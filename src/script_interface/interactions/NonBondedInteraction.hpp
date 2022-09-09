@@ -47,6 +47,7 @@ namespace Interactions {
 template <class CoreIA>
 class InteractionPotentialInterface
     : public AutoParameters<InteractionPotentialInterface<CoreIA>> {
+  /** @brief Particle type pair. */
   std::array<int, 2> m_types = {-1, -1};
 
 public:
@@ -54,9 +55,16 @@ public:
 
 protected:
   using AutoParameters<InteractionPotentialInterface<CoreIA>>::context;
+  /** @brief Managed object. */
   std::shared_ptr<CoreInteraction> m_ia_si;
+  /** @brief Pointer to the corresponding member in a handle. */
   virtual CoreInteraction IA_parameters::*get_ptr_offset() const = 0;
+  /** @brief Create a new instance using the constructor with range checks. */
   virtual void make_new_instance(VariantMap const &params) = 0;
+  /** @brief Which parameter indicates whether the potential is inactive. */
+  virtual std::string inactive_parameter() const { return "cutoff"; }
+  /** @brief Which magic value indicates the potential is inactive. */
+  virtual double inactive_cutoff() const { return INACTIVE_CUTOFF; }
 
   template <typename T>
   auto make_autoparameter(T CoreInteraction::*ptr, char const *name) {
@@ -70,6 +78,14 @@ public:
     if (name == "set_params") {
       context()->parallel_try_catch(
           [this, &params]() { make_new_instance(params); });
+      if (m_types[0] != -1) {
+        copy_si_to_core();
+        on_non_bonded_ia_change();
+      }
+      return {};
+    }
+    if (name == "deactivate") {
+      m_ia_si = std::make_shared<CoreInteraction>();
       if (m_types[0] != -1) {
         copy_si_to_core();
         on_non_bonded_ia_change();
@@ -99,19 +115,20 @@ public:
   }
 
   void do_construct(VariantMap const &params) final {
-    if (params.empty()) {
-      m_ia_si = std::make_shared<CoreInteraction>();
-    } else if (params.count("_types") != 0) {
+    if (params.count("_types") != 0) {
       do_call_method("bind_types", params);
       m_ia_si = std::make_shared<CoreInteraction>();
       copy_core_to_si();
     } else {
-      context()->parallel_try_catch(
-          [this, &params]() { make_new_instance(params); });
+      if (std::abs(get_value<double>(params, inactive_parameter()) -
+                   inactive_cutoff()) < 1e-9) {
+        m_ia_si = std::make_shared<CoreInteraction>();
+      } else {
+        context()->parallel_try_catch(
+            [this, &params]() { make_new_instance(params); });
+      }
     }
   }
-
-  auto const &get_ia() const { return *m_ia_si; }
 
   void copy_si_to_core() {
     assert(m_ia_si != nullptr);
@@ -142,6 +159,9 @@ public:
         make_autoparameter(&CoreInteraction::sig, "sigma"),
     });
   }
+
+  std::string inactive_parameter() const override { return "sigma"; }
+  double inactive_cutoff() const override { return 0.; }
 
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
@@ -179,18 +199,20 @@ public:
   }
 
   void make_new_instance(VariantMap const &params) override {
-    if (auto const *shift = boost::get<std::string>(&params.at("shift"))) {
-      if (*shift != "auto") {
+    auto new_params = params;
+    auto const *shift_string = boost::get<std::string>(&params.at("shift"));
+    if (shift_string != nullptr) {
+      if (*shift_string != "auto") {
         throw std::invalid_argument(
             "LJ parameter 'shift' has to be 'auto' or a float");
       }
-      m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                      double, double>(
-          params, "epsilon", "sigma", "cutoff", "offset", "min");
-    } else {
-      m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                      double, double, double>(
-          params, "epsilon", "sigma", "cutoff", "offset", "min", "shift");
+      new_params["shift"] = 0.;
+    }
+    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
+                                    double, double, double>(
+        new_params, "epsilon", "sigma", "cutoff", "offset", "min", "shift");
+    if (shift_string != nullptr) {
+      m_ia_si->shift = m_ia_si->get_auto_shift();
     }
   }
 };
@@ -295,6 +317,9 @@ public:
     });
   }
 
+  std::string inactive_parameter() const override { return "sigma"; }
+  double inactive_cutoff() const override { return 0.; }
+
   void make_new_instance(VariantMap const &params) override {
     m_ia_si =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
@@ -327,6 +352,9 @@ public:
         make_autoparameter(&CoreInteraction::sig, "sig"),
     });
   }
+
+  std::string inactive_parameter() const override { return "sig"; }
+
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
         params, "eps", "sig");
@@ -350,6 +378,7 @@ public:
         make_autoparameter(&CoreInteraction::cut, "cutoff"),
     });
   }
+
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double, double>(
         params, "eps", "sig", "cutoff");
@@ -509,6 +538,8 @@ public:
     });
   }
 
+  std::string inactive_parameter() const override { return "cut"; }
+
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
                                     double, double, double, double>(
@@ -534,6 +565,8 @@ public:
         make_autoparameter(&CoreInteraction::energy_tab, "energy"),
     });
   }
+
+  std::string inactive_parameter() const override { return "max"; }
 
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double,
@@ -580,6 +613,8 @@ public:
     std::ignore = get_ptr_offset(); // for code coverage
   }
 
+  std::string inactive_parameter() const override { return "r_cut"; }
+
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
                                     double, double, double, double>(
@@ -604,6 +639,10 @@ public:
         make_autoparameter(&CoreInteraction::q1q2, "q1q2"),
     });
   }
+
+  std::string inactive_parameter() const override { return "scaling_coeff"; }
+  double inactive_cutoff() const override { return 0.; }
+
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
         params, "scaling_coeff", "q1q2");
@@ -801,75 +840,65 @@ public:
     auto const key = get_ia_param_key(m_types[0], m_types[1]);
     m_interaction = ::nonbonded_ia_params[key];
 #ifdef WCA
-    set_member<InteractionWCA>(m_wca, "wca", "Interactions::InteractionWCA",
-                               params);
+    set_member(m_wca, "wca", "Interactions::InteractionWCA", params);
 #endif
 #ifdef LENNARD_JONES
-    set_member<InteractionLJ>(m_lj, "lennard_jones",
-                              "Interactions::InteractionLJ", params);
+    set_member(m_lj, "lennard_jones", "Interactions::InteractionLJ", params);
 #endif
 #ifdef LENNARD_JONES_GENERIC
-    set_member<InteractionLJGen>(m_ljgen, "generic_lennard_jones",
-                                 "Interactions::InteractionLJGen", params);
+    set_member(m_ljgen, "generic_lennard_jones",
+               "Interactions::InteractionLJGen", params);
 #endif
 #ifdef LJCOS
-    set_member<InteractionLJcos>(m_ljcos, "lennard_jones_cos",
-                                 "Interactions::InteractionLJcos", params);
+    set_member(m_ljcos, "lennard_jones_cos", "Interactions::InteractionLJcos",
+               params);
 #endif
 #ifdef LJCOS2
-    set_member<InteractionLJcos2>(m_ljcos2, "lennard_jones_cos2",
-                                  "Interactions::InteractionLJcos2", params);
+    set_member(m_ljcos2, "lennard_jones_cos2",
+               "Interactions::InteractionLJcos2", params);
 #endif
 #ifdef HERTZIAN
-    set_member<InteractionHertzian>(
-        m_hertzian, "hertzian", "Interactions::InteractionHertzian", params);
+    set_member(m_hertzian, "hertzian", "Interactions::InteractionHertzian",
+               params);
 #endif
 #ifdef GAUSSIAN
-    set_member<InteractionGaussian>(
-        m_gaussian, "gaussian", "Interactions::InteractionGaussian", params);
+    set_member(m_gaussian, "gaussian", "Interactions::InteractionGaussian",
+               params);
 #endif
 #ifdef BMHTF_NACL
-    set_member<InteractionBMHTF>(m_bmhtf, "bmhtf",
-                                 "Interactions::InteractionBMHTF", params);
+    set_member(m_bmhtf, "bmhtf", "Interactions::InteractionBMHTF", params);
 #endif
 #ifdef MORSE
-    set_member<InteractionMorse>(m_morse, "morse",
-                                 "Interactions::InteractionMorse", params);
+    set_member(m_morse, "morse", "Interactions::InteractionMorse", params);
 #endif
 #ifdef BUCKINGHAM
-    set_member<InteractionBuckingham>(m_buckingham, "buckingham",
-                                      "Interactions::InteractionBuckingham",
-                                      params);
+    set_member(m_buckingham, "buckingham",
+               "Interactions::InteractionBuckingham", params);
 #endif
 #ifdef SOFT_SPHERE
-    set_member<InteractionSoftSphere>(m_soft_sphere, "soft_sphere",
-                                      "Interactions::InteractionSoftSphere",
-                                      params);
+    set_member(m_soft_sphere, "soft_sphere",
+               "Interactions::InteractionSoftSphere", params);
 #endif
 #ifdef HAT
-    set_member<InteractionHat>(m_hat, "hat", "Interactions::InteractionHat",
-                               params);
+    set_member(m_hat, "hat", "Interactions::InteractionHat", params);
 #endif
 #ifdef GAY_BERNE
-    set_member<InteractionGayBerne>(
-        m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne", params);
+    set_member(m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne",
+               params);
 #endif
 #ifdef TABULATED
-    set_member<InteractionTabulated>(
-        m_tabulated, "tabulated", "Interactions::InteractionTabulated", params);
+    set_member(m_tabulated, "tabulated", "Interactions::InteractionTabulated",
+               params);
 #endif
 #ifdef DPD
-    set_member<InteractionDPD>(m_dpd, "dpd", "Interactions::InteractionDPD",
-                               params);
+    set_member(m_dpd, "dpd", "Interactions::InteractionDPD", params);
 #endif
 #ifdef THOLE
-    set_member<InteractionThole>(m_thole, "thole",
-                                 "Interactions::InteractionThole", params);
+    set_member(m_thole, "thole", "Interactions::InteractionThole", params);
 #endif
 #ifdef SMOOTH_STEP
-    set_member<InteractionSmoothStep>(m_smooth_step, "smooth_step",
-                                      "Interactions::InteractionSmoothStep",
-                                      params);
+    set_member(m_smooth_step, "smooth_step",
+               "Interactions::InteractionSmoothStep", params);
 #endif
   }
 

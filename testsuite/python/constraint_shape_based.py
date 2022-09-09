@@ -383,8 +383,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     energy = system.analysis.energy()
                     self.assertAlmostEqual(energy["total"], r - 1.)
         # Reset the interaction to zero
-        system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
-            epsilon=0., sigma=0., cutoff=0., shift=0., offset=0., e1=0, e2=0, b1=0., b2=0.)
+        system.non_bonded_inter[0, 1].generic_lennard_jones.deactivate()
 
     def test_cylinder(self):
         """Tests if shape based constraints can be added to a system both by

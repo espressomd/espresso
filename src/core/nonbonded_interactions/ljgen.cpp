@@ -46,6 +46,9 @@ LJGen_Parameters::LJGen_Parameters(double epsilon, double sigma, double cutoff,
   if (sigma < 0.) {
     throw std::domain_error("Generic LJ parameter 'sigma' has to be >= 0");
   }
+  if (cutoff < 0.) {
+    throw std::domain_error("Generic LJ parameter 'cutoff' has to be >= 0");
+  }
 #ifdef LJGEN_SOFTCORE
   if (delta < 0.) {
     throw std::domain_error("Generic LJ parameter 'delta' has to be >= 0");

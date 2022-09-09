@@ -30,18 +30,21 @@
 #include <cmath>
 #include <stdexcept>
 
-LJcos2_Parameters::LJcos2_Parameters(double eps, double sig, double offset,
-                                     double w)
-    : eps{eps}, sig{sig}, offset{offset}, w{w} {
-  if (eps < 0.) {
+LJcos2_Parameters::LJcos2_Parameters(double epsilon, double sigma,
+                                     double offset, double width)
+    : eps{epsilon}, sig{sigma}, offset{offset}, w{width} {
+  if (epsilon < 0.) {
     throw std::domain_error("LJcos2 parameter 'epsilon' has to be >= 0");
   }
-  if (sig < 0.) {
+  if (sigma < 0.) {
     throw std::domain_error("LJcos2 parameter 'sigma' has to be >= 0");
   }
-  if (sig != 0.) {
-    rchange = std::pow(2., 1. / 6.) * sig;
-    cut = w + rchange;
+  if (width < 0.) {
+    throw std::domain_error("LJcos2 parameter 'width' has to be >= 0");
+  }
+  if (sigma != 0.) {
+    rchange = std::pow(2., 1. / 6.) * sigma;
+    cut = width + rchange;
   }
 }
 

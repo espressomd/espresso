@@ -29,13 +29,16 @@
 
 #include <stdexcept>
 
-Gaussian_Parameters::Gaussian_Parameters(double eps, double sig, double cut)
-    : eps{eps}, sig{sig}, cut{cut} {
+Gaussian_Parameters::Gaussian_Parameters(double eps, double sig, double cutoff)
+    : eps{eps}, sig{sig}, cut{cutoff} {
   if (eps < 0.) {
     throw std::domain_error("Gaussian parameter 'eps' has to be >= 0");
   }
   if (sig < 0.) {
     throw std::domain_error("Gaussian parameter 'sig' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("Gaussian parameter 'cutoff' has to be >= 0");
   }
 }
 #endif // GAUSSIAN

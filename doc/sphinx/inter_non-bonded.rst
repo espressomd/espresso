@@ -18,22 +18,40 @@ explicitly set. A bonded interaction between a set of particles has to
 be specified explicitly by the command, while the command is used to
 define the interaction parameters.
 
-.. _Isotropic non-bonded interactions:
-
-Isotropic non-bonded interactions
----------------------------------
-
-Non-bonded interaction are configured via the :class:`espressomd.interactions.NonBondedInteraction` class, which is a member of :class:`espressomd.system.System`::
+Non-bonded interaction are configured via the
+:class:`espressomd.interactions.NonBondedInteraction` class,
+which is a member of :class:`espressomd.system.System`::
 
     system.non_bonded_inter[type1, type2]
 
-This command defines an interaction between all particles of type ``type1`` and
-``type2``. Possible interaction types and their parameters are
-listed below.
+This command defines an interaction between all particles of type ``type1``
+and ``type2``. All available interaction potentials and their parameters are
+listed below. For example, the following adds a WCA potential between
+particles of type 0::
+
+    system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=2.)
+
+Each type pair can have multiple potentials active at the same time.
+To deactivate a specific potential for a given type pair, do::
+
+    system.non_bonded_inter[0, 0].wca.deactivate()
+
+To deactivate all potentials for a given type pair, do::
+
+    system.non_bonded_inter[0, 0].reset()
+
+To deactivate all potentials between all type pairs, do::
+
+    system.non_bonded_inter.reset()
 
 For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
+
+.. _Isotropic non-bonded interactions:
+
+Isotropic non-bonded interactions
+---------------------------------
 
 .. _Tabulated interaction:
 

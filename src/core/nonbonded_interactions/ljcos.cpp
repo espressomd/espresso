@@ -32,14 +32,17 @@
 
 #include <stdexcept>
 
-LJcos_Parameters::LJcos_Parameters(double eps, double sig, double cut,
+LJcos_Parameters::LJcos_Parameters(double epsilon, double sigma, double cutoff,
                                    double offset)
-    : eps{eps}, sig{sig}, cut{cut}, offset{offset} {
-  if (eps < 0.) {
+    : eps{epsilon}, sig{sigma}, cut{cutoff}, offset{offset} {
+  if (epsilon < 0.) {
     throw std::domain_error("LJcos parameter 'epsilon' has to be >= 0");
   }
-  if (sig < 0.) {
+  if (sigma < 0.) {
     throw std::domain_error("LJcos parameter 'sigma' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("LJcos parameter 'cutoff' has to be >= 0");
   }
   auto const facsq = Utils::cbrt_2() * Utils::sqr(sig);
 

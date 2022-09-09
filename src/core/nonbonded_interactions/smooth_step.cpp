@@ -36,6 +36,12 @@ SmoothStep_Parameters::SmoothStep_Parameters(double eps, double sig,
   if (eps < 0.) {
     throw std::domain_error("SmoothStep parameter 'eps' has to be >= 0");
   }
+  if (sig < 0.) {
+    throw std::domain_error("SmoothStep parameter 'sig' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("SmoothStep parameter 'cutoff' has to be >= 0");
+  }
 }
 
 #endif // SMOOTH_STEP

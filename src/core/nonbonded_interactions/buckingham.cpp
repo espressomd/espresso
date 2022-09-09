@@ -45,6 +45,9 @@ Buckingham_Parameters::Buckingham_Parameters(double a, double b, double c,
   if (d < 0.) {
     throw std::domain_error("Buckingham parameter 'd' has to be >= 0");
   }
+  if (cutoff < 0.) {
+    throw std::domain_error("Buckingham parameter 'cutoff' has to be >= 0");
+  }
 
   /* Replace the Buckingham potential for interatomic distance less
      than or equal to discontinuity by a straight line (F1+F2*r) */

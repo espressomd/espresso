@@ -68,8 +68,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             g.kill_particle_motion(rotation=True)
             system.integrator.set_vv()
 
-            system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0, cutoff=-1, shift=0.0)
+            system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
             system.cell_system.skin = 0.0
             system.time_step = 0.01

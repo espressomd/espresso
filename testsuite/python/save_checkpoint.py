@@ -161,7 +161,7 @@ system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
 system.constraints.add(shape=espressomd.shapes.Sphere(center=system.box_l / 2, radius=0.1),
-                       particle_type=17)
+                       particle_type=7)
 system.constraints.add(
     shape=espressomd.shapes.Wall(
         normal=[1. / np.sqrt(3)] * 3, dist=0.5))
@@ -231,12 +231,8 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[3, 0].lennard_jones.set_params(
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
-    system.non_bonded_inter[1, 17].lennard_jones.set_params(
+    system.non_bonded_inter[1, 7].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
-    # add inactive interaction
-    system.non_bonded_inter[4, 4].lennard_jones.set_params(
-        epsilon=1.4, sigma=1.2, cutoff=1.5, shift=0.2, offset=0.1, min=0.2)
-    system.non_bonded_inter[4, 4].lennard_jones.set_params(cutoff=-2.)
 
 # bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)

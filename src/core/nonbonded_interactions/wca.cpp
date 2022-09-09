@@ -28,15 +28,16 @@
 #include <cmath>
 #include <stdexcept>
 
-WCA_Parameters::WCA_Parameters(double eps, double sig) : eps{eps}, sig{sig} {
-  if (eps < 0.) {
+WCA_Parameters::WCA_Parameters(double epsilon, double sigma)
+    : eps{epsilon}, sig{sigma} {
+  if (epsilon < 0.) {
     throw std::domain_error("WCA parameter 'epsilon' has to be >= 0");
   }
-  if (sig < 0.) {
+  if (sigma < 0.) {
     throw std::domain_error("WCA parameter 'sigma' has to be >= 0");
   }
-  if (sig != 0.) {
-    cut = sig * std::pow(2., 1. / 6.);
+  if (sigma != 0.) {
+    cut = sigma * std::pow(2., 1. / 6.);
   }
 }
 

@@ -36,6 +36,9 @@ SoftSphere_Parameters::SoftSphere_Parameters(double a, double n, double cutoff,
   if (a < 0.) {
     throw std::domain_error("SoftSphere parameter 'a' has to be >= 0");
   }
+  if (cutoff < 0.) {
+    throw std::domain_error("SoftSphere parameter 'cutoff' has to be >= 0");
+  }
   if (offset < 0.) {
     throw std::domain_error("SoftSphere parameter 'offset' has to be >= 0");
   }

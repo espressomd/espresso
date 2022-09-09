@@ -27,39 +27,50 @@ class NonBondedInteraction(ScriptInterfaceHelper):
     """
     Represents an instance of a non-bonded interaction, such as Lennard-Jones.
 
+    Methods
+    -------
+    deactivate()
+        Reset parameters for the interaction.
+
     """
+    _so_bind_methods = ("deactivate",)
 
     def __init__(self, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
         else:
-            self._validate(params=kwargs, check_required=True)
+            self._validate(kwargs)
             params = self.default_params()
             params.update(kwargs)
             super().__init__(**params)
+            self._validate_post(params)
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.get_params()})'
 
-    def _validate(self, params, check_required=False):
-        # Check, if any key was passed, which is not known
-        keys = {x for x in params.keys() if x != "_types"}
-        utils.check_valid_keys(self.valid_keys(), keys)
-        # When an interaction is newly activated, all required keys must be
-        # given
-        if check_required:
-            utils.check_required_keys(self.required_keys(), params.keys())
+    def _validate(self, params):
+        for key in self.required_keys():
+            if key not in params:
+                raise RuntimeError(
+                    f"{self.__class__.__name__} parameter '{key}' is missing")
+
+    def _validate_post(self, params):
+        valid_parameters = self.valid_keys()
+        for key in params:
+            if key != "_types" and key not in valid_parameters:
+                raise RuntimeError(
+                    f"Parameter '{key}' is not a valid {self.__class__.__name__} parameter")
 
     def set_params(self, **kwargs):
-        """Update the given parameters.
+        """Set new parameters.
 
         """
-        self._validate(params=kwargs, check_required=not self.is_active())
-
-        params = self.get_params()
+        self._validate(kwargs)
+        params = self.default_params()
         params.update(kwargs)
+        self._validate_post(params)
 
-        err_msg = f"setting {self.type_name()} raised an error"
+        err_msg = f"setting {self.__class__.__name__} raised an error"
         self.call_method("set_params", handle_errors_message=err_msg, **params)
 
     def _serialize(self):
@@ -72,26 +83,11 @@ class NonBondedInteraction(ScriptInterfaceHelper):
         raise Exception(
             "Subclasses of NonBondedInteraction must define the default_params() method.")
 
-    def is_active(self):
-        """Virtual method.
-
-        """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the is_active() method.")
-
-    def type_name(self):
-        """Virtual method.
-
-        """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the type_name() method.")
-
     def valid_keys(self):
-        """Virtual method.
+        """All parameters that can be set.
 
         """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the valid_keys() method.")
+        return set(self._valid_parameters())
 
     def required_keys(self):
         """Virtual method.
@@ -111,10 +107,7 @@ IF LENNARD_JONES == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -137,29 +130,11 @@ IF LENNARD_JONES == 1:
 
         _so_name = "Interactions::InteractionLJ"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.epsilon > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {"offset": 0., "min": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "LennardJones"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"epsilon", "sigma", "cutoff", "shift", "offset", "min"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -177,10 +152,7 @@ IF WCA == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -193,26 +165,11 @@ IF WCA == 1:
 
         _so_name = "Interactions::InteractionWCA"
 
-        def is_active(self):
-            return self.epsilon > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "WCA"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"epsilon", "sigma"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -234,10 +191,7 @@ IF LENNARD_JONES_GENERIC == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -272,12 +226,6 @@ IF LENNARD_JONES_GENERIC == 1:
 
         _so_name = "Interactions::InteractionLJGen"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.epsilon > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
@@ -286,23 +234,6 @@ IF LENNARD_JONES_GENERIC == 1:
                 return {"delta": 0., "lam": 1.}
             ELSE:
                 return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "GenericLennardJones"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            IF LJGEN_SOFTCORE:
-                return {"epsilon", "sigma", "cutoff", "shift",
-                        "offset", "e1", "e2", "b1", "b2", "delta", "lam"}
-            ELSE:
-                return {"epsilon", "sigma", "cutoff",
-                        "shift", "offset", "e1", "e2", "b1", "b2"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -339,29 +270,11 @@ IF LJCOS == 1:
 
         _so_name = "Interactions::InteractionLJcos"
 
-        def is_active(self):
-            """Check if interactions is active.
-
-            """
-            return self.epsilon > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {"offset": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "LennardJonesCos"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"epsilon", "sigma", "cutoff", "offset"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -378,10 +291,7 @@ IF LJCOS2 == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -397,29 +307,11 @@ IF LJCOS2 == 1:
 
         _so_name = "Interactions::InteractionLJcos2"
 
-        def is_active(self):
-            """Check if interactions is active.
-
-            """
-            return self.epsilon > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {"offset": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "LennardJonesCos2"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"epsilon", "sigma", "width", "offset"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -440,10 +332,7 @@ IF HAT == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -456,17 +345,8 @@ IF HAT == 1:
 
         _so_name = "Interactions::InteractionHat"
 
-        def is_active(self):
-            return self.F_max > 0.
-
         def default_params(self):
             return {}
-
-        def type_name(self):
-            return "Hat"
-
-        def valid_keys(self):
-            return {"F_max", "cutoff"}
 
         def required_keys(self):
             return {"F_max", "cutoff"}
@@ -480,10 +360,7 @@ IF GAY_BERNE:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -507,29 +384,11 @@ IF GAY_BERNE:
 
         _so_name = "Interactions::InteractionGayBerne"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.eps > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "GayBerne"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"eps", "sig", "cut", "k1", "k2", "mu", "nu"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -546,10 +405,7 @@ IF TABULATED:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -566,29 +422,11 @@ IF TABULATED:
 
         _so_name = "Interactions::InteractionTabulated"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.cutoff > 0
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {}
-
-        def type_name(self):
-            """Name of the potential.
-
-            """
-            return "Tabulated"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"min", "max", "energy", "force"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -609,10 +447,7 @@ IF DPD:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -637,9 +472,6 @@ IF DPD:
 
         _so_name = "Interactions::InteractionDPD"
 
-        def is_active(self):
-            return self.r_cut > 0. or self.trans_r_cut > 0.
-
         def default_params(self):
             return {
                 "weight_function": 0,
@@ -649,13 +481,6 @@ IF DPD:
                 "trans_weight_function": 0,
                 "trans_gamma": 0.0,
                 "trans_r_cut": -1.0}
-
-        def type_name(self):
-            return "DPD"
-
-        def valid_keys(self):
-            return {"weight_function", "gamma", "k", "r_cut",
-                    "trans_weight_function", "trans_gamma", "trans_r_cut"}
 
         def required_keys(self):
             return set()
@@ -669,10 +494,7 @@ IF SMOOTH_STEP == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -693,29 +515,11 @@ IF SMOOTH_STEP == 1:
 
         _so_name = "Interactions::InteractionSmoothStep"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.eps > 0. and self.sig > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {"n": 10, "k0": 0., "sig": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "SmoothStep"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"d", "n", "eps", "k0", "sig", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -732,10 +536,7 @@ IF BMHTF_NACL == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -755,29 +556,11 @@ IF BMHTF_NACL == 1:
 
         _so_name = "Interactions::InteractionBMHTF"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.a > 0. and self.c > 0. and self.d > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "BMHTF"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"a", "b", "c", "d", "sig", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -794,10 +577,7 @@ IF MORSE == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -813,29 +593,11 @@ IF MORSE == 1:
 
         _so_name = "Interactions::InteractionMorse"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.eps > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {"cutoff": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "Morse"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"eps", "alpha", "rmin", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -852,10 +614,7 @@ IF BUCKINGHAM == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -877,29 +636,11 @@ IF BUCKINGHAM == 1:
 
         _so_name = "Interactions::InteractionBuckingham"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.a > 0. or self.b > 0. or self.d > 0. or self.shift > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {"b": 0., "shift": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "Buckingham"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"a", "b", "c", "d", "discont", "cutoff", "shift"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -916,10 +657,7 @@ IF SOFT_SPHERE == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -935,29 +673,11 @@ IF SOFT_SPHERE == 1:
 
         _so_name = "Interactions::InteractionSoftSphere"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.a > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {"offset": 0.}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "SoftSphere"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"a", "n", "cutoff", "offset"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -974,10 +694,7 @@ IF HERTZIAN == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -989,29 +706,11 @@ IF HERTZIAN == 1:
 
         _so_name = "Interactions::InteractionHertzian"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.eps > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "Hertzian"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"eps", "sig"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -1028,10 +727,7 @@ IF GAUSSIAN == 1:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -1045,29 +741,11 @@ IF GAUSSIAN == 1:
 
         _so_name = "Interactions::InteractionGaussian"
 
-        def is_active(self):
-            """Check if interaction is active.
-
-            """
-            return self.eps > 0.
-
         def default_params(self):
             """Python dictionary of default parameters.
 
             """
             return {}
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "Gaussian"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return {"eps", "sig", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -1084,10 +762,7 @@ IF THOLE:
         Methods
         -------
         set_params()
-            Set or update parameters for the interaction.
-            Parameters marked as required become optional once the
-            interaction has been activated for the first time;
-            subsequent calls to this method update the existing values.
+            Set new parameters for the interaction.
 
             Parameters
             ----------
@@ -1106,17 +781,8 @@ IF THOLE:
 
         _so_name = "Interactions::InteractionThole"
 
-        def is_active(self):
-            return self.scaling_coeff != 0.
-
         def default_params(self):
             return {}
-
-        def type_name(self):
-            return "Thole"
-
-        def valid_keys(self):
-            return {"scaling_coeff", "q1q2"}
 
         def required_keys(self):
             return {"scaling_coeff", "q1q2"}
@@ -1154,6 +820,10 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
         for name, obj in self.get_params().items():
             serialized.append((name, *obj._serialize()))
         return serialized
+
+    def reset(self):
+        for key in self._valid_parameters():
+            getattr(self, key).deactivate()
 
 
 @script_interface_register

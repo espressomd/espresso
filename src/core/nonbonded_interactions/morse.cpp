@@ -36,6 +36,9 @@ Morse_Parameters::Morse_Parameters(double eps, double alpha, double rmin,
   if (eps < 0.) {
     throw std::domain_error("Morse parameter 'eps' has to be >= 0");
   }
+  if (cutoff < 0.) {
+    throw std::domain_error("Morse parameter 'cutoff' has to be >= 0");
+  }
   auto const add1 = std::exp(-2.0 * alpha * (cut - rmin));
   auto const add2 = 2.0 * std::exp(-alpha * (cut - rmin));
   rest = eps * (add1 - add2);

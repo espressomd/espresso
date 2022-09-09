@@ -27,30 +27,21 @@
 #ifdef LENNARD_JONES
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/math/int_pow.hpp>
-
 #include <algorithm>
 #include <stdexcept>
 
-LJ_Parameters::LJ_Parameters(double eps, double sig, double cut, double offset,
-                             double min)
-    : LJ_Parameters(eps, sig, cut, offset, min, 0.) {
-  if (cut != 0.) {
-    auto const sig_cut = sig / cut;
-    shift = Utils::int_pow<6>(sig_cut) - Utils::int_pow<12>(sig_cut);
-  }
-}
-
-LJ_Parameters::LJ_Parameters(double eps, double sig, double cut, double offset,
-                             double min, double shift)
-    : eps{eps}, sig{sig}, cut{cut}, shift{shift}, offset{offset}, min{std::max(
-                                                                      min,
-                                                                      0.)} {
-  if (eps < 0.) {
+LJ_Parameters::LJ_Parameters(double epsilon, double sigma, double cutoff,
+                             double offset, double min, double shift)
+    : eps{epsilon}, sig{sigma}, cut{cutoff}, shift{shift}, offset{offset},
+      min{std::max(min, 0.)} {
+  if (epsilon < 0.) {
     throw std::domain_error("LJ parameter 'epsilon' has to be >= 0");
   }
-  if (sig < 0.) {
+  if (sigma < 0.) {
     throw std::domain_error("LJ parameter 'sigma' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("LJ parameter 'cutoff' has to be >= 0");
   }
 }
 

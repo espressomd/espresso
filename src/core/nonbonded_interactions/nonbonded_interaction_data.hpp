@@ -28,6 +28,7 @@
 #include "config.hpp"
 
 #include <utils/index.hpp>
+#include <utils/math/int_pow.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -49,10 +50,17 @@ struct LJ_Parameters {
   double offset = 0.0;
   double min = 0.0;
   LJ_Parameters() = default;
-  LJ_Parameters(double eps, double sig, double cut, double offset, double min);
-  LJ_Parameters(double eps, double sig, double cut, double offset, double min,
-                double shift);
+  LJ_Parameters(double epsilon, double sigma, double cutoff, double offset,
+                double min, double shift);
+  double get_auto_shift() const {
+    auto auto_shift = 0.;
+    if (cut != 0.) {
+      auto_shift = Utils::int_pow<6>(sig / cut) - Utils::int_pow<12>(sig / cut);
+    }
+    return auto_shift;
+  }
   double max_cutoff() const { return cut + offset; }
+  double min_cutoff() const { return min + offset; }
 };
 
 /** WCA potential */
@@ -61,7 +69,7 @@ struct WCA_Parameters {
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
   WCA_Parameters() = default;
-  WCA_Parameters(double eps, double sig);
+  WCA_Parameters(double epsilon, double sigma);
   double max_cutoff() const { return cut; }
 };
 
@@ -124,7 +132,7 @@ struct Gaussian_Parameters {
   double sig = 1.0;
   double cut = INACTIVE_CUTOFF;
   Gaussian_Parameters() = default;
-  Gaussian_Parameters(double eps, double sig, double cut);
+  Gaussian_Parameters(double eps, double sig, double cutoff);
   double max_cutoff() const { return cut; }
 };
 
@@ -202,7 +210,7 @@ struct LJcos_Parameters {
   double beta = 0.0;
   double rmin = 0.0;
   LJcos_Parameters() = default;
-  LJcos_Parameters(double eps, double sig, double cut, double offset);
+  LJcos_Parameters(double epsilon, double sigma, double cutoff, double offset);
   double max_cutoff() const { return cut + offset; }
 };
 
@@ -215,7 +223,7 @@ struct LJcos2_Parameters {
   double w = 0.0;
   double rchange = 0.0;
   LJcos2_Parameters() = default;
-  LJcos2_Parameters(double eps, double sig, double offset, double w);
+  LJcos2_Parameters(double epsilon, double sigma, double offset, double width);
   double max_cutoff() const { return cut + offset; }
 };
 

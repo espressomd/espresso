@@ -34,6 +34,9 @@ Hat_Parameters::Hat_Parameters(double F_max, double cutoff)
   if (F_max < 0.) {
     throw std::domain_error("Hat parameter 'F_max' has to be >= 0");
   }
+  if (cutoff < 0.) {
+    throw std::domain_error("Hat parameter 'cutoff' has to be >= 0");
+  }
 }
 
 #endif // HAT

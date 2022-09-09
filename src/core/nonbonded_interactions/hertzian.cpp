@@ -34,6 +34,9 @@ Hertzian_Parameters::Hertzian_Parameters(double eps, double sig)
   if (eps < 0.) {
     throw std::domain_error("Hertzian parameter 'eps' has to be >= 0");
   }
+  if (sig < 0.) {
+    throw std::domain_error("Hertzian parameter 'sig' has to be >= 0");
+  }
 }
 
 #endif // HERTZIAN

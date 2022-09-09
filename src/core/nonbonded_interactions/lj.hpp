@@ -40,8 +40,7 @@
 /** Calculate Lennard-Jones force factor */
 inline double lj_pair_force_factor(IA_parameters const &ia_params,
                                    double dist) {
-  if ((dist < ia_params.lj.cut + ia_params.lj.offset) &&
-      (dist > ia_params.lj.min + ia_params.lj.offset)) {
+  if (dist < ia_params.lj.max_cutoff() and dist > ia_params.lj.min_cutoff()) {
     auto const r_off = dist - ia_params.lj.offset;
     auto const frac6 = Utils::int_pow<6>(ia_params.lj.sig / r_off);
     return 48.0 * ia_params.lj.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
@@ -51,8 +50,7 @@ inline double lj_pair_force_factor(IA_parameters const &ia_params,
 
 /** Calculate Lennard-Jones energy */
 inline double lj_pair_energy(IA_parameters const &ia_params, double dist) {
-  if ((dist < ia_params.lj.cut + ia_params.lj.offset) &&
-      (dist > ia_params.lj.min + ia_params.lj.offset)) {
+  if (dist < ia_params.lj.max_cutoff() and dist > ia_params.lj.min_cutoff()) {
     auto const r_off = dist - ia_params.lj.offset;
     auto const frac6 = Utils::int_pow<6>(ia_params.lj.sig / r_off);
     return 4.0 * ia_params.lj.eps *

@@ -43,6 +43,9 @@ BMHTF_Parameters::BMHTF_Parameters(double a, double b, double c, double d,
   if (d < 0.) {
     throw std::domain_error("BMHTF parameter 'd' has to be >= 0");
   }
+  if (cutoff < 0.) {
+    throw std::domain_error("BMHTF parameter 'cutoff' has to be >= 0");
+  }
   computed_shift = C / Utils::int_pow<6>(cut) + D / Utils::int_pow<8>(cut) -
                    A * std::exp(B * (sig - cut));
 }
