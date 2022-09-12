@@ -22,6 +22,7 @@ import tests_common
 
 import espressomd
 import espressomd.interactions
+import espressomd.code_features
 
 
 class Test(ut.TestCase):
@@ -37,40 +38,6 @@ class Test(ut.TestCase):
         """
         self.assertIsInstance(outInter, inType)
         tests_common.assert_params_match(self, inParams, outParams, msg_long)
-
-    def parameterKeys(self, interObject):
-        """
-        Check :meth:`~espressomd.interactions.NonBondedInteraction.valid_keys`
-        and :meth:`~espressomd.interactions.NonBondedInteraction.required_keys`
-        return sets, and that
-        :meth:`~espressomd.interactions.NonBondedInteraction.default_params`
-        returns a dictionary with the correct keys.
-
-        Parameters
-        ----------
-        interObject: instance of a class derived from :class:`espressomd.interactions.NonBondedInteraction`
-            Object of the interaction to test, e.g.
-            :class:`~espressomd.interactions.LennardJonesInteraction`
-        """
-        classname = interObject.__class__.__name__
-        valid_keys = interObject.valid_keys()
-        required_keys = interObject.required_keys()
-        default_keys = set(interObject.default_params().keys())
-        self.assertIsInstance(valid_keys, set,
-                              "{}.valid_keys() must return a set".format(
-                                  classname))
-        self.assertIsInstance(required_keys, set,
-                              "{}.required_keys() must return a set".format(
-                                  classname))
-        self.assertTrue(default_keys.issubset(valid_keys),
-                        "{}.default_params() has unknown parameters: {}".format(
-            classname, default_keys.difference(valid_keys)))
-        self.assertTrue(default_keys.isdisjoint(required_keys),
-                        "{}.default_params() has extra parameters: {}".format(
-            classname, default_keys.intersection(required_keys)))
-        self.assertSetEqual(default_keys, valid_keys - required_keys,
-                            "{}.default_params() should have keys: {}, got: {}".format(
-                                classname, valid_keys - required_keys, default_keys))
 
     def generateTestForNon_bonded_interaction(
             _partType1, _partType2, _interClass, _params, _interName):
@@ -115,7 +82,6 @@ class Test(ut.TestCase):
                 f"{interClass.__name__}: value set and value gotten back "
                 f"differ for particle types {partType1} and {partType2}: "
                 f"{params} vs. {outParams}")
-            self.parameterKeys(outInter)
 
         return func
 
@@ -204,16 +170,16 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_exceptions(self):
-        with self.assertRaisesRegex(RuntimeError, "LennardJonesInteraction parameter 'shift' is missing"):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'shift' is missing"):
             espressomd.interactions.LennardJonesInteraction(
                 epsilon=1., sigma=2., cutoff=2.)
-        with self.assertRaisesRegex(RuntimeError, "LennardJonesInteraction parameter 'shift' is missing"):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'shift' is missing"):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=1., sigma=2., cutoff=2.)
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'unknown' is not a valid LennardJonesInteraction parameter"):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'unknown' is not recognized"):
             espressomd.interactions.LennardJonesInteraction(
                 epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'unknown' is not a valid LennardJonesInteraction parameter"):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'unknown' is not recognized"):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
         with self.assertRaisesRegex(ValueError, "LJ parameter 'shift' has to be 'auto' or a float"):
@@ -236,11 +202,23 @@ class Test(ut.TestCase):
         self.assertEqual(inter_00_obj.call_method("get_types"), [0, 0])
         self.assertIsNone(inter_00_obj.call_method("unknown"))
 
-    def check_potential_exceptions(self, ia_class, params, check_keys):
+    def test_feature_checks(self):
+        base_class = espressomd.interactions.NonBondedInteraction
+        FeaturesError = espressomd.code_features.FeaturesError
+        for class_ia in espressomd.interactions.__dict__.values():
+            if isinstance(class_ia, type) and issubclass(
+                    class_ia, base_class) and class_ia != base_class:
+                feature = class_ia._so_feature
+                if not espressomd.code_features.has_features(feature):
+                    with self.assertRaisesRegex(FeaturesError, f"Missing features {feature}"):
+                        class_ia()
+
+    def check_potential_exceptions(
+            self, ia_class, params, check_keys, invalid_value=-0.1):
         for key in check_keys:
             with self.assertRaisesRegex(ValueError, f"parameter '{key}'"):
                 invalid_params = params.copy()
-                invalid_params[key] = -0.1
+                invalid_params[key] = invalid_value
                 ia_class(**invalid_params)
 
     @utx.skipIfMissingFeatures("WCA")
@@ -356,6 +334,16 @@ class Test(ut.TestCase):
             espressomd.interactions.SmoothStepInteraction,
             {"eps": 4., "sig": 3., "cutoff": 1., "d": 2., "n": 11, "k0": 2.},
             ("eps", "sig", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("DPD")
+    def test_dpd_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.DPDInteraction,
+            {"weight_function": 1, "gamma": 2., "r_cut": 2.,
+             "trans_weight_function": 1, "trans_gamma": 1., "trans_r_cut": 2.},
+            ("weight_function", "trans_weight_function"),
+            invalid_value=-1
         )
 
 

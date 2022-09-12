@@ -32,10 +32,13 @@
 #include "core/event.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -55,6 +58,7 @@ public:
 
 protected:
   using AutoParameters<InteractionPotentialInterface<CoreIA>>::context;
+  using AutoParameters<InteractionPotentialInterface<CoreIA>>::valid_parameters;
   /** @brief Managed object. */
   std::shared_ptr<CoreInteraction> m_ia_si;
   /** @brief Pointer to the corresponding member in a handle. */
@@ -72,12 +76,39 @@ protected:
                          [this, ptr]() { return m_ia_si.get()->*ptr; }};
   }
 
+private:
+  std::set<std::string> get_valid_parameters() const {
+    auto const vec = valid_parameters();
+    auto valid_keys = std::set<std::string>();
+    std::transform(vec.begin(), vec.end(),
+                   std::inserter(valid_keys, valid_keys.begin()),
+                   [](auto const &key) { return std::string{key}; });
+    return valid_keys;
+  }
+
+  void check_valid_parameters(VariantMap const &params) const {
+    auto const valid_keys = get_valid_parameters();
+    for (auto const &key : valid_keys) {
+      if (params.count(std::string(key)) == 0) {
+        throw std::runtime_error("Parameter '" + key + "' is missing");
+      }
+    }
+    for (auto const &kv : params) {
+      if (valid_keys.count(kv.first) == 0) {
+        throw std::runtime_error("Parameter '" + kv.first +
+                                 "' is not recognized");
+      }
+    }
+  }
+
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "set_params") {
-      context()->parallel_try_catch(
-          [this, &params]() { make_new_instance(params); });
+      context()->parallel_try_catch([this, &params]() {
+        check_valid_parameters(params);
+        make_new_instance(params);
+      });
       if (m_types[0] != -1) {
         copy_si_to_core();
         on_non_bonded_ia_change();
@@ -91,6 +122,9 @@ public:
         on_non_bonded_ia_change();
       }
       return {};
+    }
+    if (name == "is_registered") {
+      return m_types[0] != -1;
     }
     if (name == "bind_types") {
       auto types = get_value<std::vector<int>>(params, "_types");
@@ -124,8 +158,10 @@ public:
                    inactive_cutoff()) < 1e-9) {
         m_ia_si = std::make_shared<CoreInteraction>();
       } else {
-        context()->parallel_try_catch(
-            [this, &params]() { make_new_instance(params); });
+        context()->parallel_try_catch([this, &params]() {
+          check_valid_parameters(params);
+          make_new_instance(params);
+        });
       }
     }
   }
@@ -160,6 +196,7 @@ public:
     });
   }
 
+private:
   std::string inactive_parameter() const override { return "sigma"; }
   double inactive_cutoff() const override { return 0.; }
 
@@ -168,6 +205,7 @@ public:
         params, "epsilon", "sigma");
   }
 
+public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_cutoff") {
@@ -198,6 +236,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     auto new_params = params;
     auto const *shift_string = boost::get<std::string>(&params.at("shift"));
@@ -245,6 +284,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     auto new_params = params;
     auto const *shift_string = boost::get<std::string>(&params.at("shift"));
@@ -291,6 +331,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
@@ -317,6 +358,7 @@ public:
     });
   }
 
+private:
   std::string inactive_parameter() const override { return "sigma"; }
   double inactive_cutoff() const override { return 0.; }
 
@@ -326,6 +368,7 @@ public:
             params, "epsilon", "sigma", "offset", "width");
   }
 
+public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_cutoff") {
@@ -353,6 +396,7 @@ public:
     });
   }
 
+private:
   std::string inactive_parameter() const override { return "sig"; }
 
   void make_new_instance(VariantMap const &params) override {
@@ -379,6 +423,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double, double>(
         params, "eps", "sig", "cutoff");
@@ -406,6 +451,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
                                     double, double, double>(
@@ -432,6 +478,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
@@ -461,6 +508,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
                                     double, double, double, double>(
@@ -487,6 +535,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
@@ -510,6 +559,7 @@ public:
     });
   }
 
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
         params, "F_max", "cutoff");
@@ -538,6 +588,7 @@ public:
     });
   }
 
+private:
   std::string inactive_parameter() const override { return "cut"; }
 
   void make_new_instance(VariantMap const &params) override {
@@ -566,6 +617,7 @@ public:
     });
   }
 
+private:
   std::string inactive_parameter() const override { return "max"; }
 
   void make_new_instance(VariantMap const &params) override {
@@ -574,6 +626,7 @@ public:
         params, "min", "max", "force", "energy");
   }
 
+public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_cutoff") {
@@ -613,6 +666,7 @@ public:
     std::ignore = get_ptr_offset(); // for code coverage
   }
 
+private:
   std::string inactive_parameter() const override { return "r_cut"; }
 
   void make_new_instance(VariantMap const &params) override {
@@ -620,6 +674,14 @@ public:
                                     double, double, double, double>(
         params, "gamma", "k", "r_cut", "weight_function", "trans_gamma",
         "trans_r_cut", "trans_weight_function");
+    if (m_ia_si->radial.wf != 0 and m_ia_si->radial.wf != 1) {
+      throw std::domain_error(
+          "DPDInteraction parameter 'weight_function' must be 0 or 1");
+    }
+    if (m_ia_si->trans.wf != 0 and m_ia_si->trans.wf != 1) {
+      throw std::domain_error(
+          "DPDInteraction parameter 'trans_weight_function' must be 0 or 1");
+    }
   }
 };
 #endif // DPD
@@ -640,6 +702,7 @@ public:
     });
   }
 
+private:
   std::string inactive_parameter() const override { return "scaling_coeff"; }
   double inactive_cutoff() const override { return 0.; }
 
@@ -669,6 +732,8 @@ public:
         make_autoparameter(&CoreInteraction::k0, "k0"),
     });
   }
+
+private:
   void make_new_instance(VariantMap const &params) override {
     m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
                                     double, int, double>(

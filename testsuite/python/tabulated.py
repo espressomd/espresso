@@ -59,6 +59,8 @@ class TabulatedTest(ut.TestCase):
     def test_non_bonded(self):
         self.system.non_bonded_inter[0, 0].tabulated.set_params(
             min=self.min_, max=self.max_, energy=self.energy, force=self.force)
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].tabulated.cutoff, self.max_)
 
         params = self.system.non_bonded_inter[0, 0].tabulated.get_params()
         np.testing.assert_allclose(params['force'], self.force)
@@ -70,6 +72,8 @@ class TabulatedTest(ut.TestCase):
 
         self.system.non_bonded_inter[0, 0].tabulated.set_params(
             min=-1, max=-1, energy=[], force=[])
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].tabulated.cutoff, -1.)
 
         with self.assertRaisesRegex(ValueError, "TabulatedPotential parameter 'max' must be larger than or equal to parameter 'min'"):
             espressomd.interactions.TabulatedNonBonded(

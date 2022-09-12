@@ -22,6 +22,7 @@ import tests_common
 
 import espressomd
 import espressomd.interactions
+import espressomd.code_features
 import numpy as np
 
 
@@ -335,6 +336,18 @@ class BondedInteractions(ut.TestCase):
                 self.system.bonded_inter.add(dihe)
             self.assertEqual(len(self.system.bonded_inter), 2)
             self.system.bonded_inter.clear()
+
+    def test_feature_checks(self):
+        base_class = espressomd.interactions.BondedInteraction
+        FeaturesError = espressomd.code_features.FeaturesError
+        for class_bond in espressomd.interactions.__dict__.values():
+            if isinstance(class_bond, type) and issubclass(
+                    class_bond, base_class) and class_bond != base_class:
+                feature = getattr(class_bond, "_so_feature", None)
+                if feature is not None and not espressomd.code_features.has_features(
+                        feature):
+                    with self.assertRaisesRegex(FeaturesError, f"Missing features {feature}"):
+                        class_bond()
 
 
 if __name__ == "__main__":

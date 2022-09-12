@@ -330,7 +330,9 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
-    def test_non_bonded_inter(self):
+    def test_non_bonded_inter_lj(self):
+        self.assertTrue(
+            system.non_bonded_inter[0, 0].lennard_jones.call_method("is_registered"))
         params1 = system.non_bonded_inter[0, 0].lennard_jones.get_params()
         params2 = system.non_bonded_inter[3, 0].lennard_jones.get_params()
         reference1 = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
@@ -339,6 +341,13 @@ class CheckpointTest(ut.TestCase):
                       'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         self.assertEqual(params1, reference1)
         self.assertEqual(params2, reference2)
+        self.assertTrue(handle_ia.lennard_jones.call_method("is_registered"))
+        self.assertEqual(handle_ia.lennard_jones.get_params(), reference1)
+
+    @utx.skipIfMissingFeatures('DPD')
+    def test_non_bonded_inter_dpd(self):
+        self.assertEqual(dpd_ia.get_params(), dpd_params)
+        self.assertFalse(dpd_ia.call_method("is_registered"))
 
     def test_bonded_inter(self):
         # check the ObjectHandle was correctly initialized (including MPI)

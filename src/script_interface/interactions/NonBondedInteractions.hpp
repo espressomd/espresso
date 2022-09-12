@@ -69,17 +69,7 @@ public:
 
   void do_construct(VariantMap const &params) override {
     auto const size = ::max_seen_particle_type;
-    {
-      // when reloading from a checkpoint file, need to resize IA lists
-      auto const new_size = ::max_seen_particle_type;
-      auto const n_pairs = new_size * (new_size + 1) / 2;
-      ::nonbonded_ia_params.resize(n_pairs);
-      for (auto &ia_params : ::nonbonded_ia_params) {
-        if (ia_params == nullptr) {
-          ia_params = std::make_shared<::IA_parameters>();
-        }
-      }
-    }
+    make_particle_type_exist_local(size);
     for (int i = 0; i < size; i++) {
       for (int j = i; j < size; j++) {
         auto const key = Utils::upper_triangular(i, j, size);
@@ -99,6 +89,7 @@ public:
     }
     if (name == "insert") {
       auto const types = get_value<std::vector<int>>(params.at("key"));
+      make_particle_type_exist_local(std::max(types[0], types[1]));
       auto const key = get_ia_param_key(std::min(types[0], types[1]),
                                         std::max(types[0], types[1]));
       auto obj_ptr = get_value<std::shared_ptr<NonBondedInteractionHandle>>(

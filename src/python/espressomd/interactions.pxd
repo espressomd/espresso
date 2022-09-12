@@ -23,12 +23,6 @@ from libc cimport stdint
 
 from .thermostat cimport thermalized_bond
 
-include "myconfig.pxi"
-
-# force include of config.hpp
-cdef extern from "config.hpp":
-    pass
-
 cdef extern from "script_interface/interactions/bonded.hpp":
     int bonded_ia_params_zero_based_type(int bond_id) except +
 

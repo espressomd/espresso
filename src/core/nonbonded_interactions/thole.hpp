@@ -23,8 +23,6 @@
 /** \file
  *  Routines to calculate the Thole damping potential between particle pairs.
  *  See @cite thole81a.
- *
- *  Implementation in \ref thole.cpp.
  */
 
 #include "config.hpp"
