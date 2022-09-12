@@ -21,8 +21,7 @@
 
 #include "ObservableStat.hpp"
 
-#include "script_interface/interactions/bonded.hpp"
-
+#include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "core/energy.hpp"
@@ -86,7 +85,7 @@ static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
 
   auto const n_bonds = ::bonded_ia_params.get_next_key();
   for (std::size_t bond_id = 0; bond_id < n_bonds; ++bond_id) {
-    if (bonded_ia_params_zero_based_type(bond_id) != 0) {
+    if (::bonded_ia_params.get_zero_based_type(bond_id) != 0) {
       dict["bonded," + std::to_string(bond_id)] =
           get_obs_contrib(obs.bonded_contribution(bond_id));
     }

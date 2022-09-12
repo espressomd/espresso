@@ -355,18 +355,15 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(bond_ids), len(system.bonded_inter))
         # check bonded interactions
         partcl_1 = system.part.by_id(1)
-        state = partcl_1.bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
-        self.assertEqual(state, reference)
-        state = partcl_1.bonds[0][0].params
-        self.assertEqual(state, reference)
+        self.assertEqual(partcl_1.bonds[0][0].params, reference)
+        self.assertEqual(system.bonded_inter[0].params, reference)
         if 'THERM.LB' not in modes:
-            state = partcl_1.bonds[1][0].params
-            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
-                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
-            self.assertEqual(state, reference)
-            state = partcl_1.bonds[1][0].params
-            self.assertEqual(state, reference)
+            # all thermalized bonds should be identical
+            reference = {**thermalized_bond_params, 'seed': 3}
+            self.assertEqual(partcl_1.bonds[1][0].params, reference)
+            self.assertEqual(system.bonded_inter[1].params, reference)
+            self.assertEqual(thermalized_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})

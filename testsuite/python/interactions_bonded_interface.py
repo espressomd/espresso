@@ -44,47 +44,6 @@ class BondedInteractions(ut.TestCase):
         self.assertEqual(outBond, inType, msg="Bonded interaction mismatch")
         tests_common.assert_params_match(self, inParams, outParams, msg_long)
 
-    def parameterKeys(self, bondObject):
-        """
-        Check :meth:`~espressomd.interactions.BondedInteraction.valid_keys`
-        and :meth:`~espressomd.interactions.BondedInteraction.required_keys`
-        return sets, and that
-        :meth:`~espressomd.interactions.BondedInteraction.get_default_params`
-        returns a dictionary with the correct keys.
-
-        Parameters
-        ----------
-        bondObject: instance of a class derived from :class:`espressomd.interactions.BondedInteraction`
-            Object of the interaction to test, e.g.
-            :class:`~espressomd.interactions.FeneBond`
-        """
-        classname = bondObject.__class__.__name__
-        valid_keys = bondObject.valid_keys()
-        required_keys = bondObject.required_keys()
-        old_params = bondObject.params.copy()
-        default_keys = set(bondObject.get_default_params())
-        self.assertIsInstance(valid_keys, set,
-                              f"{classname}.valid_keys() must return a set")
-        self.assertIsInstance(required_keys, set,
-                              f"{classname}.required_keys() must return a set")
-        self.assertTrue(default_keys.issubset(valid_keys),
-                        f"{classname}.get_default_params() has unknown "
-                        f"parameters: {default_keys.difference(valid_keys)}")
-        self.assertTrue(default_keys.isdisjoint(required_keys),
-                        f"{classname}.get_default_params() has extra "
-                        f"parameters: {default_keys.intersection(required_keys)}")
-        self.assertSetEqual(default_keys, valid_keys - required_keys,
-                            f"{classname}.get_default_params() should have keys: "
-                            f"{valid_keys - required_keys}, got: {default_keys}")
-        with self.assertRaisesRegex(RuntimeError, "Bond parameters are immutable"):
-            bondObject.params = {}
-        for key in (bondObject.params.keys() | old_params.keys()):
-            if isinstance(old_params[key], str):
-                self.assertEqual(bondObject.params[key], old_params[key])
-            else:
-                np.testing.assert_allclose(
-                    bondObject.params[key], old_params[key], atol=1e-10)
-
     def generateTestForBondParams(_bondId, _bondClass, _params, _refs=None):
         """Generates test cases for checking bond parameters set and gotten
         back from the espresso core actually match those in the Python classes.
@@ -145,14 +104,22 @@ class BondedInteractions(ut.TestCase):
 
             # check that parameters written and read back are identical
             outBond = self.system.bonded_inter[bondId]
-            tnIn = bondClass(**params).type_number()
-            tnOut = outBond.type_number()
+            tnIn = bondClass._type_number
+            tnOut = outBond._type_number
             outParams = outBond.params
             self.bondsMatch(
                 tnIn, tnOut, outParamsRef, outParams,
-                "{}: value set and value gotten back differ for bond id {}: {} vs. {}"
-                .format(bondClass(**params).type_name(), bondId, outParamsRef, outParams))
-            self.parameterKeys(outBond)
+                f"{bondClass.__name__}: value set and value gotten back "
+                f"differ for bond id {bondId}: {outParamsRef} vs. {outParams}")
+            with self.assertRaisesRegex(RuntimeError, "Bond parameters are immutable"):
+                outBond.params = {}
+            old_params = outBond.params.copy()
+            for key in (outBond.params.keys() | old_params.keys()):
+                if isinstance(old_params[key], str):
+                    self.assertEqual(outBond.params[key], old_params[key])
+                else:
+                    np.testing.assert_allclose(
+                        outBond.params[key], old_params[key], atol=1e-10)
 
             # check no-op
             self.assertIsNone(outBond.call_method('unknown'))
@@ -175,6 +142,11 @@ class BondedInteractions(ut.TestCase):
         0, espressomd.interactions.IBM_Tribend,
         {"ind1": 0, "ind2": 1, "ind3": 2, "ind4": 3,
             "kb": 1.1, "refShape": "Initial"},
+        {"kb": 1.1, "theta0": 0.0})
+    test_ibm_tribend_flat = generateTestForBondParams(
+        0, espressomd.interactions.IBM_Tribend,
+        {"ind1": 0, "ind2": 1, "ind3": 2, "ind4": 3,
+            "kb": 1.1, "refShape": "Flat"},
         {"kb": 1.1, "theta0": 0.0})
     test_ibm_triel = generateTestForBondParams(
         0, espressomd.interactions.IBM_Triel,
@@ -231,8 +203,8 @@ class BondedInteractions(ut.TestCase):
 
     def test_exceptions(self):
         error_msg_not_yet_defined = 'The bond with id 0 is not yet defined'
-        bond_type = espressomd.interactions.get_bonded_interaction_type_from_es_core(
-            5000)
+        bond_type = self.system.bonded_inter.call_method(
+            'get_zero_based_type', bond_id=5000)
         self.assertEqual(bond_type, 0)
         has_bond = self.system.bonded_inter.call_method('has_bond', bond_id=0)
         self.assertFalse(has_bond)
@@ -252,6 +224,19 @@ class BondedInteractions(ut.TestCase):
             self.system.bonded_inter[0] = fene_bond
         with self.assertRaisesRegex(ValueError, 'Bonds can only be overwritten by bonds of equal type'):
             self.system.bonded_inter[0] = angle_bond
+        with self.assertRaisesRegex(RuntimeError, "No bond with id 8 exists in the ESPResSo core"):
+            espressomd.interactions.FeneBond(bond_id=8)
+        with self.assertRaisesRegex(RuntimeError, "The bond with id 0 is not defined as a FENE bond in the ESPResSo core"):
+            espressomd.interactions.FeneBond(bond_id=0)
+
+        # bonds can only be compared for equality
+        self.assertEqual(angle_bond, angle_bond)
+        self.assertNotEqual(harm_bond1, harm_bond2)
+        self.assertNotEqual(angle_bond, fene_bond)
+        with self.assertRaises(NotImplementedError):
+            angle_bond > fene_bond
+        with self.assertRaises(NotImplementedError):
+            angle_bond <= fene_bond
 
         # bonds are immutable
         with self.assertRaisesRegex(RuntimeError, "Parameter 'r_0' is read-only"):
@@ -260,16 +245,22 @@ class BondedInteractions(ut.TestCase):
         # sanity checks during bond construction
         with self.assertRaisesRegex(RuntimeError, "Parameter 'r_0' is missing"):
             espressomd.interactions.HarmonicBond(k=1.)
-        with self.assertRaisesRegex(ValueError, r"Only the following keys can be given as keyword arguments: "
-                                                r"\['k', 'r_0', 'r_cut'\], got \['k', 'r_0', 'rcut'\] "
-                                                r"\(unknown \['rcut'\]\)"):
+        with self.assertRaisesRegex(RuntimeError, f"Parameter 'rcut' is not recognized"):
             espressomd.interactions.HarmonicBond(k=1., r_0=1., rcut=2.)
-        with self.assertRaisesRegex(ValueError, "Unknown refShape: 'Unknown'"):
+        with self.assertRaisesRegex(ValueError, "Invalid value for parameter 'refShape': 'Unknown'"):
             espressomd.interactions.IBM_Tribend(
                 ind1=0, ind2=1, ind3=2, ind4=3, kb=1.1, refShape='Unknown')
-        with self.assertRaisesRegex(ValueError, "Unknown elasticLaw: 'Unknown'"):
+        with self.assertRaisesRegex(ValueError, "Invalid value for parameter 'elasticLaw': 'Unknown'"):
             espressomd.interactions.IBM_Triel(
                 ind1=0, ind2=1, ind3=2, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='Unknown')
+        with self.assertRaisesRegex(ValueError, "A parameter 'seed' has to be given on first activation of a thermalized bond"):
+            espressomd.interactions.ThermalizedBond(
+                temp_com=1., gamma_com=1., temp_distance=1., gamma_distance=1.,
+                r_cut=2.)
+        with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
+            espressomd.interactions.ThermalizedBond(
+                temp_com=1., gamma_com=1., temp_distance=1., gamma_distance=1.,
+                r_cut=2., seed=-1)
 
         # sanity checks when removing bonds
         self.system.bonded_inter.clear()
