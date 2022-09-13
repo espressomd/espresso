@@ -343,7 +343,7 @@ class LeesEdwards(ut.TestCase):
                 np.copy(system.velocity_difference(p1, p2)),
                 np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
 
-    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "SOFT_SPHERE"])
     def test_interactions(self):
         """
         We place two particles crossing a boundary and connect them with an

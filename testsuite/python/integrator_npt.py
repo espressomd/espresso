@@ -71,7 +71,7 @@ class IntegratorNPT(ut.TestCase):
         # get the equilibrium box length for the chosen NpT parameters
         system.integrator.run(500)
         # catch unstable simulation early (when the DP3M test case ran first)
-        assert system.box_l[0] < 20.
+        assert system.box_l[0] < 20., "NpT simulation is unstable"
         system.integrator.run(1500)
         box_l_ref = system.box_l[0]
 

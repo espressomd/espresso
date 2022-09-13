@@ -118,11 +118,10 @@ Utils::Vector3d angularmomentum(PartCfg &partCfg, int type);
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 
 /** Calculate total momentum of the system (particles & LB fluid).
- *  Inputs are bools to include particles and fluid in the linear momentum
- *  calculation
- *  @return Result for this processor
+ *  @param include_particles   Add particles momentum
+ *  @param include_lbfluid     Add LB fluid momentum
  */
-Utils::Vector3d calc_linear_momentum(int include_particles,
-                                     int include_lbfluid);
+Utils::Vector3d calc_linear_momentum(bool include_particles,
+                                     bool include_lbfluid);
 
 #endif

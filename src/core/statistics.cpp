@@ -91,8 +91,8 @@ static Utils::Vector3d mpi_particle_momentum_local() {
 REGISTER_CALLBACK_REDUCTION(mpi_particle_momentum_local,
                             std::plus<Utils::Vector3d>())
 
-Utils::Vector3d calc_linear_momentum(int include_particles,
-                                     int include_lbfluid) {
+Utils::Vector3d calc_linear_momentum(bool include_particles,
+                                     bool include_lbfluid) {
   Utils::Vector3d linear_momentum{};
   if (include_particles) {
     linear_momentum +=

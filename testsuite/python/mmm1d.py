@@ -111,7 +111,7 @@ class ElectrostaticInteractionsTests:
     def test_infinite_wire(self):
         """
         For an infinite wire, the energy per ion is :math:`MC\\frac{q}{a}`
-        with :math:`M = - \\ln{2}` the 1D Madelung constant, :math:`C`
+        with :math:`M = - 2\\ln{2}` the 1D Madelung constant, :math:`C`
         the electrostatics prefactor, :math:`q` the ion charge and
         :math:`a` the lattice constant. Likewise, the pressure for
         one ion can be derived as :math:`MC\\frac{q}{aV}` with
@@ -131,9 +131,8 @@ class ElectrostaticInteractionsTests:
         energy = self.system.analysis.energy()["coulomb"]
         p_scalar = self.system.analysis.pressure()["coulomb"]
         p_tensor = self.system.analysis.pressure_tensor()["coulomb"]
-        ref_energy = -np.log(2.)
-        np.testing.assert_allclose(energy / n_part, ref_energy,
-                                   atol=0., rtol=5e-7)
+        ref_energy = -np.log(2.) * n_part
+        np.testing.assert_allclose(energy, ref_energy, atol=0., rtol=5e-7)
         np.testing.assert_allclose(p_scalar, 0., atol=1e-12)
         np.testing.assert_allclose(p_tensor, 0., atol=1e-12)
 

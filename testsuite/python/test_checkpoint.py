@@ -44,6 +44,9 @@ is_gpu_available = espressomd.gpu_available()
 modes = config.get_modes()
 has_lb_mode = 'LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available
 has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
+has_lbb = ('LB.CPU' in modes and espressomd.has_features("LB_BOUNDARIES") or
+           'LB.GPU' in modes and espressomd.has_features("LB_BOUNDARIES_GPU")
+           and espressomd.gpu_available())
 
 
 class CheckpointTest(ut.TestCase):
@@ -654,9 +657,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(1).exclusions), [2])
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
-    @ut.skipIf(not has_lb_mode or not (espressomd.has_features("LB_BOUNDARIES")
-                                       or espressomd.has_features("LB_BOUNDARIES_GPU")),
-               "Missing features")
+    @ut.skipIf(not has_lbb, "Missing features")
     def test_lb_boundaries(self):
         # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
@@ -735,6 +736,7 @@ class CheckpointTest(ut.TestCase):
         if self.n_nodes == 1:
             union = c[7].shape
             self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(c[7].particle_type, 2)
             self.assertEqual(len(union), 2)
             wall1, wall2 = union.call_method('get_elements')
             self.assertIsInstance(wall1, espressomd.shapes.Wall)
