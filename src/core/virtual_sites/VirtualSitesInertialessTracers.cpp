@@ -105,4 +105,4 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
     }
   }
 }
-#endif
+#endif // VIRTUAL_SITES_INERTIALESS_TRACERS

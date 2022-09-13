@@ -89,13 +89,14 @@ struct CoulombP3M : public Coulomb::Actor<CoulombP3M> {
 
   int tune_timings;
   bool tune_verbose;
+  bool check_complex_residuals;
 
 private:
   bool m_is_tuned;
 
 public:
   CoulombP3M(P3MParameters &&parameters, double prefactor, int tune_timings,
-             bool tune_verbose);
+             bool tune_verbose, bool check_complex_residuals);
 
   bool is_tuned() const { return m_is_tuned; }
 

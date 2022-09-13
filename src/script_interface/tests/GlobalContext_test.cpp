@@ -28,6 +28,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -49,7 +50,7 @@ struct Dummy : si::ObjectHandle {
     static const boost::string_ref parameter_names[] = {"id", "object_param"};
 
     return Utils::make_const_span(parameter_names,
-                                  std::min(params.size(), 2lu));
+                                  std::min(params.size(), std::size_t{2u}));
   }
 };
 

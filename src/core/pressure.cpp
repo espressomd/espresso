@@ -29,18 +29,17 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config/config.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "interactions.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
+#include "short_range_loop.hpp"
 #include "virtual_sites.hpp"
 
-#include "short_range_loop.hpp"
-
-#include "electrostatics/coulomb.hpp"
-#include "magnetostatics/dipoles.hpp"
+#include "config/config.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>

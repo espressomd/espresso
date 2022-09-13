@@ -607,6 +607,7 @@ class CheckpointTest(ut.TestCase):
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                      'timings': 15, 'check_neutrality': True,
+                     'check_complex_residuals': False,
                      'charge_neutrality_tolerance': 1e-12}
         for key in reference:
             self.assertIn(key, state)
@@ -622,6 +623,7 @@ class CheckpointTest(ut.TestCase):
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                          'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                          'timings': 15, 'check_neutrality': True,
+                         'check_complex_residuals': False,
                          'charge_neutrality_tolerance': 7e-12}
         elc_reference = {'gap_size': 6.0, 'maxPWerror': 0.1,
                          'delta_mid_top': 0.9, 'delta_mid_bot': 0.1,
@@ -745,6 +747,7 @@ class CheckpointTest(ut.TestCase):
         if self.n_nodes == 1:
             union = c[7].shape
             self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(c[7].particle_type, 2)
             self.assertEqual(len(union), 2)
             wall1, wall2 = union.call_method('get_elements')
             self.assertIsInstance(wall1, espressomd.shapes.Wall)
