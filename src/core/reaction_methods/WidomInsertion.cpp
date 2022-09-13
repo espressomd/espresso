@@ -36,7 +36,7 @@ double WidomInsertion::calculate_particle_insertion_potential_energy(
     throw std::runtime_error("Trying to remove some non-existing particles "
                              "from the system via the inverse Widom scheme.");
 
-  auto const E_pot_old = calculate_current_potential_energy_of_system();
+  auto const E_pot_old = mpi_calculate_potential_energy();
 
   // make reaction attempt
   std::vector<int> p_ids_created_particles;
@@ -46,7 +46,7 @@ double WidomInsertion::calculate_particle_insertion_potential_energy(
            hidden_particles_properties) =
       make_reaction_attempt(current_reaction);
 
-  auto const E_pot_new = calculate_current_potential_energy_of_system();
+  auto const E_pot_new = mpi_calculate_potential_energy();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles

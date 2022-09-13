@@ -83,7 +83,7 @@ def autocorrelation(time_series):
 @script_interface_register
 class _ObservableStat(ScriptInterfaceHelper):
     _so_name = "ScriptInterface::Analysis::ObservableStat"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
     def _generate_summary(self, obj, dim, calc_sp):
         """
@@ -346,7 +346,7 @@ class Analysis(ScriptInterfaceHelper):
 
     """
     _so_name = "ScriptInterface::Analysis::Analysis"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "linear_momentum",
         "center_of_mass",

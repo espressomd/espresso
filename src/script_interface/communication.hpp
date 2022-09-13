@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,27 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_PRESSURE_HPP
-#define OBSERVABLES_PRESSURE_HPP
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
 
-#include "Observable.hpp"
-#include "pressure.hpp"
-#include <cstddef>
-#include <vector>
+#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 
-namespace Observables {
+#include <functional>
 
-class Pressure : public Observable {
-public:
-  std::vector<std::size_t> shape() const override { return {1}; }
-  std::vector<double> operator()() const override {
-    auto const ptensor = mpi_observable_compute_pressure_tensor();
-    std::vector<double> res{1};
-    res[0] = (ptensor[0] + ptensor[4] + ptensor[8]) / 3.;
-    return res;
-  }
-};
+namespace ScriptInterface {
 
-} // Namespace Observables
+/**
+ * @brief Reduce object by sum on the head node.
+ * Worker nodes get a default-constructed object.
+ */
+template <typename T>
+T mpi_reduce_sum(boost::mpi::communicator const &comm, T const &result) {
+  T out{};
+  boost::mpi::reduce(comm, result, out, std::plus<T>{}, 0);
+  return out;
+}
+
+} // namespace ScriptInterface
 
 #endif

@@ -172,9 +172,7 @@ const Utils::VectorXd<9> get_pressure_tensor() {
 Utils::Vector3d calc_fluid_momentum() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::Reduction(), std::plus<>(),
-        Walberla::get_momentum);
+    return Walberla::get_momentum();
 #endif
   }
   throw NoLBActive();
