@@ -24,7 +24,7 @@
 #include "Particle.hpp"
 #include "energy_inline.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
   // real particle

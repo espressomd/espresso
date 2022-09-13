@@ -464,7 +464,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_glue_to_surface_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "VIRTUAL_SITES_RELATIVE"])
     def test_glue_to_surface_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites

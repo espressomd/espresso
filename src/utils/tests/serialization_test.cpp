@@ -208,11 +208,23 @@ auto sorted_view(InputIt const &buffer_it) {
   return subset;
 }
 
+/**
+ * @brief Simplistic test for endianness.
+ * Replace with @c std::endian once ESPResSo becomes a C++20 project.
+ */
+bool is_big_endian() {
+#ifdef __BYTE_ORDER__
+  return __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__;
+#else
+  return false;
+#endif
+}
+
 BOOST_AUTO_TEST_CASE(serialization_level_test) {
   boost::mpi::communicator comm;
   auto const buffer = create_mpi_archive<std::array>(comm);
 
-  /* Serialization should produce the following bytestring:
+  /* Serialization should produce the following bytestring (little-endian):
    *   3 0 0 0 0 0 0 0
    *   4 0 0 0
    *   5 0 0 0
@@ -267,7 +279,10 @@ BOOST_AUTO_TEST_CASE(mpi_archive_test) {
   BOOST_TEST(buffer_vector == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_storage == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_quat == buffer_ref, boost::test_tools::per_element());
-  BOOST_TEST(buffer_cv[0] == Testing::N);
+  auto const index_lsb = (is_big_endian()) ? 1 : 0;
+  auto const index_hsb = (is_big_endian()) ? 0 : 1;
+  BOOST_TEST(buffer_cv[index_lsb] == Testing::N);
+  BOOST_TEST(buffer_cv[index_hsb] == 0);
   buffer_cv.erase(buffer_cv.begin());
   buffer_cv.erase(buffer_cv.begin());
   BOOST_TEST(buffer_cv == buffer_ref, boost::test_tools::per_element());

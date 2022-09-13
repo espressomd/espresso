@@ -30,20 +30,16 @@
 #include <string>
 #include <vector>
 
-using Utils::Mpi::gatherv;
-
-namespace mpi = boost::mpi;
-
 /*
  * Check that implementation behaves
- * like MPI_Gatherv with an mpi datatype.
- * To test this we gather the rank from
+ * like @c MPI_Gatherv with an mpi datatype.
+ * To test this, we gather the rank from
  * every rank to one rank and then check
  * that the value was written to the
  * correct position in the output array.
  */
 BOOST_AUTO_TEST_CASE(mpi_type) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
   auto const rank = world.rank();
   auto const size = world.size();
   auto const root = world.size() - 1;
@@ -54,10 +50,10 @@ BOOST_AUTO_TEST_CASE(mpi_type) {
       std::vector<int> out(size, -1);
       std::vector<int> sizes(size, 1);
 
-      gatherv(world, &rank, 1, out.data(), sizes.data(), root);
+      Utils::Mpi::gatherv(world, &rank, 1, out.data(), sizes.data(), root);
 
       for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(i, out.at(i));
+        BOOST_CHECK_EQUAL(out.at(i), i);
       }
     } else {
       Utils::Mpi::gatherv(world, &rank, 1, root);
@@ -71,10 +67,10 @@ BOOST_AUTO_TEST_CASE(mpi_type) {
       out[rank] = rank;
       std::vector<int> sizes(size, 1);
 
-      gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
+      Utils::Mpi::gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
 
       for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(i, out.at(i));
+        BOOST_CHECK_EQUAL(out.at(i), i);
       }
     } else {
       Utils::Mpi::gatherv(world, &rank, 1, root);
@@ -84,14 +80,14 @@ BOOST_AUTO_TEST_CASE(mpi_type) {
 
 /*
  * Check that implementation behaves
- * like MPI_Gatherv with an non-mpi datatype.
- * To test this we gather a string containing the rank from
+ * like @c MPI_Gatherv with a non-mpi datatype.
+ * To test this, we gather a string containing the rank from
  * every rank to one rank and then check
  * that the value was written to the
  * correct position in the output array.
  */
 BOOST_AUTO_TEST_CASE(non_mpi_type) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
   auto const rank = world.rank();
   auto const size = world.size();
   auto const root = world.size() - 1;
@@ -103,10 +99,10 @@ BOOST_AUTO_TEST_CASE(non_mpi_type) {
       std::vector<std::string> out(size);
       std::vector<int> sizes(size, 1);
 
-      gatherv(world, &in, 1, out.data(), sizes.data(), root);
+      Utils::Mpi::gatherv(world, &in, 1, out.data(), sizes.data(), root);
 
       for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
+        BOOST_CHECK_EQUAL(out.at(i), std::to_string(i));
       }
     } else {
       Utils::Mpi::gatherv(world, &in, 1, root);
@@ -120,10 +116,10 @@ BOOST_AUTO_TEST_CASE(non_mpi_type) {
       out[rank] = in;
       std::vector<int> sizes(size, 1);
 
-      gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
+      Utils::Mpi::gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
 
       for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
+        BOOST_CHECK_EQUAL(out.at(i), std::to_string(i));
       }
     } else {
       Utils::Mpi::gatherv(world, &in, 1, root);
@@ -132,7 +128,7 @@ BOOST_AUTO_TEST_CASE(non_mpi_type) {
 }
 
 int main(int argc, char **argv) {
-  mpi::environment mpi_env(argc, argv);
+  boost::mpi::environment mpi_env(argc, argv);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

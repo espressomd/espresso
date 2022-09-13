@@ -76,8 +76,10 @@ if 'INT.NPT' not in modes:
 lbf_actor = None
 if 'LB.CPU' in modes:
     lbf_actor = espressomd.lb.LBFluid
+    has_lbb = espressomd.has_features("LB_BOUNDARIES")
 elif 'LB.GPU' in modes and espressomd.gpu_available():
     lbf_actor = espressomd.lb.LBFluidGPU
+    has_lbb = espressomd.has_features("LB_BOUNDARIES_GPU")
 if lbf_actor:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_actor(agrid=0.5, visc=1.3, dens=1.5, tau=0.01, gamma_odd=0.2,
@@ -85,8 +87,7 @@ if lbf_actor:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if (espressomd.has_features(
-            "LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")):
+    if has_lbb:
         system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
             shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
         system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
@@ -125,6 +126,7 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         cao=1,
         alpha=1.0,
         r_cut=1.0,
+        check_complex_residuals=False,
         timings=15,
         tune=False)
     if 'ELC' in modes:
