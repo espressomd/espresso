@@ -57,7 +57,8 @@ T mpi_reduce_optional(boost::mpi::communicator const &comm,
     T value;
     comm.recv(boost::mpi::any_source, 42, value);
     return value;
-  } else if (result) {
+  }
+  if (result) {
     comm.send(0, 42, *result);
   }
   return {};
