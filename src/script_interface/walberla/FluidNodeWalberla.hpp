@@ -27,13 +27,12 @@
 
 #include "FluidWalberla.hpp"
 #include "LatticeIndices.hpp"
-#include "optional_reduction.hpp"
 
-#include "core/communication.hpp"
 #include "core/errorhandling.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/communication.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -116,13 +115,10 @@ public:
         m_lb_fluid->ghost_communication();
       }
     } else if (name == "get_velocity_at_boundary") {
-      auto result = m_lb_fluid->get_node_is_boundary(m_index);
-      bool is_boundary = (result) ? *result : false;
-      is_boundary =
-          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
-      if (is_boundary) {
-        auto result = m_lb_fluid->get_node_velocity_at_boundary(m_index);
-        return optional_reduction_with_conversion(result, m_conv_velocity);
+      if (is_boundary_all_reduce(m_lb_fluid->get_node_is_boundary(m_index))) {
+        auto const result = m_lb_fluid->get_node_velocity_at_boundary(m_index);
+        return mpi_reduce_optional(context()->get_comm(), result) /
+               m_conv_velocity;
       }
       return Variant{None{}};
     } else if (name == "set_velocity") {
@@ -131,33 +127,31 @@ public:
       m_lb_fluid->set_node_velocity(m_index, u);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_velocity") {
-      auto result = m_lb_fluid->get_node_velocity(m_index);
-      return optional_reduction_with_conversion(result, m_conv_velocity);
+      auto const result = m_lb_fluid->get_node_velocity(m_index);
+      return mpi_reduce_optional(context()->get_comm(), result) /
+             m_conv_velocity;
     } else if (name == "set_density") {
       auto const dens = get_value<double>(params, "value");
       m_lb_fluid->set_node_density(m_index, dens * m_conv_dens);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_density") {
       auto const result = m_lb_fluid->get_node_density(m_index);
-      return optional_reduction_with_conversion(result, m_conv_dens);
+      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
     } else if (name == "set_population") {
       auto const pop = get_value<std::vector<double>>(params, "value");
       m_lb_fluid->set_node_pop(m_index, pop);
       m_lb_fluid->ghost_communication();
     } else if (name == "get_population") {
       auto const result = m_lb_fluid->get_node_pop(m_index);
-      return optional_reduction_with_conversion(result);
+      return mpi_reduce_optional(context()->get_comm(), result);
     } else if (name == "get_is_boundary") {
       auto const result = m_lb_fluid->get_node_is_boundary(m_index);
-      return optional_reduction_with_conversion(result);
+      return mpi_reduce_optional(context()->get_comm(), result);
     } else if (name == "get_boundary_force") {
-      auto result = m_lb_fluid->get_node_is_boundary(m_index);
-      bool is_boundary = (result) ? *result : false;
-      is_boundary =
-          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
-      if (is_boundary) {
+      if (is_boundary_all_reduce(m_lb_fluid->get_node_is_boundary(m_index))) {
         auto result = m_lb_fluid->get_node_boundary_force(m_index);
-        return optional_reduction_with_conversion(result, m_conv_force);
+        return mpi_reduce_optional(context()->get_comm(), result) /
+               m_conv_force;
       }
       return Variant{None{}};
     } else if (name == "get_pressure_tensor") {
@@ -166,9 +160,8 @@ public:
       if (result) {
         value = (*result / m_conv_press).as_vector();
       }
-      auto const variant = optional_reduction_with_conversion(value);
+      auto const vec = mpi_reduce_optional(context()->get_comm(), value);
       if (context()->is_head_node()) {
-        auto const vec = get_value<std::vector<double>>(variant);
         auto tensor = Utils::Matrix<double, 3, 3>{};
         std::copy(vec.begin(), vec.end(), tensor.m_data.begin());
         return std::vector<Variant>{tensor.row<0>().as_vector(),
@@ -182,12 +175,19 @@ public:
       m_lb_fluid->ghost_communication();
     } else if (name == "get_last_applied_force") {
       auto const result = m_lb_fluid->get_node_last_applied_force(m_index);
-      return optional_reduction_with_conversion(result, m_conv_force);
+      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_force;
     } else if (name == "get_lattice_speed") {
       return 1. / m_conv_velocity;
     }
 
     return {};
+  }
+
+private:
+  bool is_boundary_all_reduce(boost::optional<bool> const &is_boundary) const {
+    return boost::mpi::all_reduce(context()->get_comm(),
+                                  is_boundary ? *is_boundary : false,
+                                  std::logical_or<>());
   }
 };
 } // namespace ScriptInterface::walberla

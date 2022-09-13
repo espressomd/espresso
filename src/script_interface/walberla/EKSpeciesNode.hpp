@@ -26,13 +26,12 @@
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
 #include "LatticeIndices.hpp"
-#include "optional_reduction.hpp"
 
-#include "core/communication.hpp"
 #include "core/errorhandling.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/communication.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -99,18 +98,15 @@ public:
       m_ek_species->ghost_communication();
     } else if (name == "get_density") {
       auto const result = m_ek_species->get_node_density(m_index);
-      return optional_reduction_with_conversion(result, m_conv_dens);
+      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
     } else if (name == "get_is_boundary") {
       auto const result = m_ek_species->get_node_is_boundary(m_index);
-      return optional_reduction_with_conversion(result);
+      return mpi_reduce_optional(context()->get_comm(), result);
     } else if (name == "get_node_density_at_boundary") {
-      auto result = m_ek_species->get_node_is_density_boundary(m_index);
-      bool is_boundary = (result) ? *result : false;
-      is_boundary =
-          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
-      if (is_boundary) {
-        auto result = m_ek_species->get_node_density_at_boundary(m_index);
-        return optional_reduction_with_conversion(result, m_conv_dens);
+      if (is_boundary_all_reduce(
+              m_ek_species->get_node_is_density_boundary(m_index))) {
+        auto const result = m_ek_species->get_node_density_at_boundary(m_index);
+        return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
       }
       return Variant{None{}};
     } else if (name == "set_node_density_at_boundary") {
@@ -121,13 +117,10 @@ public:
         m_ek_species->set_node_density_boundary(m_index, dens);
       }
     } else if (name == "get_node_flux_at_boundary") {
-      auto result = m_ek_species->get_node_is_flux_boundary(m_index);
-      bool is_boundary = (result) ? *result : false;
-      is_boundary =
-          boost::mpi::all_reduce(comm_cart, is_boundary, std::logical_or<>());
-      if (is_boundary) {
-        auto result = m_ek_species->get_node_flux_at_boundary(m_index);
-        return optional_reduction_with_conversion(result, m_conv_flux);
+      if (is_boundary_all_reduce(
+              m_ek_species->get_node_is_flux_boundary(m_index))) {
+        auto const result = m_ek_species->get_node_flux_at_boundary(m_index);
+        return mpi_reduce_optional(context()->get_comm(), result) / m_conv_flux;
       }
       return Variant{None{}};
     } else if (name == "set_node_flux_at_boundary") {
@@ -143,6 +136,13 @@ public:
     }
 
     return {};
+  }
+
+private:
+  bool is_boundary_all_reduce(boost::optional<bool> const &is_boundary) const {
+    return boost::mpi::all_reduce(context()->get_comm(),
+                                  is_boundary ? *is_boundary : false,
+                                  std::logical_or<>());
   }
 };
 } // namespace ScriptInterface::walberla

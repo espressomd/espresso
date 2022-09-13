@@ -27,7 +27,6 @@
 #include "EKReactant.hpp"
 #include "LatticeIndices.hpp"
 #include "LatticeWalberla.hpp"
-#include "optional_reduction.hpp"
 
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
 #include "walberla_bridge/src/electrokinetics/reactions/EKReactionImplBulk.hpp"
@@ -35,6 +34,7 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
+#include "script_interface/communication.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -125,7 +125,7 @@ public:
           get_value<Utils::Vector3i>(parameters, "node"),
           get_instance()->get_lattice()->get_grid_dimensions());
       auto const result = m_ekreaction_impl->get_node_is_boundary(index);
-      return optional_reduction_with_conversion(result);
+      return mpi_reduce_optional(context()->get_comm(), result);
     }
     return {};
   }
