@@ -25,7 +25,6 @@
 #include "core/cell_system/HybridDecomposition.hpp"
 #include "core/cell_system/RegularDecomposition.hpp"
 #include "core/cells.hpp"
-#include "core/communication.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
 #include "core/integrate.hpp"
@@ -159,7 +158,7 @@ Variant CellSystem::do_call_method(std::string const &name,
               {"n_square", hd.count_particles_in_n_square()}}};
     }
     state["verlet_reuse"] = get_verlet_reuse();
-    state["n_nodes"] = ::n_nodes;
+    state["n_nodes"] = context()->get_comm().size();
     return state;
   }
   if (name == "get_pairs") {
@@ -187,7 +186,7 @@ Variant CellSystem::do_call_method(std::string const &name,
   }
   if (name == "get_neighbors") {
     std::vector<std::vector<int>> neighbors_global;
-    context()->parallel_try_catch([&neighbors_global, &params]() {
+    context()->parallel_try_catch([this, &neighbors_global, &params]() {
       auto const dist = get_value<double>(params, "distance");
       auto const pid = get_value<int>(params, "pid");
       auto const ret = mpi_get_short_range_neighbors_local(pid, dist, true);
@@ -195,7 +194,8 @@ Variant CellSystem::do_call_method(std::string const &name,
       if (ret) {
         neighbors_local = *ret;
       }
-      boost::mpi::gather(::comm_cart, neighbors_local, neighbors_global, 0);
+      boost::mpi::gather(context()->get_comm(), neighbors_local,
+                         neighbors_global, 0);
     });
     std::vector<int> neighbors;
     for (auto const &neighbors_local : neighbors_global) {
@@ -235,7 +235,7 @@ std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
   }
   auto const size = static_cast<int>(::cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;
-  boost::mpi::gather(::comm_cart, size, n_part_per_node, 0);
+  boost::mpi::gather(context()->get_comm(), size, n_part_per_node, 0);
   return n_part_per_node;
 }
 

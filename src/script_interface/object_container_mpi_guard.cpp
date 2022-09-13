@@ -19,8 +19,7 @@
 
 #include "script_interface/object_container_mpi_guard.hpp"
 
-#include "core/communication.hpp"
-
+#include <boost/mpi/communicator.hpp>
 #include <boost/utility/string_ref.hpp>
 
 #include <cstddef>
@@ -28,8 +27,8 @@
 #include <stdexcept>
 
 void object_container_mpi_guard(boost::string_ref const &name,
-                                std::size_t n_elements) {
-  if (comm_cart.size() > 1 and n_elements) {
+                                std::size_t n_elements, int world_size) {
+  if (world_size > 1 and n_elements) {
     std::stringstream error_msg;
     error_msg << "Non-empty object containers do not support checkpointing in "
               << "MPI environments. Container " << name << " contains "

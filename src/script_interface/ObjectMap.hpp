@@ -164,7 +164,8 @@ protected:
 
 private:
   std::string get_internal_state() const override {
-    object_container_mpi_guard(BaseType::name(), m_elements.size());
+    object_container_mpi_guard(BaseType::name(), m_elements.size(),
+                               BaseType::context()->get_comm().size());
 
     using packed_type = std::pair<KeyType, std::string>;
     std::vector<packed_type> object_states(m_elements.size());
