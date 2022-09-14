@@ -35,6 +35,12 @@
 #include <memory>
 #include <string>
 
+namespace boost {
+namespace mpi {
+class communicator;
+} // namespace mpi
+} // namespace boost
+
 namespace ScriptInterface {
 /**
  * @brief Context of an object handle.
@@ -99,6 +105,7 @@ public:
 
   virtual bool is_head_node() const = 0;
   virtual void parallel_try_catch(std::function<void()> const &cb) const = 0;
+  virtual boost::mpi::communicator const &get_comm() const = 0;
 
   virtual ~Context() = default;
 };
