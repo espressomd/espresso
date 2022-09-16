@@ -52,7 +52,7 @@
 #include <memory>
 #include <utility>
 
-static std::shared_ptr<Observable_stat> calculate_pressure_local() {
+std::shared_ptr<Observable_stat> calculate_pressure() {
 
   auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
 
@@ -125,17 +125,14 @@ static std::shared_ptr<Observable_stat> calculate_pressure_local() {
   return obs_pressure_ptr;
 }
 
-REGISTER_CALLBACK_MAIN_RANK(calculate_pressure_local)
+REGISTER_CALLBACK_MAIN_RANK(calculate_pressure)
 
-std::shared_ptr<Observable_stat> calculate_pressure() {
-  return mpi_call(Communication::Result::main_rank, calculate_pressure_local);
-}
-
-Utils::Vector9d observable_compute_pressure_tensor() {
-  auto const obs_pressure = calculate_pressure();
+Utils::Vector9d mpi_observable_compute_pressure_tensor() {
+  auto const obs =
+      mpi_call(Communication::Result::main_rank, calculate_pressure);
   Utils::Vector9d pressure_tensor{};
   for (std::size_t j = 0; j < 9; j++) {
-    pressure_tensor[j] = obs_pressure->accumulate(0, j);
+    pressure_tensor[j] = obs->accumulate(0, j);
   }
   return pressure_tensor;
 }

@@ -1316,15 +1316,15 @@ Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index,
 }
 
 /** Calculate momentum of the LB fluid.
- *  @param[out] result         Fluid momentum in MD units
  *  @param[in]  lb_parameters  LB parameters
  *  @param[in]  lb_fields      Hydrodynamic fields of the fluid
  *  @param[in]  lb_lattice     The underlying lattice
  */
-void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
-                            const std::vector<LB_FluidNode> &lb_fields,
-                            const Lattice &lb_lattice) {
-  Utils::Vector3d momentum_density{}, momentum{};
+Utils::Vector3d
+mpi_lb_calc_fluid_momentum_local(LB_Parameters const &lb_parameters,
+                                 std::vector<LB_FluidNode> const &lb_fields,
+                                 Lattice const &lb_lattice) {
+  Utils::Vector3d momentum_density{}, momentum{}, result{};
 
   for (int x = 1; x <= lb_lattice.grid[0]; x++) {
     for (int y = 1; y <= lb_lattice.grid[1]; y++) {
@@ -1338,7 +1338,8 @@ void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
   }
 
   momentum *= lb_parameters.agrid / lb_parameters.tau;
-  boost::mpi::reduce(comm_cart, momentum.data(), 3, result, std::plus<>(), 0);
+  boost::mpi::reduce(::comm_cart, momentum, result, std::plus<>(), 0);
+  return result;
 }
 
 void lb_collect_boundary_forces(double *result) {
