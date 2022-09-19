@@ -17,13 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import abc
 import enum
 from . import utils
 from . import code_features
 from .script_interface import ScriptObjectMap, ScriptInterfaceHelper, script_interface_register
 
 
-class NonBondedInteraction(ScriptInterfaceHelper):
+class NonBondedInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
     """
     Represents an instance of a non-bonded interaction, such as Lennard-Jones.
 
@@ -65,12 +66,9 @@ class NonBondedInteraction(ScriptInterfaceHelper):
     def _restore_object(cls, derived_class, kwargs):
         return derived_class(**kwargs)
 
+    @abc.abstractmethod
     def default_params(self):
-        """Virtual method.
-
-        """
-        raise Exception(
-            "Subclasses of NonBondedInteraction must define the default_params() method.")
+        pass
 
 
 @script_interface_register
@@ -794,7 +792,7 @@ class BONDED_IA(enum.IntEnum):
     VIRTUAL_BOND = enum.auto()
 
 
-class BondedInteraction(ScriptInterfaceHelper):
+class BondedInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
 
     """
     Base class for bonded interactions.
@@ -874,12 +872,12 @@ class BondedInteraction(ScriptInterfaceHelper):
     def __str__(self):
         return f'{self.__class__.__name__}({self._ctor_params})'
 
+    @abc.abstractmethod
     def get_default_params(self):
         """Gets default values of optional parameters.
 
         """
-        raise Exception(
-            "Subclasses of BondedInteraction must define the get_default_params() method.")
+        pass
 
     def __repr__(self):
         return f'<{self}>'
@@ -991,6 +989,9 @@ class BondedCoulombSRBond(BondedInteraction):
     _type_number = BONDED_IA.BONDED_COULOMB_SR
 
     def get_default_params(self):
+        """Gets default values of optional parameters.
+
+        """
         return {}
 
 
@@ -1040,6 +1041,9 @@ class ThermalizedBond(BondedInteraction):
         return params
 
     def get_default_params(self):
+        """Gets default values of optional parameters.
+
+        """
         return {"r_cut": 0., "seed": None}
 
 

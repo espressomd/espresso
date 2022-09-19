@@ -73,7 +73,7 @@ void mpi_realloc_ia_params_local(int new_size) {
   }
 
   ::max_seen_particle_type = new_size;
-  std::swap(::nonbonded_ia_params, new_params);
+  ::nonbonded_ia_params = std::move(new_params);
 }
 
 REGISTER_CALLBACK(mpi_realloc_ia_params_local)
