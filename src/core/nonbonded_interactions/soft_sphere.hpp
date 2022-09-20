@@ -27,7 +27,7 @@
  *  Implementation in \ref soft_sphere.cpp
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef SOFT_SPHERE
 

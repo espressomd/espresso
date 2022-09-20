@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_NPT_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_NPT_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef NPT
 

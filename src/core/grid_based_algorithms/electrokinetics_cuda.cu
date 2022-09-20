@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA            /* Terminates at end of file */
 #ifdef ELECTROKINETICS /* Terminates at end of file */

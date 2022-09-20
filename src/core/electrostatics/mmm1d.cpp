@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -123,10 +123,19 @@ CoulombMMM1D::CoulombMMM1D(double prefactor, double maxPWerror,
     : maxPWerror{maxPWerror}, far_switch_radius{switch_rad},
       tune_timings{tune_timings}, tune_verbose{tune_verbose}, m_is_tuned{false},
       far_switch_radius_sq{-1.}, uz2{0.}, prefuz2{0.}, prefL3_i{0.} {
+  set_prefactor(prefactor);
+  if (maxPWerror <= 0.) {
+    throw std::domain_error("Parameter 'maxPWerror' must be > 0");
+  }
+  if (far_switch_radius <= 0. and far_switch_radius != -1.) {
+    throw std::domain_error("Parameter 'far_switch_radius' must be > 0");
+  }
   if (far_switch_radius > 0.) {
     far_switch_radius_sq = Utils::sqr(far_switch_radius);
   }
-  set_prefactor(prefactor);
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
+  }
 }
 
 void CoulombMMM1D::sanity_checks_periodicity() const {

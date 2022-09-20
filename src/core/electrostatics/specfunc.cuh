@@ -48,7 +48,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_CUH
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_CUH
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/constants.hpp>
 

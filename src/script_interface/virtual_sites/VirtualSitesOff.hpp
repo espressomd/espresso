@@ -22,7 +22,7 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES
 

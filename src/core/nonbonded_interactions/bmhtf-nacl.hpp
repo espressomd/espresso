@@ -27,7 +27,7 @@
  *  Implementation in \ref bmhtf-nacl.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef BMHTF_NACL
 

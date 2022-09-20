@@ -37,7 +37,7 @@
 #define MPICH_SKIP_MPICXX
 #endif
 
-#include "config-features.hpp"
+#include "config/config-features.hpp"
 
 /** P3M: Default for offset of first mesh point from the origin (left
  *  down corner of the simulation box).

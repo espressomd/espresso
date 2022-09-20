@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_COULOMB_P3M_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_COULOMB_P3M_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef P3M
 
@@ -69,6 +69,8 @@ public:
         {"timings", AutoParameter::read_only,
          [this]() { return actor()->tune_timings; }},
         {"tune", AutoParameter::read_only, [this]() { return m_tune; }},
+        {"check_complex_residuals", AutoParameter::read_only,
+         [this]() { return actor()->check_complex_residuals; }},
     });
   }
 
@@ -85,8 +87,8 @@ public:
                                get_value<double>(params, "accuracy")};
       m_actor = std::make_shared<CoreActorClass>(
           std::move(p3m), get_value<double>(params, "prefactor"),
-          get_value<int>(params, "timings"),
-          get_value<bool>(params, "verbose"));
+          get_value<int>(params, "timings"), get_value<bool>(params, "verbose"),
+          get_value<bool>(params, "check_complex_residuals"));
     });
     set_charge_neutrality_tolerance(params);
   }

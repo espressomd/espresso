@@ -22,7 +22,7 @@
  *  Implementation of \ref thermostat.hpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/thermalized_bond_utils.hpp"

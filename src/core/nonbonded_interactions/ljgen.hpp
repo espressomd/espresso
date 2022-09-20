@@ -36,7 +36,7 @@
  *  Implementation in \ref ljgen.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LENNARD_JONES_GENERIC
 

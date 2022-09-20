@@ -30,7 +30,7 @@ import espressomd.shapes
 import tests_common
 
 
-@utx.skipIfMissingFeatures(["LENNARD_JONES_GENERIC"])
+@utx.skipIfMissingFeatures(["LENNARD_JONES", "LENNARD_JONES_GENERIC"])
 class ShapeBasedConstraintTest(ut.TestCase):
 
     box_l = 30.

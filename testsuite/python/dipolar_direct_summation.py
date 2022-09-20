@@ -121,6 +121,7 @@ class dds(ut.TestCase):
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
                "Skipping test: only runs for n_nodes == 1")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_gen_reference_data(self):
         filepaths = ('dipolar_direct_summation_energy.npy',
                      'dipolar_direct_summation_arrays.npy')

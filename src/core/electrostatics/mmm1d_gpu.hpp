@@ -29,7 +29,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM1D_GPU_HPP
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM1D_GPU_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef MMM1D_GPU
 

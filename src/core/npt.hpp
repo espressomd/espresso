@@ -25,7 +25,7 @@
 #ifndef NPT_H
 #define NPT_H
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef NPT
 #include "BoxGeometry.hpp"

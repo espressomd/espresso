@@ -105,6 +105,10 @@ static void mpi_remove_translational_motion() {
   mpi_call_all(mpi_remove_translational_motion_local);
 }
 
+static auto mpi_calculate_energy() {
+  return mpi_call(Communication::Result::main_rank, calculate_energy);
+}
+
 #ifdef P3M
 static void mpi_set_tuned_p3m_local(double prefactor) {
   auto p3m = P3MParameters{false,
@@ -116,7 +120,7 @@ static void mpi_set_tuned_p3m_local(double prefactor) {
                            0.654,
                            1e-3};
   auto solver =
-      std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false);
+      std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
   ::Coulomb::add_actor(solver);
 }
 
@@ -213,9 +217,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
       auto const &p = get_particle_data(pid2);
       auto const kinetic_energy = 0.5 * p.mass() * p.v().norm2();
-      auto const obs_energy = calculate_energy();
+      auto const obs_energy = mpi_calculate_energy();
       BOOST_CHECK_CLOSE(obs_energy->kinetic[0], kinetic_energy, tol);
-      BOOST_CHECK_CLOSE(observable_compute_energy(), kinetic_energy, tol);
+      BOOST_CHECK_CLOSE(mpi_observable_compute_energy(), kinetic_energy, tol);
     }
   }
 
@@ -247,7 +251,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
     // measure energies
-    auto const obs_energy = calculate_energy();
+    auto const obs_energy = mpi_calculate_energy();
     for (int i = 0; i < n_pairs; ++i) {
       auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
       auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;
@@ -274,7 +278,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     add_particle_bond(pid2, std::vector<int>{fene_bond_id, pid3});
 
     // measure energies
-    auto const obs_energy = calculate_energy();
+    auto const obs_energy = mpi_calculate_energy();
     auto const none_energy = 0.0;
     auto const harm_energy = 0.5 * harm_bond.k * Utils::sqr(harm_bond.r - dist);
     auto const fene_energy =
@@ -306,7 +310,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       place_particle(pid2, pos2);
       auto const r = (pos2 - pos1).norm();
       // check P3M energy
-      auto const obs_energy = calculate_energy();
+      auto const obs_energy = mpi_calculate_energy();
       // at very short distances, the real-space contribution to
       // the energy is much larger than the k-space contribution
       auto const energy_ref = -prefactor / r;

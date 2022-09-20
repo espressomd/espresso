@@ -19,7 +19,7 @@
 #ifndef SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 #define SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "LBBoundary.hpp"
 

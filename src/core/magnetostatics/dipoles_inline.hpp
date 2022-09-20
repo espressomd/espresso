@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
 #define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 
@@ -51,7 +51,7 @@ struct ShortRangeForceKernel
     return {};
   }
 
-#ifdef P3M
+#ifdef DP3M
   result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
     auto const &actor = *ptr;
     return kernel_type{[&actor](Particle const &p1, Particle const &p2,
@@ -60,7 +60,7 @@ struct ShortRangeForceKernel
       return actor.pair_force(p1, p2, d, dist2, dist);
     }};
   }
-#endif // P3M
+#endif // DP3M
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
@@ -82,7 +82,7 @@ struct ShortRangeEnergyKernel
     return {};
   }
 
-#ifdef P3M
+#ifdef DP3M
   result_type operator()(std::shared_ptr<DipolarP3M> const &ptr) const {
     auto const &actor = *ptr;
     return kernel_type{[&actor](Particle const &p1, Particle const &p2,
@@ -91,7 +91,7 @@ struct ShortRangeEnergyKernel
       return actor.pair_energy(p1, p2, d, dist2, dist);
     }};
   }
-#endif // P3M
+#endif // DP3M
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {

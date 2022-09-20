@@ -19,6 +19,7 @@
 #ifndef ESPRESSO_OBJECT_CONTAINER_MPI_GUARD_HPP
 #define ESPRESSO_OBJECT_CONTAINER_MPI_GUARD_HPP
 
+#include <boost/mpi/communicator.hpp>
 #include <boost/utility/string_ref.hpp>
 
 #include <cstddef>
@@ -39,8 +40,9 @@
  *
  * @param name        Name of the object container
  * @param n_elements  Number of elements in the container
+ * @param world_size  MPI world size
  */
 void object_container_mpi_guard(boost::string_ref const &name,
-                                std::size_t n_elements);
+                                std::size_t n_elements, int world_size);
 
 #endif

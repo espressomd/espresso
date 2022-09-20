@@ -24,13 +24,14 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
 #include "event.hpp"
 #include "exclusions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "particle_node.hpp"
 #include "rotation.hpp"
+
+#include "config/config.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>

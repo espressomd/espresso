@@ -27,7 +27,7 @@
  *  Implementation in \ref morse.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef MORSE
 

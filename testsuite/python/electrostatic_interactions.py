@@ -246,7 +246,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             r_cut=1.0)
         for key in params:
             invalid_params = {**params, key: -1.0}
-            with self.assertRaisesRegex(ValueError, f"'{key}' must be >=? 0"):
+            with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be >=? 0"):
                 espressomd.electrostatics.ReactionField(**invalid_params)
 
 

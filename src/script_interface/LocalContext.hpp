@@ -43,12 +43,14 @@ namespace ScriptInterface {
 class LocalContext : public Context {
   Utils::Factory<ObjectHandle> m_factory;
   bool m_is_head_node;
+  boost::mpi::communicator const &m_comm;
   ParallelExceptionHandler m_parallel_exception_handler;
 
 public:
   LocalContext(Utils::Factory<ObjectHandle> factory,
                boost::mpi::communicator const &comm)
       : m_factory(std::move(factory)), m_is_head_node(comm.rank() == 0),
+        m_comm(comm),
         // NOLINTNEXTLINE(bugprone-throw-keyword-missing)
         m_parallel_exception_handler(comm) {}
 
@@ -85,6 +87,7 @@ public:
   void parallel_try_catch(std::function<void()> const &cb) const override {
     m_parallel_exception_handler.parallel_try_catch<std::exception>(cb);
   }
+  boost::mpi::communicator const &get_comm() const override { return m_comm; }
 };
 } // namespace ScriptInterface
 

@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ICC_STAR_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ICC_STAR_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -41,7 +41,7 @@
 namespace ScriptInterface {
 namespace Coulomb {
 
-class ICCStar : public AutoParameters<::ICCStar> {
+class ICCStar : public AutoParameters<ICCStar> {
   using CoreActorClass = ::ICCStar;
   std::shared_ptr<CoreActorClass> m_actor;
 

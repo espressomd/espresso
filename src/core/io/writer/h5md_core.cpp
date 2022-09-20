@@ -25,7 +25,8 @@
 #include "Particle.hpp"
 #include "h5md_specification.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
-#include "version.hpp"
+
+#include "config/version.hpp"
 
 #include <utils/Vector.hpp>
 

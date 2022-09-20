@@ -62,14 +62,12 @@ Tabulated interaction
 
     Feature ``TABULATED`` required.
 
-
 The interface for tabulated interactions are implemented in the
 :class:`~espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
   system.non_bonded_inter[type1, type2].tabulated.set_params(
       min='min', max='max', energy='energy', force='force')
-
 
 This defines an interaction between particles of the types ``type1`` and
 ``type2`` according to an arbitrary tabulated pair potential by linear interpolation.
@@ -664,19 +662,6 @@ and involved types.
 
 The samples folder contains the script :file:`/samples/drude_bmimpf6.py` with a
 fully polarizable, coarse grained ionic liquid where this approach is applied.
-To use the script, compile espresso with the following features:
-
-.. code-block:: c++
-
-    #define EXTERNAL_FORCES
-    #define MASS
-    #define THERMOSTAT_PER_PARTICLE
-    #define ROTATION
-    #define ROTATIONAL_INERTIA
-    #define ELECTROSTATICS
-    #define VIRTUAL_SITES_RELATIVE
-    #define LENNARD_JONES
-    #define THOLE
 
 .. _Anisotropic non-bonded interactions:
 

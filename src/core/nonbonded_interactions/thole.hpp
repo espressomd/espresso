@@ -25,7 +25,7 @@
  *  See @cite thole81a.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef THOLE
 #include "Particle.hpp"

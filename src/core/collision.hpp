@@ -19,7 +19,7 @@
 #ifndef CORE_COLLISION_HPP
 #define CORE_COLLISION_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "BondList.hpp"
 #include "Particle.hpp"

@@ -22,7 +22,7 @@
  *  near formulas of MMM1D on GPU, as well as the force kernels.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef MMM1D_GPU
 

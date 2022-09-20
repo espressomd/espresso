@@ -23,7 +23,7 @@
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "event.hpp"
 #include "rotation.hpp"
 

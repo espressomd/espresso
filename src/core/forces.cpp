@@ -211,9 +211,13 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
     // There are two global quantities that need to be evaluated:
     // object's surface and object's volume.
     for (int i = 0; i < max_oif_objects; i++) {
-      auto const area_volume = calc_oif_global(i, cell_structure);
-      if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
+      auto const area_volume = boost::mpi::all_reduce(
+          comm_cart, calc_oif_global(i, cell_structure), std::plus<>());
+      auto const oif_part_area = std::abs(area_volume[0]);
+      auto const oif_part_vol = std::abs(area_volume[1]);
+      if (oif_part_area < 1e-100 and oif_part_vol < 1e-100) {
         break;
+      }
       add_oif_global_forces(area_volume, i, cell_structure);
     }
   }

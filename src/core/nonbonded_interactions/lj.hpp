@@ -21,7 +21,7 @@
 #ifndef CORE_NB_IA_LJ_HPP
 #define CORE_NB_IA_LJ_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LENNARD_JONES
 

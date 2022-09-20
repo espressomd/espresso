@@ -61,8 +61,8 @@ hfile.write("""
 /* Handle definitions from CMake */
 /*********************************/
 
-#include "cmake_config.hpp"
-#include "myconfig-final.hpp"
+#include "config/cmake_config.hpp"
+#include "config/myconfig-final.hpp"
 """)
 external_template = string.Template("""
 // $feature is external
@@ -75,7 +75,7 @@ for feature in sorted(defs.externals):
 
 # Include definitions from CMake
 hfile.write("""
-#include "cmake_config.hpp"
+#include "config/cmake_config.hpp"
 
 """)
 
@@ -132,8 +132,8 @@ cfile = open(path_cpp, "w")
 
 cfile.write(disclaimer)
 cfile.write(f"""
-#include "config-features.hpp"
-#include "config.hpp"
+#include "config/config-features.hpp"
+#include "config/config.hpp"
 
 /***********************/
 /* Handle requirements */

@@ -19,7 +19,7 @@
 #ifndef SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARY_HPP
 #define SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARY_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"

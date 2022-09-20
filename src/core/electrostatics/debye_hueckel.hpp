@@ -27,7 +27,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_DEBYE_HUECKEL_HPP
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_DEBYE_HUECKEL_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 

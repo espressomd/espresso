@@ -20,7 +20,7 @@
 #ifndef CORE_GRID_BASED_ALGORITHMS_ELECTROKINETICS_HPP
 #define CORE_GRID_BASED_ALGORITHMS_ELECTROKINETICS_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 
 // note that we need to declare the ek_parameters struct and instantiate it for

@@ -19,7 +19,7 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_ACTOR_HPP
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_ACTOR_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 
