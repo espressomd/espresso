@@ -241,6 +241,11 @@ void on_dipoles_change() {
   on_short_range_ia_change();
 }
 
+void on_non_bonded_ia_change() {
+  maximal_cutoff_nonbonded();
+  on_short_range_ia_change();
+}
+
 void on_short_range_ia_change() {
   cells_re_init(cell_structure.decomposition_type());
   recalc_forces = true;

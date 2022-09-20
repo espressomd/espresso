@@ -65,7 +65,7 @@ class FFT_test(ut.TestCase):
         self.system.integrator.run(100)
         self.system.integrator.set_vv()
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0.0, sigma=1.0, cutoff=2)
+            epsilon=0.0, sigma=1.0, cutoff=2, shift="auto")
 
     def add_charged_particles(self):
         np.random.seed(seed=42)

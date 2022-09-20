@@ -20,6 +20,8 @@
 
 #include "BondedInteraction.hpp"
 #include "BondedInteractions.hpp"
+#include "NonBondedInteraction.hpp"
+#include "NonBondedInteractions.hpp"
 
 #include <utils/Factory.hpp>
 
@@ -49,6 +51,65 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<OifGlobalForcesBond>("Interactions::OifGlobalForcesBond");
   om->register_new<OifLocalForcesBond>("Interactions::OifLocalForcesBond");
   om->register_new<VirtualBond>("Interactions::VirtualBond");
+
+  om->register_new<NonBondedInteractions>(
+      "Interactions::NonBondedInteractions");
+  om->register_new<NonBondedInteractionHandle>(
+      "Interactions::NonBondedInteractionHandle");
+#ifdef LENNARD_JONES
+  om->register_new<InteractionLJ>("Interactions::InteractionLJ");
+#endif
+#ifdef LENNARD_JONES_GENERIC
+  om->register_new<InteractionLJGen>("Interactions::InteractionLJGen");
+#endif
+#ifdef LJCOS
+  om->register_new<InteractionLJcos>("Interactions::InteractionLJcos");
+#endif
+#ifdef LJCOS2
+  om->register_new<InteractionLJcos2>("Interactions::InteractionLJcos2");
+#endif
+#ifdef WCA
+  om->register_new<InteractionWCA>("Interactions::InteractionWCA");
+#endif
+#ifdef HERTZIAN
+  om->register_new<InteractionHertzian>("Interactions::InteractionHertzian");
+#endif
+#ifdef GAUSSIAN
+  om->register_new<InteractionGaussian>("Interactions::InteractionGaussian");
+#endif
+#ifdef BMHTF_NACL
+  om->register_new<InteractionBMHTF>("Interactions::InteractionBMHTF");
+#endif
+#ifdef MORSE
+  om->register_new<InteractionMorse>("Interactions::InteractionMorse");
+#endif
+#ifdef BUCKINGHAM
+  om->register_new<InteractionBuckingham>(
+      "Interactions::InteractionBuckingham");
+#endif
+#ifdef SOFT_SPHERE
+  om->register_new<InteractionSoftSphere>(
+      "Interactions::InteractionSoftSphere");
+#endif
+#ifdef HAT
+  om->register_new<InteractionHat>("Interactions::InteractionHat");
+#endif
+#ifdef GAY_BERNE
+  om->register_new<InteractionGayBerne>("Interactions::InteractionGayBerne");
+#endif
+#ifdef TABULATED
+  om->register_new<InteractionTabulated>("Interactions::InteractionTabulated");
+#endif
+#ifdef DPD
+  om->register_new<InteractionDPD>("Interactions::InteractionDPD");
+#endif
+#ifdef THOLE
+  om->register_new<InteractionThole>("Interactions::InteractionThole");
+#endif
+#ifdef SMOOTH_STEP
+  om->register_new<InteractionSmoothStep>(
+      "Interactions::InteractionSmoothStep");
+#endif
 }
 } // namespace Interactions
 } // namespace ScriptInterface

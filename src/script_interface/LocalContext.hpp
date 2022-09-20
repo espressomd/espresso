@@ -71,6 +71,12 @@ public:
     return sp;
   }
 
+  std::shared_ptr<ObjectHandle>
+  make_shared_local(std::string const &name,
+                    VariantMap const &parameters) override {
+    return make_shared(name, parameters);
+  }
+
   boost::string_ref name(const ObjectHandle *o) const override {
     assert(o);
 

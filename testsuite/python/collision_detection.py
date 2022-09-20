@@ -309,8 +309,7 @@ class CollisionDetection(ut.TestCase):
             self.assertIn(base_particles, bonds)
 
         # Tidy
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0, sigma=0, cutoff=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
     def run_test_glue_to_surface_for_pos(self, *positions):
         system = self.system
@@ -578,8 +577,7 @@ class CollisionDetection(ut.TestCase):
             self.assertEqual(p.type, self.part_type_vs)
 
         # Tidy
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0, sigma=0, cutoff=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
     def test_bind_three_particles(self):
         system = self.system

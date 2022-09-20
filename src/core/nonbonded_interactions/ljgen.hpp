@@ -47,24 +47,15 @@
 
 #include <cmath>
 
-int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                     double cut, double shift, double offset, double a1,
-                     double a2, double b1, double b2
-#ifdef LJGEN_SOFTCORE
-                     ,
-                     double lambda, double softrad
-#endif
-);
-
 /** Calculate Lennard-Jones force factor */
 inline double ljgen_pair_force_factor(IA_parameters const &ia_params,
                                       double dist) {
-  if (dist < (ia_params.ljgen.cut + ia_params.ljgen.offset)) {
+  if (dist < ia_params.ljgen.max_cutoff()) {
     auto r_off = dist - ia_params.ljgen.offset;
 
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
-    r_off += Utils::sqr(ia_params.ljgen.sig) * (1.0 - ia_params.ljgen.lambda1) *
+    r_off += Utils::sqr(ia_params.ljgen.sig) * (1.0 - ia_params.ljgen.lambda) *
              ia_params.ljgen.softrad;
     r_off = sqrt(r_off);
 #else
@@ -73,7 +64,7 @@ inline double ljgen_pair_force_factor(IA_parameters const &ia_params,
     auto const frac = ia_params.ljgen.sig / r_off;
     auto const fac = ia_params.ljgen.eps
 #ifdef LJGEN_SOFTCORE
-                     * ia_params.ljgen.lambda1 *
+                     * ia_params.ljgen.lambda *
                      (dist - ia_params.ljgen.offset) / r_off
 #endif
                      * (ia_params.ljgen.b1 * ia_params.ljgen.a1 *
@@ -88,11 +79,11 @@ inline double ljgen_pair_force_factor(IA_parameters const &ia_params,
 
 /** Calculate Lennard-Jones energy */
 inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
-  if (dist < (ia_params.ljgen.cut + ia_params.ljgen.offset)) {
+  if (dist < ia_params.ljgen.max_cutoff()) {
     auto r_off = dist - ia_params.ljgen.offset;
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
-    r_off += pow(ia_params.ljgen.sig, 2) * (1.0 - ia_params.ljgen.lambda1) *
+    r_off += pow(ia_params.ljgen.sig, 2) * (1.0 - ia_params.ljgen.lambda) *
              ia_params.ljgen.softrad;
     r_off = sqrt(r_off);
 #else
@@ -101,7 +92,7 @@ inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
     auto const frac = ia_params.ljgen.sig / r_off;
     auto const fac = ia_params.ljgen.eps
 #ifdef LJGEN_SOFTCORE
-                     * ia_params.ljgen.lambda1
+                     * ia_params.ljgen.lambda
 #endif
                      * (ia_params.ljgen.b1 * pow(frac, ia_params.ljgen.a1) -
                         ia_params.ljgen.b2 * pow(frac, ia_params.ljgen.a2) +
@@ -112,4 +103,4 @@ inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
 }
 
 #endif // LENNARD_JONES_GENERIC
-#endif // CORE_NB_IA_LJGEN_HPP
+#endif

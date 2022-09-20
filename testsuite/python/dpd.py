@@ -59,7 +59,7 @@ class DPDThermostat(ut.TestCase):
         gamma = 1.5
 
         # No seed should throw exception
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "A seed has to be given as keyword argument on first activation of the thermostat"):
             system.thermostat.set_dpd(kT=kT)
 
         system.thermostat.set_dpd(kT=kT, seed=41)

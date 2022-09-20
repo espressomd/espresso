@@ -25,43 +25,39 @@
 #include "ljgen.hpp"
 
 #ifdef LENNARD_JONES_GENERIC
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <stdexcept>
 
-int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                     double cut, double shift, double offset, double a1,
-                     double a2, double b1, double b2
-
+LJGen_Parameters::LJGen_Parameters(double epsilon, double sigma, double cutoff,
+                                   double shift, double offset,
 #ifdef LJGEN_SOFTCORE
-                     ,
-                     double lambda, double softrad
+                                   double lam, double delta,
 #endif
-) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->ljgen.eps = eps;
-  data->ljgen.sig = sig;
-  data->ljgen.cut = cut;
-  data->ljgen.shift = shift;
-  data->ljgen.offset = offset;
-  data->ljgen.a1 = a1;
-  data->ljgen.a2 = a2;
-  data->ljgen.b1 = b1;
-  data->ljgen.b2 = b2;
+                                   double e1, double e2, double b1, double b2)
+    : eps{epsilon}, sig{sigma}, cut{cutoff}, shift{shift}, offset{offset},
 #ifdef LJGEN_SOFTCORE
-  data->ljgen.lambda1 = lambda;
-  data->ljgen.softrad = softrad;
+      lambda{lam}, softrad{delta},
 #endif
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+      a1{e1}, a2{e2}, b1{b1}, b2{b2} {
+  if (epsilon < 0.) {
+    throw std::domain_error("Generic LJ parameter 'epsilon' has to be >= 0");
+  }
+  if (sigma < 0.) {
+    throw std::domain_error("Generic LJ parameter 'sigma' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("Generic LJ parameter 'cutoff' has to be >= 0");
+  }
+#ifdef LJGEN_SOFTCORE
+  if (delta < 0.) {
+    throw std::domain_error("Generic LJ parameter 'delta' has to be >= 0");
+  }
+  if (lam < 0. or lam > 1.) {
+    throw std::domain_error(
+        "Generic LJ parameter 'lam' has to be in the range [0, 1]");
+  }
+#endif // LJGEN_SOFTCORE
 }
 
-#endif
+#endif // LENNARD_JONES_GENERIC

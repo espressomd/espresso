@@ -63,8 +63,7 @@ class DDSGPUTest(ut.TestCase):
             g.kill_particle_motion(rotation=True)
             self.system.integrator.set_vv()
 
-            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0.0)
+            self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
             self.system.cell_system.skin = 0.0
             self.system.time_step = 0.01

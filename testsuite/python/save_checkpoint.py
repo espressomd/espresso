@@ -157,7 +157,7 @@ system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
 system.constraints.add(shape=espressomd.shapes.Sphere(center=system.box_l / 2, radius=0.1),
-                       particle_type=17)
+                       particle_type=7)
 system.constraints.add(
     shape=espressomd.shapes.Wall(
         normal=[1. / np.sqrt(3)] * 3, dist=0.5))
@@ -227,22 +227,39 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[3, 0].lennard_jones.set_params(
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
-    system.non_bonded_inter[1, 17].lennard_jones.set_params(
+    system.non_bonded_inter[1, 7].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
+if espressomd.has_features(['DPD']):
+    dpd_params = {"weight_function": 1, "gamma": 2., "trans_r_cut": 2., "k": 2.,
+                  "trans_weight_function": 0, "trans_gamma": 1., "r_cut": 2.}
+    dpd_ia = espressomd.interactions.DPDInteraction(**dpd_params)
+    handle_ia = espressomd.interactions.NonBondedInteractionHandle(
+        _types=(0, 0))
+    checkpoint.register("dpd_ia")
+    checkpoint.register("dpd_params")
+    checkpoint.register("handle_ia")
 
 # bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 p2.add_bond((harmonic_bond, p1))
 if 'THERM.LB' not in modes:
-    thermalized_bond = espressomd.interactions.ThermalizedBond(
-        temp_com=0.0, gamma_com=0.0, temp_distance=0.2, gamma_distance=0.5,
-        r_cut=2, seed=51)
-    system.bonded_inter.add(thermalized_bond)
-    p2.add_bond((thermalized_bond, p1))
+    # create 3 thermalized bonds that will overwrite each other's seed
+    thermalized_bond_params = dict(temp_com=0.1, temp_distance=0.2,
+                                   gamma_com=0.3, gamma_distance=0.5, r_cut=2.)
+    thermalized_bond1 = espressomd.interactions.ThermalizedBond(
+        seed=1, **thermalized_bond_params)
+    thermalized_bond2 = espressomd.interactions.ThermalizedBond(
+        seed=2, **thermalized_bond_params)
+    thermalized_bond3 = espressomd.interactions.ThermalizedBond(
+        seed=3, **thermalized_bond_params)
+    system.bonded_inter.add(thermalized_bond1)
+    p2.add_bond((thermalized_bond1, p1))
+    checkpoint.register("thermalized_bond2")
+    checkpoint.register("thermalized_bond_params")
     if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
         dh = espressomd.drude_helpers.DrudeHelpers()
-        dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
+        dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond1,
                                       p2, 10, 1., 4.6, 0.8, 2.)
         checkpoint.register("dh")
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
