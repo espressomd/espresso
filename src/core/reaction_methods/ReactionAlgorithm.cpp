@@ -54,7 +54,7 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
   // calculate potential energy; only consider potential energy since we
   // assume that the kinetic part drops out in the process of calculating
   // ensemble averages (kinetic part may be separated and crossed out)
-  auto current_E_pot = calculate_current_potential_energy_of_system();
+  auto current_E_pot = mpi_calculate_potential_energy();
   for (int i = 0; i < reaction_steps; i++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
     generic_oneway_reaction(*reactions[reaction_id], current_E_pot);
@@ -295,7 +295,7 @@ void ReactionAlgorithm::generic_oneway_reaction(
 
   auto const E_pot_new = (particle_inside_exclusion_range_touched)
                              ? std::numeric_limits<double>::max()
-                             : calculate_current_potential_energy_of_system();
+                             : mpi_calculate_potential_energy();
 
   auto const bf = calculate_acceptance_probability(
       current_reaction, E_pot_old, E_pot_new, old_particle_numbers);
@@ -592,14 +592,14 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     return false;
   }
 
-  auto const E_pot_old = calculate_current_potential_energy_of_system();
+  auto const E_pot_old = mpi_calculate_potential_energy();
 
   auto const original_positions = generate_new_particle_positions(
       type, particle_number_of_type_to_be_changed);
 
   auto const E_pot_new = (particle_inside_exclusion_range_touched)
                              ? std::numeric_limits<double>::max()
-                             : calculate_current_potential_energy_of_system();
+                             : mpi_calculate_potential_energy();
 
   auto const beta = 1.0 / kT;
 

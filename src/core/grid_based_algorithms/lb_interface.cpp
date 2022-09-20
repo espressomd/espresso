@@ -1099,23 +1099,18 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
   }
 }
 
-static void mpi_lb_lbfluid_calc_fluid_momentum_local() {
-  lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
-}
-
-REGISTER_CALLBACK(mpi_lb_lbfluid_calc_fluid_momentum_local)
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
-  Utils::Vector3d fluid_momentum{};
+  Utils::Vector3d momentum{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lb_calc_fluid_momentum_GPU(fluid_momentum.data());
+    if (::comm_cart.rank() == 0) {
+      lb_calc_fluid_momentum_GPU(momentum.data());
+    }
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    mpi_call(mpi_lb_lbfluid_calc_fluid_momentum_local);
-    lb_calc_fluid_momentum(fluid_momentum.data(), lbpar, lbfields, lblattice);
+    momentum = mpi_lb_calc_fluid_momentum_local(lbpar, lbfields, lblattice);
   }
-  return fluid_momentum;
+  return momentum;
 }
 
 const Utils::Vector3d

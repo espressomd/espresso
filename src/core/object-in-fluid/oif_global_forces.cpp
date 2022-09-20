@@ -22,7 +22,6 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "communication.hpp"
 #include "grid.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -32,12 +31,7 @@
 #include <utils/constants.hpp>
 #include <utils/math/triangle_functions.hpp>
 
-#include <boost/mpi/collectives.hpp>
-
-#include <functional>
-
-using Utils::area_triangle;
-using Utils::get_n_triangle;
+int max_oif_objects = 0;
 
 Utils::Vector2d calc_oif_global(int molType, CellStructure &cs) {
   // first-fold-then-the-same approach
@@ -60,20 +54,19 @@ Utils::Vector2d calc_oif_global(int molType, CellStructure &cs) {
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);
 
       // unfolded positions correct
-      auto const VOL_A = area_triangle(p11, p22, p33);
+      auto const VOL_A = Utils::area_triangle(p11, p22, p33);
       partArea += VOL_A;
 
-      auto const VOL_norm = get_n_triangle(p11, p22, p33);
+      auto const VOL_norm = Utils::get_n_triangle(p11, p22, p33);
       auto const VOL_dn = VOL_norm.norm();
       auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
-      VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
+      VOL_partVol -= VOL_A * VOL_norm[2] / VOL_dn * VOL_hz;
     }
 
     return false;
   });
 
-  auto const area_volume_local = Utils::Vector2d{{partArea, VOL_partVol}};
-  return boost::mpi::all_reduce(comm_cart, area_volume_local, std::plus<>());
+  return {{partArea, VOL_partVol}};
 }
 
 void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
@@ -96,8 +89,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
 
       // unfolded positions correct
       // starting code from volume force
-      auto const VOL_norm = get_n_triangle(p11, p22, p33).normalize();
-      auto const VOL_A = area_triangle(p11, p22, p33);
+      auto const VOL_norm = Utils::get_n_triangle(p11, p22, p33).normalize();
+      auto const VOL_A = Utils::area_triangle(p11, p22, p33);
       auto const VOL_vv = (VOL_volume - iaparams->V0) / iaparams->V0;
 
       auto const VOL_force =
@@ -126,16 +119,4 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
 
     return false;
   });
-}
-
-int max_oif_objects = 0;
-
-void mpi_set_max_oif_objects_local(int max_oif_objects) {
-  ::max_oif_objects = max_oif_objects;
-}
-
-REGISTER_CALLBACK(mpi_set_max_oif_objects_local)
-
-void mpi_set_max_oif_objects(int max_oif_objects) {
-  mpi_call_all(mpi_set_max_oif_objects_local, max_oif_objects);
 }
