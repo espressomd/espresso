@@ -151,8 +151,7 @@ class dds(ut.TestCase):
         system.integrator.set_steepest_descent(
             f_max=1, gamma=0.001, max_displacement=0.01)
         system.integrator.run(100)
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0.0, sigma=0, cutoff=0, shift=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         system.integrator.set_vv()
         assert system.analysis.energy()["total"] == 0
 

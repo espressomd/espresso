@@ -89,9 +89,21 @@ void GlobalContext::notify_call_method(const ObjectHandle *o,
 }
 
 std::shared_ptr<ObjectHandle>
+GlobalContext::make_shared_local(std::string const &name,
+                                 VariantMap const &parameters) {
+  auto sp = m_node_local_context->factory().make(name);
+  set_context(sp.get());
+
+  sp->construct(parameters);
+
+  return sp;
+}
+
+std::shared_ptr<ObjectHandle>
 GlobalContext::make_shared(std::string const &name,
                            const VariantMap &parameters) {
-  std::unique_ptr<ObjectHandle> sp = m_node_local_context->factory().make(name);
+  assert(is_head_node());
+  auto sp = m_node_local_context->factory().make(name);
   set_context(sp.get());
 
   auto const id = object_id(sp.get());

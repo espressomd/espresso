@@ -33,14 +33,10 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
-
-int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r);
-
 /** Calculate hat force factor */
 inline double hat_pair_force_factor(IA_parameters const &ia_params,
                                     double dist) {
-  if (dist > 0. && dist < ia_params.hat.r) {
+  if (dist != 0. and dist < ia_params.hat.r) {
     return ia_params.hat.Fmax * (1.0 - dist / ia_params.hat.r) / dist;
   }
   return 0.0;
@@ -55,5 +51,5 @@ inline double hat_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif /* ifdef HAT */
+#endif // HAT
 #endif

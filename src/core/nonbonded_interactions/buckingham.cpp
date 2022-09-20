@@ -25,38 +25,35 @@
 #include "buckingham.hpp"
 
 #ifdef BUCKINGHAM
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <stdexcept>
 
-int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
-                          double C, double D, double cut, double discont,
-                          double shift) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->buckingham.A = A;
-  data->buckingham.B = B;
-  data->buckingham.C = C;
-  data->buckingham.D = D;
-  data->buckingham.cut = cut;
-  data->buckingham.discont = discont;
-  data->buckingham.shift = shift;
+Buckingham_Parameters::Buckingham_Parameters(double a, double b, double c,
+                                             double d, double cutoff,
+                                             double discont, double shift)
+    : A{a}, B{b}, C{c}, D{d}, cut{cutoff}, discont{discont}, shift{shift} {
+  if (a < 0.) {
+    throw std::domain_error("Buckingham parameter 'a' has to be >= 0");
+  }
+  if (b < 0.) {
+    throw std::domain_error("Buckingham parameter 'b' has to be >= 0");
+  }
+  if (c < 0.) {
+    throw std::domain_error("Buckingham parameter 'c' has to be >= 0");
+  }
+  if (d < 0.) {
+    throw std::domain_error("Buckingham parameter 'd' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("Buckingham parameter 'cutoff' has to be >= 0");
+  }
 
   /* Replace the Buckingham potential for interatomic distance less
      than or equal to discontinuity by a straight line (F1+F2*r) */
-
   auto const F = buck_force_r(A, B, C, D, discont);
-  data->buckingham.F1 = buck_energy_r(A, B, C, D, shift, discont) + discont * F;
-  data->buckingham.F2 = -F;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+  F1 = buck_energy_r(A, B, C, D, shift, discont) + discont * F;
+  F2 = -F;
 }
 
-#endif
+#endif // BUCKINGHAM

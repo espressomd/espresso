@@ -25,39 +25,15 @@
 #include "gay_berne.hpp"
 
 #ifdef GAY_BERNE
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <cmath>
 
-int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
-                         double sig, double cut, double k1, double k2,
-                         double mu, double nu) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+GayBerne_Parameters::GayBerne_Parameters(double eps, double sig, double cut,
+                                         double k1, double k2, double mu,
+                                         double nu)
+    : eps{eps}, sig{sig}, cut{cut}, k1{k1}, k2{k2}, mu{mu}, nu{nu},
+      chi1{((k1 * k1) - 1.) / ((k1 * k1) + 1.)},
+      chi2{(std::pow(k2, 1. / mu) - 1.) / (std::pow(k2, 1. / mu) + 1.)} {}
 
-  if (!data)
-    return ES_ERROR;
-
-  data->gay_berne.eps = eps;
-  data->gay_berne.sig = sig;
-  data->gay_berne.cut = cut;
-  data->gay_berne.k1 = k1;
-  data->gay_berne.k2 = k2;
-  data->gay_berne.mu = mu;
-  data->gay_berne.nu = nu;
-
-  /* Calculate dependent parameters */
-
-  data->gay_berne.chi1 = ((data->gay_berne.k1 * data->gay_berne.k1) - 1) /
-                         ((data->gay_berne.k1 * data->gay_berne.k1) + 1);
-  data->gay_berne.chi2 =
-      (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) - 1) /
-      (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) + 1);
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
-}
-
-#endif
+#endif // GAY_BERNE

@@ -136,7 +136,7 @@ cdef class PScriptInterface:
 
         self.sip = sip
 
-    def call_method(self, method, **kwargs):
+    def call_method(self, method, handle_errors_message=None, **kwargs):
         """
         Call a method of the core class.
 
@@ -144,6 +144,8 @@ cdef class PScriptInterface:
         ----------
         method : Creation policy.
             Name of the core method.
+        handle_errors_message : :obj:`str`, optional
+            Custom error message for runtime errors raised in a MPI context.
         \*\*kwargs
             Arguments for the method.
         """
@@ -156,7 +158,9 @@ cdef class PScriptInterface:
 
         value = self.sip.get().call_method(utils.to_char_pointer(method), parameters)
         res = variant_to_python_object(value)
-        utils.handle_errors(f'while calling method {method}()')
+        if handle_errors_message is None:
+            handle_errors_message = f"while calling method {method}()"
+        utils.handle_errors(handle_errors_message)
         return res
 
     def name(self):

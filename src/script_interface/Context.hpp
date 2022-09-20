@@ -87,6 +87,12 @@ public:
   virtual std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) = 0;
 
+  /**
+   * @copydoc Context::make_shared
+   */
+  virtual std::shared_ptr<ObjectHandle>
+  make_shared_local(std::string const &name, VariantMap const &parameters) = 0;
+
 protected:
   /**
    * @brief Set the context of an object to this.

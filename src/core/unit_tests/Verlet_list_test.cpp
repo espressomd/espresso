@@ -37,6 +37,7 @@ namespace bdata = boost::unit_test::data;
 #include "Particle.hpp"
 #include "ParticleFactory.hpp"
 #include "communication.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -145,7 +146,17 @@ struct : public IntegratorHelper {
   char const *name() const override { return "VelocityVerletNpT"; }
 } velocity_verlet_npt;
 #endif // NPT
+
 } // namespace Testing
+
+void mpi_set_lj_local(int key, double eps, double sig, double cut,
+                      double offset, double min, double shift) {
+  LJ_Parameters lj{eps, sig, cut, offset, min, shift};
+  ::nonbonded_ia_params[key]->lj = lj;
+  on_non_bonded_ia_change();
+}
+
+REGISTER_CALLBACK(mpi_set_lj_local)
 
 inline double get_dist_from_last_verlet_update(Particle const &p) {
   return (p.pos() - p.pos_at_last_verlet_update()).norm();
@@ -193,7 +204,9 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   auto const min = 0.0;
   auto const r_off = dist - offset;
   auto const cut = r_off + 1e-3;
-  lennard_jones_set_params(0, 1, eps, sig, cut, shift, offset, min);
+  make_particle_type_exist(1);
+  auto const key = get_ia_param_key(0, 1);
+  mpi_call_all(mpi_set_lj_local, key, eps, sig, cut, offset, min, shift);
 
   // set up velocity-Verlet integrator
   auto const time_step = 0.01;

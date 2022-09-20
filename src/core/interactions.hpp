@@ -32,17 +32,4 @@ double maximal_cutoff(bool single_node);
  */
 bool long_range_interactions_sanity_checks();
 
-/** Send new IA params.
- *  Also calls \ref on_short_range_ia_change.
- *
- *  Used for both bonded and non-bonded interaction parameters. Therefore
- *  @p i and @p j are used depending on their value:
- *
- *  \param i   particle type for non-bonded interaction parameters /
- *             bonded interaction type number.
- *  \param j   if not negative: particle type for non-bonded interaction
- *             parameters / if negative: flag for bonded interaction
- */
-void mpi_bcast_ia_params(int i, int j);
-
 #endif
