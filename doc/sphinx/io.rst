@@ -113,7 +113,7 @@ Be aware of the following limitations:
 
 * Checkpointing only supports recursion on the head node. It is therefore
   impossible to checkpoint a :class:`espressomd.system.System` instance that
-  contains LB boundaries, constraints or auto-update accumulators when the
+  contains LB boundaries, constraint unions or auto-update accumulators when the
   simulation is running with 2 or more MPI nodes.
 
 * The active actors, i.e., the content of ``system.actors``, are checkpointed.
@@ -140,6 +140,13 @@ Be aware of the following limitations:
 * Checkpoints may depend on the presence of other Python modules at specific
   versions. It may therefore not be possible to load a checkpoint in a
   different environment than where it was written.
+  In particular, all |es| modules whose classes have been used to
+  instantiate objects in the checkpoint file also need to be imported
+  in the script that loads the checkpoint (because importing an |es|
+  module does more than just making classes visibles: it also registers
+  them as script interface classes).
+  Loading a checkpoint without the proper |es| module imports will generally
+  raise an exception indicating which module is missing.
 
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.
