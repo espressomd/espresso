@@ -148,6 +148,30 @@ Be aware of the following limitations:
   Loading a checkpoint without the proper |es| module imports will generally
   raise an exception indicating which module is missing.
 
+* It is only possible to checkpoint objects at global scope.
+  When wrapping the checkpointing logic in a function, objects local to
+  that function won't be checkpointed, since their origin cannot be safely
+  stored in the checkpoint file. To circumvent this limitation, make any
+  local object explicitly global, so that it belongs to the global scope::
+
+      import espressomd
+      import espressomd.checkpointing
+
+      def setup_system():
+          global system  # attach 'system' to global scope for checkpointing
+          checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
+          if not checkpoint.has_checkpoints():
+              system = espressomd.System(box_l=[1., 1., 1.])
+              system.part.add(pos=[0.1, 0.2, 0.3])
+              checkpoint.register("system")
+              checkpoint.save()
+          else:
+              checkpoint.load()
+              print(system.part.by_id(0).pos)
+          return system
+
+      system = setup_system()
+
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.
 
