@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: '0 3 * * *'
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
   regular_check:
     runs-on: macos-latest
@@ -25,6 +28,10 @@ jobs:
           check_skip_long: false
 
   sanitizer_check:
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+      issues: write # to create an issue
+
     runs-on: macos-latest
     if: (github.event_name == 'schedule' && github.repository == 'espressomd/espresso')
     steps:
