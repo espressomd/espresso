@@ -218,8 +218,8 @@ void halo_communication(const HaloCommunicator &hc, char *const base) {
   for (int n = 0; n < hc.num; n++) {
     int s_node, r_node;
     int comm_type = hc.halo_info[n].type;
-    char *s_buffer = (char *)base + hc.halo_info[n].s_offset;
-    char *r_buffer = (char *)base + hc.halo_info[n].r_offset;
+    char *s_buffer = static_cast<char *>(base) + hc.halo_info[n].s_offset;
+    char *r_buffer = static_cast<char *>(base) + hc.halo_info[n].r_offset;
 
     switch (comm_type) {
 

@@ -399,7 +399,8 @@ void lb_lbfluid_set_tau(double tau) {
 }
 
 void check_tau_time_step_consistency(double tau, double time_step) {
-  auto const eps = std::numeric_limits<float>::epsilon();
+  // use float epsilon since tau may be a float (GPU LB)
+  auto const eps = static_cast<double>(std::numeric_limits<float>::epsilon());
   if ((tau - time_step) / (tau + time_step) < -eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
                                 ") must be >= MD time_step (" +
@@ -654,7 +655,8 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
     auto const agrid = lb_lbfluid_get_agrid();
-    auto const lattice_speed = lb_lbfluid_get_lattice_speed();
+    auto const lattice_speed =
+        static_cast<float>(lb_lbfluid_get_lattice_speed());
     Utils::Vector3d pos;
     for (unsigned int j = 0; j < lbpar_gpu.number_of_nodes; ++j) {
       auto const k = j / lbpar_gpu.dim[0];
@@ -790,10 +792,10 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
         }
       }
     }
-  } catch (std::ios_base::failure const &fail) {
+  } catch (std::ios_base::failure const &) {
     cpfile.stream.close();
     throw std::runtime_error(err_msg + "could not write data to " + filename);
-  } catch (std::runtime_error const &fail) {
+  } catch (std::runtime_error const &) {
     cpfile.stream.close();
     throw;
   }
@@ -862,14 +864,14 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     if (cpfile.stream.peek() != EOF) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
-  } catch (std::ios_base::failure const &fail) {
+  } catch (std::ios_base::failure const &) {
     auto const eof_error = cpfile.stream.eof();
     cpfile.stream.close();
     if (eof_error) {
       throw std::runtime_error(err_msg + "EOF found.");
     }
     throw std::runtime_error(err_msg + "incorrectly formatted data.");
-  } catch (std::runtime_error const &fail) {
+  } catch (std::runtime_error const &) {
     cpfile.stream.close();
     throw;
   }

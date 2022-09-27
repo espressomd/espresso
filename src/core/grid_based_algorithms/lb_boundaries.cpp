@@ -101,14 +101,14 @@ static void ek_init_boundaries() {
   if (ek_initialized) {
     host_wallcharge_species_density.resize(ek_parameters.number_of_nodes);
     for (auto &lbboundary : lbboundaries) {
-      if (lbboundary->charge_density() != 0.0) {
+      if (lbboundary->charge_density() != 0.0f) {
         charged_boundaries = 1;
         break;
       }
     }
 
     for (int n = 0; n < int(ek_parameters.number_of_species); n++)
-      if (ek_parameters.valency[n] != 0.0) {
+      if (ek_parameters.valency[n] != 0.0f) {
         wallcharge_species = n;
         break;
       }

@@ -39,15 +39,13 @@
 #include <cstdlib>
 #include <memory>
 
-namespace Communication {
-auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
-std::shared_ptr<boost::mpi::environment> mpi_env;
-} // namespace Communication
-
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
-std::unique_ptr<MpiCallbacks> m_callbacks;
+static auto const &mpi_datatype_cache =
+    boost::mpi::detail::mpi_datatype_cache();
+static std::shared_ptr<boost::mpi::environment> mpi_env;
+static std::unique_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singleton callback class for now. */
 MpiCallbacks &mpiCallbacks() {

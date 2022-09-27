@@ -37,7 +37,8 @@
 #include <cstdio>
 
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
-  auto const c = Utils::sqr(std::cos(Utils::pi() * mesh_i * (double)n));
+  auto const c =
+      Utils::sqr(std::cos(Utils::pi() * mesh_i * static_cast<double>(n)));
   auto res = 0.0;
 
   switch (cao) {

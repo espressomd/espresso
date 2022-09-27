@@ -29,7 +29,7 @@
 #include <limits>
 #include <stdexcept>
 
-template <class T> auto const epsilon = std::numeric_limits<T>::epsilon();
+template <class T> static auto epsilon = std::numeric_limits<T>::epsilon();
 
 BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
   using detail::get_mi_coord;

@@ -407,7 +407,7 @@ int integrate(int n_steps, int reuse_forces) {
 
   // Verlet list statistics
   if (n_verlet_updates > 0)
-    verlet_reuse = n_steps / (double)n_verlet_updates;
+    verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
   else
     verlet_reuse = 0;
 
