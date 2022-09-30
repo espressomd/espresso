@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
@@ -27,6 +27,7 @@
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
+
 #include <algorithm>
 
 void VirtualSitesInertialessTracers::after_force_calc() {
@@ -51,9 +52,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
 }
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   IBM_UpdateParticlePositions(cell_structure.local_particles(), time_step,
                               this_node);
-#endif
 }
-#endif
+#endif // VIRTUAL_SITES_INERTIALESS_TRACERS

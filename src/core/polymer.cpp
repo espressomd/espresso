@@ -20,7 +20,7 @@
  */
 /** \file
  *  This file contains everything needed to create a start-up configuration
- *  of (partially charged) polymer chains with counterions and salt molecules,
+ *  of (possibly charged) polymer chains with counterions and salt molecules,
  *  assigning velocities to the particles and cross-linking the polymers if
  *  necessary.
  *

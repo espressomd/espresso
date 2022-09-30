@@ -56,8 +56,6 @@ class CutOff(ut.TestCase):
         self.assertEqual(system.cell_system.interaction_range, -1)
 
         if espressomd.has_features("LENNARD_JONES"):
-            lj_off_params = system.non_bonded_inter[0,
-                                                    0].lennard_jones.get_params()
             system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 sigma=1, epsilon=1, cutoff=2.5, shift="auto")
             self.assertEqual(
@@ -66,8 +64,7 @@ class CutOff(ut.TestCase):
                              system.cell_system.max_cut_nonbonded +
                              system.cell_system.skin)
 
-            system.non_bonded_inter[0,
-                                    0].lennard_jones.set_params(**lj_off_params)
+            system.non_bonded_inter[0, 0].lennard_jones.deactivate()
             self.assertEqual(system.cell_system.max_cut_nonbonded, -1)
             self.assertEqual(system.cell_system.interaction_range, -1)
 

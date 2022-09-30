@@ -19,8 +19,11 @@
 
 #ifndef ESPRESSO_HOLLOW_CONICAL_FRUSTUM_HPP
 #define ESPRESSO_HOLLOW_CONICAL_FRUSTUM_HPP
+
 #include "Shape.hpp"
-#include <script_interface/CylindricalTransformationParameters.hpp>
+
+#include "script_interface/math/CylindricalTransformationParameters.hpp"
+
 #include <shapes/HollowConicalFrustum.hpp>
 
 namespace ScriptInterface {
@@ -85,7 +88,8 @@ public:
 
 private:
   std::shared_ptr<::Shapes::HollowConicalFrustum> m_hollow_conical_frustum;
-  std::shared_ptr<CylindricalTransformationParameters> m_cyl_transform_params;
+  std::shared_ptr<Math::CylindricalTransformationParameters>
+      m_cyl_transform_params;
 };
 
 } /* namespace Shapes */

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef MMM1D_GPU
 
@@ -36,25 +36,33 @@ CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
     : maxPWerror{maxPWerror}, far_switch_radius{far_switch_radius},
       far_switch_radius_sq{-1.}, bessel_cutoff{bessel_cutoff}, m_is_tuned{
                                                                    false} {
-
   set_prefactor(prefactor);
-  if (far_switch_radius >= 0. and far_switch_radius > box_geo.length()[2]) {
+  if (maxPWerror <= 0.) {
+    throw std::domain_error("Parameter 'maxPWerror' must be > 0");
+  }
+  if (far_switch_radius <= 0. and far_switch_radius != -1.) {
+    throw std::domain_error("Parameter 'far_switch_radius' must be > 0");
+  }
+  if (far_switch_radius > 0. and far_switch_radius > box_geo.length()[2]) {
     throw std::domain_error(
-        "switching radius must not be larger than box length");
+        "Parameter 'far_switch_radius' must not be larger than box length");
+  }
+  if (bessel_cutoff < 0 and bessel_cutoff != -1) {
+    throw std::domain_error("Parameter 'bessel_cutoff' must be > 0");
   }
 
+  auto &system = EspressoSystemInterface::Instance();
+  system.requestFGpu();
+  system.requestRGpu();
+  system.requestQGpu();
   if (this_node == 0) {
-    auto &system = EspressoSystemInterface::Instance();
-    system.requestFGpu();
-    system.requestRGpu();
-    system.requestQGpu();
     modpsi_init();
   }
 }
 
 void CoulombMMM1DGpu::sanity_checks_periodicity() const {
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("MMM1D requires periodicity (0, 0, 1)");
+    throw std::runtime_error("MMM1D requires periodicity (False, False, True)");
   }
 }
 

@@ -78,8 +78,9 @@ class AnalyzeChain(ut.TestCase):
         tail_ids = head_ids + self.num_mono
         rg2 = []
         for p in range(self.num_poly):
-            rg2.append(
-                np.var(self.system.part.by_ids(range(head_ids[p], tail_ids[p])).pos, axis=0))
+            ids = range(head_ids[p], tail_ids[p])
+            r = np.copy(self.system.part.by_ids(ids).pos)
+            rg2.append(np.var(r, axis=0))
         rg2 = np.array(rg2)
         rg2 = np.sum(rg2, axis=1)
         return np.mean(np.sqrt(rg2)), np.std(
@@ -92,12 +93,8 @@ class AnalyzeChain(ut.TestCase):
         tail_ids = head_ids + self.num_mono - 1
         rh = []
         for p in range(self.num_poly):
-            r = np.array(
-                self.system.part.by_ids(
-                    range(
-                        head_ids[p],
-                        tail_ids[p] +
-                        1)).pos)
+            ids = range(head_ids[p], tail_ids[p] + 1)
+            r = np.copy(self.system.part.by_ids(ids).pos)
             # this generates indices for all i<j combinations
             ij = np.triu_indices(len(r), k=1)
             r_ij = r[ij[0]] - r[ij[1]]
@@ -137,14 +134,16 @@ class AnalyzeChain(ut.TestCase):
         all_partcls.pos = old_pos
 
     def test_exceptions(self):
-        err_msg = """particle with id 10 does not exist
-cannot perform analysis on the range chain_start=0, number_of_chains=2, chain_length=10
-please provide a contiguous range of particle ids"""
+        err_msg = ("Particle with id 10 does not exist; cannot perform "
+                   "analysis on the range chain_start=0, number_of_chains=2, "
+                   "chain_length=10. Please provide a contiguous range of "
+                   "particle ids.")
         analysis = self.system.analysis
         for method in (analysis.calc_re, analysis.calc_rg, analysis.calc_rh):
-            with self.assertRaisesRegex(ValueError, err_msg):
+            with self.assertRaisesRegex(RuntimeError, err_msg):
                 method(chain_start=0, number_of_chains=self.num_poly,
                        chain_length=2 * self.num_mono)
+        self.assertIsNone(analysis.call_method("unknown"))
 
 
 if __name__ == "__main__":

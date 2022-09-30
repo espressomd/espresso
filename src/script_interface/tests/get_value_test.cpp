@@ -186,7 +186,8 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
 
   auto const so_obj = so_ptr_t();
   auto const msg_prefix = std::string("Provided argument of type ");
-  auto const variant_name = std::string("ScriptInterface::Variant");
+  auto const variant_sip_name =
+      "ScriptInterface::Variant\\{" + Utils::demangle<so_ptr_t>() + "\\}";
 
   {
     // basic types
@@ -206,7 +207,7 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     // vectors
     auto const int_variant = Variant{1.5};
     auto const vec_variant = Variant{std::vector<Variant>{{so_obj}}};
-    auto const vec_variant_pattern = "std::vector<" + variant_name + ">";
+    auto const vec_variant_pattern = "std::vector<" + variant_sip_name + ">";
     auto const what = msg_prefix + "'" + vec_variant_pattern + "'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");
@@ -227,7 +228,7 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const map_variant =
         Variant{std::unordered_map<int, Variant>{{1, so_obj}}};
     auto const map_variant_pattern =
-        "std::unordered_map<int, " + variant_name + ">";
+        "std::unordered_map<int, " + variant_sip_name + ">";
     auto const what = msg_prefix + "'" + map_variant_pattern + "'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");
@@ -247,7 +248,7 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const map_variant =
         Variant{std::unordered_map<std::string, Variant>{{"key", so_obj}}};
     auto const map_variant_pattern =
-        "std::unordered_map<std::string, " + variant_name + ">";
+        "std::unordered_map<std::string, " + variant_sip_name + ">";
     auto const what = msg_prefix + "'" + map_variant_pattern + "'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");

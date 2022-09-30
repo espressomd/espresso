@@ -30,7 +30,7 @@
 #ifndef ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_BASE_HPP
 #define ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_BASE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(SCAFACOS) or defined(SCAFACOS_DIPOLAR)
 

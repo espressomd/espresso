@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.cuda_init
 
 
 class GPUAvailability(ut.TestCase):
@@ -27,14 +28,21 @@ class GPUAvailability(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
 
     def test(self):
+        cuda_init_handle = espressomd.cuda_init.CudaInitHandle()
+        devices = cuda_init_handle.list_devices()
+        devices_prop = cuda_init_handle.list_devices_properties()
+        has_gpu = espressomd.gpu_available()
+        self.assertIsInstance(devices, dict)
+        self.assertIsInstance(devices_prop, dict)
         if espressomd.has_features("CUDA"):
-            self.assertEqual(self.system.cuda_init_handle.list_devices() != {},
-                             espressomd.gpu_available())
-            self.assertEqual(
-                self.system.cuda_init_handle.list_devices_properties() != {},
-                espressomd.gpu_available())
+            self.assertEqual(devices != {}, has_gpu)
+            self.assertEqual(devices_prop != {}, has_gpu)
         else:
-            self.assertFalse(espressomd.gpu_available())
+            self.assertFalse(has_gpu)
+            self.assertEqual(devices, {})
+            self.assertEqual(devices_prop, {})
+            with self.assertRaisesRegex(AttributeError, "Object 'CudaInitHandle' has no attribute 'device'"):
+                cuda_init_handle.device
 
     @utx.skipIfMissingFeatures("CUDA")
     def test_exceptions(self):
@@ -68,6 +76,7 @@ class GPUAvailability(ut.TestCase):
         dev_id = self.system.cuda_init_handle.device
         self.assertIn(dev_id, device_list_p_head)
         device = device_list_p_head[dev_id]
+        self.assertIsInstance(device['compute_capability'], tuple)
         self.assertGreater(device['cores'], 0)
         self.assertGreater(device['total_memory'], 0)
         self.assertGreaterEqual(device['compute_capability'][0], 3)

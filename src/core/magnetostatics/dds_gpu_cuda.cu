@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLAR_DIRECT_SUM
 
@@ -152,7 +152,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
   // There is one thread per particle. Each thread computes interactions
   // with particles whose id is smaller than the thread id.
   // The force and torque of all the interaction partners of the current thread
-  // is atomically added to global results ad once.
+  // is atomically added to global results at once.
   // The result for the particle id equal to the thread id is atomically added
   // to global memory at the end.
 

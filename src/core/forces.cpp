@@ -30,13 +30,13 @@
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
-#include "comfixed_global.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "electrostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
+#include "galilei/ComFixed.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
@@ -58,6 +58,9 @@
 #include <profiler/profiler.hpp>
 
 #include <cassert>
+#include <memory>
+
+std::shared_ptr<ComFixed> comfixed = std::make_shared<ComFixed>();
 
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
@@ -208,9 +211,13 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
     // There are two global quantities that need to be evaluated:
     // object's surface and object's volume.
     for (int i = 0; i < max_oif_objects; i++) {
-      auto const area_volume = calc_oif_global(i, cell_structure);
-      if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
+      auto const area_volume = boost::mpi::all_reduce(
+          comm_cart, calc_oif_global(i, cell_structure), std::plus<>());
+      auto const oif_part_area = std::abs(area_volume[0]);
+      auto const oif_part_vol = std::abs(area_volume[1]);
+      if (oif_part_area < 1e-100 and oif_part_vol < 1e-100) {
         break;
+      }
       add_oif_global_forces(area_volume, i, cell_structure);
     }
   }
@@ -234,7 +241,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   cell_structure.ghosts_reduce_forces();
 
   // should be pretty late, since it needs to zero out the total force
-  comfixed.apply(comm_cart, particles);
+  comfixed->apply(comm_cart, particles);
 
   // Needs to be the last one to be effective
   forcecap_cap(particles);

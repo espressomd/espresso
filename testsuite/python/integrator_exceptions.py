@@ -112,11 +112,13 @@ class Integrator_test(ut.TestCase):
 
     def test_steepest_descent_integrator(self):
         self.system.cell_system.skin = 0.4
-        with self.assertRaisesRegex(ValueError, r"The following keys have to be given as keyword arguments: "
-                                                r"\['f_max', 'gamma', 'max_displacement'\], got "
-                                                r"\['f_max', 'gamma', 'max_d'\] \(missing \['max_displacement'\]\)"):
-            self.system.integrator.set_steepest_descent(
-                f_max=0, gamma=0.1, max_d=5)
+        params = {"f_max": 0., "gamma": 0.1, "max_displacement": 5.}
+        for key in params:
+            invalid_params = params.copy()
+            del invalid_params[key]
+            with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is missing"):
+                self.system.integrator.set_steepest_descent(
+                    **invalid_params)
         self.system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
         self.system.integrator.set_steepest_descent(
             f_max=0, gamma=0.1, max_displacement=0.1)

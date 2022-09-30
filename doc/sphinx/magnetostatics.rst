@@ -32,8 +32,8 @@ Magnetostatic interactions are activated via the actor framework::
 
     system = espressomd.System(box_l=[10, 10, 10])
     system.time_step = 0.01
-    system.part.add(pos=[[0, 0, 0], [1, 1, 1]],
-                    rotation=2 * [(1, 1, 1)], dip=2 * [(1, 0, 0)])
+    system.part.add(pos=[[0, 0, 0], [1, 1, 1]], dip=2 * [(1, 0, 0)],
+                    rotation=2 * [(True, True, True)])
 
     actor = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
     system.actors.add(actor)

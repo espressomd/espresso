@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_SCAFACOS_SCAFACOS_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_SCAFACOS_SCAFACOS_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(SCAFACOS) or defined(SCAFACOS_DIPOLAR)
 

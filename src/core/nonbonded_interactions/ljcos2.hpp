@@ -30,21 +30,17 @@
  *  Implementation in \ref ljcos2.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef LJCOS2
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
-
-int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                      double offset, double w);
 
 /** Calculate Lennard-Jones cosine squared force factor */
 inline double ljcos2_pair_force_factor(IA_parameters const &ia_params,

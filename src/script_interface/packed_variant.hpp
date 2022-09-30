@@ -53,8 +53,9 @@ inline ObjectId object_id(const ObjectHandle *p) {
  */
 using PackedVariant = boost::make_recursive_variant<
     None, bool, int, std::size_t, double, std::string, ObjectId,
-    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d, std::vector<int>,
-    std::vector<double>, std::vector<boost::recursive_variant_>,
+    Utils::Vector3b, Utils::Vector3i, Utils::Vector2d, Utils::Vector3d,
+    Utils::Vector4d, std::vector<int>, std::vector<double>,
+    std::vector<boost::recursive_variant_>,
     std::unordered_map<int, boost::recursive_variant_>,
     std::unordered_map<std::string, boost::recursive_variant_>>::type;
 

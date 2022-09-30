@@ -19,17 +19,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 # List all files that are eligible for a copyright header.
 
 git ls-files --exclude-standard |
 grep -vE '\.(blk|gz|npz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|css|bib|vtf|vtk|svg|ico|eps|rst|ipynb)$' |
-grep -vE '^testsuite/configs/|^old/|^cmake/|^libs/' |
-grep -vE '(ChangeLog|AUTHORS|COPYING|NEWS|README|INSTALL|README\.md|CONTRIBUTING\.md)' |
-grep -vE '(\.gitmodules|\.github|\.gitignore|\.codecov\.yml|\.gitlab-ci\.yml|kodiak\.toml)' |
-grep -vE '(\.clang-format|\.cmake-format|\.clang-tidy|\.coveragerc|\.pylintrc|ubsan\.supp)' |
-grep -vE '(\.lgtm\.yml|\.pre-commit-config\.yaml|requirements\.txt)' |
-grep -vE '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk)' |
-grep -vE '(src/config/features\.def)' |
-grep -vE '(featurelist)' |
-grep -vE '(\.cproject|\.project|\.settings)'
+grep -vE '(^testsuite/python/data/|^old/|^libs/|^samples/immersed_boundary/tables/)' |
+grep -vE '(^ChangeLog|^AUTHORS|^COPYING|^NEWS|^INSTALL|^Readme\.md|^CONTRIBUTING\.md)' |
+grep -vE '(^\.gitmodules|^\.github|^\.gitignore|^\.codecov\.yml|^\.gitlab-ci\.yml|^\.kodiak\.toml)' |
+grep -vE '(^\.clang-format|^\.cmake-format|^\.clang-tidy|^\.coveragerc|^\.pylintrc|ubsan\.supp)' |
+grep -vE '(^\.lgtm\.yml|^\.gitpod\.yml|^\.cppcheck|^\.pre-commit-config\.yaml|^requirements\.txt)' |
+grep -vE '(Doxyfile|latexmk\.1|latexmkrc|^doc/tutorials/.*/NotesForTutor\.md)'

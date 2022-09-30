@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
@@ -34,5 +37,5 @@ class ComFixed(ScriptInterfaceHelper):
         List of types for which the center of mass should be fixed.
     """
 
-    _so_name = "ComFixed"
+    _so_name = "Galilei::ComFixed"
     _so_creation_policy = "GLOBAL"

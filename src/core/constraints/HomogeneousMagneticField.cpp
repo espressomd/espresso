@@ -20,7 +20,7 @@
 
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -28,7 +28,7 @@ namespace Constraints {
 
 ParticleForce HomogeneousMagneticField::force(const Particle &p,
                                               const Utils::Vector3d &, double) {
-#if defined(ROTATION) && defined(DIPOLES)
+#ifdef DIPOLES
   return {{}, vector_product(p.calc_dip(), m_field)};
 #else
   return {};

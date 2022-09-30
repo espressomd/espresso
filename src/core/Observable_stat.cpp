@@ -21,7 +21,7 @@
 
 #include "Observable_stat.hpp"
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"

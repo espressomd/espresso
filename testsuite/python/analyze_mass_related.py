@@ -130,8 +130,7 @@ class AnalyzeMassRelated(ut.TestCase):
     def test_kinetic_pressure(self):
         no_virtual = self.system.part.select(virtual=False)
         P_kin = np.sum(
-            no_virtual.mass * np.sum(no_virtual.v**2,
-                                     axis=1),
+            no_virtual.mass * np.sum(no_virtual.v**2, axis=1),
             axis=0) / (3 * self.system.volume())
         np.testing.assert_allclose(
             P_kin, self.system.analysis.pressure()["kinetic"])
@@ -145,7 +144,7 @@ class AnalyzeMassRelated(ut.TestCase):
 
     def test_gyration_radius(self):
         if self.system.part.select(virtual=True):
-            with self.assertRaisesRegex(Exception, "not well-defined"):
+            with self.assertRaisesRegex(RuntimeError, "not well-defined"):
                 self.system.analysis.calc_rg(chain_start=0, number_of_chains=1,
                                              chain_length=len(self.system.part))
 

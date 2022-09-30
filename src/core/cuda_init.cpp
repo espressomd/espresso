@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA
 
@@ -26,8 +26,6 @@
 
 #include "communication.hpp"
 #include "errorhandling.hpp"
-
-#include <utils/constants.hpp>
 
 #include <mpi.h>
 
@@ -56,7 +54,7 @@ struct CompareDevices {
  *  of the physical node, as opposed to the logical rank of which there can
  *  be more than one per node.
  */
-static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
+std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   /* List of local devices */
   std::vector<EspressoGpuDevice> devices_local;
   /* Global unique device list (only relevant on the head node) */
@@ -65,7 +63,7 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   int n_devices;
   try {
     n_devices = cuda_get_n_gpus();
-  } catch (cuda_runtime_error const &err) {
+  } catch (cuda_runtime_error const &) {
     n_devices = 0;
   }
 
@@ -82,7 +80,7 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
       device.proc_name[63] = '\0';
       device.node = this_node;
       devices_local.push_back(device);
-    } catch (cuda_runtime_error const &err) {
+    } catch (cuda_runtime_error const &) {
       // pass
     }
   }
@@ -124,10 +122,4 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
   return devices_global;
 }
 
-REGISTER_CALLBACK_MAIN_RANK(mpi_cuda_gather_gpus_local)
-
-std::vector<EspressoGpuDevice> cuda_gather_gpus() {
-  return mpi_call(Communication::Result::main_rank, mpi_cuda_gather_gpus_local);
-}
-
-#endif /* CUDA */
+#endif // CUDA

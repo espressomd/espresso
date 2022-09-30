@@ -19,7 +19,7 @@
 #ifndef SYSTEMINTERFACE_H
 #define SYSTEMINTERFACE_H
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -62,39 +62,39 @@ public:
   virtual void init() = 0;
   virtual void update() = 0;
 
-  virtual float *rGpuBegin() { return nullptr; };
-  virtual bool hasRGpu() { return false; };
+  virtual float *rGpuBegin() { return nullptr; }
+  virtual bool hasRGpu() { return false; }
   virtual void requestRGpu() {
     throw std::runtime_error(error_message("positions"));
   }
 
-  virtual float *dipGpuBegin() { return nullptr; };
-  virtual bool hasDipGpu() { return false; };
+  virtual float *dipGpuBegin() { return nullptr; }
+  virtual bool hasDipGpu() { return false; }
   virtual void requestDipGpu() {
     throw std::runtime_error(error_message("dipoles"));
   }
 
-  virtual float *torqueGpuBegin() { return nullptr; };
-  virtual bool hasTorqueGpu() { return false; };
+  virtual float *torqueGpuBegin() { return nullptr; }
+  virtual bool hasTorqueGpu() { return false; }
   virtual void requestTorqueGpu() {
     throw std::runtime_error(error_message("torques"));
   }
 
-  virtual float *qGpuBegin() { return nullptr; };
-  virtual bool hasQGpu() { return false; };
+  virtual float *qGpuBegin() { return nullptr; }
+  virtual bool hasQGpu() { return false; }
   virtual void requestQGpu() {
     throw std::runtime_error(error_message("charges"));
   }
 
-  virtual float *fGpuBegin() { return nullptr; };
-  virtual bool hasFGpu() { return false; };
+  virtual float *fGpuBegin() { return nullptr; }
+  virtual bool hasFGpu() { return false; }
   virtual void requestFGpu() {
     throw std::runtime_error(error_message("forces"));
   }
 
-  virtual float *eGpu() { return nullptr; };
+  virtual float *eGpu() { return nullptr; }
 
-  virtual std::size_t npart_gpu() const { return 0; };
+  virtual std::size_t npart_gpu() const { return 0; }
   virtual Utils::Vector3d box() const = 0;
 
 private:

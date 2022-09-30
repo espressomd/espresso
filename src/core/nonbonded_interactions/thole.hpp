@@ -23,11 +23,9 @@
 /** \file
  *  Routines to calculate the Thole damping potential between particle pairs.
  *  See @cite thole81a.
- *
- *  Implementation in \ref thole.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef THOLE
 #include "Particle.hpp"
@@ -40,9 +38,6 @@
 #include <utils/Vector.hpp>
 
 #include <cmath>
-
-int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
-                     double q1q2);
 
 /** Calculate Thole force */
 inline Utils::Vector3d

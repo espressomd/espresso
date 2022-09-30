@@ -23,6 +23,8 @@ import setuptools
 import unittest
 
 import espressomd
+import espressomd.code_info
+import espressomd.code_features
 
 
 def no_skip(x):
@@ -32,7 +34,7 @@ def no_skip(x):
 def skipIfMissingFeatures(*args):
     """Unittest skipIf decorator for missing Espresso features."""
     if not espressomd.has_features(*args):
-        missing_features = espressomd.missing_features(*args)
+        missing_features = espressomd.code_features.missing_features(*args)
         return unittest.skip("Skipping test: missing feature{} {}".format(
             's' if missing_features else '', ', '.join(missing_features)))
     return no_skip

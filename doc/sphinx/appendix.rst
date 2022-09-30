@@ -453,7 +453,7 @@ where
 The implementation is very similar to MMM2D, except that the separation
 between slices close by, and above and below is not necessary.
 
-.. _Errors:
+.. _MMM Errors:
 
 Errors
 ~~~~~~
@@ -490,3 +490,43 @@ MMM1D the error distribution is less homogeneous, however, also here it
 is always better to have some extra precision, especially since it is
 computationally cheap.
 
+.. _MMM Testing:
+
+Testing
+~~~~~~~
+
+The accuracy of MMM algorithms can be tested against the Madelung constants
+of simple crystal lattices. Although the constants don't have a closed form
+in 2D and 3D, their infinite sum converges rapidly to well-known values.
+
+.. _Madelung electrostatics:
+
+Ionic crystals
+^^^^^^^^^^^^^^
+
+For an infinite wire, the energy per ion is :math:`MC\frac{q}{a}` with
+:math:`M = -2\ln{2}` the 1D Madelung constant, :math:`C` the electrostatics
+prefactor, :math:`q` the electric charge and :math:`a` the lattice constant.
+Likewise, the pressure per ion can be derived as :math:`MC\frac{q}{aV}`
+with :math:`V` the simulation box volume. For details, see :cite:`ciftja19a`.
+
+For an infinite 2D or 3D NaCl crystal lattice, the Madelung constant can be
+obtained in a numerical simulation with the Evjen method :cite:`evjen32a` or
+the Ewald method :cite:`ewald21a`.
+
+.. _Madelung magnetostatics:
+
+Magnetic dipoles crystals
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For an infinite wire, the energy per dipole is :math:`MC\frac{|\mu|^2}{a^3}`
+with :math:`M` the orientation-dependent 1D Madelung constant,
+:math:`M^{\mathrm{min}} = - 2 \zeta(3)` for parallel dipoles and
+:math:`M^{\mathrm{max}} = +3/2 \zeta(3)` for anti-parallel dipoles,
+:math:`\zeta(s)` the Riemann zeta function,
+:math:`C` the magnetostatics prefactor, :math:`\mu` the dipole moment and
+:math:`a` the lattice constant :cite:`batle20a`.
+
+For an infinite 2D or 3D NaCl crystal lattice, the Madelung constant for
+the maximal energy and minimal energy dipole orientation can be estimated
+in a numerical simulation :cite:`batle20a`.

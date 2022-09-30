@@ -44,7 +44,7 @@ class Test(ut.TestCase):
         self.system.actors.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
-        self.system.periodicity = [1, 1, 1]
+        self.system.periodicity = [True, True, True]
         self.system.cell_system.set_regular_decomposition()
 
     def add_charged_particles(self):
@@ -284,13 +284,13 @@ class Test(ut.TestCase):
         self.assertFalse(p3m.is_tuned)
         self.assertEqual(len(self.system.actors), 0)
 
-    @utx.skipIfMissingFeatures(["P3M"])
+    @utx.skipIfMissingFeatures(["P3M", "NPT"])
     def test_p3m_cpu_tuning_errors(self):
         self.add_charged_particles()
         p3m = espressomd.electrostatics.P3M(prefactor=1., accuracy=1e-3)
         self.check_p3m_tuning_errors(p3m)
 
-    @utx.skipIfMissingFeatures(["DP3M"])
+    @utx.skipIfMissingFeatures(["DP3M", "NPT"])
     def test_dp3m_cpu_tuning_errors(self):
         self.add_magnetic_particles()
         dp3m = espressomd.magnetostatics.DipolarP3M(
@@ -309,29 +309,29 @@ class Test(ut.TestCase):
         self.system.cell_system.set_n_square()
 
         # check periodicity exceptions
-        for periodicity in itertools.product(range(2), range(2), range(2)):
-            if periodicity == (0, 0, 1):
+        for periodicity in itertools.product((True, False), repeat=3):
+            if periodicity == (False, False, True):
                 continue
             self.system.periodicity = periodicity
-            with self.assertRaisesRegex(Exception, r"MMM1D requires periodicity \(0, 0, 1\)"):
+            with self.assertRaisesRegex(Exception, r"MMM1D requires periodicity \(False, False, True\)"):
                 mmm1d = mmm1d_class(prefactor=1., maxPWerror=1e-2)
                 self.system.actors.add(mmm1d)
             self.assertEqual(len(self.system.actors), 0)
             self.assertFalse(mmm1d.is_tuned)
-        self.system.periodicity = (0, 0, 1)
+        self.system.periodicity = (False, False, True)
 
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_mmm1d_cpu_exceptions(self):
-        self.system.periodicity = (0, 0, 1)
+        self.system.periodicity = (False, False, True)
         self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1D)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["MMM1D_GPU"])
     def test_mmm1d_gpu_exceptions(self):
-        self.system.periodicity = (0, 0, 1)
+        self.system.periodicity = (False, False, True)
         self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1DGPU)
 
-        with self.assertRaisesRegex(ValueError, "switching radius must not be larger than box length"):
+        with self.assertRaisesRegex(ValueError, "Parameter 'far_switch_radius' must not be larger than box length"):
             espressomd.electrostatics.MMM1DGPU(
                 prefactor=1., maxPWerror=1e-2,
                 far_switch_radius=2. * self.system.box_l[2])

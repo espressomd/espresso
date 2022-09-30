@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ROTATE_SYSTEM_HPP
-#define ROTATE_SYSTEM_HPP
+#ifndef ESPRESSO_SRC_CORE_ROTATE_SYSTEM_HPP
+#define ESPRESSO_SRC_CORE_ROTATE_SYSTEM_HPP
 
 /** Rotate all particle coordinates around an axis given by phi,theta through
- *  the center of mass by an angle alpha
+ *  the center of mass by an angle alpha.
  */
-void mpi_rotate_system(double phi, double theta, double alpha);
+void rotate_system(double phi, double theta, double alpha);
 
 #endif

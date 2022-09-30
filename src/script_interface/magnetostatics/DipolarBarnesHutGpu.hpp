@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_BH_GPU_HPP
 #define ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_BH_GPU_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLAR_BARNES_HUT
 
@@ -49,10 +49,12 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_actor =
-        std::make_shared<CoreActorClass>(get_value<double>(params, "prefactor"),
-                                         get_value<double>(params, "epssq"),
-                                         get_value<double>(params, "itolsq"));
+    context()->parallel_try_catch([&]() {
+      m_actor = std::make_shared<CoreActorClass>(
+          get_value<double>(params, "prefactor"),
+          get_value<double>(params, "epssq"),
+          get_value<double>(params, "itolsq"));
+    });
   }
 };
 

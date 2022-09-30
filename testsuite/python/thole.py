@@ -33,7 +33,7 @@ class TestThole(ut.TestCase):
 
     """
     This testcase takes a large box to minimize periodic effects and tests the
-    thole damping nonbonded interaction forces against the analytical result.
+    Thole damping non-bonded interaction forces against the analytical result.
     """
 
     q1 = 1.01
@@ -47,13 +47,9 @@ class TestThole(ut.TestCase):
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
         self.p0 = self.system.part.add(
-            pos=[
-                0, 0, 0], type=0, fix=[
-                1, 1, 1], q=self.q1)
+            pos=[0, 0, 0], type=0, fix=3 * [True], q=self.q1)
         self.p1 = self.system.part.add(
-            pos=[
-                2, 0, 0], type=0, fix=[
-                1, 1, 1], q=self.q2)
+            pos=[2, 0, 0], type=0, fix=3 * [True], q=self.q2)
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=3 * [52], cao=4)
@@ -63,8 +59,6 @@ class TestThole(ut.TestCase):
             scaling_coeff=self.thole_s, q1q2=self.q1 * self.q2)
 
     def test(self):
-        res_dForce = []
-        res_dEnergy = []
         ns = 100
         for i in range(1, ns):
             x = 20.0 * i / ns
@@ -82,17 +76,8 @@ class TestThole(ut.TestCase):
                 0.250088 * math.erfc(0.741426 * x)
 
             E = self.system.analysis.energy()
-            E_tot = E["total"]
-            res_dForce.append(self.p1.f[0] - F_calc)
-            res_dEnergy.append(E_tot - E_calc)
-
-        for f in res_dForce:
-            self.assertLess(
-                abs(f), 1e-3, msg="Deviation of thole interaction force (damped coulomb) from analytical result too large")
-
-        for e in res_dEnergy:
-            self.assertLess(
-                abs(e), 0.012, msg="Deviation of thole interaction energy (damped coulomb) from analytical result too large")
+            self.assertAlmostEqual(self.p1.f[0], F_calc, delta=1e-3)
+            self.assertAlmostEqual(E["total"], E_calc, delta=1.2e-2)
 
 
 if __name__ == "__main__":

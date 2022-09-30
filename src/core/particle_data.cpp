@@ -24,13 +24,14 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
 #include "event.hpp"
 #include "exclusions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "particle_node.hpp"
 #include "rotation.hpp"
+
+#include "config/config.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -424,7 +425,7 @@ void set_particle_f(int part, const Utils::Vector3d &f) {
                       &ParticleForce::f>(part, f);
 }
 
-#if defined(MASS)
+#ifdef MASS
 void set_particle_mass(int part, double mass) {
   mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
 }
@@ -506,13 +507,11 @@ void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 }
 #endif
 
-void set_particle_q(int part, double q) {
 #ifdef ELECTROSTATICS
+void set_particle_q(int part, double q) {
   mpi_update_particle_property<double, &ParticleProperties::q>(part, q);
-#endif
 }
-
-#ifndef ELECTROSTATICS
+#else
 const constexpr double ParticleProperties::q;
 #endif
 
@@ -643,36 +642,12 @@ const std::vector<BondView> &get_particle_bonds(int part) {
   return ret;
 }
 
-/** Locally rescale all particles on current node.
- *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
- *  @param scale factor by which to rescale (>1: stretch, <1: contract)
- */
-void local_rescale_particles(int dir, double scale) {
+void rescale_particles(int dir, double scale) {
   for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
       p.pos()[dir] *= scale;
     else {
       p.pos() *= scale;
-    }
-  }
-}
-
-static void mpi_rescale_particles_local(int dir) {
-  double scale = 0.0;
-  comm_cart.recv(0, some_tag, scale);
-  local_rescale_particles(dir, scale);
-  on_particle_change();
-}
-
-REGISTER_CALLBACK(mpi_rescale_particles_local)
-
-void mpi_rescale_particles(int dir, double scale) {
-  mpi_call(mpi_rescale_particles_local, dir);
-  for (int pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node) {
-      local_rescale_particles(dir, scale);
-    } else {
-      comm_cart.send(pnode, some_tag, scale);
     }
   }
   on_particle_change();

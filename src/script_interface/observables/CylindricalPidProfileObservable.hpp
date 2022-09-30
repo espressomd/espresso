@@ -27,7 +27,8 @@
 #include "Observable.hpp"
 #include "core/observables/CylindricalPidProfileObservable.hpp"
 
-#include <script_interface/CylindricalTransformationParameters.hpp>
+#include "script_interface/math/CylindricalTransformationParameters.hpp"
+
 #include <utils/constants.hpp>
 
 #include <boost/range/algorithm.hpp>
@@ -99,7 +100,7 @@ public:
            return cylindrical_pid_profile_observable()->limits()[2].second;
          }},
     });
-  };
+  }
 
   void do_construct(VariantMap const &params) override {
     set_from_args(m_transform_params, params, "transform_params");
@@ -141,7 +142,7 @@ public:
 
 private:
   std::shared_ptr<CoreObs> m_observable;
-  std::shared_ptr<CylindricalTransformationParameters> m_transform_params;
+  std::shared_ptr<Math::CylindricalTransformationParameters> m_transform_params;
 };
 
 } /* namespace Observables */

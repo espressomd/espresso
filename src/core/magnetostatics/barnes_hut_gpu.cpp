@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLAR_BARNES_HUT
 
@@ -33,15 +33,23 @@
 DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,
                                          double itolsq)
     : prefactor{prefactor}, m_epssq{epssq}, m_itolsq{itolsq} {
-  if (this_node != 0) {
-    return;
+  if (prefactor <= 0.) {
+    throw std::domain_error("Parameter 'prefactor' must be > 0");
+  }
+  if (m_itolsq <= 0.) {
+    throw std::domain_error("Parameter 'itolsq' must be > 0");
+  }
+  if (m_epssq <= 0.) {
+    throw std::domain_error("Parameter 'epssq' must be > 0");
   }
   auto &system = EspressoSystemInterface::Instance();
   system.requestFGpu();
   system.requestTorqueGpu();
   system.requestRGpu();
   system.requestDipGpu();
-  setBHPrecision(static_cast<float>(m_epssq), static_cast<float>(m_itolsq));
+  if (this_node == 0) {
+    setBHPrecision(static_cast<float>(m_epssq), static_cast<float>(m_itolsq));
+  }
 }
 
 template <class... Args, class... ArgRef>

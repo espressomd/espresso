@@ -26,7 +26,7 @@
  *  \ref icc.hpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -236,7 +236,8 @@ struct SanityChecksICC : public boost::static_visitor<void> {
   void operator()(std::shared_ptr<T> const &actor) const {}
 #ifdef P3M
 #ifdef CUDA
-  void operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
+  [[noreturn]] void
+  operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
     throw std::runtime_error("ICC does not work with P3MGPU");
   }
 #endif // CUDA
@@ -248,10 +249,10 @@ struct SanityChecksICC : public boost::static_visitor<void> {
     boost::apply_visitor(*this, actor->base_solver);
   }
 #endif // P3M
-  void operator()(std::shared_ptr<DebyeHueckel> const &) const {
+  [[noreturn]] void operator()(std::shared_ptr<DebyeHueckel> const &) const {
     throw std::runtime_error("ICC does not work with DebyeHueckel.");
   }
-  void operator()(std::shared_ptr<ReactionField> const &) const {
+  [[noreturn]] void operator()(std::shared_ptr<ReactionField> const &) const {
     throw std::runtime_error("ICC does not work with ReactionField.");
   }
 };

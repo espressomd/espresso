@@ -27,19 +27,15 @@
  *  Implementation in \ref morse.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef MORSE
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
-
-int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
-                     double rmin, double cut);
 
 /** Calculate Morse force factor */
 inline double morse_pair_force_factor(IA_parameters const &ia_params,
@@ -64,5 +60,5 @@ inline double morse_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif /* ifdef MORSE */
-#endif /* ifdef CORE_NB_IA_MORSE_HPP */
+#endif // MORSE
+#endif

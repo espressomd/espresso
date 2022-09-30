@@ -25,7 +25,7 @@
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "rotation.hpp"
 
 #include <utils/Vector.hpp>
@@ -33,15 +33,15 @@
 
 #include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/operations.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 /** Currently active steepest descent instance */
-static SteepestDescentParameters params{};
+static SteepestDescentParameters params{0., 0., 0.};
 
 bool steepest_descent_step(const ParticleRange &particles) {
   // Maximal force encountered on node
@@ -97,26 +97,19 @@ bool steepest_descent_step(const ParticleRange &particles) {
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   // Synchronize maximum force/torque encountered
-  namespace mpi = boost::mpi;
   auto const f_max_global =
-      mpi::all_reduce(comm_cart, f_max, mpi::maximum<double>());
+      boost::mpi::all_reduce(comm_cart, f_max, boost::mpi::maximum<double>());
 
   return sqrt(f_max_global) < params.f_max;
 }
 
-void mpi_bcast_steepest_descent_local() {
-  boost::mpi::broadcast(comm_cart, params, 0);
+void register_integrator(SteepestDescentParameters const &obj) {
+  ::params = obj;
 }
 
-REGISTER_CALLBACK(mpi_bcast_steepest_descent_local)
-
-/** Broadcast steepest descent parameters */
-void mpi_bcast_steepest_descent() {
-  mpi_call_all(mpi_bcast_steepest_descent_local);
-}
-
-void steepest_descent_init(const double f_max, const double gamma,
-                           const double max_displacement) {
+SteepestDescentParameters::SteepestDescentParameters(
+    const double f_max, const double gamma, const double max_displacement)
+    : f_max{f_max}, gamma{gamma}, max_displacement{max_displacement} {
   if (f_max < 0.0) {
     throw std::runtime_error("The maximal force must be positive.");
   }
@@ -126,8 +119,4 @@ void steepest_descent_init(const double f_max, const double gamma,
   if (max_displacement < 0.0) {
     throw std::runtime_error("The maximal displacement must be positive.");
   }
-
-  params = SteepestDescentParameters{f_max, gamma, max_displacement};
-
-  mpi_bcast_steepest_descent();
 }

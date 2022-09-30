@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from . import interactions
-from .__init__ import has_features
+from .code_features import has_features
 
 
 class DrudeHelpers:
@@ -81,13 +81,16 @@ class DrudeHelpers:
         k = harmonic_bond.params["k"]
         q_drude = -1.0 * pow(k * alpha / coulomb_prefactor, 0.5)
 
-        if has_features("PARTICLE_ANISOTROPY"):
-            gamma_off = [0.0, 0.0, 0.0]
-        else:
-            gamma_off = 0.0
+        if has_features("THERMOSTAT_PER_PARTICLE"):
+            if has_features("PARTICLE_ANISOTROPY"):
+                gamma_off = [0.0, 0.0, 0.0]
+            else:
+                gamma_off = 0.0
 
         drude_part = system.part.add(pos=p_core.pos, type=type_drude,
-                                     q=q_drude, mass=mass_drude, gamma=gamma_off)
+                                     q=q_drude, mass=mass_drude)
+        if has_features("THERMOSTAT_PER_PARTICLE"):
+            drude_part.gamma = gamma_off
         id_drude = drude_part.id
 
         if verbose:
@@ -98,8 +101,8 @@ class DrudeHelpers:
         p_core.mass -= mass_drude
         p_core.add_bond((harmonic_bond, id_drude))
         p_core.add_bond((thermalized_bond, id_drude))
-
-        p_core.gamma = gamma_off
+        if has_features("THERMOSTAT_PER_PARTICLE"):
+            p_core.gamma = gamma_off
 
         if type_drude in self.drude_dict and not (
                 self.drude_dict[type_drude]["q"] == q_drude and

@@ -654,7 +654,7 @@ Lattice-Boltzmann swimmers
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-    system.part.add(pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
+    system.part.add(pos=[2, 0, 0], rotation=[True, True, True], swimming={
         'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})
 
 For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous

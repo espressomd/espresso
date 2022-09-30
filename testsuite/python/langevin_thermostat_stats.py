@@ -32,7 +32,7 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.set_regular_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 0
-    system.periodicity = [0, 0, 0]
+    system.periodicity = [False, False, False]
 
     def setUp(self):
         np.random.seed(42)
@@ -100,7 +100,7 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         if espressomd.has_features("MASS"):
             p.mass = 0.5
         if espressomd.has_features("ROTATION"):
-            p.rotation = [1, 1, 1]
+            p.rotation = [True, True, True]
             # Make sure rinertia does not change diff coeff
             if espressomd.has_features("ROTATIONAL_INERTIA"):
                 p.rinertia = [0.4, 0.4, 0.4]

@@ -25,11 +25,10 @@
  *  Routines to calculate the energy and/or force for particle pairs via
  *  interpolation of lookup tables.
  *
- *  Implementation in \ref nonbonded_tab.cpp.
  *  Needs feature TABULATED compiled in (see \ref config.hpp).
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef TABULATED
 
@@ -39,21 +38,6 @@
 #include <utils/Vector.hpp>
 
 #include <vector>
-
-/** Set the parameters of a non-bonded tabulated potential.
- *  ia_params and force/energy tables are communicated to each node
- *
- *  @param part_type_a  particle type for which the interaction is defined
- *  @param part_type_b  particle type for which the interaction is defined
- *  @param min          @copybrief TabulatedPotential::minval
- *  @param max          @copybrief TabulatedPotential::maxval
- *  @param energy       @copybrief TabulatedPotential::energy_tab
- *  @param force        @copybrief TabulatedPotential::force_tab
- *  @retval ES_OK
- */
-int tabulated_set_params(int part_type_a, int part_type_b, double min,
-                         double max, std::vector<double> const &energy,
-                         std::vector<double> const &force);
 
 /** Calculate a non-bonded pair force factor by linear interpolation from a
  *  table.
@@ -75,6 +59,5 @@ inline double tabulated_pair_energy(IA_parameters const &ia_params,
   return 0.0;
 }
 
-#endif
-
+#endif // TABULATED
 #endif

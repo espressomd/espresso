@@ -20,6 +20,7 @@
 import unittest as ut
 import espressomd
 import numpy as np
+import scipy.spatial
 import itertools
 import collections
 import tests_common
@@ -38,23 +39,31 @@ class RandomPairTest(ut.TestCase):
     system = espressomd.System(box_l=[10., 15., 15.])
 
     def setUp(self):
-        s = self.system
-        s.time_step = .1
-        s.cell_system.skin = 0.0
-        s.min_global_cut = 1.5
-        n_part = 500
+        system = self.system
+        system.time_step = .1
+        system.cell_system.skin = 0.0
+        system.min_global_cut = 1.5
+        n_part = 400
 
         np.random.seed(2)
 
-        s.part.add(pos=s.box_l * np.random.random((n_part, 3)))
+        positions = system.box_l * np.random.random((n_part, 3))
+        system.part.add(pos=positions)
         self.all_pairs = []
 
-        dist_func = self.system.distance
-        for pair in self.system.part.pairs():
-            if dist_func(pair[0], pair[1]) < 1.5:
-                self.all_pairs.append((pair[0].id, pair[1].id))
+        def euclidean_pbc(a, b, box_l):
+            vec = np.fmod(a - b + box_l, box_l)
+            for i in range(3):
+                if vec[i] > box_l[i] / 2.:
+                    vec[i] -= box_l[i]
+            return np.linalg.norm(vec)
 
-        self.all_pairs = set(self.all_pairs)
+        dist_mat = scipy.spatial.distance.cdist(
+            positions, positions, metric=euclidean_pbc,
+            box_l=np.copy(system.box_l))
+        diag_mask = np.logical_not(np.eye(n_part, dtype=bool))
+        dist_crit = (dist_mat < 1.5) * diag_mask
+        self.all_pairs = list(zip(*np.nonzero(np.triu(dist_crit))))
         self.assertGreater(len(self.all_pairs), 0)
 
     def tearDown(self):
@@ -92,11 +101,10 @@ class RandomPairTest(ut.TestCase):
         self.check_pairs(n2_pairs)
 
     def test(self):
-        periods = [0, 1]
         self.system.periodicity = [True, True, True]
         tests_common.check_non_bonded_loop_trace(self, self.system)
 
-        for periodicity in itertools.product(periods, periods, periods):
+        for periodicity in itertools.product((False, True), repeat=3):
             self.system.periodicity = periodicity
             n2_pairs = self.pairs_n2(1.5)
 

@@ -25,26 +25,20 @@
 #include "gaussian.hpp"
 
 #ifdef GAUSSIAN
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <stdexcept>
 
-int gaussian_set_params(int part_type_a, int part_type_b, double eps,
-                        double sig, double cut) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->gaussian.eps = eps;
-  data->gaussian.sig = sig;
-  data->gaussian.cut = cut;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+Gaussian_Parameters::Gaussian_Parameters(double eps, double sig, double cutoff)
+    : eps{eps}, sig{sig}, cut{cutoff} {
+  if (eps < 0.) {
+    throw std::domain_error("Gaussian parameter 'eps' has to be >= 0");
+  }
+  if (sig < 0.) {
+    throw std::domain_error("Gaussian parameter 'sig' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("Gaussian parameter 'cutoff' has to be >= 0");
+  }
 }
-
-#endif
+#endif // GAUSSIAN

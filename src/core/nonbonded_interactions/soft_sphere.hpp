@@ -27,23 +27,18 @@
  *  Implementation in \ref soft_sphere.cpp
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef SOFT_SPHERE
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
-
 #include <cmath>
-
-int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
-                           double cut, double offset);
 
 /** Calculate soft-sphere force factor */
 inline double soft_pair_force_factor(IA_parameters const &ia_params,
                                      double dist) {
-  if (dist < (ia_params.soft_sphere.cut + ia_params.soft_sphere.offset)) {
+  if (dist < ia_params.soft_sphere.max_cutoff()) {
     /* normal case: resulting force/energy smaller than zero. */
     auto const r_off = dist - ia_params.soft_sphere.offset;
     if (r_off > 0.0) {
@@ -56,7 +51,7 @@ inline double soft_pair_force_factor(IA_parameters const &ia_params,
 
 /** Calculate soft-sphere energy */
 inline double soft_pair_energy(IA_parameters const &ia_params, double dist) {
-  if (dist < (ia_params.soft_sphere.cut + ia_params.soft_sphere.offset)) {
+  if (dist < ia_params.soft_sphere.max_cutoff()) {
     auto const r_off = dist - ia_params.soft_sphere.offset;
     /* normal case: resulting force/energy smaller than zero. */
     return ia_params.soft_sphere.a / std::pow(r_off, ia_params.soft_sphere.n);
@@ -64,5 +59,5 @@ inline double soft_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif /* ifdef SOFT_SPHERE */
+#endif // SOFT_SPHERE
 #endif

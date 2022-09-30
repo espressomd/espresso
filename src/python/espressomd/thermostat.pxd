@@ -114,12 +114,3 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
         void set_sd_kT(double kT) except +
         double get_sd_kT()
-
-IF NPT:
-    cdef extern from "npt.hpp":
-        ctypedef struct NptIsoParameters:
-            double p_ext
-            double p_inst
-            double p_diff
-            double piston
-        extern NptIsoParameters nptiso

@@ -24,7 +24,7 @@
  *  Energy calculation.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "energy.hpp"
 
@@ -154,8 +154,7 @@ inline double calc_non_bonded_pair_energy(
 
 #ifdef GAY_BERNE
   /* Gay-Berne */
-  ret += gb_pair_energy(p1.calc_director(), p2.calc_director(), ia_params, d,
-                        dist);
+  ret += gb_pair_energy(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
 
   return ret;
@@ -178,7 +177,7 @@ inline void add_non_bonded_pair_energy(
     Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
     Observable_stat &obs_energy) {
-  IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
+  auto const &ia_params = get_ia_param(p1.type(), p2.type());
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))

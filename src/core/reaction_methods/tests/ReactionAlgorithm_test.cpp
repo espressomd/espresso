@@ -44,7 +44,7 @@
 
 namespace espresso {
 // ESPResSo system instance
-std::unique_ptr<EspressoSystemStandAlone> system;
+static std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
 
 // Check the base class for all Monte Carlo algorithms.

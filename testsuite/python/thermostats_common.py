@@ -142,7 +142,7 @@ class ThermostatsCommon:
         system = self.system
         partcls = system.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"):
-            partcls.rotation = [1, 1, 1]
+            partcls.rotation = [True, True, True]
 
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             gamma_local = 3 * [gamma_local]

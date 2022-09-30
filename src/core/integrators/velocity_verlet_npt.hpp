@@ -19,9 +19,10 @@
 #ifndef INTEGRATORS_VELOCITY_VERLET_NPT_HPP
 #define INTEGRATORS_VELOCITY_VERLET_NPT_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef NPT
+
 #include "ParticleRange.hpp"
 
 /** Special propagator for NpT isotropic.
@@ -43,6 +44,6 @@ void velocity_verlet_npt_step_1(const ParticleRange &particles,
  */
 void velocity_verlet_npt_step_2(const ParticleRange &particles,
                                 double time_step);
-#endif
 
+#endif // NPT
 #endif

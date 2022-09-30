@@ -149,7 +149,7 @@ mpi_get_short_range_neighbors_local(int const pid, double const distance,
     }
   };
   cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
-  return ret;
+  return {ret};
 }
 
 REGISTER_CALLBACK_ONE_RANK(mpi_get_short_range_neighbors_local)

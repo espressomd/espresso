@@ -27,7 +27,7 @@
  *  For more information see \ref rattle.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef BOND_CONSTRAINT
 

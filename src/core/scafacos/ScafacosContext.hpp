@@ -28,7 +28,7 @@
  * It is further derived for the coulombic and dipolar versions of ScaFaCoS.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(SCAFACOS) or defined(SCAFACOS_DIPOLES)
 

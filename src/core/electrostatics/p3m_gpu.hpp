@@ -25,7 +25,7 @@
  * P3M electrostatics on GPU.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef P3M
 #ifdef CUDA

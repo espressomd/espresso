@@ -21,7 +21,7 @@
 #ifndef CORE_PRESSURE_INLINE_HPP
 #define CORE_PRESSURE_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "pressure.hpp"
 
@@ -62,7 +62,7 @@ inline void add_non_bonded_pair_virials(
   if (do_nonbonded(p1, p2))
 #endif
   {
-    IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
+    auto const &ia_params = get_ia_param(p1.type(), p2.type());
     auto const force =
         calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, kernel_forces).f;
     auto const stress = Utils::tensor_product(d, force);

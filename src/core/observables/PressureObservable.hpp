@@ -30,7 +30,7 @@ class Pressure : public Observable {
 public:
   std::vector<std::size_t> shape() const override { return {1}; }
   std::vector<double> operator()() const override {
-    auto const ptensor = observable_compute_pressure_tensor();
+    auto const ptensor = mpi_observable_compute_pressure_tensor();
     std::vector<double> res{1};
     res[0] = (ptensor[0] + ptensor[4] + ptensor[8]) / 3.;
     return res;

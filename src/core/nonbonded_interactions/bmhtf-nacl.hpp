@@ -27,19 +27,15 @@
  *  Implementation in \ref bmhtf-nacl.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef BMHTF_NACL
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
 #include <cmath>
-
-int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
-                     double C, double D, double sig, double cut);
 
 /** Calculate BMHTF force factor */
 inline double BMHTF_pair_force_factor(IA_parameters const &ia_params,
@@ -67,5 +63,5 @@ inline double BMHTF_pair_energy(IA_parameters const &ia_params, double dist) {
   return 0.0;
 }
 
-#endif
+#endif // BMHTF_NACL
 #endif

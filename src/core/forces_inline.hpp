@@ -24,7 +24,7 @@
  *  Force calculation.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "forces.hpp"
 
@@ -143,11 +143,7 @@ inline ParticleForce calc_non_bonded_pair_force(
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
-  // The gb force function isn't inlined, probably due to its size
-  if (dist < ia_params.gay_berne.cut) {
-    pf += gb_pair_force(p1.calc_director(), p2.calc_director(), ia_params, d,
-                        dist);
-  }
+  pf += gb_pair_force(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
   pf.f += force_factor * d;
   return pf;
@@ -184,7 +180,7 @@ inline void add_non_bonded_pair_force(
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
-  IA_parameters const &ia_params = *get_ia_param(p1.type(), p2.type());
+  auto const &ia_params = get_ia_param(p1.type(), p2.type());
   ParticleForce pf{};
 
   /***********************************************/

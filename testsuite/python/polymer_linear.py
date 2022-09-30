@@ -209,15 +209,9 @@ class LinearPolymerPositions(ut.TestCase):
         Check runtime error messages.
 
         """
-        with self.assertRaisesRegex(ValueError, r"The following keys have to be given as keyword arguments: "
-                                                r"\[.+\], got \[.+\] \(missing \['seed'\]\)"):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'seed' is missing"):
             espressomd.polymer.linear_polymer_positions(
                 n_polymers=1, beads_per_chain=10, bond_length=0.1)
-        with self.assertRaisesRegex(ValueError, r"Only the following keys can be given as keyword arguments: "
-                                                r"\[.+\], got \[.+\] \(unknown \['bondangle'\]\)"):
-            espressomd.polymer.linear_polymer_positions(
-                n_polymers=1, beads_per_chain=10, bond_length=0.1, seed=10,
-                bondangle=0.1)
         with self.assertRaisesRegex(RuntimeError, "Failed to create polymer positions"):
             espressomd.polymer.linear_polymer_positions(
                 n_polymers=1, beads_per_chain=10,

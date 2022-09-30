@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef NPT
 #include "velocity_verlet_npt.hpp"
@@ -43,6 +43,8 @@
 #include <cmath>
 #include <functional>
 
+static constexpr Utils::Vector3i nptgeom_dir{{1, 2, 4}};
+
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
                                              double time_step) {
   nptiso.p_vel = {};
@@ -54,7 +56,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
     auto const noise = friction_therm0_nptiso<2>(npt_iso, p.v(), p.id());
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
-        if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
+        if (nptiso.geometry & ::nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
           p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
         } else {
@@ -71,7 +73,7 @@ void velocity_verlet_npt_finalize_p_inst(double time_step) {
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
   for (int i = 0; i < 3; i++) {
-    if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
+    if (nptiso.geometry & ::nptgeom_dir[i]) {
       nptiso.p_vel[i] /= Utils::sqr(time_step);
       nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
     }
@@ -124,7 +126,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
       continue;
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
-        if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
+        if (nptiso.geometry & ::nptgeom_dir[j]) {
           p.pos()[j] = scal[1] * (p.pos()[j] + scal[2] * p.v()[j] * time_step);
           p.pos_at_last_verlet_update()[j] *= scal[1];
           p.v()[j] *= scal[0];
@@ -145,7 +147,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     new_box = box_geo.length();
 
     for (int i = 0; i < 3; i++) {
-      if (nptiso.cubic_box || nptiso.geometry & nptiso.nptgeom_dir[i]) {
+      if (nptiso.cubic_box || nptiso.geometry & ::nptgeom_dir[i]) {
         new_box[i] = L_new;
       }
     }
@@ -173,8 +175,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
     for (int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         auto const noise = friction_therm0_nptiso<1>(npt_iso, p.v(), p.id());
-        if (integ_switch == INTEG_METHOD_NPT_ISO &&
-            (nptiso.geometry & nptiso.nptgeom_dir[j])) {
+        if (nptiso.geometry & ::nptgeom_dir[j]) {
           p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
           nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
         } else {
@@ -201,4 +202,4 @@ void velocity_verlet_npt_step_2(const ParticleRange &particles,
 #endif
   velocity_verlet_npt_finalize_p_inst(time_step);
 }
-#endif
+#endif // NPT

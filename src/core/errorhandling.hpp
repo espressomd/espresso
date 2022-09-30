@@ -26,7 +26,7 @@
 #ifndef ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
 #define ESPRESSO_SRC_CORE_ERROR_HANDLING_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "error_handling/RuntimeError.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
@@ -53,7 +53,7 @@ class communicator;
  * @brief exit ungracefully,
  * core dump if switched on.
  */
-void errexit();
+[[noreturn]] void errexit();
 
 /**
  * @brief Count runtime errors on all nodes.

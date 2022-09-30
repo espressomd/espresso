@@ -22,7 +22,7 @@
 #ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DLC_HPP
 #define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DLC_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLES
 

@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2009-2022 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -39,7 +40,7 @@ if(SCAFACOS)
   add_subdirectory(scafacos)
 endif(SCAFACOS)
 
-if(WITH_SCRIPT_INTERFACE)
+if(WITH_PYTHON)
   add_subdirectory(script_interface)
 endif()
 

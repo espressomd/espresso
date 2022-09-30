@@ -30,7 +30,7 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -85,7 +85,7 @@ void on_program_start() {
   if (this_node == 0) {
     try {
       cuda_init();
-    } catch (cuda_runtime_error const &err) {
+    } catch (cuda_runtime_error const &) {
       // pass
     }
   }
@@ -96,10 +96,8 @@ void on_program_start() {
   /* initially go for regular decomposition */
   cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
 
-  if (this_node == 0) {
-    /* make sure interaction 0<->0 always exists */
-    make_particle_type_exist(0);
-  }
+  /* make sure interaction 0<->0 always exists */
+  make_particle_type_exist_local(0);
 }
 
 void on_integration_start(double time_step) {
@@ -253,6 +251,11 @@ void on_dipoles_change() {
   on_short_range_ia_change();
 }
 
+void on_non_bonded_ia_change() {
+  maximal_cutoff_nonbonded();
+  on_short_range_ia_change();
+}
+
 void on_short_range_ia_change() {
   cells_re_init(cell_structure.decomposition_type());
   recalc_forces = true;
@@ -320,10 +323,8 @@ void on_periodicity_change() {
 #ifdef STOKESIAN_DYNAMICS
   if (integ_switch == INTEG_METHOD_SD) {
     if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
-      runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: "
-                        << box_geo.periodic(0) << " " << box_geo.periodic(1)
-                        << " " << box_geo.periodic(2) << "\n"
-                        << "  Required: 0 0 0\n";
+      runtimeErrorMsg() << "Stokesian Dynamics requires periodicity "
+                        << "(False, False, False)\n";
   }
 #endif
   on_skin_change();

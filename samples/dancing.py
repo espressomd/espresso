@@ -52,9 +52,9 @@ system.periodicity = [False, False, False]
 system.integrator.set_stokesian_dynamics(
     viscosity=1.0, radii={0: 1.0}, approximation_method=sd_method)
 
-system.part.add(pos=[-5, 0, 0], rotation=[1, 1, 1])
-system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
-system.part.add(pos=[7, 0, 0], rotation=[1, 1, 1])
+system.part.add(pos=[-5, 0, 0], rotation=[True, True, True])
+system.part.add(pos=[0, 0, 0], rotation=[True, True, True])
+system.part.add(pos=[7, 0, 0], rotation=[True, True, True])
 
 gravity = espressomd.constraints.Gravity(g=[0, -1, 0])
 system.constraints.add(gravity)

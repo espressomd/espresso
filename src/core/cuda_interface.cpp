@@ -23,7 +23,7 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"
@@ -118,9 +118,9 @@ static void add_forces_and_torques(ParticleRange particles,
   int i = 0;
   for (auto &p : particles) {
     for (int j = 0; j < 3; j++) {
-      p.force()[j] += forces[3 * i + j];
+      p.force()[j] += static_cast<double>(forces[3 * i + j]);
 #ifdef ROTATION
-      p.torque()[j] += torques[3 * i + j];
+      p.torque()[j] += static_cast<double>(torques[3 * i + j]);
 #endif
     }
     i++;
@@ -154,22 +154,10 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
   }
 }
 
-static void cuda_bcast_global_part_params_local() {
+void cuda_bcast_global_part_params() {
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
   EspressoSystemInterface::Instance().requestParticleStructGpu();
 }
 
-REGISTER_CALLBACK(cuda_bcast_global_part_params_local)
-
-void cuda_bcast_global_part_params() {
-  mpi_call_all(cuda_bcast_global_part_params_local);
-}
-
-void cuda_bcast_global_part_params_parallel() {
-  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
-            sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-  EspressoSystemInterface::Instance().requestParticleStructGpuParallel();
-}
-
-#endif /* ifdef CUDA */
+#endif // CUDA

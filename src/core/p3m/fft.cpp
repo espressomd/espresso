@@ -25,7 +25,7 @@
  *
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #if defined(P3M) || defined(DP3M)
 
@@ -174,7 +174,7 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
     group[0] = n;
     c_pos--;
   }
-  return group;
+  return {group};
 }
 
 /** Calculate the local fft mesh. Calculate the local mesh (@p loc_mesh)
@@ -738,7 +738,7 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
   for (int i = 0; i < fft.plan[1].new_size; i++) {
     fft.data_buf[i] = data[2 * i]; /* real value */
     // Vincent:
-    if (check_complex && (data[2 * i + 1] > 1e-5)) {
+    if (check_complex and std::abs(data[2 * i + 1]) > 1e-5) {
       printf("Complex value is not zero (i=%d,data=%g)!!!\n", i,
              data[2 * i + 1]);
       if (i > 100)

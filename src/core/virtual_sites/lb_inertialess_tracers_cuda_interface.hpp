@@ -25,7 +25,7 @@
 #ifndef IBM_CUDA_INTERFACE_HPP
 #define IBM_CUDA_INTERFACE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 

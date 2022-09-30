@@ -25,7 +25,7 @@
 #ifndef LBGPU_CUH
 #define LBGPU_CUH
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA
 #include <curand_kernel.h>

@@ -32,8 +32,13 @@
 
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "galilei/ComFixed.hpp"
 
 #include <utils/Vector.hpp>
+
+#include <memory>
+
+extern std::shared_ptr<ComFixed> comfixed;
 
 /** initialize real particle forces with thermostat forces and
     ghost particle forces with zero. */

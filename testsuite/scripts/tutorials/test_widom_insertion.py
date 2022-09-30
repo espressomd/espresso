@@ -23,7 +23,7 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/widom_insertion/widom_insertion.py", sample_size=50,
-    ci_params={"mesh": (12, 12, 12), "cao": 6, "tuning": True}
+    ci_params={"mesh": (12, 12, 12), "cao": 6, "tune": True}
 )
 
 
@@ -31,10 +31,10 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
 
     def test(self):
-        np.testing.assert_allclose(
-            tutorial.excess_chemical_potentials[1:, 0],
-            tutorial.davies_equation(tutorial.salt_concentrations)[1:],
-            rtol=0.05)
+        # simulation data points must be close to the Davies curve
+        sim = tutorial.excess_chemical_potentials[:, 0]
+        ref = tutorial.davies_equation(tutorial.salt_concentrations)
+        self.assertLess(np.std(sim - ref), 0.05)
 
 
 if __name__ == "__main__":

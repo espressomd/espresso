@@ -121,6 +121,7 @@ class dds(ut.TestCase):
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
                "Skipping test: only runs for n_nodes == 1")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_gen_reference_data(self):
         filepaths = ('dipolar_direct_summation_energy.npy',
                      'dipolar_direct_summation_arrays.npy')
@@ -142,7 +143,7 @@ class dds(ut.TestCase):
         part_pos = np.random.random((N, 3)) * system.box_l
         part_dip = dipole_modulus * tests_common.random_dipoles(N)
         self.particles = system.part.add(pos=part_pos, dip=part_dip,
-                                         rotation=N * [(1, 1, 1)])
+                                         rotation=N * [(True, True, True)])
 
         # minimize system
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -150,8 +151,7 @@ class dds(ut.TestCase):
         system.integrator.set_steepest_descent(
             f_max=1, gamma=0.001, max_displacement=0.01)
         system.integrator.run(100)
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0.0, sigma=0, cutoff=0, shift=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         system.integrator.set_vv()
         assert system.analysis.energy()["total"] == 0
 
@@ -182,7 +182,7 @@ class dds(ut.TestCase):
         ref_t = array_data[:, 9:12]
 
         self.particles = system.part.add(
-            pos=pos, dip=dip, rotation=[[1, 1, 1]] * len(pos))
+            pos=pos, dip=dip, rotation=[[True, True, True]] * len(pos))
         dds_e, dds_f, dds_t = method_func()
         self.assertAlmostEqual(dds_e, ref_e, delta=energy_tol)
         np.testing.assert_allclose(dds_f, ref_f, atol=force_tol)

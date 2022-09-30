@@ -270,10 +270,15 @@ void CoulombP3M::init() {
 }
 
 CoulombP3M::CoulombP3M(P3MParameters &&parameters, double prefactor,
-                       int tune_timings, bool tune_verbose)
+                       int tune_timings, bool tune_verbose,
+                       bool check_complex_residuals)
     : p3m{std::move(parameters)}, tune_timings{tune_timings},
-      tune_verbose{tune_verbose} {
+      tune_verbose{tune_verbose}, check_complex_residuals{
+                                      check_complex_residuals} {
 
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
+  }
   m_is_tuned = !p3m.params.tuning;
   p3m.params.tuning = false;
   set_prefactor(prefactor);
@@ -490,7 +495,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     }
 
     /* Back FFT force component mesh */
-    auto const check_complex = !p3m.params.tuning;
+    auto const check_complex = !p3m.params.tuning and check_complex_residuals;
     for (int d = 0; d < 3; d++) {
       fft_perform_back(p3m.E_mesh[d].data(), check_complex, p3m.fft, comm_cart);
     }
@@ -758,7 +763,8 @@ void CoulombP3M::sanity_checks_boxl() const {
 
 void CoulombP3M::sanity_checks_periodicity() const {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("CoulombP3M: requires periodicity (1 1 1)");
+    throw std::runtime_error(
+        "CoulombP3M: requires periodicity (True, True, True)");
   }
 }
 

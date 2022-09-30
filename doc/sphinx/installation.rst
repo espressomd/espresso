@@ -105,20 +105,23 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
+Later in the installation instructions, you will see CMake commands of the
+form ``cmake ..`` with optional arguments, such as ``cmake .. -D WITH_CUDA=ON``
+to activate CUDA. These commands may need to be adapted depending on which
+operating system and CUDA version you are using.
+
 On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
 to compile sources that rely on ``std::function``. You can either use GCC 10:
 
 .. code-block:: bash
 
     CC=gcc-10 CXX=g++-10 cmake .. -D WITH_CUDA=ON
-    make -j
 
 or alternatively install Clang 12 as a replacement for nvcc and GCC:
 
 .. code-block:: bash
 
     CC=clang-12 CXX=clang++-12 cmake .. -D WITH_CUDA=ON -D WITH_CUDA_COMPILER=clang
-    make -j
 
 On Ubuntu 20.04, the default GCC compiler is also too recent for nvcc and will
 generate compiler errors. You can either install an older version of GCC and
@@ -133,7 +136,6 @@ specific one by providing custom paths to the compiler and toolkit:
 
     CUDACXX=/usr/local/cuda-11.0/bin/nvcc \
       cmake .. -D WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.0
-    make -j
 
 Alternatively for Clang:
 
@@ -141,7 +143,6 @@ Alternatively for Clang:
 
     CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.0 \
       cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang -DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.0
-    make -j
 
 .. _Requirements for building the documentation:
 
@@ -779,12 +780,12 @@ The build type is controlled by ``-D CMAKE_BUILD_TYPE=<type>`` where
 * ``Coverage``: for code coverage
 
 Cluster users and HPC developers may be interested in manually editing the
-``Espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
+``espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed
 by a series of conditionals to enable or disable compiler-specific flags.
 Compiler flags passed to CMake via the ``-DCMAKE_CXX_FLAGS`` option
 (such as ``cmake . -DCMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
-will appear in the compiler command before the flags in ``Espresso_cpp_flags``,
+will appear in the compiler command before the flags in ``espresso_cpp_flags``,
 and will therefore have lower precedence.
 
 Be aware that fast-math mode can break |es|. It is incompatible with the

@@ -24,7 +24,7 @@
  *  This file contains all subroutines required to process rotational motion.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef ROTATION
 

@@ -21,9 +21,9 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
   add_custom_command(
     OUTPUT doxy-features
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_doxyconfig.py
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_doxyconfig.py
             ${CMAKE_SOURCE_DIR}/src/config doxy-features
-    DEPENDS Espresso::config)
+    DEPENDS espresso::config)
 
   set(DOXYGEN_BIB_IN ${CMAKE_SOURCE_DIR}/doc/bibliography.bib)
   set(DOXYGEN_BIB_OUT ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib)

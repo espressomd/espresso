@@ -25,7 +25,7 @@
 #ifndef NPT_H
 #define NPT_H
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef NPT
 #include "BoxGeometry.hpp"
@@ -34,73 +34,52 @@
 
 /** Parameters of the isotropic NpT-integration scheme. */
 struct NptIsoParameters {
+  NptIsoParameters() = default;
+  NptIsoParameters(double ext_pressure, double piston,
+                   Utils::Vector<bool, 3> const &rescale, bool cubic_box);
   /** mass of a virtual piston representing the shaken box */
-  double piston;
+  double piston = 0.;
   /** inverse of \ref piston */
-  double inv_piston;
+  double inv_piston = 0.;
   /** isotropic volume. Note that we use the term volume throughout,
    *  although for a 2d or 1d system we mean Area and Length respectively
    */
-  double volume;
+  double volume = 0.;
   /** desired pressure to which the algorithm strives to */
-  double p_ext;
+  double p_ext = 0.;
   /** instantaneous pressure the system currently has */
-  double p_inst;
+  double p_inst = 0.;
   /** difference between \ref p_ext and \ref p_inst */
-  double p_diff;
+  double p_diff = 0.;
   /** virial (short-range) components of \ref p_inst */
-  Utils::Vector3d p_vir;
+  Utils::Vector3d p_vir = {0., 0., 0.};
   /** ideal gas components of \ref p_inst, derived from the velocities */
-  Utils::Vector3d p_vel;
+  Utils::Vector3d p_vel = {0., 0., 0.};
   /** geometry information for the NpT integrator. Holds the vector
    *  \< dir, dir, dir \> where a positive value for dir indicates that
    *  box movement is allowed in that direction. To check whether a
    *  given direction is turned on, use bitwise comparison with \ref
    *  nptgeom_dir
    */
-  int geometry;
-  /** bitwise comparison values corresponding to different directions */
-  Utils::Vector3i nptgeom_dir;
+  int geometry = 0;
   /** The number of dimensions in which NpT boxlength motion is coupled to
    *  particles */
-  int dimension;
+  int dimension = 0;
   /** Set this flag if you want all box dimensions to be identical. Needed for
    *  electrostatics and magnetostatics. If the value of \ref dimension is
    *  less than 3, then box length motion in one or more directions will
    *  be decoupled from the particle motion
    */
-  bool cubic_box;
+  bool cubic_box = false;
   /** An index to one of the non-constant dimensions. Handy if you just want
    *  the variable box_l
    */
-  int non_const_dim;
+  int non_const_dim = -1;
+  void coulomb_dipole_sanity_checks() const;
+  Utils::Vector<bool, 3> get_direction() const;
 };
 
 extern NptIsoParameters nptiso;
-
-/** @brief NpT initializer.
- *
- *  @param ext_pressure  Reference pressure
- *  @param piston        Piston mass
- *  @param xdir_rescale  Enable box rescaling in the *x*-direction
- *  @param ydir_rescale  Enable box rescaling in the *y*-direction
- *  @param zdir_rescale  Enable box rescaling in the *z*-direction
- *  @param cubic_box     Determines if the volume fluctuations should also
- *                       apply to dimensions which are switched off by the
- *                       above flags and which do not contribute to the
- *                       pressure (3D) or tension (2D, 1D)
- */
-void nptiso_init(double ext_pressure, double piston, bool xdir_rescale,
-                 bool ydir_rescale, bool zdir_rescale, bool cubic_box);
-
-/** @name NpT geometry bitmasks.
- *  Allowed values for @ref NptIsoParameters::geometry.
- */
-/**@{*/
-#define NPTGEOM_XDIR 1
-#define NPTGEOM_YDIR 2
-#define NPTGEOM_ZDIR 4
-/**@}*/
 
 /** @brief Synchronizes NpT state such as instantaneous and average pressure
  */

@@ -20,7 +20,7 @@
 #define OBSERVABLES_PARTICLE_TRAITS
 
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "rotation.hpp"
 
 namespace ParticleObservables {
@@ -43,7 +43,7 @@ template <> struct traits<Particle> {
   }
   auto charge(Particle const &p) const { return p.q(); }
   auto dipole_moment(Particle const &p) const {
-#if defined(ROTATION) && defined(DIPOLES)
+#ifdef DIPOLES
     return p.calc_dip();
 #else
     return Utils::Vector3d{};

@@ -29,7 +29,7 @@ class NPTThermostat(ut.TestCase):
     """Test NpT dynamics"""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 0.
-    system.periodicity = [1, 1, 1]
+    system.periodicity = [True, True, True]
 
     def setUp(self):
         np.random.seed(42)

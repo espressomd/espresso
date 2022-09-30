@@ -33,7 +33,7 @@ DIPOLAR_PREFACTOR = 1.1
 
 
 @utx.skipIfMissingFeatures(["DIPOLES", "FFTW"])
-class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
+class Test(ut.TestCase):
 
     """Tests mdlc (2d)  as well as dipolar p3m and dipolar p2nfft (3d) against
        stored data. Validity of the stored data:
@@ -43,7 +43,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.time_step = 0.01
     system.cell_system.skin = .4
-    system.periodicity = [1, 1, 1]
+    system.periodicity = [True, True, True]
 
     def tearDown(self):
         self.system.part.clear()

@@ -43,5 +43,4 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
 
 extern int max_oif_objects;
 
-void mpi_set_max_oif_objects(int max_oif_objects);
 #endif

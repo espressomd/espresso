@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DIPOLAR_DIRECT_SUM
 
@@ -38,9 +38,6 @@ static void get_simulation_box(float *box, int *per) {
 
 DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor)
     : prefactor{prefactor} {
-  if (this_node != 0) {
-    return;
-  }
   auto &system = EspressoSystemInterface::Instance();
   system.requestFGpu();
   system.requestTorqueGpu();

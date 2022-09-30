@@ -291,20 +291,31 @@ class InteractionsNonBondedTest(ut.TestCase):
     @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
     def test_lj_generic(self):
 
+        params = {"epsilon": 2.12,
+                  "sigma": 1.37,
+                  "cutoff": 2.122,
+                  "offset": 0.185,
+                  "b1": 4.22,
+                  "b2": 3.63,
+                  "e1": 10.32,
+                  "e2": 5.81,
+                  "shift": -0.13}
         self.run_test("generic_lennard_jones",
-                      {"epsilon": 2.12,
-                       "sigma": 1.37,
-                       "cutoff": 2.122,
-                       "offset": 0.185,
-                       "b1": 4.22,
-                       "b2": 3.63,
-                       "e1": 10.32,
-                       "e2": 5.81,
-                       "shift": -0.13},
+                      params,
                       force_kernel=tests_common.lj_generic_force,
                       energy_kernel=tests_common.lj_generic_potential,
                       n_steps=231,
                       force_kernel_needs_espressomd=True)
+
+        params["shift"] = "auto"
+        obj = espressomd.interactions.GenericLennardJonesInteraction(**params)
+        ref_shift = obj.b2 * (obj.sigma / obj.cutoff)**obj.e2 - \
+            obj.b1 * (obj.sigma / obj.cutoff)**obj.e1
+        self.assertAlmostEqual(obj.shift, ref_shift, delta=1e-10)
+
+        params["cutoff"] = 0.
+        obj = espressomd.interactions.GenericLennardJonesInteraction(**params)
+        self.assertEqual(obj.shift, 0.)
 
     # Test WCA Potential
     @utx.skipIfMissingFeatures("WCA")
@@ -520,9 +531,9 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             self.system.part.clear()
             self.system.part.add(
-                pos=(1, 2, 3), rotation=(1, 1, 1), type=0)
+                pos=(1, 2, 3), rotation=3 * [True], type=0)
             self.system.part.add(
-                pos=(2.2, 2.1, 2.9), rotation=(1, 1, 1), type=0)
+                pos=(2.2, 2.1, 2.9), rotation=3 * [True], type=0)
 
             self.system.non_bonded_inter[0, 0].gay_berne.set_params(
                 sig=sigma_0, cut=cut, eps=epsilon_0, k1=k_1, k2=k_2, mu=mu,

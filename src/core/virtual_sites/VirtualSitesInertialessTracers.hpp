@@ -19,11 +19,12 @@
 #ifndef VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 #define VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 
-#include "config.hpp"
-#ifdef VIRTUAL_SITES
-#include "VirtualSites.hpp"
+#include "config/config.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+
+#include "VirtualSites.hpp"
+
 /** @brief Virtual sites which are advected with an lb fluid. Forces on them are
  * instantaneously transferred to the fluid
  */
@@ -32,6 +33,5 @@ class VirtualSitesInertialessTracers : public VirtualSites {
   void after_lb_propagation(double time_step) override;
 };
 
-#endif
-#endif
+#endif // VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif

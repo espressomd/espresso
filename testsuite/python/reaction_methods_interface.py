@@ -39,7 +39,11 @@ class ReactionMethods(ut.TestCase):
         def check_reaction_parameters(reactions, parameters):
             for reaction, params in zip(reactions, parameters):
                 for key in reaction.required_keys():
-                    self.assertEqual(getattr(reaction, key), params[key])
+                    if isinstance(params[key], float):
+                        self.assertAlmostEqual(
+                            getattr(reaction, key), params[key], delta=1e-10)
+                    else:
+                        self.assertEqual(getattr(reaction, key), params[key])
 
         reaction_forward = {
             'gamma': gamma,
@@ -116,7 +120,7 @@ class ReactionMethods(ut.TestCase):
         for reaction_flat, params in zip(
                 status['reactions'], reaction_parameters):
             for key in reaction_flat:
-                if key == 'gamma':
+                if isinstance(params[key], float):
                     self.assertAlmostEqual(
                         reaction_flat[key], params[key], delta=1e-10)
                 else:

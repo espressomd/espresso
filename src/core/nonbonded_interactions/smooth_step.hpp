@@ -27,7 +27,7 @@
  *  Implementation in \ref smooth_step.cpp.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef SMOOTH_STEP
 
@@ -37,9 +37,6 @@
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
-
-int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
-                           double eps, double k0, double sig, double cut);
 
 /** Calculate smooth step force factor */
 inline double SmSt_pair_force_factor(IA_parameters const &ia_params,

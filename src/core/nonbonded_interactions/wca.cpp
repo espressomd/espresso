@@ -23,24 +23,22 @@
 #include "wca.hpp"
 
 #ifdef WCA
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
-
 #include <cmath>
+#include <stdexcept>
 
-int wca_set_params(int part_type_a, int part_type_b, double eps, double sig) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  data->wca.eps = eps;
-  data->wca.sig = sig;
-  data->wca.cut = sig * std::pow(2., 1. / 6.);
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+WCA_Parameters::WCA_Parameters(double epsilon, double sigma)
+    : eps{epsilon}, sig{sigma} {
+  if (epsilon < 0.) {
+    throw std::domain_error("WCA parameter 'epsilon' has to be >= 0");
+  }
+  if (sigma < 0.) {
+    throw std::domain_error("WCA parameter 'sigma' has to be >= 0");
+  }
+  if (sigma != 0.) {
+    cut = sigma * std::pow(2., 1. / 6.);
+  }
 }
 
 #endif /* ifdef WCA */

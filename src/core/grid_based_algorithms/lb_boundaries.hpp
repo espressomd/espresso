@@ -34,7 +34,7 @@
 
 #include "lbboundaries/LBBoundary.hpp"
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Span.hpp>
 

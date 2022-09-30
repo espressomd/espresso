@@ -19,7 +19,7 @@
 #ifndef CORE_CUDA_UTILS_HPP
 #define CORE_CUDA_UTILS_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef CUDA
 

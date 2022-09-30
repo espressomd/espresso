@@ -18,7 +18,6 @@
 
 
 from libcpp.unordered_map cimport unordered_map
-from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
 from libcpp cimport bool

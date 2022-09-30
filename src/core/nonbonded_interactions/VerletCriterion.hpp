@@ -22,7 +22,7 @@
 #define CORE_NB_IA_VERLETCRITERION_HPP
 
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/index.hpp>
@@ -30,7 +30,7 @@
 
 struct GetNonbondedCutoff {
   auto operator()(int type_i, int type_j) const {
-    return get_ia_param(type_i, type_j)->max_cut;
+    return get_ia_param(type_i, type_j).max_cut;
   }
 };
 

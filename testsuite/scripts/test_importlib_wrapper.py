@@ -360,7 +360,8 @@ import espressomd.visualization
                 path_out.read_text())
 
             # test importing a sample that relies on features not compiled in
-            inactive_features = espressomd.all_features() - set(espressomd.features())
+            inactive_features = set(
+                espressomd.all_features()) - set(espressomd.features())
             if inactive_features:
                 path_features.write_text(f"""
 import espressomd

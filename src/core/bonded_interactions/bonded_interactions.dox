@@ -243,37 +243,27 @@
  *
  *  @subsection bondedIA_new_interface Adding the interaction in the Python interface
  *
- *  Please note that the following is Cython code (www.cython.org), rather than
- *  pure Python.
- *
- *  * In file <tt>src/python/espressomd/interactions.pxd</tt>:
- *    - Add the bonded interaction to \c enum_bonded_interaction.
+ *  * In file <tt>src/python/espressomd/interactions.py</tt>:
+ *    - Add the bonded interaction to \c BONDED_IA.
  *      The order of the enum values must match the order of types in
  *      @ref Bonded_IA_Parameters exactly:
  *      @code{.py}
- *      cdef enum enum_bonded_interaction:
- *          BONDED_IA_NONE = 0,
- *          BONDED_IA_FENE,
- *          [...]
+ *      class BONDED_IA(enum.IntEnum):
+ *          NONE = 0
+ *          FENE = enum.auto()
+ *          HARMONIC = enum.auto()
+ *          # ...
  *      @endcode
- *  * In file <tt>src/python/espressomd/interactions.pyx</tt>:
- *    - Implement the Cython class for the bonded interaction, using the one
+ *    - Implement the Python class for the bonded interaction, using the one
  *      for the FENE bond as template. Please use pep8 naming convention.
- *    - Set the class' member
+ *    - Set the class' members
  *      @code{.py}
  *      _so_name = "Interactions::YourNewBond"
+ *      _type_number = BONDED_IA.YOURNEWBOND
  *      @endcode
  *      where you put the name of your bond instead of \c YourNewBond.
  *      This connects the %ScriptInterface class with the Python class.
- *    - Create a new entry in the dictionary \c bonded_interaction_classes to
- *      register the new class you have written:
- *      @code{.py}
- *      bonded_interaction_classes = {
- *          int(BONDED_IA_FENE): FeneBond,
- *          int(BONDED_IA_HARMONIC): HarmonicBond,
- *          [...]
- *      }
- *      @endcode
+ *      The type number is the new enum value from \c BONDED_IA.
  *  * In file <tt>testsuite/python/interactions_bonded_interface.py</tt>:
  *    - Add a test case to verify that parameters set and gotten from the
  *      interaction are consistent.

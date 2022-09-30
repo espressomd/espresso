@@ -22,7 +22,7 @@
 #ifndef THERMOSTATS_LANGEVIN_INLINE_HPP
 #define THERMOSTATS_LANGEVIN_INLINE_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 #include "random.hpp"

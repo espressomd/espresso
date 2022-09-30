@@ -43,6 +43,7 @@
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 #include <stdexcept>
 #include <string>
@@ -435,6 +436,12 @@ void place_particle(int p_id, Utils::Vector3d const &pos) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }
+#ifndef __FAST_MATH__
+  if (std::isnan(pos[0]) or std::isnan(pos[1]) or std::isnan(pos[2]) or
+      std::isinf(pos[0]) or std::isinf(pos[1]) or std::isinf(pos[2])) {
+    throw std::domain_error("Particle position must be finite");
+  }
+#endif // __FAST_MATH__
   if (particle_exists(p_id)) {
     mpi_place_particle(get_particle_node(p_id), p_id, pos);
   } else {

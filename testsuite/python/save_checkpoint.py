@@ -47,7 +47,7 @@ modes = config.get_modes()
 # use a box with 3 different dimensions, unless DipolarP3M is used
 system = espressomd.System(box_l=[12.0, 14.0, 16.0])
 if 'DP3M' in modes:
-    system.box_l = 3 * [np.max(system.box_l)]
+    system.box_l = 3 * [float(np.max(system.box_l))]
 system.cell_system.skin = 0.1
 system.time_step = 0.01
 system.time = 1.5
@@ -76,8 +76,10 @@ if 'INT.NPT' not in modes:
 lbf_actor = None
 if 'LB.CPU' in modes:
     lbf_actor = espressomd.lb.LBFluid
+    has_lbb = espressomd.has_features("LB_BOUNDARIES")
 elif 'LB.GPU' in modes and espressomd.gpu_available():
     lbf_actor = espressomd.lb.LBFluidGPU
+    has_lbb = espressomd.has_features("LB_BOUNDARIES_GPU")
 if lbf_actor:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_actor(agrid=0.5, visc=1.3, dens=1.5, tau=0.01, gamma_odd=0.2,
@@ -85,8 +87,7 @@ if lbf_actor:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if (espressomd.has_features(
-            "LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")):
+    if has_lbb:
         system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
             shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
         system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
@@ -110,6 +111,9 @@ if espressomd.has_features('EXCLUSIONS'):
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
 p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
 
+system.comfixed.types = [0, 2]
+p_slice = system.part.by_ids([4, 1])
+
 if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
     if espressomd.gpu_available() and 'P3M.GPU' in modes:
         ActorP3M = espressomd.electrostatics.P3MGPU
@@ -122,6 +126,7 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         cao=1,
         alpha=1.0,
         r_cut=1.0,
+        check_complex_residuals=False,
         timings=15,
         tune=False)
     if 'ELC' in modes:
@@ -158,7 +163,7 @@ system.auto_update_accumulators.add(acc_correlator)
 
 # constraints
 system.constraints.add(shape=espressomd.shapes.Sphere(center=system.box_l / 2, radius=0.1),
-                       particle_type=17)
+                       particle_type=7)
 system.constraints.add(
     shape=espressomd.shapes.Wall(
         normal=[1. / np.sqrt(3)] * 3, dist=0.5))
@@ -198,7 +203,7 @@ if 'LB' not in modes:
     elif 'THERM.DPD' in modes and espressomd.has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     elif 'THERM.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [0, 0, 0]
+        system.periodicity = [False, False, False]
         system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
     if 'INT.NPT' in modes and espressomd.has_features('NPT'):
@@ -212,7 +217,7 @@ if 'LB' not in modes:
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [0, 0, 0]
+        system.periodicity = [False, False, False]
         system.integrator.set_stokesian_dynamics(
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
             pair_mobility=False, self_mobility=True)
@@ -228,22 +233,39 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[3, 0].lennard_jones.set_params(
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
-    system.non_bonded_inter[1, 17].lennard_jones.set_params(
+    system.non_bonded_inter[1, 7].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
+if espressomd.has_features(['DPD']):
+    dpd_params = {"weight_function": 1, "gamma": 2., "trans_r_cut": 2., "k": 2.,
+                  "trans_weight_function": 0, "trans_gamma": 1., "r_cut": 2.}
+    dpd_ia = espressomd.interactions.DPDInteraction(**dpd_params)
+    handle_ia = espressomd.interactions.NonBondedInteractionHandle(
+        _types=(0, 0))
+    checkpoint.register("dpd_ia")
+    checkpoint.register("dpd_params")
+    checkpoint.register("handle_ia")
 
 # bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 p2.add_bond((harmonic_bond, p1))
 if 'THERM.LB' not in modes:
-    thermalized_bond = espressomd.interactions.ThermalizedBond(
-        temp_com=0.0, gamma_com=0.0, temp_distance=0.2, gamma_distance=0.5,
-        r_cut=2, seed=51)
-    system.bonded_inter.add(thermalized_bond)
-    p2.add_bond((thermalized_bond, p1))
+    # create 3 thermalized bonds that will overwrite each other's seed
+    thermalized_bond_params = dict(temp_com=0.1, temp_distance=0.2,
+                                   gamma_com=0.3, gamma_distance=0.5, r_cut=2.)
+    thermalized_bond1 = espressomd.interactions.ThermalizedBond(
+        seed=1, **thermalized_bond_params)
+    thermalized_bond2 = espressomd.interactions.ThermalizedBond(
+        seed=2, **thermalized_bond_params)
+    thermalized_bond3 = espressomd.interactions.ThermalizedBond(
+        seed=3, **thermalized_bond_params)
+    system.bonded_inter.add(thermalized_bond1)
+    p2.add_bond((thermalized_bond1, p1))
+    checkpoint.register("thermalized_bond2")
+    checkpoint.register("thermalized_bond_params")
     if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
         dh = espressomd.drude_helpers.DrudeHelpers()
-        dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
+        dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond1,
                                       p2, 10, 1., 4.6, 0.8, 2.)
         checkpoint.register("dh")
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
@@ -278,6 +300,7 @@ checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
+checkpoint.register("p_slice")
 if espressomd.has_features("H5MD"):
     checkpoint.register("h5")
     checkpoint.register("h5_units")
@@ -369,6 +392,11 @@ class TestCheckpoint(ut.TestCase):
         if lbf_actor:
             self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
+
+        # only objects at global scope can be checkpointed
+        with self.assertRaisesRegex(KeyError, "The given object 'local_obj' was not found in the current scope"):
+            local_obj = "local"  # pylint: disable=unused-variable
+            checkpoint.register("local_obj")
 
     @ut.skipIf(lbf_actor is None, "Skipping test due to missing mode.")
     def test_lb_checkpointing_exceptions(self):

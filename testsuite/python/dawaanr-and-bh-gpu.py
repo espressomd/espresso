@@ -49,8 +49,8 @@ class BHGPUTest(ut.TestCase):
         pf_dawaanr = 3.524
         ratio_dawaanr_bh_gpu = pf_dawaanr / pf_bh_gpu
         system = self.system
-        system.box_l = 3 * [15]
-        system.periodicity = [0, 0, 0]
+        system.box_l = [15., 15., 15.]
+        system.periodicity = [False, False, False]
         system.time_step = 1E-4
         system.cell_system.skin = 0.1
 
@@ -67,8 +67,7 @@ class BHGPUTest(ut.TestCase):
             g.kill_particle_motion(rotation=True)
             system.integrator.set_vv()
 
-            system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0, cutoff=-1, shift=0.0)
+            system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
             system.cell_system.skin = 0.0
             system.time_step = 0.01

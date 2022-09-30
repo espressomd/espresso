@@ -21,7 +21,7 @@
 #ifndef ESPRESSO_EXCLUSIONS_HPP
 #define ESPRESSO_EXCLUSIONS_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 

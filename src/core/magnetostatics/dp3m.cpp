@@ -25,7 +25,7 @@
  *  By default the magnetic epsilon is metallic = 0.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef DP3M
 
@@ -153,6 +153,9 @@ DipolarP3M::DipolarP3M(P3MParameters &&parameters, double prefactor,
 
   if (prefactor <= 0.) {
     throw std::domain_error("Parameter 'prefactor' must be > 0");
+  }
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
   }
 
   if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
@@ -879,7 +882,8 @@ void DipolarP3M::sanity_checks_boxl() const {
 
 void DipolarP3M::sanity_checks_periodicity() const {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("DipolarP3M: requires periodicity (1 1 1)");
+    throw std::runtime_error(
+        "DipolarP3M: requires periodicity (True, True, True)");
   }
 }
 

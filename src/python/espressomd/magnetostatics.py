@@ -19,7 +19,7 @@
 
 from . import utils
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .__init__ import has_features
+from .code_features import has_features
 
 
 class MagnetostaticInteraction(ScriptInterfaceHelper):
@@ -38,10 +38,18 @@ class MagnetostaticInteraction(ScriptInterfaceHelper):
         self._check_required_features()
 
         if 'sip' not in kwargs:
+            for key in self.required_keys():
+                if key not in kwargs:
+                    raise RuntimeError(f"Parameter '{key}' is missing")
+            utils.check_required_keys(self.required_keys(), kwargs.keys())
             params = self.default_params()
             params.update(kwargs)
             self.validate_params(params)
             super().__init__(**params)
+            for key in params:
+                if key not in self._valid_parameters():
+                    raise RuntimeError(
+                        f"Parameter '{key}' is not a valid parameter")
         else:
             super().__init__(**kwargs)
 
@@ -53,12 +61,9 @@ class MagnetostaticInteraction(ScriptInterfaceHelper):
         """Check validity of given parameters.
         """
         utils.check_type_or_throw_except(
-            params["prefactor"], 1, float, "prefactor should be a double")
+            params["prefactor"], 1, float, "Parameter 'prefactor' should be a float")
 
     def default_params(self):
-        raise NotImplementedError("Derived classes must implement this method")
-
-    def valid_keys(self):
         raise NotImplementedError("Derived classes must implement this method")
 
     def required_keys(self):
@@ -125,30 +130,25 @@ class DipolarP3M(MagnetostaticInteraction):
         if utils.is_valid_type(params["mesh"], int):
             params["mesh"] = 3 * [params["mesh"]]
         else:
-            utils.check_type_or_throw_except(params["mesh"], 3, int,
-                                             "DipolarP3M mesh has to be an integer or integer list of length 3")
+            utils.check_type_or_throw_except(
+                params["mesh"], 3, int,
+                "Parameter 'mesh' has to be an integer or integer list of length 3")
 
         if params["epsilon"] == "metallic":
             params["epsilon"] = 0.0
 
         utils.check_type_or_throw_except(
             params["epsilon"], 1, float,
-            "epsilon should be a double or 'metallic'")
+            "Parameter 'epsilon' has to be a float or 'metallic'")
 
-        utils.check_type_or_throw_except(params["mesh_off"], 3, float,
-                                         "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
+        utils.check_type_or_throw_except(
+            params["mesh_off"], 3, float,
+            "Parameter 'mesh_off' has to be a (3,) array_like of values between 0.0 and 1.0")
 
         if not utils.is_valid_type(params["timings"], int):
-            raise TypeError("DipolarP3M timings has to be an integer")
-        if params["timings"] <= 0:
-            raise ValueError("DipolarP3M timings must be > 0")
+            raise TypeError("Parameter 'timings' has to be an integer")
         if not utils.is_valid_type(params["tune"], bool):
-            raise TypeError("DipolarP3M tune has to be a boolean")
-
-    def valid_keys(self):
-        return {"prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
-                "cao", "accuracy", "epsilon", "cao_cut", "a", "ai",
-                "alpha", "r_cut", "cao3", "tune", "timings", "verbose"}
+            raise TypeError("Parameter 'tune' has to be a boolean")
 
     def required_keys(self):
         return {"accuracy"}
@@ -190,9 +190,6 @@ class DipolarDirectSumCpu(MagnetostaticInteraction):
     def required_keys(self):
         return set()
 
-    def valid_keys(self):
-        return {"prefactor"}
-
 
 @script_interface_register
 class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
@@ -218,9 +215,6 @@ class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
 
     def required_keys(self):
         return {"n_replica"}
-
-    def valid_keys(self):
-        return {"prefactor", "n_replica"}
 
 
 @script_interface_register
@@ -260,14 +254,8 @@ class Scafacos(MagnetostaticInteraction):
             raise NotImplementedError(
                 "Feature SCAFACOS_DIPOLES not compiled in")
 
-    def validate_params(self, params):
-        pass
-
     def default_params(self):
         return {}
-
-    def valid_keys(self):
-        return {"method_name", "method_params", "prefactor"}
 
     def required_keys(self):
         return {"method_name", "method_params", "prefactor"}
@@ -306,9 +294,6 @@ class DipolarDirectSumGpu(MagnetostaticInteraction):
         return {}
 
     def required_keys(self):
-        return set()
-
-    def valid_keys(self):
         return {"prefactor"}
 
 
@@ -325,6 +310,13 @@ class DipolarBarnesHutGpu(MagnetostaticInteraction):
     Requires feature ``DIPOLAR_BARNES_HUT``, which depends on
     ``DIPOLES`` and ``CUDA``.
 
+    Parameters
+    ----------
+    epssq : :obj:`float`, optional
+        Squared skin of the octant cells.
+    itolsq : :obj:`float`, optional
+        Squared inverse fraction of the octant cells.
+
     """
     _so_name = "Dipoles::DipolarBarnesHutGpu"
     _so_creation_policy = "GLOBAL"
@@ -338,10 +330,7 @@ class DipolarBarnesHutGpu(MagnetostaticInteraction):
         return {"epssq": 100.0, "itolsq": 4.0}
 
     def required_keys(self):
-        return set()
-
-    def valid_keys(self):
-        return {"prefactor", "epssq", "itolsq"}
+        return {"prefactor"}
 
 
 @script_interface_register
@@ -375,17 +364,17 @@ class DLC(MagnetostaticInteraction):
 
     def validate_params(self, params):
         utils.check_type_or_throw_except(
-            params["maxPWerror"], 1, float, "maxPWerror has to be a float")
+            params["maxPWerror"], 1, float,
+            "Parameter 'maxPWerror' has to be a float")
         utils.check_type_or_throw_except(
-            params["gap_size"], 1, float, "gap_size has to be a float")
+            params["gap_size"], 1, float,
+            "Parameter 'gap_size' has to be a float")
         utils.check_type_or_throw_except(
-            params["far_cut"], 1, float, "far_cut has to be a float")
+            params["far_cut"], 1, float,
+            "Parameter 'far_cut' has to be a float")
 
     def default_params(self):
         return {"far_cut": -1.}
-
-    def valid_keys(self):
-        return {"actor", "maxPWerror", "gap_size", "far_cut"}
 
     def required_keys(self):
         return {"actor", "maxPWerror", "gap_size"}

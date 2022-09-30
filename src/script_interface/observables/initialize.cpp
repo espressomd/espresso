@@ -26,7 +26,7 @@
 #include "PidProfileObservable.hpp"
 #include "ProfileObservable.hpp"
 #include "RDF.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "core/observables/BondAngles.hpp"
 #include "core/observables/BondDihedrals.hpp"
@@ -65,13 +65,6 @@ namespace Observables {
  *  "ParamlessObservableInterface"
  */
 #define REGISTER(name) om->register_new<name>("Observables::" #name "");
-
-/** Register a @ref ScriptInterface::Observables::ProfileObservable
- *  "ProfileObservable"
- */
-#define REGISTER_PROFILE_OBS(name)                                             \
-  om->register_new<ProfileObservable<::Observables::name>>(                    \
-      "Observables::" #name "");
 
 /** Register a @ref ScriptInterface::Observables::PidObservable
  *  "PidObservable"

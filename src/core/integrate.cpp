@@ -58,6 +58,7 @@
 
 #include <profiler/profiler.hpp>
 
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
@@ -406,7 +407,7 @@ int integrate(int n_steps, int reuse_forces) {
 
   // Verlet list statistics
   if (n_verlet_updates > 0)
-    verlet_reuse = n_steps / (double)n_verlet_updates;
+    verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
   else
     verlet_reuse = 0;
 
@@ -448,7 +449,7 @@ int python_integrate(int n_steps, bool recalc_forces_par,
     auto const new_skin =
         std::min(0.4 * max_cut,
                  *boost::min_element(cell_structure.max_cutoff()) - max_cut);
-    mpi_set_skin(new_skin);
+    mpi_call_all(mpi_set_skin_local, new_skin);
   }
 
   using Accumulators::auto_update;
@@ -500,33 +501,6 @@ int mpi_integrate(int n_steps, int reuse_forces) {
                   mpi_integrate_local, n_steps, reuse_forces);
 }
 
-void integrate_set_steepest_descent(const double f_max, const double gamma,
-                                    const double max_displacement) {
-  steepest_descent_init(f_max, gamma, max_displacement);
-  mpi_set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
-}
-
-void integrate_set_nvt() { mpi_set_integ_switch(INTEG_METHOD_NVT); }
-
-void integrate_set_bd() { mpi_set_integ_switch(INTEG_METHOD_BD); }
-
-void integrate_set_sd() {
-  if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
-    throw std::runtime_error("Stokesian Dynamics requires periodicity 0 0 0");
-  }
-  mpi_set_integ_switch(INTEG_METHOD_SD);
-}
-
-#ifdef NPT
-void integrate_set_npt_isotropic(double ext_pressure, double piston,
-                                 bool xdir_rescale, bool ydir_rescale,
-                                 bool zdir_rescale, bool cubic_box) {
-  nptiso_init(ext_pressure, piston, xdir_rescale, ydir_rescale, zdir_rescale,
-              cubic_box);
-  mpi_set_integ_switch(INTEG_METHOD_NPT_ISO);
-}
-#endif
-
 double interaction_range() {
   /* Consider skin only if there are actually interactions */
   auto const max_cut = maximal_cutoff(n_nodes == 1);
@@ -541,47 +515,30 @@ double get_sim_time() { return sim_time; }
 
 void increment_sim_time(double amount) { sim_time += amount; }
 
-void mpi_set_time_step_local(double dt) {
-  time_step = dt;
+void set_time_step(double value) {
+  if (value <= 0.)
+    throw std::domain_error("time_step must be > 0.");
+  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), value);
+  ::time_step = value;
   on_timestep_change();
 }
 
-REGISTER_CALLBACK(mpi_set_time_step_local)
-
-void mpi_set_time_step(double time_s) {
-  if (time_s <= 0.)
-    throw std::domain_error("time_step must be > 0.");
-  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
-  mpi_call_all(mpi_set_time_step_local, time_s);
-}
-
-void mpi_set_skin_local(double skin) {
-  ::skin = skin;
+void mpi_set_skin_local(double value) {
+  ::skin = value;
   skin_set = true;
   on_skin_change();
 }
 
 REGISTER_CALLBACK(mpi_set_skin_local)
 
-void mpi_set_skin(double skin) { mpi_call_all(mpi_set_skin_local, skin); }
-
-void mpi_set_time_local(double time) {
-  sim_time = time;
-  recalc_forces = true;
+void set_time(double value) {
+  ::sim_time = value;
+  ::recalc_forces = true;
   LeesEdwards::update_box_params();
 }
 
-REGISTER_CALLBACK(mpi_set_time_local)
-
-void mpi_set_time(double time) { mpi_call_all(mpi_set_time_local, time); }
-
-void mpi_set_integ_switch_local(int integ_switch) {
-  ::integ_switch = integ_switch;
-}
-
-REGISTER_CALLBACK(mpi_set_integ_switch_local)
-
-void mpi_set_integ_switch(int integ_switch) {
-  mpi_call_all(mpi_set_integ_switch_local, integ_switch);
+void set_integ_switch(int value) {
+  ::integ_switch = value;
+  ::recalc_forces = true;
 }

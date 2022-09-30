@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef P3M
 #ifdef CUDA
@@ -50,7 +50,7 @@ void CoulombP3MGPU::init_cpu_kernels() { CoulombP3M::init(); }
 
 void CoulombP3MGPU::request_gpu() const {
   auto &system = EspressoSystemInterface::Instance();
-  system.requestParticleStructGpuParallel();
+  system.requestParticleStructGpu();
 }
 
 #endif // CUDA

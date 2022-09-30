@@ -65,7 +65,7 @@ class FFT_test(ut.TestCase):
         self.system.integrator.run(100)
         self.system.integrator.set_vv()
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0.0, sigma=1.0, cutoff=2)
+            epsilon=0.0, sigma=1.0, cutoff=2, shift="auto")
 
     def add_charged_particles(self):
         np.random.seed(seed=42)
@@ -81,7 +81,7 @@ class FFT_test(ut.TestCase):
         positions = np.random.random((num_part, 3))
         dipoles = tests_common.random_dipoles(num_part)
         self.system.part.add(pos=positions * self.system.box_l,
-                             dip=dipoles, rotation=num_part * [(1, 1, 1)])
+                             dip=dipoles, rotation=num_part * [3 * [True]])
         self.minimize()
 
     @ut.skipIf(n_nodes not in FFT_PLANS, f"no FFT plan for {n_nodes} threads")

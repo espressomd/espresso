@@ -21,7 +21,7 @@
 #define IBM_TRIEL_H
 
 #include "Particle.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 

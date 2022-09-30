@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #ifdef P3M
 
@@ -961,7 +961,7 @@ static auto calc_total_charge() {
 
 void ElectrostaticLayerCorrection::sanity_checks_periodicity() const {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
-    throw std::runtime_error("ELC: requires periodicity (1 1 1)");
+    throw std::runtime_error("ELC: requires periodicity (True, True, True)");
   }
 }
 

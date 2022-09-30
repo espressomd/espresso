@@ -16,11 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "rotate_system.hpp"
+
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "config.hpp"
+#include "config/config.hpp"
 #include "event.hpp"
 #include "rotation.hpp"
 
@@ -34,7 +37,7 @@
 #include <cmath>
 #include <functional>
 
-static void mpi_rotate_system_local(double phi, double theta, double alpha) {
+void rotate_system(double phi, double theta, double alpha) {
   auto const particles = cell_structure.local_particles();
 
   // Calculate center of mass
@@ -55,9 +58,9 @@ static void mpi_rotate_system_local(double phi, double theta, double alpha) {
 
   // Rotation axis in Cartesian coordinates
   Utils::Vector3d axis;
-  axis[0] = sin(theta) * cos(phi);
-  axis[1] = sin(theta) * sin(phi);
-  axis[2] = cos(theta);
+  axis[0] = std::sin(theta) * std::cos(phi);
+  axis[1] = std::sin(theta) * std::sin(phi);
+  axis[2] = std::cos(theta);
 
   // Rotate particle coordinates
   for (auto &p : particles) {
@@ -71,10 +74,4 @@ static void mpi_rotate_system_local(double phi, double theta, double alpha) {
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
   update_dependent_particles();
-}
-
-REGISTER_CALLBACK(mpi_rotate_system_local)
-
-void mpi_rotate_system(double phi, double theta, double alpha) {
-  mpi_call_all(mpi_rotate_system_local, phi, theta, alpha);
 }

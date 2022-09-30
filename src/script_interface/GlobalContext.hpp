@@ -37,6 +37,7 @@
 
 #include <utils/Factory.hpp>
 
+#include <boost/mpi/communicator.hpp>
 #include <boost/serialization/utility.hpp>
 
 #include <cstddef>
@@ -71,6 +72,7 @@ class GlobalContext : public Context {
   std::shared_ptr<LocalContext> m_node_local_context;
 
   bool m_is_head_node;
+  boost::mpi::communicator const &m_comm;
 
   ParallelExceptionHandler m_parallel_exception_handler;
 
@@ -89,7 +91,7 @@ public:
   GlobalContext(Communication::MpiCallbacks &callbacks,
                 std::shared_ptr<LocalContext> node_local_context)
       : m_local_objects(), m_node_local_context(std::move(node_local_context)),
-        m_is_head_node(callbacks.comm().rank() == 0),
+        m_is_head_node(callbacks.comm().rank() == 0), m_comm(callbacks.comm()),
         // NOLINTNEXTLINE(bugprone-throw-keyword-missing)
         m_parallel_exception_handler(callbacks.comm()),
         cb_make_handle(&callbacks,
@@ -163,6 +165,9 @@ public:
    */
   std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) override;
+  std::shared_ptr<ObjectHandle>
+  make_shared_local(std::string const &name,
+                    VariantMap const &parameters) override;
 
   boost::string_ref name(const ObjectHandle *o) const override;
 
@@ -170,6 +175,7 @@ public:
   void parallel_try_catch(std::function<void()> const &cb) const override {
     m_parallel_exception_handler.parallel_try_catch<std::exception>(cb);
   }
+  boost::mpi::communicator const &get_comm() const override { return m_comm; }
 };
 } // namespace ScriptInterface
 

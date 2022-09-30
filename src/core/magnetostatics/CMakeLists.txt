@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 target_sources(
-  Espresso_core
+  espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dipoles.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/barnes_hut_gpu.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dds.cpp

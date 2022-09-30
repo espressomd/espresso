@@ -25,35 +25,29 @@
 #include "bmhtf-nacl.hpp"
 
 #ifdef BMHTF_NACL
-#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <utils/math/int_pow.hpp>
 
-int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
-                     double C, double D, double sig, double cut) {
-  double shift, dist2, pw6;
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+#include <stdexcept>
 
-  if (!data)
-    return ES_ERROR;
-
-  dist2 = cut * cut;
-  pw6 = dist2 * dist2 * dist2;
-  shift = -(A * exp(B * (sig - cut)) - C / pw6 - D / pw6 / dist2);
-
-  data->bmhtf.A = A;
-  data->bmhtf.B = B;
-  data->bmhtf.C = C;
-  data->bmhtf.D = D;
-  data->bmhtf.sig = sig;
-  data->bmhtf.cut = cut;
-  data->bmhtf.computed_shift = shift;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+BMHTF_Parameters::BMHTF_Parameters(double a, double b, double c, double d,
+                                   double sig, double cutoff)
+    : A{a}, B{b}, C{c}, D{d}, sig{sig}, cut{cutoff} {
+  if (a < 0.) {
+    throw std::domain_error("BMHTF parameter 'a' has to be >= 0");
+  }
+  if (c < 0.) {
+    throw std::domain_error("BMHTF parameter 'c' has to be >= 0");
+  }
+  if (d < 0.) {
+    throw std::domain_error("BMHTF parameter 'd' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("BMHTF parameter 'cutoff' has to be >= 0");
+  }
+  computed_shift = C / Utils::int_pow<6>(cut) + D / Utils::int_pow<8>(cut) -
+                   A * std::exp(B * (sig - cut));
 }
 
-#endif
+#endif // BMHTF_NACL

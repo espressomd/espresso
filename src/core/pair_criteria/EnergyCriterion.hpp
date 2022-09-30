@@ -34,7 +34,7 @@ public:
     auto const d = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
     // Interaction parameters for particle types
-    auto const &ia_params = *get_ia_param(p1.type(), p2.type());
+    auto const &ia_params = get_ia_param(p1.type(), p2.type());
     auto const coulomb_kernel = Coulomb::pair_energy_kernel();
 
     auto const energy = calc_non_bonded_pair_energy(

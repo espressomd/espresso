@@ -1,3 +1,22 @@
+#
+# Copyright (C) 2018-2022 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 function(CMAKE_TEST)
   cmake_parse_arguments(TEST "" "FILE" "DEPENDENCIES" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
@@ -12,7 +31,7 @@ function(CMAKE_TEST)
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 
-set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR})
+set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${Python_STDARCH})
 
 cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
 

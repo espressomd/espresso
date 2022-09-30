@@ -106,7 +106,8 @@ print(f"Principal axes tensor:\n{principal_axes}")
 # place center bead
 p_center = system.part.add(
     pos=center_of_mass, mass=branch_len * 6 + 1, rinertia=principal_moments,
-    rotation=[1, 1, 1], type=ParticleTypes.CENTER.value, quat=espressomd.rotation.matrix_to_quat(principal_axes))
+    rotation=[True, True, True], type=ParticleTypes.CENTER.value,
+    quat=espressomd.rotation.matrix_to_quat(principal_axes))
 
 # Relate the particles that make up the rigid body to the central particle.
 # This will also mark them as `virtual = True`

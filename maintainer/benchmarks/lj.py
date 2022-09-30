@@ -105,9 +105,11 @@ else:
     system.bonded_inter.add(hb)
     for _ in range(0, n_part, 2):
         pos = np.random.random(3) * system.box_l
+        vec = np.random.random(3)
+        vec /= np.linalg.norm(vec)
         p1 = system.part.add(pos=pos)
-        p2 = system.part.add(pos=pos + np.random.random(3) / np.sqrt(3))
-        system.part[p1].add_bond((hb, p2))
+        p2 = system.part.add(pos=pos + vec * hb.r_0)
+        p1.add_bond((hb, p2))
 
 #  Warmup Integration
 #############################################################

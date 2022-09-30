@@ -19,7 +19,7 @@
 #ifndef VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 #define VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 #ifdef VIRTUAL_SITES
 #include "VirtualSites.hpp"
 

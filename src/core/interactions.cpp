@@ -18,16 +18,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "communication.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "collision.hpp"
+#include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "magnetostatics/dipoles.hpp"
-
-#include "serialization/IA_parameters.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <boost/mpi/collectives/broadcast.hpp>
 
@@ -76,15 +75,4 @@ bool long_range_interactions_sanity_checks() {
     return true;
   }
   return false;
-}
-
-void mpi_bcast_ia_params_local(int i, int j) {
-  boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-  on_short_range_ia_change();
-}
-
-REGISTER_CALLBACK(mpi_bcast_ia_params_local)
-
-void mpi_bcast_ia_params(int i, int j) {
-  mpi_call_all(mpi_bcast_ia_params_local, i, j);
 }

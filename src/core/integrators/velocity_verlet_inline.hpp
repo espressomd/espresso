@@ -19,7 +19,7 @@
 #ifndef INTEGRATORS_VELOCITY_VERLET_HPP
 #define INTEGRATORS_VELOCITY_VERLET_HPP
 
-#include "config.hpp"
+#include "config/config.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"

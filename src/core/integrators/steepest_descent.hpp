@@ -24,8 +24,6 @@
 
 #include "ParticleRange.hpp"
 
-#include <boost/serialization/access.hpp>
-
 /** Parameters for the steepest descent algorithm */
 struct SteepestDescentParameters {
   /** Maximal particle force
@@ -43,20 +41,11 @@ struct SteepestDescentParameters {
    */
   double max_displacement;
 
-private:
-  friend boost::serialization::access;
-  template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &f_max;
-    ar &gamma;
-    ar &max_displacement;
-  }
+  SteepestDescentParameters(double f_max, double gamma,
+                            double max_displacement);
 };
 
-/** Steepest descent initializer
- *
- *  Sets the parameters in @ref SteepestDescentParameters
- */
-void steepest_descent_init(double f_max, double gamma, double max_displacement);
+void register_integrator(SteepestDescentParameters const &obj);
 
 /** Steepest descent integrator
  *  @return whether the maximum force/torque encountered is below the user

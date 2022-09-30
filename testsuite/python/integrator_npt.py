@@ -71,7 +71,7 @@ class IntegratorNPT(ut.TestCase):
         # get the equilibrium box length for the chosen NpT parameters
         system.integrator.run(500)
         # catch unstable simulation early (when the DP3M test case ran first)
-        assert system.box_l[0] < 20.
+        assert system.box_l[0] < 20., "NpT simulation is unstable"
         system.integrator.run(1500)
         box_l_ref = system.box_l[0]
 
@@ -91,7 +91,7 @@ class IntegratorNPT(ut.TestCase):
             system.integrator.set_steepest_descent(
                 f_max=-10, gamma=0, max_displacement=0.1)
         # the interface state is unchanged
-        integrator_state = system.integrator.get_state()
+        integrator_state = system.integrator.get_params()
         self.assertIsInstance(integrator_state['integrator'],
                               espressomd.integrate.VelocityVerletIsotropicNPT)
         params = integrator_state['integrator'].get_params()
@@ -112,7 +112,7 @@ class IntegratorNPT(ut.TestCase):
         with self.assertRaises(RuntimeError):
             system.integrator.set_isotropic_npt(ext_pressure=-1, piston=100)
         # the interface state is unchanged
-        self.assertIsInstance(system.integrator.get_state()['integrator'],
+        self.assertIsInstance(system.integrator.get_params()['integrator'],
                               espressomd.integrate.VelocityVerlet)
         # the core state is unchanged
         system.integrator.run(1)
