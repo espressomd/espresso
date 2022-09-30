@@ -72,7 +72,7 @@ struct QueueEntry {
 
 /** @brief Queue to record bonds broken during a time step */
 using Queue = std::vector<QueueEntry>;
-Queue queue;
+static Queue queue;
 
 /** @brief Retrieve breakage specification for the bond type */
 boost::optional<BreakageSpec> get_breakage_spec(int bond_type) {

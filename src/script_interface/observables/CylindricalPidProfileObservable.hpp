@@ -100,7 +100,7 @@ public:
            return cylindrical_pid_profile_observable()->limits()[2].second;
          }},
     });
-  };
+  }
 
   void do_construct(VariantMap const &params) override {
     set_from_args(m_transform_params, params, "transform_params");

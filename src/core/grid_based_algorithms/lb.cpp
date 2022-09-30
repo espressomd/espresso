@@ -185,7 +185,7 @@ static LB_FluidData lbfluid_b;
 LB_Fluid lbfluid;
 /** Span of the velocity populations of the fluid (post-collision populations).
  */
-LB_Fluid lbfluid_post;
+static LB_Fluid lbfluid_post;
 
 std::vector<LB_FluidNode> lbfields;
 

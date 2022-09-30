@@ -397,8 +397,11 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
     $<$<CXX_COMPILER_ID:Clang>:-Wrange-loop-analysis>
     -Wfloat-conversion
-    $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wimplicit-float-conversion>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wimplicit-float-conversion>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wunused-exception-parameter>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wmissing-variable-declarations>
     $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,11.0.0>>:-Wnon-c-typedef-for-linkage>
+    $<$<NOT:$<CXX_COMPILER_ID:Intel>>:-Wdelete-non-virtual-dtor>
     # disable warnings from -Wextra
     -Wno-sign-compare
     -Wno-unused-function

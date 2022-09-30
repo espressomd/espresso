@@ -174,7 +174,7 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
     group[0] = n;
     c_pos--;
   }
-  return group;
+  return {group};
 }
 
 /** Calculate the local fft mesh. Calculate the local mesh (@p loc_mesh)

@@ -114,7 +114,7 @@ public:
     return *this;
   }
 
-  void save_binary(void *address, std::size_t count){};
+  void save_binary(void *, std::size_t) {}
 
 private:
   template <typename T, std::enable_if_t<std::is_class<T>::value, int> = 0>
@@ -124,13 +124,13 @@ private:
 
   // standard types are not classes
   template <typename T, std::enable_if_t<!std::is_class<T>::value, int> = 0>
-  void recurse(T &t) {}
+  void recurse(T &) {}
 
   // const objects cannot be processed by boost::serialization
-  template <typename T> void recurse(T const &t) {}
+  template <typename T> void recurse(T const &) {}
 
   // std::vector objects cannot be processed by boost::serialization
-  template <typename T> void recurse(std::vector<T> &t) {}
+  template <typename T> void recurse(std::vector<T> &) {}
 
   buffer_type &m_buffer;
   boost::serialization::access m_accessor;

@@ -135,7 +135,7 @@ public:
   Variant get_parameter(const std::string &name) const final {
     try {
       return m_parameters.at(name).get();
-    } catch (std::out_of_range const &e) {
+    } catch (std::out_of_range const &) {
       throw UnknownParameter{name};
     }
   }
@@ -143,9 +143,9 @@ public:
   void do_set_parameter(const std::string &name, const Variant &value) final {
     try {
       m_parameters.at(name).set(value);
-    } catch (AutoParameter::WriteError const &e) {
+    } catch (AutoParameter::WriteError const &) {
       throw WriteError{name};
-    } catch (std::out_of_range const &e) {
+    } catch (std::out_of_range const &) {
       throw UnknownParameter{name};
     }
   }

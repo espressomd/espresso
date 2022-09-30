@@ -66,13 +66,6 @@ namespace Observables {
  */
 #define REGISTER(name) om->register_new<name>("Observables::" #name "");
 
-/** Register a @ref ScriptInterface::Observables::ProfileObservable
- *  "ProfileObservable"
- */
-#define REGISTER_PROFILE_OBS(name)                                             \
-  om->register_new<ProfileObservable<::Observables::name>>(                    \
-      "Observables::" #name "");
-
 /** Register a @ref ScriptInterface::Observables::PidObservable
  *  "PidObservable"
  */

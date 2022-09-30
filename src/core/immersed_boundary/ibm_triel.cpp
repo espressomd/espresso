@@ -192,7 +192,7 @@ IBMTriel::calc_forces(Particle const &p1, Particle const &p2,
   // Rotate forces back into original position of triangle
   auto forces = RotateForces(f1_rot, f2_rot, vec1, vec2);
 
-  return forces;
+  return {forces};
 }
 
 IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,

@@ -83,17 +83,17 @@ static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
     dict["total"] = get_obs_contrib({values.data(), obs_dim});
   }
 
-  auto const n_bonds = ::bonded_ia_params.get_next_key();
-  for (std::size_t bond_id = 0; bond_id < n_bonds; ++bond_id) {
+  auto const n_bonds = static_cast<int>(::bonded_ia_params.get_next_key());
+  for (int bond_id = 0; bond_id < n_bonds; ++bond_id) {
     if (::bonded_ia_params.get_zero_based_type(bond_id) != 0) {
       dict["bonded," + std::to_string(bond_id)] =
           get_obs_contrib(obs.bonded_contribution(bond_id));
     }
   }
 
-  auto const n_nonbonded = static_cast<std::size_t>(::max_seen_particle_type);
-  for (std::size_t i = 0; i < n_nonbonded; ++i) {
-    for (std::size_t j = i; j < n_nonbonded; ++j) {
+  auto const n_nonbonded = ::max_seen_particle_type;
+  for (int i = 0; i < n_nonbonded; ++i) {
+    for (int j = i; j < n_nonbonded; ++j) {
       auto const indices = std::to_string(i) + "," + std::to_string(j);
       dict["non_bonded_intra," + indices] =
           get_obs_contrib(obs.non_bonded_intra_contribution(i, j));

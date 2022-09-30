@@ -93,8 +93,9 @@ target_compile_options(
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>:-O2 -g -DNDEBUG>
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},Coverage>:-O3 -g>
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithAssert>:-O3 -g>
-  $<$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},11>:--cuda-gpu-arch=sm_30>
-  --cuda-gpu-arch=sm_52
+  $<$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_52> # GTX-900 series (Maxwell)
+  $<$<VERSION_GREATER_EQUAL:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_61> # GTX-1000 series (Pascal)
+  $<$<VERSION_GREATER_EQUAL:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_75> # RTX-2000 series (Turing)
 )
 
 function(add_gpu_library)
