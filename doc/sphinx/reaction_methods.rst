@@ -193,12 +193,19 @@ As before in the reaction ensemble, one can define multiple reactions (e.g. for 
 
 .. code-block:: python
 
-    cpH=reaction_methods.ConstantpHEnsemble(
-        temperature=1, exclusion_range=1, seed=77)
-    cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
-                    product_types=[1, 2], product_coefficients=[1, 1],
-                    default_charges={0: 0, 1: -1, 2: +1})
-    cpH.add_reaction(gamma=1/(10**-14/K_diss), reactant_types=[3], reactant_coefficients=[1], product_types=[0, 2], product_coefficients=[1, 1], default_charges={0:0, 2:1, 3:1} )
+    cpH = reaction_methods.ConstantpHEnsemble(kT=1, exclusion_range=1., seed=77)
+    cpH.add_reaction(gamma=K_diss,
+                     reactant_types=[0],
+                     reactant_coefficients=[1],
+                     product_types=[1, 2],
+                     product_coefficients=[1, 1],
+                     default_charges={0: 0, 1: -1, 2: +1})
+    cpH.add_reaction(gamma=1/(10**-14/K_diss),
+                     reactant_types=[3],
+                     reactant_coefficients=[1],
+                     product_types=[0, 2],
+                     product_coefficients=[1, 1],
+                     default_charges={0:0, 2:1, 3:1})
 
 
 An example script can be found here:
@@ -241,12 +248,13 @@ For this one has to provide the following reaction to the Widom method:
 
 .. code-block:: python
 
-    type_B=1
-    widom = reaction_methods.WidomInsertion(
-        temperature=temperature, seed=77)
+    type_B = 1
+    widom = reaction_methods.WidomInsertion(kT=1, seed=77)
     widom.add_reaction(reactant_types=[],
-    reactant_coefficients=[], product_types=[type_B],
-    product_coefficients=[1], default_charges={1: 0})
+                       reactant_coefficients=[],
+                       product_types=[type_B],
+                       product_coefficients=[1],
+                       default_charges={1: 0})
     widom.calculate_particle_insertion_potential_energy(reaction_id=0)
 
 
@@ -282,8 +290,10 @@ For this one has to provide the following reaction to the Widom method:
 .. code-block:: python
 
     widom.add_reaction(reactant_types=[type_3],
-    reactant_coefficients=[1], product_types=[type_1, type_2],
-    product_coefficients=[1,1], default_charges={1: 0})
+                       reactant_coefficients=[1],
+                       product_types=[type_1, type_2],
+                       product_coefficients=[1, 1],
+                       default_charges={1: 0})
     widom.calculate_particle_insertion_potential_energy(reaction_id=0)
 
 Be aware that in the current implementation, for MC moves which add
