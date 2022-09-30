@@ -1,4 +1,5 @@
-# Copyright (C) 2019-2022 The ESPResSo project
+#
+# Copyright (C) 2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,13 +15,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
 import importlib_wrapper 
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/widom_insertion/widom_insertion.py"
+    "@TUTORIALS_DIR@/widom_insertion/widom_insertion.py", sample_size=50,
+    ci_params={"mesh": (12, 12, 12), "cao": 6, "tuning": True}
 )
 
 
@@ -29,9 +32,9 @@ class Tutorial(ut.TestCase):
 
     def test(self):
         np.testing.assert_allclose(
-            tutorial.excess_chemical_potentials[:, 0],
-            tutorial.davies_equation(tutorial.salt_concentrations),
-            rtol=0.15)
+            tutorial.excess_chemical_potentials[1:, 0],
+            tutorial.davies_equation(tutorial.salt_concentrations)[1:],
+            rtol=0.05)
 
 
 if __name__ == "__main__":

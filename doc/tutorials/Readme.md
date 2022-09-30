@@ -58,8 +58,8 @@ physical systems.
 * **Constant pH method**  
   Modelling an acid dissociation curve using the constant pH method.  
   [Guide](constant_pH/constant_pH.ipynb)
- * **Widom particle insertion method**  
-  Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.
+* **Widom particle insertion method**  
+  Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.  
   [Guide](widom_insertion/widom_insertion.ipynb)
 
 
