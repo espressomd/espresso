@@ -39,7 +39,8 @@ physical systems.
   Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.  
   Guide
   [Part 1](lattice_boltzmann/lattice_boltzmann_theory.ipynb) |
-  [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb)
+  [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb) |
+  [Part 3](lattice_boltzmann/lattice_boltzmann_sedimentation.ipynb)
 * **Polymers**  
   Modelling polymers with hydrodynamic interactions.  
   [Guide](polymers/polymers.ipynb)
