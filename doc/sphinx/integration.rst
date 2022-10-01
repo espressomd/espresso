@@ -440,6 +440,7 @@ Best explained in an example::
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 
 The Langevin thermostat is based on an extension of Newton's equation of motion to
+account for drag and collisions with a fluid:
 
 .. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma v_i(t) + \sqrt{2\gamma k_B T} \eta_i(t).
 
