@@ -21,8 +21,6 @@
 
 #include "Exception.hpp"
 
-#include "core/MpiCallbacks.hpp"
-#include "core/communication.hpp"
 #include "core/error_handling/RuntimeError.hpp"
 #include "core/errorhandling.hpp"
 

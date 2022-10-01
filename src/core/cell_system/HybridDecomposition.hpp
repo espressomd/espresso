@@ -127,7 +127,7 @@ public:
     return m_box;
   }
 
-  BoxGeometry const &box() const override { return m_box; };
+  BoxGeometry const &box() const override { return m_box; }
 
   /** @brief Count particles in child regular decompositions. */
   std::size_t count_particles_in_regular() const {

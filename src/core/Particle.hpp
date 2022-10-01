@@ -558,7 +558,6 @@ public:
   }
   auto const &ext_force() const { return p.ext_force; }
   auto &ext_force() { return p.ext_force; }
-
 #else  // EXTERNAL_FORCES
   constexpr bool has_fixed_coordinates() const { return false; }
   constexpr bool is_fixed_along(int const) const { return false; }

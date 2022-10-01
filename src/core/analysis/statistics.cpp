@@ -73,32 +73,21 @@ double mindist(PartCfg &partCfg, std::vector<int> const &set1,
   return std::sqrt(mindist_sq);
 }
 
-static Utils::Vector3d mpi_particle_momentum_local() {
-  auto const particles = cell_structure.local_particles();
-  auto const momentum =
-      std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
-                      [](Utils::Vector3d &m, Particle const &p) {
-                        return m + p.mass() * p.v();
-                      });
-
-  return momentum;
-}
-
-REGISTER_CALLBACK_REDUCTION(mpi_particle_momentum_local,
-                            std::plus<Utils::Vector3d>())
-
-Utils::Vector3d calc_linear_momentum(int include_particles,
-                                     int include_lbfluid) {
-  Utils::Vector3d linear_momentum{};
+Utils::Vector3d calc_linear_momentum(bool include_particles,
+                                     bool include_lbfluid) {
+  Utils::Vector3d momentum{};
   if (include_particles) {
-    linear_momentum +=
-        mpi_call(::Communication::Result::reduction,
-                 std::plus<Utils::Vector3d>(), mpi_particle_momentum_local);
+    auto const particles = cell_structure.local_particles();
+    momentum =
+        std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
+                        [](Utils::Vector3d &m, Particle const &p) {
+                          return m + p.mass() * p.v();
+                        });
   }
   if (include_lbfluid) {
-    linear_momentum += lb_lbfluid_calc_fluid_momentum();
+    momentum += lb_lbfluid_calc_fluid_momentum();
   }
-  return linear_momentum;
+  return momentum;
 }
 
 Utils::Vector3d center_of_mass(PartCfg &partCfg, int p_type) {

@@ -25,11 +25,12 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "config/config.hpp"
 #include "particle_data.hpp"
 #include "particle_node.hpp"
 #include "virtual_sites.hpp"
 #include "virtual_sites/VirtualSitesOff.hpp"
+
+#include "config/config.hpp"
 
 #include <boost/mpi.hpp>
 
@@ -37,7 +38,7 @@
 #include <memory>
 
 namespace espresso {
-auto &system = EspressoSystemInterface::Instance();
+static auto &system = EspressoSystemInterface::Instance();
 }
 
 inline void check_uninitialized_device_pointers() {
@@ -60,7 +61,7 @@ boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   try {
     cuda_check_device();
     has_compatible_gpu = true;
-  } catch (cuda_runtime_error const &err) {
+  } catch (cuda_runtime_error const &) {
   }
   return has_compatible_gpu;
 }

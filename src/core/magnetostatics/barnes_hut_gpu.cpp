@@ -33,6 +33,15 @@
 DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,
                                          double itolsq)
     : prefactor{prefactor}, m_epssq{epssq}, m_itolsq{itolsq} {
+  if (prefactor <= 0.) {
+    throw std::domain_error("Parameter 'prefactor' must be > 0");
+  }
+  if (m_itolsq <= 0.) {
+    throw std::domain_error("Parameter 'itolsq' must be > 0");
+  }
+  if (m_epssq <= 0.) {
+    throw std::domain_error("Parameter 'epssq' must be > 0");
+  }
   auto &system = EspressoSystemInterface::Instance();
   system.requestFGpu();
   system.requestTorqueGpu();

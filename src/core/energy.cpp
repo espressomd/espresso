@@ -43,7 +43,7 @@
 
 #include <memory>
 
-static std::shared_ptr<Observable_stat> calculate_energy_local() {
+std::shared_ptr<Observable_stat> calculate_energy() {
 
   auto obs_energy_ptr = std::make_shared<Observable_stat>(1);
 
@@ -107,9 +107,9 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
 #ifdef CUDA
   auto const energy_host = copy_energy_from_GPU();
   if (!obs_energy.coulomb.empty())
-    obs_energy.coulomb[1] += energy_host.coulomb;
+    obs_energy.coulomb[1] += static_cast<double>(energy_host.coulomb);
   if (!obs_energy.dipolar.empty())
-    obs_energy.dipolar[1] += energy_host.dipolar;
+    obs_energy.dipolar[1] += static_cast<double>(energy_host.dipolar);
 #endif
 
   obs_energy.mpi_reduce();
@@ -117,23 +117,19 @@ static std::shared_ptr<Observable_stat> calculate_energy_local() {
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
-REGISTER_CALLBACK_MAIN_RANK(calculate_energy_local)
+REGISTER_CALLBACK_MAIN_RANK(calculate_energy)
 
-std::shared_ptr<Observable_stat> calculate_energy() {
-  return mpi_call(Communication::Result::main_rank, calculate_energy_local);
+double mpi_calculate_potential_energy() {
+  auto const obs = mpi_call(Communication::Result::main_rank, calculate_energy);
+  return obs->accumulate(-obs->kinetic[0]);
 }
 
-double calculate_current_potential_energy_of_system() {
-  auto const obs_energy = calculate_energy();
-  return obs_energy->accumulate(-obs_energy->kinetic[0]);
+double mpi_observable_compute_energy() {
+  auto const obs = mpi_call(Communication::Result::main_rank, calculate_energy);
+  return obs->accumulate(0);
 }
 
-double observable_compute_energy() {
-  auto const obs_energy = calculate_energy();
-  return obs_energy->accumulate(0);
-}
-
-double particle_short_range_energy_contribution_local(int pid) {
+double particle_short_range_energy_contribution(int pid) {
   double ret = 0.0;
 
   if (cell_structure.get_resort_particles()) {
@@ -157,12 +153,4 @@ double particle_short_range_energy_contribution_local(int pid) {
     cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
   }
   return ret;
-}
-
-REGISTER_CALLBACK_REDUCTION(particle_short_range_energy_contribution_local,
-                            std::plus<double>())
-
-double particle_short_range_energy_contribution(int pid) {
-  return mpi_call(Communication::Result::reduction, std::plus<double>(),
-                  particle_short_range_energy_contribution_local, pid);
 }

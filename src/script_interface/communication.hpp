@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,23 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
-#define SCRIPT_INTERFACE_INTERACTIONS_BONDED_HPP
+#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
+#define ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
 
-/** @file
- *  Functions to interface with the core boost::variant.
+#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/mpi/communicator.hpp>
+
+#include <functional>
+
+namespace ScriptInterface {
+
+/**
+ * @brief Reduce object by sum on the head node.
+ * Worker nodes get a default-constructed object.
  */
-
-#include "core/bonded_interactions/bonded_interaction_data.hpp"
-
-#include <boost/variant.hpp>
-
-/** Return the 0-based type number of the specified bond. */
-inline int bonded_ia_params_zero_based_type(int bond_id) {
-  if (bonded_ia_params.contains(bond_id)) {
-    return (*bonded_ia_params.at(bond_id)).which();
-  }
-  return 0;
+template <typename T>
+T mpi_reduce_sum(boost::mpi::communicator const &comm, T const &result) {
+  T out{};
+  boost::mpi::reduce(comm, result, out, std::plus<T>{}, 0);
+  return out;
 }
+
+} // namespace ScriptInterface
 
 #endif

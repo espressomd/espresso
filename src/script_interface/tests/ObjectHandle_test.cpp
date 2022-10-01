@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -165,6 +166,12 @@ BOOST_AUTO_TEST_CASE(do_call_method_) {
                MockCall::CallMethod{&name, &params}));
 }
 
+namespace boost {
+namespace mpi {
+class communicator {};
+} // namespace mpi
+} // namespace boost
+
 namespace Testing {
 /**
  * Logging mock for Context.
@@ -188,6 +195,10 @@ struct LogContext : public Context {
 
     return it;
   }
+  std::shared_ptr<ObjectHandle>
+  make_shared_local(std::string const &s, VariantMap const &v) override {
+    return make_shared(s, v);
+  }
 
   boost::string_ref name(const ObjectHandle *o) const override {
     return "Dummy";
@@ -195,6 +206,10 @@ struct LogContext : public Context {
 
   bool is_head_node() const override { return true; }
   void parallel_try_catch(std::function<void()> const &) const override {}
+  boost::mpi::communicator const &get_comm() const override { return m_comm; }
+
+private:
+  boost::mpi::communicator m_comm;
 };
 } // namespace Testing
 
@@ -247,7 +262,10 @@ BOOST_AUTO_TEST_CASE(interface_) {
   using namespace Testing;
   auto log_ctx = std::make_shared<Testing::LogContext>();
   auto o = log_ctx->make_shared({}, {});
+  auto l = log_ctx->make_shared_local({}, {});
   BOOST_CHECK(log_ctx->is_head_node());
   BOOST_CHECK_EQUAL(log_ctx->name(o.get()), "Dummy");
-  static_cast<void>(log_ctx->parallel_try_catch([]() {}));
+  BOOST_CHECK_EQUAL(log_ctx->name(l.get()), "Dummy");
+  log_ctx->parallel_try_catch([]() {});
+  std::ignore = log_ctx->get_comm();
 }

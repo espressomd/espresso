@@ -25,33 +25,23 @@
 #include "morse.hpp"
 
 #ifdef MORSE
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <cmath>
+#include <stdexcept>
 
-int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
-                     double rmin, double cut) {
-  double add1, add2;
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->morse.eps = eps;
-  data->morse.alpha = alpha;
-  data->morse.rmin = rmin;
-  data->morse.cut = cut;
-
-  /* calculate dependent parameter */
-  add1 = exp(-2.0 * data->morse.alpha * (data->morse.cut - data->morse.rmin));
-  add2 = 2.0 * exp(-data->morse.alpha * (data->morse.cut - data->morse.rmin));
-  data->morse.rest = data->morse.eps * (add1 - add2);
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+Morse_Parameters::Morse_Parameters(double eps, double alpha, double rmin,
+                                   double cutoff)
+    : eps{eps}, alpha{alpha}, rmin{rmin}, cut{cutoff} {
+  if (eps < 0.) {
+    throw std::domain_error("Morse parameter 'eps' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("Morse parameter 'cutoff' has to be >= 0");
+  }
+  auto const add1 = std::exp(-2.0 * alpha * (cut - rmin));
+  auto const add2 = 2.0 * std::exp(-alpha * (cut - rmin));
+  rest = eps * (add1 - add2);
 }
 
-#endif
+#endif // MORSE

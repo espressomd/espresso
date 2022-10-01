@@ -23,9 +23,10 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "config/version.hpp"
 #include "h5md_specification.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
+
+#include "config/version.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -59,7 +60,7 @@ static void backup_file(const std::string &from, const std::string &to) {
   try {
     boost::filesystem::copy_file(
         pfrom, pto, boost::filesystem::copy_option::fail_if_exists);
-  } catch (const boost::filesystem::filesystem_error &e) {
+  } catch (const boost::filesystem::filesystem_error &) {
     throw left_backupfile();
   }
 }

@@ -113,7 +113,7 @@ Be aware of the following limitations:
 
 * Checkpointing only supports recursion on the head node. It is therefore
   impossible to checkpoint a :class:`espressomd.system.System` instance that
-  contains LB boundaries, constraints or auto-update accumulators when the
+  contains LB boundaries, constraint unions or auto-update accumulators when the
   simulation is running with 2 or more MPI nodes.
 
 * The active actors, i.e., the content of ``system.actors``, are checkpointed.
@@ -140,6 +140,37 @@ Be aware of the following limitations:
 * Checkpoints may depend on the presence of other Python modules at specific
   versions. It may therefore not be possible to load a checkpoint in a
   different environment than where it was written.
+  In particular, all |es| modules whose classes have been used to
+  instantiate objects in the checkpoint file also need to be imported
+  in the script that loads the checkpoint (because importing an |es|
+  module does more than just making classes visibles: it also registers
+  them as script interface classes).
+  Loading a checkpoint without the proper |es| module imports will generally
+  raise an exception indicating which module is missing.
+
+* It is only possible to checkpoint objects at global scope.
+  When wrapping the checkpointing logic in a function, objects local to
+  that function won't be checkpointed, since their origin cannot be safely
+  stored in the checkpoint file. To circumvent this limitation, make any
+  local object explicitly global, so that it belongs to the global scope::
+
+      import espressomd
+      import espressomd.checkpointing
+
+      def setup_system():
+          global system  # attach 'system' to global scope for checkpointing
+          checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
+          if not checkpoint.has_checkpoints():
+              system = espressomd.System(box_l=[1., 1., 1.])
+              system.part.add(pos=[0.1, 0.2, 0.3])
+              checkpoint.register("system")
+              checkpoint.save()
+          else:
+              checkpoint.load()
+              print(system.part.by_id(0).pos)
+          return system
+
+      system = setup_system()
 
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.

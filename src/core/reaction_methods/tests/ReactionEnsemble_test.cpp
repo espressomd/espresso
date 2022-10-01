@@ -45,8 +45,9 @@
 
 namespace espresso {
 // ESPResSo system instance
-std::unique_ptr<EspressoSystemStandAlone> system;
+static std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
+
 // Check the Monte Carlo algorithm where moves depend on the system
 // configuration and energy.
 BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {

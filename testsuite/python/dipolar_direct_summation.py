@@ -121,6 +121,7 @@ class dds(ut.TestCase):
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
                "Skipping test: only runs for n_nodes == 1")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_gen_reference_data(self):
         filepaths = ('dipolar_direct_summation_energy.npy',
                      'dipolar_direct_summation_arrays.npy')
@@ -150,8 +151,7 @@ class dds(ut.TestCase):
         system.integrator.set_steepest_descent(
             f_max=1, gamma=0.001, max_displacement=0.01)
         system.integrator.run(100)
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0.0, sigma=0, cutoff=0, shift=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         system.integrator.set_vv()
         assert system.analysis.energy()["total"] == 0
 

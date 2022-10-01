@@ -19,7 +19,7 @@
 #ifndef UTILS_U32_TO_U64_HPP
 #define UTILS_U32_TO_U64_HPP
 
-#include <cinttypes>
+#include <cstdint>
 #include <utility>
 
 namespace Utils {
@@ -33,4 +33,4 @@ constexpr inline std::pair<uint32_t, uint32_t> u64_to_u32(uint64_t in) {
 
 } // namespace Utils
 
-#endif // ESPRESSO_U32_TO_U64_HPP
+#endif

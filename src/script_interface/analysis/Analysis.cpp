@@ -28,6 +28,8 @@
 #include "core/partCfg_global.hpp"
 #include "core/particle_node.hpp"
 
+#include "script_interface/communication.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/contains.hpp>
 
@@ -68,6 +70,20 @@ static void check_particle_type(int p_type) {
 
 Variant Analysis::do_call_method(std::string const &name,
                                  VariantMap const &parameters) {
+  if (name == "linear_momentum") {
+    auto const local = calc_linear_momentum(
+        get_value_or<bool>(parameters, "include_particles", true),
+        get_value_or<bool>(parameters, "include_lbfluid", true));
+    return mpi_reduce_sum(context()->get_comm(), local).as_vector();
+  }
+  if (name == "particle_energy") {
+    auto const pid = get_value<int>(parameters, "pid");
+    auto const local = particle_short_range_energy_contribution(pid);
+    return mpi_reduce_sum(context()->get_comm(), local);
+  }
+  if (not context()->is_head_node()) {
+    return {};
+  }
   if (name == "min_dist") {
     auto const p_types1 = get_value<std::vector<int>>(parameters, "p_types1");
     auto const p_types2 = get_value<std::vector<int>>(parameters, "p_types2");
@@ -89,12 +105,6 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const result = angular_momentum(partCfg(), p_type);
     return result.as_vector();
   }
-  if (name == "linear_momentum") {
-    auto const result = calc_linear_momentum(
-        get_value_or<bool>(parameters, "include_particles", true),
-        get_value_or<bool>(parameters, "include_lbfluid", true));
-    return result.as_vector();
-  }
   if (name == "nbhood") {
     auto const pos = get_value<Utils::Vector3d>(parameters, "pos");
     auto const radius = get_value<double>(parameters, "r_catch");
@@ -107,10 +117,6 @@ Variant Analysis::do_call_method(std::string const &name,
     return result.as_vector();
   }
 #endif // DPD
-  if (name == "particle_energy") {
-    auto const pid = get_value<int>(parameters, "pid");
-    return particle_short_range_energy_contribution(pid);
-  }
   if (name == "calc_re") {
     auto const chain_start = get_value<int>(parameters, "chain_start");
     auto const chain_length = get_value<int>(parameters, "chain_length");

@@ -43,7 +43,7 @@
 #include <stdexcept>
 #include <utility>
 
-LB_Particle_Coupling lb_particle_coupling;
+static LB_Particle_Coupling lb_particle_coupling;
 
 void mpi_bcast_lb_particle_coupling_local() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);

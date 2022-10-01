@@ -44,6 +44,9 @@ is_gpu_available = espressomd.gpu_available()
 modes = config.get_modes()
 has_lb_mode = 'LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available
 has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
+has_lbb = ('LB.CPU' in modes and espressomd.has_features("LB_BOUNDARIES") or
+           'LB.GPU' in modes and espressomd.has_features("LB_BOUNDARIES_GPU")
+           and espressomd.gpu_available())
 
 
 class CheckpointTest(ut.TestCase):
@@ -330,7 +333,9 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
-    def test_non_bonded_inter(self):
+    def test_non_bonded_inter_lj(self):
+        self.assertTrue(
+            system.non_bonded_inter[0, 0].lennard_jones.call_method("is_registered"))
         params1 = system.non_bonded_inter[0, 0].lennard_jones.get_params()
         params2 = system.non_bonded_inter[3, 0].lennard_jones.get_params()
         reference1 = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
@@ -339,6 +344,13 @@ class CheckpointTest(ut.TestCase):
                       'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         self.assertEqual(params1, reference1)
         self.assertEqual(params2, reference2)
+        self.assertTrue(handle_ia.lennard_jones.call_method("is_registered"))
+        self.assertEqual(handle_ia.lennard_jones.get_params(), reference1)
+
+    @utx.skipIfMissingFeatures('DPD')
+    def test_non_bonded_inter_dpd(self):
+        self.assertEqual(dpd_ia.get_params(), dpd_params)
+        self.assertFalse(dpd_ia.call_method("is_registered"))
 
     def test_bonded_inter(self):
         # check the ObjectHandle was correctly initialized (including MPI)
@@ -346,18 +358,15 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(bond_ids), len(system.bonded_inter))
         # check bonded interactions
         partcl_1 = system.part.by_id(1)
-        state = partcl_1.bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
-        self.assertEqual(state, reference)
-        state = partcl_1.bonds[0][0].params
-        self.assertEqual(state, reference)
+        self.assertEqual(partcl_1.bonds[0][0].params, reference)
+        self.assertEqual(system.bonded_inter[0].params, reference)
         if 'THERM.LB' not in modes:
-            state = partcl_1.bonds[1][0].params
-            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
-                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
-            self.assertEqual(state, reference)
-            state = partcl_1.bonds[1][0].params
-            self.assertEqual(state, reference)
+            # all thermalized bonds should be identical
+            reference = {**thermalized_bond_params, 'seed': 3}
+            self.assertEqual(partcl_1.bonds[1][0].params, reference)
+            self.assertEqual(system.bonded_inter[1].params, reference)
+            self.assertEqual(thermalized_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
@@ -504,6 +513,7 @@ class CheckpointTest(ut.TestCase):
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                      'timings': 15, 'check_neutrality': True,
+                     'check_complex_residuals': False,
                      'charge_neutrality_tolerance': 1e-12}
         for key in reference:
             self.assertIn(key, state)
@@ -519,6 +529,7 @@ class CheckpointTest(ut.TestCase):
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                          'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                          'timings': 15, 'check_neutrality': True,
+                         'check_complex_residuals': False,
                          'charge_neutrality_tolerance': 7e-12}
         elc_reference = {'gap_size': 6.0, 'maxPWerror': 0.1,
                          'delta_mid_top': 0.9, 'delta_mid_bot': 0.1,
@@ -587,9 +598,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(1).exclusions), [2])
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
-    @ut.skipIf(not has_lb_mode or not (espressomd.has_features("LB_BOUNDARIES")
-                                       or espressomd.has_features("LB_BOUNDARIES_GPU")),
-               "Missing features")
+    @ut.skipIf(not has_lbb, "Missing features")
     def test_lb_boundaries(self):
         # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
@@ -626,7 +635,7 @@ class CheckpointTest(ut.TestCase):
 
         self.assertIsInstance(c[0].shape, espressomd.shapes.Sphere)
         self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
-        self.assertEqual(c[0].particle_type, 17)
+        self.assertEqual(c[0].particle_type, 7)
 
         self.assertIsInstance(c[1].shape, espressomd.shapes.Wall)
         np.testing.assert_allclose(np.copy(c[1].shape.normal),
@@ -668,6 +677,7 @@ class CheckpointTest(ut.TestCase):
         if self.n_nodes == 1:
             union = c[7].shape
             self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(c[7].particle_type, 2)
             self.assertEqual(len(union), 2)
             wall1, wall2 = union.call_method('get_elements')
             self.assertIsInstance(wall1, espressomd.shapes.Wall)

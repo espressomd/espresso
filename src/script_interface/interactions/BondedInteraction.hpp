@@ -27,7 +27,9 @@
 #define SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTION_HPP
 
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "core/immersed_boundaries.hpp"
 #include "core/thermostat.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
@@ -35,9 +37,14 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/variant.hpp>
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
+#include <limits>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -45,7 +52,7 @@
 namespace ScriptInterface {
 namespace Interactions {
 
-template <class T> class BondedInteractionInterface {
+class BondedInteraction : public AutoParameters<BondedInteraction> {
 protected:
   std::shared_ptr<::Bonded_IA_Parameters> m_bonded_ia;
 
@@ -54,45 +61,93 @@ public:
   std::shared_ptr<const ::Bonded_IA_Parameters> bonded_ia() const {
     return m_bonded_ia;
   }
-};
 
-class BondedInteraction : public AutoParameters<BondedInteraction>,
-                          public BondedInteractionInterface<BondedInteraction> {
-  void do_construct(VariantMap const &params) override {
-    // Check if initialization "by id" or "by parameters"
-    if (params.find("bond_id") != params.end()) {
-      m_bonded_ia = ::bonded_ia_params.at(get_value<int>(params, "bond_id"));
-    } else {
-      construct_bond(params);
-    }
+protected:
+  using AutoParameters<BondedInteraction>::context;
+  using AutoParameters<BondedInteraction>::valid_parameters;
+
+  virtual std::set<std::string> get_valid_parameters() const {
+    auto const vec = valid_parameters();
+    auto valid_keys = std::set<std::string>();
+    std::transform(vec.begin(), vec.end(),
+                   std::inserter(valid_keys, valid_keys.begin()),
+                   [](auto const &key) { return std::string{key}; });
+    return valid_keys;
   }
 
 private:
-  virtual void construct_bond(VariantMap const &params) {}
+  void check_valid_parameters(VariantMap const &params) const {
+    auto const valid_keys = get_valid_parameters();
+    for (auto const &key : valid_keys) {
+      if (params.count(std::string(key)) == 0) {
+        throw std::runtime_error("Parameter '" + key + "' is missing");
+      }
+    }
+    for (auto const &kv : params) {
+      if (valid_keys.count(kv.first) == 0) {
+        throw std::runtime_error("Parameter '" + kv.first +
+                                 "' is not recognized");
+      }
+    }
+  }
+
+  void do_construct(VariantMap const &params) override {
+    // Check if initialization "by id" or "by parameters"
+    if (params.find("bond_id") != params.end()) {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      context()->parallel_try_catch([&]() {
+        if (not::bonded_ia_params.contains(bond_id)) {
+          throw std::runtime_error("No bond with id " +
+                                   std::to_string(bond_id) +
+                                   " exists in the ESPResSo core");
+        }
+      });
+      m_bonded_ia = ::bonded_ia_params.at(bond_id);
+    } else {
+      context()->parallel_try_catch([&]() {
+        check_valid_parameters(params);
+        construct_bond(params);
+      });
+    }
+  }
+
+  virtual void construct_bond(VariantMap const &params) = 0;
 
 public:
-  template <typename T>
-  bool operator==(const BondedInteractionInterface<T> &other) {
+  bool operator==(BondedInteraction const &other) {
     return m_bonded_ia == other.m_bonded_ia;
   }
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     // this feature is needed to compare bonds
-    if (name == "get_address") {
-      return reinterpret_cast<std::size_t>(bonded_ia().get());
+    if (name == "is_same_bond") {
+      auto const bond_so =
+          get_value<std::shared_ptr<BondedInteraction>>(params, "bond");
+      return *this == *bond_so;
     }
     if (name == "get_num_partners") {
       return number_of_partners(*bonded_ia());
+    }
+    if (name == "get_zero_based_type") {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      return ::bonded_ia_params.get_zero_based_type(bond_id);
     }
 
     return {};
   }
 };
 
-class FeneBond : public BondedInteraction {
-  using CoreBondedInteraction = ::FeneBond;
+template <class CoreIA> class BondedInteractionImpl : public BondedInteraction {
 
+public:
+  using CoreBondedInteraction = CoreIA;
+  CoreBondedInteraction &get_struct() {
+    return boost::get<CoreBondedInteraction>(*bonded_ia());
+  }
+};
+
+class FeneBond : public BondedInteractionImpl<::FeneBond> {
 public:
   FeneBond() {
     add_parameters({
@@ -110,15 +165,9 @@ private:
                               get_value<double>(params, "d_r_max"),
                               get_value<double>(params, "r_0")));
   }
-
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
 };
 
-class HarmonicBond : public BondedInteraction {
-  using CoreBondedInteraction = ::HarmonicBond;
-
+class HarmonicBond : public BondedInteractionImpl<::HarmonicBond> {
 public:
   HarmonicBond() {
     add_parameters({
@@ -136,15 +185,9 @@ private:
             get_value<double>(params, "k"), get_value<double>(params, "r_0"),
             get_value<double>(params, "r_cut")));
   }
-
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
 };
 
-class QuarticBond : public BondedInteraction {
-  using CoreBondedInteraction = ::QuarticBond;
-
+class QuarticBond : public BondedInteractionImpl<::QuarticBond> {
 public:
   QuarticBond() {
     add_parameters({
@@ -164,25 +207,15 @@ private:
             get_value<double>(params, "r"),
             get_value<double>(params, "r_cut")));
   }
-
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
 };
 
-class BondedCoulomb : public BondedInteraction {
-  using CoreBondedInteraction = ::BondedCoulomb;
-
+class BondedCoulomb : public BondedInteractionImpl<::BondedCoulomb> {
 public:
   BondedCoulomb() {
     add_parameters({
         {"prefactor", AutoParameter::read_only,
          [this]() { return get_struct().prefactor; }},
     });
-  }
-
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
   }
 
 private:
@@ -192,19 +225,13 @@ private:
   }
 };
 
-class BondedCoulombSR : public BondedInteraction {
-  using CoreBondedInteraction = ::BondedCoulombSR;
-
+class BondedCoulombSR : public BondedInteractionImpl<::BondedCoulombSR> {
 public:
   BondedCoulombSR() {
     add_parameters({
         {"q1q2", AutoParameter::read_only,
          [this]() { return get_struct().q1q2; }},
     });
-  }
-
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
   }
 
 private:
@@ -214,9 +241,7 @@ private:
   }
 };
 
-class AngleHarmonicBond : public BondedInteraction {
-  using CoreBondedInteraction = ::AngleHarmonicBond;
-
+class AngleHarmonicBond : public BondedInteractionImpl<::AngleHarmonicBond> {
 public:
   AngleHarmonicBond() {
     add_parameters({
@@ -227,10 +252,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia = std::make_shared<::Bonded_IA_Parameters>(
@@ -239,9 +260,7 @@ private:
   }
 };
 
-class AngleCosineBond : public BondedInteraction {
-  using CoreBondedInteraction = ::AngleCosineBond;
-
+class AngleCosineBond : public BondedInteractionImpl<::AngleCosineBond> {
 public:
   AngleCosineBond() {
     add_parameters({
@@ -252,10 +271,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia = std::make_shared<::Bonded_IA_Parameters>(
@@ -264,9 +279,7 @@ private:
   }
 };
 
-class AngleCossquareBond : public BondedInteraction {
-  using CoreBondedInteraction = ::AngleCossquareBond;
-
+class AngleCossquareBond : public BondedInteractionImpl<::AngleCossquareBond> {
 public:
   AngleCossquareBond() {
     add_parameters({
@@ -277,10 +290,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia = std::make_shared<::Bonded_IA_Parameters>(
@@ -289,9 +298,7 @@ private:
   }
 };
 
-class DihedralBond : public BondedInteraction {
-  using CoreBondedInteraction = ::DihedralBond;
-
+class DihedralBond : public BondedInteractionImpl<::DihedralBond> {
 public:
   DihedralBond() {
     add_parameters({
@@ -304,10 +311,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia =
@@ -317,9 +320,8 @@ private:
   }
 };
 
-class TabulatedDistanceBond : public BondedInteraction {
-  using CoreBondedInteraction = ::TabulatedDistanceBond;
-
+class TabulatedDistanceBond
+    : public BondedInteractionImpl<::TabulatedDistanceBond> {
 public:
   TabulatedDistanceBond() {
     add_parameters({
@@ -334,10 +336,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia =
@@ -348,9 +346,7 @@ private:
   }
 };
 
-class TabulatedAngleBond : public BondedInteraction {
-  using CoreBondedInteraction = ::TabulatedAngleBond;
-
+class TabulatedAngleBond : public BondedInteractionImpl<::TabulatedAngleBond> {
 public:
   TabulatedAngleBond() {
     add_parameters({
@@ -365,10 +361,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia =
@@ -379,9 +371,8 @@ private:
   }
 };
 
-class TabulatedDihedralBond : public BondedInteraction {
-  using CoreBondedInteraction = ::TabulatedDihedralBond;
-
+class TabulatedDihedralBond
+    : public BondedInteractionImpl<::TabulatedDihedralBond> {
 public:
   TabulatedDihedralBond() {
     add_parameters({
@@ -396,10 +387,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia =
@@ -410,9 +397,7 @@ private:
   }
 };
 
-class ThermalizedBond : public BondedInteraction {
-  using CoreBondedInteraction = ::ThermalizedBond;
-
+class ThermalizedBond : public BondedInteractionImpl<::ThermalizedBond> {
 public:
   ThermalizedBond() {
     add_parameters({
@@ -431,8 +416,15 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "get_rng_state") {
+      auto const state = ::thermalized_bond.rng_counter();
+      // check it's safe to forward the current state as an integer
+      assert(state < static_cast<uint64_t>(std::numeric_limits<int>::max()));
+      return static_cast<int>(state);
+    }
+    return BondedInteraction::do_call_method(name, params);
   }
 
 private:
@@ -443,14 +435,37 @@ private:
                               get_value<double>(params, "temp_distance"),
                               get_value<double>(params, "gamma_distance"),
                               get_value<double>(params, "r_cut")));
-    thermalized_bond.rng_initialize(
-        static_cast<uint32_t>(get_value<int>(params, "seed")));
+
+    if (is_none(params.at("seed"))) {
+      if (::thermalized_bond.is_seed_required()) {
+        throw std::invalid_argument("A parameter 'seed' has to be given on "
+                                    "first activation of a thermalized bond");
+      }
+    } else {
+      auto const seed = get_value<int>(params, "seed");
+      if (seed < 0) {
+        throw std::domain_error("Parameter 'seed' must be >= 0");
+      }
+      ::thermalized_bond.rng_initialize(static_cast<uint32_t>(seed));
+    }
+
+    // handle checkpointing
+    if (params.count("rng_state") and not is_none(params.at("rng_state"))) {
+      auto const state = get_value<int>(params, "rng_state");
+      assert(state >= 0);
+      ::thermalized_bond.set_rng_counter(static_cast<uint64_t>(state));
+    }
+  }
+
+  std::set<std::string> get_valid_parameters() const override {
+    auto names =
+        BondedInteractionImpl<CoreBondedInteraction>::get_valid_parameters();
+    names.insert("rng_state");
+    return names;
   }
 };
 
-class RigidBond : public BondedInteraction {
-  using CoreBondedInteraction = ::RigidBond;
-
+class RigidBond : public BondedInteractionImpl<::RigidBond> {
 public:
   RigidBond() {
     add_parameters({
@@ -463,10 +478,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia =
@@ -476,17 +487,7 @@ private:
   }
 };
 
-class IBMTriel : public BondedInteraction {
-  using CoreBondedInteraction = ::IBMTriel;
-
-private:
-  tElasticLaw str2elastic_law(std::string el) {
-    if (boost::iequals(el, "NeoHookean")) {
-      return tElasticLaw::NeoHookean;
-    }
-    return tElasticLaw::Skalak;
-  }
-
+class IBMTriel : public BondedInteractionImpl<::IBMTriel> {
 public:
   IBMTriel() {
     add_parameters({
@@ -504,25 +505,37 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
+    auto const law_name = get_value<std::string>(params, "elasticLaw");
+    tElasticLaw elastic_law;
+    if (law_name == "NeoHookean") {
+      elastic_law = tElasticLaw::NeoHookean;
+    } else if (law_name == "Skalak") {
+      elastic_law = tElasticLaw::Skalak;
+    } else {
+      throw std::invalid_argument(
+          "Invalid value for parameter 'elasticLaw': '" + law_name + "'");
+    }
     m_bonded_ia =
         std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction(
             get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),
             get_value<int>(params, "ind3"),
-            get_value<double>(params, "maxDist"),
-            str2elastic_law(get_value<std::string>(params, "elasticLaw")),
+            get_value<double>(params, "maxDist"), elastic_law,
             get_value<double>(params, "k1"), get_value<double>(params, "k2")));
+  }
+
+  std::set<std::string> get_valid_parameters() const override {
+    auto names =
+        BondedInteractionImpl<CoreBondedInteraction>::get_valid_parameters();
+    names.insert("ind1");
+    names.insert("ind2");
+    names.insert("ind3");
+    return names;
   }
 };
 
-class IBMVolCons : public BondedInteraction {
-  using CoreBondedInteraction = ::IBMVolCons;
-
+class IBMVolCons : public BondedInteractionImpl<::IBMVolCons> {
 public:
   IBMVolCons() {
     add_parameters({
@@ -533,8 +546,12 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
+    if (name == "current_volume") {
+      return ::immersed_boundaries.get_current_volume(get_struct().softID);
+    }
+    return BondedInteraction::do_call_method(name, params);
   }
 
 private:
@@ -545,9 +562,7 @@ private:
   }
 };
 
-class IBMTribend : public BondedInteraction {
-  using CoreBondedInteraction = ::IBMTribend;
-
+class IBMTribend : public BondedInteractionImpl<::IBMTribend> {
 public:
   IBMTribend() {
     add_parameters({
@@ -561,26 +576,39 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   bool m_flat;
   void construct_bond(VariantMap const &params) override {
-    auto const &refShape = get_value<std::string>(params, "refShape");
-    m_flat = boost::iequals(refShape, "Flat");
+    auto const shape_name = get_value<std::string>(params, "refShape");
+    if (shape_name == "Flat") {
+      m_flat = true;
+    } else if (shape_name == "Initial") {
+      m_flat = false;
+    } else {
+      throw std::invalid_argument("Invalid value for parameter 'refShape': '" +
+                                  shape_name + "'");
+    }
     m_bonded_ia =
         std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction(
             get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),
             get_value<int>(params, "ind3"), get_value<int>(params, "ind4"),
             get_value<double>(params, "kb"), m_flat));
   }
+
+  std::set<std::string> get_valid_parameters() const override {
+    auto names =
+        BondedInteractionImpl<CoreBondedInteraction>::get_valid_parameters();
+    names.erase("theta0");
+    names.insert("ind1");
+    names.insert("ind2");
+    names.insert("ind3");
+    names.insert("ind4");
+    return names;
+  }
 };
 
-class OifGlobalForcesBond : public BondedInteraction {
-  using CoreBondedInteraction = ::OifGlobalForcesBond;
-
+class OifGlobalForcesBond
+    : public BondedInteractionImpl<::OifGlobalForcesBond> {
 public:
   OifGlobalForcesBond() {
     add_parameters({
@@ -593,10 +621,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia =
@@ -607,9 +631,7 @@ private:
   }
 };
 
-class OifLocalForcesBond : public BondedInteraction {
-  using CoreBondedInteraction = ::OifLocalForcesBond;
-
+class OifLocalForcesBond : public BondedInteractionImpl<::OifLocalForcesBond> {
 public:
   OifLocalForcesBond() {
     add_parameters({
@@ -631,10 +653,6 @@ public:
     });
   }
 
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
-
 private:
   void construct_bond(VariantMap const &params) override {
     m_bonded_ia =
@@ -648,19 +666,15 @@ private:
   }
 };
 
-class VirtualBond : public BondedInteraction {
-  using CoreBondedInteraction = ::VirtualBond;
-
+class VirtualBond : public BondedInteractionImpl<::VirtualBond> {
 public:
   VirtualBond() {
     m_bonded_ia =
         std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction());
   }
 
-public:
-  CoreBondedInteraction &get_struct() {
-    return boost::get<CoreBondedInteraction>(*bonded_ia());
-  }
+private:
+  void construct_bond(VariantMap const &) override {}
 };
 
 } // namespace Interactions

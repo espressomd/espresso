@@ -35,6 +35,12 @@
 #include <memory>
 #include <string>
 
+namespace boost {
+namespace mpi {
+class communicator;
+} // namespace mpi
+} // namespace boost
+
 namespace ScriptInterface {
 /**
  * @brief Context of an object handle.
@@ -81,6 +87,12 @@ public:
   virtual std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, const VariantMap &parameters) = 0;
 
+  /**
+   * @copydoc Context::make_shared
+   */
+  virtual std::shared_ptr<ObjectHandle>
+  make_shared_local(std::string const &name, VariantMap const &parameters) = 0;
+
 protected:
   /**
    * @brief Set the context of an object to this.
@@ -99,6 +111,7 @@ public:
 
   virtual bool is_head_node() const = 0;
   virtual void parallel_try_catch(std::function<void()> const &cb) const = 0;
+  virtual boost::mpi::communicator const &get_comm() const = 0;
 
   virtual ~Context() = default;
 };

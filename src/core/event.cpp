@@ -85,7 +85,7 @@ void on_program_start() {
   if (this_node == 0) {
     try {
       cuda_init();
-    } catch (cuda_runtime_error const &err) {
+    } catch (cuda_runtime_error const &) {
       // pass
     }
   }
@@ -248,6 +248,11 @@ void on_dipoles_change() {
   reinit_magnetostatics = true;
   Dipoles::on_dipoles_change();
 #endif
+  on_short_range_ia_change();
+}
+
+void on_non_bonded_ia_change() {
+  maximal_cutoff_nonbonded();
   on_short_range_ia_change();
 }
 
