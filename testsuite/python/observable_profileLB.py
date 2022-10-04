@@ -34,9 +34,9 @@ Tests for the LB fluid profile observables.
 
 TIME_STEP = 0.1
 AGRID = 0.7
-BOX_L_X = 17.0 * AGRID
-BOX_L_Y = 15.0 * AGRID
-BOX_L_Z = 13.0 * AGRID
+BOX_L_X = 16.0 * AGRID
+BOX_L_Y = 14.0 * AGRID
+BOX_L_Z = 12.0 * AGRID
 VISC = .7
 DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
@@ -78,9 +78,9 @@ class ObservableProfileLBCommon:
 
     def set_fluid_velocities(self):
         """Set an x dependent fluid velocity."""
-        for x in range(int(self.system.box_l[0] / AGRID)):
-            for y in range(int(self.system.box_l[1] / AGRID)):
-                for z in range(int(self.system.box_l[2] / AGRID)):
+        for x in range(int(np.around(self.system.box_l[0] / AGRID))):
+            for y in range(int(np.around(self.system.box_l[1] / AGRID))):
+                for z in range(int(np.around(self.system.box_l[2] / AGRID))):
                     self.lbf[x, y, z].velocity = [float(x), 0.0, 0.0]
 
     def test_velocity_profile(self):
@@ -98,7 +98,7 @@ class ObservableProfileLBCommon:
             for y in range(obs_data.shape[1]):
                 for z in range(obs_data.shape[2]):
                     self.assertAlmostEqual(
-                        obs_data[x, y, z, 0], float(x), places=5)
+                        obs_data[x, y, z, 0], float(x), delta=2e-5)
         self.assertEqual(np.prod(obs_data.shape),
                          LB_VELOCITY_PROFILE_PARAMS['n_x_bins'] *
                          LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] *

@@ -267,10 +267,6 @@ class LBVelocityProfile(ProfileObservable):
     ``sampling_*``. Note that a small delta leads to a large number of sample
     points and carries a performance cost.
 
-    .. WARNING::
-        In case of the CPU version of the LB fluid implementation, this observable
-        currently only works for a single core.
-
     Parameters
     ----------
     n_x_bins : :obj:`int`
