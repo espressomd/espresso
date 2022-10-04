@@ -33,7 +33,7 @@ class CylindricalLBObservableCommon:
     Testcase for the CylindricalLBObservables.
 
     """
-    system = espressomd.System(box_l=3 * [15])
+    system = espressomd.System(box_l=3 * [14])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
