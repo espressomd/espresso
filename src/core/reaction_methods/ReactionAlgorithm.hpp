@@ -133,8 +133,7 @@ public:
     reactions.erase(reactions.begin() + reaction_id);
   }
 
-  bool do_global_mc_move_for_particles_of_type(int type,
-                                               int particle_number_of_type);
+  bool displacement_move_for_particles_of_type(int type, int n_part);
 
   bool particle_inside_exclusion_range_touched = false;
   bool neighbor_search_order_n = true;
@@ -165,7 +164,7 @@ protected:
   std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
              std::vector<StoredParticleProperty>>
   make_reaction_attempt(SingleReaction const &current_reaction);
-  std::vector<std::pair<int, Utils::Vector3d>>
+  std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>>
   generate_new_particle_positions(int type, int n_particles);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list);

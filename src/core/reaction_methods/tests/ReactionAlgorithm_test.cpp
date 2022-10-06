@@ -39,6 +39,7 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -164,14 +165,15 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_CHECK(r_algo.particle_inside_exclusion_range_touched);
     // check moves and bookkeeping
     for (auto const &item : bookkeeping) {
-      auto const pid = item.first;
+      auto const pid = std::get<0>(item);
       BOOST_REQUIRE(pid == 0 or pid == 1);
       auto const ref_old_pos = ref_positions[pid].first;
       auto const ref_old_vel = ref_positions[pid].second;
       auto const &p = get_particle_data(pid);
       auto const &new_pos = p.pos();
       auto const &new_vel = p.v();
-      BOOST_CHECK_EQUAL(item.second, ref_old_pos);
+      BOOST_CHECK_EQUAL(std::get<1>(item), ref_old_pos);
+      BOOST_CHECK_EQUAL(std::get<2>(item), ref_old_vel);
       BOOST_CHECK_GE(new_pos, Utils::Vector3d::broadcast(0.));
       BOOST_CHECK_LE(new_pos, Utils::Vector3d::broadcast(box_l));
       BOOST_CHECK_GE((new_pos - ref_old_pos).norm(), 0.1);
@@ -193,14 +195,14 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     set_particle_type(0, type_A);
     set_particle_type(1, type_A);
     // check early exit when a MC move cannot be performed
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_C, 1));
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_B, 2));
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 0));
+    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_C, 1));
+    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_B, 2));
+    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_A, 0));
     // force all MC moves to be rejected by picking particles inside
     // their exclusion radius
     r_algo.exclusion_range = box_l;
     r_algo.particle_inside_exclusion_range_touched = false;
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 2));
+    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_A, 2));
     // check none of the particles moved
     for (auto const pid : {0, 1}) {
       auto const ref_old_pos = ref_positions[pid];
@@ -211,7 +213,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     // force a MC move to be accepted by using a constant Hamiltonian
     r_algo.exclusion_range = 0.;
     r_algo.particle_inside_exclusion_range_touched = false;
-    BOOST_REQUIRE(r_algo.do_global_mc_move_for_particles_of_type(type_A, 1));
+    BOOST_REQUIRE(r_algo.displacement_move_for_particles_of_type(type_A, 1));
     std::vector<double> distances(2);
     // check that only one particle moved
     for (auto const pid : {0, 1}) {

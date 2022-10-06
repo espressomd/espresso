@@ -68,6 +68,9 @@ class Test(ut.TestCase):
                 acc_pos.update()
                 acc_vel.update()
                 p.pos = [0., 0., 0.]
+                p.v = [0., 0., 0.]
+            else:
+                self.assertAlmostEqual(np.linalg.norm(p.v), 0., delta=1e-12)
 
         # the x-position should follow an exponential distribution
         # -> mean = kT, median = kT x ln(2), variance = kT^2
