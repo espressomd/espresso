@@ -101,7 +101,6 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
 
 cdef make_array_locked(Vector3d)
 cdef Vector3d make_Vector3d(a)
-cdef Vector3i make_Vector3i(a)
 
 cdef extern from "utils/Factory.hpp" namespace "Utils":
     cdef cppclass Factory[T]:
