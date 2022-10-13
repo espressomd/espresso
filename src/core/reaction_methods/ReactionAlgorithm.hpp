@@ -115,7 +115,7 @@ public:
     m_max_exclusion_range = max_exclusion_range;
   }
 
-  virtual int do_reaction(int reaction_steps);
+  void do_reaction(int reaction_steps);
   void check_reaction_method() const;
   void remove_constraint() { m_reaction_constraint = ReactionConstraint::NONE; }
   void set_cyl_constraint(double center_x, double center_y, double radius);

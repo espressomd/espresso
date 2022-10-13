@@ -36,6 +36,7 @@
 #include <boost/mpi.hpp>
 
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -194,10 +195,15 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     place_particle(1, ref_positions[1]);
     set_particle_type(0, type_A);
     set_particle_type(1, type_A);
-    // check early exit when a MC move cannot be performed
-    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_C, 1));
-    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_B, 2));
-    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_A, 0));
+    // check runtime errors when a MC move cannot be physically performed
+    auto displacement_move =
+        std::bind(&ReactionAlgorithm::displacement_move_for_particles_of_type,
+                  &r_algo, std::placeholders::_1, std::placeholders::_2);
+    BOOST_REQUIRE(!displacement_move(type_C, 1));
+    BOOST_REQUIRE(!displacement_move(type_B, 2));
+    BOOST_REQUIRE(!displacement_move(type_A, 0));
+    BOOST_CHECK_THROW(displacement_move(type_A, -2), std::domain_error);
+    BOOST_CHECK_THROW(displacement_move(-2, 1), std::domain_error);
     // force all MC moves to be rejected by picking particles inside
     // their exclusion radius
     r_algo.exclusion_range = box_l;

@@ -50,7 +50,7 @@ namespace ReactionMethods {
 /**
  * Performs a randomly selected reaction in the reaction ensemble
  */
-int ReactionAlgorithm::do_reaction(int reaction_steps) {
+void ReactionAlgorithm::do_reaction(int reaction_steps) {
   // calculate potential energy; only consider potential energy since we
   // assume that the kinetic part drops out in the process of calculating
   // ensemble averages (kinetic part may be separated and crossed out)
@@ -59,7 +59,6 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
     generic_oneway_reaction(*reactions[reaction_id], current_E_pot);
   }
-  return 0;
 }
 
 /**
@@ -590,13 +589,22 @@ ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
  */
 bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
                                                                 int n_part) {
-  m_tried_configurational_MC_moves += 1;
-  particle_inside_exclusion_range_touched = false;
+
+  if (type < 0) {
+    throw std::domain_error("Parameter 'type_mc' must be >= 0");
+  }
+  if (n_part < 0) {
+    throw std::domain_error(
+        "Parameter 'particle_number_to_be_changed' must be >= 0");
+  }
 
   if (n_part == 0) {
     // reject
     return false;
   }
+
+  m_tried_configurational_MC_moves += 1;
+  particle_inside_exclusion_range_touched = false;
 
   auto const n_particles_of_type = number_of_particles_with_type(type);
   if (n_part > n_particles_of_type) {
