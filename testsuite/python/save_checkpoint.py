@@ -381,22 +381,23 @@ if lbf_actor:
         observables=('density',), base_folder=str(vtk_root))
     lb_vtk_manual.write()
     # create EK VTK callbacks
-    ek_species = espressomd.EKSpecies.EKSpecies(
-        lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
-        advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-        single_precision=False)
-    ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
-    ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
-    config.recursive_unlink(vtk_root / ek_vtk_auto_id)
-    config.recursive_unlink(vtk_root / ek_vtk_manual_id)
-    ek_vtk_auto = espressomd.EKSpecies.EKVTKOutput(
-        species=ek_species, identifier=ek_vtk_auto_id,
-        observables=('density',), delta_N=1, base_folder=str(vtk_root))
-    ek_vtk_auto.disable()
-    ek_vtk_manual = espressomd.EKSpecies.EKVTKOutput(
-        species=ek_species, identifier=ek_vtk_manual_id,
-        observables=('density',), delta_N=0, base_folder=str(vtk_root))
-    ek_vtk_manual.write()
+    if espressomd.has_features('EK_WALBERLA') and 'EK.WALBERLA' in modes:
+        ek_species = espressomd.EKSpecies.EKSpecies(
+            lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2,
+            valency=0.1, advection=False, friction_coupling=False,
+            ext_efield=[0.1, 0.2, 0.3], single_precision=False)
+        ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
+        ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
+        config.recursive_unlink(vtk_root / ek_vtk_auto_id)
+        config.recursive_unlink(vtk_root / ek_vtk_manual_id)
+        ek_vtk_auto = espressomd.EKSpecies.EKVTKOutput(
+            species=ek_species, identifier=ek_vtk_auto_id,
+            observables=('density',), delta_N=1, base_folder=str(vtk_root))
+        ek_vtk_auto.disable()
+        ek_vtk_manual = espressomd.EKSpecies.EKVTKOutput(
+            species=ek_species, identifier=ek_vtk_manual_id,
+            observables=('density',), delta_N=0, base_folder=str(vtk_root))
+        ek_vtk_manual.write()
 
 
 # save checkpoint file

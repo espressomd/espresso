@@ -210,7 +210,7 @@ class System(ScriptInterfaceHelper):
         self.constraints = constraints.Constraints()
         if has_features("CUDA"):
             self.cuda_init_handle = cuda_init.CudaInitHandle()
-        if has_features("LB_WALBERLA"):
+        if has_features("EK_WALBERLA"):
             self.ekcontainer = EKSpecies.EKContainer()
             self.ekreactions = EKSpecies.EKReactions()
         self.galilei = galilei.GalileiTransform()
@@ -249,7 +249,7 @@ class System(ScriptInterfaceHelper):
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")
         checkpointable_properties += ["actors", "thermostat"]
-        if has_features("LB_WALBERLA"):
+        if has_features("EK_WALBERLA"):
             checkpointable_properties += ["ekcontainer", "ekreactions"]
 
         odict = collections.OrderedDict()

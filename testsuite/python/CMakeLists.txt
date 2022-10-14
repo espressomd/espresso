@@ -111,15 +111,15 @@ endfunction(CHECKPOINT_TEST)
 # feature with zero or more options; separate features with 2 underscores and
 # options with 1 underscore (options can appear in any order). For example,
 # "p3m_cpu__lb_cpu_ascii" generates modes P3M, P3M.CPU, LB, LB.CPU, LB.ASCII.
-checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_walberla_cpu_ascii SUFFIX 1_core
+checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_walberla_cpu_ascii__ek_walberla_cpu_ascii SUFFIX 1_core
                 MAX_NUM_PROC 1)
-checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_walberla_cpu_ascii
+checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_walberla_cpu_ascii__ek_walberla_cpu_ascii
                 MAX_NUM_PROC 2)
-checkpoint_test(MODES therm_lb__elc_cpu__lj__lb_walberla_cpu_binary
+checkpoint_test(MODES therm_lb__elc_cpu__lj__lb_walberla_cpu_binary__ek_walberla_cpu_binary
                 MAX_NUM_PROC 2)
-checkpoint_test(MODES therm_lb__elc_gpu__lj__lb_walberla_cpu_ascii LABELS gpu
+checkpoint_test(MODES therm_lb__elc_gpu__lj__lb_walberla_cpu_ascii__ek_walberla_cpu_ascii LABELS gpu
                 MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
-checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_walberla_cpu_binary LABELS gpu
+checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_walberla_cpu_binary_ek_walberla_cpu_binary LABELS gpu
                 MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
 checkpoint_test(MODES therm_npt__int_npt)
 checkpoint_test(MODES int_sd__lj)

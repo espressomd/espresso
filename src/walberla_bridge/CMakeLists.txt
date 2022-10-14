@@ -46,11 +46,13 @@ target_include_directories(
   PRIVATE ${walberla_BINARY_DIR}/src)
 
 add_subdirectory(src)
-# TODO WALBERLA: find why `TARGET_DIRECTORY espresso_walberla` doesn't work
-# in subfolders where these source files are added to `espresso_walberla`
-set_source_files_properties(
-  src/electrokinetics/ek_walberla_init.cpp
-  PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+if(WITH_WALBERLA_ELECTROKINETICS)
+  # TODO WALBERLA: find why `TARGET_DIRECTORY espresso_walberla` doesn't work
+  # in subfolders where these source files are added to `espresso_walberla`
+  set_source_files_properties(
+    src/electrokinetics/ek_walberla_init.cpp
+    PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+endif()
 
 install(TARGETS espresso_walberla
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)

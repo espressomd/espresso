@@ -156,8 +156,8 @@ Here is a minimal working example::
 
 .. note::
 
-    Requires external feature ``LB_WALBERLA``, enabled with the CMake option
-    ``-D WITH_WALBERLA=ON``.
+    Requires external features ``LB_WALBERLA`` and ``EK_WALBERLA``, enabled with
+    the CMake options ``-D WITH_WALBERLA=ON -D WITH_WALBERLA_ELECTROKINETICS=ON``.
 
 An EK system can be set up at the same time as a LB system. The EK ``density``
 represents the electrokinetic *number densities* and is independent of the

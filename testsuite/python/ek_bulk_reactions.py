@@ -24,7 +24,7 @@ import espressomd.EKSpecies
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["EK_WALBERLA"])
 class EKReaction(ut.TestCase):
     BOX_L = 11.
     AGRID = 1.0
@@ -45,8 +45,9 @@ class EKReaction(ut.TestCase):
         """
         Calculates the base density of a species after a given time of a reaction.
         The reaction is defined via the stoichiometric coefficient of the edducts.
-        To calculate the effective species density this base density needs to be multiplied by its stoichiometric coefficient.
-        For the product density, one needs to substract this density from the init density.
+        To calculate the effective species density, the base density needs to
+        be multiplied by its stoichiometric coefficient. For the product
+        density, one needs to substract this density from the init density.
         """
         order = sum(coeffs)
         factor = rate_constant

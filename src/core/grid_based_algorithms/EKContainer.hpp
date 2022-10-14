@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef EK_WALBERLA
 
 #include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
@@ -101,5 +101,5 @@ public:
   }
 };
 
-#endif // LB_WALBERLA
+#endif // EK_WALBERLA
 #endif

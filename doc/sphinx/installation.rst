@@ -730,6 +730,10 @@ The following options are available:
 
 * ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
 
+* ``WITH_WALBERLA`` Build with waLBerla lattice-Boltzmann support
+
+* ``WITH_WALBERLA_ELECTROKINETICS`` Build with waLBerla electrokinetics support
+
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 

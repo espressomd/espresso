@@ -19,13 +19,13 @@
 
 import unittest as ut
 import unittest_decorators as utx
-import espressomd
-import espressomd.EKSpecies
 import numpy as np
 import scipy.optimize
+import espressomd
+import espressomd.EKSpecies
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["EK_WALBERLA"])
 class EKDiffusion(ut.TestCase):
     BOX_L = 31.
     AGRID = 1.0

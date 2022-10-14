@@ -19,12 +19,12 @@
 
 import unittest as ut
 import unittest_decorators as utx
+import numpy as np
 import espressomd
 import espressomd.EKSpecies
-import numpy as np
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["EK_WALBERLA"])
 class EKReaction(ut.TestCase):
     BOX_L = [22., 2., 2.]
     PADDING = 1

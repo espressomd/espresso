@@ -1,5 +1,7 @@
-add_subdirectory(electrokinetics)
 add_subdirectory(lattice_boltzmann)
+if(WITH_WALBERLA_ELECTROKINETICS)
+  add_subdirectory(electrokinetics)
+endif()
 
 target_sources(
         espresso_walberla
