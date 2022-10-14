@@ -571,7 +571,7 @@ if(WITH_WALBERLA)
   include(FetchContent)
   FetchContent_Declare(
     walberla
-    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla
+    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
     GIT_TAG        01a28162ae1aacf7b96152c9f886ce54cc7f53ff
     PATCH_COMMAND  patch -p1 -sN --ignore-whitespace -i
                    ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch || echo "Patch not applied!"
