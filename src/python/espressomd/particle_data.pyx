@@ -1813,6 +1813,9 @@ Set quat and scalar dipole moment (dipm) instead.")
         del p_dict["pos"]
         pid = p_dict.pop("id")
 
+        if "type" not in p_dict:
+            p_dict["type"] = 0
+
         if p_dict != {}:
             self.by_id(pid).update(p_dict)
 

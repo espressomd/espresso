@@ -99,6 +99,8 @@ class ReactionMethods(ut.TestCase):
             self.assertAlmostEqual(method.constant_pH, 8., delta=1e-10)
         self.assertFalse(method.displacement_mc_move_for_particles_of_type(
             type_mc=0, particle_number_to_be_changed=0))
+        self.assertFalse(method.displacement_mc_move_for_particles_of_type(
+            type_mc=0, particle_number_to_be_changed=100000))
 
         # check constraints
         method.set_wall_constraints_in_z_direction(
@@ -287,6 +289,12 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid value for 'kT'"):
             espressomd.reaction_methods.ReactionEnsemble(
                 kT=-1., exclusion_range=1., seed=12)
+        with self.assertRaisesRegex(ValueError, "Parameter 'particle_number_to_be_changed' must be >= 0"):
+            method.displacement_mc_move_for_particles_of_type(
+                type_mc=0, particle_number_to_be_changed=-1)
+        with self.assertRaisesRegex(ValueError, "Parameter 'type_mc' must be >= 0"):
+            method.displacement_mc_move_for_particles_of_type(
+                type_mc=-1, particle_number_to_be_changed=1)
 
         # check invalid exclusion ranges and radii
         with self.assertRaisesRegex(ValueError, "Invalid value for 'exclusion_range'"):

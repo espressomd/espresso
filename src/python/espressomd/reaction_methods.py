@@ -210,11 +210,15 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             The number of reactions to be performed at once, defaults to 1.
 
     displacement_mc_move_for_particles_of_type()
-        Performs a displacement Monte Carlo move for particles of given type.
+        Performs displacement Monte Carlo moves for particles of a given type.
         New positions of the displaced particles are chosen from the whole box
-        with a uniform probability distribution. If there are multiple types,
-        that are being moved in a simulation, they should be moved in a random
-        order to avoid artefacts.
+        with a uniform probability distribution and new velocities are
+        sampled from the Maxwell-Boltzmann distribution.
+
+        The sequence of moves is only accepted if each individual move in
+        the sequence was accepted. Particles are sampled without replacement.
+        Therefore, calling this method once for 10 particles is not equivalent
+        to calling this method 10 times for 1 particle.
 
         Parameters
         ----------
@@ -222,11 +226,12 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             Particle type which should be moved
         particle_number_to_be_changed : :obj:`int`
             Number of particles to move, defaults to 1.
+            Particles are selected without replacement.
 
         Returns
         -------
         :obj:`bool`
-            Whether the move was accepted.
+            Whether all moves were accepted.
 
     delete_particle()
         Deletes the particle of the given p_id and makes sure that the particle
