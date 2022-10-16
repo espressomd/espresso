@@ -23,11 +23,6 @@
 
 #include "FluidNodeWalberla.hpp"
 #include "FluidWalberla.hpp"
-#include "VTKHandle.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
-
-#include <script_interface/ObjectHandle.hpp>
-#include <utils/Factory.hpp>
 
 #include "EKContainer.hpp"
 #include "EKFFT.hpp"
@@ -39,18 +34,29 @@
 #include "EKReaction.hpp"
 #include "EKReactions.hpp"
 
+#include "VTKHandle.hpp"
+
+#include "script_interface/ObjectHandle.hpp"
+
+#include <walberla_bridge/LatticeWalberla.hpp>
+
+#include <utils/Factory.hpp>
+
 namespace ScriptInterface::walberla {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
+
   om->register_new<FluidWalberla>("walberla::FluidWalberla");
-  om->register_new<VTKHandle>("walberla::VTKHandle");
   om->register_new<FluidNodeWalberla>("walberla::FluidNodeWalberla");
+  om->register_new<VTKHandle>("walberla::VTKHandle");
 
   om->register_new<EKContainer>("walberla::EKContainer");
   om->register_new<EKSpecies>("walberla::EKSpecies");
   om->register_new<EKSpeciesNode>("walberla::EKSpeciesNode");
+#ifdef ESPRESSO_USE_WALBERLA_FFT
   om->register_new<EKFFT>("walberla::EKFFT");
+#endif // ESPRESSO_USE_WALBERLA_FFT
   om->register_new<EKNone>("walberla::None");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
 

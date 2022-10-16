@@ -17,27 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "walberla_bridge/electrokinetics/ek_walberla_init.hpp"
+#pragma once
 
-#include "EKinWalberlaImpl.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 
-#include <utils/Vector.hpp>
+#include "PoissonSolver/PoissonSolver.hpp"
 
 #include <memory>
 
-std::shared_ptr<EKinWalberlaBase>
-new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
-                double diffusion, double kT, double valency,
-                Utils::Vector3d ext_efield, double density, bool advection,
-                bool friction_coupling, bool single_precision) {
-  if (single_precision) {
-    return std::make_shared<walberla::EKinWalberlaImpl<13, float>>(
-        lattice, diffusion, kT, valency, ext_efield, density, advection,
-        friction_coupling);
-  }
-
-  return std::make_shared<walberla::EKinWalberlaImpl<13, double>>(
-      lattice, diffusion, kT, valency, ext_efield, density, advection,
-      friction_coupling);
-}
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
+                   double permittivity, bool single_precision);

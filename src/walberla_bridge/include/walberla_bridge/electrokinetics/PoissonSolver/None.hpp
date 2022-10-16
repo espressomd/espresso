@@ -17,11 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_NONE_HPP
-#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_NONE_HPP
+#pragma once
 
 #include "PoissonSolver.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
+
+#include <domain_decomposition/BlockDataID.h>
+#include <field/AddToStorage.h>
+#include <field/GhostLayerField.h>
 
 #include <memory>
 #include <utility>
@@ -55,5 +58,3 @@ public:
 };
 
 } // namespace walberla
-
-#endif

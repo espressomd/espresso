@@ -25,7 +25,7 @@ import espressomd.shapes
 import scipy.optimize
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "ESPRESSO_USE_WALBERLA_FFT"])
 class EKEOF(ut.TestCase):
     BOX_L = [30., 6., 6.]
     AGRID = 1.0

@@ -21,6 +21,8 @@
 
 #cmakedefine LB_WALBERLA
 
+#cmakedefine ESPRESSO_USE_WALBERLA_FFT
+
 #cmakedefine VALGRIND_INSTRUMENTATION
 
 #define PACKAGE_NAME "${PROJECT_NAME}"

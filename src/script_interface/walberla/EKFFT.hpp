@@ -23,6 +23,7 @@
 #include "config/config.hpp"
 
 #ifdef LB_WALBERLA
+#ifdef ESPRESSO_USE_WALBERLA_FFT
 
 #include "EKPoissonSolver.hpp"
 
@@ -67,5 +68,6 @@ private:
 };
 } // namespace ScriptInterface::walberla
 
+#endif // ESPRESSO_USE_WALBERLA_FFT
 #endif // LB_WALBERLA
 #endif
