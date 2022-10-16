@@ -19,12 +19,11 @@
 
 import unittest as ut
 import unittest_decorators as utx
-import numpy as np
 import espressomd
-import espressomd.EKSpecies
+import numpy as np
 
 
-@utx.skipIfMissingFeatures(["EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKFixedDensity(ut.TestCase):
     BOX_L = 42.
     AGRID = 1.0

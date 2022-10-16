@@ -45,8 +45,6 @@ is_gpu_available = espressomd.gpu_available()
 modes = config.get_modes()
 has_lb_mode = ('LB.WALBERLA' in modes and espressomd.has_features('LB_WALBERLA')
                and ('LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available))
-has_ek_mode = ('EK.WALBERLA' in modes and espressomd.has_features('EK_WALBERLA')
-               and ('EK.CPU' in modes or 'EK.GPU' in modes and is_gpu_available))
 has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
 
 
@@ -196,8 +194,8 @@ class CheckpointTest(ut.TestCase):
         self.assertFalse((vtk_root / filename.format(2)).exists())
 
     # TODO walberla
-#    @utx.skipIfMissingFeatures('EK_WALBERLA')
-#    @ut.skipIf(not has_ek_mode, "Skipping test due to missing EK feature.")
+#    @utx.skipIfMissingFeatures('LB_WALBERLA')
+#    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
 #    def test_ek_vtk(self):
 #        vtk_suffix = config.test_name
 #        vtk_registry = espressomd.EKSpecies._ek_vtk_registry

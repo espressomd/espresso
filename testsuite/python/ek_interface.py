@@ -335,7 +335,7 @@ class EKTest:
         assert len(set(subset1 + subset2)) == len(subset1) + len(subset2)
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA", "EK_WALBERLA"])
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class EKTestWalberla(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in double-precision."""
@@ -349,7 +349,7 @@ class EKTestWalberla(EKTest, ut.TestCase):
     rtol = 1e-7
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA", "EK_WALBERLA"])
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in single-precision."""

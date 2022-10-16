@@ -19,11 +19,11 @@
 
 import unittest as ut
 import unittest_decorators as utx
-import numpy as np
 import espressomd
 import espressomd.lb
 import espressomd.EKSpecies
 import espressomd.shapes
+import numpy as np
 
 
 class EKBoundariesBase:
@@ -144,7 +144,7 @@ class EKBoundariesBase:
                 boundary_type=espressomd.EKSpecies.FluxBoundary)
 
 
-@utx.skipIfMissingFeatures(["EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -154,7 +154,7 @@ class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
     ek_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKBoundariesWalberlaSinglePrecision(EKBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

@@ -19,42 +19,34 @@
 
 #include "config/config.hpp"
 
-#if defined(LB_WALBERLA) || defined(EK_WALBERLA)
+#ifdef LB_WALBERLA
 
+#include "FluidNodeWalberla.hpp"
+#include "FluidWalberla.hpp"
 #include "VTKHandle.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 
-#ifdef LB_WALBERLA
-#include "FluidNodeWalberla.hpp"
-#include "FluidWalberla.hpp"
-#endif // LB_WALBERLA
+#include <script_interface/ObjectHandle.hpp>
+#include <utils/Factory.hpp>
 
-#ifdef EK_WALBERLA
 #include "EKContainer.hpp"
 #include "EKFFT.hpp"
 #include "EKNone.hpp"
+#include "EKSpecies.hpp"
+#include "EKSpeciesNode.hpp"
+
 #include "EKReactant.hpp"
 #include "EKReaction.hpp"
 #include "EKReactions.hpp"
-#include "EKSpecies.hpp"
-#include "EKSpeciesNode.hpp"
-#endif // EK_WALBERLA
-
-#include <script_interface/ObjectHandle.hpp>
-#include <utils/Factory.hpp>
 
 namespace ScriptInterface::walberla {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
-
-#ifdef LB_WALBERLA
   om->register_new<FluidWalberla>("walberla::FluidWalberla");
-  om->register_new<FluidNodeWalberla>("walberla::FluidNodeWalberla");
   om->register_new<VTKHandle>("walberla::VTKHandle");
-#endif // EK_WALBERLA
+  om->register_new<FluidNodeWalberla>("walberla::FluidNodeWalberla");
 
-#ifdef EK_WALBERLA
   om->register_new<EKContainer>("walberla::EKContainer");
   om->register_new<EKSpecies>("walberla::EKSpecies");
   om->register_new<EKSpeciesNode>("walberla::EKSpeciesNode");
@@ -66,9 +58,8 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKBulkReaction>("walberla::EKBulkReaction");
   om->register_new<EKIndexedReaction>("walberla::EKIndexedReaction");
   om->register_new<EKReactions>("walberla::EKReactions");
-#endif // EK_WALBERLA
 }
 
 } // namespace ScriptInterface::walberla
 
-#endif // LB_WALBERLA or EK_WALBERLA
+#endif // LB_WALBERLA

@@ -180,14 +180,14 @@ class EKWalberlaWrite:
 
 
 @utx.skipIfMissingModules("vtk")
-@utx.skipIfMissingFeatures("EK_WALBERLA")
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBWalberlaWrite(EKWalberlaWrite, ut.TestCase):
     ek_params = {'single_precision': False}
     ek_vtk_id = 'double_precision'
 
 
 @utx.skipIfMissingModules("vtk")
-@utx.skipIfMissingFeatures("EK_WALBERLA")
+@utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBWalberlaWriteSinglePrecision(EKWalberlaWrite, ut.TestCase):
     ek_params = {'single_precision': True}
     ek_vtk_id = 'single_precision'

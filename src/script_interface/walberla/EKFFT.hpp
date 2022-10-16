@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef EK_WALBERLA
+#ifdef LB_WALBERLA
 
 #include "EKPoissonSolver.hpp"
 
@@ -67,5 +67,5 @@ private:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // EK_WALBERLA
+#endif // LB_WALBERLA
 #endif

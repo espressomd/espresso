@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef EK_WALBERLA
+#ifdef LB_WALBERLA
 
 #include "ek_reactions.hpp"
 
@@ -40,4 +40,4 @@ void perform_reactions() {
 
 } // namespace EK
 
-#endif // EK_WALBERLA
+#endif // LB_WALBERLA

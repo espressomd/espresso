@@ -19,16 +19,13 @@
 
 import unittest as ut
 import unittest_decorators as utx
-import numpy as np
-import scipy.optimize
 import espressomd
+import numpy as np
 import espressomd.shapes
-import espressomd.lb
-import espressomd.shapes
-import espressomd.EKSpecies
+import scipy.optimize
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA", "EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKEOF(ut.TestCase):
     BOX_L = [30., 6., 6.]
     AGRID = 1.0

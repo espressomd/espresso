@@ -21,20 +21,15 @@
 
 #include "config/config.hpp"
 
-#if defined(LB_WALBERLA) || defined(EK_WALBERLA)
+#ifdef LB_WALBERLA
 
 #include <walberla_bridge/VTKHandle.hpp>
-#ifdef LB_WALBERLA
-#include "FluidWalberla.hpp"
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
-#endif // LB_WALBERLA
-#ifdef EK_WALBERLA
-#include "EKSpecies.hpp"
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#endif // EK_WALBERLA
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 
+#include "EKSpecies.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
@@ -193,7 +188,6 @@ public:
   }
 };
 
-#ifdef LB_WALBERLA
 class VTKHandle : public VTKHandleBase<LBWalberlaBase> {
   static std::unordered_map<std::string, int> const obs_map;
   std::weak_ptr<LBWalberlaBase> m_lb_fluid;
@@ -226,9 +220,7 @@ std::unordered_map<std::string, int> const VTKHandle::obs_map = {
     {"velocity_vector", static_cast<int>(OutputVTK::velocity_vector)},
     {"pressure_tensor", static_cast<int>(OutputVTK::pressure_tensor)},
 };
-#endif // LB_WALBERLA
 
-#ifdef EK_WALBERLA
 class EKVTKHandle : public VTKHandleBase<EKinWalberlaBase> {
   static std::unordered_map<std::string, int> const obs_map;
   std::shared_ptr<EKinWalberlaBase> m_ekinstance;
@@ -263,9 +255,8 @@ public:
 std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
     {"density", static_cast<int>(EKOutputVTK::density)},
 };
-#endif // EK_WALBERLA
 
 } // namespace ScriptInterface::walberla
 
-#endif // LB_WALBERLA or EK_WALBERLA
+#endif // LB_WALBERLA
 #endif

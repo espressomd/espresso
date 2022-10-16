@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef EK_WALBERLA
+#ifdef LB_WALBERLA
 
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
@@ -147,5 +147,5 @@ private:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // EK_WALBERLA
+#endif // LB_WALBERLA
 #endif

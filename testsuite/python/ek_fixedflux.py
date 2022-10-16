@@ -17,16 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import numpy as np
 import espressomd.shapes
-import espressomd.lb
-import espressomd.EKSpecies
 
 
-@utx.skipIfMissingFeatures(["EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKFixedFlux(ut.TestCase):
     BOX_L = 5.
     AGRID = 1.0

@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef EK_WALBERLA
+#ifdef LB_WALBERLA
 
 #include "EKReactant.hpp"
 #include "LatticeIndices.hpp"
@@ -136,5 +136,5 @@ private:
 
 } // namespace ScriptInterface::walberla
 
-#endif // EK_WALBERLA
+#endif // LB_WALBERLA
 #endif

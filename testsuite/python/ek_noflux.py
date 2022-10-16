@@ -19,13 +19,12 @@
 
 import unittest as ut
 import unittest_decorators as utx
-import numpy as np
 import espressomd
+import numpy as np
 import espressomd.shapes
-import espressomd.EKSpecies
 
 
-@utx.skipIfMissingFeatures(["EK_WALBERLA"])
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class EKNoFlux(ut.TestCase):
     BOX_L = 15.
     AGRID = 1.0
