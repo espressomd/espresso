@@ -8,12 +8,24 @@ Setting up the system
 Setting global variables
 ------------------------
 
-The global variables in Python are controlled via the
-:class:`espressomd.system.System` class.
-Global system variables can be read and set in Python simply by accessing the
-attribute of the corresponding Python object. Those variables that are already
-available in the Python interface are listed in the following. Note that for the
-vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
+The global system variables are controlled via the Python
+:class:`espressomd.system.System` class::
+
+    import espressomd
+    system = espressomd.System(box_l=[10., 10., 10.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    system.periodicity = [True, True, True]
+
+This code creates a system with a cubic unit cell of length 10 in simulation
+units, and sets the skin to 0.4 simulation units and the time step to 0.01
+simulation units.
+
+Some variables belong to the ``System`` class and will be explained in the list
+below, while other variables such as the skin belong to objects that are
+attached to the class, and will be explain in subsequent sections and chapters.
+Note that for many vectorial properties, e.g. ``box_l`` and ``periodicity``,
+component-wise manipulation
 like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
 allowed and result in an error. This behavior is inherited, so the same applies
 to ``a`` after ``a = system.box_l``. If you want to use a vectorial property
