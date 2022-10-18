@@ -57,7 +57,7 @@ namespace bdata = boost::unit_test::data;
 
 namespace espresso {
 // ESPResSo system instance
-std::unique_ptr<EspressoSystemStandAlone> system;
+static std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
 
 /** Decorator to run a unit test only on the head node. */

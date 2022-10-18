@@ -83,7 +83,7 @@ void on_program_start() {
   if (this_node == 0) {
     try {
       cuda_init();
-    } catch (cuda_runtime_error const &err) {
+    } catch (cuda_runtime_error const &) {
       // pass
     }
   }

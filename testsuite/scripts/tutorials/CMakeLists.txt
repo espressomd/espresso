@@ -53,6 +53,8 @@ tutorial_test(FILE test_polymers.py SUFFIX rouse)
 # TODO WALBERLA: simulation is too slow without GPU
 #tutorial_test(FILE test_polymers.py SUFFIX zimm LABELS gpu)
 tutorial_test(FILE test_lattice_boltzmann_poiseuille_flow.py)
+# TODO WALBERLA: find new reference positions of the symmetry break
+# tutorial_test(FILE test_lattice_boltzmann_sedimentation.py)
 # TODO WALBERLA: simulation is too short
 # tutorial_test(FILE test_raspberry_electrophoresis.py)
 tutorial_test(FILE test_active_matter.py)
@@ -64,6 +66,7 @@ tutorial_test(FILE test_ferrofluid_2.py)
 tutorial_test(FILE test_ferrofluid_3.py)
 tutorial_test(FILE test_constant_pH__ideal.py)
 tutorial_test(FILE test_constant_pH__interactions.py)
+tutorial_test(FILE test_widom_insertion.py)
 
 add_custom_target(
   check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}

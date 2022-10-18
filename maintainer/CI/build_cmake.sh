@@ -75,10 +75,26 @@ set_default_value() {
 }
 
 # the number of available processors depends on the CI runner
-if grep -q "i7-3820" /proc/cpuinfo; then
-   ci_procs=2
+ci_procs=2
+if [ "${GITLAB_CI}" = "true" ]; then
+    if [[ "${OSTYPE}" == "linux-gnu"* ]]; then
+        # Linux runner
+        if grep -q "i7-3820" /proc/cpuinfo; then
+            # communication bottleneck for more than 2 cores on Intel i7-3820
+            ci_procs=2
+        else
+            ci_procs=4
+        fi
+    elif [[ "${OSTYPE}" == "darwin"* ]]; then
+        # macOS runner
+        ci_procs=2
+    fi
+elif [ "${GITHUB_ACTIONS}" = "true" ]; then
+    # GitHub Actions only provide 1 core; request 2 cores to run tests
+    # in parallel (OpenMPI allows oversubscription)
+    ci_procs=2
 else
-   ci_procs=4
+    ci_procs=$(nproc)
 fi
 
 # handle environment variables

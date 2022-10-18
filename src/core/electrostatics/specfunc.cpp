@@ -353,11 +353,11 @@ double LPK1(double x) {
     auto const tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
     return tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
   }
-  if (x > 2) {
-    int j = ak01_orders[((int)x) - 2];
+  if (x > 2.) {
+    int j = ak01_orders[static_cast<int>(x) - 2];
     double x2;
     double *s1;
-    if (x <= 8) {
+    if (x <= 8.) {
       s1 = ak1_cs;
       x2 = (2. * 16. / 3.) / x - 2. * 5. / 3.;
     } else {
@@ -416,11 +416,11 @@ std::pair<double, double> LPK01(double x) {
     auto const k1 = tmp * (xx * ak1_cs[1] + 0.5 * ak1_cs[0]);
     return {k0, k1};
   }
-  if (x > 2) {
-    int j = ak01_orders[((int)x) - 2];
+  if (x > 2.) {
+    int j = ak01_orders[static_cast<int>(x) - 2];
     double x2;
     double *s0, *s1;
-    if (x <= 8) {
+    if (x <= 8.) {
       s0 = ak0_cs;
       s1 = ak1_cs;
       x2 = (2. * 16. / 3.) / x - 2. * 5. / 3.;

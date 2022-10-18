@@ -893,7 +893,7 @@ class openGLLive():
                 for bond in particle.bonds:
                     # input data:
                     # bond[0]: bond type, bond[1:] bond partners
-                    bond_type = bond[0].type_number()
+                    bond_type = bond[0]._type_number
                     if len(bond) == 4:
                         self.bonds.append([particle.id, bond[1], bond_type])
                         self.bonds.append([particle.id, bond[2], bond_type])

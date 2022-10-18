@@ -483,6 +483,9 @@ void ParticleHandle::do_construct(VariantMap const &params) {
         do_set_parameter(kv.first, kv.second);
       }
     }
+    if (params.count("type") == 0) {
+      do_set_parameter("type", 0);
+    }
   }
 }
 

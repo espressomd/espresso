@@ -35,7 +35,7 @@ namespace Particles {
 class ParticleHandle : public AutoParameters<ParticleHandle> {
   int m_pid;
 
-  Particle const &particle() const { return get_particle_data(m_pid); };
+  Particle const &particle() const { return get_particle_data(m_pid); }
 
 public:
   ParticleHandle();

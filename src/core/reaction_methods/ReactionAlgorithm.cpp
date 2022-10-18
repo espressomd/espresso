@@ -50,7 +50,7 @@ namespace ReactionMethods {
 /**
  * Performs a randomly selected reaction in the reaction ensemble
  */
-int ReactionAlgorithm::do_reaction(int reaction_steps) {
+void ReactionAlgorithm::do_reaction(int reaction_steps) {
   // calculate potential energy; only consider potential energy since we
   // assume that the kinetic part drops out in the process of calculating
   // ensemble averages (kinetic part may be separated and crossed out)
@@ -59,7 +59,6 @@ int ReactionAlgorithm::do_reaction(int reaction_steps) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
     generic_oneway_reaction(*reactions[reaction_id], current_E_pot);
   }
-  return 0;
 }
 
 /**
@@ -548,11 +547,11 @@ void ReactionAlgorithm::move_particle(int p_id, Utils::Vector3d const &new_pos,
   set_particle_v(p_id, vel);
 }
 
-std::vector<std::pair<int, Utils::Vector3d>>
+std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>>
 ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
 
-  std::vector<std::pair<int, Utils::Vector3d>> old_positions;
-  old_positions.reserve(n_particles);
+  std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>> old_state;
+  old_state.reserve(n_particles);
 
   // draw particle ids at random without replacement
   int p_id = -1;
@@ -564,38 +563,58 @@ ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
       p_id = get_random_p_id(type, random_index);
     }
     drawn_pids.emplace_back(p_id);
-    // store original position
+    // store original state
     auto const &p = get_particle_data(p_id);
-    old_positions.emplace_back(std::pair<int, Utils::Vector3d>{p_id, p.pos()});
-    // write new position
+    old_state.emplace_back(std::tuple<int, Utils::Vector3d, Utils::Vector3d>{
+        p_id, p.pos(), p.v()});
+    // write new position and new velocity
     auto const prefactor = std::sqrt(kT / p.mass());
     auto const new_pos = get_random_position_in_box();
     move_particle(p_id, new_pos, prefactor);
     check_exclusion_range(p_id);
+    if (particle_inside_exclusion_range_touched) {
+      break;
+    }
   }
 
-  return old_positions;
+  return old_state;
 }
 
 /**
- * Performs a global MC move for a particle of the provided type.
+ * Performs a global MC move for particles of a given type.
+ * Particles are selected without replacement.
+ * @param type     Type of particles to move.
+ * @param n_part   Number of particles of that type to move.
+ * @returns true if all moves were accepted.
  */
-bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
-    int type, int particle_number_of_type_to_be_changed) {
+bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
+                                                                int n_part) {
+
+  if (type < 0) {
+    throw std::domain_error("Parameter 'type_mc' must be >= 0");
+  }
+  if (n_part < 0) {
+    throw std::domain_error(
+        "Parameter 'particle_number_to_be_changed' must be >= 0");
+  }
+
+  if (n_part == 0) {
+    // reject
+    return false;
+  }
+
   m_tried_configurational_MC_moves += 1;
   particle_inside_exclusion_range_touched = false;
 
-  auto const particle_number_of_type = number_of_particles_with_type(type);
-  if (particle_number_of_type == 0 or
-      particle_number_of_type_to_be_changed == 0) {
+  auto const n_particles_of_type = number_of_particles_with_type(type);
+  if (n_part > n_particles_of_type) {
     // reject
     return false;
   }
 
   auto const E_pot_old = mpi_calculate_potential_energy();
 
-  auto const original_positions = generate_new_particle_positions(
-      type, particle_number_of_type_to_be_changed);
+  auto const original_state = generate_new_particle_positions(type, n_part);
 
   auto const E_pot_new = (particle_inside_exclusion_range_touched)
                              ? std::numeric_limits<double>::max()
@@ -622,9 +641,11 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     m_accepted_configurational_MC_moves += 1;
     return true;
   }
-  // reject: restore original particle positions
-  for (auto const &item : original_positions)
+  // reject: restore original particle properties
+  for (auto const &item : original_state) {
+    set_particle_v(std::get<0>(item), std::get<2>(item));
     place_particle(std::get<0>(item), std::get<1>(item));
+  }
   return false;
 }
 

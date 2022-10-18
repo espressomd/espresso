@@ -108,7 +108,7 @@ public:
     return m_box;
   }
 
-  BoxGeometry const &box() const override { return m_box; };
+  BoxGeometry const &box() const override { return m_box; }
 
 private:
   /**

@@ -107,9 +107,9 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 #ifdef CUDA
   auto const energy_host = copy_energy_from_GPU();
   if (!obs_energy.coulomb.empty())
-    obs_energy.coulomb[1] += energy_host.coulomb;
+    obs_energy.coulomb[1] += static_cast<double>(energy_host.coulomb);
   if (!obs_energy.dipolar.empty())
-    obs_energy.dipolar[1] += energy_host.dipolar;
+    obs_energy.dipolar[1] += static_cast<double>(energy_host.dipolar);
 #endif
 
   obs_energy.mpi_reduce();

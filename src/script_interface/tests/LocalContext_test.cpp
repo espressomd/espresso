@@ -54,7 +54,7 @@ struct Dummy : si::ObjectHandle {
   }
 };
 
-auto factory = []() {
+static auto factory = []() {
   Utils::Factory<si::ObjectHandle> factory;
   factory.register_new<Dummy>("Dummy");
 

@@ -79,9 +79,9 @@ BOOST_AUTO_TEST_CASE(parallel_exceptions) {
     try {
       handler.parallel_try_catch<Testing::Error>(
           []() { throw Testing::Error(); });
-    } catch (Testing::Error const &err) {
+    } catch (Testing::Error const &) {
       rethrown = true;
-    } catch (ScriptInterface::Exception const &err) {
+    } catch (ScriptInterface::Exception const &) {
       converted = true;
     }
     if (world.rank() == 0) {
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(parallel_exceptions) {
     try {
       handler.parallel_try_catch<Testing::Error>(
           []() { throw Testing::Warning(); });
-    } catch (Testing::Warning const &err) {
+    } catch (Testing::Warning const &) {
       unhandled = true;
     }
     BOOST_CHECK(unhandled);
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(parallel_exceptions) {
                           "an error occurred on one or more MPI ranks:\n  rank "
                           "0: \n  rank 1: std::exception");
       }
-    } catch (ScriptInterface::Exception const &err) {
+    } catch (ScriptInterface::Exception const &) {
       converted = true;
     }
     if (world.rank() == 0) {
