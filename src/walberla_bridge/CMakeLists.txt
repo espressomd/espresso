@@ -29,12 +29,12 @@ if(WALBERLA_USE_AVX)
                         INTERFACE espresso::avx_flags)
 endif(WALBERLA_USE_AVX)
 
-if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-  add_gpu_library(espresso_walberla_cuda SHARED
-                  ${WalberlaBridgeCodegenCuda_SRC})
-  add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
-  target_link_libraries(espresso_walberla PUBLIC espresso::walberla_cuda)
-endif()
+#if(WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+#  add_gpu_library(espresso_walberla_cuda SHARED
+#                  ${WalberlaBridgeCodegenCuda_SRC})
+#  add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
+#  target_link_libraries(espresso_walberla PUBLIC espresso::walberla_cuda)
+#endif()
 
 target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils

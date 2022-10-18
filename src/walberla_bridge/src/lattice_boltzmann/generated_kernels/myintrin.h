@@ -1,3 +1,6 @@
+// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy v1.0+9.g19115d4.dirty,
+// lbmpy_walberla/pystencils_walberla from commit e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
+
 #pragma once
 
 #if defined(__SSE2__) || defined(_MSC_VER)

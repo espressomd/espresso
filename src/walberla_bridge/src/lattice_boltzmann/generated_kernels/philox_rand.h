@@ -1,3 +1,6 @@
+// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy v1.0+9.g19115d4.dirty,
+// lbmpy_walberla/pystencils_walberla from commit e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
+
 #include <cstdint>
 
 #if defined(__SSE2__) || defined(_MSC_VER)
@@ -96,7 +99,7 @@ QUALIFIERS void _philox4x32bumpkey(uint32* key)
 
 QUALIFIERS double _uniform_double_hq(uint32 x, uint32 y)
 {
-    uint64 z = (uint64)x ^ ((uint64)y << (53 - 32));
+    double z = (double)((uint64)x ^ ((uint64)y << (53 - 32)));
     return z * TWOPOW53_INV_DOUBLE + (TWOPOW53_INV_DOUBLE/2.0);
 }
 
@@ -139,10 +142,10 @@ QUALIFIERS void philox_float4(uint32 ctr0, uint32 ctr1, uint32 ctr2, uint32 ctr3
     _philox4x32bumpkey(key); _philox4x32round(ctr, key);  // 9
     _philox4x32bumpkey(key); _philox4x32round(ctr, key);  // 10
 
-    rnd1 = ctr[0] * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
-    rnd2 = ctr[1] * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
-    rnd3 = ctr[2] * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
-    rnd4 = ctr[3] * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
+    rnd1 = (float)(ctr[0]) * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
+    rnd2 = (float)(ctr[1]) * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
+    rnd3 = (float)(ctr[2]) * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
+    rnd4 = (float)(ctr[3]) * TWOPOW32_INV_FLOAT + (TWOPOW32_INV_FLOAT/2.0f);
 }
 
 #ifndef __CUDA_ARCH__
