@@ -53,8 +53,7 @@ tutorial_test(FILE test_polymers.py SUFFIX rouse)
 # TODO WALBERLA: simulation is too slow without GPU
 #tutorial_test(FILE test_polymers.py SUFFIX zimm LABELS gpu)
 tutorial_test(FILE test_lattice_boltzmann_poiseuille_flow.py)
-# TODO WALBERLA: find new reference positions of the symmetry break
-# tutorial_test(FILE test_lattice_boltzmann_sedimentation.py)
+tutorial_test(FILE test_lattice_boltzmann_sedimentation.py)
 # TODO WALBERLA: simulation is too short
 # tutorial_test(FILE test_raspberry_electrophoresis.py)
 tutorial_test(FILE test_active_matter.py)
