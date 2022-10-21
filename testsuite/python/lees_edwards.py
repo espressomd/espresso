@@ -292,31 +292,27 @@ class LeesEdwards(ut.TestCase):
 
     def test_trajectory_reconstruction(self):
         system = self.system
+        system.time = 3.4
 
-        protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=1., initial_pos_offset=0.0, time_0=0.0)
         system.lees_edwards.set_boundary_conditions(
-            shear_direction="x", shear_plane_normal="y", protocol=protocol)
+            shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
 
         pos = system.box_l - 0.01
         vel = np.array([0, 1, 0])
         p = system.part.add(pos=pos, v=vel)
 
-        print(system.time, system.lees_edwards.pos_offset)      
+        crossing_time = system.time
         system.integrator.run(1)
-        print(system.time, system.lees_edwards.pos_offset)      
-
         np.testing.assert_almost_equal(
             p.lees_edwards_offset, 
-            get_lin_pos_offset(system.time - system.time_step / 2, **params_lin))
+            get_lin_pos_offset(crossing_time, **params_lin))
         np.testing.assert_almost_equal(p.lees_edwards_flag, -1)
 
-        offset1 = p.lees_edwards_flag * 1.0 * system.time_step * 0.5
-
-        system.integrator.run(1)
-
+        system.integrator.run(1)  # no boundary crossing
         np.testing.assert_almost_equal(
-            offset1 - 1.0 * 0.5, p.lees_edwards_offset)
+            p.lees_edwards_offset, 
+            get_lin_pos_offset(crossing_time, **params_lin))
+
         np.testing.assert_almost_equal(p.lees_edwards_flag, 0)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
@@ -454,7 +450,11 @@ class LeesEdwards(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
         np.testing.assert_allclose(
+            np.copy(system.distance_vec(p2, p3)), [0, -2, 0], atol=tol)
+        np.testing.assert_allclose(
             np.copy(system.velocity_difference(p3, p2)), [0, 0, 0], atol=tol)
+        np.testing.assert_allclose(
+            np.copy(system.velocity_difference(p2, p3)), [0, 0, 0], atol=tol)
         system.integrator.run(0)
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
@@ -546,7 +546,7 @@ class LeesEdwards(ut.TestCase):
         ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
     def test_le_colldet(self):
         system = self.system
-        system.min_global_cut = 1.0
+        system.min_global_cut = 1.2
         system.time = 0
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)
@@ -635,7 +635,7 @@ class LeesEdwards(ut.TestCase):
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_le_breaking_bonds(self):
         system = self.system
-        system.min_global_cut = 1.0
+        system.min_global_cut = 1.2
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)

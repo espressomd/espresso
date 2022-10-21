@@ -36,9 +36,7 @@ public:
   UpdateOffset(BoxGeometry const &box) : m_le{box.lees_edwards_bc()} {}
 
   void operator()(Particle &p, double pos_prefactor = 1.0) const {
-    p.lees_edwards_offset() -= pos_prefactor *
-                               static_cast<double>(p.lees_edwards_flag()) *
-                               m_le.pos_offset / 2;
+    // Disabled as long as we do not use a two step LE update
   }
 };
 
@@ -66,7 +64,7 @@ public:
     auto const dir = static_cast<double>(p.lees_edwards_flag());
     p.v()[m_le.shear_direction] += dir * m_le.shear_velocity;
     p.pos()[m_le.shear_direction] += pos_prefactor * dir * m_le.pos_offset;
-    p.lees_edwards_offset() -= pos_prefactor * dir * m_le.pos_offset / 2;
+    p.lees_edwards_offset() -= pos_prefactor * dir * m_le.pos_offset;
     fold_position(p.pos(), p.image_box(), m_box);
     //    UpdateOffset::operator()(p,pos_prefactor);
   }
