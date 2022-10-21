@@ -34,16 +34,16 @@
 std::shared_ptr<Observable_stat> calculate_energy();
 
 /** Calculate the total energy of the system. */
-double calculate_current_potential_energy_of_system();
+double mpi_calculate_potential_energy();
 
 /** Helper function for @ref Observables::Energy. */
-double observable_compute_energy();
+double mpi_observable_compute_energy();
 
 /**
  * @brief Compute short-range energy of a particle.
  *
  * Iterates through particles inside cell and neighboring cells and computes
- * energy contribution for a specificparticle.
+ * energy contribution for a specific particle.
  *
  * @param pid    Particle id
  * @return Non-bonded energy of the particle.

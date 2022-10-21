@@ -22,8 +22,8 @@
 #include "ParticleHandle.hpp"
 
 #include "script_interface/get_value.hpp"
-#include "script_interface/interactions/bonded.hpp"
 
+#include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/grid.hpp"
 #include "core/particle_data.hpp"
 #include "core/particle_node.hpp"
@@ -399,7 +399,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     delete_particle_bonds(m_pid);
   } else if (name == "is_valid_bond_id") {
     auto const bond_id = get_value<int>(params, "bond_id");
-    return bonded_ia_params_zero_based_type(bond_id) != 0;
+    return ::bonded_ia_params.get_zero_based_type(bond_id) != 0;
   }
   if (name == "remove_particle") {
     remove_particle(m_pid);

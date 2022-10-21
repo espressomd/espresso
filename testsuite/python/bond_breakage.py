@@ -162,7 +162,7 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
             system.integrator.run(1)
 
 
-@utx.skipIfMissingFeatures("LENNARD_JONES")
+@utx.skipIfMissingFeatures(["LENNARD_JONES", "COLLISION_DETECTION"])
 class NetworkBreakage(BondBreakageCommon, ut.TestCase):
 
     @classmethod
@@ -216,6 +216,7 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         self.system.bonded_inter.clear()
         self.system.thermostat.turn_off()
 
+    @utx.skipIfMissingFeatures(["COLLISION_DETECTION"])
     def test_center_bonds(self):
 
         harm = espressomd.interactions.HarmonicBond(k=1.0, r_0=0.0, r_cut=5)
@@ -244,7 +245,8 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         bonds_count = self.count_bonds(pairs)
         np.testing.assert_equal(bonds_dist, bonds_count)
 
-    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
+    @utx.skipIfMissingFeatures(
+        ["VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
     def test_vs_bonds(self):
 
         harm = espressomd.interactions.HarmonicBond(k=1.0, r_0=0.0, r_cut=5)

@@ -28,7 +28,6 @@
 
 #include "LatticeWalberla.hpp"
 
-#include "core/communication.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"

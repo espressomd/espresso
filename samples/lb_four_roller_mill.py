@@ -84,8 +84,8 @@ np.testing.assert_array_equal(mask, np.flip(mask, axis=1))
 np.testing.assert_array_equal(mask, np.flip(mask, axis=2))
 
 if args.visualizer:
-    import espressomd.visualization_opengl
-    visualizer = espressomd.visualization_opengl.openGLLive(
+    import espressomd.visualization
+    visualizer = espressomd.visualization.openGLLive(
         system,
         LB_draw_velocity_plane=True,
         LB_plane_dist=0,

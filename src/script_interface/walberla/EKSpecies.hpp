@@ -26,14 +26,10 @@
 
 #include "walberla_bridge/LatticeWalberla.hpp"
 
-#include "core/communication.hpp"
-
 #include "walberla_bridge/electrokinetics/ek_walberla_init.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
-
-#include "optional_reduction.hpp"
 
 namespace ScriptInterface::walberla {
 

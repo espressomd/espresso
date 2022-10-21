@@ -25,34 +25,30 @@
 #include "ljcos.hpp"
 
 #ifdef LJCOS
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
-int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                     double cut, double offset) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+#include <stdexcept>
 
-  if (!data)
-    return ES_ERROR;
-
-  data->ljcos.eps = eps;
-  data->ljcos.sig = sig;
-  data->ljcos.cut = cut;
-  data->ljcos.offset = offset;
-
-  /* Calculate dependent parameters */
+LJcos_Parameters::LJcos_Parameters(double epsilon, double sigma, double cutoff,
+                                   double offset)
+    : eps{epsilon}, sig{sigma}, cut{cutoff}, offset{offset} {
+  if (epsilon < 0.) {
+    throw std::domain_error("LJcos parameter 'epsilon' has to be >= 0");
+  }
+  if (sigma < 0.) {
+    throw std::domain_error("LJcos parameter 'sigma' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("LJcos parameter 'cutoff' has to be >= 0");
+  }
   auto const facsq = Utils::cbrt_2() * Utils::sqr(sig);
-  data->ljcos.rmin = sqrt(Utils::cbrt_2()) * sig;
-  data->ljcos.alfa = Utils::pi() / (Utils::sqr(data->ljcos.cut) - facsq);
-  data->ljcos.beta =
-      Utils::pi() * (1. - (1. / (Utils::sqr(data->ljcos.cut) / facsq - 1.)));
 
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+  rmin = sqrt(Utils::cbrt_2()) * sig;
+  alfa = Utils::pi() / (Utils::sqr(cut) - facsq);
+  beta = Utils::pi() * (1. - (1. / (Utils::sqr(cut) / facsq - 1.)));
 }
-#endif
+
+#endif // LJCOS

@@ -186,13 +186,6 @@ cdef Vector3d make_Vector3d(a):
     return v
 
 
-cdef Vector3i make_Vector3i(a):
-    cdef Vector3i v
-    for i, ai in enumerate(a):
-        v[i] = ai
-    return v
-
-
 cpdef handle_errors(msg):
     """
     Gathers runtime errors.

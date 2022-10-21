@@ -105,20 +105,23 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
+Later in the installation instructions, you will see CMake commands of the
+form ``cmake ..`` with optional arguments, such as ``cmake .. -D WITH_CUDA=ON``
+to activate CUDA. These commands may need to be adapted depending on which
+operating system and CUDA version you are using.
+
 On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
 to compile sources that rely on ``std::function``. You can either use GCC 10:
 
 .. code-block:: bash
 
     CC=gcc-10 CXX=g++-10 cmake .. -D WITH_CUDA=ON
-    make -j
 
 or alternatively install Clang 12 as a replacement for nvcc and GCC:
 
 .. code-block:: bash
 
     CC=clang-12 CXX=clang++-12 cmake .. -D WITH_CUDA=ON -D WITH_CUDA_COMPILER=clang
-    make -j
 
 On Ubuntu 20.04, the default GCC compiler is also too recent for nvcc and will
 generate compiler errors. You can either install an older version of GCC and
@@ -133,7 +136,6 @@ specific one by providing custom paths to the compiler and toolkit:
 
     CUDACXX=/usr/local/cuda-11.0/bin/nvcc \
       cmake .. -D WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.0
-    make -j
 
 Alternatively for Clang:
 
@@ -141,7 +143,6 @@ Alternatively for Clang:
 
     CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.0 \
       cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang -DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.0
-    make -j
 
 .. _Requirements for building the documentation:
 

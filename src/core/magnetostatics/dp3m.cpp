@@ -154,6 +154,9 @@ DipolarP3M::DipolarP3M(P3MParameters &&parameters, double prefactor,
   if (prefactor <= 0.) {
     throw std::domain_error("Parameter 'prefactor' must be > 0");
   }
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
+  }
 
   if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
     throw std::domain_error("DipolarP3M requires a cubic mesh");

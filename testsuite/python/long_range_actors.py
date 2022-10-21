@@ -284,13 +284,13 @@ class Test(ut.TestCase):
         self.assertFalse(p3m.is_tuned)
         self.assertEqual(len(self.system.actors), 0)
 
-    @utx.skipIfMissingFeatures(["P3M"])
+    @utx.skipIfMissingFeatures(["P3M", "NPT"])
     def test_p3m_cpu_tuning_errors(self):
         self.add_charged_particles()
         p3m = espressomd.electrostatics.P3M(prefactor=1., accuracy=1e-3)
         self.check_p3m_tuning_errors(p3m)
 
-    @utx.skipIfMissingFeatures(["DP3M"])
+    @utx.skipIfMissingFeatures(["DP3M", "NPT"])
     def test_dp3m_cpu_tuning_errors(self):
         self.add_magnetic_particles()
         dp3m = espressomd.magnetostatics.DipolarP3M(
@@ -331,7 +331,7 @@ class Test(ut.TestCase):
         self.system.periodicity = (False, False, True)
         self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1DGPU)
 
-        with self.assertRaisesRegex(ValueError, "switching radius must not be larger than box length"):
+        with self.assertRaisesRegex(ValueError, "Parameter 'far_switch_radius' must not be larger than box length"):
             espressomd.electrostatics.MMM1DGPU(
                 prefactor=1., maxPWerror=1e-2,
                 far_switch_radius=2. * self.system.box_l[2])

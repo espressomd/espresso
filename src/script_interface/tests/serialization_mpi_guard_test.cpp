@@ -22,6 +22,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "script_interface/GlobalContext.hpp"
 #include "script_interface/ObjectList.hpp"
 
 #include <boost/mpi.hpp>
@@ -51,24 +52,35 @@ private:
 
 BOOST_AUTO_TEST_CASE(parallel_exception) {
   boost::mpi::communicator world;
-  auto const obj_ptr = std::make_shared<ScriptInterface::ObjectHandle>();
-  auto const predicate = [](std::exception const &ex) {
-    std::string message =
-        "Non-empty object containers do not support checkpointing "
-        "in MPI environments. Container  contains 1 elements.";
-    return ex.what() == message;
-  };
+  Utils::Factory<ObjectHandle> factory;
+  factory.register_new<Testing::ObjectContainer>("ObjectContainer");
+  Communication::MpiCallbacks cb{world};
+  auto ctx = std::make_shared<ScriptInterface::GlobalContext>(
+      cb, std::make_shared<ScriptInterface::LocalContext>(factory, world));
 
-  Testing::ObjectContainer list;
-  BOOST_CHECK_NO_THROW(list.serialize());
+  if (world.rank() == 0) {
+    auto const obj_ptr = std::make_shared<ScriptInterface::ObjectHandle>();
+    auto const predicate = [](std::exception const &ex) {
+      std::string message =
+          "Non-empty object containers do not support checkpointing in MPI "
+          "environments. Container ObjectContainer contains 1 elements.";
+      return ex.what() == message;
+    };
 
-  list.add(obj_ptr);
-  if (world.size() > 1) {
-    BOOST_CHECK_EXCEPTION(list.serialize(), std::runtime_error, predicate);
+    auto list_so = ctx->make_shared("ObjectContainer", {});
+    auto &list = dynamic_cast<Testing::ObjectContainer &>(*list_so);
+    BOOST_CHECK_NO_THROW(list.serialize());
+
+    list.add(obj_ptr);
+    if (world.size() > 1) {
+      BOOST_CHECK_EXCEPTION(list.serialize(), std::runtime_error, predicate);
+    }
+
+    list.remove(obj_ptr);
+    BOOST_CHECK_NO_THROW(list.serialize());
+  } else {
+    cb.loop();
   }
-
-  list.remove(obj_ptr);
-  BOOST_CHECK_NO_THROW(list.serialize());
 }
 
 int main(int argc, char **argv) {

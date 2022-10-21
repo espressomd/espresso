@@ -360,7 +360,7 @@ class LeesEdwards(ut.TestCase):
             np.copy(system.velocity_difference(p1, p2)),
             np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
 
-    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "SOFT_SPHERE"])
     def test_interactions(self):
         """
         We place two particles crossing a boundary and connect them with an
@@ -466,7 +466,7 @@ class LeesEdwards(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(p1.torque_lab), [0, 0, -2], atol=tol)
 
-    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "ROTATION"])
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "ROTATION", "DPD"])
     def test_virt_sites_interaction(self):
         """
         A virtual site interacts with a real particle via a DPD interaction

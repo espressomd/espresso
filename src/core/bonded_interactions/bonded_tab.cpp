@@ -30,20 +30,7 @@
 TabulatedBond::TabulatedBond(double min, double max,
                              std::vector<double> const &energy,
                              std::vector<double> const &force) {
-  assert(max >= min);
-  assert((max == min) || force.size() > 1);
-  assert(force.size() == energy.size());
-
-  auto tab_pot = this->pot = std::make_shared<TabulatedPotential>();
-
-  /* set table limits */
-  tab_pot->minval = min;
-  tab_pot->maxval = max;
-
-  tab_pot->invstepsize = static_cast<double>(force.size() - 1) / (max - min);
-
-  tab_pot->force_tab = force;
-  tab_pot->energy_tab = energy;
+  pot = std::make_shared<TabulatedPotential>(min, max, force, energy);
 }
 
 TabulatedDistanceBond::TabulatedDistanceBond(double min, double max,

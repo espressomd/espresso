@@ -143,11 +143,7 @@ inline ParticleForce calc_non_bonded_pair_force(
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
-  // The gb force function isn't inlined, probably due to its size
-  if (dist < ia_params.gay_berne.cut) {
-    pf += gb_pair_force(p1.calc_director(), p2.calc_director(), ia_params, d,
-                        dist);
-  }
+  pf += gb_pair_force(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
   pf.f += force_factor * d;
   return pf;

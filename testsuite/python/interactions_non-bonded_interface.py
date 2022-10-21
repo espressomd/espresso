@@ -22,15 +22,14 @@ import tests_common
 
 import espressomd
 import espressomd.interactions
+import espressomd.code_features
 
 
-class Non_bonded_interactionsTests(ut.TestCase):
+class Test(ut.TestCase):
     system = espressomd.System(box_l=[30.0, 30.0, 30.0])
 
     def tearDown(self):
-        if espressomd.has_features(["LENNARD_JONES"]):
-            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0., sigma=0., cutoff=0., shift=0.)
+        self.system.non_bonded_inter.reset()
 
     def intersMatch(self, inType, outInter, inParams, outParams, msg_long):
         """Check, if the interaction type set and gotten back as well as the
@@ -39,40 +38,6 @@ class Non_bonded_interactionsTests(ut.TestCase):
         """
         self.assertIsInstance(outInter, inType)
         tests_common.assert_params_match(self, inParams, outParams, msg_long)
-
-    def parameterKeys(self, interObject):
-        """
-        Check :meth:`~espressomd.interactions.NonBondedInteraction.valid_keys`
-        and :meth:`~espressomd.interactions.NonBondedInteraction.required_keys`
-        return sets, and that
-        :meth:`~espressomd.interactions.NonBondedInteraction.default_params`
-        returns a dictionary with the correct keys.
-
-        Parameters
-        ----------
-        interObject: instance of a class derived from :class:`espressomd.interactions.NonBondedInteraction`
-            Object of the interaction to test, e.g.
-            :class:`~espressomd.interactions.LennardJonesInteraction`
-        """
-        classname = interObject.__class__.__name__
-        valid_keys = interObject.valid_keys()
-        required_keys = interObject.required_keys()
-        default_keys = set(interObject.default_params().keys())
-        self.assertIsInstance(valid_keys, set,
-                              "{}.valid_keys() must return a set".format(
-                                  classname))
-        self.assertIsInstance(required_keys, set,
-                              "{}.required_keys() must return a set".format(
-                                  classname))
-        self.assertTrue(default_keys.issubset(valid_keys),
-                        "{}.default_params() has unknown parameters: {}".format(
-            classname, default_keys.difference(valid_keys)))
-        self.assertTrue(default_keys.isdisjoint(required_keys),
-                        "{}.default_params() has extra parameters: {}".format(
-            classname, default_keys.intersection(required_keys)))
-        self.assertSetEqual(default_keys, valid_keys - required_keys,
-                            "{}.default_params() should have keys: {}, got: {}".format(
-                                classname, valid_keys - required_keys, default_keys))
 
     def generateTestForNon_bonded_interaction(
             _partType1, _partType2, _interClass, _params, _interName):
@@ -114,10 +79,9 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
             self.intersMatch(
                 interClass, outInter, params, outParams,
-                "{}: value set and value gotten back differ for particle types {} and {}: {} vs. {}"
-                .format(interClass(**params).type_name(), partType1, partType2,
-                        params, outParams))
-            self.parameterKeys(outInter)
+                f"{interClass.__name__}: value set and value gotten back "
+                f"differ for particle types {partType1} and {partType2}: "
+                f"{params} vs. {outParams}")
 
         return func
 
@@ -162,26 +126,65 @@ class Non_bonded_interactionsTests(ut.TestCase):
              "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
 
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
+    def test_reset(self):
+        lj_params_inactive = {"shift": 0., "sigma": 0., "epsilon": 0.,
+                              "cutoff": -1., "offset": 0., "min": 0.}
+        # global reset
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1., sigma=2., cutoff=3., shift="auto")
+        self.system.non_bonded_inter.reset()
+        self.assertEqual(self.system.non_bonded_inter[0, 0].lennard_jones.get_params(),
+                         lj_params_inactive)
+        # handle reset
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1., sigma=2., cutoff=3., shift="auto")
+        self.system.non_bonded_inter[0, 0].reset()
+        self.assertEqual(self.system.non_bonded_inter[0, 0].lennard_jones.get_params(),
+                         lj_params_inactive)
+        # potential reset
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1., sigma=2., cutoff=3., shift="auto")
+        self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
+        self.assertEqual(self.system.non_bonded_inter[0, 0].lennard_jones.get_params(),
+                         lj_params_inactive)
+
+    @utx.skipIfMissingFeatures(["WCA"])
+    def test_set_params(self):
+        wca = espressomd.interactions.WCAInteraction(epsilon=1., sigma=2.)
+        wca.set_params(epsilon=2., sigma=3.)
+        self.assertEqual(wca.get_params()["epsilon"], 2.)
+        self.assertEqual(wca.get_params()["sigma"], 3.)
+        self.system.non_bonded_inter[0, 0].wca = wca
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].wca.get_params()["epsilon"], 2.)
+        self.assertEqual(wca.get_params()["epsilon"], 2.)
+        self.assertEqual(wca.get_params()["sigma"], 3.)
+        self.system.non_bonded_inter.reset()
+        wca.set_params(epsilon=4., sigma=3.)
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].wca.get_params()["epsilon"], 4.)
+        self.assertEqual(wca.get_params()["epsilon"], 4.)
+        with self.assertRaisesRegex(RuntimeError, r"Non-bonded interaction is already bound to interaction pair \[0, 0\]"):
+            self.system.non_bonded_inter[0, 1].wca = wca
+
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_exceptions(self):
-        err_msg_required = (r"The following keys have to be given as keyword arguments: "
-                            r"\['cutoff', 'epsilon', 'shift', 'sigma'\], got "
-                            r"\['epsilon', 'sigma'\] \(missing \['cutoff', 'shift'\]\)")
-        err_msg_valid = (r"Only the following keys can be given as keyword arguments: "
-                         r"\['cutoff', 'epsilon', 'min', 'offset', 'shift', 'sigma'\], got "
-                         r"\['cutoff', 'epsilon', 'shift', 'sigma', 'unknown'\] \(unknown \['unknown'\]\)")
-        with self.assertRaisesRegex(ValueError, err_msg_required):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'shift' is missing"):
             espressomd.interactions.LennardJonesInteraction(
-                epsilon=1., sigma=2.)
-        with self.assertRaisesRegex(ValueError, err_msg_required):
+                epsilon=1., sigma=2., cutoff=2.)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'shift' is missing"):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=1., sigma=2.)
-        with self.assertRaisesRegex(ValueError, err_msg_valid):
+                epsilon=1., sigma=2., cutoff=2.)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'unknown' is not recognized"):
             espressomd.interactions.LennardJonesInteraction(
                 epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
-        with self.assertRaisesRegex(ValueError, err_msg_valid):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'unknown' is not recognized"):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=1., sigma=2., cutoff=3., shift=4., unknown=5.)
+        with self.assertRaisesRegex(ValueError, "LJ parameter 'shift' has to be 'auto' or a float"):
+            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+                epsilon=1., sigma=2., cutoff=3., shift="automatic")
 
         skin = self.system.cell_system.skin
         box_l = self.system.box_l
@@ -190,11 +193,158 @@ class Non_bonded_interactionsTests(ut.TestCase):
         max_ia_cutoff = min(box_l / node_grid) - skin * (n_nodes > 1)
         wrong_cutoff = 1.01 * max_ia_cutoff
         lennard_jones = self.system.non_bonded_inter[0, 0].lennard_jones
-        with self.assertRaisesRegex(Exception, "setting LennardJones raised an error: ERROR: interaction range .+ in direction [0-2] is larger than the local box size"):
+        with self.assertRaisesRegex(Exception, "setting LennardJonesInteraction raised an error: ERROR: interaction range .+ in direction [0-2] is larger than the local box size"):
             lennard_jones.set_params(
                 epsilon=1., sigma=1., cutoff=wrong_cutoff, shift="auto")
         self.assertAlmostEqual(
             lennard_jones.get_params()['cutoff'], wrong_cutoff, delta=1e-10)
+        inter_00_obj = self.system.non_bonded_inter[0, 0]
+        self.assertEqual(inter_00_obj.call_method("get_types"), [0, 0])
+        self.assertIsNone(inter_00_obj.call_method("unknown"))
+
+    def test_feature_checks(self):
+        base_class = espressomd.interactions.NonBondedInteraction
+        FeaturesError = espressomd.code_features.FeaturesError
+        for class_ia in espressomd.interactions.__dict__.values():
+            if isinstance(class_ia, type) and issubclass(
+                    class_ia, base_class) and class_ia != base_class:
+                feature = class_ia._so_feature
+                if not espressomd.code_features.has_features(feature):
+                    with self.assertRaisesRegex(FeaturesError, f"Missing features {feature}"):
+                        class_ia()
+
+    def check_potential_exceptions(
+            self, ia_class, params, check_keys, invalid_value=-0.1):
+        for key in check_keys:
+            with self.assertRaisesRegex(ValueError, f"parameter '{key}'"):
+                invalid_params = params.copy()
+                invalid_params[key] = invalid_value
+                ia_class(**invalid_params)
+
+    @utx.skipIfMissingFeatures("WCA")
+    def test_wca_exceptions(self):
+        self.assertEqual(self.system.non_bonded_inter[0, 0].wca.cutoff, -1.)
+        self.check_potential_exceptions(
+            espressomd.interactions.WCAInteraction,
+            {"epsilon": 1., "sigma": 1.},
+            ("epsilon", "sigma"))
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_lj_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.LennardJonesInteraction,
+            {"epsilon": 1., "sigma": 1., "cutoff": 1.5, "shift": 0.2},
+            ("epsilon", "sigma", "cutoff"))
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
+    def test_ljgen_exceptions(self):
+        check_keys = ("epsilon", "sigma", "cutoff")
+        params = {"epsilon": 1., "sigma": 1., "cutoff": 1.5, "shift": 0.2,
+                  "offset": 0.1, "b1": 1., "b2": 1., "e1": 12., "e2": 6.}
+        if espressomd.has_features(["LJGEN_SOFTCORE"]):
+            params["delta"] = 0.1
+            params["lam"] = 0.3
+            check_keys = ("delta", "lam", *check_keys)
+        self.check_potential_exceptions(
+            espressomd.interactions.GenericLennardJonesInteraction,
+            params,
+            check_keys)
+        with self.assertRaisesRegex(ValueError, "Generic LJ parameter 'shift' has to be 'auto' or a float"):
+            invalid_params = params.copy()
+            invalid_params["shift"] = "unknown"
+            espressomd.interactions.GenericLennardJonesInteraction(
+                **invalid_params)
+
+    @utx.skipIfMissingFeatures("LJCOS")
+    def test_lj_cos_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.LennardJonesCosInteraction,
+            {"epsilon": 1., "sigma": 1., "cutoff": 1.5, "offset": 0.2},
+            ("epsilon", "sigma", "cutoff"))
+
+    @utx.skipIfMissingFeatures("LJCOS2")
+    def test_lj_cos2_exceptions(self):
+        self.assertEqual(
+            self.system.non_bonded_inter[0, 0].lennard_jones_cos2.cutoff, -1.)
+        self.check_potential_exceptions(
+            espressomd.interactions.LennardJonesCos2Interaction,
+            {"epsilon": 1., "sigma": 1., "width": 1.5, "offset": 0.2},
+            ("epsilon", "sigma", "width"))
+
+    @utx.skipIfMissingFeatures("HERTZIAN")
+    def test_hertzian_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.HertzianInteraction,
+            {"eps": 1., "sig": 1.},
+            ("eps", "sig")
+        )
+
+    @utx.skipIfMissingFeatures("GAUSSIAN")
+    def test_gaussian_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.GaussianInteraction,
+            {"eps": 1., "sig": 1., "cutoff": 1.5},
+            ("eps", "sig", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("BMHTF_NACL")
+    def test_bmhtf_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.BMHTFInteraction,
+            {"a": 3., "b": 2., "c": 1., "d": 4., "sig": 0.13, "cutoff": 1.2},
+            ("a", "c", "d", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("MORSE")
+    def test_morse_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.MorseInteraction,
+            {"eps": 1., "alpha": 3., "rmin": 0.1, "cutoff": 1.2},
+            ("eps", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("BUCKINGHAM")
+    def test_buckingham_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.BuckinghamInteraction,
+            {"a": 2., "b": 3., "c": 5., "d": 4., "discont": 1., "cutoff": 2.,
+             "shift": 0.1},
+            ("a", "b", "c", "d", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("SOFT_SPHERE")
+    def test_soft_sphere_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.SoftSphereInteraction,
+            {"a": 1., "n": 3., "cutoff": 1.1, "offset": 0.1},
+            ("a", "offset", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("HAT")
+    def test_hat_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.HatInteraction,
+            {"F_max": 10., "cutoff": 1.},
+            ("F_max", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("SMOOTH_STEP")
+    def test_smooth_step_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.SmoothStepInteraction,
+            {"eps": 4., "sig": 3., "cutoff": 1., "d": 2., "n": 11, "k0": 2.},
+            ("eps", "sig", "cutoff")
+        )
+
+    @utx.skipIfMissingFeatures("DPD")
+    def test_dpd_exceptions(self):
+        self.check_potential_exceptions(
+            espressomd.interactions.DPDInteraction,
+            {"weight_function": 1, "gamma": 2., "r_cut": 2.,
+             "trans_weight_function": 1, "trans_gamma": 1., "trans_r_cut": 2.},
+            ("weight_function", "trans_weight_function"),
+            invalid_value=-1
+        )
 
 
 if __name__ == "__main__":

@@ -33,14 +33,10 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
-
-int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
-                     double cut, double offset);
 
 /** Calculate Lennard-Jones cosine force factor */
 inline double ljcos_pair_force_factor(IA_parameters const &ia_params,

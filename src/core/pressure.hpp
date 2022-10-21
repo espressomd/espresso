@@ -35,6 +35,6 @@
 std::shared_ptr<Observable_stat> calculate_pressure();
 
 /** Helper function for @ref Observables::PressureTensor. */
-Utils::Vector9d observable_compute_pressure_tensor();
+Utils::Vector9d mpi_observable_compute_pressure_tensor();
 
 #endif

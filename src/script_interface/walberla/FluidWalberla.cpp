@@ -23,13 +23,13 @@
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include "FluidWalberla.hpp"
-#include "optional_reduction.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 
 #include "core/BoxGeometry.hpp"
-#include "core/communication.hpp"
 #include "core/grid.hpp"
 #include "core/grid_based_algorithms/LBCheckpointFile.hpp"
+
+#include "script_interface/communication.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
@@ -83,11 +83,13 @@ inline void unit_test_handle(int mode) {
 void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
   auto const err_msg = std::string("Error while reading LB checkpoint: ");
   auto const binary = mode == static_cast<int>(CptMode::binary);
+  auto const &comm = context()->get_comm();
+  auto const is_head_node = context()->is_head_node();
 
   // open file and set exceptions
   LBCheckpointFile cpfile(filename, std::ios_base::in, binary);
   if (!cpfile.stream) {
-    if (context()->is_head_node()) {
+    if (is_head_node) {
       throw std::runtime_error(err_msg + "could not open file " + filename);
     }
     return;
@@ -142,7 +144,7 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
         }
       }
     }
-    comm_cart.barrier();
+    comm.barrier();
     m_lb_fluid->reallocate_ubb_field();
     m_lb_fluid->ghost_communication();
     // check EOF
@@ -158,18 +160,18 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
     auto const eof_error = cpfile.stream.eof();
     cpfile.stream.close();
     if (eof_error) {
-      if (context()->is_head_node()) {
+      if (is_head_node) {
         throw std::runtime_error(err_msg + "EOF found.");
       }
       return;
     }
-    if (context()->is_head_node()) {
+    if (is_head_node) {
       throw std::runtime_error(err_msg + "incorrectly formatted data.");
     }
     return;
   } catch (std::runtime_error const &fail) {
     cpfile.stream.close();
-    if (context()->is_head_node()) {
+    if (is_head_node) {
       throw;
     }
     return;
@@ -181,15 +183,17 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
   auto const binary = mode == static_cast<int>(CptMode::binary);
   auto const unit_test_mode = (mode != static_cast<int>(CptMode::ascii)) and
                               (mode != static_cast<int>(CptMode::binary));
+  auto const &comm = context()->get_comm();
+  auto const is_head_node = context()->is_head_node();
   bool failure = false;
 
   // open file and set exceptions
   std::shared_ptr<LBCheckpointFile> cpfile;
-  if (context()->is_head_node()) {
+  if (is_head_node) {
     cpfile = std::make_shared<LBCheckpointFile>(filename, std::ios_base::out,
                                                 binary);
     failure = !cpfile->stream;
-    boost::mpi::broadcast(comm_cart, failure, 0);
+    boost::mpi::broadcast(comm, failure, 0);
     if (failure) {
       throw std::runtime_error(err_msg + "could not open file " + filename);
     }
@@ -199,7 +203,7 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
       cpfile->stream << std::fixed;
     }
   } else {
-    boost::mpi::broadcast(comm_cart, failure, 0);
+    boost::mpi::broadcast(comm, failure, 0);
     if (failure) {
       return;
     }
@@ -208,7 +212,7 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
   try {
     auto const grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
     auto const pop_size = m_lb_fluid->stencil_size();
-    if (context()->is_head_node()) {
+    if (is_head_node) {
       cpfile->write(grid_size);
       cpfile->write(pop_size);
       unit_test_handle(mode);
@@ -221,16 +225,15 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
           auto const ind = Utils::Vector3i{{i, j, k}};
           auto const result = get_node_checkpoint(ind);
           if (!unit_test_mode) {
-            assert(1 == boost::mpi::all_reduce(comm_cart,
-                                               static_cast<int>(!!result),
+            assert(1 == boost::mpi::all_reduce(comm, static_cast<int>(!!result),
                                                std::plus<>()) &&
                    "Incorrect number of return values");
           }
-          if (context()->is_head_node()) {
+          if (is_head_node) {
             if (result) {
               cpnode = *result;
             } else {
-              comm_cart.recv(boost::mpi::any_source, 42, cpnode);
+              comm.recv(boost::mpi::any_source, 42, cpnode);
             }
             cpfile->write(cpnode.populations);
             cpfile->write(cpnode.last_applied_force);
@@ -238,12 +241,12 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
             if (cpnode.is_boundary) {
               cpfile->write(cpnode.slip_velocity);
             }
-            boost::mpi::broadcast(comm_cart, failure, 0);
+            boost::mpi::broadcast(comm, failure, 0);
           } else {
             if (result) {
-              comm_cart.send(0, 42, *result);
+              comm.send(0, 42, *result);
             }
-            boost::mpi::broadcast(comm_cart, failure, 0);
+            boost::mpi::broadcast(comm, failure, 0);
             if (failure) {
               return;
             }
@@ -252,9 +255,9 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
       }
     }
   } catch (std::exception const &error) {
-    if (context()->is_head_node()) {
+    if (is_head_node) {
       failure = true;
-      boost::mpi::broadcast(comm_cart, failure, 0);
+      boost::mpi::broadcast(comm, failure, 0);
       cpfile->stream.close();
       if (dynamic_cast<std::ios_base::failure const *>(&error)) {
         throw std::runtime_error(err_msg + "could not write to " + filename);
@@ -265,10 +268,8 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
 }
 
 std::vector<Variant> FluidWalberla::get_average_pressure_tensor() const {
-  auto const local = m_lb_fluid->get_pressure_tensor();
-  Utils::VectorXd<9> tensor_flat{};
-  boost::mpi::reduce(comm_cart, local, tensor_flat, std::plus<>(), 0);
-  tensor_flat /= m_conv_press;
+  auto const local = m_lb_fluid->get_pressure_tensor() / m_conv_press;
+  auto const tensor_flat = mpi_reduce_sum(context()->get_comm(), local);
   auto tensor = Utils::Matrix<double, 3, 3>{};
   std::copy(tensor_flat.begin(), tensor_flat.end(), tensor.m_data.begin());
   return std::vector<Variant>{tensor.row<0>().as_vector(),
@@ -279,8 +280,8 @@ std::vector<Variant> FluidWalberla::get_average_pressure_tensor() const {
 Variant
 FluidWalberla::get_interpolated_velocity(Utils::Vector3d const &pos) const {
   auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
-  auto result = m_lb_fluid->get_velocity_at_pos(lb_pos);
-  return optional_reduction_with_conversion(result, m_conv_speed);
+  auto const result = m_lb_fluid->get_velocity_at_pos(lb_pos);
+  return mpi_reduce_optional(context()->get_comm(), result) / m_conv_speed;
 }
 
 } // namespace ScriptInterface::walberla

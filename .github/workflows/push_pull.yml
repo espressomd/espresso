@@ -22,7 +22,6 @@ jobs:
         with:
           asan: false
           ubsan: false
-          check_skip_long: false
 
   sanitizer_check:
     runs-on: macos-latest
@@ -39,7 +38,6 @@ jobs:
         with:
           asan: true
           ubsan: true
-          check_skip_long: true
       - name: Setting job link variable
         if: ${{ failure() }}
         run: |

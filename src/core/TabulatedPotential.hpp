@@ -25,7 +25,6 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <cassert>
 #include <vector>
 
 /** Evaluate forces and energies using a custom potential profile.
@@ -45,6 +44,11 @@ struct TabulatedPotential {
   std::vector<double> force_tab;
   /** Tabulated energies. */
   std::vector<double> energy_tab;
+
+  TabulatedPotential() = default;
+  TabulatedPotential(double minval, double maxval,
+                     std::vector<double> const &force,
+                     std::vector<double> const &energy);
 
   /** Evaluate the force at position @p x.
    *  @param x  Bond length/angle
@@ -67,17 +71,6 @@ struct TabulatedPotential {
   }
 
   double cutoff() const { return maxval; }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &minval;
-    ar &maxval;
-    ar &invstepsize;
-    ar &force_tab;
-    ar &energy_tab;
-  }
 };
 
 #endif

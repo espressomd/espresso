@@ -309,8 +309,7 @@ class CollisionDetection(ut.TestCase):
             self.assertIn(base_particles, bonds)
 
         # Tidy
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0, sigma=0, cutoff=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
     def run_test_glue_to_surface_for_pos(self, *positions):
         system = self.system
@@ -464,7 +463,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_glue_to_surface_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "VIRTUAL_SITES_RELATIVE"])
     def test_glue_to_surface_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites
@@ -578,8 +577,7 @@ class CollisionDetection(ut.TestCase):
             self.assertEqual(p.type, self.part_type_vs)
 
         # Tidy
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0, sigma=0, cutoff=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
     def test_bind_three_particles(self):
         system = self.system

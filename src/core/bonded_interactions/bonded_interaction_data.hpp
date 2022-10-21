@@ -133,6 +133,9 @@ public:
   bool empty() const { return m_params.empty(); }
   auto size() const { return m_params.size(); }
   auto get_next_key() const { return next_key; }
+  auto get_zero_based_type(int bond_id) const {
+    return contains(bond_id) ? at(bond_id)->which() : 0;
+  }
 
 private:
   container_type m_params = {};

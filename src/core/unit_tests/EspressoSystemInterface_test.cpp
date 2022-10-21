@@ -25,11 +25,12 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "config/config.hpp"
 #include "particle_data.hpp"
 #include "particle_node.hpp"
 #include "virtual_sites.hpp"
 #include "virtual_sites/VirtualSitesOff.hpp"
+
+#include "config/config.hpp"
 
 #include <boost/mpi.hpp>
 

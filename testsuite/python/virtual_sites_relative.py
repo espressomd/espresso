@@ -37,8 +37,7 @@ class VirtualSites(ut.TestCase):
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0., sigma=0., cutoff=0., shift=0.)
+        self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
 
     def multiply_quaternions(self, a, b):

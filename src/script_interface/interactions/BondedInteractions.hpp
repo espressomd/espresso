@@ -96,6 +96,11 @@ public:
       return {m_bonds.at(bond_id)};
     }
 
+    if (name == "get_zero_based_type") {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      return ::bonded_ia_params.get_zero_based_type(bond_id);
+    }
+
     return ObjectMap<BondedInteraction>::do_call_method(name, params);
   }
 

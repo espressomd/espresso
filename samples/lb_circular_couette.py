@@ -87,8 +87,8 @@ for node, tangent in zip(surface_nodes, tangents):
         velocity_magnitude * tangent)
 
 if args.visualizer:
-    import espressomd.visualization_opengl
-    visualizer = espressomd.visualization_opengl.openGLLive(
+    import espressomd.visualization
+    visualizer = espressomd.visualization.openGLLive(
         system,
         LB_draw_velocity_plane=True,
         LB_plane_dist=0,
@@ -197,4 +197,5 @@ ax2.quiver(quivers_fluid[:, 0], quivers_fluid[:, 1], quivers_fluid[:, 2],
 ax2.set(xlabel='x-axis', ylabel='y-axis')
 ax2.legend(framealpha=1, loc='upper right')
 
+plt.tight_layout()
 plt.show()

@@ -37,6 +37,7 @@ namespace bdata = boost::unit_test::data;
 #include "Particle.hpp"
 #include "ParticleFactory.hpp"
 #include "communication.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -95,6 +96,7 @@ void mpi_set_integrator_sd_local() {
 
 REGISTER_CALLBACK(mpi_set_integrator_sd_local)
 
+#ifdef EXTERNAL_FORCES
 struct : public IntegratorHelper {
   void set_integrator() const override {
     mpi_set_thermo_switch(THERMO_OFF);
@@ -105,6 +107,7 @@ struct : public IntegratorHelper {
   }
   char const *name() const override { return "SteepestDescent"; }
 } steepest_descent;
+#endif // EXTERNAL_FORCES
 
 void mpi_set_integrator_vv_local() { set_integ_switch(INTEG_METHOD_NVT); }
 
@@ -143,7 +146,17 @@ struct : public IntegratorHelper {
   char const *name() const override { return "VelocityVerletNpT"; }
 } velocity_verlet_npt;
 #endif // NPT
+
 } // namespace Testing
+
+void mpi_set_lj_local(int key, double eps, double sig, double cut,
+                      double offset, double min, double shift) {
+  LJ_Parameters lj{eps, sig, cut, offset, min, shift};
+  ::nonbonded_ia_params[key]->lj = lj;
+  on_non_bonded_ia_change();
+}
+
+REGISTER_CALLBACK(mpi_set_lj_local)
 
 inline double get_dist_from_last_verlet_update(Particle const &p) {
   return (p.pos() - p.pos_at_last_verlet_update()).norm();
@@ -159,8 +172,11 @@ auto const propagators =
         Testing::velocity_verlet,
 #ifdef NPT
         Testing::velocity_verlet_npt,
-#endif
-        Testing::steepest_descent};
+#endif // NPT
+#ifdef EXTERNAL_FORCES
+        Testing::steepest_descent
+#endif // EXTERNAL_FORCES
+    };
 
 BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
@@ -188,7 +204,9 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   auto const min = 0.0;
   auto const r_off = dist - offset;
   auto const cut = r_off + 1e-3;
-  lennard_jones_set_params(0, 1, eps, sig, cut, shift, offset, min);
+  make_particle_type_exist(1);
+  auto const key = get_ia_param_key(0, 1);
+  mpi_call_all(mpi_set_lj_local, key, eps, sig, cut, offset, min, shift);
 
   // set up velocity-Verlet integrator
   auto const time_step = 0.01;
@@ -227,12 +245,16 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
     {
       mpi_integrate(1, 0);
       auto const &p1 = get_particle_data(pid1);
+#ifdef EXTERNAL_FORCES
       auto const &p2 = get_particle_data(pid2);
       BOOST_CHECK_CLOSE(p1.force()[0] - p1.ext_force()[0], 480., 1e-9);
+#endif // EXTERNAL_FORCES
       BOOST_CHECK_CLOSE(p1.force()[1], 0., tol);
       BOOST_CHECK_CLOSE(p1.force()[2], 0., tol);
+#ifdef EXTERNAL_FORCES
       BOOST_TEST(p1.force() - p1.ext_force() == -p2.force(),
                  boost::test_tools::per_element());
+#endif // EXTERNAL_FORCES
       BOOST_CHECK_LT(get_dist_from_last_verlet_update(p1), skin / 2.);
     }
   }
