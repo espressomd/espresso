@@ -140,7 +140,7 @@ void unset_protocol() {
 
 template <class Kernel> void run_kernel() {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
-    auto const kernel = Kernel{box_geo, time_step};
+    auto const kernel = Kernel{box_geo};
     auto const particles = cell_structure.local_particles();
     std::for_each(particles.begin(), particles.end(),
                   [&kernel](auto &p) { kernel(p); });
