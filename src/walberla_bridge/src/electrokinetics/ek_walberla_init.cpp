@@ -22,9 +22,6 @@
 #include "EKinWalberlaImpl.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 
-#include "walberla_bridge/electrokinetics/PoissonSolver/FFT.hpp"
-#include "walberla_bridge/electrokinetics/PoissonSolver/None.hpp"
-
 #include <utils/Vector.hpp>
 
 #include <memory>
@@ -43,23 +40,4 @@ new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
   return std::make_shared<walberla::EKinWalberlaImpl<13, double>>(
       lattice, diffusion, kT, valency, ext_efield, density, advection,
       friction_coupling);
-}
-
-std::shared_ptr<walberla::PoissonSolver>
-new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
-                    bool single_precision) {
-  if (single_precision) {
-    return std::make_shared<walberla::None<float>>(lattice);
-  }
-  return std::make_shared<walberla::None<double>>(lattice);
-}
-
-std::shared_ptr<walberla::PoissonSolver>
-new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
-                   double permittivity, bool single_precision) {
-  if (single_precision) {
-    return std::make_shared<walberla::FFT<float>>(lattice, permittivity);
-  }
-
-  return std::make_shared<walberla::FFT<double>>(lattice, permittivity);
 }

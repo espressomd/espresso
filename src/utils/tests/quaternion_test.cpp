@@ -34,9 +34,9 @@ constexpr int x = 2;
 constexpr int y = 3;
 constexpr int z = 4;
 
-Utils::Quaternion<int> scalar_quat{{{{w, 0, 0, 0}}}};
-Utils::Quaternion<int> full_quat{{{{w, x, y, z}}}};
-Utils::Quaternion<int> vector_quat{{{{0, x, y, z}}}};
+static Utils::Quaternion<int> const scalar_quat{{{{w, 0, 0, 0}}}};
+static Utils::Quaternion<int> const full_quat{{{{w, x, y, z}}}};
+static Utils::Quaternion<int> const vector_quat{{{{0, x, y, z}}}};
 
 BOOST_AUTO_TEST_CASE(multiply_quaternions) {
   /* identities */

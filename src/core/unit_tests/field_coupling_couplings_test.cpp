@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(scaled) {
     struct Particle {
       Particle(int id) : m_id(id) {}
 
-      int id() const { return m_id; };
+      int id() const { return m_id; }
 
       const int m_id;
     };

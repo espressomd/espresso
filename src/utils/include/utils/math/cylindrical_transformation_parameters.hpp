@@ -30,15 +30,18 @@ namespace Utils {
 /**
  * @brief A class to hold and validate parameters for a cylindrical coordinate
  * transformations.
- *
- * @param center The origin of the cylindrical coordinates.
- * @param axis The "z"-axis. Must be normalized.
- * @param orientation The axis along which phi = 0. Must be normalized and
- * orthogonal to axis.
  */
 class CylindricalTransformationParameters {
 public:
   CylindricalTransformationParameters() = default;
+  /**
+   * @brief Main constructor.
+   *
+   * @param center The origin of the cylindrical coordinates.
+   * @param axis The "z"-axis. Must be normalized.
+   * @param orientation The axis along which phi = 0. Must be normalized and
+   * orthogonal to axis.
+   */
   CylindricalTransformationParameters(Utils::Vector3d const &center,
                                       Utils::Vector3d const &axis,
                                       Utils::Vector3d const &orientation)

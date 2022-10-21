@@ -420,6 +420,11 @@ class TestCheckpoint(ut.TestCase):
             self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
 
+        # only objects at global scope can be checkpointed
+        with self.assertRaisesRegex(KeyError, "The given object 'local_obj' was not found in the current scope"):
+            local_obj = "local"  # pylint: disable=unused-variable
+            checkpoint.register("local_obj")
+
     @ut.skipIf(lbf_actor is None, "Skipping test due to missing mode.")
     def test_lb_checkpointing_exceptions(self):
         '''

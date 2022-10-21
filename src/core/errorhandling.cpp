@@ -37,16 +37,14 @@
 #include <vector>
 
 namespace ErrorHandling {
-namespace {
 /** RuntimeErrorCollector instance.
  *  This is a unique pointer so we don't
  *  leak on repeated calls of @ref init_error_handling.
  */
-std::unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
+static std::unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
 /** The callback loop we are on. */
-Communication::MpiCallbacks *m_callbacks = nullptr;
-} // namespace
+static Communication::MpiCallbacks *m_callbacks = nullptr;
 
 void init_error_handling(Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;

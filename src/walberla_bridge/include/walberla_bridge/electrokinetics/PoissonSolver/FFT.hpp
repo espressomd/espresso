@@ -23,6 +23,7 @@
 #include "PoissonSolver.hpp"
 
 #include <blockforest/communication/UniformBufferedScheme.h>
+#include <domain_decomposition/BlockDataID.h>
 #include <fft/Fft.h>
 #include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
@@ -43,7 +44,7 @@ private:
     return numeric_cast<FloatType>(t);
   }
 
-  BlockDataID m_potential_field_id;
+  domain_decomposition::BlockDataID m_potential_field_id;
 
   using PotentialField = GhostLayerField<FloatType, 1>;
 
@@ -97,8 +98,8 @@ public:
     }
   }
 
-  void add_charge_to_field(const BlockDataID &id, double valency,
-                           bool is_double_precision) override {
+  void add_charge_to_field(domain_decomposition::BlockDataID const &id,
+                           double valency, bool is_double_precision) override {
     auto const factor = FloatType_c(valency) / FloatType_c(get_permittivity());
     // the FFT-solver re-uses the potential field for the charge
     const auto charge_id = get_potential_field_id();
@@ -123,7 +124,8 @@ public:
     }
   }
 
-  [[nodiscard]] BlockDataID get_potential_field_id() const noexcept override {
+  [[nodiscard]] domain_decomposition::BlockDataID get_potential_field_id() const
+      noexcept override {
     return m_potential_field_id;
   }
 

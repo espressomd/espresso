@@ -60,7 +60,7 @@ static void backup_file(const std::string &from, const std::string &to) {
   try {
     boost::filesystem::copy_file(
         pfrom, pto, boost::filesystem::copy_option::fail_if_exists);
-  } catch (const boost::filesystem::filesystem_error &e) {
+  } catch (const boost::filesystem::filesystem_error &) {
     throw left_backupfile();
   }
 }

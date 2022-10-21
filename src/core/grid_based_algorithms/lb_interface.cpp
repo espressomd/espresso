@@ -89,7 +89,8 @@ double get_agrid() {
 }
 
 void check_tau_time_step_consistency(double tau, double time_step) {
-  auto const eps = std::numeric_limits<float>::epsilon();
+  // use float epsilon since tau may be a float
+  auto const eps = static_cast<double>(std::numeric_limits<float>::epsilon());
   if ((tau - time_step) / (tau + time_step) < -eps)
     throw std::invalid_argument("LB tau (" + std::to_string(tau) +
                                 ") must be >= MD time_step (" +

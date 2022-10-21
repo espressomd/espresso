@@ -114,12 +114,16 @@ private:
     for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
       Cell source1 = *cell;
       Cell source2 = *cell;
-      source1[dir] = cell_idx_c(std::floor(source1[dir] + offset)) % dim;
-      source1[dir] = cell_idx_c(source1[dir] + length);
+      source1[dir] = cell_idx_c(std::floor(
+                         static_cast<FloatType>(source1[dir]) + offset)) %
+                     dim;
+      source1[dir] = cell_idx_c(static_cast<FloatType>(source1[dir]) + length);
       source1[dir] = cell_idx_c(source1[dir] % dim);
 
-      source2[dir] = cell_idx_c(std::ceil(source2[dir] + offset)) % dim;
-      source2[dir] = cell_idx_c(source2[dir] + length);
+      source2[dir] =
+          cell_idx_c(std::ceil(static_cast<FloatType>(source2[dir]) + offset)) %
+          dim;
+      source2[dir] = cell_idx_c(static_cast<FloatType>(source2[dir]) + length);
       source2[dir] = cell_idx_c(source2[dir] % dim);
 
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {

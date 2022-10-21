@@ -56,13 +56,15 @@ public:
    * \param limits  the minimum/maximum data values to consider for the
    *        histogram.
    */
-  explicit Histogram(std::array<std::size_t, M> n_bins,
-                     std::array<std::pair<U, U>, M> limits)
+  Histogram(std::array<std::size_t, M> n_bins,
+            std::array<std::pair<U, U>, M> limits)
       : m_n_bins(std::move(n_bins)), m_limits(std::move(limits)),
         m_bin_sizes(calc_bin_sizes()), m_array(m_array_dim()),
         m_count(m_array_dim()) {
     m_ones.fill(T{1});
   }
+
+  virtual ~Histogram() = default;
 
   /** \brief Get the number of bins for each dimension. */
   std::array<std::size_t, M> get_n_bins() const { return m_n_bins; }

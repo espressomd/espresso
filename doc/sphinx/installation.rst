@@ -730,6 +730,10 @@ The following options are available:
 
 * ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
 
+* ``WITH_WALBERLA`` Build with waLBerla support
+
+* ``ESPRESSO_BUILD_WITH_WALBERLA_FFT`` Build waLBerla with FFT and PFFT support, used in FFT-based electrokinetics
+
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
