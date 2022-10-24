@@ -119,7 +119,7 @@ class TestLBMomentumConservationRegularWalberlaSinglePrecision(
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
-    atol = 6e-4
+    atol = 6.5e-4
 
     def set_cellsystem(self):
         self.system.cell_system.set_regular_decomposition()
@@ -148,7 +148,7 @@ class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
-    atol = 6e-4
+    atol = 6.5e-4
 
     def set_cellsystem(self):
         self.system.cell_system.set_hybrid_decomposition(
@@ -178,7 +178,7 @@ class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
-    atol = 6e-4
+    atol = 6.5e-4
 
     def set_cellsystem(self):
         self.system.cell_system.set_hybrid_decomposition(
@@ -207,7 +207,7 @@ class TestLBMomentumConservationNSquareWalberlaSinglePrecision(
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
-    atol = 6e-4
+    atol = 6.5e-4
 
     def set_cellsystem(self):
         self.system.cell_system.set_n_square()
