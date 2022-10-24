@@ -7,8 +7,8 @@ physical systems.
 
 [comment]: # (Begin of tutorials landing page)
 
-[![Lauch with Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD)
-[![Lauch with Gitpod](https://img.shields.io/badge/launch-Gitpod-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/espressomd/espresso)
+[![Launch with Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD)
+[![Launch with Gitpod](https://img.shields.io/badge/launch-Gitpod-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/espressomd/espresso)
 
 ### Introductory tutorials
 
