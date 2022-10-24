@@ -49,8 +49,8 @@ using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
 
-LBTestParameters params; // populated in main()
-Vector3i mpi_shape;      // populated in main
+static LBTestParameters params; // populated in main()
+static Vector3i mpi_shape;      // populated in main
 
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::xrange(3u), n_ghost_layers) {
   auto const lattice =

@@ -156,7 +156,7 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
     if (cpfile.stream.peek() != EOF) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
-  } catch (std::ios_base::failure const &fail) {
+  } catch (std::ios_base::failure const &) {
     auto const eof_error = cpfile.stream.eof();
     cpfile.stream.close();
     if (eof_error) {
@@ -169,7 +169,7 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
       throw std::runtime_error(err_msg + "incorrectly formatted data.");
     }
     return;
-  } catch (std::runtime_error const &fail) {
+  } catch (std::runtime_error const &) {
     cpfile.stream.close();
     if (is_head_node) {
       throw;

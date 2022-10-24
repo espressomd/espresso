@@ -90,7 +90,7 @@ public:
            try {
              m_lb_fluid->set_rng_state(
                  static_cast<uint64_t>(get_value<int>(v)));
-           } catch (const std::exception &e) {
+           } catch (const std::exception &) {
              if (context()->is_head_node()) {
                throw;
              }

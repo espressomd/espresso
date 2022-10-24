@@ -85,16 +85,16 @@ struct LBTestParameters {
   }
 };
 
-LBTestParameters params{23u,
-                        0.,
-                        1e-3,
-                        0.5,
-                        0.01,
-                        0.01,
-                        1.,
-                        0.5,
-                        Utils::Vector3d::broadcast(8.),
-                        Utils::Vector3i::broadcast(8)};
+static LBTestParameters params{23u,
+                               0.,
+                               1e-3,
+                               0.5,
+                               0.01,
+                               0.01,
+                               1.,
+                               0.5,
+                               Utils::Vector3d::broadcast(8.),
+                               Utils::Vector3i::broadcast(8)};
 
 /** Boost unit test dataset */
 std::vector<double> const kTs{0, 1E-4};

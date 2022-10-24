@@ -53,7 +53,7 @@ using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
 
-LBTestParameters params; // populated in main()
+static LBTestParameters params; // populated in main()
 
 BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
   using boost::test_tools::per_element;

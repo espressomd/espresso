@@ -51,7 +51,7 @@ using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
 
-LBTestParameters params; // populated in main()
+static LBTestParameters params; // populated in main()
 
 BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
                      lb_generator) {

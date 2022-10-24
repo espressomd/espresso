@@ -78,14 +78,14 @@ void propagate() {
   const std::size_t velocity_field_id = []() -> std::size_t {
     try {
       return LB::Walberla::get_velocity_field_id();
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error &) {
       return {};
     }
   }();
   const std::size_t force_field_id = []() -> std::size_t {
     try {
       return LB::Walberla::get_force_field_id();
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error &) {
       return {};
     }
   }();

@@ -52,7 +52,7 @@ using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
 
-LBTestParameters params; // populated in main()
+static LBTestParameters params; // populated in main()
 
 BOOST_DATA_TEST_CASE(integrate_with_point_force_thermalized,
                      bdata::make(thermalized_lbs()), lb_generator) {

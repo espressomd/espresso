@@ -55,7 +55,7 @@ using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
 constexpr auto v0 = 0.064;
-Vector3i mpi_shape{};
+static Vector3i mpi_shape{};
 
 double u_expected(double x, double t, double nu, double v_0, double h,
                   int k_max = 100) {
