@@ -1,12 +1,14 @@
-// kernel generated with pystencils v1.0+21.g8bd3cef, lbmpy v1.0+8.gac750b5, lbmpy_walberla/pystencils_walberla from commit e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
+// kernel generated with pystencils v1.0+25.gfe5cece, lbmpy v1.0+16.g030bd5a,
+// lbmpy_walberla/pystencils_walberla from commit
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 #pragma once
-#include "stencil/Directions.h"
-#include "core/cell/CellInterval.h"
-#include "core/DataTypes.h"
-#include "field/GhostLayerField.h"
-#include "domain_decomposition/IBlock.h"
 #include "communication/UniformPackInfo.h"
+#include "core/DataTypes.h"
+#include "core/cell/CellInterval.h"
+#include "domain_decomposition/IBlock.h"
+#include "field/GhostLayerField.h"
+#include "stencil/Directions.h"
 
 #define FUNC_PREFIX
 
@@ -21,44 +23,44 @@
 namespace walberla {
 namespace lbm {
 
-
-class PushPackInfoSinglePrecision : public ::walberla::communication::UniformPackInfo
-{
+class PushPackInfoSinglePrecision
+    : public ::walberla::communication::UniformPackInfo {
 public:
-    PushPackInfoSinglePrecision( BlockDataID pdfsID_ )
-        : pdfsID(pdfsID_)
-    {};
-    virtual ~PushPackInfoSinglePrecision() {}
+  PushPackInfoSinglePrecision(BlockDataID pdfsID_) : pdfsID(pdfsID_){};
+  virtual ~PushPackInfoSinglePrecision() {}
 
-   bool constantDataExchange() const { return true; }
-   bool threadsafeReceiving()  const { return true; }
+  bool constantDataExchange() const { return true; }
+  bool threadsafeReceiving() const { return true; }
 
-   void unpackData(IBlock * receiver, stencil::Direction dir, mpi::RecvBuffer & buffer) {
-        const auto dataSize = size(dir, receiver);
-        unpack(dir, buffer.skip(dataSize), receiver);
-   }
+  void unpackData(IBlock *receiver, stencil::Direction dir,
+                  mpi::RecvBuffer &buffer) {
+    const auto dataSize = size(dir, receiver);
+    unpack(dir, buffer.skip(dataSize), receiver);
+  }
 
-   void communicateLocal(const IBlock * sender, IBlock * receiver, stencil::Direction dir) {
-       //TODO: optimize by generating kernel for this case
-       mpi::SendBuffer sBuffer;
-       packData( sender, dir, sBuffer );
-       mpi::RecvBuffer rBuffer( sBuffer );
-       unpackData( receiver, stencil::inverseDir[dir], rBuffer );
-   }
+  void communicateLocal(const IBlock *sender, IBlock *receiver,
+                        stencil::Direction dir) {
+    // TODO: optimize by generating kernel for this case
+    mpi::SendBuffer sBuffer;
+    packData(sender, dir, sBuffer);
+    mpi::RecvBuffer rBuffer(sBuffer);
+    unpackData(receiver, stencil::inverseDir[dir], rBuffer);
+  }
 
-   void packDataImpl(const IBlock * sender, stencil::Direction dir, mpi::SendBuffer & outBuffer) const {
-        const auto dataSize = size(dir, sender);
-        pack(dir, outBuffer.forward(dataSize), const_cast<IBlock*>(sender));
-   }
+  void packDataImpl(const IBlock *sender, stencil::Direction dir,
+                    mpi::SendBuffer &outBuffer) const {
+    const auto dataSize = size(dir, sender);
+    pack(dir, outBuffer.forward(dataSize), const_cast<IBlock *>(sender));
+  }
 
-   void pack  (stencil::Direction dir, unsigned char * buffer, IBlock * block) const;
-   void unpack(stencil::Direction dir, unsigned char * buffer, IBlock * block) const;
-   uint_t size  (stencil::Direction dir, const IBlock * block) const;
+  void pack(stencil::Direction dir, unsigned char *buffer, IBlock *block) const;
+  void unpack(stencil::Direction dir, unsigned char *buffer,
+              IBlock *block) const;
+  uint_t size(stencil::Direction dir, const IBlock *block) const;
 
- private:
-    BlockDataID pdfsID;
+private:
+  BlockDataID pdfsID;
 };
-
 
 } // namespace lbm
 } // namespace walberla

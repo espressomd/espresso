@@ -30,6 +30,7 @@ import lbmpy
 import lbmpy.creationfunctions
 import lbmpy.forcemodels
 import lbmpy.stencils
+import lbmpy.enums
 
 import lbmpy_walberla
 import lbmpy_espresso
@@ -82,7 +83,7 @@ with code_generation_context.CodeGeneration() as ctx:
     precision_suffix = pystencils_espresso.precision_suffix[ctx.double_accuracy]
     precision_rng = pystencils_espresso.precision_rng[ctx.double_accuracy]
     kT = sp.symbols('kT')
-    stencil = lbmpy.stencils.get_stencil('D3Q19')
+    stencil = lbmpy.stencils.LBStencil(lbmpy.enums.Stencil.D3Q19)
     fields = pystencils_espresso.generate_fields(config, stencil)
     force_field = fields['force']
 

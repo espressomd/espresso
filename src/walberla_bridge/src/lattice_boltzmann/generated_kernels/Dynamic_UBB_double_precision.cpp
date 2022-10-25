@@ -1,4 +1,4 @@
-// kernel generated with pystencils v1.0+21.g8bd3cef, lbmpy v1.0+8.gac750b5,
+// kernel generated with pystencils v1.0+25.gfe5cece, lbmpy v1.0+16.g030bd5a,
 // lbmpy_walberla/pystencils_walberla from commit
 // e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 

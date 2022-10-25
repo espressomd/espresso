@@ -1,6 +1,6 @@
-// kernel generated with pystencils v1.0, lbmpy v1.0,
+// kernel generated with pystencils v1.0+25.gfe5cece, lbmpy v1.0+16.g030bd5a,
 // lbmpy_walberla/pystencils_walberla from commit
-// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 #include "DensityPackInfo_double_precision.h"
 #include "core/DataTypes.h"

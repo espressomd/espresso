@@ -1,6 +1,6 @@
-// kernel generated with pystencils v1.0, lbmpy v1.0,
+// kernel generated with pystencils v1.0+25.gfe5cece, lbmpy v1.0+16.g030bd5a,
 // lbmpy_walberla/pystencils_walberla from commit
-// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
 //
@@ -85,20 +85,21 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
           double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
           _data_j_20_312_10[_stride_j_0] =
               -1.0 *
-                  ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                              0.0 < _data_u_20_31_10[_stride_u_0] &&
+                              0.0 < _data_u_20_32_10[_stride_u_0])
+                                 ? (1)
+                                 : (0)))) *
                   _data_rho_20_10[_stride_rho_0] *
                   _data_u_20_30_10[_stride_u_0] *
                   _data_u_20_31_10[_stride_u_0] *
                   _data_u_20_32_10[_stride_u_0] -
               1.0 *
-                  ((0.0 > _data_u_21_31_11[0] && 0.0 > _data_u_21_32_11[0] &&
-                    0.0 < _data_u_21_30_11[0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_21_31_11[0] &&
+                              0.0 > _data_u_21_32_11[0] &&
+                              0.0 < _data_u_21_30_11[0])
+                                 ? (1)
+                                 : (0)))) *
                   _data_rho_21_11[0] * _data_u_21_30_11[0] *
                   _data_u_21_31_11[0] * _data_u_21_32_11[0] +
               _data_j_20_312_10[_stride_j_0];
@@ -127,23 +128,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
             _data_j_20_312_10[_stride_j_0 * ctr_0] =
                 -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                      0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                      0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_30_10[_stride_u_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] -
                 1.0 *
-                    ((0.0 >
-                          _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                      0.0 >
-                          _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                      0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
+                                                       _stride_u_0] &&
+                                0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
+                                                       _stride_u_0] &&
+                                0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
+                                                       _stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                     _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                     _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -173,24 +175,26 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
           double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
           _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
               -1.0 *
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                          ? (1)
+                          : (0)))) *
                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                   _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
               1.0 *
-                  ((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0] &&
-                    0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0] &&
-                    0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0] &&
+                       0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0] &&
+                       0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                              _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                   _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                   _stride_rho_0] *
                   _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -237,17 +241,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_36_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_21_31_10[0]) + 1.0) *
-                      ((0.0 > _data_u_21_32_10[0] && 0.0 < _data_u_21_30_10[0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_32_10[0] &&
+                                  0.0 < _data_u_21_30_10[0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_10[0] * _data_u_21_30_10[0] *
                       _data_u_21_32_10[0] +
                   _data_j_20_36_10[_stride_j_0];
@@ -284,18 +289,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_38_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                      ((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                        0.0 < _data_u_21_31_1m1[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
+                                  0.0 < _data_u_21_31_1m1[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0] *
                       _data_u_21_31_1m1[_stride_u_0] *
                       _data_u_21_32_1m1[_stride_u_0] +
@@ -332,19 +337,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_1m1 =
                   _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
               _data_j_20_310_10[_stride_j_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                              0.0 > _data_u_20_31_10[_stride_u_0] &&
+                              0.0 < _data_u_20_32_10[_stride_u_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
-                  ((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] &&
-                    0.0 < _data_u_21_31_1m1[0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_21_32_1m1[0] &&
+                              0.0 < _data_u_21_30_1m1[0] &&
+                              0.0 < _data_u_21_31_1m1[0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
                       _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
                   _data_j_20_310_10[_stride_j_0];
@@ -381,20 +387,21 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] -
                   1.0 *
-                      ((0.0 > _data_u_21_31_11[0] &&
-                        0.0 > _data_u_21_32_11[0] && 0.0 < _data_u_21_30_11[0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_31_11[0] &&
+                                  0.0 > _data_u_21_32_11[0] &&
+                                  0.0 < _data_u_21_30_11[0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_11[0] * _data_u_21_30_11[0] *
                       _data_u_21_31_11[0] * _data_u_21_32_11[0] +
                   _data_j_20_312_10[_stride_j_0];
@@ -434,22 +441,22 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_j_20_36_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 -
                                                 _stride_u_0]) +
                    1.0) *
-                      ((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 <
-                            _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 < _data_u_21_30_10[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
@@ -488,18 +495,19 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_j_20_38_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
+                           0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
@@ -536,22 +544,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_1m1 =
                   _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
               _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                              0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                              0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((0.0 >
-                        _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 <
-                        _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 <
+                           _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -590,24 +600,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
                   1.0 *
-                      ((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 <
-                            _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -651,22 +661,28 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                        fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 <
+                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
                   (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
                                                 _stride_u_0]) +
                    1.0) *
-                      ((0.0 > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                        0.0 < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 >
+                               _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                           0.0 <
+                               _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_21_10[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                       _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -706,23 +722,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_1m1 =
                   _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
               _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                        _stride_rho_0] *
                       _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -765,24 +783,32 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 < _data_u_20_31_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 <
+                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
                   1.0 *
-                      ((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                        0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                        0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 >
+                               _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                           0.0 >
+                               _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                           0.0 <
+                               _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -830,18 +856,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             _data_j_20_38_10[_stride_j_0] =
                 (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                      0.0 < _data_u_20_32_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                0.0 < _data_u_20_32_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
                 (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                    ((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                      0.0 < _data_u_21_31_1m1[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
+                                0.0 < _data_u_21_31_1m1[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_21_1m1[_stride_rho_0] *
                     _data_u_21_31_1m1[_stride_u_0] *
                     _data_u_21_32_1m1[_stride_u_0] +
@@ -878,19 +904,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             double *RESTRICT _data_u_21_32_1m1 =
                 _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
             _data_j_20_310_10[_stride_j_0] =
-                ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                  0.0 > _data_u_20_31_10[_stride_u_0] &&
-                  0.0 < _data_u_20_32_10[_stride_u_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                            0.0 > _data_u_20_31_10[_stride_u_0] &&
+                            0.0 < _data_u_20_32_10[_stride_u_0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
-                ((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] &&
-                  0.0 < _data_u_21_31_1m1[0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_21_32_1m1[0] &&
+                            0.0 < _data_u_21_30_1m1[0] &&
+                            0.0 < _data_u_21_31_1m1[0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
                     _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
                 _data_j_20_310_10[_stride_j_0];
@@ -930,18 +957,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             _data_j_20_38_10[_stride_j_0 * ctr_0] =
                 (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
                     -1.0 *
-                    ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                      0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] +
                 (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                    ((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                      0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
+                                0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
                     _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
                     _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
@@ -978,20 +1005,23 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             double *RESTRICT _data_u_21_32_1m1 =
                 _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
             _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                            0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                            0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_30_10[_stride_u_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                ((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)((
+                    (0.0 >
+                         _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
+                     0.0 <
+                         _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
+                     0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
+                        ? (1)
+                        : (0)))) *
                     _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                     _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                     _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -1029,23 +1059,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
           double *RESTRICT _data_u_21_32_1m1 =
               _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
           _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-              ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                   ? (1.0)
-                   : (0.0)) *
+              ((double)((
+                  (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                   0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                   0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                      ? (1)
+                      : (0)))) *
                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                   _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-              ((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] &&
-                0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] &&
-                0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0])
-                   ? (1.0)
-                   : (0.0)) *
+              ((double)((
+                  (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                           _stride_u_0] &&
+                   0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                           _stride_u_0] &&
+                   0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                           _stride_u_0])
+                      ? (1)
+                      : (0)))) *
                   _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                    _stride_rho_0] *
                   _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -1107,17 +1139,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
               _data_j_20_34_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_20_32_11[0]) + 1.0) *
-                      ((0.0 > _data_u_20_31_11[0] && 0.0 < _data_u_20_30_11[0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_11[0] &&
+                                  0.0 < _data_u_20_30_11[0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_11[0] * _data_u_20_30_11[0] *
                       _data_u_20_31_11[0] +
                   _data_j_20_34_10[_stride_j_0];
@@ -1149,19 +1182,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
               _data_j_20_311_10[_stride_j_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                              0.0 > _data_u_20_32_10[_stride_u_0] &&
+                              0.0 < _data_u_20_31_10[_stride_u_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
-                  ((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] &&
-                    0.0 < _data_u_2m1_32_11[0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_2m1_31_11[0] &&
+                              0.0 < _data_u_2m1_30_11[0] &&
+                              0.0 < _data_u_2m1_32_11[0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
                       _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
                   _data_j_20_311_10[_stride_j_0];
@@ -1194,20 +1228,21 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] -
                   1.0 *
-                      ((0.0 > _data_u_21_31_11[0] &&
-                        0.0 > _data_u_21_32_11[0] && 0.0 < _data_u_21_30_11[0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_31_11[0] &&
+                                  0.0 > _data_u_21_32_11[0] &&
+                                  0.0 < _data_u_21_30_11[0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_11[0] * _data_u_21_30_11[0] *
                       _data_u_21_31_11[0] * _data_u_21_32_11[0] +
                   _data_j_20_312_10[_stride_j_0];
@@ -1235,22 +1270,22 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_j_20_34_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 -
                                                 _stride_u_0]) +
                    1.0) *
-                      ((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 <
-                            _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 < _data_u_20_30_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] +
@@ -1283,22 +1318,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
               _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                              0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
+                              0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((0.0 >
-                        _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 <
-                        _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 <
+                           _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -1333,24 +1370,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
                   1.0 *
-                      ((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 <
-                            _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -1382,22 +1419,28 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                        fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 <
+                               _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
                   (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
                                                 _stride_u_0]) +
                    1.0) *
-                      ((0.0 > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                        0.0 < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 >
+                               _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                           0.0 <
+                               _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_11[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                       _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -1433,23 +1476,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
               _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
                                        _stride_rho_0] *
                       _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -1488,24 +1533,32 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
               _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 < _data_u_20_31_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 <
+                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
                   1.0 *
-                      ((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                        0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                        0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 >
+                               _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                           0.0 >
+                               _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                           0.0 <
+                               _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -1563,11 +1616,12 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             _data_j_20_30_10[_stride_j_0] =
                 (-1.0 * fabs(_data_u_20_31_10[0]) + 1.0) *
                     (-1.0 * fabs(_data_u_20_32_10[0]) + 1.0) * -1.0 *
-                    ((0.0 < _data_u_20_30_10[0]) ? (1.0) : (0.0)) *
+                    ((double)(((0.0 < _data_u_20_30_10[0]) ? (1) : (0)))) *
                     _data_rho_20_10[0] * _data_u_20_30_10[0] +
                 (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
                     (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0]) ? (1.0) : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0]) ? (1)
+                                                                     : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] +
                 _data_j_20_30_10[_stride_j_0];
@@ -1581,17 +1635,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_31;
             _data_j_20_33_10[_stride_j_0] =
                 (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                      0.0 > _data_u_20_31_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                0.0 > _data_u_20_31_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] +
                 (-1.0 * fabs(_data_u_20_32_1m1[0]) + 1.0) * -1.0 *
-                    ((0.0 < _data_u_20_30_1m1[0] && 0.0 < _data_u_20_31_1m1[0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 < _data_u_20_30_1m1[0] &&
+                                0.0 < _data_u_20_31_1m1[0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_1m1[0] * _data_u_20_30_1m1[0] *
                     _data_u_20_31_1m1[0] +
                 _data_j_20_33_10[_stride_j_0];
@@ -1605,17 +1660,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_31;
             _data_j_20_34_10[_stride_j_0] =
                 (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                      0.0 < _data_u_20_31_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                0.0 < _data_u_20_31_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] +
                 (-1.0 * fabs(_data_u_20_32_11[0]) + 1.0) *
-                    ((0.0 > _data_u_20_31_11[0] && 0.0 < _data_u_20_30_11[0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 > _data_u_20_31_11[0] && 0.0 < _data_u_20_30_11[0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_11[0] * _data_u_20_30_11[0] *
                     _data_u_20_31_11[0] +
                 _data_j_20_34_10[_stride_j_0];
@@ -1637,17 +1693,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * ctr_1 + _data_u_2m1_32;
             _data_j_20_35_10[_stride_j_0] =
                 (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                0.0 > _data_u_20_32_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
                 (-1.0 * fabs(_data_u_2m1_31_10[0]) + 1.0) * -1.0 *
-                    ((0.0 < _data_u_2m1_30_10[0] && 0.0 < _data_u_2m1_32_10[0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 < _data_u_2m1_30_10[0] &&
+                                0.0 < _data_u_2m1_32_10[0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_2m1_10[0] * _data_u_2m1_30_10[0] *
                     _data_u_2m1_32_10[0] +
                 _data_j_20_35_10[_stride_j_0];
@@ -1669,17 +1726,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * ctr_1 + _data_u_21_32;
             _data_j_20_36_10[_stride_j_0] =
                 (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                      0.0 < _data_u_20_32_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                0.0 < _data_u_20_32_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
                 (-1.0 * fabs(_data_u_21_31_10[0]) + 1.0) *
-                    ((0.0 > _data_u_21_32_10[0] && 0.0 < _data_u_21_30_10[0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 > _data_u_21_32_10[0] && 0.0 < _data_u_21_30_10[0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_21_10[0] * _data_u_21_30_10[0] *
                     _data_u_21_32_10[0] +
                 _data_j_20_36_10[_stride_j_0];
@@ -1693,23 +1751,23 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
             _data_j_20_39_10[_stride_j_0] =
                 -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                      0.0 > _data_u_20_31_10[_stride_u_0] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
+                                0.0 < _data_u_2m1_31_1m1[0] &&
+                                0.0 < _data_u_2m1_32_1m1[0])
+                                   ? (1)
+                                   : (0)))) *
+                    _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
+                    _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
+                1.0 *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                0.0 > _data_u_20_32_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] -
-                1.0 *
-                    ((0.0 < _data_u_2m1_30_1m1[0] &&
-                      0.0 < _data_u_2m1_31_1m1[0] &&
-                      0.0 < _data_u_2m1_32_1m1[0])
-                         ? (1.0)
-                         : (0.0)) *
-                    _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                    _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
+                    _data_u_20_32_10[_stride_u_0] +
                 _data_j_20_39_10[_stride_j_0];
             double *RESTRICT _data_rho_21_1m1 =
                 _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
@@ -1720,19 +1778,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             double *RESTRICT _data_u_21_32_1m1 =
                 _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
             _data_j_20_310_10[_stride_j_0] =
-                ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                  0.0 > _data_u_20_31_10[_stride_u_0] &&
-                  0.0 < _data_u_20_32_10[_stride_u_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                            0.0 > _data_u_20_31_10[_stride_u_0] &&
+                            0.0 < _data_u_20_32_10[_stride_u_0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
-                ((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] &&
-                  0.0 < _data_u_21_31_1m1[0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_21_32_1m1[0] &&
+                            0.0 < _data_u_21_30_1m1[0] &&
+                            0.0 < _data_u_21_31_1m1[0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
                     _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
                 _data_j_20_310_10[_stride_j_0];
@@ -1745,19 +1804,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             double *RESTRICT _data_u_2m1_32_11 =
                 _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
             _data_j_20_311_10[_stride_j_0] =
-                ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                  0.0 > _data_u_20_32_10[_stride_u_0] &&
-                  0.0 < _data_u_20_31_10[_stride_u_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                            0.0 > _data_u_20_32_10[_stride_u_0] &&
+                            0.0 < _data_u_20_31_10[_stride_u_0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
-                ((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] &&
-                  0.0 < _data_u_2m1_32_11[0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_2m1_31_11[0] &&
+                            0.0 < _data_u_2m1_30_11[0] &&
+                            0.0 < _data_u_2m1_32_11[0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
                     _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
                 _data_j_20_311_10[_stride_j_0];
@@ -1771,20 +1831,21 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
             _data_j_20_312_10[_stride_j_0] =
                 -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                      0.0 < _data_u_20_31_10[_stride_u_0] &&
-                      0.0 < _data_u_20_32_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                0.0 < _data_u_20_31_10[_stride_u_0] &&
+                                0.0 < _data_u_20_32_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] -
                 1.0 *
-                    ((0.0 > _data_u_21_31_11[0] && 0.0 > _data_u_21_32_11[0] &&
-                      0.0 < _data_u_21_30_11[0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_21_31_11[0] &&
+                                0.0 > _data_u_21_32_11[0] &&
+                                0.0 < _data_u_21_30_11[0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_21_11[0] * _data_u_21_30_11[0] *
                     _data_u_21_31_11[0] * _data_u_21_32_11[0] +
                 _data_j_20_312_10[_stride_j_0];
@@ -1822,15 +1883,17 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                     (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
                         (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
                         -1.0 *
-                        ((0.0 > _data_u_20_31_10[_stride_u_0]) ? (1.0)
-                                                               : (0.0)) *
+                        ((double)(((0.0 > _data_u_20_31_10[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_20_10[_stride_rho_0] *
                         _data_u_20_31_10[_stride_u_0] +
                     (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0) *
                         (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0) *
                         -1.0 *
-                        ((0.0 < _data_u_20_31_1m1[_stride_u_0]) ? (1.0)
-                                                                : (0.0)) *
+                        ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_20_1m1[_stride_rho_0] *
                         _data_u_20_31_1m1[_stride_u_0] +
                     _data_j_20_31_10[_stride_j_0];
@@ -1877,15 +1940,17 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                     (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
                         (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
                         -1.0 *
-                        ((0.0 > _data_u_20_32_10[_stride_u_0]) ? (1.0)
-                                                               : (0.0)) *
+                        ((double)(((0.0 > _data_u_20_32_10[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_20_10[_stride_rho_0] *
                         _data_u_20_32_10[_stride_u_0] +
                     (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0) *
                         (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0) *
                         -1.0 *
-                        ((0.0 < _data_u_2m1_32_10[_stride_u_0]) ? (1.0)
-                                                                : (0.0)) *
+                        ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_2m1_10[_stride_rho_0] *
                         _data_u_2m1_32_10[_stride_u_0] +
                     _data_j_20_32_10[_stride_j_0];
@@ -1929,19 +1994,19 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                     _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
                 _data_j_20_37_10[_stride_j_0] =
                     (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                        ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                          0.0 > _data_u_20_32_10[_stride_u_0])
-                             ? (1.0)
-                             : (0.0)) *
+                        ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                    0.0 > _data_u_20_32_10[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_20_10[_stride_rho_0] *
                         _data_u_20_31_10[_stride_u_0] *
                         _data_u_20_32_10[_stride_u_0] +
                     (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) *
                         -1.0 *
-                        ((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                          0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                             ? (1.0)
-                             : (0.0)) *
+                        ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
+                                    0.0 < _data_u_2m1_32_1m1[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_2m1_1m1[_stride_rho_0] *
                         _data_u_2m1_31_1m1[_stride_u_0] *
                         _data_u_2m1_32_1m1[_stride_u_0] +
@@ -1985,18 +2050,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                     _stride_u_1 * ctr_1 + _data_u_20_32;
                 _data_j_20_38_10[_stride_j_0] =
                     (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                        ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                          0.0 < _data_u_20_32_10[_stride_u_0])
-                             ? (1.0)
-                             : (0.0)) *
+                        ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                    0.0 < _data_u_20_32_10[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_20_10[_stride_rho_0] *
                         _data_u_20_31_10[_stride_u_0] *
                         _data_u_20_32_10[_stride_u_0] +
                     (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                        ((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                          0.0 < _data_u_21_31_1m1[_stride_u_0])
-                             ? (1.0)
-                             : (0.0)) *
+                        ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
+                                    0.0 < _data_u_21_31_1m1[_stride_u_0])
+                                       ? (1)
+                                       : (0)))) *
                         _data_rho_21_1m1[_stride_rho_0] *
                         _data_u_21_31_1m1[_stride_u_0] *
                         _data_u_21_32_1m1[_stride_u_0] +
@@ -2012,18 +2077,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                     _stride_u_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 <
-                        _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 <
+                           _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0] +
                   (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                     : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] +
                   _data_j_20_30_10[_stride_j_0 * ctr_0];
@@ -2032,16 +2099,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                       (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                     : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                      : (0.0)) *
+                      ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_31_10[_stride_j_0 * ctr_0];
@@ -2050,25 +2119,27 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                       (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                     : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                      : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_10[_stride_rho_0 * ctr_0] *
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0] +
                   _data_j_20_32_10[_stride_j_0 * ctr_0];
               _data_j_20_33_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
@@ -2076,12 +2147,12 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                  _stride_u_0]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
-                                                _stride_u_0] &&
-                        0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
-                                                _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0] &&
+                                  0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
@@ -2089,32 +2160,32 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_j_20_34_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 -
                                                 _stride_u_0]) +
                    1.0) *
-                      ((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 <
-                            _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 < _data_u_20_30_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_34_10[_stride_j_0 * ctr_0];
               _data_j_20_35_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
@@ -2122,12 +2193,12 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                  _stride_u_0]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
-                                                _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
-                                                _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
@@ -2135,41 +2206,42 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_j_20_36_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 -
                                                 _stride_u_0]) +
                    1.0) *
-                      ((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 <
-                            _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 < _data_u_21_30_10[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_36_10[_stride_j_0 * ctr_0];
               _data_j_20_37_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
+                           0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
@@ -2177,86 +2249,91 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_j_20_38_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
+                           0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_38_10[_stride_j_0 * ctr_0];
               _data_j_20_39_10[_stride_j_0 * ctr_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  1.0 *
-                      ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_39_10[_stride_j_0 * ctr_0];
-              _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                       ? (1.0)
-                       : (0.0)) *
+                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
+                  1.0 *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((0.0 >
-                        _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 <
-                        _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  _data_j_20_39_10[_stride_j_0 * ctr_0];
+              _data_j_20_310_10[_stride_j_0 * ctr_0] =
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                              0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                              0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                 ? (1)
+                                 : (0)))) *
+                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
+                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
+                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
+                  ((double)((
+                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 <
+                           _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
                   _data_j_20_310_10[_stride_j_0 * ctr_0];
               _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                              0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
+                              0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((0.0 >
-                        _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 <
-                        _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 <
+                           _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -2264,24 +2341,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _data_j_20_311_10[_stride_j_0 * ctr_0];
               _data_j_20_312_10[_stride_j_0 * ctr_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] -
                   1.0 *
-                      ((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                        0.0 <
-                            _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                  0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -2297,10 +2374,11 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                _stride_u_0]) +
                      1.0) *
                     -1.0 *
-                    ((0.0 < _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 < _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -2311,19 +2389,22 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                          fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
                      1.0) *
                     -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] +
                 _data_j_20_30_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)] =
                 (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
                  1.0) *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 >
+                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
@@ -2331,12 +2412,13 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                _stride_u_0]) +
                  1.0) *
                     -1.0 *
-                    ((0.0 < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                      0.0 < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0] &&
+                         0.0 < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                      _stride_rho_0] *
                     _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -2348,22 +2430,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
                  1.0) *
                     -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 >
+                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
                 (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
                                               _stride_u_0]) +
                  1.0) *
-                    ((0.0 > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                      0.0 < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                         0.0 < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_11[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                     _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -2374,10 +2459,12 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)] =
                 (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
                  1.0) *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 >
+                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
@@ -2385,12 +2472,13 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                _stride_u_0]) +
                  1.0) *
                     -1.0 *
-                    ((0.0 < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                      0.0 < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0] &&
+                         0.0 < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_2m1_10[_stride_rho_0 * (_size_j_0 - 1) -
                                      _stride_rho_0] *
                     _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -2402,22 +2490,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
                  1.0) *
                     -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 >
+                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
                 (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
                                               _stride_u_0]) +
                  1.0) *
-                    ((0.0 > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                      0.0 < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                         0.0 < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_21_10[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                     _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -2427,24 +2518,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
                 -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                         ? (1.0)
-                         : (0.0)) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                1.0 *
-                    ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                      0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                      0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 <
+                             _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                         0.0 <
+                             _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                         0.0 <
+                             _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                       _stride_rho_0] *
                     _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -2452,26 +2537,41 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                     _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
                                        _stride_u_0] *
                     _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] +
-                _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-                ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                  0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                  0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                     ? (1.0)
-                     : (0.0)) *
+                                       _stride_u_0] -
+                1.0 *
+                    ((double)((
+                        (0.0 >
+                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 >
+                             _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                ((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                  0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                  0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0])
-                     ? (1.0)
-                     : (0.0)) *
+                _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
+                ((double)((
+                    (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                     0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                     0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                        ? (1)
+                        : (0)))) *
+                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
+                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
+                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
+                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
+                ((double)((
+                    (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                             _stride_u_0] &&
+                     0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                             _stride_u_0] &&
+                     0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                             _stride_u_0])
+                        ? (1)
+                        : (0)))) *
                     _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                      _stride_rho_0] *
                     _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -2482,23 +2582,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                       _stride_u_0] +
                 _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-                ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                  0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                  0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)((
+                    (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                     0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                     0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                        ? (1)
+                        : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                ((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                  0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0] &&
-                  0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                          _stride_u_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)((
+                    (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                             _stride_u_0] &&
+                     0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                             _stride_u_0] &&
+                     0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                             _stride_u_0])
+                        ? (1)
+                        : (0)))) *
                     _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
                                      _stride_rho_0] *
                     _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -2510,24 +2612,28 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
             _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
                 -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                      0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 >
+                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 <
+                             _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                         0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                     _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                     _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
                 1.0 *
-                    ((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                      0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                      0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)((
+                        (0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                         0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                         0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                            ? (1)
+                            : (0)))) *
                     _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                     _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -2575,13 +2681,16 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0]) ? (1.0) : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_20_31_1m1[_stride_u_0]) ? (1.0) : (0.0)) *
+                      ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_1m1[_stride_rho_0] *
                       _data_u_20_31_1m1[_stride_u_0] +
                   _data_j_20_31_10[_stride_j_0];
@@ -2616,18 +2725,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
               _data_j_20_33_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_20_32_1m1[0]) + 1.0) * -1.0 *
-                      ((0.0 < _data_u_20_30_1m1[0] &&
-                        0.0 < _data_u_20_31_1m1[0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_20_30_1m1[0] &&
+                                  0.0 < _data_u_20_31_1m1[0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_1m1[0] * _data_u_20_30_1m1[0] *
                       _data_u_20_31_1m1[0] +
                   _data_j_20_33_10[_stride_j_0];
@@ -2670,18 +2779,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 *
-                      ((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0] *
                       _data_u_2m1_31_1m1[_stride_u_0] *
                       _data_u_2m1_32_1m1[_stride_u_0] +
@@ -2726,18 +2835,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_38_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                      ((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                        0.0 < _data_u_21_31_1m1[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
+                                  0.0 < _data_u_21_31_1m1[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0] *
                       _data_u_21_31_1m1[_stride_u_0] *
                       _data_u_21_32_1m1[_stride_u_0] +
@@ -2781,23 +2890,23 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
+                                  0.0 < _data_u_2m1_31_1m1[0] &&
+                                  0.0 < _data_u_2m1_32_1m1[0])
+                                     ? (1)
+                                     : (0)))) *
+                      _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
+                      _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
+                  1.0 *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  1.0 *
-                      ((0.0 < _data_u_2m1_30_1m1[0] &&
-                        0.0 < _data_u_2m1_31_1m1[0] &&
-                        0.0 < _data_u_2m1_32_1m1[0])
-                           ? (1.0)
-                           : (0.0)) *
-                      _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                      _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
+                      _data_u_20_32_10[_stride_u_0] +
                   _data_j_20_39_10[_stride_j_0];
             }
             if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
@@ -2837,19 +2946,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
               _data_j_20_310_10[_stride_j_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                              0.0 > _data_u_20_31_10[_stride_u_0] &&
+                              0.0 < _data_u_20_32_10[_stride_u_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
-                  ((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] &&
-                    0.0 < _data_u_21_31_1m1[0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_21_32_1m1[0] &&
+                              0.0 < _data_u_21_30_1m1[0] &&
+                              0.0 < _data_u_21_31_1m1[0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
                       _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
                   _data_j_20_310_10[_stride_j_0];
@@ -2890,16 +3000,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                       (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                     : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                      : (0.0)) *
+                      ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0] +
                   _data_j_20_31_10[_stride_j_0 * ctr_0];
@@ -2934,10 +3046,10 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
               _data_j_20_33_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] +
@@ -2945,12 +3057,12 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                  _stride_u_0]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
-                                                _stride_u_0] &&
-                        0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
-                                                _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0] &&
+                                  0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
@@ -2994,19 +3106,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
+                           0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
@@ -3052,18 +3165,19 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_j_20_38_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
+                           0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
                       _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
@@ -3107,28 +3221,28 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * ctr_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  1.0 *
-                      ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
+                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
+                  1.0 *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
+                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
+                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
+                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   _data_j_20_39_10[_stride_j_0 * ctr_0];
             }
             if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
@@ -3168,22 +3282,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
               _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                              0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                              0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((0.0 >
-                        _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 <
-                        _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 <
+                           _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -3224,10 +3340,13 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   (-1.0 *
                        fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
                    1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 >
+                               _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
@@ -3235,12 +3354,15 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                  _stride_u_0]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                        0.0 < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 <
+                               _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0] &&
+                           0.0 <
+                               _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                        _stride_rho_0] *
                       _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -3287,24 +3409,17 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  1.0 *
-                      ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 *
+                                                               (_size_j_0 - 1) -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 *
+                                                               (_size_j_0 - 1) -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 *
+                                                               (_size_j_0 - 1) -
+                                                           _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                         _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -3312,7 +3427,21 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                       _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
                                          _stride_u_0] *
                       _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] +
+                                         _stride_u_0] -
+                  1.0 *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 > _data_u_20_31_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 >
+                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
+                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
+                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
+                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
+                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
                   _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
@@ -3352,23 +3481,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_21_32_1m1 =
                   _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
               _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                        _stride_rho_0] *
                       _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -3416,19 +3547,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
           double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
           _data_j_20_311_10[_stride_j_0] =
-              ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                0.0 > _data_u_20_32_10[_stride_u_0] &&
-                0.0 < _data_u_20_31_10[_stride_u_0])
-                   ? (1.0)
-                   : (0.0)) *
+              ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                          0.0 > _data_u_20_32_10[_stride_u_0] &&
+                          0.0 < _data_u_20_31_10[_stride_u_0])
+                             ? (1)
+                             : (0)))) *
                   _data_rho_20_10[_stride_rho_0] *
                   _data_u_20_30_10[_stride_u_0] *
                   _data_u_20_31_10[_stride_u_0] *
                   _data_u_20_32_10[_stride_u_0] +
-              ((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] &&
-                0.0 < _data_u_2m1_32_11[0])
-                   ? (1.0)
-                   : (0.0)) *
+              ((double)(((0.0 > _data_u_2m1_31_11[0] &&
+                          0.0 < _data_u_2m1_30_11[0] &&
+                          0.0 < _data_u_2m1_32_11[0])
+                             ? (1)
+                             : (0)))) *
                   _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
                   _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
               _data_j_20_311_10[_stride_j_0];
@@ -3465,20 +3597,23 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
             double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
             _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                            0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
+                            0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
+                               ? (1)
+                               : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_30_10[_stride_u_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                ((0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                  0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                     ? (1.0)
-                     : (0.0)) *
+                ((double)((
+                    (0.0 >
+                         _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
+                     0.0 <
+                         _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
+                     0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                        ? (1)
+                        : (0)))) *
                     _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                     _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                     _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -3517,23 +3652,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
           double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
           _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-              ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                   ? (1.0)
-                   : (0.0)) *
+              ((double)((
+                  (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                   0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                   0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                      ? (1)
+                      : (0)))) *
                   _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                   _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                   _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-              ((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] &&
-                0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] &&
-                0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0])
-                   ? (1.0)
-                   : (0.0)) *
+              ((double)((
+                  (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                           _stride_u_0] &&
+                   0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                           _stride_u_0] &&
+                   0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                           _stride_u_0])
+                      ? (1)
+                      : (0)))) *
                   _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
                                    _stride_rho_0] *
                   _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -3592,13 +3729,16 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_32_10[_stride_u_0]) ? (1.0) : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_32_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_32_10[_stride_u_0]) ? (1.0) : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_10[_stride_rho_0] *
                       _data_u_2m1_32_10[_stride_u_0] +
                   _data_j_20_32_10[_stride_j_0];
@@ -3644,18 +3784,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _data_u_2m1_32;
               _data_j_20_35_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_2m1_31_10[0]) + 1.0) * -1.0 *
-                      ((0.0 < _data_u_2m1_30_10[0] &&
-                        0.0 < _data_u_2m1_32_10[0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_10[0] &&
+                                  0.0 < _data_u_2m1_32_10[0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_10[0] * _data_u_2m1_30_10[0] *
                       _data_u_2m1_32_10[0] +
                   _data_j_20_35_10[_stride_j_0];
@@ -3701,18 +3841,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
                   (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 *
-                      ((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0] *
                       _data_u_2m1_31_1m1[_stride_u_0] *
                       _data_u_2m1_32_1m1[_stride_u_0] +
@@ -3759,23 +3899,23 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
+                                  0.0 < _data_u_2m1_31_1m1[0] &&
+                                  0.0 < _data_u_2m1_32_1m1[0])
+                                     ? (1)
+                                     : (0)))) *
+                      _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
+                      _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
+                  1.0 *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  1.0 *
-                      ((0.0 < _data_u_2m1_30_1m1[0] &&
-                        0.0 < _data_u_2m1_31_1m1[0] &&
-                        0.0 < _data_u_2m1_32_1m1[0])
-                           ? (1.0)
-                           : (0.0)) *
-                      _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                      _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
+                      _data_u_20_32_10[_stride_u_0] +
                   _data_j_20_39_10[_stride_j_0];
             }
             if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
@@ -3818,19 +3958,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_311_10[_stride_j_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                              0.0 > _data_u_20_32_10[_stride_u_0] &&
+                              0.0 < _data_u_20_31_10[_stride_u_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0] *
                       _data_u_20_30_10[_stride_u_0] *
                       _data_u_20_31_10[_stride_u_0] *
                       _data_u_20_32_10[_stride_u_0] +
-                  ((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] &&
-                    0.0 < _data_u_2m1_32_11[0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_2m1_31_11[0] &&
+                              0.0 < _data_u_2m1_30_11[0] &&
+                              0.0 < _data_u_2m1_32_11[0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
                       _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
                   _data_j_20_311_10[_stride_j_0];
@@ -3882,16 +4023,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                       (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                     : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) + 1.0) *
                       (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) +
                        1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0]) ? (1.0)
-                                                                      : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_10[_stride_rho_0 * ctr_0] *
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0] +
                   _data_j_20_32_10[_stride_j_0 * ctr_0];
@@ -3937,10 +4080,10 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _data_u_2m1_32;
               _data_j_20_35_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
@@ -3948,12 +4091,12 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                  _stride_u_0]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
-                                                _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
-                                                _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
+                                                          _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
@@ -4000,19 +4143,20 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
               _data_j_20_37_10[_stride_j_0 * ctr_0] =
                   (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
+                           0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
                       _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
@@ -4059,28 +4203,28 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * ctr_0] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                           ? (1.0)
-                           : (0.0)) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  1.0 *
-                      ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
+                                                           _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
+                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
+                  1.0 *
+                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                     ? (1)
+                                     : (0)))) *
+                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
+                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
+                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
+                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
                   _data_j_20_39_10[_stride_j_0 * ctr_0];
             }
             if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
@@ -4123,22 +4267,24 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                              0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
+                              0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
+                                 ? (1)
+                                 : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * ctr_0] *
                       _data_u_20_30_10[_stride_u_0 * ctr_0] *
                       _data_u_20_31_10[_stride_u_0 * ctr_0] *
                       _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((0.0 >
-                        _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 <
-                        _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                    0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 -
+                                               _stride_u_0] &&
+                       0.0 <
+                           _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                       _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
                       _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
@@ -4190,10 +4336,13 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   (-1.0 *
                        fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
                    1.0) *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 >
+                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
@@ -4201,12 +4350,15 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                                                  _stride_u_0]) +
                    1.0) *
                       -1.0 *
-                      ((0.0 < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)((
+                          (0.0 <
+                               _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0] &&
+                           0.0 <
+                               _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
+                                                 _stride_u_0])
+                              ? (1)
+                              : (0)))) *
                       _data_rho_2m1_10[_stride_rho_0 * (_size_j_0 - 1) -
                                        _stride_rho_0] *
                       _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
@@ -4256,24 +4408,17 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
                   -1.0 *
-                      ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                        0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                           ? (1.0)
-                           : (0.0)) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  1.0 *
-                      ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                        0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])
-                           ? (1.0)
-                           : (0.0)) *
+                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 *
+                                                               (_size_j_0 - 1) -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 *
+                                                               (_size_j_0 - 1) -
+                                                           _stride_u_0] &&
+                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 *
+                                                               (_size_j_0 - 1) -
+                                                           _stride_u_0])
+                                     ? (1)
+                                     : (0)))) *
                       _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                         _stride_rho_0] *
                       _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -4281,7 +4426,21 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                       _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
                                          _stride_u_0] *
                       _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] +
+                                         _stride_u_0] -
+                  1.0 *
+                      ((double)((
+                          (0.0 > _data_u_20_30_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 > _data_u_20_31_10[_stride_u_0 *
+                                                  (_size_j_0 - 1)] &&
+                           0.0 >
+                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                              ? (1)
+                              : (0)))) *
+                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
+                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
+                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
+                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
                   _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
@@ -4324,23 +4483,25 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               double *RESTRICT _data_u_20_32_10 =
                   _stride_u_1 * ctr_1 + _data_u_20_32;
               _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
                       _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
                       _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0] &&
-                    0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                            _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0] &&
+                       0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
+                                               _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                       _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
                                        _stride_rho_0] *
                       _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
@@ -4397,18 +4558,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
             _data_j_20_37_10[_stride_j_0] =
                 (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                    ((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                0.0 > _data_u_20_32_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_31_10[_stride_u_0] *
                     _data_u_20_32_10[_stride_u_0] +
                 (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 *
-                    ((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                      0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
+                                0.0 < _data_u_2m1_32_1m1[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_2m1_1m1[_stride_rho_0] *
                     _data_u_2m1_31_1m1[_stride_u_0] *
                     _data_u_2m1_32_1m1[_stride_u_0] +
@@ -4455,23 +4616,23 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             _data_j_20_39_10[_stride_j_0] =
                 -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                      0.0 > _data_u_20_31_10[_stride_u_0] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
+                                0.0 < _data_u_2m1_31_1m1[0] &&
+                                0.0 < _data_u_2m1_32_1m1[0])
+                                   ? (1)
+                                   : (0)))) *
+                    _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
+                    _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
+                1.0 *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
+                                0.0 > _data_u_20_31_10[_stride_u_0] &&
+                                0.0 > _data_u_20_32_10[_stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0] *
                     _data_u_20_30_10[_stride_u_0] *
                     _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] -
-                1.0 *
-                    ((0.0 < _data_u_2m1_30_1m1[0] &&
-                      0.0 < _data_u_2m1_31_1m1[0] &&
-                      0.0 < _data_u_2m1_32_1m1[0])
-                         ? (1.0)
-                         : (0.0)) *
-                    _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                    _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] +
+                    _data_u_20_32_10[_stride_u_0] +
                 _data_j_20_39_10[_stride_j_0];
           }
         }
@@ -4517,19 +4678,19 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
             _data_j_20_37_10[_stride_j_0 * ctr_0] =
                 (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                    ((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_20_10[_stride_rho_0 * ctr_0] *
                     _data_u_20_31_10[_stride_u_0 * ctr_0] *
                     _data_u_20_32_10[_stride_u_0 * ctr_0] +
                 (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
                     -1.0 *
-                    ((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                      0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
+                                0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
                     _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
                     _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
@@ -4576,28 +4737,28 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                 _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             _data_j_20_39_10[_stride_j_0 * ctr_0] =
                 -1.0 *
-                    ((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                      0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                      0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                         ? (1.0)
-                         : (0.0)) *
-                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                    _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                1.0 *
-                    ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                      0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                      0.0 <
-                          _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                         ? (1.0)
-                         : (0.0)) *
+                    ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0] &&
+                                0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
+                                                         _stride_u_0])
+                                   ? (1)
+                                   : (0)))) *
                     _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
                     _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
                     _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
+                    _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
+                1.0 *
+                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
+                                0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
+                                0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
+                                   ? (1)
+                                   : (0)))) *
+                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
+                    _data_u_20_30_10[_stride_u_0 * ctr_0] *
+                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
+                    _data_u_20_32_10[_stride_u_0 * ctr_0] +
                 _data_j_20_39_10[_stride_j_0 * ctr_0];
           }
         }
@@ -4642,24 +4803,15 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
               _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
           _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
               -1.0 *
-                  ((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                    0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                       ? (1.0)
-                       : (0.0)) *
-                  _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                  _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-              1.0 *
-                  ((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                    0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                    0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0])
-                       ? (1.0)
-                       : (0.0)) *
+                  ((double)((
+                      (0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                       0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0] &&
+                       0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
+                                                _stride_u_0])
+                          ? (1)
+                          : (0)))) *
                   _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
                                     _stride_rho_0] *
                   _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
@@ -4667,7 +4819,18 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
                   _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
                                      _stride_u_0] *
                   _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] +
+                                     _stride_u_0] -
+              1.0 *
+                  ((double)((
+                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
+                       0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
+                          ? (1)
+                          : (0)))) *
+                  _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
+                  _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
+                  _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
+                  _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
               _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
         }
       }
@@ -4678,8 +4841,8 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
 
 void AdvectiveFluxKernel_double_precision::run(IBlock *block) {
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
-  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
   auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -4728,8 +4891,8 @@ void AdvectiveFluxKernel_double_precision::runOnCellInterval(
     return;
 
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
-  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
   auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));

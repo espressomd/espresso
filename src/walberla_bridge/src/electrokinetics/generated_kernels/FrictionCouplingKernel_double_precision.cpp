@@ -1,6 +1,6 @@
-// kernel generated with pystencils v1.0, lbmpy v1.0,
+// kernel generated with pystencils v1.0+25.gfe5cece, lbmpy v1.0+16.g030bd5a,
 // lbmpy_walberla/pystencils_walberla from commit
-// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 //======================================================================================================================
 //
@@ -216,8 +216,8 @@ frictioncouplingkernel_double_precision_frictioncouplingkernel_double_precision(
 } // namespace internal_828cb3fbc90c26a23ae54639862a1401
 
 void FrictionCouplingKernel_double_precision::run(IBlock *block) {
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto f = block->getData<field::GhostLayerField<double, 3>>(fID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   auto &kT = this->kT_;
   auto &D = this->D_;
@@ -261,8 +261,8 @@ void FrictionCouplingKernel_double_precision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto f = block->getData<field::GhostLayerField<double, 3>>(fID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   auto &kT = this->kT_;
   auto &D = this->D_;
