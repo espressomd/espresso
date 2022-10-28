@@ -62,7 +62,24 @@ set(CUDA_NVCC_FLAGS_RELWITHASSERT "${CUDA_NVCC_FLAGS_RELWITHASSERT} -O3 -g")
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
 set(gpu_interface_flags "${CUDA_NVCC_FLAGS} ${CUDA_NVCC_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} --cuda-gpu-arch=sm_52")
 if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 11)
+  # GTX-600 series (Kepler)
   set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_30")
+endif()
+if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 12)
+  # GTX-900 series (Maxwell)
+  set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_52")
+endif()
+if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
+  # GTX-1000 series (Pascal)
+  set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_61")
+endif()
+if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "10.0.0" AND
+   (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS "14.0.0" OR
+   CUDA_VERSION VERSION_GREATER_EQUAL "11.3.0"))
+  # RTX-2000 series (Turing)
+  # With Clang 14+, architectures sm_70+ are only supported with Thrust 1.11+
+  # from CUDA 11.3+, for details see https://github.com/NVIDIA/cub/pull/170
+  set(gpu_interface_flags "${gpu_interface_flags} --cuda-gpu-arch=sm_75")
 endif()
 if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0.0" AND
    CMAKE_CUDA_COMPILER_VERSION VERSION_LESS "13.0.0" AND

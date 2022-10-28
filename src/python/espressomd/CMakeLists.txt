@@ -78,6 +78,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 else()
   target_compile_options(Espresso_pyx_flags INTERFACE -Wno-pedantic
                                                       -Wno-unused-variable)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION
+                                                VERSION_GREATER_EQUAL 14.0.0)
+    target_compile_options(Espresso_pyx_flags
+                           INTERFACE -Wno-c++17-attribute-extensions)
+  endif()
 endif()
 
 # Configure, compile and install Cython files
