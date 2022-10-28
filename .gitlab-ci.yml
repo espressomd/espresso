@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-20.04:ba17d0a6faeef892b1d1ca2b69e805c9fe1dc495
+image: ghcr.io/espressomd/docker/ubuntu-20.04:efd89c5f66b8a65f579a7807d0059939fcb4b12f
 
 stages:
   - prepare
@@ -177,7 +177,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
+  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -195,7 +195,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/debian:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
+  image: ghcr.io/espressomd/docker/debian:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -210,7 +210,7 @@ debian:10:
 fedora:36:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:adb6ad0892de1fb1ecdd9f29c1115cfc16ea5f4b
+  image: ghcr.io/espressomd/docker/fedora:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      with_cuda: 'false'
      myconfig: 'maxset'
@@ -251,7 +251,7 @@ clang-sanitizer:
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:ba17d0a6faeef892b1d1ca2b69e805c9fe1dc495
+  image: ghcr.io/espressomd/docker/cuda:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      CC: 'gcc-9'
      CXX: 'g++-9'
@@ -271,7 +271,7 @@ fast_math:
 cuda11-maxset:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-22.04:ba17d0a6faeef892b1d1ca2b69e805c9fe1dc495
+  image: ghcr.io/espressomd/docker/ubuntu-22.04:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      CC: 'gcc-10'
      CXX: 'g++-10'
