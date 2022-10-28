@@ -92,28 +92,6 @@ default:
      check_skip_long: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
-    - cd ${CI_PROJECT_DIR}/build
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4
   tags:
     - espresso
     - no-cuda
@@ -135,28 +113,6 @@ maxset:
      cmake_params: '-DTEST_NP=8'
   script:
     - bash maintainer/CI/build_cmake.sh
-    - cd ${CI_PROJECT_DIR}/build
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4
   tags:
     - espresso
     - no-cuda
@@ -175,28 +131,6 @@ maxset-walberla:
      check_skip_long: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
-    - cd ${CI_PROJECT_DIR}/build
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4
   tags:
     - espresso
     - no-cuda
@@ -235,28 +169,6 @@ no_rotation:
      check_skip_long: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
-    - cd ${CI_PROJECT_DIR}/build
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4
   tags:
     - espresso
     - no-cuda
@@ -330,29 +242,7 @@ clang-sanitizer:
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
-    - cd ${CI_PROJECT_DIR}/build
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4
-  timeout: 3h
+  timeout: 2h
   tags:
     - espresso
     - cuda
@@ -417,28 +307,6 @@ cuda10-maxset:
      cmake_params: '-DWALBERLA_USE_STD_EXPERIMENTAL_FILESYSTEM=TRUE'
   script:
     - bash maintainer/CI/build_cmake.sh
-    - cd ${CI_PROJECT_DIR}/build
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - make -j4 check_python_skip_long
-    - mv ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/scafacos.CMakeLists.txt
-    - mv ${CI_PROJECT_DIR}/testsuite/python/original.CMakeLists.txt ${CI_PROJECT_DIR}/testsuite/python/CMakeLists.txt
-    - make -j4
   artifacts:
     paths:
     - build/
