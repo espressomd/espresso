@@ -93,9 +93,14 @@ target_compile_options(
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>:-O2 -g -DNDEBUG>
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},Coverage>:-O3 -g>
   $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithAssert>:-O3 -g>
-  $<$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_52> # GTX-900 series (Maxwell)
-  $<$<VERSION_GREATER_EQUAL:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_61> # GTX-1000 series (Pascal)
-  $<$<VERSION_GREATER_EQUAL:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_75> # RTX-2000 series (Turing)
+  # GTX-900 series (Maxwell)
+  $<$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_52>
+  # GTX-1000 series (Pascal)
+  $<$<VERSION_GREATER_EQUAL:${CMAKE_CUDA_COMPILER_VERSION},10>:--cuda-gpu-arch=sm_61>
+  # RTX-2000 series (Turing)
+  # With Clang 14+, architectures sm_70+ are only supported with Thrust 1.11+
+  # from CUDA 11.3+, for details see https://github.com/NVIDIA/cub/pull/170
+  $<$<AND:$<VERSION_GREATER_EQUAL:${CMAKE_CUDA_COMPILER_VERSION},10>,$<OR:$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},14>,$<VERSION_GREATER_EQUAL:${CUDA_VERSION},11.3.0>>>:--cuda-gpu-arch=sm_75>
 )
 
 function(add_gpu_library)

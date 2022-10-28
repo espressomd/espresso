@@ -44,9 +44,8 @@ namespace Analysis {
 static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
   auto const obs_dim = obs.get_chunk_size();
 
-  auto const get_obs_contribs =
-      [obs_dim,
-       calc_sp](Utils::Span<double> const views) -> std::vector<Variant> {
+  auto const get_obs_contribs = [obs_dim,
+                                 calc_sp](Utils::Span<double> const views) {
     if (obs_dim == 1) {
       return std::vector<Variant>(views.begin(), views.end());
     }
