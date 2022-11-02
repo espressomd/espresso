@@ -28,7 +28,7 @@
 
 #include "actor/traits.hpp"
 
-#include "magnetostatics/dds_replica.hpp"
+#include "magnetostatics/dds.hpp"
 #include "magnetostatics/dp3m.hpp"
 
 #include <ParticleRange.hpp>
@@ -82,7 +82,7 @@ struct DipolarLayerCorrection {
 #ifdef DP3M
       std::shared_ptr<DipolarP3M>,
 #endif
-      std::shared_ptr<DipolarDirectSumWithReplica>>;
+      std::shared_ptr<DipolarDirectSum>>;
 
   /** @name Variables from the adapted solver. */
   /**@{*/

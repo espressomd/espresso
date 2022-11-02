@@ -29,7 +29,6 @@
 #include "magnetostatics/barnes_hut_gpu.hpp"
 #include "magnetostatics/dds.hpp"
 #include "magnetostatics/dds_gpu.hpp"
-#include "magnetostatics/dds_replica.hpp"
 #include "magnetostatics/dlc.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/scafacos.hpp"
@@ -62,8 +61,7 @@ using MagnetostaticsActor =
 #ifdef SCAFACOS_DIPOLES
                    std::shared_ptr<DipolarScafacos>,
 #endif
-                   std::shared_ptr<DipolarLayerCorrection>,
-                   std::shared_ptr<DipolarDirectSumWithReplica>>;
+                   std::shared_ptr<DipolarLayerCorrection>>;
 
 extern boost::optional<MagnetostaticsActor> magnetostatics_actor;
 

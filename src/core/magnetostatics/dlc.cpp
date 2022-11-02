@@ -25,7 +25,7 @@
 
 #include "magnetostatics/dlc.hpp"
 
-#include "magnetostatics/dds_replica.hpp"
+#include "magnetostatics/dds.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "p3m/common.hpp"
@@ -449,7 +449,7 @@ double DipolarLayerCorrection::tune_far_cut() const {
 struct AdaptSolver : public boost::static_visitor<void> {
   explicit AdaptSolver(DipolarLayerCorrection *this_ptr) : m_actor{this_ptr} {}
 
-  void operator()(std::shared_ptr<DipolarDirectSumWithReplica> const &solver) {
+  void operator()(std::shared_ptr<DipolarDirectSum> const &solver) {
     m_actor->prefactor = solver->prefactor;
     m_actor->epsilon = P3M_EPSILON_METALLIC;
   }

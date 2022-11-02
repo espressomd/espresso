@@ -22,7 +22,6 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/barnes_hut_gpu.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dds.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dds_gpu.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/dds_replica.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dlc.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dp3m.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/scafacos_impl.cpp)

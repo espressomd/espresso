@@ -99,6 +99,8 @@ unit_test(NAME all_compare_test SRC all_compare_test.cpp DEPENDS
           espresso::utils::mpi Boost::mpi MPI::MPI_CXX NUM_PROC 3)
 unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS espresso::utils::mpi
           Boost::mpi MPI::MPI_CXX NUM_PROC 3)
+unit_test(NAME iall_gatherv_test SRC iall_gatherv_test.cpp DEPENDS
+          espresso::utils::mpi Boost::mpi MPI::MPI_CXX NUM_PROC 3)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS espresso::utils::mpi
           Boost::mpi MPI::MPI_CXX espresso::utils NUM_PROC 3)
 unit_test(NAME serialization_test SRC serialization_test.cpp DEPENDS

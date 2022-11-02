@@ -81,7 +81,8 @@ struct MockDipolarDirectSum
 
   void do_construct(VariantMap const &params) override {
     m_actor = std::make_shared<CoreActorClass>(
-        get_value<double>(params, "prefactor"));
+        get_value<double>(params, "prefactor"),
+        get_value<double>(params, "n_replicas"));
   }
 };
 #endif // DIPOLES
@@ -118,8 +119,9 @@ BOOST_AUTO_TEST_CASE(dipoles_actor) {
   auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
   n_nodes = 1;
   ScriptInterface::Dipoles::MockDipolarDirectSum actor;
-  actor.do_construct({{"prefactor", 2.}});
+  actor.do_construct({{"prefactor", 2.}, {"n_replicas", 3}});
   // check const and non-const access
+  BOOST_CHECK_EQUAL(actor.actor()->n_replicas, 3);
   BOOST_CHECK_CLOSE(actor.actor()->prefactor, 2., tol);
   BOOST_CHECK_CLOSE(Utils::as_const(actor).actor()->prefactor, 2., tol);
 }

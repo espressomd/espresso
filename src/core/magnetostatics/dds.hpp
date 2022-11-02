@@ -36,7 +36,8 @@
  */
 struct DipolarDirectSum {
   double prefactor;
-  DipolarDirectSum(double prefactor);
+  int n_replicas;
+  DipolarDirectSum(double prefactor, int n_replicas);
 
   void on_activation() const {}
   void on_boxl_change() const {}
@@ -46,12 +47,8 @@ struct DipolarDirectSum {
   void init() const {}
   void sanity_checks() const {}
 
-  double kernel(bool force_flag, bool energy_flag,
-                ParticleRange const &particles) const;
-
-private:
-  double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
-                               Particle &p2, bool force_flag) const;
+  double long_range_energy(ParticleRange const &particles) const;
+  void add_long_range_forces(ParticleRange const &particles) const;
 };
 
 #endif // DIPOLES

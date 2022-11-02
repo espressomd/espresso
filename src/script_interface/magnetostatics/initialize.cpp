@@ -27,7 +27,6 @@
 #include "DipolarBarnesHutGpu.hpp"
 #include "DipolarDirectSum.hpp"
 #include "DipolarDirectSumGpu.hpp"
-#include "DipolarDirectSumWithReplica.hpp"
 #include "DipolarLayerCorrection.hpp"
 #include "DipolarP3M.hpp"
 #include "DipolarScafacos.hpp"
@@ -46,7 +45,7 @@ namespace Dipoles {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef DIPOLES
-  om->register_new<DipolarDirectSum>("Dipoles::DipolarDirectSum");
+  om->register_new<DipolarDirectSum>("Dipoles::DipolarDirectSumCpu");
 #ifdef DIPOLAR_DIRECT_SUM
   om->register_new<DipolarDirectSumGpu>("Dipoles::DipolarDirectSumGpu");
 #endif
@@ -60,8 +59,6 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<DipolarScafacos>("Dipoles::DipolarScafacos");
 #endif
   om->register_new<DipolarLayerCorrection>("Dipoles::DipolarLayerCorrection");
-  om->register_new<DipolarDirectSumWithReplica>(
-      "Dipoles::DipolarDirectSumWithReplica");
 #endif // DIPOLES
 }
 
