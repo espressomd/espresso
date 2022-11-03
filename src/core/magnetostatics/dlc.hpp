@@ -28,7 +28,7 @@
 
 #include "actor/traits.hpp"
 
-#include "magnetostatics/dds.hpp"
+#include "magnetostatics/dipolar_direct_sum.hpp"
 #include "magnetostatics/dp3m.hpp"
 
 #include <ParticleRange.hpp>

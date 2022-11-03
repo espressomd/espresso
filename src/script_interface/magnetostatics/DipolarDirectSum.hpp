@@ -26,7 +26,7 @@
 
 #include "Actor.hpp"
 
-#include "core/magnetostatics/dds.hpp"
+#include "core/magnetostatics/dipolar_direct_sum.hpp"
 
 #include "script_interface/get_value.hpp"
 

@@ -21,8 +21,8 @@
 
 #ifdef DIPOLAR_DIRECT_SUM
 
-#include "magnetostatics/dds_gpu.hpp"
-#include "magnetostatics/dds_gpu_cuda.cuh"
+#include "magnetostatics/dipolar_direct_sum_gpu.hpp"
+#include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"

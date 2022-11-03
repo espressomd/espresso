@@ -27,8 +27,8 @@
 #include "actor/traits.hpp"
 
 #include "magnetostatics/barnes_hut_gpu.hpp"
-#include "magnetostatics/dds.hpp"
-#include "magnetostatics/dds_gpu.hpp"
+#include "magnetostatics/dipolar_direct_sum.hpp"
+#include "magnetostatics/dipolar_direct_sum_gpu.hpp"
 #include "magnetostatics/dlc.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/scafacos.hpp"

@@ -25,7 +25,7 @@
 
 #include "magnetostatics/dlc.hpp"
 
-#include "magnetostatics/dds.hpp"
+#include "magnetostatics/dipolar_direct_sum.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "p3m/common.hpp"

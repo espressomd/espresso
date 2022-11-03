@@ -23,7 +23,7 @@
 
 #ifdef DIPOLES
 
-#include "magnetostatics/dds.hpp"
+#include "magnetostatics/dipolar_direct_sum.hpp"
 
 #include "cells.hpp"
 #include "communication.hpp"
@@ -161,7 +161,7 @@ struct PosMom {
  *
  * @param begin Iterator pointing to begin of particle range
  * @param end Iterator pointing past the end of particle range
- * @param pi Pointer to particle that is considered
+ * @param it Pointer to particle that is considered
  * @param with_replicas If periodic replicas are to be considered
  *        at all. If false, distances are calulated as Euclidean
  *        distances, and not using minimum image convention.
@@ -173,22 +173,22 @@ struct PosMom {
  * @return The total sum.
  */
 template <class InputIterator, class T, class F>
-T image_sum(InputIterator begin, InputIterator end, InputIterator pi,
+T image_sum(InputIterator begin, InputIterator end, InputIterator it,
             bool with_replicas, Utils::Vector3i const &ncut,
             Utils::Vector3d const &box_l, T init, F f) {
 
-  for (auto pj = begin; pj != end; ++pj) {
-    auto const exclude_primary = (pi == pj);
+  for (auto jt = begin; jt != end; ++jt) {
+    auto const exclude_primary = (it == jt);
     auto const primary_distance =
-        (with_replicas) ? (pi->pos - pj->pos)
-                        : ::box_geo.get_mi_vector(pi->pos, pj->pos);
+        (with_replicas) ? (it->pos - jt->pos)
+                        : ::box_geo.get_mi_vector(it->pos, jt->pos);
 
     for_each_image(ncut, [&](int nx, int ny, int nz) {
       if (!(exclude_primary && nx == 0 && ny == 0 && nz == 0)) {
         auto const rn =
             primary_distance +
             Utils::Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-        init += f(rn, pj->m);
+        init += f(rn, jt->m);
       }
     });
   }
@@ -289,27 +289,27 @@ void DipolarDirectSum::add_long_range_forces(
   auto p = local_particles.begin();
 
   /* IA with local particles */
-  for (auto pi = local_posmom_begin; pi != local_posmom_end; ++pi, ++p) {
+  for (auto it = local_posmom_begin; it != local_posmom_end; ++it, ++p) {
     /* IA with own images */
     auto fi = image_sum(
-        pi, std::next(pi), pi, with_replicas, ncut, box_l, ParticleForce{},
-        [pi](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-          return pair_force(rn, pi->m, mj);
+        it, std::next(it), it, with_replicas, ncut, box_l, ParticleForce{},
+        [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
+          return pair_force(rn, it->m, mj);
         });
 
     /* IA with other local particles */
     auto q = std::next(p);
-    for (auto pj = std::next(pi); pj != local_posmom_end; ++pj, ++q) {
+    for (auto jt = std::next(it); jt != local_posmom_end; ++jt, ++q) {
       auto const d = (with_replicas)
-                         ? (pi->pos - pj->pos)
-                         : ::box_geo.get_mi_vector(pi->pos, pj->pos);
+                         ? (it->pos - jt->pos)
+                         : ::box_geo.get_mi_vector(it->pos, jt->pos);
 
       ParticleForce fij{};
       ParticleForce fji{};
       for_each_image(ncut, [&](int nx, int ny, int nz) {
         auto const rn =
             d + Utils::Vector3d{nx * box_l[0], ny * box_l[1], nz * box_l[2]};
-        auto const pf = pair_force(rn, pi->m, pj->m);
+        auto const pf = pair_force(rn, it->m, jt->m);
         fij += pf;
         fji.f -= pf.f;
         /* Conservation of angular momentum mandates that
@@ -333,20 +333,20 @@ void DipolarDirectSum::add_long_range_forces(
   p = local_particles.begin();
 
   /* Interaction with all the other particles */
-  for (auto pi = local_posmom_begin; pi != local_posmom_end; ++pi, ++p) {
+  for (auto it = local_posmom_begin; it != local_posmom_end; ++it, ++p) {
     // red particles
     auto fi =
-        image_sum(all_posmom.begin(), local_posmom_begin, pi, with_replicas,
+        image_sum(all_posmom.begin(), local_posmom_begin, it, with_replicas,
                   ncut, box_l, ParticleForce{},
-                  [pi](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-                    return pair_force(rn, pi->m, mj);
+                  [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
+                    return pair_force(rn, it->m, mj);
                   });
 
     // black particles
-    fi += image_sum(local_posmom_end, all_posmom.end(), pi, with_replicas, ncut,
+    fi += image_sum(local_posmom_end, all_posmom.end(), it, with_replicas, ncut,
                     box_l, ParticleForce{},
-                    [pi](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-                      return pair_force(rn, pi->m, mj);
+                    [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
+                      return pair_force(rn, it->m, mj);
                     });
 
     (*p)->force() += prefactor * fi.f;
@@ -382,10 +382,10 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
   auto const local_posmom_end = local_posmom_begin + local_particles.size();
 
   auto u = 0.;
-  for (auto pi = local_posmom_begin; pi != local_posmom_end; ++pi) {
-    u = image_sum(pi, all_posmom.end(), pi, with_replicas, ncut, box_l, u,
-                  [pi](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
-                    return pair_potential(rn, pi->m, mj);
+  for (auto it = local_posmom_begin; it != local_posmom_end; ++it) {
+    u = image_sum(it, all_posmom.end(), it, with_replicas, ncut, box_l, u,
+                  [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
+                    return pair_potential(rn, it->m, mj);
                   });
   }
 

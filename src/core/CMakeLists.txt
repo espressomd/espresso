@@ -72,7 +72,7 @@ if(CUDA)
     cuda_init_cuda.cu
     CudaHostAllocator.cu
     magnetostatics/barnes_hut_gpu_cuda.cu
-    magnetostatics/dds_gpu_cuda.cu
+    magnetostatics/dipolar_direct_sum_gpu_cuda.cu
     electrostatics/mmm1d_gpu_cuda.cu
     electrostatics/p3m_gpu_cuda.cu
     electrostatics/p3m_gpu_error_cuda.cu

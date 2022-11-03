@@ -37,7 +37,7 @@
 #include "core/electrostatics/coulomb.hpp"
 #include "core/electrostatics/debye_hueckel.hpp"
 #include "core/electrostatics/registration.hpp"
-#include "core/magnetostatics/dds.hpp"
+#include "core/magnetostatics/dipolar_direct_sum.hpp"
 #include "core/magnetostatics/dipoles.hpp"
 #include "core/magnetostatics/registration.hpp"
 
