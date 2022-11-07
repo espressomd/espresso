@@ -80,11 +80,11 @@ public:
   double volume;
   int non_interacting_type = 100;
 
-  int m_accepted_configurational_MC_moves = 0;
-  int m_tried_configurational_MC_moves = 0;
-  double get_acceptance_rate_configurational_moves() const {
-    return static_cast<double>(m_accepted_configurational_MC_moves) /
-           static_cast<double>(m_tried_configurational_MC_moves);
+  int N_trial_particle_displacement_MC_moves = 0;
+  int N_accepted_particle_displacement_MC_moves = 0;
+  double get_acceptance_rate_particle_displacement_MC_moves() const {
+    return static_cast<double>(N_accepted_particle_displacement_MC_moves) /
+           static_cast<double>(N_trial_particle_displacement_MC_moves);
   }
 
   auto get_kT() const { return kT; }
@@ -133,7 +133,9 @@ public:
     reactions.erase(reactions.begin() + reaction_id);
   }
 
-  bool displacement_move_for_particles_of_type(int type, int n_part);
+  void
+  do_particle_displacement_MC_move(int mc_steps,
+                                   std::vector<int> particle_types_to_move);
 
   bool particle_inside_exclusion_range_touched = false;
   bool neighbor_search_order_n = true;
@@ -164,8 +166,6 @@ protected:
   std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
              std::vector<StoredParticleProperty>>
   make_reaction_attempt(SingleReaction const &current_reaction);
-  std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>>
-  generate_new_particle_positions(int type, int n_particles);
   void
   restore_properties(std::vector<StoredParticleProperty> const &property_list);
   /**

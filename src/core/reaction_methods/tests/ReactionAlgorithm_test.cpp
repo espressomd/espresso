@@ -55,7 +55,6 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   class ReactionAlgorithmTest : public ReactionAlgorithm {
   public:
     using ReactionAlgorithm::calculate_acceptance_probability;
-    using ReactionAlgorithm::generate_new_particle_positions;
     using ReactionAlgorithm::get_random_position_in_box;
     using ReactionAlgorithm::ReactionAlgorithm;
   };
@@ -65,12 +64,13 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   ReactionAlgorithmTest r_algo(42, 1., 0., {});
   for (int tried_moves = 1; tried_moves < 5; ++tried_moves) {
     for (int accepted_moves = 0; accepted_moves < 5; ++accepted_moves) {
-      r_algo.m_tried_configurational_MC_moves = tried_moves;
-      r_algo.m_accepted_configurational_MC_moves = accepted_moves;
+      r_algo.N_trial_particle_displacement_MC_moves = tried_moves;
+      r_algo.N_accepted_particle_displacement_MC_moves = accepted_moves;
       auto const ref_rate = static_cast<double>(accepted_moves) /
                             static_cast<double>(tried_moves);
-      BOOST_CHECK_CLOSE(r_algo.get_acceptance_rate_configurational_moves(),
-                        ref_rate, tol);
+      BOOST_CHECK_CLOSE(
+          r_algo.get_acceptance_rate_particle_displacement_MC_moves(), ref_rate,
+          tol);
     }
   }
 
@@ -145,92 +145,59 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   // exception if deleting a non-existent particle
   BOOST_CHECK_THROW(r_algo.delete_particle(5), std::runtime_error);
 
-  // check particle moves
+  // check particle displacement Monte Carlo moves
   {
-    // set up particles
-    auto const box_l = 1.;
-    std::vector<std::pair<Utils::Vector3d, Utils::Vector3d>> ref_positions{
-        {{0.1, 0.2, 0.3}, {+10., +20., +30.}},
-        {{0.4, 0.5, 0.6}, {-10., -20., -30.}}};
-    place_particle(0, ref_positions[0].first);
-    place_particle(1, ref_positions[1].first);
-    set_particle_v(0, ref_positions[0].second);
-    set_particle_v(1, ref_positions[1].second);
-    set_particle_type(0, type_A);
-    set_particle_type(1, type_A);
-    // update particle positions and velocities
-    BOOST_CHECK(!r_algo.particle_inside_exclusion_range_touched);
-    r_algo.particle_inside_exclusion_range_touched = false;
-    r_algo.exclusion_range = box_l;
-    auto const bookkeeping = r_algo.generate_new_particle_positions(0, 2);
-    BOOST_CHECK(r_algo.particle_inside_exclusion_range_touched);
-    // check moves and bookkeeping
-    for (auto const &item : bookkeeping) {
-      auto const pid = std::get<0>(item);
-      BOOST_REQUIRE(pid == 0 or pid == 1);
-      auto const ref_old_pos = ref_positions[pid].first;
-      auto const ref_old_vel = ref_positions[pid].second;
-      auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.pos();
-      auto const &new_vel = p.v();
-      BOOST_CHECK_EQUAL(std::get<1>(item), ref_old_pos);
-      BOOST_CHECK_EQUAL(std::get<2>(item), ref_old_vel);
-      BOOST_CHECK_GE(new_pos, Utils::Vector3d::broadcast(0.));
-      BOOST_CHECK_LE(new_pos, Utils::Vector3d::broadcast(box_l));
-      BOOST_CHECK_GE((new_pos - ref_old_pos).norm(), 0.1);
-      BOOST_CHECK_GE((new_vel - ref_old_vel).norm(), 10.);
-    }
-    // cleanup
-    remove_particle(0);
-    remove_particle(1);
-  }
 
-  // check Monte Carlo moves
-  {
-    // set up particles
+    // set up one particle
+
     auto const box_l = 1.;
     std::vector<Utils::Vector3d> ref_positions{{0.1, 0.2, 0.3},
                                                {0.4, 0.5, 0.6}};
     place_particle(0, ref_positions[0]);
-    place_particle(1, ref_positions[1]);
     set_particle_type(0, type_A);
-    set_particle_type(1, type_A);
-    // check runtime errors when a MC move cannot be physically performed
-    auto displacement_move =
-        std::bind(&ReactionAlgorithm::displacement_move_for_particles_of_type,
-                  &r_algo, std::placeholders::_1, std::placeholders::_2);
-    BOOST_REQUIRE(!displacement_move(type_C, 1));
-    BOOST_REQUIRE(!displacement_move(type_B, 2));
-    BOOST_REQUIRE(!displacement_move(type_A, 0));
-    BOOST_CHECK_THROW(displacement_move(type_A, -2), std::domain_error);
-    BOOST_CHECK_THROW(displacement_move(-2, 1), std::domain_error);
+
+    // check that the particle moves if there is no restriction
+    r_algo.do_particle_displacement_MC_move(1, {});
+    BOOST_CHECK_GE((get_particle_data(0).pos() - ref_positions[0]).norm(), tol);
+
+    // check that only particles with types in particle_types_to_move are
+    // allowed to move
+
+    place_particle(0, ref_positions[0]);
+    place_particle(1, ref_positions[1]);
+
+    set_particle_type(1, type_B);
+    r_algo.do_particle_displacement_MC_move(10, {type_B});
+
+    BOOST_CHECK_EQUAL((get_particle_data(0).pos() - ref_positions[0]).norm(),
+                      0);
+    BOOST_CHECK_GE((get_particle_data(1).pos() - ref_positions[1]).norm(), tol);
+
+    // check that no particle moves if they do not match  types in
+    // particle_types_to_move
+
+    place_particle(0, ref_positions[0]);
+    place_particle(1, ref_positions[1]);
+    r_algo.do_particle_displacement_MC_move(10, {3});
+    BOOST_CHECK_EQUAL((get_particle_data(0).pos() - ref_positions[0]).norm(),
+                      0);
+    BOOST_CHECK_EQUAL((get_particle_data(1).pos() - ref_positions[1]).norm(),
+                      0);
     // force all MC moves to be rejected by picking particles inside
     // their exclusion radius
+
     r_algo.exclusion_range = box_l;
     r_algo.particle_inside_exclusion_range_touched = false;
-    BOOST_REQUIRE(!r_algo.displacement_move_for_particles_of_type(type_A, 2));
-    // check none of the particles moved
-    for (auto const pid : {0, 1}) {
-      auto const ref_old_pos = ref_positions[pid];
-      auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.pos();
-      BOOST_CHECK_LE((new_pos - ref_old_pos).norm(), tol);
-    }
-    // force a MC move to be accepted by using a constant Hamiltonian
-    r_algo.exclusion_range = 0.;
-    r_algo.particle_inside_exclusion_range_touched = false;
-    BOOST_REQUIRE(r_algo.displacement_move_for_particles_of_type(type_A, 1));
-    std::vector<double> distances(2);
-    // check that only one particle moved
-    for (auto const pid : {0, 1}) {
-      auto const &p = get_particle_data(pid);
-      distances[pid] = (ref_positions[pid] - p.pos()).norm();
-    }
-    BOOST_CHECK_LE(std::min(distances[0], distances[1]), tol);
-    BOOST_CHECK_GE(std::max(distances[0], distances[1]), 0.1);
-    // cleanup
-    remove_particle(0);
-    remove_particle(1);
+
+    place_particle(0, ref_positions[0]);
+    place_particle(1, ref_positions[1]);
+
+    r_algo.do_particle_displacement_MC_move(10, {type_A, type_B});
+
+    BOOST_CHECK_EQUAL((get_particle_data(0).pos() - ref_positions[0]).norm(),
+                      0);
+    BOOST_CHECK_EQUAL((get_particle_data(1).pos() - ref_positions[1]).norm(),
+                      0);
   }
 
   // check random positions generator
@@ -312,33 +279,6 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     exclusion_radius_per_type[type_A] = 0.1;
     exclusion_radius_per_type[type_B] = 1;
     ReactionAlgorithmTest r_algo(40, 1., 0, exclusion_radius_per_type);
-
-    // the new position will always be in the excluded range since the sum of
-    // the radii of both particle types is larger than box length. The exclusion
-    // range value should be ignored
-
-    r_algo.generate_new_particle_positions(type_B, 1);
-
-    BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
-
-    // the new position will never be in the excluded range because the
-    // exclusion_radius of the particle is 0
-
-    r_algo.exclusion_radius_per_type[type_B] = 0;
-    r_algo.particle_inside_exclusion_range_touched = false;
-    r_algo.generate_new_particle_positions(type_B, 1);
-
-    BOOST_REQUIRE(!r_algo.particle_inside_exclusion_range_touched);
-    // the new position will never accepted since the value in exclusion_range
-    // will be used if the particle does not have a defined excluded radius
-
-    r_algo.exclusion_range = 1;
-    r_algo.exclusion_radius_per_type = {{type_A, 0}};
-    r_algo.generate_new_particle_positions(type_B, 1);
-
-    BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
-
-    //
   }
 }
 

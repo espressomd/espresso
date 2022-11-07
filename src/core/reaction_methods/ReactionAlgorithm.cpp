@@ -547,106 +547,63 @@ void ReactionAlgorithm::move_particle(int p_id, Utils::Vector3d const &new_pos,
   set_particle_v(p_id, vel);
 }
 
-std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>>
-ReactionAlgorithm::generate_new_particle_positions(int type, int n_particles) {
-
-  std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>> old_state;
-  old_state.reserve(n_particles);
-
-  // draw particle ids at random without replacement
-  int p_id = -1;
-  std::vector<int> drawn_pids{p_id};
-  for (int i = 0; i < n_particles; i++) {
-    // draw a new particle id
-    while (Utils::contains(drawn_pids, p_id)) {
-      auto const random_index = i_random(number_of_particles_with_type(type));
-      p_id = get_random_p_id(type, random_index);
-    }
-    drawn_pids.emplace_back(p_id);
-    // store original state
-    auto const &p = get_particle_data(p_id);
-    old_state.emplace_back(std::tuple<int, Utils::Vector3d, Utils::Vector3d>{
-        p_id, p.pos(), p.v()});
-    // write new position and new velocity
-    auto const prefactor = std::sqrt(kT / p.mass());
-    auto const new_pos = get_random_position_in_box();
-    move_particle(p_id, new_pos, prefactor);
-    check_exclusion_range(p_id);
-    if (particle_inside_exclusion_range_touched) {
-      break;
-    }
-  }
-
-  return old_state;
-}
-
 /**
- * Performs a global MC move for particles of a given type.
- * Particles are selected without replacement.
- * @param type     Type of particles to move.
- * @param n_part   Number of particles of that type to move.
- * @returns true if all moves were accepted.
+ * Performs particle displacement MC moves in the canonical ensemble
+ * @param mc_steps Number of trial MC steps
+ * @param particle_types_to_move  List of particle types from which particles
+ * are selected. If empty, any particle can be chosen by default.
+ *
  */
-bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
-                                                                int n_part) {
 
-  if (type < 0) {
-    throw std::domain_error("Parameter 'type_mc' must be >= 0");
-  }
-  if (n_part < 0) {
-    throw std::domain_error(
-        "Parameter 'particle_number_to_be_changed' must be >= 0");
-  }
+void ReactionAlgorithm::do_particle_displacement_MC_move(
+    int mc_steps, std::vector<int> particle_types_to_move) {
+  std::vector<signed int> ids_to_move;
 
-  if (n_part == 0) {
-    // reject
-    return false;
-  }
-
-  m_tried_configurational_MC_moves += 1;
-  particle_inside_exclusion_range_touched = false;
-
-  auto const n_particles_of_type = number_of_particles_with_type(type);
-  if (n_part > n_particles_of_type) {
-    // reject
-    return false;
+  if (particle_types_to_move.empty()) {
+    ids_to_move = get_particle_ids();
+  } else {
+    for (signed int p_id : get_particle_ids()) {
+      if (std::find(
+              particle_types_to_move.begin(), particle_types_to_move.end(),
+              get_particle_data(p_id).type()) != particle_types_to_move.end()) {
+        ids_to_move.push_back(p_id);
+      }
+    }
   }
 
-  auto const E_pot_old = mpi_calculate_potential_energy();
-
-  auto const original_state = generate_new_particle_positions(type, n_part);
-
-  auto const E_pot_new = (particle_inside_exclusion_range_touched)
-                             ? std::numeric_limits<double>::max()
-                             : mpi_calculate_potential_energy();
-
-  auto const beta = 1.0 / kT;
-
-  // Metropolis algorithm since proposal density is symmetric
-  auto const bf = std::min(1.0, exp(-beta * (E_pot_new - E_pot_old)));
-
-  // // correct for enhanced proposal of small radii by using the
-  // // Metropolis-Hastings algorithm for asymmetric proposal densities
-  // double old_radius =
-  //     std::sqrt(std::pow(particle_positions[0][0]-cyl_x,2) +
-  //               std::pow(particle_positions[0][1]-cyl_y,2));
-  // double new_radius =
-  //     std::sqrt(std::pow(new_pos[0]-cyl_x,2)+std::pow(new_pos[1]-cyl_y,2));
-  // auto const bf = std::min(1.0,
-  //     exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
-
-  // Metropolis-Hastings algorithm for asymmetric proposal density
-  if (m_uniform_real_distribution(m_generator) < bf) {
-    // accept
-    m_accepted_configurational_MC_moves += 1;
-    return true;
+  // If there are no particles available to move, return
+  if (ids_to_move.empty()) {
+    return;
   }
-  // reject: restore original particle properties
-  for (auto const &item : original_state) {
-    set_particle_v(std::get<0>(item), std::get<2>(item));
-    place_particle(std::get<0>(item), std::get<1>(item));
+
+  for (int step = 0; step < mc_steps; step++) {
+
+    N_trial_particle_displacement_MC_moves += 1;
+    particle_inside_exclusion_range_touched = false;
+    int p_id = ids_to_move[i_random(static_cast<int>(ids_to_move.size()))];
+    auto const particle = get_particle_data(p_id);
+    auto const old_position = particle.pos();
+    auto const E_pot_old = mpi_calculate_potential_energy();
+    auto const new_position = get_random_position_in_box();
+
+    place_particle(p_id, new_position);
+    check_exclusion_range(p_id);
+
+    auto const E_pot_new = (particle_inside_exclusion_range_touched)
+                               ? std::numeric_limits<double>::max()
+                               : mpi_calculate_potential_energy();
+
+    // Metropolis algorithm
+    auto const bf = std::min(1.0, exp(-1.0 * (E_pot_new - E_pot_old) / kT));
+
+    if (m_uniform_real_distribution(m_generator) < bf) {
+      // accept
+      N_accepted_particle_displacement_MC_moves += 1;
+    } else {
+      // reject: restore original particle position
+      place_particle(p_id, old_position);
+    }
   }
-  return false;
 }
 
 } // namespace ReactionMethods

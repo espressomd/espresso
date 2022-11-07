@@ -168,7 +168,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Get the volume to be used in the acceptance probability of the reaction
         ensemble.
 
-    get_acceptance_rate_configurational_moves()
+    get_acceptance_rate_particle_displacement_MC_moves()
         Returns the acceptance rate for the configuration moves.
 
     get_acceptance_rate_reaction()
@@ -209,29 +209,21 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         reaction_steps : :obj:`int`, optional
             The number of reactions to be performed at once, defaults to 1.
 
-    displacement_mc_move_for_particles_of_type()
-        Performs displacement Monte Carlo moves for particles of a given type.
+    do_particle_displacement_MC_move()
+        Performs particle displacement MC moves in the canonical ensemble.
         New positions of the displaced particles are chosen from the whole box
-        with a uniform probability distribution and new velocities are
-        sampled from the Maxwell-Boltzmann distribution.
-
-        The sequence of moves is only accepted if each individual move in
-        the sequence was accepted. Particles are sampled without replacement.
-        Therefore, calling this method once for 10 particles is not equivalent
-        to calling this method 10 times for 1 particle.
+        with a uniform probability distribution. When moved, the particles preserve
+        their original velocity. By default, any particle can be selected to be moved,
+        but the particles types allowed to moved can be selected with particle_types_to_move
 
         Parameters
         ----------
-        type_mc : :obj:`int`
-            Particle type which should be moved
-        particle_number_to_be_changed : :obj:`int`
-            Number of particles to move, defaults to 1.
-            Particles are selected without replacement.
+        mc_steps : :obj:`int`
+            Number of trial MC steps
+        particle_types_to_move : :obj:`list`
+            List of particle types from which particles are selected. 
+            If empty, any particle can be chosen by default.
 
-        Returns
-        -------
-        :obj:`bool`
-            Whether all moves were accepted.
 
     delete_particle()
         Deletes the particle of the given p_id and makes sure that the particle
@@ -287,7 +279,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
                         "set_non_interacting_type",
                         "get_non_interacting_type",
                         "reaction",
-                        "displacement_mc_move_for_particles_of_type",
+                        "do_particle_displacement_MC_move",
                         "check_reaction_method",
                         "change_reaction_constant",
                         "delete_reaction",
