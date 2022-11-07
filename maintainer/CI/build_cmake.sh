@@ -121,9 +121,6 @@ fi
 if [ "${with_coverage}" = true ]; then
     build_type="Coverage"
 fi
-if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
-    bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
-fi
 
 if [ "${with_fast_math}" = true ]; then
     cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math -fno-finite-math-only"
@@ -325,8 +322,24 @@ fi
 if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     start "COVERAGE"
     cd "${builddir}"
+
+    # import codecov key
+    gpg --import "${CODECOV_PUBLIC_KEY}"
+
+    # download uploader and signatures
+    curl -OSs https://uploader.codecov.io/latest/linux/codecov
+    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+
+    # check uploader integrity, exit script in case of failure
+    gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
+    shasum -a 256 -c codecov.SHA256SUM
+    chmod +x codecov
+
+    codecov_opts=""
     if [ "${with_coverage}" = true ]; then
         echo "Running lcov and gcov..."
+        codecov_opts="${codecov_opts} --gcov"
         lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
@@ -337,12 +350,19 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
         python3 -m coverage xml
     fi
     echo "Uploading to Codecov..."
-    codecov_opts="-X gcov -X coveragepy"
-    if [ -z "${CODECOV_TOKEN}" ]; then
-        codecov_opts="${codecov_opts} -t '${CODECOV_TOKEN}'"
-    fi
-    bash <(curl --fail --silent --show-error https://codecov.io/bash 2>./codecov_stderr) ${codecov_opts} || echo "Codecov did not collect coverage reports"
-    cat ./codecov_stderr
+    for codecov_trial in 1 2 3; do
+        codecov_errno="0"
+        ./codecov ${codecov_opts} -t "${CODECOV_TOKEN}" --nonZero || codecov_errno="${?}"
+        if [ ! "${codecov_errno}" = "0" ]; then
+            echo "Codecov did not upload coverage reports (return code: ${codecov_errno})" >&2
+            echo "That was attempt ${codecov_trial}/3"
+            echo ""
+            if [ ! "${codecov_trial}" = "3" ]; then
+                sleep 10s
+            fi
+        fi
+    done
+
     end "COVERAGE"
 fi
 
