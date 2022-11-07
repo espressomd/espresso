@@ -101,7 +101,7 @@ ParticleHandle::ParticleHandle() {
        [this]() { return particle().type(); }},
       {"pos",
        [this](Variant const &value) {
-         place_particle(m_pid, get_value<Utils::Vector3d>(value));
+         mpi_set_particle_pos(m_pid, get_value<Utils::Vector3d>(value));
        },
        [this]() {
          auto const &p = particle();
@@ -471,7 +471,7 @@ void ParticleHandle::do_construct(VariantMap const &params) {
 
     // create a default-constructed particle
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
-    place_particle(m_pid, pos);
+    mpi_make_new_particle(m_pid, pos);
 
     // set particle properties (filter out read-only and deferred properties)
     std::vector<std::string> skip = {

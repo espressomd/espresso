@@ -528,7 +528,9 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   }
 
   // we use mass=1 for all particles, think about adapting this
-  move_particle(p_id, get_random_position_in_box(), std::sqrt(kT));
+  auto const new_pos = get_random_position_in_box();
+  mpi_make_new_particle(p_id, new_pos);
+  move_particle(p_id, new_pos, std::sqrt(kT));
   set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
   set_particle_q(p_id, charges_of_types[desired_type]);
@@ -538,7 +540,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
 
 void ReactionAlgorithm::move_particle(int p_id, Utils::Vector3d const &new_pos,
                                       double velocity_prefactor) {
-  place_particle(p_id, new_pos);
+  mpi_set_particle_pos(p_id, new_pos);
   // create random velocity vector according to Maxwell-Boltzmann distribution
   Utils::Vector3d vel;
   vel[0] = velocity_prefactor * m_normal_distribution(m_generator);
@@ -644,7 +646,7 @@ bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
   // reject: restore original particle properties
   for (auto const &item : original_state) {
     set_particle_v(std::get<0>(item), std::get<2>(item));
-    place_particle(std::get<0>(item), std::get<1>(item));
+    mpi_set_particle_pos(std::get<0>(item), std::get<1>(item));
   }
   return false;
 }

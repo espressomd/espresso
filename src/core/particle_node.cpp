@@ -37,6 +37,7 @@
 
 #include <boost/algorithm/cxx11/copy_if.hpp>
 #include <boost/mpi/collectives/gather.hpp>
+#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/sort.hpp>
@@ -44,6 +45,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <iterator>
 #include <stdexcept>
 #include <string>
@@ -336,15 +338,12 @@ static int calculate_max_seen_id() {
 }
 
 /**
- * @brief Create a new particle.
- * The position must be on the local node!
- *
- * @param p_id  identity of the particle to create
- * @param pos   position
- *
- * @return Pointer to the particle.
+ * @brief Create a new particle and attach it to a cell.
+ * @param p_id  The identity of the particle to create.
+ * @param pos   The particle position.
+ * @return Whether the particle was created on that node.
  */
-static Particle *local_insert_particle(int p_id, const Utils::Vector3d &pos) {
+static bool maybe_insert_particle(int p_id, Utils::Vector3d const &pos) {
   auto folded_pos = pos;
   auto image_box = Utils::Vector3i{};
   fold_position(folded_pos, image_box, box_geo);
@@ -354,85 +353,29 @@ static Particle *local_insert_particle(int p_id, const Utils::Vector3d &pos) {
   new_part.pos() = folded_pos;
   new_part.image_box() = image_box;
 
-  return cell_structure.add_local_particle(std::move(new_part));
+  return ::cell_structure.add_local_particle(std::move(new_part)) != nullptr;
 }
 
 /**
- * @brief Move a particle to a new position.
- * The position must be on the local node!
- *
- * @param p_id  identity of the particle to move
- * @param pos   new position
- *
- * @return Pointer to the particle.
+ * @brief Move particle to a new position.
+ * @param p_id  The identity of the particle to move.
+ * @param pos   The new particle position.
+ * @return Whether the particle was moved from that node.
  */
-static Particle *local_move_particle(int p_id, const Utils::Vector3d &pos) {
+static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
+  auto pt = ::cell_structure.get_local_particle(p_id);
+  if (pt == nullptr) {
+    return false;
+  }
   auto folded_pos = pos;
   auto image_box = Utils::Vector3i{};
   fold_position(folded_pos, image_box, box_geo);
-
-  auto pt = cell_structure.get_local_particle(p_id);
   pt->pos() = folded_pos;
   pt->image_box() = image_box;
-
-  return pt;
+  return true;
 }
 
-static boost::optional<int>
-mpi_place_new_particle_local(int p_id, Utils::Vector3d const &pos) {
-  auto p = local_insert_particle(p_id, pos);
-  on_particle_change();
-  if (p) {
-    return comm_cart.rank();
-  }
-  return {};
-}
-
-REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_local)
-
-/** Create particle at a position on a node.
- *  Also calls \ref on_particle_change.
- *  \param p_id  the particle to create.
- *  \param pos   the particles position.
- */
-static int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
-  return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_local,
-                  p_id, pos);
-}
-
-void mpi_place_particle_local(int pnode, int p_id) {
-  if (pnode == this_node) {
-    Utils::Vector3d pos;
-    comm_cart.recv(0, some_tag, pos);
-    local_move_particle(p_id, pos);
-  }
-
-  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-  on_particle_change();
-}
-
-REGISTER_CALLBACK(mpi_place_particle_local)
-
-/** Move particle to a position on a node.
- *  Also calls \ref on_particle_change.
- *  \param node  the node to attach it to.
- *  \param p_id  the particle to move.
- *  \param pos   the particles position.
- */
-static void mpi_place_particle(int node, int p_id, const Utils::Vector3d &pos) {
-  mpi_call(mpi_place_particle_local, node, p_id);
-
-  if (node == this_node)
-    local_move_particle(p_id, pos);
-  else {
-    comm_cart.send(node, some_tag, pos);
-  }
-
-  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-  on_particle_change();
-}
-
-void place_particle(int p_id, Utils::Vector3d const &pos) {
+static void particle_checks(int p_id, Utils::Vector3d const &pos) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }
@@ -442,12 +385,6 @@ void place_particle(int p_id, Utils::Vector3d const &pos) {
     throw std::domain_error("Particle position must be finite");
   }
 #endif // __FAST_MATH__
-  if (particle_exists(p_id)) {
-    mpi_place_particle(get_particle_node(p_id), p_id, pos);
-  } else {
-    particle_node[p_id] = mpi_place_new_particle(p_id, pos);
-    max_seen_pid = std::max(max_seen_pid, p_id);
-  }
 }
 
 static void mpi_remove_particle_local(int p_id) {
@@ -489,6 +426,47 @@ void remove_particle(int p_id) {
       max_seen_pid = calculate_max_seen_id();
     }
   }
+}
+
+static void mpi_make_new_particle_local(int p_id, Utils::Vector3d const &pos) {
+  auto const has_created = maybe_insert_particle(p_id, pos);
+  on_particle_change();
+
+  auto node = -1;
+  auto const node_local = (has_created) ? ::comm_cart.rank() : 0;
+  boost::mpi::reduce(::comm_cart, node_local, node, std::plus<int>{}, 0);
+  if (::this_node == 0) {
+    particle_node[p_id] = node;
+    max_seen_pid = std::max(max_seen_pid, p_id);
+    assert(not has_created or node == 0);
+  }
+}
+
+REGISTER_CALLBACK(mpi_make_new_particle_local)
+
+void mpi_make_new_particle(int p_id, Utils::Vector3d const &pos) {
+  particle_checks(p_id, pos);
+  mpi_call_all(mpi_make_new_particle_local, p_id, pos);
+}
+
+static void mpi_set_particle_pos_local(int p_id, Utils::Vector3d const &pos) {
+  auto const has_moved = maybe_move_particle(p_id, pos);
+  ::cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  on_particle_change();
+
+  auto success = false;
+  boost::mpi::reduce(::comm_cart, has_moved, success, std::plus<bool>{}, 0);
+  if (::this_node == 0 and !success) {
+    throw std::runtime_error("Particle node for id " + std::to_string(p_id) +
+                             " not found!");
+  }
+}
+
+REGISTER_CALLBACK(mpi_set_particle_pos_local)
+
+void mpi_set_particle_pos(int p_id, Utils::Vector3d const &pos) {
+  particle_checks(p_id, pos);
+  mpi_call_all(mpi_set_particle_pos_local, p_id, pos);
 }
 
 int get_random_p_id(int type, int random_index_in_type_map) {

@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     // create a D particle in the system
     auto const pid = 0;
     auto const ref_position = Utils::Vector3d{0.1, 0.2, 0.3};
-    place_particle(pid, ref_position);
+    mpi_make_new_particle(pid, ref_position);
     set_particle_type(pid, type_D);
 
     // sentinel value to check energies get updated
