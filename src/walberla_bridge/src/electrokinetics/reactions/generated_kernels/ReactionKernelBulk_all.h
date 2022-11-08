@@ -114,7 +114,8 @@ auto get_kernel_impl(const std::vector<std::shared_ptr<Reactant>> &reactants,
       numeric_cast<FloatType>(coefficient),
       numeric_cast<FloatType>(reactants[ints]->get_stoech_coeff())...);
 
-  return kernel->getSweep();
+  std::function<void(IBlock *)> sweep = [kernel](IBlock * b) { kernel->run(b); };
+  return sweep;
 }
 
 template <typename FloatType, class Reactant, class... Args>
