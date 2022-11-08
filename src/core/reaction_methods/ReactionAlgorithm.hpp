@@ -27,6 +27,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <random>
@@ -38,10 +39,41 @@
 
 namespace ReactionMethods {
 
-struct StoredParticleProperty {
-  int p_id;
-  int type;
-  double charge;
+/** @brief Bookkeeping for particle changes. */
+struct ParticleChangeRecorder {
+  explicit ParticleChangeRecorder(std::function<void(int)> &&deleter)
+      : m_deleter{deleter} {}
+
+  struct StoredParticleProperty {
+    int p_id;
+    int type;
+    double charge;
+  };
+
+  /** @brief Record particle creation. */
+  void save_created_particle(int p_id) { m_created.push_back(p_id); }
+
+  /** @brief Record particle state before it is hidden. */
+  void save_hidden_particle(StoredParticleProperty &&item) {
+    m_hidden.push_back(item);
+  }
+
+  /** @brief Record particle state before a property change. */
+  void save_changed_particle(StoredParticleProperty &&item) {
+    m_changed.push_back(item);
+  }
+
+  /** @brief Delete hidden particles from the system. */
+  void delete_hidden_particles() const;
+
+  /** @brief Restore original system state. */
+  void restore_original_state() const;
+
+private:
+  std::function<void(int)> m_deleter;
+  std::vector<int> m_created;
+  std::vector<StoredParticleProperty> m_hidden;
+  std::vector<StoredParticleProperty> m_changed;
 };
 
 /** Base class for reaction ensemble methods */
@@ -161,13 +193,9 @@ protected:
   void generic_oneway_reaction(SingleReaction &current_reaction,
                                double &E_pot_old);
 
-  std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
-             std::vector<StoredParticleProperty>>
-  make_reaction_attempt(SingleReaction const &current_reaction);
+  ParticleChangeRecorder make_reaction_attempt(SingleReaction const &reaction);
   std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>>
   generate_new_particle_positions(int type, int n_particles);
-  void
-  restore_properties(std::vector<StoredParticleProperty> const &property_list);
   /**
    * @brief draws a random integer from the uniform distribution in the range
    * [0,maxint-1]
@@ -201,9 +229,6 @@ private:
   void check_exclusion_range(int inserted_particle_id);
   void move_particle(int p_id, Utils::Vector3d const &new_pos,
                      double velocity_prefactor);
-
-  void append_particle_property_of_random_particle(
-      int type, std::vector<StoredParticleProperty> &list_of_particles);
 
   enum class ReactionConstraint { NONE, CYL_Z, SLAB_Z };
   ReactionConstraint m_reaction_constraint = ReactionConstraint::NONE;

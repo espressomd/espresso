@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -76,6 +77,29 @@ void ReactionAlgorithm::add_reaction(
   init_type_map(non_interacting_type);
 
   reactions.push_back(new_reaction);
+}
+
+void ParticleChangeRecorder::restore_original_state() const {
+  auto const restore_state = [](StoredParticleProperty const &item) {
+#ifdef ELECTROSTATICS
+    set_particle_q(item.p_id, item.charge);
+#endif
+    set_particle_type(item.p_id, item.type);
+  };
+  // 1) delete created product particles
+  std::for_each(m_created.begin(), m_created.end(), m_deleter);
+  // 2) restore previously hidden reactant particles
+  std::for_each(m_hidden.begin(), m_hidden.end(), restore_state);
+  // 3) restore previously changed reactant particles
+  std::for_each(m_changed.begin(), m_changed.end(), restore_state);
+}
+
+void ParticleChangeRecorder::delete_hidden_particles() const {
+  for (auto const &item : m_hidden) {
+    // change back type otherwise the bookkeeping algorithm breaks
+    set_particle_type(item.p_id, item.type);
+    m_deleter(item.p_id);
+  }
 }
 
 /**
@@ -138,117 +162,74 @@ bool ReactionAlgorithm::all_reactant_particles_exist(
 }
 
 /**
- * Stores the particle property of a random particle of the provided type into
- * the provided vector
- */
-void ReactionAlgorithm::append_particle_property_of_random_particle(
-    int type, std::vector<StoredParticleProperty> &list_of_particles) {
-  int random_index_in_type_map = i_random(number_of_particles_with_type(type));
-  int p_id = get_random_p_id(type, random_index_in_type_map);
-  StoredParticleProperty properties = {p_id, type, charges_of_types[type]};
-  list_of_particles.push_back(properties);
-}
-
-/**
  *Performs a trial reaction move
  */
-std::tuple<std::vector<StoredParticleProperty>, std::vector<int>,
-           std::vector<StoredParticleProperty>>
-ReactionAlgorithm::make_reaction_attempt(
-    SingleReaction const &current_reaction) {
+ParticleChangeRecorder
+ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction) {
   // create or hide particles of types with corresponding types in reaction
-  std::vector<int> p_ids_created_particles;
-  std::vector<StoredParticleProperty> hidden_particles_properties;
-  std::vector<StoredParticleProperty> changed_particles_properties;
-
-  for (int i = 0; i < std::min(current_reaction.product_types.size(),
-                               current_reaction.reactant_types.size());
-       i++) {
+  auto const n_product_types = reaction.product_types.size();
+  auto const n_reactant_types = reaction.reactant_types.size();
+  auto const get_random_p_id_of_type = [this](int type) {
+    auto const random_index = i_random(number_of_particles_with_type(type));
+    return get_random_p_id(type, random_index);
+  };
+  ParticleChangeRecorder tracker{[this](int p_id) { delete_particle(p_id); }};
+  for (int i = 0; i < std::min(n_product_types, n_reactant_types); i++) {
+    auto const n_product_coef = reaction.product_coefficients[i];
+    auto const n_reactant_coef = reaction.reactant_coefficients[i];
     // change std::min(reactant_coefficients(i),product_coefficients(i)) many
     // particles of reactant_types(i) to product_types(i)
-    for (int j = 0; j < std::min(current_reaction.product_coefficients[i],
-                                 current_reaction.reactant_coefficients[i]);
-         j++) {
-      append_particle_property_of_random_particle(
-          current_reaction.reactant_types[i], changed_particles_properties);
-      replace_particle(changed_particles_properties.back().p_id,
-                       current_reaction.product_types[i]);
+    auto const type = reaction.reactant_types[i];
+    for (int j = 0; j < std::min(n_product_coef, n_reactant_coef); j++) {
+      auto const p_id = get_random_p_id_of_type(type);
+      tracker.save_changed_particle({p_id, type, charges_of_types[type]});
+      replace_particle(p_id, reaction.product_types[i]);
     }
     // create product_coefficients(i)-reactant_coefficients(i) many product
     // particles iff product_coefficients(i)-reactant_coefficients(i)>0,
     // iff product_coefficients(i)-reactant_coefficients(i)<0, hide this number
     // of reactant particles
-    if (current_reaction.product_coefficients[i] -
-            current_reaction.reactant_coefficients[i] >
-        0) {
-      for (int j = 0; j < current_reaction.product_coefficients[i] -
-                              current_reaction.reactant_coefficients[i];
-           j++) {
-        int p_id = create_particle(current_reaction.product_types[i]);
+    auto const delta_n = n_product_coef - n_reactant_coef;
+    if (delta_n > 0) {
+      auto const type = reaction.product_types[i];
+      for (int j = 0; j < delta_n; j++) {
+        auto const p_id = create_particle(type);
         check_exclusion_range(p_id);
-        p_ids_created_particles.push_back(p_id);
+        tracker.save_created_particle(p_id);
       }
-    } else if (current_reaction.reactant_coefficients[i] -
-                   current_reaction.product_coefficients[i] >
-               0) {
-      for (int j = 0; j < current_reaction.reactant_coefficients[i] -
-                              current_reaction.product_coefficients[i];
-           j++) {
-        append_particle_property_of_random_particle(
-            current_reaction.reactant_types[i], hidden_particles_properties);
-        check_exclusion_range(hidden_particles_properties.back().p_id);
-        hide_particle(hidden_particles_properties.back().p_id);
+    } else if (delta_n < 0) {
+      auto const type = reaction.reactant_types[i];
+      for (int j = 0; j < -delta_n; j++) {
+        auto const p_id = get_random_p_id_of_type(type);
+        tracker.save_hidden_particle({p_id, type, charges_of_types[type]});
+        check_exclusion_range(p_id);
+        hide_particle(p_id);
       }
     }
   }
   // create or hide particles of types with noncorresponding replacement types
-  for (auto i = std::min(current_reaction.product_types.size(),
-                         current_reaction.reactant_types.size());
-       i < std::max(current_reaction.product_types.size(),
-                    current_reaction.reactant_types.size());
-       i++) {
-    if (current_reaction.product_types.size() <
-        current_reaction.reactant_types.size()) {
+  for (auto i = std::min(n_product_types, n_reactant_types);
+       i < std::max(n_product_types, n_reactant_types); i++) {
+    if (n_product_types < n_reactant_types) {
+      auto const type = reaction.reactant_types[i];
       // hide superfluous reactant_types particles
-      for (int j = 0; j < current_reaction.reactant_coefficients[i]; j++) {
-        append_particle_property_of_random_particle(
-            current_reaction.reactant_types[i], hidden_particles_properties);
-        check_exclusion_range(hidden_particles_properties.back().p_id);
-        hide_particle(hidden_particles_properties.back().p_id);
+      for (int j = 0; j < reaction.reactant_coefficients[i]; j++) {
+        auto const p_id = get_random_p_id_of_type(type);
+        tracker.save_hidden_particle({p_id, type, charges_of_types[type]});
+        check_exclusion_range(p_id);
+        hide_particle(p_id);
       }
     } else {
       // create additional product_types particles
-      for (int j = 0; j < current_reaction.product_coefficients[i]; j++) {
-        int p_id = create_particle(current_reaction.product_types[i]);
+      for (int j = 0; j < reaction.product_coefficients[i]; j++) {
+        auto const p_id = create_particle(reaction.product_types[i]);
         check_exclusion_range(p_id);
-        p_ids_created_particles.push_back(p_id);
+        tracker.save_created_particle(p_id);
       }
     }
   }
 
-  return {changed_particles_properties, p_ids_created_particles,
-          hidden_particles_properties};
-}
-
-/**
- * Restores the previously stored particle properties. This function is invoked
- * when a reaction attempt is rejected.
- */
-void ReactionAlgorithm::restore_properties(
-    std::vector<StoredParticleProperty> const &property_list) {
-  // this function restores all properties of all particles provided in the
-  // property list, the format of the property list is (p_id,charge,type)
-  // repeated for each particle that occurs in that list
-  for (auto &i : property_list) {
-    int type = i.type;
-#ifdef ELECTROSTATICS
-    // set charge
-    double charge = i.charge;
-    set_particle_q(i.p_id, charge);
-#endif
-    // set type
-    set_particle_type(i.p_id, type);
-  }
+  return tracker;
 }
 
 std::map<int, int> ReactionAlgorithm::save_old_particle_numbers(
@@ -278,19 +259,9 @@ void ReactionAlgorithm::generic_oneway_reaction(
   }
 
   // find reacting molecules in reactants and save their properties for later
-  // recreation if step is not accepted
-  // do reaction
-  // save old particle_numbers
-  std::map<int, int> old_particle_numbers =
-      save_old_particle_numbers(current_reaction);
-
-  std::vector<int> p_ids_created_particles;
-  std::vector<StoredParticleProperty> hidden_particles_properties;
-  std::vector<StoredParticleProperty> changed_particles_properties;
-
-  std::tie(changed_particles_properties, p_ids_created_particles,
-           hidden_particles_properties) =
-      make_reaction_attempt(current_reaction);
+  // re-creation if step is not accepted
+  auto const old_particle_numbers = save_old_particle_numbers(current_reaction);
+  auto const change_tracker = make_reaction_attempt(current_reaction);
 
   auto const E_pot_new = (particle_inside_exclusion_range_touched)
                              ? std::numeric_limits<double>::max()
@@ -305,38 +276,13 @@ void ReactionAlgorithm::generic_oneway_reaction(
 
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
-    // delete hidden reactant_particles (remark: don't delete changed particles)
-    // extract ids of to be deleted particles
-    auto len_hidden_particles_properties =
-        static_cast<int>(hidden_particles_properties.size());
-    std::vector<int> to_be_deleted_hidden_ids(len_hidden_particles_properties);
-    std::vector<int> to_be_deleted_hidden_types(
-        len_hidden_particles_properties);
-    for (int i = 0; i < len_hidden_particles_properties; i++) {
-      auto p_id = hidden_particles_properties[i].p_id;
-      to_be_deleted_hidden_ids[i] = p_id;
-      to_be_deleted_hidden_types[i] = hidden_particles_properties[i].type;
-      // change back type otherwise the bookkeeping algorithm is not working
-      set_particle_type(p_id, hidden_particles_properties[i].type);
-    }
-
-    for (int i = 0; i < len_hidden_particles_properties; i++) {
-      delete_particle(to_be_deleted_hidden_ids[i]); // delete particle
-    }
+    // delete hidden reactant particles (remark: don't delete changed particles)
+    change_tracker.delete_hidden_particles();
     current_reaction.accepted_moves += 1;
     E_pot_old = E_pot_new; // Update the system energy
-
   } else {
     // reject
-    // reverse reaction
-    // 1) delete created product particles
-    for (int p_ids_created_particle : p_ids_created_particles) {
-      delete_particle(p_ids_created_particle);
-    }
-    // 2) restore previously hidden reactant particles
-    restore_properties(hidden_particles_properties);
-    // 3) restore previously changed reactant particles
-    restore_properties(changed_particles_properties);
+    change_tracker.restore_original_state();
   }
 }
 
