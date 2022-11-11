@@ -21,11 +21,7 @@
 
 #include "energy.hpp"
 
-#include <cmath>
 #include <stdexcept>
-#include <tuple>
-#include <utility>
-#include <vector>
 
 namespace ReactionMethods {
 
@@ -38,25 +34,10 @@ double WidomInsertion::calculate_particle_insertion_potential_energy(
 
   auto const E_pot_old = mpi_calculate_potential_energy();
 
-  // make reaction attempt
-  std::vector<int> p_ids_created_particles;
-  std::vector<StoredParticleProperty> hidden_particles_properties;
-  std::vector<StoredParticleProperty> changed_particles_properties;
-  std::tie(changed_particles_properties, p_ids_created_particles,
-           hidden_particles_properties) =
-      make_reaction_attempt(current_reaction);
-
+  // make reaction attempt and immediately reverse it
+  auto const change_tracker = make_reaction_attempt(current_reaction);
   auto const E_pot_new = mpi_calculate_potential_energy();
-  // reverse reaction attempt
-  // reverse reaction
-  // 1) delete created product particles
-  for (int p_ids_created_particle : p_ids_created_particles) {
-    delete_particle(p_ids_created_particle);
-  }
-  // 2) restore previously hidden reactant particles
-  restore_properties(hidden_particles_properties);
-  // 3) restore previously changed reactant particles
-  restore_properties(changed_particles_properties);
+  change_tracker.restore_original_state();
 
   // calculate the particle insertion potential energy
   auto const E_pot_insertion = E_pot_new - E_pot_old;

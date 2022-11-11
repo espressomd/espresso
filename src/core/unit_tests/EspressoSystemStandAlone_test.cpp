@@ -179,7 +179,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 
   auto const reset_particle_positions = [&start_positions]() {
     for (auto const &kv : start_positions) {
-      place_particle(kv.first, kv.second);
+      mpi_set_particle_pos(kv.first, kv.second);
     }
   };
 
@@ -307,7 +307,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     for (int i = 0; i < 10; ++i) {
       // move particle
       pos2[0] += step;
-      place_particle(pid2, pos2);
+      mpi_set_particle_pos(pid2, pos2);
       auto const r = (pos2 - pos1).norm();
       // check P3M energy
       auto const obs_energy = mpi_calculate_energy();

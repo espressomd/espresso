@@ -37,7 +37,7 @@ struct ParticleFactory {
   }
 
   void create_particle(Utils::Vector3d const &pos, int pid, int type) {
-    place_particle(pid, pos);
+    mpi_make_new_particle(pid, pos);
     set_particle_type(pid, type);
     particle_cache.emplace_back(pid);
   }

@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
 
   auto const pid = 1;
-  place_particle(pid, {0., 0., 0.});
+  mpi_make_new_particle(pid, {0., 0., 0.});
   set_particle_type(pid, 0);
 
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
