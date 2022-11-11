@@ -21,7 +21,7 @@
 
 #ifdef DIPOLAR_DIRECT_SUM
 
-#include "magnetostatics/dds_gpu_cuda.cuh"
+#include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
 #include "cuda_utils.cuh"
 

@@ -129,11 +129,7 @@ struct LongRangeForce : public boost::static_visitor<void> {
     boost::apply_visitor(*this, actor->base_solver);
   }
   void operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
-    actor->kernel(true, false, m_particles);
-  }
-  void
-  operator()(std::shared_ptr<DipolarDirectSumWithReplica> const &actor) const {
-    actor->kernel(true, false, m_particles);
+    actor->add_long_range_forces(m_particles);
   }
 #ifdef DIPOLAR_DIRECT_SUM
   void operator()(std::shared_ptr<DipolarDirectSumGpu> const &actor) const {
@@ -169,11 +165,7 @@ struct LongRangeEnergy : public boost::static_visitor<double> {
     return energy + actor->energy_correction(m_particles);
   }
   double operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
-    return actor->kernel(false, true, m_particles);
-  }
-  double
-  operator()(std::shared_ptr<DipolarDirectSumWithReplica> const &actor) const {
-    return actor->kernel(false, true, m_particles);
+    return actor->long_range_energy(m_particles);
   }
 #ifdef DIPOLAR_DIRECT_SUM
   double operator()(std::shared_ptr<DipolarDirectSumGpu> const &actor) const {

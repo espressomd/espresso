@@ -25,7 +25,7 @@
 
 #include "Actor.hpp"
 
-#include "DipolarDirectSumWithReplica.hpp"
+#include "DipolarDirectSum.hpp"
 #include "DipolarP3M.hpp"
 
 #include "core/magnetostatics/dlc.hpp"
@@ -42,7 +42,7 @@ namespace Dipoles {
 
 class DipolarLayerCorrection
     : public Actor<DipolarLayerCorrection, ::DipolarLayerCorrection> {
-  using DipolarDSR = DipolarDirectSumWithReplica;
+  using DipolarDSR = DipolarDirectSum;
   using BaseSolver = boost::variant<
 #ifdef DP3M
       std::shared_ptr<DipolarP3M>,
