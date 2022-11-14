@@ -49,8 +49,7 @@ public:
   auto cyl_transform_params() const { return m_transform_params; }
 
   void do_construct(VariantMap const &params) override {
-    auto n_params = params.size();
-    switch (n_params) {
+    switch (params.size()) {
     case 0:
       m_transform_params =
           std::make_shared<::Utils::CylindricalTransformationParameters>();

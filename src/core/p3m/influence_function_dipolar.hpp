@@ -190,10 +190,9 @@ inline double G_opt_dipolar_self_energy(P3MParameters const &params,
  * @param g Energies on the grid.
  * @return Total self-energy.
  */
-double grid_influence_function_self_energy(P3MParameters const &params,
-                                           Utils::Vector3i const &n_start,
-                                           Utils::Vector3i const &n_end,
-                                           std::vector<double> const &g) {
+inline double grid_influence_function_self_energy(
+    P3MParameters const &params, Utils::Vector3i const &n_start,
+    Utils::Vector3i const &n_end, std::vector<double> const &g) {
   auto const size = n_end - n_start;
 
   auto const shifts = detail::calc_meshift(params.mesh, false);
