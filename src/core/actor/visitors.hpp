@@ -40,7 +40,7 @@ struct GetActorName : public boost::static_visitor<std::string> {
 
 /** @brief Get the symbol name of an actor. */
 template <class Variant> auto get_actor_name(Variant const &variant) {
-  return boost::apply_visitor(GetActorName{}, variant);
+  return boost::apply_visitor(GetActorName(), variant);
 }
 
 /** @brief Get an actor of a specific type, recursively. */
@@ -76,7 +76,7 @@ public:
 /** @brief Get an active actor of a specific type, recursively. */
 template <typename Actor, typename Variant>
 std::shared_ptr<Actor> get_actor_by_type(Variant const &variant) {
-  return boost::apply_visitor(GetActorByType<Actor>{}, variant);
+  return boost::apply_visitor(GetActorByType<Actor>(), variant);
 }
 
 template <typename Actor, typename Variant>
@@ -118,7 +118,7 @@ public:
 /** @brief Check if an actor of a specific type is active, recursively. */
 template <typename Actor, typename Variant>
 auto has_actor_of_type(Variant const &variant) {
-  return boost::apply_visitor(HasActorOfType<Actor>{}, variant);
+  return boost::apply_visitor(HasActorOfType<Actor>(), variant);
 }
 
 template <typename Actor, typename Variant>
@@ -149,7 +149,7 @@ struct ActorEquality : public boost::static_visitor<bool> {
 template <typename T, class Variant>
 bool is_already_stored(std::shared_ptr<T> const &actor,
                        boost::optional<Variant> const &active_actor) {
-  auto const visitor = std::bind(ActorEquality{}, actor, std::placeholders::_1);
+  auto const visitor = std::bind(ActorEquality(), actor, std::placeholders::_1);
   return active_actor and boost::apply_visitor(visitor, *active_actor);
 }
 

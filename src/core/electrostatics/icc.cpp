@@ -108,7 +108,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
   }
 
   auto const prefactor =
-      boost::apply_visitor(GetCoulombPrefactor{}, *electrostatics_actor);
+      boost::apply_visitor(GetCoulombPrefactor(), *electrostatics_actor);
   auto const pref = 1. / (prefactor * 2. * Utils::pi());
   auto const kernel = Coulomb::pair_force_kernel();
   auto const elc_kernel = Coulomb::pair_force_elc_kernel();
@@ -268,7 +268,7 @@ void ICCStar::sanity_check() const {
 
 void ICCStar::sanity_checks_active_solver() const {
   if (electrostatics_actor) {
-    boost::apply_visitor(SanityChecksICC{}, *electrostatics_actor);
+    boost::apply_visitor(SanityChecksICC(), *electrostatics_actor);
   } else {
     throw std::runtime_error("An electrostatics solver is needed by ICC");
   }

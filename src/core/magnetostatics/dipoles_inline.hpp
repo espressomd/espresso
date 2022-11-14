@@ -103,7 +103,7 @@ struct ShortRangeEnergyKernel
 inline ShortRangeForceKernel::result_type pair_force_kernel() {
 #ifdef DIPOLES
   if (magnetostatics_actor) {
-    auto const visitor = ShortRangeForceKernel{};
+    auto const visitor = ShortRangeForceKernel();
     return boost::apply_visitor(visitor, *magnetostatics_actor);
   }
 #endif // DIPOLES
@@ -113,7 +113,7 @@ inline ShortRangeForceKernel::result_type pair_force_kernel() {
 inline ShortRangeEnergyKernel::result_type pair_energy_kernel() {
 #ifdef DIPOLES
   if (magnetostatics_actor) {
-    auto const visitor = ShortRangeEnergyKernel{};
+    auto const visitor = ShortRangeEnergyKernel();
     return boost::apply_visitor(visitor, *magnetostatics_actor);
   }
 #endif // DIPOLES
