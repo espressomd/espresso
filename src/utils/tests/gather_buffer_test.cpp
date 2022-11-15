@@ -35,9 +35,8 @@
 #include <vector>
 
 using Utils::Mpi::gather_buffer;
-namespace mpi = boost::mpi;
 
-void check_vector(const mpi::communicator &comm, int root) {
+void check_vector(const boost::mpi::communicator &comm, int root) {
   std::vector<int> buf(comm.rank() + 1, comm.rank() + 1);
 
   gather_buffer(buf, comm, root);
@@ -67,7 +66,7 @@ void check_vector(const mpi::communicator &comm, int root) {
   }
 }
 
-void check_vector_out_of_bounds(const mpi::communicator &comm) {
+void check_vector_out_of_bounds(const boost::mpi::communicator &comm) {
   /* Check that moving data in the buffer on the root doesn't lead
    * to an access out of bounds (using assertions from std::vector) */
   const auto root = 1;
@@ -90,7 +89,7 @@ void check_vector_out_of_bounds(const mpi::communicator &comm) {
   }
 }
 
-void check_vector_empty(const mpi::communicator &comm, int empty) {
+void check_vector_empty(const boost::mpi::communicator &comm, int empty) {
   std::vector<int> buf((comm.rank() == empty) ? 0 : 11, comm.rank());
   gather_buffer(buf, comm);
 
@@ -111,44 +110,44 @@ void check_vector_empty(const mpi::communicator &comm, int empty) {
 }
 
 BOOST_AUTO_TEST_CASE(vector) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
   check_vector(world, 0);
 }
 
 BOOST_AUTO_TEST_CASE(vector_overlap) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
   if (world.size() >= 2)
     check_vector(world, 1);
 }
 
 BOOST_AUTO_TEST_CASE(vector_out_of_bounds) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
   if (world.size() >= 2)
     check_vector_out_of_bounds(world);
 }
 
 BOOST_AUTO_TEST_CASE(vector_root) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
 
   auto root = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
   check_vector(world, root);
 }
 
 BOOST_AUTO_TEST_CASE(vector_empty) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
 
   check_vector_empty(world, 0);
 }
 
 BOOST_AUTO_TEST_CASE(vector_empty_root) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
   auto root = (world.size() >= 3) ? world.size() - 2 : world.size() - 1;
 
   check_vector_empty(world, root);
 }
 
 BOOST_AUTO_TEST_CASE(non_trivial_type) {
-  mpi::communicator world;
+  boost::mpi::communicator world;
 
   std::string s(
       "A long string that is too long for short-string optimization.");
