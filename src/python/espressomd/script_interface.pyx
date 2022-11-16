@@ -57,9 +57,9 @@ cdef class PScriptInterface:
         Object id of an existing core object (method 1).
     name : :obj:`str`
         Name of the core class to instantiate (method 2).
-    \*\*kwargs
+    **kwargs
         Parameters for the core class constructor (method 2).
-    policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
+    policy : :obj:`str`, {'GLOBAL', 'LOCAL'}
         Creation policy. The managed object exists either on all MPI nodes
         with 'GLOBAL' (default), or only on the head node with 'LOCAL'.
 
@@ -146,7 +146,7 @@ cdef class PScriptInterface:
             Name of the core method.
         handle_errors_message : :obj:`str`, optional
             Custom error message for runtime errors raised in a MPI context.
-        \*\*kwargs
+        **kwargs
             Arguments for the method.
         """
         cdef VariantMap parameters

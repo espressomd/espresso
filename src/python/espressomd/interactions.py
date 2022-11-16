@@ -89,7 +89,7 @@ class LennardJonesInteraction(NonBondedInteraction):
             Interaction length scale.
         cutoff : :obj:`float`
             Cutoff distance of the interaction.
-        shift : :obj:`float` or :obj:`str` \{'auto'\}
+        shift : :obj:`float` or :obj:`str` {'auto'}
             Constant shift of the potential. If ``'auto'``, a default value
             is computed from ``sigma`` and ``cutoff``. The LJ potential
             will be shifted by :math:`4\\epsilon\\cdot\\text{shift}`.
@@ -161,7 +161,7 @@ class GenericLennardJonesInteraction(NonBondedInteraction):
             Interaction length scale.
         cutoff : :obj:`float`
             Cutoff distance of the interaction.
-        shift : :obj:`float` or :obj:`str` \{'auto'\}
+        shift : :obj:`float` or :obj:`str` {'auto'}
             Constant shift of the potential. If ``'auto'``, a default value
             is computed from the other parameters. The LJ potential
             will be shifted by :math:`\\epsilon\\cdot\\text{shift}`.
@@ -376,7 +376,7 @@ class DPDInteraction(NonBondedInteraction):
 
         Parameters
         ----------
-        weight_function : :obj:`int`, \{0, 1\}
+        weight_function : :obj:`int`, {0, 1}
             The distance dependence of the parallel part,
             either 0 (constant) or 1 (linear)
         gamma : :obj:`float`
@@ -385,7 +385,7 @@ class DPDInteraction(NonBondedInteraction):
             Exponent in the modified weight function
         r_cut : :obj:`float`
             Cutoff of the parallel part
-        trans_weight_function : :obj:`int`, \{0, 1\}
+        trans_weight_function : :obj:`int`, {0, 1}
             The distance dependence of the orthogonal part,
             either 0 (constant) or 1 (linear)
         trans_gamma : :obj:`float`
@@ -1313,7 +1313,7 @@ class IBM_Triel(BondedInteraction):
         Area resistance for Skalak
     maxDist : :obj:`float`
         Gives an error if an edge becomes longer than maxDist
-    elasticLaw : :obj:`str`, \{'NeoHookean', 'Skalak'\}
+    elasticLaw : :obj:`str`, {'NeoHookean', 'Skalak'}
         Type of elastic bond
 
     """
@@ -1343,7 +1343,7 @@ class IBM_Tribend(BondedInteraction):
         initializing reference state
     kb : :obj:`float`
         Bending modulus
-    refShape : :obj:`str`, optional, \{'Flat', 'Initial'\}
+    refShape : :obj:`str`, optional, {'Flat', 'Initial'}
         Reference shape, default is ``'Flat'``
 
     """
