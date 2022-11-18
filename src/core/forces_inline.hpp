@@ -308,9 +308,10 @@ inline bool add_bonded_two_body_force(
   if (auto const *iap = boost::get<ThermalizedBond>(&iaparams)) {
     auto result = iap->forces(p1, p2, dx);
     if (result) {
-      using std::get;
-      p1.force() += get<0>(result.get());
-      p2.force() += get<1>(result.get());
+      auto const &forces = result.get();
+
+      p1.force() += std::get<0>(forces);
+      p2.force() += std::get<1>(forces);
 
       return false;
     }
@@ -362,12 +363,11 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
   }
   auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
   if (result) {
-    using std::get;
     auto const &forces = result.get();
 
-    p1.force() += get<0>(forces);
-    p2.force() += get<1>(forces);
-    p3.force() += get<2>(forces);
+    p1.force() += std::get<0>(forces);
+    p2.force() += std::get<1>(forces);
+    p3.force() += std::get<2>(forces);
 
     return false;
   }
@@ -401,13 +401,12 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
                                        Particle &p4) {
   auto const result = calc_bonded_four_body_force(iaparams, p1, p2, p3, p4);
   if (result) {
-    using std::get;
     auto const &forces = result.get();
 
-    p1.force() += get<0>(forces);
-    p2.force() += get<1>(forces);
-    p3.force() += get<2>(forces);
-    p4.force() += get<3>(forces);
+    p1.force() += std::get<0>(forces);
+    p2.force() += std::get<1>(forces);
+    p3.force() += std::get<2>(forces);
+    p4.force() += std::get<3>(forces);
 
     return false;
   }

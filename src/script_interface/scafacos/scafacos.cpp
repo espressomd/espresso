@@ -128,12 +128,12 @@ private:
 };
 
 std::string serialize_parameters(Variant const &pack) {
-  auto const parameters = boost::apply_visitor(GetParameterList{}, pack);
+  auto const parameters = boost::apply_visitor(GetParameterList(), pack);
   if (parameters.empty()) {
     throw std::invalid_argument(
         "ScaFaCoS methods require at least 1 parameter");
   }
-  auto const visitor = ConvertToStringVector{};
+  auto const visitor = ConvertToStringVector();
   std::string method_params = "";
   for (auto const &kv : parameters) {
     method_params += "," + kv.first;

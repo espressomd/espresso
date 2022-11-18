@@ -196,13 +196,13 @@ struct LongRangeEnergy : public boost::static_visitor<double> {
 
 void calc_long_range_force(ParticleRange const &particles) {
   if (magnetostatics_actor) {
-    boost::apply_visitor(LongRangeForce{particles}, *magnetostatics_actor);
+    boost::apply_visitor(LongRangeForce(particles), *magnetostatics_actor);
   }
 }
 
 double calc_energy_long_range(ParticleRange const &particles) {
   if (magnetostatics_actor) {
-    return boost::apply_visitor(LongRangeEnergy{particles},
+    return boost::apply_visitor(LongRangeEnergy(particles),
                                 *magnetostatics_actor);
   }
   return 0.;

@@ -652,8 +652,8 @@ public:
   TuningAlgorithm::Parameters get_time() override {
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
-    for (auto mesh_density = m_mesh_density_min;
-         mesh_density <= m_mesh_density_max; mesh_density += 0.1) {
+    auto mesh_density = m_mesh_density_min;
+    while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       if (m_tune_mesh) {
         for (int i : {0, 1, 2}) {
@@ -671,26 +671,25 @@ public:
           get_m_time(trial_params.mesh, trial_params.cao, trial_params.r_cut_iL,
                      trial_params.alpha_L, trial_params.accuracy);
 
-      /* this mesh does not work at all */
-      if (trial_time < 0.)
-        continue;
+      if (trial_time >= 0.) {
+        /* the optimum r_cut for this mesh is the upper limit for higher meshes,
+           everything else is slower */
+        if (has_actor_of_type<CoulombP3M>(electrostatics_actor)) {
+          m_r_cut_iL_max = trial_params.r_cut_iL;
+        }
 
-      /* the optimum r_cut for this mesh is the upper limit for higher meshes,
-         everything else is slower */
-      if (has_actor_of_type<CoulombP3M>(electrostatics_actor)) {
-        m_r_cut_iL_max = trial_params.r_cut_iL;
+        if (trial_time < time_best) {
+          /* new optimum */
+          reset_n_trials();
+          tuned_params = trial_params;
+          time_best = tuned_params.time = trial_time;
+        } else if (trial_time > time_best + time_granularity or
+                   get_n_trials() > max_n_consecutive_trials) {
+          /* no hope of further optimisation */
+          break;
+        }
       }
-
-      if (trial_time < time_best) {
-        /* new optimum */
-        reset_n_trials();
-        tuned_params = trial_params;
-        time_best = tuned_params.time = trial_time;
-      } else if (trial_time > time_best + time_granularity or
-                 get_n_trials() > max_n_consecutive_trials) {
-        /* no hope of further optimisation */
-        break;
-      }
+      mesh_density += 0.1;
     }
     return tuned_params;
   }

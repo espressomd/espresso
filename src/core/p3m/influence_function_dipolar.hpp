@@ -58,7 +58,9 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
                      Utils::Vector3i const &d_op) {
   using Utils::int_pow;
   using Utils::sinc;
-  auto constexpr limit = 30.;
+  auto constexpr limit = P3M_BRILLOUIN;
+  auto constexpr exp_limit = 30.;
+  auto const exponent = 2. * params.cao;
 
   auto numerator = 0.0;
   auto denominator = 0.0;
@@ -66,19 +68,19 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
   auto const f1 = 1.0 / static_cast<double>(params.mesh[0]);
   auto const f2 = Utils::sqr(Utils::pi() / params.alpha_L);
 
-  for (double mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+  for (int mx = -limit; mx <= limit; mx++) {
     auto const nmx = shift[0] + params.mesh[0] * mx;
-    auto const sx = std::pow(sinc(f1 * nmx), 2.0 * params.cao);
-    for (double my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+    auto const sx = std::pow(sinc(f1 * nmx), exponent);
+    for (int my = -limit; my <= limit; my++) {
       auto const nmy = shift[1] + params.mesh[0] * my;
-      auto const sy = sx * std::pow(sinc(f1 * nmy), 2.0 * params.cao);
-      for (double mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+      auto const sy = sx * std::pow(sinc(f1 * nmy), exponent);
+      for (int mz = -limit; mz <= limit; mz++) {
         auto const nmz = shift[2] + params.mesh[0] * mz;
-        auto const sz = sy * std::pow(sinc(f1 * nmz), 2.0 * params.cao);
+        auto const sz = sy * std::pow(sinc(f1 * nmz), exponent);
         auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        auto const exponent = f2 * nm2;
-        if (exponent < limit) {
-          auto const f3 = sz * std::exp(-exponent) / nm2;
+        auto const exp_term = f2 * nm2;
+        if (exp_term < exp_limit) {
+          auto const f3 = sz * std::exp(-exp_term) / nm2;
           auto const n_nm = d_op[0] * nmx + d_op[1] * nmy + d_op[2] * nmz;
           numerator += f3 * int_pow<S>(n_nm);
         }
@@ -156,19 +158,20 @@ std::vector<double> grid_influence_function(P3MParameters const &params,
 inline double G_opt_dipolar_self_energy(P3MParameters const &params,
                                         Utils::Vector3i const &shift) {
   using Utils::sinc;
-  double u_sum = 0.0;
-  constexpr int limit = P3M_BRILLOUIN + 1;
+  auto constexpr limit = P3M_BRILLOUIN + 1;
   auto const exponent = 2. * params.cao;
+
+  auto u_sum = 0.0;
 
   auto const f1 = 1.0 / static_cast<double>(params.mesh[0]);
 
-  for (double mx = -limit; mx <= limit; mx++) {
+  for (int mx = -limit; mx <= limit; mx++) {
     auto const nmx = shift[0] + params.mesh[0] * mx;
     auto const sx = std::pow(sinc(f1 * nmx), exponent);
-    for (double my = -limit; my <= limit; my++) {
+    for (int my = -limit; my <= limit; my++) {
       auto const nmy = shift[1] + params.mesh[0] * my;
       auto const sy = sx * std::pow(sinc(f1 * nmy), exponent);
-      for (double mz = -limit; mz <= limit; mz++) {
+      for (int mz = -limit; mz <= limit; mz++) {
         auto const nmz = shift[2] + params.mesh[0] * mz;
         auto const sz = sy * std::pow(sinc(f1 * nmz), exponent);
         u_sum += sz;
@@ -187,10 +190,9 @@ inline double G_opt_dipolar_self_energy(P3MParameters const &params,
  * @param g Energies on the grid.
  * @return Total self-energy.
  */
-double grid_influence_function_self_energy(P3MParameters const &params,
-                                           Utils::Vector3i const &n_start,
-                                           Utils::Vector3i const &n_end,
-                                           std::vector<double> const &g) {
+inline double grid_influence_function_self_energy(
+    P3MParameters const &params, Utils::Vector3i const &n_start,
+    Utils::Vector3i const &n_end, std::vector<double> const &g) {
   auto const size = n_end - n_start;
 
   auto const shifts = detail::calc_meshift(params.mesh, false);

@@ -5,7 +5,6 @@ Checks: |
    -clang-analyzer-core.NullDereference,
    -clang-analyzer-core.uninitialized.UndefReturn,
    -clang-analyzer-optin.mpi.MPI-Checker,
-   -clang-analyzer-security.FloatLoopCounter,
    bugprone-*,
    -bugprone-easily-swappable-parameters,
    -bugprone-implicit-widening-of-multiplication-result,

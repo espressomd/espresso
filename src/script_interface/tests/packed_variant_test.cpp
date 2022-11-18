@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(PackVisitor_) {
                                                  ObjectRef{},
                                              }}};
 
-  auto const visitor = ScriptInterface::PackVisitor{};
+  auto const visitor = ScriptInterface::PackVisitor();
 
   auto const result = boost::apply_visitor(visitor, v);
 
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(pack_) {
                                                  ObjectRef{},
                                              }}};
 
-  auto const expected = boost::apply_visitor(ScriptInterface::PackVisitor{}, v);
+  auto const expected = boost::apply_visitor(ScriptInterface::PackVisitor(), v);
   auto const result = ScriptInterface::pack(v);
 
   BOOST_CHECK(expected == result);
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(UnpackVisitor_) {
 
   std::unordered_map<ObjectId, ObjectRef> const &objects{
       {object_id(ObjectRef{}.get()), ObjectRef{}}};
-  auto const visitor = ScriptInterface::UnpackVisitor{objects};
+  auto const visitor = ScriptInterface::UnpackVisitor(objects);
 
   auto const result = boost::apply_visitor(visitor, v);
 
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(unpack_) {
       {object_id(ObjectRef{}.get()), ObjectRef{}}};
 
   auto const expected =
-      boost::apply_visitor(ScriptInterface::UnpackVisitor{objects}, v);
+      boost::apply_visitor(ScriptInterface::UnpackVisitor(objects), v);
   auto const result = ScriptInterface::unpack(v, objects);
 
   BOOST_CHECK(expected == result);

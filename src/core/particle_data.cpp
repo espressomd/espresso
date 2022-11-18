@@ -347,7 +347,7 @@ static void mpi_send_update_message_local(int node, int id) {
   if (node == comm_cart.rank()) {
     UpdateMessage msg{};
     comm_cart.recv(0, some_tag, msg);
-    boost::apply_visitor(UpdateVisitor{id}, msg);
+    boost::apply_visitor(UpdateVisitor(id), msg);
   }
 
   on_particle_change();
@@ -384,7 +384,7 @@ static void mpi_send_update_message(int id, const UpdateMessage &msg) {
   if (pnode != comm_cart.rank()) {
     comm_cart.send(pnode, some_tag, msg);
   } else {
-    boost::apply_visitor(UpdateVisitor{id}, msg);
+    boost::apply_visitor(UpdateVisitor(id), msg);
   }
 
   on_particle_change();

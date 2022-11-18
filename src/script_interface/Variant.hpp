@@ -100,7 +100,7 @@ template <class T> struct is_type_visitor : boost::static_visitor<bool> {
  * @return true, if v holds a T.
  */
 template <class T> bool is_type(Variant const &v) {
-  return boost::apply_visitor(detail::is_type_visitor<T>{}, v);
+  return boost::apply_visitor(detail::is_type_visitor<T>(), v);
 }
 
 inline bool is_none(Variant const &v) { return is_type<None>(v); }
