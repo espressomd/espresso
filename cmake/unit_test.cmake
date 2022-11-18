@@ -49,12 +49,11 @@ function(UNIT_TEST)
   else()
     set(SANITIZERS_HALT_ON_ERROR "halt_on_error=0")
   endif()
-  set(UBSAN_OPTIONS "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/maintainer/CI/ubsan.supp:${SANITIZERS_HALT_ON_ERROR}:print_stacktrace=1")
-  set(ASAN_OPTIONS "ASAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}:detect_leaks=0:allocator_may_return_null=1")
-  set(MSAN_OPTIONS "MSAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}")
+  list(APPEND TEST_ENV_VARIABLES "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/maintainer/CI/ubsan.supp:${SANITIZERS_HALT_ON_ERROR}:print_stacktrace=1")
+  list(APPEND TEST_ENV_VARIABLES "ASAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}:detect_leaks=0:allocator_may_return_null=1")
+  list(APPEND TEST_ENV_VARIABLES "MSAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}")
   set_tests_properties(
-    ${TEST_NAME} PROPERTIES ENVIRONMENT
-                            "${UBSAN_OPTIONS} ${ASAN_OPTIONS} ${MSAN_OPTIONS}")
+    ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}")
 
   add_dependencies(check_unit_tests ${TEST_NAME})
 endfunction(UNIT_TEST)
