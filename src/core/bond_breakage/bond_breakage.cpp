@@ -186,7 +186,7 @@ void process_queue() {
 
   // Execute actions
   for (auto const &a : actions) {
-    boost::apply_visitor(execute{}, a);
+    boost::apply_visitor(execute(), a);
   }
 }
 } // namespace BondBreakage

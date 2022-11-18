@@ -130,7 +130,7 @@ private:
 
 Utils::Vector9d calc_pressure_long_range(ParticleRange const &particles) {
   if (electrostatics_actor) {
-    return boost::apply_visitor(LongRangePressure{particles},
+    return boost::apply_visitor(LongRangePressure(particles),
                                 *electrostatics_actor);
   }
   return {};
@@ -170,7 +170,7 @@ struct ShortRangeCutoff : public boost::static_visitor<double> {
 
 double cutoff() {
   if (electrostatics_actor) {
-    return boost::apply_visitor(ShortRangeCutoff{}, *electrostatics_actor);
+    return boost::apply_visitor(ShortRangeCutoff(), *electrostatics_actor);
   }
   return -1.0;
 }
@@ -191,7 +191,7 @@ struct EventOnObservableCalc : public boost::static_visitor<void> {
 
 void on_observable_calc() {
   if (electrostatics_actor) {
-    boost::apply_visitor(EventOnObservableCalc{}, *electrostatics_actor);
+    boost::apply_visitor(EventOnObservableCalc(), *electrostatics_actor);
   }
 }
 
@@ -282,7 +282,7 @@ private:
 
 void calc_long_range_force(ParticleRange const &particles) {
   if (electrostatics_actor) {
-    boost::apply_visitor(LongRangeForce{particles}, *electrostatics_actor);
+    boost::apply_visitor(LongRangeForce(particles), *electrostatics_actor);
   }
 #ifdef ELECTROKINETICS
   /* Add fields from EK if enabled */
@@ -294,7 +294,7 @@ void calc_long_range_force(ParticleRange const &particles) {
 
 double calc_energy_long_range(ParticleRange const &particles) {
   if (electrostatics_actor) {
-    return boost::apply_visitor(LongRangeEnergy{particles},
+    return boost::apply_visitor(LongRangeEnergy(particles),
                                 *electrostatics_actor);
   }
   return 0.;

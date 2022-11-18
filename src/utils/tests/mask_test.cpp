@@ -30,9 +30,6 @@
 #include <type_traits>
 
 BOOST_AUTO_TEST_CASE(mask_) {
-  using Utils::get;
-  using Utils::tuple_element_t;
-
   const uint8_t mask = 1u | 4u;
 
   auto const a = std::make_tuple(std::string("a"), 3, 4.5);
@@ -43,7 +40,7 @@ BOOST_AUTO_TEST_CASE(mask_) {
 
   static_assert(std::is_same<input_type, result_type>::value, "");
 
-  BOOST_CHECK_EQUAL(get<0>(result), get<0>(a));
-  BOOST_CHECK_EQUAL(get<1>(result), 0);
-  BOOST_CHECK_EQUAL(get<2>(result), get<2>(a));
+  BOOST_CHECK_EQUAL(Utils::get<0>(result), Utils::get<0>(a));
+  BOOST_CHECK_EQUAL(Utils::get<1>(result), 0);
+  BOOST_CHECK_EQUAL(Utils::get<2>(result), Utils::get<2>(a));
 }

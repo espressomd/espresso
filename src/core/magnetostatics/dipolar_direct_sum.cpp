@@ -283,7 +283,8 @@ void DipolarDirectSum::add_long_range_forces(
 
   /* Range of particles we calculate the ia for on this node */
   auto const local_posmom_begin = all_posmom.begin() + offset;
-  auto const local_posmom_end = local_posmom_begin + local_particles.size();
+  auto const local_posmom_end =
+      local_posmom_begin + static_cast<long>(local_particles.size());
 
   /* Output iterator for the force */
   auto p = local_particles.begin();
@@ -379,7 +380,8 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
 
   /* Range of particles we calculate the ia for on this node */
   auto const local_posmom_begin = all_posmom.begin() + offset;
-  auto const local_posmom_end = local_posmom_begin + local_particles.size();
+  auto const local_posmom_end =
+      local_posmom_begin + static_cast<long>(local_particles.size());
 
   auto u = 0.;
   for (auto it = local_posmom_begin; it != local_posmom_end; ++it) {

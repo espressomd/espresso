@@ -250,10 +250,8 @@ void CoulombMMM1DGpu::tune(double maxPWerror, double far_switch_radius,
     auto const maxrad = host_boxz;
     auto bestrad = 0.0;
     float besttime = INFINITY;
-
-    // NOLINTNEXTLINE(clang-analyzer-security.FloatLoopCounter)
-    for (auto radius = 0.05 * maxrad; radius < maxrad;
-         radius += 0.05 * maxrad) {
+    auto radius = 0.05 * maxrad;
+    while (radius < maxrad) {
       set_params(0, 0, maxPWerror, radius, bessel_cutoff);
       tune(maxPWerror, radius, -2); // tune Bessel cutoff
       auto const runtime = force_benchmark();
@@ -261,6 +259,7 @@ void CoulombMMM1DGpu::tune(double maxPWerror, double far_switch_radius,
         besttime = runtime;
         bestrad = radius;
       }
+      radius += 0.05 * maxrad;
     }
     set_params(0, 0, maxPWerror, bestrad, bessel_cutoff);
     tune(maxPWerror, bestrad, -2); // tune Bessel cutoff
