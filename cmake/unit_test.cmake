@@ -52,6 +52,9 @@ function(UNIT_TEST)
   list(APPEND TEST_ENV_VARIABLES "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/maintainer/CI/ubsan.supp:${SANITIZERS_HALT_ON_ERROR}:print_stacktrace=1")
   list(APPEND TEST_ENV_VARIABLES "ASAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}:detect_leaks=0:allocator_may_return_null=1")
   list(APPEND TEST_ENV_VARIABLES "MSAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}")
+  if(NOT TEST_NUM_PROC AND ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA AND "${TEST_DEPENDS}" MATCHES "(^|;)([Bb]oost::mpi|MPI::MPI_CXX)($|;)")
+    list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  endif()
   set_tests_properties(
     ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}")
 

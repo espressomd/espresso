@@ -67,6 +67,15 @@ are required to be able to compile and use |es|:
         Other MPI implementations like Intel MPI should also work, although
         they are not actively tested in |es| continuous integration.
 
+        Open MPI version 4.x is known to not properly support the MCA binding
+        policy "numa" in singleton mode on a few NUMA architectures.
+        On affected systems, e.g. AMD Ryzen or AMD EPYC, Open MPI halts with
+        a fatal error when setting the processor affinity in ``MPI_Init``.
+        This issue can be resolved by setting the environment variable
+        ``OMPI_MCA_hwloc_base_binding_policy`` to a value other than "numa",
+        such as "l3cache" to bind to a NUMA shared memory block, or to
+        "none" to disable binding (can cause performance loss).
+
     Python
         |es|'s main user interface relies on Python 3.
 
@@ -742,6 +751,11 @@ The following options are available:
 
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
+
+* ``ESPRESSO_ADD_OMPI_SINGLETON_WARNING``: Add a runtime warning in the
+  pypresso and ipypresso scripts that is triggered in singleton mode
+  with Open MPI version 4.x on unsupported NUMA environments
+  (see :term:`MPI installation requirements <MPI>` for details).
 
 When the value in the :file:`CMakeLists.txt` file is set to ON, the
 corresponding option is created; if the value of the option is set to OFF,
