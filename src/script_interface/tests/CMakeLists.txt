@@ -42,9 +42,9 @@ unit_test(NAME ParallelExceptionHandler_test SRC
 unit_test(NAME packed_variant_test SRC packed_variant_test.cpp DEPENDS
           Espresso::script_interface)
 unit_test(NAME ObjectList_test SRC ObjectList_test.cpp DEPENDS
-          Espresso::script_interface Espresso::core)
+          Espresso::script_interface Espresso::core Boost::mpi)
 unit_test(NAME ObjectMap_test SRC ObjectMap_test.cpp DEPENDS
-          Espresso::script_interface Espresso::core)
+          Espresso::script_interface Espresso::core Boost::mpi)
 unit_test(NAME serialization_mpi_guard_test SRC
           serialization_mpi_guard_test.cpp DEPENDS Espresso::script_interface
           Boost::mpi MPI::MPI_CXX NUM_PROC 2)

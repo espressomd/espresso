@@ -96,6 +96,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
     "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)"
     OFF)
 endif()
+option(
+  ESPRESSO_ADD_OMPI_SINGLETON_WARNING
+  "Add a runtime warning in the pypresso script for NUMA architectures that aren't supported in singleton mode by Open MPI 4.x"
+  ON)
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
@@ -280,11 +284,38 @@ find_package(MPI 3.0 REQUIRED)
 find_package(MpiexecBackend)
 
 # OpenMPI checks the number of processes against the number of CPUs
-if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND "${MPIEXEC_BACKEND_VERSION}"
-                                                    VERSION_GREATER_EQUAL 2.0.0)
-  set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
-else()
-  set(MPIEXEC_OVERSUBSCRIBE "")
+set(MPIEXEC_OVERSUBSCRIBE "")
+# Open MPI 4.x has a bug on NUMA archs that prevents running in singleton mode
+set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA OFF)
+set(ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN "AMD (EPYC|Ryzen)")
+
+if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI")
+  if("${MPIEXEC_BACKEND_VERSION}" VERSION_GREATER_EQUAL 2.0.0)
+    set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+  endif()
+  if("${MPIEXEC_BACKEND_VERSION}" VERSION_GREATER_EQUAL 4.0
+     AND "${MPIEXEC_BACKEND_VERSION}" VERSION_LESS 5.0)
+    if(NOT DEFINED ESPRESSO_CPU_MODEL_NAME)
+      if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+        if(EXISTS /proc/cpuinfo)
+          file(READ /proc/cpuinfo ESPRESSO_CPU_INFO)
+          string(REGEX
+                 REPLACE ".*\n[Mm]odel name[ \t]*:[ \t]+([^\n]+).*" "\\1"
+                         ESPRESSO_CPU_MODEL_NAME_STRING "${ESPRESSO_CPU_INFO}")
+        else()
+          set(ESPRESSO_CPU_MODEL_NAME_STRING "__unreadable")
+        endif()
+      else()
+        set(ESPRESSO_CPU_MODEL_NAME_STRING "__unaffected")
+      endif()
+      set(ESPRESSO_CPU_MODEL_NAME "${ESPRESSO_CPU_MODEL_NAME_STRING}"
+          CACHE INTERNAL "")
+    endif()
+    if(ESPRESSO_CPU_MODEL_NAME MATCHES
+       "^${ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN}")
+      set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA ON)
+    endif()
+  endif()
 endif()
 
 # OpenMPI cannot run two jobs in parallel in a Docker container, because the
