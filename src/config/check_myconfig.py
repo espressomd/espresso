@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,10 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
-from subprocess import CalledProcessError
+#
 
-from defines import Defines
+import sys
+import subprocess
+
+import defines
 import featuredefs
 
 
@@ -58,69 +61,50 @@ def handle_unknown(f, all_features):
             match = d
 
     if match:
-        print(f"Unknown feature '{f}', did you mean '{match}'?")
+        return f"- unknown feature '{f}', did you mean '{match}'?"
     else:
-        print(f"Unknown feature '{f}'")
+        return f"- unknown feature '{f}'"
 
 
-class FeatureError(Exception):
-    pass
-
-
-def print_exception(ex):
-    print(f"Skipped external header because {' '.join(ex.cmd)} returned "
-          f"non-zero exit code {ex.returncode}, output: {ex.output.strip()}.")
-
-
-def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
-    # This does not work on all compilers, so if the parsing fails
-    # we just bail out.
-    external_defs = []
-
-    if pre_header:
-        try:
-            external_features = Defines(compiler).defines(pre_header)
-        except CalledProcessError as ex:
-            print_exception(ex)
-            return
-
-        external_defs = ['-D' + s for s in external_features]
-
+def check_myconfig(compiler, feature_file, myconfig, cmake_config=None):
+    # query features from the compiler
     try:
+        Defines = defines.Defines
+        external_defs = []
+        if cmake_config:
+            external_features = Defines(compiler).defines(cmake_config)
+            external_defs += ['-D' + s for s in external_features]
         my_features = Defines(compiler, flags=external_defs).defines(myconfig)
-    except CalledProcessError as ex:
-        print_exception(ex)
-        return
+    except subprocess.CalledProcessError as ex:
+        message = ex.output.decode("utf-8").split("\n")[0].strip()
+        raise RuntimeError(
+            f"Command `{' '.join(ex.cmd)}` returned non-zero exit code "
+            f"{ex.returncode}, output: {message}.")
 
-    # Parse feature file
+    # parse feature file
     defs = featuredefs.defs(feature_file)
 
-    error_state = False
+    error_queue = []
     for e in (my_features & defs.externals):
-        error_state = True
         my_features.remove(e)
-        print(f"External feature '{e}' can not be defined in myconfig.")
+        error_queue.append(
+            f"- external feature '{e}' cannot be defined in myconfig")
 
     for u in (my_features - defs.features):
         if u.startswith('__'):
             continue
-        error_state = True
-        handle_unknown(u, defs.features)
+        error_queue.append(handle_unknown(u, defs.features))
 
-    if error_state:
-        raise FeatureError(f"There were errors in '{sys.argv[3]}'")
-    else:
-        return
+    if error_queue:
+        error_report = "\n".join(error_queue)
+        raise RuntimeError(
+            f"There were errors in '{myconfig}':\n{error_report}")
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 4:
-        pre_header = sys.argv[4]
+        cmake_config = sys.argv[4]
     else:
-        pre_header = None
+        cmake_config = None
 
-    try:
-        check_myconfig(sys.argv[1], sys.argv[2], sys.argv[3], pre_header)
-        sys.exit()
-    except FeatureError:
-        sys.exit(f"There were errors in '{sys.argv[3]}'")
+    check_myconfig(sys.argv[1], sys.argv[2], sys.argv[3], cmake_config)
