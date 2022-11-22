@@ -42,9 +42,6 @@ endif(SCAFACOS)
 
 if(WITH_PYTHON)
   add_subdirectory(script_interface)
-endif()
-
-if(WITH_PYTHON)
   add_subdirectory(python)
 endif()
 

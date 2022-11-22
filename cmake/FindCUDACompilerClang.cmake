@@ -87,12 +87,12 @@ set(CUDA 1)
 target_compile_options(
   espresso_cuda_flags
   INTERFACE
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>:-g>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>:-O3 -DNDEBUG>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},MinSizeRel>:-O2 -DNDEBUG>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>:-O2 -g -DNDEBUG>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Coverage>:-O3 -g>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithAssert>:-O3 -g>
+  $<$<CONFIG:Debug>:-g>
+  $<$<CONFIG:Release>:-O3 -DNDEBUG>
+  $<$<CONFIG:MinSizeRel>:-O2 -DNDEBUG>
+  $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
+  $<$<CONFIG:Coverage>:-O3 -g>
+  $<$<CONFIG:RelWithAssert>:-O3 -g>
   # GTX-900 series (Maxwell)
   $<$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},12>:--cuda-gpu-arch=sm_52>
   # GTX-1000 series (Pascal)
