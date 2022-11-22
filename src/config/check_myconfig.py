@@ -66,14 +66,12 @@ def handle_unknown(f, all_features):
         return f"- unknown feature '{f}'"
 
 
-def check_myconfig(compiler, feature_file, myconfig, cmake_config=None):
-    # query features from the compiler
+def check_myconfig(compiler, feature_file, cmakedefine_file,
+                   myconfig, cmake_config):
     try:
         Defines = defines.Defines
-        external_defs = []
-        if cmake_config:
-            external_features = Defines(compiler).defines(cmake_config)
-            external_defs += ['-D' + s for s in external_features]
+        external_features = Defines(compiler).defines(cmake_config)
+        external_defs = ['-D' + s for s in external_features]
         my_features = Defines(compiler, flags=external_defs).defines(myconfig)
     except subprocess.CalledProcessError as ex:
         message = ex.output.decode("utf-8").split("\n")[0].strip()
@@ -81,10 +79,17 @@ def check_myconfig(compiler, feature_file, myconfig, cmake_config=None):
             f"Command `{' '.join(ex.cmd)}` returned non-zero exit code "
             f"{ex.returncode}, output: {message}.")
 
-    # parse feature file
     defs = featuredefs.defs(feature_file)
-
+    cmakedefs = featuredefs.cmakedefs(cmakedefine_file)
     error_queue = []
+
+    for e in defs.externals - cmakedefs.externals:
+        error_queue.append(
+            f"- cmakedefine '{e}' is missing from '{cmakedefine_file}'")
+    for e in cmakedefs.externals - defs.externals:
+        error_queue.append(
+            f"- external feature '{e}' is missing from '{feature_file}'")
+
     for e in (my_features & defs.externals):
         my_features.remove(e)
         error_queue.append(
@@ -102,9 +107,4 @@ def check_myconfig(compiler, feature_file, myconfig, cmake_config=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 4:
-        cmake_config = sys.argv[4]
-    else:
-        cmake_config = None
-
-    check_myconfig(sys.argv[1], sys.argv[2], sys.argv[3], cmake_config)
+    check_myconfig(*sys.argv[1:])

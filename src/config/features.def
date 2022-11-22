@@ -118,3 +118,4 @@ H5MD external
 SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
+VALGRIND_INSTRUMENTATION external
