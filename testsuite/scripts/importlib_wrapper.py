@@ -72,7 +72,7 @@ def configure_and_import(filepath,
         if ``True``, move to the script's directory (useful when the script
         needs to load files hardcoded as relative paths, or when files are
         generated and need cleanup); this is enabled by default
-    \*\*parameters :
+    **parameters
         global variables to replace
 
     """
@@ -206,12 +206,12 @@ def substitute_variable_values(code, strings_as_is=False, keep_original=True,
     code : :obj:`str`
         Source code to edit.
     strings_as_is : :obj:`bool`
-        If ``True``, consider all values in \*\*parameters are strings and
+        If ``True``, consider all values in **parameters are strings and
         substitute them in-place without formatting by ``repr()``.
     keep_original : :obj:`bool`
         Keep the original value (e.g. ``N = 10; _N__original = 1000``), helps
         with debugging.
-    \*\*parameters :
+    **parameters
         Variable names and their new value.
 
     """

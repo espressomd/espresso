@@ -111,7 +111,7 @@ cdef inline get_obs_contribs(Span[double] contributions,
     ----------
     contributions : (N,) array_like of :obj:`float`
         Flattened array of energy/pressure contributions from an observable.
-    size : :obj:`int`, \{1, 9\}
+    size : :obj:`int`, {1, 9}
         Dimensionality of the data.
     calc_scalar_pressure : :obj:`bool`
         Whether to calculate a scalar pressure (only relevant when

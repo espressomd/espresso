@@ -156,6 +156,7 @@ double particle_short_range_energy_contribution_local(int pid) {
     };
     cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
   }
+  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
   return ret;
 }
 

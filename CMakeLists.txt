@@ -108,14 +108,13 @@ set(TEST_TIMEOUT "300" CACHE STRING
                              "Timeout in seconds for each testsuite test")
 
 if(WITH_CCACHE)
-  find_program(CCACHE ccache)
-  if(CCACHE)
-    message(STATUS "Found ccache ${CCACHE}")
-    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
-  else()
-    message(FATAL_ERROR "ccache not found.")
-  endif(CCACHE)
-endif(WITH_CCACHE)
+  find_program(CCACHE_PROGRAM ccache REQUIRED)
+  if(CCACHE_PROGRAM)
+    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CUDA_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+  endif()
+endif()
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

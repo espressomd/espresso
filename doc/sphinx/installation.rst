@@ -713,37 +713,56 @@ Options and Variables
 ~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
-in the :file:`CMakeLists.txt` file. Also options are defined there.
-The following options are available:
+in the :file:`CMakeLists.txt` file. Most options are boolean values
+(``ON`` or ``OFF``). A few options are strings or semicolon-delimited lists.
 
-* ``WITH_CUDA``: Build with GPU support
+The following options control features from external libraries:
 
-* ``WITH_HDF5``: Build with HDF5
+* ``WITH_CUDA``: Build with GPU support.
+* ``WITH_HDF5``: Build with HDF5 support.
+* ``WITH_SCAFACOS``: Build with ScaFaCoS support.
+* ``WITH_GSL``: Build with GSL support.
+* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
 
-* ``WITH_TESTS``: Enable tests
+The following options control code instrumentation:
 
-* ``WITH_SCAFACOS``: Build with ScaFaCoS support
+* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation markers
+* ``WITH_PROFILER``: Build with Caliper profiler annotations
+* ``WITH_MSAN``: Compile C++ code with memory sanitizer
+* ``WITH_ASAN``: Compile C++ code with address sanitizer
+* ``WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
+* ``WITH_COVERAGE``: Generate C++ code coverage reports when running |es|
+* ``WITH_COVERAGE_PYTHON``: Generate Python code coverage reports when running |es|
 
-* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
+The following options control how the project is built and tested:
 
-* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
-  markers
-
+* ``WITH_CLANG_TIDY``: Run Clang-Tidy during compilation.
+* ``WITH_CPPCHECK``: Run Cppcheck during compilation.
+* ``WITH_CCACHE``: Enable compiler cache for faster rebuilds.
+* ``WITH_TESTS``: Enable C++ and Python tests.
+* ``WITH_CUDA_COMPILER`` (string): Select the CUDA compiler.
+* ``CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
+* ``TEST_TIMEOUT``: Test timeout.
 * ``ESPRESSO_ADD_OMPI_SINGLETON_WARNING``: Add a runtime warning in the
   pypresso and ipypresso scripts that is triggered in singleton mode
   with Open MPI version 4.x on unsupported NUMA environments
   (see :term:`MPI installation requirements <MPI>` for details).
+* ``MYCONFIG_NAME`` (string): Filename of the user-provided config file
+* ``MPIEXEC_PREFLAGS``, ``MPIEXEC_POSTFLAGS`` (strings): Flags passed to the
+  ``mpiexec`` command in MPI-parallel tests and benchmarks.
+* ``CMAKE_CXX_FLAGS`` (string): Flags passed to the compilers.
+* ``CMAKE_BUILD_TYPE`` (string): Build type. Default is ``Release``.
+* ``CUDA_TOOLKIT_ROOT_DIR`` (string): Path to the CUDA toolkit directory.
 
-When the value in the :file:`CMakeLists.txt` file is set to ON, the
-corresponding option is created; if the value of the option is set to OFF,
-the corresponding option is not created. These options can also be modified
+Most of these options are opt-in, meaning their default value is set to
+``OFF`` in the :file:`CMakeLists.txt` file. These options can be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
     cmake -D WITH_HDF5=OFF ..
 
-When an option is activated, additional options may become available.
+When an option is enabled, additional options may become available.
 For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
 ``-D WITH_CUDA_COMPILER=<compiler_id>``, where ``<compiler_id>`` can be
 ``nvcc`` (default) or ``clang``.

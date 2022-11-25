@@ -38,7 +38,7 @@ class Constraints(ScriptObjectList):
         ----------
         constraint: :class:`espressomd.constraints.Constraint`
             Either a constraint object...
-        \*\*kwargs : any
+        **kwargs
             ... or parameters to construct an
             :class:`espressomd.constraints.ShapeBasedConstraint`
 

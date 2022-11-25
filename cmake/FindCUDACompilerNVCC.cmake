@@ -77,7 +77,7 @@ find_gpu_library(VARNAME CUDA_CUFFT_LIBRARIES NAMES cufft REQUIRED)
 function(add_gpu_library)
   cuda_add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
-  set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+  set_target_properties(${GPU_TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
   target_link_libraries(${GPU_TARGET_NAME} PRIVATE
     ${CUDA_LIBRARY} ${CUDART_LIBRARY} ${CUDA_CUFFT_LIBRARIES})
 endfunction()

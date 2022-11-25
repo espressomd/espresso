@@ -40,7 +40,7 @@ the subsection :ref:`Capping the force during warmup` for more details.
 Tabulated interaction
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. note ::
+.. note::
 
     Feature ``TABULATED`` required.
 
@@ -209,17 +209,17 @@ Lennard-Jones cosine interaction
 
    Feature ``LJCOS`` and/or ``LJCOS2`` required.
 
-.. code::
+:class:`espressomd.interactions.LennardJonesCosInteraction` and
+:class:`espressomd.interactions.LennardJonesCos2Interaction` specify
+a Lennard-Jones interaction with cosine tail :cite:`soddemann01a`
+between particles of the types ``type1`` and ``type2``. They
+are configured via the syntax::
 
    system.non_bonded_inter[type1, type2].lennard_jones_cos.set_params(**kwargs)
    system.non_bonded_inter[type1, type2].lennard_jones_cos2.set_params(**kwargs)
 
-:class:`espressomd.interactions.LennardJonesCosInteraction` and
-:class:`espressomd.interactions.LennardJonesCos2Interaction` specifies
-a Lennard-Jones interaction with cosine tail :cite:`soddemann01a`
-between particles of the types ``type1`` and ``type2``. The first variant
-behaves as follows: Until the minimum of the Lennard-Jones potential
-at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
+The first variant behaves as follows: until the minimum of the Lennard-Jones
+potential at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
 behaves identical to the unshifted Lennard-Jones potential
 (:math:`c_\mathrm{shift}=0`). Between :math:`r_\mathrm{min}` and :math:`r_\mathrm{cut}`, a cosine is used to
 smoothly connect the potential to 0, i.e.,
