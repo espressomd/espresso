@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-find_package(Sphinx 2.3.0)
+find_package(Sphinx 3.4.3)
 if(SPHINX_FOUND)
   # configured documentation tools and intermediate build results
   set(BINARY_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/_build")
