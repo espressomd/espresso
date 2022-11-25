@@ -198,7 +198,7 @@ To write data in a hdf5-file according to the H5MD proposal
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd.io.writer.h5md
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
@@ -285,7 +285,7 @@ To read from the command line with
 `h5dump <https://support.hdfgroup.org/HDF5/doc/RM/Tools/h5dump.htm>`__
 (Ubuntu package ``hdf5-tools``):
 
-.. code:: sh
+.. code-block:: sh
 
     # show metadata only
     h5dump --header sample.h5 | less
@@ -311,7 +311,7 @@ data is easily accessible. In contrast to H5MD, the MPI-IO functionality
 outputs data in a *machine-dependent format*, but has write and read
 capabilities. The usage is quite simple:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io
@@ -387,7 +387,7 @@ to generate a timeframe of the simulation state. For example:
 
 A standalone VTF file can simply be
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf
@@ -435,7 +435,7 @@ timesteps. This is a restriction of VMD itself, not of the format.
 
 Writes a structure block describing the system's structure to the given channel, for example:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf
@@ -457,7 +457,7 @@ contains a trajectory of a whole simulation.
 Writes a coordinate (or timestep) block that contains all coordinates of
 the system's particles.
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf
@@ -476,7 +476,7 @@ Generates a dictionary which maps |es| particle ``id`` to VTF indices.
 This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD
 requires increasing and continuous indexing. The |es| ``id`` can be used as *key* to obtain the VTF index as the *value*, for example:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf

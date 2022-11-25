@@ -23,6 +23,7 @@ function(UTILS_TEST)
 endfunction(UTILS_TEST)
 
 utils_test(FILE test_maintainer_CI_jupyter_warnings.py)
+utils_test(FILE test_check_myconfig.py)
 
 add_custom_target(
   check_utils COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}

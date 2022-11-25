@@ -36,9 +36,9 @@ class LeesEdwards(ScriptInterfaceHelper):
         Current shear velocity.
     pos_offset : :obj:`float`
         Current position offset
-    shear_direction : :obj:`str`, \{'x', 'y', 'z'\}
+    shear_direction : :obj:`str`, {'x', 'y', 'z'}
         Shear direction.
-    shear_plane_normal : :obj:`str`, \{'x', 'y', 'z'\}
+    shear_plane_normal : :obj:`str`, {'x', 'y', 'z'}
         Shear plane normal.
 
     Methods
@@ -49,8 +49,8 @@ class LeesEdwards(ScriptInterfaceHelper):
         Parameters
         ----------
         protocol : :obj:`object`
-        shear_direction : :obj:`str`, \{'x', 'y', 'z'\}
-        shear_plane_normal : :obj:`str`, \{'x', 'y', 'z'\}
+        shear_direction : :obj:`str`, {'x', 'y', 'z'}
+        shear_plane_normal : :obj:`str`, {'x', 'y', 'z'}
 
     """
 

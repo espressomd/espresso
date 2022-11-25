@@ -43,6 +43,7 @@ add_custom_target(
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_myconfig.py
     ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_SOURCE_DIR}/features.def
+    ${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/myconfig-final.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/cmake_config.hpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/features.def myconfig)

@@ -53,12 +53,12 @@ add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
 target_compile_options(
   espresso_cuda_flags
   INTERFACE
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>:>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},MinSizeRel>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},Coverage>:-Xptxas=-O3 -Xcompiler=-Og,-g>
-  $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithAssert>:-Xptxas=-O3 -Xcompiler=-O3,-g>
+  $<$<CONFIG:Debug>:>
+  $<$<CONFIG:Release>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
+  $<$<CONFIG:MinSizeRel>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
+  $<$<CONFIG:RelWithDebInfo>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
+  $<$<CONFIG:Coverage>:-Xptxas=-O3 -Xcompiler=-Og,-g>
+  $<$<CONFIG:RelWithAssert>:-Xptxas=-O3 -Xcompiler=-O3,-g>
   "--compiler-bindir=${CMAKE_CXX_COMPILER}"
   $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
   $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
@@ -67,7 +67,7 @@ target_compile_options(
 function(add_gpu_library)
   add_library(${ARGV})
   set(GPU_TARGET_NAME ${ARGV0})
-  set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+  set_target_properties(${GPU_TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
   target_link_libraries(${GPU_TARGET_NAME} PRIVATE espresso::cuda_flags)
   list(APPEND cuda_archs 75) # RTX-2000 series (Turing)
   list(APPEND cuda_archs 61) # GTX-1000 series (Pascal)
