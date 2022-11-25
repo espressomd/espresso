@@ -152,8 +152,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     std::vector<std::pair<Utils::Vector3d, Utils::Vector3d>> ref_positions{
         {{0.1, 0.2, 0.3}, {+10., +20., +30.}},
         {{0.4, 0.5, 0.6}, {-10., -20., -30.}}};
-    place_particle(0, ref_positions[0].first);
-    place_particle(1, ref_positions[1].first);
+    mpi_make_new_particle(0, ref_positions[0].first);
+    mpi_make_new_particle(1, ref_positions[1].first);
     set_particle_v(0, ref_positions[0].second);
     set_particle_v(1, ref_positions[1].second);
     set_particle_type(0, type_A);
@@ -191,8 +191,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     auto const box_l = 1.;
     std::vector<Utils::Vector3d> ref_positions{{0.1, 0.2, 0.3},
                                                {0.4, 0.5, 0.6}};
-    place_particle(0, ref_positions[0]);
-    place_particle(1, ref_positions[1]);
+    mpi_make_new_particle(0, ref_positions[0]);
+    mpi_make_new_particle(1, ref_positions[1]);
     set_particle_type(0, type_A);
     set_particle_type(1, type_A);
     // check runtime errors when a MC move cannot be physically performed
@@ -305,9 +305,9 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     espresso::system->set_box_l(box_l);
 
     // set up particle
-    place_particle(0, {0.5, 0.5, 0.5});
+    mpi_make_new_particle(0, {0.5, 0.5, 0.5});
+    mpi_make_new_particle(1, {0.7, 0.7, 0.7});
     set_particle_type(0, type_A);
-    place_particle(1, {0.7, 0.7, 0.7});
     set_particle_type(1, type_B);
     exclusion_radius_per_type[type_A] = 0.1;
     exclusion_radius_per_type[type_B] = 1;

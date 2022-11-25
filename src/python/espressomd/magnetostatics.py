@@ -174,47 +174,25 @@ class DipolarDirectSumCpu(MagnetostaticInteraction):
     See :ref:`Dipolar direct sum` for more details.
 
     If the system has periodic boundaries, the minimum image convention is
-    applied in the respective directions.
+    applied in the respective directions when no replicas are used. When
+    replicas are used, ``n_replicas`` copies of the system are taken into
+    account in the respective directions, and a spherical cutoff is applied.
 
     Parameters
     ----------
     prefactor : :obj:`float`
         Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
-
-    """
-    _so_name = "Dipoles::DipolarDirectSum"
-
-    def default_params(self):
-        return {}
-
-    def required_keys(self):
-        return set()
-
-
-@script_interface_register
-class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
-    """
-    Calculate magnetostatic interactions by direct summation over all pairs.
-    See :ref:`Dipolar direct sum` for more details.
-
-    If the system has periodic boundaries, ``n_replica`` copies of the system are
-    taken into account in the respective directions. Spherical cutoff is applied.
-
-    Parameters
-    ----------
-    prefactor : :obj:`float`
-        Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
-    n_replica : :obj:`int`
+    n_replicas : :obj:`int`, optional
         Number of replicas to be taken into account at periodic boundaries.
 
     """
-    _so_name = "Dipoles::DipolarDirectSumWithReplica"
+    _so_name = "Dipoles::DipolarDirectSumCpu"
 
     def default_params(self):
-        return {}
+        return {"n_replicas": 0}
 
     def required_keys(self):
-        return {"n_replica"}
+        return {"prefactor"}
 
 
 @script_interface_register

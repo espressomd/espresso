@@ -183,7 +183,6 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
                        bdata::make(node_grids) * bdata::make(propagators),
                        node_grid, integration_helper) {
   constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
-  boost::mpi::communicator world;
 
   auto const box_l = 8.;
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
@@ -260,9 +259,9 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   }
 
   // check that particles in different cells will interact when manually
-  // placed next to each other (@c place_particle() resorts particles)
+  // placed next to each other (@c mpi_set_particle_pos() resorts particles)
   {
-    place_particle(pid3, {4. + 0.10, 1., 1.0});
+    mpi_set_particle_pos(pid3, {4. + 0.10, 1., 1.0});
     {
       auto const &p2 = get_particle_data(pid2);
       auto const &p3 = get_particle_data(pid3);

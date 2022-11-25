@@ -19,7 +19,7 @@
 
 import tempfile
 import subprocess
-from sys import argv
+import sys
 
 
 class Defines:
@@ -61,9 +61,9 @@ class Defines:
 
 
 if __name__ == "__main__":
-    compiler = argv[1]
-    filename = argv[2]
-    flags = argv[3:]
+    compiler = sys.argv[1]
+    filename = sys.argv[2]
+    flags = sys.argv[3:]
 
     parser = Defines(compiler, flags)
     map(print, parser.defines(filename))

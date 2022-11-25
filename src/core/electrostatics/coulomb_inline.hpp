@@ -94,7 +94,7 @@ struct ShortRangeForceCorrectionsKernel
 inline ShortRangeForceKernel::result_type pair_force_kernel() {
 #ifdef ELECTROSTATICS
   if (electrostatics_actor) {
-    auto const visitor = ShortRangeForceKernel{};
+    auto const visitor = ShortRangeForceKernel();
     return boost::apply_visitor(visitor, *electrostatics_actor);
   }
 #endif // ELECTROSTATICS
@@ -180,7 +180,7 @@ struct ShortRangeEnergyKernel
 inline ShortRangeForceCorrectionsKernel::result_type pair_force_elc_kernel() {
 #ifdef ELECTROSTATICS
   if (electrostatics_actor) {
-    auto const visitor = ShortRangeForceCorrectionsKernel{};
+    auto const visitor = ShortRangeForceCorrectionsKernel();
     return boost::apply_visitor(visitor, *electrostatics_actor);
   }
 #endif // ELECTROSTATICS
@@ -190,7 +190,7 @@ inline ShortRangeForceCorrectionsKernel::result_type pair_force_elc_kernel() {
 inline ShortRangePressureKernel::result_type pair_pressure_kernel() {
 #ifdef ELECTROSTATICS
   if (electrostatics_actor) {
-    auto const visitor = ShortRangePressureKernel{};
+    auto const visitor = ShortRangePressureKernel();
     return boost::apply_visitor(visitor, *electrostatics_actor);
   }
 #endif // ELECTROSTATICS
@@ -200,7 +200,7 @@ inline ShortRangePressureKernel::result_type pair_pressure_kernel() {
 inline ShortRangeEnergyKernel::result_type pair_energy_kernel() {
 #ifdef ELECTROSTATICS
   if (electrostatics_actor) {
-    auto const visitor = ShortRangeEnergyKernel{};
+    auto const visitor = ShortRangeEnergyKernel();
     return boost::apply_visitor(visitor, *electrostatics_actor);
   }
 #endif // ELECTROSTATICS

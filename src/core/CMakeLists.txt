@@ -62,10 +62,16 @@ add_library(espresso::core ALIAS espresso_core)
 if(CUDA)
   target_sources(espresso_core PRIVATE cuda_init.cpp cuda_interface.cpp)
   add_gpu_library(
-    espresso_cuda SHARED cuda_common_cuda.cu cuda_init_cuda.cu
-    CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
-    magnetostatics/dds_gpu_cuda.cu electrostatics/mmm1d_gpu_cuda.cu
-    electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
+    espresso_cuda
+    SHARED
+    cuda_common_cuda.cu
+    cuda_init_cuda.cu
+    CudaHostAllocator.cu
+    magnetostatics/barnes_hut_gpu_cuda.cu
+    magnetostatics/dipolar_direct_sum_gpu_cuda.cu
+    electrostatics/mmm1d_gpu_cuda.cu
+    electrostatics/p3m_gpu_cuda.cu
+    electrostatics/p3m_gpu_error_cuda.cu
     EspressoSystemInterface_cuda.cu)
   add_library(espresso::cuda ALIAS espresso_cuda)
   target_link_libraries(

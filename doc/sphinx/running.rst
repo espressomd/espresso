@@ -292,8 +292,7 @@ Parallel computing
 
 Many algorithms in |es| are designed to work with multiple MPI ranks.
 However, not all algorithms benefit from MPI parallelization equally.
-Several algorithms only use MPI rank 0 (e.g. :ref:`Reaction methods`), while
-a small subset simply don't support MPI (e.g. :ref:`Dipolar direct sum`).
+Several algorithms only use MPI rank 0 (e.g. :ref:`Reaction methods`).
 |es| should work with most MPI implementations on the market;
 see the :term:`MPI installation requirements <MPI>` for details.
 

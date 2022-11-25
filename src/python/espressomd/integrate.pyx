@@ -139,10 +139,10 @@ class SteepestDescent(Integrator):
     Steepest descent algorithm for energy minimization.
 
     Particles located at :math:`\\vec{r}_i` at integration step :math:`i` and
-    experiencing a potential :math:`\mathcal{H}(\\vec{r}_i)` are displaced
+    experiencing a potential :math:`\\mathcal{H}(\\vec{r}_i)` are displaced
     according to the equation:
 
-    :math:`\\vec{r}_{i+1} = \\vec{r}_i - \\gamma\\nabla\mathcal{H}(\\vec{r}_i)`
+    :math:`\\vec{r}_{i+1} = \\vec{r}_i - \\gamma\\nabla\\mathcal{H}(\\vec{r}_i)`
 
     Parameters
     ----------
@@ -247,7 +247,7 @@ class StokesianDynamics(Integrator):
         Bulk viscosity.
     radii : :obj:`dict`
         Dictionary that maps particle types to radii.
-    approximation_method : :obj:`str`, optional, \{'ft', 'fts'\}
+    approximation_method : :obj:`str`, optional, {'ft', 'fts'}
         Chooses the method of the mobility approximation.
         ``'fts'`` is more accurate. Default is ``'fts'``.
     self_mobility : :obj:`bool`, optional

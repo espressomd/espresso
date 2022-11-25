@@ -115,6 +115,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
     "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)"
     OFF)
 endif()
+option(
+  ESPRESSO_ADD_OMPI_SINGLETON_WARNING
+  "Add a runtime warning in the pypresso script for NUMA architectures that aren't supported in singleton mode by Open MPI 4.x"
+  ON)
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
 option(WITH_PROFILER "Enable profiler annotations." OFF)
@@ -123,14 +127,13 @@ set(TEST_TIMEOUT "300" CACHE STRING
                              "Timeout in seconds for each testsuite test")
 
 if(WITH_CCACHE)
-  find_program(CCACHE ccache)
-  if(CCACHE)
-    message(STATUS "Found ccache ${CCACHE}")
-    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
-  else()
-    message(FATAL_ERROR "ccache not found.")
-  endif(CCACHE)
-endif(WITH_CCACHE)
+  find_program(CCACHE_PROGRAM ccache REQUIRED)
+  if(CCACHE_PROGRAM)
+    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CUDA_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+  endif()
+endif()
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -384,14 +387,46 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 #
 
 find_package(MPI 3.0 REQUIRED)
-find_package(MpiexecBackend)
+include(espresso_get_mpiexec_vendor)
+espresso_get_mpiexec_vendor()
+message(
+  STATUS
+    "Found ${ESPRESSO_MPIEXEC_VENDOR}: ${MPIEXEC} (version \"${ESPRESSO_MPIEXEC_VERSION}\")"
+)
 
 # OpenMPI checks the number of processes against the number of CPUs
-if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND "${MPIEXEC_BACKEND_VERSION}"
-                                                    VERSION_GREATER_EQUAL 2.0.0)
-  set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
-else()
-  set(MPIEXEC_OVERSUBSCRIBE "")
+set(MPIEXEC_OVERSUBSCRIBE "")
+# Open MPI 4.x has a bug on NUMA archs that prevents running in singleton mode
+set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA OFF)
+set(ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN "AMD (EPYC|Ryzen)")
+
+if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI")
+  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL 2.0.0)
+    set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+  endif()
+  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL 4.0
+     AND ${ESPRESSO_MPIEXEC_VERSION} VERSION_LESS 5.0)
+    if(NOT DEFINED ESPRESSO_CPU_MODEL_NAME)
+      if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+        if(EXISTS /proc/cpuinfo)
+          file(READ /proc/cpuinfo ESPRESSO_CPU_INFO)
+          string(REGEX
+                 REPLACE ".*\n[Mm]odel name[ \t]*:[ \t]+([^\n]+).*" "\\1"
+                         ESPRESSO_CPU_MODEL_NAME_STRING "${ESPRESSO_CPU_INFO}")
+        else()
+          set(ESPRESSO_CPU_MODEL_NAME_STRING "__unreadable")
+        endif()
+      else()
+        set(ESPRESSO_CPU_MODEL_NAME_STRING "__unaffected")
+      endif()
+      set(ESPRESSO_CPU_MODEL_NAME "${ESPRESSO_CPU_MODEL_NAME_STRING}"
+          CACHE INTERNAL "")
+    endif()
+    if(ESPRESSO_CPU_MODEL_NAME MATCHES
+       "^${ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN}")
+      set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA ON)
+    endif()
+  endif()
 endif()
 
 # OpenMPI cannot run two jobs in parallel in a Docker container, because the
@@ -399,7 +434,7 @@ endif()
 # base folder is deleted upon completion of a job, other jobs will fail when
 # attempting to create subdirectories in the base folder.
 # https://github.com/open-mpi/ompi/issues/8510
-if("${MPIEXEC_BACKEND_NAME}" STREQUAL "OpenMPI" AND INSIDE_DOCKER)
+if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI" AND INSIDE_DOCKER)
   cmake_host_system_information(RESULT hostname QUERY HOSTNAME)
   function(set_mpiexec_tmpdir)
     set(MPIEXEC_TMPDIR --mca orte_tmpdir_base

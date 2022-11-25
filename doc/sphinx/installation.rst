@@ -67,6 +67,15 @@ are required to be able to compile and use |es|:
         Other MPI implementations like Intel MPI should also work, although
         they are not actively tested in |es| continuous integration.
 
+        Open MPI version 4.x is known to not properly support the MCA binding
+        policy "numa" in singleton mode on a few NUMA architectures.
+        On affected systems, e.g. AMD Ryzen or AMD EPYC, Open MPI halts with
+        a fatal error when setting the processor affinity in ``MPI_Init``.
+        This issue can be resolved by setting the environment variable
+        ``OMPI_MCA_hwloc_base_binding_policy`` to a value other than "numa",
+        such as "l3cache" to bind to a NUMA shared memory block, or to
+        "none" to disable binding (can cause performance loss).
+
     Python
         |es|'s main user interface relies on Python 3.
 
@@ -717,36 +726,58 @@ Options and Variables
 ~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
-in the :file:`CMakeLists.txt` file. Also options are defined there.
-The following options are available:
+in the :file:`CMakeLists.txt` file. Most options are boolean values
+(``ON`` or ``OFF``). A few options are strings or semicolon-delimited lists.
 
-* ``WITH_CUDA``: Build with GPU support
+The following options control features from external libraries:
 
-* ``WITH_HDF5``: Build with HDF5
-
-* ``WITH_TESTS``: Enable tests
-
-* ``WITH_SCAFACOS``: Build with ScaFaCoS support
-
-* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
-
+* ``WITH_CUDA``: Build with GPU support.
+* ``WITH_HDF5``: Build with HDF5 support.
+* ``WITH_SCAFACOS``: Build with ScaFaCoS support.
+* ``WITH_GSL``: Build with GSL support.
+* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
 * ``WITH_WALBERLA`` Build with waLBerla support
 
+The following options control code instrumentation:
+
+* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation markers
+* ``WITH_PROFILER``: Build with Caliper profiler annotations
+* ``WITH_MSAN``: Compile C++ code with memory sanitizer
+* ``WITH_ASAN``: Compile C++ code with address sanitizer
+* ``WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
+* ``WITH_COVERAGE``: Generate C++ code coverage reports when running |es|
+* ``WITH_COVERAGE_PYTHON``: Generate Python code coverage reports when running |es|
+
+The following options control how the project is built and tested:
+
+* ``WITH_CLANG_TIDY``: Run Clang-Tidy during compilation.
+* ``WITH_CPPCHECK``: Run Cppcheck during compilation.
+* ``WITH_CCACHE``: Enable compiler cache for faster rebuilds.
+* ``WITH_TESTS``: Enable C++ and Python tests.
+* ``WITH_CUDA_COMPILER`` (string): Select the CUDA compiler.
+* ``CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
+* ``TEST_TIMEOUT``: Test timeout.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_FFT`` Build waLBerla with FFT and PFFT support, used in FFT-based electrokinetics
+* ``ESPRESSO_ADD_OMPI_SINGLETON_WARNING``: Add a runtime warning in the
+  pypresso and ipypresso scripts that is triggered in singleton mode
+  with Open MPI version 4.x on unsupported NUMA environments
+  (see :term:`MPI installation requirements <MPI>` for details).
+* ``MYCONFIG_NAME`` (string): Filename of the user-provided config file
+* ``MPIEXEC_PREFLAGS``, ``MPIEXEC_POSTFLAGS`` (strings): Flags passed to the
+  ``mpiexec`` command in MPI-parallel tests and benchmarks.
+* ``CMAKE_CXX_FLAGS`` (string): Flags passed to the compilers.
+* ``CMAKE_BUILD_TYPE`` (string): Build type. Default is ``Release``.
+* ``CUDA_TOOLKIT_ROOT_DIR`` (string): Path to the CUDA toolkit directory.
 
-* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
-  markers
-
-When the value in the :file:`CMakeLists.txt` file is set to ON, the
-corresponding option is created; if the value of the option is set to OFF,
-the corresponding option is not created. These options can also be modified
+Most of these options are opt-in, meaning their default value is set to
+``OFF`` in the :file:`CMakeLists.txt` file. These options can be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
     cmake -D WITH_HDF5=OFF ..
 
-When an option is activated, additional options may become available.
+When an option is enabled, additional options may become available.
 For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
 ``-D WITH_CUDA_COMPILER=<compiler_id>``, where ``<compiler_id>`` can be
 ``nvcc`` (default) or ``clang``.

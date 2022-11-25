@@ -440,7 +440,6 @@ void File::write(const ParticleRange &particles, double time, int step,
 
 void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
-  int particle_index = 0;
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     for (auto const b : p.bonds()) {
@@ -452,7 +451,6 @@ void File::write_connectivity(const ParticleRange &particles) {
         nbonds_local++;
       }
     }
-    particle_index++;
   }
 
   auto const n_bonds_local = static_cast<int>(bond.shape()[1]);

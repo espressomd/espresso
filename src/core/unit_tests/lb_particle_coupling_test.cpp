@@ -402,7 +402,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   set_particle_mu_E(pid, {-2., 1.5, 1.});
   expected += gamma * p.mu_E();
 #endif
-  place_particle(pid, first_lb_node + Utils::Vector3d::broadcast(0.5));
+  mpi_set_particle_pos(pid, first_lb_node + Utils::Vector3d::broadcast(0.5));
   lb_lbcoupling_set_gamma(gamma);
 
   for (bool with_ghosts : {false, true}) {
