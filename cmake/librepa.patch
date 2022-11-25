@@ -1,0 +1,29 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -54,10 +54,6 @@ if(REPA_WITH_TESTS)
+ endif(REPA_WITH_TESTS)
+ find_package(Boost "1.67.0" REQUIRED ${REQ_BOOST_PACKAGES})
+ 
+-if (Boost_VERSION VERSION_GREATER_EQUAL "1.69" AND Boost_VERSION VERSION_LESS_EQUAL "1.71")
+-  message(FATAL_ERROR "Boost 1.69 - 1.71 have a bug and are not supported.")
+-endif()
+-
+ include_directories(${Boost_INCLUDE_DIRS})
+ 
+ # Used for librepa itself as well as all tests
+--- a/repa/CMakeLists.txt
++++ b/repa/CMakeLists.txt
+@@ -95,11 +95,5 @@ target_compile_options(repa
+                        PRIVATE ${REPA_DEFAULT_COMPILE_OPTIONS})
+ 
+ install(TARGETS repa
+-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+-        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+-# Keep folder structure, so no install for all repa_HDR
+-foreach(hdr ${repa_HDR})
+-    get_filename_component(dir ${hdr} DIRECTORY)
+-    install(FILES ${hdr}
+-            DESTINATION ${CMAKE_INSTALL_PREFIX}/include/repa/${dir})
+-endforeach()
++        LIBRARY DESTINATION ${ESPRESSO_INSTALL_LIBDIR}
++        ARCHIVE DESTINATION ${ESPRESSO_INSTALL_LIBDIR})
