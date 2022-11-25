@@ -114,6 +114,16 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
+If you cannot install this package, for example because you are maintaining
+multiple CUDA versions, you will need to configure the binary and library
+paths before building the project, for example via environment variables:
+
+.. code-block:: bash
+
+    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-11.5"
+    export PATH="${CUDA_TOOLKIT_ROOT_DIR}/bin${PATH:+:$PATH}"
+    export LD_LIBRARY_PATH="${CUDA_TOOLKIT_ROOT_DIR}/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
 Later in the installation instructions, you will see CMake commands of the form
 ``cmake ..`` with optional arguments, such as ``cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 to activate CUDA. These commands may need to be adapted depending on which
@@ -133,27 +143,21 @@ or alternatively install Clang 12 as a replacement for nvcc and GCC:
     CC=clang-12 CXX=clang++-12 cmake .. \
       -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang
 
-On Ubuntu 20.04, the default GCC compiler is also too recent for nvcc and will
-generate compiler errors. You can either install an older version of GCC and
-select it with environment variables ``CC`` and ``CXX`` when building |es|,
-or edit the system header files as shown in the following
-`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`__.
-
 On systems with multiple CUDA releases installed, it is possible to select a
 specific one by providing custom paths to the compiler and toolkit:
 
 .. code-block:: bash
 
-    CUDACXX=/usr/local/cuda-11.0/bin/nvcc \
-      cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.0
+    CUDACXX=/usr/local/cuda-11.5/bin/nvcc \
+      cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.5
 
 Alternatively for Clang:
 
 .. code-block:: bash
 
-    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.0 \
+    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
       cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang \
-      -D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.0
+      -D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.5
 
 .. _Requirements for building the documentation:
 
@@ -796,9 +800,9 @@ compiler with ``-D ESPRESSO_CUDA_COMPILER=<compiler_id>``, where
 Environment variables can be passed to CMake. For example, to select Clang, use
 ``CC=clang CXX=clang++ cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang``.
 If you have multiple versions of the CUDA library installed, you can select the
-correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
+correct one with ``CUDA_BIN_PATH=/usr/local/cuda-11.5 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
-path with ``-D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
+path with ``-D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.5``).
 
 .. _Build types and compiler flags:
 

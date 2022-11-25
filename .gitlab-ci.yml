@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-20.04:efd89c5f66b8a65f579a7807d0059939fcb4b12f
+image: ghcr.io/espressomd/docker/ubuntu-22.04:3fd42369f84239b8c4f5d77067d404789c55ff44
 
 stages:
   - prepare
@@ -43,6 +43,7 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
+  image: ghcr.io/espressomd/docker/ubuntu-20.04:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   dependencies: []
   before_script:
     - git config --global --add safe.directory ${CI_PROJECT_DIR}
@@ -80,8 +81,9 @@ default:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-9'
-     CXX: 'g++-9'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      with_cuda: 'false'
      myconfig: 'default'
      with_coverage: 'true'
@@ -98,8 +100,9 @@ maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-9'
-     CXX: 'g++-9'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      with_cuda: 'false'
      with_cxx_standard: '17'
      myconfig: 'maxset'
@@ -119,8 +122,9 @@ no_rotation:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-9'
-     CXX: 'g++-9'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      with_cuda: 'false'
      myconfig: 'no_rotation'
      with_coverage: 'true'
@@ -136,7 +140,7 @@ no_rotation:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:efd89c5f66b8a65f579a7807d0059939fcb4b12f
+  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:3fd42369f84239b8c4f5d77067d404789c55ff44
   variables:
      myconfig: 'maxset'
      with_cuda: 'false'
@@ -145,6 +149,7 @@ ubuntu:wo-dependencies:
      with_gsl: 'false'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
+     MPIEXEC_PREFLAGS: '--mca;btl_vader_single_copy_mechanism;none'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -156,7 +161,7 @@ ubuntu:wo-dependencies:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/debian:efd89c5f66b8a65f579a7807d0059939fcb4b12f
+  image: ghcr.io/espressomd/docker/debian:3fd42369f84239b8c4f5d77067d404789c55ff44
   variables:
      with_cuda: 'false'
      with_gsl: 'false'
@@ -172,7 +177,7 @@ debian:10:
 fedora:36:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:efd89c5f66b8a65f579a7807d0059939fcb4b12f
+  image: ghcr.io/espressomd/docker/fedora:3fd42369f84239b8c4f5d77067d404789c55ff44
   variables:
      with_cuda: 'false'
      with_gsl: 'false'
@@ -191,8 +196,8 @@ clang-sanitizer:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'clang-9'
-     CXX: 'clang++-9'
+     CC: 'clang-14'
+     CXX: 'clang++-14'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_cuda_compiler: 'clang'
@@ -214,10 +219,10 @@ clang-sanitizer:
 fast_math:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
-     CC: 'gcc-9'
-     CXX: 'g++-9'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -231,31 +236,9 @@ fast_math:
     - cuda
   when: manual
 
-cuda11-maxset-ubuntu20.04:
+cuda11-coverage:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/cuda:efd89c5f66b8a65f579a7807d0059939fcb4b12f
-  variables:
-     CC: 'gcc-9'
-     CXX: 'g++-9'
-     GCOV: 'gcov-9'
-     myconfig: 'maxset'
-     with_cuda: 'true'
-     with_coverage: 'true'
-     check_skip_long: 'true'
-     with_scafacos: 'true'
-     with_stokesian_dynamics: 'true'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - cuda
-    - numa
-
-cuda11-maxset-ubuntu22.04:
-  <<: *global_job_definition
-  stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-22.04:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      CC: 'gcc-10'
      CXX: 'g++-10'
@@ -273,12 +256,13 @@ cuda11-maxset-ubuntu22.04:
     - cuda
     - numa
 
-cuda10-maxset:
+cuda11-maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-8'
-     CXX: 'g++-8'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -302,8 +286,9 @@ tutorials-samples-maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-8'
-     CXX: 'g++-8'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -320,13 +305,15 @@ tutorials-samples-maxset:
   tags:
     - espresso
     - cuda
+    - numa
 
 tutorials-samples-default:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-8'
-     CXX: 'g++-8'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      myconfig: 'default'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -342,6 +329,7 @@ tutorials-samples-default:
   tags:
     - espresso
     - cuda
+    - numa
   only:
     - schedules
 
@@ -349,8 +337,9 @@ tutorials-samples-empty:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-8'
-     CXX: 'g++-8'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      myconfig: 'empty'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -367,6 +356,7 @@ tutorials-samples-empty:
   tags:
     - espresso
     - cuda
+    - numa
   only:
     - schedules
 
@@ -374,8 +364,9 @@ tutorials-samples-no-gpu:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-8'
-     CXX: 'g++-8'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -399,8 +390,9 @@ installation:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-8'
-     CXX: 'g++-8'
+     CC: 'gcc-10'
+     CXX: 'g++-10'
+     GCOV: 'gcov-10'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -434,8 +426,8 @@ empty:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'clang-9'
-     CXX: 'clang++-9'
+     CC: 'clang-14'
+     CXX: 'clang++-14'
      myconfig: 'empty'
      with_cuda: 'true'
      with_cuda_compiler: 'clang'
@@ -455,7 +447,7 @@ check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
   needs:
-    - cuda10-maxset
+    - cuda11-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -477,7 +469,7 @@ run_tutorials:
   <<: *global_job_definition
   stage: additional_checks
   needs:
-    - cuda10-maxset
+    - cuda11-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -503,7 +495,7 @@ run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
   needs:
-    - cuda10-maxset
+    - cuda11-maxset
   when: on_success
   only:
     - python
@@ -524,7 +516,7 @@ maxset_no_gpu:
   stage: additional_checks
   when: on_success
   needs:
-    - cuda10-maxset
+    - cuda11-maxset
   script:
     - export CUDA_VISIBLE_DEVICES=""
     - cd ${CI_PROJECT_DIR}/build
@@ -539,7 +531,7 @@ maxset_3_cores:
   stage: additional_checks
   when: on_success
   needs:
-    - cuda10-maxset
+    - cuda11-maxset
   script:
     - cd ${CI_PROJECT_DIR}/build
     - cmake -D ESPRESSO_TEST_NP=3 .

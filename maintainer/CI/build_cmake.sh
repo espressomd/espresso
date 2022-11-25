@@ -383,13 +383,14 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     for codecov_trial in 1 2 3; do
         codecov_errno="0"
         ./codecov ${codecov_opts} -t "${CODECOV_TOKEN}" --nonZero || codecov_errno="${?}"
-        if [ ! "${codecov_errno}" = "0" ]; then
-            echo "Codecov did not upload coverage reports (return code: ${codecov_errno})" >&2
-            echo "That was attempt ${codecov_trial}/3"
-            echo ""
-            if [ ! "${codecov_trial}" = "3" ]; then
-                sleep 10s
-            fi
+        if [ "${codecov_errno}" = "0" ]; then
+            break
+        fi
+        echo "Codecov did not upload coverage reports (return code: ${codecov_errno})" >&2
+        echo "That was attempt ${codecov_trial}/3"
+        echo ""
+        if [ ! "${codecov_trial}" = "3" ]; then
+            sleep 10s
         fi
     done
 
