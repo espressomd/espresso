@@ -85,8 +85,9 @@ foreach(cython_file ${cython_SRC})
     add_custom_command(
       OUTPUT ${outputpath}
       COMMAND
-        ${CYTHON_EXECUTABLE} $<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>
-        -3 --cplus --directive embedsignature=True --directive binding=True -I
+        ${CYTHON_EXECUTABLE}
+        $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:--warning-errors> -3 --cplus
+        --directive embedsignature=True --directive binding=True -I
         ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_CURRENT_BINARY_DIR}
         ${cython_file} -o ${outputpath}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..

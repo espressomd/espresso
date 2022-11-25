@@ -35,7 +35,7 @@ class Test(ut.TestCase):
         path_myconfig = path_root / "myconfig.hpp"
         path_cmake_config = path_root / "cmake_config.hpp"
         path_cmakedefine = path_root / "cmake_config.cmakein"
-        with open("@CMAKE_SOURCE_DIR@/cmake/cmake_config.cmakein") as fp:
+        with open("@CMAKE_SOURCE_DIR@/cmake/espresso_cmake_config.cmakein") as fp:
             default_cmakedefine = fp.read()
 
         def run(myconfig="", cmake_config="", cmakedefine=default_cmakedefine):
@@ -66,7 +66,7 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "myconfig.hpp` returned non-zero exit code 1, output:"):
             run(myconfig="#define")
         with self.assertRaisesRegex(RuntimeError, "external feature 'UNKNOWN' is missing from '.*features.def'"):
-            run(cmakedefine="#cmake" + "define UNKNOWN")
+            run(cmakedefine="#cmake" + "define ESPRESSO_BUILD_WITH_UNKNOWN")
         with self.assertRaisesRegex(RuntimeError, "cmakedefine 'FFTW' is missing from '.*cmake_config.cmakein'"):
             run(cmakedefine="")
 

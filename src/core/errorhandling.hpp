@@ -94,12 +94,12 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 #define runtimeErrorMsg()                                                      \
   ErrorHandling::_runtimeMessageStream(                                        \
       ErrorHandling::RuntimeError::ErrorLevel::ERROR, __FILE__, __LINE__,      \
-      PRETTY_FUNCTION_EXTENSION)
+      ESPRESSO_PRETTY_FUNCTION_EXTENSION)
 
 #define runtimeWarningMsg()                                                    \
   ErrorHandling::_runtimeMessageStream(                                        \
       ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,    \
-      PRETTY_FUNCTION_EXTENSION)
+      ESPRESSO_PRETTY_FUNCTION_EXTENSION)
 
 /** @brief Gather messages on main rank. Only call from main rank. */
 std::vector<RuntimeError> mpi_gather_runtime_errors();

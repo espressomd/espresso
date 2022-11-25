@@ -123,6 +123,8 @@ set_default_value with_cxx_standard 14
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_hdf5 true
+set_default_value with_fftw true
+set_default_value with_gsl true
 set_default_value with_scafacos false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
@@ -142,60 +144,72 @@ if [ "${with_fast_math}" = true ]; then
     cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math -fno-finite-math-only"
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_CXX_STANDARD=${with_cxx_standard} -DWARNINGS_ARE_ERRORS=ON ${cmake_params}"
-cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -DINSIDE_DOCKER=ON"
-cmake_params="${cmake_params} -DCTEST_ARGS=-j${check_procs} -DTEST_TIMEOUT=${test_timeout}"
+cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D CMAKE_CXX_STANDARD=${with_cxx_standard} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
+cmake_params="${cmake_params} -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -D ESPRESSO_INSIDE_DOCKER=ON"
+cmake_params="${cmake_params} -D ESPRESSO_CTEST_ARGS=-j${check_procs} -D ESPRESSO_TEST_TIMEOUT=${test_timeout}"
 
 if [ "${make_check_benchmarks}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_BENCHMARKS=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=ON"
 fi
 
 if [ "${with_ccache}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_CCACHE=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=ON"
 fi
 
 if [ "${with_hdf5}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_HDF5=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=ON"
 else
-    cmake_params="${cmake_params} -DWITH_HDF5=OFF"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=OFF"
+fi
+
+if [ "${with_fftw}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=ON"
+else
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=OFF"
+fi
+
+if [ "${with_gsl}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=ON"
+else
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=OFF"
 fi
 
 if [ "${with_scafacos}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=ON"
 else
-    cmake_params="${cmake_params} -DWITH_SCAFACOS=OFF"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=OFF"
 fi
 
 if [ "${with_stokesian_dynamics}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON"
 else
-    cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=OFF"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=OFF"
 fi
 
 if [ "${with_coverage}" = true ]; then
-    cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_COVERAGE=ON ${cmake_params}"
 fi
 
 if [ "${with_coverage_python}" = true ]; then
-    cmake_params="-DWITH_COVERAGE_PYTHON=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON=ON ${cmake_params}"
 fi
 
 if [ "${with_asan}" = true ]; then
-    cmake_params="-DWITH_ASAN=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_ASAN=ON ${cmake_params}"
 fi
 
 if [ "${with_ubsan}" = true ]; then
-    cmake_params="-DWITH_UBSAN=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_UBSAN=ON ${cmake_params}"
 fi
 
 if [ "${with_static_analysis}" = true ]; then
-    cmake_params="-DWITH_CLANG_TIDY=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_CLANG_TIDY=ON ${cmake_params}"
 fi
 
 if [ "${with_cuda}" = true ]; then
-    cmake_params="-DWITH_CUDA=ON -DWITH_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
 else
-    cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=OFF ${cmake_params}"
 fi
 
 command -v nvidia-smi && nvidia-smi || true

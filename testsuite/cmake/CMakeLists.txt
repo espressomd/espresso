@@ -31,13 +31,14 @@ function(CMAKE_TEST)
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 
-set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${Python_STDARCH})
+set(ESPRESSO_PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${Python_STDARCH})
 
 cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
 
 add_custom_target(setup_install COMMAND make install
                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_custom_target(
-  check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                              -C serial --output-on-failure)
+  check_cmake_install
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -C serial
+          --output-on-failure)
 add_dependencies(check_cmake_install setup_install)

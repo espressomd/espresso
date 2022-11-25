@@ -19,9 +19,9 @@
 
 include(unit_test)
 
-if(WITH_COVERAGE_PYTHON)
+if(ESPRESSO_BUILD_WITH_COVERAGE_PYTHON)
   set(PYPRESSO_OPTIONS --coverage)
-endif(WITH_COVERAGE_PYTHON)
+endif()
 
 add_subdirectory(python)
 add_subdirectory(cmake)

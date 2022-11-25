@@ -21,26 +21,26 @@
 
 # Target for the unit tests
 add_custom_target(
-  check_unit_tests COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           ${CTEST_ARGS} --output-on-failure)
+  check_unit_tests
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   # Run unit tests on check
   add_dependencies(check check_unit_tests)
-endif(WITH_TESTS)
+endif()
 
 add_subdirectory(utils)
 add_subdirectory(shapes)
 add_subdirectory(core)
 add_subdirectory(config)
-
 add_subdirectory(profiler)
 
-if(SCAFACOS)
+if(ESPRESSO_BUILD_WITH_SCAFACOS)
   add_subdirectory(scafacos)
-endif(SCAFACOS)
+endif()
 
-if(WITH_PYTHON)
+if(ESPRESSO_BUILD_WITH_PYTHON)
   add_subdirectory(script_interface)
   add_subdirectory(python)
 endif()

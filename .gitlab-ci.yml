@@ -68,7 +68,7 @@ style_doxygen:
     - mkdir build
     - cd build
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -DWITH_CUDA=ON -DWITH_SCAFACOS=ON
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso
@@ -107,7 +107,7 @@ maxset:
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
-     cmake_params: '-DTEST_NP=8'
+     cmake_params: '-D ESPRESSO_TEST_NP=8'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -141,6 +141,8 @@ ubuntu:wo-dependencies:
      myconfig: 'maxset'
      with_cuda: 'false'
      with_hdf5: 'false'
+     with_fftw: 'false'
+     with_gsl: 'false'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
   script:
@@ -157,6 +159,7 @@ debian:10:
   image: ghcr.io/espressomd/docker/debian:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      with_cuda: 'false'
+     with_gsl: 'false'
      myconfig: 'maxset'
      make_check_python: 'false'
      with_stokesian_dynamics: 'true'
@@ -172,6 +175,7 @@ fedora:36:
   image: ghcr.io/espressomd/docker/fedora:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   variables:
      with_cuda: 'false'
+     with_gsl: 'false'
      myconfig: 'maxset'
      make_check_python: 'true'
      with_stokesian_dynamics: 'true'
@@ -413,7 +417,7 @@ installation:
     # get path of installed files
     - CI_INSTALL_DIR="/tmp/espresso-unit-tests"
     - CI_INSTALL_PYTHON_PATH=$(dirname $(find "${CI_INSTALL_DIR}/lib" -name espressomd))
-    - CI_CORES=$(cmake -L . | grep CTEST_ARGS | grep --color=never -Po '(?<=-j)[0-9]+')
+    - CI_CORES=$(cmake -L . | grep ESPRESSO_CTEST_ARGS | grep --color=never -Po '(?<=-j)[0-9]+')
     # deploy object-in-fluid module
     - cp -r "src/python/object_in_fluid" "${CI_INSTALL_PYTHON_PATH}/object_in_fluid"
     # run all tests with the installed files
@@ -538,7 +542,7 @@ maxset_3_cores:
     - cuda10-maxset
   script:
     - cd ${CI_PROJECT_DIR}/build
-    - cmake -DTEST_NP=3 .
+    - cmake -D ESPRESSO_TEST_NP=3 .
     - make -t && make check_unit_tests && make check_python_parallel_odd
   tags:
     - espresso

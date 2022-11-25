@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if(H5MD)
+if(ESPRESSO_BUILD_WITH_HDF5)
   target_link_libraries(espresso_core PUBLIC ${HDF5_LIBRARIES}
                                              Boost::filesystem h5xx)
   target_include_directories(espresso_core PUBLIC ${CMAKE_CURRRENT_SOURCE_DIR}
@@ -28,4 +28,4 @@ if(H5MD)
   target_sources(
     espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/h5md_core.cpp
                           ${CMAKE_CURRENT_SOURCE_DIR}/h5md_specification.cpp)
-endif(H5MD)
+endif()

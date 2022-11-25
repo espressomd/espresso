@@ -47,7 +47,8 @@ benchmark_test(FILE test_ferrofluid.py)
 benchmark_test(FILE test_mc_acid_base_reservoir.py)
 
 add_custom_target(
-  check_benchmarks COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           ${CTEST_ARGS} --output-on-failure)
+  check_benchmarks
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_benchmarks pypresso local_benchmarks)

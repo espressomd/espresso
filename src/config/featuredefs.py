@@ -173,7 +173,8 @@ class cmakedefs:
     def __init__(self, filename):
         self.externals = set()
 
-        re_pattern = re.compile("^#cmakedefine +([A-Za-z0-9_]+) *$")
+        re_pattern = re.compile(
+            "^#cmakedefine +ESPRESSO_BUILD_WITH_([A-Za-z0-9_]+) *$")
         inside_multiline_comment = False
         for line in fileinput.input(filename):
             line = line.strip()
