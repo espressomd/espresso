@@ -119,7 +119,7 @@ set_default_value make_check_benchmarks false
 set_default_value with_fast_math false
 set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
-set_default_value with_cxx_standard 14
+set_default_value with_cxx_standard 17
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_hdf5 true

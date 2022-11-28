@@ -48,7 +48,7 @@ are required to be able to compile and use |es|:
         The build system is based on CMake.
 
     C++ compiler
-        The C++ core of |es| needs to be built by a C++14-capable compiler.
+        The C++ core of |es| needs to be built by a C++17-capable compiler.
 
     Boost
         A number of advanced C++ features used by |es| are provided by Boost.

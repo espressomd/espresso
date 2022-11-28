@@ -34,7 +34,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # C++ standard
 enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to be used")
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to be used")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
