@@ -34,10 +34,10 @@
 #include "script_interface/shapes/Sphere.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/as_const.hpp>
 
 #include <limits>
 #include <memory>
+#include <utility>
 
 using namespace ScriptInterface;
 
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(shape_based_constraint) {
   {
     // check const and non-const access
     BOOST_TEST(constraint.constraint()->fits_in_box({}));
-    BOOST_TEST(Utils::as_const(constraint).constraint()->fits_in_box({}));
+    BOOST_TEST(std::as_const(constraint).constraint()->fits_in_box({}));
     BOOST_TEST(constraint.shape_based_constraint()->fits_in_box({}));
   }
   {
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(field_constraints) {
     BOOST_TEST(h == h_ref, boost::test_tools::per_element());
     // check const and non-const access
     BOOST_TEST(field.constraint()->fits_in_box({}));
-    BOOST_TEST(Utils::as_const(field).constraint()->fits_in_box({}));
+    BOOST_TEST(std::as_const(field).constraint()->fits_in_box({}));
   }
   {
     // check constructor and getters
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(field_constraints) {
     BOOST_TEST(g == gravity_constant, boost::test_tools::per_element());
     // check const and non-const access
     BOOST_TEST(field.constraint()->fits_in_box({}));
-    BOOST_TEST(Utils::as_const(field).constraint()->fits_in_box({}));
+    BOOST_TEST(std::as_const(field).constraint()->fits_in_box({}));
   }
 }
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(potential_constraints) {
     BOOST_CHECK_EQUAL(field_codim, field_codim_ref);
     // check const and non-const access
     BOOST_TEST(potential.constraint()->fits_in_box({}));
-    BOOST_TEST(Utils::as_const(potential).constraint()->fits_in_box({}));
+    BOOST_TEST(std::as_const(potential).constraint()->fits_in_box({}));
   }
   {
     // check exception mechanism

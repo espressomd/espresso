@@ -40,7 +40,6 @@
  */
 
 #include <utils/NumeratedContainer.hpp>
-#include <utils/as_const.hpp>
 #include <utils/tuple.hpp>
 #include <utils/type_traits.hpp>
 
@@ -128,7 +127,7 @@ auto invoke(F f, boost::mpi::packed_iarchive &ia) {
      or const reference. Output parameters on callbacks are not
      sensible because the changes are not propagated back, so
      we make sure this does not compile. */
-  return Utils::apply(f, Utils::as_const(params));
+  return Utils::apply(f, std::as_const(params));
 }
 
 /**
