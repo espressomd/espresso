@@ -127,7 +127,7 @@ auto invoke(F f, boost::mpi::packed_iarchive &ia) {
      or const reference. Output parameters on callbacks are not
      sensible because the changes are not propagated back, so
      we make sure this does not compile. */
-  return Utils::apply(f, std::as_const(params));
+  return std::apply(f, std::as_const(params));
 }
 
 /**
