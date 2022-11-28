@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.18)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -201,8 +201,8 @@ endif()
 
 # Python interpreter and Cython interface library
 if(ESPRESSO_BUILD_WITH_PYTHON)
-  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 0.29.14 REQUIRED)
+  find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development NumPy)
+  find_package(Cython 0.29.21 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif()
 
@@ -385,7 +385,7 @@ if(ESPRESSO_BUILD_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
+find_package(Boost 1.74.0 REQUIRED ${BOOST_COMPONENTS})
 
 #
 # Paths
