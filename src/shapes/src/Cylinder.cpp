@@ -25,7 +25,6 @@
 
 #include <cassert>
 #include <cmath>
-#include <tuple>
 #include <utility>
 
 namespace Shapes {
@@ -73,8 +72,7 @@ void Cylinder::calculate_dist(const Utils::Vector3d &pos, double &dist,
   /* The pore has mirror symmetry in z with regard to
      the center in the {r,z} system. We calculate always
      for the z > 0 case, and flip the result if appropriate. */
-  double dr, dz;
-  std::tie(dr, dz) = dist_half_pore(r, std::abs(z));
+  auto [dr, dz] = dist_half_pore(r, std::abs(z));
 
   double side = -1;
   if (std::abs(z) >= m_half_length || r >= m_rad) /* outside */

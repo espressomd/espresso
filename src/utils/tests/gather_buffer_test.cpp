@@ -31,7 +31,6 @@
 #include <algorithm>
 #include <iterator>
 #include <string>
-#include <tuple>
 #include <vector>
 
 using Utils::Mpi::gather_buffer;
@@ -52,8 +51,7 @@ void check_vector(const boost::mpi::communicator &comm, int root) {
 
     /* Check values */
     for (int i = 1; i <= n; i++) {
-      std::vector<int>::iterator lower, upper;
-      std::tie(lower, upper) = std::equal_range(buf.begin(), buf.end(), i);
+      auto const [lower, upper] = std::equal_range(buf.begin(), buf.end(), i);
 
       BOOST_CHECK(i == std::distance(lower, upper));
     }
@@ -97,8 +95,7 @@ void check_vector_empty(const boost::mpi::communicator &comm, int empty) {
     BOOST_CHECK(buf.size() == (comm.size() - 1) * 11);
 
     for (int i = 0; i < comm.size(); i++) {
-      std::vector<int>::iterator lower, upper;
-      std::tie(lower, upper) = std::equal_range(buf.begin(), buf.end(), i);
+      auto const [lower, upper] = std::equal_range(buf.begin(), buf.end(), i);
 
       if (i == empty) {
         BOOST_CHECK(0 == std::distance(lower, upper));

@@ -231,8 +231,8 @@ auto gather_particle_data(ParticleRange const &particles, int n_replicas) {
     std::swap(all_posmom, local_posmom);
   }
 
-  return std::make_tuple(std::move(local_particles), std::move(local_posmom),
-                         std::move(all_posmom), std::move(reqs), offset);
+  return std::make_tuple(std::move(local_particles), std::move(all_posmom),
+                         std::move(reqs), offset);
 }
 
 auto get_n_cut(int n_replicas) {
@@ -268,13 +268,7 @@ auto get_n_cut(int n_replicas) {
 void DipolarDirectSum::add_long_range_forces(
     ParticleRange const &particles) const {
   auto const &box_l = ::box_geo.length();
-  /* collect particle data */
-  std::vector<Particle *> local_particles;
-  std::vector<PosMom> local_posmom;
-  std::vector<PosMom> all_posmom;
-  std::vector<boost::mpi::request> reqs;
-  int offset{0};
-  std::tie(local_particles, local_posmom, all_posmom, reqs, offset) =
+  auto [local_particles, all_posmom, reqs, offset] =
       gather_particle_data(particles, n_replicas);
 
   /* Number of image boxes considered */
@@ -363,12 +357,7 @@ void DipolarDirectSum::add_long_range_forces(
 double
 DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
   auto const &box_l = ::box_geo.length();
-  /* collect particle data */
-  std::vector<Particle *> local_particles;
-  std::vector<PosMom> all_posmom;
-  std::vector<boost::mpi::request> reqs;
-  int offset{0};
-  std::tie(local_particles, std::ignore, all_posmom, reqs, offset) =
+  auto [local_particles, all_posmom, reqs, offset] =
       gather_particle_data(particles, n_replicas);
 
   /* Number of image boxes considered */
