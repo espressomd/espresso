@@ -49,7 +49,8 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // compute distance from the rhomboid corners, edges and faces using linear
   // combinations of the rhomboid edge vectors
 
-  auto const corner = [=, &vec, &dist, a = bxc / a_dot_bxc, b = axc / b_dot_axc,
+  auto const corner = [this, &vec, &dist, a = bxc / a_dot_bxc,
+                       b = axc / b_dot_axc,
                        c = axb / c_dot_axb](auto op1, auto op2, auto op3,
                                             Utils::Vector3d const &d) {
     /* coefficients A, B, C tell whether ppos lies within a cone defined
@@ -83,13 +84,13 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
       corner(ge, ge, ge, dpos - m_a - m_b - m_c))
     return;
 
-  auto const edge = [=, &vec, &dist](auto op1, auto op2,
-                                     Utils::Vector3d const &d,
-                                     Utils::Vector3d const &axis1,
-                                     double const dir1_dot_axis1,
-                                     Utils::Vector3d const &axis2,
-                                     double const dir2_dot_axis2,
-                                     Utils::Vector3d const &edge) {
+  auto const edge = [this, &vec, &dist](auto op1, auto op2,
+                                        Utils::Vector3d const &d,
+                                        Utils::Vector3d const &axis1,
+                                        double const dir1_dot_axis1,
+                                        Utils::Vector3d const &axis2,
+                                        double const dir2_dot_axis2,
+                                        Utils::Vector3d const &edge) {
     auto const A = (d * axis1) / dir1_dot_axis1;
     auto const B = (d * axis2) / dir2_dot_axis2;
     if (op1(A, 0) and op2(B, 0)) {
@@ -128,9 +129,9 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
     return;
 
   auto const face_outside =
-      [=, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
-                       Utils::Vector3d const &axis, double const dir_dot_axis,
-                       int sign) {
+      [this, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
+                          Utils::Vector3d const &axis,
+                          double const dir_dot_axis, int sign) {
         auto d = distance * axis;
         if (op1(dir_dot_axis, 0)) {
           d *= -1;
@@ -181,9 +182,9 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   }
 
   auto const face_inside =
-      [=, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
-                       Utils::Vector3d const &axis, double const dir_dot_axis,
-                       int sign) {
+      [this, &vec, &dist](auto op1, auto op2, Utils::Vector3d const &distance,
+                          Utils::Vector3d const &axis,
+                          double const dir_dot_axis, int sign) {
         auto d = distance * axis;
         if (op1(dir_dot_axis, 0)) {
           d *= -1;

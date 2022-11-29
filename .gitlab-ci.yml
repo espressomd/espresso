@@ -104,7 +104,7 @@ maxset:
      CXX: 'g++-10'
      GCOV: 'gcov-10'
      with_cuda: 'false'
-     with_cxx_standard: '17'
+     with_cxx_standard: '20'
      myconfig: 'maxset'
      with_coverage: 'true'
      with_scafacos: 'true'
