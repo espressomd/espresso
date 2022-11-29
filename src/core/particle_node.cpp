@@ -35,7 +35,6 @@
 #include <utils/keys.hpp>
 #include <utils/mpi/gatherv.hpp>
 
-#include <boost/algorithm/cxx11/copy_if.hpp>
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
@@ -231,8 +230,9 @@ void prefetch_particle_data(Utils::Span<const int> in_ids) {
 
   static std::vector<int> ids;
   ids.clear();
+  auto out_ids = std::back_inserter(ids);
 
-  boost::algorithm::copy_if(in_ids, std::back_inserter(ids), [](int id) {
+  std::copy_if(in_ids.begin(), in_ids.end(), out_ids, [](int id) {
     return (get_particle_node(id) != this_node) && particle_fetch_cache.has(id);
   });
 

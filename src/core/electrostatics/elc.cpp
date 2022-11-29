@@ -42,9 +42,9 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -1036,8 +1036,8 @@ elc_data::elc_data(double maxPWerror, double gap_size, double far_cut,
                                                              delta_bot != 0.},
       const_pot{with_const_pot and dielectric_contrast_on},
       neutralize{neutralize and !dielectric_contrast_on},
-      delta_mid_top{boost::algorithm::clamp(delta_top, -1., +1.)},
-      delta_mid_bot{boost::algorithm::clamp(delta_bot, -1., +1.)},
+      delta_mid_top{std::clamp(delta_top, -1., +1.)}, delta_mid_bot{std::clamp(
+                                                          delta_bot, -1., +1.)},
       pot_diff{(with_const_pot) ? potential_diff : 0.},
       // initial setup of parameters, may change later when P3M is finally tuned
       // set the space_layer to be 1/3 of the gap size, so that box = layer

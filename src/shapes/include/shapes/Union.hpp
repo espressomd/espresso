@@ -20,8 +20,6 @@
 #ifndef SHAPES_UNION
 #define SHAPES_UNION
 
-#include <boost/algorithm/cxx11/any_of.hpp>
-
 #include "Shape.hpp"
 
 #include <algorithm>
@@ -75,8 +73,9 @@ public:
   }
 
   bool is_inside(Utils::Vector3d const &pos) const override {
-    return boost::algorithm::any_of(
-        m_shapes, [&pos](auto const &shape) { return shape->is_inside(pos); });
+    return std::any_of(
+        m_shapes.begin(), m_shapes.end(),
+        [&pos](auto const &shape) { return shape->is_inside(pos); });
   }
 
 private:

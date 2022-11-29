@@ -25,8 +25,7 @@
 
 #include <utils/Span.hpp>
 
-#include <boost/algorithm/clamp.hpp>
-
+#include <algorithm>
 #include <cstddef>
 #include <vector>
 
@@ -41,8 +40,8 @@ inline std::vector<Particle> fetch_particles(std::vector<int> const &ids) {
 
   auto const chunk_size = fetch_cache_max_size();
   for (std::size_t offset = 0; offset < ids.size();) {
-    auto const this_size =
-        boost::algorithm::clamp(chunk_size, 0, ids.size() - offset);
+    auto const this_size = std::clamp(chunk_size, std::size_t{0},
+                                      std::size_t{ids.size() - offset});
     auto const chunk_ids =
         Utils::make_const_span(ids.data() + offset, this_size);
 

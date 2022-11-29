@@ -25,8 +25,7 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/algorithm/clamp.hpp>
-
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -59,8 +58,8 @@ public:
       auto v2 = box_geo.get_mi_vector(traits.position(particles[i + 2]),
                                       traits.position(particles[i + 1]));
       auto const n2 = v2.norm();
-      auto const cosine = boost::algorithm::clamp(
-          (v1 * v2) / (n1 * n2), -TINY_COS_VALUE, TINY_COS_VALUE);
+      auto const cosine =
+          std::clamp((v1 * v2) / (n1 * n2), -TINY_COS_VALUE, TINY_COS_VALUE);
       /* to reduce computational time, after calculating an angle ijk, the
        * vector r_ij takes the value r_jk, but to orient it correctly, it has
        * to be multiplied -1; it's cheaper to do this operation on a double

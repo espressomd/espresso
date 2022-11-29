@@ -38,7 +38,6 @@
 
 #include <utils/math/sqr.hpp>
 
-#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -444,8 +443,8 @@ private:
     get_local_particles(partner_ids, std::back_inserter(partners));
 
     /* Check if id resolution failed for any partner */
-    if (boost::algorithm::any_of(
-            partners, [](Particle *partner) { return partner == nullptr; })) {
+    if (std::any_of(partners.begin(), partners.end(),
+                    [](Particle const *const p) { return p == nullptr; })) {
       throw BondResolutionError{};
     }
 
