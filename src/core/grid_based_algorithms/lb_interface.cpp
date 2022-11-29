@@ -41,6 +41,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
@@ -858,7 +859,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
     // check EOF
     if (!binary) {
       if (cpfile.stream.peek() == '\n') {
-        static_cast<void>(cpfile.stream.get());
+        std::ignore = cpfile.stream.get();
       }
     }
     if (cpfile.stream.peek() != EOF) {

@@ -43,7 +43,6 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
-  image: ghcr.io/espressomd/docker/ubuntu-20.04:efd89c5f66b8a65f579a7807d0059939fcb4b12f
   dependencies: []
   before_script:
     - git config --global --add safe.directory ${CI_PROJECT_DIR}

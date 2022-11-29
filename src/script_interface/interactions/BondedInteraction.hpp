@@ -96,7 +96,7 @@ private:
     if (params.find("bond_id") != params.end()) {
       auto const bond_id = get_value<int>(params, "bond_id");
       context()->parallel_try_catch([&]() {
-        if (not::bonded_ia_params.contains(bond_id)) {
+        if (not ::bonded_ia_params.contains(bond_id)) {
           throw std::runtime_error("No bond with id " +
                                    std::to_string(bond_id) +
                                    " exists in the ESPResSo core");

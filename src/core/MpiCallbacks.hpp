@@ -242,7 +242,7 @@ struct callback_main_rank_t final : public callback_concept_t {
   explicit callback_main_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
   void operator()(boost::mpi::communicator const &,
                   boost::mpi::packed_iarchive &ia) const override {
-    (void)detail::invoke<F, Args...>(m_f, ia);
+    std::ignore = detail::invoke<F, Args...>(m_f, ia);
   }
 };
 
@@ -385,7 +385,7 @@ public:
      * arguments, otherwise this will not compile.
      */
     template <class... ArgRef>
-    auto operator()(ArgRef &&... args) const
+    auto operator()(ArgRef &&...args) const
         /* Enable if a hypothetical function with signature void(Args..)
          * could be called with the provided arguments. */
         -> std::enable_if_t<
@@ -497,7 +497,7 @@ public:
    * @param fp Pointer to the static callback function to add.
    */
   template <class Tag, class R, class... Args, class... TagArgs>
-  static void add_static(Tag tag, R (*fp)(Args...), TagArgs &&... tag_args) {
+  static void add_static(Tag tag, R (*fp)(Args...), TagArgs &&...tag_args) {
     static_callbacks().emplace_back(
         reinterpret_cast<void (*)()>(fp),
         detail::make_model(tag, fp, std::forward<TagArgs>(tag_args)...));
@@ -534,7 +534,7 @@ private:
    * @param id The callback to call.
    * @param args Arguments for the callback.
    */
-  template <class... Args> void call(int id, Args &&... args) const {
+  template <class... Args> void call(int id, Args &&...args) const {
     if (m_comm.rank() != 0) {
       throw std::logic_error("Callbacks can only be invoked on rank 0.");
     }
@@ -567,7 +567,7 @@ public:
    * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
-  auto call(void (*fp)(Args...), ArgRef &&... args) const ->
+  auto call(void (*fp)(Args...), ArgRef &&...args) const ->
       /* Enable only if fp can be called with the provided arguments,
        * e.g. if fp(args...) is well-formed. */
       std::enable_if_t<std::is_void_v<decltype(fp(args...))>> {
@@ -587,7 +587,7 @@ public:
    * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
-  void call_all(void (*fp)(Args...), ArgRef &&... args) const {
+  void call_all(void (*fp)(Args...), ArgRef &&...args) const {
     call(fp, args...);
     fp(args...);
   }
@@ -608,8 +608,8 @@ public:
 
     call(id, args...);
 
-    std::remove_cv_t<std::remove_reference_t<decltype(
-        op(std::declval<R>(), std::declval<R>()))>>
+    std::remove_cv_t<std::remove_reference_t<decltype(op(std::declval<R>(),
+                                                         std::declval<R>()))>>
         result{};
     boost::mpi::reduce(m_comm, fp(args...), result, op, 0);
 
@@ -775,7 +775,7 @@ public:
   }
 
   template <class Tag, class R, class... Args, class... TagArgs>
-  explicit RegisterCallback(Tag tag, R (*cb)(Args...), TagArgs &&... tag_args) {
+  explicit RegisterCallback(Tag tag, R (*cb)(Args...), TagArgs &&...tag_args) {
     MpiCallbacks::add_static(tag, cb, std::forward<TagArgs>(tag_args)...);
   }
 };

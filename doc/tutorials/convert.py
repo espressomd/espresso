@@ -56,8 +56,8 @@ def add_cell_from_script(nb, filepath):
     with open(filepath, encoding='utf-8') as f:
         code = f.read()
     # remove ESPResSo copyright header
-    m = re.search('# Copyright \(C\) [\d\-,]+ The ESPResSo project\n.+?'
-                  'If not, see <http://www\.gnu\.org/licenses/>\.\n', code, re.DOTALL)
+    m = re.search('# Copyright \\(C\\) [\\d\\-,]+ The ESPResSo project\n.+?'
+                  'If not, see <http://www\\.gnu\\.org/licenses/>\\.\n', code, re.DOTALL)
     if m and all(x.startswith('#') for x in m.group(0).strip().split('\n')):
         code = re.sub('^(#\n)+', '', code.replace(m.group(0), ''), re.M)
     # strip first component in relative paths

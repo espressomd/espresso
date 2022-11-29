@@ -33,8 +33,12 @@
 
 #include <utils/Vector.hpp>
 
+#include <tuple>
+
 void Galilei::kill_particle_motion(bool omega) const {
-  static_cast<void>(omega);
+#ifndef ROTATION
+  std::ignore = omega;
+#endif // not ROTATION
   for (auto &p : cell_structure.local_particles()) {
     p.v() = {};
 #ifdef ROTATION
@@ -47,7 +51,9 @@ void Galilei::kill_particle_motion(bool omega) const {
 }
 
 void Galilei::kill_particle_forces(bool torque) const {
-  static_cast<void>(torque);
+#ifndef ROTATION
+  std::ignore = torque;
+#endif // not ROTATION
   for (auto &p : cell_structure.local_particles()) {
     p.force() = {};
 #ifdef ROTATION

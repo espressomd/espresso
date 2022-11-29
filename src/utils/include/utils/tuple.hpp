@@ -36,7 +36,7 @@ namespace detail {
 template <class Tuple, class F, std::size_t... I>
 constexpr void for_each_impl(F &&f, Tuple t, std::index_sequence<I...>) {
   using expand = int[];
-  (void)expand{0, ((void)(f(std::get<I>(t))), 0)...};
+  std::ignore = expand{0, ((void)(f(std::get<I>(t))), 0)...};
 }
 
 template <class F, class Tuple>

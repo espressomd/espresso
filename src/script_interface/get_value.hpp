@@ -423,7 +423,7 @@ T get_value_or(VariantMap const &vals, std::string const &name,
  */
 template <typename T, typename... Types, typename... ArgNames>
 std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
-                                         ArgNames &&... args) {
+                                         ArgNames &&...args) {
   return std::make_shared<T>(
       get_value<Types>(vals, std::forward<ArgNames>(args))...);
 }

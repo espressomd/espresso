@@ -34,6 +34,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -150,7 +151,7 @@ private:
       auto const param_name = get_value<std::string>(kv.first);
       if (expected_param_names.count(param_name) == 0) {
         // throw if parameter is unknown
-        static_cast<void>(get_parameter(param_name));
+        std::ignore = get_parameter(param_name);
         // throw if parameter is known but doesn't match the selected mode
         throw std::runtime_error("Parameter '" + param_name + "' is not " +
                                  "required for mode '" + name + "'");
