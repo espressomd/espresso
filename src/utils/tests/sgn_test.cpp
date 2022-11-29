@@ -22,7 +22,7 @@
 #include "utils/math/sgn.hpp"
 
 /* Check that it can be used in constexpr context */
-static_assert(Utils::sgn(1), "");
+static_assert(Utils::sgn(1));
 
 BOOST_AUTO_TEST_CASE(pos) { BOOST_CHECK_EQUAL(Utils::sgn(89), 1); }
 BOOST_AUTO_TEST_CASE(nul) { BOOST_CHECK_EQUAL(Utils::sgn(0), 0); }

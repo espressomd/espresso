@@ -51,9 +51,8 @@ class CylindricalPidProfileObservable
       AutoParameters<CylindricalPidProfileObservable<CoreObs>, Observable>;
 
 public:
-  static_assert(std::is_base_of<::Observables::CylindricalPidProfileObservable,
-                                CoreObs>::value,
-                "");
+  static_assert(std::is_base_of_v<
+                ::Observables::CylindricalPidProfileObservable, CoreObs>);
   using Base::Base;
   CylindricalPidProfileObservable() {
     this->add_parameters({

@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(square) {
   using actual_type = decltype(tensor_product(x, y));
 
   /* Check return type */
-  static_assert(std::is_same<expected_type, actual_type>::value, "");
+  static_assert(std::is_same_v<expected_type, actual_type>);
 
   auto prod = tensor_product(x, y);
 
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(non_square) {
   using actual_type = decltype(tensor_product(x, y));
 
   /* Check return type */
-  static_assert(std::is_same<expected_type, actual_type>::value, "");
+  static_assert(std::is_same_v<expected_type, actual_type>);
 
   auto prod = tensor_product(x, y);
 
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(left_scalar) {
   using actual_type = decltype(tensor_product(x, y));
 
   /* Check return type */
-  static_assert(std::is_same<expected_type, actual_type>::value, "");
+  static_assert(std::is_same_v<expected_type, actual_type>);
 
   auto prod = tensor_product(x, y);
 

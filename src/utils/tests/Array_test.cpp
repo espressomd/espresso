@@ -37,8 +37,8 @@
 using Utils::Array;
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
-  static_assert(4 == Array<int, 4>().size(), "");
-  static_assert(4 == Array<int, 4>().max_size(), "");
+  static_assert(4 == Array<int, 4>().size());
+  static_assert(4 == Array<int, 4>().max_size());
   BOOST_TEST_PASSPOINT();
 }
 
@@ -91,9 +91,9 @@ BOOST_AUTO_TEST_CASE(fill) {
 
 BOOST_AUTO_TEST_CASE(broadcast) {
   constexpr auto a = Array<int, 3>::broadcast(5);
-  static_assert(a[0] == 5, "");
-  static_assert(a[1] == 5, "");
-  static_assert(a[2] == 5, "");
+  static_assert(a[0] == 5);
+  static_assert(a[1] == 5);
+  static_assert(a[2] == 5);
   BOOST_TEST_PASSPOINT();
 }
 
@@ -120,9 +120,9 @@ BOOST_AUTO_TEST_CASE(zero_size) {
 BOOST_AUTO_TEST_CASE(tuple_protocol) {
   using A = Utils::Array<int, 4>;
 
-  static_assert(std::is_same<Utils::tuple_element_t<0, A>, int>::value, "");
-  static_assert(std::is_same<Utils::tuple_element_t<1, A>, int>::value, "");
-  static_assert(A{}.size() == Utils::tuple_size<A>::value, "");
+  static_assert(std::is_same_v<Utils::tuple_element_t<0, A>, int>);
+  static_assert(std::is_same_v<Utils::tuple_element_t<1, A>, int>);
+  static_assert(A{}.size() == Utils::tuple_size<A>::value);
 
   BOOST_CHECK_EQUAL(Utils::get<1>(A{{{1, 2, 3, 4}}}), 2);
 }

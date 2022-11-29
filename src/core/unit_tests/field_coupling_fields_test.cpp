@@ -43,12 +43,10 @@ using namespace FieldCoupling::Fields;
 
 BOOST_AUTO_TEST_CASE(jacobian_type_test) {
   using FieldCoupling::Fields::detail::jacobian_type;
-  using std::is_same;
 
-  static_assert(is_same<jacobian_type<double, 1>, Utils::Vector3d>::value, "");
+  static_assert(std::is_same_v<jacobian_type<double, 1>, Utils::Vector3d>);
   static_assert(
-      is_same<jacobian_type<double, 2>, Utils::Matrix<double, 2, 3>>::value,
-      "");
+      std::is_same_v<jacobian_type<double, 2>, Utils::Matrix<double, 2, 3>>);
   BOOST_TEST_PASSPOINT();
 }
 
@@ -56,11 +54,8 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   using Field = Constant<double, 1>;
 
   /* Types */
-  {
-    static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value,
-                  "");
-  }
+  static_assert(std::is_same_v<Field::value_type, double>);
+  static_assert(std::is_same_v<Field::jacobian_type, Utils::Vector3d>);
 
   /* ctor */
   {
@@ -100,12 +95,9 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
   using Field = Constant<double, 2>;
 
   /* Types */
-  {
-    static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
-    static_assert(
-        std::is_same<Field::jacobian_type, Utils::Matrix<double, 2, 3>>::value,
-        "");
-  }
+  static_assert(std::is_same_v<Field::value_type, Utils::Vector2d>);
+  static_assert(
+      std::is_same_v<Field::jacobian_type, Utils::Matrix<double, 2, 3>>);
 
   /* ctor */
   {
@@ -147,12 +139,9 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   using Field = AffineMap<double, 1>;
 
   /* Types */
-  {
-    static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type,
-                               Utils::Vector<Field::value_type, 3>>::value,
-                  "");
-  }
+  static_assert(std::is_same_v<Field::value_type, double>);
+  static_assert(std::is_same_v<Field::jacobian_type,
+                               Utils::Vector<Field::value_type, 3>>);
 
   /* ctor */
   {
@@ -202,12 +191,9 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
   using Field = AffineMap<double, 2>;
 
   /* Types */
-  {
-    static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
-    static_assert(
-        std::is_same<Field::jacobian_type, Utils::Matrix<double, 2, 3>>::value,
-        "");
-  }
+  static_assert(std::is_same_v<Field::value_type, Utils::Vector2d>);
+  static_assert(
+      std::is_same_v<Field::jacobian_type, Utils::Matrix<double, 2, 3>>);
 
   /* Field value unshifted */
   {
@@ -237,11 +223,8 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   using Field = Interpolated<double, 1>;
 
   /* Types */
-  {
-    static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value,
-                  "");
-  }
+  static_assert(std::is_same_v<Field::value_type, double>);
+  static_assert(std::is_same_v<Field::jacobian_type, Utils::Vector3d>);
 
   /* Ctor */
   {
@@ -319,12 +302,9 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   using Field = Interpolated<double, 2>;
 
   /* Types */
-  {
-    static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
-    static_assert(
-        std::is_same<Field::jacobian_type, Utils::Matrix<double, 2, 3>>::value,
-        "");
-  }
+  static_assert(std::is_same_v<Field::value_type, Utils::Vector2d>);
+  static_assert(
+      std::is_same_v<Field::jacobian_type, Utils::Matrix<double, 2, 3>>);
 
   /* field value */
   {

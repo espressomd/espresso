@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(mask_) {
   auto const result = Utils::mask(mask, a);
   using result_type = decltype(result);
 
-  static_assert(std::is_same<input_type, result_type>::value, "");
+  static_assert(std::is_same_v<input_type, result_type>);
 
   BOOST_CHECK_EQUAL(Utils::get<0>(result), Utils::get<0>(a));
   BOOST_CHECK_EQUAL(Utils::get<1>(result), 0);

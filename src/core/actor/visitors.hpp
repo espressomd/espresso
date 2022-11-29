@@ -48,7 +48,7 @@ template <typename Actor>
 struct GetActorByType : public boost::static_visitor<std::shared_ptr<Actor>> {
 private:
   template <typename T>
-  static constexpr bool is_exact_match_v = std::is_same<T, Actor>::value;
+  static constexpr bool is_exact_match_v = std::is_same_v<T, Actor>;
   template <typename T>
   static constexpr bool is_layer_correction_v =
       traits::is_layer_correction<T>::value;
@@ -90,7 +90,7 @@ template <typename Actor>
 struct HasActorOfType : public boost::static_visitor<bool> {
 private:
   template <typename T>
-  static constexpr bool is_exact_match_v = std::is_same<T, Actor>::value;
+  static constexpr bool is_exact_match_v = std::is_same_v<T, Actor>;
   template <typename T>
   static constexpr bool is_layer_correction_v =
       traits::is_layer_correction<T>::value;
@@ -128,17 +128,17 @@ auto has_actor_of_type(boost::optional<Variant> const &optional) {
 
 /** Check whether two actors are identical by pointer. */
 struct ActorEquality : public boost::static_visitor<bool> {
-  template <typename T, typename U,
-            typename std::enable_if_t<std::is_same<T, U>::value,
-                                      std::nullptr_t> = nullptr>
+  template <
+      typename T, typename U,
+      typename std::enable_if_t<std::is_same_v<T, U>, std::nullptr_t> = nullptr>
   bool operator()(std::shared_ptr<T> const &lhs,
                   std::shared_ptr<U> const &rhs) const {
     return lhs == rhs;
   }
 
   template <typename T, typename U,
-            typename std::enable_if_t<!std::is_same<T, U>::value,
-                                      std::nullptr_t> = nullptr>
+            typename std::enable_if_t<!std::is_same_v<T, U>, std::nullptr_t> =
+                nullptr>
   bool operator()(std::shared_ptr<T> const &,
                   std::shared_ptr<U> const &) const {
     return false;

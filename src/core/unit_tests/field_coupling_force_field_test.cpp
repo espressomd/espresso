@@ -48,16 +48,15 @@ BOOST_AUTO_TEST_CASE(BindCoupling_test) {
 
   /* is_linear */
   {
-    static_assert(BindCoupling<Id<true>, Particle>::is_linear, "");
-    static_assert(!BindCoupling<Id<false>, Particle>::is_linear, "");
+    static_assert(BindCoupling<Id<true>, Particle>::is_linear);
+    static_assert(!BindCoupling<Id<false>, Particle>::is_linear);
   }
 
   /* make_bind_coupling */
   {
     /* Return type */
-    using std::is_same;
     using return_type = decltype(make_bind_coupling(int{}, float{}));
-    static_assert(is_same<BindCoupling<int, float>, return_type>::value, "");
+    static_assert(std::is_same_v<BindCoupling<int, float>, return_type>);
   }
 
   /* Call */

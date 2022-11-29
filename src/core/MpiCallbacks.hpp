@@ -92,10 +92,11 @@ namespace detail {
  * parameters can not work across ranks.
  */
 template <class T>
-using is_allowed_argument = std::integral_constant<
-    bool, not(std::is_pointer<T>::value ||
-              (!std::is_const<std::remove_reference_t<T>>::value &&
-               std::is_lvalue_reference<T>::value))>;
+using is_allowed_argument =
+    std::integral_constant<bool,
+                           not(std::is_pointer_v<T> ||
+                               (!std::is_const_v<std::remove_reference_t<T>> &&
+                                std::is_lvalue_reference_v<T>))>;
 
 template <class... Args>
 using are_allowed_arguments =
@@ -360,9 +361,9 @@ public:
    */
   template <class... Args> class CallbackHandle {
   public:
-    template <typename F, class = std::enable_if_t<std::is_same<
+    template <typename F, class = std::enable_if_t<std::is_same_v<
                               typename detail::functor_types<F>::argument_types,
-                              std::tuple<Args...>>::value>>
+                              std::tuple<Args...>>>>
     CallbackHandle(MpiCallbacks *cb, F &&f)
         : m_id(cb->add(std::forward<F>(f))), m_cb(cb) {}
 
@@ -388,8 +389,8 @@ public:
         /* Enable if a hypothetical function with signature void(Args..)
          * could be called with the provided arguments. */
         -> std::enable_if_t<
-            std::is_void<decltype(std::declval<void (*)(Args...)>()(
-                std::forward<ArgRef>(args)...))>::value> {
+            std::is_void_v<decltype(std::declval<void (*)(Args...)>()(
+                std::forward<ArgRef>(args)...))>> {
       if (m_cb)
         m_cb->call(m_id, std::forward<ArgRef>(args)...);
     }
@@ -569,7 +570,7 @@ public:
   auto call(void (*fp)(Args...), ArgRef &&... args) const ->
       /* Enable only if fp can be called with the provided arguments,
        * e.g. if fp(args...) is well-formed. */
-      std::enable_if_t<std::is_void<decltype(fp(args...))>::value> {
+      std::enable_if_t<std::is_void_v<decltype(fp(args...))>> {
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, std::forward<ArgRef>(args)...);

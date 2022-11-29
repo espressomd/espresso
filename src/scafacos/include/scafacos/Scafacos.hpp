@@ -57,9 +57,9 @@ private:
   std::string m_parameters;
 };
 
-static_assert(std::is_same<fcs_int, int>::value,
+static_assert(std::is_same_v<fcs_int, int>,
               "ScaFaCoS must be compiled with fcs_int = int");
-static_assert(std::is_same<fcs_float, double>::value,
+static_assert(std::is_same_v<fcs_float, double>,
               "ScaFaCoS must be compiled with fcs_float = double");
 
 } // namespace Scafacos
