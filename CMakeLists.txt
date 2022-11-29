@@ -317,10 +317,18 @@ endif()
 find_package(MPI 3.0 REQUIRED)
 include(espresso_get_mpiexec_vendor)
 espresso_get_mpiexec_vendor()
-message(
-  STATUS
-    "Found ${ESPRESSO_MPIEXEC_VENDOR}: ${MPIEXEC} (version \"${ESPRESSO_MPIEXEC_VERSION}\")"
-)
+if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL
+   ${ESPRESSO_MINIMAL_MPIEXEC_VERSION})
+  message(
+    STATUS
+      "Found ${ESPRESSO_MPIEXEC_VENDOR}: ${MPIEXEC} (found suitable version \"${ESPRESSO_MPIEXEC_VERSION}\", minimum required is \"${ESPRESSO_MINIMAL_MPIEXEC_VERSION}\")"
+  )
+else()
+  message(
+    FATAL_ERROR
+      "Could not find a suitable ${ESPRESSO_MPIEXEC_VENDOR} implementation (found unsuitable version \"${ESPRESSO_MPIEXEC_VERSION}\", minimum required is \"${ESPRESSO_MINIMAL_MPIEXEC_VERSION}\")"
+  )
+endif()
 
 # OpenMPI checks the number of processes against the number of CPUs
 set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "")
