@@ -202,6 +202,7 @@ endif()
 # Python interpreter and Cython interface library
 if(ESPRESSO_BUILD_WITH_PYTHON)
   find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development NumPy)
+  # use version range 0.29.21...<3.0.0 in CMake 3.19
   find_package(Cython 0.29.21 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif()
@@ -337,11 +338,8 @@ set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA OFF)
 set(ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN "AMD (EPYC|Ryzen)")
 
 if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI")
-  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL 2.0.0)
-    set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
-  endif()
-  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL 4.0
-     AND ${ESPRESSO_MPIEXEC_VERSION} VERSION_LESS 5.0)
+  set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_LESS 5.0)
     if(NOT DEFINED ESPRESSO_CPU_MODEL_NAME)
       if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         if(EXISTS /proc/cpuinfo)
