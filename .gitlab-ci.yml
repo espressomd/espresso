@@ -148,7 +148,6 @@ ubuntu:wo-dependencies:
      with_gsl: 'false'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
-     MPIEXEC_PREFLAGS: '--mca;btl_vader_single_copy_mechanism;none'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:

@@ -206,6 +206,12 @@ if [ "${with_static_analysis}" = true ]; then
     cmake_params="-D ESPRESSO_BUILD_WITH_CLANG_TIDY=ON ${cmake_params}"
 fi
 
+if [ "${run_checks}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_TESTS=ON"
+else
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_TESTS=OFF"
+fi
+
 if [ "${with_cuda}" = true ]; then
     cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
 else
@@ -238,6 +244,7 @@ cd "${builddir}"
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
     grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
+    grep -q "Ubuntu 22.04" /etc/os-release && export MPIEXEC_PREFLAGS="--mca;btl_vader_single_copy_mechanism;none"
 fi
 
 # CONFIGURE
