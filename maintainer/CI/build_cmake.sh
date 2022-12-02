@@ -219,6 +219,7 @@ else
 fi
 
 command -v nvidia-smi && nvidia-smi || true
+nvidia-smi -L || true
 if [ "${hide_gpu}" = true ]; then
     echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
     export CUDA_VISIBLE_DEVICES=""
@@ -297,7 +298,7 @@ if [ "${run_checks}" = true ]; then
 
     # fail if built with CUDA but no compatible GPU was found
     if [ "${with_cuda}" = true ] && [ "${hide_gpu}" != true ]; then
-        ./pypresso -c "import espressomd.cuda_init as gpu;gpu.CudaInitHandle().device = 0" || exit 1
+        ./pypresso -c "import espressomd.cuda_init as gpu;gpu.CudaInitHandle().device = 0" || (command -v nvidia-smi && nvidia-smi || true ; exit 1)
     fi
 
     # unit tests
