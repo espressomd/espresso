@@ -46,14 +46,14 @@ namespace Utils {
 template <class T>
 struct is_statically_serializable
     : std::integral_constant<
-          bool, std::is_trivially_copyable<T>::value or
+          bool, std::is_trivially_copyable_v<T> or
                     boost::serialization::is_bitwise_serializable<T>::value> {};
 
 namespace detail {
 /* Use memcpy for packing */
 template <class T>
 using use_memcpy = std::integral_constant<
-    bool, std::is_trivially_copyable<T>::value or
+    bool, std::is_trivially_copyable_v<T> or
               boost::serialization::is_bitwise_serializable<T>::value>;
 /* Use serialize function only if the type is opt-in but not
  * trivially copyable, in which case memcpy is more efficient. */

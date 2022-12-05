@@ -426,8 +426,7 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields) {
   // Read own prefix (1 int at prefix rank).
   // Communicate own prefix to rank-1
   // Determine nlocalpart (prefix of rank+1 - own prefix) on every node.
-  unsigned long pref, nlocalpart;
-  std::tie(pref, nlocalpart) =
+  auto const [pref, nlocalpart] =
       read_prefs(prefix + ".pref", rank, size, nglobalpart);
 
   std::vector<Particle> particles(nlocalpart);

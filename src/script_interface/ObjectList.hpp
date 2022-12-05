@@ -40,9 +40,9 @@ namespace ScriptInterface {
  * @tparam ManagedType Type of the managed objects, needs to be
  *         derived from ObjectHandle
  */
-template <
-    typename ManagedType, class BaseType = ObjectHandle,
-    class = std::enable_if_t<std::is_base_of<ObjectHandle, ManagedType>::value>>
+template <typename ManagedType, class BaseType = ObjectHandle,
+          class =
+              std::enable_if_t<std::is_base_of_v<ObjectHandle, ManagedType>>>
 class ObjectList : public BaseType {
 private:
   virtual void add_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;

@@ -30,14 +30,10 @@
 #include <boost/mpi.hpp>
 
 #include <mpi.h>
-#ifdef OPEN_MPI
-#include <dlfcn.h>
-#endif
 
 #include <cassert>
-#include <cstdio>
-#include <cstdlib>
 #include <memory>
+#include <utility>
 
 boost::mpi::communicator comm_cart;
 
@@ -59,62 +55,6 @@ using Communication::mpiCallbacks;
 
 int this_node = -1;
 int n_nodes = -1;
-
-#if defined(OPEN_MPI)
-namespace {
-/** Workaround for "Read -1, expected XXXXXXX, errno = 14" that sometimes
- *  appears when CUDA is used. This is a bug in OpenMPI 2.0-2.1.2 and 3.0.0
- *  according to
- *  https://www.mail-archive.com/users@lists.open-mpi.org/msg32357.html,
- *  so we set btl_vader_single_copy_mechanism = none.
- */
-void openmpi_fix_vader() {
-  if ((OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
-       OMPI_RELEASE_VERSION < 3) or
-      (OMPI_MAJOR_VERSION == 3 && OMPI_MINOR_VERSION == 0 &&
-       OMPI_RELEASE_VERSION == 0)) {
-    setenv("OMPI_MCA_btl_vader_single_copy_mechanism", "none", 0);
-  }
-}
-
-/**
- * @brief Assure that openmpi is loaded to the global namespace.
- *
- * This was originally inspired by mpi4py
- * (https://github.com/mpi4py/mpi4py/blob/4e3f47b6691c8f5a038e73f84b8d43b03f16627f/src/lib-mpi/compat/openmpi.h).
- * It's needed because OpenMPI dlopens its submodules. These are unable to
- * find the top-level OpenMPI library if that was dlopened itself, i.e. when
- * the Python interpreter dlopens a module that is linked against OpenMPI.
- * It's about some weird two-level symbol namespace thing.
- */
-void openmpi_global_namespace() {
-  if (OMPI_MAJOR_VERSION >= 3)
-    return;
-#ifdef RTLD_NOLOAD
-  const int mode = RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD;
-#else
-  const int mode = RTLD_NOW | RTLD_GLOBAL;
-#endif
-
-  const void *_openmpi_symbol = dlsym(RTLD_DEFAULT, "MPI_Init");
-  if (!_openmpi_symbol) {
-    fprintf(stderr, "Aborting because unable to find OpenMPI symbol.\n");
-    errexit();
-  }
-
-  Dl_info _openmpi_info;
-  dladdr(_openmpi_symbol, &_openmpi_info);
-
-  const void *handle = dlopen(_openmpi_info.dli_fname, mode);
-
-  if (!handle) {
-    fprintf(stderr, "Aborting because unable to load libmpi into the "
-                    "global symbol space.\n");
-    errexit();
-  }
-}
-} // namespace
-#endif
 
 namespace Communication {
 void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
@@ -138,11 +78,6 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 } // namespace Communication
 
 std::shared_ptr<boost::mpi::environment> mpi_init(int argc, char **argv) {
-#ifdef OPEN_MPI
-  openmpi_fix_vader();
-  openmpi_global_namespace();
-#endif
-
   return std::make_shared<boost::mpi::environment>(argc, argv);
 }
 

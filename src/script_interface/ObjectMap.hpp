@@ -42,7 +42,7 @@ namespace ScriptInterface {
  */
 template <
     typename ManagedType, class BaseType = ObjectHandle, class KeyType = int,
-    class = std::enable_if_t<std::is_base_of<ObjectHandle, ManagedType>::value>>
+    class = std::enable_if_t<std::is_base_of_v<ObjectHandle, ManagedType>>>
 class ObjectMap : public BaseType {
 private:
   virtual KeyType

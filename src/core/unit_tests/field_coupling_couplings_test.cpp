@@ -34,7 +34,7 @@
 using namespace FieldCoupling::Coupling;
 
 BOOST_AUTO_TEST_CASE(charge) {
-  static_assert(Charge::is_linear, "");
+  static_assert(Charge::is_linear);
 
   struct {
     auto q() const { return 1.23; }
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(charge) {
 }
 
 BOOST_AUTO_TEST_CASE(mass) {
-  static_assert(Mass::is_linear, "");
+  static_assert(Mass::is_linear);
 
   struct {
     auto mass() const { return 1.23; }
@@ -61,13 +61,13 @@ BOOST_AUTO_TEST_CASE(mass) {
 }
 
 BOOST_AUTO_TEST_CASE(direct) {
-  static_assert(Direct::is_linear, "");
+  static_assert(Direct::is_linear);
 
   BOOST_CHECK(5 == Direct()(0, 5));
 }
 
 BOOST_AUTO_TEST_CASE(scaled) {
-  static_assert(Scaled::is_linear, "");
+  static_assert(Scaled::is_linear);
 
   auto const scales = std::unordered_map<int, double>{{0, 1.23}, {2, 3.45}};
   auto const default_val = 9.8;
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(scaled) {
 }
 
 BOOST_AUTO_TEST_CASE(viscous) {
-  static_assert(Viscous::is_linear, "");
+  static_assert(Viscous::is_linear);
 
   auto const gamma = 3.14159;
 

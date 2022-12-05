@@ -109,7 +109,7 @@ template <typename T> auto make_vector_of_variants(std::vector<T> const &v) {
 namespace detail {
 template <class T> struct is_type_visitor : boost::static_visitor<bool> {
   template <class U> constexpr bool operator()(const U &) const {
-    return std::is_same<T, U>::value;
+    return std::is_same_v<T, U>;
   }
 };
 } // namespace detail

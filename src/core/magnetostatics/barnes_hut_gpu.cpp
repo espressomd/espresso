@@ -53,7 +53,7 @@ DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,
 }
 
 template <class... Args, class... ArgRef>
-int call_kernel(void (*fp)(Args...), ArgRef &&... args) {
+int call_kernel(void (*fp)(Args...), ArgRef &&...args) {
   int error_code = ES_ERROR;
   try {
     fp(args...);

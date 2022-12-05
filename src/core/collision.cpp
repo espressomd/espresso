@@ -37,8 +37,6 @@
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <boost/algorithm/clamp.hpp>
-#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/serialization.hpp>
 
@@ -305,7 +303,8 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
            ((partner_ids[0] == id2) && (partner_ids[1] == id1));
   };
 
-  if (boost::algorithm::any_of(p.bonds(), [=](auto const &bond) {
+  auto const &bonds = p.bonds();
+  if (std::any_of(bonds.begin(), bonds.end(), [=](auto const &bond) {
         return is_collision_bond(bond) and has_same_partners(bond);
       })) {
     return;
@@ -319,8 +318,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
   /* vector from p to p2 */
   auto const vec2 = box_geo.get_mi_vector(p.pos(), p2.pos()).normalize();
 
-  auto const cosine =
-      boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
+  auto const cosine = std::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
 
   // Bond angle
   auto const phi = acos(cosine);

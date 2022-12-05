@@ -32,7 +32,7 @@ class ExternalField : public Constraint {
 
 public:
   template <typename... Args>
-  ExternalField(Args &&... args) : impl(std::forward<Args>(args)...) {}
+  ExternalField(Args &&...args) : impl(std::forward<Args>(args)...) {}
 
   const Coupling &coupling() const { return impl.coupling(); }
   const Field &field() const { return impl.field(); }

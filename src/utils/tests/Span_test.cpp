@@ -31,16 +31,16 @@ using Utils::Span;
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(const_expr_ctor) {
-  static_assert(4 == Span<int>(nullptr, 4).size(), "");
+  static_assert(4 == Span<int>(nullptr, 4).size());
   BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(array_ctor) {
-  BOOST_CHECK((std::is_constructible<Span<const int>, int[3]>::value));
-  BOOST_CHECK((std::is_constructible<Span<const int>, const int[3]>::value));
-  BOOST_CHECK(not(std::is_constructible<Span<int>, const int[3]>::value));
-  BOOST_CHECK((std::is_convertible<int[3], Span<const int>>::value));
-  BOOST_CHECK((std::is_convertible<const int[3], Span<const int>>::value));
+  BOOST_CHECK((std::is_constructible_v<Span<const int>, int[3]>));
+  BOOST_CHECK((std::is_constructible_v<Span<const int>, const int[3]>));
+  BOOST_CHECK(not(std::is_constructible_v<Span<int>, const int[3]>));
+  BOOST_CHECK((std::is_convertible_v<int[3], Span<const int>>));
+  BOOST_CHECK((std::is_convertible_v<const int[3], Span<const int>>));
 
   int a[4] = {1, 2, 3, 4};
   Span<int> s(a);
@@ -52,16 +52,14 @@ BOOST_AUTO_TEST_CASE(array_ctor) {
 BOOST_AUTO_TEST_CASE(ctor) {
   /* Container conversion rules */
   {
+    BOOST_CHECK((std::is_constructible_v<Span<const int>, std::vector<int>>));
     BOOST_CHECK(
-        (std::is_constructible<Span<const int>, std::vector<int>>::value));
-    BOOST_CHECK((
-        std::is_constructible<Span<const int>, const std::vector<int>>::value));
+        (std::is_constructible_v<Span<const int>, const std::vector<int>>));
     BOOST_CHECK(
-        not(std::is_constructible<Span<int>, const std::vector<int>>::value));
+        not(std::is_constructible_v<Span<int>, const std::vector<int>>));
+    BOOST_CHECK((std::is_convertible_v<std::vector<int>, Span<const int>>));
     BOOST_CHECK(
-        (std::is_convertible<std::vector<int>, Span<const int>>::value));
-    BOOST_CHECK(
-        (std::is_convertible<const std::vector<int>, Span<const int>>::value));
+        (std::is_convertible_v<const std::vector<int>, Span<const int>>));
   }
 
   /* from ptr + size */
@@ -115,14 +113,12 @@ BOOST_AUTO_TEST_CASE(make_span_) {
   using std::declval;
   using Utils::make_span;
 
-  static_assert(std::is_same<decltype(make_span(declval<int *>(),
-                                                declval<std::size_t>())),
-                             Span<int>>::value,
-                "");
-  static_assert(std::is_same<decltype(make_span(declval<const int *>(),
-                                                declval<std::size_t>())),
-                             Span<const int>>::value,
-                "");
+  static_assert(std::is_same_v<decltype(make_span(declval<int *>(),
+                                                  declval<std::size_t>())),
+                               Span<int>>);
+  static_assert(std::is_same_v<decltype(make_span(declval<const int *>(),
+                                                  declval<std::size_t>())),
+                               Span<const int>>);
 
   /* From pointer and size */
   {
@@ -145,14 +141,13 @@ BOOST_AUTO_TEST_CASE(make_const_span_) {
   using std::declval;
   using Utils::make_const_span;
 
-  static_assert(std::is_same<decltype(make_const_span(declval<int *>(),
-                                                      declval<std::size_t>())),
-                             Span<const int>>::value,
-                "");
-  static_assert(std::is_same<decltype(make_const_span(declval<const int *>(),
-                                                      declval<std::size_t>())),
-                             Span<const int>>::value,
-                "");
+  static_assert(std::is_same_v<decltype(make_const_span(
+                                   declval<int *>(), declval<std::size_t>())),
+                               Span<const int>>);
+  static_assert(
+      std::is_same_v<decltype(make_const_span(declval<const int *>(),
+                                              declval<std::size_t>())),
+                     Span<const int>>);
 
   {
     const int p = 5;

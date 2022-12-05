@@ -82,7 +82,6 @@ else()
   message(STATUS "Found CUDA installation: ${CUDA_DIR}")
 endif()
 set(CUDA_VERSION ${CUDAToolkit_VERSION})
-set(CUDA 1)
 
 target_compile_options(
   espresso_cuda_flags
@@ -103,7 +102,7 @@ target_compile_options(
   $<$<AND:$<VERSION_GREATER_EQUAL:${CMAKE_CUDA_COMPILER_VERSION},10>,$<OR:$<VERSION_LESS:${CMAKE_CUDA_COMPILER_VERSION},14>,$<VERSION_GREATER_EQUAL:${CUDA_VERSION},11.3.0>>>:--cuda-gpu-arch=sm_75>
 )
 
-function(add_gpu_library)
+function(espresso_add_gpu_library)
   set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
   set(oneValueArgs)
   set(multiValueArgs)

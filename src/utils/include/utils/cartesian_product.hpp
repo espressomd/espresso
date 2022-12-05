@@ -51,7 +51,7 @@ struct cart_prod_impl<Body, Head, Tail...> {
  * @param rng Ranges to form the product over
  */
 template <typename Body, typename... ForwardRange>
-void cartesian_product(const Body &op, const ForwardRange &... rng) {
+void cartesian_product(const Body &op, const ForwardRange &...rng) {
   detail::cart_prod_impl<Body, ForwardRange...>{}(rng..., op);
 }
 } // namespace Utils

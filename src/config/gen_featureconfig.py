@@ -58,6 +58,19 @@ hfile.write("""
 
 #include "config/cmake_config.hpp"
 
+// rename external features
+""")
+
+external_template = string.Template("""
+#if defined(ESPRESSO_BUILD_WITH_$feature)
+#undef ESPRESSO_BUILD_WITH_$feature
+#define $feature
+#endif
+""")
+for feature in sorted(defs.externals):
+    hfile.write(external_template.substitute(feature=feature))
+
+hfile.write("""
 /************************************/
 /* Handle definitions from MyConfig */
 /************************************/

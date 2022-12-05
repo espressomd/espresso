@@ -24,8 +24,9 @@
 #include "BondList.hpp"
 #include "Particle.hpp"
 
-#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/variant.hpp>
+
+#include <algorithm>
 
 /** @brief Checks both particles for a specific bond, even on ghost particles.
  *
@@ -37,8 +38,10 @@
 template <typename BondType>
 inline bool pair_bond_enum_exists_on(Particle const &p,
                                      Particle const &p_partner) {
-  return boost::algorithm::any_of(
-      p.bonds(), [partner_id = p_partner.id()](BondView const &bond) {
+  auto const &bonds = p.bonds();
+  return std::any_of(
+      bonds.begin(), bonds.end(),
+      [partner_id = p_partner.id()](BondView const &bond) {
         auto const &bond_ptr = bonded_ia_params.at(bond.bond_id());
         return (boost::get<BondType>(bond_ptr.get()) != nullptr) and
                (bond.partner_ids()[0] == partner_id);

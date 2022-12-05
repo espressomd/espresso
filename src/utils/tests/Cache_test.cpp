@@ -31,8 +31,8 @@ using Utils::Cache;
 
 BOOST_AUTO_TEST_CASE(types) {
   using cache_type = Cache<int, char>;
-  static_assert(std::is_same<cache_type::key_type, int>::value, "");
-  static_assert(std::is_same<cache_type::value_type, const char *>::value, "");
+  static_assert(std::is_same_v<cache_type::key_type, int>);
+  static_assert(std::is_same_v<cache_type::value_type, const char *>);
   BOOST_TEST_PASSPOINT();
 }
 

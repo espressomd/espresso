@@ -60,8 +60,8 @@ RDF::evaluate(Utils::Span<const Particle *const> particles1,
   auto const inv_bin_width = 1.0 / bin_width;
   std::vector<double> res(n_values(), 0.0);
   long int cnt = 0;
-  auto op = [=, &cnt, &res](const Particle *const p1,
-                            const Particle *const p2) {
+  auto op = [this, inv_bin_width, &cnt, &res](const Particle *const p1,
+                                              const Particle *const p2) {
     auto const dist = box_geo.get_mi_vector(p1->pos(), p2->pos()).norm();
     if (dist > min_r && dist < max_r) {
       auto const ind =

@@ -54,7 +54,7 @@ inline std::string simplify_symbol_variant(Variant const &v);
 
 /** @brief Simplify the demangled symbol of an object. */
 template <typename T> auto simplify_symbol(T const *) {
-  auto constexpr is_string = std::is_same<T, std::string>::value;
+  auto constexpr is_string = std::is_same_v<T, std::string>;
   auto const symbol_for_variant = Utils::demangle<Variant>();
   auto const name_for_variant = std::string("ScriptInterface::Variant");
   auto name = (is_string) ? std::string{"std::string"} : Utils::demangle<T>();
@@ -170,10 +170,10 @@ inline auto simplify_symbol_containee_variant(Variant const &v) {
  */
 template <class To, class From>
 using allow_conversion =
-    std::integral_constant<bool, std::is_same<To, From>::value ||
-                                     (std::is_convertible<To, From>::value &&
-                                      std::is_floating_point<To>::value &&
-                                      std::is_arithmetic<From>::value)>;
+    std::integral_constant<bool, std::is_same_v<To, From> ||
+                                     (std::is_convertible_v<To, From> &&
+                                      std::is_floating_point_v<To> &&
+                                      std::is_arithmetic_v<From>)>;
 
 template <class To> struct conversion_visitor : boost::static_visitor<To> {
   template <class From>
@@ -254,7 +254,7 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
   std::vector<T> operator()(std::vector<T> const &v) const { return v; }
 
   template <typename V = T,
-            std::enable_if_t<!std::is_same<V, Variant>::value, bool> = true>
+            std::enable_if_t<!std::is_same_v<V, Variant>, bool> = true>
   std::vector<T> operator()(std::vector<Variant> const &vv) const {
     std::vector<T> ret(vv.size());
 
@@ -285,7 +285,7 @@ struct GetMapOrEmpty : boost::static_visitor<std::unordered_map<K, T>> {
   }
 
   template <typename V = T,
-            std::enable_if_t<!std::is_same<V, Variant>::value, bool> = true>
+            std::enable_if_t<!std::is_same_v<V, Variant>, bool> = true>
   std::unordered_map<K, T>
   operator()(std::unordered_map<K, Variant> const &v) const {
     std::unordered_map<K, T> ret;
@@ -320,8 +320,7 @@ class bad_get_nullptr : public boost::bad_get {};
 template <typename T>
 struct get_value_helper<
     std::shared_ptr<T>,
-    typename std::enable_if<std::is_base_of<ObjectHandle, T>::value,
-                            void>::type> {
+    typename std::enable_if_t<std::is_base_of_v<ObjectHandle, T>, void>> {
   std::shared_ptr<T> operator()(Variant const &v) const {
     auto so_ptr = boost::get<ObjectRef>(v);
     if (!so_ptr) {
@@ -424,7 +423,7 @@ T get_value_or(VariantMap const &vals, std::string const &name,
  */
 template <typename T, typename... Types, typename... ArgNames>
 std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
-                                         ArgNames &&... args) {
+                                         ArgNames &&...args) {
   return std::make_shared<T>(
       get_value<Types>(vals, std::forward<ArgNames>(args))...);
 }

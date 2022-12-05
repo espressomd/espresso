@@ -31,7 +31,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
@@ -61,9 +60,9 @@ bool steepest_descent_step(const ParticleRange &particles) {
           f += Utils::sqr(p.force()[j]);
 
           // Positional increment, crop to maximum allowed by user
-          auto const dp = boost::algorithm::clamp(params.gamma * p.force()[j],
-                                                  -params.max_displacement,
-                                                  params.max_displacement);
+          auto const dp =
+              std::clamp(params.gamma * p.force()[j], -params.max_displacement,
+                         params.max_displacement);
 
           // Move particle
           p.pos()[j] += dp;
@@ -80,8 +79,8 @@ bool steepest_descent_step(const ParticleRange &particles) {
       auto const l = dq.norm();
       if (l > 0.0) {
         auto const axis = dq / l;
-        auto const angle = boost::algorithm::clamp(l, -params.max_displacement,
-                                                   params.max_displacement);
+        auto const angle =
+            std::clamp(l, -params.max_displacement, params.max_displacement);
 
         // Rotate the particle around axis dq by amount l
         local_rotate_particle(p, axis, angle);

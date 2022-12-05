@@ -93,8 +93,8 @@ struct LogHandle : public ObjectHandle {
 } // namespace Testing
 
 BOOST_AUTO_TEST_CASE(non_copyable) {
-  static_assert(!std::is_copy_constructible<ObjectHandle>::value, "");
-  static_assert(!std::is_copy_assignable<ObjectHandle>::value, "");
+  static_assert(!std::is_copy_constructible_v<ObjectHandle>);
+  static_assert(!std::is_copy_assignable_v<ObjectHandle>);
   BOOST_TEST_PASSPOINT();
 }
 

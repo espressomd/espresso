@@ -82,7 +82,7 @@ std::shared_ptr<boost::mpi::environment> mpi_init(int argc = 0,
  *  @param args    Local function arguments
  */
 template <class... Args, class... ArgRef>
-void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
+void mpi_call(void (*fp)(Args...), ArgRef &&...args) {
   Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
 }
 
@@ -93,7 +93,7 @@ void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
  *  @param args    Local function arguments
  */
 template <class... Args, class... ArgRef>
-void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
+void mpi_call_all(void (*fp)(Args...), ArgRef &&...args) {
   Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
 }
 
@@ -107,7 +107,7 @@ void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
  *  @param args    Local function arguments
  */
 template <class Tag, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
+auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&...args) {
   return Communication::mpiCallbacks().call(tag, fp,
                                             std::forward<ArgRef>(args)...);
 }
@@ -124,7 +124,7 @@ auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
  *  @param args    Local function arguments
  */
 template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
+auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&...args) {
   return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
                                             fp, std::forward<ArgRef>(args)...);
 }

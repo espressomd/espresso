@@ -119,8 +119,8 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
   node_index[7] = node_index[0] + slice_xy + slice_x + 1u;
 }
 
-Utils::Vector3i Lattice::local_index(Utils::Vector3i const &global_index) const
-    noexcept {
+Utils::Vector3i
+Lattice::local_index(Utils::Vector3i const &global_index) const noexcept {
   return global_index - local_index_offset +
          Utils::Vector3i::broadcast(halo_size);
 }

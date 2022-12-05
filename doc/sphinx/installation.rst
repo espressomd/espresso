@@ -48,7 +48,7 @@ are required to be able to compile and use |es|:
         The build system is based on CMake.
 
     C++ compiler
-        The C++ core of |es| needs to be built by a C++14-capable compiler.
+        The C++ core of |es| needs to be built by a C++17-capable compiler.
 
     Boost
         A number of advanced C++ features used by |es| are provided by Boost.
@@ -114,8 +114,18 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
-Later in the installation instructions, you will see CMake commands of the
-form ``cmake ..`` with optional arguments, such as ``cmake .. -D WITH_CUDA=ON``
+If you cannot install this package, for example because you are maintaining
+multiple CUDA versions, you will need to configure the binary and library
+paths before building the project, for example via environment variables:
+
+.. code-block:: bash
+
+    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-11.5"
+    export PATH="${CUDA_TOOLKIT_ROOT_DIR}/bin${PATH:+:$PATH}"
+    export LD_LIBRARY_PATH="${CUDA_TOOLKIT_ROOT_DIR}/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+Later in the installation instructions, you will see CMake commands of the form
+``cmake ..`` with optional arguments, such as ``cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 to activate CUDA. These commands may need to be adapted depending on which
 operating system and CUDA version you are using.
 
@@ -124,34 +134,30 @@ to compile sources that rely on ``std::function``. You can either use GCC 10:
 
 .. code-block:: bash
 
-    CC=gcc-10 CXX=g++-10 cmake .. -D WITH_CUDA=ON
+    CC=gcc-10 CXX=g++-10 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON
 
 or alternatively install Clang 12 as a replacement for nvcc and GCC:
 
 .. code-block:: bash
 
-    CC=clang-12 CXX=clang++-12 cmake .. -D WITH_CUDA=ON -D WITH_CUDA_COMPILER=clang
-
-On Ubuntu 20.04, the default GCC compiler is also too recent for nvcc and will
-generate compiler errors. You can either install an older version of GCC and
-select it with environment variables ``CC`` and ``CXX`` when building |es|,
-or edit the system header files as shown in the following
-`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`__.
+    CC=clang-12 CXX=clang++-12 cmake .. \
+      -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang
 
 On systems with multiple CUDA releases installed, it is possible to select a
 specific one by providing custom paths to the compiler and toolkit:
 
 .. code-block:: bash
 
-    CUDACXX=/usr/local/cuda-11.0/bin/nvcc \
-      cmake .. -D WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.0
+    CUDACXX=/usr/local/cuda-11.5/bin/nvcc \
+      cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.5
 
 Alternatively for Clang:
 
 .. code-block:: bash
 
-    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.0 \
-      cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang -DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.0
+    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
+      cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang \
+      -D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.5
 
 .. _Requirements for building the documentation:
 
@@ -741,36 +747,37 @@ in the :file:`CMakeLists.txt` file. Most options are boolean values
 
 The following options control features from external libraries:
 
-* ``WITH_CUDA``: Build with GPU support.
-* ``WITH_HDF5``: Build with HDF5 support.
-* ``WITH_SCAFACOS``: Build with ScaFaCoS support.
-* ``WITH_GSL``: Build with GSL support.
-* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
+* ``ESPRESSO_BUILD_WITH_CUDA``: Build with GPU support.
+* ``ESPRESSO_BUILD_WITH_HDF5``: Build with HDF5 support.
+* ``ESPRESSO_BUILD_WITH_FFTW``: Build with FFTW support.
+* ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.
+* ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
+* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
 
 The following options control code instrumentation:
 
-* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation markers
-* ``WITH_PROFILER``: Build with Caliper profiler annotations
-* ``WITH_MSAN``: Compile C++ code with memory sanitizer
-* ``WITH_ASAN``: Compile C++ code with address sanitizer
-* ``WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
-* ``WITH_COVERAGE``: Generate C++ code coverage reports when running |es|
-* ``WITH_COVERAGE_PYTHON``: Generate Python code coverage reports when running |es|
+* ``ESPRESSO_BUILD_WITH_VALGRIND_MARKERS``: Build with valgrind instrumentation markers
+* ``ESPRESSO_BUILD_WITH_PROFILER``: Build with Caliper profiler annotations
+* ``ESPRESSO_BUILD_WITH_MSAN``: Compile C++ code with memory sanitizer
+* ``ESPRESSO_BUILD_WITH_ASAN``: Compile C++ code with address sanitizer
+* ``ESPRESSO_BUILD_WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
+* ``ESPRESSO_BUILD_WITH_COVERAGE``: Generate C++ code coverage reports when running |es|
+* ``ESPRESSO_BUILD_WITH_COVERAGE_PYTHON``: Generate Python code coverage reports when running |es|
 
 The following options control how the project is built and tested:
 
-* ``WITH_CLANG_TIDY``: Run Clang-Tidy during compilation.
-* ``WITH_CPPCHECK``: Run Cppcheck during compilation.
-* ``WITH_CCACHE``: Enable compiler cache for faster rebuilds.
-* ``WITH_TESTS``: Enable C++ and Python tests.
-* ``WITH_CUDA_COMPILER`` (string): Select the CUDA compiler.
-* ``CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
-* ``TEST_TIMEOUT``: Test timeout.
+* ``ESPRESSO_BUILD_WITH_CLANG_TIDY``: Run Clang-Tidy during compilation.
+* ``ESPRESSO_BUILD_WITH_CPPCHECK``: Run Cppcheck during compilation.
+* ``ESPRESSO_BUILD_WITH_CCACHE``: Enable compiler cache for faster rebuilds.
+* ``ESPRESSO_BUILD_TESTS``: Enable C++ and Python tests.
+* ``ESPRESSO_CUDA_COMPILER`` (string): Select the CUDA compiler.
+* ``ESPRESSO_CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
+* ``ESPRESSO_TEST_TIMEOUT``: Test timeout.
 * ``ESPRESSO_ADD_OMPI_SINGLETON_WARNING``: Add a runtime warning in the
   pypresso and ipypresso scripts that is triggered in singleton mode
   with Open MPI version 4.x on unsupported NUMA environments
   (see :term:`MPI installation requirements <MPI>` for details).
-* ``MYCONFIG_NAME`` (string): Filename of the user-provided config file
+* ``ESPRESSO_MYCONFIG_NAME`` (string): Filename of the user-provided config file
 * ``MPIEXEC_PREFLAGS``, ``MPIEXEC_POSTFLAGS`` (strings): Flags passed to the
   ``mpiexec`` command in MPI-parallel tests and benchmarks.
 * ``CMAKE_CXX_FLAGS`` (string): Flags passed to the compilers.
@@ -783,19 +790,19 @@ by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
-    cmake -D WITH_HDF5=OFF ..
+    cmake -D ESPRESSO_BUILD_WITH_HDF5=OFF ..
 
 When an option is enabled, additional options may become available.
-For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
-``-D WITH_CUDA_COMPILER=<compiler_id>``, where ``<compiler_id>`` can be
-``nvcc`` (default) or ``clang``.
+For example with ``-D ESPRESSO_BUILD_WITH_CUDA=ON``, one can choose the CUDA
+compiler with ``-D ESPRESSO_CUDA_COMPILER=<compiler_id>``, where
+``<compiler_id>`` can be ``nvcc`` (default) or ``clang``.
 
 Environment variables can be passed to CMake. For example, to select Clang, use
-``CC=clang CXX=clang++ cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang``.
+``CC=clang CXX=clang++ cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang``.
 If you have multiple versions of the CUDA library installed, you can select the
-correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -DWITH_CUDA=ON``
+correct one with ``CUDA_BIN_PATH=/usr/local/cuda-11.5 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
-path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
+path with ``-D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.5``).
 
 .. _Build types and compiler flags:
 
@@ -816,8 +823,8 @@ Cluster users and HPC developers may be interested in manually editing the
 ``espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed
 by a series of conditionals to enable or disable compiler-specific flags.
-Compiler flags passed to CMake via the ``-DCMAKE_CXX_FLAGS`` option
-(such as ``cmake . -DCMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
+Compiler flags passed to CMake via the ``-D CMAKE_CXX_FLAGS`` option
+(such as ``cmake . -D CMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
 will appear in the compiler command before the flags in ``espresso_cpp_flags``,
 and will therefore have lower precedence.
 
@@ -840,9 +847,9 @@ external libraries that are downloaded automatically by CMake. When a
 network connection cannot be established due to firewall restrictions,
 the CMake logic needs editing:
 
-* ``WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder will be
-  a git submodule containing a :file:`.git` subfolder. To prevent CMake from
-  updating this submodule with git, delete the corresponding command with:
+* ``ESPRESSO_BUILD_WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder
+  will be a git submodule containing a :file:`.git` subfolder. To prevent CMake
+  from updating this submodule with git, delete the corresponding command with:
 
   .. code-block:: bash
 
@@ -851,8 +858,8 @@ the CMake logic needs editing:
   When installing a release version of |es|, no network communication
   is needed for HDF5.
 
-* ``WITH_STOKESIAN_DYNAMICS``: this library is installed using `FetchContent
-  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
+* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS``: this library is installed using
+  `FetchContent <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
   The repository URL can be found in the ``GIT_REPOSITORY`` field of the
   corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
   provides the commit. Clone this repository locally next to the |es|
@@ -897,7 +904,7 @@ targets are available:
 ``install``
     Install |es| in the path specified by the CMake variable
     ``CMAKE_INSTALL_PREFIX``. The path can be changed by calling CMake
-    with ``cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/espresso``. Do not use
+    with ``cmake .. -D CMAKE_INSTALL_PREFIX=/path/to/espresso``. Do not use
     ``make DESTDIR=/path/to/espresso install`` to install to a specific path,
     this will cause issues with the runtime path (RPATH) and will conflict
     with the CMake variable ``CMAKE_INSTALL_PREFIX`` if it has been set.
@@ -942,7 +949,7 @@ assertions. This is achieved by updating the CMake project and rebuilding
 
 .. code-block:: bash
 
-    cmake . -DCMAKE_BUILD_TYPE=RelWithAssert
+    cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
     make -j
 
 The resulting build will run slightly slower, but will produce an error
@@ -954,7 +961,7 @@ instrumentation:
 
 .. code-block:: bash
 
-    cmake . -DCMAKE_BUILD_TYPE=Debug
+    cmake . -D CMAKE_BUILD_TYPE=Debug
     make -j
 
 The resulting build will be quite slow but will allow many debugging tools
@@ -966,7 +973,7 @@ you can as a last resort activate sanitizers:
 
 .. code-block:: bash
 
-    cmake . -DWITH_ASAN=ON -DWITH_UBSAN=ON -DCMAKE_BUILD_TYPE=Release
+    cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON -D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=Release
     make -j
 
 The resulting build will be around 5 times slower that a debug build,

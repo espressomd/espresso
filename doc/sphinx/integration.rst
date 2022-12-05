@@ -323,7 +323,7 @@ Stokesian Dynamics
 .. note::
 
     Requires ``STOKESIAN_DYNAMICS`` external feature, enabled with
-    ``-DWITH_STOKESIAN_DYNAMICS=ON``.
+    ``-D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON``.
 
 :meth:`espressomd.integrate.IntegratorHandle.set_stokesian_dynamics`
 
@@ -681,7 +681,7 @@ Stokesian thermostat
 .. note::
 
     Requires ``STOKESIAN_DYNAMICS`` external feature, enabled with
-    ``-DWITH_STOKESIAN_DYNAMICS=ON``.
+    ``-D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON``.
 
 In order to thermalize a Stokesian Dynamics simulation, the SD thermostat
 needs to be activated via::

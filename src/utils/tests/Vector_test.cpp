@@ -231,14 +231,14 @@ BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
     using original_t = Vector<int, 1>;
     using decayed_t = typename Utils::decay_to_scalar<original_t>::type;
 
-    static_assert(std::is_same<int, decayed_t>::value, "");
+    static_assert(std::is_same_v<int, decayed_t>);
   }
   BOOST_TEST_PASSPOINT();
   {
     using original_t = Utils::Vector3i;
     using decayed_t = typename Utils::decay_to_scalar<original_t>::type;
 
-    static_assert(std::is_same<original_t, decayed_t>::value, "");
+    static_assert(std::is_same_v<original_t, decayed_t>);
   }
 }
 
@@ -252,15 +252,15 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
 BOOST_AUTO_TEST_CASE(products) {
   /* Types */
   {
-    static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}),
-                               double>::value,
-                  "");
-    static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3i{}),
-                               double>::value,
-                  "");
-    static_assert(std::is_same<decltype(Vector<std::complex<float>, 2>{} * 3.f),
-                               Vector<std::complex<float>, 2>>::value,
-                  "");
+    static_assert(
+        std::is_same_v<decltype(Utils::Vector3d{} * Utils::Vector3d{}),
+                       double>);
+    static_assert(
+        std::is_same_v<decltype(Utils::Vector3d{} * Utils::Vector3i{}),
+                       double>);
+    static_assert(
+        std::is_same_v<decltype(Vector<std::complex<float>, 2>{} * 3.f),
+                       Vector<std::complex<float>, 2>>);
   }
 
   /* Vector-Vector */
@@ -372,9 +372,8 @@ BOOST_AUTO_TEST_CASE(hadamard_division_test) {
 
 BOOST_AUTO_TEST_CASE(type_deduction) {
   static_assert(
-      std::is_same<
+      std::is_same_v<
           typename boost::qvm::deduce_vec<Utils::Vector<double, 3>, 3>::type,
-          Utils::Vector<double, 3>>::value,
-      "");
+          Utils::Vector<double, 3>>);
   BOOST_TEST_PASSPOINT();
 }

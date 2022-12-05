@@ -1,10 +1,20 @@
-# Find the Cython compiler.
 #
-# This code sets the following variables:
+# Find ``cython`` executable.
 #
-#  CYTHON_EXECUTABLE
+# This module will set the following variables in your project:
 #
-# See also UseCython.cmake
+#  ``CYTHON_EXECUTABLE``
+#    path to the ``cython`` program
+#
+#  ``CYTHON_VERSION``
+#    version of ``cython``
+#
+#  ``CYTHON_FOUND``
+#    true if the program was found
+#
+# Adapted from the scikit-build/scikit-build project. Original file available at:
+# https://github.com/scikit-build/scikit-build/blob/066200d/skbuild/resources/cmake/FindCython.cmake
+#
 
 #=============================================================================
 # Copyright 2011 Kitware, Inc.
@@ -22,15 +32,54 @@
 # limitations under the License.
 #=============================================================================
 
-set(CYTHON_EXECUTABLE ${Python_EXECUTABLE} -m cython)
-execute_process(COMMAND ${CYTHON_EXECUTABLE} -V
-                ERROR_VARIABLE CYTHON_OUTPUT RESULT_VARIABLE CYTHON_STATUS OUTPUT_QUIET)
-if(CYTHON_STATUS EQUAL 0)
-  string(REGEX REPLACE "^Cython version ([0-9]+\\.[0-9\\.]+).*" "\\1" CYTHON_VERSION "${CYTHON_OUTPUT}")
+# Use the Cython executable that lives next to the Python executable
+# if it is a local installation.
+if(Python_EXECUTABLE)
+  get_filename_component(_python_path ${Python_EXECUTABLE} PATH)
+elseif(Python3_EXECUTABLE)
+  get_filename_component(_python_path ${Python3_EXECUTABLE} PATH)
+elseif(DEFINED PYTHON_EXECUTABLE)
+  get_filename_component(_python_path ${PYTHON_EXECUTABLE} PATH)
 endif()
 
-include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( Cython REQUIRED_VARS CYTHON_EXECUTABLE
-                                   VERSION_VAR CYTHON_VERSION)
+if(DEFINED _python_path)
+  find_program(CYTHON_EXECUTABLE
+               NAMES cython cython.bat cython3
+               HINTS ${_python_path}
+               DOC "path to the cython executable")
+else()
+  find_program(CYTHON_EXECUTABLE
+               NAMES cython cython.bat cython3
+               DOC "path to the cython executable")
+endif()
 
-mark_as_advanced( CYTHON_EXECUTABLE )
+if(CYTHON_EXECUTABLE)
+  set(CYTHON_version_command ${CYTHON_EXECUTABLE} --version)
+
+  execute_process(COMMAND ${CYTHON_version_command}
+                  OUTPUT_VARIABLE CYTHON_version_output
+                  ERROR_VARIABLE CYTHON_version_error
+                  RESULT_VARIABLE CYTHON_version_result
+                  OUTPUT_STRIP_TRAILING_WHITESPACE
+                  ERROR_STRIP_TRAILING_WHITESPACE)
+
+  if(NOT ${CYTHON_version_result} EQUAL 0)
+    set(_error_msg "Command \"${CYTHON_version_command}\" failed with")
+    set(_error_msg "${_error_msg} output:\n${CYTHON_version_error}")
+    message(SEND_ERROR "${_error_msg}")
+  else()
+    if("${CYTHON_version_output}" MATCHES "^[Cc]ython version ([^,]+)")
+      set(CYTHON_VERSION "${CMAKE_MATCH_1}")
+    else()
+      if("${CYTHON_version_error}" MATCHES "^[Cc]ython version ([^,]+)")
+        set(CYTHON_VERSION "${CMAKE_MATCH_1}")
+      endif()
+    endif()
+  endif()
+endif()
+
+include(FindPackageHandleStandardArgs)
+# add HANDLE_VERSION_RANGE in CMake 3.19
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Cython REQUIRED_VARS CYTHON_EXECUTABLE VERSION_VAR CYTHON_VERSION)
+
+mark_as_advanced(CYTHON_EXECUTABLE)

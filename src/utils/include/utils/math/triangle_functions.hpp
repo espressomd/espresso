@@ -22,8 +22,7 @@
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
 
-#include <boost/algorithm/clamp.hpp>
-
+#include <algorithm>
 #include <cmath>
 
 namespace Utils {
@@ -81,9 +80,8 @@ inline double angle_btw_triangles(const Vector3d &P1, const Vector3d &P2,
                                   const Vector3d &P3, const Vector3d &P4) {
   auto const normal1 = get_n_triangle(P2, P1, P3);
   auto const normal2 = get_n_triangle(P2, P3, P4);
-  auto const cosine = boost::algorithm::clamp(
-      normal1 * normal2 / std::sqrt(normal1.norm2() * normal2.norm2()), -1.0,
-      1.0);
+  auto const denominator = std::sqrt(normal1.norm2() * normal2.norm2());
+  auto const cosine = std::clamp(normal1 * normal2 / denominator, -1., 1.);
   // The angle between the faces (not considering
   // the orientation, always less or equal to Pi)
   // is equal to Pi minus angle between the normals

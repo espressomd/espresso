@@ -111,8 +111,8 @@ public:
    * @brief Calculate the node-local index.
    * @param global_index Index into global lattice.
    */
-  Utils::Vector3i local_index(Utils::Vector3i const &global_index) const
-      noexcept;
+  Utils::Vector3i
+  local_index(Utils::Vector3i const &global_index) const noexcept;
 };
 
 #endif /* CORE_LB_LATTICE_HPP */

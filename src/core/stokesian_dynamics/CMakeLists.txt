@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if(STOKESIAN_DYNAMICS)
+if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
   target_sources(espresso_core
                  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sd_interface.cpp)
   target_link_libraries(espresso_core PRIVATE StokesianDynamics::sd_cpu)

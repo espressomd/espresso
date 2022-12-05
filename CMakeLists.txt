@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.18)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -34,12 +34,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # C++ standard
 enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to be used")
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to be used")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # require minimal compiler versions
-macro(minimal_compiler_version)
+macro(espresso_minimal_compiler_version)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "${ARGV0}" AND CMAKE_CXX_COMPILER_VERSION
                                                    VERSION_LESS "${ARGV1}")
     message(FATAL_ERROR "Unsupported compiler ${CMAKE_CXX_COMPILER_ID} \
@@ -47,16 +47,16 @@ macro(minimal_compiler_version)
   endif()
 endmacro()
 
-minimal_compiler_version("GNU" 7.0.0)
-minimal_compiler_version("Clang" 8.0.0)
-minimal_compiler_version("AppleClang" 11.0.0)
-minimal_compiler_version("Intel" 18.0)
-minimal_compiler_version("IntelLLVM" 2021.0)
+espresso_minimal_compiler_version("GNU" 8.0.0)
+espresso_minimal_compiler_version("Clang" 9.0.0)
+espresso_minimal_compiler_version("AppleClang" 11.0.0)
+espresso_minimal_compiler_version("Intel" 18.0)
+espresso_minimal_compiler_version("IntelLLVM" 2021.0)
 
 include(FeatureSummary)
 project(ESPResSo)
 include(GNUInstallDirs)
-include(option_enum)
+include(espresso_option_enum)
 if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
@@ -69,7 +69,7 @@ set(PROJECT_VERSION "4.3-dev")
 #
 
 # Select the build type
-option_enum(
+espresso_option_enum(
   varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release"
   possible_values
   "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage;RelWithAssert")
@@ -83,31 +83,35 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 # ##############################################################################
 
-option(WITH_PYTHON "Build with Python bindings" ON)
-option(WITH_GSL "Build with GSL support" OFF)
-option(WITH_CUDA "Build with GPU support" OFF)
-option(WITH_HDF5 "Build with HDF5 support" OFF)
-option(WITH_TESTS "Enable tests" ON)
-option(WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
-option(WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics" OFF)
-option(WITH_BENCHMARKS "Enable benchmarks" OFF)
-option(WITH_VALGRIND_INSTRUMENTATION
+option(ESPRESSO_BUILD_WITH_PYTHON "Build with Python bindings" ON)
+option(ESPRESSO_BUILD_WITH_GSL "Build with GSL support" OFF)
+option(ESPRESSO_BUILD_WITH_FFTW "Build with FFTW support" ON)
+option(ESPRESSO_BUILD_WITH_CUDA "Build with GPU support" OFF)
+option(ESPRESSO_BUILD_WITH_HDF5 "Build with HDF5 support" OFF)
+option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
+option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
+option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
+       OFF)
+option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
+option(ESPRESSO_BUILD_WITH_VALGRIND_MARKERS
        "Build with valgrind instrumentation markers" OFF)
-option(WITH_CPPCHECK "Run Cppcheck during compilation" OFF)
+option(ESPRESSO_BUILD_WITH_CPPCHECK "Run Cppcheck during compilation" OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
+  option(ESPRESSO_BUILD_WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
                                             "GNU")
-  option(WITH_COVERAGE "Generate code coverage report for C++ code" OFF)
-  option(WITH_COVERAGE_PYTHON "Generate code coverage report for Python code"
+  option(ESPRESSO_BUILD_WITH_COVERAGE
+         "Generate code coverage report for C++ code" OFF)
+  option(ESPRESSO_BUILD_WITH_COVERAGE_PYTHON
+         "Generate code coverage report for Python code" OFF)
+  option(ESPRESSO_BUILD_WITH_ASAN "Build with address sanitizer" OFF)
+  option(ESPRESSO_BUILD_WITH_UBSAN "Build with undefined behavior sanitizer"
          OFF)
-  option(WITH_ASAN "Build with address sanitizer" OFF)
-  option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
   option(
-    WITH_MSAN
+    ESPRESSO_BUILD_WITH_MSAN
     "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)"
     OFF)
 endif()
@@ -115,14 +119,17 @@ option(
   ESPRESSO_ADD_OMPI_SINGLETON_WARNING
   "Add a runtime warning in the pypresso script for NUMA architectures that aren't supported in singleton mode by Open MPI 4.x"
   ON)
-option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
-option(WITH_CCACHE "Use ccache compiler invocation." OFF)
-option(WITH_PROFILER "Enable profiler annotations." OFF)
-option(INSIDE_DOCKER "Enable when running inside Docker." OFF)
-set(TEST_TIMEOUT "300" CACHE STRING
-                             "Timeout in seconds for each testsuite test")
+option(ESPRESSO_WARNINGS_ARE_ERRORS
+       "Treat warnings as errors during compilation" OFF)
+option(ESPRESSO_BUILD_WITH_CCACHE "Use ccache compiler invocation." OFF)
+option(ESPRESSO_BUILD_WITH_PROFILER "Build with Caliper profiler annotations."
+       OFF)
+option(ESPRESSO_INSIDE_DOCKER "Set this to ON when running inside Docker." OFF)
+mark_as_advanced(ESPRESSO_INSIDE_DOCKER)
+set(ESPRESSO_TEST_TIMEOUT "300"
+    CACHE STRING "Timeout in seconds for each testsuite test")
 
-if(WITH_CCACHE)
+if(ESPRESSO_BUILD_WITH_CCACHE)
   find_program(CCACHE_PROGRAM ccache REQUIRED)
   if(CCACHE_PROGRAM)
     message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
@@ -135,11 +142,11 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # choose the name of the config file
-set(MYCONFIG_NAME "myconfig.hpp" CACHE STRING
-                                       "Default name of the local config file")
+set(ESPRESSO_MYCONFIG_NAME "myconfig.hpp"
+    CACHE STRING "Default name of the local config file")
 
 # Check which config file to use
-include(MyConfig)
+include(espresso_myconfig)
 
 #
 # Pretty function
@@ -148,7 +155,7 @@ include(MyConfig)
 include(CheckCXXSourceCompiles)
 
 # cross-platform macro to print the function name in error messages
-set(PRETTY_FUNCTION_EXTENSION __func__)
+set(ESPRESSO_PRETTY_FUNCTION_EXTENSION __func__)
 
 # search for a supported compiler extension that prints the function name as
 # well as its list of arguments, return type and namespace
@@ -159,7 +166,7 @@ foreach(func_name __PRETTY_FUNCTION__ __FUNCSIG__ __FUNCTION__)
      int main() { std::string(${func_name}); }
      " result${func_name})
   if(result${func_name})
-    set(PRETTY_FUNCTION_EXTENSION ${func_name})
+    set(ESPRESSO_PRETTY_FUNCTION_EXTENSION ${func_name})
     break()
   endif(result${func_name})
 endforeach()
@@ -169,34 +176,36 @@ endforeach()
 #
 
 # CUDA compiler
-if(WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA)
   enable_language(CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-  set(MINIMAL_CUDA_VERSION 10.0)
-  find_package(CUDAToolkit ${MINIMAL_CUDA_VERSION} REQUIRED)
-  option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
-              default_value "nvcc" possible_values "nvcc;clang")
-  if(WITH_CUDA_COMPILER STREQUAL "nvcc")
-    find_package(CUDACompilerNVCC ${MINIMAL_CUDA_VERSION} REQUIRED)
-  elseif(WITH_CUDA_COMPILER STREQUAL "clang")
-    if(WITH_COVERAGE)
+  set(ESPRESSO_MINIMAL_CUDA_VERSION 11.0)
+  find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
+  espresso_option_enum(
+    varname "ESPRESSO_CUDA_COMPILER" help_text "CUDA compiler" default_value
+    "nvcc" possible_values "nvcc;clang")
+  if(ESPRESSO_CUDA_COMPILER STREQUAL "nvcc")
+    find_package(CUDACompilerNVCC ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
+  elseif(ESPRESSO_CUDA_COMPILER STREQUAL "clang")
+    if(ESPRESSO_BUILD_WITH_COVERAGE)
       message(
         FATAL_ERROR
           "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
     find_package(CUDACompilerClang 9.0 REQUIRED)
   else()
-    message(FATAL_ERROR "Unknown CUDA compiler '${WITH_CUDA_COMPILER}'")
+    message(FATAL_ERROR "Unknown CUDA compiler '${ESPRESSO_CUDA_COMPILER}'")
   endif()
-endif(WITH_CUDA)
+endif()
 
 # Python interpreter and Cython interface library
-if(WITH_PYTHON)
-  find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 0.29.14 REQUIRED)
+if(ESPRESSO_BUILD_WITH_PYTHON)
+  find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development NumPy)
+  # use version range 0.29.21...<3.0.0 in CMake 3.19
+  find_package(Cython 0.29.21 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
-endif(WITH_PYTHON)
+endif()
 
 #
 # Installation folders
@@ -211,7 +220,7 @@ set(ESPRESSO_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}")
 set(ESPRESSO_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 # python site-packages, can be overriden with CMake options
-if(WITH_PYTHON)
+if(ESPRESSO_BUILD_WITH_PYTHON)
   if(NOT ESPRESSO_INSTALL_PYTHON)
     if(CMAKE_INSTALL_PREFIX STREQUAL "/")
       set(ESPRESSO_INSTALL_PYTHON "${Python_SITEARCH}")
@@ -229,13 +238,12 @@ endif()
 # Libraries
 #
 
-find_package(FFTW3)
-if(FFTW3_FOUND)
-  set(FFTW 3)
-endif(FFTW3_FOUND)
+if(ESPRESSO_BUILD_WITH_FFTW)
+  find_package(FFTW3 REQUIRED)
+endif()
 
 # We need the parallel hdf5 version!
-if(WITH_HDF5)
+if(ESPRESSO_BUILD_WITH_HDF5)
   # The FindHDF5 function will fall back to the serial version if no parallel
   # version was found, and print to the CMake log that HDF5 was found. There is
   # no QUIET argument to override that message. This can be confusing to people
@@ -245,19 +253,17 @@ if(WITH_HDF5)
   find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
   if(HDF5_FOUND)
     if(HDF5_IS_PARALLEL)
-      set(H5MD 1)
       add_feature_info(HDF5 ON "parallel")
     else()
-      unset(H5MD)
       set(HDF5_FOUND FALSE)
       message(FATAL_ERROR "HDF5 parallel version not found.")
-    endif(HDF5_IS_PARALLEL)
-  endif(HDF5_FOUND)
-endif(WITH_HDF5)
+    endif()
+  endif()
+endif()
 
 # Check for the h5xx submodule and try to check it out if not found or update it
 # if found.
-if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+if(ESPRESSO_BUILD_WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
   # Try to find git
   find_package(Git)
   if(GIT_FOUND)
@@ -271,25 +277,16 @@ if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
   endif()
 endif()
 
-if(WITH_SCAFACOS)
+if(ESPRESSO_BUILD_WITH_SCAFACOS)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(SCAFACOS scafacos REQUIRED)
-  if(SCAFACOS_FOUND)
-    set(SCAFACOS 1)
-  endif(SCAFACOS_FOUND)
-endif(WITH_SCAFACOS)
+endif()
 
-if(WITH_GSL)
+if(ESPRESSO_BUILD_WITH_GSL)
   find_package(GSL REQUIRED)
-else()
-  find_package(GSL)
-endif(WITH_GSL)
+endif()
 
-if(GSL_FOUND)
-  set(GSL 1)
-endif(GSL_FOUND)
-
-if(WITH_STOKESIAN_DYNAMICS)
+if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
   include(FetchContent)
   FetchContent_Declare(
@@ -303,17 +300,16 @@ if(WITH_STOKESIAN_DYNAMICS)
     add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
                      ${stokesian_dynamics_BINARY_DIR})
   endif()
-endif(WITH_STOKESIAN_DYNAMICS)
+endif()
 
-if(WITH_VALGRIND_INSTRUMENTATION)
+if(ESPRESSO_BUILD_WITH_VALGRIND_MARKERS)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(VALGRIND valgrind REQUIRED)
   if(VALGRIND_FOUND)
-    set(VALGRIND_INSTRUMENTATION 1)
     message(STATUS ${VALGRIND_INCLUDE_DIRS})
     include_directories(SYSTEM ${VALGRIND_INCLUDE_DIRS})
-  endif(VALGRIND_FOUND)
-endif(WITH_VALGRIND_INSTRUMENTATION)
+  endif()
+endif()
 
 #
 # MPI
@@ -322,23 +318,28 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 find_package(MPI 3.0 REQUIRED)
 include(espresso_get_mpiexec_vendor)
 espresso_get_mpiexec_vendor()
-message(
-  STATUS
-    "Found ${ESPRESSO_MPIEXEC_VENDOR}: ${MPIEXEC} (version \"${ESPRESSO_MPIEXEC_VERSION}\")"
-)
+if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL
+   ${ESPRESSO_MINIMAL_MPIEXEC_VERSION})
+  message(
+    STATUS
+      "Found ${ESPRESSO_MPIEXEC_VENDOR}: ${MPIEXEC} (found suitable version \"${ESPRESSO_MPIEXEC_VERSION}\", minimum required is \"${ESPRESSO_MINIMAL_MPIEXEC_VERSION}\")"
+  )
+else()
+  message(
+    FATAL_ERROR
+      "Could not find a suitable ${ESPRESSO_MPIEXEC_VENDOR} implementation (found unsuitable version \"${ESPRESSO_MPIEXEC_VERSION}\", minimum required is \"${ESPRESSO_MINIMAL_MPIEXEC_VERSION}\")"
+  )
+endif()
 
 # OpenMPI checks the number of processes against the number of CPUs
-set(MPIEXEC_OVERSUBSCRIBE "")
+set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "")
 # Open MPI 4.x has a bug on NUMA archs that prevents running in singleton mode
 set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA OFF)
 set(ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN "AMD (EPYC|Ryzen)")
 
 if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI")
-  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL 2.0.0)
-    set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
-  endif()
-  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_GREATER_EQUAL 4.0
-     AND ${ESPRESSO_MPIEXEC_VERSION} VERSION_LESS 5.0)
+  set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+  if(${ESPRESSO_MPIEXEC_VERSION} VERSION_LESS 5.0)
     if(NOT DEFINED ESPRESSO_CPU_MODEL_NAME)
       if(CMAKE_SYSTEM_NAME STREQUAL Linux)
         if(EXISTS /proc/cpuinfo)
@@ -367,15 +368,16 @@ endif()
 # base folder is deleted upon completion of a job, other jobs will fail when
 # attempting to create subdirectories in the base folder.
 # https://github.com/open-mpi/ompi/issues/8510
-if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI" AND INSIDE_DOCKER)
+if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI" AND ESPRESSO_INSIDE_DOCKER)
   cmake_host_system_information(RESULT hostname QUERY HOSTNAME)
-  function(set_mpiexec_tmpdir)
-    set(MPIEXEC_TMPDIR --mca orte_tmpdir_base
-                       "/tmp/ompi.${hostname}.$ENV{USER}.${ARGV0}" PARENT_SCOPE)
+  function(espresso_set_mpiexec_tmpdir)
+    set(ESPRESSO_MPIEXEC_TMPDIR --mca orte_tmpdir_base
+                                "/tmp/ompi.${hostname}.$ENV{USER}.${ARGV0}"
+        PARENT_SCOPE)
   endfunction()
 else()
-  function(set_mpiexec_tmpdir)
-    set(MPIEXEC_TMPDIR "" PARENT_SCOPE)
+  function(espresso_set_mpiexec_tmpdir)
+    set(ESPRESSO_MPIEXEC_TMPDIR "" PARENT_SCOPE)
   endfunction()
 endif()
 
@@ -385,11 +387,11 @@ endif()
 
 list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
 endif()
 
-find_package(Boost 1.69.0 REQUIRED ${BOOST_COMPONENTS})
+find_package(Boost 1.74.0 REQUIRED ${BOOST_COMPONENTS})
 
 #
 # Paths
@@ -406,7 +408,7 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 add_library(espresso_coverage_flags INTERFACE)
 add_library(espresso::coverage_flags ALIAS espresso_coverage_flags)
-if(WITH_COVERAGE)
+if(ESPRESSO_BUILD_WITH_COVERAGE)
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(
       espresso_coverage_flags INTERFACE -g -fprofile-instr-generate
@@ -427,7 +429,7 @@ target_compile_options(
     -Wall
     -Wextra
     -pedantic
-    $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+    $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:-Werror>
     # add extra warnings
     $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
     $<$<CXX_COMPILER_ID:Clang>:-Wrange-loop-analysis>
@@ -471,24 +473,24 @@ set(CMAKE_MACOSX_RPATH TRUE)
 # Sanitizers
 #
 
-if(WITH_ASAN AND WITH_MSAN)
+if(ESPRESSO_BUILD_WITH_ASAN AND ESPRESSO_BUILD_WITH_MSAN)
   message(
     FATAL_ERROR
       "Address sanitizer and memory sanitizer cannot be enabled simultaneously")
 endif()
-if(WITH_ASAN)
+if(ESPRESSO_BUILD_WITH_ASAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
   target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=address
                                                       -fno-omit-frame-pointer)
   target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=address)
 endif()
-if(WITH_MSAN)
+if(ESPRESSO_BUILD_WITH_MSAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
   target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=memory
                                                       -fno-omit-frame-pointer)
   target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=memory)
 endif()
-if(WITH_UBSAN)
+if(ESPRESSO_BUILD_WITH_UBSAN)
   target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=undefined)
   target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=undefined)
 endif()
@@ -499,12 +501,12 @@ target_link_libraries(espresso_cpp_flags INTERFACE espresso::coverage_flags)
 # Static analysis
 #
 
-if(WITH_CLANG_TIDY)
+if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
   set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
 
-if(WITH_CPPCHECK)
+if(ESPRESSO_BUILD_WITH_CPPCHECK)
   find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
   if(NOT CMAKE_CXX_CPPCHECK)
     message(FATAL_ERROR "Could not find the program cppcheck.")
@@ -512,7 +514,7 @@ if(WITH_CPPCHECK)
   list(APPEND CMAKE_CXX_CPPCHECK "--enable=all"
        "--std=c++${CMAKE_CXX_STANDARD}" "--quiet" "--inline-suppr"
        "--suppressions-list=${CMAKE_CURRENT_SOURCE_DIR}/.cppcheck")
-  if(WARNINGS_ARE_ERRORS)
+  if(ESPRESSO_WARNINGS_ARE_ERRORS)
     list(APPEND CMAKE_CXX_CPPCHECK "--error-exitcode=2")
   endif()
 endif()
@@ -521,22 +523,23 @@ endif()
 # Testing
 #
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   enable_testing()
   add_custom_target(check)
-  set(CTEST_ARGS ""
+  set(ESPRESSO_CTEST_ARGS ""
       CACHE STRING
             "Extra arguments to give to ctest calls (separated by semicolons)")
-  set(TEST_NP "4" CACHE STRING "Maximal number of MPI ranks to use per test")
-  if(WITH_PYTHON)
+  set(ESPRESSO_TEST_NP "4" CACHE STRING
+                                 "Maximal number of MPI ranks to use per test")
+  if(ESPRESSO_BUILD_WITH_PYTHON)
     add_subdirectory(testsuite)
-  endif(WITH_PYTHON)
-endif(WITH_TESTS)
+  endif()
+endif()
 
-if(WITH_BENCHMARKS)
+if(ESPRESSO_BUILD_BENCHMARKS)
   add_custom_target(benchmark)
   add_subdirectory(maintainer/benchmarks)
-endif(WITH_BENCHMARKS)
+endif()
 
 #
 # Subdirectories

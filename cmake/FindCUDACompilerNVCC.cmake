@@ -23,7 +23,6 @@
 # `add_library()` wrapper function named `add_gpu_library()`.
 
 set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
-set(CUDA 1)
 
 execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
                 OUTPUT_VARIABLE NVCC_VERSION_STRING)
@@ -35,7 +34,7 @@ string(REGEX
 get_filename_component(CMAKE_CUDA_COMPILER_TOOLKIT "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc" REALPATH)
 get_filename_component(CMAKE_CUDA_COMPILER_RESOLVED "${CMAKE_CUDA_COMPILER}" REALPATH)
 if(NOT "${CMAKE_CUDA_COMPILER_TOOLKIT}" STREQUAL "${CMAKE_CUDA_COMPILER_RESOLVED}"
-   AND NOT INSIDE_DOCKER)
+   AND NOT ESPRESSO_INSIDE_DOCKER)
   get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CMAKE_CUDA_COMPILER}" DIRECTORY)
   get_filename_component(NVCC_EXECUTABLE_DIRNAME "${NVCC_EXECUTABLE_DIRNAME}" DIRECTORY)
   message(
@@ -60,21 +59,21 @@ target_compile_options(
   $<$<CONFIG:Coverage>:-Xptxas=-O3 -Xcompiler=-Og,-g>
   $<$<CONFIG:RelWithAssert>:-Xptxas=-O3 -Xcompiler=-O3,-g>
   "--compiler-bindir=${CMAKE_CXX_COMPILER}"
-  $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
+  $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
   $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
 )
 
-function(add_gpu_library)
+function(espresso_add_gpu_library)
   add_library(${ARGV})
-  set(GPU_TARGET_NAME ${ARGV0})
-  set_target_properties(${GPU_TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${GPU_TARGET_NAME} PRIVATE espresso::cuda_flags)
+  set(TARGET_NAME ${ARGV0})
+  set_target_properties(${TARGET_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+  target_link_libraries(${TARGET_NAME} PRIVATE espresso::cuda_flags)
   list(APPEND cuda_archs 75) # RTX-2000 series (Turing)
   list(APPEND cuda_archs 61) # GTX-1000 series (Pascal)
   if(CMAKE_CUDA_COMPILER_VERSION LESS 11)
     list(APPEND cuda_archs 52) # GTX-900 series (Maxwell)
   endif()
-  set_target_properties(${GPU_TARGET_NAME} PROPERTIES CUDA_ARCHITECTURES "${cuda_archs}")
+  set_target_properties(${TARGET_NAME} PROPERTIES CUDA_ARCHITECTURES "${cuda_archs}")
 endfunction()
 
 include(FindPackageHandleStandardArgs)

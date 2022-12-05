@@ -42,7 +42,7 @@ macro(PYTHON_SCRIPTS_TEST)
   set_tests_properties(${TEST_NAME} PROPERTIES FIXTURES_REQUIRED
                                                IMPORTLIB_WRAPPER)
   set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
-  if("gpu" IN_LIST TEST_LABELS AND WITH_CUDA)
+  if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 endmacro(PYTHON_SCRIPTS_TEST)

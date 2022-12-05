@@ -46,8 +46,7 @@ class LBProfileObservable
 
 public:
   static_assert(
-      std::is_base_of<::Observables::LBProfileObservable, CoreLBObs>::value,
-      "");
+      std::is_base_of_v<::Observables::LBProfileObservable, CoreLBObs>);
   using Base::Base;
   LBProfileObservable() {
     this->add_parameters(

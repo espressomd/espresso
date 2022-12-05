@@ -8,9 +8,9 @@
 #
 
 if test -n "$PYTHONPATH"; then
-  PYTHONPATH="@PYTHON_DIR@:$PYTHONPATH"
+  PYTHONPATH="@ESPRESSO_PYTHON_DIR@:$PYTHONPATH"
 else
-  PYTHONPATH="@PYTHON_DIR@"
+  PYTHONPATH="@ESPRESSO_PYTHON_DIR@"
 fi
 export PYTHONPATH
 
@@ -23,29 +23,29 @@ if [ "@ESPRESSO_ADD_OMPI_SINGLETON_WARNING@" = "ON" ] && [ "@ESPRESSO_MPIEXEC_GU
   fi
 fi
 
-if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@WITH_ASAN@" = "ON" ]; then
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@ESPRESSO_BUILD_WITH_ASAN@" = "ON" ]; then
   asan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=address 2>&1 | grep -o '[" ][^" ]*libclang_rt.asan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
   export DYLD_INSERT_LIBRARIES="$asan_lib"
   for lib in $asan_lib; do
       test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
   done
 fi
-if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@WITH_UBSAN@" = "ON" ] && [ "@WITH_ASAN@" != "ON" ]; then
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@ESPRESSO_BUILD_WITH_UBSAN@" = "ON" ] && [ "@ESPRESSO_BUILD_WITH_ASAN@" != "ON" ]; then
   ubsan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=undefined 2>&1 | grep -o '[" ][^" ]*libclang_rt.ubsan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
   for lib in $ubsan_lib; do
     test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
   done
 fi
 export LD_PRELOAD
-if [ "@WITH_UBSAN@" = "ON" ]; then
+if [ "@ESPRESSO_BUILD_WITH_UBSAN@" = "ON" ]; then
   export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/maintainer/CI/ubsan.supp\" $UBSAN_OPTIONS"
-  if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
+  if [ "@ESPRESSO_WARNINGS_ARE_ERRORS@" = "ON" ]; then
     export UBSAN_OPTIONS="halt_on_error=1 $UBSAN_OPTIONS"
   fi
 fi
-if [ "@WITH_ASAN@" = "ON" ]; then
+if [ "@ESPRESSO_BUILD_WITH_ASAN@" = "ON" ]; then
   ASAN_OPTIONS="protect_shadow_gap=0 allocator_may_return_null=1 $ASAN_OPTIONS"
-  if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
+  if [ "@ESPRESSO_WARNINGS_ARE_ERRORS@" = "ON" ]; then
     ASAN_OPTIONS="halt_on_error=1 $ASAN_OPTIONS"
   fi
   if [ "$1" = "--leaks" ]; then
@@ -55,19 +55,19 @@ if [ "@WITH_ASAN@" = "ON" ]; then
   fi
   export ASAN_OPTIONS
 fi
-if [ "@WITH_MSAN@" = "ON" ] && [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
+if [ "@ESPRESSO_BUILD_WITH_MSAN@" = "ON" ] && [ "@ESPRESSO_WARNINGS_ARE_ERRORS@" = "ON" ]; then
   export MSAN_OPTIONS="halt_on_error=1 $MSAN_OPTIONS"
 fi
 
 case "$1" in
     --gdb)
         shift
-        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" --args "@Python_EXECUTABLE@" "$@"
-        exec gdb --args "@PYTHON_FRONTEND@" "$@"
+        [ "@ESPRESSO_PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" --args "@Python_EXECUTABLE@" "$@"
+        exec gdb --args "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --lldb)
         shift
-        exec lldb -- "@PYTHON_FRONTEND@" "$@"
+        exec lldb -- "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --coverage)
         shift
@@ -75,43 +75,43 @@ case "$1" in
         ;;
     --valgrind)
         shift
-        exec valgrind --leak-check=full "@PYTHON_FRONTEND@" "$@"
+        exec valgrind --leak-check=full "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-gdb)
         shift
-        exec cuda-gdb --args "@PYTHON_FRONTEND@" "$@"
+        exec cuda-gdb --args "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-memcheck)
         shift
-        exec cuda-memcheck "@PYTHON_FRONTEND@" "$@"
+        exec cuda-memcheck "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --gdb=*)
         options="${1#*=}"
         shift
-        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" ${options} --args "@Python_EXECUTABLE@" "$@"
-        exec gdb ${options} --args "@PYTHON_FRONTEND@" "$@"
+        [ "@ESPRESSO_PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" ${options} --args "@Python_EXECUTABLE@" "$@"
+        exec gdb ${options} --args "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --lldb=*)
         options="${1#*=}"
         shift
-        exec lldb ${options} -- "@PYTHON_FRONTEND@" "$@"
+        exec lldb ${options} -- "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --valgrind=*)
         options="${1#*=}"
         shift
-        exec valgrind ${options} "@PYTHON_FRONTEND@" "$@"
+        exec valgrind ${options} "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-gdb=*)
         options="${1#*=}"
         shift
-        exec cuda-gdb ${options} --args "@PYTHON_FRONTEND@" "$@"
+        exec cuda-gdb ${options} --args "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-memcheck=*)
         options="${1#*=}"
         shift
-        exec cuda-memcheck ${options} "@PYTHON_FRONTEND@" "$@"
+        exec cuda-memcheck ${options} "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     *)
-        exec "@PYTHON_FRONTEND@" "$@"
+        exec "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
 esac

@@ -25,7 +25,7 @@ using Utils::AS_erfc_part;
 #include <cmath>
 
 /* Check that it can be used in constexpr context */
-static_assert((AS_erfc_part(0.), true), "");
+static_assert((AS_erfc_part(0.), true));
 
 BOOST_AUTO_TEST_CASE(approx) {
   auto x = 0.0;

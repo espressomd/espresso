@@ -25,10 +25,10 @@
 #include "core/accumulators/TimeSeries.hpp"
 
 #include <boost/range/algorithm/transform.hpp>
-#include <utils/as_const.hpp>
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ScriptInterface {
@@ -36,8 +36,7 @@ namespace Accumulators {
 
 class TimeSeries : public AccumulatorBase {
 public:
-  /* as_const is to make obs read-only. */
-  TimeSeries() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
+  TimeSeries() { add_parameters({{"obs", std::as_const(m_obs)}}); }
 
   void do_construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");

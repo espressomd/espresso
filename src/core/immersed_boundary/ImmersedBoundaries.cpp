@@ -52,8 +52,8 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
   if (not BoundariesFound) {
-    BoundariesFound =
-        boost::algorithm::any_of(bonded_ia_params, [](auto const &kv) {
+    BoundariesFound = std::any_of(
+        bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &kv) {
           return (boost::get<IBMVolCons>(&(*kv.second)) != nullptr);
         });
   }

@@ -61,4 +61,6 @@ target_link_libraries(
 target_include_directories(espresso_script_interface
                            PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
-add_subdirectory(tests)
+if(ESPRESSO_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()

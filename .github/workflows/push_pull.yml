@@ -19,7 +19,7 @@ jobs:
       - name: Setup Python environment
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Check without sanitizer
         uses: ./.github/actions/build_and_check
         with:
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Python environment
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Check with sanitizer
         uses: ./.github/actions/build_and_check
         with:

@@ -35,7 +35,6 @@ unit_test(NAME int_pow SRC int_pow_test.cpp DEPENDS espresso::utils)
 unit_test(NAME sgn SRC sgn_test.cpp DEPENDS espresso::utils)
 unit_test(NAME AS_erfc_part SRC AS_erfc_part_test.cpp DEPENDS espresso::utils)
 unit_test(NAME sinc SRC sinc_test.cpp DEPENDS espresso::utils)
-unit_test(NAME as_const SRC as_const_test.cpp DEPENDS espresso::utils)
 unit_test(NAME permute_ifield_test SRC permute_ifield_test.cpp DEPENDS
           espresso::utils)
 unit_test(NAME vec_rotate SRC vec_rotate_test.cpp DEPENDS espresso::utils)

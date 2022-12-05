@@ -32,19 +32,19 @@ function(UNIT_TEST)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if(TEST_NUM_PROC)
-    if(${TEST_NUM_PROC} GREATER ${TEST_NP})
-      set(TEST_NUM_PROC ${TEST_NP})
+    if(${TEST_NUM_PROC} GREATER ${ESPRESSO_TEST_NP})
+      set(TEST_NUM_PROC ${ESPRESSO_TEST_NP})
     endif()
-    set_mpiexec_tmpdir("${TEST_NAME}")
-    add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE}
+    espresso_set_mpiexec_tmpdir(${TEST_NAME})
+    add_test(${TEST_NAME} ${MPIEXEC} ${ESPRESSO_MPIEXEC_OVERSUBSCRIBE}
              ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS}
-             ${MPIEXEC_TMPDIR} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}
+             ${ESPRESSO_MPIEXEC_TMPDIR} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}
              ${MPIEXEC_POSTFLAGS})
   else()
     add_test(${TEST_NAME} ${TEST_NAME})
   endif()
 
-  if(WARNINGS_ARE_ERRORS)
+  if(ESPRESSO_WARNINGS_ARE_ERRORS)
     set(SANITIZERS_HALT_ON_ERROR "halt_on_error=1")
   else()
     set(SANITIZERS_HALT_ON_ERROR "halt_on_error=0")

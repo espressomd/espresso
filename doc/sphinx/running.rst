@@ -148,7 +148,7 @@ terminal:
 This only means |es| was compiled with IPython instead of Jupyter. If Jupyter
 is installed on your system, the notebook will automatically close IPython and
 start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
-``-DIPYTHON_EXECUTABLE=$(which jupyter)``.
+``-D IPYTHON_EXECUTABLE=$(which jupyter)``.
 
 You can find the official Jupyter documentation at
 https://jupyter.readthedocs.io/en/latest/running.html

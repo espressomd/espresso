@@ -27,15 +27,15 @@
 using ScriptInterface::None;
 
 BOOST_AUTO_TEST_CASE(constructor_bool) {
-  static_assert(!None{}, "");
-  static_assert(!None{nullptr}, "");
+  static_assert(!None{});
+  static_assert(!None{nullptr});
   BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(comparison) {
-  static_assert(None{} == None{}, "");
-  static_assert(!(None{} != None{}), "");
-  static_assert(!(None{} < None{}), "");
+  static_assert(None{} == None{});
+  static_assert(!(None{} != None{}));
+  static_assert(!(None{} < None{}));
   BOOST_TEST_PASSPOINT();
 }
 

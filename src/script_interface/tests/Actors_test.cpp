@@ -47,13 +47,13 @@
 #include "script_interface/get_value.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/as_const.hpp>
 
 #include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 namespace ScriptInterface {
 namespace Coulomb {
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(coulomb_actor) {
   actor.do_construct({{"prefactor", 2.}, {"kappa", 3.}, {"r_cut", 4.}});
   // check const and non-const access
   BOOST_CHECK_CLOSE(actor.actor()->prefactor, 2., tol);
-  BOOST_CHECK_CLOSE(Utils::as_const(actor).actor()->prefactor, 2., tol);
+  BOOST_CHECK_CLOSE(std::as_const(actor).actor()->prefactor, 2., tol);
   // check visitors
   BOOST_CHECK(has_actor_of_type<::DebyeHueckel>(
       boost::optional<ElectrostaticsActor>(actor.actor())));
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(dipoles_actor) {
   // check const and non-const access
   BOOST_CHECK_EQUAL(actor.actor()->n_replicas, 3);
   BOOST_CHECK_CLOSE(actor.actor()->prefactor, 2., tol);
-  BOOST_CHECK_CLOSE(Utils::as_const(actor).actor()->prefactor, 2., tol);
+  BOOST_CHECK_CLOSE(std::as_const(actor).actor()->prefactor, 2., tol);
 }
 #endif // DIPOLES
 
