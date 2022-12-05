@@ -31,9 +31,9 @@ class EKReaction(ut.TestCase):
     WIDTH = 20.
     AGRID = 1.0
     INITIAL_DENSITIES = [1.7, 1.3]
-    DIFFUSION_COEFFICIENTS = np.array([0.2, 0.1])
-    REACTION_RATES = np.array([1e-3, 2e-3])
-    TIME = 40000
+    DIFFUSION_COEFFICIENTS = np.array([0.4, 0.2])
+    REACTION_RATES = np.array([4e-3, 8e-3])
+    TIME = 6000
 
     system = espressomd.System(box_l=BOX_L)
     system.time_step = 1.0
