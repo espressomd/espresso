@@ -45,7 +45,6 @@
 
 #include <iterator>
 #include <stdexcept>
-#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -467,10 +466,7 @@ void set_particle_dipm(int part, double dipm) {
 }
 
 void set_particle_dip(int part, Utils::Vector3d const &dip) {
-  Utils::Quaternion<double> quat;
-  double dipm;
-  std::tie(quat, dipm) = convert_dip_to_quat(dip);
-
+  auto const [quat, dipm] = convert_dip_to_quat(dip);
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat);
 }

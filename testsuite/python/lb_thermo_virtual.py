@@ -84,7 +84,7 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])
 
-    @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+    @utx.skipIfMissingFeatures(["WALBERLA_LIB"])
     def test_lb_walberla(self):
         self.check_virtual(espressomd.lb.LBFluidWalberla)
 

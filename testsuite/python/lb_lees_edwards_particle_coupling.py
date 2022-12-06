@@ -24,7 +24,7 @@ import numpy as np
 import unittest_decorators as utx
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
+@utx.skipIfMissingFeatures("WALBERLA_LIB")
 class LBLeesEdwardsParticleCoupling(ut.TestCase):
     def test(self):
         system = espressomd.System(box_l=[10, 10, 10])

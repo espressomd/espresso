@@ -132,7 +132,7 @@ class LBStreamingCommon:
                 self.lbf[target_node_index].population = np.zeros(19) + 1e-10
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBStreamingWalberla(LBStreamingCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -142,7 +142,7 @@ class LBStreamingWalberla(LBStreamingCommon, ut.TestCase):
     rtol = 1e-10
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBStreamingWalberlaSinglePrecision(LBStreamingCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
@@ -154,7 +154,7 @@ class LBStreamingWalberlaSinglePrecision(LBStreamingCommon, ut.TestCase):
 
 # TODO WALBERLA
 # @utx.skipIfMissingGPU()
-# @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+# @utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 # class LBGPU(LBStreamingCommon, ut.TestCase):
 
 #    """Test for the Walberla implementation of the LB on the GPU."""

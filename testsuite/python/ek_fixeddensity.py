@@ -23,7 +23,7 @@ import espressomd
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class EKFixedDensity(ut.TestCase):
     BOX_L = 42.
     AGRID = 1.0

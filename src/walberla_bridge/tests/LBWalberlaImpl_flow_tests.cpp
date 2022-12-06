@@ -20,7 +20,7 @@
 #define BOOST_TEST_DYN_LINK
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 
 #define BOOST_TEST_NO_MAIN
 
@@ -168,6 +168,6 @@ int main(int argc, char **argv) {
   return res;
 }
 
-#else // ifdef LB_WALBERLA
+#else // WALBERLA_LIB
 int main(int argc, char **argv) {}
 #endif

@@ -20,7 +20,7 @@
 #define BOOST_TEST_DYN_LINK
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 
 #define BOOST_TEST_NO_MAIN
 
@@ -98,8 +98,10 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
 
   // aggregate
   boost::mpi::communicator world;
-  auto sum_v = boost::mpi::all_reduce(world, sum_v_local, std::plus<Vector3d>());
-  auto sum_v_square = boost::mpi::all_reduce(world, sum_v_square_local, std::plus<Vector3d>());
+  auto sum_v =
+      boost::mpi::all_reduce(world, sum_v_local, std::plus<Vector3d>());
+  auto sum_v_square =
+      boost::mpi::all_reduce(world, sum_v_square_local, std::plus<Vector3d>());
   sum_v /= static_cast<double>(world.size());
   sum_v_square /= static_cast<double>(world.size());
 
@@ -138,6 +140,6 @@ int main(int argc, char **argv) {
   return res;
 }
 
-#else // ifdef LB_WALBERLA
+#else // WALBERLA_LIB
 int main(int argc, char **argv) {}
 #endif

@@ -28,6 +28,6 @@ target_link_libraries(espresso_utils INTERFACE Boost::serialization)
 target_link_libraries(espresso_utils_mpi INTERFACE espresso::utils Boost::mpi
                                                    MPI::MPI_CXX)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)
 endif()

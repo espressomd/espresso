@@ -26,8 +26,8 @@ description of the method, please refer to the literature.
 
 .. note::
 
-    Requires external feature ``LB_WALBERLA``, enabled with the CMake option
-    ``-D WITH_WALBERLA=ON``.
+    Requires external feature ``WALBERLA_LIB``, enabled with the CMake option
+    ``-D ESPRESSO_BUILD_WITH_WALBERLA_LIB=ON``.
 
 .. _Setting up a LB fluid:
 

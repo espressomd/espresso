@@ -68,7 +68,7 @@ class LEContextManager:
         system.lees_edwards.protocol = espressomd.lees_edwards.Off()
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
 class LBLeesEdwards(ut.TestCase):
 
     """
@@ -128,7 +128,7 @@ class LBLeesEdwards(ut.TestCase):
 
         .. code-block:: none
 
-            /-------------\        /-------------\
+            +-------------+        +-------------+
             |      5      |        |     151     |
             |             |        |      1      |
             |             |        | 1    1    1 |
@@ -136,7 +136,7 @@ class LBLeesEdwards(ut.TestCase):
             |             |        | 1    1    1 |
             |             |        |      1      |
             |      5      |        |     151     |
-            \-------------/        \-------------/
+            +-------------+        +-------------+
 
 
         When Lees-Edwards boundary conditions are present, contributions
@@ -149,7 +149,7 @@ class LBLeesEdwards(ut.TestCase):
 
         .. code-block:: none
 
-            /-------------\        /-------------\
+            /-------------\\        /-------------\
             |      5      |        |     141 1   |
             |             |        |      1      |
             |             |        | 1    1    1 |
@@ -157,7 +157,7 @@ class LBLeesEdwards(ut.TestCase):
             |             |        | 1    1    1 |
             |             |        |      1      |
             |      5      |        |   1 141     |
-            \-------------/        \-------------/
+            \\-------------/        \\-------------/
 
 
         The interpolated velocity at the shear boundary is equal to

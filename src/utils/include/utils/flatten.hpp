@@ -37,8 +37,8 @@ struct flatten_impl {
 
 template <class T, class OutputIterator>
 struct flatten_impl<T, OutputIterator,
-                    std::enable_if_t<std::is_assignable<
-                        decltype(*std::declval<OutputIterator>()), T>::value>> {
+                    std::enable_if_t<std::is_assignable_v<
+                        decltype(*std::declval<OutputIterator>()), T>>> {
   static OutputIterator apply(T const &v, OutputIterator out) {
     *out = v;
     return ++out;

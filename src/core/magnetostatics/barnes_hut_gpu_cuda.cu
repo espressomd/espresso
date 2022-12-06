@@ -812,12 +812,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
 
             // Check if all threads agree that cell is far enough away (or is a
             // body, i.e. n < nbodiesd).
-#if defined(__CUDACC__) && CUDA_VERSION >= 9000
             if ((n < bhpara->nbodies) ||
                 __all_sync(__activemask(), tmp >= dq[depth])) {
-#else
-            if ((n < bhpara->nbodies) || __all(tmp >= dq[depth])) {
-#endif
               if (n != i) {
 
                 auto const d1 = sqrtf(tmp);
@@ -964,12 +960,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
             }
             // check if all threads agree that cell is far enough away
             // (or is a body)
-#if defined(__CUDACC__) && CUDA_VERSION >= 9000
             if ((n < bhpara->nbodies) ||
                 __all_sync(__activemask(), tmp >= dq[depth])) {
-#else
-            if ((n < bhpara->nbodies) || __all(tmp >= dq[depth])) {
-#endif
               if (n != i) {
                 auto const d1 = sqrtf(tmp);
                 auto const dd5 = __fdividef(1.0f, tmp * tmp * d1);

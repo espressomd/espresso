@@ -38,6 +38,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
@@ -54,7 +55,7 @@ void init() {}
 
 void propagate() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     lb_walberla()->integrate();
 #endif
   }
@@ -65,7 +66,7 @@ void sanity_checks(double time_step) {
     return;
 
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     lb_sanity_checks(*lb_walberla(), *lb_walberla_params(), time_step);
 #endif
   }
@@ -73,7 +74,7 @@ void sanity_checks(double time_step) {
 
 void lebc_sanity_checks(int shear_direction, int shear_plane_normal) {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     lb_walberla()->check_lebc(shear_direction, shear_plane_normal);
 #endif
   }
@@ -81,7 +82,7 @@ void lebc_sanity_checks(int shear_direction, int shear_plane_normal) {
 
 double get_agrid() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     return lb_walberla_params()->get_agrid();
 #endif
   }
@@ -105,7 +106,7 @@ void check_tau_time_step_consistency(double tau, double time_step) {
 }
 
 double get_tau() {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
   if (lattice_switch == ActiveLB::WALBERLA) {
     return lb_walberla_params()->get_tau();
   }
@@ -115,7 +116,7 @@ double get_tau() {
 
 double get_kT() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     return lb_walberla()->get_kT();
 #endif
   }
@@ -124,7 +125,7 @@ double get_kT() {
 
 double get_lattice_speed() { return get_agrid() / get_tau(); }
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 namespace Walberla {
 
 static Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
@@ -157,11 +158,11 @@ std::size_t get_velocity_field_id() {
 std::size_t get_force_field_id() { return lb_walberla()->get_force_field_id(); }
 
 } // namespace Walberla
-#endif // LB_WALBERLA
+#endif // WALBERLA_LIB
 
 const Utils::VectorXd<9> get_pressure_tensor() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     return ::Communication::mpiCallbacks().call(
         ::Communication::Result::reduction, std::plus<>(),
         Walberla::get_pressure_tensor);
@@ -172,7 +173,7 @@ const Utils::VectorXd<9> get_pressure_tensor() {
 
 Utils::Vector3d calc_fluid_momentum() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     return Walberla::get_momentum();
 #endif
   }
@@ -181,7 +182,7 @@ Utils::Vector3d calc_fluid_momentum() {
 
 const Utils::Vector3d get_interpolated_velocity(const Utils::Vector3d &pos) {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     auto const folded_pos = folded_position(pos, box_geo);
     return mpi_call(::Communication::Result::one_rank,
                     Walberla::get_velocity_at_pos, folded_pos / get_agrid());
@@ -192,7 +193,7 @@ const Utils::Vector3d get_interpolated_velocity(const Utils::Vector3d &pos) {
 
 double get_interpolated_density(const Utils::Vector3d &pos) {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
     auto const folded_pos = folded_position(pos, box_geo);
     return mpi_call(::Communication::Result::one_rank,
                     Walberla::get_interpolated_density_at_pos,

@@ -45,7 +45,6 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
-#include <tuple>
 #include <vector>
 
 /* if you define this feature, the Bessel functions are calculated up
@@ -233,12 +232,11 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
         break;
 
       auto const fq = c_2pi * bp;
-      double k0, k1;
 #ifdef MMM1D_MACHINE_PREC
-      k0 = K0(fq * rxy_d);
-      k1 = K1(fq * rxy_d);
+      auto const k0 = K0(fq * rxy_d);
+      auto const k1 = K1(fq * rxy_d);
 #else
-      std::tie(k0, k1) = LPK01(fq * rxy_d);
+      auto const [k0, k1] = LPK01(fq * rxy_d);
 #endif
       sr += bp * k1 * cos(fq * z_d);
       sz += bp * k0 * sin(fq * z_d);

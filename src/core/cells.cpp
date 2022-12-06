@@ -40,7 +40,6 @@
 #include "integrate.hpp"
 #include "particle_node.hpp"
 
-#include <utils/as_const.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
@@ -213,7 +212,7 @@ void cells_re_init(CellStructureType new_cs) {
     /* Get current HybridDecomposition to extract n_square_types */
     auto &current_hybrid_decomposition =
         dynamic_cast<HybridDecomposition const &>(
-            Utils::as_const(cell_structure).decomposition());
+            std::as_const(cell_structure).decomposition());
     cell_structure.set_hybrid_decomposition(
         comm_cart, current_hybrid_decomposition.get_cutoff_regular(), box_geo,
         local_geo, current_hybrid_decomposition.get_n_square_types());

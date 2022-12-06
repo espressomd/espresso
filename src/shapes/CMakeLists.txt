@@ -33,6 +33,6 @@ target_include_directories(
 install(TARGETS espresso_shapes
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(unit_tests)
-endif(WITH_TESTS)
+endif()

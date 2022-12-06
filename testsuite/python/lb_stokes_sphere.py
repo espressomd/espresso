@@ -114,7 +114,7 @@ class Stokes:
             atol=stokes_force * 0.03)
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
 class StokesWalberla(Stokes, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -123,7 +123,7 @@ class StokesWalberla(Stokes, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
 class StokesWalberlaSinglePrecision(Stokes, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

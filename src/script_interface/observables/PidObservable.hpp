@@ -44,8 +44,7 @@ template <typename CorePidObs>
 class PidObservable
     : public AutoParameters<PidObservable<CorePidObs>, Observable> {
 public:
-  static_assert(
-      std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
+  static_assert(std::is_base_of_v<::Observables::PidObservable, CorePidObs>);
 
   PidObservable() {
     this->add_parameters({{"ids", AutoParameter::read_only,

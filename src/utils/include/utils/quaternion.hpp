@@ -137,7 +137,7 @@ public:
  * @return Multiplied quaternion.
  */
 template <typename T, typename U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
+          std::enable_if_t<std::is_arithmetic_v<U>, bool> = true>
 Quaternion<T> operator*(const U &b, const Quaternion<T> &a) {
   return boost::qvm::operator*(a, b);
 }

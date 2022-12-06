@@ -58,7 +58,7 @@
 #define SOFT_SPHERE
 #define WCA
 
-#ifdef P3M
+#ifdef FFTW
 #define THOLE
 #endif
 

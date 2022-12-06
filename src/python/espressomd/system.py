@@ -210,7 +210,7 @@ class System(ScriptInterfaceHelper):
         self.constraints = constraints.Constraints()
         if has_features("CUDA"):
             self.cuda_init_handle = cuda_init.CudaInitHandle()
-        if has_features("LB_WALBERLA"):
+        if has_features("WALBERLA_LIB"):
             self.ekcontainer = EKSpecies.EKContainer()
             self.ekreactions = EKSpecies.EKReactions()
         self.galilei = galilei.GalileiTransform()
@@ -249,13 +249,13 @@ class System(ScriptInterfaceHelper):
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")
         checkpointable_properties += ["actors", "thermostat"]
-        if has_features("LB_WALBERLA"):
+        if has_features("WALBERLA_LIB"):
             checkpointable_properties += ["ekcontainer", "ekreactions"]
 
         odict = collections.OrderedDict()
         for property_name in checkpointable_properties:
             odict[property_name] = System.__getattribute__(self, property_name)
-        if has_features("LB_WALBERLA"):
+        if has_features("WALBERLA_LIB"):
             odict["_lb_vtk_registry"] = lb._vtk_registry
             # TODO walberla
             # odict["_ek_vtk_registry"] = EKSpecies._ek_vtk_registry
@@ -263,14 +263,14 @@ class System(ScriptInterfaceHelper):
 
     def __setstate__(self, params):
         # note: this class is initialized twice by pickle
-        if has_features("LB_WALBERLA"):
+        if has_features("WALBERLA_LIB"):
             lb_vtk_registry = params.pop("_lb_vtk_registry")
             # TODO walberla
             # ek_vtk_registry = params.pop("_ek_vtk_registry")
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
         self.call_method("lock_system_creation")
-        if has_features("LB_WALBERLA"):
+        if has_features("WALBERLA_LIB"):
             lb._vtk_registry = lb_vtk_registry
             # TODO walberla
             # EKSpecies._vtk_registry = ek_vtk_registry

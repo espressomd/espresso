@@ -35,8 +35,8 @@ class EKFFT(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
 
         super().__init__(*args, **kwargs)
 
@@ -46,8 +46,8 @@ class EKNone(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
 
         super().__init__(*args, **kwargs)
 
@@ -96,8 +96,8 @@ class EKSpecies(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
 
         super().__init__(*args, **kwargs)
 
@@ -229,7 +229,7 @@ class DensityBoundary:
         self.density = density
 
 
-if has_features("LB_WALBERLA"):
+if has_features("WALBERLA_LIB"):
     _ek_vtk_registry = VTKRegistry()
 
 
@@ -252,7 +252,7 @@ class EKVTKOutput(ScriptInterfaceHelper):
     ----------
     identifier : :obj:`str`
         Name of the VTK writer.
-    observables : :obj:`list`, \{'density',\}
+    observables : :obj:`list`, {'density',}
         List of observables to write to the VTK files.
     delta_N : :obj:`int`
         Write frequency. If this value is 0 (default), the object is a
@@ -270,8 +270,8 @@ class EKVTKOutput(ScriptInterfaceHelper):
     _so_bind_methods = ("enable", "disable", "write")
 
     def __init__(self, *args, **kwargs):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
         if 'sip' not in kwargs:
             params = self.default_params()
             params.update(kwargs)

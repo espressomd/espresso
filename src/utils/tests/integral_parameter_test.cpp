@@ -34,9 +34,8 @@ template <std::size_t I> struct F {
 
 BOOST_AUTO_TEST_CASE(integral_parameter_) {
   static_assert(
-      std::is_same<decltype(Utils::integral_parameter<F, 1, 5>(5, 13)),
-                   std::pair<std::size_t, int>>::value,
-      "");
+      std::is_same_v<decltype(Utils::integral_parameter<F, 1, 5>(5, 13)),
+                     std::pair<std::size_t, int>>);
 
   BOOST_CHECK(std::make_pair(std::size_t{1u}, 13) ==
               (Utils::integral_parameter<F, 1, 5>(1, 13)));

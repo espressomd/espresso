@@ -24,7 +24,7 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
 @utx.skipIfMissingFeatures(
-    ['VIRTUAL_SITES_INERTIALESS_TRACERS', 'LB_WALBERLA'])
+    ['VIRTUAL_SITES_INERTIALESS_TRACERS', 'WALBERLA_LIB'])
 class VirtualSitesTracersWalberla(ut.TestCase, VirtualSitesTracersCommon):
 
     def setUp(self):

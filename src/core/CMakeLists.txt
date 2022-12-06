@@ -59,7 +59,7 @@ add_library(
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 
-if(CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(espresso_core PRIVATE cuda_init.cpp cuda_interface.cpp)
   add_gpu_library(
     espresso_cuda SHARED cuda_common_cuda.cu cuda_init_cuda.cu
@@ -116,6 +116,6 @@ add_subdirectory(scafacos)
 add_subdirectory(stokesian_dynamics)
 add_subdirectory(virtual_sites)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(unit_tests)
-endif(WITH_TESTS)
+endif()

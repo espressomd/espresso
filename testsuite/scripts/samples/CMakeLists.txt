@@ -104,7 +104,8 @@ sample_test(FILE test_widom_insertion.py)
 sample_test(FILE test_immersed_boundary.py)
 
 add_custom_target(
-  check_samples COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                        ${CTEST_ARGS} --output-on-failure)
+  check_samples
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_samples pypresso local_samples)

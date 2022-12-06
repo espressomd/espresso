@@ -28,9 +28,9 @@ if(EXISTS ${MPIEXEC})
     OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
   if(mpi_version_result EQUAL 0 AND mpi_version_output MATCHES
                                     "\\(Open(RTE| MPI)\\) ([3-9]\\.|1[0-9])")
-    set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+    set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
   else()
-    set(MPIEXEC_OVERSUBSCRIBE "")
+    set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "")
   endif()
 endif()
 
@@ -72,24 +72,26 @@ function(PYTHON_BENCHMARK)
   # parallel schemes
   if(EXISTS ${MPIEXEC} AND ${BENCHMARK_RUN_WITH_MPI})
     set(BENCHMARK_CONFIGURATIONS "sentinel")
-    foreach(nproc 1 2 4 8 16)
-      if(${BENCHMARK_MAX_NUM_PROC} GREATER_EQUAL ${nproc}
-         AND ${BENCHMARK_MIN_NUM_PROC} LESS_EQUAL ${nproc}
-         AND ${NP} GREATER_EQUAL ${nproc})
-        list(APPEND BENCHMARK_CONFIGURATIONS ${nproc})
+    foreach(BENCHMARK_NUM_PROC 1 2 4 8 16)
+      if(${BENCHMARK_MAX_NUM_PROC} GREATER_EQUAL ${BENCHMARK_NUM_PROC}
+         AND ${BENCHMARK_MIN_NUM_PROC} LESS_EQUAL ${BENCHMARK_NUM_PROC}
+         AND ${NP} GREATER_EQUAL ${BENCHMARK_NUM_PROC})
+        list(APPEND BENCHMARK_CONFIGURATIONS ${BENCHMARK_NUM_PROC})
       endif()
-    endforeach(nproc)
+    endforeach(BENCHMARK_NUM_PROC)
     list(REMOVE_AT BENCHMARK_CONFIGURATIONS 0)
-    foreach(nproc IN LISTS BENCHMARK_CONFIGURATIONS)
-      set(BENCHMARK_TEST_NAME benchmark__${BENCHMARK_NAME}__parallel_${nproc})
+    foreach(BENCHMARK_NUM_PROC IN LISTS BENCHMARK_CONFIGURATIONS)
+      set(BENCHMARK_TEST_NAME
+          benchmark__${BENCHMARK_NAME}__parallel_${BENCHMARK_NUM_PROC})
       add_test(
         NAME ${BENCHMARK_TEST_NAME}
         COMMAND
-          ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${nproc}
-          ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE}
-          ${BENCHMARK_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
+          ${MPIEXEC} ${ESPRESSO_MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
+          ${BENCHMARK_NUM_PROC} ${MPIEXEC_PREFLAGS}
+          ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS}
+          ${MPIEXEC_POSTFLAGS})
       set_benchmark_properties(${BENCHMARK_TEST_NAME})
-    endforeach(nproc)
+    endforeach(BENCHMARK_NUM_PROC)
   else()
     set(BENCHMARK_TEST_NAME benchmark__${BENCHMARK_NAME}__serial)
     add_test(NAME ${BENCHMARK_TEST_NAME}
@@ -116,7 +118,8 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks.py
           ${CMAKE_CURRENT_BINARY_DIR})
 add_custom_target(
-  benchmark_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                           ${CTEST_ARGS} --output-on-failure)
+  benchmark_python
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
 add_dependencies(benchmark benchmark_python benchmarks_data)

@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 
 #include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
@@ -35,10 +35,10 @@ namespace ScriptInterface::walberla {
 
 class EKPoissonSolver : public AutoParameters<::walberla::PoissonSolver> {
 public:
-  virtual std::shared_ptr<::walberla::PoissonSolver> get_instance() const
-      noexcept = 0;
+  virtual std::shared_ptr<::walberla::PoissonSolver>
+  get_instance() const noexcept = 0;
 };
 } // namespace ScriptInterface::walberla
 
-#endif // LB_WALBERLA
+#endif // WALBERLA_LIB
 #endif

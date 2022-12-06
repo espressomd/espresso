@@ -24,7 +24,7 @@ import espressomd.EKSpecies
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class EKReaction(ut.TestCase):
     BOX_L = 11.
     AGRID = 1.0

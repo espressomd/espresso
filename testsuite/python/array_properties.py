@@ -187,7 +187,7 @@ class ArrayPropertyTest(ArrayCommon):
 
         self.assert_copy_is_writable(self.partcl.gamma_rot)
 
-    @utx.skipIfMissingFeatures("LB_WALBERLA")
+    @utx.skipIfMissingFeatures("WALBERLA_LIB")
     def test_lb(self):
         lbf = espressomd.lb.LBFluidWalberla(
             agrid=0.5, density=1, viscosity=1, tau=0.01)

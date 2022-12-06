@@ -145,9 +145,8 @@ void vs_relate_to(int part_num, int relate_to) {
   auto const &p_current = get_particle_data(part_num);
   auto const &p_relate_to = get_particle_data(relate_to);
 
-  Utils::Quaternion<double> quat;
-  double dist;
-  std::tie(quat, dist) = calculate_vs_relate_to_params(p_current, p_relate_to);
+  auto const [quat, dist] =
+      calculate_vs_relate_to_params(p_current, p_relate_to);
 
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation

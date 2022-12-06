@@ -24,7 +24,7 @@ import unittest_decorators as utx
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB", "LB_ELECTROHYDRODYNAMICS"])
 class LBEHTest(ut.TestCase):
     system = espressomd.System(box_l=[6.0, 6.0, 6.0])
 

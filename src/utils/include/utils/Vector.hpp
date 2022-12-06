@@ -260,7 +260,7 @@ Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
 
 /* Scalar multiplication */
 template <std::size_t N, typename T, class U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
+          std::enable_if_t<std::is_arithmetic_v<U>, bool> = true>
 auto operator*(U const &a, Vector<T, N> const &b) {
   using R = decltype(a * std::declval<T>());
   Vector<R, N> ret;
@@ -272,7 +272,7 @@ auto operator*(U const &a, Vector<T, N> const &b) {
 }
 
 template <std::size_t N, typename T, class U,
-          std::enable_if_t<std::is_arithmetic<U>::value, bool> = true>
+          std::enable_if_t<std::is_arithmetic_v<U>, bool> = true>
 auto operator*(Vector<T, N> const &b, U const &a) {
   using R = decltype(std::declval<T>() * a);
   Vector<R, N> ret;
@@ -324,9 +324,9 @@ auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
   return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
 }
 
-template <std::size_t N, typename T, class U,
-          class = std::enable_if_t<std::is_integral<T>::value &&
-                                   std::is_integral<U>::value>>
+template <
+    std::size_t N, typename T, class U,
+    class = std::enable_if_t<std::is_integral_v<T> and std::is_integral_v<U>>>
 auto operator%(Vector<T, N> const &a, Vector<U, N> const &b) {
   using std::declval;
   using R = decltype(declval<T>() % declval<U>());

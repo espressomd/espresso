@@ -231,8 +231,8 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 class VTKRegistry:
 
     def __init__(self):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
         self.map = {}
         self.collisions = {}
 
@@ -252,7 +252,7 @@ class VTKRegistry:
             self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
 
 
-if has_features("LB_WALBERLA"):
+if has_features("WALBERLA_LIB"):
     _vtk_registry = VTKRegistry()
 
 
@@ -276,7 +276,7 @@ class VTKOutput(ScriptInterfaceHelper):
     ----------
     identifier : :obj:`str`
         Name of the VTK writer.
-    observables : :obj:`list`, \{'density', 'velocity_vector', 'pressure_tensor'\}
+    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor'}
         List of observables to write to the VTK files.
     delta_N : :obj:`int`
         Write frequency. If this value is 0 (default), the object is a
@@ -294,8 +294,8 @@ class VTKOutput(ScriptInterfaceHelper):
     _so_bind_methods = ("enable", "disable", "write")
 
     def __init__(self, *args, **kwargs):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
 
         if 'sip' not in kwargs:
             params = self.default_params()
@@ -369,8 +369,8 @@ class LatticeWalberla(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
 
         if 'sip' not in kwargs:
             params = self.default_params()
@@ -426,8 +426,8 @@ class LBFluidWalberla(HydrodynamicInteraction):
     #    "get_pressure_tensor")
 
     def __init__(self, *args, **kwargs):
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
 
         if 'sip' not in kwargs:
             params = self.default_params()
@@ -631,8 +631,8 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
     def __init__(self, *args, **kwargs):
         if not has_features("CUDA"):
             raise NotImplementedError("Feature CUDA not compiled in")
-        if not has_features("LB_WALBERLA"):
-            raise NotImplementedError("Feature LB_WALBERLA not compiled in")
+        if not has_features("WALBERLA_LIB"):
+            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
         raise NotImplementedError("Not implemented yet")
 
 

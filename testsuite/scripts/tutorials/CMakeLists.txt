@@ -68,7 +68,8 @@ tutorial_test(FILE test_constant_pH__interactions.py)
 tutorial_test(FILE test_widom_insertion.py)
 
 add_custom_target(
-  check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                          ${CTEST_ARGS} --output-on-failure)
+  check_tutorials
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_tutorials pypresso local_tutorials)

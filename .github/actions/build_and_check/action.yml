@@ -18,7 +18,7 @@ runs:
        pip3 install numpy cython h5py scipy
       shell: bash
     - run: |
-        export myconfig=maxset with_cuda=false test_timeout=800 with_asan=${{ inputs.asan }} with_ubsan=${{ inputs.ubsan }} check_skip_long=true build_procs=2 check_procs=2
+        export myconfig=maxset with_cuda=false with_gsl=false test_timeout=800 with_asan=${{ inputs.asan }} with_ubsan=${{ inputs.ubsan }} check_skip_long=true build_procs=2 check_procs=2
         bash maintainer/CI/build_cmake.sh
       shell: bash
       # This is a workaround for the unfortunate interaction of MacOS and OpenMPI 4

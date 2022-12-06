@@ -18,7 +18,7 @@
  */
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 #include "lb_walberla_instance.hpp"
 
 #include "communication.hpp"

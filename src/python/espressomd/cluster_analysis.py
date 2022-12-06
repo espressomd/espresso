@@ -45,7 +45,8 @@ class Cluster(ScriptInterfaceHelper):
 
         .. note::
 
-            Requires ``GSL`` external feature, enabled with ``-DWITH_GSL=ON``.
+            Requires ``GSL`` external feature, enabled with
+            ``-D ESPRESSO_BUILD_WITH_GSL=ON``.
 
         Parameters
         ----------

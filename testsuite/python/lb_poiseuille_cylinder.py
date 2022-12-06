@@ -196,7 +196,7 @@ class LBPoiseuilleCommon:
         self.check_observable()
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
 class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -205,7 +205,7 @@ class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
 class LBPoiseuilleWalberlaSinglePrecision(LBPoiseuilleCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

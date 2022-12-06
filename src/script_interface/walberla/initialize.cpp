@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 
 #include "FluidNodeWalberla.hpp"
 #include "FluidWalberla.hpp"
@@ -42,7 +42,7 @@
 
 #include <utils/Factory.hpp>
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 #ifdef WALBERLA_STATIC_ASSERT
 #error "waLberla headers should not be visible to the ESPResSo script interface"
 #endif
@@ -60,9 +60,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<EKContainer>("walberla::EKContainer");
   om->register_new<EKSpecies>("walberla::EKSpecies");
   om->register_new<EKSpeciesNode>("walberla::EKSpeciesNode");
-#ifdef ESPRESSO_USE_WALBERLA_FFT
+#ifdef WALBERLA_FFT
   om->register_new<EKFFT>("walberla::EKFFT");
-#endif // ESPRESSO_USE_WALBERLA_FFT
+#endif // WALBERLA_FFT
   om->register_new<EKNone>("walberla::None");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
 
@@ -74,4 +74,4 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 
 } // namespace ScriptInterface::walberla
 
-#endif // LB_WALBERLA
+#endif // WALBERLA_LIB

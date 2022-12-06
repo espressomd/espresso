@@ -44,16 +44,9 @@ if(NOT QUERY_VERSION_RESULT)
   endif()
 endif()
 
-set(SPHINX_VERSION_COMPATIBLE TRUE)
-# Blacklist broken versions
-if("${SPHINX_VERSION}" VERSION_LESS "2.3.0" OR "${SPHINX_VERSION}" VERSION_EQUAL "3.0.0")
-  message(WARNING "Sphinx version ${SPHINX_VERSION} is not compatible.")
-  set(SPHINX_VERSION_COMPATIBLE FALSE)
-endif()
-
 find_package_handle_standard_args(
   Sphinx REQUIRED_VARS SPHINX_EXECUTABLE SPHINX_API_DOC_EXE
-  SPHINX_VERSION_COMPATIBLE VERSION_VAR SPHINX_VERSION)
+  VERSION_VAR SPHINX_VERSION)
 
 mark_as_advanced(SPHINX_EXECUTABLE)
 mark_as_advanced(SPHINX_API_DOC_EXE)

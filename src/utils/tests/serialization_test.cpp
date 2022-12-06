@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(serialization_level_test) {
 
   // check buffer metadata
   {
-    static_assert(Testing::N <= (1ul << (8ul * sizeof(Testing::Serial_T))), "");
+    static_assert(Testing::N <= (1ul << (8ul * sizeof(Testing::Serial_T))));
     auto constexpr N = sizeof(std::size_t);
     auto const array_length = sorted_view<N>(buffer.begin());
     // since the array length is smaller than the size of the buffer type,
@@ -303,19 +303,19 @@ BOOST_AUTO_TEST_CASE(text_archive_test) {
 template <template <class> class Trait> void constexpr assert_has_trait() {
   struct S {};
   // arrays of standard types have the trait
-  static_assert(Trait<Utils::detail::Storage<int, 2>>::value, "");
-  static_assert(Trait<Utils::Array<int, 2>>::value, "");
-  static_assert(Trait<Utils::Vector<int, 2>>::value, "");
-  static_assert(Trait<Utils::Vector3i>::value, "");
-  static_assert(Trait<Utils::Vector3d>::value, "");
-  static_assert(Trait<Utils::Quaternion<float>>::value, "");
+  static_assert(Trait<Utils::detail::Storage<int, 2>>::value);
+  static_assert(Trait<Utils::Array<int, 2>>::value);
+  static_assert(Trait<Utils::Vector<int, 2>>::value);
+  static_assert(Trait<Utils::Vector3i>::value);
+  static_assert(Trait<Utils::Vector3d>::value);
+  static_assert(Trait<Utils::Quaternion<float>>::value);
   BOOST_TEST_PASSPOINT();
   // arrays of non-standard types don't have the trait
-  static_assert(!Trait<S>::value, "");
-  static_assert(!Trait<Utils::detail::Storage<S, 2>>::value, "");
-  static_assert(!Trait<Utils::Array<S, 2>>::value, "");
-  static_assert(!Trait<Utils::Vector<S, 2>>::value, "");
-  static_assert(!Trait<Utils::Quaternion<S>>::value, "");
+  static_assert(!Trait<S>::value);
+  static_assert(!Trait<Utils::detail::Storage<S, 2>>::value);
+  static_assert(!Trait<Utils::Array<S, 2>>::value);
+  static_assert(!Trait<Utils::Vector<S, 2>>::value);
+  static_assert(!Trait<Utils::Quaternion<S>>::value);
 }
 
 BOOST_AUTO_TEST_CASE(serialization_traits_test) {
@@ -329,8 +329,8 @@ BOOST_AUTO_TEST_CASE(serialization_traits_test) {
 
 BOOST_AUTO_TEST_CASE(compact_vector_test) {
   using namespace Utils;
-  static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value, "");
-  static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>), "");
+  static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value);
+  static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>));
   BOOST_TEST_PASSPOINT();
 }
 

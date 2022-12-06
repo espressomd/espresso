@@ -92,7 +92,7 @@ class LBBoundaryForceCommon:
             atol=1E-10)
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -101,7 +101,7 @@ class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBBoundaryForceWalberlaSinglePrecision(
         LBBoundaryForceCommon, ut.TestCase):
 

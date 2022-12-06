@@ -21,10 +21,10 @@
 
 #include <utils/linear_interpolation.hpp>
 
-#include <boost/algorithm/clamp.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <algorithm>
 #include <vector>
 
 /** Evaluate forces and energies using a custom potential profile.
@@ -55,9 +55,8 @@ struct TabulatedPotential {
    *  @return Interpolated force.
    */
   double force(double x) const {
-    using boost::algorithm::clamp;
     return Utils::linear_interpolation(force_tab, invstepsize, minval,
-                                       clamp(x, minval, maxval));
+                                       std::clamp(x, minval, maxval));
   }
 
   /** Evaluate the energy at position @p x.
@@ -65,9 +64,8 @@ struct TabulatedPotential {
    *  @return Interpolated energy.
    */
   double energy(double x) const {
-    using boost::algorithm::clamp;
     return Utils::linear_interpolation(energy_tab, invstepsize, minval,
-                                       clamp(x, minval, maxval));
+                                       std::clamp(x, minval, maxval));
   }
 
   double cutoff() const { return maxval; }

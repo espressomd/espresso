@@ -28,8 +28,8 @@
 BOOST_AUTO_TEST_CASE(abs_test) {
   using Utils::abs;
 
-  static_assert(std::is_same<float, decltype(abs(1.f))>::value, "");
-  static_assert(std::is_same<double, decltype(abs(1.))>::value, "");
+  static_assert(std::is_same_v<float, decltype(abs(1.f))>);
+  static_assert(std::is_same_v<double, decltype(abs(1.))>);
 
   BOOST_CHECK_EQUAL(std::abs(3.1415), abs(3.1415));
   BOOST_CHECK_EQUAL(std::abs(-3.1415), abs(-3.1415));

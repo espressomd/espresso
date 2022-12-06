@@ -199,7 +199,7 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.sampling_offset_z, 15)
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class ObservableProfileWalberla(ObservableProfileLBCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -208,7 +208,7 @@ class ObservableProfileWalberla(ObservableProfileLBCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class ObservableProfileWalberlaSinglePrecision(
         ObservableProfileLBCommon, ut.TestCase):
 

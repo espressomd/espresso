@@ -21,19 +21,19 @@
 # to check the user input, generate a help string with all options, and set
 # the list of possible values in ccmake/cmake-gui (e.g. in ccmake, one can
 # cycle through the list of values with [enter] instead of typing them).
-macro(option_enum)
-  cmake_parse_arguments(option_enum "" "varname;help_text;default_value" "possible_values" ${ARGN})
+macro(espresso_option_enum)
+  cmake_parse_arguments(espresso_option_enum "" "varname;help_text;default_value" "possible_values" ${ARGN})
   # Process user input
-  set(option_enum_input_value "${${option_enum_varname}}")
-  if(NOT option_enum_input_value IN_LIST option_enum_possible_values)
-    if(option_enum_input_value)
-      message(WARNING "Unknown ${option_enum_help_text} '${option_enum_input_value}', defaulting to '${option_enum_default_value}'")
+  set(espresso_option_enum_input_value "${${espresso_option_enum_varname}}")
+  if(NOT espresso_option_enum_input_value IN_LIST espresso_option_enum_possible_values)
+    if(espresso_option_enum_input_value)
+      message(WARNING "Unknown ${espresso_option_enum_help_text} '${espresso_option_enum_input_value}', defaulting to '${espresso_option_enum_default_value}'")
     endif()
-    set(option_enum_input_value ${option_enum_default_value})
+    set(espresso_option_enum_input_value ${espresso_option_enum_default_value})
   endif()
   # Declare variable with a help string
-  string(REPLACE ";" " " option_enum_possible_values_concat "${option_enum_possible_values}")
-  set(${option_enum_varname} ${option_enum_input_value} CACHE STRING "Choose the ${option_enum_help_text}, options are: ${option_enum_possible_values_concat}" FORCE)
+  string(REPLACE ";" " " espresso_option_enum_possible_values_concat "${espresso_option_enum_possible_values}")
+  set(${espresso_option_enum_varname} ${espresso_option_enum_input_value} CACHE STRING "Choose the ${espresso_option_enum_help_text}, options are: ${espresso_option_enum_possible_values_concat}" FORCE)
   # Set the possible values for ccmake and cmake-gui
-  set_property(CACHE ${option_enum_varname} PROPERTY STRINGS ${option_enum_possible_values})
+  set_property(CACHE ${espresso_option_enum_varname} PROPERTY STRINGS ${espresso_option_enum_possible_values})
 endmacro()

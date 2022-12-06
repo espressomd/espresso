@@ -107,7 +107,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
         np.testing.assert_allclose(fluid_temp, KT, atol=5e-3)
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
@@ -117,7 +117,7 @@ class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
 
 
 # TODO WALBERLA: Each thermostat test takes ~150s, but timeout is at 300s
-# @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+# @utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 # class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
 
 #    """Test for the CPU implementation of the LB in single-precision."""
@@ -128,7 +128,7 @@ class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
 
 # TODO WALBERLA
 # @utx.skipIfMissingGPU()
-# @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+# @utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 # class LBWalberlaGPUThermostat(LBThermostatCommon, ut.TestCase):
 
 #    """Test for the GPU implementation of the LB."""

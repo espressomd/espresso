@@ -38,7 +38,7 @@ using ObjectId = std::size_t;
  */
 inline ObjectId object_id(const ObjectHandle *p) {
   // NOLINTNEXTLINE(bugprone-sizeof-expression)
-  static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId), "");
+  static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId));
   // Use the pointer value as the unique identifier.
   // This function is only called on the head node.
   return reinterpret_cast<ObjectId>(p);

@@ -43,7 +43,7 @@ namespace Mpi {
 template <typename T>
 void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
                     int root = 0) {
-  static_assert(std::is_pod<T>::value, "");
+  static_assert(std::is_trivial_v<T>);
   if (comm.rank() == root) {
     static std::vector<int> sizes;
     static std::vector<int> displ;

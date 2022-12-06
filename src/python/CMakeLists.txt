@@ -18,35 +18,35 @@
 #
 
 # Configure pypresso for build dir
-set(PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(ESPRESSO_PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-set(PYTHON_FRONTEND ${Python_EXECUTABLE})
+set(ESPRESSO_PYTHON_FRONTEND ${Python_EXECUTABLE})
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   execute_process(
-    COMMAND "${PYTHON_FRONTEND}" "-c"
+    COMMAND "${ESPRESSO_PYTHON_FRONTEND}" "-c"
             "import sysconfig; print(sysconfig.get_config_var('exec_prefix'))"
     OUTPUT_VARIABLE DARWIN_EXEC_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(PYTHON_FRONTEND_TMP
+  set(ESPRESSO_PYTHON_FRONTEND_TMP
       "${DARWIN_EXEC_PREFIX}/Resources/Python.app/Contents/MacOS/Python")
-  if(EXISTS ${PYTHON_FRONTEND_TMP})
-    set(PYTHON_FRONTEND ${PYTHON_FRONTEND_TMP})
+  if(EXISTS ${ESPRESSO_PYTHON_FRONTEND_TMP})
+    set(ESPRESSO_PYTHON_FRONTEND ${ESPRESSO_PYTHON_FRONTEND_TMP})
   endif()
 endif()
 configure_file(pypresso.cmakein ${CMAKE_BINARY_DIR}/pypresso @ONLY)
 
 if(IPYTHON_EXECUTABLE)
-  set(PYTHON_FRONTEND ${IPYTHON_EXECUTABLE})
+  set(ESPRESSO_PYTHON_FRONTEND ${IPYTHON_EXECUTABLE})
   configure_file(pypresso.cmakein ${CMAKE_BINARY_DIR}/ipypresso @ONLY)
 endif()
 
 # Configure pypresso for install dir
-set(PYTHON_DIR ${ESPRESSO_INSTALL_PYTHON})
+set(ESPRESSO_PYTHON_DIR ${ESPRESSO_INSTALL_PYTHON})
 
-set(PYTHON_FRONTEND ${Python_EXECUTABLE})
+set(ESPRESSO_PYTHON_FRONTEND ${Python_EXECUTABLE})
 configure_file(pypresso.cmakein ${CMAKE_CURRENT_BINARY_DIR}/pypresso @ONLY)
 
 if(IPYTHON_EXECUTABLE)
-  set(PYTHON_FRONTEND ${IPYTHON_EXECUTABLE})
+  set(ESPRESSO_PYTHON_FRONTEND ${IPYTHON_EXECUTABLE})
   configure_file(pypresso.cmakein ${CMAKE_CURRENT_BINARY_DIR}/ipypresso @ONLY)
 endif()
 

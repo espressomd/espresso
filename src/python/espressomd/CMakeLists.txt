@@ -61,8 +61,6 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
-    $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,14.0.0>>:-Wno-c++17-attribute-extensions>
-    $<$<CXX_COMPILER_ID:IntelLLVM>:-Wno-c++17-attribute-extensions>
     -Wno-unused-variable)
 
 # Configure, compile and install Cython files
@@ -85,8 +83,9 @@ foreach(cython_file ${cython_SRC})
     add_custom_command(
       OUTPUT ${outputpath}
       COMMAND
-        ${CYTHON_EXECUTABLE} $<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>
-        -3 --cplus --directive embedsignature=True --directive binding=True -I
+        ${CYTHON_EXECUTABLE}
+        $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:--warning-errors> -3 --cplus
+        --directive embedsignature=True --directive binding=True -I
         ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_CURRENT_BINARY_DIR}
         ${cython_file} -o ${outputpath}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..

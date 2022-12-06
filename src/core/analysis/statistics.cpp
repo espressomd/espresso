@@ -79,7 +79,7 @@ Utils::Vector3d calc_linear_momentum(bool include_particles,
     auto const particles = cell_structure.local_particles();
     momentum =
         std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
-                        [](Utils::Vector3d &m, Particle const &p) {
+                        [](Utils::Vector3d const &m, Particle const &p) {
                           return m + p.mass() * p.v();
                         });
   }

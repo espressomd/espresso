@@ -42,7 +42,7 @@ def taylor_couette(v1, v2, r1, r2):
     return a, b
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBCircularCouetteCommon:
 
     system = espressomd.System(box_l=(GRID_SIZE + [1, 1, 0]) * AGRID)
@@ -146,7 +146,7 @@ class LBCircularCouetteCommon:
         np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-4)
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBCircularCouetteWalberla(LBCircularCouetteCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -155,7 +155,7 @@ class LBCircularCouetteWalberla(LBCircularCouetteCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBCircularCouetteWalberlaSinglePrecision(
         LBCircularCouetteCommon, ut.TestCase):
 

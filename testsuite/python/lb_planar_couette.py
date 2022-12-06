@@ -112,7 +112,7 @@ class LBCouetteFlowCommon:
                            shear_direction="z", shear_plane_normal="y")
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
+@utx.skipIfMissingFeatures("WALBERLA_LIB")
 class LBCouetteFlowWalberla(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -121,7 +121,7 @@ class LBCouetteFlowWalberla(LBCouetteFlowCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
+@utx.skipIfMissingFeatures("WALBERLA_LIB")
 class LBCouetteFlowWalberlaSinglePrecision(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

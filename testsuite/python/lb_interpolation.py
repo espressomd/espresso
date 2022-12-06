@@ -125,7 +125,7 @@ class LBInterpolation:
         self.assertIsNone(self.lbf[0, 0, 0].boundary)
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
 class LBInterpolationWalberla(LBInterpolation, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -134,7 +134,7 @@ class LBInterpolationWalberla(LBInterpolation, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
 class LBInterpolationWalberlaSinglePrecision(LBInterpolation, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

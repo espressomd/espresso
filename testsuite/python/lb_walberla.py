@@ -20,13 +20,13 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-if espressomd.has_features("LB_WALBERLA"):
+if espressomd.has_features("WALBERLA_LIB"):
     from espressomd.lb import LBFluidWalberla
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features("LB_WALBERLA"),
-           "Skipping for LACK of LB_WALBERLA")
+@ut.skipIf(not espressomd.has_features("WALBERLA_LIB"),
+           "Skipping for LACK of WALBERLA_LIB")
 class LbWalberlaTest(ut.TestCase):
 
     def test(self):

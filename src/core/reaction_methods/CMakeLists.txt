@@ -25,6 +25,6 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/WidomInsertion.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)
-endif(WITH_TESTS)
+endif()

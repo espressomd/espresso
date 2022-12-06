@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 
 #include "EKReaction.hpp"
 
@@ -43,5 +43,5 @@ class EKReactions : public ObjectList<EKReaction> {
 };
 } // namespace ScriptInterface::walberla
 
-#endif // LB_WALBERLA
+#endif // WALBERLA_LIB
 #endif

@@ -25,7 +25,7 @@ import numpy as np
 import itertools
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class LBBoundaryVelocityTest(ut.TestCase):
     """
     Various tests to check the interaction of lb velocity boundary conditions and the fluid

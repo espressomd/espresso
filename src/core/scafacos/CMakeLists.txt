@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if(SCAFACOS)
+if(ESPRESSO_BUILD_WITH_SCAFACOS)
   target_link_libraries(espresso_core PRIVATE espresso::scafacos)
   target_sources(
     espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ScafacosContext.cpp

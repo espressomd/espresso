@@ -27,20 +27,16 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/observables/Observable.hpp"
 
-#include "utils/as_const.hpp"
-
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace ScriptInterface {
 namespace Accumulators {
 
 class MeanVarianceCalculator : public AccumulatorBase {
 public:
-  /* as_const is to make obs read-only. */
-  MeanVarianceCalculator() {
-    add_parameters({{"obs", Utils::as_const(m_obs)}});
-  }
+  MeanVarianceCalculator() { add_parameters({{"obs", std::as_const(m_obs)}}); }
 
   void do_construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");

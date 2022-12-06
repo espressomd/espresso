@@ -36,19 +36,19 @@ function(PYTHON_TEST)
     set(TEST_MAX_NUM_PROC 4)
   endif()
 
-  if(${TEST_MAX_NUM_PROC} GREATER ${TEST_NP})
-    set(TEST_NUM_PROC ${TEST_NP})
+  if(${TEST_MAX_NUM_PROC} GREATER ${ESPRESSO_TEST_NP})
+    set(TEST_NUM_PROC ${ESPRESSO_TEST_NP})
   else()
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
   endif()
 
   if(EXISTS ${MPIEXEC})
-    set_mpiexec_tmpdir("${TEST_NAME}")
+    espresso_set_mpiexec_tmpdir(${TEST_NAME})
     add_test(
       NAME ${TEST_NAME}
       COMMAND
-        ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
-        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${MPIEXEC_TMPDIR}
+        ${MPIEXEC} ${ESPRESSO_MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
+        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${ESPRESSO_MPIEXEC_TMPDIR}
         ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
         ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
   else()
@@ -58,7 +58,7 @@ function(PYTHON_TEST)
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
                                                DEPENDS "${TEST_DEPENDS}")
 
-  if("gpu" IN_LIST TEST_LABELS AND WITH_CUDA)
+  if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 
@@ -305,7 +305,7 @@ python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE h5md.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE p3m_fft.py MAX_NUM_PROC 6)
-if(${TEST_NP} GREATER_EQUAL 8)
+if(${ESPRESSO_TEST_NP} GREATER_EQUAL 8)
   python_test(FILE p3m_fft.py MAX_NUM_PROC 8 SUFFIX 8_cores)
 endif()
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 LABELS gpu)
@@ -339,22 +339,24 @@ add_custom_target(
 
 add_custom_target(
   check_python_parallel_odd
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -L parallel_odd
-          ${CTEST_ARGS} --output-on-failure)
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L
+          parallel_odd ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
 add_custom_target(
-  check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -L
-                           gpu ${CTEST_ARGS} --output-on-failure)
+  check_python_gpu
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -L gpu
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
 add_custom_target(
   check_python_skip_long
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -LE long
-          ${CTEST_ARGS} --output-on-failure)
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT} -LE long
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python_skip_long pypresso python_test_data)
 
 add_custom_target(
-  check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                       ${CTEST_ARGS} --output-on-failure)
+  check_python
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
 add_dependencies(check check_python)

@@ -25,7 +25,7 @@ import numpy as np
 import scipy.optimize
 
 
-@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
 class EKDiffusion(ut.TestCase):
     BOX_L = 31.
     AGRID = 1.0

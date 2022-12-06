@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef LB_WALBERLA
+#ifdef WALBERLA_LIB
 
 #include "EKPoissonSolver.hpp"
 
@@ -48,8 +48,8 @@ public:
                      [this]() { return m_single_precision; }}});
   }
 
-  [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver> get_instance() const
-      noexcept override {
+  [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver>
+  get_instance() const noexcept override {
     return m_instance;
   }
 
@@ -61,5 +61,5 @@ private:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // LB_WALBERLA
+#endif // WALBERLA_LIB
 #endif

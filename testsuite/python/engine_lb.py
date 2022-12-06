@@ -181,7 +181,7 @@ class SwimmerTest():
 
 
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -193,7 +193,7 @@ class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -207,7 +207,7 @@ class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 @ut.skipIf(SwimmerTest.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -221,7 +221,7 @@ class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 @ut.skipIf(SwimmerTest.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -235,7 +235,7 @@ class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 @ut.skipIf(SwimmerTest.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -250,7 +250,7 @@ class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 @ut.skipIf(SwimmerTest.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -265,7 +265,7 @@ class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 @ut.skipIf(SwimmerTest.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -280,7 +280,7 @@ class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
 @ut.skipIf(SwimmerTest.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA_LIB"])
 class SwimmerTestHybrid1CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla

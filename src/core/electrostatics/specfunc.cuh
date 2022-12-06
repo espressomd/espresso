@@ -153,11 +153,16 @@ __device__ float evaluateAsTaylorSeriesAt(float const *c, int n, float x) {
 }
 
 __device__ float dev_K0(float x) {
-  auto const c = evaluateAsChebychevSeriesAt(
-      x <= 2.0f ? bk0_data : x <= 8.0f ? ak0_data : ak02_data,
-      x <= 2.0f ? bk0_size : x <= 8.0f ? ak0_size : ak02_size,
-      x <= 2.0f ? x * x / 2.0f - 1.0f
-                : x <= 8.0f ? (16.0f / x - 5.0f) / 3.0f : (16.0f / x - 1.0f));
+  auto const c =
+      evaluateAsChebychevSeriesAt(x <= 2.0f   ? bk0_data
+                                  : x <= 8.0f ? ak0_data
+                                              : ak02_data,
+                                  x <= 2.0f   ? bk0_size
+                                  : x <= 8.0f ? ak0_size
+                                              : ak02_size,
+                                  x <= 2.0f   ? x * x / 2.0f - 1.0f
+                                  : x <= 8.0f ? (16.0f / x - 5.0f) / 3.0f
+                                              : (16.0f / x - 1.0f));
   if (x <= 2.0f) {
     auto const I0 =
         evaluateAsChebychevSeriesAt(bi0_data, bi0_size, x * x / 4.5f - 1.0f);
@@ -167,11 +172,16 @@ __device__ float dev_K0(float x) {
 }
 
 __device__ float dev_K1(float x) {
-  auto const c = evaluateAsChebychevSeriesAt(
-      x <= 2.0f ? bk1_data : x <= 8.0f ? ak1_data : ak12_data,
-      x <= 2.0f ? bk1_size : x <= 8.0f ? ak1_size : ak12_size,
-      x <= 2.0f ? x * x / 2.0f - 1.0f
-                : x <= 8.0f ? (16.0f / x - 5.0f) / 3.0f : (16.0f / x - 1.0f));
+  auto const c =
+      evaluateAsChebychevSeriesAt(x <= 2.0f   ? bk1_data
+                                  : x <= 8.0f ? ak1_data
+                                              : ak12_data,
+                                  x <= 2.0f   ? bk1_size
+                                  : x <= 8.0f ? ak1_size
+                                              : ak12_size,
+                                  x <= 2.0f   ? x * x / 2.0f - 1.0f
+                                  : x <= 8.0f ? (16.0f / x - 5.0f) / 3.0f
+                                              : (16.0f / x - 1.0f));
   if (x <= 2.0f) {
     auto const I1 = x * evaluateAsChebychevSeriesAt(bi1_data, bi1_size,
                                                     x * x / 4.5f - 1.0f);

@@ -523,7 +523,7 @@ cdef class Thermostat:
         """
         Sets the LB thermostat.
 
-        This thermostat requires the feature ``LB_WALBERLA``.
+        This thermostat requires the feature ``WALBERLA_LIB``.
 
         Parameters
         ----------

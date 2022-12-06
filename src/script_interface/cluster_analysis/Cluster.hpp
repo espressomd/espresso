@@ -28,7 +28,6 @@
 
 #include <memory>
 #include <string>
-#include <tuple>
 #include <vector>
 
 namespace ScriptInterface {
@@ -52,9 +51,7 @@ public:
       return m_cluster->radius_of_gyration();
     }
     if (method == "fractal_dimension") {
-      double mean_sq_residual;
-      double df;
-      std::tie(df, mean_sq_residual) =
+      auto const [df, mean_sq_residual] =
           m_cluster->fractal_dimension(get_value<double>(parameters.at("dr")));
       return std::vector<double>({df, mean_sq_residual});
     }

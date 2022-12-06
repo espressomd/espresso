@@ -25,7 +25,7 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/ek_container.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/ek_reactions.cpp)
 
-if(WITH_WALBERLA)
+if(ESPRESSO_BUILD_WITH_WALBERLA_LIB)
   target_link_libraries(espresso_core PRIVATE espresso::walberla
                                               ${WALBERLA_LIBS})
   target_sources(espresso_core

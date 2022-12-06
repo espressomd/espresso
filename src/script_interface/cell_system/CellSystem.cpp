@@ -33,7 +33,6 @@
 #include "core/tuning.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/as_const.hpp>
 
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/variant.hpp>
@@ -53,12 +52,12 @@ namespace CellSystem {
 
 static auto const &get_regular_decomposition() {
   return dynamic_cast<RegularDecomposition const &>(
-      Utils::as_const(::cell_structure).decomposition());
+      std::as_const(::cell_structure).decomposition());
 }
 
 static auto const &get_hybrid_decomposition() {
   return dynamic_cast<HybridDecomposition const &>(
-      Utils::as_const(::cell_structure).decomposition());
+      std::as_const(::cell_structure).decomposition());
 }
 
 CellSystem::CellSystem() {

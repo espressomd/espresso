@@ -179,9 +179,7 @@ void process_queue() {
   // Construct delete actions from breakage queue
   ActionSet actions = {};
   for (auto const &e : global_queue) {
-    // Convert to merge() once we are on C++17
-    auto to_add = actions_for_breakage(e);
-    actions.insert(to_add.begin(), to_add.end());
+    actions.merge(actions_for_breakage(e));
   }
 
   // Execute actions

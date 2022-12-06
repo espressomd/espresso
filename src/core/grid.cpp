@@ -33,10 +33,9 @@
 #include <utils/Vector.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
-#include <boost/algorithm/clamp.hpp>
-
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 

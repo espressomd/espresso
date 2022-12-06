@@ -23,7 +23,7 @@ import espressomd
 import espressomd.lb
 
 
-@utx.skipIfMissingFeatures("LB_WALBERLA")
+@utx.skipIfMissingFeatures("WALBERLA_LIB")
 class TestLattice(ut.TestCase):
 
     """

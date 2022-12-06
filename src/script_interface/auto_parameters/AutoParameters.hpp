@@ -89,7 +89,7 @@ namespace ScriptInterface {
  */
 template <typename Derived, typename Base = ObjectHandle>
 class AutoParameters : public Base {
-  static_assert(std::is_base_of<ObjectHandle, Base>::value, "");
+  static_assert(std::is_base_of_v<ObjectHandle, Base>);
 
 public:
   /** @brief Exception thrown when accessing an unknown parameter */

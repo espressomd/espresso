@@ -28,12 +28,6 @@
 #include <type_traits>
 
 namespace Utils {
-namespace detail {
-template <class T, class C>
-using has_data =
-    std::is_convertible<std::decay_t<decltype(std::declval<C>().data())> *,
-                        T *const *>;
-} // namespace detail
 
 /**
  * @brief A stripped-down version of std::span from C++17.
@@ -61,13 +55,15 @@ private:
 
   template <typename U>
   using enable_if_const_t =
-      typename std::enable_if<std::is_const<T>::value, U>::type;
+      typename std::enable_if<std::is_const_v<T>, U>::type;
   template <class U>
   using enable_if_mutable_t =
-      typename std::enable_if<!std::is_const<T>::value, U>::type;
+      typename std::enable_if<!std::is_const_v<T>, U>::type;
   template <class U>
-  using enable_if_has_data_t =
-      typename std::enable_if<detail::has_data<T, U>::value, U>::type;
+  using enable_if_has_data_t = typename std::enable_if<
+      std::is_convertible_v<std::decay_t<decltype(std::declval<U>().data())> *,
+                            T *const *>,
+      U>::type;
 
 public:
   Span() = default;

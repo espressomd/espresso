@@ -44,6 +44,8 @@ NPT
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
 STOKESIAN_DYNAMICS              implies ROTATION
+H5MD
+HDF5                            implies H5MD
 
 /* Rotation */
 ROTATION
@@ -104,13 +106,13 @@ ADDITIONAL_CHECKS
 
 # External switches
 # Switches that are set by configure or gcc, not to be set manually
-# All these switches must also be present in cmake/cmake_config.cmakein
+# All these switches must also be present in cmake/espresso_cmake_config.cmakein
 CUDA external
 FFTW external
-H5MD external
+HDF5 external
 SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
-LB_WALBERLA external
-ESPRESSO_USE_WALBERLA_FFT external
-VALGRIND_INSTRUMENTATION external
+WALBERLA_LIB external
+WALBERLA_FFT external
+VALGRIND_MARKERS external

@@ -77,14 +77,14 @@ public:
         m_solver = so_solver;
       } else
 #endif // DP3M
-          if (auto so_solver = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
-        solver = so_solver->actor();
-        m_solver = so_solver;
-      } else {
-        throw std::invalid_argument("Parameter 'actor' of type " +
-                                    so_ptr->name().to_string() +
-                                    " isn't supported by DLC");
-      }
+        if (auto so_solver = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
+          solver = so_solver->actor();
+          m_solver = so_solver;
+        } else {
+          throw std::invalid_argument("Parameter 'actor' of type " +
+                                      so_ptr->name().to_string() +
+                                      " isn't supported by DLC");
+        }
     });
     context()->parallel_try_catch([&]() {
       auto dlc = dlc_data(get_value<double>(params, "maxPWerror"),

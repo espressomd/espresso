@@ -32,7 +32,7 @@ class ExternalPotential : public Constraint {
 
 public:
   template <typename... Args>
-  ExternalPotential(Args &&... args) : impl(std::forward<Args>(args)...) {}
+  ExternalPotential(Args &&...args) : impl(std::forward<Args>(args)...) {}
 
   const Coupling &coupling() const { return impl.coupling(); }
   const Field &field() const { return impl.field(); }
