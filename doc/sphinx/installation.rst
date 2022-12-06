@@ -744,7 +744,8 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_LIB``: Build with waLBerla support.
-* ``ESPRESSO_BUILD_WITH_WALBERLA_FFT`` Build waLBerla with FFT and PFFT support, used in FFT-based electrokinetics
+* ``ESPRESSO_BUILD_WITH_WALBERLA_FFT``: Build waLBerla with FFT and PFFT support, used in FFT-based electrokinetics.
+* ``ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 
 The following options control code instrumentation:
 

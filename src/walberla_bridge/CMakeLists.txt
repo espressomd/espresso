@@ -29,7 +29,7 @@ add_library(espresso::walberla::cpp_flags ALIAS espresso_walberla_cpp_flags)
 if(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
   target_link_libraries(espresso_walberla_cpp_flags
                         INTERFACE espresso::avx_flags)
-endif(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
+endif()
 
 #if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
 #  espresso_add_gpu_library(espresso_walberla_cuda SHARED
@@ -57,8 +57,8 @@ set_source_files_properties(
 install(TARGETS espresso_walberla
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   set(CMAKE_CXX_CLANG_TIDY "")
   add_subdirectory(tests)
   set(CMAKE_CXX_CLANG_TIDY "${ESPRESSO_DEFAULT_CXX_CLANG_TIDY}")
-endif(WITH_TESTS)
+endif()

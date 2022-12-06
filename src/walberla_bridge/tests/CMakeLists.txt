@@ -44,11 +44,13 @@ unit_test(NAME LBWalberlaImpl_bspline_tests SRC LBWalberlaImpl_bspline_tests.cpp
 target_include_directories(LBWalberlaImpl_bspline_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
 
-unit_test(NAME LBWalberlaImpl_statistical_tests SRC LBWalberlaImpl_statistical_tests.cpp
-          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-          Boost::mpi ${WALBERLA_LIBS})
-target_include_directories(LBWalberlaImpl_statistical_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                                   ${walberla_BINARY_DIR}/src)
+if(NOT (ESPRESSO_BUILD_WITH_ASAN OR ESPRESSO_BUILD_WITH_UBSAN))
+  unit_test(NAME LBWalberlaImpl_statistical_tests SRC LBWalberlaImpl_statistical_tests.cpp
+            DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
+            Boost::mpi ${WALBERLA_LIBS})
+  target_include_directories(LBWalberlaImpl_statistical_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
+                                                     ${walberla_BINARY_DIR}/src)
+endif()
 
 unit_test(NAME LBWalberlaImpl_flow_tests SRC LBWalberlaImpl_flow_tests.cpp
           DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils

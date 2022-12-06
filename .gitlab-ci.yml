@@ -110,51 +110,9 @@ maxset:
      with_coverage: 'true'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
-     check_skip_long: 'true'
-     cmake_params: '-D ESPRESSO_TEST_NP=8'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - no-cuda
-    - numa
-
-maxset-walberla:
-  <<: *global_job_definition
-  stage: build
-  variables:
-     CC: 'gcc-10'
-     CXX: 'g++-10'
-     GCOV: 'gcov-10'
-     with_cuda: 'false'
-     myconfig: 'maxset'
-     with_coverage: 'true'
      with_walberla: 'true'
-     with_scafacos: 'false'
-     with_stokesian_dynamics: 'false'
      check_skip_long: 'true'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - no-cuda
-    - numa
-
-maxset-walberla-avx:
-  <<: *global_job_definition
-  stage: build
-  variables:
-     CC: 'gcc-10'
-     CXX: 'g++-10'
-     GCOV: 'gcov-10'
-     with_cuda: 'false'
-     myconfig: 'maxset'
-     with_coverage: 'true'
-     with_walberla: 'true'
-     with_scafacos: 'false'
-     with_stokesian_dynamics: 'false'
-     check_skip_long: 'true'
-     cmake_params: '-DWALBERLA_USE_AVX=TRUE'
+     cmake_params: '-D ESPRESSO_TEST_NP=8 -D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
