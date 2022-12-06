@@ -32,6 +32,7 @@
 
 #include <utils/constants.hpp>
 
+#include <cstddef>
 #include <cmath>
 #include <memory>
 #include <utility>
@@ -90,7 +91,7 @@ public:
 
   void reset_charge_field() override {
     // the FFT-solver re-uses the potential field for the charge
-    const auto potential_id = get_potential_field_id();
+    const auto potential_id = walberla::BlockDataID(get_potential_field_id());
 
     for (auto &block : *get_lattice()->get_blocks()) {
       auto field = block.template getData<PotentialField>(potential_id);
@@ -98,12 +99,12 @@ public:
     }
   }
 
-  void add_charge_to_field(domain_decomposition::BlockDataID const &id,
-                           double valency, bool is_double_precision) override {
+  void add_charge_to_field(
+      std::size_t id, double valency, bool is_double_precision) override {
     auto const factor = FloatType_c(valency) / FloatType_c(get_permittivity());
     // the FFT-solver re-uses the potential field for the charge
-    const auto charge_id = get_potential_field_id();
-    const auto &density_id = id;
+    const auto charge_id = walberla::BlockDataID(get_potential_field_id());
+    const auto density_id = walberla::BlockDataID(id);
     for (auto &block : *get_lattice()->get_blocks()) {
       auto charge_field = block.template getData<PotentialField>(charge_id);
       if (is_double_precision) {
@@ -124,9 +125,8 @@ public:
     }
   }
 
-  [[nodiscard]] domain_decomposition::BlockDataID get_potential_field_id() const
-      noexcept override {
-    return m_potential_field_id;
+  [[nodiscard]] std::size_t get_potential_field_id() const noexcept override {
+    return static_cast<std::size_t>(m_potential_field_id);
   }
 
   void solve() override {

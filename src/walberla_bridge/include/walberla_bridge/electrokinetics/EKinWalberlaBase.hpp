@@ -21,8 +21,6 @@
 
 #include "walberla_bridge/LatticeModel.hpp"
 
-#include <domain_decomposition/BlockDataID.h>
-
 #include <boost/optional.hpp>
 
 #include <utils/Vector.hpp>
@@ -95,8 +93,7 @@ public:
   virtual void set_friction_coupling(bool friction_coupling) noexcept = 0;
   virtual void set_ext_efield(const Utils::Vector3d &field) noexcept = 0;
 
-  [[nodiscard]] virtual walberla::BlockDataID get_density_id() const
-      noexcept = 0;
+  [[nodiscard]] virtual std::size_t get_density_id() const noexcept = 0;
 
   virtual ~EKinWalberlaBase() = default;
 };

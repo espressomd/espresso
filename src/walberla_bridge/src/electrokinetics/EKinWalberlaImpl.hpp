@@ -348,8 +348,9 @@ public:
     integrate_vtk_writers();
   }
 
-  [[nodiscard]] walberla::BlockDataID get_density_id() const noexcept override {
-    return m_density_field_id;
+  [[nodiscard]] std::size_t get_density_id() const noexcept override {
+    static_assert(std::is_same_v<std::size_t, walberla::uint_t>);
+    return static_cast<std::size_t>(m_density_field_id);
   }
 
   // Density

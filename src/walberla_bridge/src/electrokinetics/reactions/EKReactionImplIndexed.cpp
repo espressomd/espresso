@@ -119,9 +119,10 @@ EKReactionImplIndexed::EKReactionImplIndexed(
     std::vector<std::shared_ptr<EKReactant>> reactants, double coefficient)
     : EKReactionBase(lattice, reactants, coefficient),
       m_pending_changes(false) {
-  m_flagfield_id = field::addFlagFieldToStorage<detail::FlagField>(
-      get_lattice()->get_blocks(), "flag field reaction",
-      get_lattice()->get_ghost_layers());
+  m_flagfield_id = static_cast<std::size_t>(
+      field::addFlagFieldToStorage<detail::FlagField>(
+          get_lattice()->get_blocks(), "flag field reaction",
+          get_lattice()->get_ghost_layers()));
 
   // take one IndexVector as a dummy-value
   using IndexVectors = detail::ReactionKernelIndexedSelector::KernelTrait<>::
@@ -130,13 +131,14 @@ EKReactionImplIndexed::EKReactionImplIndexed(
   auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
     return new IndexVectors();
   };
-  m_indexvector_id = get_lattice()
-                         ->get_blocks()
-                         ->template addStructuredBlockData<IndexVectors>(
-                             createIdxVector, "IndexField");
+  m_indexvector_id = static_cast<std::size_t>(
+      get_lattice()->get_blocks()
+                   ->template addStructuredBlockData<IndexVectors>(
+                       createIdxVector, "IndexField"));
 
   for (auto &block : *get_lattice()->get_blocks()) {
-    auto flag_field = block.template getData<detail::FlagField>(m_flagfield_id);
+    auto flag_field =
+      block.template getData<detail::FlagField>(BlockDataID(m_flagfield_id));
     // register flags
     flag_field->registerFlag(Domain_flag);
     flag_field->registerFlag(Boundary_flag);
@@ -154,7 +156,7 @@ void EKReactionImplIndexed::perform_reaction() {
   boundary_update();
 
   auto kernel = detail::ReactionKernelIndexedSelector::get_kernel(
-      get_reactants(), get_coefficient(), m_indexvector_id);
+      get_reactants(), get_coefficient(), BlockDataID(get_indexvector_id()));
 
   for (auto &block : *get_lattice()->get_blocks()) {
     kernel(&block);
@@ -168,8 +170,8 @@ void EKReactionImplIndexed::set_node_is_boundary(const Utils::Vector3i &node,
     return;
 
   auto [flag_field, boundary_flag] =
-      detail::get_flag_field_and_flag<detail::FlagField>(bc->block,
-                                                         get_flagfield_id());
+      detail::get_flag_field_and_flag<detail::FlagField>(
+        bc->block, BlockDataID(get_flagfield_id()));
   if (is_boundary) {
     flag_field->addFlag(bc->cell, boundary_flag);
   } else {
@@ -185,8 +187,8 @@ EKReactionImplIndexed::get_node_is_boundary(const Utils::Vector3i &node) {
     return {boost::none};
 
   auto [flag_field, boundary_flag] =
-      detail::get_flag_field_and_flag<detail::FlagField>(bc->block,
-                                                         get_flagfield_id());
+      detail::get_flag_field_and_flag<detail::FlagField>(
+        bc->block, BlockDataID(get_flagfield_id()));
   return {flag_field->isFlagSet(bc->cell, boundary_flag)};
 }
 
@@ -199,8 +201,8 @@ void EKReactionImplIndexed::boundary_update() {
 
   if (m_pending_changes) {
     detail::fillFromFlagField<detail::FlagField, IndexVectors, IndexInfo>(
-        get_lattice()->get_blocks(), get_indexvector_id(), get_flagfield_id(),
-        Boundary_flag, Domain_flag);
+        get_lattice()->get_blocks(), BlockDataID(get_indexvector_id()),
+        BlockDataID(get_flagfield_id()), Boundary_flag, Domain_flag);
     m_pending_changes = false;
   }
 }

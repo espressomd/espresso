@@ -25,7 +25,7 @@
 #include "lb_interface.hpp"
 
 #ifdef LB_WALBERLA
-#include "EKContainer.hpp"
+#include <walberla_bridge/electrokinetics/EKContainer.hpp>
 #endif // LB_WALBERLA
 
 #include <cmath>

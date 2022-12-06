@@ -24,10 +24,9 @@
 #include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
 
-#include <domain_decomposition/BlockDataID.h>
-
 #include <boost/optional.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -35,8 +34,8 @@ namespace walberla {
 
 class EKReactionImplIndexed : public EKReactionBase {
 private:
-  BlockDataID m_flagfield_id;
-  BlockDataID m_indexvector_id;
+  std::size_t m_flagfield_id;
+  std::size_t m_indexvector_id;
 
   bool m_pending_changes;
 

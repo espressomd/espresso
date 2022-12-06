@@ -17,19 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_EKCONTAINER_HPP
-#define ESPRESSO_EKCONTAINER_HPP
-
-#include "config/config.hpp"
-
-#ifdef LB_WALBERLA
+#pragma once
 
 #include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cassert>
 #include <memory>
-#include <stdexcept>
 #include <vector>
 
 template <class EKSpecies> class EKContainer {
@@ -68,13 +63,6 @@ public:
   const_iterator end() const noexcept { return m_ekcontainer.end(); }
   [[nodiscard]] bool empty() const noexcept { return m_ekcontainer.empty(); }
 
-  void on_boxl_change() const {
-    if (not this->empty()) {
-      throw std::runtime_error("The box size can not be changed because there "
-                               "are active EKs.");
-    }
-  }
-
   void set_poissonsolver(
       std::shared_ptr<walberla::PoissonSolver> const &solver) noexcept {
     m_poissonsolver = solver;
@@ -88,18 +76,14 @@ public:
   void set_tau(double tau) noexcept { m_tau = tau; }
 
   void reset_charge() const { m_poissonsolver->reset_charge_field(); }
-  void add_charge(const walberla::domain_decomposition::BlockDataID &id,
-                  double valency, bool is_double_precision) const {
+  void add_charge(
+      std::size_t const id, double valency, bool is_double_precision) const {
     m_poissonsolver->add_charge_to_field(id, valency, is_double_precision);
   }
 
   void solve_poisson() const { m_poissonsolver->solve(); }
 
-  [[nodiscard]] walberla::domain_decomposition::BlockDataID
-  get_potential_field_id() const {
+  [[nodiscard]] std::size_t get_potential_field_id() const {
     return m_poissonsolver->get_potential_field_id();
   }
 };
-
-#endif // LB_WALBERLA
-#endif

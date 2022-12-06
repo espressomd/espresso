@@ -22,10 +22,10 @@
 #include "PoissonSolver.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 
-#include <domain_decomposition/BlockDataID.h>
 #include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
 
+#include <cstddef>
 #include <memory>
 #include <utility>
 
@@ -47,10 +47,9 @@ public:
   ~None() override = default;
 
   void reset_charge_field() override {}
-  void add_charge_to_field(const BlockDataID &, double, bool) override {}
+  void add_charge_to_field(std::size_t, double, bool) override {}
 
-  [[nodiscard]] domain_decomposition::BlockDataID get_potential_field_id() const
-      noexcept override {
+  [[nodiscard]] std::size_t get_potential_field_id() const noexcept override {
     return m_potential_field_id;
   }
 

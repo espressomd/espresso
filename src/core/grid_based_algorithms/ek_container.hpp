@@ -23,8 +23,8 @@
 #include "config/config.hpp"
 
 #ifdef LB_WALBERLA
-#include "EKContainer.hpp"
-#include "walberla_bridge/electrokinetics/EKinWalberlaBase.hpp"
+#include <walberla_bridge/electrokinetics/EKContainer.hpp>
+#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 #endif // LB_WALBERLA
 
 #include <stdexcept>

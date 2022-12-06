@@ -74,6 +74,12 @@
 #include <callgrind.h>
 #endif
 
+#ifdef LB_WALBERLA
+#ifdef WALBERLA_STATIC_ASSERT
+#error "waLberla headers should not be visible to the ESPResSo core"
+#endif
+#endif
+
 int integ_switch = INTEG_METHOD_NVT;
 
 /** Time step for the integration. */

@@ -21,8 +21,7 @@
 
 #include "walberla_bridge/LatticeWalberla.hpp"
 
-#include <domain_decomposition/BlockDataID.h>
-
+#include <cstddef>
 #include <memory>
 #include <utility>
 
@@ -40,12 +39,11 @@ public:
 
   virtual void reset_charge_field() = 0;
 
-  virtual void add_charge_to_field(const domain_decomposition::BlockDataID &id,
+  virtual void add_charge_to_field(std::size_t id,
                                    double valency,
                                    bool is_double_precision) = 0;
 
-  [[nodiscard]] virtual domain_decomposition::BlockDataID
-  get_potential_field_id() const noexcept = 0;
+  [[nodiscard]] virtual std::size_t get_potential_field_id() const noexcept = 0;
 
   void set_permittivity(double permittivity) noexcept {
     m_permittivity = permittivity;
