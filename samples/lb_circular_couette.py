@@ -33,7 +33,7 @@ import matplotlib.ticker
 import itertools
 import argparse
 
-espressomd.assert_features(["LB_WALBERLA"])
+espressomd.assert_features(["WALBERLA_LIB"])
 
 parser = argparse.ArgumentParser(epilog=__doc__)
 parser.add_argument("--visualizer", action="store_true", dest="visualizer",

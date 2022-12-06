@@ -29,7 +29,7 @@ print("""
 =======================================================
 """)
 
-required_features = ["LB_WALBERLA", "EXTERNAL_FORCES"]
+required_features = ["WALBERLA_LIB", "EXTERNAL_FORCES"]
 
 import espressomd
 import espressomd.lb

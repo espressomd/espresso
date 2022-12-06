@@ -28,7 +28,7 @@ import espressomd.shapes
 import espressomd.visualization
 import numpy as np
 
-required_features = ["LB_WALBERLA", "EXTERNAL_FORCES"]
+required_features = ["WALBERLA_LIB", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
 # System setup

@@ -26,7 +26,7 @@ import espressomd.lb
 import espressomd.shapes
 import espressomd.visualization
 
-required_features = ["LB_WALBERLA"]
+required_features = ["WALBERLA_LIB"]
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
