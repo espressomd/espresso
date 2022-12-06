@@ -20,9 +20,11 @@
 add_library(espresso_walberla SHARED)
 add_library(espresso::walberla ALIAS espresso_walberla)
 
+set_target_properties(espresso_walberla PROPERTIES CXX_CLANG_TIDY "")
 target_include_directories(espresso_walberla PUBLIC include)
 
 add_library(espresso_walberla_cpp_flags INTERFACE)
+set_target_properties(espresso_walberla_cpp_flags PROPERTIES CXX_CLANG_TIDY "")
 add_library(espresso::walberla::cpp_flags ALIAS espresso_walberla_cpp_flags)
 if(WALBERLA_USE_AVX)
   target_link_libraries(espresso_walberla_cpp_flags
@@ -56,5 +58,7 @@ install(TARGETS espresso_walberla
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(WITH_TESTS)
+  set(CMAKE_CXX_CLANG_TIDY "")
   add_subdirectory(tests)
+  set(CMAKE_CXX_CLANG_TIDY "${ESPRESSO_DEFAULT_CXX_CLANG_TIDY}")
 endif(WITH_TESTS)

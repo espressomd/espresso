@@ -568,7 +568,8 @@ target_link_libraries(espresso_cpp_flags INTERFACE espresso::coverage_flags)
 
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
+  set(ESPRESSO_DEFAULT_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
+  set(CMAKE_CXX_CLANG_TIDY "${ESPRESSO_DEFAULT_CXX_CLANG_TIDY}")
 endif()
 
 if(WITH_CPPCHECK)
@@ -636,7 +637,9 @@ if(WITH_WALBERLA)
     else()
       set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
     endif()
+    set(CMAKE_CXX_CLANG_TIDY "")
     add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
+    set(CMAKE_CXX_CLANG_TIDY "${ESPRESSO_DEFAULT_CXX_CLANG_TIDY}")
     set(LB_WALBERLA 1)
     set(WALBERLA_LIBS
         walberla::core walberla::domain_decomposition walberla::blockforest
