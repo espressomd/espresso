@@ -59,6 +59,7 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-strict-aliasing>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-volatile>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
     -Wno-unused-variable)
