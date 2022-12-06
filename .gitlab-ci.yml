@@ -109,8 +109,8 @@ maxset:
      myconfig: 'maxset'
      with_coverage: 'true'
      with_scafacos: 'true'
-     with_stokesian_dynamics: 'true'
      with_walberla: 'true'
+     with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
      cmake_params: '-D ESPRESSO_TEST_NP=8 -D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
@@ -209,8 +209,8 @@ clang-sanitizer:
      with_asan: 'true'
      with_ubsan: 'true'
      with_scafacos: 'true'
-     with_stokesian_dynamics: 'true'
      with_walberla: 'true'
+     with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h
