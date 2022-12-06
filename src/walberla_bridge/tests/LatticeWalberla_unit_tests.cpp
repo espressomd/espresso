@@ -92,9 +92,8 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::xrange(3u), n_ghost_layers) {
     constexpr auto origin = Vector3i{0, 0, 0};
     if (n >= origin and n < params.grid_dimensions) {
       boost::mpi::communicator world;
-      boost::mpi::all_reduce(world, boost::mpi::inplace(is_local),
-                             std::plus<int>());
-      BOOST_CHECK(is_local == 1);
+      auto const is_local_sum = boost::mpi::all_reduce(world, is_local, std::plus<int>());
+      BOOST_CHECK(is_local_sum == 1);
     }
   }
 }

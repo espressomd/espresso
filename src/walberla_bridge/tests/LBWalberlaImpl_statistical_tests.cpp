@@ -37,7 +37,6 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/mpi/inplace.hpp>
 
 #include <mpi.h>
 
@@ -67,7 +66,7 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   auto const [my_left, my_right] = lb->get_lattice().get_local_domain();
   auto const denominator = Utils::product(my_right - my_left);
 
-  Vector3d sum_v{}, sum_v_square{};
+  Vector3d sum_v_local{}, sum_v_square_local{};
 
   for (int i = 0; i < steps; i++) {
     Vector3d step_v{}, step_v_square{};
@@ -88,9 +87,9 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
     step_v /= denominator;
     step_v_square /= denominator;
 
-    sum_v += step_v;
-    sum_v_square += step_v_square;
-    std::cout << sum_v_square / static_cast<double>(i + 1) << std::endl;
+    sum_v_local += step_v;
+    sum_v_square_local += step_v_square;
+    std::cout << sum_v_square_local / static_cast<double>(i + 1) << std::endl;
 
     lb->integrate();
     lb->integrate();
@@ -99,10 +98,8 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
 
   // aggregate
   boost::mpi::communicator world;
-  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v),
-                         std::plus<Vector3d>());
-  boost::mpi::all_reduce(world, boost::mpi::inplace(sum_v_square),
-                         std::plus<Vector3d>());
+  auto sum_v = boost::mpi::all_reduce(world, sum_v_local, std::plus<Vector3d>());
+  auto sum_v_square = boost::mpi::all_reduce(world, sum_v_square_local, std::plus<Vector3d>());
   sum_v /= static_cast<double>(world.size());
   sum_v_square /= static_cast<double>(world.size());
 

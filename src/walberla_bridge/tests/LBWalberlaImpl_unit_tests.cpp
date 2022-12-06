@@ -38,7 +38,6 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/mpi/inplace.hpp>
 #include <boost/multi_array.hpp>
 
 #include <mpi.h>
@@ -261,9 +260,8 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
     constexpr auto origin = Vector3i{0, 0, 0};
     if (n >= origin and n < params.grid_dimensions) {
       boost::mpi::communicator world;
-      boost::mpi::all_reduce(world, boost::mpi::inplace(is_local),
-                             std::plus<int>());
-      BOOST_CHECK(is_local == 1);
+      auto const is_local_sum = boost::mpi::all_reduce(world, is_local, std::plus<int>());
+      BOOST_CHECK(is_local_sum == 1);
     }
   }
 }
@@ -511,29 +509,30 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
   // check forces to be applied
   // Each corner node should have 1/8 of the force
   auto const tol = 1E-10;
+  int count_local = 0;
   int count = 0;
   for (auto const &c : corner_nodes(params.grid_dimensions)) {
     auto const res = lb->get_node_force_to_be_applied(c);
     if (res) {
       BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), tol);
-      count += 1;
+      ++count_local;
     }
   };
-  boost::mpi::all_reduce(world, boost::mpi::inplace(count), std::plus<int>());
+  count = boost::mpi::all_reduce(world, count_local, std::plus<int>());
   BOOST_CHECK_EQUAL(count, 8);
 
   lb->integrate();
 
   // check applied forces from last integration step
-  count = 0;
+  count_local = 0;
   for (auto const &c : corner_nodes(params.grid_dimensions)) {
     auto const res = lb->get_node_last_applied_force(c);
     if (res) {
       BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), tol);
-      count += 1;
+      ++count_local;
     }
   };
-  boost::mpi::all_reduce(world, boost::mpi::inplace(count), std::plus<int>());
+  count = boost::mpi::all_reduce(world, count_local, std::plus<int>());
   BOOST_CHECK_EQUAL(count, 8);
 }
 
