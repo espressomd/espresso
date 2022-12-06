@@ -189,12 +189,10 @@ else
 fi
 
 if [ "${with_walberla}" = true ]; then
-  cmake_params="${cmake_params} -DWITH_WALBERLA=ON"
+  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=ON"
   # disable default OpenMPI CPU binding mechanism to avoid stale references to
   # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
   mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
-  # fix runtime warnings about "Read -1, expected 70560, errno = 1"
-  mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--mca;btl_vader_single_copy_mechanism;none"
 fi
 
 if [ "${with_coverage}" = true ]; then
@@ -229,8 +227,6 @@ else
     cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=OFF ${cmake_params}"
 fi
 
-cmake_params="${cmake_params}${mpiexec_preflags:+ -DMPIEXEC_PREFLAGS=${mpiexec_preflags}}"
-
 command -v nvidia-smi && nvidia-smi || true
 nvidia-smi -L || true
 if [ "${hide_gpu}" = true ]; then
@@ -258,7 +254,7 @@ cd "${builddir}"
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
     grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
-    grep -q "Ubuntu 22.04" /etc/os-release && export MPIEXEC_PREFLAGS="--mca;btl_vader_single_copy_mechanism;none"
+    grep -q "Ubuntu 22.04" /etc/os-release && export MPIEXEC_PREFLAGS="--mca;btl_vader_single_copy_mechanism;none${mpiexec_preflags:+;$mpiexec_preflags}"
 fi
 
 # CONFIGURE
