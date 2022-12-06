@@ -95,5 +95,5 @@ public:
 
   [[nodiscard]] virtual std::size_t get_density_id() const noexcept = 0;
 
-  virtual ~EKinWalberlaBase() = default;
+  ~EKinWalberlaBase() override = default;
 };

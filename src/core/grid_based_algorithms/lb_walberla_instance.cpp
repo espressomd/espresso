@@ -44,10 +44,8 @@
 #include <memory>
 #include <stdexcept>
 
-namespace {
 static std::weak_ptr<LBWalberlaBase> lb_walberla_instance;
 static std::shared_ptr<LBWalberlaParams> lb_walberla_params_instance;
-} // namespace
 
 std::shared_ptr<LBWalberlaBase> lb_walberla() {
   auto lb_walberla_instance_handle = lb_walberla_instance.lock();

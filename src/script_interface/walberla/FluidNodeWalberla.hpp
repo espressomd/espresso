@@ -104,7 +104,8 @@ public:
       }
       m_index = index;
       return ES_OK;
-    } else if (name == "set_velocity_at_boundary") {
+    }
+    if (name == "set_velocity_at_boundary") {
       if (is_none(params.at("value"))) {
         m_lb_fluid->remove_node_from_boundary(m_index);
         m_lb_fluid->ghost_communication();
@@ -114,47 +115,61 @@ public:
         m_lb_fluid->set_node_velocity_at_boundary(m_index, u);
         m_lb_fluid->ghost_communication();
       }
-    } else if (name == "get_velocity_at_boundary") {
+      return {};
+    }
+    if (name == "get_velocity_at_boundary") {
       if (is_boundary_all_reduce(m_lb_fluid->get_node_is_boundary(m_index))) {
         auto const result = m_lb_fluid->get_node_velocity_at_boundary(m_index);
         return mpi_reduce_optional(context()->get_comm(), result) /
                m_conv_velocity;
       }
       return Variant{None{}};
-    } else if (name == "set_velocity") {
+    }
+    if (name == "set_velocity") {
       auto const u =
           get_value<Utils::Vector3d>(params, "value") * m_conv_velocity;
       m_lb_fluid->set_node_velocity(m_index, u);
       m_lb_fluid->ghost_communication();
-    } else if (name == "get_velocity") {
+      return {};
+    }
+    if (name == "get_velocity") {
       auto const result = m_lb_fluid->get_node_velocity(m_index);
       return mpi_reduce_optional(context()->get_comm(), result) /
              m_conv_velocity;
-    } else if (name == "set_density") {
+    }
+    if (name == "set_density") {
       auto const dens = get_value<double>(params, "value");
       m_lb_fluid->set_node_density(m_index, dens * m_conv_dens);
       m_lb_fluid->ghost_communication();
-    } else if (name == "get_density") {
+      return {};
+    }
+    if (name == "get_density") {
       auto const result = m_lb_fluid->get_node_density(m_index);
       return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
-    } else if (name == "set_population") {
+    }
+    if (name == "set_population") {
       auto const pop = get_value<std::vector<double>>(params, "value");
       m_lb_fluid->set_node_pop(m_index, pop);
       m_lb_fluid->ghost_communication();
-    } else if (name == "get_population") {
+      return {};
+    }
+    if (name == "get_population") {
       auto const result = m_lb_fluid->get_node_pop(m_index);
       return mpi_reduce_optional(context()->get_comm(), result);
-    } else if (name == "get_is_boundary") {
+    }
+    if (name == "get_is_boundary") {
       auto const result = m_lb_fluid->get_node_is_boundary(m_index);
       return mpi_reduce_optional(context()->get_comm(), result);
-    } else if (name == "get_boundary_force") {
+    }
+    if (name == "get_boundary_force") {
       if (is_boundary_all_reduce(m_lb_fluid->get_node_is_boundary(m_index))) {
         auto result = m_lb_fluid->get_node_boundary_force(m_index);
         return mpi_reduce_optional(context()->get_comm(), result) /
                m_conv_force;
       }
       return Variant{None{}};
-    } else if (name == "get_pressure_tensor") {
+    }
+    if (name == "get_pressure_tensor") {
       auto const result = m_lb_fluid->get_node_pressure_tensor(m_index);
       auto value = boost::optional<std::vector<double>>{};
       if (result) {
@@ -169,14 +184,18 @@ public:
                                     tensor.row<2>().as_vector()};
       }
       return {};
-    } else if (name == "set_last_applied_force") {
+    }
+    if (name == "set_last_applied_force") {
       auto const f = get_value<Utils::Vector3d>(params, "value");
       m_lb_fluid->set_node_last_applied_force(m_index, f * m_conv_force);
       m_lb_fluid->ghost_communication();
-    } else if (name == "get_last_applied_force") {
+      return {};
+    }
+    if (name == "get_last_applied_force") {
       auto const result = m_lb_fluid->get_node_last_applied_force(m_index);
       return mpi_reduce_optional(context()->get_comm(), result) / m_conv_force;
-    } else if (name == "get_lattice_speed") {
+    }
+    if (name == "get_lattice_speed") {
       return 1. / m_conv_velocity;
     }
 

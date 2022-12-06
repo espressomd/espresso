@@ -70,7 +70,7 @@ namespace utf = boost::unit_test;
 constexpr auto tol = 6 * 100 * std::numeric_limits<double>::epsilon();
 
 struct LBTestParameters {
-  unsigned int seed;
+  int seed;
   double kT;
   double viscosity;
   double density;
@@ -85,7 +85,7 @@ struct LBTestParameters {
   }
 };
 
-static LBTestParameters params{23u,
+static LBTestParameters params{23,
                                0.,
                                1e-3,
                                0.5,
@@ -164,6 +164,8 @@ struct CleanupActorLB : public ParticleFactory {
   CleanupActorLB() : ParticleFactory() {
     mpi_call_all(espresso::add_lb_actor_local, 0.);
   }
+
+  // NOLINTNEXTLINE(bugprone-exception-escape)
   ~CleanupActorLB() { mpi_call_all(espresso::remove_lb_actor_local); }
 };
 
@@ -220,7 +222,7 @@ BOOST_AUTO_TEST_CASE(rng) {
 
   auto step3_norandom = lb_particle_coupling_noise(
       false, 4, lb_particle_coupling.rng_counter_coupling);
-  BOOST_CHECK(step3_norandom == Utils::Vector3d{});
+  BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
 }
 
 BOOST_AUTO_TEST_CASE(access_outside_domain) {

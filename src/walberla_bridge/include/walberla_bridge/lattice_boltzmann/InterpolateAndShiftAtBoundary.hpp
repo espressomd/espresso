@@ -111,9 +111,9 @@ private:
     auto const prefactor =
         ((slab_dir == m_slab_max) ? FloatType{-1} : FloatType{1});
     auto const offset = get_pos_offset() * prefactor;
-    for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
-      Cell source1 = *cell;
-      Cell source2 = *cell;
+    for (auto const &&cell : ci) {
+      Cell source1 = cell;
+      Cell source2 = cell;
       source1[dir] = cell_idx_c(std::floor(
                          static_cast<FloatType>(source1[dir]) + offset)) %
                      dim;
@@ -127,16 +127,16 @@ private:
       source2[dir] = cell_idx_c(source2[dir] % dim);
 
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
-        tmp_field->get(*cell, q) = field->get(source1, q) * (1 - weight) +
-                                   field->get(source2, q) * weight;
+        tmp_field->get(cell, q) = field->get(source1, q) * (1 - weight) +
+                                  field->get(source2, q) * weight;
       }
-      tmp_field->get(*cell, m_shear_direction) -= prefactor * shift;
+      tmp_field->get(cell, m_shear_direction) -= prefactor * shift;
     }
 
     // swap
-    for (auto cell = ci.begin(); cell != ci.end(); ++cell) {
+    for (auto const &&cell : ci) {
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
-        field->get(*cell, q) = tmp_field->get(*cell, q);
+        field->get(cell, q) = tmp_field->get(cell, q);
       }
     }
   }

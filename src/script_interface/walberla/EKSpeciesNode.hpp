@@ -92,38 +92,47 @@ public:
       }
       m_index = index;
       return ES_OK;
-    } else if (name == "set_density") {
+    }
+    if (name == "set_density") {
       auto const dens = get_value<double>(params, "value");
       m_ek_species->set_node_density(m_index, dens * m_conv_dens);
       m_ek_species->ghost_communication();
-    } else if (name == "get_density") {
+      return {};
+    }
+    if (name == "get_density") {
       auto const result = m_ek_species->get_node_density(m_index);
       return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
-    } else if (name == "get_is_boundary") {
+    }
+    if (name == "get_is_boundary") {
       auto const result = m_ek_species->get_node_is_boundary(m_index);
       return mpi_reduce_optional(context()->get_comm(), result);
-    } else if (name == "get_node_density_at_boundary") {
+    }
+    if (name == "get_node_density_at_boundary") {
       if (is_boundary_all_reduce(
               m_ek_species->get_node_is_density_boundary(m_index))) {
         auto const result = m_ek_species->get_node_density_at_boundary(m_index);
         return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
       }
       return Variant{None{}};
-    } else if (name == "set_node_density_at_boundary") {
+    }
+    if (name == "set_node_density_at_boundary") {
       if (is_none(params.at("value"))) {
         m_ek_species->remove_node_from_density_boundary(m_index);
       } else {
         auto const dens = get_value<double>(params, "value") * m_conv_dens;
         m_ek_species->set_node_density_boundary(m_index, dens);
       }
-    } else if (name == "get_node_flux_at_boundary") {
+      return {};
+    }
+    if (name == "get_node_flux_at_boundary") {
       if (is_boundary_all_reduce(
               m_ek_species->get_node_is_flux_boundary(m_index))) {
         auto const result = m_ek_species->get_node_flux_at_boundary(m_index);
         return mpi_reduce_optional(context()->get_comm(), result) / m_conv_flux;
       }
       return Variant{None{}};
-    } else if (name == "set_node_flux_at_boundary") {
+    }
+    if (name == "set_node_flux_at_boundary") {
       if (is_none(params.at("value"))) {
         m_ek_species->remove_node_from_flux_boundary(m_index);
       } else {
@@ -131,7 +140,9 @@ public:
             get_value<Utils::Vector3d>(params, "value") * m_conv_flux;
         m_ek_species->set_node_flux_boundary(m_index, flux);
       }
-    } else if (name == "get_lattice_speed") {
+      return {};
+    }
+    if (name == "get_lattice_speed") {
       return 1. / m_conv_velocity;
     }
 

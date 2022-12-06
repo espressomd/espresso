@@ -45,9 +45,8 @@ protected:
       ss << "provided index [" << formatter << index << "] is out of range "
          << "for shape [" << formatter << shape << "]";
       throw std::out_of_range(ss.str());
-    } else {
-      throw Exception("");
     }
+    throw Exception("");
   }
 
   [[nodiscard]] Utils::Vector3i

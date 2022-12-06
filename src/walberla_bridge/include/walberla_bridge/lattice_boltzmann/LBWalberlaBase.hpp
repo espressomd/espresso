@@ -42,7 +42,7 @@
 /** @brief Interface of a lattice-based fluid model. */
 class LBWalberlaBase : public LatticeModel {
 public:
-  virtual ~LBWalberlaBase() = default;
+  ~LBWalberlaBase() override = default;
 
   /** @brief Integrate LB for one time step. */
   virtual void integrate() = 0;

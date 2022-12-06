@@ -324,10 +324,10 @@ protected:
   }
 
 public:
-  LBWalberlaImpl(std::shared_ptr<LatticeWalberla> const &lattice,
+  LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice,
                  double viscosity, double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
-        m_kT(FloatType{0}), m_lattice(lattice) {
+        m_kT(FloatType{0}), m_lattice(std::move(lattice)) {
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
