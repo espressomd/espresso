@@ -22,8 +22,8 @@
 #include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <cassert>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -76,8 +76,8 @@ public:
   void set_tau(double tau) noexcept { m_tau = tau; }
 
   void reset_charge() const { m_poissonsolver->reset_charge_field(); }
-  void add_charge(
-      std::size_t const id, double valency, bool is_double_precision) const {
+  void add_charge(std::size_t const id, double valency,
+                  bool is_double_precision) const {
     m_poissonsolver->add_charge_to_field(id, valency, is_double_precision);
   }
 

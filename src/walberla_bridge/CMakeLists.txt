@@ -32,7 +32,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
 endif(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
 
 #if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-#  add_gpu_library(espresso_walberla_cuda SHARED
+#  espresso_add_gpu_library(espresso_walberla_cuda SHARED
 #                  ${WalberlaBridgeCodegenCuda_SRC})
 #  add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
 #  target_link_libraries(espresso_walberla PUBLIC espresso::walberla_cuda)

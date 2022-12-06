@@ -32,8 +32,8 @@
 
 #include <utils/constants.hpp>
 
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 #include <memory>
 #include <utility>
 
@@ -99,8 +99,8 @@ public:
     }
   }
 
-  void add_charge_to_field(
-      std::size_t id, double valency, bool is_double_precision) override {
+  void add_charge_to_field(std::size_t id, double valency,
+                           bool is_double_precision) override {
     auto const factor = FloatType_c(valency) / FloatType_c(get_permittivity());
     // the FFT-solver re-uses the potential field for the charge
     const auto charge_id = walberla::BlockDataID(get_potential_field_id());

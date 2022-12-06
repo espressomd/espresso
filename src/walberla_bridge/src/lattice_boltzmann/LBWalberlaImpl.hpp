@@ -324,8 +324,8 @@ protected:
   }
 
 public:
-  LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice,
-                 double viscosity, double density)
+  LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
+                 double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
         m_kT(FloatType{0}), m_lattice(std::move(lattice)) {
 

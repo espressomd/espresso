@@ -39,8 +39,7 @@ public:
 
   virtual void reset_charge_field() = 0;
 
-  virtual void add_charge_to_field(std::size_t id,
-                                   double valency,
+  virtual void add_charge_to_field(std::size_t id, double valency,
                                    bool is_double_precision) = 0;
 
   [[nodiscard]] virtual std::size_t get_potential_field_id() const noexcept = 0;
