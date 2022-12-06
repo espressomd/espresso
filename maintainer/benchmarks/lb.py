@@ -55,7 +55,7 @@ assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 
-required_features = ["LENNARD_JONES"]
+required_features = ["LENNARD_JONES", "WALBERLA_LIB"]
 espressomd.assert_features(required_features)
 
 # System

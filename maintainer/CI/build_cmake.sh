@@ -189,7 +189,7 @@ else
 fi
 
 if [ "${with_walberla}" = true ]; then
-  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=ON"
+  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_LIB=ON"
   # disable default OpenMPI CPU binding mechanism to avoid stale references to
   # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
   mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
