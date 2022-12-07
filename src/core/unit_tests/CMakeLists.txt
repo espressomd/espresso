@@ -68,8 +68,8 @@ unit_test(NAME bonded_interactions_map_test SRC
           bonded_interactions_map_test.cpp DEPENDS espresso::core)
 unit_test(NAME bond_breakage_test SRC bond_breakage_test.cpp DEPENDS
           espresso::core)
-if(ESPRESSO_BUILD_WITH_WALBERLA_LIB)
+if(ESPRESSO_BUILD_WITH_WALBERLA)
   unit_test(NAME lb_particle_coupling_test SRC lb_particle_coupling_test.cpp
             DEPENDS espresso::core espresso::walberla
             espresso::walberla::cpp_flags Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-endif(ESPRESSO_BUILD_WITH_WALBERLA_LIB)
+endif(ESPRESSO_BUILD_WITH_WALBERLA)

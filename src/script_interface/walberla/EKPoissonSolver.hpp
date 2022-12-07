@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
 
@@ -40,5 +40,5 @@ public:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

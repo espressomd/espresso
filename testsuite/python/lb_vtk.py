@@ -216,7 +216,7 @@ class TestLBWrite:
 
 
 @utx.skipIfMissingModules("vtk")
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LBWalberlaWrite(TestLBWrite, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': False}
@@ -224,7 +224,7 @@ class LBWalberlaWrite(TestLBWrite, ut.TestCase):
 
 
 @utx.skipIfMissingModules("vtk")
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LBWalberlaWriteSinglePrecision(TestLBWrite, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}

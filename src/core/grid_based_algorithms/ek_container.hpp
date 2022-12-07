@@ -22,10 +22,10 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 #include <walberla_bridge/electrokinetics/EKContainer.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 
 #include <stdexcept>
 
@@ -35,9 +35,9 @@ struct NoEKActive : public std::exception {
 
 namespace EK {
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 extern EKContainer<EKinWalberlaBase> ek_container;
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 
 double get_tau();
 int get_steps_per_md_step(double md_timestep);

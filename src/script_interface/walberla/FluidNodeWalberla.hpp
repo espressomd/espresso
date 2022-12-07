@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
@@ -211,5 +211,5 @@ private:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

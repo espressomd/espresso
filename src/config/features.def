@@ -113,6 +113,6 @@ HDF5 external
 SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
-WALBERLA_LIB external
+WALBERLA external
 WALBERLA_FFT external
 VALGRIND_MARKERS external

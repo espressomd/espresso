@@ -30,7 +30,7 @@ namespace utf = boost::unit_test;
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include "ParticleFactory.hpp"
 
@@ -617,6 +617,6 @@ int main(int argc, char **argv) {
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
 
-#else // WALBERLA_LIB
+#else // WALBERLA
 int main(int argc, char **argv) {}
 #endif

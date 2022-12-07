@@ -77,7 +77,7 @@ class LBLinearMomentum:
             linear_momentum, analyze_linear_momentum, atol=self.atol)
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBLinearMomentumWalberla(LBLinearMomentum, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -87,7 +87,7 @@ class LBLinearMomentumWalberla(LBLinearMomentum, ut.TestCase):
     atol = 1e-10
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBLinearMomentumWalberlaSinglePrecision(LBLinearMomentum, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

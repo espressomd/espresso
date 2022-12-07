@@ -144,7 +144,7 @@ class EKBoundariesBase:
                 boundary_type=espressomd.EKSpecies.FluxBoundary)
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -154,7 +154,7 @@ class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
     ek_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class EKBoundariesWalberlaSinglePrecision(EKBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

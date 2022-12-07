@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include "EKSpecies.hpp"
 
@@ -66,5 +66,5 @@ private:
 };
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

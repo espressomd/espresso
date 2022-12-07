@@ -35,8 +35,8 @@ class EKFFT(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA_LIB"):
-            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
+        if not has_features("WALBERLA"):
+            raise NotImplementedError("Feature WALBERLA not compiled in")
 
         super().__init__(*args, **kwargs)
 
@@ -46,8 +46,8 @@ class EKNone(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA_LIB"):
-            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
+        if not has_features("WALBERLA"):
+            raise NotImplementedError("Feature WALBERLA not compiled in")
 
         super().__init__(*args, **kwargs)
 
@@ -96,8 +96,8 @@ class EKSpecies(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA_LIB"):
-            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
+        if not has_features("WALBERLA"):
+            raise NotImplementedError("Feature WALBERLA not compiled in")
 
         super().__init__(*args, **kwargs)
 
@@ -229,7 +229,7 @@ class DensityBoundary:
         self.density = density
 
 
-if has_features("WALBERLA_LIB"):
+if has_features("WALBERLA"):
     _ek_vtk_registry = VTKRegistry()
 
 
@@ -270,8 +270,8 @@ class EKVTKOutput(ScriptInterfaceHelper):
     _so_bind_methods = ("enable", "disable", "write")
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA_LIB"):
-            raise NotImplementedError("Feature WALBERLA_LIB not compiled in")
+        if not has_features("WALBERLA"):
+            raise NotImplementedError("Feature WALBERLA not compiled in")
         if 'sip' not in kwargs:
             params = self.default_params()
             params.update(kwargs)

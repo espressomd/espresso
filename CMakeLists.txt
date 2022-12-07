@@ -92,10 +92,10 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
-option(ESPRESSO_BUILD_WITH_WALBERLA_LIB "Build with waLBerla lattice-Boltzmann support" OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA "Build with waLBerla lattice-Boltzmann support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX
        "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
-option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" ${ESPRESSO_BUILD_WITH_WALBERLA_LIB})
+option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" ${ESPRESSO_BUILD_WITH_WALBERLA})
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND_MARKERS
        "Build with valgrind instrumentation markers" OFF)
@@ -606,7 +606,7 @@ if(ESPRESSO_BUILD_BENCHMARKS)
 endif()
 
 # Walberla
-if(ESPRESSO_BUILD_WITH_WALBERLA_LIB)
+if(ESPRESSO_BUILD_WITH_WALBERLA)
   include(FetchContent)
   FetchContent_Declare(
     walberla

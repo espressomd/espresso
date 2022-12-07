@@ -66,7 +66,7 @@ class LBMassCommon:
         np.testing.assert_array_less(result[:, 1], 0.015)
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LBMassWalberla(LBMassCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -76,7 +76,7 @@ class LBMassWalberla(LBMassCommon, ut.TestCase):
     atol = 1e-10
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LBMassWalberlaSinglePrecision(LBMassCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

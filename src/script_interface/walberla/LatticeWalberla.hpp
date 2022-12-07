@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
@@ -80,5 +80,5 @@ public:
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

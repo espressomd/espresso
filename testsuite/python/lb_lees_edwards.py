@@ -68,7 +68,7 @@ class LEContextManager:
         system.lees_edwards.protocol = espressomd.lees_edwards.Off()
 
 
-@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
+@utx.skipIfMissingFeatures(['WALBERLA'])
 class LBLeesEdwards(ut.TestCase):
 
     """

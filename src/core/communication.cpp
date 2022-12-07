@@ -30,7 +30,7 @@
 #include <utils/mpi/cart_comm.hpp>
 
 // TODO: extract mpi-init from lb_walberla_init to separate file
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 #endif
 
@@ -80,7 +80,7 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 
   ErrorHandling::init_error_handling(mpiCallbacks());
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
   walberla_mpi_init();
 #endif
 

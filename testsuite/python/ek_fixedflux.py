@@ -24,7 +24,7 @@ import numpy as np
 import espressomd.shapes
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedFlux(ut.TestCase):
     BOX_L = 5.
     AGRID = 1.0

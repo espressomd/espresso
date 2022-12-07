@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 #ifdef WALBERLA_FFT
 
 #include "EKPoissonSolver.hpp"
@@ -69,5 +69,5 @@ private:
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA_FFT
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

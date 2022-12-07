@@ -263,7 +263,7 @@ void on_boxl_change(bool skip_method_adaption) {
 void on_cell_structure_change() {
   clear_particle_node();
 
-  if (lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
     throw std::runtime_error(
         "LB does not currently support handling changes of the MD cell "
         "geometry. Setup the cell system, skin and interactions before "
@@ -343,7 +343,7 @@ unsigned global_ghost_flags() {
   /* Position and Properties are always requested. */
   unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
-  if (lattice_switch == ActiveLB::WALBERLA)
+  if (lattice_switch == ActiveLB::WALBERLA_LB)
     data_parts |= Cells::DATA_PART_MOMENTUM;
 
   if (thermo_switch & THERMO_DPD)

@@ -20,7 +20,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
 

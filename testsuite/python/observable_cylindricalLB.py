@@ -276,7 +276,7 @@ class CylindricalLBObservableCommon:
         self.check_edges(flux_obs, np_edges)
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class CylindricalLBObservableWalberla(
         CylindricalLBObservableCommon, ut.TestCase):
 
@@ -286,7 +286,7 @@ class CylindricalLBObservableWalberla(
     lb_params_extra = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class CylindricalLBObservableWalberlaSinglePrecision(
         CylindricalLBObservableWalberla, ut.TestCase):
 

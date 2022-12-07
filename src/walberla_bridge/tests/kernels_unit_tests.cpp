@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include <boost/test/unit_test.hpp>
 

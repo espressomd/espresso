@@ -24,7 +24,7 @@ import espressomd.EKSpecies
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class EKReaction(ut.TestCase):
     BOX_L = [22., 2., 2.]
     PADDING = 1

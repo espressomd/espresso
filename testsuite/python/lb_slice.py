@@ -24,7 +24,7 @@ import numpy as np
 import itertools
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LBSliceTest(ut.TestCase):
 
     """This simple test first writes random numbers and then reads them

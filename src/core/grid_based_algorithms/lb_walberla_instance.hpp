@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
@@ -69,6 +69,6 @@ bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
 /** @brief De-register a waLBerla LB instance and update lattice switch. */
 void deactivate_lb_walberla();
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 
 #endif

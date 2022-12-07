@@ -36,7 +36,7 @@ import logging
 import tqdm
 import sys
 
-espressomd.assert_features(["WALBERLA_LIB"])
+espressomd.assert_features(["WALBERLA"])
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 parser = argparse.ArgumentParser(epilog=__doc__)

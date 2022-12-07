@@ -75,7 +75,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
 #ifdef H5MD
   Writer::initialize(f);
 #endif
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
   walberla::initialize(f);
 #endif
 }

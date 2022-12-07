@@ -30,7 +30,7 @@ import espressomd.lees_edwards
 import numpy as np
 import matplotlib.pyplot as plt
 
-required_features = ["WALBERLA_LIB"]
+required_features = ["WALBERLA"]
 espressomd.assert_features(required_features)
 
 

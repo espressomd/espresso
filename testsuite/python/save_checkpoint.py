@@ -72,7 +72,7 @@ if 'INT.NPT' not in modes:
 
 lbf_actor = None
 lb_lattice = None
-if espressomd.has_features('WALBERLA_LIB') and 'LB.WALBERLA' in modes:
+if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
     lbf_actor = espressomd.lb.LBFluidWalberla
     lb_lattice = espressomd.lb.LatticeWalberla(agrid=1.0, n_ghost_layers=1)
     # TODO WALBERLA

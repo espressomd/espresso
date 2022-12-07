@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include "EKReactions.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
@@ -35,5 +35,5 @@ void perform_reactions();
 
 } // namespace EK
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

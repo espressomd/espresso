@@ -146,7 +146,7 @@ class TestLB:
 
 @ut.skipIf(TestLB.n_nodes == 1,
            "LB with regular decomposition already tested with 2 MPI ranks")
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class TestRegularLBWalberla(TestLB, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -159,7 +159,7 @@ class TestRegularLBWalberla(TestLB, ut.TestCase):
 
 @ut.skipIf(TestLB.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class TestNSquareLBWalberla(TestLB, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -170,7 +170,7 @@ class TestNSquareLBWalberla(TestLB, ut.TestCase):
 
 @ut.skipIf(TestLB.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class TestHybrid0LBWalberla(TestLB, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -183,7 +183,7 @@ class TestHybrid0LBWalberla(TestLB, ut.TestCase):
 
 @ut.skipIf(TestLB.n_nodes > 1,
            "LB with N-square only works on 1 MPI rank")
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class TestHybrid1LBWalberla(TestLB, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla

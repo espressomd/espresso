@@ -84,7 +84,7 @@ class LBBoundariesBase:
                 boundary_type=espressomd.lb.VelocityBounceBack)
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBBoundariesWalberla(LBBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -93,7 +93,7 @@ class LBBoundariesWalberla(LBBoundariesBase, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBBoundariesWalberlaSinglePrecision(LBBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

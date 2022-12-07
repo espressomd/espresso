@@ -22,7 +22,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include "EKSpecies.hpp"
 #include "core/grid_based_algorithms/ek_container.hpp"
@@ -66,5 +66,5 @@ class EKContainer : public ObjectList<EKSpecies> {
 };
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

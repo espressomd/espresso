@@ -110,7 +110,7 @@ class LBBuoyancy:
             atol=np.linalg.norm(expected_force) * 0.02)
 
 
-@utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "WALBERLA"])
 class LBBuoyancyWalberla(LBBuoyancy, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -119,7 +119,7 @@ class LBBuoyancyWalberla(LBBuoyancy, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "WALBERLA_LIB"])
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "WALBERLA"])
 class LBBuoyancyWalberlaSinglePrecision(LBBuoyancy, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

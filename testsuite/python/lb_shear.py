@@ -182,7 +182,7 @@ class LBShearCommon:
         self.check_profile(y, -z)
 
 
-@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
+@utx.skipIfMissingFeatures(['WALBERLA'])
 class LBShearWalberla(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -191,7 +191,7 @@ class LBShearWalberla(LBShearCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-@utx.skipIfMissingFeatures(['WALBERLA_LIB'])
+@utx.skipIfMissingFeatures(['WALBERLA'])
 class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

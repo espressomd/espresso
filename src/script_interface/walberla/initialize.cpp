@@ -19,7 +19,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include "FluidNodeWalberla.hpp"
 #include "FluidWalberla.hpp"
@@ -42,7 +42,7 @@
 
 #include <utils/Factory.hpp>
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 #ifdef WALBERLA_STATIC_ASSERT
 #error "waLberla headers should not be visible to the ESPResSo script interface"
 #endif
@@ -74,4 +74,4 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA

@@ -586,7 +586,7 @@ class LBTest:
         np.testing.assert_allclose(f1, f2, rtol=1e-2)
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberla(LBTest, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
@@ -598,7 +598,7 @@ class LBTestWalberla(LBTest, ut.TestCase):
     rtol = 1e-7
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaSinglePrecision(LBTest, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""

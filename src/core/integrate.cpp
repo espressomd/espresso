@@ -74,7 +74,7 @@
 #include <callgrind.h>
 #endif
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 #ifdef WALBERLA_STATIC_ASSERT
 #error "waLberla headers should not be visible to the ESPResSo core"
 #endif
@@ -371,7 +371,7 @@ int integrate(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       auto const lb_active = LB::get_lattice_switch() != ActiveLB::NONE;
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
       auto const ek_active = not EK::ek_container.empty();
 #else
       auto constexpr ek_active = false;

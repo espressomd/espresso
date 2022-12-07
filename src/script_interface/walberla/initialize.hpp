@@ -21,11 +21,11 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 namespace ScriptInterface::walberla {
 void initialize(Utils::Factory<ObjectHandle> *om);
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

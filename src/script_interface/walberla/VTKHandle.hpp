@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#ifdef WALBERLA_LIB
+#ifdef WALBERLA
 
 #include <walberla_bridge/VTKHandle.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
@@ -258,5 +258,5 @@ std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
 
 } // namespace ScriptInterface::walberla
 
-#endif // WALBERLA_LIB
+#endif // WALBERLA
 #endif

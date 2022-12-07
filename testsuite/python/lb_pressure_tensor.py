@@ -143,7 +143,7 @@ class TestLBPressureTensor:
                 self.assertAlmostEqual(avg_ij, 0., delta=tol_node)
 
 
-@utx.skipIfMissingFeatures("WALBERLA_LIB")
+@utx.skipIfMissingFeatures("WALBERLA")
 class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
 
     def setUp(self):
@@ -153,7 +153,7 @@ class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
 
 
 # TODO WALBERLA
-# @utx.skipIfMissingFeatures("WALBERLA_LIB")
+# @utx.skipIfMissingFeatures("WALBERLA")
 # @utx.skipIfMissingGPU()
 # class TestLBPressureTensorGPU(TestLBPressureTensor, ut.TestCase):
 

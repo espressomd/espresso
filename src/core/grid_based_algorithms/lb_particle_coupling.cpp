@@ -75,7 +75,7 @@ void lb_lbcoupling_set_gamma(double gamma) {
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
 bool lb_lbcoupling_is_seed_required() {
-  if (lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
     return not lb_particle_coupling.rng_counter_coupling.is_initialized();
   }
   return false;
@@ -86,14 +86,14 @@ uint64_t lb_coupling_get_rng_state_cpu() {
 }
 
 uint64_t lb_lbcoupling_get_rng_state() {
-  if (lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
     return lb_coupling_get_rng_state_cpu();
   }
   throw std::runtime_error("No LB active");
 }
 
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
     lb_particle_coupling.rng_counter_coupling =
         Utils::Counter<uint64_t>(counter);
   } else
@@ -306,7 +306,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
                                             const ParticleRange &more_particles,
                                             double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-  if (lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
     if (lb_particle_coupling.couple_to_md) {
       bool using_regular_cell_structure =
           (local_geo.cell_structure_type() ==
@@ -352,7 +352,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 void lb_lbcoupling_propagate() {
   if (lattice_switch != ActiveLB::NONE) {
     if (LB::get_kT() > 0.0) {
-      if (lattice_switch == ActiveLB::WALBERLA) {
+      if (lattice_switch == ActiveLB::WALBERLA_LB) {
         lb_particle_coupling.rng_counter_coupling->increment();
       }
     }

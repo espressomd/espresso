@@ -34,8 +34,8 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef WALBERLA_LIB
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
+#ifdef WALBERLA
     auto res = lb_walberla()->get_velocity_at_pos(pos / LB::get_agrid(), true);
     if (!res) {
       std::cout << this_node << ": position: [" << pos << "]\n";
@@ -50,8 +50,8 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
 void lb_lbinterpolation_add_force_density(
     const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef WALBERLA_LIB
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
+#ifdef WALBERLA
     if (!lb_walberla()->add_force_at_pos(pos / LB::get_agrid(), force_density))
       throw std::runtime_error("Could not apply force to lb.");
 #endif
