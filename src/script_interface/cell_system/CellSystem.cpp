@@ -206,6 +206,7 @@ Variant CellSystem::do_call_method(std::string const &name,
     return neighbors;
   }
   if (name == "non_bonded_loop_trace") {
+    on_observable_calc();
     std::vector<Variant> out;
     auto const pair_list = non_bonded_loop_trace();
     std::transform(pair_list.begin(), pair_list.end(), std::back_inserter(out),
