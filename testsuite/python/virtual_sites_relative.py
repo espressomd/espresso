@@ -158,6 +158,9 @@ class VirtualSites(ut.TestCase):
         if system.cell_system.get_state()["n_nodes"] > 1:
             with self.assertRaisesRegex(Exception, r"The distance between virtual and non-virtual particle \([0-9\.]+\) is larger than the minimum global cutoff"):
                 p2.vs_auto_relate_to(p1)
+            # If overridden this check should not raise an exception
+            system.virtual_sites.override_cutoff_check = True
+            p2.vs_auto_relate_to(p1)
 
     def test_pos_vel_forces(self):
         system = self.system
