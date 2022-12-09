@@ -30,8 +30,15 @@ if has_features("VIRTUAL_SITES"):
 
         Attributes
         ----------
-        implementation :
-            instance of a virtual sites implementation
+        have_quaternion : :obj:`bool`
+            Whether the virtual sites has a quaternion (only relevant for
+            :class:`~espressomd.virtual_sites.VirtualSitesRelative`).
+        override_cutoff_check : :obj:`bool`
+            Whether to disable the sanity check that triggers when attempting
+            to set up a virtual site too far away from the real particle in a
+            MPI-parallel simulation with more than 1 core. Disabling this
+            check is not recommended; it is only relevant in rare situations
+            when using the :ref:`Hybrid decomposition` cell system.
 
         """
         _so_name = "VirtualSites::ActiveVirtualSitesHandle"
@@ -47,7 +54,7 @@ if has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
     @script_interface_register
     class VirtualSitesInertialessTracers(ScriptInterfaceHelper):
 
-        """Virtual sites which are advected with an lb fluid without inertia.
+        """Virtual sites which are advected with an LB fluid without inertia.
         Forces are on them are transferred to the fluid instantly.
 
         """
