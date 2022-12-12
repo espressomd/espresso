@@ -43,7 +43,8 @@ class EKTest:
                          "diffusion": 0.1,
                          "advection": False,
                          "friction_coupling": False,
-                         "ext_efield": [0.1, 0.2, 0.3]}
+                         "ext_efield": [0.1, 0.2, 0.3],
+                         "tau": params["tau"]}
 
     system.periodicity = [True, True, True]
     system.time_step = params["tau"]
@@ -209,7 +210,7 @@ class EKTest:
         ek_reactant = espressomd.EKSpecies.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         ek_reaction = espressomd.EKSpecies.EKIndexedReaction(
-            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice)
+            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice, tau=self.params["tau"])
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
         self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)
@@ -227,7 +228,7 @@ class EKTest:
         ek_reactant = espressomd.EKSpecies.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         ek_reaction = espressomd.EKSpecies.EKIndexedReaction(
-            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice)
+            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice, tau=self.params["tau"])
         # check ranges and out-of-bounds access
         shape = np.around(self.system.box_l / self.params["agrid"]).astype(int)
         for i in range(3):
@@ -306,7 +307,7 @@ class EKTest:
         ek_reactant = espressomd.EKSpecies.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         ek_reaction = espressomd.EKSpecies.EKBulkReaction(
-            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice)
+            reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice, tau=self.params["tau"])
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
         self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)

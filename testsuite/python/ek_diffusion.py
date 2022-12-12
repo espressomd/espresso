@@ -27,14 +27,15 @@ import scipy.optimize
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKDiffusion(ut.TestCase):
-    BOX_L = 31.
-    AGRID = 1.0
+    BOX_L = 15.5
+    AGRID = 0.5
     DENSITY = 1
-    DIFFUSION_COEFFICIENT = 0.1
-    TIME = 150
+    DIFFUSION_COEFFICIENT = 0.05
+    TAU = 0.9
+    TIMESTEPS = int(65 / TAU)
 
     system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
-    system.time_step = 1.0
+    system.time_step = TAU
     system.cell_system.skin = 0.4
 
     def tearDown(self) -> None:
@@ -62,15 +63,15 @@ class EKDiffusion(ut.TestCase):
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
+                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies)
-        self.system.ekcontainer.tau = 1.0
+        self.system.ekcontainer.tau = self.TAU
         self.system.ekcontainer.solver = eksolver
 
-        center = np.asarray(self.system.box_l / 2, dtype=np.int)
+        center = np.asarray(lattice.shape // 2, dtype=int)
 
         ekspecies[center].density = self.DENSITY
 
@@ -78,14 +79,14 @@ class EKDiffusion(ut.TestCase):
         np.testing.assert_almost_equal(
             np.sum(ekspecies[:, :, :].density), self.DENSITY, decimal_precision)
 
-        # TODO: replace that when the blockforest is able to return the
-        # dimensions
-        positions = np.empty((*self.system.box_l.astype(np.int), 3))
+        # calculate physical positions
+        positions = np.empty((*lattice.shape, 3))
         positions[..., 2], positions[..., 1], positions[..., 0] = np.meshgrid(
-            *map(lambda x: np.arange(0, x) - x / 2, self.system.box_l))
+            *map(lambda x: np.arange(0, x) - x / 2, lattice.shape))
         positions += 0.5
+        positions *= self.AGRID
 
-        self.system.integrator.run(self.TIME)
+        self.system.integrator.run(self.TIMESTEPS)
 
         simulated_density = np.copy(ekspecies[:, :, :].density)
 
@@ -98,20 +99,21 @@ class EKDiffusion(ut.TestCase):
         # check that the maximum is in the right place
         peak = np.unravel_index(
             np.argmax(simulated_density, axis=None),
-            self.system.box_l.astype(np.int))
-        np.testing.assert_equal(peak, self.system.box_l / 2 - 0.5)
+            lattice.shape)
+        np.testing.assert_equal(peak, center)
 
         calc_density = self.analytical_density(
-            positions, self.TIME, self.DIFFUSION_COEFFICIENT)
-        target = [self.TIME, self.DIFFUSION_COEFFICIENT]
+            positions, self.TIMESTEPS * self.TAU, self.DIFFUSION_COEFFICIENT) * self.AGRID ** 3
+
+        target = [self.TIMESTEPS * self.TAU, self.DIFFUSION_COEFFICIENT]
 
         popt, _ = scipy.optimize.curve_fit(self.analytical_density,
                                            positions.reshape(-1, 3),
-                                           simulated_density.reshape(-1),
+                                           simulated_density.reshape(-1) / self.AGRID ** 3,
                                            p0=target,
                                            bounds=([0, 0], [np.inf, np.inf]))
 
-        np.testing.assert_allclose(popt[0], self.TIME, rtol=0.1)
+        np.testing.assert_allclose(popt[0], self.TIMESTEPS * self.TAU, rtol=0.1)
         np.testing.assert_allclose(
             popt[1], self.DIFFUSION_COEFFICIENT, rtol=0.1)
         np.testing.assert_allclose(

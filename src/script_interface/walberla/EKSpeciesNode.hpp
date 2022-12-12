@@ -52,7 +52,6 @@ class EKSpeciesNode : public AutoParameters<EKSpeciesNode, LatticeIndices> {
   Utils::Vector3i m_grid_size;
   double m_conv_dens;
   double m_conv_flux;
-  double m_conv_velocity;
 
 public:
   EKSpeciesNode() {
@@ -66,9 +65,8 @@ public:
           get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
       m_ek_species = ek_sip->get_ekinstance();
       assert(m_ek_species);
-      m_conv_dens = 1.;
-      m_conv_flux = 1.;
-      m_conv_velocity = 1.;
+      m_conv_dens = ek_sip->get_conversion_factor_density();
+      m_conv_flux = ek_sip->get_conversion_factor_flux();
     } catch (std::exception const &e) {
       if (context()->is_head_node()) {
         runtimeErrorMsg() << "EKSpeciesNode failed: " << e.what();
@@ -141,9 +139,6 @@ public:
         m_ek_species->set_node_flux_boundary(m_index, flux);
       }
       return {};
-    }
-    if (name == "get_lattice_speed") {
-      return 1. / m_conv_velocity;
     }
 
     return {};

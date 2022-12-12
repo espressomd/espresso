@@ -34,24 +34,48 @@
 namespace ScriptInterface::walberla {
 
 class EKSpecies : public AutoParameters<EKSpecies> {
+private:
+  double m_conv_diffusion;
+  double m_conv_ext_efield;
+  double m_conv_density;
+  double m_conv_flux;
+
 public:
   void do_construct(VariantMap const &args) override {
     m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
     const auto single_precision =
         get_value_or<bool>(args, "single_precision", false);
+
+    // unit conversions
+    auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
+    auto const tau = get_value<double>(args, "tau");
+
+    m_conv_diffusion = tau / Utils::int_pow<2>(agrid);
+    m_conv_ext_efield = Utils::int_pow<2>(tau) / agrid;
+    m_conv_density = Utils::int_pow<3>(agrid);
+    m_conv_flux = tau * Utils::int_pow<2>(agrid);
+
+    auto const ek_diffusion =
+        get_value<double>(args, "diffusion") * m_conv_diffusion;
+    auto const ek_ext_efield =
+        get_value<Utils::Vector3d>(args, "ext_efield") * m_conv_ext_efield;
+    auto const ek_density = get_value<double>(args, "density") * m_conv_density;
+
     m_ekinstance = new_ek_walberla(
-        m_lattice->lattice(), get_value<double>(args, "diffusion"),
-        get_value<double>(args, "kT"), get_value<double>(args, "valency"),
-        get_value<Utils::Vector3d>(args, "ext_efield"),
-        get_value<double>(args, "density"), get_value<bool>(args, "advection"),
+        m_lattice->lattice(), ek_diffusion, get_value<double>(args, "kT"),
+        get_value<double>(args, "valency"), ek_ext_efield, ek_density,
+        get_value<bool>(args, "advection"),
         get_value<bool>(args, "friction_coupling"), single_precision);
 
     add_parameters(
         {{"diffusion",
           [this](Variant const &v) {
-            m_ekinstance->set_diffusion(get_value<double>(v));
+            m_ekinstance->set_diffusion(get_value<double>(v) *
+                                        m_conv_diffusion);
           },
-          [this]() { return m_ekinstance->get_diffusion(); }},
+          [this]() {
+            return m_ekinstance->get_diffusion() / m_conv_diffusion;
+          }},
          {"kT",
           [this](Variant const &v) {
             m_ekinstance->set_kT(get_value<double>(v));
@@ -64,9 +88,12 @@ public:
           [this]() { return m_ekinstance->get_valency(); }},
          {"ext_efield",
           [this](Variant const &v) {
-            m_ekinstance->set_ext_efield(get_value<Utils::Vector3d>(v));
+            m_ekinstance->set_ext_efield(get_value<Utils::Vector3d>(v) *
+                                         m_conv_ext_efield);
           },
-          [this]() { return m_ekinstance->get_ext_efield(); }},
+          [this]() {
+            return m_ekinstance->get_ext_efield() / m_conv_ext_efield;
+          }},
          {"advection",
           [this](Variant const &v) {
             m_ekinstance->set_advection(get_value<bool>(v));
@@ -91,18 +118,29 @@ public:
     return m_ekinstance;
   }
 
+  [[nodiscard]] std::shared_ptr<LatticeWalberla> get_lattice() {
+    return m_lattice;
+  }
+
   [[nodiscard]] Variant do_call_method(std::string const &method,
                                        VariantMap const &parameters) override {
     if (method == "update_flux_boundary_from_shape") {
+      auto value_view =
+          get_value<std::vector<double>>(parameters, "value_view");
+      std::transform(value_view.begin(), value_view.end(), value_view.begin(),
+                     [this](double v) { return v * m_conv_flux; });
+
       m_ekinstance->update_flux_boundary_from_shape(
-          get_value<std::vector<int>>(parameters, "raster_view"),
-          get_value<std::vector<double>>(parameters, "value_view"));
+          get_value<std::vector<int>>(parameters, "raster_view"), value_view);
       return none;
     }
     if (method == "update_density_boundary_from_shape") {
+      auto value_view =
+          get_value<std::vector<double>>(parameters, "value_view");
+      std::transform(value_view.begin(), value_view.end(), value_view.begin(),
+                     [this](double v) { return v * m_conv_density; });
       m_ekinstance->update_density_boundary_from_shape(
-          get_value<std::vector<int>>(parameters, "raster_view"),
-          get_value<std::vector<double>>(parameters, "value_view"));
+          get_value<std::vector<int>>(parameters, "raster_view"), value_view);
       return none;
     }
     if (method == "clear_flux_boundaries") {
@@ -114,6 +152,13 @@ public:
       return none;
     }
     return none;
+  }
+
+  [[nodiscard]] double get_conversion_factor_density() const noexcept {
+    return m_conv_density;
+  }
+  [[nodiscard]] double get_conversion_factor_flux() const noexcept {
+    return m_conv_flux;
   }
 
 private:

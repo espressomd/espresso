@@ -25,17 +25,19 @@ import numpy as np
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedDensity(ut.TestCase):
-    BOX_L = 42.
-    AGRID = 1.0
+    AGRID = 1.1
+    BOX_L = np.array([32., 3., 3.]) * AGRID
     DENSITY = 1
-    DIFFUSION_COEFFICIENT = 0.5
+
+    DIFFUSION_COEFFICIENT = 0.2
     TIME = 5000
+    TAU = 1.81
 
     INLET_CONCENTRATION = 1.0
     OUTLET_CONCENTRATION = 0.01
 
-    system = espressomd.System(box_l=[BOX_L, 3, 3])
-    system.time_step = 1.0
+    system = espressomd.System(box_l=BOX_L)
+    system.time_step = TAU
     system.cell_system.skin = 0.4
 
     def tearDown(self) -> None:
@@ -58,12 +60,12 @@ class EKFixedDensity(ut.TestCase):
         ekspecies = espressomd.EKSpecies.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             kT=0.0, valency=0.0, advection=False, friction_coupling=False,
-            ext_efield=[0, 0, 0], single_precision=single_precision)
+            ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies)
-        self.system.ekcontainer.tau = 1.0
+        self.system.ekcontainer.tau = self.TAU
         self.system.ekcontainer.solver = eksolver
 
         # left and right no flux
@@ -83,13 +85,15 @@ class EKFixedDensity(ut.TestCase):
 
         self.system.integrator.run(self.TIME)
 
-        effective_boxl = self.BOX_L - 2
-        domain_positions = np.arange(effective_boxl, dtype=np.float64)
+        effective_boxl = (lattice.shape[0] - 3) * self.AGRID
+        domain_positions = np.arange(
+            lattice.shape[0] - 2,
+            dtype=np.float64) * self.AGRID
 
         measured_values = ekspecies[1:-1, 1, 1].density.squeeze()
 
         slope = (self.OUTLET_CONCENTRATION -
-                 self.INLET_CONCENTRATION) / (effective_boxl - 1)
+                 self.INLET_CONCENTRATION) / effective_boxl
         offset = self.INLET_CONCENTRATION
         analytic_values = slope * domain_positions + offset
 

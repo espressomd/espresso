@@ -55,7 +55,7 @@ class EKWalberlaWrite:
             lattice=self.lattice, density=self.density, kT=self.kT,
             diffusion=self.diffusion, valency=self.valency,
             advection=False, friction_coupling=False, ext_efield=[0., 0., 0.],
-            **self.ek_params)
+            tau=1.0, **self.ek_params)
         self.system.ekcontainer.add(self.species)
         self.system.ekcontainer.tau = 1.0
         self.system.ekcontainer.solver = self.solver
