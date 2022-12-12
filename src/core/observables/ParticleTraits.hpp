@@ -70,6 +70,13 @@ template <> struct traits<Particle> {
     return Utils::Vector3d{};
 #endif
   }
+  auto director(Particle const &p) const {
+#ifdef ROTATION
+    return p.calc_director();
+#else
+    return Utils::Vector3d{{0., 0., 1.}};
+#endif
+  }
 };
 
 } // namespace ParticleObservables
