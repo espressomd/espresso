@@ -38,6 +38,9 @@ double WidomInsertion::calculate_particle_insertion_potential_energy(
 
   auto const E_pot_old = calculate_current_potential_energy_of_system();
 
+  // Setup the list of empty pids for bookkeeping
+  setup_bookkeeping_of_empty_pids();
+
   // make reaction attempt
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
