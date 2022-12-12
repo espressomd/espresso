@@ -127,7 +127,7 @@ class CheckpointTest(ut.TestCase):
                         decimal=precision)
         state = lbf.get_params()
         reference = {
-            'agrid': 1.0,
+            'agrid': 2.0,
             'viscosity': 1.3,
             'density': 1.5,
             'tau': 0.01}

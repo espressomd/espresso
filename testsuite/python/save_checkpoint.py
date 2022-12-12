@@ -74,16 +74,16 @@ lbf_actor = None
 lb_lattice = None
 if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
     lbf_actor = espressomd.lb.LBFluidWalberla
-    lb_lattice = espressomd.lb.LatticeWalberla(agrid=1.0, n_ghost_layers=1)
+    lb_lattice = espressomd.lb.LatticeWalberla(agrid=2.0, n_ghost_layers=1)
     # TODO WALBERLA
 #    if 'LB.GPU' in modes and espressomd.gpu_available():
 #        lbf_actor = espressomd.lb.LBFluidWalberlaGPU
 if lbf_actor:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_actor(lattice=lb_lattice, viscosity=1.3, density=1.5, tau=0.01)
-    wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5)
+    wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=1.0)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
-                                   dist=-(system.box_l[0] - 0.5))
+                                   dist=-(system.box_l[0] - 1.0))
     lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
