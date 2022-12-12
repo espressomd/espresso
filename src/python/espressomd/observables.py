@@ -488,6 +488,28 @@ class ParticleVelocities(Observable):
 
 
 @script_interface_register
+class ParticleDirectors(Observable):
+
+    """Calculates the particle directors for particles with given ids.
+
+    Output format: :math:`(d1_x,\\ d1_y,\\ d1_z),\\ (d2_x,\\ d2_y,\\ d2_z),\\ \\dots,\\ (dn_x,\\ dn_y,\\ dn_z)`.
+
+    The particles are ordered according to the list of ids passed to the observable.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+        The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
+
+    """
+    _so_name = "Observables::ParticleDirectors"
+
+
+@script_interface_register
 class ParticleDistances(Observable):
 
     """Calculates the distances between particles with given ids along a

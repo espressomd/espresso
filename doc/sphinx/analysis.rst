@@ -464,6 +464,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.ParticleBodyAngularVelocities`: As above, but in the particles' body-fixed frame.
 
+   - :class:`~espressomd.observables.ParticleDirectors`: The particles' directors.
+
 - Observables working on a given set of particles and returning reduced quantities:
    - :class:`~espressomd.observables.DipoleMoment`: Total electric dipole moment of the system obtained based on unfolded positions
 
