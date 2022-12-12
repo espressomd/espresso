@@ -122,6 +122,23 @@ class PairTest(ut.TestCase):
         self.run_and_check()
         self.check_range_exception()
 
+    def test_non_consecutive(self):
+        self.system.part.clear()
+        self.system.part.add(id=100, pos=(0.1, 0.5, 0.5))
+        self.system.part.add(id=200, pos=(0.2, 0.5, 0.5))
+        self.system.part.add(id=1, pos=(0.3, 0.5, 0.5))
+        self.system.part.add(id=2, pos=(0.4, 0.5, 0.5))
+
+        self.system.integrator.run(0)
+
+        pairs = self.system.part.pairs()
+        pairs_ids = []
+        for pair in pairs:
+            pairs_ids.append(tuple(sorted([pair[0].id, pair[1].id])))
+        expected_pairs = [(1, 2), (1, 100), (2, 200),
+                          (100, 200), (2, 100), (1, 200)]
+        self.assertSetEqual(set(pairs_ids), set(expected_pairs))
+
 
 if __name__ == "__main__":
     ut.main()

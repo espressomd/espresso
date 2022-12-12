@@ -35,6 +35,7 @@ from .utils cimport Vector3i, Vector3d, Vector4d
 from .utils cimport make_Vector3d
 from .utils cimport make_Vector3i
 from .grid cimport box_geo, folded_position, unfolded_position
+import itertools
 
 
 # List of particle attributes for pickle and the like
@@ -1966,10 +1967,9 @@ Set quat and scalar dipole moment (dipm) instead.")
         """
 
         ids = get_particle_ids()
-
-        for i in ids:
-            for j in ids[i + 1:]:
-                yield (self.by_id(i), self.by_id(j))
+        id_pairs = itertools.combinations(ids, 2)
+        for id_pair in id_pairs:
+            yield (self.by_id(id_pair[0]), self.by_id(id_pair[1]))
 
     def select(self, *args, **kwargs):
         """Generates a particle slice by filtering particles via a user-defined criterion
