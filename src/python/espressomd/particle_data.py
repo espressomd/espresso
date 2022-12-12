@@ -26,6 +26,7 @@ from .utils import nesting_level, array_locked, is_valid_type, handle_errors
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
+import itertools
 
 
 @script_interface_register
@@ -1176,10 +1177,9 @@ class ParticleList(ScriptInterfaceHelper):
         """
 
         ids = self.call_method("get_particle_ids")
-
-        for i in ids:
-            for j in ids[i + 1:]:
-                yield (self.by_id(i), self.by_id(j))
+        id_pairs = itertools.combinations(ids, 2)
+        for id_pair in id_pairs:
+            yield (self.by_id(id_pair[0]), self.by_id(id_pair[1]))
 
     def select(self, *args, **kwargs):
         """
