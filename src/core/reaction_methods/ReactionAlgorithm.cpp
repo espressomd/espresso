@@ -603,24 +603,17 @@ bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
  * Cleans the list of empty pids and searches for empty pid in the system
  */
 void ReactionAlgorithm::setup_bookkeeping_of_empty_pids() {
-
   // Clean-up the list of empty pids
-  m_empty_p_ids_smaller_than_max_seen_particle = {};
+  m_empty_p_ids_smaller_than_max_seen_particle.clear();
 
-  // Loop from 0 to the maximum particle id in the system
-
-  std::vector<signed int> existing_ids = get_particle_ids();
-  int max_id = *max_element(std::begin(existing_ids), std::end(existing_ids));
-
-  for (int pid = 0; pid < max_id; pid++) {
-    // Search if the pid is in the system
-
-    if (std::find(existing_ids.begin(), existing_ids.end(), pid) ==
-        existing_ids.end()) {
-      //  if the pid is not in the system, add it to the list of empty pids
-
+  auto particle_ids = get_particle_ids();
+  std::sort(particle_ids.begin(), particle_ids.end());
+  auto pid1 = -1;
+  for (auto pid2 : particle_ids) {
+    for (int pid = pid1 + 1; pid < pid2; ++pid) {
       m_empty_p_ids_smaller_than_max_seen_particle.push_back(pid);
     }
+    pid1 = pid2;
   }
 }
 

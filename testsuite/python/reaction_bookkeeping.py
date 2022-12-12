@@ -58,7 +58,8 @@ class ReactionMethodsBookkeepingTest(ut.TestCase):
     def setUpClass(cls):
         cls.system.part.add(type=[cls.types["Na"]] * cls.N_SALT,
                             pos=np.random.rand(cls.N_SALT, 3) * cls.BOX_LENGTH,
-                            q=[cls.charges["Na"]] * cls.N_SALT)
+                            q=[cls.charges["Na"]] * cls.N_SALT,
+                            id=list(range(20, 20 + cls.N_SALT)))
         cls.system.part.add(type=[cls.types["Cl"]] * cls.N_SALT,
                             pos=np.random.rand(cls.N_SALT, 3) * cls.BOX_LENGTH,
                             q=[cls.charges["Cl"]] * cls.N_SALT)
