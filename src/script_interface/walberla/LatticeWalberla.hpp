@@ -50,10 +50,13 @@ class LatticeWalberla : public AutoParameters<LatticeWalberla> {
 
 public:
   LatticeWalberla() {
-    add_parameters(
-        {{"agrid", AutoParameter::read_only, [this]() { return m_agrid; }},
-         {"n_ghost_layers", AutoParameter::read_only,
-          [this]() { return m_n_ghost_layers; }}});
+    add_parameters({
+        {"agrid", AutoParameter::read_only, [this]() { return m_agrid; }},
+        {"n_ghost_layers", AutoParameter::read_only,
+         [this]() { return m_n_ghost_layers; }},
+        {"shape", AutoParameter::read_only,
+         [this]() { return m_lattice->get_grid_dimensions(); }},
+    });
   }
 
   void do_construct(VariantMap const &args) override {
