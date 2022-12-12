@@ -27,13 +27,14 @@ import numpy as np
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKReaction(ut.TestCase):
     BOX_L = 11.
-    AGRID = 1.0
+    AGRID = 1.1
     INITIAL_DENSITY = 1.0
     DIFFUSION_COEFFICIENT = 0.1
-    TIME = 1000
+    TIME = 500
+    TAU = 1.9
 
     system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
-    system.time_step = 1.0
+    system.time_step = TAU
     system.cell_system.skin = 0.4
 
     def tearDown(self) -> None:
@@ -44,9 +45,9 @@ class EKReaction(ut.TestCase):
             self, time: float, coeffs, rate_constant: float, init_density: float) -> float:
         """
         Calculates the base density of a species after a given time of a reaction.
-        The reaction is defined via the stoichiometric coefficient of the edducts.
+        The reaction is defined via the stoichiometric coefficient of the educts.
         To calculate the effective species density this base density needs to be multiplied by its stoichiometric coefficient.
-        For the product density, one needs to substract this density from the init density.
+        For the product density, one needs to subtract this density from the init density.
         """
         order = sum(coeffs)
         factor = rate_constant
@@ -71,7 +72,7 @@ class EKReaction(ut.TestCase):
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.tau = 1.0
+        self.system.ekcontainer.tau = self.TAU
 
         reaction_rate: float = 1e-5
 
@@ -84,7 +85,8 @@ class EKReaction(ut.TestCase):
                 lattice=lattice, density=coeff * self.INITIAL_DENSITY, kT=0.0,
                 diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
                 advection=False, friction_coupling=False,
-                ext_efield=[0., 0., 0.], single_precision=single_precision)
+                ext_efield=[0., 0., 0.], single_precision=single_precision,
+                tau=self.TAU)
             self.system.ekcontainer.add(species)
             reactants.append(
                 espressomd.EKSpecies.EKReactant(
@@ -96,7 +98,7 @@ class EKReaction(ut.TestCase):
         ek_species_product = espressomd.EKSpecies.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             kT=0.0, valency=0.0, advection=False, friction_coupling=False,
-            ext_efield=[0., 0., 0.], single_precision=single_precision)
+            ext_efield=[0., 0., 0.], single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(ek_species_product)
         reactants.append(
             espressomd.EKSpecies.EKReactant(
@@ -107,13 +109,14 @@ class EKReaction(ut.TestCase):
         self.system.ekcontainer.solver = eksolver
 
         reaction = espressomd.EKSpecies.EKBulkReaction(
-            reactants=reactants, coefficient=reaction_rate, lattice=lattice)
+            reactants=reactants, coefficient=reaction_rate, lattice=lattice, tau=self.TAU)
 
         self.system.ekreactions.add(reaction)
 
         self.system.integrator.run(self.TIME)
 
         domain_volume = np.product(ek_species_product.shape)
+        analytic_time = (self.TIME + 0.5) * self.system.time_step
 
         measured_educt_densities = np.zeros(len(stoech_coeffs))
         for i, educt in enumerate(educt_species):
@@ -125,10 +128,10 @@ class EKReaction(ut.TestCase):
         analytic_educt_densities = np.zeros(len(stoech_coeffs))
         for i, coeff in enumerate(stoech_coeffs):
             analytic_educt_densities[i] = coeff * self.analytic_density_base(
-                self.TIME + 0.5, stoech_coeffs, reaction_rate, self.INITIAL_DENSITY)
+                analytic_time, stoech_coeffs, reaction_rate, self.INITIAL_DENSITY)
         analytic_product_density = product_coeff * \
             (self.INITIAL_DENSITY -
-                self.analytic_density_base(self.TIME + 0.5, stoech_coeffs,
+                self.analytic_density_base(analytic_time, stoech_coeffs,
                                            reaction_rate, self.INITIAL_DENSITY))
 
         np.testing.assert_allclose(
