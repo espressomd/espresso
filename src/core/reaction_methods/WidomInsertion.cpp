@@ -34,6 +34,9 @@ double WidomInsertion::calculate_particle_insertion_potential_energy(
 
   auto const E_pot_old = mpi_calculate_potential_energy();
 
+  // Setup the list of empty pids for bookeeping
+  setup_bookkeeping_of_empty_pids();
+
   // make reaction attempt and immediately reverse it
   auto const change_tracker = make_reaction_attempt(current_reaction);
   auto const E_pot_new = mpi_calculate_potential_energy();
