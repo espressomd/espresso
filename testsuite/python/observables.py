@@ -53,7 +53,9 @@ class Observables(ut.TestCase):
     if espressomd.has_features(["ROTATION"]):
         partcls.omega_body = np.random.random((N_PART, 3)) - .5
         partcls.torque_lab = np.random.random((N_PART, 3)) - .5
-        partcls.quat = np.random.random((N_PART, 4))
+        direcs = np.random.random((N_PART, 3)) - 0.5
+        direcs /= np.linalg.norm(direcs, axis=1)[:, None]
+        partcls.director = direcs
 
     if espressomd.has_features("DIPOLES"):
         partcls.dipm = np.random.random(N_PART) + 2
@@ -144,6 +146,17 @@ class Observables(ut.TestCase):
             espressomd.observables.ParticleBodyAngularVelocities, "omega_body")
         test_lab_angular_velocity = generate_test_for_pid_observable(
             espressomd.observables.ParticleAngularVelocities, "omega_lab")
+        test_director = generate_test_for_pid_observable(
+            espressomd.observables.ParticleDirectors, "director")
+
+    @ut.skipIf(espressomd.has_features(["ROTATION"]),
+               "check default directors")
+    def test_director_norotation(self):
+        id_list = self.system.part.all().id
+        observable = espressomd.observables.ParticleDirectors(ids=id_list)
+        obs_data = observable.calculate()
+        np.testing.assert_array_almost_equal(
+            obs_data, self.N_PART * [[0., 0., 1.]], decimal=11)
 
     @utx.skipIfMissingFeatures(['ROTATION'])
     def test_particle_body_velocities(self):

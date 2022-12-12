@@ -56,6 +56,8 @@ void ReactionAlgorithm::do_reaction(int reaction_steps) {
   // assume that the kinetic part drops out in the process of calculating
   // ensemble averages (kinetic part may be separated and crossed out)
   auto current_E_pot = mpi_calculate_potential_energy();
+  // Setup the list of empty pids for bookeeping
+  setup_bookkeeping_of_empty_pids();
   for (int i = 0; i < reaction_steps; i++) {
     int reaction_id = i_random(static_cast<int>(reactions.size()));
     generic_oneway_reaction(*reactions[reaction_id], current_E_pot);
@@ -595,6 +597,24 @@ bool ReactionAlgorithm::displacement_move_for_particles_of_type(int type,
     mpi_set_particle_pos(std::get<0>(item), std::get<1>(item));
   }
   return false;
+}
+
+/**
+ * Cleans the list of empty pids and searches for empty pid in the system
+ */
+void ReactionAlgorithm::setup_bookkeeping_of_empty_pids() {
+  // Clean-up the list of empty pids
+  m_empty_p_ids_smaller_than_max_seen_particle.clear();
+
+  auto particle_ids = get_particle_ids();
+  std::sort(particle_ids.begin(), particle_ids.end());
+  auto pid1 = -1;
+  for (auto pid2 : particle_ids) {
+    for (int pid = pid1 + 1; pid < pid2; ++pid) {
+      m_empty_p_ids_smaller_than_max_seen_particle.push_back(pid);
+    }
+    pid1 = pid2;
+  }
 }
 
 } // namespace ReactionMethods

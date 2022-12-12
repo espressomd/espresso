@@ -63,6 +63,14 @@ struct Velocity {
   }
 };
 
+struct Director {
+  template <class Particle, class Traits = default_traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.director(p);
+  }
+};
+
 struct BodyVelocity {
   template <class Particle, class Traits = default_traits<Particle>>
   decltype(auto) operator()(Particle const &p,
