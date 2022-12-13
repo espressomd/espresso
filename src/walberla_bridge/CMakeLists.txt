@@ -30,10 +30,16 @@ if(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
   target_link_libraries(espresso_walberla_cpp_flags
                         INTERFACE espresso::avx_flags)
 endif()
+install(TARGETS espresso_walberla
+        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-  add_library(espresso_walberla_cuda SHARED)
+  espresso_add_gpu_library(espresso_walberla_cuda SHARED)
   add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
+  target_link_libraries(
+    espresso_walberla_cuda PRIVATE CUDA::cuda_driver CUDA::cudart)
+  install(TARGETS espresso_walberla_cuda
+          LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
   target_link_libraries(espresso_walberla PUBLIC espresso::walberla_cuda)
 endif()
 
@@ -52,11 +58,6 @@ add_subdirectory(src)
 set_source_files_properties(
   src/electrokinetics/ek_walberla_init.cpp
   PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
-
-install(TARGETS espresso_walberla
-        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
-install(TARGETS espresso_walberla_cuda
-        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(ESPRESSO_BUILD_TESTS)
   set(CMAKE_CXX_CLANG_TIDY "")
