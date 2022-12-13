@@ -32,6 +32,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  add_library(espresso_walberla_cuda SHARED)
   add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
   target_link_libraries(espresso_walberla PUBLIC espresso::walberla_cuda)
 endif()
