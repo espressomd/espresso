@@ -98,6 +98,7 @@ std::vector<std::vector<double>>
 structure_factor(PartCfg &partCfg, std::vector<int> const &p_types, int order);
 
 /** Calculate the center of mass of a special type of the current configuration.
+ *  @param partCfg     particle collection
  *  @param p_type      type of the particle
  */
 Utils::Vector3d center_of_mass(PartCfg &partCfg, int p_type);

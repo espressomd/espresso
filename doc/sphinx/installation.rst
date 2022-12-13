@@ -753,6 +753,7 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
+* ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 
 The following options control code instrumentation:
 
@@ -770,6 +771,7 @@ The following options control how the project is built and tested:
 * ``ESPRESSO_BUILD_WITH_CPPCHECK``: Run Cppcheck during compilation.
 * ``ESPRESSO_BUILD_WITH_CCACHE``: Enable compiler cache for faster rebuilds.
 * ``ESPRESSO_BUILD_TESTS``: Enable C++ and Python tests.
+* ``ESPRESSO_BUILD_BENCHMARKS``: Enable benchmarks.
 * ``ESPRESSO_CUDA_COMPILER`` (string): Select the CUDA compiler.
 * ``ESPRESSO_CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
 * ``ESPRESSO_TEST_TIMEOUT``: Test timeout.
