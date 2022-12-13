@@ -55,6 +55,8 @@ set_source_files_properties(
 
 install(TARGETS espresso_walberla
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
+install(TARGETS espresso_walberla_cuda
+        LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 if(ESPRESSO_BUILD_TESTS)
   set(CMAKE_CXX_CLANG_TIDY "")
