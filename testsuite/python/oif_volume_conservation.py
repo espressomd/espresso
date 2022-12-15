@@ -22,6 +22,8 @@ import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
+import scipy.optimize
+import object_in_fluid as oif
 
 
 @utx.skipIfMissingFeatures("MASS")
@@ -30,59 +32,77 @@ class OifVolumeConservation(ut.TestCase):
     """Loads a soft elastic sphere via object_in_fluid, stretches it and checks
        restoration of original volume due to elastic forces."""
 
-    def test(self):
-        import object_in_fluid as oif
+    system = espressomd.System(box_l=(50., 50., 50.))
+    system.time_step = 0.4
+    system.cell_system.skin = 0.5
 
-        system = espressomd.System(box_l=(10, 10, 10))
-        self.assertEqual(system.max_oif_objects, 0)
-        system.time_step = 0.4
-        system.cell_system.skin = 0.5
+    def check_relaxation(self, **kwargs):
+        self.system.part.clear()
+        self.system.thermostat.turn_off()
+        half_box_l = np.copy(self.system.box_l) / 2.
 
         # creating the template for OIF object
         cell_type = oif.OifCellType(
             nodes_file=str(tests_common.data_path("sphere393nodes.dat")),
             triangles_file=str(
                 tests_common.data_path("sphere393triangles.dat")),
-            system=system, ks=1.0, kb=1.0, kal=1.0, kag=0.1, kv=0.1,
+            system=self.system, **kwargs, kb=1.0, kal=1.0, kag=0.1, kv=0.1,
             check_orientation=False, resize=(3.0, 3.0, 3.0))
 
         # creating the OIF object
         cell0 = oif.OifCell(
-            cell_type=cell_type, particle_type=0, origin=[5.0, 5.0, 5.0])
-        self.assertEqual(system.max_oif_objects, 1)
-        partcls = system.part.all()
+            cell_type=cell_type, particle_type=0, origin=half_box_l)
+        partcls = self.system.part.all()
 
-        # fluid
         diameter_init = cell0.diameter()
-        print(f"initial diameter = {diameter_init}")
+        self.assertAlmostEqual(diameter_init, 24., delta=1e-3)
 
         # OIF object is being stretched by factor 1.5
-        partcls.pos = (partcls.pos - 5) * 1.5 + 5
+        partcls.pos = (partcls.pos - half_box_l) * 1.5 + half_box_l
 
         diameter_stretched = cell0.diameter()
-        print(f"stretched diameter = {diameter_stretched}")
+        self.assertAlmostEqual(diameter_stretched, 36., delta=1e-3)
 
         # Apply non-isotropic deformation
         partcls.pos = partcls.pos * np.array((0.96, 1.05, 1.02))
 
         # Test that restoring forces net to zero and don't produce a torque
-        system.integrator.run(1)
+        self.system.integrator.run(1)
         total_force = np.sum(partcls.f, axis=0)
-        np.testing.assert_allclose(total_force, [0., 0., 0.], atol=1E-12)
+        np.testing.assert_allclose(total_force, [0., 0., 0.], atol=1E-10)
         total_torque = np.zeros(3)
-        for p in system.part:
+        for p in self.system.part:
             total_torque += np.cross(p.pos, p.f)
-        np.testing.assert_allclose(total_torque, [0., 0., 0.], atol=2E-12)
+        np.testing.assert_allclose(total_torque, [0., 0., 0.], atol=1E-10)
 
-        # main integration loop
-        system.thermostat.set_langevin(kT=0, gamma=0.7, seed=42)
-        # OIF object is let to relax into relaxed shape of the sphere
-        for _ in range(2):
-            system.integrator.run(steps=240)
-            diameter_final = cell0.diameter()
-            print(f"final diameter = {diameter_final}")
-            self.assertAlmostEqual(
-                diameter_final / diameter_init - 1, 0, delta=0.005)
+        # Test relaxation to equilibrium diameter (overdamped system)
+        self.system.thermostat.set_langevin(kT=0, gamma=0.7, seed=42)
+        # warmup
+        self.system.integrator.run(steps=50)
+        # sampling
+        xdata = []
+        ydata = []
+        for _ in range(20):
+            self.system.integrator.run(steps=20)
+            xdata.append(self.system.time)
+            ydata.append(cell0.diameter())
+        # check exponential decay
+        (prefactor, lam, _, diameter_final), _ = scipy.optimize.curve_fit(
+            lambda x, a, b, c, d: a * np.exp(-b * x + c) + d, xdata, ydata,
+            p0=[3., 0.03, 0., diameter_init],
+            bounds=([-np.inf, 0., -np.inf, 0.], 4 * [np.inf]))
+        self.assertGreater(prefactor, 0.)
+        self.assertAlmostEqual(diameter_final, diameter_init, delta=0.005)
+        self.assertAlmostEqual(lam, 0.0325, delta=0.0001)
+
+    def test(self):
+        self.assertEqual(self.system.max_oif_objects, 0)
+        with self.subTest(msg='linear stretching'):
+            self.check_relaxation(kslin=1.)
+        self.assertEqual(self.system.max_oif_objects, 1)
+        with self.subTest(msg='neo-Hookean stretching'):
+            self.check_relaxation(ks=1.)
+        self.assertEqual(self.system.max_oif_objects, 2)
 
 
 if __name__ == "__main__":
