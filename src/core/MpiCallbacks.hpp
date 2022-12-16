@@ -508,7 +508,7 @@ private:
    * @brief Remove callback.
    *
    * Remove the callback id from the callback list.
-   * This is a collective call that must be run on all node.
+   * This is a collective call that must be run on all nodes.
    *
    * @param id Identifier of the callback to remove.
    */

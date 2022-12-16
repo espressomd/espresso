@@ -27,6 +27,8 @@
 
 #include <array>
 #include <cstddef>
+#include <limits>
+#include <stdexcept>
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(calc_meshift_false) {
@@ -58,3 +60,27 @@ BOOST_AUTO_TEST_CASE(calc_meshift_true) {
     }
   }
 }
+
+#if defined(P3M) || defined(DP3M)
+BOOST_AUTO_TEST_CASE(analytic_cotangent_sum) {
+  auto constexpr kernel = p3m_analytic_cotangent_sum;
+  auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
+
+  // check only trivial cases
+  for (auto const cao : {1, 2, 3, 4, 5, 6, 7}) {
+    BOOST_CHECK_CLOSE(kernel(0, 0., cao), 1., tol);
+  }
+  BOOST_CHECK_CLOSE(kernel(1, 0.5, 1), 1., tol);
+  BOOST_CHECK_CLOSE(kernel(1, 0.5, 2), 1. / 3., tol);
+  BOOST_CHECK_CLOSE(kernel(1, 0.5, 3), 2. / 15., tol);
+  BOOST_CHECK_CLOSE(kernel(1, 0.5, 4), 17. / 315., tol);
+  BOOST_CHECK_CLOSE(kernel(1, 0.5, 5), 62. / 2835., tol);
+  BOOST_CHECK_CLOSE(kernel(1, 0.5, 6), 1382. / 155925., tol);
+  BOOST_CHECK_CLOSE(kernel(1, 0.5, 7), 21844. / 6081075., tol);
+
+  // check assertion
+  for (auto const invalid_cao : {-1, 0, 8}) {
+    BOOST_CHECK_THROW(kernel(1, 0., invalid_cao), std::logic_error);
+  }
+}
+#endif // defined(P3M) || defined(DP3M)

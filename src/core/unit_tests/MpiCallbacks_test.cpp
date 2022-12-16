@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <string>
 
 static bool called = false;

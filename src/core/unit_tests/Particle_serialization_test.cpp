@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
   {
     static_assert(!TraitWrapper::template apply<Particle>::value);
     typename Checker::buffer_type buffer_ref = {"Particle"};
-    typename Checker::buffer_type buffer;
+    typename Checker::buffer_type buffer = {};
     Checker oa{buffer};
     Particle p;
     oa &p;
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
         "Utils::compact_vector<int>",
 #endif
     };
-    typename Checker::buffer_type buffer;
+    typename Checker::buffer_type buffer = {};
     Checker oa{buffer};
     Particle p;
     oa | p;

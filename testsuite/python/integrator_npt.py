@@ -120,8 +120,11 @@ class IntegratorNPT(ut.TestCase):
             np.copy(system.part.all().pos),
             positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
-    def run_with_p3m(self, p3m, **npt_kwargs):
+    def run_with_p3m(self, p3m, method):
         system = self.system
+        npt_kwargs = {"ext_pressure": 0.001, "piston": 0.001}
+        npt_kwargs_rectangular = {
+            "cubic_box": False, "direction": (False, True, True), **npt_kwargs}
         np.random.seed(42)
         # set up particles
         system.box_l = [6] * 3
@@ -140,10 +143,23 @@ class IntegratorNPT(ut.TestCase):
         # combine NpT with a P3M algorithm
         system.actors.add(p3m)
         system.integrator.run(10)
-        system.integrator.set_isotropic_npt(ext_pressure=0.001, piston=0.001,
-                                            **npt_kwargs)
+        system.integrator.set_isotropic_npt(**npt_kwargs)
         system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
         system.integrator.run(10)
+        # check runtime warnings
+        self.system.thermostat.turn_off()
+        self.system.integrator.set_vv()
+        err_msg = f"If {method} is being used you must use the cubic box NpT"
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            system.integrator.set_isotropic_npt(**npt_kwargs_rectangular)
+        self.assertIsInstance(
+            system.integrator.integrator,
+            espressomd.integrate.VelocityVerlet)
+        system.actors.remove(p3m)
+        system.integrator.set_isotropic_npt(**npt_kwargs_rectangular)
+        system.actors.add(p3m)
+        with self.assertRaisesRegex(Exception, err_msg):
+            system.integrator.run(0, recalc_forces=True)
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_npt_dp3m_cpu(self):
@@ -151,12 +167,7 @@ class IntegratorNPT(ut.TestCase):
         dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [36], cao=7, r_cut=1.0,
             alpha=2.995, tune=False)
-        with self.assertRaisesRegex(RuntimeError, 'If magnetostatics is being used you must use the cubic box NpT'):
-            self.run_with_p3m(
-                dp3m, cubic_box=False, direction=(False, True, True))
-        self.tearDown()
-        # should not raise an exception
-        self.run_with_p3m(dp3m)
+        self.run_with_p3m(dp3m, "magnetostatics")
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_npt_p3m_cpu(self):
@@ -164,12 +175,7 @@ class IntegratorNPT(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
             alpha=5.35, tune=False)
-        with self.assertRaisesRegex(RuntimeError, 'If electrostatics is being used you must use the cubic box NpT'):
-            self.run_with_p3m(
-                p3m, cubic_box=False, direction=(False, True, True))
-        self.tearDown()
-        # should not raise an exception
-        self.run_with_p3m(p3m)
+        self.run_with_p3m(p3m, "electrostatics")
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
@@ -178,12 +184,7 @@ class IntegratorNPT(ut.TestCase):
         p3m = espressomd.electrostatics.P3MGPU(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
             alpha=5.35, tune=False)
-        with self.assertRaisesRegex(RuntimeError, 'If electrostatics is being used you must use the cubic box NpT'):
-            self.run_with_p3m(
-                p3m, cubic_box=False, direction=(False, True, True))
-        self.tearDown()
-        # should not raise an exception
-        self.run_with_p3m(p3m)
+        self.run_with_p3m(p3m, "electrostatics")
 
 
 if __name__ == "__main__":
