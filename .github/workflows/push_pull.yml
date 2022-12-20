@@ -11,13 +11,13 @@ permissions:
 
 jobs:
   regular_check:
-    runs-on: macos-latest
+    runs-on: macos-12
     if: github.event_name != 'schedule'
     steps:
       - name: Checkout
         uses: actions/checkout@main
       - name: Setup Python environment
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.3.1
         with:
           python-version: '3.9'
       - name: Check without sanitizer
@@ -31,13 +31,13 @@ jobs:
       contents: read # to fetch code (actions/checkout)
       issues: write # to create an issue
 
-    runs-on: macos-latest
+    runs-on: macos-12
     if: (github.event_name == 'schedule' && github.repository == 'espressomd/espresso')
     steps:
       - name: Checkout
         uses: actions/checkout@main
       - name: Setup Python environment
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4.3.1
         with:
           python-version: '3.9'
       - name: Check with sanitizer
