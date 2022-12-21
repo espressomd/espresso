@@ -361,12 +361,11 @@ class CheckpointTest(ut.TestCase):
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
         self.assertEqual(partcl_1.bonds[0][0].params, reference)
         self.assertEqual(system.bonded_inter[0].params, reference)
-        if 'THERM.LB' not in modes:
-            # all thermalized bonds should be identical
-            reference = {**thermalized_bond_params, 'seed': 3}
-            self.assertEqual(partcl_1.bonds[1][0].params, reference)
-            self.assertEqual(system.bonded_inter[1].params, reference)
-            self.assertEqual(thermalized_bond2.params, reference)
+        # all thermalized bonds should be identical
+        reference = {**therm_params, 'seed': 3}
+        self.assertEqual(partcl_1.bonds[1][0].params, reference)
+        self.assertEqual(system.bonded_inter[1].params, reference)
+        self.assertEqual(therm_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
@@ -394,7 +393,6 @@ class CheckpointTest(ut.TestCase):
             delta=1e-10)
         self.assertEqual(break_spec.action_type, cpt_spec.action_type)
 
-    @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
     @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
     def test_drude_helpers(self):
         drude_type = 10
@@ -467,9 +465,8 @@ class CheckpointTest(ut.TestCase):
             def predicate(cur, key):
                 np.testing.assert_allclose(cur[key][0], cur[key][1],
                                            err_msg=f"mismatch for '{key}'")
-            # note: cannot compare forces since they are NaN in frame #1
-            for key in ('position', 'image', 'velocity',
-                        'id', 'species', 'mass', 'charge'):
+            for key in ('id', 'position', 'image', 'velocity',
+                        'species', 'mass', 'charge', 'force'):
                 predicate(cur, f'particles/atoms/{key}/value')
             for key in ('offset', 'direction', 'normal'):
                 predicate(cur, f'particles/atoms/lees_edwards/{key}/value')
