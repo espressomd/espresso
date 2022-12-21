@@ -357,6 +357,38 @@ if lbf_actor:
     lbf_cpt_path = path_cpt_root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
 
+# set various properties
+p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
+p8.lees_edwards_offset = 0.2
+p4.v = [-1., 2., -4.]
+if espressomd.has_features('MASS'):
+    p3.mass = 1.5
+if espressomd.has_features('ROTATION'):
+    p3.quat = [1., 2., 3., 4.]
+    p4.director = [3., 2., 1.]
+    p4.omega_body = [0.3, 0.5, 0.7]
+    p3.rotation = [True, False, True]
+if espressomd.has_features('EXTERNAL_FORCES'):
+    p3.fix = [False, True, False]
+    p3.ext_force = [-0.6, 0.1, 0.2]
+if espressomd.has_features(['EXTERNAL_FORCES', 'ROTATION']):
+    p3.ext_torque = [0.3, 0.5, 0.7]
+if espressomd.has_features('ROTATIONAL_INERTIA'):
+    p3.rinertia = [2., 3., 4.]
+if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
+    gamma = 2.
+    if espressomd.has_features('PARTICLE_ANISOTROPY'):
+        gamma = np.array([2., 3., 4.])
+    p4.gamma = gamma
+    if espressomd.has_features('ROTATION'):
+        p3.gamma_rot = 2. * gamma
+if espressomd.has_features('ENGINE'):
+    p3.swimming = {"f_swim": 0.03}
+if espressomd.has_features('ENGINE') and lbf_actor:
+    p4.swimming = {"v_swim": 0.02, "mode": "puller", "dipole_length": 1.}
+if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_actor:
+    p8.mu_E = [-0.1, 0.2, -0.3]
+
 # h5md output
 if espressomd.has_features("H5MD"):
     h5_units = espressomd.io.writer.h5md.UnitSystem(

@@ -157,12 +157,87 @@ class CheckpointTest(ut.TestCase):
         self.assertAlmostEqual(protocol.time_0, 0.2, delta=1e-10)
         self.assertAlmostEqual(protocol.shear_velocity, 1.2, delta=1e-10)
 
-    def test_part(self):
-        p1, p2 = system.part.by_ids([0, 1])
+    def test_particle_properties(self):
+        p1, p2, p3, p4, p8 = system.part.by_ids([0, 1, 3, 4, 8])
         np.testing.assert_allclose(np.copy(p1.pos), np.array([1.0, 2.0, 3.0]))
         np.testing.assert_allclose(np.copy(p2.pos), np.array([1.0, 1.0, 2.0]))
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
         np.testing.assert_allclose(np.copy(p2.f), particle_force1)
+        self.assertEqual(p1.type, 0)
+        self.assertEqual(p2.type, 0)
+        self.assertEqual(p3.type, 1)
+        self.assertEqual(p4.type, 1)
+        np.testing.assert_allclose(np.copy(p3.v), [0., 0., 0.])
+        np.testing.assert_allclose(np.copy(p4.v), [-1., 2., -4.])
+        np.testing.assert_allclose(p8.lees_edwards_offset, 0.2)
+        np.testing.assert_equal(np.copy(p1.image_box), [0, 0, 0])
+        np.testing.assert_equal(np.copy(p8.image_box),
+                                np.copy(system.periodicity).astype(int))
+        self.assertEqual(p8.lees_edwards_flag, 0)
+        if espressomd.has_features('MASS'):
+            np.testing.assert_allclose(p3.mass, 1.5)
+            np.testing.assert_allclose(p4.mass, 1.)
+        if espressomd.has_features('ROTATIONAL_INERTIA'):
+            np.testing.assert_allclose(np.copy(p3.rinertia), [2., 3., 4.])
+            np.testing.assert_allclose(np.copy(p4.rinertia), [1., 1., 1.])
+        if espressomd.has_features('ELECTROSTATICS'):
+            np.testing.assert_allclose(p1.q, 1.)
+            if espressomd.has_features(['MASS', 'ROTATION']):
+                # check Drude particles
+                p5 = system.part.by_id(5)
+                np.testing.assert_allclose(p2.q, +0.118, atol=1e-3)
+                np.testing.assert_allclose(p5.q, -1.118, atol=1e-3)
+                np.testing.assert_allclose(p2.mass, 0.4)
+                np.testing.assert_allclose(p5.mass, 0.6)
+            else:
+                np.testing.assert_allclose(p2.q, -1.)
+                np.testing.assert_allclose(p2.mass, 1.)
+            np.testing.assert_allclose(p3.q, 0.)
+            np.testing.assert_allclose(p4.q, 0.)
+        if espressomd.has_features('DIPOLES'):
+            np.testing.assert_allclose(np.copy(p1.dip), [1.3, 2.1, -6.])
+        if espressomd.has_features('ROTATION'):
+            np.testing.assert_allclose(np.copy(p3.quat), [1., 2., 3., 4.])
+            np.testing.assert_allclose(np.copy(p4.director) * np.sqrt(14.),
+                                       [3., 2., 1.])
+            np.testing.assert_allclose(np.copy(p3.omega_body), [0., 0., 0.])
+            np.testing.assert_allclose(np.copy(p4.omega_body), [0.3, 0.5, 0.7])
+            np.testing.assert_equal(np.copy(p3.rotation), [True, False, True])
+        if espressomd.has_features('EXTERNAL_FORCES'):
+            np.testing.assert_equal(np.copy(p3.fix), [False, True, False])
+            np.testing.assert_allclose(np.copy(p3.ext_force), [-0.6, 0.1, 0.2])
+        if espressomd.has_features(['EXTERNAL_FORCES', 'ROTATION']):
+            np.testing.assert_allclose(np.copy(p3.ext_torque), [0.3, 0.5, 0.7])
+        if espressomd.has_features('ROTATIONAL_INERTIA'):
+            np.testing.assert_allclose(p3.rinertia, [2., 3., 4.])
+        if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
+            gamma = 2.
+            if espressomd.has_features('PARTICLE_ANISOTROPY'):
+                gamma = np.array([2., 3., 4.])
+            np.testing.assert_allclose(p4.gamma, gamma)
+            if espressomd.has_features('ROTATION'):
+                np.testing.assert_allclose(p3.gamma_rot, 2. * gamma)
+        if espressomd.has_features('ENGINE'):
+            self.assertEqual(p3.swimming, {"f_swim": 0.03, "mode": "N/A",
+                                           "v_swim": 0., "dipole_length": 0.})
+        if espressomd.has_features('ENGINE') and has_lb_mode:
+            self.assertEqual(p4.swimming, {"v_swim": 0.02, "mode": "puller",
+                                           "f_swim": 0., "dipole_length": 1.})
+        if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and has_lb_mode:
+            np.testing.assert_allclose(np.copy(p8.mu_E), [-0.1, 0.2, -0.3])
+        if espressomd.has_features('VIRTUAL_SITES_RELATIVE'):
+            from scipy.spatial.transform import Rotation as R
+            q_ind = ([1, 2, 3, 0],)  # convert from scalar-first to scalar-last
+            vs_id, vs_dist, vs_quat = p2.vs_relative
+            d = p2.pos - p1.pos
+            theta = np.arccos(d[2] / np.linalg.norm(d))
+            assert abs(theta - 3. * np.pi / 4.) < 1e-8
+            q = np.array([0., 0., np.sin(theta / 2.), -np.cos(theta / 2.)])
+            r = R.from_quat(p1.quat[q_ind]) * R.from_quat(vs_quat[q_ind])
+            self.assertEqual(vs_id, p1.id)
+            np.testing.assert_allclose(vs_dist, np.sqrt(2.))
+            np.testing.assert_allclose(q[q_ind], r.as_quat(), atol=1e-10)
+            np.testing.assert_allclose(np.copy(p2.vs_quat), [1., 0., 0., 0.])
 
     def test_part_slice(self):
         np.testing.assert_allclose(np.copy(p_slice.id), [4, 1])
