@@ -91,7 +91,7 @@ class ObservableProfileLBCommon:
         obs_edges = obs.call_method("edges")
         _, np_edges = tests_common.get_histogram(
             np.zeros([1, 3]), LB_VELOCITY_PROFILE_PARAMS, 'cartesian',
-            normed=True)
+            density=True)
         for i in range(3):
             np.testing.assert_array_almost_equal(obs_edges[i], np_edges[i])
         for x in range(obs_data.shape[0]):
