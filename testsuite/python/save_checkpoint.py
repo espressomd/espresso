@@ -220,6 +220,8 @@ if 'LB' not in modes:
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
         have_quaternion=True)
+    system.virtual_sites.have_quaternion = True
+    system.virtual_sites.override_cutoff_check = True
     p2.vs_auto_relate_to(p1)
 
 # non-bonded interactions

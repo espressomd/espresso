@@ -721,6 +721,7 @@ The following options control features from external libraries:
 * ``WITH_SCAFACOS``: Build with ScaFaCoS support.
 * ``WITH_GSL``: Build with GSL support.
 * ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
+* ``WITH_PYTHON`` Build with Stokesian Dynamics support.
 
 The following options control code instrumentation:
 
@@ -738,6 +739,7 @@ The following options control how the project is built and tested:
 * ``WITH_CPPCHECK``: Run Cppcheck during compilation.
 * ``WITH_CCACHE``: Enable compiler cache for faster rebuilds.
 * ``WITH_TESTS``: Enable C++ and Python tests.
+* ``WITH_BENCHMARKS``: Enable benchmarks.
 * ``WITH_CUDA_COMPILER`` (string): Select the CUDA compiler.
 * ``CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
 * ``TEST_TIMEOUT``: Test timeout.

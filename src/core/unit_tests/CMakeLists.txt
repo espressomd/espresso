@@ -33,7 +33,7 @@ unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           Espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS
           Espresso::utils)
-unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS Espresso::utils)
+unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS Espresso::utils Espresso::core)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS Espresso::utils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS Espresso::utils
           Boost::serialization)
@@ -67,4 +67,6 @@ unit_test(NAME energy_test SRC energy_test.cpp DEPENDS Espresso::core)
 unit_test(NAME bonded_interactions_map_test SRC
           bonded_interactions_map_test.cpp DEPENDS Espresso::core)
 unit_test(NAME bond_breakage_test SRC bond_breakage_test.cpp DEPENDS
+          Espresso::core)
+unit_test(NAME specfunc_test SRC specfunc_test.cpp DEPENDS Espresso::utils
           Espresso::core)

@@ -933,16 +933,18 @@ class OifCell:
         return self.mesh.volume()
 
     def diameter(self):
-        max_distance = 0.0
+        """
+        Compute the maximal pairwise distance between all mesh points.
+        Computational complexity is :math:`\\mathcal{O}(N^2)`.
+        """
         n_points = len(self.mesh.points)
-        for i in range(0, n_points):
-            for j in range(i + 1, n_points):
-                p1 = self.mesh.points[i].get_pos()
-                p2 = self.mesh.points[j].get_pos()
-                tmp_dist = vec_distance(p1, p2)
-                if tmp_dist > max_distance:
-                    max_distance = tmp_dist
-        return max_distance
+        pos = np.array(list(map(lambda p: p.get_pos(), self.mesh.points)))
+        max_dist_sq = 0.0
+        for i in range(0, n_points - 1):
+            dist_sq = np.max((np.square(pos[i] - pos[i + 1:])).sum(axis=1))
+            if dist_sq > max_dist_sq:
+                max_dist_sq = dist_sq
+        return np.sqrt(max_dist_sq)
 
     def get_n_nodes(self):
         return self.mesh.get_n_nodes()

@@ -479,6 +479,8 @@ class CheckpointTest(ut.TestCase):
         self.assertIsInstance(
             system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesRelative)
+        self.assertTrue(system.virtual_sites.have_quaternion)
+        self.assertTrue(system.virtual_sites.override_cutoff_check)
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(

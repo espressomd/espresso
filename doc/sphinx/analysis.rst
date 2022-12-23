@@ -44,11 +44,11 @@ The different energetic contributions to the total energy can also be obtained (
 
 For example, ::
 
->>> energy = system.analysis.energy()
->>> print(energy["total"])
->>> print(energy["kinetic"])
->>> print(energy["bonded"])
->>> print(energy["non_bonded"])
+    >>> energy = system.analysis.energy()
+    >>> print(energy["total"])
+    >>> print(energy["kinetic"])
+    >>> print(energy["bonded"])
+    >>> print(energy["non_bonded"])
 
 
 .. _Momentum of the system:

@@ -98,15 +98,17 @@ void calc_structurefactor(PartCfg &partCfg, std::vector<int> const &p_types,
                           std::vector<double> &intensities);
 
 /** Calculate the center of mass of a special type of the current configuration.
+ *  \param partCfg    particle collection
  *  \param part_type  type of the particle
  */
-Utils::Vector3d centerofmass(PartCfg &, int part_type);
+Utils::Vector3d centerofmass(PartCfg &partCfg, int part_type);
 
 /** Calculate the angular momentum of a special type of the current
  *  configuration.
- *  \param type  type of the particle
+ *  \param partCfg    particle collection
+ *  \param type       type of the particle
  */
-Utils::Vector3d angularmomentum(PartCfg &, int type);
+Utils::Vector3d angularmomentum(PartCfg &partCfg, int type);
 
 /** Calculate the center of mass of a special type of a saved configuration.
  *  \param partCfg     @copybrief PartCfg
