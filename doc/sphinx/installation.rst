@@ -168,10 +168,8 @@ To generate the Sphinx documentation, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user \
-        'sphinx>=2.3.0,!=3.0.0' \
-        'sphinxcontrib-bibtex>=2.4.1' \
-        'sphinx-toggleprompt==0.0.5'
+    pip3 install --user -c requirements.txt \
+        sphinx sphinxcontrib-bibtex sphinx-toggleprompt
 
 To generate the Doxygen documentation, install the following packages:
 
@@ -311,7 +309,7 @@ Run the following commands:
       doxygen gsl numpy scipy ipython jupyter
     brew install hdf5-mpi
     brew link --force cython
-    pip install PyOpenGL matplotlib
+    pip install -c requirements.txt PyOpenGL matplotlib
 
 .. _Quick installation:
 
