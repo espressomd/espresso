@@ -32,6 +32,8 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/format.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -458,16 +460,49 @@ Variant ParticleHandle::do_call_method(std::string const &name,
   return {};
 }
 
+#ifdef ROTATION
+static auto const contradicting_arguments_quat = std::vector<
+    std::array<std::string, 3>>{{
+    {{"dip", "dipm",
+      "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
+    {{"quat", "director",
+      "Setting 'quat' is sufficient as it defines the director."}},
+    {{"dip", "quat",
+      "Setting 'dip' would overwrite 'quat'. Set 'quat' and 'dipm' instead."}},
+    {{"dip", "director",
+      "Setting 'dip' would overwrite 'director'. Set 'director' and "
+      "'dipm' instead."}},
+}};
+#endif // ROTATION
+
 void ParticleHandle::do_construct(VariantMap const &params) {
-  m_pid = (params.count("id")) ? get_value<int>(params, "id")
-                               : get_maximal_particle_id() + 1;
+  auto const n_extra_args = params.size() - params.count("id");
+  auto const has_param = [&params](std::string const key) {
+    return params.count(key) == 1;
+  };
+  m_pid = (has_param("id")) ? get_value<int>(params, "id")
+                            : get_maximal_particle_id() + 1;
 
   // create a new particle if extra arguments were passed
-  if ((params.size() - params.count("id")) > 0) {
+  if (n_extra_args > 0) {
     if (particle_exists(m_pid)) {
       throw std::invalid_argument("Particle " + std::to_string(m_pid) +
                                   " already exists");
     }
+#ifdef ROTATION
+    // if we are not constructing a particle from a checkpoint file,
+    // check the quaternion is not accidentally set twice by the user
+    if (not has_param("__cpt_sentinel")) {
+      auto formatter =
+          boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
+      for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
+        if (has_param(prop1) and has_param(prop2)) {
+          auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
+          throw std::invalid_argument(err_msg);
+        }
+      }
+    }
+#endif // ROTATION
 
     // create a default-constructed particle
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
@@ -475,15 +510,28 @@ void ParticleHandle::do_construct(VariantMap const &params) {
 
     // set particle properties (filter out read-only and deferred properties)
     std::vector<std::string> skip = {
-        "id",        "pos",  "dipm",  "pos_folded", "lees_edwards_flag",
-        "image_box", "node", "bonds", "exclusions",
+        "pos_folded", "pos", "quat", "director",  "id",    "lees_edwards_flag",
+        "exclusions", "dip", "node", "image_box", "bonds", "__cpt_sentinel",
     };
+#ifdef ROTATION
+    // multiple parameters can potentially set the quaternion, but only one
+    // can be allowed to; these conditionals are required to handle a reload
+    // from a checkpoint file, where all properties exist (avoids accidentally
+    // overwriting the quaternion by the default-constructed dipole moment)
+    if (has_param("quat")) {
+      do_set_parameter("quat", params.at("quat"));
+    } else if (has_param("director")) {
+      do_set_parameter("director", params.at("director"));
+    } else if (has_param("dip")) {
+      do_set_parameter("dip", params.at("dip"));
+    }
+#endif // ROTATION
     for (auto const &kv : params) {
       if (std::find(skip.begin(), skip.end(), kv.first) == skip.end()) {
         do_set_parameter(kv.first, kv.second);
       }
     }
-    if (params.count("type") == 0) {
+    if (not has_param("type")) {
       do_set_parameter("type", 0);
     }
   }
