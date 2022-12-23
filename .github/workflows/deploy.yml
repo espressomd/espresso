@@ -9,14 +9,14 @@ permissions:
 
 jobs:
   deploy_docs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: github.repository == 'espressomd/espresso'
     environment: deploy_documentation
     steps:
       - name: Install pandoc
-        uses: r-lib/actions/setup-pandoc@v1
+        uses: r-lib/actions/setup-pandoc@v2
       - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.5.2
+        uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.GH_PAGES_SSH_PRIVATE_KEY }}
       - name: Checkout
