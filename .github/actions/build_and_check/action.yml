@@ -15,7 +15,7 @@ runs:
     - run: |
        brew install boost boost-mpi fftw
        brew install hdf5-mpi
-       pip3 install numpy cython h5py scipy
+       pip3 install -c requirements.txt numpy cython h5py scipy
       shell: bash
     - run: |
         export myconfig=maxset with_cuda=false with_gsl=false test_timeout=800 with_asan=${{ inputs.asan }} with_ubsan=${{ inputs.ubsan }} check_skip_long=true build_procs=2 check_procs=2
