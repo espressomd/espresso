@@ -74,6 +74,8 @@ std::string ParticleList::get_internal_state() const {
     state.params.emplace_back(
         std::pair<std::string, PackedVariant>{"exclusions", pack(exclusions)});
 #endif // EXCLUSIONS
+    state.params.emplace_back(
+        std::pair<std::string, PackedVariant>{"__cpt_sentinel", pack(None{})});
     return Utils::pack(state);
   });
 
