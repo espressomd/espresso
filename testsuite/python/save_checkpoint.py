@@ -230,22 +230,35 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[1, 17].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
+if espressomd.has_features(['DPD']):
+    dpd_params = {"weight_function": 1, "gamma": 2., "trans_r_cut": 2., "k": 2.,
+                  "trans_weight_function": 0, "trans_gamma": 1., "r_cut": 2.}
+    dpd_ia = espressomd.interactions.DPDInteraction(**dpd_params)
+    checkpoint.register("dpd_ia")
+    checkpoint.register("dpd_params")
 
 # bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 p2.add_bond((harmonic_bond, p1))
-if 'THERM.LB' not in modes:
-    thermalized_bond = espressomd.interactions.ThermalizedBond(
-        temp_com=0.0, gamma_com=0.0, temp_distance=0.2, gamma_distance=0.5,
-        r_cut=2, seed=51)
-    system.bonded_inter.add(thermalized_bond)
-    p2.add_bond((thermalized_bond, p1))
-    if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
-        dh = espressomd.drude_helpers.DrudeHelpers()
-        dh.add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
-                                      p2, 10, 1., 4.6, 0.8, 2.)
-        checkpoint.register("dh")
+# create 3 thermalized bonds that will overwrite each other's seed
+therm_params = dict(temp_com=0.1, temp_distance=0.2, gamma_com=0.3,
+                    gamma_distance=0.5, r_cut=2.)
+therm_bond1 = espressomd.interactions.ThermalizedBond(seed=1, **therm_params)
+therm_bond2 = espressomd.interactions.ThermalizedBond(seed=2, **therm_params)
+therm_bond3 = espressomd.interactions.ThermalizedBond(seed=3, **therm_params)
+system.bonded_inter.add(therm_bond1)
+p2.add_bond((therm_bond1, p1))
+checkpoint.register("therm_bond2")
+checkpoint.register("therm_params")
+# create Drude particles
+if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
+    dh = espressomd.drude_helpers.DrudeHelpers()
+    dh.add_drude_particle_to_core(
+        system=system, harmonic_bond=harmonic_bond,
+        thermalized_bond=therm_bond1, p_core=p2, type_drude=10,
+        alpha=1., mass_drude=0.6, coulomb_prefactor=0.8, thole_damping=2.)
+    checkpoint.register("dh")
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
 p4.add_bond((strong_harmonic_bond, p3))
@@ -259,17 +272,6 @@ break_spec = espressomd.bond_breakage.BreakageSpec(
     breakage_length=5., action_type="delete_bond")
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
 
-# h5md output
-if espressomd.has_features("H5MD"):
-    h5_units = espressomd.io.writer.h5md.UnitSystem(
-        time="ps", mass="u", length="m", charge="e")
-    h5 = espressomd.io.writer.h5md.H5md(
-        file_path=str(path_cpt_root / "test.h5"),
-        unit_system=h5_units)
-    h5.write()
-    h5.flush()
-    h5.close()
-
 checkpoint.register("system")
 checkpoint.register("acc_mean_variance")
 checkpoint.register("acc_time_series")
@@ -278,9 +280,6 @@ checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
-if espressomd.has_features("H5MD"):
-    checkpoint.register("h5")
-    checkpoint.register("h5_units")
 
 # calculate forces
 system.integrator.run(0)
@@ -348,6 +347,51 @@ if lbf_actor:
     # save LB checkpoint file
     lbf_cpt_path = path_cpt_root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
+
+# set various properties
+p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
+p8.lees_edwards_offset = 0.2
+p4.v = [-1., 2., -4.]
+if espressomd.has_features('MASS'):
+    p3.mass = 1.5
+if espressomd.has_features('ROTATION'):
+    p3.quat = [1., 2., 3., 4.]
+    p4.director = [3., 2., 1.]
+    p4.omega_body = [0.3, 0.5, 0.7]
+    p3.rotation = [True, False, True]
+if espressomd.has_features('EXTERNAL_FORCES'):
+    p3.fix = [False, True, False]
+    p3.ext_force = [-0.6, 0.1, 0.2]
+if espressomd.has_features(['EXTERNAL_FORCES', 'ROTATION']):
+    p3.ext_torque = [0.3, 0.5, 0.7]
+if espressomd.has_features('ROTATIONAL_INERTIA'):
+    p3.rinertia = [2., 3., 4.]
+if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
+    gamma = 2.
+    if espressomd.has_features('PARTICLE_ANISOTROPY'):
+        gamma = np.array([2., 3., 4.])
+    p4.gamma = gamma
+    if espressomd.has_features('ROTATION'):
+        p3.gamma_rot = 2. * gamma
+if espressomd.has_features('ENGINE'):
+    p3.swimming = {"f_swim": 0.03}
+if espressomd.has_features('ENGINE') and lbf_actor:
+    p4.swimming = {"v_swim": 0.02, "mode": "puller", "dipole_length": 1.}
+if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_actor:
+    p8.mu_E = [-0.1, 0.2, -0.3]
+
+# h5md output
+if espressomd.has_features("H5MD"):
+    h5_units = espressomd.io.writer.h5md.UnitSystem(
+        time="ps", mass="u", length="m", charge="e")
+    h5 = espressomd.io.writer.h5md.H5md(
+        file_path=str(path_cpt_root / "test.h5"),
+        unit_system=h5_units)
+    h5.write()
+    h5.flush()
+    h5.close()
+    checkpoint.register("h5")
+    checkpoint.register("h5_units")
 
 # save checkpoint file
 checkpoint.save(0)

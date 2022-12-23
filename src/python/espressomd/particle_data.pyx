@@ -1434,7 +1434,13 @@ cdef class ParticleHandle:
         if "id" in new_properties:
             raise Exception("Cannot change particle id.")
 
+        for k in ("quat", "director", "dip"):
+            if k in new_properties:
+                setattr(self, k, new_properties[k])
+                break
         for k, v in new_properties.items():
+            if k in ("quat", "director", "dip"):
+                continue
             setattr(self, k, v)
 
     IF ROTATION:
@@ -1795,13 +1801,18 @@ cdef class ParticleList:
         # Prevent setting of contradicting attributes
         IF DIPOLES:
             if 'dip' in p_dict and 'dipm' in p_dict:
-                raise ValueError("Contradicting attributes: dip and dipm. Setting \
-dip is sufficient as the length of the vector defines the scalar dipole moment.")
+                raise ValueError("Contradicting attributes: 'dip' and 'dipm'. Setting \
+'dip' is sufficient as the length of the vector defines the scalar dipole moment.")
             IF ROTATION:
-                if 'dip' in p_dict and 'quat' in p_dict:
-                    raise ValueError("Contradicting attributes: dip and quat. \
-Setting dip overwrites the rotation of the particle around the dipole axis. \
-Set quat and scalar dipole moment (dipm) instead.")
+                for key in ('quat', 'director'):
+                    if 'dip' in p_dict and key in p_dict:
+                        raise ValueError(f"Contradicting attributes: 'dip' and '{key}'. \
+Setting 'dip' overwrites the rotation of the particle around the dipole axis. \
+Set '{key}' and 'dipm' instead.")
+        IF ROTATION:
+            if 'director' in p_dict and 'quat' in p_dict:
+                raise ValueError("Contradicting attributes: 'director' and 'quat'. \
+Setting 'quat' is sufficient as it defines the director.")
 
         # The ParticleList can not be used yet, as the particle
         # doesn't yet exist. Hence, the setting of position has to be

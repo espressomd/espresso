@@ -229,16 +229,20 @@ class ParticleProperties(ut.TestCase):
             p1.add_exclusion(pid2)
             p1.add_exclusion(pid2)
 
-    @utx.skipIfMissingFeatures("DIPOLES")
-    def test_contradicting_properties_dip_dipm(self):
-        with self.assertRaises(ValueError):
-            self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1], dipm=1.0)
-
-    @utx.skipIfMissingFeatures(["DIPOLES", "ROTATION"])
-    def test_contradicting_properties_dip_quat(self):
-        with self.assertRaises(ValueError):
-            self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1],
-                                 quat=[1.0, 1.0, 1.0, 1.0])
+    @utx.skipIfMissingFeatures(["ROTATION"])
+    def test_contradicting_properties_quat(self):
+        invalid_combinations = [
+            {'quat': [1., 1., 1., 1.], 'director': [1., 1., 1.]},
+        ]
+        if espressomd.has_features(["DIPOLES"]):
+            invalid_combinations += [
+                {'dip': [1., 1., 1.], 'dipm': 1.},
+                {'dip': [1., 1., 1.], 'quat': [1., 1., 1., 1.]},
+                {'dip': [1., 1., 1.], 'director': [1., 1., 1.]},
+            ]
+        for kwargs in invalid_combinations:
+            with self.assertRaises(ValueError):
+                self.system.part.add(pos=[0., 0., 0.], **kwargs)
 
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_invalid_quat(self):
