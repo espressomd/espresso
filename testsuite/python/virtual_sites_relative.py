@@ -84,12 +84,22 @@ class VirtualSites(ut.TestCase):
         self.assertIsInstance(
             self.system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesOff)
+        self.assertFalse(self.system.virtual_sites.have_quaternion)
+        self.assertFalse(self.system.virtual_sites.override_cutoff_check)
+
+        # Set properties
+        self.system.virtual_sites.have_quaternion = True
+        self.system.virtual_sites.override_cutoff_check = True
+        self.assertTrue(self.system.virtual_sites.have_quaternion)
+        self.assertTrue(self.system.virtual_sites.override_cutoff_check)
 
         # Switch implementation
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         self.assertIsInstance(
             self.system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesRelative)
+        self.assertFalse(self.system.virtual_sites.have_quaternion)
+        self.assertFalse(self.system.virtual_sites.override_cutoff_check)
 
     def test_vs_quat(self):
         self.system.time_step = 0.01
@@ -233,9 +243,11 @@ class VirtualSites(ut.TestCase):
             self.assertAlmostEqual(np.linalg.norm(t_exp - t), 0., delta=1E-6)
 
     def run_test_lj(self):
-        """This fills the system with vs-based dumbells, adds a lj potential,
-          integrates and verifies forces. This is to make sure that no pairs
-          get lost or are outdated in the short range loop"""
+        """
+        This fills the system with vs-based dumbbells, adds a LJ potential,
+        integrates and verifies forces. This is to make sure that no pairs
+        get lost or are outdated in the short range loop.
+        """
         system = self.system
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         # Parameters
@@ -259,8 +271,8 @@ class VirtualSites(ut.TestCase):
         system.time_step = 0.01
         system.thermostat.turn_off()
 
-        # Dumbells consist of 2 virtual lj spheres + central particle w/o interactions
-        # For n spheres, n/2 dumbells.
+        # Dumbbells consist of 2 virtual lj spheres + central particle
+        # w/o interactions. For n spheres, n/2 dumbbells.
         for i in range(n // 2):
             # Type=1, i.e., no lj ia for the center of mass particles
             p3i = system.part.add(
@@ -382,4 +394,4 @@ class VirtualSites(ut.TestCase):
 
 
 if __name__ == "__main__":
-    ut.main()
+    ut.main(verbosity=2)

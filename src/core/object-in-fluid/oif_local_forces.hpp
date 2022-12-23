@@ -98,13 +98,6 @@ private:
   }
 };
 
-/** @details see eq. (19) in @cite dupin07a */
-inline double KS(double lambda) {
-  double res;
-  res = (pow(lambda, 0.5) + pow(lambda, -2.5)) / (lambda + pow(lambda, -3.));
-  return res;
-}
-
 /** Compute the OIF local forces.
  *  See @cite dupin07a, @cite jancigova16a.
  *  @param p2           %Particle of triangle 1.
@@ -126,24 +119,25 @@ OifLocalForcesBond::calc_forces(Particle const &p2, Particle const &p1,
 
   Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
-  // non-linear stretching
-  if (ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  // surface strain constraint
+  if (ks > TINY_OIF_ELASTICITY_COEFFICIENT or
+      kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
     auto const dx = fp2 - fp3;
     auto const len = dx.norm();
     auto const dr = len - r0;
-    auto const lambda = 1.0 * len / r0;
-    auto const fac = -ks * KS(lambda) * dr; // no normalization
-    auto const f = (fac / len) * dx;
-    force2 += f;
-    force3 -= f;
-  }
-
-  // linear stretching
-  if (kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
-    auto const dx = fp2 - fp3;
-    auto const len = dx.norm();
-    auto const dr = len - r0;
-    auto const fac = -kslin * dr; // no normalization
+    auto fac = 0.;
+    // linear stretching
+    if (kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
+      fac -= kslin * dr; // no normalization
+    }
+    // non-linear stretching
+    if (ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
+      /** For non-linear stretching, see eq. (19) in @cite dupin07a */
+      auto const lambda = len / r0;
+      auto const spring = (std::pow(lambda, 0.5) + std::pow(lambda, -2.5)) /
+                          (lambda + std::pow(lambda, -3.));
+      fac -= ks * spring * dr; // no normalization
+    }
     auto const f = (fac / len) * dx;
     force2 += f;
     force3 -= f;

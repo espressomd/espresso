@@ -21,8 +21,8 @@
 
 /** @file
  *  This file contains implementations for some special functions which are
- *  needed by the MMM family of algorithms. This are the modified Hurwitz zeta
- *  function and the modified Bessel functions of first and second kind. The
+ *  needed by the MMM family of algorithms. These are the modified Hurwitz
+ *  zeta function and the modified Bessel functions of second kind. The
  *  implementations are based on the GSL code (see @ref specfunc.cpp for the
  *  original GSL header).
  *
@@ -47,6 +47,7 @@ double hzeta(double order, double x);
 
 /** Modified Bessel function of second kind, order 0. This function was taken
  *  from the GSL code. Precise roughly up to machine precision.
+ *  It is 16 times faster than <tt>std::cyl_bessel_k</tt>.
  *  If @c MMM1D_MACHINE_PREC is not defined, @ref LPK0 is used instead.
  */
 double K0(double x);
@@ -57,21 +58,29 @@ double K0(double x);
  */
 double K1(double x);
 
-/** Bessel function of second kind, order 0, low precision.
+/** Modified Bessel function of second kind, order 0, low precision.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
- *  hardware.
+ *  hardware in the ranges @f$ ]0, 8[ @f$ and @f$ ]8, 23[ @f$. Above 23,
+ *  the precision starts to degrade, and above 27 the result drifts and
+ *  slowly converges to 96% of the real value.
+ *  It is 25 times faster than <tt>std::cyl_bessel_k</tt>
+ *  and 1.5 times faster than @ref K0.
  */
 double LPK0(double x);
 
-/** Bessel function of second kind, order 1, low precision.
+/** Modified Bessel function of second kind, order 1, low precision.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
- *  hardware.
+ *  hardware in the ranges @f$ ]0, 8[ @f$ and @f$ ]8, 23[ @f$. Above 23,
+ *  the precision starts to degrade, and above 27 the result drifts and
+ *  slowly converges to 111% of the real value.
+ *  It is 25 times faster than <tt>std::cyl_bessel_k</tt>
+ *  and 1.5 times faster than @ref K1.
  */
 double LPK1(double x);
 
-/** Bessel functions of second kind, order 0 and order 1, low precision.
+/** Modified Bessel functions of second kind, order 0 and 1, low precision.
  *  The implementation has an absolute precision of around 10^(-14), which is
  *  comparable to the relative precision sqrt implementation of current
  *  hardware.
@@ -85,8 +94,8 @@ inline double evaluateAsTaylorSeriesAt(Utils::Span<const double> series,
                                        double x) {
   assert(not series.empty());
   auto cnt = static_cast<int>(series.size()) - 1;
-  const double *c = series.data();
-  double r = c[cnt];
+  auto const *c = series.data();
+  auto r = c[cnt];
   while (--cnt >= 0)
     r = r * x + c[cnt];
   return r;
@@ -99,10 +108,10 @@ inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
                                           double x) {
   assert(series.size() >= 3);
 
-  const double *c = series.data();
-  double const x2 = 2.0 * x;
-  double dd = c[series.size() - 1];
-  double d = x2 * dd + c[series.size() - 2];
+  auto const *c = series.data();
+  auto const x2 = 2.0 * x;
+  auto dd = c[series.size() - 1];
+  auto d = x2 * dd + c[series.size() - 2];
   for (auto j = static_cast<int>(series.size()) - 3; j >= 1; j--) {
     auto const tmp = d;
     d = x2 * d - dd + c[j];

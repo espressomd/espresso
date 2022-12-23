@@ -35,7 +35,7 @@ unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS
           espresso::utils)
-unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS espresso::utils)
+unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS espresso::utils espresso::core)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS espresso::utils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS espresso::utils
           Boost::serialization)
@@ -70,3 +70,8 @@ unit_test(NAME bonded_interactions_map_test SRC
           bonded_interactions_map_test.cpp DEPENDS espresso::core)
 unit_test(NAME bond_breakage_test SRC bond_breakage_test.cpp DEPENDS
           espresso::core)
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+  # AppleClang doesn't implement C++17's mathematical special functions
+  unit_test(NAME specfunc_test SRC specfunc_test.cpp DEPENDS espresso::utils
+            espresso::core)
+endif()

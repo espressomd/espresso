@@ -292,6 +292,7 @@ tutorials-samples-maxset:
      with_coverage: 'false'
      with_coverage_python: 'true'
      with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'

@@ -359,7 +359,7 @@ this node is twice as high. For 3 processors, the interactions are 0-0,
 Therefore it is highly recommended that you use N-squared only with an
 odd number of nodes, if with multiple processors at all.
 
-.. _Hybrid:
+.. _Hybrid decomposition:
 
 Hybrid decomposition
 ^^^^^^^^^^^^^^^^^^^^
