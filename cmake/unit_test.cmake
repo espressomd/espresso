@@ -23,6 +23,7 @@ function(UNIT_TEST)
   add_executable(${TEST_NAME} ${TEST_SRC})
   # Build tests only when testing
   set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
+  set_target_properties(${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
   target_link_libraries(${TEST_NAME} PRIVATE Boost::unit_test_framework)
   if(TEST_DEPENDS)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})

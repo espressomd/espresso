@@ -20,6 +20,8 @@
 add_library(espresso_scafacos SHARED src/Scafacos.cpp src/Coulomb.cpp
                                      src/Dipoles.cpp)
 add_library(espresso::scafacos ALIAS espresso_scafacos)
+set_target_properties(espresso_scafacos PROPERTIES CXX_CLANG_TIDY
+                                                   "${ESPRESSO_CXX_CLANG_TIDY}")
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 10
    AND ESPRESSO_INSIDE_DOCKER AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS_EQUAL
                                   11 AND ESPRESSO_BUILD_WITH_COVERAGE)

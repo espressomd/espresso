@@ -535,7 +535,8 @@ target_link_libraries(espresso_cpp_flags INTERFACE espresso::coverage_flags)
 
 if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
+  set(ESPRESSO_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  set(ESPRESSO_CUDA_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
 
 if(ESPRESSO_BUILD_WITH_CPPCHECK)

@@ -58,6 +58,8 @@ add_library(
   EspressoSystemStandAlone.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
+set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
+                                               "${ESPRESSO_CXX_CLANG_TIDY}")
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(
@@ -92,6 +94,8 @@ if(ESPRESSO_BUILD_WITH_CUDA)
             ${CMAKE_CURRENT_SOURCE_DIR}/grid_based_algorithms
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
+  set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
+                                                 "${ESPRESSO_CUDA_CLANG_TIDY}")
   target_link_libraries(espresso_core PUBLIC espresso::cuda)
   install(TARGETS espresso_cuda
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
