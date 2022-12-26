@@ -213,7 +213,10 @@ else
 fi
 
 if [ "${with_cuda}" = true ]; then
-    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=ON -D CUDAToolkit_ROOT=/usr/lib/cuda ${cmake_params}"
+    if [ "${CUDACXX}" = "" ]; then
+        cmake_params="-D CMAKE_CUDA_FLAGS='--compiler-bindir=/usr/bin/g++-10' ${cmake_params}"
+    fi
 else
     cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=OFF ${cmake_params}"
 fi
