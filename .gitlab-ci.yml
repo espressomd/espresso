@@ -276,7 +276,6 @@ cuda11-maxset:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
-     cmake_params: '-DWALBERLA_USE_STD_EXPERIMENTAL_FILESYSTEM=TRUE'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -302,7 +301,6 @@ tutorials-samples-maxset:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
-     cmake_params: '-DWALBERLA_USE_STD_EXPERIMENTAL_FILESYSTEM=TRUE'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
