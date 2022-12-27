@@ -23,6 +23,8 @@ add_library(
   src/Rhomboid.cpp src/SimplePore.cpp src/Slitpore.cpp src/Sphere.cpp
   src/SpheroCylinder.cpp src/Torus.cpp src/Wall.cpp)
 add_library(espresso::shapes ALIAS espresso_shapes)
+set_target_properties(espresso_shapes PROPERTIES CXX_CLANG_TIDY
+                                                 "${ESPRESSO_CXX_CLANG_TIDY}")
 
 target_link_libraries(espresso_shapes PUBLIC espresso::utils
                       PRIVATE Boost::boost espresso::cpp_flags)
