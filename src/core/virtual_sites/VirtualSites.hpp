@@ -60,9 +60,15 @@ public:
     m_have_quaternion = have_quaternion;
   }
   bool have_quaternions() const { return m_have_quaternion; }
+  /**  @brief Enable/disable override for the vs cutoff check */
+  void set_override_cutoff_check(const bool &override_cutoff_check) {
+    m_override_cutoff_check = override_cutoff_check;
+  }
+  bool get_override_cutoff_check() const { return m_override_cutoff_check; }
 
 private:
   bool m_have_quaternion = false;
+  bool m_override_cutoff_check = false;
 };
 
 #endif

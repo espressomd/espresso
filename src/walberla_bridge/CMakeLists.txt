@@ -60,7 +60,5 @@ set_source_files_properties(
   PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 
 if(ESPRESSO_BUILD_TESTS)
-  set(CMAKE_CXX_CLANG_TIDY "")
   add_subdirectory(tests)
-  set(CMAKE_CXX_CLANG_TIDY "${ESPRESSO_DEFAULT_CXX_CLANG_TIDY}")
 endif()

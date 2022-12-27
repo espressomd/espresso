@@ -508,7 +508,7 @@ private:
    * @brief Remove callback.
    *
    * Remove the callback id from the callback list.
-   * This is a collective call that must be run on all node.
+   * This is a collective call that must be run on all nodes.
    *
    * @param id Identifier of the callback to remove.
    */
@@ -539,10 +539,8 @@ private:
       throw std::logic_error("Callbacks can only be invoked on rank 0.");
     }
 
-    /* Check if callback exists */
-    if (m_callback_map.find(id) == m_callback_map.end()) {
-      throw std::out_of_range("Callback does not exist.");
-    }
+    assert(m_callback_map.find(id) != m_callback_map.end() &&
+           "m_callback_map and m_func_ptr_to_id disagree");
 
     /* Send request to worker nodes */
     boost::mpi::packed_oarchive oa(m_comm);

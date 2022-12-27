@@ -66,7 +66,8 @@ calculate_vs_relate_to_params(Particle const &p_current,
   // than minimum global cutoff. If so, warn user.
   auto const dist = d.norm();
   auto const min_global_cut = get_min_global_cut();
-  if (dist > min_global_cut && n_nodes > 1) {
+  if (dist > min_global_cut && n_nodes > 1 &&
+      not virtual_sites()->get_override_cutoff_check()) {
     runtimeErrorMsg()
         << "Warning: The distance between virtual and non-virtual particle ("
         << dist << ") is larger than the minimum global cutoff ("

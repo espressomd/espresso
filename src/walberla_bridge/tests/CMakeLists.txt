@@ -19,47 +19,40 @@
 
 include(unit_test)
 
-unit_test(NAME kernels_unit_tests SRC kernels_unit_tests.cpp
-          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-          ${WALBERLA_LIBS})
-target_include_directories(kernels_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
+function(ESPRESSO_WALBERLA_UNIT_TEST)
+  cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC;DEPENDS" ${ARGN})
+  unit_test(NAME ${TEST_NAME} NUM_PROC ${TEST_NUM_PROC} SRC ${TEST_SRC} DEPENDS ${TEST_DEPENDS})
+  set_target_properties(${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "")
+  target_include_directories(${TEST_NAME} PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                    ${walberla_BINARY_DIR}/src)
+  target_link_libraries(${TEST_NAME} PRIVATE ${WALBERLA_LIBS})
+endfunction()
 
-unit_test(NAME LatticeWalberla_unit_tests SRC LatticeWalberla_unit_tests.cpp
-          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-          Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
-target_include_directories(
-  LatticeWalberla_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                     ${walberla_BINARY_DIR}/src)
+espresso_walberla_unit_test(NAME kernels_unit_tests SRC kernels_unit_tests.cpp
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils)
 
-unit_test(NAME LBWalberlaImpl_unit_tests SRC LBWalberlaImpl_unit_tests.cpp
+espresso_walberla_unit_test(NAME LatticeWalberla_unit_tests SRC LatticeWalberla_unit_tests.cpp
           DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-          Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
-target_include_directories(LBWalberlaImpl_unit_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                                   ${walberla_BINARY_DIR}/src)
+          Boost::mpi NUM_PROC 2)
 
-unit_test(NAME LBWalberlaImpl_bspline_tests SRC LBWalberlaImpl_bspline_tests.cpp
+espresso_walberla_unit_test(NAME LBWalberlaImpl_unit_tests SRC LBWalberlaImpl_unit_tests.cpp
           DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-          Boost::mpi ${WALBERLA_LIBS} NUM_PROC 2)
-target_include_directories(LBWalberlaImpl_bspline_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                                   ${walberla_BINARY_DIR}/src)
+          Boost::mpi NUM_PROC 2)
+
+espresso_walberla_unit_test(NAME LBWalberlaImpl_bspline_tests SRC LBWalberlaImpl_bspline_tests.cpp
+          DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
+          Boost::mpi NUM_PROC 2)
 
 if(NOT (ESPRESSO_BUILD_WITH_ASAN OR ESPRESSO_BUILD_WITH_UBSAN))
-  unit_test(NAME LBWalberlaImpl_statistical_tests SRC LBWalberlaImpl_statistical_tests.cpp
+  espresso_walberla_unit_test(NAME LBWalberlaImpl_statistical_tests SRC LBWalberlaImpl_statistical_tests.cpp
             DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-            Boost::mpi ${WALBERLA_LIBS})
-  target_include_directories(LBWalberlaImpl_statistical_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                                     ${walberla_BINARY_DIR}/src)
+            Boost::mpi)
 endif()
 
-unit_test(NAME LBWalberlaImpl_flow_tests SRC LBWalberlaImpl_flow_tests.cpp
+espresso_walberla_unit_test(NAME LBWalberlaImpl_flow_tests SRC LBWalberlaImpl_flow_tests.cpp
           DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-          Boost::mpi ${WALBERLA_LIBS})
-target_include_directories(LBWalberlaImpl_flow_tests PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                                   ${walberla_BINARY_DIR}/src)
+          Boost::mpi)
 
-unit_test(NAME LBWalberlaImpl_lees_edwards_test SRC LBWalberlaImpl_lees_edwards.cpp
+espresso_walberla_unit_test(NAME LBWalberlaImpl_lees_edwards_test SRC LBWalberlaImpl_lees_edwards.cpp
           DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-          Boost::mpi ${WALBERLA_LIBS})
-target_include_directories(LBWalberlaImpl_lees_edwards_test PRIVATE ${WALBERLA_INCLUDE_DIRS}
-                                                   ${walberla_BINARY_DIR}/src)
+          Boost::mpi)

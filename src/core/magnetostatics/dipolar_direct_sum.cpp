@@ -166,6 +166,7 @@ struct PosMom {
  *        at all. If false, distances are calulated as Euclidean
  *        distances, and not using minimum image convention.
  * @param ncut Number of replicas in each direction.
+ * @param box_l Box dimensions.
  * @param init Initial value of the sum.
  * @param f Binary operation mapping distance and moment of the
  *          interaction partner to the value to be summed up for this pair.

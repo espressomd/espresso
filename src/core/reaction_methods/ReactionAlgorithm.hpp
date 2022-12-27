@@ -159,6 +159,7 @@ public:
     return {m_slab_start_z, m_slab_end_z};
   }
 
+  void setup_bookkeeping_of_empty_pids();
   void delete_particle(int p_id);
   void add_reaction(std::shared_ptr<SingleReaction> const &new_reaction);
   void delete_reaction(int reaction_id) {

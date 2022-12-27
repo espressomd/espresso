@@ -44,11 +44,11 @@ The different energetic contributions to the total energy can also be obtained (
 
 For example, ::
 
->>> energy = system.analysis.energy()
->>> print(energy["total"])
->>> print(energy["kinetic"])
->>> print(energy["bonded"])
->>> print(energy["non_bonded"])
+    >>> energy = system.analysis.energy()
+    >>> print(energy["total"])
+    >>> print(energy["kinetic"])
+    >>> print(energy["bonded"])
+    >>> print(energy["non_bonded"])
 
 
 .. _Momentum of the system:
@@ -463,6 +463,8 @@ documentation for all available observables in :mod:`espressomd.observables`.
    - :class:`~espressomd.observables.ParticleAngularVelocities`: The particles' angular velocities in the space-fixed frame
 
    - :class:`~espressomd.observables.ParticleBodyAngularVelocities`: As above, but in the particles' body-fixed frame.
+
+   - :class:`~espressomd.observables.ParticleDirectors`: The particles' directors.
 
 - Observables working on a given set of particles and returning reduced quantities:
    - :class:`~espressomd.observables.DipoleMoment`: Total electric dipole moment of the system obtained based on unfolded positions

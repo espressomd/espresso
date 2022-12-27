@@ -28,7 +28,61 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
+
+struct identity {
+  template <class T> constexpr T &&operator()(T &&t) const noexcept {
+    return std::forward<T>(t);
+  }
+};
+
+template <typename T, class F> void check(T default_value, F conversion) {
+  boost::mpi::communicator world;
+  auto const rank = world.rank();
+  auto const size = world.size();
+  auto const root = world.size() - 1;
+  auto const in = conversion(rank);
+
+  /* out-of-place */
+  {
+    if (rank == root) {
+      std::vector<T> out(size, default_value);
+      std::vector<int> sizes(size, 1);
+
+      Utils::Mpi::gatherv(world, &in, 1, out.data(), sizes.data(), root);
+
+      for (int i = 0; i < size; i++) {
+        BOOST_CHECK_EQUAL(out.at(i), conversion(i));
+      }
+    } else if (rank % 2 == 0) {
+      Utils::Mpi::gatherv(world, &in, 1, static_cast<T *>(nullptr), nullptr,
+                          root);
+    } else {
+      Utils::Mpi::gatherv(world, &in, 1, root);
+    }
+  }
+
+  /* in-place */
+  {
+    if (rank == root) {
+      std::vector<T> out(size, default_value);
+      out[rank] = in;
+      std::vector<int> sizes(size, 1);
+
+      Utils::Mpi::gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
+
+      for (int i = 0; i < size; i++) {
+        BOOST_CHECK_EQUAL(out.at(i), conversion(i));
+      }
+    } else if (rank % 2 == 0) {
+      Utils::Mpi::gatherv(world, &in, 1, static_cast<T *>(nullptr), nullptr,
+                          root);
+    } else {
+      Utils::Mpi::gatherv(world, &in, 1, root);
+    }
+  }
+}
 
 /*
  * Check that implementation behaves
@@ -38,45 +92,7 @@
  * that the value was written to the
  * correct position in the output array.
  */
-BOOST_AUTO_TEST_CASE(mpi_type) {
-  boost::mpi::communicator world;
-  auto const rank = world.rank();
-  auto const size = world.size();
-  auto const root = world.size() - 1;
-
-  /* out-of-place */
-  {
-    if (rank == root) {
-      std::vector<int> out(size, -1);
-      std::vector<int> sizes(size, 1);
-
-      Utils::Mpi::gatherv(world, &rank, 1, out.data(), sizes.data(), root);
-
-      for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(out.at(i), i);
-      }
-    } else {
-      Utils::Mpi::gatherv(world, &rank, 1, root);
-    }
-  }
-
-  /* in-place */
-  {
-    if (rank == root) {
-      std::vector<int> out(size, -1);
-      out[rank] = rank;
-      std::vector<int> sizes(size, 1);
-
-      Utils::Mpi::gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
-
-      for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(out.at(i), i);
-      }
-    } else {
-      Utils::Mpi::gatherv(world, &rank, 1, root);
-    }
-  }
-}
+BOOST_AUTO_TEST_CASE(mpi_type) { check(-1, identity{}); }
 
 /*
  * Check that implementation behaves
@@ -87,44 +103,7 @@ BOOST_AUTO_TEST_CASE(mpi_type) {
  * correct position in the output array.
  */
 BOOST_AUTO_TEST_CASE(non_mpi_type) {
-  boost::mpi::communicator world;
-  auto const rank = world.rank();
-  auto const size = world.size();
-  auto const root = world.size() - 1;
-  auto const in = std::to_string(rank);
-
-  /* out-of-place */
-  {
-    if (rank == root) {
-      std::vector<std::string> out(size);
-      std::vector<int> sizes(size, 1);
-
-      Utils::Mpi::gatherv(world, &in, 1, out.data(), sizes.data(), root);
-
-      for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(out.at(i), std::to_string(i));
-      }
-    } else {
-      Utils::Mpi::gatherv(world, &in, 1, root);
-    }
-  }
-
-  /* in-place */
-  {
-    if (rank == root) {
-      std::vector<std::string> out(size);
-      out[rank] = in;
-      std::vector<int> sizes(size, 1);
-
-      Utils::Mpi::gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
-
-      for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(out.at(i), std::to_string(i));
-      }
-    } else {
-      Utils::Mpi::gatherv(world, &in, 1, root);
-    }
-  }
+  check(std::string{""}, static_cast<std::string (&)(int)>(std::to_string));
 }
 
 int main(int argc, char **argv) {

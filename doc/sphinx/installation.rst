@@ -129,35 +129,42 @@ Later in the installation instructions, you will see CMake commands of the form
 to activate CUDA. These commands may need to be adapted depending on which
 operating system and CUDA version you are using.
 
+You can control the list of CUDA architectures to generate device code for.
+For example, ``-D CMAKE_CUDA_ARCHITECTURES=61;75`` will generate device code
+for both sm_61 and sm_75 architectures.
+
 On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
 to compile sources that rely on ``std::function``. You can either use GCC 10:
 
 .. code-block:: bash
 
-    CC=gcc-10 CXX=g++-10 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON
+    CC=gcc-10 CXX=g++-10 CUDACXX=/usr/local/cuda-11.5/bin/nvcc cmake .. \
+      -D ESPRESSO_BUILD_WITH_CUDA=ON \
+      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
+      -D CMAKE_CUDA_FLAGS="--compiler-bindir=/usr/bin/g++-10"
 
-or alternatively install Clang 12 as a replacement for nvcc and GCC:
-
-.. code-block:: bash
-
-    CC=clang-12 CXX=clang++-12 cmake .. \
-      -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang
-
-On systems with multiple CUDA releases installed, it is possible to select a
-specific one by providing custom paths to the compiler and toolkit:
+or alternatively install Clang 14 as a replacement for nvcc and GCC:
 
 .. code-block:: bash
 
-    CUDACXX=/usr/local/cuda-11.5/bin/nvcc \
-      cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.5
+    CC=clang-14 CXX=clang++-14 CUDACXX=clang++-14 cmake .. \
+      -D ESPRESSO_BUILD_WITH_CUDA=ON \
+      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
+      -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5" \
+      -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5"
 
-Alternatively for Clang:
+Please note that all CMake options and compiler flags that involve
+``/usr/local/cuda-*`` need to be adapted to your CUDA environment.
+But they are only necessary on systems with multiple CUDA releases installed,
+and can be safely removed if you have only one CUDA release installed.
 
-.. code-block:: bash
-
-    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
-      cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang \
-      -D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.5
+Please also note that with Clang, you still need the GCC 10 toolchain,
+which can be set up with ``apt install gcc-10 g++-10 libstdc++-10-dev``.
+The extra compiler flags in the Clang CMake command above are needed to pin
+the search paths of Clang. By default, it searches trough the most recent
+GCC version, which is GCC 12 on Ubuntu 22.04. It is not possible to install
+the NVIDIA driver without GCC 12 due to a dependency resolution issue
+(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-12``).
 
 .. _Requirements for building the documentation:
 
@@ -168,10 +175,8 @@ To generate the Sphinx documentation, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user \
-        'sphinx>=2.3.0,!=3.0.0' \
-        'sphinxcontrib-bibtex>=2.4.1' \
-        'sphinx-toggleprompt==0.0.5'
+    pip3 install --user -c requirements.txt \
+        sphinx sphinxcontrib-bibtex sphinx-toggleprompt
 
 To generate the Doxygen documentation, install the following packages:
 
@@ -311,7 +316,7 @@ Run the following commands:
       doxygen gsl numpy scipy ipython jupyter
     brew install hdf5-mpi
     brew link --force cython
-    pip install PyOpenGL matplotlib
+    pip install -c requirements.txt PyOpenGL matplotlib
 
 .. _Quick installation:
 
@@ -746,6 +751,7 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_FFT``: Build waLBerla with FFT and PFFT support, used in FFT-based electrokinetics.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
+* ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 
 The following options control code instrumentation:
 
@@ -763,7 +769,7 @@ The following options control how the project is built and tested:
 * ``ESPRESSO_BUILD_WITH_CPPCHECK``: Run Cppcheck during compilation.
 * ``ESPRESSO_BUILD_WITH_CCACHE``: Enable compiler cache for faster rebuilds.
 * ``ESPRESSO_BUILD_TESTS``: Enable C++ and Python tests.
-* ``ESPRESSO_CUDA_COMPILER`` (string): Select the CUDA compiler.
+* ``ESPRESSO_BUILD_BENCHMARKS``: Enable benchmarks.
 * ``ESPRESSO_CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
 * ``ESPRESSO_TEST_TIMEOUT``: Test timeout.
 * ``ESPRESSO_ADD_OMPI_SINGLETON_WARNING``: Add a runtime warning in the
@@ -773,9 +779,11 @@ The following options control how the project is built and tested:
 * ``ESPRESSO_MYCONFIG_NAME`` (string): Filename of the user-provided config file
 * ``MPIEXEC_PREFLAGS``, ``MPIEXEC_POSTFLAGS`` (strings): Flags passed to the
   ``mpiexec`` command in MPI-parallel tests and benchmarks.
-* ``CMAKE_CXX_FLAGS`` (string): Flags passed to the compilers.
 * ``CMAKE_BUILD_TYPE`` (string): Build type. Default is ``Release``.
-* ``CUDA_TOOLKIT_ROOT_DIR`` (string): Path to the CUDA toolkit directory.
+* ``CMAKE_CXX_FLAGS`` (string): Flags passed to the C++ compiler.
+* ``CMAKE_CUDA_FLAGS`` (string): Flags passed to the CUDA compiler.
+* ``CMAKE_CUDA_ARCHITECTURES`` (list): Semicolon-separated list of architectures to generate device code for.
+* ``CUDAToolkit_ROOT`` (string): Path to the CUDA toolkit directory.
 
 Most of these options are opt-in, meaning their default value is set to
 ``OFF`` in the :file:`CMakeLists.txt` file. These options can be modified
@@ -786,16 +794,15 @@ by calling ``cmake`` with the command line argument ``-D``:
     cmake -D ESPRESSO_BUILD_WITH_HDF5=OFF ..
 
 When an option is enabled, additional options may become available.
-For example with ``-D ESPRESSO_BUILD_WITH_CUDA=ON``, one can choose the CUDA
-compiler with ``-D ESPRESSO_CUDA_COMPILER=<compiler_id>``, where
-``<compiler_id>`` can be ``nvcc`` (default) or ``clang``.
+For example with ``-D ESPRESSO_BUILD_TESTS=ON``, one can specify
+the CTest parameters with ``-D ESPRESSO_CTEST_ARGS=-j$(nproc)``.
 
 Environment variables can be passed to CMake. For example, to select Clang, use
-``CC=clang CXX=clang++ cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_CUDA_COMPILER=clang``.
+``CC=clang CXX=clang++ CUDACXX=clang++ cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``.
 If you have multiple versions of the CUDA library installed, you can select the
 correct one with ``CUDA_BIN_PATH=/usr/local/cuda-11.5 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
-path with ``-D CMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.5``).
+path with ``-D CMAKE_CUDA_FLAGS=--cuda-path=/usr/local/cuda-11.5``).
 
 .. _Build types and compiler flags:
 

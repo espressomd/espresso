@@ -280,8 +280,11 @@ int main(int argc, char **argv) {
   espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
   // the test case only works for 4 MPI ranks
   boost::mpi::communicator world;
-  if (world.size() == 4)
-    return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  int error_code = 0;
+  if (world.size() == 4) {
+    error_code = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  }
+  return error_code;
 }
 #else // ifdef LENNARD_JONES
 int main(int argc, char **argv) {}

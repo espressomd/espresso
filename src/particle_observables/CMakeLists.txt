@@ -23,6 +23,8 @@ target_include_directories(
   espresso_particle_observables SYSTEM
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>)
+set_target_properties(espresso_particle_observables
+                      PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
 
 install(TARGETS espresso_particle_observables
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
