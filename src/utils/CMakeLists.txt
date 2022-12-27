@@ -27,10 +27,6 @@ target_include_directories(
 target_link_libraries(espresso_utils INTERFACE Boost::serialization)
 target_link_libraries(espresso_utils_mpi INTERFACE espresso::utils Boost::mpi
                                                    MPI::MPI_CXX)
-set_target_properties(espresso_utils PROPERTIES CXX_CLANG_TIDY
-                                                "${ESPRESSO_CXX_CLANG_TIDY}")
-set_target_properties(espresso_utils_mpi
-                      PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)

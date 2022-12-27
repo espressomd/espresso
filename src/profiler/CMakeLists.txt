@@ -20,8 +20,6 @@
 add_library(espresso_profiler INTERFACE)
 add_library(espresso::profiler ALIAS espresso_profiler)
 target_include_directories(espresso_profiler INTERFACE "include")
-set_target_properties(espresso_profiler PROPERTIES CXX_CLANG_TIDY
-                                                   "${ESPRESSO_CXX_CLANG_TIDY}")
 
 if(ESPRESSO_BUILD_WITH_PROFILER)
   find_package(caliper REQUIRED)
