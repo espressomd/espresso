@@ -290,13 +290,9 @@ class ParticleProperties(ut.TestCase):
         np.testing.assert_equal(sorted(res.id), np.arange(0, 16, 2, dtype=int))
 
     def test_image_box(self):
-        s = self.system
-        s.part.clear()
-
-        pos = 1.5 * s.box_l
-
-        p = s.part.add(pos=pos)
-
+        self.system.part.clear()
+        pos = 1.5 * self.system.box_l
+        p = self.system.part.add(pos=pos)
         np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
     def test_particle_numbering(self):

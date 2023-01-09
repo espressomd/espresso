@@ -171,21 +171,25 @@ class ReactionMethods(ut.TestCase):
                   'exclusion_radius_per_type': {1: 0.1}}
 
         # reaction ensemble
-        method = espressomd.reaction_methods.ReactionEnsemble(
-            kT=1.4, seed=12, search_algorithm="order_n", **params)
-        self.check_interface(method, kT=1.4, gamma=1.2,
-                             search_algorithm="order_n", **params)
+        with self.subTest(msg="reaction ensemble"):
+            method = espressomd.reaction_methods.ReactionEnsemble(
+                kT=1.4, seed=12, search_algorithm="order_n", **params)
+            self.check_interface(method, kT=1.4, gamma=1.2,
+                                 search_algorithm="order_n", **params)
 
-        # constant pH ensemble
-        method = espressomd.reaction_methods.ConstantpHEnsemble(
-            kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10., **params)
-        self.check_interface(method, kT=1.5, gamma=1.2,
-                             search_algorithm="parallel", **params)
+        with self.subTest(msg="constant pH ensemble"):
+            method = espressomd.reaction_methods.ConstantpHEnsemble(
+                kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10.,
+                **params)
+            self.check_interface(method, kT=1.5, gamma=1.2,
+                                 search_algorithm="parallel", **params)
 
-        # Widom insertion
-        method = espressomd.reaction_methods.WidomInsertion(kT=1.6, seed=16)
-        self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
-                             exclusion_radius_per_type={}, search_algorithm=None)
+        with self.subTest(msg="Widom insertion"):
+            method = espressomd.reaction_methods.WidomInsertion(
+                kT=1.6, seed=16)
+            self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
+                                 exclusion_radius_per_type={},
+                                 search_algorithm=None)
 
     def test_exceptions(self):
         single_reaction_params = {
