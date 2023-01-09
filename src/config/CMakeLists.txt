@@ -55,6 +55,8 @@ execute_process(
 
 add_library(espresso_config SHARED src/config-features.cpp)
 add_library(espresso::config ALIAS espresso_config)
+set_target_properties(espresso_config PROPERTIES CXX_CLANG_TIDY
+                                                 "${ESPRESSO_CXX_CLANG_TIDY}")
 add_dependencies(espresso_config myconfig check_myconfig
                  generate_config_features)
 install(TARGETS espresso_config

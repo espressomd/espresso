@@ -196,9 +196,9 @@ clang-sanitizer:
   variables:
      CC: 'clang-14'
      CXX: 'clang++-14'
+     CUDAXX: 'clang++-14'
      myconfig: 'maxset'
      with_cuda: 'true'
-     with_cuda_compiler: 'clang'
      with_coverage: 'false'
      with_static_analysis: 'true'
      check_skip_long: 'true'
@@ -427,9 +427,9 @@ empty:
   variables:
      CC: 'clang-14'
      CXX: 'clang++-14'
+     CUDAXX: 'clang++-14'
      myconfig: 'empty'
      with_cuda: 'true'
-     with_cuda_compiler: 'clang'
      with_static_analysis: 'true'
      with_scafacos: 'false'
      with_stokesian_dynamics: 'false'

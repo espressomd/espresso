@@ -27,6 +27,8 @@ add_custom_command(
 
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
 target_link_libraries(gen_pxiconfig espresso::config)
+set_target_properties(gen_pxiconfig PROPERTIES CXX_CLANG_TIDY
+                                               "${ESPRESSO_CXX_CLANG_TIDY}")
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi

@@ -26,4 +26,6 @@ if(ESPRESSO_BUILD_WITH_PROFILER)
 
   target_link_libraries(espresso_profiler INTERFACE caliper-mpi)
   target_compile_definitions(espresso_profiler INTERFACE HAVE_CALIPER)
+  set_target_properties(espresso_profiler
+                        PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
 endif()
