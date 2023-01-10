@@ -322,6 +322,12 @@ int get_particle_node(int p_id) {
 
 void clear_particle_node() { particle_node.clear(); }
 
+static void clear_particle_type_map() {
+  for (auto &kv : ::particle_type_map) {
+    kv.second.clear();
+  }
+}
+
 /**
  * @brief Calculate the largest particle id.
  * Traversing the @ref particle_node to find the largest particle id
@@ -404,6 +410,7 @@ REGISTER_CALLBACK(mpi_remove_all_particles_local)
 void remove_all_particles() {
   mpi_call_all(mpi_remove_all_particles_local);
   clear_particle_node();
+  clear_particle_type_map();
 }
 
 void remove_particle(int p_id) {

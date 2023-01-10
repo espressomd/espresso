@@ -45,6 +45,9 @@ class ReactionMethods(ut.TestCase):
                     else:
                         self.assertEqual(getattr(reaction, key), params[key])
 
+        def count_by_type(types):
+            return [self.system.number_of_particles(type=x) for x in types]
+
         reaction_forward = {
             'gamma': gamma,
             'reactant_types': [5],
@@ -156,11 +159,15 @@ class ReactionMethods(ut.TestCase):
             potential_energy = method.calculate_particle_insertion_potential_energy(
                 reaction_id=0)
             self.assertEqual(potential_energy, 0.)
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 1, 0])
         method.delete_particle(p_id=p3.id)
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 0, 0])
         self.assertEqual(len(self.system.part), 2)
-        method.delete_particle(p_id=p1.id)
+        p1.remove()
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [0, 1, 0, 0])
         self.assertEqual(len(self.system.part), 1)
         self.system.part.clear()
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [0, 0, 0, 0])
 
         # check reaction deletion
         method.delete_reaction(reaction_id=0)
