@@ -87,14 +87,18 @@ class CheckpointTest(ut.TestCase):
         Check serialization of the LB fluid. The checkpoint file only stores
         population information, therefore calling ``lbf.load_checkpoint()``
         erases all LBBoundaries information but doesn't remove the objects
-        contained in ``system.lbboundaries`. This test method is named such
-        that it is executed after ``self.test_lb_boundaries()``.
+        contained in ``system.lbboundaries``. A callback should re-introduce
+        the LB boundary flag after LB populations are reloaded.
         '''
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
         cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
         cpt_path = str(cpt_root / "lb") + "{}.cpt"
+
+        if has_lbb:
+            # LB boundaries must be correct before LB populations are loaded
+            self.check_lb_boundaries()
 
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -132,6 +136,10 @@ class CheckpointTest(ut.TestCase):
         for key in reference:
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+
+        if has_lbb:
+            # LB boundaries must be correct after LB populations are loaded
+            self.check_lb_boundaries(remove_boundaries=True)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
@@ -672,8 +680,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(1).exclusions), [2])
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
-    @ut.skipIf(not has_lbb, "Missing features")
-    def test_lb_boundaries(self):
+    def check_lb_boundaries(self, remove_boundaries=False):
         # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
         np.testing.assert_allclose(
@@ -684,6 +691,7 @@ class CheckpointTest(ut.TestCase):
             system.lbboundaries[0].shape, espressomd.shapes.Wall)
         self.assertIsInstance(
             system.lbboundaries[1].shape, espressomd.shapes.Wall)
+
         # check boundary flag
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
@@ -691,7 +699,10 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_equal(np.copy(lbf[-1, :, :].boundary.astype(int)), 2)
         np.testing.assert_equal(
             np.copy(lbf[1:-1, :, :].boundary.astype(int)), 0)
+
         # remove boundaries
+        if not remove_boundaries:
+            return
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
         np.testing.assert_equal(np.copy(lbf[:, :, :].boundary.astype(int)), 0)
