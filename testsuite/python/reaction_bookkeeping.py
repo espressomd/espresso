@@ -94,10 +94,8 @@ class ReactionMethodsBookkeepingTest(ut.TestCase):
         for _ in range(50):
             self.widom.calculate_particle_insertion_potential_energy(
                 reaction_id=0)
-            charge = 0.
-            for p in self.system.part:
-                charge += p.q
-            self.assertEqual(charge, 0.)
+            total_charge = sum(self.system.part.all().q)
+            self.assertEqual(total_charge, 0.)
 
 
 if __name__ == "__main__":
