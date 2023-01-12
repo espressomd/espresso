@@ -32,6 +32,7 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
@@ -207,6 +208,7 @@ void lb_initialize_fields(std::vector<LB_FluidNode> &lb_fields,
     field.boundary = false;
 #endif // LB_BOUNDARIES
   }
+  on_lbboundary_change();
 }
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
