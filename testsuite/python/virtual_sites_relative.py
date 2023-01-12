@@ -32,6 +32,8 @@ class VirtualSites(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10.0, 10.0, 10.0]
+        self.system.cell_system.set_regular_decomposition(
+            use_verlet_lists=True)
 
     def tearDown(self):
         self.system.part.clear()
@@ -266,10 +268,7 @@ class VirtualSites(ut.TestCase):
         # Setup
         system.box_l = [l, l, l]
         system.min_global_cut = 0.501
-        system.part.clear()
-
         system.time_step = 0.01
-        system.thermostat.turn_off()
 
         # Dumbbells consist of 2 virtual lj spheres + central particle
         # w/o interactions. For n spheres, n/2 dumbbells.
@@ -300,8 +299,12 @@ class VirtualSites(ut.TestCase):
         # Remove overlap
         system.integrator.set_steepest_descent(
             f_max=0, gamma=0.1, max_displacement=0.1)
-        while system.analysis.energy()["total"] > 10 * n:
+        n_loops = 0
+        n_max = 10
+        while system.analysis.energy()["total"] > 10 * n and n_loops < n_max:
             system.integrator.run(20)
+            n_loops += 1
+        assert n_loops < n_max, "Steepest descent didn't converge"
         # Integrate
         system.integrator.set_vv()
         for i in range(10):
@@ -312,7 +315,7 @@ class VirtualSites(ut.TestCase):
             # Constant energy to get rid of thermostat forces in the
             # verification
             system.integrator.run(2)
-            # Check the virtual sites config,pos and vel of the lj spheres
+            # Check the virtual sites config, pos and vel of the lj spheres
             for j in range(int(n / 2)):
                 self.verify_vs(system.part.by_id(3 * j + 1))
                 self.verify_vs(system.part.by_id(3 * j + 2))
@@ -323,26 +326,33 @@ class VirtualSites(ut.TestCase):
             tests_common.verify_lj_forces(system, 1E-10, 3 * np.arange(n // 2))
 
         # Test applying changes
-        enegry_pre_change = system.analysis.energy()['total']
+        energy_pre_change = system.analysis.energy()['total']
         pressure_pre_change = system.analysis.pressure()['total']
         p0 = system.part.by_id(0)
         p0.pos = p0.pos + (2.2, -1.4, 4.2)
-        enegry_post_change = system.analysis.energy()['total']
+        energy_post_change = system.analysis.energy()['total']
         pressure_post_change = system.analysis.pressure()['total']
-        self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)
+        self.assertNotAlmostEqual(energy_pre_change, energy_post_change)
         self.assertNotAlmostEqual(pressure_pre_change, pressure_post_change)
 
     def test_lj(self):
         """Run LJ fluid test for different cell systems."""
-        system = self.system
 
-        system.cell_system.skin = 0.4
-        system.cell_system.set_n_square(use_verlet_lists=True)
-        self.run_test_lj()
-        system.cell_system.set_regular_decomposition(use_verlet_lists=True)
-        self.run_test_lj()
-        system.cell_system.set_regular_decomposition(use_verlet_lists=False)
-        self.run_test_lj()
+        self.system.cell_system.skin = 0.4
+        with self.subTest(msg='N-square cell system with Verlet lists'):
+            self.system.cell_system.set_n_square(use_verlet_lists=True)
+            self.run_test_lj()
+            self.tearDown()
+        with self.subTest(msg='regular decomposition cell system with Verlet lists'):
+            self.system.cell_system.set_regular_decomposition(
+                use_verlet_lists=True)
+            self.run_test_lj()
+            self.tearDown()
+        with self.subTest(msg='regular decomposition cell system without Verlet lists'):
+            self.system.cell_system.set_regular_decomposition(
+                use_verlet_lists=False)
+            self.run_test_lj()
+            self.tearDown()
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_zz_pressure_tensor(self):
