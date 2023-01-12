@@ -421,7 +421,9 @@ class ek_eof_one_species(ut.TestCase):
             ek.write_vtk_velocity(str(path_vtk_velocity))
             ek.write_vtk_potential(str(path_vtk_potential))
             ek.write_vtk_density(str(path_vtk_lbdensity))
-            ek.write_vtk_lbforce(str(path_vtk_lbforce))
+            if espressomd.has_features('EK_DEBUG') or espressomd.has_features(
+                    'VIRTUAL_SITES_INERTIALESS_TRACERS'):
+                ek.write_vtk_lbforce(str(path_vtk_lbforce))
             counterions.write_vtk_density(str(path_vtk_density))
             counterions.write_vtk_flux(str(path_vtk_flux))
             if espressomd.has_features('EK_DEBUG'):
@@ -436,7 +438,9 @@ class ek_eof_one_species(ut.TestCase):
             vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
             vtk_lbdensity = get_vtk(
                 path_vtk_lbdensity, "density_lb", grid_dims)
-            get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
+            if espressomd.has_features('EK_DEBUG') or espressomd.has_features(
+                    'VIRTUAL_SITES_INERTIALESS_TRACERS'):
+                get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
             vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
             vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
             if espressomd.has_features('EK_DEBUG'):
