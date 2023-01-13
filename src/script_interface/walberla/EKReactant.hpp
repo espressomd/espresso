@@ -43,10 +43,7 @@ public:
         get_value<double>(args, "stoech_coeff"),
         get_value<double>(args, "order"));
 
-    add_parameters({{"order",
-                     [this](Variant const &v) {
-                       m_ekreactant->set_order(get_value<double>(v));
-                     },
+    add_parameters({{"order", AutoParameter::read_only,
                      [this]() { return m_ekreactant->get_order(); }},
                     {"stoech_coeff",
                      [this](Variant const &v) {

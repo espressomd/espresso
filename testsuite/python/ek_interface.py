@@ -201,9 +201,10 @@ class EKTest:
         self.assertAlmostEqual(ek_reactant.stoech_coeff, -2.0, delta=self.atol)
         self.assertAlmostEqual(ek_reactant.order, 2.0, delta=self.atol)
         ek_reactant.stoech_coeff = 1.0
-        ek_reactant.order = 1.5
         self.assertAlmostEqual(ek_reactant.stoech_coeff, 1.0, delta=self.atol)
-        self.assertAlmostEqual(ek_reactant.order, 1.5, delta=self.atol)
+
+        with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) 'order' is read-only"):
+            ek_reactant.order = 1.5
 
     def test_ek_indexed_reactions(self):
         ek_species = self.make_default_ek_species()
