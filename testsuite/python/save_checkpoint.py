@@ -371,7 +371,7 @@ if lbf_actor:
     ek_species = espressomd.EKSpecies.EKSpecies(
         lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
         advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-        single_precision=False)
+        single_precision=False, tau=0.01)
     ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
     ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
     config.recursive_unlink(vtk_root / ek_vtk_auto_id)

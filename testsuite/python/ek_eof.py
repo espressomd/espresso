@@ -27,23 +27,20 @@ import scipy.optimize
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKEOF(ut.TestCase):
-    BOX_L = [30., 6., 6.]
-    AGRID = 1.0
+    BOX_L = [45., 9., 9.]
+    AGRID = 1.5
     DENSITY = 1
     DIFFUSION_COEFFICIENT = 0.25
-    TIME = 3000
+    TIMESTEPS = 5000
+    TAU = 1.6
 
     system = espressomd.System(box_l=BOX_L)
-    system.time_step = 1.0
+    system.time_step = TAU
     system.cell_system.skin = 0.4
 
     def tearDown(self) -> None:
         self.system.actors.clear()
         self.system.ekcontainer.clear()
-
-    def analytical_density(pos: np.ndarray, time: int, D: float):
-        return (4 * np.pi * D * time)**(-3 / 2) * \
-            np.exp(-np.sum(np.square(pos), axis=-1) / (4 * D * time))
 
     def test_eof_single(self):
         self.detail_test_eof(single_precision=True)
@@ -56,12 +53,12 @@ class EKEOF(ut.TestCase):
         Testing EK for the electroosmotic flow
         """
 
-        eps0 = 1.0
-        epsR = 1.0
-        kT = 1.0
-        offset = 1
+        eps0 = 0.015
+        epsR = 18.5
+        kT = 2.3
+        offset = self.AGRID
         d = self.system.box_l[0] - 2 * offset
-        valency = 1.0
+        valency = 1.1
         external_electric_field = np.asarray([0.0, 0.001, 0.0])
 
         visc = 1. / 6.
@@ -74,20 +71,20 @@ class EKEOF(ut.TestCase):
 
         ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
                                                    density=density, kT=kT, diffusion=self.DIFFUSION_COEFFICIENT, valency=valency,
-                                                   advection=True, friction_coupling=True, ext_efield=external_electric_field, single_precision=single_precision)
+                                                   advection=True, friction_coupling=True, ext_efield=external_electric_field, single_precision=single_precision, tau=self.TAU)
         ekwallcharge = espressomd.EKSpecies.EKSpecies(lattice=lattice,
-                                                      density=0.0, kT=kT, diffusion=0.0, valency=-valency, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision)
+                                                      density=0.0, kT=kT, diffusion=0.0, valency=-valency, advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
 
         eksolver = espressomd.EKSpecies.EKFFT(
             lattice=lattice, permittivity=eps0 * epsR, single_precision=single_precision)
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.add(ekwallcharge)
 
-        self.system.ekcontainer.tau = 1.0
+        self.system.ekcontainer.tau = self.TAU
         self.system.ekcontainer.solver = eksolver
 
         lb_fluid = espressomd.lb.LBFluidWalberla(
-            lattice=lattice, density=1.0, viscosity=visc, tau=1.0, single_precision=single_precision)
+            lattice=lattice, density=1.0, viscosity=visc, tau=self.TAU, single_precision=single_precision)
         self.system.actors.add(lb_fluid)
 
         wall_bot = espressomd.shapes.Wall(normal=[1, 0, 0], dist=offset)
@@ -96,82 +93,83 @@ class EKEOF(ut.TestCase):
         for obj in (wall_bot, wall_top):
             ekspecies.add_boundary_from_shape(
                 obj, [0.0, 0.0, 0.0], espressomd.EKSpecies.FluxBoundary)
+            ekspecies.add_boundary_from_shape(
+                obj, 0.0, espressomd.EKSpecies.DensityBoundary)
             lb_fluid.add_boundary_from_shape(obj, [0.0, 0.0, 0.0])
 
         ekspecies[0, :, :].density = 0.0
         ekspecies[-1, :, :].density = 0.0
 
-        sigma = density * d / 2
+        density_wall = density * d / 2
+        sigma = -valency * density_wall
 
-        ekwallcharge[0, :, :].density = sigma
-        ekwallcharge[-1, :, :].density = sigma
+        ekwallcharge[0, :, :].density = density_wall
+        ekwallcharge[-1, :, :].density = density_wall
 
-        self.system.integrator.run(self.TIME)
+        self.system.integrator.run(self.TIMESTEPS)
 
-        # TODO: figure out if the runtime is enough
-        # TODO: make an actual comparison with the analytic solution
-        # TODO: add dielectric permittivities? electrostatic prefactor? to
-        # EKFFT
-
-        def trans(x):
-            return x * np.tan(valency * d / (4. * kT) * x) - \
+        def transcendental_equation(
+                x, valency, distance, kT, sigma, eps0, epsR):
+            return x * np.tan(valency * distance / (4. * kT) * x) + \
                 sigma / (eps0 * epsR)
 
-        C = scipy.optimize.fsolve(trans, 0.1)
+        integration_constant = scipy.optimize.fsolve(
+            lambda x: transcendental_equation(
+                x=x,
+                valency=valency,
+                distance=d,
+                kT=kT,
+                sigma=sigma,
+                eps0=eps0,
+                epsR=epsR),
+            0.1)
 
-        def analytical(x):
-            return (epsR * eps0) * C ** 2 / (2 * kT) / np.square(
-                np.cos(valency * C / (2 * kT) * x))
+        def calc_analytic_density(
+                x, integration_constant, valency, kT, eps0, epsR):
+            return (epsR * eps0) * integration_constant**2 / (2 * kT) / np.square(
+                np.cos(valency * integration_constant / (2 * kT) * x))
 
-        def vel(x):
+        def calc_analytic_velocity(x, integration_constant, valency,
+                                   distance, kT, eps0, epsR, eta, external_electric_field):
             return 2 * np.linalg.norm(external_electric_field) * epsR * eps0 * kT / (eta * valency) * (
-                np.log(np.cos(valency * C / (2 * kT) * x)) - np.log(np.cos(d * valency * C / (4 * kT))))
+                np.log(np.cos(valency * integration_constant / (2 * kT) * x)) - np.log(np.cos(distance * valency * integration_constant / (4 * kT))))
 
-        # import matplotlib.pyplot as plt
-        #
-        # plt.figure()
-
-        # simulated_density = ekspecies[:, 0, 0].density.squeeze()
+        simulated_density = ekspecies[:, 0, 0].density.squeeze()
         simulated_velocity = lb_fluid[:, 0, 0].velocity.squeeze()[:, 1]
 
-        x_sim = np.arange(
-            self.system.box_l[0]) - self.system.box_l[0] / 2 + 0.5
-        # x_shifted = np.linspace(x_sim[0], x_sim[-1], 200)
-        # ions boundary is half a cell offset to the fluid cell
-        # x_ions = np.linspace(x_sim[0] - 0.5, x_sim[-1] + 0.5, 200)
-        # plt.plot(x_sim, simulated_density, "x", label="density")
-        # plt.plot(x_sim, simulated_velocity, "x", label="y-velocity")
+        x_sim = (np.arange(lattice.shape[0]) -
+                 lattice.shape[0] / 2 + 0.5) * self.AGRID
 
-        analytic_density = analytical(x_sim)
+        analytic_density = calc_analytic_density(
+            x=x_sim,
+            integration_constant=integration_constant,
+            valency=valency,
+            kT=kT,
+            eps0=eps0,
+            epsR=epsR)
         analytic_density[np.logical_or(
             x_sim < -self.system.box_l[0] / 2 + offset,
             x_sim > self.system.box_l[0] / 2 - offset)] = 0.
-        # np.testing.assert_allclose(
-        #     simulated_density, analytic_density, rtol=2e-3)
+        np.testing.assert_allclose(
+            simulated_density, analytic_density, rtol=2e-3)
 
-        # TODO: figure out how to test the velocity profile...z
-        analytic_velocity = vel(x_sim)
+        analytic_velocity = calc_analytic_velocity(
+            x=x_sim,
+            integration_constant=integration_constant,
+            valency=valency,
+            distance=d,
+            kT=kT,
+            eps0=eps0,
+            epsR=epsR,
+            eta=eta,
+            external_electric_field=external_electric_field)
         analytic_velocity[np.logical_or(
             x_sim < -self.system.box_l[0] / 2 + offset,
             x_sim > self.system.box_l[0] / 2 - offset)] = 0.
         np.testing.assert_allclose(
             simulated_velocity,
             analytic_velocity,
-            rtol=3e-2)
-        # print((simulated_velocity - analytic_velocity) / analytic_velocity)
-        # print(np.sum(np.abs(simulated_velocity - analytic_velocity)))
-
-        # analytic_density = analytical(x_ions)
-        # analytic_velocity = vel(x_shifted)
-        # analytic_density[np.logical_or(x_ions < - self.system.box_l[0] / 2 + offset - 0.5, x_ions > self.system.box_l[0] / 2 - offset + 0.5)] = 0.
-        # analytic_velocity[np.logical_or(x_shifted < - self.system.box_l[0] / 2 + offset, x_shifted > self.system.box_l[0] / 2 - offset)] = 0.
-
-        # plt.plot(x_ions, analytic_density, label="analytic density")
-        # plt.plot(x_shifted, analytic_velocity, label="analytic velocity")
-
-        # plt.legend()
-
-        # plt.show()
+            rtol=2e-2)
 
 
 if __name__ == "__main__":

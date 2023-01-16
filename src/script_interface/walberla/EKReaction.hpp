@@ -52,12 +52,37 @@ public:
     return m_ekreaction;
   }
 
+  [[nodiscard]] auto get_conversion_coefficient() const noexcept {
+    return m_conv_coefficient;
+  }
+
 protected:
+  auto get_agrid(VariantMap const &args) const {
+    auto lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
+    return get_value<double>(lattice->get_parameter("agrid"));
+  }
+
+  auto calculate_bulk_conversion_factor(VariantMap const &args) const {
+    auto const tau = get_value<double>(args, "tau");
+    auto const agrid = get_agrid(args);
+    auto reactant = get_value<std::vector<Variant>>(args, "reactants");
+
+    auto get_order = [](Variant const &v) {
+      return get_value<double>(
+          get_value<std::shared_ptr<EKReactant>>(v)->get_parameter("order"));
+    };
+    auto const sum_alphas =
+        std::accumulate(reactant.begin(), reactant.end(), 0.,
+                        [get_order](double sum, auto &element) {
+                          return sum + get_order(element);
+                        });
+
+    return tau / std::pow(Utils::int_pow<3>(agrid), sum_alphas - 1.);
+  }
+
   template <typename T>
   std::shared_ptr<T> make_instance(VariantMap const &args) const {
-    auto lattice =
-        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
-
+    auto lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
     auto reactant = get_value<std::vector<Variant>>(args, "reactants");
     auto output =
         std::vector<std::shared_ptr<::walberla::EKReactant>>(reactant.size());
@@ -67,11 +92,14 @@ protected:
     std::transform(reactant.begin(), reactant.end(), output.begin(),
                    get_instance);
 
-    return std::make_shared<T>(lattice, output,
-                               get_value<double>(args, "coefficient"));
+    auto const coefficient =
+        get_value<double>(args, "coefficient") * get_conversion_coefficient();
+
+    return std::make_shared<T>(lattice->lattice(), output, coefficient);
   }
 
   std::shared_ptr<::walberla::EKReactionBase> m_ekreaction;
+  double m_conv_coefficient;
 };
 
 class EKBulkReaction : public EKReaction {
@@ -79,12 +107,17 @@ public:
   EKBulkReaction() {
     add_parameters({{"coefficient",
                      [this](Variant const &v) {
-                       get_instance()->set_coefficient(get_value<double>(v));
+                       get_instance()->set_coefficient(
+                           get_value<double>(v) * get_conversion_coefficient());
                      },
-                     [this]() { return get_instance()->get_coefficient(); }}});
+                     [this]() {
+                       return get_instance()->get_coefficient() /
+                              get_conversion_coefficient();
+                     }}});
   }
 
   void do_construct(VariantMap const &args) override {
+    m_conv_coefficient = calculate_bulk_conversion_factor(args);
     m_ekreaction = make_instance<::walberla::EKReactionImplBulk>(args);
   }
 };
@@ -95,15 +128,21 @@ public:
     add_parameters(
         {{"coefficient",
           [this](Variant const &v) {
-            get_instance()->set_coefficient(get_value<double>(v));
+            get_instance()->set_coefficient(get_value<double>(v) *
+                                            get_conversion_coefficient());
           },
-          [this]() { return get_instance()->get_coefficient(); }},
+          [this]() {
+            return get_instance()->get_coefficient() /
+                   get_conversion_coefficient();
+          }},
          {"shape", AutoParameter::read_only, [this]() {
             return get_instance()->get_lattice()->get_grid_dimensions();
           }}});
   }
 
   void do_construct(VariantMap const &args) override {
+    auto const agrid = get_agrid(args);
+    m_conv_coefficient = calculate_bulk_conversion_factor(args) / agrid;
     m_ekreaction = make_instance<::walberla::EKReactionImplIndexed>(args);
     m_ekreaction_impl =
         std::dynamic_pointer_cast<::walberla::EKReactionImplIndexed>(

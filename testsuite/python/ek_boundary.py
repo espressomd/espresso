@@ -35,7 +35,8 @@ class EKBoundariesBase:
                          "diffusion": 0.1,
                          "advection": False,
                          "friction_coupling": False,
-                         "ext_efield": [0., 0., 0.]}
+                         "ext_efield": [0., 0., 0.],
+                         "tau": 1.0}
 
     wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
     wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-7.5)
@@ -60,7 +61,7 @@ class EKBoundariesBase:
             return value_grid
 
         accessor = np.vectorize(
-            lambda obj: getattr(obj, attr),
+            lambda obj: np.copy(getattr(obj, attr)),
             signature=f"()->({'n' if attr == 'flux' else ''})")
 
         slice1 = ek_species[:5, :, :]
@@ -70,6 +71,7 @@ class EKBoundariesBase:
         np.testing.assert_equal(np.copy(slice2.is_boundary), True)
         np.testing.assert_equal(np.copy(slice3.is_boundary), False)
         field = f"{attr}_boundary"
+
         np.testing.assert_allclose(accessor(np.copy(getattr(slice1, field))),
                                    generator(value1, [5, 10, 10, 1]))
         np.testing.assert_allclose(accessor(np.copy(getattr(slice2, field))),

@@ -37,20 +37,32 @@
 namespace ScriptInterface::walberla {
 
 class EKFFT : public EKPoissonSolver {
+private:
+  double m_conv_permittivity;
+
 public:
   void do_construct(VariantMap const &args) override {
     m_single_precision = get_value_or<bool>(args, "single_precision", false);
-    auto lattice =
-        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
-    auto permittivity = get_value<double>(args, "permittivity");
+    auto lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
 
-    m_instance = new_ek_poisson_fft(lattice, permittivity, m_single_precision);
+    // unit conversions
+    auto const agrid = get_value<double>(lattice->get_parameter("agrid"));
+    m_conv_permittivity = Utils::int_pow<2>(agrid);
+    auto const permittivity =
+        get_value<double>(args, "permittivity") * m_conv_permittivity;
+
+    m_instance = new_ek_poisson_fft(lattice->lattice(), permittivity,
+                                    m_single_precision);
 
     add_parameters({{"permittivity",
                      [this](Variant const &v) {
-                       m_instance->set_permittivity(get_value<double>(v));
+                       m_instance->set_permittivity(get_value<double>(v) *
+                                                    m_conv_permittivity);
                      },
-                     [this]() { return m_instance->get_permittivity(); }},
+                     [this]() {
+                       return m_instance->get_permittivity() /
+                              m_conv_permittivity;
+                     }},
                     {"is_single_precision", AutoParameter::read_only,
                      [this]() { return m_single_precision; }}});
   }

@@ -26,17 +26,18 @@ import numpy as np
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKReaction(ut.TestCase):
-    BOX_L = [22., 2., 2.]
+    AGRID = 1.32
+    BOX_L = np.asarray([22., 2., 2.]) * AGRID
     PADDING = 1
-    WIDTH = 20.
-    AGRID = 1.0
+    WIDTH = BOX_L[0] - 2 * PADDING * AGRID
     INITIAL_DENSITIES = [1.7, 1.3]
     DIFFUSION_COEFFICIENTS = np.array([0.4, 0.2])
-    REACTION_RATES = np.array([4e-3, 8e-3])
-    TIME = 6000
+    REACTION_RATES = np.array([5e-3, 8e-3])
+    TIME = 7000
+    TAU = 1.88
 
     system = espressomd.System(box_l=BOX_L)
-    system.time_step = 1.0
+    system.time_step = TAU
     system.cell_system.skin = 0.4
 
     def tearDown(self) -> None:
@@ -73,7 +74,7 @@ class EKReaction(ut.TestCase):
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.tau = 1.0
+        self.system.ekcontainer.tau = self.TAU
 
         self.system.ekcontainer.solver = eksolver
 
@@ -81,58 +82,55 @@ class EKReaction(ut.TestCase):
             lattice=lattice, density=self.INITIAL_DENSITIES[0], kT=0.0,
             diffusion=self.DIFFUSION_COEFFICIENTS[0], valency=0.0,
             advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
-            single_precision=single_precision)
+            single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(species_A)
 
         species_B = espressomd.EKSpecies.EKSpecies(
             lattice=lattice, density=self.INITIAL_DENSITIES[1], kT=0.0,
             diffusion=self.DIFFUSION_COEFFICIENTS[1], valency=0.0,
             advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
-            single_precision=single_precision)
+            single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(species_B)
 
         coeffs_left = [-1.0, 1.0]
-        reactants_left = []
-        reactants_left.append(
+        reactants_left = [
             espressomd.EKSpecies.EKReactant(
                 ekspecies=species_A,
                 stoech_coeff=coeffs_left[0],
-                order=1.0))
-        reactants_left.append(
+                order=1.0),
             espressomd.EKSpecies.EKReactant(
                 ekspecies=species_B,
                 stoech_coeff=coeffs_left[1],
-                order=0.0))
+                order=0.0)]
 
         reaction_left = espressomd.EKSpecies.EKIndexedReaction(
             reactants=reactants_left, coefficient=self.REACTION_RATES[0],
-            lattice=lattice)
+            lattice=lattice, tau=self.TAU)
         reaction_left[1, :, :] = True
 
         coeffs_right = [1.0, -1.0]
-        reactants_right = []
-        reactants_right.append(
+        reactants_right = [
             espressomd.EKSpecies.EKReactant(
                 ekspecies=species_A,
                 stoech_coeff=coeffs_right[0],
-                order=0.0))
-        reactants_right.append(
+                order=0.0),
             espressomd.EKSpecies.EKReactant(
                 ekspecies=species_B,
                 stoech_coeff=coeffs_right[1],
-                order=1.0))
+                order=1.0)]
 
         reaction_right = espressomd.EKSpecies.EKIndexedReaction(
             reactants=reactants_right, coefficient=self.REACTION_RATES[1],
-            lattice=lattice)
+            lattice=lattice, tau=self.TAU)
         reaction_right[-2, :, :] = True
 
         self.system.ekreactions.add(reaction_left)
         self.system.ekreactions.add(reaction_right)
 
-        wall_left = espressomd.shapes.Wall(normal=[1, 0, 0], dist=self.PADDING)
+        wall_left = espressomd.shapes.Wall(
+            normal=[1, 0, 0], dist=self.PADDING * self.AGRID)
         wall_right = espressomd.shapes.Wall(
-            normal=[-1, 0, 0], dist=-self.BOX_L[0] + self.PADDING)
+            normal=[-1, 0, 0], dist=-self.BOX_L[0] + self.PADDING * self.AGRID)
         for obj in (wall_left, wall_right):
             species_A.add_boundary_from_shape(
                 obj, [0.0, 0.0, 0.0], espressomd.EKSpecies.FluxBoundary)

@@ -26,11 +26,12 @@ import espressomd.shapes
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class EKFixedFlux(ut.TestCase):
-    BOX_L = 5.
-    AGRID = 1.0
+    BOX_L = 2.5
+    AGRID = 0.5
     DENSITY = 1
     DIFFUSION_COEFFICIENT = 0.1
-    TIME = 10
+    TIMESTEPS = 40
+    TAU = 0.25
 
     INFLOW_FLUX = 0.1
 
@@ -60,12 +61,12 @@ class EKFixedFlux(ut.TestCase):
         ekspecies = espressomd.EKSpecies.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             kT=0.0, valency=0.0, advection=False, friction_coupling=False,
-            ext_efield=[0, 0, 0], single_precision=single_precision)
+            ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
 
         eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies)
-        self.system.ekcontainer.tau = 1.0
+        self.system.ekcontainer.tau = self.TAU
         self.system.ekcontainer.solver = eksolver
 
         ekspecies[1:-1, 1:-1, 1:-1].density = self.DENSITY
@@ -84,27 +85,27 @@ class EKFixedFlux(ut.TestCase):
             espressomd.EKSpecies.FluxBoundary([0, 0, 0])
 
         # set fixed flux in +z-direction
-        ekspecies[:, :, 4].flux_boundary = espressomd.EKSpecies.FluxBoundary(
+        ekspecies[:, :, -1].flux_boundary = espressomd.EKSpecies.FluxBoundary(
             [0, 0, -self.INFLOW_FLUX])
         additional_center_flux = 3 * self.INFLOW_FLUX
-        midpoint = int(self.BOX_L / 2.)
-        ekspecies[midpoint, midpoint, 4].flux_boundary = \
+        midpoint = int(lattice.shape[0] // 2)
+        ekspecies[midpoint, midpoint, -1].flux_boundary = \
             espressomd.EKSpecies.FluxBoundary(
                 [0, 0, -self.INFLOW_FLUX - additional_center_flux])
 
         # check density before integration
-        expected_initial_density = self.DENSITY * (self.BOX_L - 2)**3
+        expected_initial_density = self.DENSITY * (lattice.shape[0] - 2) * (lattice.shape[1] - 2) * (lattice.shape[2] - 2)
 
         np.testing.assert_almost_equal(
             actual=np.sum(ekspecies[1:-1, 1:-1, 1:-1].density),
             desired=expected_initial_density, decimal=decimal_precision)
 
-        self.system.integrator.run(self.TIME)
+        self.system.integrator.run(self.TIMESTEPS)
 
         # check that density has pushed into domain
-        inflow_area = (ekspecies.shape[0] - 2) * (ekspecies.shape[1] - 2)
+        inflow_area = (lattice.shape[0] - 2) * (lattice.shape[1] - 2)
         expected_end_density = expected_initial_density + \
-            (self.INFLOW_FLUX * inflow_area + additional_center_flux) * self.TIME
+            (self.INFLOW_FLUX * inflow_area + additional_center_flux) * self.TIMESTEPS * self.TAU / self.AGRID
 
         np.testing.assert_almost_equal(
             actual=np.sum(ekspecies[1:-1, 1:-1, 1:-1].density),

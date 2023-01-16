@@ -21,6 +21,7 @@ import unittest_decorators as utx
 
 import espressomd
 import espressomd.lb
+import numpy as np
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
@@ -42,6 +43,8 @@ class TestLattice(ut.TestCase):
         for agrid in (0.5, 1., 2.):
             obj = LatticeWalberla(agrid=agrid, n_ghost_layers=1)
             self.assertEqual(obj.agrid, agrid)
+            target_shape = np.asarray(self.system.box_l, dtype=int) / obj.agrid
+            np.testing.assert_array_equal(obj.shape, target_shape)
 
         # check exception mechanism
         obj = LatticeWalberla(agrid=1., n_ghost_layers=1)
