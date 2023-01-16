@@ -88,6 +88,11 @@ class CheckpointTest(ut.TestCase):
         cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
         cpt_path = str(cpt_root / "lb") + "{}.cpt"
 
+        # LB boundaries are loaded at the same time as LB populations
+        np.testing.assert_equal(np.copy(lbf[:, :, :].velocity), 0.)
+        np.testing.assert_equal(
+            np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
+
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
             lbf.load_checkpoint(cpt_path.format("-missing-data"), cpt_mode)

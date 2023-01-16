@@ -45,6 +45,9 @@ class ReactionMethods(ut.TestCase):
                     else:
                         self.assertEqual(getattr(reaction, key), params[key])
 
+        def count_by_type(types):
+            return [self.system.number_of_particles(type=x) for x in types]
+
         reaction_forward = {
             'gamma': gamma,
             'reactant_types': [5],
@@ -156,11 +159,15 @@ class ReactionMethods(ut.TestCase):
             potential_energy = method.calculate_particle_insertion_potential_energy(
                 reaction_id=0)
             self.assertEqual(potential_energy, 0.)
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 1, 0])
         method.delete_particle(p_id=p3.id)
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 0, 0])
         self.assertEqual(len(self.system.part), 2)
-        method.delete_particle(p_id=p1.id)
+        p1.remove()
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [0, 1, 0, 0])
         self.assertEqual(len(self.system.part), 1)
         self.system.part.clear()
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [0, 0, 0, 0])
 
         # check reaction deletion
         method.delete_reaction(reaction_id=0)
@@ -171,21 +178,25 @@ class ReactionMethods(ut.TestCase):
                   'exclusion_radius_per_type': {1: 0.1}}
 
         # reaction ensemble
-        method = espressomd.reaction_methods.ReactionEnsemble(
-            kT=1.4, seed=12, search_algorithm="order_n", **params)
-        self.check_interface(method, kT=1.4, gamma=1.2,
-                             search_algorithm="order_n", **params)
+        with self.subTest(msg="reaction ensemble"):
+            method = espressomd.reaction_methods.ReactionEnsemble(
+                kT=1.4, seed=12, search_algorithm="order_n", **params)
+            self.check_interface(method, kT=1.4, gamma=1.2,
+                                 search_algorithm="order_n", **params)
 
-        # constant pH ensemble
-        method = espressomd.reaction_methods.ConstantpHEnsemble(
-            kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10., **params)
-        self.check_interface(method, kT=1.5, gamma=1.2,
-                             search_algorithm="parallel", **params)
+        with self.subTest(msg="constant pH ensemble"):
+            method = espressomd.reaction_methods.ConstantpHEnsemble(
+                kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10.,
+                **params)
+            self.check_interface(method, kT=1.5, gamma=1.2,
+                                 search_algorithm="parallel", **params)
 
-        # Widom insertion
-        method = espressomd.reaction_methods.WidomInsertion(kT=1.6, seed=16)
-        self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
-                             exclusion_radius_per_type={}, search_algorithm=None)
+        with self.subTest(msg="Widom insertion"):
+            method = espressomd.reaction_methods.WidomInsertion(
+                kT=1.6, seed=16)
+            self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
+                                 exclusion_radius_per_type={},
+                                 search_algorithm=None)
 
     def test_exceptions(self):
         single_reaction_params = {

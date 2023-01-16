@@ -683,7 +683,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       string(REPLACE "walberla::" "" target_wo_namespace ${target_w_namespace})
       add_library(${target_w_namespace} ALIAS ${target_wo_namespace})
     endforeach()
-    # TODO WALBERLA: remove -lstdc++fs
     # TODO WALBERLA: remove -lmpi_cxx -lmpi (required to find symbol MPI::Datatype::Free() in VTK code)
     # TODO WALBERLA: remove -lpfft (required to find pfft_free in FFT-code)
     # TODO WALBERLA: remove -lfftw3_mpi (required to find fftw_mpi_execute_r2r in FFT-code)
