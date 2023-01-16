@@ -257,23 +257,20 @@ class System(ScriptInterfaceHelper):
             odict[property_name] = System.__getattribute__(self, property_name)
         if has_features("WALBERLA"):
             odict["_lb_vtk_registry"] = lb._vtk_registry
-            # TODO walberla
-            # odict["_ek_vtk_registry"] = EKSpecies._ek_vtk_registry
+            odict["_ek_vtk_registry"] = EKSpecies._ek_vtk_registry
         return odict
 
     def __setstate__(self, params):
         # note: this class is initialized twice by pickle
         if has_features("WALBERLA"):
             lb_vtk_registry = params.pop("_lb_vtk_registry")
-            # TODO walberla
-            # ek_vtk_registry = params.pop("_ek_vtk_registry")
+            ek_vtk_registry = params.pop("_ek_vtk_registry")
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
         self.call_method("lock_system_creation")
         if has_features("WALBERLA"):
             lb._vtk_registry = lb_vtk_registry
-            # TODO walberla
-            # EKSpecies._vtk_registry = ek_vtk_registry
+            EKSpecies._vtk_registry = ek_vtk_registry
 
     @property
     def box_l(self):

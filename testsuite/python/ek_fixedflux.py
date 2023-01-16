@@ -94,7 +94,7 @@ class EKFixedFlux(ut.TestCase):
                 [0, 0, -self.INFLOW_FLUX - additional_center_flux])
 
         # check density before integration
-        expected_initial_density = self.DENSITY * (lattice.shape[0] - 2) * (lattice.shape[1] - 2) * (lattice.shape[2] - 2)
+        expected_initial_density = self.DENSITY * np.prod(lattice.shape - 2)
 
         np.testing.assert_almost_equal(
             actual=np.sum(ekspecies[1:-1, 1:-1, 1:-1].density),
@@ -103,9 +103,10 @@ class EKFixedFlux(ut.TestCase):
         self.system.integrator.run(self.TIMESTEPS)
 
         # check that density has pushed into domain
-        inflow_area = (lattice.shape[0] - 2) * (lattice.shape[1] - 2)
+        inflow_area = np.prod(lattice.shape[:2] - 2)
         expected_end_density = expected_initial_density + \
-            (self.INFLOW_FLUX * inflow_area + additional_center_flux) * self.TIMESTEPS * self.TAU / self.AGRID
+            (self.INFLOW_FLUX * inflow_area + additional_center_flux) * \
+            self.TIMESTEPS * self.TAU / self.AGRID
 
         np.testing.assert_almost_equal(
             actual=np.sum(ekspecies[1:-1, 1:-1, 1:-1].density),

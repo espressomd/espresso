@@ -36,6 +36,7 @@ import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
+import espressomd.EKSpecies
 
 with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
@@ -138,7 +139,8 @@ class CheckpointTest(ut.TestCase):
             'tau': 0.01}
         for key in reference:
             self.assertIn(key, state)
-            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
+            np.testing.assert_allclose(np.copy(state[key]), reference[key],
+                                       atol=1E-7, err_msg=f"{key} differs")
         self.assertTrue(lbf.is_active)
         self.assertFalse(lbf.is_single_precision)
 
@@ -152,6 +154,7 @@ class CheckpointTest(ut.TestCase):
             np.copy(lbf[-1, :, :].is_boundary.astype(int)), 1)
         np.testing.assert_equal(
             np.copy(lbf[1:-1, :, :].is_boundary.astype(int)), 0)
+        # check boundary conditions
         for node in lbf[0, :, :]:
             np.testing.assert_allclose(np.copy(node.velocity), slip_velocity1)
         for node in lbf[-1, :, :]:
@@ -162,6 +165,64 @@ class CheckpointTest(ut.TestCase):
         lbf.clear_boundaries()
         np.testing.assert_equal(
             np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
+
+    @utx.skipIfMissingFeatures('WALBERLA')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
+    def test_ek_species(self):
+        state = ek_species.get_params()
+        reference = {
+            "density": 1.5,
+            "diffusion": 0.2,
+            "kT": 2.0,
+            "valency": 0.1,
+            "ext_efield": [0.1, 0.2, 0.3],
+            "advection": False,
+            "friction_coupling": False,
+            "tau": 0.01}
+        for key in reference:
+            self.assertIn(key, state)
+            np.testing.assert_allclose(np.copy(state[key]), reference[key],
+                                       atol=1E-7, err_msg=f"{key} differs")
+        # self.assertFalse(ek_species.is_active)
+        self.assertFalse(ek_species.is_single_precision)
+
+        # TODO walberla: enable EK checkpointing
+#        def generator(value, shape):
+#            value_grid = np.tile(value, shape)
+#            if value_grid.shape[-1] == 1:
+#                value_grid = np.squeeze(value_grid, axis=-1)
+#            return value_grid
+
+#        # check boundary objects
+#        dens1 = 1.
+#        dens2 = 2.
+#        flux1 = 1e-3 * np.array([1., 2., 3.])
+#        flux2 = 1e-3 * np.array([4., 5., 6.])
+#        boundaries = [("density", dens1, dens2), ("flux", flux1, flux2)]
+#        for attr, val1, val2 in boundaries:
+#            accessor = np.vectorize(
+#                lambda obj: np.copy(getattr(obj, attr)),
+#                signature=f"()->({'n' if attr == 'flux' else ''})")
+#            slice1 = ek_species[0, :, :]
+#            slice2 = ek_species[-1, :, :]
+#            slice3 = ek_species[1:-1, :, :]
+#            # check boundary flag
+#            np.testing.assert_equal(np.copy(slice1.is_boundary), True)
+#            np.testing.assert_equal(np.copy(slice2.is_boundary), True)
+#            np.testing.assert_equal(np.copy(slice3.is_boundary), False)
+#            # check boundary conditions
+#            field = f"{attr}_boundary"
+#            shape = [1] + list(ek_species.shape)[1:] + [1]
+#            np.testing.assert_allclose(
+#                accessor(np.copy(getattr(slice1, field))),
+#                generator(value1, shape))
+#            np.testing.assert_allclose(
+#                accessor(np.copy(getattr(slice2, field))),
+#                generator(value2, shape))
+#            # remove boundaries
+#            getattr(ek_species, f"clear_{attr}_boundaries")()
+#        np.testing.assert_equal(
+#            np.copy(ek_species[:, :, :].is_boundary), False)
 
     @utx.skipIfMissingFeatures('WALBERLA')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
@@ -198,41 +259,40 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
 
-    # TODO walberla
-#    @utx.skipIfMissingFeatures('WALBERLA')
-#    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
-#    def test_ek_vtk(self):
-#        vtk_suffix = config.test_name
-#        vtk_registry = espressomd.EKSpecies._ek_vtk_registry
-#        key_auto = f'vtk_out/auto_ek_{vtk_suffix}'
-#        self.assertIn(key_auto, vtk_registry.map)
-#        obj = vtk_registry.map[key_auto]
-#        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
-#        self.assertEqual(obj.vtk_uid, key_auto)
-#        self.assertEqual(obj.delta_N, 1)
-#        self.assertFalse(obj.enabled)
-#        self.assertEqual(set(obj.observables), {'density'})
-#        self.assertIn(
-#            f"write to '{key_auto}' every 1 LB steps (disabled)>", repr(obj))
-#        key_manual = f'vtk_out/manual_ek_{vtk_suffix}'
-#        self.assertIn(key_manual, vtk_registry.map)
-#        obj = vtk_registry.map[key_manual]
-#        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
-#        self.assertEqual(obj.vtk_uid, key_manual)
-#        self.assertEqual(obj.delta_N, 0)
-#        self.assertEqual(set(obj.observables), {'density'})
-#        self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
-#        # check file numbering when resuming VTK write operations
-#        vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
-#        filename = "simulation_step_{}.vtu"
-#        vtk_manual = espressomd.lb._vtk_registry.map[key_manual]
-#        self.assertTrue((vtk_root / filename.format(0)).exists())
-#        self.assertFalse((vtk_root / filename.format(1)).exists())
-#        self.assertFalse((vtk_root / filename.format(2)).exists())
-#        vtk_manual.write()
-#        self.assertTrue((vtk_root / filename.format(0)).exists())
-#        self.assertTrue((vtk_root / filename.format(1)).exists())
-#        self.assertFalse((vtk_root / filename.format(2)).exists())
+    @utx.skipIfMissingFeatures('WALBERLA')
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
+    def test_ek_vtk(self):
+        vtk_suffix = config.test_name
+        vtk_registry = espressomd.EKSpecies._ek_vtk_registry
+        key_auto = f'vtk_out/auto_ek_{vtk_suffix}'
+        self.assertIn(key_auto, vtk_registry.map)
+        obj = vtk_registry.map[key_auto]
+        self.assertIsInstance(obj, espressomd.EKSpecies.EKVTKOutput)
+        self.assertEqual(obj.vtk_uid, key_auto)
+        self.assertEqual(obj.delta_N, 1)
+        self.assertFalse(obj.enabled)
+        self.assertEqual(set(obj.observables), {'density'})
+        self.assertIn(
+            f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(obj))
+        key_manual = f'vtk_out/manual_ek_{vtk_suffix}'
+        self.assertIn(key_manual, vtk_registry.map)
+        obj = vtk_registry.map[key_manual]
+        self.assertIsInstance(obj, espressomd.EKSpecies.EKVTKOutput)
+        self.assertEqual(obj.vtk_uid, key_manual)
+        self.assertEqual(obj.delta_N, 0)
+        self.assertEqual(set(obj.observables), {'density'})
+        self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
+        # check file numbering when resuming VTK write operations
+        vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
+        filename = "simulation_step_{}.vtu"
+        vtk_manual = espressomd.EKSpecies._vtk_registry.map[key_manual]
+        self.assertTrue((vtk_root / filename.format(0)).exists())
+        self.assertFalse((vtk_root / filename.format(1)).exists())
+        self.assertFalse((vtk_root / filename.format(2)).exists())
+        vtk_manual.write()
+        self.assertTrue((vtk_root / filename.format(0)).exists())
+        self.assertTrue((vtk_root / filename.format(1)).exists())
+        self.assertFalse((vtk_root / filename.format(2)).exists())
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()

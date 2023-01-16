@@ -39,34 +39,11 @@ private:
   double m_conv_ext_efield;
   double m_conv_density;
   double m_conv_flux;
+  double m_tau;
+  double m_density;
 
 public:
-  void do_construct(VariantMap const &args) override {
-    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
-    const auto single_precision =
-        get_value_or<bool>(args, "single_precision", false);
-
-    // unit conversions
-    auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
-    auto const tau = get_value<double>(args, "tau");
-
-    m_conv_diffusion = tau / Utils::int_pow<2>(agrid);
-    m_conv_ext_efield = Utils::int_pow<2>(tau) / agrid;
-    m_conv_density = Utils::int_pow<3>(agrid);
-    m_conv_flux = tau * Utils::int_pow<2>(agrid);
-
-    auto const ek_diffusion =
-        get_value<double>(args, "diffusion") * m_conv_diffusion;
-    auto const ek_ext_efield =
-        get_value<Utils::Vector3d>(args, "ext_efield") * m_conv_ext_efield;
-    auto const ek_density = get_value<double>(args, "density") * m_conv_density;
-
-    m_ekinstance = new_ek_walberla(
-        m_lattice->lattice(), ek_diffusion, get_value<double>(args, "kT"),
-        get_value<double>(args, "valency"), ek_ext_efield, ek_density,
-        get_value<bool>(args, "advection"),
-        get_value<bool>(args, "friction_coupling"), single_precision);
-
+  EKSpecies() {
     add_parameters(
         {{"diffusion",
           [this](Variant const &v) {
@@ -106,12 +83,43 @@ public:
           [this]() { return m_ekinstance->get_friction_coupling(); }},
          {"is_single_precision", AutoParameter::read_only,
           [this]() { return not m_ekinstance->is_double_precision(); }},
+         {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
+         {"density", AutoParameter::read_only,
+          [this]() { return m_density / m_conv_density; }},
          {"shape", AutoParameter::read_only,
           [this]() {
             return m_ekinstance->get_lattice().get_grid_dimensions();
           }},
          {"lattice", AutoParameter::read_only,
           [this]() { return m_lattice; }}});
+  }
+
+  void do_construct(VariantMap const &args) override {
+    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
+    const auto single_precision =
+        get_value_or<bool>(args, "single_precision", false);
+
+    // unit conversions
+    auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
+    m_tau = get_value<double>(args, "tau");
+
+    m_conv_diffusion = m_tau / Utils::int_pow<2>(agrid);
+    m_conv_ext_efield = Utils::int_pow<2>(m_tau) / agrid;
+    m_conv_density = Utils::int_pow<3>(agrid);
+    m_conv_flux = m_tau * Utils::int_pow<2>(agrid);
+
+    auto const ek_diffusion =
+        get_value<double>(args, "diffusion") * m_conv_diffusion;
+    auto const ek_ext_efield =
+        get_value<Utils::Vector3d>(args, "ext_efield") * m_conv_ext_efield;
+    auto const ek_density = m_density =
+        get_value<double>(args, "density") * m_conv_density;
+
+    m_ekinstance = new_ek_walberla(
+        m_lattice->lattice(), ek_diffusion, get_value<double>(args, "kT"),
+        get_value<double>(args, "valency"), ek_ext_efield, ek_density,
+        get_value<bool>(args, "advection"),
+        get_value<bool>(args, "friction_coupling"), single_precision);
   }
 
   [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> get_ekinstance() {

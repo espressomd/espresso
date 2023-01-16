@@ -109,11 +109,13 @@ class EKDiffusion(ut.TestCase):
 
         popt, _ = scipy.optimize.curve_fit(self.analytical_density,
                                            positions.reshape(-1, 3),
-                                           simulated_density.reshape(-1) / self.AGRID ** 3,
+                                           simulated_density.reshape(
+                                               -1) / self.AGRID ** 3,
                                            p0=target,
                                            bounds=([0, 0], [np.inf, np.inf]))
 
-        np.testing.assert_allclose(popt[0], self.TIMESTEPS * self.TAU, rtol=0.1)
+        np.testing.assert_allclose(
+            popt[0], self.TIMESTEPS * self.TAU, rtol=0.1)
         np.testing.assert_allclose(
             popt[1], self.DIFFUSION_COEFFICIENT, rtol=0.1)
         np.testing.assert_allclose(

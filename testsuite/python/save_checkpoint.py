@@ -36,6 +36,7 @@ import espressomd.accumulators
 import espressomd.observables
 import espressomd.io.writer
 import espressomd.lb
+import espressomd.EKSpecies
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
@@ -70,22 +71,39 @@ if 'INT.NPT' not in modes:
     system.lees_edwards.set_boundary_conditions(
         shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
-lbf_actor = None
+lbf_class = None
 lb_lattice = None
 if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
-    lbf_actor = espressomd.lb.LBFluidWalberla
+    lbf_class = espressomd.lb.LBFluidWalberla
     lb_lattice = espressomd.lb.LatticeWalberla(agrid=2.0, n_ghost_layers=1)
     # TODO WALBERLA
 #    if 'LB.GPU' in modes and espressomd.gpu_available():
-#        lbf_actor = espressomd.lb.LBFluidWalberlaGPU
-if lbf_actor:
+#        lbf_class = espressomd.lb.LBFluidWalberlaGPU
+if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
-    lbf = lbf_actor(lattice=lb_lattice, viscosity=1.3, density=1.5, tau=0.01)
+    lbf = lbf_class(lattice=lb_lattice, viscosity=1.3, density=1.5, tau=0.01)
     wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=1.0)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
                                    dist=-(system.box_l[0] - 1.0))
     lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
+    # TODO walberla: add EK to the system and make it more complex
+    ek_species = espressomd.EKSpecies.EKSpecies(
+        lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
+        advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
+        single_precision=False, tau=0.01)
+    ek_species.add_boundary_from_shape(
+        shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
+        boundary_type=espressomd.EKSpecies.FluxBoundary)
+    ek_species.add_boundary_from_shape(
+        shape=wall2, value=1e-3 * np.array([4., 5., 6.]),
+        boundary_type=espressomd.EKSpecies.FluxBoundary)
+    ek_species.add_boundary_from_shape(
+        shape=wall1, value=1.,
+        boundary_type=espressomd.EKSpecies.DensityBoundary)
+    ek_species.add_boundary_from_shape(
+        shape=wall2, value=2.,
+        boundary_type=espressomd.EKSpecies.DensityBoundary)
 
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
@@ -336,7 +354,7 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
             "p2nfft_r_cut": "11",
             "p2nfft_alpha": "0.37"}))
 
-if lbf_actor:
+if lbf_class:
     system.actors.add(lbf)
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
@@ -352,6 +370,9 @@ if lbf_actor:
     # save LB checkpoint file
     lbf_cpt_path = path_cpt_root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
+    # save EK checkpoint file
+    checkpoint.register("ek_species")
+    # setup VTK folder
     vtk_suffix = config.test_name
     vtk_root = pathlib.Path("vtk_out")
     # create LB VTK callbacks
@@ -368,10 +389,6 @@ if lbf_actor:
         observables=('density',), base_folder=str(vtk_root))
     lb_vtk_manual.write()
     # create EK VTK callbacks
-    ek_species = espressomd.EKSpecies.EKSpecies(
-        lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
-        advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-        single_precision=False, tau=0.01)
     ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
     ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
     config.recursive_unlink(vtk_root / ek_vtk_auto_id)
@@ -413,9 +430,9 @@ if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
         p3.gamma_rot = 2. * gamma
 if espressomd.has_features('ENGINE'):
     p3.swimming = {"f_swim": 0.03}
-if espressomd.has_features('ENGINE') and lbf_actor:
+if espressomd.has_features('ENGINE') and lbf_class:
     p4.swimming = {"v_swim": 0.02, "mode": "puller", "dipole_length": 1.}
-if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_actor:
+if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
 
 # h5md output
@@ -448,7 +465,7 @@ class TestCheckpoint(ut.TestCase):
         self.assertTrue(checkpoint_filepath.is_file(),
                         "checkpoint file not created")
 
-        if lbf_actor:
+        if lbf_class:
             self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
 
@@ -457,7 +474,7 @@ class TestCheckpoint(ut.TestCase):
             local_obj = "local"  # pylint: disable=unused-variable
             checkpoint.register("local_obj")
 
-    @ut.skipIf(lbf_actor is None, "Skipping test due to missing mode.")
+    @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
     def test_lb_checkpointing_exceptions(self):
         '''
         Check the LB checkpointing exception mechanism. Write corrupted

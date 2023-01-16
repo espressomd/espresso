@@ -231,8 +231,6 @@ class EKVTKHandle : public VTKHandleBase<EKinWalberlaBase> {
     return m_ekinstance;
   }
 
-  // TODO WALBERLA
-  /*
 public:
   EKVTKHandle() {
     constexpr auto read_only = AutoParameter::read_only;
@@ -240,7 +238,6 @@ public:
         {"species", read_only, [this]() { return m_ekspecies; }},
     });
   }
-  */
 
   void setup_field_instance(VariantMap const &params) override {
     m_ekspecies = get_value<std::shared_ptr<EKSpecies>>(params, "species");
