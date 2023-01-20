@@ -57,9 +57,9 @@ static void backup_file(const std::string &from, const std::string &to) {
    * have gone wrong.
    */
   boost::filesystem::path pfrom(from), pto(to);
+  auto constexpr option_fail_if_exists = boost::filesystem::copy_options::none;
   try {
-    boost::filesystem::copy_file(
-        pfrom, pto, boost::filesystem::copy_option::fail_if_exists);
+    boost::filesystem::copy_file(pfrom, pto, option_fail_if_exists);
   } catch (const boost::filesystem::filesystem_error &) {
     throw left_backupfile();
   }
