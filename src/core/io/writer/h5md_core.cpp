@@ -29,7 +29,9 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/filesystem.hpp>
 #include <boost/mpi/collectives.hpp>
+#include <boost/version.hpp>
 
 #include <mpi.h>
 
@@ -56,10 +58,14 @@ static void backup_file(const std::string &from, const std::string &to) {
    * have gone wrong.
    */
   boost::filesystem::path pfrom(from), pto(to);
+#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 >= 74
+  auto constexpr option_fail_if_exists = boost::filesystem::copy_options::none;
+#else
+  auto constexpr option_fail_if_exists = boost::filesystem::copy_option::none;
+#endif
   try {
-    boost::filesystem::copy_file(
-        pfrom, pto, boost::filesystem::copy_option::fail_if_exists);
-  } catch (const boost::filesystem::filesystem_error &e) {
+    boost::filesystem::copy_file(pfrom, pto, option_fail_if_exists);
+  } catch (const boost::filesystem::filesystem_error &) {
     throw left_backupfile();
   }
 }
