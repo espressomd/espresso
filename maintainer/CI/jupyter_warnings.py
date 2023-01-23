@@ -33,7 +33,7 @@ import nbconvert
 sphinx_docs = {}
 
 
-def detect_invalid_urls(nb, sphinx_root='.'):
+def detect_invalid_urls(nb, build_root='.', html_exporter=None):
     '''
     Find all links. Check that links to the Sphinx documentation are valid
     (the target HTML files exist and contain the anchors). These links are
@@ -44,7 +44,12 @@ def detect_invalid_urls(nb, sphinx_root='.'):
     Parameters
     ----------
     nb: :obj:`nbformat.notebooknode.NotebookNode`
-        Jupyter notebook to process
+        Jupyter notebook to process.
+    build_root: :obj:`str`
+        Path to the ESPResSo build directory. The Sphinx files will be
+        searched in :file:`doc/sphinx/html`.
+    html_exporter: :obj:`nbformat.HTMLExporter`
+        Custom NB convert HTML exporter.
 
     Returns
     -------
@@ -52,7 +57,8 @@ def detect_invalid_urls(nb, sphinx_root='.'):
         List of warnings formatted as strings.
     '''
     # convert notebooks to HTML
-    html_exporter = nbconvert.HTMLExporter()
+    if html_exporter is None:
+        html_exporter = nbconvert.HTMLExporter()
     html_exporter.template_name = 'classic'
     html_string = html_exporter.from_notebook_node(nb)[0]
     # parse HTML
@@ -60,7 +66,7 @@ def detect_invalid_urls(nb, sphinx_root='.'):
     root = lxml.etree.fromstring(html_string, parser=html_parser)
     # process all links
     espressomd_website_root = 'https://espressomd.github.io/doc/'
-    sphinx_html_root = pathlib.Path(sphinx_root) / 'doc' / 'sphinx' / 'html'
+    sphinx_html_root = pathlib.Path(build_root) / 'doc' / 'sphinx' / 'html'
     broken_links = []
     for link in root.xpath('//a'):
         url = link.attrib.get('href', '')
@@ -76,7 +82,7 @@ def detect_invalid_urls(nb, sphinx_root='.'):
             basename = url.split(espressomd_website_root, 1)[1]
             filepath = sphinx_html_root / basename
             if not filepath.is_file():
-                broken_links.append(f'{url} does not exist')
+                broken_links.append(f'"{url}" does not exist')
                 continue
             # check anchor exists
             if anchor is not None:
@@ -86,19 +92,27 @@ def detect_invalid_urls(nb, sphinx_root='.'):
                 doc = sphinx_docs[filepath]
                 nodes = doc.xpath(f'//*[@id="{anchor}"]')
                 if not nodes:
-                    broken_links.append(f'{url} has no anchor "{anchor}"')
+                    broken_links.append(f'"{url}" has no anchor "{anchor}"')
         elif url.startswith('#'):
             # check anchor exists
             anchor = url[1:]
             nodes = root.xpath(f'//*[@id="{anchor}"]')
             if not nodes:
                 broken_links.append(f'notebook has no anchor "{anchor}"')
+        elif url.startswith('file:///'):
+            broken_links.append(f'"{url}" is an absolute path to a local file')
+    for link in root.xpath('//script'):
+        url = link.attrib.get('src', '')
+        if url.startswith('file:///'):
+            broken_links.append(f'"{url}" is an absolute path to a local file')
     return broken_links
 
 
 if __name__ == '__main__':
     error_code = 0
-    for nb_filepath in sorted(pathlib.Path().glob('doc/tutorials/*/*.ipynb')):
+    nb_filepaths = sorted(pathlib.Path().glob('doc/tutorials/*/*.ipynb'))
+    assert len(nb_filepaths) != 0, 'no Jupyter notebooks could be found!'
+    for nb_filepath in nb_filepaths:
         with open(nb_filepath, encoding='utf-8') as f:
             nb = nbformat.read(f, as_version=4)
         issues = detect_invalid_urls(nb)
