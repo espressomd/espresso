@@ -20,9 +20,9 @@
 set(TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER
     ${CMAKE_CURRENT_BINARY_DIR}/test_importlib_wrapper.py)
 configure_file(importlib_wrapper.py
-               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
+               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py COPYONLY)
 configure_file(test_importlib_wrapper.py
-               ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
+               ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER} COPYONLY)
 
 macro(PYTHON_SCRIPTS_TEST)
   cmake_parse_arguments(TEST "" "FILE;SUFFIX;TYPE" "DEPENDENCIES;LABELS"

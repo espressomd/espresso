@@ -237,68 +237,6 @@ except ImportError:
         self.assertEqual(v.matplotlib_backend_linenos, [17, 18])
         self.assertEqual(v.ipython_magic_linenos, [19])
 
-    def test_prng_seed_espressomd_system_visitor(self):
-        import_stmt = [
-            'sys0 = espressomd.System()   # nothing: espressomd not imported',
-            'import espressomd as es1',
-            'import espressomd.system as es2',
-            'import espressomd.System as s1, espressomd.system.System as s2',
-            'from espressomd import System as s3, electrostatics',
-            'from espressomd.system import System as s4',
-            'from espressomd import system as es5',
-            'sys1 = es1.System()',
-            'sys2 = es1.system.System()',
-            'sys3 = es2.System()',
-            'sys4 = s1()',
-            'sys5 = s2()',
-            'sys6 = s3()',
-            'sys7 = s4()',
-            'sys8 = es5.System()',
-            'import numpy as np',
-            'import numpy.random as npr1',
-            'from numpy import random as npr2',
-            'np.random.seed(1)',
-            'npr1.seed(1)',
-            'npr2.seed(1)',
-        ]
-        tree = ast.parse('\n'.join(import_stmt))
-        v = iw.GetPrngSeedEspressomdSystem()
-        v.visit(tree)
-        # find all aliases for espressomd.system.System
-        expected_es_sys_aliases = {'es1.System', 'es1.system.System',
-                                   'es2.System', 's1', 's2', 's3', 's4',
-                                   'es5.System'}
-        self.assertEqual(v.es_system_aliases, expected_es_sys_aliases)
-        # find all variables of type espressomd.system.System
-        expected_es_sys_objs = set(f'sys{i}' for i in range(1, 9))
-        self.assertEqual(v.variable_system_aliases, expected_es_sys_objs)
-        # find all seeds setup
-        self.assertEqual(v.numpy_seeds, [19, 20, 21])
-        # test exceptions
-        str_es_sys_list = [
-            'import espressomd.System',
-            'import espressomd.system.System',
-            'from espressomd import System',
-            'from espressomd.system import System',
-        ]
-        exception_stmt = [
-            's, var = System(), 5',
-            'class A:\n\ts = System()',
-            'def A():\n\ts = System()',
-        ]
-        for str_es_sys in str_es_sys_list:
-            for str_stmt in exception_stmt:
-                for alias in ['', ' as EsSystem']:
-                    str_import = str_es_sys + alias + '\n'
-                    alias = str_import.split()[-1]
-                    code = str_import + str_stmt.replace('System', alias)
-                    v = iw.GetPrngSeedEspressomdSystem()
-                    tree = ast.parse(code)
-                    err_msg = v.__class__.__name__ + \
-                        ' should fail on ' + repr(code)
-                    with self.assertRaises(AssertionError, msg=err_msg):
-                        v.visit(tree)
-
     def test_delimit_statements(self):
         lines = [
             'a = 1 # NEWLINE becomes NL after a comment',
