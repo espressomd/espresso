@@ -18,7 +18,7 @@ sphinx>=2.3.0,!=3.0.0
 sphinx-toggleprompt==0.0.5
 sphinxcontrib-bibtex>=2.4.1
 # jupyter dependencies
-nbconvert==6.4.5
+nbconvert==6.5.1
 jupyter_contrib_nbextensions==0.5.1
 tqdm>=4.30.0
 # pep8 and its dependencies
