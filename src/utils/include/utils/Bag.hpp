@@ -26,6 +26,7 @@
 #include <boost/serialization/vector.hpp>
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -40,12 +41,14 @@ namespace Utils {
  *
  * Elements in the container do not have a stable position and
  * removing elements can change the order of the other elements.
- * The loser contract (compared to a vector) allows removing any
+ * The looser contract (compared to a vector) allows removing any
  * element in the container in constant time.
  *
- * @tparam T Element Type, needs to be Swappable.
+ * @tparam T Element type, needs to be Swappable.
  */
 template <class T> class Bag {
+  static_assert(std::is_swappable_v<T>);
+
   /** Storage backend */
   using storage_type = std::vector<T>;
 
@@ -63,7 +66,7 @@ public:
 
 private:
   /** Underlying storage of the container */
-  std::vector<T> m_storage;
+  storage_type m_storage;
 
   friend boost::serialization::access;
   /**
@@ -110,7 +113,7 @@ public:
    *
    * Increase capacity to at least the specified value.
    *
-   *     @param new_capacity New minimum capacity.
+   * @param new_capacity New minimum capacity.
    */
   void reserve(std::size_t new_capacity) { m_storage.reserve(new_capacity); }
 
@@ -121,7 +124,7 @@ public:
    * If the new size is larger than the capacity, all
    * iterators into the container are invalidated.
    *
-   *     @param new_size Size to resize to.
+   * @param new_size Size to resize to.
    */
   void resize(std::size_t new_size) { m_storage.resize(new_size); }
 

@@ -112,7 +112,7 @@ class Test(ut.TestCase):
             length = len(system.part)
             for pid in range(length):
                 system.part.by_id(pid).add_bond((bond, (pid + 1) % length))
-            system.auto_exclusions(distance=2)
+            system.part.auto_exclusions(distance=2)
 
             for pid in range(length):
                 excl = sorted(list(system.part.by_id(pid).exclusions))
@@ -145,7 +145,7 @@ class Test(ut.TestCase):
         p1.add_bond((bond, p0))
         p2.add_bond((bond, p1))
         p3.add_bond((bond, p1))
-        system.auto_exclusions(distance=2)
+        system.part.auto_exclusions(distance=2)
 
         self.assertEqual(sorted(list(p0.exclusions)), [1, 2, 3])
         self.assertEqual(sorted(list(p1.exclusions)), [0, 2, 3])
@@ -172,7 +172,7 @@ class Test(ut.TestCase):
         p2.add_bond((bond, p4))
         p3.add_bond((bond, p4))
         p5.add_bond((bond, p4))
-        system.auto_exclusions(distance=3)
+        system.part.auto_exclusions(distance=3)
 
         self.assertEqual(sorted(list(p0.exclusions)), [1, 2, 3, 4])
         self.assertEqual(sorted(list(p1.exclusions)), [0, 2, 3, 4, 5])
@@ -191,7 +191,7 @@ class Test(ut.TestCase):
 
         # topology: 0-4
         p0.add_bond((bond, p4))
-        system.auto_exclusions(distance=1)
+        system.part.auto_exclusions(distance=1)
 
         self.assertEqual(list(p0.exclusions), [4])
         self.assertEqual(list(p4.exclusions), [0])
@@ -219,7 +219,7 @@ class Test(ut.TestCase):
         if espressomd.has_features(["VIRTUAL_SITES_INERTIALESS_TRACERS"]):
             system.part.by_id(0).add_bond((volcons,))
 
-        system.auto_exclusions(distance=2)
+        system.part.auto_exclusions(distance=2)
 
         for p in system.part.all():
             self.assertEqual(list(p.exclusions), [])

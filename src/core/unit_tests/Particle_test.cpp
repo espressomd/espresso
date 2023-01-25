@@ -83,10 +83,6 @@ BOOST_AUTO_TEST_CASE(serialization) {
 
   BOOST_CHECK(q.id() == p.id());
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
-
-#ifdef EXCLUSIONS
-  BOOST_CHECK(q.exclusions_as_vector() == el);
-#endif
 }
 
 namespace Utils {

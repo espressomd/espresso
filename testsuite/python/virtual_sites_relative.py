@@ -159,6 +159,8 @@ class VirtualSites(ut.TestCase):
         # relating to anything else other than a particle or id is not allowed
         with self.assertRaisesRegex(ValueError, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
+        with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
+            p2.vs_auto_relate_to(-2)
         # relating to itself is not allowed
         with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):
             p2.vs_auto_relate_to(p2)

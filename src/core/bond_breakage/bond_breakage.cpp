@@ -22,6 +22,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "particle_data.hpp"
 
 #include <utils/mpi/gather_buffer.hpp>
@@ -153,20 +154,45 @@ ActionSet actions_for_breakage(QueueEntry const &e) {
   return {};
 }
 
+/**
+ * @brief Delete specific bond.
+ */
+static void remove_bond(Particle &p, BondView const &view) {
+  auto &bond_list = p.bonds();
+  auto it = std::find(bond_list.begin(), bond_list.end(), view);
+  if (it != bond_list.end()) {
+    bond_list.erase(it);
+  }
+}
+
+/**
+ * @brief Delete pair bonds to a specific partner
+ */
+static void remove_pair_bonds_to(Particle &p, int other_pid) {
+  std::vector<std::pair<int, int>> to_delete;
+  for (auto b : p.bonds()) {
+    if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
+      to_delete.emplace_back(std::pair<int, int>{b.bond_id(), other_pid});
+  }
+  for (auto const &b : to_delete) {
+    remove_bond(p, BondView(b.first, {&b.second, 1}));
+  }
+}
+
 // Handler for the different delete events
 class execute : public boost::static_visitor<> {
 public:
   void operator()(DeleteBond const &d) const {
-    auto p = cell_structure.get_local_particle(d.particle_id);
-    if (!p)
-      return;
-    local_remove_bond(*p, {d.bond_type, d.bond_partner_id});
+    if (auto p = ::cell_structure.get_local_particle(d.particle_id)) {
+      remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id, 1}));
+    }
+    on_particle_change();
   }
   void operator()(DeleteAllBonds const &d) const {
-    auto p = cell_structure.get_local_particle(d.particle_id_1);
-    if (!p)
-      return;
-    local_remove_pair_bonds_to(*p, d.particle_id_2);
+    if (auto p = ::cell_structure.get_local_particle(d.particle_id_1)) {
+      remove_pair_bonds_to(*p, d.particle_id_2);
+    }
+    on_particle_change();
   }
 };
 
