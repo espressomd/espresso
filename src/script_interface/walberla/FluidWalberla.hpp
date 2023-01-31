@@ -47,13 +47,6 @@
 
 namespace ScriptInterface::walberla {
 
-enum class CptMode : int {
-  ascii = 0,
-  binary = 1,
-  unit_test_runtime_error = -1,
-  unit_test_ios_failure = -2
-};
-
 class FluidWalberla : public AutoParameters<FluidWalberla> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;

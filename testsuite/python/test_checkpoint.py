@@ -169,6 +169,44 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('WALBERLA')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
     def test_ek_species(self):
+        cpt_mode = 0 if 'LB.ASCII' in modes else 1
+        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
+        cpt_path = str(cpt_root / "ek") + "{}.cpt"
+
+        # check exception mechanism with corrupted LB checkpoint files
+        with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+            ek_species.load_checkpoint(
+                cpt_path.format("-missing-data"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+            ek_species.load_checkpoint(
+                cpt_path.format("-extra-data"), cpt_mode)
+        if cpt_mode == 0:
+            with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                ek_species.load_checkpoint(
+                    cpt_path.format("-wrong-format"), cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                ek_species.load_checkpoint(
+                    cpt_path.format("-wrong-boxdim"), cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            ek_species.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
+
+        ek_species.load_checkpoint(cpt_path.format(""), cpt_mode)
+
+        precision = 9 if "LB.WALBERLA" in modes else 5
+        m = np.pi / 12
+        nx = ek_species.lattice.shape[0]
+        ny = ek_species.lattice.shape[1]
+        nz = ek_species.lattice.shape[2]
+        grid_3D = np.fromfunction(
+            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+            (nx, ny, nz), dtype=float)
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    np.testing.assert_almost_equal(
+                        np.copy(ek_species[i, j, k].density),
+                        grid_3D[i, j, k], decimal=precision)
+
         state = ek_species.get_params()
         reference = {
             "density": 1.5,
@@ -186,43 +224,44 @@ class CheckpointTest(ut.TestCase):
         # self.assertFalse(ek_species.is_active)
         self.assertFalse(ek_species.is_single_precision)
 
-        # TODO walberla: enable EK checkpointing
-#        def generator(value, shape):
-#            value_grid = np.tile(value, shape)
-#            if value_grid.shape[-1] == 1:
-#                value_grid = np.squeeze(value_grid, axis=-1)
-#            return value_grid
+        def generator(value, shape):
+            value_grid = np.tile(value, shape)
+            if value_grid.shape[-1] == 1:
+                value_grid = np.squeeze(value_grid, axis=-1)
+            return value_grid
 
-#        # check boundary objects
-#        dens1 = 1.
-#        dens2 = 2.
-#        flux1 = 1e-3 * np.array([1., 2., 3.])
-#        flux2 = 1e-3 * np.array([4., 5., 6.])
-#        boundaries = [("density", dens1, dens2), ("flux", flux1, flux2)]
-#        for attr, val1, val2 in boundaries:
-#            accessor = np.vectorize(
-#                lambda obj: np.copy(getattr(obj, attr)),
-#                signature=f"()->({'n' if attr == 'flux' else ''})")
-#            slice1 = ek_species[0, :, :]
-#            slice2 = ek_species[-1, :, :]
-#            slice3 = ek_species[1:-1, :, :]
-#            # check boundary flag
-#            np.testing.assert_equal(np.copy(slice1.is_boundary), True)
-#            np.testing.assert_equal(np.copy(slice2.is_boundary), True)
-#            np.testing.assert_equal(np.copy(slice3.is_boundary), False)
-#            # check boundary conditions
-#            field = f"{attr}_boundary"
-#            shape = [1] + list(ek_species.shape)[1:] + [1]
-#            np.testing.assert_allclose(
-#                accessor(np.copy(getattr(slice1, field))),
-#                generator(value1, shape))
-#            np.testing.assert_allclose(
-#                accessor(np.copy(getattr(slice2, field))),
-#                generator(value2, shape))
-#            # remove boundaries
-#            getattr(ek_species, f"clear_{attr}_boundaries")()
-#        np.testing.assert_equal(
-#            np.copy(ek_species[:, :, :].is_boundary), False)
+        # check boundary objects
+        dens1 = 1.
+        dens2 = 2.
+        flux1 = 1e-3 * np.array([1., 2., 3.])
+        flux2 = 1e-3 * np.array([4., 5., 6.])
+        boundaries = [("density", dens1, dens2), ("flux", flux1, flux2)]
+        for attr, value1, value2 in boundaries:
+            accessor = np.vectorize(
+                lambda obj: np.copy(getattr(obj, attr)),
+                signature=f"()->({'n' if attr == 'flux' else ''})")
+            slice1 = ek_species[0, :, :]
+            slice2 = ek_species[-1, :, :]
+            slice3 = ek_species[1:-1, :, :]
+            # check boundary flag
+
+            np.testing.assert_equal(np.copy(slice1.is_boundary), True)
+            np.testing.assert_equal(np.copy(slice2.is_boundary), True)
+            np.testing.assert_equal(np.copy(slice3.is_boundary), False)
+            # check boundary conditions
+            field = f"{attr}_boundary"
+            shape = [1] + list(ek_species.shape)[1:] + [1]
+            np.testing.assert_allclose(
+                accessor(np.copy(getattr(slice1, field))),
+                generator(value1, shape))
+            np.testing.assert_allclose(
+                accessor(np.copy(getattr(slice2, field))),
+                generator(value2, shape))
+
+        ek_species.clear_density_boundaries()
+        ek_species.clear_flux_boundaries()
+        np.testing.assert_equal(
+            np.copy(ek_species[:, :, :].is_boundary), False)
 
     @utx.skipIfMissingFeatures('WALBERLA')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")

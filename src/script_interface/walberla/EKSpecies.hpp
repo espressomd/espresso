@@ -24,12 +24,17 @@
 
 #ifdef WALBERLA
 
+#include "LatticeWalberla.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 
 #include "walberla_bridge/electrokinetics/ek_walberla_init.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
+
+#include <walberla_bridge/electrokinetics/EKWalberlaNodeState.hpp>
+
+#include <utils/math/int_pow.hpp>
 
 namespace ScriptInterface::walberla {
 
@@ -122,7 +127,7 @@ public:
         get_value<bool>(args, "friction_coupling"), single_precision);
   }
 
-  [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> get_ekinstance() {
+  [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> get_ekinstance() const {
     return m_ekinstance;
   }
 
@@ -159,6 +164,16 @@ public:
       m_ekinstance->clear_density_boundaries();
       return none;
     }
+    if (method == "save_checkpoint") {
+      auto const path = get_value<std::string>(parameters, "path");
+      auto const mode = get_value<int>(parameters, "mode");
+      save_checkpoint(path, mode);
+    }
+    if (method == "load_checkpoint") {
+      auto const path = get_value<std::string>(parameters, "path");
+      auto const mode = get_value<int>(parameters, "mode");
+      load_checkpoint(path, mode);
+    }
     return none;
   }
 
@@ -170,10 +185,14 @@ public:
   }
 
 private:
-  /* The actual constraint */
   std::shared_ptr<::EKinWalberlaBase> m_ekinstance;
 
   std::shared_ptr<LatticeWalberla> m_lattice;
+
+  void load_checkpoint(std::string const &filename, int mode);
+  void save_checkpoint(std::string const &filename, int mode);
+  boost::optional<EKWalberlaNodeState>
+  get_node_checkpoint(Utils::Vector3i const &ind) const;
 };
 } // namespace ScriptInterface::walberla
 

@@ -204,6 +204,22 @@ class EKSpecies(ScriptInterfaceHelper):
                                       grid_offset=0.5)
         return np.reshape(mask_flat, self.shape).astype(type(True))
 
+    def save_checkpoint(self, path, binary):
+        """
+        Write EK densities and boundary conditions to a file.
+        """
+        tmp_path = path + ".__tmp__"
+        self.call_method(
+            'save_checkpoint', path=tmp_path, mode=int(binary))
+        os.rename(tmp_path, path)
+
+    def load_checkpoint(self, path, binary):
+        """
+        Load EK densities and boundary conditions from a file.
+        """
+        return self.call_method(
+            'load_checkpoint', path=path, mode=int(binary))
+
 
 class FluxBoundary:
     """

@@ -87,7 +87,7 @@ if lbf_class:
                                    dist=-(system.box_l[0] - 1.0))
     lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
-    # TODO walberla: add EK to the system and make it more complex
+
     ek_species = espressomd.EKSpecies.EKSpecies(
         lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
         advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
@@ -371,6 +371,9 @@ if lbf_class:
     lbf_cpt_path = path_cpt_root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
     # save EK checkpoint file
+    ek_species[:, :, :].density = grid_3D
+    ek_cpt_path = path_cpt_root / "ek.cpt"
+    ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
     checkpoint.register("ek_species")
     # setup VTK folder
     vtk_suffix = config.test_name
@@ -518,6 +521,45 @@ class TestCheckpoint(ut.TestCase):
             # write checkpoint file with different population size
             with open(cpt_path.format("-wrong-popsize"), "wb") as f:
                 f.write(boxsize + b"\n" + b"2" + popsize + b"\n" + data)
+
+    @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
+    def test_ek_checkpointing_exceptions(self):
+        '''
+        Check the EK checkpointing exception mechanism. Write corrupted
+        EK checkpoint files that will be tested in ``test_checkpoint.py``.
+        '''
+
+        # check exception mechanism
+        ek_cpt_root = ek_cpt_path.parent
+        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+            invalid_path = ek_cpt_root / "unknown_dir" / "ek.cpt"
+            ek_species.save_checkpoint(str(invalid_path), lbf_cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, 'unit test error'):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -1)
+        with self.assertRaisesRegex(RuntimeError, 'could not write to'):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -2)
+        with self.assertRaisesRegex(ValueError, 'Unknown mode -3'):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -3)
+        with self.assertRaisesRegex(ValueError, 'Unknown mode 2'):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), 2)
+
+        # read the valid EK checkpoint file
+        ek_cpt_data = ek_cpt_path.read_bytes()
+        cpt_path = str(path_cpt_root / "ek") + "{}.cpt"
+        # write checkpoint file with missing data
+        with open(cpt_path.format("-missing-data"), "wb") as f:
+            f.write(ek_cpt_data[:len(ek_cpt_data) // 2])
+        # write checkpoint file with extra data
+        with open(cpt_path.format("-extra-data"), "wb") as f:
+            f.write(ek_cpt_data + ek_cpt_data[-8:])
+        if lbf_cpt_mode == 0:
+            boxsize, data = ek_cpt_data.split(b"\n", 1)
+            # write checkpoint file with incorrectly formatted data
+            with open(cpt_path.format("-wrong-format"), "wb") as f:
+                f.write(boxsize + b"\n" + b"\ntext string\n" + data)
+            # write checkpoint file with different box dimensions
+            with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
+                f.write(b"2" + boxsize + b"\n" + data)
 
     def test_generator_recursive_unlink(self):
         with tempfile.TemporaryDirectory() as tmp_directory:
