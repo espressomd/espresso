@@ -783,11 +783,13 @@ void auto_exclusions(int distance) {
      setting the bonds, which the user apparently accepted.
   */
   for (auto &kv : partners) {
-    auto const id = kv.first;
+    auto const pid1 = kv.first;
     auto const partner_list = kv.second;
-    for (int j : partner_list)
-      if (id < j)
-        add_particle_exclusion(id, j);
+    for (int j = 0; j < partner_list.size(); j += 2) {
+      auto const pid2 = partner_list[j];
+      if (pid1 < pid2)
+        add_particle_exclusion(pid1, pid2);
+    }
   }
 }
 #endif // EXCLUSIONS

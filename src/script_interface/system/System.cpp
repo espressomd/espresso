@@ -81,8 +81,10 @@ Variant System::do_call_method(std::string const &name,
   }
 #ifdef EXCLUSIONS
   if (name == "auto_exclusions") {
-    auto const distance = get_value<int>(parameters, "distance");
-    auto_exclusions(distance);
+    if (context()->is_head_node()) {
+      auto const distance = get_value<int>(parameters, "distance");
+      auto_exclusions(distance);
+    }
     return {};
   }
 #endif
