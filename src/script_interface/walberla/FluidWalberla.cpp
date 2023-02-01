@@ -28,7 +28,6 @@
 
 #include "core/BoxGeometry.hpp"
 #include "core/grid.hpp"
-#include "core/grid_based_algorithms/LBCheckpointFile.hpp"
 
 #include "script_interface/communication.hpp"
 
@@ -37,82 +36,55 @@
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/optional.hpp>
 
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <functional>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace ScriptInterface::walberla {
 
-boost::optional<LBWalberlaNodeState>
-FluidWalberla::get_node_checkpoint(Utils::Vector3i const &ind) const {
-  auto const pop = lb_walberla()->get_node_pop(ind);
-  auto const laf = lb_walberla()->get_node_last_applied_force(ind);
-  auto const lbb = lb_walberla()->get_node_is_boundary(ind);
-  auto const vbb = lb_walberla()->get_node_velocity_at_boundary(ind);
-  if (pop and laf and lbb and ((*lbb) ? vbb.has_value() : true)) {
-    LBWalberlaNodeState cpnode;
-    cpnode.populations = *pop;
-    cpnode.last_applied_force = *laf;
-    cpnode.is_boundary = *lbb;
-    if (*lbb) {
-      cpnode.slip_velocity = *vbb;
-    }
-    return cpnode;
-  }
-  return {boost::none};
-}
-
 void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
-  auto const err_msg = std::string("Error while reading LB checkpoint: ");
-  auto const binary = mode == static_cast<int>(CptMode::binary);
-  auto const &comm = context()->get_comm();
-  auto const is_head_node = context()->is_head_node();
+  auto &lb_obj = *m_lb_fluid;
 
-  // open file and set exceptions
-  LBCheckpointFile cpfile(filename, std::ios_base::in, binary);
-  if (!cpfile.stream) {
-    if (is_head_node) {
-      throw std::runtime_error(err_msg + "could not open file " + filename);
-    }
-    return;
-  }
-  cpfile.stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-
-  // check the grid size in the checkpoint header matches the current grid size
-  auto const check_header = [&](Utils::Vector3i const &expected_grid_size,
-                                std::size_t expected_pop_size) {
-    Utils::Vector3i grid_size;
-    std::size_t pop_size;
-    cpfile.read(grid_size);
-    cpfile.read(pop_size);
-    if (grid_size != expected_grid_size) {
+  auto const read_metadata = [&lb_obj](CheckpointFile &cpfile) {
+    auto const expected_grid_size = lb_obj.get_lattice().get_grid_dimensions();
+    auto const expected_pop_size = lb_obj.stencil_size();
+    Utils::Vector3i read_grid_size;
+    std::size_t read_pop_size;
+    cpfile.read(read_grid_size);
+    cpfile.read(read_pop_size);
+    if (read_grid_size != expected_grid_size) {
       std::stringstream message;
-      message << " grid dimensions mismatch,"
-              << " read [" << grid_size << "],"
-              << " expected [" << expected_grid_size << "].";
-      throw std::runtime_error(err_msg + message.str());
+      message << "grid dimensions mismatch, "
+              << "read [" << read_grid_size << "], "
+              << "expected [" << expected_grid_size << "].";
+      throw std::runtime_error(message.str());
     }
-    if (pop_size != expected_pop_size) {
-      throw std::runtime_error(err_msg + "population size mismatch, read " +
-                               std::to_string(pop_size) + ", expected " +
+    if (read_pop_size != expected_pop_size) {
+      throw std::runtime_error("population size mismatch, read " +
+                               std::to_string(read_pop_size) + ", expected " +
                                std::to_string(expected_pop_size) + ".");
     }
   };
 
-  try {
-    auto const grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
-    auto const pop_size = m_lb_fluid->stencil_size();
-    check_header(grid_size, pop_size);
-
+  auto const read_data = [&lb_obj](CheckpointFile &cpfile) {
+    auto const grid_size = lb_obj.get_lattice().get_grid_dimensions();
+    auto const i_max = grid_size[0];
+    auto const j_max = grid_size[1];
+    auto const k_max = grid_size[2];
     LBWalberlaNodeState cpnode;
-    cpnode.populations.resize(pop_size);
-    for (int i = 0; i < grid_size[0]; i++) {
-      for (int j = 0; j < grid_size[1]; j++) {
-        for (int k = 0; k < grid_size[2]; k++) {
+    cpnode.populations.resize(lb_obj.stencil_size());
+    for (int i = 0; i < i_max; i++) {
+      for (int j = 0; j < j_max; j++) {
+        for (int k = 0; k < k_max; k++) {
           auto const ind = Utils::Vector3i{{i, j, k}};
           cpfile.read(cpnode.populations);
           cpfile.read(cpnode.last_applied_force);
@@ -120,94 +92,84 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
           if (cpnode.is_boundary) {
             cpfile.read(cpnode.slip_velocity);
           }
-          m_lb_fluid->set_node_pop(ind, cpnode.populations);
-          m_lb_fluid->set_node_last_applied_force(ind,
-                                                  cpnode.last_applied_force);
+          lb_obj.set_node_pop(ind, cpnode.populations);
+          lb_obj.set_node_last_applied_force(ind, cpnode.last_applied_force);
           if (cpnode.is_boundary) {
-            m_lb_fluid->set_node_velocity_at_boundary(ind,
-                                                      cpnode.slip_velocity);
+            lb_obj.set_node_velocity_at_boundary(ind, cpnode.slip_velocity);
           }
         }
       }
     }
-    comm.barrier();
-    m_lb_fluid->reallocate_ubb_field();
-    m_lb_fluid->ghost_communication();
-    // check EOF
-    if (!binary) {
-      if (cpfile.stream.peek() == '\n') {
-        static_cast<void>(cpfile.stream.get());
-      }
-    }
-    if (cpfile.stream.peek() != EOF) {
-      throw std::runtime_error(err_msg + "extra data found, expected EOF.");
-    }
-  } catch (std::ios_base::failure const &) {
-    auto const eof_error = cpfile.stream.eof();
-    cpfile.stream.close();
-    if (eof_error) {
-      if (is_head_node) {
-        throw std::runtime_error(err_msg + "EOF found.");
-      }
-      return;
-    }
-    if (is_head_node) {
-      throw std::runtime_error(err_msg + "incorrectly formatted data.");
-    }
-    return;
-  } catch (std::runtime_error const &) {
-    cpfile.stream.close();
-    if (is_head_node) {
-      throw;
-    }
-    return;
-  }
+  };
+
+  auto const on_success = [&lb_obj]() {
+    lb_obj.reallocate_ubb_field();
+    lb_obj.ghost_communication();
+  };
+
+  load_checkpoint_common(*context(), "LB", filename, mode, read_metadata,
+                         read_data, on_success);
 }
 
 void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
-  auto const err_msg = std::string("Error while writing LB checkpoint: ");
-  auto const binary = mode == static_cast<int>(CptMode::binary);
-  auto const unit_test_mode = (mode != static_cast<int>(CptMode::ascii)) and
-                              (mode != static_cast<int>(CptMode::binary));
-  auto const &comm = context()->get_comm();
-  auto const is_head_node = context()->is_head_node();
-  bool failure = false;
+  auto &lb_obj = *m_lb_fluid;
 
-  // open file and set exceptions
-  std::shared_ptr<LBCheckpointFile> cpfile;
-  if (is_head_node) {
-    cpfile = std::make_shared<LBCheckpointFile>(filename, std::ios_base::out,
-                                                binary);
-    failure = !cpfile->stream;
-    boost::mpi::broadcast(comm, failure, 0);
-    if (failure) {
-      throw std::runtime_error(err_msg + "could not open file " + filename);
-    }
-    cpfile->stream.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-    if (!binary) {
-      cpfile->stream.precision(16);
-      cpfile->stream << std::fixed;
-    }
-  } else {
-    boost::mpi::broadcast(comm, failure, 0);
-    if (failure) {
-      return;
-    }
-  }
-
-  try {
-    auto const grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
-    auto const pop_size = m_lb_fluid->stencil_size();
-    if (is_head_node) {
-      cpfile->write(grid_size);
-      cpfile->write(pop_size);
+  auto const write_metadata = [&lb_obj,
+                               mode](std::shared_ptr<CheckpointFile> cpfile_ptr,
+                                     Context const &context) {
+    auto const grid_size = lb_obj.get_lattice().get_grid_dimensions();
+    auto const pop_size = lb_obj.stencil_size();
+    if (context.is_head_node()) {
+      cpfile_ptr->write(grid_size);
+      cpfile_ptr->write(pop_size);
       unit_test_handle(mode);
     }
+  };
 
+  auto const on_failure = [](std::shared_ptr<CheckpointFile> const &,
+                             Context const &context) {
+    if (context.is_head_node()) {
+      auto failure = true;
+      boost::mpi::broadcast(context.get_comm(), failure, 0);
+    }
+  };
+
+  auto const write_data = [&lb_obj,
+                           mode](std::shared_ptr<CheckpointFile> cpfile_ptr,
+                                 Context const &context) {
+    auto const get_node_checkpoint = [&](Utils::Vector3i const &ind)
+        -> boost::optional<LBWalberlaNodeState> {
+      auto const pop = lb_obj.get_node_pop(ind);
+      auto const laf = lb_obj.get_node_last_applied_force(ind);
+      auto const lbb = lb_obj.get_node_is_boundary(ind);
+      auto const vbb = lb_obj.get_node_velocity_at_boundary(ind);
+      if (pop and laf and lbb and ((*lbb) ? vbb.has_value() : true)) {
+        LBWalberlaNodeState cpnode;
+        cpnode.populations = *pop;
+        cpnode.last_applied_force = *laf;
+        cpnode.is_boundary = *lbb;
+        if (*lbb) {
+          cpnode.slip_velocity = *vbb;
+        }
+        return cpnode;
+      }
+      return {boost::none};
+    };
+
+    auto failure = false;
+    auto &cpfile = *cpfile_ptr;
+    auto const &comm = context.get_comm();
+    auto const is_head_node = context.is_head_node();
+    auto const unit_test_mode = (mode != static_cast<int>(CptMode::ascii)) and
+                                (mode != static_cast<int>(CptMode::binary));
+    auto const grid_size = lb_obj.get_lattice().get_grid_dimensions();
+    auto const i_max = grid_size[0];
+    auto const j_max = grid_size[1];
+    auto const k_max = grid_size[2];
     LBWalberlaNodeState cpnode;
-    for (int i = 0; i < grid_size[0]; i++) {
-      for (int j = 0; j < grid_size[1]; j++) {
-        for (int k = 0; k < grid_size[2]; k++) {
+    for (int i = 0; i < i_max; i++) {
+      for (int j = 0; j < j_max; j++) {
+        for (int k = 0; k < k_max; k++) {
           auto const ind = Utils::Vector3i{{i, j, k}};
           auto const result = get_node_checkpoint(ind);
           if (!unit_test_mode) {
@@ -221,11 +183,11 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
             } else {
               comm.recv(boost::mpi::any_source, 42, cpnode);
             }
-            cpfile->write(cpnode.populations);
-            cpfile->write(cpnode.last_applied_force);
-            cpfile->write(cpnode.is_boundary);
+            cpfile.write(cpnode.populations);
+            cpfile.write(cpnode.last_applied_force);
+            cpfile.write(cpnode.is_boundary);
             if (cpnode.is_boundary) {
-              cpfile->write(cpnode.slip_velocity);
+              cpfile.write(cpnode.slip_velocity);
             }
             boost::mpi::broadcast(comm, failure, 0);
           } else {
@@ -240,17 +202,10 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
         }
       }
     }
-  } catch (std::exception const &error) {
-    if (is_head_node) {
-      failure = true;
-      boost::mpi::broadcast(comm, failure, 0);
-      cpfile->stream.close();
-      if (dynamic_cast<std::ios_base::failure const *>(&error)) {
-        throw std::runtime_error(err_msg + "could not write to " + filename);
-      }
-      throw;
-    }
-  }
+  };
+
+  save_checkpoint_common(*context(), "LB", filename, mode, write_metadata,
+                         write_data, on_failure);
 }
 
 std::vector<Variant> FluidWalberla::get_average_pressure_tensor() const {

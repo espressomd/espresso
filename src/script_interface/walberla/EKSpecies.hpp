@@ -191,8 +191,6 @@ private:
 
   void load_checkpoint(std::string const &filename, int mode);
   void save_checkpoint(std::string const &filename, int mode);
-  boost::optional<EKWalberlaNodeState>
-  get_node_checkpoint(Utils::Vector3i const &ind) const;
 };
 } // namespace ScriptInterface::walberla
 

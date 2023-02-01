@@ -39,8 +39,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
 
-#include <boost/optional.hpp>
-
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -142,13 +140,13 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "activate") {
-      auto const fail = activate_lb_walberla(m_lb_fluid, m_lb_params);
+      auto const fail = ::activate_lb_walberla(m_lb_fluid, m_lb_params);
       if (not fail) {
         m_is_active = true;
       }
     }
     if (name == "deactivate") {
-      deactivate_lb_walberla();
+      ::deactivate_lb_walberla();
       m_is_active = false;
     }
     if (name == "add_force_at_pos") {
@@ -200,8 +198,6 @@ public:
 private:
   void load_checkpoint(std::string const &filename, int mode);
   void save_checkpoint(std::string const &filename, int mode);
-  boost::optional<LBWalberlaNodeState>
-  get_node_checkpoint(Utils::Vector3i const &ind) const;
   std::vector<Variant> get_average_pressure_tensor() const;
   Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };

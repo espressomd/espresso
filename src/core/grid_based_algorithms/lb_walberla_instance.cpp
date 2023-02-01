@@ -48,8 +48,8 @@ static std::weak_ptr<LBWalberlaBase> lb_walberla_instance;
 static std::shared_ptr<LBWalberlaParams> lb_walberla_params_instance;
 
 std::shared_ptr<LBWalberlaBase> lb_walberla() {
-  auto lb_walberla_instance_handle = lb_walberla_instance.lock();
-  if (!lb_walberla_instance_handle) {
+  auto lb_walberla_instance_handle = ::lb_walberla_instance.lock();
+  if (not lb_walberla_instance_handle) {
     throw std::runtime_error(
         "Attempted access to uninitialized LBWalberla instance.");
   }
@@ -57,11 +57,11 @@ std::shared_ptr<LBWalberlaBase> lb_walberla() {
 }
 
 std::shared_ptr<LBWalberlaParams> lb_walberla_params() {
-  if (!lb_walberla_params_instance) {
+  if (not ::lb_walberla_params_instance) {
     throw std::runtime_error(
         "Attempted access to uninitialized LBWalberlaParams instance.");
   }
-  return lb_walberla_params_instance;
+  return ::lb_walberla_params_instance;
 }
 
 void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
