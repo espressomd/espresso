@@ -157,7 +157,6 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
     };
 
     auto failure = false;
-    auto &cpfile = *cpfile_ptr;
     auto const &comm = context.get_comm();
     auto const is_head_node = context.is_head_node();
     auto const unit_test_mode = (mode != static_cast<int>(CptMode::ascii)) and
@@ -183,6 +182,7 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
             } else {
               comm.recv(boost::mpi::any_source, 42, cpnode);
             }
+            auto &cpfile = *cpfile_ptr;
             cpfile.write(cpnode.populations);
             cpfile.write(cpnode.last_applied_force);
             cpfile.write(cpnode.is_boundary);
