@@ -1,7 +1,7 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND noninteractive
-run apt update
-run apt install -y dpkg-dev build-essential
+RUN apt-get update
+RUN apt-get install -y dpkg-dev build-essential
 
 COPY entrypoint.sh /entrypoint.sh
