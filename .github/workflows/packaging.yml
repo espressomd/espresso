@@ -19,5 +19,13 @@ jobs:
         uses: ./.github/actions/test_ubuntu_package
         with:
           package_file: ${{steps.build.outputs.package_file }}
+
+      - name: Publish PPA
+        uses: yuezk/publish-ppa-package@main
+        with:
+          repository: 'ppa:bishwash369/espressoppa'
+          gpg_private_key: ${{ secrets.ESPRESSO_PPA_PRIVATE_KEY }}
+          gpg_passphrase: ${{ secrets.ESPRESSO_PPA_PASSPHRASE }}
+          pkgdir: '${{ github.workspace }}'
           
 
