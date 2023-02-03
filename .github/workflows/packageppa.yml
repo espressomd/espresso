@@ -1,0 +1,7 @@
+        name: Publish PPA
+        uses: yuezk/publish-ppa-package@v1.0.0
+        with:
+          repository: 'ppa:bishwash369/espressoppa'
+          gpg_private_key: ${{ secrets.ESPRESSO_PPA_PRIVATE_KEY }}
+          gpg_passphrase: ${{ secrets.ESPRESSO_PPA_PASSPHRASE }}
+          pkgdir: '${{ github.workspace }}/artifacts/deb-build/globalprotect-openconnect*/'
