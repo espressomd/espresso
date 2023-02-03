@@ -446,8 +446,9 @@ class ParticleProperties(ut.TestCase):
         np.random.shuffle(ids)
         for pid in ids:
             self.system.part.by_id(pid).remove()
-        with self.assertRaises(Exception):
-            self.system.part.by_id(17).remove()
+        p = self.system.part.by_id(17)
+        with self.assertRaises(RuntimeError):
+            p.remove()
 
     def test_coord_fold_corner_cases(self):
         system = self.system
@@ -563,6 +564,8 @@ class ParticleProperties(ut.TestCase):
         new_pdict = p.to_dict()
         del new_pdict['id']
         self.assertEqual(str(new_pdict), str(pdict))
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'test' is missing"):
+            p.call_method("set_param_parallel", name="test")
 
 
 if __name__ == "__main__":

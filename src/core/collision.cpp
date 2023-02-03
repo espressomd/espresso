@@ -344,9 +344,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   new_part.id() = current_vs_pid;
   new_part.pos() = pos;
   auto p_vs = cell_structure.add_particle(std::move(new_part));
-
-  local_vs_relate_to(*p_vs, get_part(relate_to));
-
+  vs_relate_to(*p_vs, get_part(relate_to));
   p_vs->set_virtual(true);
   p_vs->type() = collision_params.vs_particle_type;
 }

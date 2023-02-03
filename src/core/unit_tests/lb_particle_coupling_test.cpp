@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The ESPResSo project
+ * Copyright (C) 2019-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -45,6 +45,7 @@ namespace utf = boost::unit_test;
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+#include "particle_node.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
 
@@ -56,8 +57,10 @@ namespace utf = boost::unit_test;
 
 #include <boost/mpi.hpp>
 
+#include <array>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <sstream>
@@ -80,7 +83,7 @@ struct LBTestParameters {
   double skin;
   Utils::Vector3d box_dimensions;
   Utils::Vector3i grid_dimensions;
-  Utils::Vector3d force_md_to_lb(Utils::Vector3d const &md_force) {
+  auto force_md_to_lb(Utils::Vector3d const &md_force) const {
     return (-this->time_step * this->tau / this->agrid) * md_force;
   }
 };
@@ -97,7 +100,7 @@ static LBTestParameters params{23,
                                Utils::Vector3i::broadcast(8)};
 
 /** Boost unit test dataset */
-std::vector<double> const kTs{0, 1E-4};
+std::vector<double> const kTs{0., 1E-4};
 
 namespace espresso {
 // ESPResSo system instance
@@ -126,6 +129,32 @@ void remove_lb_actor_local() { deactivate_lb_walberla(); }
 
 void cells_update_ghosts_local() { cells_update_ghosts(global_ghost_flags()); }
 
+void set_particle_f_local(int p_id, Utils::Vector3d f) {
+  if (auto p = ::cell_structure.get_local_particle(p_id)) {
+    p->force() = f;
+  }
+  on_particle_change();
+}
+REGISTER_CALLBACK(set_particle_f_local)
+#ifdef ENGINE
+void set_particle_swimming_local(int p_id, ParticleParametersSwimming swim) {
+  if (auto p = ::cell_structure.get_local_particle(p_id)) {
+    p->swimming() = swim;
+  }
+  on_particle_change();
+}
+REGISTER_CALLBACK(set_particle_swimming_local)
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+void set_particle_mu_E_local(int p_id, Utils::Vector3d mu_E) {
+  if (auto p = ::cell_structure.get_local_particle(p_id)) {
+    p->mu_E() = mu_E;
+  }
+  on_particle_change();
+}
+REGISTER_CALLBACK(set_particle_mu_E_local)
+#endif
+
 REGISTER_CALLBACK(add_lb_actor_local)
 REGISTER_CALLBACK(set_lb_kT_local)
 REGISTER_CALLBACK(remove_lb_actor_local)
@@ -133,7 +162,7 @@ REGISTER_CALLBACK(cells_update_ghosts_local)
 } // namespace espresso
 
 namespace LB {
-const Utils::Vector3d get_force_to_be_applied(Utils::Vector3d const &pos) {
+auto get_force_to_be_applied(Utils::Vector3d const &pos) {
   auto const agrid = espresso::lb_params->get_agrid();
   auto const ind = Utils::Vector3i{static_cast<int>(pos[0] / agrid),
                                    static_cast<int>(pos[1] / agrid),
@@ -198,11 +227,11 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 17);
   BOOST_CHECK(not lb_lbcoupling_is_seed_required());
-  auto step1_random1 = lb_particle_coupling_noise(
+  auto const step1_random1 = lb_particle_coupling_noise(
       true, 1, lb_particle_coupling.rng_counter_coupling);
-  auto step1_random2 = lb_particle_coupling_noise(
+  auto const step1_random2 = lb_particle_coupling_noise(
       true, 4, lb_particle_coupling.rng_counter_coupling);
-  auto step1_random2_try2 = lb_particle_coupling_noise(
+  auto const step1_random2_try2 = lb_particle_coupling_noise(
       true, 4, lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK(step1_random1 != step1_random2);
   BOOST_CHECK(step1_random2 == step1_random2_try2);
@@ -213,14 +242,14 @@ BOOST_AUTO_TEST_CASE(rng) {
 
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 18);
-  auto step2_random1 = lb_particle_coupling_noise(
+  auto const step2_random1 = lb_particle_coupling_noise(
       true, 1, lb_particle_coupling.rng_counter_coupling);
-  auto step2_random2 = lb_particle_coupling_noise(
+  auto const step2_random2 = lb_particle_coupling_noise(
       true, 4, lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK(step1_random1 != step2_random1);
   BOOST_CHECK(step1_random1 != step2_random2);
 
-  auto step3_norandom = lb_particle_coupling_noise(
+  auto const step3_norandom = lb_particle_coupling_noise(
       false, 4, lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
 }
@@ -243,7 +272,7 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   expected += p.swimming().v_swim * p.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  p.mu_E() = Utils::Vector3d{-2, 1.5, 1};
+  p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
   expected += p.mu_E();
 #endif
   BOOST_CHECK_SMALL(
@@ -253,10 +282,10 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   mpi_call_all(espresso::set_lb_kT_local, kT);
   Particle p{};
-  p.v() = {-2.5, 1.5, 2};
+  p.v() = {-2.5, 1.5, 2.};
   p.pos() = lb_walberla()->get_lattice().get_local_domain().first;
   lb_lbcoupling_set_gamma(0.2);
-  Utils::Vector3d drift_offset{-1, 1, 1};
+  Utils::Vector3d drift_offset{-1., 1., 1.};
 
   // Drag force in quiescent fluid
   {
@@ -397,11 +426,13 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto expected =
       noise * Random::noise_uniform<RNGSalt::PARTICLES>(rng->value(), 0, pid);
 #ifdef ENGINE
-  set_particle_swimming(pid, ParticleParametersSwimming{true, 0., 2., 1, 3.});
+  mpi_call_all(espresso::set_particle_swimming_local, pid,
+               ParticleParametersSwimming{true, 0., 2., 1, 3.});
   expected += gamma * p.swimming().v_swim * p.calc_director();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  set_particle_mu_E(pid, {-2., 1.5, 1.});
+  mpi_call_all(espresso::set_particle_mu_E_local, pid,
+               Utils::Vector3d{-2., 1.5, 1.});
   expected += gamma * p.mu_E();
 #endif
   mpi_set_particle_pos(pid, first_lb_node + Utils::Vector3d::broadcast(0.5));
@@ -486,7 +517,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
       BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
       // remove force of the particle from the fluid
-      set_particle_f(pid, {});
+      mpi_call_all(espresso::set_particle_f_local, pid, Utils::Vector3d{});
       add_md_force(p.pos(), -expected, params.time_step);
     }
   }

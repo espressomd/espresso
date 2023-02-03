@@ -375,10 +375,19 @@ class ParticleHandle(ScriptInterfaceHelper):
     """
 
     _so_name = "Particles::ParticleHandle"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "delete_all_bonds",
     )
+
+    # here we must redefine the script interface setters
+
+    def set_params(self, **kwargs):
+        for name, value in kwargs.items():
+            self.set_parameter(name, value)
+
+    def set_parameter(self, name, value):
+        return self.call_method("set_param_parallel", name=name, value=value)
 
     def remove(self):
         """
@@ -971,11 +980,32 @@ class ParticleList(ScriptInterfaceHelper):
         --------
         :meth:`espressomd.particle_data.ParticleHandle.remove`
 
+    auto_exclusions()
+        Add exclusions between particles that are connected by pair bonds,
+        including virtual bonds. Angle and diheral bonds are ignored. The most
+        common use case for this method is to auto-exclude virtual sites.
+
+        Another use case is to exclude 1-2, 1-3 and optionally 1-4 non-nonded
+        interactions on polymer chains. This technique is commonly used in
+        atomistic molecular dynamics engines such as NAMD, AMBER or GROMACS,
+        where the short-range part of the potential energy surface is better
+        approximated with Fourier sums (using dihedral bonds) than with pair
+        potentials. Linear, branched and circular topologies are supported.
+
+        Requires feature ``EXCLUSIONS``.
+
+        Parameters
+        ----------
+        distance : :obj:`int`
+            Maximal length of a chain in unit of bonds. The topology
+            will be traversed recursively until the bond chain either
+            terminates or reaches that distance.
+
     """
     _so_name = "Particles::ParticleList"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
-        "clear",
+        "clear", "auto_exclusions"
     )
 
     def by_id(self, p_id):
