@@ -16,7 +16,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p ./artifacts/deb-build
-          git archive --prefix=espresso-${GITHUB_REF##*/}/ -o ./artifacts/espresso-${GITHUB_REF##*/}.tar.gz HEAD
+          git archive --prefix=espresso-4.2/ -o ./artifacts/espresso-4.2.tar.gz HEAD
           cd ./artifacts
           cp *.tar.gz deb-build && cd deb-build
           tar xf *.tar.gz
