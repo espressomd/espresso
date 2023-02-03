@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 The ESPResSo project
+# Copyright (C) 2021-2023 The ESPResSo project
 # Copyright (C) 2020-2022 The waLBerla project
 #
 # This file is part of ESPResSo.
