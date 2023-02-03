@@ -29,7 +29,7 @@ jobs:
       #     package_file: ${{steps.build.outputs.package_file }}
 
       - name: Publish PPA
-        uses: yuezk/publish-ppa-package@v1.0.0
+        uses: ./.github/actions/publish-ppa-package
         with:
           repository: 'ppa:bishwash369/espressoppa'
           gpg_private_key: ${{ secrets.ESPRESSO_PPA_PRIVATE_KEY }}
