@@ -477,10 +477,6 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         thmst = system.thermostat.get_state()[0]
-        # TODO WALBERLA
-#        if 'LB.GPU' in modes and not espressomd.gpu_available():
-#            self.assertEqual(thmst['type'], 'OFF')
-#        else:
         self.assertEqual(thmst['type'], 'LB')
         # rng_counter_fluid = seed, seed is 0 because kT=0
         self.assertEqual(thmst['rng_counter_fluid'], 0)

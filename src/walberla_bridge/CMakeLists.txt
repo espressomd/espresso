@@ -47,10 +47,9 @@ target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
   PRIVATE Boost::boost espresso::cpp_flags espresso::walberla::cpp_flags
           ${WALBERLA_LIBS})
-# TODO WALBERLA: break dependency on walberla headers in public API
 target_include_directories(
-  espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WALBERLA_INCLUDE_DIRS}
-  PRIVATE ${walberla_BINARY_DIR}/src)
+  espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)
 
 add_subdirectory(src)
 # TODO WALBERLA: find why `TARGET_DIRECTORY espresso_walberla` doesn't work

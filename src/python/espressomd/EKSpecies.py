@@ -157,8 +157,6 @@ class EKSpecies(ScriptInterfaceHelper):
                 raise ValueError(
                     f'Cannot process density value grid of shape {np.shape(value)}')
 
-        # TODO unit conversion
-        #        value *=
         value_flat = value.reshape((-1,))
         mask_flat = shape.call_method('rasterize', grid_size=self.shape,
                                       grid_spacing=self.lattice.agrid,

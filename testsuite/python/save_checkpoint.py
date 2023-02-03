@@ -76,9 +76,6 @@ lb_lattice = None
 if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
     lbf_class = espressomd.lb.LBFluidWalberla
     lb_lattice = espressomd.lb.LatticeWalberla(agrid=2.0, n_ghost_layers=1)
-    # TODO WALBERLA
-#    if 'LB.GPU' in modes and espressomd.gpu_available():
-#        lbf_class = espressomd.lb.LBFluidWalberlaGPU
 if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_class(lattice=lb_lattice, viscosity=1.3, density=1.5, tau=0.01)

@@ -188,12 +188,6 @@ public:
                                     const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
       auto const &shear_plane_normal = lees_edwards_bc().shear_plane_normal;
-      //      if (a[shear_plane_normal] <0 or a[shear_plane_normal]
-      //      >=length()[shear_plane_normal]
-      //          or b[shear_plane_normal] <0 or b[shear_plane_normal]
-      //          >=length()[shear_plane_normal]) throw
-      //          std::runtime_error("Unfolded position in shear plane normal
-      //          direction in LE get_mi_vector will lead to wrong result");
       auto a_tmp = a;
       auto b_tmp = b;
       a_tmp[shear_plane_normal] = Algorithm::periodic_fold(

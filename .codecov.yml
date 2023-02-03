@@ -28,11 +28,11 @@ coverage:
           - "!src/**/*tests/"
           - "!src/python/"
         enabled: yes
-        threshold: 2% # TODO WALBERLA
+        threshold: 1%
     patch:
       default:
         enabled: yes
-        threshold: 2% # TODO WALBERLA
+        threshold: 1%
     changes: no
 
 parsers:
