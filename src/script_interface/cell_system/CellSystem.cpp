@@ -230,9 +230,7 @@ Variant CellSystem::do_call_method(std::string const &name,
 
 std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
   ::cell_structure.resort_particles(global_flag, box_geo);
-  if (context()->is_head_node()) {
-    clear_particle_node();
-  }
+  clear_particle_node();
   auto const size = static_cast<int>(::cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;
   boost::mpi::gather(context()->get_comm(), size, n_part_per_node, 0);

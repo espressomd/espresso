@@ -152,13 +152,15 @@ class ReactionMethods(ut.TestCase):
             reaction_backward['gamma'],
             delta=1e-10)
 
-        # check particle deletion
+        # check particle deletion on a worker node
         p1, _, p3 = self.system.part.add(
-            pos=3 * [(0., 0., 0.)], type=[5, 2, 3])
+            pos=3 * [(-1., -1., -1.)], type=[5, 2, 3])
         if isinstance(method, espressomd.reaction_methods.WidomInsertion):
             potential_energy = method.calculate_particle_insertion_potential_energy(
                 reaction_id=0)
             self.assertEqual(potential_energy, 0.)
+        if self.system.cell_system.get_state()["n_nodes"] > 1:
+            assert set(self.system.part.all().node) != {0}
         self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 1, 0])
         method.delete_particle(p_id=p3.id)
         self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 0, 0])

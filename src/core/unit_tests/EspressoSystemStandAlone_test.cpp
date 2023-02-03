@@ -33,6 +33,7 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/bonded_interaction_utils.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics/p3m.hpp"
 #include "electrostatics/registration.hpp"
@@ -93,6 +94,22 @@ REGISTER_CALLBACK(mpi_create_bonds_local)
 
 static void mpi_create_bonds(int harm_bond_id, int fene_bond_id) {
   mpi_call_all(mpi_create_bonds_local, harm_bond_id, fene_bond_id);
+}
+
+static void mpi_add_bond_local(int p_id, int bond_id,
+                               std::vector<int> const &partner_ids) {
+  auto p = ::cell_structure.get_local_particle(p_id);
+  if (p != nullptr and not p->is_ghost()) {
+    p->bonds().insert(BondView(bond_id, partner_ids));
+  }
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_add_bond_local)
+
+static void mpi_add_bond(int p_id, int bond_id,
+                         std::vector<int> const &partner_ids) {
+  mpi_call_all(mpi_add_bond_local, p_id, bond_id, partner_ids);
 }
 
 static void mpi_remove_translational_motion_local() {
@@ -274,8 +291,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
         *boost::get<HarmonicBond>(bonded_ia_params.at(harm_bond_id).get());
     auto const &fene_bond =
         *boost::get<FeneBond>(bonded_ia_params.at(fene_bond_id).get());
-    add_particle_bond(pid2, std::vector<int>{harm_bond_id, pid1});
-    add_particle_bond(pid2, std::vector<int>{fene_bond_id, pid3});
+    mpi_add_bond(pid2, harm_bond_id, {pid1});
+    mpi_add_bond(pid2, fene_bond_id, {pid3});
 
     // measure energies
     auto const obs_energy = mpi_calculate_energy();

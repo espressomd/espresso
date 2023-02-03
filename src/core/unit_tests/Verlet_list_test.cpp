@@ -36,6 +36,7 @@ namespace bdata = boost::unit_test::data;
 #include "MpiCallbacks.hpp"
 #include "Particle.hpp"
 #include "ParticleFactory.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
@@ -70,6 +71,18 @@ private:
   boost::mpi::communicator world;
 };
 
+#ifdef EXTERNAL_FORCES
+static void mpi_set_particle_ext_force_local(int p_id,
+                                             Utils::Vector3d const &ext_force) {
+  if (auto p = ::cell_structure.get_local_particle(p_id)) {
+    p->ext_force() = ext_force;
+  }
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_set_particle_ext_force_local)
+#endif // EXTERNAL_FORCES
+
 namespace Testing {
 /**
  * Helper class to setup an integrator and particle properties such that the
@@ -103,7 +116,8 @@ struct : public IntegratorHelper {
     mpi_call_all(mpi_set_integrator_sd_local);
   }
   void set_particle_properties(int pid) const override {
-    set_particle_ext_force(pid, {20., 0., 0.});
+    mpi_call_all(mpi_set_particle_ext_force_local, pid,
+                 Utils::Vector3d{20., 0., 0.});
   }
   char const *name() const override { return "SteepestDescent"; }
 } steepest_descent;

@@ -73,6 +73,18 @@ static std::unordered_map<int, int> particle_node;
  */
 static int max_seen_pid = -1;
 
+static auto rebuild_needed() {
+  auto is_rebuild_needed = ::particle_node.empty();
+  boost::mpi::broadcast(::comm_cart, is_rebuild_needed, 0);
+  return is_rebuild_needed;
+}
+
+static void mpi_synchronize_max_seen_pid_local() {
+  boost::mpi::broadcast(::comm_cart, ::max_seen_pid, 0);
+}
+
+REGISTER_CALLBACK(mpi_synchronize_max_seen_pid_local)
+
 void init_type_map(int type) {
   type_list_enable = true;
   if (type < 0)
@@ -98,8 +110,19 @@ static void add_id_to_type_map(int p_id, int type) {
     it->second.insert(p_id);
 }
 
+void on_particle_type_change_head(int p_id, int old_type, int new_type) {
+  if (type_list_enable) {
+    assert(::this_node == 0);
+    if (old_type != new_type) {
+      remove_id_from_map(p_id, old_type);
+    }
+    add_id_to_type_map(p_id, new_type);
+  }
+}
+
 void on_particle_type_change(int p_id, int type) {
   if (type_list_enable) {
+    assert(::this_node == 0);
     // check if the particle exists already and the type is changed, then remove
     // it from the list which contains it
     auto const &cur_par = get_particle_data(p_id);
@@ -254,8 +277,10 @@ static void mpi_who_has_local() {
   auto const n_part = static_cast<int>(local_particles.size());
   boost::mpi::gather(comm_cart, n_part, 0);
 
-  if (n_part == 0)
+  if (n_part == 0) {
+    mpi_synchronize_max_seen_pid_local();
     return;
+  }
 
   sendbuf.resize(n_part);
 
@@ -263,13 +288,12 @@ static void mpi_who_has_local() {
                  sendbuf.begin(), [](Particle const &p) { return p.id(); });
 
   comm_cart.send(0, some_tag, sendbuf);
+  mpi_synchronize_max_seen_pid_local();
 }
 
 REGISTER_CALLBACK(mpi_who_has_local)
 
-static void mpi_who_has() {
-  mpi_call(mpi_who_has_local);
-
+static void mpi_who_has_head() {
   auto local_particles = cell_structure.local_particles();
 
   static std::vector<int> n_parts;
@@ -295,12 +319,27 @@ static void mpi_who_has() {
       }
     }
   }
+  mpi_synchronize_max_seen_pid_local();
 }
 
 /**
  * @brief Rebuild the particle index.
  */
-static void build_particle_node() { mpi_who_has(); }
+static void build_particle_node() {
+  mpi_call(mpi_who_has_local);
+  mpi_who_has_head();
+}
+
+/**
+ * @brief Rebuild the particle index.
+ */
+static void build_particle_node_parallel() {
+  if (this_node == 0) {
+    mpi_who_has_head();
+  } else {
+    mpi_who_has_local();
+  }
+}
 
 int get_particle_node(int p_id) {
   if (p_id < 0) {
@@ -320,7 +359,10 @@ int get_particle_node(int p_id) {
   return needle->second;
 }
 
-void clear_particle_node() { particle_node.clear(); }
+void clear_particle_node() {
+  ::max_seen_pid = -1;
+  particle_node.clear();
+}
 
 static void clear_particle_type_map() {
   for (auto &kv : ::particle_type_map) {
@@ -381,7 +423,7 @@ static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
   return true;
 }
 
-static void particle_checks(int p_id, Utils::Vector3d const &pos) {
+void particle_checks(int p_id, Utils::Vector3d const &pos) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }
@@ -396,6 +438,7 @@ static void particle_checks(int p_id, Utils::Vector3d const &pos) {
 static void mpi_remove_particle_local(int p_id) {
   cell_structure.remove_particle(p_id);
   on_particle_change();
+  mpi_synchronize_max_seen_pid_local();
 }
 
 REGISTER_CALLBACK(mpi_remove_particle_local)
@@ -403,15 +446,13 @@ REGISTER_CALLBACK(mpi_remove_particle_local)
 static void mpi_remove_all_particles_local() {
   cell_structure.remove_all_particles();
   on_particle_change();
+  clear_particle_node();
+  clear_particle_type_map();
 }
 
 REGISTER_CALLBACK(mpi_remove_all_particles_local)
 
-void remove_all_particles() {
-  mpi_call_all(mpi_remove_all_particles_local);
-  clear_particle_node();
-  clear_particle_type_map();
-}
+void remove_all_particles() { mpi_call_all(mpi_remove_all_particles_local); }
 
 void remove_particle(int p_id) {
   auto const &cur_par = get_particle_data(p_id);
@@ -433,9 +474,55 @@ void remove_particle(int p_id) {
       max_seen_pid = calculate_max_seen_id();
     }
   }
+  mpi_call_all(mpi_synchronize_max_seen_pid_local);
 }
 
-static void mpi_make_new_particle_local(int p_id, Utils::Vector3d const &pos) {
+void remove_particle_parallel(int p_id) {
+  {
+    auto track_particle_types = ::type_list_enable;
+    boost::mpi::broadcast(::comm_cart, track_particle_types, 0);
+    if (track_particle_types) {
+      auto p = ::cell_structure.get_local_particle(p_id);
+      auto p_type = -1;
+      if (p != nullptr and not p->is_ghost()) {
+        if (this_node == 0) {
+          p_type = p->type();
+        } else {
+          ::comm_cart.send(0, 42, p->type());
+        }
+      } else if (this_node == 0) {
+        ::comm_cart.recv(boost::mpi::any_source, 42, p_type);
+      }
+      if (this_node == 0) {
+        assert(p_type != -1);
+        remove_id_from_map(p_id, p_type);
+      }
+    }
+  }
+
+  if (this_node == 0) {
+    particle_node[p_id] = -1;
+  }
+  mpi_remove_particle_local(p_id);
+  if (this_node == 0) {
+    particle_node.erase(p_id);
+    if (p_id == ::max_seen_pid) {
+      --::max_seen_pid;
+      // if there is a gap (i.e. there is no particle with id max_seen_pid - 1,
+      // then the cached value is invalidated and has to be recomputed (slow)
+      if (particle_node.count(::max_seen_pid) == 0 or
+          particle_node[::max_seen_pid] == -1) {
+        ::max_seen_pid = calculate_max_seen_id();
+      }
+    }
+  }
+  mpi_synchronize_max_seen_pid_local();
+}
+
+void mpi_make_new_particle_local(int p_id, Utils::Vector3d const &pos) {
+  if (rebuild_needed()) {
+    build_particle_node_parallel();
+  }
   auto const has_created = maybe_insert_particle(p_id, pos);
   on_particle_change();
 
@@ -447,6 +534,7 @@ static void mpi_make_new_particle_local(int p_id, Utils::Vector3d const &pos) {
     max_seen_pid = std::max(max_seen_pid, p_id);
     assert(not has_created or node == 0);
   }
+  mpi_synchronize_max_seen_pid_local();
 }
 
 REGISTER_CALLBACK(mpi_make_new_particle_local)
@@ -456,7 +544,7 @@ void mpi_make_new_particle(int p_id, Utils::Vector3d const &pos) {
   mpi_call_all(mpi_make_new_particle_local, p_id, pos);
 }
 
-static void mpi_set_particle_pos_local(int p_id, Utils::Vector3d const &pos) {
+void mpi_set_particle_pos_local(int p_id, Utils::Vector3d const &pos) {
   auto const has_moved = maybe_move_particle(p_id, pos);
   ::cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
@@ -520,6 +608,14 @@ std::vector<int> get_particle_ids() {
 int get_maximal_particle_id() {
   if (particle_node.empty())
     build_particle_node();
+
+  return max_seen_pid;
+}
+
+int get_maximal_particle_id_parallel() {
+  if (rebuild_needed()) {
+    build_particle_node_parallel();
+  }
 
   return max_seen_pid;
 }

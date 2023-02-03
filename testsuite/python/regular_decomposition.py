@@ -44,8 +44,10 @@ class RegularDecomposition(ut.TestCase):
             pos=n_part * [(0, 0, 0)], type=n_part * [1])
 
         # And now change their positions
-        particles.pos = self.system.box_l * \
-            np.random.random((n_part, 3))
+        particles.pos = self.system.box_l * np.random.random((n_part, 3))
+
+        # All particles should still be on node 0
+        np.testing.assert_array_equal(np.copy(particles.node), 0)
 
         # Add an interacting particle in a corner of the box
         self.system.part.add(pos=(0.01, 0.01, 0.01), type=0)
@@ -63,7 +65,7 @@ class RegularDecomposition(ut.TestCase):
 
         # Check that we can still access all the particles
         # This basically checks if part_node and local_particles
-        # is still in a valid state after the particle exchange
+        # are still in a valid state after the particle exchange
         self.assertEqual(sum(self.system.part.all().type), n_part)
 
         # Check that the system is still valid
@@ -73,6 +75,15 @@ class RegularDecomposition(ut.TestCase):
             self.assertEqual(new_energy, ref_energy)
         # force calculation
         self.system.integrator.run(0, recalc_forces=True)
+
+        # Check particle transfer back to node 0
+        old_nodes = np.copy(particles.node)
+        particles.pos = n_part * [(0., 0., 0.)]
+        new_nodes = np.copy(particles.node)
+        np.testing.assert_array_equal(new_nodes, old_nodes)
+        self.system.cell_system.resort()
+        new_nodes = np.copy(particles.node)
+        np.testing.assert_array_equal(new_nodes, 0)
 
     def test_resort(self):
         self.check_resort()
