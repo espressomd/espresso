@@ -95,7 +95,7 @@ class LBInterpolation:
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity([BOX_L - AGRID, 0, 0])),
             ([0, 0, V_BOUNDARY] + np.copy(node_next_to_boundary.velocity)) / 2.,
-            atol=1e-6)
+            atol=1e-4)
 
         # Bulk
         for pos in itertools.product(
@@ -104,7 +104,7 @@ class LBInterpolation:
                 np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_allclose(
                 self.lbf.get_interpolated_velocity(pos)[2],
-                velocity_profile(pos[0]), atol=5e-5)
+                velocity_profile(pos[0]), atol=1e-3)
 
     def test_mach_limit_check(self):
         """

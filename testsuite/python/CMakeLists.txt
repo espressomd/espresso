@@ -118,9 +118,9 @@ checkpoint_test(MODES therm_lb__p3m_cpu__lj__lb_walberla_cpu_ascii
 checkpoint_test(MODES therm_lb__elc_cpu__lj__lb_walberla_cpu_binary
                 MAX_NUM_PROC 2)
 checkpoint_test(MODES therm_lb__elc_gpu__lj__lb_walberla_cpu_ascii LABELS gpu
-                MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
+                MAX_NUM_PROC 2)
 checkpoint_test(MODES therm_lb__p3m_gpu__lj__lb_walberla_cpu_binary LABELS gpu
-                MAX_NUM_PROC 2) # TODO WALBERLA: use walberla_gpu
+                MAX_NUM_PROC 2)
 checkpoint_test(MODES therm_npt__int_npt)
 checkpoint_test(MODES int_sd__lj)
 checkpoint_test(MODES dp3m_cpu__therm_langevin__int_nvt)
@@ -271,16 +271,16 @@ python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2)
 python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 2)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 2)
 python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 2)
-# python_test(FILE lb_interpolation.py MAX_NUM_PROC 2) # TODO WALBERLA (#4381)
+python_test(FILE lb_interpolation.py MAX_NUM_PROC 2)
 python_test(FILE analyze_gyration_tensor.py MAX_NUM_PROC 1)
 python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
 python_test(FILE lb_boundary.py MAX_NUM_PROC 2)
 python_test(FILE lb_streaming.py MAX_NUM_PROC 2)
-# python_test(FILE lb_shear.py MAX_NUM_PROC 2) # TODO WALBERLA (#4381)
+python_test(FILE lb_shear.py MAX_NUM_PROC 2)
 python_test(FILE lb_thermostat.py MAX_NUM_PROC 1)
-# python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2) # TODO WALBERLA (dynamic UBB)
+# python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2) # TODO WALBERLA
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 LABELS long SUFFIX n_square)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 LABELS gpu)

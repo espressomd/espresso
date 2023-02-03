@@ -74,9 +74,6 @@ class LBBuoyancy:
 
         sphere_volume = 4. / 3. * np.pi * RADIUS**3
 
-        # TODO WALBERLA: (#4381)
-        self.skipTest("boundary forces not implemented at the moment")
-
         # Equilibration
         last_force = np.inf * np.ones(3)
         self.system.integrator.run(100)

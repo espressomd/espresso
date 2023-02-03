@@ -486,16 +486,16 @@ class TestCheckpoint(ut.TestCase):
 
         # check exception mechanism
         lbf_cpt_root = lbf_cpt_path.parent
-        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+        with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = lbf_cpt_root / "unknown_dir" / "lb.cpt"
             lbf.save_checkpoint(str(invalid_path), lbf_cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'unit test error'):
+        with self.assertRaisesRegex(RuntimeError, "unit test error"):
             lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -1)
-        with self.assertRaisesRegex(RuntimeError, 'could not write to'):
+        with self.assertRaisesRegex(RuntimeError, "could not write to"):
             lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -2)
-        with self.assertRaisesRegex(ValueError, 'Unknown mode -3'):
+        with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
             lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -3)
-        with self.assertRaisesRegex(ValueError, 'Unknown mode 2'):
+        with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
             lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), 2)
 
         # deactivate LB actor
@@ -531,16 +531,16 @@ class TestCheckpoint(ut.TestCase):
 
         # check exception mechanism
         ek_cpt_root = ek_cpt_path.parent
-        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+        with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = ek_cpt_root / "unknown_dir" / "ek.cpt"
             ek_species.save_checkpoint(str(invalid_path), lbf_cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'unit test error'):
+        with self.assertRaisesRegex(RuntimeError, "unit test error"):
             ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -1)
-        with self.assertRaisesRegex(RuntimeError, 'could not write to'):
+        with self.assertRaisesRegex(RuntimeError, "could not write to"):
             ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -2)
-        with self.assertRaisesRegex(ValueError, 'Unknown mode -3'):
+        with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
             ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -3)
-        with self.assertRaisesRegex(ValueError, 'Unknown mode 2'):
+        with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
             ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), 2)
 
         # read the valid EK checkpoint file

@@ -97,9 +97,9 @@ class LBShearCommon:
 
         """
         self.tearDown()
-        self.setUp()
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
+        self.setUp()
         self.system.actors.add(self.lbf)
         self.lbf.clear_boundaries()
 
