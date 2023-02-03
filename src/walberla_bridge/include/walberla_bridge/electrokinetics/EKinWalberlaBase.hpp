@@ -51,12 +51,14 @@ public:
   virtual bool set_node_flux_boundary(const Utils::Vector3i &node,
                                       const Utils::Vector3d &flux) = 0;
   [[nodiscard]] virtual boost::optional<Utils::Vector3d>
-  get_node_flux_at_boundary(const Utils::Vector3i &node) const = 0;
+  get_node_flux_at_boundary(const Utils::Vector3i &node,
+                            bool consider_ghosts = false) const = 0;
   virtual bool remove_node_from_flux_boundary(const Utils::Vector3i &node) = 0;
   virtual bool set_node_density_boundary(const Utils::Vector3i &node,
                                          double density) = 0;
   [[nodiscard]] virtual boost::optional<double>
-  get_node_density_at_boundary(const Utils::Vector3i &node) const = 0;
+  get_node_density_at_boundary(const Utils::Vector3i &node,
+                               bool consider_ghosts = false) const = 0;
   virtual bool
   remove_node_from_density_boundary(const Utils::Vector3i &node) = 0;
   [[nodiscard]] virtual boost::optional<bool>

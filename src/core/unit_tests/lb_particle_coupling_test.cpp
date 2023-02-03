@@ -515,7 +515,7 @@ bool test_lb_domain_mismatch_local() {
   auto const params = LBWalberlaParams(0.5, 0.01);
   ::node_grid = node_grid_reversed;
   auto const lattice = std::make_shared<LatticeWalberla>(
-      Utils::Vector3i{12, 12, 12}, node_grid_reversed, n_ghost_layers);
+      Utils::Vector3i{12, 12, 12}, node_grid_original, n_ghost_layers);
   auto const ptr = init_lb_walberla(lattice, params, 1.0, 1.0, 0.0, 0, false);
   ::node_grid = node_grid_original;
   if (world.rank() == 0) {

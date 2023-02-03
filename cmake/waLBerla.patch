@@ -1,3 +1,6 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+Fix for a regression in the management of the FFTW library
+https://i10git.cs.fau.de/walberla/walberla/-/issues/191
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -29,7 +29,7 @@ if ( CMAKE_CUDA_COMPILER )
@@ -9,3 +12,27 @@
     add_subdirectory( fft )
  endif()
  add_subdirectory( field )
+diff --git a/src/blockforest/Initialization.cpp b/src/blockforest/Initialization.cpp
+Fix the domain decomposition of a uniform blockforest created with the
+walberla::blockforest::createUniformBlockGrid() function. When the first
+blockforest is created, if the Cartesian communicator isn't set yet, it will
+be configured as a side-effect, and the blocks in the forest will be attached
+to MPI ranks in the correct order. When subsequent blockforests are created,
+if the Cartesian communicator still exists and is in a valid state, it will
+not be reconfigured, and the processIdMap vector will not be populated. In
+this case, the walberla::blockforest::CartesianDistribution() attaches the
+blocks to MPI ranks in increasing order, completely ignoring the Cartesian
+topology. When running a simulation on 4 MPI ranks, the second time a lattice
+is created (e.g. when reloading from a checkpoint file), MPI ranks 1 and 2
+are exchanged in the blockforest, and particle coupling becomes incorrect.
+--- a/src/blockforest/Initialization.cpp
++++ b/src/blockforest/Initialization.cpp
+@@ -232,6 +232,8 @@ createBlockForest(      const AABB& domainAABB,
+       {
+          mpiManager->createCartesianComm( numberOfXProcesses, numberOfYProcesses, numberOfZProcesses, xPeriodic, yPeriodic, zPeriodic );
+ 
++      }
++      {
+          processIdMap.resize( numberOfProcesses );
+ 
+          for( uint_t z = 0; z != numberOfZProcesses; ++z ) {

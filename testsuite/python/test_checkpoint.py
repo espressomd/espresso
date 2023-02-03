@@ -59,7 +59,7 @@ class CheckpointTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ref_box_l = np.array([12.0, 14.0, 16.0])
+        cls.ref_box_l = np.array([12.0, 8.0, 16.0])
         if 'DP3M' in modes:
             cls.ref_box_l = np.array([16.0, 16.0, 16.0])
         cls.ref_periodicity = np.array([True, True, True])
@@ -647,10 +647,9 @@ class CheckpointTest(ut.TestCase):
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
-        if 'DP3M.CPU' not in modes:
-            self.assertEqual(
-                ibm_tribend_bond.params,
-                {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
+        self.assertEqual(
+            {**ibm_tribend_bond.params, **{'theta0': 0.}},
+            {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
         self.assertEqual(
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})

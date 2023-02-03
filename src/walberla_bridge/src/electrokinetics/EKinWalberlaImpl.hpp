@@ -396,8 +396,9 @@ public:
   }
 
   [[nodiscard]] boost::optional<Utils::Vector3d>
-  get_node_flux_at_boundary(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(get_lattice(), node, true);
+  get_node_flux_at_boundary(const Utils::Vector3i &node,
+                            bool consider_ghosts = false) const override {
+    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary_flux->node_is_boundary(node))
       return {boost::none};
 
@@ -427,8 +428,9 @@ public:
   }
 
   [[nodiscard]] boost::optional<double>
-  get_node_density_at_boundary(const Utils::Vector3i &node) const override {
-    auto const bc = get_block_and_cell(get_lattice(), node, true);
+  get_node_density_at_boundary(const Utils::Vector3i &node,
+                               bool consider_ghosts = false) const override {
+    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary_density->node_is_boundary(node))
       return {boost::none};
 
