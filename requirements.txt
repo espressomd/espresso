@@ -22,6 +22,7 @@ sphinx-toggleprompt==0.2.0
 sphinxcontrib-bibtex>=2.5.0
 numpydoc>=1.5.0
 # jupyter dependencies
+nbconvert==6.5.1
 jupyter_contrib_nbextensions==0.5.1
 tqdm>=4.57.0
 # linters and their dependencies

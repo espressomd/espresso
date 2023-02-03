@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-22.04:3fd42369f84239b8c4f5d77067d404789c55ff44
+image: ghcr.io/espressomd/docker/ubuntu-22.04:4dffd5329d7dc2ac63e0db9ccc94d626df5eb029
 
 stages:
   - prepare
