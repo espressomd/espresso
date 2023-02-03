@@ -1,0 +1,29 @@
+name: 'publish-ppa-package'
+description: 'Publish a PPA package'
+branding:
+  color: orange
+  icon: package
+inputs:
+  repository:
+    description: 'The PPA respository, e.g. ppa:yuezk/globalprotect-openconnect'
+    required: true
+  gpg_private_key:
+    description: 'GPG private key exported as an ASCII armored version or its base64 encoding'
+    required: true
+  gpg_passphrase:
+    description: 'Passphrase of the GPG private key'
+    required: false
+  pkgdir:
+    description: 'The package directory which contains the debian folder'
+    required: true
+  series:
+    description: 'The series to which the package will be published, separated by space. e.g., "bionic focal"'
+    required: false
+  is_native:
+    description: 'Indicates whether it is a native debian package or not'
+    required: false
+    default: ''
+
+runs:
+  using: docker
+  image: Dockerfile
