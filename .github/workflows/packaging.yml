@@ -16,7 +16,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p ./artifacts/deb-build
-          git-archive-all --force-submodules --prefix=espresso-${GITHUB_REF##*/}/ ./artifacts/espresso-${GITHUB_REF##*/}.tar.gz
+          git archive --prefix=espresso-${GITHUB_REF##*/}/ -o ./artifacts/espresso-${GITHUB_REF##*/}.tar.gz HEAD
           cd ./artifacts
           cp *.tar.gz deb-build && cd deb-build
           tar xf *.tar.gz
