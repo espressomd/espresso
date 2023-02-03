@@ -12,6 +12,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
+
+      - name: Build
+        run: |
+          mkdir -p ./artifacts/deb-build
+          git-archive-all --force-submodules --prefix=espresso-${GITHUB_REF##*/}/ ./artifacts/espresso-${GITHUB_REF##*/}.tar.gz
+          cd ./artifacts
+          cp *.tar.gz deb-build && cd deb-build
+          tar xf *.tar.gz
       # - name: Build package
       #   id: build
       #   uses: ./.github/actions/build_ubuntu_package
@@ -26,7 +34,7 @@ jobs:
           repository: 'ppa:bishwash369/espressoppa'
           gpg_private_key: ${{ secrets.ESPRESSO_PPA_PRIVATE_KEY }}
           gpg_passphrase: ${{ secrets.ESPRESSO_PPA_PASSPHRASE }}
-          pkgdir: '${{ github.workspace }}'
+          pkgdir: '${{ github.workspace }}/artifacts/deb-build/espresso*/'
 
           
 
