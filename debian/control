@@ -3,9 +3,9 @@ Section: science
 Priority: optional
 Maintainer: Espresso Maintainers <espressomd-devel@nongnu.org>
 Build-Depends:
- cmake (=3.18),
+ cmake (>= 3.18),
  cython3,
- debhelper-compat (=12),
+ debhelper-compat (>= 12),
  fftw3-dev,
  libblas-dev,
  libboost-dev,
