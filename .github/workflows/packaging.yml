@@ -16,7 +16,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p ./artifacts/deb-build
-          git archive --prefix=espresso-4.2/ -o ./artifacts/espresso-4.2.tar.gz HEAD
+          git archive --prefix=espresso-espresso-4.2/ -o ./artifacts/espresso-4.2.tar.gz HEAD
           cd ./artifacts
           cp *.tar.gz deb-build && cd deb-build
           tar xf *.tar.gz
@@ -26,7 +26,7 @@ jobs:
       # - name: Test package
       #   uses: ./.github/actions/test_ubuntu_package
       #   with:
-      #     package_file: ${{steps.build.outputs.package_file }}
+      ##     package_file: ${{steps.build.outputs.package_file }}
 
       - name: Publish PPA
         uses: ./.github/actions/publish-ppa-package
