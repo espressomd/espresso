@@ -17,27 +17,32 @@
 
 import numpy as np
 import warnings
+import math
+import sys
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .code_features import has_features
 from . import utils
 
 
 @script_interface_register
 class SingleReaction(ScriptInterfaceHelper):
     _so_name = "ReactionMethods::SingleReaction"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("get_acceptance_rate",)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not 'sip' in kwargs:
             utils.check_valid_keys(self.valid_keys(), kwargs.keys())
+        self.reaction_types = tuple(
+            sorted(set(tuple(self.reactant_types) + tuple(self.product_types))))
 
     def valid_keys(self):
-        return ("reactant_types", "reactant_coefficients",
-                "product_types", "product_coefficients", "gamma")
+        return self.required_keys()
 
     def required_keys(self):
-        return ("reactant_types", "reactant_coefficients",
-                "product_types", "product_coefficients", "gamma")
+        return {"reactant_types", "reactant_coefficients", "gamma",
+                "product_types", "product_coefficients"}
 
     def make_backward_reaction(self):
         return SingleReaction(
@@ -47,7 +52,6 @@ class SingleReaction(ScriptInterfaceHelper):
             product_coefficients=self.reactant_coefficients)
 
 
-@script_interface_register
 class ReactionAlgorithm(ScriptInterfaceHelper):
     """
 
@@ -67,7 +71,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Thermal energy of the system in simulation units
     exclusion_range : :obj:`float`
         Minimal distance from any particle, within which new particles will not
-        be inserted. 
+        be inserted.
     seed : :obj:`int`
         Initial counter value (or seed) of the Mersenne Twister RNG.
     exclusion_radius_per_type : :obj:`dict`, optional
@@ -201,14 +205,6 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     get_non_interacting_type()
         Returns the type which is used for hiding particle
 
-    reaction()
-        Performs randomly selected reactions.
-
-        Parameters
-        ----------
-        reaction_steps : :obj:`int`, optional
-            The number of reactions to be performed at once, defaults to 1.
-
     displacement_mc_move_for_particles_of_type()
         Performs displacement Monte Carlo moves for particles of a given type.
         New positions of the displaced particles are chosen from the whole box
@@ -254,29 +250,15 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         Parameters
         ----------
         reaction_id : :obj:`int`
-            Reaction id
+            Identifier of the reaction to modify.
+            Will be multiplied by 2 internally!
         gamma : :obj:`float`
-            New reaction constant
-
-    delete_reaction()
-        Delete a reaction from the set of used reactions
-        (the forward and backward reaction).
-        The ``reaction_id`` which is assigned to a reaction
-        depends on the order in which :meth:`add_reaction` was called.
-        The 0th reaction has ``reaction_id=0``, the next added
-        reaction needs to be addressed with ``reaction_id=1``, etc.
-        After the deletion of a reaction subsequent reactions
-        take the ``reaction_id`` of the deleted reaction.
-
-        Parameters
-        ----------
-        reaction_id : :obj:`int`
-            Reaction id
+            New reaction constant for the forward reaction.
 
     """
 
     _so_name = "ReactionMethods::ReactionAlgorithm"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("remove_constraint",
                         "get_wall_constraints_in_z_direction",
                         "set_wall_constraints_in_z_direction",
@@ -286,21 +268,22 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
                         "get_acceptance_rate_reaction",
                         "set_non_interacting_type",
                         "get_non_interacting_type",
-                        "reaction",
                         "displacement_mc_move_for_particles_of_type",
-                        "check_reaction_method",
                         "change_reaction_constant",
-                        "delete_reaction",
                         "delete_particle",
                         )
 
     def __init__(self, **kwargs):
+        if self._so_name == ReactionAlgorithm._so_name:
+            raise RuntimeError(
+                f"Base class '{self.__class__.__name__}' cannot be instantiated")
         if 'exclusion_radius' in kwargs:
             raise KeyError(
                 'the keyword `exclusion_radius` is obsolete. Currently, the equivalent keyword is `exclusion_range`')
         super().__init__(**kwargs)
         if not 'sip' in kwargs:
             utils.check_valid_keys(self.valid_keys(), kwargs.keys())
+        self._rebuild_reaction_cache()
 
     def valid_keys(self):
         return {"kT", "exclusion_range", "seed",
@@ -338,6 +321,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         """
         default_charges = kwargs.pop("default_charges")
         neutrality_check = kwargs.pop("check_for_electroneutrality", True)
+        if not isinstance(default_charges, dict):
+            raise TypeError("Argument 'default_charges' needs to be a dict")
         forward_reaction = SingleReaction(**kwargs)
         backward_reaction = forward_reaction.make_backward_reaction()
         if neutrality_check:
@@ -345,17 +330,57 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
                 type2charge=default_charges,
                 reaction=forward_reaction)
 
+        old_default_charges = self.default_charges
+        for ptype, charge in default_charges.items():
+            if ptype in old_default_charges:
+                if abs(old_default_charges[ptype] - charge) > 1e-10:
+                    raise ValueError(
+                        f"Cannot override charge on particle type {ptype} (from {old_default_charges[ptype]} to {charge})")
+        for ptype, charge in default_charges.items():
+            if ptype not in old_default_charges:
+                self.call_method(
+                    "set_charge_of_type",
+                    type=ptype,
+                    charge=charge)
+
         self.call_method("add_reaction", reaction=forward_reaction)
         self.call_method("add_reaction", reaction=backward_reaction)
+        self.check_reaction_method()
+        self._rebuild_reaction_cache()
 
-        for ptype, charge in default_charges.items():
-            self.call_method("set_charge_of_type", type=ptype, charge=charge)
-        self.call_method("check_reaction_method")
+    def delete_reaction(self, **kwargs):
+        """
+        Delete a reaction from the set of used reactions
+        (the forward and backward reaction).
+        The ``reaction_id`` which is assigned to a reaction
+        depends on the order in which :meth:`add_reaction` was called.
+        The 0th reaction has ``reaction_id=0``, the next added
+        reaction needs to be addressed with ``reaction_id=1``, etc.
+        After the deletion of a reaction subsequent reactions
+        take the ``reaction_id`` of the deleted reaction.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            Reaction id
+
+        """
+        self.call_method("delete_reaction", **kwargs)
+        self._rebuild_reaction_cache()
+
+    def check_reaction_method(self):
+        if len(self.reactions) == 0:
+            raise RuntimeError("Reaction system not initialized")
+
+        # charges of all reactive types need to be known
+        if has_features("ELECTROSTATICS"):
+            for reaction in self.reactions:
+                for p_type in reaction.reaction_types:
+                    if p_type not in self.default_charges:
+                        raise RuntimeError(
+                            f"Forgot to assign charge to type {p_type}")
 
     def _check_charge_neutrality(self, type2charge, reaction):
-        if not isinstance(type2charge, dict):
-            raise ValueError(
-                "No dictionary for relation between types and default charges provided.")
         charges = np.array(list(type2charge.values()))
         if np.count_nonzero(charges) == 0:
             # all particles have zero charge
@@ -374,6 +399,102 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         if abs(net_charge_change) / min_abs_nonzero_charge > 1e-10:
             raise ValueError("Reaction system is not charge neutral")
 
+    def _rebuild_reaction_cache(self):
+        """
+        Maintain a local cache of the Python representation of the
+        script interface reactions. This helps reducing the overhead
+        when calculating the acceptance probability.
+        """
+        self._reactions_cache = [x for x in self.reactions]
+
+    def reaction(self, reaction_steps):
+        """
+        Performs randomly selected reactions.
+
+        Parameters
+        ----------
+        reaction_steps : :obj:`int`, optional
+            The number of reactions to be performed at once, defaults to 1.
+
+        """
+        self.call_method("setup_bookkeeping_of_empty_pids")
+        E_pot = self.call_method("potential_energy")
+        for _ in range(reaction_steps):
+            reaction_id = self.call_method("get_random_reaction_index")
+            E_pot = self.generic_oneway_reaction(reaction_id, E_pot)
+
+    def calculate_acceptance_probability(self, reaction_id, E_pot_diff):
+        """
+        Calculate the acceptance probability of a Monte Carlo move.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            Identifier of the reaction that was carried out in the move.
+        E_pot_diff : :obj:`float`
+            The potential energy difference for the move.
+
+        Returns
+        -------
+        :obj:`float`
+            The acceptance probability.
+
+        """
+        factorial_expr = self.call_method("calculate_factorial_expression")
+        reaction = self._reactions_cache[reaction_id]
+        return self.get_volume()**reaction.nu_bar * reaction.gamma * \
+            factorial_expr * math.exp(-E_pot_diff / self.kT)
+
+    def generic_oneway_reaction(self, reaction_id, E_pot_old):
+        """
+        Carry out a generic one-way chemical reaction of the type
+        `A+B+...+G +... --> K+...X + Z +...`
+
+        You need to use `2A --> B` instead of `A+A --> B` since
+        in the latter you assume distinctness of the particles, however both
+        ways to describe the reaction are equivalent in the thermodynamic limit
+        (large particle numbers). Furthermore, the order of the reactant and
+        product types matters since particles will be replaced in that order!
+        If there are less reactants than products, new product particles are
+        created randomly in the box. Reactants get their type and charge
+        changed to the corresponding type and charge of the products.
+        If there are more reactants than products, excess reactant particles
+        are deleted.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            Identifier of the reaction to attempt.
+        E_pot_old : :obj:`float`
+            The current potential energy.
+
+        Returns
+        -------
+        E_pot_new : :obj:`float`
+            The potential energy after the move.
+
+        """
+        try:
+            E_pot_new = self.call_method(
+                "generic_oneway_reaction_part_1", reaction_id=reaction_id)
+            if E_pot_new is None:
+                return E_pot_old
+            E_pot_diff = E_pot_new - E_pot_old
+            bf = self.calculate_acceptance_probability(reaction_id, E_pot_diff)
+            return self.call_method("generic_oneway_reaction_part_2",
+                                    reaction_id=reaction_id, bf=bf,
+                                    E_pot_new=E_pot_new, E_pot_old=E_pot_old)
+        except BaseException as err:
+            tb = sys.exc_info()[2]
+            raise RuntimeError(
+                "An exception was raised by a chemical reaction; the particle "
+                "state tracking is no longer guaranteed to be correct! -- "
+                f"{err}").with_traceback(tb)
+
+    def _check_reaction_index(self, reaction_index):
+        if reaction_index < 0 or reaction_index >= len(self.reactions):
+            raise IndexError(f"No reaction with id {reaction_index}")
+
     def get_status(self):
         """
         Returns the status of the reaction ensemble in a dictionary containing
@@ -381,19 +502,19 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
 
         """
 
-        self.call_method("check_reaction_method")
+        self.check_reaction_method()
         reactions_list = []
 
-        for core_reaction in self.reactions:
-            reaction = {"reactant_coefficients": core_reaction.reactant_coefficients,
-                        "reactant_types": core_reaction.reactant_types,
-                        "product_types": core_reaction.product_types,
-                        "product_coefficients": core_reaction.product_coefficients,
-                        "reactant_types": core_reaction.reactant_types,
-                        "gamma": core_reaction.gamma}
+        for reaction in self.reactions:
+            reaction = {"reactant_coefficients": reaction.reactant_coefficients,
+                        "reactant_types": reaction.reactant_types,
+                        "product_types": reaction.product_types,
+                        "product_coefficients": reaction.product_coefficients,
+                        "reactant_types": reaction.reactant_types,
+                        "gamma": reaction.gamma}
             reactions_list.append(reaction)
 
-        return {"reactions": reactions_list, "kT": self.kT, 
+        return {"reactions": reactions_list, "kT": self.kT,
                 "exclusion_range": self.exclusion_range}
 
 
@@ -404,7 +525,6 @@ class ReactionEnsemble(ReactionAlgorithm):
     """
 
     _so_name = "ReactionMethods::ReactionEnsemble"
-    _so_creation_policy = "LOCAL"
 
 
 @script_interface_register
@@ -423,7 +543,6 @@ class ConstantpHEnsemble(ReactionAlgorithm):
 
     """
     _so_name = "ReactionMethods::ConstantpHEnsemble"
-    _so_creation_policy = "LOCAL"
 
     def valid_keys(self):
         return {"kT", "exclusion_range", "seed",
@@ -431,6 +550,29 @@ class ConstantpHEnsemble(ReactionAlgorithm):
 
     def required_keys(self):
         return {"kT", "exclusion_range", "seed", "constant_pH"}
+
+    def calculate_acceptance_probability(self, reaction_id, E_pot_diff):
+        """
+        Calculate the acceptance probability of a Monte Carlo move.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            Identifier of the reaction that was carried out in the move.
+        E_pot_diff : :obj:`float`
+            The potential energy difference for the move.
+
+        Returns
+        -------
+        :obj:`float`
+            The acceptance probability.
+
+        """
+        factorial_expr = self.call_method("calculate_factorial_expression")
+        reaction = self._reactions_cache[reaction_id]
+        ln_bf = E_pot_diff - reaction.nu_bar * self.kT * math.log(10.) * (
+            self.constant_pH + reaction.nu_bar * math.log10(reaction.gamma))
+        return factorial_expr * math.exp(-ln_bf / self.kT)
 
     def add_reaction(self, *args, **kwargs):
         warn_msg = (
@@ -479,7 +621,6 @@ class WidomInsertion(ReactionAlgorithm):
     """
 
     _so_name = "ReactionMethods::WidomInsertion"
-    _so_creation_policy = "LOCAL"
 
     def required_keys(self):
         return {"kT", "seed"}
@@ -495,7 +636,7 @@ class WidomInsertion(ReactionAlgorithm):
         """
         Measures the potential energy when particles are inserted in the
         system following the reaction provided in ``reaction_id``. Please
-        define the insertion moves first by calling the method
+        define the insertion moves by calling the method
         :meth:`~ReactionAlgorithm.add_reaction` (with only product types
         specified).
 
@@ -507,16 +648,19 @@ class WidomInsertion(ReactionAlgorithm):
         Parameters
         ----------
         reaction_id : :obj:`int`
-            Reaction identifier.
-        """
-        # make inverse widom scheme (deletion of particles) inaccessible.
-        # The deletion reactions are the odd reaction_ids
+            Reaction identifier. Will be multiplied by 2 internally to
+            skip reverse reactions, i.e. deletion reactions!
 
+        Returns
+        -------
+        :obj:`float`
+            The particle insertion potential energy.
+
+        """
         return self.call_method(
             "calculate_particle_insertion_potential_energy", **kwargs)
 
-    def calculate_excess_chemical_potential(
-            self, **kwargs):
+    def calculate_excess_chemical_potential(self, **kwargs):
         """
         Given a set of samples of the particle insertion potential energy,
         calculates the excess chemical potential and its statistical error.
@@ -534,6 +678,7 @@ class WidomInsertion(ReactionAlgorithm):
             Mean excess chemical potential.
         error : :obj:`float`
             Standard error of the mean.
+
         """
 
         def do_block_analysis(samples, N_blocks):

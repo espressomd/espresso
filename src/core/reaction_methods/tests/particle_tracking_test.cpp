@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the particle tracking mechanism. */
-
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE Particle tracking test
 #define BOOST_TEST_ALTERNATIVE_INIT_API

@@ -96,20 +96,15 @@ Variant System::do_call_method(std::string const &name,
     return {};
   }
   if (name == "setup_type_map") {
-    if (context()->is_head_node()) {
-      auto const types = get_value<std::vector<int>>(parameters, "type_list");
-      for (auto const type : types) {
-        init_type_map(type);
-      }
+    auto const types = get_value<std::vector<int>>(parameters, "type_list");
+    for (auto const type : types) {
+      ::init_type_map(type);
     }
     return {};
   }
   if (name == "number_of_particles") {
-    if (context()->is_head_node()) {
-      auto const type = get_value<int>(parameters, "type");
-      return number_of_particles_with_type(type);
-    }
-    return {};
+    auto const type = get_value<int>(parameters, "type");
+    return ::number_of_particles_with_type(type);
   }
   if (name == "velocity_difference") {
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");

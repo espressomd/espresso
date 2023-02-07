@@ -19,11 +19,7 @@ include(unit_test)
 
 unit_test(NAME SingleReaction_test SRC SingleReaction_test.cpp DEPENDS
           espresso::core)
-unit_test(NAME ConstantpHEnsemble_test SRC ConstantpHEnsemble_test.cpp DEPENDS
-          espresso::core Boost::mpi MPI::MPI_CXX)
 unit_test(NAME ReactionAlgorithm_test SRC ReactionAlgorithm_test.cpp DEPENDS
-          espresso::core Boost::mpi MPI::MPI_CXX)
-unit_test(NAME ReactionEnsemble_test SRC ReactionEnsemble_test.cpp DEPENDS
           espresso::core Boost::mpi MPI::MPI_CXX)
 unit_test(NAME particle_tracking_test SRC particle_tracking_test.cpp DEPENDS
           espresso::core Boost::mpi MPI::MPI_CXX)

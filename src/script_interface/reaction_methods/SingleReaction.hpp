@@ -20,9 +20,12 @@
 #ifndef SCRIPT_INTERFACE_REACTION_METHODS_SINGLE_REACTION_HPP
 #define SCRIPT_INTERFACE_REACTION_METHODS_SINGLE_REACTION_HPP
 
-#include "core/reaction_methods/SingleReaction.hpp"
 #include "script_interface/ScriptInterface.hpp"
-#include <numeric>
+
+#include "core/reaction_methods/SingleReaction.hpp"
+
+#include <memory>
+#include <string>
 #include <vector>
 
 namespace ScriptInterface {
@@ -32,6 +35,7 @@ class SingleReaction : public AutoParameters<SingleReaction> {
 public:
   SingleReaction() {
     add_parameters({
+        {"nu_bar", AutoParameter::read_only, [this]() { return m_sr->nu_bar; }},
         {"gamma", AutoParameter::read_only, [this]() { return m_sr->gamma; }},
         {"reactant_types", AutoParameter::read_only,
          [this]() { return m_sr->reactant_types; }},
@@ -45,21 +49,31 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_sr = std::make_shared<::ReactionMethods::SingleReaction>(
-        get_value<double>(params, "gamma"),
-        get_value<std::vector<int>>(params, "reactant_types"),
-        get_value<std::vector<int>>(params, "reactant_coefficients"),
-        get_value<std::vector<int>>(params, "product_types"),
-        get_value<std::vector<int>>(params, "product_coefficients"));
+    context()->parallel_try_catch([&]() {
+      m_sr = std::make_shared<::ReactionMethods::SingleReaction>(
+          get_value<double>(params, "gamma"),
+          get_value<std::vector<int>>(params, "reactant_types"),
+          get_value<std::vector<int>>(params, "reactant_coefficients"),
+          get_value<std::vector<int>>(params, "product_types"),
+          get_value<std::vector<int>>(params, "product_coefficients"));
+    });
   }
 
   std::shared_ptr<::ReactionMethods::SingleReaction> get_reaction() {
     return m_sr;
   }
 
+  Variant do_call_method(std::string const &name, VariantMap const &) override {
+    if (name == "get_acceptance_rate") {
+      return m_sr->get_acceptance_rate();
+    }
+    return {};
+  }
+
 private:
   std::shared_ptr<::ReactionMethods::SingleReaction> m_sr;
 };
+
 } /* namespace ReactionMethods */
 } /* namespace ScriptInterface */
 

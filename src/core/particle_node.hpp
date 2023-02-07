@@ -36,6 +36,11 @@
 #include <cstddef>
 #include <vector>
 
+namespace type_tracking {
+auto constexpr any_type = -2;
+auto constexpr new_part = -3;
+} // namespace type_tracking
+
 /**
  * @brief Get particle data.
  *
@@ -102,7 +107,7 @@ void remove_all_particles();
 
 void init_type_map(int type);
 void on_particle_type_change(int p_id, int type);
-void on_particle_type_change_head(int p_id, int old_type, int new_type);
+void on_particle_type_change_parallel(int p_id, int old_type, int new_type);
 
 /** Find a particle of given type and return its id */
 int get_random_p_id(int type, int random_index_in_type_map);
@@ -130,6 +135,7 @@ int get_particle_node(int p_id);
  * @return Sorted ids of all existing particles.
  */
 std::vector<int> get_particle_ids();
+std::vector<int> get_particle_ids_parallel();
 
 /**
  * @brief Get maximal particle id.

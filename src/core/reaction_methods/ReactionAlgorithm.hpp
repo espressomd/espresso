@@ -23,13 +23,14 @@
 
 #include "SingleReaction.hpp"
 
+#include "Particle.hpp"
 #include "random.hpp"
 
 #include <utils/Vector.hpp>
 
 #include <functional>
-#include <map>
 #include <memory>
+#include <optional>
 #include <random>
 #include <stdexcept>
 #include <tuple>
@@ -37,53 +38,23 @@
 #include <utility>
 #include <vector>
 
+namespace boost::mpi {
+class communicator;
+} // namespace boost::mpi
+
 namespace ReactionMethods {
-
-/** @brief Bookkeeping for particle changes. */
-struct ParticleChangeRecorder {
-  explicit ParticleChangeRecorder(std::function<void(int)> &&deleter)
-      : m_deleter{deleter} {}
-
-  struct StoredParticleProperty {
-    int p_id;
-    int type;
-    double charge;
-  };
-
-  /** @brief Record particle creation. */
-  void save_created_particle(int p_id) { m_created.push_back(p_id); }
-
-  /** @brief Record particle state before it is hidden. */
-  void save_hidden_particle(StoredParticleProperty &&item) {
-    m_hidden.push_back(item);
-  }
-
-  /** @brief Record particle state before a property change. */
-  void save_changed_particle(StoredParticleProperty &&item) {
-    m_changed.push_back(item);
-  }
-
-  /** @brief Delete hidden particles from the system. */
-  void delete_hidden_particles() const;
-
-  /** @brief Restore original system state. */
-  void restore_original_state() const;
-
-private:
-  std::function<void(int)> m_deleter;
-  std::vector<int> m_created;
-  std::vector<StoredParticleProperty> m_hidden;
-  std::vector<StoredParticleProperty> m_changed;
-};
 
 /** Base class for reaction ensemble methods */
 class ReactionAlgorithm {
+private:
+  boost::mpi::communicator const &m_comm;
 
 public:
   ReactionAlgorithm(
-      int seed, double kT, double exclusion_range,
+      boost::mpi::communicator const &comm, int seed, double kT,
+      double exclusion_range,
       std::unordered_map<int, double> const &exclusion_radius_per_type)
-      : kT{kT}, exclusion_range{exclusion_range},
+      : m_comm{comm}, kT{kT}, exclusion_range{exclusion_range},
         m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
     if (kT < 0.) {
@@ -99,7 +70,7 @@ public:
   virtual ~ReactionAlgorithm() = default;
 
   std::vector<std::shared_ptr<SingleReaction>> reactions;
-  std::map<int, double> charges_of_types;
+  std::unordered_map<int, double> charges_of_types;
   double kT;
   /**
    * Hard sphere radius. If particles are closer than this value,
@@ -147,8 +118,6 @@ public:
     m_max_exclusion_range = max_exclusion_range;
   }
 
-  void do_reaction(int reaction_steps);
-  void check_reaction_method() const;
   void remove_constraint() { m_reaction_constraint = ReactionConstraint::NONE; }
   void set_cyl_constraint(double center_x, double center_y, double radius);
   void set_slab_constraint(double slab_start_z, double slab_end_z);
@@ -166,37 +135,86 @@ public:
     reactions.erase(reactions.begin() + reaction_id);
   }
 
-  bool displacement_move_for_particles_of_type(int type, int n_part);
-
   bool particle_inside_exclusion_range_touched = false;
   bool neighbor_search_order_n = true;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
-  /**
-   * @brief Carry out a generic one-way chemical reaction.
-   *
-   * Generic one way reaction of the type
-   * <tt>A+B+...+G +... --> K+...X + Z +...</tt>
-   * You need to use <tt>2A --> B</tt> instead of <tt>A+A --> B</tt> since
-   * in the latter you assume distinctness of the particles, however both
-   * ways to describe the reaction are equivalent in the thermodynamic limit
-   * (large particle numbers). Furthermore, it is crucial for the function
-   * in which order you provide the reactant and product types since particles
-   * will be replaced correspondingly! If there are less reactants than
-   * products, new product particles are created randomly in the box.
-   * Matching particles simply change the types. If there are more reactants
-   * than products, old reactant particles are deleted.
-   *
-   * @param[in,out] current_reaction  The reaction to attempt.
-   * @param[in,out] E_pot_old         The current potential energy.
-   */
-  void generic_oneway_reaction(SingleReaction &current_reaction,
-                               double &E_pot_old);
 
-  ParticleChangeRecorder make_reaction_attempt(SingleReaction const &reaction);
-  std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>>
-  generate_new_particle_positions(int type, int n_particles);
+public:
+  struct ParticleChanges {
+    std::vector<int> created{};
+    std::vector<std::tuple<int, int>> changed{};
+    std::vector<std::tuple<int, int>> hidden{};
+    std::vector<std::tuple<int, Utils::Vector3d, Utils::Vector3d>> moved{};
+    std::unordered_map<int, int> old_particle_numbers{};
+    int reaction_id{-1};
+  };
+
+  bool is_reaction_under_way() const { return m_system_changes != nullptr; }
+  auto const &get_old_system_state() const {
+    if (not is_reaction_under_way()) {
+      throw std::runtime_error("No chemical reaction is currently under way");
+    }
+    return *m_system_changes;
+  }
+
+protected:
+  /** @brief Restore last valid system state. */
+  void restore_old_system_state();
+  /** @brief Clear last valid system state. */
+  void clear_old_system_state() {
+    assert(is_reaction_under_way());
+    m_system_changes = nullptr;
+  }
+  /** @brief Open new handle for system state tracking. */
+  auto &make_new_system_state() {
+    assert(not is_reaction_under_way());
+    m_system_changes = std::make_shared<ParticleChanges>();
+    return *m_system_changes;
+  }
+  std::shared_ptr<ParticleChanges> m_system_changes;
+
+public:
+  /**
+   * Attempt a reaction move and calculate the new potential energy.
+   * Particles are selected without replacement.
+   * @returns Potential energy of the system after the move.
+   */
+  std::optional<double> generic_oneway_reaction_part_1(int reaction_id);
+  /**
+   * Accept or reject moves made by @ref generic_oneway_reaction_part_1 based
+   * on a probability acceptance @c bf.
+   * @returns Potential energy of the system after the move was accepted or
+   * rejected.
+   */
+  double generic_oneway_reaction_part_2(int reaction_id, double bf,
+                                        double E_pot_old, double E_pot_new);
+  /**
+   * Attempt a global MC move for particles of a given type.
+   * Particles are selected without replacement.
+   * @param type          Type of particles to move.
+   * @param n_particles   Number of particles of that type to move.
+   * @returns true if all moves were accepted.
+   */
+  bool make_displacement_mc_move_attempt(int type, int n_particles);
+  /**
+   * Perform a global MC move for particles of a given type.
+   * Particles are selected without replacement.
+   * @param type          Type of particles to move.
+   * @param n_particles   Number of particles of that type to move.
+   */
+  void displacement_mc_move(int type, int n_particles);
+
+  /** @brief Compute the system potential energy. */
+  double calculate_potential_energy() const;
+
+protected:
+  /** @brief Carry out a chemical reaction and save the old system state. */
+  void make_reaction_attempt(::ReactionMethods::SingleReaction const &reaction,
+                             ParticleChanges &bookkeeping);
+
+public:
   /**
    * @brief draws a random integer from the uniform distribution in the range
    * [0,maxint-1]
@@ -207,29 +225,30 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
+
+protected:
   bool
   all_reactant_particles_exist(SingleReaction const &current_reaction) const;
-
-  virtual double
-  calculate_acceptance_probability(SingleReaction const &, double, double,
-                                   std::map<int, int> const &) const {
-    return -10.;
-  }
 
 private:
   std::mt19937 m_generator;
   std::normal_distribution<double> m_normal_distribution;
   std::uniform_real_distribution<double> m_uniform_real_distribution;
 
-  std::map<int, int>
-  save_old_particle_numbers(SingleReaction const &current_reaction) const;
+  std::unordered_map<int, int>
+  get_particle_numbers(SingleReaction const &reaction) const;
 
-  void replace_particle(int p_id, int desired_type) const;
-  int create_particle(int desired_type);
-  void hide_particle(int p_id) const;
-  void check_exclusion_range(int inserted_particle_id);
-  void move_particle(int p_id, Utils::Vector3d const &new_pos,
-                     double velocity_prefactor);
+  int create_particle(int p_type);
+  void hide_particle(int p_id, int p_type) const;
+  void check_exclusion_range(int p_id, int p_type);
+  auto get_random_uniform_number() {
+    return m_uniform_real_distribution(m_generator);
+  }
+  auto get_random_velocity_vector() {
+    return Utils::Vector3d{m_normal_distribution(m_generator),
+                           m_normal_distribution(m_generator),
+                           m_normal_distribution(m_generator)};
+  }
 
   enum class ReactionConstraint { NONE, CYL_Z, SLAB_Z };
   ReactionConstraint m_reaction_constraint = ReactionConstraint::NONE;
@@ -239,6 +258,9 @@ private:
   double m_slab_start_z = -10.0;
   double m_slab_end_z = -10.0;
   double m_max_exclusion_range = 0.;
+
+  Particle *get_real_particle(int p_id) const;
+  Particle *get_local_particle(int p_id) const;
 
 protected:
   Utils::Vector3d get_random_position_in_box();

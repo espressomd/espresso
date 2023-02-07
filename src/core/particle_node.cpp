@@ -26,6 +26,7 @@
 #include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 
@@ -35,6 +36,7 @@
 #include <utils/keys.hpp>
 #include <utils/mpi/gatherv.hpp>
 
+#include <boost/mpi/collectives/all_gather.hpp>
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
@@ -86,15 +88,26 @@ static void mpi_synchronize_max_seen_pid_local() {
 REGISTER_CALLBACK(mpi_synchronize_max_seen_pid_local)
 
 void init_type_map(int type) {
-  type_list_enable = true;
-  if (type < 0)
+  if (type < 0) {
     throw std::runtime_error("Types may not be negative");
+  }
+  ::type_list_enable = true;
+  make_particle_type_exist_local(type);
 
-  auto &map_for_type = particle_type_map[type];
-  map_for_type.clear();
-  for (auto const &p : partCfg()) {
-    if (p.type() == type)
-      map_for_type.insert(p.id());
+  std::vector<int> local_pids;
+  for (auto const &p : ::cell_structure.local_particles()) {
+    if (p.type() == type) {
+      local_pids.emplace_back(p.id());
+    }
+  }
+
+  std::vector<std::vector<int>> global_pids;
+  boost::mpi::all_gather(::comm_cart, local_pids, global_pids);
+  ::particle_type_map[type].clear();
+  for (auto const &vec : global_pids) {
+    for (auto const &p_id : vec) {
+      ::particle_type_map[type].insert(p_id);
+    }
   }
 }
 
@@ -110,11 +123,25 @@ static void add_id_to_type_map(int p_id, int type) {
     it->second.insert(p_id);
 }
 
-void on_particle_type_change_head(int p_id, int old_type, int new_type) {
-  if (type_list_enable) {
-    assert(::this_node == 0);
-    if (old_type != new_type) {
-      remove_id_from_map(p_id, old_type);
+void on_particle_type_change_parallel(int p_id, int old_type, int new_type) {
+  if (::type_list_enable) {
+    if (old_type == type_tracking::any_type) {
+      for (auto &kv : ::particle_type_map) {
+        auto it = kv.second.find(p_id);
+        if (it != kv.second.end()) {
+          kv.second.erase(it);
+#ifndef NDEBUG
+          if (auto p = ::cell_structure.get_local_particle(p_id)) {
+            assert(p->type() == kv.first);
+          }
+#endif
+          break;
+        }
+      }
+    } else if (old_type != type_tracking::new_part) {
+      if (old_type != new_type) {
+        remove_id_from_map(p_id, old_type);
+      }
     }
     add_id_to_type_map(p_id, new_type);
   }
@@ -478,26 +505,21 @@ void remove_particle(int p_id) {
 }
 
 void remove_particle_parallel(int p_id) {
-  {
-    auto track_particle_types = ::type_list_enable;
-    boost::mpi::broadcast(::comm_cart, track_particle_types, 0);
-    if (track_particle_types) {
-      auto p = ::cell_structure.get_local_particle(p_id);
-      auto p_type = -1;
-      if (p != nullptr and not p->is_ghost()) {
-        if (this_node == 0) {
-          p_type = p->type();
-        } else {
-          ::comm_cart.send(0, 42, p->type());
-        }
-      } else if (this_node == 0) {
-        ::comm_cart.recv(boost::mpi::any_source, 42, p_type);
-      }
+  if (::type_list_enable) {
+    auto p = ::cell_structure.get_local_particle(p_id);
+    auto p_type = -1;
+    if (p != nullptr and not p->is_ghost()) {
       if (this_node == 0) {
-        assert(p_type != -1);
-        remove_id_from_map(p_id, p_type);
+        p_type = p->type();
+      } else {
+        ::comm_cart.send(0, 42, p->type());
       }
+    } else if (this_node == 0) {
+      ::comm_cart.recv(boost::mpi::any_source, 42, p_type);
     }
+    assert(not(this_node == 0 and p_type == -1));
+    boost::mpi::broadcast(::comm_cart, p_type, 0);
+    remove_id_from_map(p_id, p_type);
   }
 
   if (this_node == 0) {
@@ -575,7 +597,10 @@ int get_random_p_id(int type, int random_index_in_type_map) {
   if (random_index_in_type_map + 1 > it->second.size())
     throw std::runtime_error("The provided index exceeds the number of "
                              "particle types listed in the particle_type_map");
-  return *std::next(it->second.begin(), random_index_in_type_map);
+  // there is no guarantee of order across MPI ranks
+  auto p_id = *std::next(it->second.begin(), random_index_in_type_map);
+  boost::mpi::broadcast(::comm_cart, p_id, 0);
+  return p_id;
 }
 
 int number_of_particles_with_type(int type) {
@@ -603,6 +628,15 @@ std::vector<int> get_particle_ids() {
   boost::sort(ids);
 
   return ids;
+}
+
+std::vector<int> get_particle_ids_parallel() {
+  if (rebuild_needed()) {
+    build_particle_node_parallel();
+  }
+  auto pids = Utils::keys(particle_node);
+  boost::mpi::broadcast(::comm_cart, pids, 0);
+  return pids;
 }
 
 int get_maximal_particle_id() {

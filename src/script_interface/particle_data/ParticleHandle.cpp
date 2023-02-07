@@ -167,9 +167,7 @@ ParticleHandle::ParticleHandle() {
                error_msg("type", "must be an integer >= 0"));
          }
          make_particle_type_exist_local(new_type);
-         if (context()->is_head_node()) {
-           on_particle_type_change_head(m_pid, old_type, new_type);
-         }
+         on_particle_type_change_parallel(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },
        [this]() { return get_particle_data(m_pid).type(); }},

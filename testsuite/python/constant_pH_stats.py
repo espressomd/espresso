@@ -54,6 +54,7 @@ class Test(ut.TestCase):
     RE = espressomd.reaction_methods.ConstantpHEnsemble(
         kT=1., exclusion_range=1., seed=44, constant_pH=pH,
         search_algorithm="parallel")
+    RE.set_non_interacting_type(type=max(types.values()) + 1)
 
     @classmethod
     def setUpClass(cls):
@@ -76,10 +77,6 @@ class Test(ut.TestCase):
         N0 = self.N0
         types = self.types
         system = self.system
-
-        # Set the hidden particle type to the lowest possible number to speed
-        # up the simulation
-        RE.set_non_interacting_type(type=max(types.values()) + 1)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
