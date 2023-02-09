@@ -69,7 +69,7 @@ public:
 
   void do_construct(VariantMap const &params) override {
     auto const size = ::max_seen_particle_type;
-    make_particle_type_exist_local(size);
+    make_particle_type_exist(size);
     for (int i = 0; i < size; i++) {
       for (int j = i; j < size; j++) {
         auto const key = Utils::upper_triangular(i, j, size);
@@ -89,7 +89,7 @@ public:
     }
     if (name == "insert") {
       auto const types = get_value<std::vector<int>>(params.at("key"));
-      make_particle_type_exist_local(std::max(types[0], types[1]));
+      make_particle_type_exist(std::max(types[0], types[1]));
       auto const key = get_ia_param_key(std::min(types[0], types[1]),
                                         std::max(types[0], types[1]));
       auto obj_ptr = get_value<std::shared_ptr<NonBondedInteractionHandle>>(

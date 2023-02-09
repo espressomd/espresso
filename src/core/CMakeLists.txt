@@ -41,7 +41,6 @@ add_library(
   integrate.cpp
   npt.cpp
   partCfg_global.cpp
-  particle_data.cpp
   particle_node.cpp
   polymer.cpp
   pressure.cpp

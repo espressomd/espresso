@@ -77,7 +77,7 @@ public:
 
   void set_type(const int &type) {
     part_rep.type() = type;
-    make_particle_type_exist_local(type);
+    make_particle_type_exist(type);
   }
 
   Utils::Vector3d total_force() const;

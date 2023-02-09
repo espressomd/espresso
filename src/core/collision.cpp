@@ -193,7 +193,7 @@ void Collision_parameters::initialize() {
       throw std::domain_error("Collision detection particle type for virtual "
                               "sites needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.vs_particle_type);
+    make_particle_type_exist(collision_params.vs_particle_type);
   }
 
   if (collision_params.mode == CollisionModeType::GLUE_TO_SURF) {
@@ -201,25 +201,25 @@ void Collision_parameters::initialize() {
       throw std::domain_error("Collision detection particle type for virtual "
                               "sites needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.vs_particle_type);
+    make_particle_type_exist(collision_params.vs_particle_type);
 
     if (collision_params.part_type_to_be_glued < 0) {
       throw std::domain_error("Collision detection particle type to be glued "
                               "needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.part_type_to_be_glued);
+    make_particle_type_exist(collision_params.part_type_to_be_glued);
 
     if (collision_params.part_type_to_attach_vs_to < 0) {
       throw std::domain_error("Collision detection particle type to attach "
                               "the virtual site to needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.part_type_to_attach_vs_to);
+    make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
 
     if (collision_params.part_type_after_glueing < 0) {
       throw std::domain_error("Collision detection particle type after gluing "
                               "needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.part_type_after_glueing);
+    make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
   on_short_range_ia_change();

@@ -166,14 +166,14 @@ ParticleHandle::ParticleHandle() {
            throw std::domain_error(
                error_msg("type", "must be an integer >= 0"));
          }
-         make_particle_type_exist_local(new_type);
-         on_particle_type_change_parallel(m_pid, old_type, new_type);
+         make_particle_type_exist(new_type);
+         on_particle_type_change(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },
        [this]() { return get_particle_data(m_pid).type(); }},
       {"pos",
        [this](Variant const &value) {
-         mpi_set_particle_pos_local(m_pid, get_value<Utils::Vector3d>(value));
+         set_particle_pos(m_pid, get_value<Utils::Vector3d>(value));
        },
        [this]() {
          auto const p = get_particle_data(m_pid);
@@ -581,7 +581,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
   if (name == "remove_particle") {
     context()->parallel_try_catch([&]() {
       std::ignore = get_real_particle(context()->get_comm(), m_pid);
-      remove_particle_parallel(m_pid);
+      remove_particle(m_pid);
     });
 #ifdef VIRTUAL_SITES_RELATIVE
   } else if (name == "vs_relate_to") {
@@ -711,7 +711,7 @@ void ParticleHandle::do_construct(VariantMap const &params) {
     return params.count(key) == 1;
   };
   m_pid = (has_param("id")) ? get_value<int>(params, "id")
-                            : get_maximal_particle_id_parallel() + 1;
+                            : get_maximal_particle_id() + 1;
 
 #ifndef NDEBUG
   if (!has_param("id")) {
@@ -754,7 +754,7 @@ void ParticleHandle::do_construct(VariantMap const &params) {
 #endif // ROTATION
 
   // create a default-constructed particle
-  mpi_make_new_particle_local(m_pid, pos);
+  make_new_particle(m_pid, pos);
 
   context()->parallel_try_catch([&]() {
     // set particle properties (filter out read-only and deferred properties)

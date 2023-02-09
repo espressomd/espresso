@@ -23,7 +23,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "particle_data.hpp"
 
 #include <utils/mpi/gather_buffer.hpp>
 

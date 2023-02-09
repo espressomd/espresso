@@ -57,6 +57,8 @@ unit_test(NAME Constraints_test SRC Constraints_test.cpp DEPENDS
 unit_test(NAME Actors_test SRC Actors_test.cpp DEPENDS
           espresso::script_interface espresso::core)
 unit_test(NAME ConstantpHEnsemble_test SRC ConstantpHEnsemble_test.cpp DEPENDS
-          espresso::core espresso::script_interface Boost::mpi MPI::MPI_CXX)
+          espresso::core espresso::script_interface Boost::mpi MPI::MPI_CXX
+          NUM_PROC 2)
 unit_test(NAME ReactionEnsemble_test SRC ReactionEnsemble_test.cpp DEPENDS
-          espresso::core espresso::script_interface Boost::mpi MPI::MPI_CXX)
+          espresso::core espresso::script_interface Boost::mpi MPI::MPI_CXX
+          NUM_PROC 2)

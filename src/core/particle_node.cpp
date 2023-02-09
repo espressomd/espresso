@@ -28,7 +28,6 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/Cache.hpp>
 #include <utils/Span.hpp>
@@ -92,7 +91,7 @@ void init_type_map(int type) {
     throw std::runtime_error("Types may not be negative");
   }
   ::type_list_enable = true;
-  make_particle_type_exist_local(type);
+  make_particle_type_exist(type);
 
   std::vector<int> local_pids;
   for (auto const &p : ::cell_structure.local_particles()) {
@@ -123,7 +122,7 @@ static void add_id_to_type_map(int p_id, int type) {
     it->second.insert(p_id);
 }
 
-void on_particle_type_change_parallel(int p_id, int old_type, int new_type) {
+void on_particle_type_change(int p_id, int old_type, int new_type) {
   if (::type_list_enable) {
     if (old_type == type_tracking::any_type) {
       for (auto &kv : ::particle_type_map) {
@@ -144,21 +143,6 @@ void on_particle_type_change_parallel(int p_id, int old_type, int new_type) {
       }
     }
     add_id_to_type_map(p_id, new_type);
-  }
-}
-
-void on_particle_type_change(int p_id, int type) {
-  if (type_list_enable) {
-    assert(::this_node == 0);
-    // check if the particle exists already and the type is changed, then remove
-    // it from the list which contains it
-    auto const &cur_par = get_particle_data(p_id);
-    int prev_type = cur_par.type();
-    if (prev_type != type) {
-      // particle existed before so delete it from the list
-      remove_id_from_map(p_id, prev_type);
-    }
-    add_id_to_type_map(p_id, type);
   }
 }
 
@@ -386,6 +370,29 @@ int get_particle_node(int p_id) {
   return needle->second;
 }
 
+int get_particle_node_parallel(int p_id) {
+  if (p_id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
+  }
+
+  if (rebuild_needed()) {
+    build_particle_node_parallel();
+  }
+
+  if (this_node != 0) {
+    return -1;
+  }
+
+  auto const needle = particle_node.find(p_id);
+
+  // Check if particle has a node, if not, we assume it does not exist.
+  if (needle == particle_node.end()) {
+    throw std::runtime_error("Particle node for id " + std::to_string(p_id) +
+                             " not found!");
+  }
+  return needle->second;
+}
+
 void clear_particle_node() {
   ::max_seen_pid = -1;
   particle_node.clear();
@@ -462,49 +469,14 @@ void particle_checks(int p_id, Utils::Vector3d const &pos) {
 #endif // __FAST_MATH__
 }
 
-static void mpi_remove_particle_local(int p_id) {
-  cell_structure.remove_particle(p_id);
-  on_particle_change();
-  mpi_synchronize_max_seen_pid_local();
-}
-
-REGISTER_CALLBACK(mpi_remove_particle_local)
-
-static void mpi_remove_all_particles_local() {
-  cell_structure.remove_all_particles();
+void remove_all_particles() {
+  ::cell_structure.remove_all_particles();
   on_particle_change();
   clear_particle_node();
   clear_particle_type_map();
 }
 
-REGISTER_CALLBACK(mpi_remove_all_particles_local)
-
-void remove_all_particles() { mpi_call_all(mpi_remove_all_particles_local); }
-
 void remove_particle(int p_id) {
-  auto const &cur_par = get_particle_data(p_id);
-  if (type_list_enable) {
-    // remove particle from its current type_list
-    int type = cur_par.type();
-    remove_id_from_map(p_id, type);
-  }
-
-  particle_node[p_id] = -1;
-  mpi_call_all(mpi_remove_particle_local, p_id);
-  particle_node.erase(p_id);
-  if (p_id == max_seen_pid) {
-    --max_seen_pid;
-    // if there is a gap (i.e. there is no particle with id max_seen_pid - 1,
-    // then the cached value is invalidated and has to be recomputed (slow)
-    if (particle_node.count(max_seen_pid) == 0 or
-        particle_node[max_seen_pid] == -1) {
-      max_seen_pid = calculate_max_seen_id();
-    }
-  }
-  mpi_call_all(mpi_synchronize_max_seen_pid_local);
-}
-
-void remove_particle_parallel(int p_id) {
   if (::type_list_enable) {
     auto p = ::cell_structure.get_local_particle(p_id);
     auto p_type = -1;
@@ -525,7 +497,9 @@ void remove_particle_parallel(int p_id) {
   if (this_node == 0) {
     particle_node[p_id] = -1;
   }
-  mpi_remove_particle_local(p_id);
+  ::cell_structure.remove_particle(p_id);
+  on_particle_change();
+  mpi_synchronize_max_seen_pid_local();
   if (this_node == 0) {
     particle_node.erase(p_id);
     if (p_id == ::max_seen_pid) {
@@ -541,7 +515,7 @@ void remove_particle_parallel(int p_id) {
   mpi_synchronize_max_seen_pid_local();
 }
 
-void mpi_make_new_particle_local(int p_id, Utils::Vector3d const &pos) {
+void make_new_particle(int p_id, Utils::Vector3d const &pos) {
   if (rebuild_needed()) {
     build_particle_node_parallel();
   }
@@ -559,14 +533,7 @@ void mpi_make_new_particle_local(int p_id, Utils::Vector3d const &pos) {
   mpi_synchronize_max_seen_pid_local();
 }
 
-REGISTER_CALLBACK(mpi_make_new_particle_local)
-
-void mpi_make_new_particle(int p_id, Utils::Vector3d const &pos) {
-  particle_checks(p_id, pos);
-  mpi_call_all(mpi_make_new_particle_local, p_id, pos);
-}
-
-void mpi_set_particle_pos_local(int p_id, Utils::Vector3d const &pos) {
+void set_particle_pos(int p_id, Utils::Vector3d const &pos) {
   auto const has_moved = maybe_move_particle(p_id, pos);
   ::cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
@@ -577,13 +544,6 @@ void mpi_set_particle_pos_local(int p_id, Utils::Vector3d const &pos) {
     throw std::runtime_error("Particle node for id " + std::to_string(p_id) +
                              " not found!");
   }
-}
-
-REGISTER_CALLBACK(mpi_set_particle_pos_local)
-
-void mpi_set_particle_pos(int p_id, Utils::Vector3d const &pos) {
-  particle_checks(p_id, pos);
-  mpi_call_all(mpi_set_particle_pos_local, p_id, pos);
 }
 
 int get_random_p_id(int type, int random_index_in_type_map) {
@@ -640,13 +600,6 @@ std::vector<int> get_particle_ids_parallel() {
 }
 
 int get_maximal_particle_id() {
-  if (particle_node.empty())
-    build_particle_node();
-
-  return max_seen_pid;
-}
-
-int get_maximal_particle_id_parallel() {
   if (rebuild_needed()) {
     build_particle_node_parallel();
   }

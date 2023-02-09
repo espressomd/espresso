@@ -32,10 +32,10 @@
 namespace utf = boost::unit_test;
 namespace bdata = boost::unit_test::data;
 
-#include "EspressoSystemStandAlone.hpp"
-#include "MpiCallbacks.hpp"
-#include "Particle.hpp"
 #include "ParticleFactory.hpp"
+
+#include "EspressoSystemStandAlone.hpp"
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
@@ -61,34 +61,31 @@ namespace espresso {
 static std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
 
-/** Decorator to run a unit test only on the head node. */
-struct if_head_node {
-  boost::test_tools::assertion_result operator()(utf::test_unit_id) {
-    return world.rank() == 0;
+static auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
+                                       int p_id) {
+  boost::optional<Particle> result{};
+  auto p = ::cell_structure.get_local_particle(p_id);
+  if (p and not p->is_ghost()) {
+    if (comm.rank() == 0) {
+      result = *p;
+    } else {
+      comm.send(0, p_id, *p);
+    }
   }
-
-private:
-  boost::mpi::communicator world;
-};
-
-#ifdef EXTERNAL_FORCES
-static void mpi_set_particle_ext_force_local(int p_id,
-                                             Utils::Vector3d const &ext_force) {
-  if (auto p = ::cell_structure.get_local_particle(p_id)) {
-    p->ext_force() = ext_force;
+  if (comm.rank() == 0 and not result) {
+    Particle p{};
+    comm.recv(boost::mpi::any_source, p_id, p);
+    result = p;
   }
-  on_particle_change();
+  return result;
 }
-
-REGISTER_CALLBACK(mpi_set_particle_ext_force_local)
-#endif // EXTERNAL_FORCES
 
 namespace Testing {
 /**
  * Helper class to setup an integrator and particle properties such that the
  * particle is on a collision course with another particle on the x-axis.
  */
-struct IntegratorHelper {
+struct IntegratorHelper : public ParticleFactory {
   IntegratorHelper() = default;
   virtual ~IntegratorHelper() = default;
   /** Set integrator parameters. */
@@ -102,35 +99,25 @@ struct IntegratorHelper {
   }
 };
 
-void mpi_set_integrator_sd_local() {
-  register_integrator(SteepestDescentParameters(0., 0.01, 100.));
-  set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
-}
-
-REGISTER_CALLBACK(mpi_set_integrator_sd_local)
-
 #ifdef EXTERNAL_FORCES
 struct : public IntegratorHelper {
   void set_integrator() const override {
-    mpi_set_thermo_switch(THERMO_OFF);
-    mpi_call_all(mpi_set_integrator_sd_local);
+    mpi_set_thermo_switch_local(THERMO_OFF);
+    register_integrator(SteepestDescentParameters(0., 0.01, 100.));
+    set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
   }
   void set_particle_properties(int pid) const override {
-    mpi_call_all(mpi_set_particle_ext_force_local, pid,
-                 Utils::Vector3d{20., 0., 0.});
+    set_particle_property(pid, &Particle::ext_force,
+                          Utils::Vector3d{20., 0., 0.});
   }
   char const *name() const override { return "SteepestDescent"; }
 } steepest_descent;
 #endif // EXTERNAL_FORCES
 
-void mpi_set_integrator_vv_local() { set_integ_switch(INTEG_METHOD_NVT); }
-
-REGISTER_CALLBACK(mpi_set_integrator_vv_local)
-
 struct : public IntegratorHelper {
   void set_integrator() const override {
-    mpi_set_thermo_switch(THERMO_OFF);
-    mpi_call_all(mpi_set_integrator_vv_local);
+    mpi_set_thermo_switch_local(THERMO_OFF);
+    set_integ_switch(INTEG_METHOD_NVT);
   }
   void set_particle_properties(int pid) const override {
     set_particle_v(pid, {20., 0., 0.});
@@ -139,20 +126,14 @@ struct : public IntegratorHelper {
 } velocity_verlet;
 
 #ifdef NPT
-void mpi_set_integrator_npt_local() {
-  ::nptiso = NptIsoParameters(1., 1e9, {true, true, true}, true);
-  set_integ_switch(INTEG_METHOD_NPT_ISO);
-}
-
-REGISTER_CALLBACK(mpi_set_integrator_npt_local)
-
 struct : public IntegratorHelper {
   void set_integrator() const override {
-    mpi_call_all(mpi_set_integrator_npt_local);
-    mpi_set_temperature(1.);
-    npt_iso_set_rng_seed(0);
-    mpi_set_thermo_switch(thermo_switch | THERMO_NPT_ISO);
-    mpi_set_nptiso_gammas(0., 0.); // disable box volume change
+    ::nptiso = NptIsoParameters(1., 1e9, {true, true, true}, true);
+    set_integ_switch(INTEG_METHOD_NPT_ISO);
+    mpi_set_temperature_local(1.);
+    mpi_npt_iso_set_rng_seed(0);
+    mpi_set_thermo_switch_local(thermo_switch | THERMO_NPT_ISO);
+    mpi_set_nptiso_gammas_local(0., 0.); // disable box volume change
   }
   void set_particle_properties(int pid) const override {
     set_particle_v(pid, {20., 0., 0.});
@@ -162,15 +143,6 @@ struct : public IntegratorHelper {
 #endif // NPT
 
 } // namespace Testing
-
-void mpi_set_lj_local(int key, double eps, double sig, double cut,
-                      double offset, double min, double shift) {
-  LJ_Parameters lj{eps, sig, cut, offset, min, shift};
-  ::nonbonded_ia_params[key]->lj = lj;
-  on_non_bonded_ia_change();
-}
-
-REGISTER_CALLBACK(mpi_set_lj_local)
 
 inline double get_dist_from_last_verlet_update(Particle const &p) {
   return (p.pos() - p.pos_at_last_verlet_update()).norm();
@@ -192,11 +164,12 @@ auto const propagators =
 #endif // EXTERNAL_FORCES
     };
 
-BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
                        bdata::make(node_grids) * bdata::make(propagators),
                        node_grid, integration_helper) {
   constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
+  auto const comm = boost::mpi::communicator();
+  auto const rank = comm.rank();
 
   auto const box_l = 8.;
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
@@ -219,7 +192,9 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   auto const cut = r_off + 1e-3;
   make_particle_type_exist(1);
   auto const key = get_ia_param_key(0, 1);
-  mpi_call_all(mpi_set_lj_local, key, eps, sig, cut, offset, min, shift);
+  LJ_Parameters lj{eps, sig, cut, offset, min, shift};
+  ::nonbonded_ia_params[key]->lj = lj;
+  on_non_bonded_ia_change();
 
   // set up velocity-Verlet integrator
   auto const time_step = 0.01;
@@ -237,9 +212,10 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   create_particle({2. - 0.10, 1., 1.}, pid1, 0);
   create_particle({4. + 0.15, 1., 1.}, pid2, 1);
   create_particle({2. - 0.10, 5., 1.}, pid3, 0);
-  BOOST_REQUIRE_EQUAL(get_particle_node(pid1), 0);
-  BOOST_REQUIRE_EQUAL(get_particle_node(pid2), 2);
-  BOOST_REQUIRE_EQUAL(get_particle_node(pid3), (node_grid[0] == 4) ? 0 : 1);
+  BOOST_REQUIRE_EQUAL(get_particle_node_parallel(pid1), rank ? -1 : 0);
+  BOOST_REQUIRE_EQUAL(get_particle_node_parallel(pid2), rank ? -1 : 2);
+  BOOST_REQUIRE_EQUAL(get_particle_node_parallel(pid3),
+                      rank ? -1 : ((node_grid[0] == 4) ? 0 : 1));
 
   // check that particles in different cells will eventually interact during
   // normal integration (the integration helper sets a collision course)
@@ -248,44 +224,61 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
 
     // integrate until both particles are closer than cutoff
     {
-      mpi_integrate(11, 0);
-      auto const &p1 = get_particle_data(pid1);
-      auto const &p2 = get_particle_data(pid2);
-      BOOST_REQUIRE_LT(get_dist_from_pair(p1, p2), cut);
+      integrate(11, 0);
+      auto const p1_opt = copy_particle_to_head_node(comm, pid1);
+      auto const p2_opt = copy_particle_to_head_node(comm, pid2);
+      if (rank == 0) {
+        auto const &p1 = *p1_opt;
+        auto const &p2 = *p2_opt;
+        BOOST_REQUIRE_LT(get_dist_from_pair(p1, p2), cut);
+      }
     }
 
     // check forces and Verlet update
     {
-      mpi_integrate(1, 0);
-      auto const &p1 = get_particle_data(pid1);
+      integrate(1, 0);
+      auto const p1_opt = copy_particle_to_head_node(comm, pid1);
 #ifdef EXTERNAL_FORCES
-      auto const &p2 = get_particle_data(pid2);
-      BOOST_CHECK_CLOSE(p1.force()[0] - p1.ext_force()[0], 480., 1e-9);
+      auto const p2_opt = copy_particle_to_head_node(comm, pid2);
 #endif // EXTERNAL_FORCES
-      BOOST_CHECK_CLOSE(p1.force()[1], 0., tol);
-      BOOST_CHECK_CLOSE(p1.force()[2], 0., tol);
+      if (rank == 0) {
+        auto const &p1 = *p1_opt;
+        auto const &p2 = *p2_opt;
 #ifdef EXTERNAL_FORCES
-      BOOST_TEST(p1.force() - p1.ext_force() == -p2.force(),
-                 boost::test_tools::per_element());
+        BOOST_CHECK_CLOSE(p1.force()[0] - p1.ext_force()[0], 480., 1e-9);
 #endif // EXTERNAL_FORCES
-      BOOST_CHECK_LT(get_dist_from_last_verlet_update(p1), skin / 2.);
+        BOOST_CHECK_CLOSE(p1.force()[1], 0., tol);
+        BOOST_CHECK_CLOSE(p1.force()[2], 0., tol);
+#ifdef EXTERNAL_FORCES
+        BOOST_TEST(p1.force() - p1.ext_force() == -p2.force(),
+                   boost::test_tools::per_element());
+#endif // EXTERNAL_FORCES
+        BOOST_CHECK_LT(get_dist_from_last_verlet_update(p1), skin / 2.);
+      }
     }
   }
 
   // check that particles in different cells will interact when manually
-  // placed next to each other (@c mpi_set_particle_pos() resorts particles)
+  // placed next to each other (@c set_particle_pos() resorts particles)
   {
-    mpi_set_particle_pos(pid3, {4. + 0.10, 1., 1.0});
+    ::set_particle_pos(pid3, {4. + 0.10, 1., 1.0});
     {
-      auto const &p2 = get_particle_data(pid2);
-      auto const &p3 = get_particle_data(pid3);
-      BOOST_REQUIRE_LT(get_dist_from_pair(p2, p3), cut);
-      BOOST_CHECK_GT(get_dist_from_last_verlet_update(p3), skin / 2.);
+      auto const p2_opt = copy_particle_to_head_node(comm, pid2);
+      auto const p3_opt = copy_particle_to_head_node(comm, pid3);
+      if (rank == 0) {
+        auto const &p2 = *p2_opt;
+        auto const &p3 = *p3_opt;
+        BOOST_REQUIRE_LT(get_dist_from_pair(p2, p3), cut);
+        BOOST_CHECK_GT(get_dist_from_last_verlet_update(p3), skin / 2.);
+      }
     }
     {
-      mpi_integrate(0, 0);
-      auto const &p3 = get_particle_data(pid3);
-      BOOST_CHECK_LT(get_dist_from_last_verlet_update(p3), skin / 2.);
+      integrate(0, 0);
+      auto const p3_opt = copy_particle_to_head_node(comm, pid3);
+      if (rank == 0) {
+        auto const &p3 = *p3_opt;
+        BOOST_CHECK_LT(get_dist_from_last_verlet_update(p3), skin / 2.);
+      }
     }
   }
 }

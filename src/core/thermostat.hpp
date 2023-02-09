@@ -331,6 +331,7 @@ struct StokesianThermostat : public BaseThermostat {
  * @param thermostat        The thermostat object name
  */
 #define NEW_THERMOSTAT(thermostat)                                             \
+  void mpi_##thermostat##_set_rng_seed(uint32_t seed);                         \
   void thermostat##_set_rng_seed(uint32_t seed);                               \
   void thermostat##_set_rng_counter(uint64_t seed);
 
@@ -376,11 +377,14 @@ void mpi_set_langevin_gamma_rot(Thermostat::GammaType const &gamma);
 void mpi_set_thermo_virtual(bool thermo_virtual);
 
 void mpi_set_temperature(double temperature);
+void mpi_set_temperature_local(double temperature);
 
 void mpi_set_thermo_switch(int thermo_switch);
+void mpi_set_thermo_switch_local(int thermo_switch);
 
 #ifdef NPT
 void mpi_set_nptiso_gammas(double gamma0, double gammav);
+void mpi_set_nptiso_gammas_local(double gamma0, double gammav);
 #endif
 
 #endif

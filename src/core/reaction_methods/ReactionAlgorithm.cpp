@@ -86,7 +86,7 @@ void ReactionAlgorithm::restore_old_system_state() {
   // restore the properties of changed and hidden particles
   for (auto const &state : {old_state.changed, old_state.hidden}) {
     for (auto const &[p_id, p_type] : state) {
-      on_particle_type_change_parallel(p_id, type_tracking::any_type, p_type);
+      on_particle_type_change(p_id, type_tracking::any_type, p_type);
       if (auto p = get_local_particle(p_id)) {
         p->type() = p_type;
 #ifdef ELECTROSTATICS
@@ -158,7 +158,7 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
     auto const new_type = reaction.product_types[i];
     for (int j = 0; j < std::min(n_product_coef, n_reactant_coef); j++) {
       auto const p_id = get_random_p_id_of_type(old_type);
-      on_particle_type_change_parallel(p_id, old_type, new_type);
+      on_particle_type_change(p_id, old_type, new_type);
       if (auto p = get_local_particle(p_id)) {
         p->type() = new_type;
 #ifdef ELECTROSTATICS
@@ -292,7 +292,7 @@ double ReactionAlgorithm::generic_oneway_reaction_part_2(int reaction_id,
  * like the one above).
  */
 void ReactionAlgorithm::hide_particle(int p_id, int p_type) const {
-  on_particle_type_change_parallel(p_id, p_type, non_interacting_type);
+  on_particle_type_change(p_id, p_type, non_interacting_type);
   if (auto p = get_local_particle(p_id)) {
     p->type() = non_interacting_type;
 #ifdef ELECTROSTATICS
@@ -378,10 +378,10 @@ void ReactionAlgorithm::delete_particle(int p_id) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }
-  auto const old_max_seen_id = ::get_maximal_particle_id_parallel();
+  auto const old_max_seen_id = ::get_maximal_particle_id();
   if (p_id == old_max_seen_id) {
     // last particle, just delete
-    remove_particle_parallel(p_id);
+    remove_particle(p_id);
     // remove all saved empty p_ids which are greater than the max_seen_particle
     // this is needed in order to avoid the creation of holes
     for (auto p_id_iter = m_empty_p_ids_smaller_than_max_seen_particle.begin();
@@ -393,7 +393,7 @@ void ReactionAlgorithm::delete_particle(int p_id) {
         ++p_id_iter;
     }
   } else if (p_id <= old_max_seen_id) {
-    remove_particle_parallel(p_id);
+    remove_particle(p_id);
     m_empty_p_ids_smaller_than_max_seen_particle.push_back(p_id);
   } else {
     throw std::runtime_error(
@@ -470,14 +470,14 @@ int ReactionAlgorithm::create_particle(int p_type) {
     p_id = *p_id_iter;
     m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
   } else {
-    p_id = ::get_maximal_particle_id_parallel() + 1;
+    p_id = ::get_maximal_particle_id() + 1;
   }
 
   // create random velocity vector according to Maxwell-Boltzmann distribution
   auto pos = get_random_position_in_box();
   auto vel = get_random_velocity_vector();
 
-  ::mpi_make_new_particle_local(p_id, pos);
+  ::make_new_particle(p_id, pos);
   if (auto p = get_local_particle(p_id)) {
     p->v() = std::sqrt(kT / p->mass()) * vel;
     p->type() = p_type;
@@ -485,7 +485,7 @@ int ReactionAlgorithm::create_particle(int p_type) {
     p->q() = charges_of_types.at(p_type);
 #endif
   }
-  on_particle_type_change_parallel(p_id, ::type_tracking::new_part, p_type);
+  on_particle_type_change(p_id, ::type_tracking::new_part, p_type);
   return p_id;
 }
 
@@ -516,7 +516,7 @@ void ReactionAlgorithm::displacement_mc_move(int type, int n_particles) {
     }
     boost::mpi::broadcast(m_comm, old_state, 0);
     bookkeeping.moved.emplace_back(old_state);
-    mpi_set_particle_pos_local(p_id, new_pos);
+    ::set_particle_pos(p_id, new_pos);
 
     check_exclusion_range(p_id, type);
     if (particle_inside_exclusion_range_touched) {
