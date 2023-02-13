@@ -476,12 +476,12 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         """
         try:
             E_pot_new = self.call_method(
-                "generic_oneway_reaction_part_1", reaction_id=reaction_id)
+                "create_new_trial_state", reaction_id=reaction_id)
             if E_pot_new is None:
                 return E_pot_old
             E_pot_diff = E_pot_new - E_pot_old
             bf = self.calculate_acceptance_probability(reaction_id, E_pot_diff)
-            return self.call_method("generic_oneway_reaction_part_2",
+            return self.call_method("make_reaction_mc_move_attempt",
                                     reaction_id=reaction_id, bf=bf,
                                     E_pot_new=E_pot_new, E_pot_old=E_pot_old)
         except BaseException as err:
@@ -515,7 +515,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
             reactions_list.append(reaction)
 
         return {"reactions": reactions_list, "kT": self.kT,
-                "exclusion_range": self.exclusion_range}
+                "exclusion_range": self.exclusion_range,
+                "exclusion_radius_per_type": self.exclusion_radius_per_type}
 
 
 @script_interface_register

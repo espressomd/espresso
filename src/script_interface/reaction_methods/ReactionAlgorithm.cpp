@@ -130,26 +130,26 @@ Variant ReactionAlgorithm::do_call_method(std::string const &name,
   if (name == "potential_energy") {
     return RE()->calculate_potential_energy();
   }
-  if (name == "generic_oneway_reaction_part_1") {
+  if (name == "create_new_trial_state") {
     auto const reaction_id = get_value<int>(params, "reaction_id");
     Variant result{};
     context()->parallel_try_catch([&]() {
-      auto const optional = RE()->generic_oneway_reaction_part_1(reaction_id);
+      auto const optional = RE()->create_new_trial_state(reaction_id);
       if (optional) {
         result = *optional;
       }
     });
     return result;
   }
-  if (name == "generic_oneway_reaction_part_2") {
+  if (name == "make_reaction_mc_move_attempt") {
     auto const bf = get_value<double>(params, "bf");
     auto const E_pot_old = get_value<double>(params, "E_pot_old");
     auto const E_pot_new = get_value<double>(params, "E_pot_new");
     auto const reaction_id = get_value<int>(params, "reaction_id");
     Variant result;
     context()->parallel_try_catch([&]() {
-      result = RE()->generic_oneway_reaction_part_2(reaction_id, bf, E_pot_old,
-                                                    E_pot_new);
+      result = RE()->make_reaction_mc_move_attempt(reaction_id, bf, E_pot_old,
+                                                   E_pot_new);
     });
     return result;
   }

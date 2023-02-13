@@ -177,39 +177,43 @@ protected:
 
 public:
   /**
-   * Attempt a reaction move and calculate the new potential energy.
+   * Carry out a reaction MC move and calculate the new potential energy.
    * Particles are selected without replacement.
+   * The previous state of the system is cached.
    * @returns Potential energy of the system after the move.
    */
-  std::optional<double> generic_oneway_reaction_part_1(int reaction_id);
+  std::optional<double> create_new_trial_state(int reaction_id);
   /**
-   * Accept or reject moves made by @ref generic_oneway_reaction_part_1 based
-   * on a probability acceptance @c bf.
+   * Accept or reject a reaction MC move made by @ref create_new_trial_state
+   * based on a probability acceptance @c bf.
+   * The previous state of the system is either restored from the cache if
+   * the move is rejected, or cleared from the cache if the move is accepted.
    * @returns Potential energy of the system after the move was accepted or
    * rejected.
    */
-  double generic_oneway_reaction_part_2(int reaction_id, double bf,
-                                        double E_pot_old, double E_pot_new);
+  double make_reaction_mc_move_attempt(int reaction_id, double bf,
+                                       double E_pot_old, double E_pot_new);
   /**
-   * Attempt a global MC move for particles of a given type.
+   * Attempt displacement MC moves for particles of a given type.
    * Particles are selected without replacement.
    * @param type          Type of particles to move.
    * @param n_particles   Number of particles of that type to move.
    * @returns true if all moves were accepted.
    */
   bool make_displacement_mc_move_attempt(int type, int n_particles);
+
+  /** @brief Compute the system potential energy. */
+  double calculate_potential_energy() const;
+
+protected:
   /**
-   * Perform a global MC move for particles of a given type.
+   * Carry out displacement MC moves for particles of a given type.
    * Particles are selected without replacement.
    * @param type          Type of particles to move.
    * @param n_particles   Number of particles of that type to move.
    */
   void displacement_mc_move(int type, int n_particles);
 
-  /** @brief Compute the system potential energy. */
-  double calculate_potential_energy() const;
-
-protected:
   /** @brief Carry out a chemical reaction and save the old system state. */
   void make_reaction_attempt(::ReactionMethods::SingleReaction const &reaction,
                              ParticleChanges &bookkeeping);

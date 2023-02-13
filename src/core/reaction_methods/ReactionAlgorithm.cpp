@@ -233,7 +233,7 @@ ReactionAlgorithm::get_particle_numbers(SingleReaction const &reaction) const {
 }
 
 std::optional<double>
-ReactionAlgorithm::generic_oneway_reaction_part_1(int reaction_id) {
+ReactionAlgorithm::create_new_trial_state(int reaction_id) {
   auto &reaction = *reactions[reaction_id];
   reaction.tried_moves++;
   particle_inside_exclusion_range_touched = false;
@@ -253,10 +253,10 @@ ReactionAlgorithm::generic_oneway_reaction_part_1(int reaction_id) {
   return {E_pot_new};
 }
 
-double ReactionAlgorithm::generic_oneway_reaction_part_2(int reaction_id,
-                                                         double bf,
-                                                         double E_pot_old,
-                                                         double E_pot_new) {
+double ReactionAlgorithm::make_reaction_mc_move_attempt(int reaction_id,
+                                                        double bf,
+                                                        double E_pot_old,
+                                                        double E_pot_new) {
   auto const exponential = std::exp(-(E_pot_new - E_pot_old) / kT);
   auto &reaction = *reactions[reaction_id];
   reaction.accumulator_potential_energy_difference_exponential(

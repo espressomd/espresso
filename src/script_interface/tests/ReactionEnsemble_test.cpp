@@ -182,7 +182,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
     espresso::system->set_box_l(box_l);
 
     // without reactants, no reaction will take place
-    auto const result = r_algo.generic_oneway_reaction_part_1(reaction_id);
+    auto const result = r_algo.create_new_trial_state(reaction_id);
     BOOST_REQUIRE(not result.has_value());
 
     // the reaction was updated
@@ -200,7 +200,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
       // system
       auto const energy_ref = 0.;
 
-      auto const result = r_algo.generic_oneway_reaction_part_1(reaction_id);
+      auto const result = r_algo.create_new_trial_state(reaction_id);
       BOOST_REQUIRE(result.has_value());
       auto const energy_move = *result;
 
@@ -218,7 +218,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
       auto const bf = r_algo_si->calculate_acceptance_probability(
           reaction, energy_move, {{type_D, 1}, {type_E, 0}});
 
-      auto const energy_end = r_algo.generic_oneway_reaction_part_2(
+      auto const energy_end = r_algo.make_reaction_mc_move_attempt(
           reaction_id, bf, 0., energy_move);
       BOOST_CHECK_CLOSE(energy_end, energy_ref, tol);
 
@@ -231,7 +231,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
     }
     {
       // attempt a second reaction
-      auto const result = r_algo.generic_oneway_reaction_part_1(reaction_id);
+      auto const result = r_algo.create_new_trial_state(reaction_id);
       BOOST_REQUIRE(result.has_value());
 
       // verify bookkeeping
@@ -247,7 +247,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
 
       // force move to be rejected
       auto const energy_reject =
-          r_algo.generic_oneway_reaction_part_2(reaction_id, 0., 0.2, 0.1);
+          r_algo.make_reaction_mc_move_attempt(reaction_id, 0., 0.2, 0.1);
       BOOST_CHECK_CLOSE(energy_reject, 0.2, tol);
 
       // the reaction was updated

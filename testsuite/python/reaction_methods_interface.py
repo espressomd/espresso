@@ -93,6 +93,7 @@ class ReactionMethods(ut.TestCase):
                 list(method.exclusion_radius_per_type.keys()), [2])
             self.assertAlmostEqual(
                 method.exclusion_radius_per_type[2], 0.2, delta=1e-10)
+            exclusion_radius_per_type = {2: 0.2}
         self.assertAlmostEqual(
             method.get_volume(), self.system.volume(), delta=1e-10)
         method.set_volume(volume=1.)
@@ -125,6 +126,9 @@ class ReactionMethods(ut.TestCase):
         status = method.get_status()
         self.assertEqual(status['kT'], kT)
         self.assertEqual(status['exclusion_range'], exclusion_range)
+        self.assertEqual(
+            status['exclusion_radius_per_type'],
+            exclusion_radius_per_type)
         self.assertEqual(len(status['reactions']), 2)
         for reaction_flat, params in zip(
                 status['reactions'], reaction_parameters):
