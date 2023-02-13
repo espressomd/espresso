@@ -407,19 +407,19 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         """
         self._reactions_cache = [x for x in self.reactions]
 
-    def reaction(self, reaction_steps):
+    def reaction(self, steps):
         """
         Performs randomly selected reactions.
 
         Parameters
         ----------
-        reaction_steps : :obj:`int`, optional
+        steps : :obj:`int`, optional
             The number of reactions to be performed at once, defaults to 1.
 
         """
         self.call_method("setup_bookkeeping_of_empty_pids")
         E_pot = self.call_method("potential_energy")
-        for _ in range(reaction_steps):
+        for _ in range(steps):
             reaction_id = self.call_method("get_random_reaction_index")
             E_pot = self.generic_oneway_reaction(reaction_id, E_pot)
 

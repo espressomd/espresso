@@ -64,12 +64,12 @@ class ConstantpHTest(ut.TestCase):
             default_charges=charges_dict)
 
         # equilibration
-        RE.reaction(reaction_steps=800)
+        RE.reaction(steps=800)
 
         # sampling
         alphas = []
         for _ in range(80):
-            RE.reaction(reaction_steps=15)
+            RE.reaction(steps=15)
             num_H = system.number_of_particles(type=types["H+"])
             num_HA = system.number_of_particles(type=types["HA"])
             num_A = system.number_of_particles(type=types["A-"])

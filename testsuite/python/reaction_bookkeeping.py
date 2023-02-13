@@ -88,7 +88,7 @@ class ReactionMethodsBookkeepingTest(ut.TestCase):
 
     def test_reaction_bookeeping(self):
         self.widom.calculate_particle_insertion_potential_energy(reaction_id=0)
-        self.cph.reaction(reaction_steps=100)
+        self.cph.reaction(steps=100)
 
         # Measure the chemical potential
         for _ in range(50):
