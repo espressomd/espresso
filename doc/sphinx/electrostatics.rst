@@ -271,7 +271,7 @@ non-periodic direction. In more detail, it is a special procedure that
 converts a 3D electrostatic method to a 2D method in computational order N.
 The periodicity has to be set to ``(True, True, True)``. *ELC* cancels the electrostatic
 contribution of the periodic replica in **z-direction**. Make sure that you
-read the papers on ELC (:cite:`arnold02c,arnold02d,tyagi08a`) before using it.
+read the papers on *ELC* (:cite:`arnold02c,dejoannis02a,tyagi08a`) before using it.
 See :ref:`ELC theory` for more details.
 
 Usage notes:
@@ -340,7 +340,7 @@ MMM1D
     Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version
     additionally needs the features ``CUDA`` and ``MMM1D_GPU``.
 
-Please cite :cite:`arnold05a` when using MMM1D. See :ref:`MMM1D theory` for
+Please cite :cite:`arnold05b` when using MMM1D. See :ref:`MMM1D theory` for
 the details.
 
 MMM1D is used with::
