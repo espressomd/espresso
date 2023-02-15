@@ -334,7 +334,7 @@ lines below (optional steps which modify the build process are commented out):
     cd build
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
-    make -j
+    make -j$(nproc)
 
 This will build |es| with a default feature set, namely
 :file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
@@ -389,13 +389,19 @@ This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
 will negatively affect |es|'s performance.
 
-Features can be activated in the configuration header :file:`myconfig.hpp`
+Most features can be activated in the configuration header :file:`myconfig.hpp`
 (see section :ref:`myconfig.hpp\: Activating and deactivating features`).
 To activate ``FEATURE``, add the following line to the header file:
 
 .. code-block:: c++
 
     #define FEATURE
+
+Some features cannot be manually enabled; they are instead automatically
+enabled when a specific list of dependent features are enabled. For example,
+``DIPOLAR_DIRECT_SUM`` is automatically enabled when ``DIPOLES``, ``ROTATION``
+and ``CUDA`` are enabled. Please note that ``CUDA`` is an external feature
+and can only be enabled via a CMake option (see :ref:`External features`).
 
 
 .. _General features:
@@ -449,15 +455,17 @@ General features
 
    .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.mass`
 
--  ``EXCLUSIONS`` Allows to exclude any two particles
+-  ``EXCLUSIONS`` Allows particle pairs to be excluded from non-bonded interaction calculations.
 
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
--  ``VIRTUAL_SITES`` Allows to set particles wthout meaningful mass, whose position is generally fixed in the simula
-   box or fixed to other particles.
+-  ``VIRTUAL_SITES`` Allows the creation of pseudo-particles whose forces,
+   torques and orientations can be transferred to real particle.
+   They don't have a meaningful mass, and their position is generally
+   fixed in the simulation box or fixed to other particles.
 
 -  ``VIRTUAL_SITES_INERTIALESS_TRACERS`` Allows to use virtual sites as tracers by advecting them with a LB fluid 
 
@@ -473,13 +481,13 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
--  ``NPT`` Enables an on-the-fly NpT integration scheme.
+-  ``NPT`` Enables the NpT integration scheme.
 
    .. seealso:: :ref:`Isotropic NpT thermostat`
 
--  ``ENGINE`` Allows to set swimming parameters for active particles
+-  ``ENGINE`` Activates swimming parameters for active particles (self-propelled particles)
 
--  ``PARTICLE_ANISOTROPY`` Allows to incorporate the non-sphericity in particles 
+-  ``PARTICLE_ANISOTROPY`` Allows the use of non-isotropic friction coefficients in thermostats.
 
 .. _Fluid dynamics and fluid structure interaction:
 
@@ -490,18 +498,18 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB_BOUNDARIES``
+-  ``LB_BOUNDARIES`` Enables the construction of LB boundaries from shape-based constraints on the CPU.
 
--  ``LB_BOUNDARIES_GPU``
+-  ``LB_BOUNDARIES_GPU`` Enables the construction of LB boundaries from shape-based constraints on the GPU.
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
 
--  ``ELECTROKINETICS``
+-  ``ELECTROKINETICS`` Enables the description of chemical species advected by a LB fluid on the GPU.
 
--  ``EK_BOUNDARIES``
+-  ``EK_BOUNDARIES`` Enables the construction of electrokinetic boundaries from shape-based constraints on the GPU.
 
--  ``EK_DEBUG``
+-  ``EK_DEBUG`` Enables additional checks in electrokinetic simulations.
 
 
 .. _Interaction features:
@@ -708,7 +716,7 @@ are ever modified by the build process.
 
     cd build
     cmake ..
-    make -j
+    make -j$(nproc)
 
 Afterwards |es| can be run by calling ``./pypresso`` from the command line.
 
@@ -960,7 +968,7 @@ assertions. This is achieved by updating the CMake project and rebuilding
 .. code-block:: bash
 
     cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
-    make -j
+    make -j$(nproc)
 
 The resulting build will run slightly slower, but will produce an error
 message for common issues, such as divisions by zero, array access out
@@ -972,7 +980,7 @@ instrumentation:
 .. code-block:: bash
 
     cmake . -D CMAKE_BUILD_TYPE=Debug
-    make -j
+    make -j$(nproc)
 
 The resulting build will be quite slow but will allow many debugging tools
 to be used. For details, please refer to chapter :ref:`Debugging es`.
@@ -984,7 +992,7 @@ you can as a last resort activate sanitizers:
 .. code-block:: bash
 
     cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON -D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=Release
-    make -j
+    make -j$(nproc)
 
 The resulting build will be around 5 times slower that a debug build,
 but it will generate valuable reports when detecting fatal exceptions.

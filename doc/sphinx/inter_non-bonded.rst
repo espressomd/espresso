@@ -48,6 +48,18 @@ For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
 
+It is possible to exclude particle pairs from the non-bonded interaction
+calculation. For example::
+
+    system.part.by_id(0).exclusions = [1, 2]
+
+exclude short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
+It is possible to automatically exclude particle pairs that are involved in
+bonded interactions, for example to prevent virtual sites from interacting
+with the real particles they are tracking, or to facilitate the use of custom
+potentials in polymers. This is achieved via the
+:meth:`espressomd.particle_data.ParticleList.auto_exclusions()` method.
+
 .. _Isotropic non-bonded interactions:
 
 Isotropic non-bonded interactions

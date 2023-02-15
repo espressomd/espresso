@@ -67,7 +67,7 @@ Coulomb P3M
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In |es|, you can check if it is compiled in by
 checking for the feature ``FFTW`` with ``espressomd.features``.
-P3M requires full periodicity (1 1 1). When using a non-metallic dielectric
+P3M requires full periodicity ``(True, True, True)``. When using a non-metallic dielectric
 constant (``epsilon != 0.0``), the box must be cubic.
 Make sure that you know the relevance of the P3M parameters before using P3M!
 If you are not sure, read the following references:
@@ -269,7 +269,7 @@ Electrostatic Layer Correction (ELC)
 systems. It can account for different dielectric jumps on both sides of the
 non-periodic direction. In more detail, it is a special procedure that
 converts a 3D electrostatic method to a 2D method in computational order N.
-The periodicity has to be set to (1 1 1). *ELC* cancels the electrostatic
+The periodicity has to be set to ``(True, True, True)``. *ELC* cancels the electrostatic
 contribution of the periodic replica in **z-direction**. Make sure that you
 read the papers on ELC (:cite:`arnold02c,arnold02d,tyagi08a`) before using it.
 See :ref:`ELC theory` for more details.
