@@ -53,7 +53,7 @@ calculation. For example::
 
     system.part.by_id(0).exclusions = [1, 2]
 
-exclude short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
+excludes short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
 It is possible to automatically exclude particle pairs that are involved in
 bonded interactions, for example to prevent virtual sites from interacting
 with the real particles they are tracking, or to facilitate the use of custom

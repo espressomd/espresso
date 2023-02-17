@@ -270,16 +270,16 @@ systems. It can account for different dielectric jumps on both sides of the
 non-periodic direction. In more detail, it is a special procedure that
 converts a 3D electrostatic method to a 2D method in computational order N.
 The periodicity has to be set to ``(True, True, True)``. *ELC* cancels the electrostatic
-contribution of the periodic replica in **z-direction**. Make sure that you
+contribution of the periodic replica in :math:`z`-direction. Make sure that you
 read the papers on *ELC* (:cite:`arnold02c,dejoannis02a,tyagi08a`) before using it.
 See :ref:`ELC theory` for more details.
 
 Usage notes:
 
-* The non-periodic direction is always the **z-direction**.
+* The non-periodic direction is always the :math:`z`-direction.
 
 * The method relies on a slab of the simulation box perpendicular to the
-  z-direction not to contain particles. The size in z-direction of this slab
+  :math:`z`-direction not to contain particles. The size in :math:`z`-direction of this slab
   is controlled by the ``gap_size`` parameter. The user has to ensure that
   no particles enter this region by means of constraints or by fixing the
   particles' z-coordinate. When particles enter the slab of the specified

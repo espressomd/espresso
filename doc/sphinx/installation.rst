@@ -463,8 +463,8 @@ General features
    between particles.
 
 -  ``VIRTUAL_SITES`` Allows the creation of pseudo-particles whose forces,
-   torques and orientations can be transferred to real particle.
-   They don't have a meaningful mass, and their position is generally
+   torques, and orientations can be transferred to real particles.
+   They don't have mass, and their position is generally
    fixed in the simulation box or fixed to other particles.
 
 -  ``VIRTUAL_SITES_INERTIALESS_TRACERS`` Allows to use virtual sites as tracers by advecting them with a LB fluid 
