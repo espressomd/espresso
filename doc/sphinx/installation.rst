@@ -437,7 +437,7 @@ General features
 -  ``THERMOSTAT_PER_PARTICLE`` Allows setting a per-particle friction
    coefficient for the Langevin and Brownian thermostats.
 
--  ``ROTATIONAL_INERTIA``
+-  ``ROTATIONAL_INERTIA`` Allows to set the eigenvalues for rotational inertia matrix of particles
 
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
    individually. Also allows to fix individual coordinates of particles,
@@ -449,13 +449,17 @@ General features
 
    .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.mass`
 
--  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
-   molecules.
+-  ``EXCLUSIONS`` Allows to exclude any two particles
 
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
+
+-  ``VIRTUAL_SITES`` Allows to set particles wthout meaningful mass, whose position is generally fixed in the simula
+   box or fixed to other particles.
+
+-  ``VIRTUAL_SITES_INERTIALESS_TRACERS`` Allows to use virtual sites as tracers by advecting them with a LB fluid 
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
@@ -473,10 +477,9 @@ integrator or thermostat:
 
    .. seealso:: :ref:`Isotropic NpT thermostat`
 
--  ``ENGINE``
+-  ``ENGINE`` Allows to set swimming parameters for active particles
 
--  ``PARTICLE_ANISOTROPY``
-
+-  ``PARTICLE_ANISOTROPY`` Allows to incorporate the non-sphericity in particles 
 
 .. _Fluid dynamics and fluid structure interaction:
 
