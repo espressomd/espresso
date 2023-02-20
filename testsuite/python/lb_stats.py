@@ -45,7 +45,6 @@ class TestLB:
     system.time_step = 0.01
     system.cell_system.skin = 1.0
     dof = 3.
-    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def tearDown(self):
         self.system.actors.clear()
@@ -165,8 +164,6 @@ class TestRegularLBGPU(TestLB, ut.TestCase):
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
 
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 class TestNSquareLBCPU(TestLB, ut.TestCase):
 
     def setUp(self):
@@ -186,8 +183,6 @@ class TestNSquareLBGPU(TestLB, ut.TestCase):
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
 
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 class TestHybrid0LBCPU(TestLB, ut.TestCase):
 
     def setUp(self):
