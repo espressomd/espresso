@@ -172,6 +172,12 @@ Be aware of the following limitations:
 
       system = setup_system()
 
+* To be fully deterministic when loading a checkpoint with an active thermostat,
+  the first step of the integration should be called with the flag 
+  ``reuse_forces=True``. This is because loading a checkpoint reinitializes the system
+  and enforce a recalculation of the forces. However this computes the forces from the
+  velocities at the current timestep and not at the previous half time step.
+
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.
 
