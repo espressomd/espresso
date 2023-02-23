@@ -67,7 +67,7 @@ Coulomb P3M
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In |es|, you can check if it is compiled in by
 checking for the feature ``FFTW`` with ``espressomd.features``.
-P3M requires full periodicity (1 1 1). When using a non-metallic dielectric
+P3M requires full periodicity ``(True, True, True)``. When using a non-metallic dielectric
 constant (``epsilon != 0.0``), the box must be cubic.
 Make sure that you know the relevance of the P3M parameters before using P3M!
 If you are not sure, read the following references:
@@ -269,17 +269,17 @@ Electrostatic Layer Correction (ELC)
 systems. It can account for different dielectric jumps on both sides of the
 non-periodic direction. In more detail, it is a special procedure that
 converts a 3D electrostatic method to a 2D method in computational order N.
-The periodicity has to be set to (1 1 1). *ELC* cancels the electrostatic
-contribution of the periodic replica in **z-direction**. Make sure that you
-read the papers on ELC (:cite:`arnold02c,arnold02d,tyagi08a`) before using it.
+The periodicity has to be set to ``(True, True, True)``. *ELC* cancels the electrostatic
+contribution of the periodic replica in :math:`z`-direction. Make sure that you
+read the papers on *ELC* (:cite:`arnold02c,dejoannis02a,tyagi08a`) before using it.
 See :ref:`ELC theory` for more details.
 
 Usage notes:
 
-* The non-periodic direction is always the **z-direction**.
+* The non-periodic direction is always the :math:`z`-direction.
 
 * The method relies on a slab of the simulation box perpendicular to the
-  z-direction not to contain particles. The size in z-direction of this slab
+  :math:`z`-direction not to contain particles. The size in :math:`z`-direction of this slab
   is controlled by the ``gap_size`` parameter. The user has to ensure that
   no particles enter this region by means of constraints or by fixing the
   particles' z-coordinate. When particles enter the slab of the specified
@@ -340,7 +340,7 @@ MMM1D
     Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version
     additionally needs the features ``CUDA`` and ``MMM1D_GPU``.
 
-Please cite :cite:`arnold05a` when using MMM1D. See :ref:`MMM1D theory` for
+Please cite :cite:`arnold05b` when using MMM1D. See :ref:`MMM1D theory` for
 the details.
 
 MMM1D is used with::

@@ -292,7 +292,7 @@ In pseudo code, the far formula algorithm looks like:
          :math:`\xi^{(+,s/c,s/c)}_j\Xi^{(l,s/c,s/c)}_s` and
          :math:`\xi^{(-,s/c,s/c)}_j\Xi^{(h,s/c,s/c)}_s`
 
-For further details, see :cite:`arnold02a,arnold02b,arnold02c,arnold02d`.
+For further details, see :cite:`arnold02a,arnold02b,arnold02c,dejoannis02a`.
 
 .. _Dielectric contrast:
 
@@ -366,7 +366,7 @@ neither the near nor far formula allow a product decomposition or
 similar tricks. MMM1D has to be implemented as a simple NxN loop.
 However, the formulas can be evaluated efficiently, so that MMM1D can
 still be used reasonably for up to 400 particles on a single processor
-:cite:`arnold05a`.
+:cite:`arnold05b`.
 
 .. _ELC theory:
 
@@ -467,7 +467,7 @@ Ewald methods, for which decreasing the error bound can lead to
 excessive computation time. For example, P3M cannot reach a precision
 beyond :math:`10^{-5}` in general. The precise form of the error
 estimates is of little importance here, for details see
-:cite:`arnold02c,arnold02d`.
+:cite:`arnold02c,dejoannis02a`.
 
 One important aspect is that the error estimates are also exponential in
 the non-periodic coordinate. Since the number of close by and far away
