@@ -79,4 +79,11 @@ system.actors.add(p3m)
 # let's also register the p3m reference for easy access later
 checkpoint.register("p3m")
 
+# get velocities at half time step (for thermostat reproducibility)
+system.integrator.run(1)
+
 checkpoint.save()
+
+# write reference forces to file
+system.integrator.run(2)
+np.savetxt("mycheckpoint/forces.npy", np.copy(system.part.all().f))
