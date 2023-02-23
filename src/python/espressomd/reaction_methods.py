@@ -503,16 +503,10 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         """
 
         self.check_reaction_method()
-        reactions_list = []
-
-        for reaction in self.reactions:
-            reaction = {"reactant_coefficients": reaction.reactant_coefficients,
-                        "reactant_types": reaction.reactant_types,
-                        "product_types": reaction.product_types,
-                        "product_coefficients": reaction.product_coefficients,
-                        "reactant_types": reaction.reactant_types,
-                        "gamma": reaction.gamma}
-            reactions_list.append(reaction)
+        property_keys = {"reactant_coefficients", "reactant_types",
+                         "product_coefficients", "product_types", "gamma"}
+        reactions_list = [{key: getattr(reaction, key) for key in property_keys}
+                          for reaction in self.reactions]
 
         return {"reactions": reactions_list, "kT": self.kT,
                 "exclusion_range": self.exclusion_range,
