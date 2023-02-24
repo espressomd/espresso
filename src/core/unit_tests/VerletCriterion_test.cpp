@@ -25,7 +25,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "config/config.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
-#include "particle_data.hpp"
 
 BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
   auto constexpr skin = 0.4;

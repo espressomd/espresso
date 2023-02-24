@@ -37,7 +37,6 @@ namespace utf = boost::unit_test;
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
 #include "cells.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -102,6 +101,25 @@ static LBTestParameters params{23,
 /** Boost unit test dataset */
 std::vector<double> const kTs{0., 1E-4};
 
+static auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
+                                       int p_id) {
+  boost::optional<Particle> result{};
+  auto p = ::cell_structure.get_local_particle(p_id);
+  if (p and not p->is_ghost()) {
+    if (comm.rank() == 0) {
+      result = *p;
+    } else {
+      comm.send(0, p_id, *p);
+    }
+  }
+  if (comm.rank() == 0 and not result) {
+    Particle p{};
+    comm.recv(boost::mpi::any_source, p_id, p);
+    result = p;
+  }
+  return result;
+}
+
 namespace espresso {
 // ESPResSo system instance
 static std::unique_ptr<EspressoSystemStandAlone> system;
@@ -110,7 +128,7 @@ static std::shared_ptr<LBWalberlaParams> lb_params;
 static std::shared_ptr<LatticeWalberla> lb_lattice;
 static std::shared_ptr<LBWalberlaBase> lb_fluid;
 
-void add_lb_actor_local(double kT) {
+void add_lb_actor(double kT) {
   constexpr unsigned int n_ghost_layers = 1u;
   params.kT = kT;
   lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
@@ -121,44 +139,9 @@ void add_lb_actor_local(double kT) {
   activate_lb_walberla(lb_fluid, lb_params);
 }
 
-void set_lb_kT_local(double kT) {
-  lb_fluid->set_collision_model(kT, params.seed);
-}
+void remove_lb_actor() { deactivate_lb_walberla(); }
 
-void remove_lb_actor_local() { deactivate_lb_walberla(); }
-
-void cells_update_ghosts_local() { cells_update_ghosts(global_ghost_flags()); }
-
-void set_particle_f_local(int p_id, Utils::Vector3d f) {
-  if (auto p = ::cell_structure.get_local_particle(p_id)) {
-    p->force() = f;
-  }
-  on_particle_change();
-}
-REGISTER_CALLBACK(set_particle_f_local)
-#ifdef ENGINE
-void set_particle_swimming_local(int p_id, ParticleParametersSwimming swim) {
-  if (auto p = ::cell_structure.get_local_particle(p_id)) {
-    p->swimming() = swim;
-  }
-  on_particle_change();
-}
-REGISTER_CALLBACK(set_particle_swimming_local)
-#endif
-#ifdef LB_ELECTROHYDRODYNAMICS
-void set_particle_mu_E_local(int p_id, Utils::Vector3d mu_E) {
-  if (auto p = ::cell_structure.get_local_particle(p_id)) {
-    p->mu_E() = mu_E;
-  }
-  on_particle_change();
-}
-REGISTER_CALLBACK(set_particle_mu_E_local)
-#endif
-
-REGISTER_CALLBACK(add_lb_actor_local)
-REGISTER_CALLBACK(set_lb_kT_local)
-REGISTER_CALLBACK(remove_lb_actor_local)
-REGISTER_CALLBACK(cells_update_ghosts_local)
+void set_lb_kT(double kT) { lb_fluid->set_collision_model(kT, params.seed); }
 } // namespace espresso
 
 namespace LB {
@@ -169,51 +152,44 @@ auto get_force_to_be_applied(Utils::Vector3d const &pos) {
                                    static_cast<int>(pos[2] / agrid)};
   auto const res = espresso::lb_fluid->get_node_force_to_be_applied(ind);
   if (!res) {
+    auto const comm = boost::mpi::communicator();
     std::stringstream what;
     what << "Force to be applied could not be obtained from Walberla "
-         << "on MPI rank " << this_node << ": position = [" << pos << "]";
+         << "on MPI rank " << comm.rank() << ": position = [" << pos << "]";
     throw std::runtime_error(what.str());
   }
   return *res;
 }
 } // namespace LB
 
-/** Decorator to run a unit test only on the head node. */
-struct if_head_node {
-  boost::test_tools::assertion_result operator()(utf::test_unit_id) {
-    return world.rank() == 0;
-  }
-
-private:
-  boost::mpi::communicator world;
-};
-
 /** Fixture to manage the lifetime of the LB actor. */
 struct CleanupActorLB : public ParticleFactory {
-  CleanupActorLB() : ParticleFactory() {
-    mpi_call_all(espresso::add_lb_actor_local, 0.);
-  }
+  CleanupActorLB() : ParticleFactory() { espresso::add_lb_actor(0.); }
 
   // NOLINTNEXTLINE(bugprone-exception-escape)
-  ~CleanupActorLB() { mpi_call_all(espresso::remove_lb_actor_local); }
+  ~CleanupActorLB() { espresso::remove_lb_actor(); }
 };
 
-BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorLB,
-                         *utf::precondition(if_head_node()))
+BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorLB)
+
+static void lb_lbcoupling_broadcast() {
+  boost::mpi::communicator world;
+  boost::mpi::broadcast(world, lb_particle_coupling, 0);
+}
 
 BOOST_AUTO_TEST_CASE(activate) {
   lb_lbcoupling_deactivate();
-  mpi_bcast_lb_particle_coupling();
+  lb_lbcoupling_broadcast();
   lb_lbcoupling_activate();
-  mpi_bcast_lb_particle_coupling();
+  lb_lbcoupling_broadcast();
   BOOST_CHECK(lb_particle_coupling.couple_to_md);
 }
 
 BOOST_AUTO_TEST_CASE(de_activate) {
   lb_lbcoupling_activate();
-  mpi_bcast_lb_particle_coupling();
+  lb_lbcoupling_broadcast();
   lb_lbcoupling_deactivate();
-  mpi_bcast_lb_particle_coupling();
+  lb_lbcoupling_broadcast();
   BOOST_CHECK(not lb_particle_coupling.couple_to_md);
 }
 
@@ -237,7 +213,7 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK(step1_random2 == step1_random2_try2);
 
   // Propagation queries kT from LB, so LB needs to be initialized
-  mpi_call_all(espresso::set_lb_kT_local, 1E-4);
+  espresso::set_lb_kT(1E-4);
   lb_lbcoupling_propagate();
 
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
@@ -280,7 +256,7 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
 }
 
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
-  mpi_call_all(espresso::set_lb_kT_local, kT);
+  espresso::set_lb_kT(kT);
   Particle p{};
   p.v() = {-2.5, 1.5, 2.};
   p.pos() = lb_walberla()->get_lattice().get_local_domain().first;
@@ -297,7 +273,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 
 #ifdef ENGINE
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
-  mpi_call_all(espresso::set_lb_kT_local, kT);
+  espresso::set_lb_kT(kT);
   auto const first_lb_node =
       lb_walberla()->get_lattice().get_local_domain().first;
   Particle p{};
@@ -358,7 +334,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 #endif // ENGINE
 
 BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
-  mpi_call_all(espresso::set_lb_kT_local, kT);
+  espresso::set_lb_kT(kT);
   lb_lbcoupling_set_rng_state(17);
   auto const first_lb_node =
       lb_walberla()->get_lattice().get_local_domain().first;
@@ -404,7 +380,9 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
 
 BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
                        bdata::make(kTs), kT) {
-  mpi_call_all(espresso::set_lb_kT_local, kT);
+  auto const comm = boost::mpi::communicator();
+  auto const rank = comm.rank();
+  espresso::set_lb_kT(kT);
   lb_lbcoupling_set_rng_state(17);
   auto const first_lb_node =
       lb_walberla()->get_lattice().get_local_domain().first;
@@ -419,38 +397,50 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   create_particle({box_l[0] / 2. - skin * 2., skin * 2., skin * 2.}, 0, 0);
 
   // sanity checks
-  BOOST_REQUIRE_EQUAL(get_particle_node(pid), 0);
-  BOOST_REQUIRE_EQUAL(ErrorHandling::mpi_gather_runtime_errors().size(), 0);
+  BOOST_REQUIRE_EQUAL(get_particle_node_parallel(pid), rank ? -1 : 0);
+  BOOST_REQUIRE_EQUAL(
+      ErrorHandling::mpi_gather_runtime_errors_all(rank == 0).size(), 0);
 
-  auto const &p = get_particle_data(pid);
-  auto expected =
-      noise * Random::noise_uniform<RNGSalt::PARTICLES>(rng->value(), 0, pid);
 #ifdef ENGINE
-  mpi_call_all(espresso::set_particle_swimming_local, pid,
-               ParticleParametersSwimming{true, 0., 2., 1, 3.});
-  expected += gamma * p.swimming().v_swim * p.calc_director();
+  set_particle_property(pid, &Particle::swimming,
+                        ParticleParametersSwimming{true, 0., 2., 1, 3.});
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  mpi_call_all(espresso::set_particle_mu_E_local, pid,
-               Utils::Vector3d{-2., 1.5, 1.});
-  expected += gamma * p.mu_E();
+  set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
-  mpi_set_particle_pos(pid, first_lb_node + Utils::Vector3d::broadcast(0.5));
+
+  auto expected =
+      noise * Random::noise_uniform<RNGSalt::PARTICLES>(rng->value(), 0, pid);
+  auto const p_opt = copy_particle_to_head_node(comm, pid);
+  if (rank == 0) {
+    auto const &p = *p_opt;
+#ifdef ENGINE
+    expected += gamma * p.swimming().v_swim * p.calc_director();
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+    expected += gamma * p.mu_E();
+#endif
+  }
+  boost::mpi::broadcast(comm, expected, 0);
+  auto const p_pos = first_lb_node + Utils::Vector3d::broadcast(0.5);
+  set_particle_pos(pid, p_pos);
   lb_lbcoupling_set_gamma(gamma);
 
   for (bool with_ghosts : {false, true}) {
     {
       if (with_ghosts) {
-        mpi_call_all(espresso::cells_update_ghosts_local);
+        cells_update_ghosts(global_ghost_flags());
       }
-      auto const particles = cell_structure.local_particles();
-      auto const ghost_particles = cell_structure.ghost_particles();
-      BOOST_REQUIRE_GE(particles.size(), 1);
-      BOOST_REQUIRE_GE(ghost_particles.size(), with_ghosts);
+      if (rank == 0) {
+        auto const particles = ::cell_structure.local_particles();
+        auto const ghost_particles = ::cell_structure.ghost_particles();
+        BOOST_REQUIRE_GE(particles.size(), 1);
+        BOOST_REQUIRE_GE(ghost_particles.size(), static_cast<int>(with_ghosts));
+      }
     }
 
     // check box shifts
-    {
+    if (rank == 0) {
       auto constexpr reference_shifts =
           std::array<Utils::Vector3i, 8>{{{{0, 0, 0}},
                                           {{0, 0, 8}},
@@ -489,46 +479,63 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     // check without LB coupling
     {
       lb_lbcoupling_deactivate();
-      mpi_bcast_lb_particle_coupling();
-      auto const particles = cell_structure.local_particles();
-      auto const ghost_particles = cell_structure.ghost_particles();
+      lb_lbcoupling_broadcast();
+      auto const particles = ::cell_structure.local_particles();
+      auto const ghost_particles = ::cell_structure.ghost_particles();
       lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
                                              ghost_particles, params.time_step);
-      auto const &p = get_particle_data(pid);
-      BOOST_CHECK_EQUAL(p.force().norm(), 0.);
+      auto const p_opt = copy_particle_to_head_node(comm, pid);
+      if (rank == 0) {
+        auto const &p = *p_opt;
+        BOOST_CHECK_EQUAL(p.force().norm(), 0.);
+      }
     }
 
     // check with LB coupling
     {
       lb_lbcoupling_activate();
-      mpi_bcast_lb_particle_coupling();
-      auto const particles = cell_structure.local_particles();
-      auto const ghost_particles = cell_structure.ghost_particles();
-      // get original LB force
-      auto const lb_before = LB::get_force_to_be_applied(p.pos());
+      lb_lbcoupling_broadcast();
+      auto const particles = ::cell_structure.local_particles();
+      auto const ghost_particles = ::cell_structure.ghost_particles();
+      Utils::Vector3d lb_before{};
+      {
+        auto const p_opt = copy_particle_to_head_node(comm, pid);
+        if (rank == 0) {
+          auto const &p = *p_opt;
+          // get original LB force
+          lb_before = LB::get_force_to_be_applied(p.pos());
+        }
+      }
       // couple particle to LB
       lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
                                              ghost_particles, params.time_step);
-      // check particle force
-      auto const &p = get_particle_data(pid);
-      BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
-      // check LB force
-      auto const lb_after = LB::get_force_to_be_applied(p.pos());
-      auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
-      BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
+      {
+        auto const p_opt = copy_particle_to_head_node(comm, pid);
+        if (rank == 0) {
+          auto const &p = *p_opt;
+          // check particle force
+          BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
+          // check LB force
+          auto const lb_after = LB::get_force_to_be_applied(p.pos());
+          auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
+          BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
+        }
+      }
       // remove force of the particle from the fluid
-      mpi_call_all(espresso::set_particle_f_local, pid, Utils::Vector3d{});
-      add_md_force(p.pos(), -expected, params.time_step);
+      set_particle_property(pid, &Particle::force, Utils::Vector3d{});
+      add_md_force(p_pos, -expected, params.time_step);
     }
   }
 
   // clean-up and sanity checks
   {
+    boost::mpi::communicator world;
     auto const error_message_ref = std::string(
         "Recalculating forces, so the LB coupling forces are not included in "
         "the particle force the first time step. This only matters if it "
         "happens frequently during sampling.");
-    auto const error_messages = ErrorHandling::mpi_gather_runtime_errors();
+    auto const error_messages =
+        ErrorHandling::mpi_gather_runtime_errors_all(world.rank() == 0);
     for (auto const &error_message : error_messages) {
       BOOST_CHECK_EQUAL(error_message.what(), error_message_ref);
     }
@@ -561,8 +568,6 @@ bool test_lb_domain_mismatch_local() {
   return false;
 }
 
-REGISTER_CALLBACK_MAIN_RANK(test_lb_domain_mismatch_local)
-
 bool test_init_lb_walberla_nullptr_local() {
   auto const n_ghost_layers = 0u;
   auto const lattice =
@@ -572,9 +577,7 @@ bool test_init_lb_walberla_nullptr_local() {
   return ptr == nullptr;
 }
 
-REGISTER_CALLBACK_MAIN_RANK(test_init_lb_walberla_nullptr_local)
-
-BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
+BOOST_AUTO_TEST_CASE(exceptions) {
   {
     using std::exception;
     // accessing uninitialized pointers is not allowed
@@ -604,34 +607,39 @@ BOOST_AUTO_TEST_CASE(exceptions, *utf::precondition(if_head_node())) {
   // lattices without a ghost layer are not suitable for LB
   {
     boost::mpi::communicator world;
-    auto const is_nullptr = mpi_call(Communication::Result::main_rank,
-                                     test_init_lb_walberla_nullptr_local);
+    auto const is_nullptr = test_init_lb_walberla_nullptr_local();
     auto const n_errors = check_runtime_errors_local();
-    auto const error_queue = ErrorHandling::mpi_gather_runtime_errors();
-    BOOST_TEST_REQUIRE(is_nullptr);
-    BOOST_REQUIRE_EQUAL(n_errors, 1);
-    BOOST_REQUIRE_EQUAL(error_queue.size(), world.size());
-    auto const what_ref = std::string("during waLBerla initialization: At "
-                                      "least one ghost layer must be used");
-    for (auto const &error : error_queue) {
-      BOOST_CHECK_EQUAL(error.what(), what_ref);
+    auto const error_queue =
+        ErrorHandling::mpi_gather_runtime_errors_all(world.rank() == 0);
+    if (world.rank() == 0) {
+      BOOST_TEST_REQUIRE(is_nullptr);
+      BOOST_REQUIRE_EQUAL(n_errors, 1);
+      BOOST_REQUIRE_EQUAL(error_queue.size(), world.size());
+      auto const what_ref = std::string("during waLBerla initialization: At "
+                                        "least one ghost layer must be used");
+      for (auto const &error : error_queue) {
+        BOOST_CHECK_EQUAL(error.what(), what_ref);
+      }
     }
   }
 
   // waLBerla and ESPResSo must agree on domain decomposition
   {
-    auto const has_thrown_correct_exception = mpi_call(
-        Communication::Result::main_rank, test_lb_domain_mismatch_local);
+    boost::mpi::communicator world;
+    auto const has_thrown_correct_exception = test_lb_domain_mismatch_local();
     auto const n_errors = check_runtime_errors_local();
-    auto const error_queue = ErrorHandling::mpi_gather_runtime_errors();
-    BOOST_TEST_REQUIRE(has_thrown_correct_exception);
-    BOOST_REQUIRE_EQUAL(n_errors, 1);
-    BOOST_REQUIRE_EQUAL(error_queue.size(), 1);
-    auto const what_ref = std::string("MPI rank 0: left ESPResSo: [0, 0, 0], "
-                                      "left waLBerla: [0, 0, 0]");
-    for (auto const &error : error_queue) {
-      auto const error_what = error.what().substr(1, what_ref.size());
-      BOOST_CHECK_EQUAL(error_what, what_ref);
+    auto const error_queue =
+        ErrorHandling::mpi_gather_runtime_errors_all(world.rank() == 0);
+    if (world.rank() == 0) {
+      BOOST_TEST_REQUIRE(has_thrown_correct_exception);
+      BOOST_REQUIRE_EQUAL(n_errors, 1);
+      BOOST_REQUIRE_EQUAL(error_queue.size(), 1);
+      auto const what_ref = std::string("MPI rank 0: left ESPResSo: [0, 0, 0], "
+                                        "left waLBerla: [0, 0, 0]");
+      for (auto const &error : error_queue) {
+        auto const error_what = error.what().substr(1, what_ref.size());
+        BOOST_CHECK_EQUAL(error_what, what_ref);
+      }
     }
   }
 }

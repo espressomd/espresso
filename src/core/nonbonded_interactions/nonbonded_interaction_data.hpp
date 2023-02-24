@@ -387,16 +387,11 @@ inline IA_parameters &get_ia_param(int i, int j) {
   return *::nonbonded_ia_params[get_ia_param_key(i, j)];
 }
 
-void mpi_realloc_ia_params_local(int new_size);
-
-bool is_new_particle_type(int type);
 /** Make sure that ia_params is large enough to cover interactions
  *  for this particle type. The interactions are initialized with values
  *  such that no physical interaction occurs.
  */
 void make_particle_type_exist(int type);
-
-void make_particle_type_exist_local(int type);
 
 /** Check if a non-bonded interaction is defined */
 inline bool checkIfInteraction(IA_parameters const &data) {

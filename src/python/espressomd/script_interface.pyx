@@ -423,7 +423,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         return (_unpickle_so_class, (self._so_name, self._serialize()))
 
     def __dir__(self):
-        return self.__dict__.keys() + self._valid_parameters()
+        return list(self.__dict__.keys()) + self._valid_parameters()
 
     def __getattr__(self, attr):
         if attr in self._valid_parameters():

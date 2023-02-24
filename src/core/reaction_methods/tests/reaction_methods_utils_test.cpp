@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the ReactionMethods utility functions. */
-
 #define BOOST_TEST_MODULE ReactionMethods utility functions test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -27,12 +25,10 @@
 
 #include <cmath>
 #include <limits>
-#include <stdexcept>
-#include <vector>
 
 BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
   using namespace ReactionMethods;
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  constexpr double tol = 100. * std::numeric_limits<double>::epsilon();
 
   auto const reaction_ensemble_combinations = [](int N, int nu) {
     return (N + nu < 0) ? 0. : std::tgamma(N + 1) / std::tgamma(N + nu + 1);
@@ -42,7 +38,7 @@ BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
     for (int nu = -4; nu <= 4; ++nu) {
       auto const val = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N0, nu);
       auto const ref = reaction_ensemble_combinations(N0, nu);
-      BOOST_CHECK_CLOSE(val, ref, 10 * tol);
+      BOOST_CHECK_CLOSE(val, ref, 10. * tol);
     }
   }
 }

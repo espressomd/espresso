@@ -127,7 +127,8 @@ public:
         get_value<bool>(args, "friction_coupling"), single_precision);
   }
 
-  [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> const get_ekinstance() const {
+  [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> const
+  get_ekinstance() const {
     return m_ekinstance;
   }
 

@@ -29,7 +29,6 @@
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 
 #include <unordered_set>
 

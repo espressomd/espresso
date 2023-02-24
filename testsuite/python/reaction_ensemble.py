@@ -70,6 +70,7 @@ class ReactionEnsembleTest(ut.TestCase):
     RE = espressomd.reaction_methods.ReactionEnsemble(
         seed=12, kT=temperature,
         exclusion_range=exclusion_range, search_algorithm="parallel")
+    RE.set_non_interacting_type(type=max(types.values()) + 1)
 
     @classmethod
     def setUpClass(cls):
@@ -94,20 +95,16 @@ class ReactionEnsembleTest(ut.TestCase):
         RE = ReactionEnsembleTest.RE
         target_alpha = ReactionEnsembleTest.target_alpha
 
-        # Set the hidden particle type to the lowest possible number to speed
-        # up the simulation
-        RE.set_non_interacting_type(type=max(types.values()) + 1)
-
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(reaction_steps=5 * N0)
+        RE.reaction(steps=5 * N0)
 
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 300
         for _ in range(num_samples):
-            RE.reaction(reaction_steps=10)
+            RE.reaction(steps=10)
             average_NH += system.number_of_particles(type=types["H+"])
             average_NHA += system.number_of_particles(type=types["HA"])
             average_NA += system.number_of_particles(type=types["A-"])
@@ -137,6 +134,14 @@ class ReactionEnsembleTest(ut.TestCase):
         rate1 = RE.get_acceptance_rate_reaction(reaction_id=1)
         self.assertAlmostEqual(rate0, 0.85, delta=0.05)
         self.assertAlmostEqual(rate1, 0.85, delta=0.05)
+        self.assertAlmostEqual(
+            rate0,
+            RE.reactions[0].get_acceptance_rate(),
+            delta=1e-10)
+        self.assertAlmostEqual(
+            rate1,
+            RE.reactions[1].get_acceptance_rate(),
+            delta=1e-10)
 
 
 if __name__ == "__main__":

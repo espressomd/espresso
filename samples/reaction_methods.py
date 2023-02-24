@@ -107,7 +107,7 @@ RE.set_non_interacting_type(type=max(types.values()) + 1)
 
 
 for i in range(10000):
-    RE.reaction(reaction_steps=1)
+    RE.reaction(steps=1)
     if i % 100 == 0:
         print(f"HA {system.number_of_particles(type=types['HA'])}",
               f"A- {system.number_of_particles(type=types['A-'])}",

@@ -78,7 +78,7 @@ public:
   void do_construct(VariantMap const &params) override {
     m_tune = get_value<bool>(params, "tune");
     context()->parallel_try_catch([&]() {
-      auto p3m = P3MParameters{get_value<bool>(params, "tune"),
+      auto p3m = P3MParameters{!get_value_or<bool>(params, "is_tuned", !m_tune),
                                get_value<double>(params, "epsilon"),
                                get_value<double>(params, "r_cut"),
                                get_value<Utils::Vector3i>(params, "mesh"),

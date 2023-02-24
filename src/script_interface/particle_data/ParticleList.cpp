@@ -220,6 +220,13 @@ Variant ParticleList::do_call_method(std::string const &name,
     return {};
   }
 #endif // EXCLUSIONS
+  if (name == "get_highest_particle_id") {
+    return get_maximal_particle_id();
+  }
+  if (name == "clear") {
+    remove_all_particles();
+    return {};
+  }
   if (not context()->is_head_node()) {
     return {};
   }
@@ -232,9 +239,7 @@ Variant ParticleList::do_call_method(std::string const &name,
   if (name == "particle_exists") {
     return particle_exists(get_value<int>(params, "p_id"));
   }
-  if (name == "clear") {
-    remove_all_particles();
-  } else if (name == "add_particle") {
+  if (name == "add_particle") {
     assert(params.count("bonds") == 0);
     auto obj = context()->make_shared("Particles::ParticleHandle", params);
     auto &p_handle = dynamic_cast<ParticleHandle &>(*obj);
@@ -244,9 +249,6 @@ Variant ParticleList::do_call_method(std::string const &name,
     }
 #endif // EXCLUSIONS
     return p_handle.get_parameter("id");
-  }
-  if (name == "get_highest_particle_id") {
-    return get_maximal_particle_id();
   }
   return {};
 }

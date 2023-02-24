@@ -172,6 +172,25 @@ Be aware of the following limitations:
 
       system = setup_system()
 
+* To be fully deterministic when loading from a checkpoint with an active
+  thermostat, the first step of the integration should be called with the flag
+  ``reuse_forces=True``, e.g. ``system.integrator.run(2, reuse_forces=True)``.
+  This is because loading a checkpoint reinitializes the system and enforces
+  a recalculation of the forces. However, this computes the forces from the
+  velocities at the current time step and not at the previous half time step.
+  Please note that long-range actors can make trajectories non-reproducible.
+  For example, lattice-Boltzmann introduces errors of the order of 1e-15 with
+  binary checkpoint files, or 1e-7 with ASCII checkpoint files. In addition,
+  several electrostatic and magnetostatic actors automatically introduce
+  a deviation of the order of 1e-7, either due to floating-point rounding
+  errors (:class:`~espressomd.electrostatics.P3MGPU`), or due to re-tuning
+  using the most recent system state (:class:`~espressomd.electrostatics.MMM1D`,
+  :class:`~espressomd.electrostatics.MMM1DGPU`).
+  When in doubt, you can easily verify the absence of a "force jump" when
+  loading from a checkpoint by replacing the electrostatics actor with your
+  combination of features in files :file:`samples/save_checkpoint.py` and
+  :file:`samples/load_checkpoint.py` and running them sequentially.
+
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.
 
