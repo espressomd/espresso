@@ -11,6 +11,9 @@ property. Chemical reactions take place by changing the value in the
 moves using the potential energy of the system before and after the reaction
 :cite:`turner08a`.
 
+For a description of the common functionality of all reaction methods,
+see :class:`espressomd.reaction_methods.ReactionAlgorithm`.
+
 Please keep in mind the following remarks:
 
 * All reaction methods uses Monte Carlo moves which require potential energies.
