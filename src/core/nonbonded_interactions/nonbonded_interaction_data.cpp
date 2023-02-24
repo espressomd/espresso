@@ -23,7 +23,6 @@
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "event.hpp"
 
@@ -50,7 +49,7 @@ static double min_global_cut = INACTIVE_CUTOFF;
  * general low-level functions
  *****************************************/
 
-void mpi_realloc_ia_params_local(int new_size) {
+static void realloc_ia_params(int new_size) {
   auto const old_size = ::max_seen_particle_type;
   if (new_size <= old_size)
     return;
@@ -75,8 +74,6 @@ void mpi_realloc_ia_params_local(int new_size) {
   ::max_seen_particle_type = new_size;
   ::nonbonded_ia_params = std::move(new_params);
 }
-
-REGISTER_CALLBACK(mpi_realloc_ia_params_local)
 
 static double recalc_maximal_cutoff(const IA_parameters &data) {
   auto max_cut_current = INACTIVE_CUTOFF;
@@ -165,19 +162,7 @@ double maximal_cutoff_nonbonded() {
   return max_cut_nonbonded;
 }
 
-bool is_new_particle_type(int type) {
-  return (type + 1) > max_seen_particle_type;
-}
-
-void make_particle_type_exist(int type) {
-  if (is_new_particle_type(type))
-    mpi_call_all(mpi_realloc_ia_params_local, type + 1);
-}
-
-void make_particle_type_exist_local(int type) {
-  if (is_new_particle_type(type))
-    mpi_realloc_ia_params_local(type + 1);
-}
+void make_particle_type_exist(int type) { realloc_ia_params(type + 1); }
 
 void set_min_global_cut(double min_global_cut) {
   ::min_global_cut = min_global_cut;
