@@ -390,6 +390,30 @@ This allows the user to quickly set up a system with boundary conditions
 that simultaneously act on the fluid and particles. For a complete
 description of all available shapes, refer to :mod:`espressomd.shapes`.
 
+.. _Prototyping new LB methods:
+
+Prototyping new LB methods
+--------------------------
+
+Start by installing the code generator dependencies:
+
+.. code-block:: bash
+
+    pip3 install --user -c requirements.txt numpy sympy pystencils lbmpy
+
+Next, edit the code generator script to configure new kernels, then execute it:
+
+.. code-block:: bash
+
+    python3 maintainer/walberla_kernels/generate_lb_kernels.py
+
+The generated source code files will be written to
+:file:`src/walberla_bridge/src/lattice_boltzmann/generated_kernels/`.
+Edit the :file:`src/walberla_bridge/src/lattice_boltzmann/generated_kernels/CMakeLists.txt`
+file to include the new kernels in the build system. Then, adapt
+:file:`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`
+to use the new LB kernels.
+
 
 .. [1]
    https://www.paraview.org/
