@@ -259,7 +259,7 @@ RE.add_reaction(
 
 
 def equilibrate_reaction(reaction_steps=1):
-    RE.reaction(reaction_steps=reaction_steps)
+    RE.reaction(steps=reaction_steps)
 
 
 def report_progress(system, i, next_i):
@@ -295,7 +295,7 @@ if args.output:
 
         if MC_STEPS_PER_SAMPLE > 0:
             tick_MC = time.time()
-            RE.reaction(reaction_steps=MC_STEPS_PER_SAMPLE)
+            RE.reaction(steps=MC_STEPS_PER_SAMPLE)
             tock_MC = time.time()
 
         t_MC = (tock_MC - tick_MC) / MC_STEPS_PER_SAMPLE
@@ -332,7 +332,7 @@ elif args.script_tune:
     for i in range(NUM_SAMPLES):
         if RUN_INTEGRATION:
             system.integrator.run(INTEGRATION_STEPS_PER_SAMPLE)
-        RE.reaction(reaction_steps=MC_STEPS_PER_SAMPLE)
+        RE.reaction(steps=MC_STEPS_PER_SAMPLE)
         n_A = system.number_of_particles(type=TYPES['A'])
         n_As.append(n_A)
         n_All = len(system.part)

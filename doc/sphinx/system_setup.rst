@@ -320,13 +320,18 @@ in total, or more than 4 MPI ranks per direction. In this situation,
 consider increasing the box size or decreasing the interaction cutoff
 or Verlet list skin.
 
+This scheme is also known as the spatial decomposition cell scheme
+:cite:`plimpton95a`, and requires communicating particle information
+from neighboring cells at every time step.
+
 .. _N-squared:
 
 N-squared
 ^^^^^^^^^
 
 Invoking :py:meth:`~espressomd.cell_system.CellSystem.set_n_square`
-selects the very primitive N-squared cellsystem, which calculates
+selects the very primitive N-squared cellsystem, also known as the atom
+decomposition cell scheme :cite:`plimpton95a`, which calculates
 the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
 :math:`N^2`. However, algorithms like MMM1D or the plain Coulomb
@@ -341,10 +346,10 @@ In a multiple processor environment, the N-squared cellsystem uses a
 simple particle balancing scheme to have a nearly equal number of
 particles per CPU, :math:`n` nodes have :math:`m` particles, and
 :math:`p-n` nodes have :math:`m+1` particles, such that
-:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles. Therefore the
-computational load should be balanced fairly equal among the nodes, with
-one exception: This code always uses one CPU for the interaction between
-two different nodes. For an odd number of nodes, this is fine, because
+:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles.
+Therefore the computational load should be balanced fairly equal among the
+nodes, with one exception: this code always uses one CPU for the interaction
+between two different nodes. For an odd number of nodes, this is fine, because
 the total number of interactions to calculate is a multiple of the
 number of nodes, but for an even number of nodes, for each of the
 :math:`p-1` communication rounds, one processor is idle.
@@ -355,6 +360,9 @@ But the 0-1 interaction is treated by node 1 alone, so the workload for
 this node is twice as high. For 3 processors, the interactions are 0-0,
 1-1, 2-2, 0-1, 1-2, 0-2. Of these interactions, node 0 treats 0-0 and
 0-2, node 1 treats 1-1 and 0-1, and node 2 treats 2-2 and 1-2.
+
+In addition, this scheme requires an all-to-all communication of all particles
+at every time step, which is time-consuming when the number of nodes is large.
 
 Therefore it is highly recommended that you use N-squared only with an
 odd number of nodes, if with multiple processors at all.

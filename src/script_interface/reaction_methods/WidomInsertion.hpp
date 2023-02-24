@@ -39,36 +39,49 @@ public:
   std::shared_ptr<::ReactionMethods::ReactionAlgorithm> RE() override {
     return m_re;
   }
+  std::shared_ptr<::ReactionMethods::ReactionAlgorithm> const
+  RE() const override {
+    return m_re;
+  }
 
   WidomInsertion() {
     add_parameters({{"search_algorithm",
-                     [](Variant const &) {
-                       throw std::runtime_error(
-                           "No search algorithm for WidomInsertion");
+                     [this](Variant const &) {
+                       if (context()->is_head_node()) {
+                         throw std::runtime_error(
+                             "No search algorithm for WidomInsertion");
+                       }
                      },
                      []() { return none; }}});
   }
 
   void do_construct(VariantMap const &params) override {
-    m_re = std::make_shared<::ReactionMethods::WidomInsertion>(
-        get_value<int>(params, "seed"), get_value<double>(params, "kT"), 0.,
-        std::unordered_map<int, double>{});
+    context()->parallel_try_catch([&]() {
+      m_re = std::make_shared<::ReactionMethods::WidomInsertion>(
+          context()->get_comm(), get_value<int>(params, "seed"),
+          get_value<double>(params, "kT"), 0.,
+          std::unordered_map<int, double>{});
+    });
   }
 
   Variant do_call_method(std::string const &name,
-                         VariantMap const &parameters) override {
+                         VariantMap const &params) override {
     if (name == "calculate_particle_insertion_potential_energy") {
-      auto const reaction_id = get_value<int>(parameters, "reaction_id");
-      auto const index = get_reaction_index(reaction_id);
-      auto &reaction = *m_reactions[index]->get_reaction();
-      return m_re->calculate_particle_insertion_potential_energy(reaction);
+      Variant result;
+      context()->parallel_try_catch([&]() {
+        auto const reaction_id = get_value<int>(params, "reaction_id");
+        auto const index = get_reaction_index(reaction_id);
+        result = m_re->calculate_particle_insertion_potential_energy(index);
+      });
+      return result;
     }
-    return ReactionAlgorithm::do_call_method(name, parameters);
+    return ReactionAlgorithm::do_call_method(name, params);
   }
 
 private:
   std::shared_ptr<::ReactionMethods::WidomInsertion> m_re;
 };
+
 } /* namespace ReactionMethods */
 } /* namespace ScriptInterface */
 

@@ -19,9 +19,9 @@
 #ifndef REACTION_METHODS_UTILS_HPP
 #define REACTION_METHODS_UTILS_HPP
 
-#include "reaction_methods/ReactionAlgorithm.hpp"
+#include "reaction_methods/SingleReaction.hpp"
 
-#include <map>
+#include <unordered_map>
 
 namespace ReactionMethods {
 
@@ -31,19 +31,21 @@ namespace ReactionMethods {
  *
  * See @cite smith94c.
  */
-double
-calculate_factorial_expression(SingleReaction const &current_reaction,
-                               std::map<int, int> const &old_particle_numbers);
+double calculate_factorial_expression(
+    SingleReaction const &reaction,
+    std::unordered_map<int, int> const &particle_numbers);
 
 /**
  * Calculates the factorial expression which occurs in the constant pH method
  * with symmetric proposal probability.
  *
- * See @cite landsgesell17b
+ * See @cite landsgesell17b for details.
+ * zeta = 1 (see @cite smith94c) since we only perform one reaction
+ * at one call of the function.
  */
 double calculate_factorial_expression_cpH(
-    SingleReaction const &current_reaction,
-    std::map<int, int> const &old_particle_numbers);
+    SingleReaction const &reaction,
+    std::unordered_map<int, int> const &particle_numbers);
 
 /**
  * Calculates the factorial expression which occurs in the reaction ensemble

@@ -56,23 +56,20 @@ class ConstantpHTest(ut.TestCase):
             exclusion_range=1,
             seed=44,
             constant_pH=pH)
+        RE.set_non_interacting_type(type=max(types.values()) + 1)
         RE.add_reaction(
             gamma=10**(-pKa),
             reactant_types=[types["HA"]],
             product_types=[types["A-"], types["H+"]],
             default_charges=charges_dict)
 
-        # Set the hidden particle type to the lowest possible number to speed
-        # up the simulation
-        RE.set_non_interacting_type(type=max(types.values()) + 1)
-
         # equilibration
-        RE.reaction(reaction_steps=800)
+        RE.reaction(steps=800)
 
         # sampling
         alphas = []
         for _ in range(80):
-            RE.reaction(reaction_steps=15)
+            RE.reaction(steps=15)
             num_H = system.number_of_particles(type=types["H+"])
             num_HA = system.number_of_particles(type=types["HA"])
             num_A = system.number_of_particles(type=types["A-"])
