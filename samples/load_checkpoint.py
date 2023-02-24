@@ -30,6 +30,7 @@ Basic usage of the checkpointing feature. Show how to load the state of:
 import espressomd
 import espressomd.electrostatics
 import espressomd.checkpointing
+import numpy as np
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
@@ -69,7 +70,6 @@ print(f"system.thermostat.get_state() = {system.thermostat.get_state()}")
 print("\n### p3m test ###")
 print(f"p3m.get_params() = {p3m.get_params()}")
 
-
 # test registered objects
 # all objects that are registered when writing a checkpoint are
 # automatically registered after loading this checkpoint
@@ -77,8 +77,11 @@ print("\n### checkpoint register test ###")
 print(
     f"checkpoint.get_registered_objects() = {checkpoint.get_registered_objects()}")
 
-
-# integrate system
+# integrate system while re-using forces (and velocities at half time step)
 print("Integrating...")
+system.integrator.run(2, reuse_forces=True)
 
-system.integrator.run(1000)
+# measure deviation from reference forces (trajectory must be deterministic)
+forces_ref = np.loadtxt("mycheckpoint/forces.npy")
+forces_diff = np.abs(system.part.all().f - forces_ref)
+print(f"max deviation from reference forces = {np.max(forces_diff):.2e}")
