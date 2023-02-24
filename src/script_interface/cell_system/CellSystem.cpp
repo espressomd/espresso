@@ -188,7 +188,7 @@ Variant CellSystem::do_call_method(std::string const &name,
     context()->parallel_try_catch([this, &neighbors_global, &params]() {
       auto const dist = get_value<double>(params, "distance");
       auto const pid = get_value<int>(params, "pid");
-      auto const ret = mpi_get_short_range_neighbors_local(pid, dist, true);
+      auto const ret = get_short_range_neighbors(pid, dist);
       std::vector<int> neighbors_local;
       if (ret) {
         neighbors_local = *ret;

@@ -114,10 +114,8 @@ void check_resort_particles();
  * @brief Get ids of particles that are within a certain distance
  * of another particle.
  */
-std::vector<int> mpi_get_short_range_neighbors(int pid, double distance);
-boost::optional<std::vector<int>>
-mpi_get_short_range_neighbors_local(int pid, double distance,
-                                    bool run_sanity_checks);
+boost::optional<std::vector<int>> get_short_range_neighbors(int pid,
+                                                            double distance);
 
 /**
  * @brief Find the cell in which a particle is stored.
