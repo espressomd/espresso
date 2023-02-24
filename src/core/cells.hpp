@@ -56,6 +56,8 @@
 
 #include "Particle.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/optional.hpp>
 
 #include <utility>
@@ -142,10 +144,24 @@ public:
   int node;
 };
 
+namespace boost {
+namespace serialization {
+template <class Archive>
+void serialize(Archive &ar, PairInfo &p, unsigned int const /* version */) {
+  ar &p.id1;
+  ar &p.id2;
+  ar &p.pos1;
+  ar &p.pos2;
+  ar &p.vec21;
+  ar &p.node;
+}
+} // namespace serialization
+} // namespace boost
+
 /**
  * @brief Returns pairs of particle ids, positions and distance as seen by the
  * non-bonded loop.
  */
-std::vector<PairInfo> non_bonded_loop_trace();
+std::vector<PairInfo> non_bonded_loop_trace(int rank);
 
 #endif
