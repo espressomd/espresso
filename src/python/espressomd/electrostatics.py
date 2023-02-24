@@ -396,11 +396,13 @@ class MMM1D(ElectrostaticInteraction):
         Maximal pairwise error.
     far_switch_radius : :obj:`float`, optional
         Radius where near-field and far-field calculation are switched.
-    bessel_cutoff : :obj:`int`, optional
-    tune : :obj:`bool`, optional
-        Specify whether to automatically tune or not. Defaults to ``True``.
-    timings : :obj:`int`
+    verbose : :obj:`bool`, optional
+        If ``False``, disable log output during tuning.
+    timings : :obj:`int`, optional
         Number of force calculations during tuning.
+    check_neutrality : :obj:`bool`, optional
+        Raise a warning if the system is not electrically neutral when
+        set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombMMM1D"
@@ -445,8 +447,11 @@ class MMM1DGPU(ElectrostaticInteraction):
     far_switch_radius : :obj:`float`, optional
         Radius where near-field and far-field calculation are switched
     bessel_cutoff : :obj:`int`, optional
-    tune : :obj:`bool`, optional
-        Specify whether to automatically tune or not. Defaults to ``True``.
+    timings : :obj:`int`, optional
+        Number of force calculations during tuning.
+    check_neutrality : :obj:`bool`, optional
+        Raise a warning if the system is not electrically neutral when
+        set to ``True`` (default).
     """
     _so_name = "Coulomb::CoulombMMM1DGpu"
     _so_creation_policy = "GLOBAL"
