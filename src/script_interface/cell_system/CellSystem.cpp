@@ -230,6 +230,9 @@ Variant CellSystem::do_call_method(std::string const &name,
               get_value_or<bool>(params, "adjust_max_skin", false));
     return ::skin;
   }
+  if (name == "get_max_range") {
+    return ::cell_structure.max_range();
+  }
   return {};
 }
 

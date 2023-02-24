@@ -119,6 +119,30 @@ void check_resort_particles();
 boost::optional<std::vector<int>> get_short_range_neighbors(int pid,
                                                             double distance);
 
+struct NeighborPIDs {
+  NeighborPIDs() = default;
+  NeighborPIDs(int _pid, std::vector<int> _neighbor_pids)
+      : pid{_pid}, neighbor_pids{std::move(_neighbor_pids)} {}
+
+  int pid;
+  std::vector<int> neighbor_pids;
+};
+
+namespace boost {
+namespace serialization {
+template <class Archive>
+void serialize(Archive &ar, NeighborPIDs &n, unsigned int const /* version */) {
+  ar &n.pid;
+  ar &n.neighbor_pids;
+}
+} // namespace serialization
+} // namespace boost
+
+/**
+ * @brief Returns pairs of particle ids and neighbor particle id lists.
+ */
+std::vector<NeighborPIDs> get_neighbor_pids();
+
 /**
  * @brief Find the cell in which a particle is stored.
  *

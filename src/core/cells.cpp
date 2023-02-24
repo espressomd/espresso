@@ -135,6 +135,24 @@ get_short_range_neighbors(int const pid, double const distance) {
   return {};
 }
 
+/**
+ * @brief Get pointers to all interacting neighbors of a central particle.
+ */
+static auto get_interacting_neighbors(Particle const &p) {
+  auto const distance = *boost::min_element(::cell_structure.max_range());
+  detail::search_neighbors_sanity_checks(distance);
+  std::vector<Particle const *> ret;
+  auto const cutoff2 = Utils::sqr(distance);
+  auto const kernel = [cutoff2, &ret](Particle const &, Particle const &p2,
+                                      Utils::Vector3d const &vec) {
+    if (vec.norm2() < cutoff2) {
+      ret.emplace_back(&p2);
+    }
+  };
+  ::cell_structure.run_on_particle_short_range_neighbors(p, kernel);
+  return ret;
+}
+
 std::vector<std::pair<int, int>> get_pairs(double const distance) {
   detail::search_neighbors_sanity_checks(distance);
   return get_pairs_filtered(distance, [](Particle const &) { return true; });
@@ -159,6 +177,23 @@ std::vector<PairInfo> non_bonded_loop_trace(int const rank) {
   };
   cell_structure.non_bonded_loop(pair_kernel);
   return pairs;
+}
+
+std::vector<NeighborPIDs> get_neighbor_pids() {
+  std::vector<NeighborPIDs> ret;
+  auto kernel = [&ret](Particle const &p,
+                       std::vector<Particle const *> const &neighbors) {
+    std::vector<int> neighbor_pids;
+    neighbor_pids.reserve(neighbors.size());
+    for (auto const &neighbor : neighbors) {
+      neighbor_pids.emplace_back(neighbor->id());
+    }
+    ret.emplace_back(p.id(), neighbor_pids);
+  };
+  for (auto const &p : ::cell_structure.local_particles()) {
+    kernel(p, get_interacting_neighbors(p));
+  }
+  return ret;
 }
 
 void set_hybrid_decomposition(std::set<int> n_square_types,

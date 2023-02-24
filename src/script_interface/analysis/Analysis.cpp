@@ -21,8 +21,10 @@
 
 #include "core/analysis/statistics.hpp"
 #include "core/analysis/statistics_chain.hpp"
+#include "core/cells.hpp"
 #include "core/dpd.hpp"
 #include "core/energy.hpp"
+#include "core/event.hpp"
 #include "core/grid.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/partCfg_global.hpp"
@@ -32,6 +34,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/contains.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -80,6 +83,19 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const pid = get_value<int>(parameters, "pid");
     auto const local = particle_short_range_energy_contribution(pid);
     return mpi_reduce_sum(context()->get_comm(), local);
+  }
+  if (name == "particle_neighbor_pids") {
+    on_observable_calc();
+    std::unordered_map<int, std::vector<int>> dict;
+    context()->parallel_try_catch([&]() {
+      auto neighbor_pids = get_neighbor_pids();
+      Utils::Mpi::gather_buffer(neighbor_pids, context()->get_comm());
+      std::for_each(neighbor_pids.begin(), neighbor_pids.end(),
+                    [&dict](NeighborPIDs const &neighbor_pid) {
+                      dict[neighbor_pid.pid] = neighbor_pid.neighbor_pids;
+                    });
+    });
+    return make_unordered_map_of_variants(dict);
   }
   if (not context()->is_head_node()) {
     return {};
