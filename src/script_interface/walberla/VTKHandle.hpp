@@ -167,8 +167,10 @@ public:
       // the system is checkpointed multiple times)
     } else {
       // object built by the user
-      m_flag_obs = deserialize_obs_flag(
-          get_value<std::vector<std::string>>(params, "observables"));
+      ObjectHandle::context()->parallel_try_catch([&]() {
+        m_flag_obs = deserialize_obs_flag(
+            get_value<std::vector<std::string>>(params, "observables"));
+      });
     }
     m_delta_N = get_value<int>(params, "delta_N");
     m_identifier = get_value<std::string>(params, "identifier");

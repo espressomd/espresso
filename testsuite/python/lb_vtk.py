@@ -132,8 +132,9 @@ class TestLBWrite:
             # check scalar pressure is symmetric at all time steps
             for filepath in filepaths:
                 vtk_pressure = self.parse_vtk(filepath, shape)[2]
+                # TODO WALBERLA: VTK seems to be transposed with 2+ MPI ranks
                 p_profile = np.mean(
-                    np.trace(vtk_pressure, axis1=-2, axis2=-1),
+                    np.trace(vtk_pressure.T, axis1=-2, axis2=-1),
                     axis=(1, 2))
                 np.testing.assert_allclose(
                     p_profile, p_profile[::-1], atol=1e-6)
@@ -156,6 +157,7 @@ class TestLBWrite:
                 self.lbf[2:-2, :, :].pressure_tensor) * tau**2
 
             for vtk_density, vtk_velocity, vtk_pressure in last_frame_outputs:
+                # TODO WALBERLA: VTK seems to be transposed with 2+ MPI ranks
                 np.testing.assert_allclose(
                     vtk_density, lb_density, rtol=1e-10, atol=0.)
                 np.testing.assert_allclose(

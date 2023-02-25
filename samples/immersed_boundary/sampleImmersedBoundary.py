@@ -19,7 +19,6 @@ Simulate the motion of a spherical red blood cell-like particle advected
 in a planar Poiseuille flow, with or without volume conservation. For more
 details, see :ref:`Immersed Boundary Method for soft elastic objects`.
 """
-from addSoft import AddSoft
 import os
 import argparse
 import writeVTK
@@ -55,6 +54,7 @@ print(f"Parallelization: {system.cell_system.node_grid}")
 force = 0.001
 k1 = 0.1
 k2 = 1
+from addSoft import AddSoft
 AddSoft(system, 10, 10, 10, k1, k2)
 
 # case without bending and volCons

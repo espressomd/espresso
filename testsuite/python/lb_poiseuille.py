@@ -62,7 +62,7 @@ class LBPoiseuilleCommon:
     by comparing to the analytical solution for the planar Poiseuille.
     """
 
-    system = espressomd.System(box_l=[10, 3.0, 3.0])
+    system = espressomd.System(box_l=[9.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
