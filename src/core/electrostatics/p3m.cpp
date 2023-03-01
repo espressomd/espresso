@@ -763,9 +763,17 @@ void CoulombP3M::sanity_checks_periodicity() const {
 
 void CoulombP3M::sanity_checks_cell_structure() const {
   if (local_geo.cell_structure_type() !=
-      CellStructureType::CELL_STRUCTURE_REGULAR) {
+          CellStructureType::CELL_STRUCTURE_REGULAR &&
+      local_geo.cell_structure_type() !=
+          CellStructureType::CELL_STRUCTURE_HYBRID) {
     throw std::runtime_error(
-        "CoulombP3M: requires the regular decomposition cell system");
+        "CoulombP3M: requires the regular or hybrid decomposition cell system");
+  }
+  if (n_nodes > 1 && local_geo.cell_structure_type() ==
+                         CellStructureType::CELL_STRUCTURE_HYBRID) {
+    throw std::runtime_error(
+        "CoulombP3M: does not work with the hybrid decomposition cell system, "
+        "if using more than one MPI node");
   }
 }
 
