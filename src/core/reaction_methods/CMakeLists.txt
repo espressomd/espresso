@@ -18,12 +18,8 @@
 #
 
 target_sources(
-  espresso_core
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ReactionAlgorithm.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/ReactionEnsemble.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/ConstantpHEnsemble.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/WidomInsertion.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp)
+  espresso_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ReactionAlgorithm.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp)
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)

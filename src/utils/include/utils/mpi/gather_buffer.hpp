@@ -52,7 +52,7 @@ namespace Mpi {
  */
 template <typename T, class Allocator>
 void gather_buffer(std::vector<T, Allocator> &buffer,
-                   boost::mpi::communicator comm, int root = 0) {
+                   boost::mpi::communicator const &comm, int root = 0) {
   auto const n_elem = static_cast<int>(buffer.size());
 
   if (comm.rank() == root) {

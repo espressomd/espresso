@@ -102,6 +102,21 @@ class AnalyzeDistance(ut.TestCase):
                 self.system.analysis.nbhood(pos=[i, i, i], r_catch=i * 2),
                 self.nbhood(pos=[i, i, i], r_catch=i * 2))
 
+    def test_particle_neighbors(self):
+        max_range = min(self.system.cell_system.call_method("get_max_range"))
+        # try five times
+        for _ in range(5):
+            self.system.part.all().pos = (
+                np.random.random((len(self.system.part), 3)) * BOX_L
+            )
+            neighbor_dict = self.system.analysis.particle_neighbor_pids()
+            for pid, neighborlist in neighbor_dict.items():
+                nbhood = list(self.nbhood(
+                    pos=self.system.part.by_id(pid).pos, r_catch=max_range
+                ))
+                nbhood.remove(pid)
+                self.assertListEqual(sorted(neighborlist), sorted(nbhood))
+
     def test_distance_to_pos(self):
         parts = self.system.part
         # try five times

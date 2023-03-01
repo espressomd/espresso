@@ -40,8 +40,8 @@
 #include "integrate.hpp"
 #include "particle_node.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
@@ -61,7 +61,7 @@ CellStructure cell_structure{box_geo};
  * filter criterion.
  *
  * It uses link_cell to get pairs out of the cellsystem
- * by a simple distance criterion and
+ * by a simple distance criterion and applies the filter on both particles.
  *
  * Pairs are sorted so that first.id < second.id
  */
@@ -69,11 +69,10 @@ template <class Filter>
 std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
                                                     Filter filter) {
   std::vector<std::pair<int, int>> ret;
-  on_observable_calc();
-  auto const cutoff2 = distance * distance;
-  auto pair_kernel = [&ret, &cutoff2, &filter](Particle const &p1,
-                                               Particle const &p2,
-                                               Distance const &d) {
+  auto const cutoff2 = Utils::sqr(distance);
+  auto const pair_kernel = [cutoff2, &filter, &ret](Particle const &p1,
+                                                    Particle const &p2,
+                                                    Distance const &d) {
     if (d.dist2 < cutoff2 and filter(p1) and filter(p2))
       ret.emplace_back(p1.id(), p2.id());
   };
@@ -89,107 +88,112 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
   return ret;
 }
 
-namespace boost {
-namespace serialization {
-template <class Archive>
-void serialize(Archive &ar, PairInfo &p, const unsigned int /* version */) {
-  ar &p.id1;
-  ar &p.id2;
-  ar &p.pos1;
-  ar &p.pos2;
-  ar &p.vec21;
-  ar &p.node;
-}
-} // namespace serialization
-} // namespace boost
-
 namespace detail {
-static void search_distance_sanity_check(double const distance) {
+static auto get_max_neighbor_search_range() {
+  return *boost::min_element(cell_structure.max_range());
+}
+static void search_distance_sanity_check_max_range(double const distance) {
   /* get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
    * finding range is therefore limited by the decomposition that is used.
    */
-  auto const range = *boost::min_element(cell_structure.max_range());
-  if (distance > range) {
+  auto const max_range = get_max_neighbor_search_range();
+  if (distance > max_range) {
     throw std::domain_error("pair search distance " + std::to_string(distance) +
                             " bigger than the decomposition range " +
-                            std::to_string(range));
+                            std::to_string(max_range));
   }
 }
-static void search_neighbors_sanity_check(double const distance) {
-  search_distance_sanity_check(distance);
+static void search_distance_sanity_check_cell_structure(double const distance) {
   if (cell_structure.decomposition_type() ==
       CellStructureType::CELL_STRUCTURE_HYBRID) {
     throw std::runtime_error("Cannot search for neighbors in the hybrid "
                              "decomposition cell system");
   }
 }
+static void search_neighbors_sanity_checks(double const distance) {
+  search_distance_sanity_check_max_range(distance);
+  search_distance_sanity_check_cell_structure(distance);
+}
 } // namespace detail
 
 boost::optional<std::vector<int>>
-mpi_get_short_range_neighbors_local(int const pid, double const distance,
-                                    bool run_sanity_checks) {
-
-  if (run_sanity_checks) {
-    detail::search_neighbors_sanity_check(distance);
-  }
-  on_observable_calc();
-
-  auto const p = cell_structure.get_local_particle(pid);
-  if (not p or p->is_ghost()) {
-    return {};
-  }
-
+get_short_range_neighbors(int const pid, double const distance) {
+  detail::search_neighbors_sanity_checks(distance);
   std::vector<int> ret;
-  auto const cutoff2 = distance * distance;
-  auto kernel = [&ret, cutoff2](Particle const &p1, Particle const &p2,
-                                Utils::Vector3d const &vec) {
+  auto const cutoff2 = Utils::sqr(distance);
+  auto const kernel = [cutoff2, &ret](Particle const &, Particle const &p2,
+                                      Utils::Vector3d const &vec) {
     if (vec.norm2() < cutoff2) {
       ret.emplace_back(p2.id());
     }
   };
-  cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
-  return {ret};
+  auto const p = ::cell_structure.get_local_particle(pid);
+  if (p and not p->is_ghost()) {
+    ::cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
+    return {ret};
+  }
+  return {};
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_get_short_range_neighbors_local)
-
-std::vector<int> mpi_get_short_range_neighbors(int const pid,
-                                               double const distance) {
-  detail::search_neighbors_sanity_check(distance);
-  return mpi_call(::Communication::Result::one_rank,
-                  mpi_get_short_range_neighbors_local, pid, distance, false);
+/**
+ * @brief Get pointers to all interacting neighbors of a central particle.
+ */
+static auto get_interacting_neighbors(Particle const &p) {
+  auto const distance = *boost::min_element(::cell_structure.max_range());
+  detail::search_neighbors_sanity_checks(distance);
+  std::vector<Particle const *> ret;
+  auto const cutoff2 = Utils::sqr(distance);
+  auto const kernel = [cutoff2, &ret](Particle const &, Particle const &p2,
+                                      Utils::Vector3d const &vec) {
+    if (vec.norm2() < cutoff2) {
+      ret.emplace_back(&p2);
+    }
+  };
+  ::cell_structure.run_on_particle_short_range_neighbors(p, kernel);
+  return ret;
 }
 
 std::vector<std::pair<int, int>> get_pairs(double const distance) {
-  detail::search_distance_sanity_check(distance);
-  auto pairs =
-      get_pairs_filtered(distance, [](Particle const &) { return true; });
-  Utils::Mpi::gather_buffer(pairs, comm_cart);
-  return pairs;
+  detail::search_neighbors_sanity_checks(distance);
+  return get_pairs_filtered(distance, [](Particle const &) { return true; });
 }
 
 std::vector<std::pair<int, int>>
 get_pairs_of_types(double const distance, std::vector<int> const &types) {
-  detail::search_distance_sanity_check(distance);
-  auto pairs = get_pairs_filtered(distance, [types](Particle const &p) {
+  detail::search_neighbors_sanity_checks(distance);
+  return get_pairs_filtered(distance, [types](Particle const &p) {
     return std::any_of(types.begin(), types.end(),
                        // NOLINTNEXTLINE(bugprone-exception-escape)
                        [p](int const type) { return p.type() == type; });
   });
-  Utils::Mpi::gather_buffer(pairs, comm_cart);
+}
+
+std::vector<PairInfo> non_bonded_loop_trace(int const rank) {
+  std::vector<PairInfo> pairs;
+  auto const pair_kernel = [&pairs, rank](Particle const &p1,
+                                          Particle const &p2,
+                                          Distance const &d) {
+    pairs.emplace_back(p1.id(), p2.id(), p1.pos(), p2.pos(), d.vec21, rank);
+  };
+  cell_structure.non_bonded_loop(pair_kernel);
   return pairs;
 }
 
-std::vector<PairInfo> non_bonded_loop_trace() {
-  std::vector<PairInfo> pairs;
-  auto pair_kernel = [&pairs](Particle const &p1, Particle const &p2,
-                              Distance const &d) {
-    pairs.emplace_back(p1.id(), p2.id(), p1.pos(), p2.pos(), d.vec21,
-                       comm_cart.rank());
+std::vector<NeighborPIDs> get_neighbor_pids() {
+  std::vector<NeighborPIDs> ret;
+  auto kernel = [&ret](Particle const &p,
+                       std::vector<Particle const *> const &neighbors) {
+    std::vector<int> neighbor_pids;
+    neighbor_pids.reserve(neighbors.size());
+    for (auto const &neighbor : neighbors) {
+      neighbor_pids.emplace_back(neighbor->id());
+    }
+    ret.emplace_back(p.id(), neighbor_pids);
   };
-  cell_structure.non_bonded_loop(pair_kernel);
-  Utils::Mpi::gather_buffer(pairs, comm_cart);
-  return pairs;
+  for (auto const &p : ::cell_structure.local_particles()) {
+    kernel(p, get_interacting_neighbors(p));
+  }
+  return ret;
 }
 
 void set_hybrid_decomposition(std::set<int> n_square_types,

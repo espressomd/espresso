@@ -84,7 +84,7 @@ void on_program_start() {
   cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
 
   /* make sure interaction 0<->0 always exists */
-  make_particle_type_exist_local(0);
+  make_particle_type_exist(0);
 }
 
 void on_integration_start(double time_step) {

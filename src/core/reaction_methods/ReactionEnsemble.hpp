@@ -21,7 +21,7 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
-#include <map>
+#include <unordered_map>
 
 namespace ReactionMethods {
 
@@ -37,16 +37,11 @@ namespace ReactionMethods {
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
   ReactionEnsemble(
-      int seed, double kT, double exclusion_radius,
+      boost::mpi::communicator const &comm, int seed, double kT,
+      double exclusion_radius,
       const std::unordered_map<int, double> &exclusion_radius_per_type)
-      : ReactionAlgorithm(seed, kT, exclusion_radius,
+      : ReactionAlgorithm(comm, seed, kT, exclusion_radius,
                           exclusion_radius_per_type) {}
-
-protected:
-  double calculate_acceptance_probability(
-      SingleReaction const &current_reaction, double E_pot_old,
-      double E_pot_new,
-      std::map<int, int> const &old_particle_numbers) const override;
 };
 
 } // namespace ReactionMethods

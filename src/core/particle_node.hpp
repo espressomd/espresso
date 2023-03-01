@@ -36,6 +36,11 @@
 #include <cstddef>
 #include <vector>
 
+namespace type_tracking {
+auto constexpr any_type = -2;
+auto constexpr new_part = -3;
+} // namespace type_tracking
+
 /**
  * @brief Get particle data.
  *
@@ -70,16 +75,13 @@ std::size_t fetch_cache_max_size();
  */
 void clear_particle_node();
 
-void mpi_set_particle_pos_local(int p_id, Utils::Vector3d const &pos);
-
 /**
  * @brief Create a new particle and attach it to a cell.
  * Also call @ref on_particle_change.
  * @param p_id  The identity of the particle to create.
  * @param pos   The particle position.
  */
-void mpi_make_new_particle(int p_id, Utils::Vector3d const &pos);
-void mpi_make_new_particle_local(int p_id, Utils::Vector3d const &pos);
+void make_new_particle(int p_id, Utils::Vector3d const &pos);
 void particle_checks(int p_id, Utils::Vector3d const &pos);
 
 /**
@@ -88,21 +90,19 @@ void particle_checks(int p_id, Utils::Vector3d const &pos);
  * @param p_id  The identity of the particle to move.
  * @param pos   The new particle position.
  */
-void mpi_set_particle_pos(int p_id, Utils::Vector3d const &pos);
+void set_particle_pos(int p_id, Utils::Vector3d const &pos);
 
 /** Remove particle with a given identity. Also removes all bonds to the
  *  particle.
  *  @param p_id     identity of the particle to remove
  */
 void remove_particle(int p_id);
-void remove_particle_parallel(int p_id);
 
 /** Remove all particles. */
 void remove_all_particles();
 
 void init_type_map(int type);
-void on_particle_type_change(int p_id, int type);
-void on_particle_type_change_head(int p_id, int old_type, int new_type);
+void on_particle_type_change(int p_id, int old_type, int new_type);
 
 /** Find a particle of given type and return its id */
 int get_random_p_id(int type, int random_index_in_type_map);
@@ -123,6 +123,7 @@ bool particle_exists(int p_id);
  *  @return The MPI rank the particle is on.
  */
 int get_particle_node(int p_id);
+int get_particle_node_parallel(int p_id);
 
 /**
  * @brief Get all particle ids.
@@ -130,12 +131,12 @@ int get_particle_node(int p_id);
  * @return Sorted ids of all existing particles.
  */
 std::vector<int> get_particle_ids();
+std::vector<int> get_particle_ids_parallel();
 
 /**
  * @brief Get maximal particle id.
  */
 int get_maximal_particle_id();
-int get_maximal_particle_id_parallel();
 
 /**
  * @brief Get number of particles.

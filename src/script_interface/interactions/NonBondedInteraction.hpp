@@ -899,8 +899,7 @@ public:
     auto const types = get_value<std::vector<int>>(params.at("_types"));
     m_types[0] = std::min(types[0], types[1]);
     m_types[1] = std::max(types[0], types[1]);
-    // make type exist
-    mpi_realloc_ia_params_local(m_types[1] + 1);
+    make_particle_type_exist(m_types[1]);
     // create interface objects
     auto const key = get_ia_param_key(m_types[0], m_types[1]);
     m_interaction = ::nonbonded_ia_params[key];

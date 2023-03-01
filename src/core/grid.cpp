@@ -28,7 +28,6 @@
 
 #include "communication.hpp"
 #include "event.hpp"
-#include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/cart_comm.hpp>

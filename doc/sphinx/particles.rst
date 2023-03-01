@@ -393,8 +393,8 @@ Interacting with groups of particles
 ------------------------------------
 
 Groups of particles are addressed using :class:`~espressomd.particle_data.ParticleSlice` objects.
-Usually, these objects do not have to be instantiated by the user. There are several ways
-to retrieve a particle slice:
+The objects behave similarly to :class:`~espressomd.particle_data.ParticleList` objects.
+There are several ways to retrieve a particle slice:
 
 - By calling :meth:`ParticleList.add() <espressomd.particle_data.ParticleList.add>`
 

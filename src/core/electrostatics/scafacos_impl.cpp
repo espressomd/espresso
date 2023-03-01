@@ -31,7 +31,6 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "tuning.hpp"
 
 #include <utils/Span.hpp>

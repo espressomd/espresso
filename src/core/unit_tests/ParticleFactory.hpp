@@ -19,7 +19,9 @@
 #ifndef REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
 #define REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
 
-#include "particle_data.hpp"
+#include "BondList.hpp"
+#include "cells.hpp"
+#include "event.hpp"
 #include "particle_node.hpp"
 
 #include <utils/Vector.hpp>
@@ -36,10 +38,37 @@ struct ParticleFactory {
     }
   }
 
-  void create_particle(Utils::Vector3d const &pos, int pid, int type) {
-    mpi_make_new_particle(pid, pos);
-    set_particle_type(pid, type);
-    particle_cache.emplace_back(pid);
+  void create_particle(Utils::Vector3d const &pos, int p_id, int type) {
+    ::make_new_particle(p_id, pos);
+    set_particle_property(p_id, &Particle::type, type);
+    on_particle_type_change(p_id, type_tracking::new_part, type);
+    particle_cache.emplace_back(p_id);
+  }
+
+  void set_particle_type(int p_id, int type) const {
+    set_particle_property(p_id, &Particle::type, type);
+    on_particle_type_change(p_id, type_tracking::any_type, type);
+  }
+
+  void set_particle_v(int p_id, Utils::Vector3d const &vel) const {
+    set_particle_property(p_id, &Particle::v, vel);
+  }
+
+  void insert_particle_bond(int p_id, int bond_id,
+                            std::vector<int> const &partner_ids) const {
+    auto p = ::cell_structure.get_local_particle(p_id);
+    if (p != nullptr and not p->is_ghost()) {
+      p->bonds().insert(BondView(bond_id, partner_ids));
+    }
+    on_particle_change();
+  }
+
+  template <typename T>
+  void set_particle_property(int p_id, T &(Particle::*setter)(),
+                             T const &value) const {
+    if (auto p = ::cell_structure.get_local_particle(p_id)) {
+      (p->*setter)() = value;
+    }
   }
 
 private:
