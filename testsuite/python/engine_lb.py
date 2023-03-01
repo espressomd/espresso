@@ -34,7 +34,6 @@ class SwimmerTest():
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
-    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def add_all_types_of_swimmers(
             self,
@@ -152,8 +151,6 @@ class SwimmerTestRegularGPU(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestNSquareCPU(SwimmerTest, ut.TestCase):
 
@@ -175,8 +172,6 @@ class SwimmerTestNSquareGPU(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_n_square()
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestHybrid0CPU(SwimmerTest, ut.TestCase):
 
@@ -188,8 +183,6 @@ class SwimmerTestHybrid0CPU(SwimmerTest, ut.TestCase):
             n_square_types={0}, cutoff_regular=1)
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestHybrid1CPU(SwimmerTest, ut.TestCase):
 

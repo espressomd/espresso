@@ -48,7 +48,6 @@ class Momentum(object):
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
-    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def setUp(self):
         self.set_cellsystem()
@@ -116,8 +115,6 @@ class TestNSquareLBGPU(Momentum, ut.TestCase):
         self.system.cell_system.set_n_square()
 
 
-@ut.skipIf(Momentum.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
 class TestNSquareLBCPU(Momentum, ut.TestCase):
 
@@ -149,8 +146,6 @@ class TestHybrid1LBGPU(Momentum, ut.TestCase):
             n_square_types={1}, cutoff_regular=1)
 
 
-@ut.skipIf(Momentum.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
 class TestHybrid0LBCPU(Momentum, ut.TestCase):
 
@@ -161,8 +156,6 @@ class TestHybrid0LBCPU(Momentum, ut.TestCase):
             n_square_types={0}, cutoff_regular=1)
 
 
-@ut.skipIf(Momentum.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
 class TestHybrid1LBCPU(Momentum, ut.TestCase):
 
