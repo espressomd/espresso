@@ -376,6 +376,24 @@ class ParticleProperties(ut.TestCase):
                 p.swimming = {"v_swim": 0.3, "f_swim": 0.6}
             with self.assertRaisesRegex(ValueError, err_msg.format("swimming.mode", "has to be either 'pusher', 'puller' or 'N/A'")):
                 p.swimming = {"v_swim": 0.3, "mode": "invalid"}
+        if espressomd.has_features("MASS"):
+            for mass in [0., -1., -2.]:
+                with self.assertRaisesRegex(ValueError, err_msg.format("mass", "must be a float > 0")):
+                    p.mass = mass
+
+    def test_missing_features(self):
+        def check(feature, prop, throwing_values, valid_value=None):
+            if not espressomd.has_features(feature):
+                if valid_value is not None:
+                    # this should not throw
+                    setattr(self.partcl, prop, valid_value)
+                for throwing_value in throwing_values:
+                    with self.assertRaisesRegex(RuntimeError, f"Feature {feature} not compiled in"):
+                        setattr(self.partcl, prop, throwing_value)
+
+        check("MASS", "mass", [1.1, 0., -1.], 1.)
+        check("ELECTROSTATICS", "q", [1., -1.], 0.)
+        check("VIRTUAL_SITES", "virtual", [True], False)
 
     def test_parallel_property_setters(self):
         system = self.system
