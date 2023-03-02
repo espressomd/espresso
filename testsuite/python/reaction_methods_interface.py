@@ -132,7 +132,12 @@ class ReactionMethods(ut.TestCase):
         self.assertEqual(len(reactions), 2)
         check_reaction_parameters(method.reactions, reaction_parameters)
 
-        # check reactions after parameter change
+        # check reactions after unsuccessful parameter change
+        with self.assertRaises(ValueError):
+            method.change_reaction_constant(reaction_id=0, gamma=0.)
+        check_reaction_parameters(method.reactions, reaction_parameters)
+
+        # check reactions after successful parameter change
         new_gamma = 634.
         reaction_forward['gamma'] = new_gamma
         reaction_backward['gamma'] = 1. / new_gamma
@@ -173,7 +178,6 @@ class ReactionMethods(ut.TestCase):
         params = {'exclusion_range': 0.8,
                   'exclusion_radius_per_type': {1: 0.1}}
 
-        # reaction ensemble
         with self.subTest(msg="reaction ensemble"):
             method = espressomd.reaction_methods.ReactionEnsemble(
                 kT=1.4, seed=12, search_algorithm="order_n", **params)
@@ -227,6 +231,10 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, err_msg):
             method.add_reaction(default_charges={2: 1, 3: 0, 4: 1 + 1e-10},
                                 **single_reaction_params)
+        with self.assertRaisesRegex(ValueError, 'gamma'):
+            method.add_reaction(**{**reaction_params, 'gamma': 0.})
+        with self.assertRaisesRegex(ValueError, 'gamma'):
+            method.add_reaction(**{**reaction_params, 'gamma': -2.})
 
         # check invalid reaction id exceptions
         # (note: reactions id = 2 * reactions index)
@@ -236,6 +244,8 @@ class ReactionMethods(ut.TestCase):
                 method.delete_reaction(reaction_id=i)
             with self.assertRaisesRegex(IndexError, 'This reaction is not present'):
                 method.get_acceptance_rate_reaction(reaction_id=2 * i)
+        with self.assertRaisesRegex(ValueError, "Only forward reactions can be selected"):
+            method.change_reaction_constant(reaction_id=1, gamma=1.)
 
         # check constraint exceptions
         set_cyl_constraint = method.set_cylindrical_constraint_in_z_direction
@@ -274,6 +284,8 @@ class ReactionMethods(ut.TestCase):
         # check exceptions for missing particles
         with self.assertRaisesRegex(RuntimeError, "Particle id is greater than the max seen particle id"):
             method.delete_particle(p_id=0)
+        with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
+            method.delete_particle(p_id=-2)
         with self.assertRaisesRegex(RuntimeError, "Trying to remove some non-existing particles from the system via the inverse Widom scheme"):
             widom.calculate_particle_insertion_potential_energy(reaction_id=0)
         with self.assertRaisesRegex(RuntimeError, "No search algorithm for WidomInsertion"):

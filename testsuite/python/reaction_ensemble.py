@@ -70,6 +70,7 @@ class ReactionEnsembleTest(ut.TestCase):
     RE = espressomd.reaction_methods.ReactionEnsemble(
         seed=12, kT=temperature,
         exclusion_range=exclusion_range, search_algorithm="parallel")
+    RE.set_non_interacting_type(type=max(types.values()) + 1)
 
     @classmethod
     def setUpClass(cls):
@@ -93,10 +94,6 @@ class ReactionEnsembleTest(ut.TestCase):
 
         RE = ReactionEnsembleTest.RE
         target_alpha = ReactionEnsembleTest.target_alpha
-
-        # Set the hidden particle type to the lowest possible number to speed
-        # up the simulation
-        RE.set_non_interacting_type(type=max(types.values()) + 1)
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling

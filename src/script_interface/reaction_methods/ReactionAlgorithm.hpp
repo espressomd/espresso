@@ -149,6 +149,12 @@ public:
     } else if (name == "change_reaction_constant") {
       auto const gamma = get_value<double>(parameters, "gamma");
       auto const reaction_id = get_value<int>(parameters, "reaction_id");
+      if (reaction_id % 2 == 1) {
+        throw std::invalid_argument("Only forward reactions can be selected");
+      }
+      if (gamma <= 0.) {
+        throw std::domain_error("gamma needs to be a strictly positive value");
+      }
       auto const index = get_reaction_index(reaction_id);
       m_reactions[index + 0]->get_reaction()->gamma = gamma;
       m_reactions[index + 1]->get_reaction()->gamma = 1. / gamma;
