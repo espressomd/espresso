@@ -281,7 +281,7 @@ python_test(FILE lb_streaming.py MAX_NUM_PROC 4)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2)
 python_test(FILE lb_thermostat.py MAX_NUM_PROC 2)
 # python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2) # TODO WALBERLA
-python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 24 LABELS long)
+python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 LABELS long)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 LABELS long SUFFIX 1_core)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE p3m_madelung.py MAX_NUM_PROC 2 LABELS gpu long)
