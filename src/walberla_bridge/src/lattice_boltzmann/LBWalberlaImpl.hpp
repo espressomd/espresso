@@ -300,7 +300,7 @@ protected:
   template <typename Field> auto add_to_storage(char const *tag) {
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
-#ifdef WITH_AVX_KERNELS
+#ifdef ESPRESSO_BUILD_WITH_AVX_KERNELS
 #if defined(__AVX512F__)
     constexpr uint_t alignment = 64;
 #elif defined(__AVX__)
@@ -317,10 +317,10 @@ protected:
     return field::addToStorage<Field>(
         blocks, tag, field::internal::defaultSize, FloatType{0}, field::fzyx,
         n_ghost_layers, false, {}, empty_set, empty_set, allocator);
-#else  // WITH_AVX_KERNELS
+#else  // ESPRESSO_BUILD_WITH_AVX_KERNELS
     return field::addToStorage<Field>(blocks, tag, FloatType{0}, field::fzyx,
                                       n_ghost_layers);
-#endif // WITH_AVX_KERNELS
+#endif // ESPRESSO_BUILD_WITH_AVX_KERNELS
   }
 
 public:

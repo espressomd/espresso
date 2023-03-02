@@ -57,6 +57,7 @@ include(FeatureSummary)
 project(ESPResSo)
 include(GNUInstallDirs)
 include(espresso_option_enum)
+include(espresso_enable_avx2_support)
 if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
@@ -183,56 +184,6 @@ include(CheckCXXCompilerFlag)
 
 add_library(espresso_avx_flags INTERFACE)
 add_library(espresso::avx_flags ALIAS espresso_avx_flags)
-
-function(espresso_enable_avx2_support)
-  set(compiler_avx2_flag "")
-  foreach(flag_name "-mavx2" "/arch:AVX2")
-    string(REGEX REPLACE "[^0-9A-Za-z_]" "_" flag_variable "${flag_name}")
-    check_cxx_compiler_flag("${flag_name}"
-                            compiler_has_${flag_variable}_flag_result)
-    if(compiler_has_${flag_variable}_flag_result)
-      set(compiler_avx2_flag "${flag_name}")
-      target_compile_options(espresso_avx_flags
-                             INTERFACE "${compiler_avx2_flag}" "-DWITH_AVX_KERNELS")
-      break()
-    endif()
-  endforeach()
-  if(compiler_avx2_flag STREQUAL "")
-    message(
-      FATAL_ERROR
-        "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} doesn't support AVX2-specific compiler flags."
-    )
-  endif()
-  if(NOT compiler_avx2_flag STREQUAL "/arch:AVX2")
-    execute_process(
-      COMMAND ${CMAKE_CXX_COMPILER} -march=native -E -v - INPUT_FILE /dev/null
-      OUTPUT_VARIABLE march_native_output_string
-      ERROR_VARIABLE march_native_output_string)
-    if(NOT "${march_native_output_string}" MATCHES
-       "[ \n](\\+avx2|-mavx2|-D__AVX2__)[ \n]")
-      message(
-        FATAL_ERROR
-          "AVX2 not supported on this CPU architecture according to ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}. While ESPResSo will still compile, you will get SIGILL crashes when calling AVX functions."
-      )
-    endif()
-  endif()
-  set(CMAKE_REQUIRED_FLAGS_BACKUP "${CMAKE_REQUIRED_FLAGS}")
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${compiler_avx2_flag}")
-  check_cxx_source_compiles(
-    "#include <immintrin.h>
-       __m256i xi_i = _mm256_set_epi32(1, 2, 3, 4, 5, 6, 7, 8);
-       __m256  xi_s = _mm256_set_ps(0.f, 1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 7.f);
-       __m256d xi_d = _mm256_set_pd(0.0, 1.0, 2.0, 3.0);
-       int main() {}
-      " compiler_has_avx2_support)
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS_BACKUP}")
-  if(NOT compiler_has_avx2_support)
-    message(
-      FATAL_ERROR
-        "Cannot execute a simple AVX2 program compiled by ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}."
-    )
-  endif()
-endfunction()
 
 #
 # Interface libraries
@@ -697,7 +648,12 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     endif()
   endif()
   if(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
-    espresso_enable_avx2_support()
+    function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
+      target_compile_options(
+        espresso_avx_flags INTERFACE "${COMPILER_AVX2_FLAG}"
+                                     "-DESPRESSO_BUILD_WITH_AVX_KERNELS")
+    endfunction()
+    espresso_enable_avx2_support(espresso_avx_flags_callback)
   endif()
 endif()
 
