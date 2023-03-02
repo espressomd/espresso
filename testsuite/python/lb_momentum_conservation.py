@@ -125,8 +125,6 @@ class TestLBMomentumConservationRegularWalberlaSinglePrecision(
         self.system.cell_system.set_regular_decomposition()
 
 
-@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
 class TestLBCPUMomentumConservationHybridNSquareWalberla(
         TestLBMomentumConservation, ut.TestCase):
@@ -140,8 +138,6 @@ class TestLBCPUMomentumConservationHybridNSquareWalberla(
             n_square_types={0}, cutoff_regular=1)
 
 
-@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
 class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):
@@ -155,8 +151,6 @@ class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
             n_square_types={0}, cutoff_regular=1)
 
 
-@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
 class TestLBCPUMomentumConservationHybridRegularWalberla(
         TestLBMomentumConservation, ut.TestCase):
@@ -170,8 +164,6 @@ class TestLBCPUMomentumConservationHybridRegularWalberla(
             n_square_types={1}, cutoff_regular=1)
 
 
-@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
 class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):
@@ -185,8 +177,6 @@ class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
             n_square_types={1}, cutoff_regular=1)
 
 
-@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
 class TestLBMomentumConservationNSquareWalberla(
         TestLBMomentumConservation, ut.TestCase):
@@ -199,8 +189,6 @@ class TestLBMomentumConservationNSquareWalberla(
         self.system.cell_system.set_n_square()
 
 
-@ut.skipIf(TestLBMomentumConservation.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
 class TestLBMomentumConservationNSquareWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):

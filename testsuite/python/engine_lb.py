@@ -35,7 +35,6 @@ class SwimmerTest():
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
-    n_nodes = system.cell_system.get_state()['n_nodes']
 
     def add_all_types_of_swimmers(
             self,
@@ -204,8 +203,6 @@ class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
 class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
@@ -218,8 +215,6 @@ class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_n_square()
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
 class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
@@ -232,8 +227,6 @@ class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_n_square()
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
 class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
@@ -247,8 +240,6 @@ class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
             n_square_types={0}, cutoff_regular=1)
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
 class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
@@ -262,8 +253,6 @@ class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
             n_square_types={0}, cutoff_regular=1)
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
 class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
@@ -277,8 +266,6 @@ class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
             n_square_types={1}, cutoff_regular=1)
 
 
-@ut.skipIf(SwimmerTest.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures(
     ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
 class SwimmerTestHybrid1CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):

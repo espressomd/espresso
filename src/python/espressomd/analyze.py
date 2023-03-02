@@ -192,6 +192,15 @@ class Analysis(ScriptInterfaceHelper):
         (N,) array_like of :obj:`int`
             The neighbouring particle ids.
 
+    particle_neighbor_pids()
+        Get a list of all short-range neighbors for each particle.
+
+        Returns
+        -------
+        :obj: `dict`
+            A dictionary where each item is a pair of a particle id and
+            its respective neighboring particle ids.
+
     calc_re()
         Calculate the mean end-to-end distance of chains and its
         standard deviation, as well as mean square end-to-end distance of
@@ -351,6 +360,7 @@ class Analysis(ScriptInterfaceHelper):
         "linear_momentum",
         "center_of_mass",
         "nbhood",
+        "particle_neighbor_pids",
         "calc_re",
         "calc_rg",
         "calc_rh",

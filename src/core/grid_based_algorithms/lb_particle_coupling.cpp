@@ -308,17 +308,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
     if (lb_particle_coupling.couple_to_md) {
-      bool using_regular_cell_structure =
-          (local_geo.cell_structure_type() ==
-           CellStructureType::CELL_STRUCTURE_REGULAR);
-      if (not using_regular_cell_structure) {
-        if (n_nodes > 1) {
-          throw std::runtime_error("LB only works with regular decomposition, "
-                                   "if using more than one MPI node");
-        }
-      }
-      using Utils::sqr;
-      auto const kT = LB::get_kT() * sqr(LB::get_lattice_speed());
+      auto const kT = LB::get_kT() * Utils::sqr(LB::get_lattice_speed());
       /* Eq. (16) @cite ahlrichs99a.
        * The factor 12 comes from the fact that we use random numbers
        * from -0.5 to 0.5 (equally distributed) which have variance 1/12.

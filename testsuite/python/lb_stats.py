@@ -134,9 +134,8 @@ class TestLB:
         #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
         # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
         #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
-
-        temp_prec_fluid = 0.05 * self.params["temp"]
         temp_prec_particle = 0.05 * self.params["temp"]
+        temp_prec_fluid = 0.05 * self.params["temp"]
 
         self.assertAlmostEqual(
             np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
@@ -157,8 +156,6 @@ class TestRegularLBWalberla(TestLB, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestNSquareLBWalberla(TestLB, ut.TestCase):
 
@@ -168,8 +165,6 @@ class TestNSquareLBWalberla(TestLB, ut.TestCase):
         self.system.cell_system.set_n_square()
 
 
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestHybrid0LBWalberla(TestLB, ut.TestCase):
 
@@ -181,8 +176,6 @@ class TestHybrid0LBWalberla(TestLB, ut.TestCase):
         self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
 
-@ut.skipIf(TestLB.n_nodes > 1,
-           "LB with N-square only works on 1 MPI rank")
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestHybrid1LBWalberla(TestLB, ut.TestCase):
 

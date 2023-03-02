@@ -323,8 +323,9 @@ void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
                   all_ids.end());
     particle_ids = all_ids;
   } else {
+    on_observable_calc();
     auto const local_ids =
-        mpi_get_short_range_neighbors_local(p_id, m_max_exclusion_range, true);
+        get_short_range_neighbors(p_id, m_max_exclusion_range);
     assert(p1_ptr == nullptr or !!local_ids);
     if (local_ids) {
       particle_ids = std::move(*local_ids);
