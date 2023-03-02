@@ -194,6 +194,9 @@ ParticleHandle::ParticleHandle() {
       {"mass",
 #ifdef MASS
        [this](Variant const &value) {
+         if (get_value<double>(value) <= 0.) {
+           throw std::domain_error(error_msg("mass", "must be a float > 0"));
+         }
          set_particle_property(&Particle::mass, value);
        },
 #else  // MASS
