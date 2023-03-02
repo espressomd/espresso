@@ -378,6 +378,8 @@ cdef class ParticleHandle:
             IF MASS == 1:
                 check_type_or_throw_except(
                     _mass, 1, float, "Mass has to be 1 float")
+                if _mass <= 0.:
+                    raise ValueError("mass must be a float > 0")
                 set_particle_mass(self._id, _mass)
             ELSE:
                 raise AttributeError("You are trying to set the particle mass "

@@ -358,6 +358,22 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(ValueError, err_msg):
             self.system.part.add([1, 2])
 
+    def test_invalid_particle_attributes(self):
+        p = self.partcl
+        with self.assertRaisesRegex(ValueError, "type must be an integer >= 0"):
+            p.type = -1
+        with self.assertRaisesRegex(ValueError, "mol_id must be an integer >= 0"):
+            p.mol_id = -1
+        if espressomd.has_features("ENGINE"):
+            with self.assertRaisesRegex(Exception, "You can't set v_swim and f_swim at the same time"):
+                p.swimming = {"v_swim": 0.3, "f_swim": 0.6}
+            with self.assertRaisesRegex(Exception, "'mode' has to be either 'pusher', 'puller' or 'N/A'"):
+                p.swimming = {"v_swim": 0.3, "mode": "invalid"}
+        if espressomd.has_features("MASS"):
+            for mass in [0., -1., -2.]:
+                with self.assertRaisesRegex(ValueError, "mass must be a float > 0"):
+                    p.mass = mass
+
     def test_parallel_property_setters(self):
         s = self.system
         s.part.clear()
