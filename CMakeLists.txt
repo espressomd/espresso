@@ -637,15 +637,18 @@ if(ESPRESSO_BUILD_BENCHMARKS)
   add_subdirectory(maintainer/benchmarks)
 endif()
 
-# Walberla
+#
+# waLBerla
+#
+
 if(ESPRESSO_BUILD_WITH_WALBERLA)
   include(FetchContent)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
     GIT_TAG        01a28162ae1aacf7b96152c9f886ce54cc7f53ff
-    PATCH_COMMAND  patch -p1 -sN --ignore-whitespace -i
-                   ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch || echo "Patch not applied!"
+    PATCH_COMMAND  patch -p1 -N --ignore-whitespace -i
+                   ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch
   )
   if(NOT walberla_POPULATED)
     FetchContent_Populate(walberla)
