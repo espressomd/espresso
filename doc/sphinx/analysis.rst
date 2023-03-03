@@ -86,7 +86,7 @@ For example, ::
 .. _Particles in the neighborhood:
 
 Particles in the neighborhood
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :meth:`espressomd.analyze.Analysis.nbhood`
 
@@ -94,6 +94,22 @@ Returns a list of the ids of particles that fall within a given radius of a targ
 For example, ::
 
     ids = system.analysis.nbhood(pos=system.box_l * 0.5, r_catch=5.0)
+
+.. _Particles environment descriptors:
+
+Particles environment descriptors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:meth:`espressomd.analyze.Analysis.particle_neighbor_pids`
+
+Returns for each particle in the system a list of all neighboring particles
+that are within interaction range. For example, ::
+
+    neighborhood_dict = system.analysis.particle_neighbor_pids()
+
+From this dictionary one can extract descriptors of the environment around
+each particle. These descriptors can be used to calculate forces with
+machine-learned potentials.
 
 .. _Particle distribution:
 
@@ -115,7 +131,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     ...     system.part.add(pos=i * system.box_l, type=0)
     >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
     ...                                            r_min=0.0, r_max=10.0, r_bins=10)
-    >>>
     >>> print(bins)
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)

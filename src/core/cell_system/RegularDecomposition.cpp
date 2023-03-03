@@ -398,7 +398,7 @@ void RegularDecomposition::init_cell_interactions() {
   auto const global_halo_offset = hadamard_product(node_pos, cell_grid) - halo;
   auto const global_size = hadamard_product(node_grid, cell_grid);
 
-  /* Tanslate a node local index (relative to the origin of the local grid)
+  /* Translate a node local index (relative to the origin of the local grid)
    * to a global index. */
   auto global_index =
       [&](Utils::Vector3i const &local_index) -> Utils::Vector3i {
