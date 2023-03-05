@@ -237,15 +237,15 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[1, 7].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
+    handle_ia = espressomd.interactions.NonBondedInteractionHandle(
+        _types=(0, 0))
+    checkpoint.register("handle_ia")
 if espressomd.has_features(['DPD']):
     dpd_params = {"weight_function": 1, "gamma": 2., "trans_r_cut": 2., "k": 2.,
                   "trans_weight_function": 0, "trans_gamma": 1., "r_cut": 2.}
     dpd_ia = espressomd.interactions.DPDInteraction(**dpd_params)
-    handle_ia = espressomd.interactions.NonBondedInteractionHandle(
-        _types=(0, 0))
     checkpoint.register("dpd_ia")
     checkpoint.register("dpd_params")
-    checkpoint.register("handle_ia")
 
 # bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
