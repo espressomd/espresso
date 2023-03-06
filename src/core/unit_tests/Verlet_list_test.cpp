@@ -243,8 +243,8 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
 #endif // EXTERNAL_FORCES
       if (rank == 0) {
         auto const &p1 = *p1_opt;
-        auto const &p2 = *p2_opt;
 #ifdef EXTERNAL_FORCES
+        auto const &p2 = *p2_opt;
         BOOST_CHECK_CLOSE(p1.force()[0] - p1.ext_force()[0], 480., 1e-9);
 #endif // EXTERNAL_FORCES
         BOOST_CHECK_CLOSE(p1.force()[1], 0., tol);
