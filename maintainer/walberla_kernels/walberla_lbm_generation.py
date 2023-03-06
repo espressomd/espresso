@@ -62,15 +62,15 @@ def generate_macroscopic_values_accessors(
 
     cqc = lb_method.conserved_quantity_computation
     vel_symbols = cqc.velocity_symbols
-    rho_sym = sp.Symbol('rho')
-    pdfs_sym = sp.symbols(f'f_:{lb_method.stencil.Q}')
+    rho_sym = sp.Symbol("rho")
+    pdfs_sym = sp.symbols(f"f_:{lb_method.stencil.Q}")
     vel_arr_symbols = [
-        IndexedBase(TypedSymbol('u', dtype=default_dtype), shape=(1,))[i]
+        IndexedBase(TypedSymbol("u", dtype=default_dtype), shape=(1,))[i]
         for i in range(len(vel_symbols))]
-    momentum_density_symbols = sp.symbols(f'md_:{len(vel_symbols)}')
-    second_momentum_symbols = sp.symbols(f'p_:{len(vel_symbols)**2}')
+    momentum_density_symbols = sp.symbols(f"md_:{len(vel_symbols)}")
+    second_momentum_symbols = sp.symbols(f"p_:{len(vel_symbols)**2}")
 
-    subs_dict = {a: b for a, b in zip(vel_symbols, vel_arr_symbols)}
+    equilibrium_subs_dict = {a: b for a, b in zip(vel_symbols, vel_arr_symbols)}
     equilibrium = lb_method.get_equilibrium()
     lhs_list = [a.lhs for a in equilibrium.main_assignments]
     equilibrium_matrix = sp.Matrix(
@@ -78,37 +78,41 @@ def generate_macroscopic_values_accessors(
     equilibrium = ps.AssignmentCollection([ps.Assignment(lhs, rhs)
                                            for lhs, rhs in zip(lhs_list, equilibrium_matrix)])
     equilibrium = __type_equilibrium_assignments(
-        equilibrium, config, subs_dict)
+        equilibrium, config, equilibrium_subs_dict)
 
     eq_input_from_input_eqs = cqc.equilibrium_input_equations_from_init_values(
-        sp.Symbol('rho_in'), vel_arr_symbols)
+        sp.Symbol("rho_in"), vel_arr_symbols)
     density_velocity_setter_macroscopic_values = equations_to_code(
-        eq_input_from_input_eqs, dtype=default_dtype, variables_without_prefix=['rho_in', 'u'])
+        eq_input_from_input_eqs, dtype=default_dtype, variables_without_prefix=["rho_in", "u"])
     momentum_density_getter = cqc.output_equations_from_pdfs(
-        pdfs_sym, {'density': rho_sym, 'momentum_density': momentum_density_symbols})
+        pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
     second_momentum_getter = cqc.output_equations_from_pdfs(
-        pdfs_sym, {'moment2': second_momentum_symbols})
+        pdfs_sym, {"moment2": second_momentum_symbols})
 
     jinja_context = {
-        'stencil_name': stencil_name,
-        'D': lb_method.stencil.D,
-        'Q': lb_method.stencil.Q,
-        'compressible': cqc.compressible,
-        'zero_centered': cqc.zero_centered_pdfs,
-        'dtype': default_dtype,
+        "stencil_name": stencil_name,
+        "D": lb_method.stencil.D,
+        "Q": lb_method.stencil.Q,
+        "compressible": cqc.compressible,
+        "zero_centered": cqc.zero_centered_pdfs,
+        "dtype": default_dtype,
 
-        'equilibrium_from_direction': stencil_switch_statement(lb_method.stencil, equilibrium),
-        'equilibrium': [cpp_printer.doprint(e.rhs) for e in equilibrium],
+        "equilibrium_from_direction": stencil_switch_statement(lb_method.stencil, equilibrium),
+        "equilibrium": [cpp_printer.doprint(e.rhs) for e in equilibrium],
 
-        'density_getters': equations_to_code(cqc.output_equations_from_pdfs(pdfs_sym, {"density": rho_sym}),
-                                             variables_without_prefix=[e.name for e in pdfs_sym], dtype=default_dtype),
-        'momentum_density_getter': equations_to_code(momentum_density_getter, variables_without_prefix=pdfs_sym,
-                                                     dtype=default_dtype),
-        'second_momentum_getter': equations_to_code(second_momentum_getter, variables_without_prefix=pdfs_sym,
-                                                    dtype=default_dtype),
-        'density_velocity_setter_macroscopic_values': density_velocity_setter_macroscopic_values,
+        "density_getters": equations_to_code(
+            cqc.output_equations_from_pdfs(pdfs_sym, {"density": rho_sym}),
+            variables_without_prefix=[e.name for e in pdfs_sym],
+            dtype=default_dtype),
+        "momentum_density_getter": equations_to_code(
+            momentum_density_getter, variables_without_prefix=pdfs_sym,
+            dtype=default_dtype),
+        "second_momentum_getter": equations_to_code(
+            second_momentum_getter, variables_without_prefix=pdfs_sym,
+            dtype=default_dtype),
+        "density_velocity_setter_macroscopic_values": density_velocity_setter_macroscopic_values,
 
-        'namespace': 'lbm',
+        "namespace": "lbm",
     }
 
     env = Environment(loader=FileSystemLoader(os.path.dirname(__file__)),
@@ -116,13 +120,13 @@ def generate_macroscopic_values_accessors(
     add_pystencils_filters_to_jinja_env(env)
 
     header = env.get_template(
-        'macroscopic_values_accessors.tmpl.h').render(**jinja_context)
+        "macroscopic_values_accessors.tmpl.h").render(**jinja_context)
 
     gen_context.write_file(filename, header)
-    with open(filename, 'r+') as f:
+    with open(filename, "r+") as f:
         content = f.read()
         f.seek(0)
         f.truncate(0)
         # remove lattice model
-        content = content.replace('lm.force_->', 'force_field.')
+        content = content.replace("lm.force_->", "force_field.")
         f.write(content)

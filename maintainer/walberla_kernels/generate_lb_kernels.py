@@ -41,9 +41,9 @@ import walberla_lbm_generation
 import code_generation_context
 
 
-parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
-parser.add_argument('--single-precision', action='store_true', required=False,
-                    help='Use single-precision')
+parser = argparse.ArgumentParser(description="Generate the waLBerla kernels.")
+parser.add_argument("--single-precision", action="store_true", required=False,
+                    help="Use single-precision")
 parser.add_argument("--gpu", action="store_true")
 args = parser.parse_args()
 
@@ -53,39 +53,48 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
-for module, requirement in [(ps, '==1.0'), (lbmpy, '==1.0')]:
-    assert SpecifierSet(requirement).contains(module.__version__), \
-        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
+#SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
+#for module, requirement in [(ps, "==1.1.1"), (lbmpy, "==1.1.1")]:
+#    assert SpecifierSet(requirement).contains(module.__version__), \
+#        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
+
+def paramlist(parameters, keys):
+    for key in keys:
+        if key in parameters:
+            yield parameters[key]
 
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
-    ctx.cuda = True
     if target == ps.Target.GPU:
-        target_prefix = "Cuda"
-    else:
-        target_prefix = ""
+        ctx.cuda = True
 
     # vectorization parameters
-    cpu_vectorize_info = {
-        "instruction_set": "avx",
-        "assume_inner_stride_one": True,
-        "assume_aligned": True,
-        "assume_sufficient_line_padding": False}
-    params = {"target": target}
-    params_vec = {"target": target, "cpu_vectorize_info": cpu_vectorize_info}
+    parameters = {}
+    if target == ps.Target.GPU:
+        default_key = "GPU"
+        parameters["GPU"] = ({"target": target}, "CUDA")
+    else:
+        default_key = "CPU"
+        cpu_vectorize_info = {
+            "instruction_set": "avx",
+            "assume_inner_stride_one": True,
+            "assume_aligned": True,
+            "assume_sufficient_line_padding": False}
+        parameters["CPU"] = ({"target": target}, "")
+        parameters["AVX"] = ({"target": target,
+                             "cpu_vectorize_info": cpu_vectorize_info}, "AVX")
 
     # codegen configuration
-    config = pystencils_espresso.generate_config(ctx, params)
+    config = pystencils_espresso.generate_config(ctx, parameters[default_key][0])
 
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     precision_suffix = pystencils_espresso.precision_suffix[ctx.double_accuracy]
     precision_rng = pystencils_espresso.precision_rng[ctx.double_accuracy]
-    kT = sp.symbols('kT')
+    kT = sp.symbols("kT")
     stencil = lbmpy.stencils.LBStencil(lbmpy.enums.Stencil.D3Q19)
     fields = pystencils_espresso.generate_fields(config, stencil)
-    force_field = fields['force']
+    force_field = fields["force"]
 
     # LB Method definition
     method = lbmpy.creationfunctions.create_mrt_orthogonal(
@@ -97,24 +106,20 @@ with code_generation_context.CodeGeneration() as ctx:
     )
 
     # generate stream kernels
-    pystencils_espresso.generate_stream_sweep(
-        ctx,
-        method,
-        f"{target_prefix}StreamSweep{precision_prefix}",
-        params)
-    if target == ps.Target.CPU:
+    for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
         pystencils_espresso.generate_stream_sweep(
             ctx,
             method,
-            f"{target_prefix}StreamSweep{precision_prefix}AVX",
-            params_vec)
+            f"StreamSweep{precision_prefix}{target_suffix}",
+            params)
 
     # generate initial densities
-    pdfs_setter = pystencils_espresso.generate_setters(ctx, method, params)
-    pystencils_walberla.codegen.generate_sweep(
-        ctx,
-        f"{target_prefix}InitialPDFsSetter{precision_prefix}",
-        pdfs_setter, **params)
+    for params, target_suffix in paramlist(parameters, (default_key,)):
+        pystencils_walberla.codegen.generate_sweep(
+            ctx,
+            f"InitialPDFsSetter{precision_prefix}{target_suffix}",
+            pystencils_espresso.generate_setters(ctx, method, params),
+            **params)
 
     # generate unthermalized Lees-Edwards collision rule
     le_config = lbmpy.LBMConfig(stencil=stencil,
@@ -124,29 +129,21 @@ with code_generation_context.CodeGeneration() as ctx:
                                 zero_centered=False,
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=force_field.center_vector,
-                                kernel_type='collide_only')
+                                kernel_type="collide_only")
     lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
     le_collision_rule_unthermalized = lbmpy.create_lb_update_rule(
         lbm_config=le_config,
         lbm_optimisation=lbm_opt)
-
     le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
         config, le_collision_rule_unthermalized,
         fields["pdfs"], stencil, 1)  # shear_dir_normal y
-    pystencils_espresso.generate_collision_sweep(
-        ctx,
-        le_config,
-        le_collision_rule_unthermalized,
-        f"CollideSweep{precision_prefix}LeesEdwards",
-        params
-    )
-    if target == ps.Target.CPU:
+    for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
         pystencils_espresso.generate_collision_sweep(
             ctx,
             le_config,
             le_collision_rule_unthermalized,
-            f"CollideSweep{precision_prefix}LeesEdwardsAVX",
-            params_vec
+            f"CollideSweep{precision_prefix}LeesEdwards{target_suffix}",
+            params
         )
 
     # generate thermalized LB
@@ -154,63 +151,58 @@ with code_generation_context.CodeGeneration() as ctx:
         method,
         zero_centered=False,
         fluctuating={
-            'temperature': kT,
-            'block_offsets': 'walberla',
-            'rng_node': precision_rng
+            "temperature": kT,
+            "block_offsets": "walberla",
+            "rng_node": precision_rng
         },
-        optimization={'cse_global': True,
-                      'double_precision': ctx.double_accuracy}
+        optimization={"cse_global": True,
+                      "double_precision": ctx.double_accuracy}
     )
-    pystencils_espresso.generate_collision_sweep(
-        ctx,
-        method,
-        collision_rule_thermalized,
-        f"{target_prefix}CollideSweep{precision_prefix}Thermalized",
-        params
-    )
-    if target == ps.Target.CPU:
+    for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
         pystencils_espresso.generate_collision_sweep(
             ctx,
             method,
             collision_rule_thermalized,
-            f"{target_prefix}CollideSweep{precision_prefix}ThermalizedAVX",
-            params_vec
+            f"CollideSweep{precision_prefix}Thermalized{target_suffix}",
+            params
         )
 
     # generate accessors
-    if target == ps.Target.CPU:
+    for _, target_suffix in paramlist(parameters, ("CPU",)): # TODO GPU
         walberla_lbm_generation.generate_macroscopic_values_accessors(
             ctx,
             config,
             collision_rule_thermalized.method,
-            f'{target_prefix}macroscopic_values_accessors_{precision_suffix}.h')
+            f"macroscopic_values_accessors_{precision_suffix}{target_suffix}.h")
 
-    # Boundary conditions
+    # boundary conditions
     ubb_dynamic = lbmpy_espresso.UBB(
         lambda *args: None, dim=3, data_type=config.data_type.default_factory())
     ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
         method.stencil, ubb_dynamic)
 
-    lbmpy_walberla.generate_boundary(
-        ctx, f'{target_prefix}Dynamic_UBB_{precision_suffix}', ubb_dynamic,
-        method, additional_data_handler=ubb_data_handler,
-        streaming_pattern="push", target=target)
+    for _, target_suffix in paramlist(parameters, ("GPU", "CPU",)):
+        lbmpy_walberla.generate_boundary(
+            ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb_dynamic,
+            method, additional_data_handler=ubb_data_handler,
+            streaming_pattern="push", target=target)
 
-    with open(f'{target_prefix}Dynamic_UBB_{precision_suffix}.h', 'r+') as f:
-        content = f.read()
-        f.seek(0)
-        f.truncate(0)
-        # patch for floating point accuracy
-        content = content.replace('real_t',
-                                  config.data_type.default_factory().c_name)
-        f.write(content)
+        with open(f"Dynamic_UBB_{precision_suffix}{target_suffix}.h", "r+") as f:
+            content = f.read()
+            f.seek(0)
+            f.truncate(0)
+            # patch for floating point accuracy
+            content = content.replace("real_t",
+                                      config.data_type.default_factory().c_name)
+            f.write(content)
 
     # communication
-    lbmpy_walberla.generate_lb_pack_info(
-        ctx,
-        f'{target_prefix}PushPackInfo{precision_prefix}',
-        method.stencil,
-        fields['pdfs'],
-        streaming_pattern='push',
-        target=target
-    )
+    for _, target_suffix in paramlist(parameters, ("GPU", "CPU",)):
+        lbmpy_walberla.generate_lb_pack_info(
+            ctx,
+            f"PushPackInfo{precision_prefix}{target_suffix}",
+            method.stencil,
+            fields["pdfs"],
+            streaming_pattern="push",
+            target=target
+        )
