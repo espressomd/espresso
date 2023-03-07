@@ -191,6 +191,14 @@ ParticleHandle::ParticleHandle() {
          set_particle_property(&Particle::force, value);
        },
        [this]() { return get_particle_data(m_pid).force(); }},
+       {"propagation",
+        [this](Variant const &value) {
+         set_particle_property([&value](Particle &p) {
+          p.set_propagation(get_value<int>(value));
+         });
+       },        
+       [this]() {return get_particle_data(m_pid).propagation(); }
+       },
       {"mass",
 #ifdef MASS
        [this](Variant const &value) {

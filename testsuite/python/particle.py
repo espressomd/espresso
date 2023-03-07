@@ -99,6 +99,11 @@ class ParticleProperties(ut.TestCase):
     test_f = generateTestForVectorProperty("f", np.array([0.2, 0.3, 0.7]))
     test_type = generateTestForScalarProperty("type", int(3))
     test_mol_id = generateTestForScalarProperty("mol_id", int(3))
+    test_propagation = generateTestForScalarProperty("propagation", int(64))
+
+    def test_invalid_propagation(self):
+        with self.assertRaisesRegex(ValueError, "propagation combination not valid"):
+            setattr(self.partcl, "propagation", 22)
 
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))

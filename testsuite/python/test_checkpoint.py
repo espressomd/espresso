@@ -171,6 +171,8 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(p2.pos), np.array([1.0, 1.0, 2.0]))
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
         np.testing.assert_allclose(np.copy(p2.f), particle_force1)
+        np.testing.assert_equal(np.copy(p1.propagation), particle_propagation0)
+        np.testing.assert_equal(np.copy(p2.propagation), particle_propagation1)
         self.assertEqual(p1.type, 0)
         self.assertEqual(p2.type, 0)
         self.assertEqual(p3.type, 1)

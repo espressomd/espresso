@@ -96,6 +96,9 @@ if lbf_actor:
 p1 = system.part.add(id=0, pos=[1.0] * 3)
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
+p1.propagation = 4
+p2.propagation = 8 
+
 if espressomd.has_features('ELECTROSTATICS'):
     p1.q = 1
     p2.q = -1
@@ -301,6 +304,11 @@ checkpoint.register("particle_force1")
 if espressomd.has_features("COLLISION_DETECTION"):
     system.collision_detection.set_params(
         mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
+
+particle_propagation0 = np.copy(p1.propagation)
+particle_propagation1 = np.copy(p2.propagation)
+checkpoint.register("particle_propagation0")
+checkpoint.register("particle_propagation1")
 
 if espressomd.has_features('DP3M') and 'DP3M' in modes:
     dp3m = espressomd.magnetostatics.DipolarP3M(

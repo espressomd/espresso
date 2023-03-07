@@ -23,6 +23,8 @@
 
 #include "BondList.hpp"
 
+#include "PropagationModes.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/compact_vector.hpp>
 #include <utils/math/quaternion.hpp>
@@ -85,6 +87,9 @@ struct ParticleProperties {
   int mol_id = 0;
   /** particle type, used for non-bonded interactions. */
   int type = 0;
+ /** determines which propagation schemes should be applied to the particle **/
+  int propagation = 0;
+
 
 #ifdef VIRTUAL_SITES
   /** is particle virtual */
@@ -212,6 +217,8 @@ struct ParticleProperties {
     ar &identity;
     ar &mol_id;
     ar &type;
+    ar &propagation;
+
 #ifdef MASS
     ar &mass;
 #endif
@@ -434,6 +441,14 @@ public:
   auto &mol_id() { return p.mol_id; }
   auto const &type() const { return p.type; }
   auto &type() { return p.type; }
+
+  auto const &propagation() const { return p.propagation; }
+  auto &propagation() { return p.propagation; }
+  auto set_propagation(int propagation){
+    if(is_valid_propagation_combination(propagation)) p.propagation=propagation;
+    else throw std::invalid_argument( "propagation combination not valid" );
+  }
+
 
   bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
 
