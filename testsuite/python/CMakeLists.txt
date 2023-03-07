@@ -189,12 +189,6 @@ python_test(FILE writevtf.py MAX_NUM_PROC 4)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 LABELS gpu long)
 # python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
 # python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1 LABELS gpu) # TODO WALBERLA
-# python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX x
-#             ARGUMENTS Test__axis_x DEPENDENCIES unittest_generator.py) # TODO WALBERLA
-# python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX y
-#             ARGUMENTS Test__axis_y DEPENDENCIES unittest_generator.py) # TODO WALBERLA
-# python_test(FILE ek_eof_one_species.py MAX_NUM_PROC 1 LABELS gpu SUFFIX z
-#             ARGUMENTS Test__axis_z DEPENDENCIES unittest_generator.py) # TODO WALBERLA
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)

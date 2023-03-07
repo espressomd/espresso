@@ -122,10 +122,18 @@ class EK:
                 raise ValueError(
                     "rng_node not provided but fluctuations requested")
 
+            block_offsets = tuple(
+                ps.TypedSymbol(
+                    "block_offset_{}".format(i),
+                    np.uint32) for i in range(
+                    self.dim))
+
             rng_symbol_gen = random_symbol(_flux_collection.subexpressions,
                                            dim=self.dim,
                                            rng_node=rng_node,
-                                           seed=ps.TypedSymbol("seed", np.uint32))
+                                           seed=ps.TypedSymbol(
+                                               "seed", np.uint32),
+                                           offsets=block_offsets)
 
             stencil = self.flux_field.staggered_stencil
             stencil_offsets = list(
@@ -136,7 +144,7 @@ class EK:
                 assert _flux_collection.main_assignments[i].lhs == self.flux_field.staggered_access(
                     val)
                 _flux_collection.main_assignments[i] = ps.Assignment(
-                    self.velocity_field.staggered_access(val),
+                    self.flux_field.staggered_access(val),
                     _flux_collection.main_assignments[i].rhs + sp.sqrt(
                         2 * self.diffusion * discretize(self.density_field.center, d)) / sp.Matrix(
                         d).norm() * rng_symb * sp.sqrt(
