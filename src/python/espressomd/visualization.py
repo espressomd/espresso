@@ -1118,6 +1118,7 @@ class openGLLive():
                 self._draw_arrow_property(
                     part_id, part_type, self.specs['velocity_arrows_type_scale'],
                     self.specs['velocity_arrows_type_colors'],
+                    self.specs['velocity_arrows_type_materials'],
                     self.specs['velocity_arrows_type_radii'], 'velocity')
                 reset_material = True
 
@@ -1125,6 +1126,7 @@ class openGLLive():
                 self._draw_arrow_property(
                     part_id, part_type, self.specs['force_arrows_type_scale'],
                     self.specs['force_arrows_type_colors'],
+                    self.specs['force_arrows_type_materials'],
                     self.specs['force_arrows_type_radii'], 'force')
                 reset_material = True
 
@@ -1132,19 +1134,21 @@ class openGLLive():
                 self._draw_arrow_property(
                     part_id, part_type, self.specs['director_arrows_type_scale'],
                     self.specs['director_arrows_type_colors'],
+                    self.specs['director_arrows_type_materials'],
                     self.specs['director_arrows_type_radii'], 'director')
                 reset_material = True
 
-    def _draw_arrow_property(self, part_id, part_type,
-                             type_scale, type_colors, type_radii, prop):
+    def _draw_arrow_property(self, part_id, part_type, type_scale,
+                             type_colors, type_materials, type_radii, prop):
         sc = self._modulo_indexing(type_scale, part_type)
         if sc > 0:
             v = self.particles[prop][self.index_from_id[part_id]]
             col = self._modulo_indexing(type_colors, part_type)
             radius = self._modulo_indexing(type_radii, part_type)
+            material = self._modulo_indexing(type_materials, part_type)
             draw_arrow(self.particles['pos'][self.index_from_id[part_id]],
                        np.array(v, dtype=float) * sc, radius, col,
-                       self.materials['chrome'], self.specs['quality_arrows'])
+                       self.materials[material], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
         half_box_l = self.system.box_l / 2.0
