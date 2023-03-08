@@ -84,7 +84,7 @@ namespace walberla {
 /** @brief Class that runs and controls the LB on waLBerla. */
 template <typename FloatType = double>
 class LBWalberlaImpl : public LBWalberlaBase {
-  template <typename T> inline FloatType FloatType_c(T t) {
+  template <typename T> inline FloatType FloatType_c(T t) const {
     return numeric_cast<FloatType>(t);
   }
   using CollisionModelLeesEdwards =
@@ -608,9 +608,9 @@ public:
     if (!bc)
       return {};
     auto const vel_field = get_velocity_field_ptr(bc->block);
-    return Utils::Vector3d{double_c(vel_field->get((*bc).cell, uint_t(0u))),
-                           double_c(vel_field->get((*bc).cell, uint_t(1u))),
-                           double_c(vel_field->get((*bc).cell, uint_t(2u)))};
+    return Utils::Vector3d{double_c(vel_field->get(bc->cell, uint_t(0u))),
+                           double_c(vel_field->get(bc->cell, uint_t(1u))),
+                           double_c(vel_field->get(bc->cell, uint_t(2u)))};
   }
   bool set_node_velocity(const Utils::Vector3i &node,
                          const Utils::Vector3d &v) override {
@@ -622,9 +622,9 @@ public:
     auto const vel = to_vector3<FloatType>(v);
     setDensityAndVelocity(*bc, vel, density);
     auto vel_field =
-        (*bc).block->template getData<VectorField>(m_velocity_field_id);
+        bc->block->template getData<VectorField>(m_velocity_field_id);
     for (uint_t f = 0u; f < 3u; ++f) {
-      vel_field->get((*bc).cell, f) = FloatType_c(v[f]);
+      vel_field->get(bc->cell, f) = FloatType_c(v[f]);
     }
 
     return true;
@@ -686,10 +686,10 @@ public:
           get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
       if (bc) {
         auto force_field =
-            (*bc).block->template uncheckedFastGetData<VectorField>(
+            bc->block->template uncheckedFastGetData<VectorField>(
                 m_force_to_be_applied_id);
         for (int i : {0, 1, 2})
-          force_field->get((*bc).cell, i) += FloatType_c(force[i] * weight);
+          force_field->get(bc->cell, i) += FloatType_c(force[i] * weight);
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -703,10 +703,10 @@ public:
       return {};
 
     auto const &force_field =
-        (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-    return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
-                           double_c(force_field->get((*bc).cell, uint_t(1u))),
-                           double_c(force_field->get((*bc).cell, uint_t(2u)))};
+        bc->block->template getData<VectorField>(m_force_to_be_applied_id);
+    return Utils::Vector3d{double_c(force_field->get(bc->cell, uint_t(0u))),
+                           double_c(force_field->get(bc->cell, uint_t(1u))),
+                           double_c(force_field->get(bc->cell, uint_t(2u)))};
   }
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
@@ -715,10 +715,10 @@ public:
     if (!bc)
       return false;
 
-    auto force_field = (*bc).block->template getData<VectorField>(
-        m_last_applied_force_field_id);
+    auto force_field =
+        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
     for (uint_t f = 0u; f < 3u; ++f) {
-      force_field->get((*bc).cell, f) = FloatType_c(force[f]);
+      force_field->get(bc->cell, f) = FloatType_c(force[f]);
     }
 
     return true;
@@ -731,11 +731,11 @@ public:
     if (!bc)
       return {};
 
-    auto const force_field = (*bc).block->template getData<VectorField>(
-        m_last_applied_force_field_id);
-    return Utils::Vector3d{double_c(force_field->get((*bc).cell, uint_t(0u))),
-                           double_c(force_field->get((*bc).cell, uint_t(1u))),
-                           double_c(force_field->get((*bc).cell, uint_t(2u)))};
+    auto const force_field =
+        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    return Utils::Vector3d{double_c(force_field->get(bc->cell, uint_t(0u))),
+                           double_c(force_field->get(bc->cell, uint_t(1u))),
+                           double_c(force_field->get(bc->cell, uint_t(2u)))};
   }
 
   // Population
@@ -745,10 +745,10 @@ public:
     if (!bc)
       return false;
 
-    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
     assert(population.size() == Stencil::Size);
     for (uint_t f = 0u; f < Stencil::Size; ++f) {
-      pdf_field->get((*bc).cell, f) = FloatType_c(population[f]);
+      pdf_field->get(bc->cell, f) = FloatType_c(population[f]);
     }
 
     return true;
@@ -764,7 +764,7 @@ public:
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
     std::vector<double> population(Stencil::Size);
     for (uint_t f = 0u; f < Stencil::Size; ++f) {
-      population[f] = double_c(pdf_field->get((*bc).cell, f));
+      population[f] = double_c(pdf_field->get(bc->cell, f));
     }
 
     return {population};

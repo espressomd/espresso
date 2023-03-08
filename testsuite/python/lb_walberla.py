@@ -30,17 +30,17 @@ import numpy as np
 class LbWalberlaTest(ut.TestCase):
 
     def test(self):
-        s = espressomd.System(box_l=(12 * .6, 18 * .6, 12 * .6))
-        s.time_step = 0.2
-        s.cell_system.skin = 0.
+        system = espressomd.System(box_l=(12 * .6, 18 * .6, 12 * .6))
+        system.time_step = 0.2
+        system.cell_system.skin = 0.
         dens_init = 1.3
         lbf = LBFluidWalberla(
             agrid=.6,
             density=dens_init,
             viscosity=2.5,
-            tau=s.time_step)
-        s.actors.add(lbf)
-        max_ind = s.box_l / .6
+            tau=system.time_step)
+        system.actors.add(lbf)
+        max_ind = system.box_l / .6
         for i in range(int(max_ind[0])):
             for j in range(int(max_ind[1])):
                 for k in range(int(max_ind[2])):
@@ -73,7 +73,7 @@ class LbWalberlaTest(ut.TestCase):
                     np.testing.assert_allclose(
                         lb_last_applied_force, last_applied_force, atol=1E-10)
 
-        s.actors.remove(lbf)
+        system.actors.remove(lbf)
 
 
 if __name__ == "__main__":
