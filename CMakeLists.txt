@@ -597,7 +597,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+    GIT_TAG        ad7168aa523af17dbb4c16585b7534d53500c903
     PATCH_COMMAND  git apply --ignore-whitespace
                    ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch
   )
