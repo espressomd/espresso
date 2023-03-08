@@ -1072,6 +1072,9 @@ class openGLLive():
                     elif self.specs['particle_coloring'] == 'node':
                         color = self._modulo_indexing(
                             self.specs['particle_type_colors'], self.particles['node'][index])
+                    else:
+                        raise ValueError(
+                            f"Cannot process particle_coloring={self.specs['particle_coloring']}")
 
                     # Invert color of highlighted particle
                     if part_id == self.drag_id or part_id == self.info_id:
@@ -1165,8 +1168,9 @@ class openGLLive():
             try:
                 x_a = self.particles['pos'][self.index_from_id[b[0]]]
                 x_b = self.particles['pos'][self.index_from_id[b[1]]]
-            except BaseException:
-                pass
+            except Exception:
+                # skip this bond
+                continue
             dx = x_b - x_a
 
             if np.all(np.abs(dx) < half_box_l):
