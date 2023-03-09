@@ -481,7 +481,7 @@ Specification of boundaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To set up the geometry of the channels, we mostly use rhomboids and
-cylinders, but there are also other boundary types available in |es|.
+cylinders, but there are also other shape types available in |es|.
 Their usage is described elsewhere.
 
 
@@ -521,7 +521,7 @@ we create boundaries for the fluid:
     system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary1))
     system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary2))
 
-Followed by constraints for cells:
+Followed by creating the constraints for cells:
 
 ::
 
@@ -652,7 +652,7 @@ or data files for further processing and analysis.
 Visualization in ParaView
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For visualization we suggest the free software ParaView. All .vtk
+For visualization we suggest the free software ParaView [5]_. All .vtk
 files (boundaries, fluid, objects at all time steps) can be loaded at
 the same time. The loading is a two step process, because only after
 pressing the Apply button, are the files actually imported. Using the
@@ -1262,6 +1262,8 @@ this type is created. This saves computational time, since the data for
 elastic interactions of the given object do not need to be recalculated
 every time.
 
+.. [5]
+   https://www.paraview.org/
 
 .. _Particle polarizability with thermalized cold Drude oscillators:
 
