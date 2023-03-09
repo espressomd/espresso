@@ -77,18 +77,32 @@ inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
  * by the map between the space-fixed and body-fixed frame \f$O\f$ like
  *
  * \f[
- *     A' = O^T A O.
+ *     A' = O A O^T.
  * \f]
  *
  * @tparam T Scalar type
+ * @param quat quaternion to transform from, i.e. the rotation
+ *             that transforms space- to body-fixed frame.
+ * @param A Matrix representation in body-fixed coordinates.
+ * @return Matrix representation in space-fixed coordinates.
+ */
+template <class T>
+auto convert_body_to_space(const Utils::Quaternion<double> &quat,
+                           const Utils::Matrix<T, 3, 3> &A) {
+  auto const O = rotation_matrix(quat);
+  return O * A * O.transposed();
+}
+
+/**
+ * @brief Transform matrix from body- to space-fixed frame.
+ * @tparam T Scalar type
  * @param p Particle transforming from.
- * @param A Matrix to transform
+ * @param A Matrix representation in body-fixed coordinates.
  * @return Matrix representation in space-fixed coordinates.
  */
 template <class T>
 auto convert_body_to_space(const Particle &p, const Utils::Matrix<T, 3, 3> &A) {
-  auto const O = rotation_matrix(p.quat());
-  return O.transposed() * A * O;
+  return convert_body_to_space(p.quat(), A);
 }
 
 #ifdef DIPOLES
