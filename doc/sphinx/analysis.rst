@@ -86,7 +86,7 @@ For example, ::
 .. _Particles in the neighborhood:
 
 Particles in the neighborhood
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :meth:`espressomd.analyze.Analysis.nbhood`
 
@@ -115,7 +115,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     ...     system.part.add(pos=i * system.box_l, type=0)
     >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
     ...                                            r_min=0.0, r_max=10.0, r_bins=10)
-    >>>
     >>> print(bins)
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)

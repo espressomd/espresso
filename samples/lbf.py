@@ -22,6 +22,8 @@ Set up a lattice-Boltzmann fluid and apply an external force density on it.
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import espressomd
+import espressomd.lb
 
 parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
@@ -45,8 +47,6 @@ else:
     if not args.cpu:
         print("(select the implementation with --cpu or --gpu)")
 
-import espressomd
-import espressomd.lb
 espressomd.assert_features(required_features)
 
 

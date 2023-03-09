@@ -58,7 +58,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ESPResSo'
-copyright = '2018-2021, The ESPResSo project'
+copyright = '2018-2023, The ESPResSo project'
 author = 'C. Holm, F. Weik, R. Weeber'
 
 # The version info for the project you're documenting, acts as replacement for

@@ -46,7 +46,7 @@ Thermodynamic ensembles
 Reaction ensemble
 ~~~~~~~~~~~~~~~~~
 
-The reaction ensemble :cite:`smith94c,turner08a` allows to simulate
+The reaction ensemble :cite:`smith94c,johnson94a,turner08a` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
@@ -230,7 +230,7 @@ For a description of the available methods, see :class:`espressomd.reaction_meth
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Widom insertion method measures the change in excess free energy, i.e. the excess chemical potential due to the insertion of a new particle, or a group of particles:
+The Widom insertion method :cite:`widom63a` measures the change in excess free energy, i.e. the excess chemical potential due to the insertion of a new particle, or a group of particles:
 
 .. math::
 
