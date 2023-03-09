@@ -590,17 +590,9 @@ class openGLLive():
 
         # read the pixels
         OpenGL.GL.glReadBuffer(OpenGL.GL.GL_COLOR_ATTACHMENT0)
-        data = OpenGL.GL.glReadPixels(
-            0,
-            0,
-            self.specs['window_size'][0],
-            self.specs['window_size'][1],
-            OpenGL.GL.GL_RGB,
-            OpenGL.GL.GL_FLOAT)
 
         # save image
-        data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
-        matplotlib.pyplot.imsave(path, data)
+        self._make_screenshot(path)
 
     def run(self, integration_steps=1):
         """Convenience method with a simple integration thread.
@@ -1005,14 +997,12 @@ class openGLLive():
 
     def _determine_radius(self, part_type):
         def radius_by_lj(part_type):
-            try:
-                radius = self.system.non_bonded_inter[part_type, part_type].lennard_jones.get_params()[
-                    'sigma'] * 0.5
-                if radius == 0.0:
-                    radius = self.system.non_bonded_inter[part_type, part_type].wca.get_params()[
-                        'sigma'] * 0.5
-            except Exception:
-                radius = 0.5
+            ia = self.system.non_bonded_inter[part_type, part_type]
+            radius = 0.5
+            if hasattr(ia, "lennard_jones"):
+                radius = ia.lennard_jones.sigma * 0.5
+            if radius == 0.0 and hasattr(ia, "wca"):
+                radius = ia.wca.sigma * 0.5
             if radius == 0.0:
                 radius = 0.5
             return radius
@@ -1039,8 +1029,9 @@ class openGLLive():
 
             # Only change material if type/charge has changed, color_by_id or
             # material was reset by arrows
-            if reset_material or color_by_id or not part_type == part_type_last or \
-                    part_id == self.drag_id or part_id == self.info_id or self.specs['particle_coloring'] == 'node':
+            if reset_material or color_by_id or part_type != part_type_last or \
+                    part_id == self.drag_id or part_id == self.info_id or \
+                    self.specs['particle_coloring'] == 'node':
                 reset_material = False
 
                 radius = self._determine_radius(part_type)
@@ -1287,9 +1278,6 @@ class openGLLive():
     def _handle_screenshot(self):
         if self.take_screenshot:
             self.take_screenshot = False
-            data = OpenGL.GL.glReadPixels(0, 0, self.specs['window_size'][0],
-                                          self.specs['window_size'][1],
-                                          OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)
             script_name = os.path.splitext(sys.argv[0])[0]
 
             i = 0
@@ -1297,12 +1285,18 @@ class openGLLive():
                 i += 1
             file_name = f"{script_name}_{i:04d}.png"
 
-            data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
-            matplotlib.pyplot.imsave(file_name, data)
+            self._make_screenshot(file_name)
 
             self.screenshot_captured = True
             self.screenshot_capture_time = time.time()
             self.screenshot_capture_txt = f"Saved screenshot {file_name}"
+
+    def _make_screenshot(self, filepath):
+        data = OpenGL.GL.glReadPixels(0, 0, self.specs['window_size'][0],
+                                      self.specs['window_size'][1],
+                                      OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)
+        data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
+        matplotlib.pyplot.imsave(filepath, data)
 
     def _display_all(self):
 
@@ -1411,36 +1405,30 @@ class openGLLive():
         def display():
             if self.hasParticleData and self.glut_main_loop_started:
                 self._display_all()
-            return
 
         # pylint: disable=unused-argument
         def keyboard_up(button, x, y):
             if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_up(button)
-            return
 
         # pylint: disable=unused-argument
         def keyboard_down(button, x, y):
             if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_down(button)
-            return
 
         def mouse(button, state, x, y):
             self.mouse_manager.mouse_click(button, state, x, y)
-            return
 
         def motion(x, y):
             self.mouse_manager.mouse_move(x, y)
-            return
 
         def redraw_on_idle():
             # don't repost faster than 60 fps
             if (time.time() - self.last_draw) > 1.0 / 60.0:
                 OpenGL.GLUT.glutPostRedisplay()
                 self.last_draw = time.time()
-            return
 
         def reshape_callback(w, h):
             self._reshape_window(w, h)
@@ -1457,7 +1445,6 @@ class openGLLive():
         OpenGL.GLUT.glutReshapeFunc(reshape_callback)
         OpenGL.GLUT.glutMotionFunc(motion)
         OpenGL.GLUT.glutWMCloseFunc(close_window)
-
         OpenGL.GLUT.glutIdleFunc(redraw_on_idle)
 
     def _init_timers(self):
@@ -1554,10 +1541,9 @@ class openGLLive():
     def _fcolor_to_id(fcolor):
         if (fcolor == [0, 0, 0]).all():
             return -1
-        else:
-            return int(fcolor[0] * 255) * 256 ** 2 + \
-                int(fcolor[1] * 255) * 256 + \
-                int(fcolor[2] * 255) - 1
+        return int(fcolor[0] * 255) * 256 ** 2 + \
+            int(fcolor[1] * 255) * 256 + \
+            int(fcolor[2] * 255) - 1
 
     # pylint: disable=unused-argument
     def _set_particle_drag(self, pos, pos_old):
@@ -1906,7 +1892,6 @@ class Shape():
         self.box_l = box_l
         self.rasterize_resolution = rasterize_resolution
         self.pointsize = rasterize_pointsize
-
         self.rasterized_surface_points = None
 
     def draw(self):
@@ -1936,16 +1921,15 @@ class Shape():
         for i in range(int(resolution[0])):
             for j in range(int(resolution[1])):
                 for k in range(int(resolution[2])):
-                    # some shapes may not have a well-defined distance function in the whole domain
-                    # and may throw upon asking for a distance
+                    # some shapes may not have a well-defined distance function
+                    # in the whole domain and may throw a ValueError
                     try:
                         p = np.array([i, j, k]) * spacing
                         dist, vec = self.shape.call_method(
                             "calc_distance", position=p.tolist())
-                        if not np.isnan(vec).any() and not np.isnan(
-                                dist) and abs(dist) < spacing:
+                        if not (np.isnan(vec).any() or np.isnan(dist)) \
+                                and abs(dist) < spacing:
                             points.append((p - vec).tolist())
-                    # domain error translates to ValueError (cython)
                     except ValueError:
                         continue
         return points
@@ -2484,7 +2468,6 @@ def draw_cylinder(posA, posB, radius, color, material, quality,
 
     d = posB - posA
 
-    # angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
     OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
 
