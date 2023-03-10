@@ -18,6 +18,7 @@
  */
 #include "LocalBox.hpp"
 #include "Particle.hpp"
+#include "algorithm/periodic_fold.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
@@ -162,27 +163,34 @@ bool in_local_halo(Utils::Vector3d const &pos) {
  * @brief Return a vector of positions shifted by +,- box length in each
  * coordinate
  */
-std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
-                                               const BoxGeometry &box) {
-  std::vector<Utils::Vector3d> res;
+std::vector<std::pair<Utils::Vector3d, Utils::Vector3d>>
+positions_in_halo(Utils::Vector3d pos, const BoxGeometry &box) {
+  std::vector<std::pair<Utils::Vector3d, Utils::Vector3d>> res;
   for (int i : {-1, 0, 1}) {
     for (int j : {-1, 0, 1}) {
       for (int k : {-1, 0, 1}) {
         Utils::Vector3d shift{{double(i), double(j), double(k)}};
         Utils::Vector3d pos_shifted =
             pos + Utils::hadamard_product(box.length(), shift);
-
+        Utils::Vector3d vel_shift{{0., 0., 0.}};
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
           auto le = box_geo.lees_edwards_bc();
           auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
-          if (normal_shift > std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] += le.pos_offset;
-          if (normal_shift < -std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] -= le.pos_offset;
+          auto folded_offset = Algorithm::periodic_fold(
+              le.pos_offset, box_geo.length()[le.shear_direction]);
+          if (normal_shift > std::numeric_limits<double>::epsilon()) {
+            pos_shifted[le.shear_direction] += folded_offset;
+            vel_shift[le.shear_direction] -= le.shear_velocity;
+          }
+          if (normal_shift < -std::numeric_limits<double>::epsilon()) {
+            pos_shifted[le.shear_direction] -= folded_offset;
+            vel_shift[le.shear_direction] += le.shear_velocity;
+          }
         }
 
         if (in_local_halo(pos_shifted)) {
-          res.push_back(pos_shifted);
+          res.push_back({pos_shifted, vel_shift});
+          //          std::cout << "coupling at "<<pos_shifted<<std::endl;
         }
       }
     }
@@ -232,7 +240,9 @@ void add_swimmer_force(Particle const &p, double time_step) {
 
     // couple positions including shifts by one box length to add forces
     // to ghost layers
-    for (auto pos : positions_in_halo(source_position, box_geo)) {
+    for (auto shift : positions_in_halo(source_position, box_geo)) {
+      auto const pos = shift.first;
+
       add_md_force(pos, force, time_step);
     }
   }
@@ -260,10 +270,12 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
 
   // Calculate coupling force
   Utils::Vector3d coupling_force = {};
-  for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+  for (auto shift : positions_in_halo(p.pos(), box_geo)) {
+    auto const pos = shift.first;
+    auto const lees_edwards_vel = shift.second;
     if (in_local_halo(pos)) {
-      auto const drag_force =
-          lb_drag_force(p, pos, lb_particle_coupling_drift_vel_offset(p));
+      auto const drag_force = lb_drag_force(
+          p, pos, lb_particle_coupling_drift_vel_offset(p) + lees_edwards_vel);
       auto const random_force =
           noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
                                                        p.id(), rng_counter);
@@ -274,7 +286,8 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
 
   // couple positions including shifts by one box length to add
   // forces to ghost layers
-  for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+  for (auto shift : positions_in_halo(p.pos(), box_geo)) {
+    auto const pos = shift.first;
     if (in_local_domain(pos)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
