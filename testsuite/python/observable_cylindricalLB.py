@@ -39,7 +39,7 @@ class CylindricalLBObservableCommon:
 
     lb_params = {'agrid': 1.,
                  'density': 1.2,
-                 'viscosity': 2.7,
+                 'kinematic_viscosity': 2.7,
                  'tau': 0.1,
                  }
     cyl_transform_params = espressomd.math.CylindricalTransformationParameters(

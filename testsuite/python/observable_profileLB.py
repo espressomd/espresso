@@ -41,7 +41,7 @@ VISC = .7
 DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': VISC,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP
              }
 

@@ -38,7 +38,7 @@ TIME_STEP = 0.005
 GAMMA = 2
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': VISC,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP,
              'kT': KT,
              'seed': 123}

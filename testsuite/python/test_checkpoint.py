@@ -134,7 +134,7 @@ class CheckpointTest(ut.TestCase):
         state = lbf.get_params()
         reference = {
             "agrid": 2.0,
-            "viscosity": 1.3,
+            "kinematic_viscosity": 1.3,
             "density": 1.5,
             "tau": 0.01}
         for key in reference:
@@ -600,7 +600,7 @@ class CheckpointTest(ut.TestCase):
             integ['integrator'],
             espressomd.integrate.StokesianDynamics)
         expected_params = {
-            'approximation_method': 'ft', 'radii': {0: 1.5}, 'viscosity': 0.5,
+            'approximation_method': 'ft', 'radii': {0: 1.5}, 'kinematic_viscosity': 0.5,
             'lubrication': False, 'pair_mobility': False, 'self_mobility': True}
         params = integ['integrator'].get_params()
         self.assertEqual(params, expected_params)

@@ -36,7 +36,7 @@ class TestLB:
     params = {'tau': 0.01,
               'agrid': 0.5,
               'dens': 0.85,
-              'viscosity': 3.0,
+              'kinematic_viscosity': 3.0,
               'friction': 2.0,
               'temp': 1.5,
               'gamma': 1.5}
@@ -65,7 +65,7 @@ class TestLB:
 
         self.lbf = self.lb_class(
             kT=self.params['temp'],
-            viscosity=self.params['viscosity'],
+            kinematic_viscosity=self.params['kinematic_viscosity'],
             density=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
