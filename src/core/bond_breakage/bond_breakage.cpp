@@ -107,8 +107,10 @@ void clear_queue() { queue.clear(); }
 /** @brief Gathers combined queue from all mpi ranks */
 Queue gather_global_queue(Queue const &local_queue) {
   Queue res = local_queue;
-  Utils::Mpi::gather_buffer(res, comm_cart);
-  boost::mpi::broadcast(comm_cart, res, 0);
+  if (comm_cart.size() > 1) {
+    Utils::Mpi::gather_buffer(res, comm_cart);
+    boost::mpi::broadcast(comm_cart, res, 0);
+  }
   return res;
 }
 

@@ -88,7 +88,7 @@ To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
 
     sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
       libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-scipy python3-opengl libgsl-dev
+      python3-scipy python3-opengl libgsl-dev freeglut3
 
 Optionally the ccmake utility can be installed for easier configuration:
 
