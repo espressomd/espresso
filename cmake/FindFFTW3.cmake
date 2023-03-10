@@ -33,7 +33,7 @@ endif(FFTW3_INCLUDE_DIR)
 find_path(FFTW3_INCLUDE_DIR fftw3.h)
 find_library(FFTW3_LIBRARIES NAMES fftw3)
 
-# handle the QUIETLY and REQUIRED arguments and set FFTW_FOUND to TRUE if all
+# handle the QUIETLY and REQUIRED arguments and set FFTW3_FOUND to TRUE if all
 # listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_LIBRARIES
