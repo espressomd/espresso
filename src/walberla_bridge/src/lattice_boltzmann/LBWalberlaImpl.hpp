@@ -269,7 +269,7 @@ protected:
       blockforest::communication::UniformBufferedScheme<Stencil>;
   template <class Field>
   using PackInfo =
-      typename FieldTrait<FloatType, Architecture>::PackInfo<Field>;
+      typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
 
   // communicators
   std::shared_ptr<FullCommunicator> m_full_communication;
