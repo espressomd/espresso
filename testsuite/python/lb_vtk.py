@@ -44,7 +44,7 @@ class TestLBWrite:
 
     def setUp(self):
         self.lbf = self.lb_class(
-            kT=0, agrid=1.0, density=1.0, viscosity=1.0, tau=0.1,
+            kT=0, agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.1,
             ext_force_density=[0, 0.03, 0], **self.lb_params)
         self.system.actors.add(self.lbf)
 

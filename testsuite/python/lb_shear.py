@@ -147,13 +147,13 @@ class LBShearCommon:
         # https://de.wikipedia.org/wiki/Navier-Stokes-Gleichungen
         # note that for an incompressible fluid the viscous stress tensor is
         # defined as \sigma = -p 1 + \mu [\nabla * u + (\nabla * u)^T]
-        # where 'p' is the static pressure, '\mu' is the dynamic kinematic_viscosity,
+        # where 'p' is the static pressure, '\mu' is the dynamic viscosity,
         # '*' denotes the outer product and 'u' is the velocity field
         # NOTE: the so called stress property of the fluid is actually the
         # pressure tensor not the viscous stress tensor!
         shear_rate = SHEAR_VELOCITY / H
-        dynamic_kinematic_viscosity = self.lbf.kinematic_viscosity * DENS
-        p_expected = p_eq * np.identity(3) - dynamic_kinematic_viscosity * shear_rate * (
+        dynamic_viscosity = self.lbf.kinematic_viscosity * DENS
+        p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
             np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
         # Walberla TODO
         for n in []:  # (2, 3, 4), (3, 4, 2), (5, 4, 3):
@@ -168,7 +168,7 @@ class LBShearCommon:
 #            -np.copy(wall2.get_force()),
 #            atol=1E-4)
 #        np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()), shear_direction),
-# SHEAR_VELOCITY / H * W**2 * dynamic_kinematic_viscosity, atol=2E-4)
+# SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
 
     def test(self):
         x = np.array((1, 0, 0), dtype=int)

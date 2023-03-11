@@ -76,7 +76,8 @@ system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
 system.lees_edwards.shear_direction = 0
 system.lees_edwards.shear_plane_normal = 1
 
-lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1., viscosity=nu, tau=1.)
+lbf = espressomd.lb.LBFluidWalberla(
+    agrid=1, density=1., kinematic_viscosity=nu, tau=1.)
 system.actors.add(lbf)
 
 # sampling

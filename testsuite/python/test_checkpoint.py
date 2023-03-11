@@ -600,7 +600,7 @@ class CheckpointTest(ut.TestCase):
             integ['integrator'],
             espressomd.integrate.StokesianDynamics)
         expected_params = {
-            'approximation_method': 'ft', 'radii': {0: 1.5}, 'kinematic_viscosity': 0.5,
+            'approximation_method': 'ft', 'radii': {0: 1.5}, 'viscosity': 0.5,
             'lubrication': False, 'pair_mobility': False, 'self_mobility': True}
         params = integ['integrator'].get_params()
         self.assertEqual(params, expected_params)

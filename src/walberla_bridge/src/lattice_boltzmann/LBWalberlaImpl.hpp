@@ -248,7 +248,7 @@ private:
 
 protected:
   // Member variables
-  FloatType m_viscosity;
+  FloatType m_viscosity; /// kinematic viscosity
   FloatType m_density;
   FloatType m_kT;
 

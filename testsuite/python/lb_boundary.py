@@ -34,7 +34,8 @@ class LBBoundariesBase:
 
     def setUp(self):
         self.lbf = self.lb_class(
-            viscosity=1.0, density=1.0, agrid=0.5, tau=1.0, **self.lb_params)
+            kinematic_viscosity=1.0, density=1.0, agrid=0.5, tau=1.0,
+            **self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):

@@ -291,7 +291,7 @@ class EKTest:
         # check exceptions with an incompatible LB time step
         with self.assertRaisesRegex(Exception, "LB and EK are active but with different timesteps"):
             lb = self.lb_fluid_class(
-                lattice=self.lattice, density=0.5, viscosity=3.,
+                lattice=self.lattice, density=0.5, kinematic_viscosity=3.,
                 tau=2. * self.params["tau"], **self.lb_params)
             self.system.actors.add(lb)
             self.system.integrator.run(1)

@@ -41,13 +41,13 @@ The following minimal example illustrates how to use the LBM in |es|::
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidWalberla(agrid=1.0, density=1.0, viscosity=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberla(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
     system.actors.add(lb)
     system.integrator.run(100)
 
 To use the GPU-accelerated variant, replace line 6 in the example above by::
 
-    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, viscosity=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
 
 .. note:: Feature ``CUDA`` required for the GPU-accelerated variant
 
@@ -300,7 +300,7 @@ of the LBM in analogy to the example for the CPU given in section
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, viscosity=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
     system.actors.add(lb)
     system.integrator.run(100)
 
@@ -350,7 +350,7 @@ One can set (or update) the slip velocity of individual nodes::
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, viscosity=1.0, tau=0.01)
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
     system.actors.add(lbf)
     # make one node a boundary node with a slip velocity
     lbf[0, 0, 0].boundary = espressomd.lb.VelocityBounceBack([0, 0, 1])
@@ -371,7 +371,7 @@ Adding a shape-based boundary is straightforward::
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, viscosity=1.0, tau=0.01)
+    lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
     system.actors.add(lbf)
     # set up shear flow between two sliding walls
     wall1 = espressomd.shapes.Wall(normal=[+1., 0., 0.], dist=2.5)

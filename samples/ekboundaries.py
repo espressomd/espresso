@@ -36,7 +36,7 @@ system.cell_system.skin = 0.4
 system.time_step = 0.1
 
 ek = espressomd.electrokinetics.Electrokinetics(
-    lb_density=1, friction=1, agrid=1, viscosity=1, T=1, prefactor=1)
+    lb_density=1, friction=1, agrid=1, kinematic_viscosity=1, T=1, prefactor=1)
 
 pos = espressomd.electrokinetics.Species(
     density=0.05, D=0.1, valency=1, ext_force_density=[0, 0, 1.])

@@ -41,7 +41,7 @@ class VirtualSitesTracersCommon:
 
     def set_lb(self, ext_force_density=(0, 0, 0)):
         self.lbf = self.LBClass(
-            kT=0.0, agrid=1, density=1, viscosity=1.8,
+            kT=0.0, agrid=1., density=1., kinematic_viscosity=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(

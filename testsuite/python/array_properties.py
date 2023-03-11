@@ -190,7 +190,7 @@ class ArrayPropertyTest(ArrayCommon):
     @utx.skipIfMissingFeatures("WALBERLA")
     def test_lb(self):
         lbf = espressomd.lb.LBFluidWalberla(
-            agrid=0.5, density=1, viscosity=1, tau=0.01)
+            agrid=0.5, density=1., kinematic_viscosity=1., tau=0.01)
         self.system.actors.add(lbf)
 
         self.assert_operator_usage_raises(lbf[0, 0, 0].velocity)

@@ -91,8 +91,8 @@ system.thermostat.turn_off()
 print(f"LB shape: [{lb_grid}, {lb_grid}, {lb_grid}]")
 print(f"LB agrid: {agrid:.3f}")
 
-lbf = espressomd.lb.LBFluidWalberla(agrid=agrid, density=1, viscosity=1,
-                                    tau=system.time_step,
+lbf = espressomd.lb.LBFluidWalberla(agrid=agrid, tau=system.time_step,
+                                    density=1., kinematic_viscosity=1.,
                                     single_precision=args.single_precision)
 system.actors.add(lbf)
 

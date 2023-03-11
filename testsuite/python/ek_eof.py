@@ -88,7 +88,8 @@ class EKEOF(ut.TestCase):
         self.system.ekcontainer.solver = eksolver
 
         lb_fluid = espressomd.lb.LBFluidWalberla(
-            lattice=lattice, density=1.0, viscosity=visc, tau=self.TAU, single_precision=single_precision)
+            lattice=lattice, density=1.0, kinematic_viscosity=visc,
+            tau=self.TAU, single_precision=single_precision)
         self.system.actors.add(lb_fluid)
 
         wall_bot = espressomd.shapes.Wall(normal=[1, 0, 0], dist=offset)

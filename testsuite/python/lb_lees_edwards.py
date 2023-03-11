@@ -38,7 +38,7 @@ class LBContextManager:
 
     def __enter__(self):
         self.lbf = espressomd.lb.LBFluidWalberla(
-            agrid=1., density=1., viscosity=1., tau=system.time_step)
+            agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
         system.actors.add(self.lbf)
         system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
         return self.lbf
@@ -149,7 +149,7 @@ class LBLeesEdwards(ut.TestCase):
 
         .. code-block:: none
 
-            /-------------\\        /-------------\
+            +-------------+        +-------------+
             |      5      |        |     141 1   |
             |             |        |      1      |
             |             |        | 1    1    1 |
@@ -157,7 +157,7 @@ class LBLeesEdwards(ut.TestCase):
             |             |        | 1    1    1 |
             |             |        |      1      |
             |      5      |        |   1 141     |
-            \\-------------/        \\-------------/
+            +-------------+        +-------------+
 
 
         The interpolated velocity at the shear boundary is equal to
@@ -302,7 +302,7 @@ class LBLeesEdwards(ut.TestCase):
                 with self.assertRaisesRegex(Exception, err_msg):
                     with LEContextManager(shear_dir, shear_plane_normal, 1.):
                         system.actors.add(espressomd.lb.LBFluidWalberla(
-                            agrid=1., density=1., viscosity=1.,
+                            agrid=1., density=1., kinematic_viscosity=1.,
                             tau=system.time_step))
                 self.assertEqual(len(system.actors), 0)
         # while LB and MD LEbc must agree on the shear directions,
@@ -314,7 +314,7 @@ class LBLeesEdwards(ut.TestCase):
         with self.assertRaisesRegex(Exception, "Lees-Edwards LB doesn't support thermalization"):
             with LEContextManager('x', 'y', 1.):
                 system.actors.add(espressomd.lb.LBFluidWalberla(
-                    agrid=1., density=1., viscosity=1., kT=1., seed=42,
+                    agrid=1., density=1., kinematic_viscosity=1., kT=1., seed=42,
                     tau=system.time_step))
         self.assertEqual(len(system.actors), 0)
 

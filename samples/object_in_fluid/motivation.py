@@ -74,7 +74,7 @@ system.non_bonded_inter[1, 10].soft_sphere.set_params(
     a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
 
 # fluid
-lbf = espressomd.lb.LBFluidWalberla(agrid=1., density=1., viscosity=1.5,
+lbf = espressomd.lb.LBFluidWalberla(agrid=1., density=1., kinematic_viscosity=1.5,
                                     tau=0.1, ext_force_density=[0.002, 0., 0.])
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)

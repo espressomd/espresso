@@ -40,7 +40,7 @@ class LBSliceTest(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.lb_fluid = espressomd.lb.LBFluidWalberla(
-            agrid=1.0, density=1., viscosity=1., tau=0.01)
+            agrid=1.0, density=1., kinematic_viscosity=1., tau=0.01)
         cls.system.actors.add(cls.lb_fluid)
 
     def test_slicing(self):

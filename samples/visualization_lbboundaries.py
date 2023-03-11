@@ -34,7 +34,7 @@ system.time_step = 0.01
 system.cell_system.skin = 0.4
 
 lb_fluid = espressomd.lb.LBFluidWalberla(
-    agrid=1.0, density=1.0, viscosity=1.0, tau=0.01, ext_force_density=[0, 0, 0.15])
+    agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01, ext_force_density=[0, 0, 0.15])
 system.actors.add(lb_fluid)
 
 cylinder_shape = espressomd.shapes.Cylinder(

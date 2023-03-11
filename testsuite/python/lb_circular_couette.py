@@ -62,7 +62,8 @@ class LBCircularCouetteCommon:
 
         system = self.system
         lb_fluid = espressomd.lb.LBFluidWalberla(
-            agrid=AGRID, density=0.5, viscosity=3.2, tau=system.time_step)
+            agrid=AGRID, density=0.5, kinematic_viscosity=3.2,
+            tau=system.time_step)
         system.actors.add(lb_fluid)
 
         # set up two cylinders

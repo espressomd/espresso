@@ -41,7 +41,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
         lbf = espressomd.lb.LBFluidWalberla(
-            agrid=1, density=1, viscosity=1, tau=system.time_step)
+            agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
         system.actors.add(lbf)
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
 
