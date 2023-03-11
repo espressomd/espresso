@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "walberla_bridge/Architecture.hpp"
+
 #include "generated_kernels/Dynamic_UBB_double_precision.h"
 #include "generated_kernels/Dynamic_UBB_single_precision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
@@ -42,7 +44,10 @@
 
 namespace walberla {
 namespace detail {
-template <typename FT = double> struct KernelTrait {
+
+using lbmpy::Arch;
+
+template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
 #ifdef __AVX2__
   using CollisionModelThermalized =
       pystencils::CollideSweepDoublePrecisionThermalizedAVX;
@@ -57,7 +62,8 @@ template <typename FT = double> struct KernelTrait {
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
 };
-template <> struct KernelTrait<float> {
+
+template <> struct KernelTrait<float, Arch::CPU> {
 #ifdef __AVX2__
   using CollisionModelThermalized =
       pystencils::CollideSweepSinglePrecisionThermalizedAVX;
@@ -73,11 +79,14 @@ template <> struct KernelTrait<float> {
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
 };
 
-template <typename FT> struct BoundaryHandlingTrait {
+template <typename FT = double, Arch AT = Arch::CPU>
+struct BoundaryHandlingTrait {
   using Dynamic_UBB = lbm::Dynamic_UBB_double_precision;
 };
-template <> struct BoundaryHandlingTrait<float> {
+
+template <> struct BoundaryHandlingTrait<float, Arch::CPU> {
   using Dynamic_UBB = lbm::Dynamic_UBB_single_precision;
 };
+
 } // namespace detail
 } // namespace walberla

@@ -72,9 +72,8 @@ fill_3D_scalar_array(std::vector<double> const &vec_flat,
   return output_vector;
 }
 
-template <class BoundaryModel, class FieldGetter, class DataType>
+template <class BoundaryModel, class DataType>
 void set_boundary_from_grid(BoundaryModel &boundary,
-                            FieldGetter const &field_getter,
                             LatticeWalberla const &lattice,
                             std::vector<int> const &raster_flat,
                             std::vector<DataType> const &data_flat) {
@@ -92,11 +91,7 @@ void set_boundary_from_grid(BoundaryModel &boundary,
     auto const off_i = static_cast<int>(left[0]);
     auto const off_j = static_cast<int>(left[1]);
     auto const off_k = static_cast<int>(left[2]);
-    auto const field = field_getter(block);
-    auto const size_i = static_cast<int>(field->xSize());
-    auto const size_j = static_cast<int>(field->ySize());
-    auto const size_k = static_cast<int>(field->zSize());
-
+    auto const [size_i, size_j, size_k] = boundary.block_dims(*block);
     // Get field data which knows about the indices
     // In the loop, x,y,z are in block-local coordinates
     auto const n_ghost_layers = lattice.get_ghost_layers();

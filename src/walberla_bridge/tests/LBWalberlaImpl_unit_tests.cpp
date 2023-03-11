@@ -307,12 +307,12 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
       bool const consider_ghosts =
           !lb->get_lattice().node_in_local_domain(node);
       auto res = lb->get_node_velocity(node, consider_ghosts);
-      BOOST_CHECK(res);                                    // value available
+      BOOST_REQUIRE(res);                                  // value available?
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
       // Check that the interpolated velocity at the node pos equals the node
       // vel
       res = lb->get_velocity_at_pos(n_pos(node), consider_ghosts);
-      BOOST_CHECK(res);                                    // value available
+      BOOST_REQUIRE(res);                                  // value available?
       BOOST_CHECK_SMALL((*res - n_vel(node)).norm(), eps); // value correct?
     } else {
       // Check that access to node velocity is not possible
@@ -363,12 +363,12 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
     if (lb->get_lattice().node_in_local_halo(node)) {
       if (lb->get_lattice().node_in_local_domain(node)) {
         auto res = lb->get_node_density(node);
-        BOOST_CHECK(res);                            // value available
+        BOOST_REQUIRE(res);                          // value available?
         BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
         // Check that the interpolated density at the node pos equals the node
         // density
         res = lb->get_interpolated_density_at_pos(n_pos(node));
-        BOOST_CHECK(res);                            // value available
+        BOOST_REQUIRE(res);                          // value available?
         BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
       } else {
         BOOST_CHECK(!lb->get_node_density(node));

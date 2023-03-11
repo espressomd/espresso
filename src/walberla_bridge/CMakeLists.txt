@@ -38,7 +38,8 @@ if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
   add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
   target_link_libraries(
     espresso_walberla_cuda PRIVATE CUDA::cuda_driver CUDA::cudart)
-  target_link_libraries(espresso_walberla_cuda PRIVATE ${WALBERLA_LIBS})
+  target_link_libraries(espresso_walberla_cuda PUBLIC espresso::utils PRIVATE ${WALBERLA_LIBS})
+  target_include_directories(espresso_walberla_cuda PUBLIC include)
   target_include_directories(
     espresso_walberla_cuda PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)

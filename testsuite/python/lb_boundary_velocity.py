@@ -60,12 +60,12 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
         # fluid in contact with moving boundary adopts same velocity
         self.system.integrator.run(200)
-        v_fluid = self.lb_fluid[2, 1, 3].velocity
+        v_fluid = np.copy(self.lb_fluid[2, 1, 3].velocity)
         np.testing.assert_allclose(v_fluid, v_boundary, atol=atol)
 
         # velocity in the middle needs to propagate first
         self.system.integrator.run(200)
-        v_fluid = self.lb_fluid[2, 1, 3].velocity
+        v_fluid = np.copy(self.lb_fluid[2, 1, 3].velocity)
         np.testing.assert_allclose(v_fluid, v_boundary, atol=atol)
 
     def test_wall_slip_parallel(self):

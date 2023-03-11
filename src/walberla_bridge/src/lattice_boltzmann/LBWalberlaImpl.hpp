@@ -52,6 +52,7 @@
 #include "lb_kernels.hpp"
 #include "vtk_writers.hpp"
 
+#include "walberla_bridge/Architecture.hpp"
 #include "walberla_bridge/BlockAndCell.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 #include "walberla_bridge/lattice_boltzmann/InterpolateAndShiftAtBoundary.hpp"
@@ -82,25 +83,48 @@
 namespace walberla {
 
 /** @brief Class that runs and controls the LB on waLBerla. */
-template <typename FloatType = double>
+template <typename FloatType, lbmpy::Arch Architecture>
 class LBWalberlaImpl : public LBWalberlaBase {
+protected:
+  using CollisionModelLeesEdwards =
+      typename detail::KernelTrait<FloatType,
+                                   Architecture>::CollisionModelLeesEdwards;
+  using CollisionModelThermalized =
+      typename detail::KernelTrait<FloatType,
+                                   Architecture>::CollisionModelThermalized;
+  using StreamSweep =
+      typename detail::KernelTrait<FloatType, Architecture>::StreamSweep;
+  using InitialPDFsSetter =
+      typename detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
+  using BoundaryModel =
+      BoundaryHandling<Vector3<FloatType>,
+                       typename detail::BoundaryHandlingTrait<
+                           FloatType, Architecture>::Dynamic_UBB>;
+  using CollisionModel =
+      boost::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
+
+public:
+  // Type definitions
+  using Stencil = stencil::D3Q19;
+  using Lattice_T = LatticeWalberla::Lattice_T;
+
+protected:
+  template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct FieldTrait {
+    using PdfField = GhostLayerField<FT, Stencil::Size>;
+    using VectorField = GhostLayerField<FT, uint_t{3u}>;
+    template <class Field>
+    using PackInfo = field::communication::PackInfo<Field>;
+  };
+
+public:
+  using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
+  using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
+  using FlagField = typename BoundaryModel::FlagField;
+
+public:
   template <typename T> inline FloatType FloatType_c(T t) const {
     return numeric_cast<FloatType>(t);
   }
-  using CollisionModelLeesEdwards =
-      typename detail::KernelTrait<FloatType>::CollisionModelLeesEdwards;
-  using CollisionModelThermalized =
-      typename detail::KernelTrait<FloatType>::CollisionModelThermalized;
-  using StreamSweep = typename detail::KernelTrait<FloatType>::StreamSweep;
-  using InitialPDFsSetter =
-      typename detail::KernelTrait<FloatType>::InitialPDFsSetter;
-  using BoundaryModel = BoundaryHandling<
-      Vector3<FloatType>,
-      typename detail::BoundaryHandlingTrait<FloatType>::Dynamic_UBB>;
-
-protected:
-  using CollisionModel =
-      boost::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
 
 private:
   class : public boost::static_visitor<> {
@@ -140,15 +164,6 @@ private:
                                                  m_flag_field_id);
   }
 
-public:
-  // Type definitions
-  typedef stencil::D3Q19 Stencil;
-  using PdfField = GhostLayerField<FloatType, Stencil::Size>;
-  using VectorField = GhostLayerField<FloatType, 3u>;
-  using FlagField = typename BoundaryModel::FlagField;
-  using Lattice_T = LatticeWalberla::Lattice_T;
-
-private:
   FloatType getDensity(const BlockAndCell &bc) const {
     auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
     return lbm::accessor::Density::get(*pdf_field, bc.cell.x(), bc.cell.y(),
@@ -250,10 +265,14 @@ protected:
 
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
-  std::shared_ptr<FullCommunicator> m_full_communication;
   using PDFStreamingCommunicator =
-      blockforest::communication::UniformBufferedScheme<
-          typename stencil::D3Q19>;
+      blockforest::communication::UniformBufferedScheme<Stencil>;
+  template <class Field>
+  using PackInfo =
+      typename FieldTrait<FloatType, Architecture>::PackInfo<Field>;
+
+  // communicators
+  std::shared_ptr<FullCommunicator> m_full_communication;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
 
   // ResetForce sweep + external force handling
@@ -297,30 +316,32 @@ protected:
    * will fall back to @c StdFieldAlloc, yet @c AllocateAligned is needed
    * for intrinsics to work.
    */
-  template <typename Field> auto add_to_storage(char const *tag) {
+  template <typename Field> auto add_to_storage(std::string const tag) {
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
 #ifdef ESPRESSO_BUILD_WITH_AVX_KERNELS
 #if defined(__AVX512F__)
-    constexpr uint_t alignment = 64;
+      constexpr uint_t alignment = 64;
 #elif defined(__AVX__)
-    constexpr uint_t alignment = 32;
+      constexpr uint_t alignment = 32;
 #elif defined(__SSE__)
-    constexpr uint_t alignment = 16;
+      constexpr uint_t alignment = 16;
 #else
 #error "Unsupported arch, check walberla src/field/allocation/FieldAllocator.h"
 #endif
-    using value_type = typename Field::value_type;
-    using Allocator = field::AllocateAligned<value_type, alignment>;
-    auto const allocator = std::make_shared<Allocator>();
-    auto const empty_set = Set<SUID>::emptySet();
-    return field::addToStorage<Field>(
-        blocks, tag, field::internal::defaultSize, FloatType{0}, field::fzyx,
-        n_ghost_layers, false, {}, empty_set, empty_set, allocator);
+      using value_type = typename Field::value_type;
+      using Allocator = field::AllocateAligned<value_type, alignment>;
+      auto const allocator = std::make_shared<Allocator>();
+      auto const empty_set = Set<SUID>::emptySet();
+      return field::addToStorage<Field>(
+          blocks, tag, field::internal::defaultSize, FloatType{0}, field::fzyx,
+          n_ghost_layers, false, {}, empty_set, empty_set, allocator);
 #else  // ESPRESSO_BUILD_WITH_AVX_KERNELS
-    return field::addToStorage<Field>(blocks, tag, FloatType{0}, field::fzyx,
-                                      n_ghost_layers);
+      return field::addToStorage<Field>(blocks, tag, FloatType{0}, field::fzyx,
+                                        n_ghost_layers);
 #endif // ESPRESSO_BUILD_WITH_AVX_KERNELS
+    }
   }
 
 public:
@@ -334,15 +355,15 @@ public:
     if (n_ghost_layers == 0)
       throw std::runtime_error("At least one ghost layer must be used");
 
-    // Init and register fields
+    // Initialize and register fields
     m_pdf_field_id = add_to_storage<PdfField>("pdfs");
     m_pdf_tmp_field_id = add_to_storage<PdfField>("pdfs_tmp");
     m_last_applied_force_field_id = add_to_storage<VectorField>("force field");
     m_force_to_be_applied_id = add_to_storage<VectorField>("force field");
     m_velocity_field_id = add_to_storage<VectorField>("velocity field");
-    m_vec_tmp_field_id = add_to_storage<VectorField>("velocity field");
+    m_vec_tmp_field_id = add_to_storage<VectorField>("velocity_tmp field");
 
-    // Init and register pdf field
+    // Initialize and register pdf field
     auto pdf_setter =
         InitialPDFsSetter(m_force_to_be_applied_id, m_pdf_field_id,
                           m_velocity_field_id, m_density);
@@ -350,40 +371,36 @@ public:
       pdf_setter(&*b);
     }
 
-    // Init and register flag field (fluid/boundary)
+    // Initialize and register flag field (fluid/boundary)
     m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
         blocks, "flag field", n_ghost_layers);
-    // Init boundary sweep
+    // Initialize boundary sweep
     reset_boundary_handling();
 
     // Set up the communication and register fields
     m_pdf_streaming_communication =
         std::make_shared<PDFStreamingCommunicator>(blocks);
     m_pdf_streaming_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<PdfField>>(
-            m_pdf_field_id, n_ghost_layers));
+        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
     m_pdf_streaming_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_last_applied_force_field_id, n_ghost_layers));
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
+                                                n_ghost_layers));
     m_pdf_streaming_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_id, n_ghost_layers));
 
     m_full_communication = std::make_shared<FullCommunicator>(blocks);
     m_full_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<PdfField>>(
-            m_pdf_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_last_applied_force_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<VectorField>>(
-            m_velocity_field_id, n_ghost_layers));
+        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
+    m_full_communication->addPackInfo(std::make_shared<PackInfo<VectorField>>(
+        m_last_applied_force_field_id, n_ghost_layers));
+    m_full_communication->addPackInfo(std::make_shared<PackInfo<VectorField>>(
+        m_velocity_field_id, n_ghost_layers));
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_id, n_ghost_layers));
 
-    // Instance the sweep responsible for force double buffering and
+    // Instantiate the sweep responsible for force double buffering and
     // external forces
     m_reset_force = std::make_shared<ResetForce<PdfField, VectorField>>(
         m_last_applied_force_field_id, m_force_to_be_applied_id);
@@ -455,13 +472,13 @@ private:
     integrate_reset_force(blocks);
     // LB collide
     integrate_collide(blocks);
-    (*m_pdf_streaming_communication).communicate();
+    m_pdf_streaming_communication->communicate();
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
     // Refresh ghost layers
-    (*m_full_communication).communicate();
+    m_full_communication->communicate();
   }
 
   void integrate_pull_scheme() {
@@ -502,7 +519,7 @@ public:
   }
 
   void ghost_communication() override {
-    (*m_full_communication).communicate();
+    m_full_communication->communicate();
     if (lees_edwards_bc()) {
       auto const &blocks = get_lattice().get_blocks();
       apply_lees_edwards_pdf_interpolation(blocks);
@@ -598,7 +615,7 @@ public:
 
   // Velocity
   boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i &node,
+  get_node_velocity(Utils::Vector3i const &node,
                     bool consider_ghosts = false) const override {
     auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
     if (is_boundary)    // is info available locally
@@ -612,11 +629,13 @@ public:
                            double_c(vel_field->get(bc->cell, uint_t(1u))),
                            double_c(vel_field->get(bc->cell, uint_t(2u)))};
   }
-  bool set_node_velocity(const Utils::Vector3i &node,
-                         const Utils::Vector3d &v) override {
+
+  bool set_node_velocity(Utils::Vector3i const &node,
+                         Utils::Vector3d const &v) override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
+
     // We have to set both, the pdf and the stored velocity field
     auto const density = getDensity(*bc);
     auto const vel = to_vector3<FloatType>(v);
@@ -629,6 +648,7 @@ public:
 
     return true;
   }
+
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &pos,
                       bool consider_points_in_halo = false) const override {
@@ -755,7 +775,7 @@ public:
   }
 
   boost::optional<std::vector<double>>
-  get_node_pop(const Utils::Vector3i &node,
+  get_node_pop(Utils::Vector3i const &node,
                bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
@@ -852,11 +872,7 @@ public:
                              std::vector<double> const &data_flat) override {
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
-    auto const field_getter = [field_id = m_pdf_field_id](auto &block) {
-      return block->template getData<PdfField>(field_id);
-    };
-    set_boundary_from_grid(*m_boundary, field_getter, get_lattice(),
-                           raster_flat, data);
+    set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
   }
 
   // Pressure tensor
@@ -865,8 +881,10 @@ public:
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return {boost::none};
+
     auto tensor = getPressureTensor(*bc);
     pressure_tensor_correction(tensor);
+
     return to_vector9d(tensor);
   }
 
@@ -898,7 +916,7 @@ public:
           block->template getData<VectorField>(m_last_applied_force_field_id);
       Vector3<FloatType> local_v;
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        FloatType local_dens =
+        auto const local_dens =
             getDensityAndVelocity(pdf_field, force_field, x, y, z, local_v);
         mom += local_dens * local_v;
       });

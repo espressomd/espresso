@@ -483,11 +483,7 @@ public:
       const std::vector<double> &data_flat) override {
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
-    auto const field_getter = [field_id = m_flux_field_id](auto &block) {
-      return block->template getData<FluxField>(field_id);
-    };
-    set_boundary_from_grid(*m_boundary_flux, field_getter, get_lattice(),
-                           raster_flat, data);
+    set_boundary_from_grid(*m_boundary_flux, get_lattice(), raster_flat, data);
     reallocate_flux_boundary_field();
   }
 
@@ -496,11 +492,8 @@ public:
       const std::vector<double> &data_flat) override {
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_scalar_array(data_flat, grid_size);
-    auto const field_getter = [field_id = m_density_field_id](auto &block) {
-      return block->template getData<DensityField>(field_id);
-    };
-    set_boundary_from_grid(*m_boundary_density, field_getter, get_lattice(),
-                           raster_flat, data);
+    set_boundary_from_grid(*m_boundary_density, get_lattice(), raster_flat,
+                           data);
     reallocate_density_boundary_field();
   }
 

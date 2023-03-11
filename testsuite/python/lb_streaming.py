@@ -87,7 +87,7 @@ class LBStreamingCommon:
 
     """
     Check the streaming and relaxation steps of the LB fluid implementation by
-    setting all populations to zero except one.
+    setting all populations to zero except for one cell.
 
     """
     system = espressomd.System(box_l=[3.0] * 3)
@@ -102,34 +102,28 @@ class LBStreamingCommon:
     def tearDown(self):
         self.system.actors.clear()
 
-    def reset_fluid_populations(self):
-        """Set all populations to 0.0.
+    def test_population_streaming(self):
+        pop_default = np.zeros(19) + 1e-10
+        pop_source = np.arange(1, 20, dtype=float)
 
-        """
+        # reset fluid populations
         for i in itertools.product(range(self.grid[0]), range(
                 self.grid[1]), range(self.grid[2])):
-            self.lbf[i].population = np.zeros(19) + 1e-10
+            self.lbf[i].population = pop_default
 
-    def set_fluid_populations(self, grid_index):
-        """Set the population of direction n_v of grid_index to n_v+1.
-
-        """
-        pop = np.arange(1, 20, dtype=float)
-        self.lbf[grid_index].population = pop
-
-    def test_population_streaming(self):
-        self.reset_fluid_populations()
+        # check streaming
         for grid_index in itertools.product(
-                range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
-            self.set_fluid_populations(grid_index)
+                range(0, self.grid[0]), range(0, self.grid[1]), range(0, self.grid[2])):
+            self.lbf[grid_index].population = pop_source
             self.system.integrator.run(1)
             for n_v in range(19):
                 target_node_index = np.mod(
                     grid_index + VELOCITY_VECTORS[n_v], self.grid)
                 np.testing.assert_allclose(
                     self.lbf[target_node_index].population[n_v],
-                    REFERENCE_POPULATIONS[n_v], rtol=self.rtol)
-                self.lbf[target_node_index].population = np.zeros(19) + 1e-10
+                    REFERENCE_POPULATIONS[n_v], rtol=self.rtol,
+                    err_msg=f"streaming is incorrect in direction {VELOCITY_VECTORS[n_v]} from cell at {grid_index}")
+                self.lbf[target_node_index].population = pop_default
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])

@@ -19,6 +19,7 @@
 
 #include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
 
+#include "walberla_bridge/Architecture.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 #include "walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp"
 
@@ -45,10 +46,10 @@ std::shared_ptr<LBWalberlaBase>
 new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
                 double viscosity, double density, bool single_precision) {
   if (single_precision)
-    return std::make_shared<walberla::LBWalberlaImpl<float>>(lattice, viscosity,
-                                                             density);
-  return std::make_shared<walberla::LBWalberlaImpl<double>>(lattice, viscosity,
-                                                            density);
+    return std::make_shared<walberla::LBWalberlaImpl<float, lbmpy::Arch::CPU>>(
+        lattice, viscosity, density);
+  return std::make_shared<walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>>(
+      lattice, viscosity, density);
 }
 
 Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,

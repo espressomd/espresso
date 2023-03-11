@@ -24,6 +24,7 @@
 
 #include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
 
+#include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
@@ -49,11 +50,12 @@ using LbGeneratorVector = std::vector<
     std::function<std::shared_ptr<LBWalberlaBase>(LBTestParameters const &)>>;
 
 LbGeneratorVector unthermalized_lbs() {
+  using LBImplementation = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
   LbGeneratorVector lbs;
 
   // Unthermalized D3Q19 MRT
   lbs.push_back([](LBTestParameters const &params) {
-    auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
+    auto ptr = std::make_shared<LBImplementation>(
         params.lattice, params.viscosity, params.density);
     ptr->set_collision_model(0.0, params.seed);
     ptr->ghost_communication();
@@ -63,11 +65,12 @@ LbGeneratorVector unthermalized_lbs() {
 }
 
 LbGeneratorVector thermalized_lbs() {
+  using LBImplementation = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
   LbGeneratorVector lbs;
 
   // Thermalized D3Q19 MRT
   lbs.push_back([](LBTestParameters const &params) {
-    auto ptr = std::make_shared<walberla::LBWalberlaImpl<>>(
+    auto ptr = std::make_shared<LBImplementation>(
         params.lattice, params.viscosity, params.density);
     ptr->set_collision_model(params.kT, params.seed);
     ptr->ghost_communication();

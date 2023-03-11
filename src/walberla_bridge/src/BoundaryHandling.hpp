@@ -153,6 +153,12 @@ public:
     }
   }
 
+  std::tuple<int, int, int> block_dims(IBlock const &block) const {
+    auto const field = block.template getData<FlagField>(m_flag_field_id);
+    return {static_cast<int>(field->xSize()), static_cast<int>(field->ySize()),
+            static_cast<int>(field->zSize())};
+  }
+
 private:
   std::shared_ptr<StructuredBlockForest> m_blocks;
   BlockDataID m_value_field_id;
