@@ -48,7 +48,7 @@ class LBTest:
     params = {'tau': 0.01,
               'agrid': 0.5,
               'density': 0.85,
-              'viscosity': 3.0}
+              'kinematic_viscosity': 3.0}
 
     system.periodicity = [True, True, True]
     system.time_step = params['tau']
@@ -89,7 +89,7 @@ class LBTest:
         # check LB object
         self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
         self.assertAlmostEqual(lbf.agrid, agrid, delta=self.atol)
-        self.assertAlmostEqual(lbf.viscosity, 3., delta=self.atol)
+        self.assertAlmostEqual(lbf.kinematic_viscosity, 3., delta=self.atol)
         self.assertAlmostEqual(lbf.density, 0.85, delta=self.atol)
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
         self.assertEqual(lbf.seed, 42)
@@ -98,8 +98,8 @@ class LBTest:
             self.lb_params['single_precision'])
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), [0., 0., 0.], atol=self.atol)
-        lbf.viscosity = 2.
-        self.assertAlmostEqual(lbf.viscosity, 2., delta=self.atol)
+        lbf.kinematic_viscosity = 2.
+        self.assertAlmostEqual(lbf.kinematic_viscosity, 2., delta=self.atol)
         ext_f = [0.01, 0.02, 0.03]
         lbf.ext_force_density = ext_f
         np.testing.assert_allclose(
@@ -117,8 +117,8 @@ class LBTest:
         self.assertEqual(
             lbf.is_single_precision,
             self.lb_params['single_precision'])
-        lbf.viscosity = 3.
-        self.assertAlmostEqual(lbf.viscosity, 3., delta=self.atol)
+        lbf.kinematic_viscosity = 3.
+        self.assertAlmostEqual(lbf.kinematic_viscosity, 3., delta=self.atol)
         ext_force_density = [0.02, 0.05, 0.07]
         lbf.ext_force_density = ext_force_density
         np.testing.assert_allclose(np.copy(lbf.ext_force_density),
@@ -329,7 +329,7 @@ class LBTest:
         lj_sig = 1.0
         l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / phi)**(1. / 3.)
         system.box_l = [l] * 3 * np.array(system.cell_system.node_grid)
-        lbf = self.lb_class(agrid=l / 31, density=1, viscosity=1, kT=0,
+        lbf = self.lb_class(agrid=l / 31, density=1, kinematic_viscosity=1, kT=0,
                             tau=system.time_step, **self.lb_params)
         system.actors.add(lbf)
         system.integrator.run(steps=1)
@@ -532,7 +532,7 @@ class LBTest:
         base_params = {}
         base_params.update(
             ext_force_density=[2.3, 1.2, 0.1],
-            viscosity=self.params['viscosity'],
+            kinematic_viscosity=self.params['kinematic_viscosity'],
             density=self.params['density'],
             agrid=self.params['agrid'])
 

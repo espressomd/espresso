@@ -28,14 +28,14 @@ import espressomd.shapes
 
 AGRID = .5
 EXT_FORCE = .1
-VISC = 2.7
+KINEMATIC_VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.05
 BOX_L = 8.0
 EFFECTIVE_RADIUS = BOX_L / 2.0 - 1.0
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': VISC,
+             'kinematic_viscosity':KINEMATIC_VISC,
              'tau': TIME_STEP}
 
 OBS_PARAMS = {'n_r_bins': 6,
@@ -140,7 +140,7 @@ class LBPoiseuilleCommon:
             positions[1:-1] - BOX_L / 2.0,
             EFFECTIVE_RADIUS,
             EXT_FORCE,
-            VISC * DENS)
+            KINEMATIC_VISC * DENS)
         f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
         np.testing.assert_allclose(v_measured + f_half_correction,
                                    v_expected, atol=0.01, rtol=0.)
@@ -167,7 +167,7 @@ class LBPoiseuilleCommon:
             r,
             EFFECTIVE_RADIUS,
             EXT_FORCE,
-            VISC * DENS)
+            KINEMATIC_VISC * DENS)
         v_r, v_phi, v_z = np.copy(obs.calculate()).reshape([-1, 3]).T
         # check velocity is zero for the radial and azimuthal components
         np.testing.assert_allclose(v_r, 0., atol=1e-4, rtol=0.)

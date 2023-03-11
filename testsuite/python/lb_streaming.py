@@ -77,7 +77,7 @@ REFERENCE_POPULATIONS = np.array([
     17 + 2 / 3])
 LB_PARAMETERS = {
     'agrid': AGRID,
-    'viscosity': VISC,
+    'kinematic_viscosity': VISC,
     'tau': TAU,
     'density': 1.0,
 }

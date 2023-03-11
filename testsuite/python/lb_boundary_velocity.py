@@ -33,7 +33,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
     lb_params = {'agrid': 0.6,
                  'density': 0.5,
-                 'viscosity': 3.2,
+                 'kinematic_viscosity': 3.2,
                  'tau': 0.7}
     system = espressomd.System(box_l=3 * [8 * lb_params['agrid']])
     system.time_step = lb_params['tau']

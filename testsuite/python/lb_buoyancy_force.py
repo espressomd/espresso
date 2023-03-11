@@ -33,7 +33,7 @@ BOX_SIZE = 18 * AGRID
 
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': KVISC,
+             'kinematic_viscosity': KVISC,
              'tau': TIME_STEP,
              'ext_force_density': [0, DENS * G, 0]}
 # System setup

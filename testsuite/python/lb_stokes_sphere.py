@@ -30,7 +30,7 @@ KVISC = 6
 DENS = 2.3
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': KVISC,
+             'kinematic_viscosity': KVISC,
              'tau': TIME_STEP}
 # System setup
 radius = 7 * AGRID

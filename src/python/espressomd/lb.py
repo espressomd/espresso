@@ -54,7 +54,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         LB time step, must be an integer multiple of the MD time step.
     density : :obj:`float`
         Fluid density.
-    viscosity : :obj:`float`
+    kinematic_viscosity : :obj:`float`
         Fluid kinematic viscosity.
     ext_force_density : (3,) array_like of :obj:`float`, optional
         Force density applied on the fluid.
@@ -96,7 +96,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         return self._params
 
     def validate_params(self, params):
-        for key in ('agrid', 'tau', 'density', 'viscosity'):
+        for key in ('agrid', 'tau', 'density', 'kinematic_viscosity'):
             if key not in params or key not in self.valid_keys():
                 continue
             utils.check_type_or_throw_except(
@@ -116,11 +116,11 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             params['ext_force_density'], 3, float, 'ext_force_density must be 3 floats')
 
     def valid_keys(self):
-        return {"agrid", "tau", "density", "ext_force_density", "viscosity",
+        return {"agrid", "tau", "density", "ext_force_density", "kinematic_viscosity",
                 "lattice", "kT", "seed"}
 
     def required_keys(self):
-        return {"lattice", "density", "viscosity", "tau"}
+        return {"lattice", "density", "kinematic_viscosity", "tau"}
 
     def default_params(self):
         return {"lattice": None, "seed": 0, "kT": 0.,
@@ -168,7 +168,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         self._params['kT'] = self.kT
         if self._params['kT'] > 0.0:
             self._params['seed'] = self.seed
-        self._params['viscosity'] = self.viscosity
+        self._params['kinematic_viscosity'] = self.kinematic_viscosity
         self._params['ext_force_density'] = self.ext_force_density
 
         return self._params

@@ -26,12 +26,12 @@ import espressomd.shapes
 
 AGRID = .25
 EXT_FORCE = .1
-VISC = 2.7
+KINEMATIC_VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.07
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': VISC,
+             'kinematic_viscosity':KINEMATIC_VISC,
              'tau': TIME_STEP,
              'ext_force_density': [0.0, 0.0, EXT_FORCE]}
 
@@ -115,7 +115,7 @@ class LBPoiseuilleCommon:
         v_expected = poiseuille_flow(velocities[1:-1, 0] - 0.5 * self.system.box_l[0],
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
-                                     VISC * DENS)
+                                     KINEMATIC_VISC * DENS)
         np.testing.assert_allclose(v_measured, v_expected, rtol=5E-5)
 
 

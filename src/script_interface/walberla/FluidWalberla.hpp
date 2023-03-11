@@ -90,7 +90,7 @@ public:
          [this]() { return static_cast<int>(m_lb_fluid->get_rng_state()); }},
         {"density", AutoParameter::read_only,
          [this]() { return m_lb_fluid->get_density() / m_conv_dens; }},
-        {"viscosity",
+        {"kinematic_viscosity",
          [this](const Variant &v) {
            auto const visc = m_conv_visc * get_value<double>(v);
            m_lb_fluid->set_viscosity(visc);
@@ -124,7 +124,7 @@ public:
     m_is_active = false;
     m_seed = get_value<int>(params, "seed");
     auto const lb_lattice = lb_lattice_si->lattice();
-    auto const lb_visc = m_conv_visc * get_value<double>(params, "viscosity");
+    auto const lb_visc = m_conv_visc * get_value<double>(params, "kinematic_viscosity");
     auto const lb_dens = m_conv_dens * get_value<double>(params, "density");
     auto const lb_temp = m_conv_temp * get_value<double>(params, "kT");
     auto const ext_f = m_conv_force_dens *

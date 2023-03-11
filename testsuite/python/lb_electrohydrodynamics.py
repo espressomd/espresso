@@ -34,7 +34,7 @@ class LBEHTest(ut.TestCase):
                        'tau': 0.02,
                        'agrid': 0.5,
                        'dens': 0.85,
-                       'viscosity': 30.0,
+                       'kinematic_viscosity': 30.0,
                        'friction': 3.0,
                        'temp': 0.0,
                        'skin': 0.2,
@@ -45,7 +45,7 @@ class LBEHTest(ut.TestCase):
         system.cell_system.skin = self.params['skin']
 
         lbf = espressomd.lb.LBFluidWalberla(
-            viscosity=self.params['viscosity'],
+            kinematic_viscosity=self.params['kinematic_viscosity'],
             density=self.params['dens'],
             agrid=self.params['agrid'],
             tau=system.time_step,

@@ -35,7 +35,7 @@ GAMMA = 1
 
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': KVISC,
+             'kinematic_viscosity': KVISC,
              'tau': TIME_STEP,
              'ext_force_density': np.array([-.7 * F, .9 * F, .8 * F])}
 

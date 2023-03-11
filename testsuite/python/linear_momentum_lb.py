@@ -36,7 +36,7 @@ BOX_L = 3.0
 
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
-             'viscosity': VISC,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP,
              'ext_force_density': [0.1, 0.2, 0.3]}
 
