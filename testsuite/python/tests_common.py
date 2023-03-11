@@ -147,7 +147,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 
 def data_path(filename):
     """
-    Resolve abosulte path to a resource.
+    Resolve absolute path to a resource.
     """
     return pathlib.Path(__file__).resolve().parent / "data" / filename
 

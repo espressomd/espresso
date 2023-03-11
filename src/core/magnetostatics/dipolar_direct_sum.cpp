@@ -163,7 +163,7 @@ struct PosMom {
  * @param end Iterator pointing past the end of particle range
  * @param it Pointer to particle that is considered
  * @param with_replicas If periodic replicas are to be considered
- *        at all. If false, distances are calulated as Euclidean
+ *        at all. If false, distances are calculated as Euclidean
  *        distances, and not using minimum image convention.
  * @param ncut Number of replicas in each direction.
  * @param box_l Box dimensions.

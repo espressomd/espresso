@@ -397,9 +397,10 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
 
 std::vector<CollisionPair> gather_global_collision_queue() {
   std::vector<CollisionPair> res = local_collision_queue;
-  Utils::Mpi::gather_buffer(res, comm_cart);
-  boost::mpi::broadcast(comm_cart, res, 0);
-
+  if (comm_cart.size() > 1) {
+    Utils::Mpi::gather_buffer(res, comm_cart);
+    boost::mpi::broadcast(comm_cart, res, 0);
+  }
   return res;
 }
 
