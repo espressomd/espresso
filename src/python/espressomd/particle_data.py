@@ -982,7 +982,7 @@ class ParticleList(ScriptInterfaceHelper):
 
     auto_exclusions()
         Add exclusions between particles that are connected by pair bonds,
-        including virtual bonds. Angle and diheral bonds are ignored. The most
+        including virtual bonds. Angle and dihedral bonds are ignored. The most
         common use case for this method is to auto-exclude virtual sites.
 
         Another use case is to exclude 1-2, 1-3 and optionally 1-4 non-nonded
