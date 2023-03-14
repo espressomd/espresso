@@ -17,16 +17,18 @@ The following dependencies needs to be in the Python path:
 ## Example
 
 ```sh
-export VERSION=1.0
+export VERSION=1.1.1
 export DEPS="${HOME}/walberla_deps"
 export PYTHONPATH="${DEPS}/${VERSION}/lbmpy:${DEPS}/${VERSION}/pystencils:${DEPS}/devel/walberla/python/"
+cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py --single-precision
-$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.{cpp,h}
-mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
+$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
+$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py
 python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py --single-precision
-$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.{cpp,h}
+$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
+$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
 mv ReactionKernel*.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
-mv *.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
 ```

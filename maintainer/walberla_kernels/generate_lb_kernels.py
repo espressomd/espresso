@@ -40,7 +40,6 @@ import relaxation_rates
 import walberla_lbm_generation
 import code_generation_context
 
-
 parser = argparse.ArgumentParser(description="Generate the waLBerla kernels.")
 parser.add_argument("--single-precision", action="store_true", required=False,
                     help="Use single-precision")
@@ -53,10 +52,11 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-#SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
-#for module, requirement in [(ps, "==1.1.1"), (lbmpy, "==1.1.1")]:
-#    assert SpecifierSet(requirement).contains(module.__version__), \
-#        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
+SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
+for module, requirement in [(ps, "==1.1.1"), (lbmpy, "==1.1.1")]:
+    assert SpecifierSet(requirement).contains(module.__version__), \
+        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
+
 
 def paramlist(parameters, keys):
     for key in keys:
@@ -190,7 +190,7 @@ with code_generation_context.CodeGeneration() as ctx:
     ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
         method.stencil, ubb_dynamic)
 
-    for _, target_suffix in paramlist(parameters, ("GPU", "CPU",)):
+    for _, target_suffix in paramlist(parameters, ("GPU", "CPU")):
         lbmpy_walberla.generate_boundary(
             ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb_dynamic,
             method, additional_data_handler=ubb_data_handler,
@@ -205,13 +205,13 @@ with code_generation_context.CodeGeneration() as ctx:
                                       config.data_type.default_factory().c_name)
             f.write(content)
 
-    # communication
-    for _, target_suffix in paramlist(parameters, ("GPU", "CPU",)):
-        lbmpy_walberla.generate_lb_pack_info(
-            ctx,
-            f"PushPackInfo{precision_prefix}{target_suffix}",
-            method.stencil,
-            fields["pdfs"],
-            streaming_pattern="push",
-            target=target
-        )
+#    # communication
+#    for _, target_suffix in paramlist(parameters, ("GPU", "CPU")):
+#        lbmpy_walberla.generate_lb_pack_info(
+#            ctx,
+#            f"PushPackInfo{precision_prefix}{target_suffix}",
+#            method.stencil,
+#            fields["pdfs"],
+#            streaming_pattern="push",
+#            target=target
+#        )
