@@ -164,57 +164,6 @@ private:
                                                  m_flag_field_id);
   }
 
-  FloatType getDensity(const BlockAndCell &bc) const {
-    auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    return lbm::accessor::Density::get(*pdf_field, bc.cell.x(), bc.cell.y(),
-                                       bc.cell.z());
-  }
-
-  FloatType getDensityAndVelocity(const BlockAndCell &bc,
-                                  Vector3<FloatType> &velocity) const {
-    auto const pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    auto const force_field =
-        bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    return getDensityAndVelocity(pdf_field, force_field, bc.cell.x(),
-                                 bc.cell.y(), bc.cell.z(), velocity);
-  }
-
-  FloatType getDensityAndVelocity(const PdfField *pdf_field,
-                                  const VectorField *force_field,
-                                  const cell_idx_t x, const cell_idx_t y,
-                                  const cell_idx_t z,
-                                  Vector3<FloatType> &velocity) const {
-    auto const rho = lbm::accessor::DensityAndMomentumDensity::get(
-        velocity, *force_field, *pdf_field, x, y, z);
-    auto const invRho = FloatType{1} / rho;
-    velocity *= invRho;
-    return rho;
-  }
-
-  auto get_velocity_field_ptr(const IBlock *block) const {
-    return block->template uncheckedFastGetData<VectorField>(
-        m_velocity_field_id);
-  }
-
-  void setDensityAndVelocity(const BlockAndCell &bc,
-                             Vector3<FloatType> const &velocity,
-                             FloatType rho) {
-    auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    auto force_field =
-        bc.block->template getData<VectorField>(m_last_applied_force_field_id);
-    lbm::accessor::DensityAndVelocity::set(*pdf_field, bc.cell.x(), bc.cell.y(),
-                                           bc.cell.z(), *force_field, velocity,
-                                           rho);
-  }
-
-  Matrix3<FloatType> getPressureTensor(const BlockAndCell &bc) const {
-    Matrix3<FloatType> pressureTensor;
-    auto pdf_field = bc.block->template getData<PdfField>(m_pdf_field_id);
-    lbm::accessor::PressureTensor::get(pressureTensor, *pdf_field, bc.cell.x(),
-                                       bc.cell.y(), bc.cell.z());
-    return pressureTensor;
-  }
-
   FloatType pressure_tensor_correction_factor() const {
     return m_viscosity / (m_viscosity + FloatType{1} / FloatType{6});
   }
@@ -624,10 +573,10 @@ public:
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {};
-    auto const vel_field = get_velocity_field_ptr(bc->block);
-    return Utils::Vector3d{double_c(vel_field->get(bc->cell, uint_t(0u))),
-                           double_c(vel_field->get(bc->cell, uint_t(1u))),
-                           double_c(vel_field->get(bc->cell, uint_t(2u)))};
+
+    auto field = bc->block->template getData<VectorField>(m_velocity_field_id);
+    auto const vec = lbm::accessor::Vector::get(field, bc->cell);
+    return to_vector3d(vec);
   }
 
   bool set_node_velocity(Utils::Vector3i const &node,
@@ -637,20 +586,20 @@ public:
       return false;
 
     // We have to set both, the pdf and the stored velocity field
-    auto const density = getDensity(*bc);
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto vel_field = bc->block->template getData<VectorField>(m_velocity_field_id);
+    auto force_field =
+        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    auto const rho = lbm::accessor::Density::get(pdf_field, bc->cell);
     auto const vel = to_vector3<FloatType>(v);
-    setDensityAndVelocity(*bc, vel, density);
-    auto vel_field =
-        bc->block->template getData<VectorField>(m_velocity_field_id);
-    for (uint_t f = 0u; f < 3u; ++f) {
-      vel_field->get(bc->cell, f) = FloatType_c(v[f]);
-    }
+    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, vel, rho, bc->cell);
+    lbm::accessor::Vector::set(vel_field, vel, bc->cell);
 
     return true;
   }
 
   boost::optional<Utils::Vector3d>
-  get_velocity_at_pos(const Utils::Vector3d &pos,
+  get_velocity_at_pos(Utils::Vector3d const &pos,
                       bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
       return {};
@@ -658,7 +607,7 @@ public:
       return {};
     Utils::Vector3d v{0.0, 0.0, 0.0};
     interpolate_bspline_at_pos(
-        pos, [this, &v, pos](const std::array<int, 3> node, double weight) {
+        pos, [this, &v, pos](std::array<int, 3> const node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
@@ -681,7 +630,7 @@ public:
       return {};
     double dens = 0.0;
     interpolate_bspline_at_pos(
-        pos, [this, &dens, pos](const std::array<int, 3> node, double weight) {
+        pos, [this, &dens, pos](std::array<int, 3> const node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
           if (weight != 0) {
@@ -696,20 +645,20 @@ public:
   }
 
   // Local force
-  bool add_force_at_pos(const Utils::Vector3d &pos,
-                        const Utils::Vector3d &force) override {
+  bool add_force_at_pos(Utils::Vector3d const &pos,
+                        Utils::Vector3d const &force) override {
     if (!m_lattice->pos_in_local_halo(pos))
       return false;
-    auto force_at_node = [this, force](const std::array<int, 3> node,
-                                       double weight) {
+    auto const force_at_node = [this, force](std::array<int, 3> const node,
+                                             double weight) {
       auto const bc =
           get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
       if (bc) {
+        auto const weighted_force = to_vector3<FloatType>(weight * force);
         auto force_field =
             bc->block->template uncheckedFastGetData<VectorField>(
                 m_force_to_be_applied_id);
-        for (int i : {0, 1, 2})
-          force_field->get(bc->cell, i) += FloatType_c(force[i] * weight);
+        lbm::accessor::Vector::add(force_field, weighted_force, bc->cell);
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
@@ -717,16 +666,15 @@ public:
   }
 
   boost::optional<Utils::Vector3d>
-  get_node_force_to_be_applied(const Utils::Vector3i &node) const override {
+  get_node_force_to_be_applied(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return {};
 
-    auto const &force_field =
+    auto field =
         bc->block->template getData<VectorField>(m_force_to_be_applied_id);
-    return Utils::Vector3d{double_c(force_field->get(bc->cell, uint_t(0u))),
-                           double_c(force_field->get(bc->cell, uint_t(1u))),
-                           double_c(force_field->get(bc->cell, uint_t(2u)))};
+    auto const vec = lbm::accessor::Vector::get(field, bc->cell);
+    return to_vector3d(vec);
   }
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
@@ -735,27 +683,25 @@ public:
     if (!bc)
       return false;
 
-    auto force_field =
+    auto field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
-    for (uint_t f = 0u; f < 3u; ++f) {
-      force_field->get(bc->cell, f) = FloatType_c(force[f]);
-    }
+    auto const vec = to_vector3<FloatType>(force);
+    lbm::accessor::Vector::set(field, vec, bc->cell);
 
     return true;
   }
 
   boost::optional<Utils::Vector3d>
-  get_node_last_applied_force(const Utils::Vector3i &node,
+  get_node_last_applied_force(Utils::Vector3i const &node,
                               bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {};
 
-    auto const force_field =
+    auto field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
-    return Utils::Vector3d{double_c(force_field->get(bc->cell, uint_t(0u))),
-                           double_c(force_field->get(bc->cell, uint_t(1u))),
-                           double_c(force_field->get(bc->cell, uint_t(2u)))};
+    auto const vec = lbm::accessor::Vector::get(field, bc->cell);
+    return to_vector3d(vec);
   }
 
   // Population
@@ -766,10 +712,11 @@ public:
       return false;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
-    assert(population.size() == Stencil::Size);
+    std::array<FloatType, Stencil::Size> pop;
     for (uint_t f = 0u; f < Stencil::Size; ++f) {
-      pdf_field->get(bc->cell, f) = FloatType_c(population[f]);
+      pop[f] = FloatType_c(population[f]);
     }
+    lbm::accessor::Population::set(pdf_field, pop, bc->cell);
 
     return true;
   }
@@ -782,40 +729,45 @@ public:
       return {boost::none};
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto const pop = lbm::accessor::Population::get(pdf_field, bc->cell);
     std::vector<double> population(Stencil::Size);
     for (uint_t f = 0u; f < Stencil::Size; ++f) {
-      population[f] = double_c(pdf_field->get(bc->cell, f));
+      population[f] = double_c(pop[f]);
     }
 
     return {population};
   }
 
   // Density
-  bool set_node_density(const Utils::Vector3i &node, double density) override {
+  bool set_node_density(Utils::Vector3i const &node, double density) override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
 
-    Vector3<FloatType> vel;
-    getDensityAndVelocity(*bc, vel);
-    setDensityAndVelocity(*bc, vel, FloatType_c(density));
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto force_field =
+        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    auto const velocity = std::get<1>(lbm::accessor::DensityAndVelocity::get(
+        pdf_field, force_field, bc->cell));
+    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, velocity, FloatType_c(density), bc->cell);
 
     return true;
   }
 
   boost::optional<double>
-  get_node_density(const Utils::Vector3i &node,
+  get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
 
-    auto const density = getDensity(*bc);
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto const density = lbm::accessor::Density::get(pdf_field, bc->cell);
     return {double_c(density)};
   }
 
   boost::optional<Utils::Vector3d>
-  get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
+  get_node_velocity_at_boundary(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
@@ -823,8 +775,8 @@ public:
     return {m_boundary->get_node_value_at_boundary(node)};
   }
 
-  bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                     const Utils::Vector3d &v) override {
+  bool set_node_velocity_at_boundary(Utils::Vector3i const &node,
+                                     Utils::Vector3d const &v) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -835,7 +787,7 @@ public:
   }
 
   boost::optional<Utils::Vector3d>
-  get_node_boundary_force(const Utils::Vector3i &node) const override {
+  get_node_boundary_force(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
@@ -843,7 +795,7 @@ public:
     return get_node_last_applied_force(node, true);
   }
 
-  bool remove_node_from_boundary(const Utils::Vector3i &node) override {
+  bool remove_node_from_boundary(Utils::Vector3i const &node) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -854,7 +806,7 @@ public:
   }
 
   boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node,
+  get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
@@ -877,12 +829,13 @@ public:
 
   // Pressure tensor
   boost::optional<Utils::VectorXd<9>>
-  get_node_pressure_tensor(const Utils::Vector3i &node) const override {
+  get_node_pressure_tensor(Utils::Vector3i const &node) const override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return {boost::none};
 
-    auto tensor = getPressureTensor(*bc);
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto tensor = lbm::accessor::PressureTensor::get(pdf_field, bc->cell);
     pressure_tensor_correction(tensor);
 
     return to_vector9d(tensor);
@@ -895,9 +848,7 @@ public:
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
       WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        Matrix3<FloatType> local_p;
-        lbm::accessor::PressureTensor::get(local_p, *pdf_field, x, y, z);
-        tensor += local_p;
+        tensor += lbm::accessor::PressureTensor::get(pdf_field, Cell{x, y, z});
       });
     }
     auto const grid_size = get_lattice().get_grid_dimensions();
@@ -909,25 +860,21 @@ public:
   // Global momentum
   Utils::Vector3d get_momentum() const override {
     auto const &blocks = get_lattice().get_blocks();
-    Vector3<FloatType> mom;
+    Vector3<FloatType> mom(FloatType{0});
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
       auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
       auto force_field =
           block->template getData<VectorField>(m_last_applied_force_field_id);
-      Vector3<FloatType> local_v;
-      WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-        auto const local_dens =
-            getDensityAndVelocity(pdf_field, force_field, x, y, z, local_v);
-        mom += local_dens * local_v;
-      });
+      mom += lbm::accessor::MomentumDensity::reduce(pdf_field, force_field);
     }
     return to_vector3d(mom);
   }
 
   // Global external force
-  void set_external_force(const Utils::Vector3d &ext_force) override {
+  void set_external_force(Utils::Vector3d const &ext_force) override {
     m_reset_force->set_ext_force(ext_force);
   }
+
   Utils::Vector3d get_external_force() const override {
     return m_reset_force->get_ext_force();
   }

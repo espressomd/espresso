@@ -21,9 +21,9 @@
 import os
 import sympy as sp
 import pystencils as ps
-from pystencils.node_collection import NodeCollection
-from pystencils.typing.transformations import add_types
+import lbmpy_walberla
 from pystencils.typing.typed_sympy import TypedSymbol
+from pystencils.typing import BasicType, CastFunc, TypedSymbol
 
 # File derived from lbmpy_walberla.walberla_lbm_generation in the
 # walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
@@ -32,6 +32,8 @@ from pystencils.typing.typed_sympy import TypedSymbol
 def __type_equilibrium_assignments(assignments, config, subs_dict):
     # Function derived from lbmpy_walberla.walberla_lbm_generation.__type_equilibrium_assignments()
     # in the walberla project, commit 9dcd0dd90f50f7b64b0a38bb06327854463fdafd
+    from pystencils.node_collection import NodeCollection
+    from pystencils.typing.transformations import add_types
     result = assignments.new_with_substitutions(subs_dict)
     result = NodeCollection(result.main_assignments)
     result.evaluate_terms()
@@ -39,8 +41,68 @@ def __type_equilibrium_assignments(assignments, config, subs_dict):
     return result
 
 
-def generate_macroscopic_values_accessors(
-        gen_context, config, lb_method, filename):
+def type_expr(eq, dtype):
+    # manually cast floats to dtype since this is somehow not done automatically
+    repl = ((rational := sp.Rational(1, i), CastFunc(rational, dtype))
+            for i in (2, 3, 4, 6, 8, 9, 12, 24, 18, 36, 72))
+    eq = eq.subs(repl)
+    return eq.subs({s: TypedSymbol(s.name, dtype) for s in eq.atoms(sp.Symbol)})
+
+
+def pow_to_mul(eq):
+    keep_processing = True
+    while keep_processing:
+        for expr in sp.preorder_traversal(eq):
+            if expr.is_Pow:
+                if expr.args[0].is_Symbol and expr.args[1].is_Integer:
+                    power = expr.args[1].p
+                    if power >= 1:
+                        chained_product = expr.args[1].p * [expr.args[0]]
+                        expr_mul = sp.Mul(*chained_product, evaluate=False)
+                        print(f"folding '{expr}' to '{expr_mul}'")
+                        eq = eq.subs(expr, sp.UnevaluatedExpr(expr_mul))
+                        break
+        else:
+            keep_processing = False
+    return eq
+
+
+def equations_to_code(equations, variable_prefix="", variables_without_prefix=None, dtype=None, backend=None):
+    if dtype is None:
+        dtype = BasicType("float64")
+
+    if variables_without_prefix is None:
+        variables_without_prefix = []
+    if isinstance(equations, ps.AssignmentCollection):
+        equations = equations.all_assignments
+
+    variables_without_prefix = list(variables_without_prefix)
+
+    result = []
+    left_hand_side_names = [eq.lhs.name for eq in equations]
+    for eq in equations:
+        lhs, rhs = eq.lhs, eq.rhs
+        rhs = lbmpy_walberla.walberla_lbm_generation.field_and_symbol_substitute(
+            rhs, variable_prefix, variables_without_prefix + left_hand_side_names)
+        lhs = type_expr(lhs, dtype=dtype)
+        rhs = type_expr(rhs, dtype=dtype)
+        rhs = pow_to_mul(rhs)
+        assignment = ps.astnodes.SympyAssignment(lhs, rhs)
+        result.append(backend(assignment))
+    return "\n".join(result)
+
+
+def substitute_force_getter_cpp(code):
+    field_getter = "force->"
+    assert field_getter in code is not None, f"pattern '{field_getter} not found in '''\n{code}\n'''"
+    return code.replace(field_getter, "force_field->")
+
+
+def add_espresso_filters_to_jinja_env(jinja_env):
+    jinja_env.filters["substitute_force_getter_cpp"] = substitute_force_getter_cpp
+
+
+def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
 
     # Function derived from lbmpy_walberla.walberla_lbm_generation.__lattice_model()
     # in the walberla project, commit 3455bf3eebc64efa9beaecd74ebde3459b98991d
@@ -49,8 +111,10 @@ def generate_macroscopic_values_accessors(
     from jinja2 import Environment, FileSystemLoader, StrictUndefined
     from sympy.tensor import IndexedBase
     from pystencils.backends.cbackend import CustomSympyPrinter
+    from pystencils.backends.cbackend import CBackend
+    from pystencils.backends.cuda_backend import CudaBackend
     from pystencils_walberla.jinja_filters import add_pystencils_filters_to_jinja_env
-    from lbmpy_walberla.walberla_lbm_generation import equations_to_code, stencil_switch_statement
+    from lbmpy_walberla.walberla_lbm_generation import stencil_switch_statement
 
     cpp_printer = CustomSympyPrinter()
     stencil_name = lb_method.stencil.name
@@ -59,6 +123,11 @@ def generate_macroscopic_values_accessors(
             "lb_method uses a stencil that is not supported in waLBerla")
 
     default_dtype = config.data_type.default_factory()
+    if config.target == ps.Target.GPU:
+        backend = CudaBackend()
+    else:
+        backend = CBackend()
+    kwargs = {"backend": backend, "variable_prefix": "", "dtype": default_dtype}
 
     cqc = lb_method.conserved_quantity_computation
     vel_symbols = cqc.velocity_symbols
@@ -83,7 +152,7 @@ def generate_macroscopic_values_accessors(
     eq_input_from_input_eqs = cqc.equilibrium_input_equations_from_init_values(
         sp.Symbol("rho_in"), vel_arr_symbols)
     density_velocity_setter_macroscopic_values = equations_to_code(
-        eq_input_from_input_eqs, dtype=default_dtype, variables_without_prefix=["rho_in", "u"])
+        eq_input_from_input_eqs, variables_without_prefix=["rho_in", "u"], **kwargs)
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
     second_momentum_getter = cqc.output_equations_from_pdfs(
@@ -102,14 +171,11 @@ def generate_macroscopic_values_accessors(
 
         "density_getters": equations_to_code(
             cqc.output_equations_from_pdfs(pdfs_sym, {"density": rho_sym}),
-            variables_without_prefix=[e.name for e in pdfs_sym],
-            dtype=default_dtype),
+            variables_without_prefix=[e.name for e in pdfs_sym], **kwargs),
         "momentum_density_getter": equations_to_code(
-            momentum_density_getter, variables_without_prefix=pdfs_sym,
-            dtype=default_dtype),
+            momentum_density_getter, variables_without_prefix=pdfs_sym, **kwargs),
         "second_momentum_getter": equations_to_code(
-            second_momentum_getter, variables_without_prefix=pdfs_sym,
-            dtype=default_dtype),
+            second_momentum_getter, variables_without_prefix=pdfs_sym, **kwargs),
         "density_velocity_setter_macroscopic_values": density_velocity_setter_macroscopic_values,
 
         "namespace": "lbm",
@@ -118,15 +184,8 @@ def generate_macroscopic_values_accessors(
     env = Environment(loader=FileSystemLoader(os.path.dirname(__file__)),
                       undefined=StrictUndefined)
     add_pystencils_filters_to_jinja_env(env)
+    add_espresso_filters_to_jinja_env(env)
 
-    header = env.get_template(
-        "macroscopic_values_accessors.tmpl.h").render(**jinja_context)
-
-    gen_context.write_file(filename, header)
-    with open(filename, "r+") as f:
-        content = f.read()
-        f.seek(0)
-        f.truncate(0)
-        # remove lattice model
-        content = content.replace("lm.force_->", "force_field.")
-        f.write(content)
+    for filename, template in templates.items():
+        source = env.get_template(template).render(**jinja_context)
+        ctx.write_file(filename, source)

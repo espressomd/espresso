@@ -27,8 +27,8 @@
 
 #include "../src/lattice_boltzmann/generated_kernels/Dynamic_UBB_double_precision.h"
 #include "../src/lattice_boltzmann/generated_kernels/Dynamic_UBB_single_precision.h"
-#include "../src/lattice_boltzmann/generated_kernels/macroscopic_values_accessors_double_precision.h"
-#include "../src/lattice_boltzmann/generated_kernels/macroscopic_values_accessors_single_precision.h"
+#include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsDoublePrecision.h"
+#include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsSinglePrecision.h"
 
 #include <walberla_bridge/utils/walberla_utils.hpp>
 

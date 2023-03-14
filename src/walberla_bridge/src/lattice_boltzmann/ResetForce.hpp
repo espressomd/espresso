@@ -26,6 +26,9 @@
 
 #include "walberla_bridge/utils/walberla_utils.hpp"
 
+#include "generated_kernels/FieldAccessorsDoublePrecision.h"
+#include "generated_kernels/FieldAccessorsSinglePrecision.h"
+
 #include <utils/Vector.hpp>
 
 namespace walberla {
@@ -50,23 +53,16 @@ public:
   Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); }
 
   void operator()(IBlock *block) {
-    auto *force_field =
+    auto force_field =
         block->template getData<ForceField>(m_last_applied_force_field_id);
-    auto *force_to_be_applied =
+    auto force_to_be_applied =
         block->template getData<ForceField>(m_force_to_be_applied_id);
 
     force_field->swapDataPointers(force_to_be_applied);
 
-    WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_field, {
-      Cell cell(x, y, z);
-      for (int i : {0, 1, 2})
-        force_field->get(x, y, z, i) += m_ext_force[i];
-    });
-    WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(force_to_be_applied, {
-      Cell cell(x, y, z);
-      for (int i : {0, 1, 2})
-        force_to_be_applied->get(cell, i) = FloatType{0};
-    });
+    lbm::accessor::Vector::add_to_all(force_field, m_ext_force);
+    lbm::accessor::Vector::broadcast(force_to_be_applied,
+                                     Vector3<FloatType>{0});
   }
 
 private:

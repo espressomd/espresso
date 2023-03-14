@@ -86,7 +86,8 @@ with code_generation_context.CodeGeneration() as ctx:
                              "cpu_vectorize_info": cpu_vectorize_info}, "AVX")
 
     # codegen configuration
-    config = pystencils_espresso.generate_config(ctx, parameters[default_key][0])
+    config = pystencils_espresso.generate_config(
+        ctx, parameters[default_key][0])
 
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     precision_suffix = pystencils_espresso.precision_suffix[ctx.double_accuracy]
@@ -168,12 +169,20 @@ with code_generation_context.CodeGeneration() as ctx:
         )
 
     # generate accessors
-    for _, target_suffix in paramlist(parameters, ("CPU",)): # TODO GPU
+    for _, target_suffix in paramlist(parameters, ("GPU", "CPU")):
+        filename = f"FieldAccessors{precision_prefix}{target_suffix}"
+        if target == ps.Target.GPU:
+            templates = {
+                f"{filename}.h": "FieldAccessors.tmpl.cuh",
+                f"{filename}.cu": "FieldAccessors.tmpl.cu",
+            }
+        else:
+            templates = {
+                f"{filename}.h": "FieldAccessors.tmpl.h",
+            }
         walberla_lbm_generation.generate_macroscopic_values_accessors(
-            ctx,
-            config,
-            collision_rule_thermalized.method,
-            f"macroscopic_values_accessors_{precision_suffix}{target_suffix}.h")
+            ctx, config, method, templates
+        )
 
     # boundary conditions
     ubb_dynamic = lbmpy_espresso.UBB(
