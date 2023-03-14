@@ -23,12 +23,12 @@
 
 #include "generated_kernels/Dynamic_UBB_double_precision.h"
 #include "generated_kernels/Dynamic_UBB_single_precision.h"
+#include "generated_kernels/FieldAccessorsDoublePrecision.h"
+#include "generated_kernels/FieldAccessorsSinglePrecision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
 #include "generated_kernels/StreamSweepDoublePrecision.h"
 #include "generated_kernels/StreamSweepSinglePrecision.h"
-#include "generated_kernels/FieldAccessorsDoublePrecision.h"
-#include "generated_kernels/FieldAccessorsSinglePrecision.h"
 
 #ifdef __AVX2__
 #include "generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.h"

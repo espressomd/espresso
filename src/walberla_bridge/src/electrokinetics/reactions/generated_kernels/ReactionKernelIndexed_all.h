@@ -1,4 +1,6 @@
-// kernel generated with pystencils v1.0+12.g54b91e2.dirty, lbmpy v1.0+8.gac750b5, lbmpy_walberla/pystencils_walberla from commit e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
+// kernel generated with pystencils v1.0+12.g54b91e2.dirty, lbmpy
+// v1.0+8.gac750b5, lbmpy_walberla/pystencils_walberla from commit
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 /*
  * Copyright (C) 2022 The ESPResSo project
@@ -21,7 +23,6 @@
 
 #pragma once
 
-
 #include "ReactionKernelIndexed_1_double_precision.h"
 #include "ReactionKernelIndexed_1_single_precision.h"
 
@@ -36,7 +37,6 @@
 
 #include "ReactionKernelIndexed_5_double_precision.h"
 #include "ReactionKernelIndexed_5_single_precision.h"
-
 
 #include <domain_decomposition/BlockDataID.h>
 
@@ -75,7 +75,6 @@ template <> struct KernelTrait<double, 5> {
       pystencils::ReactionKernelIndexed_5_double_precision;
 };
 
-
 template <> struct KernelTrait<float, 1> {
   using ReactionKernelIndexed =
       pystencils::ReactionKernelIndexed_1_single_precision;
@@ -101,11 +100,9 @@ template <> struct KernelTrait<float, 5> {
       pystencils::ReactionKernelIndexed_5_single_precision;
 };
 
-
 template <typename FloatType, class Reactant, std::size_t... ints>
 auto get_kernel_impl(const std::vector<std::shared_ptr<Reactant>> &reactants,
-                     const double coefficient,
-                     const BlockDataID &indexFieldID,
+                     const double coefficient, const BlockDataID &indexFieldID,
                      std::index_sequence<ints...> int_seq) {
   auto kernel = std::make_shared<
       typename KernelTrait<FloatType, int_seq.size()>::ReactionKernelIndexed>(
@@ -116,7 +113,7 @@ auto get_kernel_impl(const std::vector<std::shared_ptr<Reactant>> &reactants,
       numeric_cast<FloatType>(coefficient),
       numeric_cast<FloatType>(reactants[ints]->get_stoech_coeff())...);
 
-  std::function<void(IBlock *)> sweep = [kernel](IBlock * b) { kernel->run(b); };
+  std::function<void(IBlock *)> sweep = [kernel](IBlock *b) { kernel->run(b); };
   return sweep;
 }
 

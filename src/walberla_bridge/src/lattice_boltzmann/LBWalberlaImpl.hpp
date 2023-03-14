@@ -587,12 +587,14 @@ public:
 
     // We have to set both, the pdf and the stored velocity field
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
-    auto vel_field = bc->block->template getData<VectorField>(m_velocity_field_id);
+    auto vel_field =
+        bc->block->template getData<VectorField>(m_velocity_field_id);
     auto force_field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
     auto const rho = lbm::accessor::Density::get(pdf_field, bc->cell);
     auto const vel = to_vector3<FloatType>(v);
-    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, vel, rho, bc->cell);
+    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, vel, rho,
+                                           bc->cell);
     lbm::accessor::Vector::set(vel_field, vel, bc->cell);
 
     return true;
@@ -749,7 +751,8 @@ public:
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
     auto const velocity = std::get<1>(lbm::accessor::DensityAndVelocity::get(
         pdf_field, force_field, bc->cell));
-    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, velocity, FloatType_c(density), bc->cell);
+    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, velocity,
+                                           FloatType_c(density), bc->cell);
 
     return true;
   }

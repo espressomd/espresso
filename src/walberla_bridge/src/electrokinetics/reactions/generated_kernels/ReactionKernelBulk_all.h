@@ -1,4 +1,6 @@
-// kernel generated with pystencils v1.0+12.g54b91e2.dirty, lbmpy v1.0+8.gac750b5, lbmpy_walberla/pystencils_walberla from commit e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
+// kernel generated with pystencils v1.0+12.g54b91e2.dirty, lbmpy
+// v1.0+8.gac750b5, lbmpy_walberla/pystencils_walberla from commit
+// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 /*
  * Copyright (C) 2022 The ESPResSo project
@@ -21,7 +23,6 @@
 
 #pragma once
 
-
 #include "ReactionKernelBulk_1_double_precision.h"
 #include "ReactionKernelBulk_1_single_precision.h"
 
@@ -37,7 +38,6 @@
 #include "ReactionKernelBulk_5_double_precision.h"
 #include "ReactionKernelBulk_5_single_precision.h"
 
-
 #include <domain_decomposition/BlockDataID.h>
 
 #include <cstddef>
@@ -51,56 +51,44 @@ namespace detail {
 namespace ReactionKernelBulkSelector {
 
 template <typename FloatType = double, std::size_t N = 1> struct KernelTrait {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_1_double_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_1_double_precision;
 };
 
 template <> struct KernelTrait<double, 2> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_2_double_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_2_double_precision;
 };
 
 template <> struct KernelTrait<double, 3> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_3_double_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_3_double_precision;
 };
 
 template <> struct KernelTrait<double, 4> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_4_double_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_4_double_precision;
 };
 
 template <> struct KernelTrait<double, 5> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_5_double_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_5_double_precision;
 };
 
-
 template <> struct KernelTrait<float, 1> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_1_single_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_1_single_precision;
 };
 
 template <> struct KernelTrait<float, 2> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_2_single_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_2_single_precision;
 };
 
 template <> struct KernelTrait<float, 3> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_3_single_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_3_single_precision;
 };
 
 template <> struct KernelTrait<float, 4> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_4_single_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_4_single_precision;
 };
 
 template <> struct KernelTrait<float, 5> {
-  using ReactionKernelBulk =
-      pystencils::ReactionKernelBulk_5_single_precision;
+  using ReactionKernelBulk = pystencils::ReactionKernelBulk_5_single_precision;
 };
-
 
 template <typename FloatType, class Reactant, std::size_t... ints>
 auto get_kernel_impl(const std::vector<std::shared_ptr<Reactant>> &reactants,
@@ -114,7 +102,7 @@ auto get_kernel_impl(const std::vector<std::shared_ptr<Reactant>> &reactants,
       numeric_cast<FloatType>(coefficient),
       numeric_cast<FloatType>(reactants[ints]->get_stoech_coeff())...);
 
-  std::function<void(IBlock *)> sweep = [kernel](IBlock * b) { kernel->run(b); };
+  std::function<void(IBlock *)> sweep = [kernel](IBlock *b) { kernel->run(b); };
   return sweep;
 }
 

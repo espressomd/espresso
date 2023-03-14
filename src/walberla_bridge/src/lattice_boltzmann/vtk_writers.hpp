@@ -34,8 +34,7 @@ public:
 
   DensityVTKWriter(ConstBlockDataID const &pdf, std::string const &id)
       : vtk::BlockCellDataWriter<OutputType, 1>(id), m_block_id(pdf),
-      m_pdf_field(nullptr) {
-  }
+        m_pdf_field(nullptr) {}
 
 protected:
   void configure() override {
@@ -75,7 +74,8 @@ protected:
   OutputType evaluate(const cell_idx_t x, const cell_idx_t y,
                       const cell_idx_t z, const cell_idx_t f) override {
     WALBERLA_ASSERT_NOT_NULLPTR(m_pdf_field);
-    auto pressureTensor = lbm::accessor::PressureTensor::get(m_pdf_field, {x, y, z});
+    auto pressureTensor =
+        lbm::accessor::PressureTensor::get(m_pdf_field, {x, y, z});
     auto const revert_factor =
         (f == 0 or f == 4 or f == 8) ? FloatType{1} : m_off_diag_factor;
     return numeric_cast<OutputType>(revert_factor * pressureTensor[f]);
