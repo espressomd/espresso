@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
 
 BOOST_AUTO_TEST_CASE(convert_operator_body_to_space_test) {
   auto constexpr sqrt_2_half = Utils::sqrt_2() / 2.0;
-  // rotation around z-axis by pi/2
+  // rotation around y-axis by pi/2
   Utils::Quaternion<double> const quat = {sqrt_2_half, 0.0, sqrt_2_half, 0.0};
   // rotation around z-axis by pi/4
   Utils::Matrix<double, 3, 3> const linear_transf_body = {
