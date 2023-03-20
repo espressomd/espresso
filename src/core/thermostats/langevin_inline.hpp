@@ -79,9 +79,13 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
   // lab-fixed reference frame.
   const Utils::Matrix<double, 3, 3> fric_mat =
       boost::qvm::diag_mat(pref_friction);
+  const Utils::Matrix<double, 3, 3> noise_mat =
+      boost::qvm::diag_mat(pref_noise);
+
   auto const friction_op =
       aniso_flag ? convert_body_to_space(p, fric_mat) : fric_mat;
-  const Utils::Matrix<double, 3, 3> noise_op = boost::qvm::diag_mat(pref_noise);
+  auto const noise_op =
+      aniso_flag ? convert_body_to_space(p, noise_mat) : noise_mat;
 #else
   auto const &friction_op = pref_friction;
   auto const &noise_op = pref_noise;
