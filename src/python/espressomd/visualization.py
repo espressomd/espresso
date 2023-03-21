@@ -1002,9 +1002,9 @@ class openGLLive():
             ia = self.system.non_bonded_inter[part_type, part_type]
             radius = 0.5
             if hasattr(ia, "lennard_jones"):
-                radius = ia.lennard_jones.sigma * 0.5
+                radius = ia.lennard_jones.get_params()["sigma"] * 0.5
             if radius == 0.0 and hasattr(ia, "wca"):
-                radius = ia.wca.sigma * 0.5
+                radius = ia.wca.get_params()["sigma"] * 0.5
             if radius == 0.0:
                 radius = 0.5
             return radius
