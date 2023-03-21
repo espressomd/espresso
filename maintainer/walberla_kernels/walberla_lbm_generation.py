@@ -42,11 +42,12 @@ def __type_equilibrium_assignments(assignments, config, subs_dict):
 
 
 def type_expr(eq, dtype):
-    # manually cast floats to dtype since this is somehow not done automatically
+    # manually cast floats to dtype since this is not done automatically
     repl = ((rational := sp.Rational(1, i), CastFunc(rational, dtype))
             for i in (2, 3, 4, 6, 8, 9, 12, 24, 18, 36, 72))
     eq = eq.subs(repl)
-    return eq.subs({s: TypedSymbol(s.name, dtype) for s in eq.atoms(sp.Symbol)})
+    return eq.subs({s: TypedSymbol(s.name, dtype)
+                   for s in eq.atoms(sp.Symbol)})
 
 
 def pow_to_mul(eq):
@@ -67,7 +68,8 @@ def pow_to_mul(eq):
     return eq
 
 
-def equations_to_code(equations, variable_prefix="", variables_without_prefix=None, dtype=None, backend=None):
+def equations_to_code(equations, variable_prefix="",
+                      variables_without_prefix=None, dtype=None, backend=None):
     if dtype is None:
         dtype = BasicType("float64")
 
@@ -127,7 +129,10 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
         backend = CudaBackend()
     else:
         backend = CBackend()
-    kwargs = {"backend": backend, "variable_prefix": "", "dtype": default_dtype}
+    kwargs = {
+        "backend": backend,
+        "variable_prefix": "",
+        "dtype": default_dtype}
 
     cqc = lb_method.conserved_quantity_computation
     vel_symbols = cqc.velocity_symbols
@@ -139,7 +144,7 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
     momentum_density_symbols = sp.symbols(f"md_:{len(vel_symbols)}")
     second_momentum_symbols = sp.symbols(f"p_:{len(vel_symbols)**2}")
 
-    equilibrium_subs_dict = {a: b for a, b in zip(vel_symbols, vel_arr_symbols)}
+    equilibrium_subs_dict = dict(zip(vel_symbols, vel_arr_symbols))
     equilibrium = lb_method.get_equilibrium()
     lhs_list = [a.lhs for a in equilibrium.main_assignments]
     equilibrium_matrix = sp.Matrix(
