@@ -1934,6 +1934,12 @@ class Shape():
                         continue
         return points
 
+    def _has_gle_features(self, feature_names):
+        for feature_name in feature_names:
+            if not bool(getattr(OpenGL.GLE, feature_name)):
+                return False
+        return True
+
 
 class Cylinder(Shape):
     """
@@ -2004,6 +2010,8 @@ class HollowConicalFrustum(Shape):
         self.length = self.shape.get_parameter('length')
         self.thickness = self.shape.get_parameter('thickness')
         self.central_angle = self.shape.get_parameter('central_angle')
+        self.use_gle = self._has_gle_features(
+            ["gleSpiral", "gleSetNumSides", "gleSetJoinStyle"])
 
     def draw(self):
         """
@@ -2011,7 +2019,7 @@ class HollowConicalFrustum(Shape):
         Use rasterization of base class, otherwise.
 
         """
-        if bool(OpenGL.GLE.gleSpiral) and self.central_angle == 0.:
+        if self.use_gle and self.central_angle == 0.:
             self._draw_using_gle()
         else:
             super().draw()
@@ -2070,6 +2078,8 @@ class SimplePore(Shape):
         self.smoothing_radius = np.array(
             self.shape.get_parameter('smoothing_radius'))
         self.max_box_l = max(box_l)
+        self.use_gle = self._has_gle_features(
+            ["gleSpiral", "gleSetNumSides", "gleSetJoinStyle"])
 
     def draw(self):
         """
@@ -2084,7 +2094,7 @@ class SimplePore(Shape):
         ax, rx, ry = rotation_helper(self.axis)
         OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
 
-        if bool(OpenGL.GLE.gleSpiral):
+        if self.use_gle:
             self._draw_using_gle()
         else:
             self._draw_using_primitives()
@@ -2092,27 +2102,25 @@ class SimplePore(Shape):
         OpenGL.GL.glPopMatrix()
 
     def _draw_using_gle(self):
-        # if available, use the GL Extrusion library
-        if bool(OpenGL.GLE.gleSpiral):
-            n = max(10, self.quality // 3)
-            contour = [[0.5 * self.max_box_l, -0.5 * self.length]]
-            for theta in np.linspace(0, 0.5 * np.pi, n):
-                contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
-                                -0.5 * self.length + (1. - np.cos(theta)) * self.smoothing_radius])
-            for theta in np.linspace(0.5 * np.pi, np.pi, n):
-                contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
-                                0.5 * self.length - (1. + np.cos(theta)) * self.smoothing_radius])
-            contour.append([0.5 * self.max_box_l, 0.5 * self.length])
+        n = max(10, self.quality // 3)
+        contour = [[0.5 * self.max_box_l, -0.5 * self.length]]
+        for theta in np.linspace(0, 0.5 * np.pi, n):
+            contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
+                            -0.5 * self.length + (1. - np.cos(theta)) * self.smoothing_radius])
+        for theta in np.linspace(0.5 * np.pi, np.pi, n):
+            contour.append([(1. - np.sin(theta)) * self.smoothing_radius,
+                            0.5 * self.length - (1. + np.cos(theta)) * self.smoothing_radius])
+        contour.append([0.5 * self.max_box_l, 0.5 * self.length])
 
-            normals = np.diff(np.array(contour), axis=0)
-            normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
-            normals = np.roll(normals, 1, axis=1)
-            normals[:, 0] *= -1
+        normals = np.diff(np.array(contour), axis=0)
+        normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
+        normals = np.roll(normals, 1, axis=1)
+        normals[:, 0] *= -1
 
-            OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
-            OpenGL.GLE.gleSetNumSides(max(90, 3 * self.quality))
-            OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], self.radius, 0., 0., 0.,
-                                 [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
+        OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
+        OpenGL.GLE.gleSetNumSides(max(90, 3 * self.quality))
+        OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], self.radius, 0., 0., 0.,
+                             [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
 
     def _draw_using_primitives(self):
         clip_plane = get_extra_clip_plane()
