@@ -296,6 +296,8 @@ class ReactionMethods(ut.TestCase):
             method.set_volume(volume=-10.)
         with self.assertRaisesRegex(RuntimeError, r"unknown method 'unknown\(\)'"):
             method.call_method('unknown', x=1)
+        with self.assertRaisesRegex(RuntimeError, r"unknown argument 'steps'"):
+            method.reaction(steps=1)
         err_msg = r"Only the following keys can be given as keyword arguments: \[.+\], got \[.+\] \(unknown \['x'\]\)"
         with self.assertRaisesRegex(ValueError, err_msg):
             espressomd.reaction_methods.SingleReaction(

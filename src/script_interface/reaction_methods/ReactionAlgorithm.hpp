@@ -126,6 +126,10 @@ public:
     } else if (name == "get_non_interacting_type") {
       return RE()->non_interacting_type;
     } else if (name == "reaction") {
+      if (parameters.count("steps") == 1) {
+        throw std::runtime_error(
+            "unknown argument 'steps', did you mean 'reaction_steps'?");
+      }
       RE()->do_reaction(get_value_or<int>(parameters, "reaction_steps", 1));
     } else if (name == "displacement_mc_move_for_particles_of_type") {
       return RE()->displacement_move_for_particles_of_type(
