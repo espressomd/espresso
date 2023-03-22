@@ -168,55 +168,6 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   return force;
 }
 
-/**
- * @brief Check if a position is within the local box + halo.
- *
- * @param pos Position to check
- * @param halo Halo
- *
- * @return True iff the point is inside of the box up to halo.
- */
-inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
-  auto const halo_vec = Utils::Vector3d::broadcast(halo);
-
-  return in_box(
-      pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
-}
-
-/**
- * @brief Check if a position is within the local LB domain
- *       plus halo.
- *
- * @param pos Position to check
- *
- * @return True iff the point is inside of the domain.
- */
-bool in_local_halo(Utils::Vector3d const &pos) {
-  auto const halo = 0.5 * lb_lbfluid_get_agrid();
-
-  return in_local_domain(pos, halo);
-}
-
-/** @brief Return a vector of positions shifted by +,- box length in each
- ** coordinate */
-std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
-                                               const BoxGeometry &box) {
-  std::vector<Utils::Vector3d> res;
-  for (int i : {-1, 0, 1}) {
-    for (int j : {-1, 0, 1}) {
-      for (int k : {-1, 0, 1}) {
-        Utils::Vector3d shift{{double(i), double(j), double(k)}};
-        Utils::Vector3d pos_shifted =
-            pos + Utils::hadamard_product(box.length(), shift);
-        if (in_local_halo(pos_shifted)) {
-          res.push_back(pos_shifted);
-        }
-      }
-    }
-  }
-  return res;
-}
-
 /** @brief Return if locally there exists a physical particle
  ** for a given (ghost) particle */
 bool is_ghost_for_local_particle(const Particle &p) {
@@ -246,6 +197,7 @@ bool should_be_coupled(const Particle &p,
 #ifdef ENGINE
 void add_swimmer_force(Particle const &p, double time_step) {
   if (p.swimming().swimming) {
+    const double agrid = lb_lbfluid_get_agrid();
     // calculate source position
     const double direction =
         double(p.swimming().push_pull) * p.swimming().dipole_length;
@@ -255,7 +207,7 @@ void add_swimmer_force(Particle const &p, double time_step) {
 
     // couple positions including shifts by one box length to add forces
     // to ghost layers
-    for (auto pos : positions_in_halo(source_position, box_geo)) {
+    for (auto pos : positions_in_halo(source_position, box_geo, agrid)) {
       add_md_force(pos, force, time_step);
     }
   }
@@ -309,13 +261,16 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
         };
 
         auto couple_particle = [&](Particle &p) -> void {
+          const double agrid = lb_lbfluid_get_agrid();
+
+          ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
           if (p.is_virtual() and !couple_virtual)
             return;
 
           // Calculate coupling force
           Utils::Vector3d force = {};
-          for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-            if (in_local_halo(pos)) {
+          for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
+            if (in_local_halo(pos, agrid)) {
               force = lb_viscous_coupling(p, pos,
                                           noise_amplitude * f_random(p.id()));
               break;
@@ -324,8 +279,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 
           // couple positions including shifts by one box length to add
           // forces to ghost layers
-          for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-            if (in_local_domain(pos)) {
+          for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
+            if (in_local_domain(pos, /* halo */ 0)) {
               /* if the particle is in our LB volume, this node
                * is responsible to adding its force */
               p.force() += force;

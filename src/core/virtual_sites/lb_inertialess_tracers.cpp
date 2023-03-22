@@ -63,11 +63,11 @@ void IBM_ForcesIntoFluid_CPU() {
       CoupleIBMParticleToFluid(p, p.pos());
     }
   }
-
+  const double agrid = lb_lbfluid_get_agrid();
   for (auto &p : cell_structure.ghost_particles()) {
     // for ghost particles we have to check if they lie
     // in the range of the local lattice nodes
-    if (in_local_halo(p.pos())) {
+    if (in_local_halo(p.pos(), agrid)) {
       if (p.is_virtual()) {
         CoupleIBMParticleToFluid(p, p.pos());
       }
@@ -246,26 +246,21 @@ bool IsHalo(std::size_t indexCheck) {
  *
  * @return True iff the point is inside of the box up to halo.
  */
-inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
-  auto const halo_vec = Utils::Vector3d::broadcast(halo);
-
-  return in_box(
-      pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
-}
 
 /** Get particle velocities from LB and set the velocity field in the
  * particles data structure.
  */
 void ParticleVelocitiesFromLB_CPU() {
   std::unordered_set<int> coupled_ghost_particles;
-
   // Loop over particles in local cells.
   // Here all contributions are included: velocity, external force and
   // particle force.
   for (auto &p : cell_structure.local_particles()) {
+    const double agrid = lb_lbfluid_get_agrid();
+
     if (p.is_virtual() and should_be_coupled(p, coupled_ghost_particles)) {
-      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-        if (in_local_domain(pos)) {
+      for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
+        if (in_local_domain(pos, /* halo */ 0)) {
           p.force() = GetIBMInterpolatedVelocity<true>(pos);
           break;
         }
@@ -276,8 +271,9 @@ void ParticleVelocitiesFromLB_CPU() {
   // Here we only add the particle forces stemming from the ghosts
   for (auto &p : cell_structure.ghost_particles()) {
     if (p.is_virtual() and should_be_coupled(p, coupled_ghost_particles)) {
-      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-        if (in_local_domain(pos)) {
+      double const agrid = lb_lbfluid_get_agrid();
+      for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
+        if (in_local_domain(pos, /* halo */ 0)) {
           p.force() = GetIBMInterpolatedVelocity<true>(pos);
           break;
         }

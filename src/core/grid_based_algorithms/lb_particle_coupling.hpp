@@ -20,6 +20,8 @@
 #define LB_PARTICLE_COUPLING_HPP
 
 #include "BoxGeometry.hpp"
+#include "grid.hpp"
+
 #include "OptionalCounter.hpp"
 #include "ParticleRange.hpp"
 
@@ -95,11 +97,49 @@ bool in_box(Utils::Vector<T, N> const &pos, Box<T, N> const &box) {
   return (pos >= box.first) and (pos < box.second);
 }
 
-bool in_local_halo(Utils::Vector3d const &pos);
-std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
-                                               const BoxGeometry &box);
 bool is_ghost_for_local_particle(const Particle &p);
 bool should_be_coupled(const Particle &p,
                        std::unordered_set<int> &coupled_ghost_particles);
+
+inline bool in_local_domain(Utils::Vector3d const &pos, double halo) {
+  auto const halo_vec = Utils::Vector3d::broadcast(halo);
+
+  return in_box(
+      pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
+}
+
+/**
+ * @brief Check if a position is within the local LB domain
+ *       plus halo.
+ *
+ * @param pos Position to check
+ *
+ * @return True iff the point is inside of the domain.
+ */
+inline bool in_local_halo(Utils::Vector3d const &pos, double agrid) {
+  auto const halo = 0.5 * agrid;
+
+  return in_local_domain(pos, halo);
+}
+
+/** @brief Return a vector of positions shifted by +,- box length in each
+ ** coordinate */
+inline std::vector<Utils::Vector3d>
+positions_in_halo(Utils::Vector3d pos, const BoxGeometry &box, double agrid) {
+  std::vector<Utils::Vector3d> res;
+  for (int i : {-1, 0, 1}) {
+    for (int j : {-1, 0, 1}) {
+      for (int k : {-1, 0, 1}) {
+        Utils::Vector3d shift{{double(i), double(j), double(k)}};
+        Utils::Vector3d pos_shifted =
+            pos + Utils::hadamard_product(box.length(), shift);
+        if (in_local_halo(pos_shifted, agrid)) {
+          res.push_back(pos_shifted);
+        }
+      }
+    }
+  }
+  return res;
+}
 
 #endif
