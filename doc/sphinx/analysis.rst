@@ -266,14 +266,34 @@ Chains
 ~~~~~~
 
 All analysis functions in this section require the topology of the chains to be set correctly.
-The above set of functions is designed to facilitate analysis of molecules.
-Molecules are expected to be a group of particles comprising a contiguous range of particle IDs.
-Each molecule is a set of consecutively numbered particles and all molecules are supposed to consist of the same number of particles.
+A chain needs to be set up with a contiguous range of particle IDs, and the
+head resp. tail particle must be have the first resp. last id in the range.
+For chain observables that rely on connectivity information, the chain topology
+must be linear, i.e. particle :math:`n` is connected to :math:`n+1` and so on.
+Each chain is a set of consecutively numbered particles and all chains are
+supposed to consist of the same number of particles.
 
-Some functions in this group require that the particles constituting a molecule are connected into
-linear chains (particle :math:`n` is connected to :math:`n+1` and so on)
-while others are applicable to molecules of whatever topology.
-
+The particles :attr:`~espressomd.particle_data.ParticleHandle.image_box`
+values must also be consistent, since these observables are calculated using
+*unfolded coordinates*. For example, if all particles were to be inserted in
+the central box except for the tail particle, which would be e.g. inserted in
+the fourth periodic image, the end-to-end distance and radius of gyration
+would be quite large, even if the tail particle is in close proximity to the
+penultimate particle in *folded coordinates*, because the last inter-particle
+distance would be evaluated as being 4 times the box length plus the bond
+length. Particles *can* have different ``image_box`` values, for example
+in a chain with equilibrium bond length 2, if the penultimate particle is at
+``[box_l - 1, 0, 0]`` and the tail particle at ``[box_l + 1, 0, 0]``, their
+inter-particle distance would be evaluated as 2 and the observables would
+be correctly calculated. This can lead to counter-intuitive behavior when
+chains are longer than half the box size in a fully periodic system. As an
+example, consider the end-to-end distance of a linear polymer growing on
+the x-axis. While :meth:`espressomd.system.System.distance()` would feature
+a triangle wave with a period equal to the box length in the x-direction,
+:meth:`espressomd.analyze.Analysis.calc_re` would be monotonically increasing,
+assuming the ``image_box`` values were properly set up. This is important to
+consider when setting up systems where the polymers are much longer than the
+box length, which is common when simulating polymer melts.
 
 .. _End to end distance:
 
@@ -281,7 +301,8 @@ End-to-end distance
 ^^^^^^^^^^^^^^^^^^^
 :meth:`espressomd.analyze.Analysis.calc_re`
 
-Returns the quadratic end-to-end-distance and its root averaged over all chains.
+Returns the mean end-to-end-distance and its standard deviation,
+as well as its mean squared value over all chains.
 
 .. _Radius of gyration:
 
