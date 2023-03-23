@@ -23,18 +23,8 @@
 
 #ifdef NPT
 
-#include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "integrate.hpp"
-#include "rotation.hpp"
-#include <utils/Vector.hpp>
-void velocity_verlet_npt_p_vel_zero();
-void velocity_verlet_npt_propagate_vel(Particle &p, double time_step);
-void velocity_verlet_npt_propagate_vel_final(Particle &p, double time_step);
-Utils::Vector3d velocity_verlet_npt_propagate_pos_1(double time_step);
-void velocity_verlet_npt_propagate_pos_2(Particle &p, double time_step,
-                                         Utils::Vector3d scal);
-void velocity_verlet_npt_propagate_pos_3();
+
 /** Special propagator for NpT isotropic.
  *  Propagate the velocities and positions. Integration steps before force
  *  calculation of the Velocity Verlet integrator:
@@ -46,20 +36,7 @@ void velocity_verlet_npt_propagate_pos_3();
  */
 template <typename ParticleIterable>
 void velocity_verlet_npt_step_1(const ParticleIterable &particles,
-                                double time_step) {
-  velocity_verlet_npt_p_vel_zero();
-  for (auto &p : particles) {
-    velocity_verlet_npt_propagate_vel(p, time_step);
-  }
-  auto scal = velocity_verlet_npt_propagate_pos_1(time_step);
-  for (auto &p : particles) {
-    velocity_verlet_npt_propagate_pos_2(p, time_step, scal);
-  }
-  velocity_verlet_npt_propagate_pos_3();
-  increment_sim_time(time_step);
-}
-
-void velocity_verlet_npt_finalize_p_inst(double time_step);
+                                double time_step);
 
 /** Final integration step of the Velocity Verlet+NpT integrator.
  *  Finalize instantaneous pressure calculation:
@@ -68,16 +45,7 @@ void velocity_verlet_npt_finalize_p_inst(double time_step);
  */
 template <typename ParticleIterable>
 void velocity_verlet_npt_step_2(const ParticleIterable &particles,
-                                double time_step) {
-  velocity_verlet_npt_p_vel_zero();
-  for (auto &p : particles) {
-    velocity_verlet_npt_propagate_vel_final(p, time_step);
-  }
-#ifdef ROTATION
-  convert_torques_propagate_omega(particles, time_step);
-#endif
-  velocity_verlet_npt_finalize_p_inst(time_step);
-}
+                                double time_step);
 
 #endif // NPT
 #endif

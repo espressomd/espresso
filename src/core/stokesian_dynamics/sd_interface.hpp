@@ -61,7 +61,8 @@ double get_sd_kT();
  *  is gathered from all nodes and their velocities and angular velocities are
  *  set according to the Stokesian Dynamics method.
  */
-void propagate_vel_pos_sd(const ParticleRange &particles,
+template <typename ParticleIterable>
+void propagate_vel_pos_sd(const ParticleIterable &particles,
                           const boost::mpi::communicator &comm,
                           double time_step);
 

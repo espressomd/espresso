@@ -85,7 +85,8 @@ void register_integrator(StokesianDynamicsParameters const &obj) {
 }
 
 /** Update translational and rotational velocities of all particles. */
-void sd_update_locally(ParticleRange const &parts) {
+template <typename ParticleIterable>
+void sd_update_locally(ParticleIterable const &parts) {
   std::size_t i = 0;
 
   // Even though on the head node, the v_sd vector is larger than
@@ -139,7 +140,8 @@ void set_sd_kT(double kT) {
 
 double get_sd_kT() { return sd_kT; }
 
-void propagate_vel_pos_sd(const ParticleRange &particles,
+template <typename ParticleIterable>
+void propagate_vel_pos_sd(const ParticleIterable &particles,
                           const boost::mpi::communicator &comm,
                           const double time_step) {
   static std::vector<SD_particle_data> parts_buffer{};
@@ -199,5 +201,15 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
                              static_cast<int>(particles.size() * 6), comm, 0);
   sd_update_locally(particles);
 }
+
+template void
+propagate_vel_pos_sd(const ParticleRange &particles, const boost::mpi::communicator &comm, const double time_step) template void propagate_vel_pos_sd(
+    const ParticleRangeDefault &particles, const boost::mpi::communicator &comm,
+    const double
+        time_step) template void propagate_vel_pos_sd(const ParticleRangeStokesian
+                                                          &particles,
+                                                      const boost::mpi::
+                                                          communicator &comm,
+                                                      const double time_step)
 
 #endif // STOKESIAN_DYNAMICS

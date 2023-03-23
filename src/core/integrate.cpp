@@ -191,12 +191,6 @@ static void resort_particles_if_needed(ParticleIterable const &particles) {
   }
 }
 
-template <PropagationMode criterion> struct PropagationPredicate {
-  bool operator()(Particle const &p) {
-    return true;
-  }; // p.p.propagation == criterion; };
-};
-
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
@@ -235,13 +229,10 @@ static bool integrator_step_1(ParticleIterable const &particles,
 static bool integrator_step_1_full(ParticleRange const &particles) {
   if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return steepest_descent_step(particles);
-  else {
-    auto filtered_particles = particles.filter<
-        PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>>();
-    // velocity_verlet_step_1(filtered_particles,integ_switch);
-    integrator_step_1(filtered_particles, integ_switch);
-    return false;
-  }
+  auto filtered_particles = particles.filter<
+      PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>>();
+  integrator_step_1(filtered_particles, integ_switch);
+  return false;
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
@@ -278,7 +269,6 @@ static void integrator_step_2(ParticleIterable const &particles, double kT,
 static void integrator_step_2_full(ParticleRange const &particles, double kT) {
   auto filtered_particles = particles.filter<
       PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>>();
-  // velocity_verlet_step_2(particles, time_step);
   integrator_step_2(filtered_particles, kT, integ_switch);
 }
 

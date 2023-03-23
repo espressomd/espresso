@@ -21,6 +21,7 @@
 
 #include "Particle.hpp"
 #include "ParticleIterator.hpp"
+#include "PropagationModes.hpp"
 #include "cell_system/Cell.hpp"
 
 #include <boost/iterator/filter_iterator.hpp>
@@ -59,5 +60,24 @@ public:
 private:
   base_type::difference_type mutable m_size = -1;
 };
+
+template <PropagationMode criterion> struct PropagationPredicate {
+  bool operator()(Particle const &p) {
+    return true;
+  }; // p.p.propagation == criterion; };
+};
+
+typedef boost::iterator_range<boost::iterators::filter_iterator<
+    PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>,
+    ParticleIterator<Cell **>>>
+    ParticleRangeDefault;
+typedef boost::iterator_range<boost::iterators::filter_iterator<
+    PropagationPredicate<PropagationMode::TRANS_LANGEVIN>,
+    ParticleIterator<Cell **>>>
+    ParticleRangeLangevin;
+typedef boost::iterator_range<boost::iterators::filter_iterator<
+    PropagationPredicate<PropagationMode::TRANS_STOKESIAN>,
+    ParticleIterator<Cell **>>>
+    ParticleRangeStokesian;
 
 #endif
