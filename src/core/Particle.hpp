@@ -87,9 +87,8 @@ struct ParticleProperties {
   int mol_id = 0;
   /** particle type, used for non-bonded interactions. */
   int type = 0;
- /** determines which propagation schemes should be applied to the particle **/
+  /** determines which propagation schemes should be applied to the particle **/
   int propagation = 0;
-
 
 #ifdef VIRTUAL_SITES
   /** is particle virtual */
@@ -444,11 +443,12 @@ public:
 
   auto const &propagation() const { return p.propagation; }
   auto &propagation() { return p.propagation; }
-  auto set_propagation(int propagation){
-    if(is_valid_propagation_combination(propagation)) p.propagation=propagation;
-    else throw std::invalid_argument( "propagation combination not valid" );
+  auto set_propagation(int propagation) {
+    if (is_valid_propagation_combination(propagation))
+      p.propagation = propagation;
+    else
+      throw std::invalid_argument("propagation combination not valid");
   }
-
 
   bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
 

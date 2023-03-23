@@ -32,7 +32,8 @@
  *  v(t) + 0.5 \Delta t f(t)/m \f] <br> \f[ p(t+\Delta t) = p(t) + \Delta t
  *  v(t+0.5 \Delta t) \f]
  */
-inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
+template <typename ParticleIterable>
+inline void velocity_verlet_propagate_vel_pos(const ParticleIterable &particles,
                                               double time_step) {
 
   for (auto &p : particles) {
@@ -59,8 +60,10 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
 /** Final integration step of the Velocity Verlet integrator
  *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f]
  */
-inline void velocity_verlet_propagate_vel_final(const ParticleRange &particles,
-                                                double time_step) {
+template <typename ParticleIterable>
+inline void
+velocity_verlet_propagate_vel_final(const ParticleIterable &particles,
+                                    double time_step) {
 
   for (auto &p : particles) {
     // Virtual sites are not propagated during integration
@@ -75,14 +78,14 @@ inline void velocity_verlet_propagate_vel_final(const ParticleRange &particles,
     }
   }
 }
-
-inline void velocity_verlet_step_1(const ParticleRange &particles,
+template <typename ParticleIterable>
+inline void velocity_verlet_step_1(const ParticleIterable &particles,
                                    double time_step) {
   velocity_verlet_propagate_vel_pos(particles, time_step);
   increment_sim_time(time_step);
 }
-
-inline void velocity_verlet_step_2(const ParticleRange &particles,
+template <typename ParticleIterable>
+inline void velocity_verlet_step_2(const ParticleIterable &particles,
                                    double time_step) {
   velocity_verlet_propagate_vel_final(particles, time_step);
 #ifdef ROTATION

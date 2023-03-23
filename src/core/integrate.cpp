@@ -182,7 +182,8 @@ void integrator_sanity_checks() {
   }
 }
 
-static void resort_particles_if_needed(ParticleRange const &particles) {
+template <typename ParticleIterable>
+static void resort_particles_if_needed(ParticleIterable const &particles) {
   auto const offset = LeesEdwards::verlet_list_offset(
       box_geo, cell_structure.get_le_pos_offset_at_last_resort());
   if (cell_structure.check_resort_required(particles, skin, offset)) {
@@ -190,15 +191,24 @@ static void resort_particles_if_needed(ParticleRange const &particles) {
   }
 }
 
+template <PropagationMode criterion> struct PropagationPredicate {
+  bool operator()(Particle const &p) {
+    return true;
+  }; // p.p.propagation == criterion; };
+};
+
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-static bool integrator_step_1(ParticleRange const &particles) {
+template <typename ParticleIterable>
+static bool integrator_step_1(ParticleIterable const &particles,
+                              int switch_value) {
   bool early_exit = false;
-  switch (integ_switch) {
-  case INTEG_METHOD_STEEPEST_DESCENT:
+  switch (switch_value) {
+  /*case INTEG_METHOD_STEEPEST_DESCENT:
     early_exit = steepest_descent_step(particles);
     break;
+    */
   case INTEG_METHOD_NVT:
     velocity_verlet_step_1(particles, time_step);
     break;
@@ -222,9 +232,23 @@ static bool integrator_step_1(ParticleRange const &particles) {
   return early_exit;
 }
 
+static bool integrator_step_1_full(ParticleRange const &particles) {
+  if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
+    return steepest_descent_step(particles);
+  else {
+    auto filtered_particles = particles.filter<
+        PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>>();
+    // velocity_verlet_step_1(filtered_particles,integ_switch);
+    integrator_step_1(filtered_particles, integ_switch);
+    return false;
+  }
+}
+
 /** Calls the hook of the propagation kernels after force calculation */
-static void integrator_step_2(ParticleRange const &particles, double kT) {
-  switch (integ_switch) {
+template <typename ParticleIterable>
+static void integrator_step_2(ParticleIterable const &particles, double kT,
+                              int switch_value) {
+  switch (switch_value) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
     break;
@@ -249,6 +273,13 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
   }
+}
+
+static void integrator_step_2_full(ParticleRange const &particles, double kT) {
+  auto filtered_particles = particles.filter<
+      PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>>();
+  // velocity_verlet_step_2(particles, time_step);
+  integrator_step_2(filtered_particles, kT, integ_switch);
 }
 
 int integrate(int n_steps, int reuse_forces) {
@@ -309,7 +340,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
     LeesEdwards::update_box_params();
-    bool early_exit = integrator_step_1(particles);
+    bool early_exit = integrator_step_1_full(particles);
     if (early_exit)
       break;
 
@@ -349,7 +380,7 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
 #endif
-    integrator_step_2(particles, temperature);
+    integrator_step_2_full(particles, temperature);
     LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>();
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates

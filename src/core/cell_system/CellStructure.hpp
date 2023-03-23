@@ -381,8 +381,9 @@ public:
    *                            the skin (e.g., for Lees-Edwards BC).
    * @return Whether a resort is needed.
    */
+  template <typename ParticleIterable>
   bool
-  check_resort_required(ParticleRange const &particles, double skin,
+  check_resort_required(ParticleIterable const &particles, double skin,
                         Utils::Vector3d const &additional_offset = {}) const {
     auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
     return std::any_of(

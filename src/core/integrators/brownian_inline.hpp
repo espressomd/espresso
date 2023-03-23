@@ -31,9 +31,9 @@
 #include "thermostats/brownian_inline.hpp"
 
 #include <utils/math/sqr.hpp>
-
+template <typename ParticleIterable>
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
-                                         const ParticleRange &particles,
+                                         const ParticleIterable &particles,
                                          double time_step, double kT) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs

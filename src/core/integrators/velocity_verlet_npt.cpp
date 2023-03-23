@@ -45,24 +45,22 @@
 
 static constexpr Utils::Vector3i nptgeom_dir{{1, 2, 4}};
 
-void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles,
-                                             double time_step) {
-  nptiso.p_vel = {};
+void velocity_verlet_npt_p_vel_zero() { nptiso.p_vel = {}; }
 
-  for (auto &p : particles) {
-    // Virtual sites are not propagated during integration
-    if (p.is_virtual())
-      continue;
-    auto const noise = friction_therm0_nptiso<2>(npt_iso, p.v(), p.id());
-    for (int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        if (nptiso.geometry & ::nptgeom_dir[j]) {
-          nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
-          p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
-        } else {
-          // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
-          p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
-        }
+void velocity_verlet_npt_propagate_vel_final(Particle &p, double time_step) {
+
+  // Virtual sites are not propagated during integration
+  if (p.is_virtual())
+    return;
+  auto const noise = friction_therm0_nptiso<2>(npt_iso, p.v(), p.id());
+  for (int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      if (nptiso.geometry & ::nptgeom_dir[j]) {
+        nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
+        p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
+      } else {
+        // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
+        p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
       }
     }
   }
@@ -88,8 +86,7 @@ void velocity_verlet_npt_finalize_p_inst(double time_step) {
   }
 }
 
-void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
-                                       double time_step) {
+Utils::Vector3d velocity_verlet_npt_propagate_pos_1(double time_step) {
   Utils::Vector3d scal{};
   double L_new = 0.0;
 
@@ -119,29 +116,34 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     scal[0] = 1. / scal[1];
   }
   boost::mpi::broadcast(comm_cart, scal, 0);
+  return scal;
+}
 
+void velocity_verlet_npt_propagate_pos_2(Particle &p, double time_step,
+                                         Utils::Vector3d scal) {
   /* propagate positions while rescaling positions and velocities */
-  for (auto &p : particles) {
-    if (p.is_virtual())
-      continue;
-    for (int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        if (nptiso.geometry & ::nptgeom_dir[j]) {
-          p.pos()[j] = scal[1] * (p.pos()[j] + scal[2] * p.v()[j] * time_step);
-          p.pos_at_last_verlet_update()[j] *= scal[1];
-          p.v()[j] *= scal[0];
-        } else {
-          p.pos()[j] += p.v()[j] * time_step;
-        }
+
+  if (p.is_virtual())
+    return;
+  for (int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      if (nptiso.geometry & ::nptgeom_dir[j]) {
+        p.pos()[j] = scal[1] * (p.pos()[j] + scal[2] * p.v()[j] * time_step);
+        p.pos_at_last_verlet_update()[j] *= scal[1];
+        p.v()[j] *= scal[0];
+      } else {
+        p.pos()[j] += p.v()[j] * time_step;
       }
     }
   }
-
+}
+void velocity_verlet_npt_propagate_pos_3() {
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   /* Apply new volume to the box-length, communicate it, and account for
    * necessary adjustments to the cell geometry */
   Utils::Vector3d new_box;
+  double L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
 
   if (this_node == 0) {
     new_box = box_geo.length();
@@ -160,46 +162,44 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
   on_boxl_change(true);
 }
 
-void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
-                                       double time_step) {
-  nptiso.p_vel = {};
+void velocity_verlet_npt_propagate_vel(Particle &p, double time_step) {
 
-  for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(p, time_step);
+  propagate_omega_quat_particle(p, time_step);
 #endif
 
-    // Don't propagate translational degrees of freedom of vs
-    if (p.is_virtual())
-      continue;
-    for (int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        auto const noise = friction_therm0_nptiso<1>(npt_iso, p.v(), p.id());
-        if (nptiso.geometry & ::nptgeom_dir[j]) {
-          p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
-          nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
-        } else {
-          // Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
-          p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
-        }
+  // Don't propagate translational degrees of freedom of vs
+  if (p.is_virtual())
+    return;
+  for (int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      auto const noise = friction_therm0_nptiso<1>(npt_iso, p.v(), p.id());
+      if (nptiso.geometry & ::nptgeom_dir[j]) {
+        p.v()[j] += (p.force()[j] * time_step / 2.0 + noise[j]) / p.mass();
+        nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
+      } else {
+        // Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
+        p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
       }
     }
   }
 }
 
-void velocity_verlet_npt_step_1(const ParticleRange &particles,
+/*
+void velocity_verlet_npt_step_1(const ParticleIterable &particles,
                                 double time_step) {
   velocity_verlet_npt_propagate_vel(particles, time_step);
   velocity_verlet_npt_propagate_pos(particles, time_step);
   increment_sim_time(time_step);
 }
 
-void velocity_verlet_npt_step_2(const ParticleRange &particles,
+template <typename ParticleIterable>
+void velocity_verlet_npt_step_2(const ParticleIterable &particles,
                                 double time_step) {
   velocity_verlet_npt_propagate_vel_final(particles, time_step);
 #ifdef ROTATION
   convert_torques_propagate_omega(particles, time_step);
 #endif
   velocity_verlet_npt_finalize_p_inst(time_step);
-}
+}  */
 #endif // NPT
