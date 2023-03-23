@@ -202,14 +202,14 @@ void propagate_vel_pos_sd(const ParticleIterable &particles,
   sd_update_locally(particles);
 }
 
-template void
-propagate_vel_pos_sd(const ParticleRange &particles, const boost::mpi::communicator &comm, const double time_step) template void propagate_vel_pos_sd(
-    const ParticleRangeDefault &particles, const boost::mpi::communicator &comm,
-    const double
-        time_step) template void propagate_vel_pos_sd(const ParticleRangeStokesian
-                                                          &particles,
-                                                      const boost::mpi::
-                                                          communicator &comm,
-                                                      const double time_step)
+template void propagate_vel_pos_sd(const ParticleRange &particles,
+                                   const boost::mpi::communicator &comm,
+                                   const double time_step);
+template void propagate_vel_pos_sd(const ParticleRangeDefault &particles,
+                                   const boost::mpi::communicator &comm,
+                                   const double time_step);
+template void propagate_vel_pos_sd(const ParticleRangeStokesian &particles,
+                                   const boost::mpi::communicator &comm,
+                                   const double time_step);
 
 #endif // STOKESIAN_DYNAMICS
