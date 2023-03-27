@@ -401,25 +401,16 @@ struct ParticleRattle {
 
 /** Struct holding all information for one particle. */
 struct Particle { // NOLINT(bugprone-exception-escape)
-  ///
-  ParticleProperties p;
-  ///
-  ParticlePosition r;
-  ///
-  ParticleMomentum m;
-  ///
-  ParticleForce f;
-  ///
-  ParticleLocal l;
-
 private:
+  ParticleProperties p;
+  ParticlePosition r;
+  ParticleMomentum m;
+  ParticleForce f;
+  ParticleLocal l;
 #ifdef BOND_CONSTRAINT
-  ///
   ParticleRattle rattle;
 #endif
-
   BondList bl;
-
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no non-bonded
    *  interactions
@@ -448,6 +439,8 @@ public:
   auto &v() { return m.v; }
   auto const &force() const { return f.f; }
   auto &force() { return f.f; }
+  auto const &force_and_torque() const { return f; }
+  auto &force_and_torque() { return f; }
 
   bool is_ghost() const { return l.ghost; }
   void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
