@@ -36,7 +36,15 @@
 #include <algorithm>
 #include <array>
 #include <sstream>
+#include <utility>
 #include <vector>
+
+void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
+  BOOST_TEST(out.f == ref.f, boost::test_tools::per_element());
+#ifdef ROTATION
+  BOOST_TEST(out.torque == ref.torque, boost::test_tools::per_element());
+#endif
+}
 
 BOOST_AUTO_TEST_CASE(comparison) {
   {
@@ -68,6 +76,10 @@ BOOST_AUTO_TEST_CASE(serialization) {
 
   p.id() = 15;
   p.bonds().insert({bond_id, bond_partners});
+  p.force() = {1., -2., 3.};
+#ifdef ROTATION
+  p.torque() = {-4., 5., -6.};
+#endif
 #ifdef EXCLUSIONS
   std::vector<int> el = {5, 6, 7, 8};
   p.exclusions() = Utils::compact_vector<int>{el.begin(), el.end()};
@@ -81,8 +93,14 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto q = Particle();
   in_ar >> q;
 
+  auto const &pf = std::as_const(p).force_and_torque();
   BOOST_CHECK(q.id() == p.id());
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
+  BOOST_TEST(q.force() == pf.f, boost::test_tools::per_element());
+#ifdef ROTATION
+  BOOST_TEST(q.torque() == pf.torque, boost::test_tools::per_element());
+#endif
+  check_particle_force(q.force_and_torque(), pf);
 }
 
 namespace Utils {
@@ -117,13 +135,6 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
     BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
     BOOST_CHECK_EQUAL(out.identity, prop.identity);
   }
-}
-
-void check_particle_force(ParticleForce const &out, ParticleForce const &ref) {
-  BOOST_TEST(out.f == ref.f, boost::test_tools::per_element());
-#ifdef ROTATION
-  BOOST_TEST(out.torque == ref.torque, boost::test_tools::per_element());
-#endif
 }
 
 namespace Utils {
