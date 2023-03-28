@@ -354,6 +354,10 @@ Please note:
    you need to set the system's :attr:`~espressomd.system.System.min_global_cut`
    attribute to this largest distance.
    An error is generated when this requirement is not met.
+   Under very specific circumstances it may be desirable to disable this check,
+   e.g. when using certain setups with the hybrid decomposition scheme.
+   You can do so by setting the virtual sites property ``override_cutoff_check = True``.
+   However, only consider this if you are absolutely sure of what you are doing.
 
 -  If the virtual sites represent actual particles carrying a mass, the
    inertia tensor of the non-virtual particle in the center of mass
@@ -389,8 +393,8 @@ Interacting with groups of particles
 ------------------------------------
 
 Groups of particles are addressed using :class:`~espressomd.particle_data.ParticleSlice` objects.
-Usually, these objects do not have to be instantiated by the user. There are several ways
-to retrieve a particle slice:
+The objects behave similarly to :class:`~espressomd.particle_data.ParticleList` objects.
+There are several ways to retrieve a particle slice:
 
 - By calling :meth:`ParticleList.add() <espressomd.particle_data.ParticleList.add>`
 

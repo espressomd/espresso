@@ -189,6 +189,38 @@ BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(convert_operator_body_to_space_test) {
+  auto constexpr sqrt_2_half = Utils::sqrt_2() / 2.0;
+  // rotation around y-axis by pi/2
+  Utils::Quaternion<double> const quat = {sqrt_2_half, 0.0, sqrt_2_half, 0.0};
+  // rotation around z-axis by pi/4
+  Utils::Matrix<double, 3, 3> const linear_transf_body = {
+      {sqrt_2_half, -sqrt_2_half, 0.0},
+      {sqrt_2_half, sqrt_2_half, 0.0},
+      {0.0, 0.0, 1.0}};
+  // rotation around x-axis by pi/4
+  Utils::Matrix<double, 3, 3> const linear_transf_space_ref = {
+      {1.0, 0.0, 0.0},
+      {0.0, sqrt_2_half, -sqrt_2_half},
+      {0.0, sqrt_2_half, sqrt_2_half}};
+
+  auto const linear_transf_space =
+      convert_body_to_space(quat, linear_transf_body);
+
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      if (linear_transf_space_ref(i, j) == 0.0) {
+        BOOST_CHECK_SMALL(
+            std::abs(linear_transf_space(i, j) - linear_transf_space_ref(i, j)),
+            tol);
+      } else {
+        BOOST_CHECK_CLOSE(linear_transf_space(i, j),
+                          linear_transf_space_ref(i, j), tol);
+      }
+    }
+  }
+}
+
 #ifdef DIPOLES
 BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
   auto const quat_to_vector4d = [](Utils::Quaternion<double> const &quat) {

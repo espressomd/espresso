@@ -43,7 +43,12 @@ public:
           [this](const Variant &v) {
             virtual_sites()->set_have_quaternion(get_value<bool>(v));
           },
-          [this]() { return virtual_sites()->have_quaternions(); }}});
+          [this]() { return virtual_sites()->have_quaternions(); }},
+         {"override_cutoff_check",
+          [this](const Variant &v) {
+            virtual_sites()->set_override_cutoff_check(get_value<bool>(v));
+          },
+          [this]() { return virtual_sites()->get_override_cutoff_check(); }}});
   }
   /** Vs implementation we are wrapping */
   virtual std::shared_ptr<::VirtualSites> virtual_sites() = 0;

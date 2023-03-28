@@ -28,12 +28,10 @@
 BOOST_AUTO_TEST_CASE(ctor) {
   /* Exception can be formed from a string */
   static_assert(
-      std::is_constructible<ScriptInterface::Exception, std::string>::value,
-      "");
+      std::is_constructible_v<ScriptInterface::Exception, std::string>);
   /* Exception can be formed from a char constant */
   static_assert(
-      std::is_constructible<ScriptInterface::Exception, const char *>::value,
-      "");
+      std::is_constructible_v<ScriptInterface::Exception, const char *>);
   BOOST_TEST_PASSPOINT();
 }
 

@@ -31,10 +31,10 @@
 #include "core/accumulators/Correlator.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/as_const.hpp>
 
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace ScriptInterface {
 namespace Accumulators {
@@ -53,8 +53,8 @@ public:
          {"corr_operation", m_correlator, &CoreCorr::correlation_operation},
          {"args", m_correlator, &CoreCorr::set_correlation_args,
           &CoreCorr::correlation_args},
-         {"obs1", Utils::as_const(m_obs1)},
-         {"obs2", Utils::as_const(m_obs2)}});
+         {"obs1", std::as_const(m_obs1)},
+         {"obs2", std::as_const(m_obs2)}});
   }
 
   void do_construct(VariantMap const &args) override {

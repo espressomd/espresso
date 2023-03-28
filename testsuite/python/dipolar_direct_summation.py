@@ -30,7 +30,7 @@ OPEN_BOUNDARIES_REF_ARRAYS = tests_common.data_path(
 
 
 @utx.skipIfMissingFeatures(["DIPOLES"])
-class dds(ut.TestCase):
+class Test(ut.TestCase):
 
     system = espressomd.System(box_l=[3, 3, 3])
 
@@ -41,6 +41,7 @@ class dds(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
+        self.system.periodicity = [False, False, False]
 
     def dds_gpu_data(self):
         system = self.system
@@ -80,26 +81,6 @@ class dds(ut.TestCase):
 
         return (ref_e, ref_f, ref_t)
 
-    def dds_replica_data(self):
-        system = self.system
-
-        dds_cpu = espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu(
-            prefactor=1.2, n_replica=0)
-        system.actors.add(dds_cpu)
-        # check MD cell reset has no impact
-        self.system.box_l = self.system.box_l
-        self.system.periodicity = self.system.periodicity
-        self.system.cell_system.node_grid = self.system.cell_system.node_grid
-
-        system.integrator.run(steps=0, recalc_forces=True)
-        ref_e = system.analysis.energy()["dipolar"]
-        ref_f = np.copy(self.particles.f)
-        ref_t = np.copy(self.particles.torque_lab)
-
-        system.actors.clear()
-
-        return (ref_e, ref_f, ref_t)
-
     def fcs_data(self):
         system = self.system
 
@@ -119,8 +100,7 @@ class dds(ut.TestCase):
 
         return (ref_e, ref_f, ref_t)
 
-    @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
-               "Skipping test: only runs for n_nodes == 1")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_gen_reference_data(self):
         filepaths = ('dipolar_direct_summation_energy.npy',
                      'dipolar_direct_summation_arrays.npy')
@@ -150,8 +130,7 @@ class dds(ut.TestCase):
         system.integrator.set_steepest_descent(
             f_max=1, gamma=0.001, max_displacement=0.01)
         system.integrator.run(100)
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0.0, sigma=0, cutoff=0, shift=0)
+        system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         system.integrator.set_vv()
         assert system.analysis.energy()["total"] == 0
 
@@ -195,13 +174,6 @@ class dds(ut.TestCase):
             force_tol=1E-12,
             torque_tol=1E-12)
 
-    def test_dds_cpu_replica_data(self):
-        self.check_open_bc(
-            self.dds_replica_data,
-            energy_tol=1E-12,
-            force_tol=1E-12,
-            torque_tol=1E-12)
-
     @utx.skipIfMissingFeatures("DIPOLAR_DIRECT_SUM")
     @utx.skipIfMissingGPU()
     def test_dds_gpu(self):
@@ -219,6 +191,109 @@ class dds(ut.TestCase):
             energy_tol=1E-12,
             force_tol=1E-12,
             torque_tol=1E-12)
+
+    def check_min_image_convention(self, solver, rtol):
+        system = self.system
+        tol = {"atol": 1e-10, "rtol": rtol}
+        # place particles close to each other in space
+        system.part.add(pos=[0.1, 0., 0.], dip=[0., 0., 1.],
+                        rotation=[True, True, True])
+        system.part.add(pos=[0.3, 0., 0.], dip=[0., 0.5, 0.5],
+                        rotation=[True, True, True])
+        ref_min_img_energy = 62.5
+        ref_min_img_forces = 937.5 * np.array([[-1., 0., 0.], [+1., 0., 0.]])
+        ref_min_img_torques = 62.5 * np.array([[+1., 0., 0.], [-1., 0., 0.]])
+        system.actors.add(solver)
+
+        # check min image against reference data
+        system.periodicity = [False, False, False]
+        system.integrator.run(steps=0, recalc_forces=True)
+        min_img_energy = system.analysis.energy()["dipolar"]
+        min_img_forces = np.copy(system.part.all().f)
+        min_img_torques = np.copy(system.part.all().torque_lab)
+        np.testing.assert_allclose(min_img_energy, ref_min_img_energy, **tol)
+        np.testing.assert_allclose(min_img_forces, ref_min_img_forces, **tol)
+        np.testing.assert_allclose(min_img_torques, ref_min_img_torques, **tol)
+
+        # place particles far away from each other, but close across a boundary
+        system.part.by_id(1).pos = [system.box_l[0] - 0.1, 0., 0.]
+
+        # check that max image convention is applied for open boundaries
+        system.periodicity = [False, False, False]
+        system.integrator.run(steps=0, recalc_forces=True)
+        max_img_energy = system.analysis.energy()["dipolar"]
+        max_img_forces = np.copy(system.part.all().f)
+        max_img_torques = np.copy(system.part.all().torque_lab)
+        np.testing.assert_array_less(
+            max_img_energy, min_img_energy / 1000.)
+        np.testing.assert_array_less(
+            np.abs(max_img_forces[:, 0]),
+            np.abs(min_img_forces[:, 0]) / 1000.)
+        np.testing.assert_array_less(
+            np.abs(max_img_torques[:, 0]),
+            np.abs(min_img_torques[:, 0]) / 1000.)
+        np.testing.assert_allclose(
+            max_img_torques,
+            min_img_torques * max_img_energy / min_img_energy,
+            **tol)
+
+        # check that min image convention is applied for periodic boundaries
+        system.periodicity = [True, True, True]
+        system.integrator.run(steps=0, recalc_forces=True)
+        min_img_energy = system.analysis.energy()["dipolar"]
+        min_img_forces = np.copy(system.part.all().f)
+        min_img_torques = np.copy(system.part.all().torque_lab)
+        np.testing.assert_allclose(min_img_energy, ref_min_img_energy, **tol)
+        np.testing.assert_allclose(min_img_forces, -ref_min_img_forces, **tol)
+        np.testing.assert_allclose(min_img_torques, ref_min_img_torques, **tol)
+
+    def test_min_image_convention_cpu(self):
+        solver = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
+        self.check_min_image_convention(solver, rtol=1e-10)
+
+    @utx.skipIfMissingFeatures("DIPOLAR_DIRECT_SUM")
+    @utx.skipIfMissingGPU()
+    def test_min_image_convention_gpu(self):
+        solver = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1.)
+        self.check_min_image_convention(solver, rtol=1e-5)
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
+               "only runs for 2 or more MPI ranks")
+    def test_inner_loop_consistency_cpu(self):
+        system = self.system
+        system.periodicity = [True, True, True]
+        tol = {"atol": 1e-10, "rtol": 1e-10}
+        p1 = system.part.add(pos=[0., 0., 0.], dip=[0., 0., 1.],
+                             rotation=[True, True, True])
+        p2 = system.part.add(pos=[1., 0., 0.], dip=[0., 0., 1.],
+                             rotation=[True, True, True])
+        for n_replicas in [0, 1]:
+            system.actors.clear()
+            solver = espressomd.magnetostatics.DipolarDirectSumCpu(
+                prefactor=1., n_replicas=n_replicas)
+            system.actors.add(solver)
+
+            # intra-node calculation
+            p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]
+            p2.pos = [system.box_l[0] / 2. + 0.1, 0., 0.]
+            system.integrator.run(steps=0, recalc_forces=True)
+            assert p1.node != p2.node
+            node_01_energy = system.analysis.energy()["dipolar"]
+            node_01_forces = np.copy(system.part.all().f)
+            node_01_torques = np.copy(system.part.all().torque_lab)
+
+            # inter-node calculation
+            p1.pos = [0.1, 0., 2.]
+            p2.pos = [0.3, 0., 0.]
+            system.integrator.run(steps=0, recalc_forces=True)
+            assert p1.node == p2.node
+            node_00_energy = system.analysis.energy()["dipolar"]
+            node_00_forces = np.copy(system.part.all().f)
+            node_00_torques = np.copy(system.part.all().torque_lab)
+
+            np.testing.assert_allclose(node_01_energy, node_00_energy, **tol)
+            np.testing.assert_allclose(node_01_forces, node_00_forces, **tol)
+            np.testing.assert_allclose(node_01_torques, node_00_torques, **tol)
 
 
 if __name__ == "__main__":

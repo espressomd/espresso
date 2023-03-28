@@ -48,7 +48,7 @@ are required to be able to compile and use |es|:
         The build system is based on CMake.
 
     C++ compiler
-        The C++ core of |es| needs to be built by a C++14-capable compiler.
+        The C++ core of |es| needs to be built by a C++17-capable compiler.
 
     Boost
         A number of advanced C++ features used by |es| are provided by Boost.
@@ -66,6 +66,15 @@ are required to be able to compile and use |es|:
         `UCX <https://openucx.org>`__ enabled.
         Other MPI implementations like Intel MPI should also work, although
         they are not actively tested in |es| continuous integration.
+
+        Open MPI version 4.x is known to not properly support the MCA binding
+        policy "numa" in singleton mode on a few NUMA architectures.
+        On affected systems, e.g. AMD Ryzen or AMD EPYC, Open MPI halts with
+        a fatal error when setting the processor affinity in ``MPI_Init``.
+        This issue can be resolved by setting the environment variable
+        ``OMPI_MCA_hwloc_base_binding_policy`` to a value other than "numa",
+        such as "l3cache" to bind to a NUMA shared memory block, or to
+        "none" to disable binding (can cause performance loss).
 
     Python
         |es|'s main user interface relies on Python 3.
@@ -85,7 +94,7 @@ To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
 
     sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
       libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-scipy python3-opengl libgsl-dev
+      python3-scipy python3-opengl libgsl-dev freeglut3
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -105,43 +114,57 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
+If you cannot install this package, for example because you are maintaining
+multiple CUDA versions, you will need to configure the binary and library
+paths before building the project, for example via environment variables:
+
+.. code-block:: bash
+
+    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-11.5"
+    export PATH="${CUDA_TOOLKIT_ROOT_DIR}/bin${PATH:+:$PATH}"
+    export LD_LIBRARY_PATH="${CUDA_TOOLKIT_ROOT_DIR}/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+Later in the installation instructions, you will see CMake commands of the form
+``cmake ..`` with optional arguments, such as ``cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
+to activate CUDA. These commands may need to be adapted depending on which
+operating system and CUDA version you are using.
+
+You can control the list of CUDA architectures to generate device code for.
+For example, ``-D CMAKE_CUDA_ARCHITECTURES=61;75`` will generate device code
+for both sm_61 and sm_75 architectures.
+
 On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
 to compile sources that rely on ``std::function``. You can either use GCC 10:
 
 .. code-block:: bash
 
-    CC=gcc-10 CXX=g++-10 cmake .. -D WITH_CUDA=ON
-    make -j
+    CC=gcc-10 CXX=g++-10 CUDACXX=/usr/local/cuda-11.5/bin/nvcc cmake .. \
+      -D ESPRESSO_BUILD_WITH_CUDA=ON \
+      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
+      -D CMAKE_CUDA_FLAGS="--compiler-bindir=/usr/bin/g++-10"
 
-or alternatively install Clang 12 as a replacement for nvcc and GCC:
-
-.. code-block:: bash
-
-    CC=clang-12 CXX=clang++-12 cmake .. -D WITH_CUDA=ON -D WITH_CUDA_COMPILER=clang
-    make -j
-
-On Ubuntu 20.04, the default GCC compiler is also too recent for nvcc and will
-generate compiler errors. You can either install an older version of GCC and
-select it with environment variables ``CC`` and ``CXX`` when building |es|,
-or edit the system header files as shown in the following
-`patch for Ubuntu 20.04 <https://github.com/espressomd/espresso/issues/3654#issuecomment-612165048>`__.
-
-On systems with multiple CUDA releases installed, it is possible to select a
-specific one by providing custom paths to the compiler and toolkit:
+or alternatively install Clang 14 as a replacement for nvcc and GCC:
 
 .. code-block:: bash
 
-    CUDACXX=/usr/local/cuda-11.0/bin/nvcc \
-      cmake .. -D WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-11.0
-    make -j
+    CC=clang-14 CXX=clang++-14 CUDACXX=clang++-14 cmake .. \
+      -D ESPRESSO_BUILD_WITH_CUDA=ON \
+      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
+      -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5" \
+      -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5"
 
-Alternatively for Clang:
+Please note that all CMake options and compiler flags that involve
+``/usr/local/cuda-*`` need to be adapted to your CUDA environment.
+But they are only necessary on systems with multiple CUDA releases installed,
+and can be safely removed if you have only one CUDA release installed.
 
-.. code-block:: bash
-
-    CC=clang-12 CXX=clang++-12 CUDACXX=clang++-12 CUDAToolkit_ROOT=/usr/local/cuda-11.0 \
-      cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang -DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-11.0
-    make -j
+Please also note that with Clang, you still need the GCC 10 toolchain,
+which can be set up with ``apt install gcc-10 g++-10 libstdc++-10-dev``.
+The extra compiler flags in the Clang CMake command above are needed to pin
+the search paths of Clang. By default, it searches trough the most recent
+GCC version, which is GCC 12 on Ubuntu 22.04. It is not possible to install
+the NVIDIA driver without GCC 12 due to a dependency resolution issue
+(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-12``).
 
 .. _Requirements for building the documentation:
 
@@ -152,10 +175,8 @@ To generate the Sphinx documentation, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user \
-        'sphinx>=2.3.0,!=3.0.0' \
-        'sphinxcontrib-bibtex>=2.4.1' \
-        'sphinx-toggleprompt==0.0.5'
+    pip3 install --user -c requirements.txt \
+        sphinx sphinxcontrib-bibtex sphinx-toggleprompt
 
 To generate the Doxygen documentation, install the following packages:
 
@@ -292,10 +313,10 @@ Run the following commands:
 .. code-block:: bash
 
     brew install cmake python cython boost boost-mpi fftw \
-      doxygen gsl numpy scipy ipython jupyter
+      doxygen gsl numpy scipy ipython jupyter freeglut
     brew install hdf5-mpi
     brew link --force cython
-    pip install PyOpenGL matplotlib
+    pip install -c requirements.txt PyOpenGL matplotlib
 
 .. _Quick installation:
 
@@ -313,7 +334,7 @@ lines below (optional steps which modify the build process are commented out):
     cd build
     cmake ..
     #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
-    make -j
+    make -j$(nproc)
 
 This will build |es| with a default feature set, namely
 :file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
@@ -368,13 +389,19 @@ This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
 will negatively affect |es|'s performance.
 
-Features can be activated in the configuration header :file:`myconfig.hpp`
+Most features can be activated in the configuration header :file:`myconfig.hpp`
 (see section :ref:`myconfig.hpp\: Activating and deactivating features`).
 To activate ``FEATURE``, add the following line to the header file:
 
 .. code-block:: c++
 
     #define FEATURE
+
+Some features cannot be manually enabled; they are instead automatically
+enabled when a specific list of dependent features are enabled. For example,
+``DIPOLAR_DIRECT_SUM`` is automatically enabled when ``DIPOLES``, ``ROTATION``
+and ``CUDA`` are enabled. Please note that ``CUDA`` is an external feature
+and can only be enabled via a CMake option (see :ref:`External features`).
 
 
 .. _General features:
@@ -416,7 +443,7 @@ General features
 -  ``THERMOSTAT_PER_PARTICLE`` Allows setting a per-particle friction
    coefficient for the Langevin and Brownian thermostats.
 
--  ``ROTATIONAL_INERTIA``
+-  ``ROTATIONAL_INERTIA`` Allows to set the eigenvalues for rotational inertia matrix of particles
 
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
    individually. Also allows to fix individual coordinates of particles,
@@ -428,13 +455,19 @@ General features
 
    .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.mass`
 
--  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
-   molecules.
+-  ``EXCLUSIONS`` Allows particle pairs to be excluded from non-bonded interaction calculations.
 
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
+
+-  ``VIRTUAL_SITES`` Allows the creation of pseudo-particles whose forces,
+   torques, and orientations can be transferred to real particles.
+   They don't have mass, and their position is generally
+   fixed in the simulation box or fixed to other particles.
+
+-  ``VIRTUAL_SITES_INERTIALESS_TRACERS`` Allows to use virtual sites as tracers by advecting them with a LB fluid 
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
@@ -448,14 +481,13 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
--  ``NPT`` Enables an on-the-fly NpT integration scheme.
+-  ``NPT`` Enables the NpT integration scheme.
 
    .. seealso:: :ref:`Isotropic NpT thermostat`
 
--  ``ENGINE``
+-  ``ENGINE`` Activates swimming parameters for active particles (self-propelled particles)
 
--  ``PARTICLE_ANISOTROPY``
-
+-  ``PARTICLE_ANISOTROPY`` Allows the use of non-isotropic friction coefficients in thermostats.
 
 .. _Fluid dynamics and fluid structure interaction:
 
@@ -466,18 +498,18 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB_BOUNDARIES``
+-  ``LB_BOUNDARIES`` Enables the construction of LB boundaries from shape-based constraints on the CPU.
 
--  ``LB_BOUNDARIES_GPU``
+-  ``LB_BOUNDARIES_GPU`` Enables the construction of LB boundaries from shape-based constraints on the GPU.
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
 
--  ``ELECTROKINETICS``
+-  ``ELECTROKINETICS`` Enables the description of chemical species advected by a LB fluid on the GPU.
 
--  ``EK_BOUNDARIES``
+-  ``EK_BOUNDARIES`` Enables the construction of electrokinetic boundaries from shape-based constraints on the GPU.
 
--  ``EK_DEBUG``
+-  ``EK_DEBUG`` Enables additional checks in electrokinetic simulations.
 
 
 .. _Interaction features:
@@ -684,7 +716,7 @@ are ever modified by the build process.
 
     cd build
     cmake ..
-    make -j
+    make -j$(nproc)
 
 Afterwards |es| can be run by calling ``./pypresso`` from the command line.
 
@@ -726,42 +758,69 @@ Options and Variables
 ~~~~~~~~~~~~~~~~~~~~~
 
 The behavior of |es| can be controlled by means of options and variables
-in the :file:`CMakeLists.txt` file. Also options are defined there.
-The following options are available:
+in the :file:`CMakeLists.txt` file. Most options are boolean values
+(``ON`` or ``OFF``). A few options are strings or semicolon-delimited lists.
 
-* ``WITH_CUDA``: Build with GPU support
+The following options control features from external libraries:
 
-* ``WITH_HDF5``: Build with HDF5
+* ``ESPRESSO_BUILD_WITH_CUDA``: Build with GPU support.
+* ``ESPRESSO_BUILD_WITH_HDF5``: Build with HDF5 support.
+* ``ESPRESSO_BUILD_WITH_FFTW``: Build with FFTW support.
+* ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.
+* ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
+* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
+* ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 
-* ``WITH_TESTS``: Enable tests
+The following options control code instrumentation:
 
-* ``WITH_SCAFACOS``: Build with ScaFaCoS support
+* ``ESPRESSO_BUILD_WITH_VALGRIND_MARKERS``: Build with valgrind instrumentation markers
+* ``ESPRESSO_BUILD_WITH_PROFILER``: Build with Caliper profiler annotations
+* ``ESPRESSO_BUILD_WITH_MSAN``: Compile C++ code with memory sanitizer
+* ``ESPRESSO_BUILD_WITH_ASAN``: Compile C++ code with address sanitizer
+* ``ESPRESSO_BUILD_WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
+* ``ESPRESSO_BUILD_WITH_COVERAGE``: Generate C++ code coverage reports when running |es|
+* ``ESPRESSO_BUILD_WITH_COVERAGE_PYTHON``: Generate Python code coverage reports when running |es|
 
-* ``WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support
+The following options control how the project is built and tested:
 
-* ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
-  markers
+* ``ESPRESSO_BUILD_WITH_CLANG_TIDY``: Run Clang-Tidy during compilation.
+* ``ESPRESSO_BUILD_WITH_CPPCHECK``: Run Cppcheck during compilation.
+* ``ESPRESSO_BUILD_WITH_CCACHE``: Enable compiler cache for faster rebuilds.
+* ``ESPRESSO_BUILD_TESTS``: Enable C++ and Python tests.
+* ``ESPRESSO_BUILD_BENCHMARKS``: Enable benchmarks.
+* ``ESPRESSO_CTEST_ARGS`` (string): Arguments passed to the ``ctest`` command.
+* ``ESPRESSO_TEST_TIMEOUT``: Test timeout.
+* ``ESPRESSO_ADD_OMPI_SINGLETON_WARNING``: Add a runtime warning in the
+  pypresso and ipypresso scripts that is triggered in singleton mode
+  with Open MPI version 4.x on unsupported NUMA environments
+  (see :term:`MPI installation requirements <MPI>` for details).
+* ``ESPRESSO_MYCONFIG_NAME`` (string): Filename of the user-provided config file
+* ``MPIEXEC_PREFLAGS``, ``MPIEXEC_POSTFLAGS`` (strings): Flags passed to the
+  ``mpiexec`` command in MPI-parallel tests and benchmarks.
+* ``CMAKE_BUILD_TYPE`` (string): Build type. Default is ``Release``.
+* ``CMAKE_CXX_FLAGS`` (string): Flags passed to the C++ compiler.
+* ``CMAKE_CUDA_FLAGS`` (string): Flags passed to the CUDA compiler.
+* ``CMAKE_CUDA_ARCHITECTURES`` (list): Semicolon-separated list of architectures to generate device code for.
+* ``CUDAToolkit_ROOT`` (string): Path to the CUDA toolkit directory.
 
-When the value in the :file:`CMakeLists.txt` file is set to ON, the
-corresponding option is created; if the value of the option is set to OFF,
-the corresponding option is not created. These options can also be modified
+Most of these options are opt-in, meaning their default value is set to
+``OFF`` in the :file:`CMakeLists.txt` file. These options can be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
 .. code-block:: bash
 
-    cmake -D WITH_HDF5=OFF ..
+    cmake -D ESPRESSO_BUILD_WITH_HDF5=OFF ..
 
-When an option is activated, additional options may become available.
-For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
-``-D WITH_CUDA_COMPILER=<compiler_id>``, where ``<compiler_id>`` can be
-``nvcc`` (default) or ``clang``.
+When an option is enabled, additional options may become available.
+For example with ``-D ESPRESSO_BUILD_TESTS=ON``, one can specify
+the CTest parameters with ``-D ESPRESSO_CTEST_ARGS=-j$(nproc)``.
 
 Environment variables can be passed to CMake. For example, to select Clang, use
-``CC=clang CXX=clang++ cmake .. -DWITH_CUDA=ON -DWITH_CUDA_COMPILER=clang``.
+``CC=clang CXX=clang++ CUDACXX=clang++ cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``.
 If you have multiple versions of the CUDA library installed, you can select the
-correct one with ``CUDA_BIN_PATH=/usr/local/cuda-10.0 cmake .. -DWITH_CUDA=ON``
+correct one with ``CUDA_BIN_PATH=/usr/local/cuda-11.5 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 (with Clang as the CUDA compiler, you also need to override its default CUDA
-path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-10.0``).
+path with ``-D CMAKE_CUDA_FLAGS=--cuda-path=/usr/local/cuda-11.5``).
 
 .. _Build types and compiler flags:
 
@@ -782,8 +841,8 @@ Cluster users and HPC developers may be interested in manually editing the
 ``espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed
 by a series of conditionals to enable or disable compiler-specific flags.
-Compiler flags passed to CMake via the ``-DCMAKE_CXX_FLAGS`` option
-(such as ``cmake . -DCMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
+Compiler flags passed to CMake via the ``-D CMAKE_CXX_FLAGS`` option
+(such as ``cmake . -D CMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
 will appear in the compiler command before the flags in ``espresso_cpp_flags``,
 and will therefore have lower precedence.
 
@@ -806,9 +865,9 @@ external libraries that are downloaded automatically by CMake. When a
 network connection cannot be established due to firewall restrictions,
 the CMake logic needs editing:
 
-* ``WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder will be
-  a git submodule containing a :file:`.git` subfolder. To prevent CMake from
-  updating this submodule with git, delete the corresponding command with:
+* ``ESPRESSO_BUILD_WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder
+  will be a git submodule containing a :file:`.git` subfolder. To prevent CMake
+  from updating this submodule with git, delete the corresponding command with:
 
   .. code-block:: bash
 
@@ -817,8 +876,8 @@ the CMake logic needs editing:
   When installing a release version of |es|, no network communication
   is needed for HDF5.
 
-* ``WITH_STOKESIAN_DYNAMICS``: this library is installed using `FetchContent
-  <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
+* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS``: this library is installed using
+  `FetchContent <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
   The repository URL can be found in the ``GIT_REPOSITORY`` field of the
   corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
   provides the commit. Clone this repository locally next to the |es|
@@ -863,7 +922,7 @@ targets are available:
 ``install``
     Install |es| in the path specified by the CMake variable
     ``CMAKE_INSTALL_PREFIX``. The path can be changed by calling CMake
-    with ``cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/espresso``. Do not use
+    with ``cmake .. -D CMAKE_INSTALL_PREFIX=/path/to/espresso``. Do not use
     ``make DESTDIR=/path/to/espresso install`` to install to a specific path,
     this will cause issues with the runtime path (RPATH) and will conflict
     with the CMake variable ``CMAKE_INSTALL_PREFIX`` if it has been set.
@@ -908,8 +967,8 @@ assertions. This is achieved by updating the CMake project and rebuilding
 
 .. code-block:: bash
 
-    cmake . -DCMAKE_BUILD_TYPE=RelWithAssert
-    make -j
+    cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
+    make -j$(nproc)
 
 The resulting build will run slightly slower, but will produce an error
 message for common issues, such as divisions by zero, array access out
@@ -920,8 +979,8 @@ instrumentation:
 
 .. code-block:: bash
 
-    cmake . -DCMAKE_BUILD_TYPE=Debug
-    make -j
+    cmake . -D CMAKE_BUILD_TYPE=Debug
+    make -j$(nproc)
 
 The resulting build will be quite slow but will allow many debugging tools
 to be used. For details, please refer to chapter :ref:`Debugging es`.
@@ -932,8 +991,8 @@ you can as a last resort activate sanitizers:
 
 .. code-block:: bash
 
-    cmake . -DWITH_ASAN=ON -DWITH_UBSAN=ON -DCMAKE_BUILD_TYPE=Release
-    make -j
+    cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON -D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
 
 The resulting build will be around 5 times slower that a debug build,
 but it will generate valuable reports when detecting fatal exceptions.

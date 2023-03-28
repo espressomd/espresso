@@ -8,12 +8,24 @@ Setting up the system
 Setting global variables
 ------------------------
 
-The global variables in Python are controlled via the
-:class:`espressomd.system.System` class.
-Global system variables can be read and set in Python simply by accessing the
-attribute of the corresponding Python object. Those variables that are already
-available in the Python interface are listed in the following. Note that for the
-vectorial properties ``box_l`` and ``periodicity``, component-wise manipulation
+The global system variables are controlled via the Python
+:class:`espressomd.system.System` class::
+
+    import espressomd
+    system = espressomd.System(box_l=[10., 10., 10.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    system.periodicity = [True, True, True]
+
+This code creates a system with a cubic unit cell of length 10 in simulation
+units, and sets the skin to 0.4 simulation units and the time step to 0.01
+simulation units.
+
+Some variables belong to the ``System`` class and will be explained in the list
+below, while other variables such as the skin belong to objects that are
+attached to the class, and will be explain in subsequent sections and chapters.
+Note that for many vectorial properties, e.g. ``box_l`` and ``periodicity``,
+component-wise manipulation
 like ``system.box_l[0] = 1`` or in-place operators like ``+=`` or ``*=`` are not
 allowed and result in an error. This behavior is inherited, so the same applies
 to ``a`` after ``a = system.box_l``. If you want to use a vectorial property
@@ -308,13 +320,18 @@ in total, or more than 4 MPI ranks per direction. In this situation,
 consider increasing the box size or decreasing the interaction cutoff
 or Verlet list skin.
 
+This scheme is also known as the spatial decomposition cell scheme
+:cite:`plimpton95a`, and requires communicating particle information
+from neighboring cells at every time step.
+
 .. _N-squared:
 
 N-squared
 ^^^^^^^^^
 
 Invoking :py:meth:`~espressomd.cell_system.CellSystem.set_n_square`
-selects the very primitive N-squared cellsystem, which calculates
+selects the very primitive N-squared cellsystem, also known as the atom
+decomposition cell scheme :cite:`plimpton95a`, which calculates
 the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
 :math:`N^2`. However, algorithms like MMM1D or the plain Coulomb
@@ -329,10 +346,10 @@ In a multiple processor environment, the N-squared cellsystem uses a
 simple particle balancing scheme to have a nearly equal number of
 particles per CPU, :math:`n` nodes have :math:`m` particles, and
 :math:`p-n` nodes have :math:`m+1` particles, such that
-:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles. Therefore the
-computational load should be balanced fairly equal among the nodes, with
-one exception: This code always uses one CPU for the interaction between
-two different nodes. For an odd number of nodes, this is fine, because
+:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles.
+Therefore the computational load should be balanced fairly equal among the
+nodes, with one exception: this code always uses one CPU for the interaction
+between two different nodes. For an odd number of nodes, this is fine, because
 the total number of interactions to calculate is a multiple of the
 number of nodes, but for an even number of nodes, for each of the
 :math:`p-1` communication rounds, one processor is idle.
@@ -344,10 +361,13 @@ this node is twice as high. For 3 processors, the interactions are 0-0,
 1-1, 2-2, 0-1, 1-2, 0-2. Of these interactions, node 0 treats 0-0 and
 0-2, node 1 treats 1-1 and 0-1, and node 2 treats 2-2 and 1-2.
 
+In addition, this scheme requires an all-to-all communication of all particles
+at every time step, which is time-consuming when the number of nodes is large.
+
 Therefore it is highly recommended that you use N-squared only with an
 odd number of nodes, if with multiple processors at all.
 
-.. _Hybrid:
+.. _Hybrid decomposition:
 
 Hybrid decomposition
 ^^^^^^^^^^^^^^^^^^^^

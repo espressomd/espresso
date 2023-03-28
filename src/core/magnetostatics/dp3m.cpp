@@ -154,6 +154,9 @@ DipolarP3M::DipolarP3M(P3MParameters &&parameters, double prefactor,
   if (prefactor <= 0.) {
     throw std::domain_error("Parameter 'prefactor' must be > 0");
   }
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
+  }
 
   if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
     throw std::domain_error("DipolarP3M requires a cubic mesh");
@@ -886,9 +889,17 @@ void DipolarP3M::sanity_checks_periodicity() const {
 
 void DipolarP3M::sanity_checks_cell_structure() const {
   if (local_geo.cell_structure_type() !=
-      CellStructureType::CELL_STRUCTURE_REGULAR) {
+          CellStructureType::CELL_STRUCTURE_REGULAR &&
+      local_geo.cell_structure_type() !=
+          CellStructureType::CELL_STRUCTURE_HYBRID) {
     throw std::runtime_error(
-        "DipolarP3M: requires the regular decomposition cell system");
+        "DipolarP3M: requires the regular or hybrid decomposition cell system");
+  }
+  if (n_nodes > 1 && local_geo.cell_structure_type() ==
+                         CellStructureType::CELL_STRUCTURE_HYBRID) {
+    throw std::runtime_error(
+        "DipolarP3M: does not work with the hybrid decomposition cell system, "
+        "if using more than one MPI node");
   }
 }
 

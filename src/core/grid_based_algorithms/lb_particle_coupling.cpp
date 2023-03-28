@@ -43,7 +43,7 @@
 #include <stdexcept>
 #include <utility>
 
-LB_Particle_Coupling lb_particle_coupling;
+static LB_Particle_Coupling lb_particle_coupling;
 
 void mpi_bcast_lb_particle_coupling_local() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
@@ -284,15 +284,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     if (lb_particle_coupling.couple_to_md) {
-      bool using_regular_cell_structure =
-          (local_geo.cell_structure_type() ==
-           CellStructureType::CELL_STRUCTURE_REGULAR);
-      if (not using_regular_cell_structure) {
-        if (n_nodes > 1) {
-          throw std::runtime_error("LB only works with regular decomposition, "
-                                   "if using more than one MPI node");
-        }
-      }
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::quadratic):
         throw std::runtime_error("The non-linear interpolation scheme is not "

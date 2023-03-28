@@ -24,7 +24,6 @@ import pathlib
 import tempfile
 import contextlib
 
-import sys
 import math
 import numpy as np
 
@@ -159,55 +158,25 @@ params = {
 
 
 def bisection():
+    args = [params_base[k]
+            for k in ('width', 'bjerrum_length', 'sigma', 'valency')]
     # initial parameters for bisection scheme
     size = math.pi / (2.0 * params_base['width'])
     pnt0 = 0.0
     pntm = pnt0 + size
     pnt1 = pnt0 + 1.9 * size
-
     # the bisection scheme
     tol = 1.0e-08
     while size > tol:
-        val0 = solve(
-            pnt0,
-            params_base['width'],
-            params_base['bjerrum_length'],
-            params_base['sigma'],
-            params_base['valency'])
-        val1 = solve(
-            pnt1,
-            params_base['width'],
-            params_base['bjerrum_length'],
-            params_base['sigma'],
-            params_base['valency'])
-        valm = solve(
-            pntm,
-            params_base['width'],
-            params_base['bjerrum_length'],
-            params_base['sigma'],
-            params_base['valency'])
-
-        if (val0 < 0.0 and val1 > 0.0):
-            if valm < 0.0:
-                pnt0 = pntm
-                size = size / 2.0
-                pntm = pnt0 + size
-            else:
-                pnt1 = pntm
-                size = size / 2.0
-                pntm = pnt1 - size
-        elif (val0 > 0.0 and val1 < 0.0):
-            if valm < 0.0:
-                pnt1 = pntm
-                size = size / 2.0
-                pntm = pnt1 - size
-            else:
-                pnt0 = pntm
-                size = size / 2.0
-                pntm = pnt0 + size
+        size /= 2.0
+        val0, val1, valm = map(lambda x: solve(x, *args), [pnt0, pnt1, pntm])
+        assert val0 < 0.0 and val1 > 0.0, "Bisection method failed"
+        if valm < 0.0:
+            pnt0 = pntm
+            pntm += size
         else:
-            sys.exit("Bisection method fails:\n"
-                     "Tuning of regular boundaries may be required.")
+            pnt1 = pntm
+            pntm -= size
     return pntm
 
 
@@ -452,7 +421,9 @@ class ek_eof_one_species(ut.TestCase):
             ek.write_vtk_velocity(str(path_vtk_velocity))
             ek.write_vtk_potential(str(path_vtk_potential))
             ek.write_vtk_density(str(path_vtk_lbdensity))
-            ek.write_vtk_lbforce(str(path_vtk_lbforce))
+            if espressomd.has_features('EK_DEBUG') or espressomd.has_features(
+                    'VIRTUAL_SITES_INERTIALESS_TRACERS'):
+                ek.write_vtk_lbforce(str(path_vtk_lbforce))
             counterions.write_vtk_density(str(path_vtk_density))
             counterions.write_vtk_flux(str(path_vtk_flux))
             if espressomd.has_features('EK_DEBUG'):
@@ -467,7 +438,9 @@ class ek_eof_one_species(ut.TestCase):
             vtk_potential = get_vtk(path_vtk_potential, "potential", grid_dims)
             vtk_lbdensity = get_vtk(
                 path_vtk_lbdensity, "density_lb", grid_dims)
-            get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
+            if espressomd.has_features('EK_DEBUG') or espressomd.has_features(
+                    'VIRTUAL_SITES_INERTIALESS_TRACERS'):
+                get_vtk(path_vtk_lbforce, "lbforce", grid_dims + [3])
             vtk_density = get_vtk(path_vtk_density, "density_1", grid_dims)
             vtk_flux = get_vtk(path_vtk_flux, "flux_1", grid_dims + [3])
             if espressomd.has_features('EK_DEBUG'):

@@ -17,50 +17,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the Reaction Algorithm. */
-
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ReactionAlgorithm test
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "config/config.hpp"
+
 #include "reaction_methods/ReactionAlgorithm.hpp"
+#include "reaction_methods/SingleReaction.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
-#include "particle_data.hpp"
 #include "particle_node.hpp"
+#include "unit_tests/ParticleFactory.hpp"
 
 #include <boost/mpi.hpp>
 
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace espresso {
 // ESPResSo system instance
-std::unique_ptr<EspressoSystemStandAlone> system;
+static std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
 
+namespace Testing {
+class ReactionAlgorithm : public ReactionMethods::ReactionAlgorithm {
+public:
+  using Base = ReactionMethods::ReactionAlgorithm;
+  using Base::clear_old_system_state;
+  using Base::displacement_mc_move;
+  using Base::get_old_system_state;
+  using Base::get_random_position_in_box;
+  using Base::make_displacement_mc_move_attempt;
+  using Base::ReactionAlgorithm;
+};
+} // namespace Testing
+
 // Check the base class for all Monte Carlo algorithms.
-BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
-  using namespace ReactionMethods;
-  class ReactionAlgorithmTest : public ReactionAlgorithm {
-  public:
-    using ReactionAlgorithm::calculate_acceptance_probability;
-    using ReactionAlgorithm::generate_new_particle_positions;
-    using ReactionAlgorithm::get_random_position_in_box;
-    using ReactionAlgorithm::ReactionAlgorithm;
-  };
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
+  using ReactionMethods::SingleReaction;
+  auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
+  auto const comm = boost::mpi::communicator();
 
   // check acceptance rate
-  ReactionAlgorithmTest r_algo(42, 1., 0., {});
+  auto r_algo = Testing::ReactionAlgorithm(comm, 42, 1., 0., {});
   for (int tried_moves = 1; tried_moves < 5; ++tried_moves) {
     for (int accepted_moves = 0; accepted_moves < 5; ++accepted_moves) {
       r_algo.m_tried_configurational_MC_moves = tried_moves;
@@ -72,19 +84,12 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     }
   }
 
-  // exception if no reaction was added
-  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
-
   // create a reaction A -> 3 B + 4 C
   int const type_A = 0;
   int const type_B = 1;
   int const type_C = 2;
   SingleReaction const reaction(2., {type_A}, {1}, {type_B, type_C}, {3, 4});
-
-  // track particles
-  init_type_map(type_A);
-  init_type_map(type_B);
-  init_type_map(type_C);
+  r_algo.non_interacting_type = 5;
 
   // check reaction addition
   {
@@ -103,26 +108,6 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
                boost::test_tools::per_element());
     BOOST_CHECK_EQUAL(value.gamma, reaction.gamma);
   }
-
-  // check acceptance probability
-  {
-    double probability =
-        r_algo.calculate_acceptance_probability(reaction, -1., -1., {{1, 2}});
-    BOOST_CHECK_EQUAL(probability, -10.);
-  }
-
-#ifdef ELECTROSTATICS
-  // exception if reactant types have no charge information
-  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
-  r_algo.charges_of_types[0] = 1;
-  // exception if product types have no charge information
-  BOOST_CHECK_THROW(r_algo.check_reaction_method(), std::runtime_error);
-  r_algo.charges_of_types[1] = 1;
-  r_algo.charges_of_types[2] = 0;
-#endif
-
-  // sanity checks should now pass
-  r_algo.check_reaction_method();
 
   // check reaction removal
   {
@@ -150,8 +135,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     std::vector<std::pair<Utils::Vector3d, Utils::Vector3d>> ref_positions{
         {{0.1, 0.2, 0.3}, {+10., +20., +30.}},
         {{0.4, 0.5, 0.6}, {-10., -20., -30.}}};
-    place_particle(0, ref_positions[0].first);
-    place_particle(1, ref_positions[1].first);
+    ::make_new_particle(0, ref_positions[0].first);
+    ::make_new_particle(1, ref_positions[1].first);
     set_particle_v(0, ref_positions[0].second);
     set_particle_v(1, ref_positions[1].second);
     set_particle_type(0, type_A);
@@ -160,24 +145,27 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     BOOST_CHECK(!r_algo.particle_inside_exclusion_range_touched);
     r_algo.particle_inside_exclusion_range_touched = false;
     r_algo.exclusion_range = box_l;
-    auto const bookkeeping = r_algo.generate_new_particle_positions(0, 2);
+    r_algo.displacement_mc_move(0, 2);
+    auto const &bookkeeping = r_algo.get_old_system_state();
     BOOST_CHECK(r_algo.particle_inside_exclusion_range_touched);
     // check moves and bookkeeping
-    for (auto const &item : bookkeeping) {
-      auto const pid = item.first;
+    for (auto const &[pid, old_pos, old_vel] : bookkeeping.moved) {
       BOOST_REQUIRE(pid == 0 or pid == 1);
       auto const ref_old_pos = ref_positions[pid].first;
       auto const ref_old_vel = ref_positions[pid].second;
-      auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.pos();
-      auto const &new_vel = p.v();
-      BOOST_CHECK_EQUAL(item.second, ref_old_pos);
-      BOOST_CHECK_GE(new_pos, Utils::Vector3d::broadcast(0.));
-      BOOST_CHECK_LE(new_pos, Utils::Vector3d::broadcast(box_l));
-      BOOST_CHECK_GE((new_pos - ref_old_pos).norm(), 0.1);
-      BOOST_CHECK_GE((new_vel - ref_old_vel).norm(), 10.);
+      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+        auto const &new_pos = p->pos();
+        auto const &new_vel = p->v();
+        BOOST_CHECK_EQUAL(old_pos, ref_old_pos);
+        BOOST_CHECK_EQUAL(old_vel, ref_old_vel);
+        BOOST_CHECK_GE(new_pos, Utils::Vector3d::broadcast(0.));
+        BOOST_CHECK_LE(new_pos, Utils::Vector3d::broadcast(box_l));
+        BOOST_CHECK_GE((new_pos - ref_old_pos).norm(), 0.1);
+        BOOST_CHECK_GE((new_vel - ref_old_vel).norm(), 10.);
+      }
     }
     // cleanup
+    r_algo.clear_old_system_state();
     remove_particle(0);
     remove_particle(1);
   }
@@ -187,36 +175,41 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     // set up particles
     auto const box_l = 1.;
     std::vector<Utils::Vector3d> ref_positions{{0.1, 0.2, 0.3},
-                                               {0.4, 0.5, 0.6}};
-    place_particle(0, ref_positions[0]);
-    place_particle(1, ref_positions[1]);
+                                               {0.6, 0.7, 0.8}};
+    ::make_new_particle(0, ref_positions[0]);
+    ::make_new_particle(1, ref_positions[1]);
     set_particle_type(0, type_A);
     set_particle_type(1, type_A);
-    // check early exit when a MC move cannot be performed
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_C, 1));
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_B, 2));
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 0));
+    // check runtime errors when a MC move cannot be physically performed
+    auto displacement_move = std::bind(
+        &Testing::ReactionAlgorithm::make_displacement_mc_move_attempt, &r_algo,
+        std::placeholders::_1, std::placeholders::_2);
+    BOOST_REQUIRE(!displacement_move(type_C, 1));
+    BOOST_REQUIRE(!displacement_move(type_B, 2));
+    BOOST_REQUIRE(!displacement_move(type_A, 0));
+    BOOST_CHECK_THROW(displacement_move(type_A, -2), std::domain_error);
+    BOOST_CHECK_THROW(displacement_move(-2, 1), std::domain_error);
     // force all MC moves to be rejected by picking particles inside
     // their exclusion radius
     r_algo.exclusion_range = box_l;
-    r_algo.particle_inside_exclusion_range_touched = false;
-    BOOST_REQUIRE(!r_algo.do_global_mc_move_for_particles_of_type(type_A, 2));
+    BOOST_REQUIRE(!displacement_move(type_A, 2));
     // check none of the particles moved
     for (auto const pid : {0, 1}) {
       auto const ref_old_pos = ref_positions[pid];
-      auto const &p = get_particle_data(pid);
-      auto const &new_pos = p.pos();
-      BOOST_CHECK_LE((new_pos - ref_old_pos).norm(), tol);
+      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+        auto const &new_pos = p->pos();
+        BOOST_CHECK_LE((new_pos - ref_old_pos).norm(), tol);
+      }
     }
     // force a MC move to be accepted by using a constant Hamiltonian
     r_algo.exclusion_range = 0.;
-    r_algo.particle_inside_exclusion_range_touched = false;
-    BOOST_REQUIRE(r_algo.do_global_mc_move_for_particles_of_type(type_A, 1));
+    BOOST_REQUIRE(displacement_move(type_A, 1));
     std::vector<double> distances(2);
     // check that only one particle moved
     for (auto const pid : {0, 1}) {
-      auto const &p = get_particle_data(pid);
-      distances[pid] = (ref_positions[pid] - p.pos()).norm();
+      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+        distances[pid] = (ref_positions[pid] - p->pos()).norm();
+      }
     }
     BOOST_CHECK_LE(std::min(distances[0], distances[1]), tol);
     BOOST_CHECK_GE(std::max(distances[0], distances[1]), 0.1);
@@ -237,6 +230,13 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
       auto const pos = r_algo.get_random_position_in_box();
       BOOST_TEST(pos <= box_l, boost::test_tools::per_element());
       BOOST_TEST(pos >= origin, boost::test_tools::per_element());
+      // nodes must agree on random numbers
+      auto pos_head_node = Utils::Vector3d::broadcast(0.);
+      if (comm.rank() == 0) {
+        pos_head_node = pos;
+      }
+      boost::mpi::broadcast(comm, pos_head_node, 0);
+      BOOST_TEST(pos == pos_head_node, boost::test_tools::per_element());
     }
     // slab case
     auto const start_z{0.2}, end_z{0.6};
@@ -278,10 +278,8 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
   }
 
   {
-
     // domain error if negative exclusion_range is provided
-
-    BOOST_CHECK_THROW(ReactionAlgorithmTest r_algo(40, 1., -1, {}),
+    BOOST_CHECK_THROW(Testing::ReactionAlgorithm(comm, 40, 1., -1, {}),
                       std::domain_error);
 
     // domain error if a negative value is provided in exclusion_radius_per_type
@@ -290,52 +288,47 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     exclusion_radius_per_type[type_B] = -1;
 
     BOOST_CHECK_THROW(
-        ReactionAlgorithmTest r_algo(40, 1., 1, exclusion_radius_per_type),
+        Testing::ReactionAlgorithm(comm, 40, 1., 1, exclusion_radius_per_type),
         std::domain_error);
 
-    auto const box_l = Utils::Vector3d{1, 1, 1};
-    espresso::system->set_box_l(box_l);
+    espresso::system->set_box_l({1., 1., 1.});
 
     // set up particle
-    place_particle(0, {0.5, 0.5, 0.5});
+    ::make_new_particle(0, {0.5, 0.5, 0.5});
+    ::make_new_particle(1, {0.7, 0.7, 0.7});
     set_particle_type(0, type_A);
-    place_particle(1, {0.7, 0.7, 0.7});
     set_particle_type(1, type_B);
     exclusion_radius_per_type[type_A] = 0.1;
     exclusion_radius_per_type[type_B] = 1;
-    ReactionAlgorithmTest r_algo(40, 1., 0, exclusion_radius_per_type);
+    auto r_algo =
+        Testing::ReactionAlgorithm(comm, 40, 1., 0, exclusion_radius_per_type);
 
     // the new position will always be in the excluded range since the sum of
     // the radii of both particle types is larger than box length. The exclusion
     // range value should be ignored
-
-    r_algo.generate_new_particle_positions(type_B, 1);
-
+    r_algo.displacement_mc_move(type_B, 1);
     BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
+    r_algo.clear_old_system_state();
 
     // the new position will never be in the excluded range because the
     // exclusion_radius of the particle is 0
-
     r_algo.exclusion_radius_per_type[type_B] = 0;
     r_algo.particle_inside_exclusion_range_touched = false;
-    r_algo.generate_new_particle_positions(type_B, 1);
-
+    r_algo.displacement_mc_move(type_B, 1);
     BOOST_REQUIRE(!r_algo.particle_inside_exclusion_range_touched);
+    r_algo.clear_old_system_state();
+
     // the new position will never accepted since the value in exclusion_range
     // will be used if the particle does not have a defined excluded radius
-
     r_algo.exclusion_range = 1;
     r_algo.exclusion_radius_per_type = {{type_A, 0}};
-    r_algo.generate_new_particle_positions(type_B, 1);
-
+    r_algo.displacement_mc_move(type_B, 1);
     BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
-
-    //
+    r_algo.clear_old_system_state();
   }
 }
 
 int main(int argc, char **argv) {
   espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
-
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

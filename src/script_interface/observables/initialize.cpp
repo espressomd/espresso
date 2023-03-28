@@ -45,6 +45,7 @@
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
+#include "core/observables/ParticleDirectors.hpp"
 #include "core/observables/ParticleDistances.hpp"
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
@@ -65,13 +66,6 @@ namespace Observables {
  *  "ParamlessObservableInterface"
  */
 #define REGISTER(name) om->register_new<name>("Observables::" #name "");
-
-/** Register a @ref ScriptInterface::Observables::ProfileObservable
- *  "ProfileObservable"
- */
-#define REGISTER_PROFILE_OBS(name)                                             \
-  om->register_new<ProfileObservable<::Observables::name>>(                    \
-      "Observables::" #name "");
 
 /** Register a @ref ScriptInterface::Observables::PidObservable
  *  "PidObservable"
@@ -119,6 +113,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER(Pressure);
   REGISTER(PressureTensor);
   REGISTER_PID_OBS(ParticlePositions);
+  REGISTER_PID_OBS(ParticleDirectors);
   REGISTER_PID_OBS(ParticleVelocities);
   REGISTER_PID_OBS(ParticleForces);
   REGISTER_PID_OBS(ParticleBodyVelocities);

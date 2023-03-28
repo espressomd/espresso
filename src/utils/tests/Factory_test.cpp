@@ -17,12 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the Utils::Factory class.
- * The factory is tested by registering different types of classes
- * with it (first test), and then checking if instances of those classes can be
- * made via the Factory (second test).
- */
-
 #define BOOST_TEST_MODULE Factory test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -41,43 +35,28 @@ struct DerivedTestClass : public TestClass {
   void method() override {}
 };
 
-struct OtherDerivedTestClass : public TestClass {
-  void method() override {}
-};
-
-/* Check registration of construction functions */
-BOOST_AUTO_TEST_CASE(register_class) {
-  Utils::Factory<TestClass> factory;
-
-  factory.register_new<OtherDerivedTestClass>("other_derived_class");
-
-  BOOST_CHECK(factory.has_builder("other_derived_class"));
-}
-
-/* Check object construction. */
 BOOST_AUTO_TEST_CASE(make) {
   Utils::Factory<TestClass> factory;
-  factory.register_new<DerivedTestClass>("derived_test_class");
+  auto const derived_class_name = std::string{"derived_test_class"};
 
-  /* Make a derived object */
-  auto o = factory.make("derived_test_class");
-  BOOST_CHECK(o);
-
-  /* Check for correct (derived) type */
-  BOOST_CHECK(dynamic_cast<DerivedTestClass *>(o.get()) != nullptr);
-}
-
-BOOST_AUTO_TEST_CASE(type_name) {
-  const std::string derived_class_name = "derived_test_class";
-
-  Utils::Factory<TestClass> factory;
+  // Register construction function
   factory.register_new<DerivedTestClass>(derived_class_name);
 
-  /* Make an object */
+  // Check registration of construction function
+  BOOST_REQUIRE(factory.has_builder(derived_class_name));
+
+  // Make a derived object
   auto o = factory.make(derived_class_name);
+  BOOST_REQUIRE(o);
   o->method();
+
+  // Check for correct type name
   BOOST_CHECK_EQUAL(factory.type_name(*o.get()), derived_class_name);
 
-  /* Make an unknown object */
+  // Check for correct (derived) type
+  BOOST_CHECK(dynamic_cast<DerivedTestClass *>(o.get()) != nullptr);
+
+  // Make an unknown object
+  BOOST_CHECK(not factory.has_builder("unknown"));
   BOOST_CHECK_THROW(factory.make("unknown"), std::domain_error);
 }

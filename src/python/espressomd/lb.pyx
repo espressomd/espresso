@@ -324,7 +324,7 @@ cdef class HydrodynamicInteraction(FluidActor):
 
         Parameters
         ----------
-        interpolation_order : :obj:`str`, \{"linear", "quadratic"\}
+        interpolation_order : :obj:`str`, {"linear", "quadratic"}
             ``"linear"`` for trilinear interpolation, ``"quadratic"`` for
             quadratic interpolation. For the CPU implementation of LB, only
             ``"linear"`` is available.

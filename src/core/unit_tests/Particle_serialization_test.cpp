@@ -73,8 +73,7 @@ template <class T, typename Enable = void>
 struct has_serialize_method : std::integral_constant<bool, false> {};
 
 template <class T>
-struct has_serialize_method<T,
-                            typename std::enable_if_t<std::is_class<T>::value>>
+struct has_serialize_method<T, typename std::enable_if_t<std::is_class_v<T>>>
     : std::integral_constant<
           bool, !static_cast<bool>(detail::hasnt_serialize_method(
                     detail::DetectMember<T, detail::SerializableClass>{}))> {};
@@ -114,23 +113,21 @@ public:
     return *this;
   }
 
-  void save_binary(void *address, std::size_t count){};
+  void save_binary(void *, std::size_t) {}
 
 private:
-  template <typename T, std::enable_if_t<std::is_class<T>::value, int> = 0>
-  void recurse(T &t) {
-    m_accessor.serialize(*this, t, 0);
+  template <typename T> void recurse(T &t) {
+    // standard types are not classes
+    if constexpr (std::is_class_v<T>) {
+      m_accessor.serialize(*this, t, 0);
+    }
   }
 
-  // standard types are not classes
-  template <typename T, std::enable_if_t<!std::is_class<T>::value, int> = 0>
-  void recurse(T &t) {}
-
   // const objects cannot be processed by boost::serialization
-  template <typename T> void recurse(T const &t) {}
+  template <typename T> void recurse(T const &) {}
 
   // std::vector objects cannot be processed by boost::serialization
-  template <typename T> void recurse(std::vector<T> &t) {}
+  template <typename T> void recurse(std::vector<T> &) {}
 
   buffer_type &m_buffer;
   boost::serialization::access m_accessor;
@@ -174,10 +171,10 @@ BOOST_IS_BITWISE_SERIALIZABLE(Testing::BitwiseSerializable)
 
 void constexpr assert_has_serialize_method() {
   using namespace Testing;
-  static_assert(!traits::has_serialize_method<int>::value, "");
-  static_assert(!traits::has_serialize_method<NotSerializable>::value, "");
-  static_assert(traits::has_serialize_method<BitwiseSerializable>::value, "");
-  static_assert(traits::has_serialize_method<MixedSerializable>::value, "");
+  static_assert(!traits::has_serialize_method<int>::value);
+  static_assert(!traits::has_serialize_method<NotSerializable>::value);
+  static_assert(traits::has_serialize_method<BitwiseSerializable>::value);
+  static_assert(traits::has_serialize_method<MixedSerializable>::value);
 }
 
 BOOST_AUTO_TEST_CASE(TraitChecker_test) {
@@ -214,9 +211,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
 
   // struct Particle is not statically serializable
   {
-    static_assert(!TraitWrapper::template apply<Particle>::value, "");
+    static_assert(!TraitWrapper::template apply<Particle>::value);
     typename Checker::buffer_type buffer_ref = {"Particle"};
-    typename Checker::buffer_type buffer;
+    typename Checker::buffer_type buffer = {};
     Checker oa{buffer};
     Particle p;
     oa &p;
@@ -231,7 +228,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
         "Utils::compact_vector<int>",
 #endif
     };
-    typename Checker::buffer_type buffer;
+    typename Checker::buffer_type buffer = {};
     Checker oa{buffer};
     Particle p;
     oa | p;

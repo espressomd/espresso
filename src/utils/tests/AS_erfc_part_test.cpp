@@ -25,12 +25,14 @@ using Utils::AS_erfc_part;
 #include <cmath>
 
 /* Check that it can be used in constexpr context */
-static_assert((AS_erfc_part(0.), true), "");
+static_assert((AS_erfc_part(0.), true));
 
 BOOST_AUTO_TEST_CASE(approx) {
-  for (double x = 0.0; x <= 1.; x += 0.01) {
+  auto x = 0.0;
+  while (x <= 1.) {
     auto const approx = AS_erfc_part(x);
     auto const exact = std::exp(x * x) * std::erfc(x);
     BOOST_CHECK(std::abs(approx - exact) < 5.e-7);
+    x += 0.01;
   }
 }

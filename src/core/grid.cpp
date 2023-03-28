@@ -28,15 +28,13 @@
 
 #include "communication.hpp"
 #include "event.hpp"
-#include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
-#include <boost/algorithm/clamp.hpp>
-
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 
@@ -53,7 +51,7 @@ int map_position_node_array(const Utils::Vector3d &pos) {
   Utils::Vector3i im;
   for (int i = 0; i < 3; i++) {
     im[i] = static_cast<int>(std::floor(f_pos[i] / local_geo.length()[i]));
-    im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
+    im[i] = std::clamp(im[i], 0, node_grid[i] - 1);
   }
 
   return Utils::Mpi::cart_rank(comm_cart, im);

@@ -67,6 +67,7 @@ disable=all
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
 enable=dangerous-default-value, # W0102
+       duplicate-key, # W0109
        wildcard-import, # W0401
        assert-on-tuple, # W0199
        unused-import, # W0611

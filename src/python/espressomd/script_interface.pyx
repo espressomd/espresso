@@ -57,9 +57,9 @@ cdef class PScriptInterface:
         Object id of an existing core object (method 1).
     name : :obj:`str`
         Name of the core class to instantiate (method 2).
-    \*\*kwargs
+    **kwargs
         Parameters for the core class constructor (method 2).
-    policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
+    policy : :obj:`str`, {'GLOBAL', 'LOCAL'}
         Creation policy. The managed object exists either on all MPI nodes
         with 'GLOBAL' (default), or only on the head node with 'LOCAL'.
 
@@ -136,7 +136,7 @@ cdef class PScriptInterface:
 
         self.sip = sip
 
-    def call_method(self, method, **kwargs):
+    def call_method(self, method, handle_errors_message=None, **kwargs):
         """
         Call a method of the core class.
 
@@ -144,7 +144,9 @@ cdef class PScriptInterface:
         ----------
         method : Creation policy.
             Name of the core method.
-        \*\*kwargs
+        handle_errors_message : :obj:`str`, optional
+            Custom error message for runtime errors raised in a MPI context.
+        **kwargs
             Arguments for the method.
         """
         cdef VariantMap parameters
@@ -156,7 +158,9 @@ cdef class PScriptInterface:
 
         value = self.sip.get().call_method(utils.to_char_pointer(method), parameters)
         res = variant_to_python_object(value)
-        utils.handle_errors(f'while calling method {method}()')
+        if handle_errors_message is None:
+            handle_errors_message = f"while calling method {method}()"
+        utils.handle_errors(handle_errors_message)
         return res
 
     def name(self):
@@ -392,7 +396,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         return (_unpickle_so_class, (self._so_name, self._serialize()))
 
     def __dir__(self):
-        return self.__dict__.keys() + self._valid_parameters()
+        return list(self.__dict__.keys()) + self._valid_parameters()
 
     def __getattr__(self, attr):
         if attr in self._valid_parameters():

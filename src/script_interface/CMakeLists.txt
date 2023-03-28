@@ -22,6 +22,8 @@ add_library(
   initialize.cpp ObjectHandle.cpp object_container_mpi_guard.cpp
   GlobalContext.cpp ContextManager.cpp ParallelExceptionHandler.cpp)
 add_library(espresso::script_interface ALIAS espresso_script_interface)
+set_target_properties(espresso_script_interface
+                      PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
 
 add_subdirectory(accumulators)
 add_subdirectory(analysis)
@@ -61,4 +63,6 @@ target_link_libraries(
 target_include_directories(espresso_script_interface
                            PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
-add_subdirectory(tests)
+if(ESPRESSO_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()

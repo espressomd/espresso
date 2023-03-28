@@ -306,4 +306,4 @@ void ParticleVelocitiesFromLB_CPU() {
     }
   }
 }
-#endif
+#endif // VIRTUAL_SITES_INERTIALESS_TRACERS

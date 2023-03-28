@@ -147,7 +147,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
 
 def data_path(filename):
     """
-    Resolve abosulte path to a resource.
+    Resolve absolute path to a resource.
     """
     return pathlib.Path(__file__).resolve().parent / "data" / filename
 
@@ -268,9 +268,9 @@ def get_histogram(pos, obs_params, coord_system, **kwargs):
         Particle positions.
     obs_params : :obj:`dict`
         Parameters of the observable.
-    coord_system : :obj:`str`, \{'cartesian', 'cylindrical'\}
+    coord_system : :obj:`str`, {'cartesian', 'cylindrical'}
         Coordinate system.
-    \*\*kwargs :
+    **kwargs
         Optional parameters to ``np.histogramdd()``.
 
     Returns

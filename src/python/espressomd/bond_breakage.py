@@ -30,7 +30,7 @@ class BreakageSpec(ScriptInterfaceHelper):
     ----------
     breakage_length: :obj:`float`
         Maximal bond extension until the bond breaks.
-    action_type: :obj:`str`, \{'delete_bond', 'revert_bind_at_point_of_collision', 'none'\}
+    action_type: :obj:`str`, {'delete_bond', 'revert_bind_at_point_of_collision', 'none'}
         Action triggered when the bond reaches its maximal extension.
 
     """

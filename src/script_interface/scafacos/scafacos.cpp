@@ -56,14 +56,12 @@ struct ConvertToStringVector
     return std::vector<std::string>{value};
   }
 
-  template <typename T,
-            typename = std::enable_if_t<!std::is_arithmetic<T>::value>>
+  template <typename T, typename = std::enable_if_t<!std::is_arithmetic_v<T>>>
   std::vector<std::string> operator()(T const &value) const {
     throw std::runtime_error("Cannot convert " + Utils::demangle<T>());
   }
 
-  template <typename T,
-            typename = std::enable_if_t<std::is_same<T, int>::value>>
+  template <typename T, typename = std::enable_if_t<std::is_same_v<T, int>>>
   auto operator()(T const &value) const {
     return operator()(to_str(value));
   }
@@ -84,8 +82,7 @@ struct ConvertToStringVector
     return values_str;
   }
 
-  template <typename T,
-            typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
   auto operator()(std::vector<T> const &values) const {
     std::vector<std::string> values_str;
     for (auto const &v : values) {
@@ -128,12 +125,12 @@ private:
 };
 
 std::string serialize_parameters(Variant const &pack) {
-  auto const parameters = boost::apply_visitor(GetParameterList{}, pack);
+  auto const parameters = boost::apply_visitor(GetParameterList(), pack);
   if (parameters.empty()) {
     throw std::invalid_argument(
         "ScaFaCoS methods require at least 1 parameter");
   }
-  auto const visitor = ConvertToStringVector{};
+  auto const visitor = ConvertToStringVector();
   std::string method_params = "";
   for (auto const &kv : parameters) {
     method_params += "," + kv.first;

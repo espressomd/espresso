@@ -79,7 +79,7 @@ class Test(ut.TestCase):
             self.system.part.add(pos=spacing * pos, dip=[1., 0., 0.])
 
         dp3m_params = dict(prefactor=1., accuracy=1e-9, mesh=48, r_cut=28.,
-                           cao=6, tuning=False)
+                           cao=6, alpha=0.137582516, tune=False)
         mdlc_params = {'maxPWerror': 1e-9, 'gap_size': 16.}
 
         def check():
@@ -123,7 +123,7 @@ class Test(ut.TestCase):
             self.system.part.add(pos=spacing * pos, dip=[0., 0., 1.])
 
         dp3m_params = dict(prefactor=1., accuracy=1e-9, mesh=48, r_cut=33.6,
-                           cao=7, tuning=False)
+                           cao=7, alpha=0.1186918, tune=False)
         mdlc_params = {'maxPWerror': 1e-9, 'gap_size': 16.}
 
         def check():
@@ -167,7 +167,8 @@ class Test(ut.TestCase):
             self.system.part.add(pos=spacing * pos, dip=[0., 0., 1.])
 
         dp3m_params = dict(
-            prefactor=1., accuracy=5e-8, mesh=64, r_cut=8.2, cao=7, tuning=False)
+            prefactor=1., accuracy=5e-8, mesh=64, r_cut=8.2, cao=7,
+            alpha=0.5091135, tune=False)
 
         def check():
             # minimal energy configuration
@@ -198,7 +199,7 @@ class Test(ut.TestCase):
         base = [0., 0., 1.]
         ref_energy, ref_pressure = self.get_reference_obs_per_ion(mc, base)
         p3m_params = dict(prefactor=1., accuracy=1e-8, mesh=32, r_cut=14.,
-                          cao=7, tuning=False)
+                          cao=7, alpha=0.27362958, tune=False)
 
         def check():
             energy, p_scalar, p_tensor = self.get_normalized_obs_per_ion()
@@ -228,7 +229,7 @@ class Test(ut.TestCase):
         base = [1., 1., 0.]
         ref_energy, ref_pressure = self.get_reference_obs_per_ion(mc, base)
         p3m_params = dict(prefactor=1., accuracy=1e-8, mesh=48, r_cut=22.,
-                          cao=7, tuning=False)
+                          cao=7, alpha=0.179719, tune=False)
         elc_params = dict(maxPWerror=1e-6, gap_size=16)
 
         def check(pressure=True):
@@ -261,7 +262,7 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_infinite_ionic_cube(self):
-        n_pairs = 8
+        n_pairs = 6
         self.system.box_l = 3 * [2 * n_pairs]
         for j, k, l in itertools.product(range(2 * n_pairs), repeat=3):
             self.system.part.add(pos=[j, k, l], q=(-1)**(j + k + l))
@@ -269,8 +270,8 @@ class Test(ut.TestCase):
         mc = -1.74756459463318219
         base = [1., 1., 1.]
         ref_energy, ref_pressure = self.get_reference_obs_per_ion(mc, base)
-        p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=44, r_cut=7., cao=7,
-                          tuning=False)
+        p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=52, r_cut=4.4, cao=7,
+                          alpha=0.8895166, tune=False)
 
         def check():
             energy, p_scalar, p_tensor = self.get_normalized_obs_per_ion()
@@ -285,6 +286,8 @@ class Test(ut.TestCase):
         check()
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
             self.system.actors.clear()
+            p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=42, r_cut=5.5,
+                              cao=7, alpha=0.709017, tune=False)
             p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
             self.system.actors.add(p3m)
             check()

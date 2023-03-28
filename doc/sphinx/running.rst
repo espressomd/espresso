@@ -148,7 +148,7 @@ terminal:
 This only means |es| was compiled with IPython instead of Jupyter. If Jupyter
 is installed on your system, the notebook will automatically close IPython and
 start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
-``-DIPYTHON_EXECUTABLE=$(which jupyter)``.
+``-D IPYTHON_EXECUTABLE=$(which jupyter)``.
 
 You can find the official Jupyter documentation at
 https://jupyter.readthedocs.io/en/latest/running.html
@@ -292,8 +292,7 @@ Parallel computing
 
 Many algorithms in |es| are designed to work with multiple MPI ranks.
 However, not all algorithms benefit from MPI parallelization equally.
-Several algorithms only use MPI rank 0 (e.g. :ref:`Reaction methods`), while
-a small subset simply don't support MPI (e.g. :ref:`Dipolar direct sum`).
+Several algorithms only use MPI rank 0 (e.g. :ref:`Reaction methods`).
 |es| should work with most MPI implementations on the market;
 see the :term:`MPI installation requirements <MPI>` for details.
 

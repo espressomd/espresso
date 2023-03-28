@@ -65,13 +65,13 @@ BOOST_AUTO_TEST_CASE(packing_size_test) {
 }
 
 BOOST_AUTO_TEST_CASE(type_traits) {
-  static_assert(Utils::is_statically_serializable<int>::value, "");
-  static_assert(Utils::detail::use_memcpy<int>::value, "");
-  static_assert(not Utils::detail::use_serialize<int>::value, "");
+  static_assert(Utils::is_statically_serializable<int>::value);
+  static_assert(Utils::detail::use_memcpy<int>::value);
+  static_assert(not Utils::detail::use_serialize<int>::value);
 
-  static_assert(Utils::is_statically_serializable<OpVec>::value, "");
-  static_assert(not Utils::detail::use_memcpy<OpVec>::value, "");
-  static_assert(Utils::detail::use_serialize<OpVec>::value, "");
+  static_assert(Utils::is_statically_serializable<OpVec>::value);
+  static_assert(not Utils::detail::use_memcpy<OpVec>::value);
+  static_assert(Utils::detail::use_serialize<OpVec>::value);
 
   BOOST_TEST_PASSPOINT();
 }

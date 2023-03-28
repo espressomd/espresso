@@ -81,15 +81,13 @@ BOOST_AUTO_TEST_CASE(matrix_serialization) {
 
 BOOST_AUTO_TEST_CASE(type_deduction) {
   static_assert(
-      std::is_same<boost::qvm::deduce_vec2<Utils::Matrix<int, 2, 2>,
-                                           Utils::Vector<int, 2>, 2>::type,
-                   Utils::Vector<int, 2>>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_vec2<Utils::Matrix<int, 2, 2>,
+                                             Utils::Vector<int, 2>, 2>::type,
+                     Utils::Vector<int, 2>>);
   static_assert(
-      std::is_same<boost::qvm::deduce_vec2<Utils::Matrix<int, 2, 2>,
-                                           Utils::Vector<double, 2>, 2>::type,
-                   Utils::Vector<double, 2>>::value,
-      "");
+      std::is_same_v<boost::qvm::deduce_vec2<Utils::Matrix<int, 2, 2>,
+                                             Utils::Vector<double, 2>, 2>::type,
+                     Utils::Vector<double, 2>>);
   BOOST_TEST_PASSPOINT();
 }
 

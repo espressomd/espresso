@@ -20,7 +20,7 @@
 add_subdirectory(include/config)
 add_subdirectory(src)
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_config.cmakein
+configure_file(${CMAKE_SOURCE_DIR}/cmake/espresso_cmake_config.cmakein
                ${CMAKE_CURRENT_BINARY_DIR}/include/config/cmake_config.hpp)
 
 add_custom_command(
@@ -43,6 +43,7 @@ add_custom_target(
   COMMAND
     ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_myconfig.py
     ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_SOURCE_DIR}/features.def
+    ${CMAKE_SOURCE_DIR}/cmake/espresso_cmake_config.cmakein
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/myconfig-final.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/include/config/cmake_config.hpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/features.def myconfig)
@@ -54,6 +55,8 @@ execute_process(
 
 add_library(espresso_config SHARED src/config-features.cpp)
 add_library(espresso::config ALIAS espresso_config)
+set_target_properties(espresso_config PROPERTIES CXX_CLANG_TIDY
+                                                 "${ESPRESSO_CXX_CLANG_TIDY}")
 add_dependencies(espresso_config myconfig check_myconfig
                  generate_config_features)
 install(TARGETS espresso_config
@@ -71,7 +74,7 @@ add_custom_target(
     ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
     -DPROJECT_VERSION=${PROJECT_VERSION} -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -P
-    ${PROJECT_SOURCE_DIR}/cmake/version.cmake)
+    ${PROJECT_SOURCE_DIR}/cmake/espresso_version.cmake)
 set_property(
   DIRECTORY APPEND
   PROPERTY ADDITIONAL_MAKE_CLEAN_FILES include/config/version.hpp

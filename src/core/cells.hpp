@@ -56,6 +56,8 @@
 
 #include "Particle.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/optional.hpp>
 
 #include <utility>
@@ -114,10 +116,32 @@ void check_resort_particles();
  * @brief Get ids of particles that are within a certain distance
  * of another particle.
  */
-std::vector<int> mpi_get_short_range_neighbors(int pid, double distance);
-boost::optional<std::vector<int>>
-mpi_get_short_range_neighbors_local(int pid, double distance,
-                                    bool run_sanity_checks);
+boost::optional<std::vector<int>> get_short_range_neighbors(int pid,
+                                                            double distance);
+
+struct NeighborPIDs {
+  NeighborPIDs() = default;
+  NeighborPIDs(int _pid, std::vector<int> _neighbor_pids)
+      : pid{_pid}, neighbor_pids{std::move(_neighbor_pids)} {}
+
+  int pid;
+  std::vector<int> neighbor_pids;
+};
+
+namespace boost {
+namespace serialization {
+template <class Archive>
+void serialize(Archive &ar, NeighborPIDs &n, unsigned int const /* version */) {
+  ar &n.pid;
+  ar &n.neighbor_pids;
+}
+} // namespace serialization
+} // namespace boost
+
+/**
+ * @brief Returns pairs of particle ids and neighbor particle id lists.
+ */
+std::vector<NeighborPIDs> get_neighbor_pids();
 
 /**
  * @brief Find the cell in which a particle is stored.
@@ -144,10 +168,24 @@ public:
   int node;
 };
 
+namespace boost {
+namespace serialization {
+template <class Archive>
+void serialize(Archive &ar, PairInfo &p, unsigned int const /* version */) {
+  ar &p.id1;
+  ar &p.id2;
+  ar &p.pos1;
+  ar &p.pos2;
+  ar &p.vec21;
+  ar &p.node;
+}
+} // namespace serialization
+} // namespace boost
+
 /**
  * @brief Returns pairs of particle ids, positions and distance as seen by the
  * non-bonded loop.
  */
-std::vector<PairInfo> non_bonded_loop_trace();
+std::vector<PairInfo> non_bonded_loop_trace(int rank);
 
 #endif

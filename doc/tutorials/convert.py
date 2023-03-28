@@ -56,8 +56,8 @@ def add_cell_from_script(nb, filepath):
     with open(filepath, encoding='utf-8') as f:
         code = f.read()
     # remove ESPResSo copyright header
-    m = re.search('# Copyright \(C\) [\d\-,]+ The ESPResSo project\n.+?'
-                  'If not, see <http://www\.gnu\.org/licenses/>\.\n', code, re.DOTALL)
+    m = re.search('# Copyright \\(C\\) [\\d\\-,]+ The ESPResSo project\n.+?'
+                  'If not, see <http://www\\.gnu\\.org/licenses/>\\.\n', code, re.DOTALL)
     if m and all(x.startswith('#') for x in m.group(0).strip().split('\n')):
         code = re.sub('^(#\n)+', '', code.replace(m.group(0), ''), re.M)
     # strip first component in relative paths
@@ -116,6 +116,8 @@ def split_matplotlib_cells(nb):
                 split_code = '\n'.join(lines[lineno_end:]).lstrip('\n')
                 if split_code:
                     new_cell = nbformat.v4.new_code_cell(source=split_code)
+                    if 'id' not in cell and 'id' in new_cell:
+                        del new_cell['id']
                     nb['cells'].insert(i + 1, new_cell)
                 lines = lines[:lineno_end]
                 nb['cells'][i]['source'] = '\n'.join(lines).rstrip('\n')
@@ -314,7 +316,7 @@ def handle_ci_case(args):
 
     # write edited notebook
     with open(notebook_filepath_edited, 'w', encoding='utf-8') as f:
-        nbformat.write(nb, f)
+        nbformat.write(nb, f, version=nbformat.NO_CONVERT)
 
 
 def handle_exercise2_case(args):

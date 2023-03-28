@@ -23,13 +23,15 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "ParticleFactory.hpp"
+
 #include "EspressoSystemInterface.hpp"
+#include "Particle.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
-#include "config/config.hpp"
-#include "particle_data.hpp"
 #include "particle_node.hpp"
-#include "virtual_sites.hpp"
-#include "virtual_sites/VirtualSitesOff.hpp"
+
+#include "config/config.hpp"
 
 #include <boost/mpi.hpp>
 
@@ -37,7 +39,7 @@
 #include <memory>
 
 namespace espresso {
-auto &system = EspressoSystemInterface::Instance();
+static auto &system = EspressoSystemInterface::Instance();
 }
 
 inline void check_uninitialized_device_pointers() {
@@ -60,44 +62,58 @@ boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   try {
     cuda_check_device();
     has_compatible_gpu = true;
-  } catch (cuda_runtime_error const &err) {
+  } catch (cuda_runtime_error const &) {
   }
   return has_compatible_gpu;
 }
 
-BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
+BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
+                        *boost::unit_test::precondition(has_gpu)) {
+  auto const rank = boost::mpi::communicator().rank();
+
   check_uninitialized_device_pointers();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
 
-  auto const pid = 1;
-  place_particle(pid, {0., 0., 0.});
-  set_particle_type(pid, 0);
+  auto const p_id = 1;
+  create_particle({0., 0., 0.}, p_id, 0);
 
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
   espresso::system.update();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
   espresso::system.requestParticleStructGpu();
   espresso::system.update();
-  BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 1);
+  BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), (rank == 0) ? 1 : 0);
 
   // check position split
   BOOST_TEST(espresso::system.hasRGpu());
   espresso::system.requestRGpu();
   espresso::system.update();
-  BOOST_TEST(espresso::system.rGpuBegin() != nullptr);
+  if (rank == 0) {
+    BOOST_TEST(espresso::system.rGpuBegin() != nullptr);
+  } else {
+    BOOST_TEST(espresso::system.rGpuBegin() == nullptr);
+  }
 
   // check force split
   BOOST_TEST(espresso::system.hasFGpu());
   espresso::system.requestFGpu();
   espresso::system.update();
-  BOOST_TEST(espresso::system.fGpuBegin() != nullptr);
+  if (rank == 0) {
+    BOOST_TEST(espresso::system.fGpuBegin() != nullptr);
+  } else {
+    BOOST_TEST(espresso::system.fGpuBegin() == nullptr);
+  }
 
   // check torque split
 #ifdef ROTATION
   BOOST_CHECK(espresso::system.hasTorqueGpu());
   espresso::system.requestTorqueGpu();
   espresso::system.update();
-  BOOST_TEST(espresso::system.torqueGpuBegin() != nullptr);
+  if (rank == 0) {
+    BOOST_TEST(espresso::system.torqueGpuBegin() != nullptr);
+  } else {
+    BOOST_TEST(espresso::system.torqueGpuBegin() == nullptr);
+  }
 #else
   BOOST_CHECK(!espresso::system.hasTorqueGpu());
   BOOST_CHECK_THROW(espresso::system.requestTorqueGpu(), std::runtime_error);
@@ -108,7 +124,11 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
   BOOST_CHECK(espresso::system.hasQGpu());
   espresso::system.requestQGpu();
   espresso::system.update();
-  BOOST_TEST(espresso::system.qGpuBegin() != nullptr);
+  if (rank == 0) {
+    BOOST_TEST(espresso::system.qGpuBegin() != nullptr);
+  } else {
+    BOOST_TEST(espresso::system.qGpuBegin() == nullptr);
+  }
 #else
   BOOST_CHECK(!espresso::system.hasQGpu());
   BOOST_CHECK_THROW(espresso::system.requestQGpu(), std::runtime_error);
@@ -119,14 +139,18 @@ BOOST_AUTO_TEST_CASE(check_with_gpu, *boost::unit_test::precondition(has_gpu)) {
   BOOST_CHECK(espresso::system.hasDipGpu());
   espresso::system.requestDipGpu();
   espresso::system.update();
-  BOOST_TEST(espresso::system.dipGpuBegin() != nullptr);
+  if (rank == 0) {
+    BOOST_TEST(espresso::system.dipGpuBegin() != nullptr);
+  } else {
+    BOOST_TEST(espresso::system.dipGpuBegin() == nullptr);
+  }
 #else
   BOOST_CHECK(!espresso::system.hasDipGpu());
   BOOST_CHECK_THROW(espresso::system.requestDipGpu(), std::runtime_error);
 #endif
 
   // clear device memory
-  remove_particle(pid);
+  remove_particle(p_id);
   espresso::system.update();
   BOOST_CHECK_EQUAL(espresso::system.npart_gpu(), 0);
 }
@@ -153,15 +177,8 @@ BOOST_AUTO_TEST_CASE(check_without_cuda) {
 int main(int argc, char **argv) {
   auto mpi_env = mpi_init(argc, argv);
 
-  // this unit test only runs on 1 core
-  assert(boost::mpi::communicator().size() == 1);
-
   // initialize the MpiCallbacks framework
   Communication::init(mpi_env);
-#ifdef VIRTUAL_SITES
-  set_virtual_sites(std::make_shared<VirtualSitesOff>());
-#endif
-  mpi_loop();
 
   espresso::system.init();
 

@@ -32,10 +32,12 @@ class HybridDecomposition(ut.TestCase):
         self.system.cell_system.set_hybrid_decomposition(
             use_verlet_lists=False, n_square_types={1}, cutoff_regular=2.5)
         self.system.cell_system.node_grid = self.original_node_grid
+        self.system.min_global_cut = 0.4
         self.system.time_step = 1e-3
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.actors.clear()
 
     def check_resort(self):
         n_part = 2352
@@ -95,21 +97,13 @@ class HybridDecomposition(ut.TestCase):
         if n_part_small > 0:
             self.system.part.add(
                 type=[0] * n_part_small,
-                pos=np.random.random(
-                    (n_part_small,
-                     3)) * box_l,
-                v=np.random.randn(
-                    n_part_small,
-                    3))
+                pos=np.random.random((n_part_small, 3)) * box_l,
+                v=np.random.randn(n_part_small, 3))
         if n_part_large > 0:
             self.system.part.add(
                 type=[1] * n_part_large,
-                pos=np.random.random(
-                    (n_part_large,
-                     3)) * box_l,
-                v=np.random.randn(
-                    n_part_large,
-                    3))
+                pos=np.random.random((n_part_large, 3)) * box_l,
+                v=np.random.randn(n_part_large, 3))
         self.assertEqual(len(self.system.part.all()),
                          n_part_small + n_part_large)
 
@@ -126,10 +120,10 @@ class HybridDecomposition(ut.TestCase):
         self.system.integrator.set_steepest_descent(
             f_max=0, gamma=30, max_displacement=0.01)
         self.system.integrator.run(0)
-        old_force = np.max(np.linalg.norm(self.system.part.all().f, axis=1))
+        old_force = np.max(np.linalg.norm(self.system.part.all().f, axis=-1))
         while old_force > n_part_small + n_part_large:
             self.system.integrator.run(20)
-            force = np.max(np.linalg.norm(self.system.part.all().f, axis=1))
+            force = np.max(np.linalg.norm(self.system.part.all().f, axis=-1))
             old_force = force
 
         self.system.integrator.set_vv()
@@ -164,31 +158,42 @@ class HybridDecomposition(ut.TestCase):
     def test_against_nsquare(self):
         self.prepare_hybrid_setup(n_part_small=150, n_part_large=50)
 
+        self.run_comparison(self.system.cell_system.set_n_square)
+
+    def run_comparison(self, set_reference_decomposition_fun):
         steps_per_round = 20
         for _ in range(40):
             # integrate using hybrid and calculate energy and forces
             self.system.cell_system.set_hybrid_decomposition(
                 n_square_types={1}, cutoff_regular=2.5)
             self.system.integrator.run(steps_per_round)
-            energy = self.system.analysis.energy()
-            forces = self.system.part.all().f
+            energy_mix = self.system.analysis.energy()
+            forces_mix = np.copy(self.system.part.all().f)
 
-            # compare to n_square for consistency
-            self.system.cell_system.set_n_square()
+            # compare to reference cell system for consistency
+            set_reference_decomposition_fun()
             self.system.integrator.run(0)
 
-            energy_n_square = self.system.analysis.energy()
-            forces_n_square = self.system.part.all().f
+            energy_ref = self.system.analysis.energy()
+            forces_ref = np.copy(self.system.part.all().f)
             self.assertAlmostEqual(
-                energy_n_square["non_bonded"],
-                energy["non_bonded"])
+                energy_mix["non_bonded"],
+                energy_ref["non_bonded"],
+                delta=1e-9)
             self.assertAlmostEqual(
-                energy_n_square[("non_bonded", 0, 0)], energy[("non_bonded", 0, 0)])
+                energy_mix[("non_bonded", 0, 0)],
+                energy_ref[("non_bonded", 0, 0)],
+                delta=1e-9)
             self.assertAlmostEqual(
-                energy_n_square[("non_bonded", 0, 1)], energy[("non_bonded", 0, 1)])
+                energy_mix[("non_bonded", 0, 1)],
+                energy_ref[("non_bonded", 0, 1)],
+                delta=1e-9)
             self.assertAlmostEqual(
-                energy_n_square[("non_bonded", 1, 1)], energy[("non_bonded", 1, 1)])
-            self.assertTrue(np.allclose(forces_n_square, forces))
+                energy_mix[("non_bonded", 1, 1)],
+                energy_ref[("non_bonded", 1, 1)],
+                delta=1e-9)
+            np.testing.assert_allclose(
+                forces_mix, forces_ref, rtol=1e-9, atol=0.)
 
     def test_sort_into_child_decs(self):
         """Assert that particles end up in the respective child
@@ -214,6 +219,93 @@ class HybridDecomposition(ut.TestCase):
                 'parts_per_decomposition']
             self.assertEqual(parts_per_decomposition['n_square'], n_n_square)
             self.assertEqual(parts_per_decomposition['regular'], n_regular)
+
+    def valid_p3m_parameters(self):
+        return {"r_cut": 16.11914, "alpha": 0.14735, "mesh": 12, "cao": 5,
+                "tune": False, "accuracy": 1e-5, "prefactor": 1.0}
+
+    def valid_dp3m_parameters(self):
+        return {"r_cut": 17.8418, "alpha": 0.09919, "mesh": 4, "cao": 2,
+                "tune": False, "accuracy": 1e-5, "prefactor": 1.0}
+
+    def add_particles(self, charge=False, dip=False):
+        eps = 1e-14
+        corner = np.full(3, eps)
+        edge = [self.system.box_l[0] - eps,
+                self.system.box_l[1] - eps,
+                self.system.box_l[2] / 2]
+        p = self.system.part.add(
+            pos=[corner, [0.5, 2.6, 7.6], edge],
+            type=[0, 1, 0],
+        )
+        if charge:
+            p.q = np.array([-1., 1., 0.])
+        if dip:
+            p.dip = np.array([(1., 0., 0.), (0., -1., 0.), (0., 0., 1.)])
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 1,
+               "Skipping test: only runs for n_nodes == 1")
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_against_regular_p3m(self):
+        import espressomd.electrostatics
+
+        self.prepare_hybrid_setup(n_part_small=0, n_part_large=0)
+        self.add_particles(charge=True)
+        coulomb_interaction = espressomd.electrostatics.P3M(
+            **self.valid_p3m_parameters()
+        )
+        self.system.actors.add(coulomb_interaction)
+
+        self.run_comparison(self.system.cell_system.set_regular_decomposition)
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 1,
+               "Skipping test: only runs for n_nodes == 1")
+    @utx.skipIfMissingFeatures(["DP3M"])
+    def test_against_regular_dp3m(self):
+        import espressomd.magnetostatics
+
+        self.prepare_hybrid_setup(n_part_small=0, n_part_large=0)
+        self.add_particles(dip=True)
+        dipolar_interaction = espressomd.magnetostatics.DipolarP3M(
+            **self.valid_dp3m_parameters()
+        )
+        self.system.actors.add(dipolar_interaction)
+
+        self.run_comparison(self.system.cell_system.set_regular_decomposition)
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] in [1, 3],
+               "Skipping test: only runs for n_nodes not in [1, 3]")
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_mpi_exception_p3m(self):
+        import espressomd.electrostatics
+
+        self.system.cell_system.set_regular_decomposition()
+        self.system.analysis.energy()
+        actor = espressomd.electrostatics.P3M(
+            **self.valid_p3m_parameters()
+        )
+        self.system.actors.add(actor)
+
+        with self.assertRaises(Exception):
+            self.system.cell_system.set_hybrid_decomposition(
+                use_verlet_lists=False, n_square_types={1}, cutoff_regular=2.5)
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] in [1, 3],
+               "Skipping test: only runs for n_nodes not in [1, 3]")
+    @utx.skipIfMissingFeatures(["DP3M"])
+    def test_mpi_exception_dp3m(self):
+        import espressomd.magnetostatics
+
+        self.system.cell_system.set_regular_decomposition()
+        self.system.analysis.energy()
+        actor = espressomd.magnetostatics.DipolarP3M(
+            **self.valid_dp3m_parameters()
+        )
+        self.system.actors.add(actor)
+
+        with self.assertRaises(Exception):
+            self.system.cell_system.set_hybrid_decomposition(
+                use_verlet_lists=False, n_square_types={1}, cutoff_regular=2.5)
 
 
 if __name__ == "__main__":

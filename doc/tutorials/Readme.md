@@ -7,6 +7,9 @@ physical systems.
 
 [comment]: # (Begin of tutorials landing page)
 
+[![Launch with Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD)
+[![Launch with Gitpod](https://img.shields.io/badge/launch-Gitpod-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/espressomd/espresso)
+
 ### Introductory tutorials
 
 * **Simulate a simple Lennard-Jones liquid**  
@@ -39,7 +42,8 @@ physical systems.
   Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.  
   Guide
   [Part 1](lattice_boltzmann/lattice_boltzmann_theory.ipynb) |
-  [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb)
+  [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb) |
+  [Part 3](lattice_boltzmann/lattice_boltzmann_sedimentation.ipynb)
 * **Polymers**  
   Modelling polymers with hydrodynamic interactions.  
   [Guide](polymers/polymers.ipynb)
@@ -58,6 +62,10 @@ physical systems.
 * **Constant pH method**  
   Modelling an acid dissociation curve using the constant pH method.  
   [Guide](constant_pH/constant_pH.ipynb)
+* **Widom particle insertion method**  
+  Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.  
+  [Guide](widom_insertion/widom_insertion.ipynb)
+
 
 [comment]: # (End of tutorials landing page)
 

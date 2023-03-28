@@ -44,6 +44,9 @@ is_gpu_available = espressomd.gpu_available()
 modes = config.get_modes()
 has_lb_mode = 'LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available
 has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
+has_lbb = ('LB.CPU' in modes and espressomd.has_features("LB_BOUNDARIES") or
+           'LB.GPU' in modes and espressomd.has_features("LB_BOUNDARIES_GPU")
+           and espressomd.gpu_available())
 
 
 class CheckpointTest(ut.TestCase):
@@ -84,14 +87,18 @@ class CheckpointTest(ut.TestCase):
         Check serialization of the LB fluid. The checkpoint file only stores
         population information, therefore calling ``lbf.load_checkpoint()``
         erases all LBBoundaries information but doesn't remove the objects
-        contained in ``system.lbboundaries`. This test method is named such
-        that it is executed after ``self.test_lb_boundaries()``.
+        contained in ``system.lbboundaries``. A callback should re-introduce
+        the LB boundary flag after LB populations are reloaded.
         '''
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
         cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
         cpt_path = str(cpt_root / "lb") + "{}.cpt"
+
+        if has_lbb:
+            # LB boundaries must be correct before LB populations are loaded
+            self.check_lb_boundaries()
 
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -130,6 +137,10 @@ class CheckpointTest(ut.TestCase):
             self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
+        if has_lbb:
+            # LB boundaries must be correct after LB populations are loaded
+            self.check_lb_boundaries(remove_boundaries=True)
+
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
         self.assertTrue(cell_system_params['use_verlet_lists'])
@@ -154,12 +165,87 @@ class CheckpointTest(ut.TestCase):
         self.assertAlmostEqual(protocol.time_0, 0.2, delta=1e-10)
         self.assertAlmostEqual(protocol.shear_velocity, 1.2, delta=1e-10)
 
-    def test_part(self):
-        p1, p2 = system.part.by_ids([0, 1])
+    def test_particle_properties(self):
+        p1, p2, p3, p4, p8 = system.part.by_ids([0, 1, 3, 4, 8])
         np.testing.assert_allclose(np.copy(p1.pos), np.array([1.0, 2.0, 3.0]))
         np.testing.assert_allclose(np.copy(p2.pos), np.array([1.0, 1.0, 2.0]))
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
         np.testing.assert_allclose(np.copy(p2.f), particle_force1)
+        self.assertEqual(p1.type, 0)
+        self.assertEqual(p2.type, 0)
+        self.assertEqual(p3.type, 1)
+        self.assertEqual(p4.type, 1)
+        np.testing.assert_allclose(np.copy(p3.v), [0., 0., 0.])
+        np.testing.assert_allclose(np.copy(p4.v), [-1., 2., -4.])
+        np.testing.assert_allclose(p8.lees_edwards_offset, 0.2)
+        np.testing.assert_equal(np.copy(p1.image_box), [0, 0, 0])
+        np.testing.assert_equal(np.copy(p8.image_box),
+                                np.copy(system.periodicity).astype(int))
+        self.assertEqual(p8.lees_edwards_flag, 0)
+        if espressomd.has_features('MASS'):
+            np.testing.assert_allclose(p3.mass, 1.5)
+            np.testing.assert_allclose(p4.mass, 1.)
+        if espressomd.has_features('ROTATIONAL_INERTIA'):
+            np.testing.assert_allclose(np.copy(p3.rinertia), [2., 3., 4.])
+            np.testing.assert_allclose(np.copy(p4.rinertia), [1., 1., 1.])
+        if espressomd.has_features('ELECTROSTATICS'):
+            np.testing.assert_allclose(p1.q, 1.)
+            if espressomd.has_features(['MASS', 'ROTATION']):
+                # check Drude particles
+                p5 = system.part.by_id(5)
+                np.testing.assert_allclose(p2.q, +0.118, atol=1e-3)
+                np.testing.assert_allclose(p5.q, -1.118, atol=1e-3)
+                np.testing.assert_allclose(p2.mass, 0.4)
+                np.testing.assert_allclose(p5.mass, 0.6)
+            else:
+                np.testing.assert_allclose(p2.q, -1.)
+                np.testing.assert_allclose(p2.mass, 1.)
+            np.testing.assert_allclose(p3.q, 0.)
+            np.testing.assert_allclose(p4.q, 0.)
+        if espressomd.has_features('DIPOLES'):
+            np.testing.assert_allclose(np.copy(p1.dip), [1.3, 2.1, -6.])
+        if espressomd.has_features('ROTATION'):
+            np.testing.assert_allclose(np.copy(p3.quat), [1., 2., 3., 4.])
+            np.testing.assert_allclose(np.copy(p4.director) * np.sqrt(14.),
+                                       [3., 2., 1.])
+            np.testing.assert_allclose(np.copy(p3.omega_body), [0., 0., 0.])
+            np.testing.assert_allclose(np.copy(p4.omega_body), [0.3, 0.5, 0.7])
+            np.testing.assert_equal(np.copy(p3.rotation), [True, False, True])
+        if espressomd.has_features('EXTERNAL_FORCES'):
+            np.testing.assert_equal(np.copy(p3.fix), [False, True, False])
+            np.testing.assert_allclose(np.copy(p3.ext_force), [-0.6, 0.1, 0.2])
+        if espressomd.has_features(['EXTERNAL_FORCES', 'ROTATION']):
+            np.testing.assert_allclose(np.copy(p3.ext_torque), [0.3, 0.5, 0.7])
+        if espressomd.has_features('ROTATIONAL_INERTIA'):
+            np.testing.assert_allclose(p3.rinertia, [2., 3., 4.])
+        if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
+            gamma = 2.
+            if espressomd.has_features('PARTICLE_ANISOTROPY'):
+                gamma = np.array([2., 3., 4.])
+            np.testing.assert_allclose(p4.gamma, gamma)
+            if espressomd.has_features('ROTATION'):
+                np.testing.assert_allclose(p3.gamma_rot, 2. * gamma)
+        if espressomd.has_features('ENGINE'):
+            self.assertEqual(p3.swimming, {"f_swim": 0.03, "mode": "N/A",
+                                           "v_swim": 0., "dipole_length": 0.})
+        if espressomd.has_features('ENGINE') and has_lb_mode:
+            self.assertEqual(p4.swimming, {"v_swim": 0.02, "mode": "puller",
+                                           "f_swim": 0., "dipole_length": 1.})
+        if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and has_lb_mode:
+            np.testing.assert_allclose(np.copy(p8.mu_E), [-0.1, 0.2, -0.3])
+        if espressomd.has_features('VIRTUAL_SITES_RELATIVE'):
+            from scipy.spatial.transform import Rotation as R
+            q_ind = ([1, 2, 3, 0],)  # convert from scalar-first to scalar-last
+            vs_id, vs_dist, vs_quat = p2.vs_relative
+            d = p2.pos - p1.pos
+            theta = np.arccos(d[2] / np.linalg.norm(d))
+            assert abs(theta - 3. * np.pi / 4.) < 1e-8
+            q = np.array([0., 0., np.sin(theta / 2.), -np.cos(theta / 2.)])
+            r = R.from_quat(p1.quat[q_ind]) * R.from_quat(vs_quat[q_ind])
+            self.assertEqual(vs_id, p1.id)
+            np.testing.assert_allclose(vs_dist, np.sqrt(2.))
+            np.testing.assert_allclose(q[q_ind], r.as_quat(), atol=1e-10)
+            np.testing.assert_allclose(np.copy(p2.vs_quat), [1., 0., 0., 0.])
 
     def test_part_slice(self):
         np.testing.assert_allclose(np.copy(p_slice.id), [4, 1])
@@ -330,7 +416,9 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
-    def test_non_bonded_inter(self):
+    def test_non_bonded_inter_lj(self):
+        self.assertTrue(
+            system.non_bonded_inter[0, 0].lennard_jones.call_method("is_registered"))
         params1 = system.non_bonded_inter[0, 0].lennard_jones.get_params()
         params2 = system.non_bonded_inter[3, 0].lennard_jones.get_params()
         reference1 = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
@@ -339,6 +427,13 @@ class CheckpointTest(ut.TestCase):
                       'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         self.assertEqual(params1, reference1)
         self.assertEqual(params2, reference2)
+        self.assertTrue(handle_ia.lennard_jones.call_method("is_registered"))
+        self.assertEqual(handle_ia.lennard_jones.get_params(), reference1)
+
+    @utx.skipIfMissingFeatures('DPD')
+    def test_non_bonded_inter_dpd(self):
+        self.assertEqual(dpd_ia.get_params(), dpd_params)
+        self.assertFalse(dpd_ia.call_method("is_registered"))
 
     def test_bonded_inter(self):
         # check the ObjectHandle was correctly initialized (including MPI)
@@ -346,18 +441,14 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(bond_ids), len(system.bonded_inter))
         # check bonded interactions
         partcl_1 = system.part.by_id(1)
-        state = partcl_1.bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
-        self.assertEqual(state, reference)
-        state = partcl_1.bonds[0][0].params
-        self.assertEqual(state, reference)
-        if 'THERM.LB' not in modes:
-            state = partcl_1.bonds[1][0].params
-            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
-                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
-            self.assertEqual(state, reference)
-            state = partcl_1.bonds[1][0].params
-            self.assertEqual(state, reference)
+        self.assertEqual(partcl_1.bonds[0][0].params, reference)
+        self.assertEqual(system.bonded_inter[0].params, reference)
+        # all thermalized bonds should be identical
+        reference = {**therm_params, 'seed': 3}
+        self.assertEqual(partcl_1.bonds[1][0].params, reference)
+        self.assertEqual(system.bonded_inter[1].params, reference)
+        self.assertEqual(therm_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
@@ -385,7 +476,6 @@ class CheckpointTest(ut.TestCase):
             delta=1e-10)
         self.assertEqual(break_spec.action_type, cpt_spec.action_type)
 
-    @ut.skipIf('THERM.LB' in modes, 'LB thermostat in modes')
     @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
     def test_drude_helpers(self):
         drude_type = 10
@@ -410,6 +500,8 @@ class CheckpointTest(ut.TestCase):
         self.assertIsInstance(
             system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesRelative)
+        self.assertTrue(system.virtual_sites.have_quaternion)
+        self.assertTrue(system.virtual_sites.override_cutoff_check)
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
@@ -458,9 +550,8 @@ class CheckpointTest(ut.TestCase):
             def predicate(cur, key):
                 np.testing.assert_allclose(cur[key][0], cur[key][1],
                                            err_msg=f"mismatch for '{key}'")
-            # note: cannot compare forces since they are NaN in frame #1
-            for key in ('position', 'image', 'velocity',
-                        'id', 'species', 'mass', 'charge'):
+            for key in ('id', 'position', 'image', 'velocity',
+                        'species', 'mass', 'charge', 'force'):
                 predicate(cur, f'particles/atoms/{key}/value')
             for key in ('offset', 'direction', 'normal'):
                 predicate(cur, f'particles/atoms/lees_edwards/{key}/value')
@@ -504,6 +595,7 @@ class CheckpointTest(ut.TestCase):
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                      'timings': 15, 'check_neutrality': True,
+                     'check_complex_residuals': False,
                      'charge_neutrality_tolerance': 1e-12}
         for key in reference:
             self.assertIn(key, state)
@@ -519,6 +611,7 @@ class CheckpointTest(ut.TestCase):
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                          'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                          'timings': 15, 'check_neutrality': True,
+                         'check_complex_residuals': False,
                          'charge_neutrality_tolerance': 7e-12}
         elc_reference = {'gap_size': 6.0, 'maxPWerror': 0.1,
                          'delta_mid_top': 0.9, 'delta_mid_bot': 0.1,
@@ -587,10 +680,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(1).exclusions), [2])
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
-    @ut.skipIf(not has_lb_mode or not (espressomd.has_features("LB_BOUNDARIES")
-                                       or espressomd.has_features("LB_BOUNDARIES_GPU")),
-               "Missing features")
-    def test_lb_boundaries(self):
+    def check_lb_boundaries(self, remove_boundaries=False):
         # check boundary objects
         self.assertEqual(len(system.lbboundaries), 2)
         np.testing.assert_allclose(
@@ -601,6 +691,7 @@ class CheckpointTest(ut.TestCase):
             system.lbboundaries[0].shape, espressomd.shapes.Wall)
         self.assertIsInstance(
             system.lbboundaries[1].shape, espressomd.shapes.Wall)
+
         # check boundary flag
         lbf = self.get_active_actor_of_type(
             espressomd.lb.HydrodynamicInteraction)
@@ -608,7 +699,10 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_equal(np.copy(lbf[-1, :, :].boundary.astype(int)), 2)
         np.testing.assert_equal(
             np.copy(lbf[1:-1, :, :].boundary.astype(int)), 0)
+
         # remove boundaries
+        if not remove_boundaries:
+            return
         system.lbboundaries.clear()
         self.assertEqual(len(system.lbboundaries), 0)
         np.testing.assert_equal(np.copy(lbf[:, :, :].boundary.astype(int)), 0)
@@ -626,7 +720,7 @@ class CheckpointTest(ut.TestCase):
 
         self.assertIsInstance(c[0].shape, espressomd.shapes.Sphere)
         self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
-        self.assertEqual(c[0].particle_type, 17)
+        self.assertEqual(c[0].particle_type, 7)
 
         self.assertIsInstance(c[1].shape, espressomd.shapes.Wall)
         np.testing.assert_allclose(np.copy(c[1].shape.normal),
@@ -668,6 +762,7 @@ class CheckpointTest(ut.TestCase):
         if self.n_nodes == 1:
             union = c[7].shape
             self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(c[7].particle_type, 2)
             self.assertEqual(len(union), 2)
             wall1, wall2 = union.call_method('get_elements')
             self.assertIsInstance(wall1, espressomd.shapes.Wall)

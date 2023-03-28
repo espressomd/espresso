@@ -28,6 +28,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -49,11 +50,11 @@ struct Dummy : si::ObjectHandle {
     static const boost::string_ref parameter_names[] = {"id", "object_param"};
 
     return Utils::make_const_span(parameter_names,
-                                  std::min(params.size(), 2lu));
+                                  std::min(params.size(), std::size_t{2u}));
   }
 };
 
-auto factory = []() {
+static auto factory = []() {
   Utils::Factory<si::ObjectHandle> factory;
   factory.register_new<Dummy>("Dummy");
 
@@ -65,6 +66,16 @@ BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
   auto ctx = std::make_shared<si::LocalContext>(factory, comm);
 
   auto res = ctx->make_shared("Dummy", {});
+  BOOST_REQUIRE(res != nullptr);
+  BOOST_CHECK_EQUAL(res->context(), ctx.get());
+  BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
+}
+
+BOOST_AUTO_TEST_CASE(LocalContext_make_shared_local) {
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<si::LocalContext>(factory, comm);
+
+  auto res = ctx->make_shared_local("Dummy", {});
   BOOST_REQUIRE(res != nullptr);
   BOOST_CHECK_EQUAL(res->context(), ctx.get());
   BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");

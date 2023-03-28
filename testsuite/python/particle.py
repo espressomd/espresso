@@ -228,16 +228,23 @@ class ParticleProperties(ut.TestCase):
             p1.add_exclusion(pid2)
             p1.add_exclusion(pid2)
 
-    @utx.skipIfMissingFeatures("DIPOLES")
-    def test_contradicting_properties_dip_dipm(self):
-        with self.assertRaises(ValueError):
-            self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1], dipm=1.0)
-
-    @utx.skipIfMissingFeatures(["DIPOLES", "ROTATION"])
-    def test_contradicting_properties_dip_quat(self):
-        with self.assertRaises(ValueError):
-            self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1],
-                                 quat=[1.0, 1.0, 1.0, 1.0])
+    @utx.skipIfMissingFeatures(["ROTATION"])
+    def test_contradicting_properties_quat(self):
+        invalid_combinations = [
+            {'quat': [1., 1., 1., 1.], 'director': [1., 1., 1.]},
+        ]
+        if espressomd.has_features(["DIPOLES"]):
+            invalid_combinations += [
+                {'dip': [1., 1., 1.], 'dipm': 1.},
+                {'dip': [1., 1., 1.], 'quat': [1., 1., 1., 1.]},
+                {'dip': [1., 1., 1.], 'director': [1., 1., 1.]},
+            ]
+        # check all methods that can instantiate particles
+        for kwargs in invalid_combinations:
+            for make_new_particle in (
+                    self.system.part.add, espressomd.particle_data.ParticleHandle):
+                with self.assertRaises(ValueError):
+                    make_new_particle(pos=[0., 0., 0.], **kwargs)
 
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_invalid_quat(self):
@@ -283,13 +290,9 @@ class ParticleProperties(ut.TestCase):
         np.testing.assert_equal(sorted(res.id), np.arange(0, 16, 2, dtype=int))
 
     def test_image_box(self):
-        s = self.system
-        s.part.clear()
-
-        pos = 1.5 * s.box_l
-
-        p = s.part.add(pos=pos)
-
+        self.system.part.clear()
+        pos = 1.5 * self.system.box_l
+        p = self.system.part.add(pos=pos)
         np.testing.assert_equal(np.copy(p.image_box), [1, 1, 1])
 
     def test_particle_numbering(self):
@@ -373,6 +376,24 @@ class ParticleProperties(ut.TestCase):
                 p.swimming = {"v_swim": 0.3, "f_swim": 0.6}
             with self.assertRaisesRegex(ValueError, err_msg.format("swimming.mode", "has to be either 'pusher', 'puller' or 'N/A'")):
                 p.swimming = {"v_swim": 0.3, "mode": "invalid"}
+        if espressomd.has_features("MASS"):
+            for mass in [0., -1., -2.]:
+                with self.assertRaisesRegex(ValueError, err_msg.format("mass", "must be a float > 0")):
+                    p.mass = mass
+
+    def test_missing_features(self):
+        def check(feature, prop, throwing_values, valid_value=None):
+            if not espressomd.has_features(feature):
+                if valid_value is not None:
+                    # this should not throw
+                    setattr(self.partcl, prop, valid_value)
+                for throwing_value in throwing_values:
+                    with self.assertRaisesRegex(RuntimeError, f"Feature {feature} not compiled in"):
+                        setattr(self.partcl, prop, throwing_value)
+
+        check("MASS", "mass", [1.1, 0., -1.], 1.)
+        check("ELECTROSTATICS", "q", [1., -1.], 0.)
+        check("VIRTUAL_SITES", "virtual", [True], False)
 
     def test_parallel_property_setters(self):
         system = self.system
@@ -443,8 +464,9 @@ class ParticleProperties(ut.TestCase):
         np.random.shuffle(ids)
         for pid in ids:
             self.system.part.by_id(pid).remove()
-        with self.assertRaises(Exception):
-            self.system.part.by_id(17).remove()
+        p = self.system.part.by_id(17)
+        with self.assertRaises(RuntimeError):
+            p.remove()
 
     def test_coord_fold_corner_cases(self):
         system = self.system
@@ -560,6 +582,8 @@ class ParticleProperties(ut.TestCase):
         new_pdict = p.to_dict()
         del new_pdict['id']
         self.assertEqual(str(new_pdict), str(pdict))
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'test' is missing"):
+            p.call_method("set_param_parallel", name="test")
 
 
 if __name__ == "__main__":

@@ -39,10 +39,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   constexpr double const tol = 1e-12;
 
   double value = 1;
-  std::vector<double> means, variances;
-  std::vector<std::vector<double>> covariance;
-  std::vector<std::vector<double>> correlation;
-  std::tie(means, variances, covariance, correlation) = noise_statistics(
+  auto const [means, variances, covariance, correlation] = noise_statistics(
       [&value]() -> std::array<VariantVectorXd, 1> {
         value *= -1;
         return {{Utils::Vector2d{value, -value}}};
@@ -66,10 +63,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
 BOOST_AUTO_TEST_CASE(test_noise_uniform_1d) {
   constexpr std::size_t const sample_size = 60'000;
 
-  std::vector<double> means, variances;
-  std::vector<std::vector<double>> covariance;
-  std::vector<std::vector<double>> correlation;
-  std::tie(means, variances, covariance, correlation) = noise_statistics(
+  auto const [means, variances, covariance, correlation] = noise_statistics(
       [counter = 0]() mutable -> std::array<VariantVectorXd, 1> {
         return {{Random::noise_uniform<RNGSalt::NPTISOV, 1>(counter++, 0, 1)}};
       },
@@ -83,10 +77,7 @@ BOOST_AUTO_TEST_CASE(test_noise_uniform_3d) {
   constexpr std::size_t const sample_size = 60'000;
   constexpr std::size_t const x = 0, y = 1, z = 2;
 
-  std::vector<double> means, variances;
-  std::vector<std::vector<double>> covariance;
-  std::vector<std::vector<double>> correlation;
-  std::tie(means, variances, covariance, correlation) = noise_statistics(
+  auto const [means, variances, covariance, correlation] = noise_statistics(
       [counter = 0]() mutable -> std::array<VariantVectorXd, 1> {
         return {{Random::noise_uniform<RNGSalt::LANGEVIN>(counter++, 1, 0)}};
       },
@@ -108,10 +99,7 @@ BOOST_AUTO_TEST_CASE(test_noise_gaussian_4d) {
   constexpr std::size_t const sample_size = 100'000;
   constexpr std::size_t const x = 0, y = 1, z = 2, t = 3;
 
-  std::vector<double> means, variances;
-  std::vector<std::vector<double>> covariance;
-  std::vector<std::vector<double>> correlation;
-  std::tie(means, variances, covariance, correlation) = noise_statistics(
+  auto const [means, variances, covariance, correlation] = noise_statistics(
       [counter = 0]() mutable -> std::array<VariantVectorXd, 1> {
         return {{Random::noise_gaussian<RNGSalt::BROWNIAN_WALK, 4>(counter++, 0,
                                                                    0)}};

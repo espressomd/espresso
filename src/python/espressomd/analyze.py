@@ -83,7 +83,7 @@ def autocorrelation(time_series):
 @script_interface_register
 class _ObservableStat(ScriptInterfaceHelper):
     _so_name = "ScriptInterface::Analysis::ObservableStat"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
     def _generate_summary(self, obj, dim, calc_sp):
         """
@@ -191,6 +191,15 @@ class Analysis(ScriptInterfaceHelper):
         -------
         (N,) array_like of :obj:`int`
             The neighbouring particle ids.
+
+    particle_neighbor_pids()
+        Get a list of all short-range neighbors for each particle.
+
+        Returns
+        -------
+        :obj: `dict`
+            A dictionary where each item is a pair of a particle id and
+            its respective neighboring particle ids.
 
     calc_re()
         Calculate the mean end-to-end distance of chains and its
@@ -346,11 +355,12 @@ class Analysis(ScriptInterfaceHelper):
 
     """
     _so_name = "ScriptInterface::Analysis::Analysis"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "linear_momentum",
         "center_of_mass",
         "nbhood",
+        "particle_neighbor_pids",
         "calc_re",
         "calc_rg",
         "calc_rh",

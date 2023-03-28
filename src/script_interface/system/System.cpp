@@ -21,9 +21,10 @@
 
 #include "config/config.hpp"
 
+#include "core/cells.hpp"
+#include "core/event.hpp"
 #include "core/grid.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
-#include "core/particle_data.hpp"
 #include "core/particle_node.hpp"
 #include "core/rotate_system.hpp"
 
@@ -41,6 +42,21 @@ System::System() {
   add_parameters({
       {"max_oif_objects", ::max_oif_objects},
   });
+}
+
+/** Rescale all particle positions in direction @p dir by a factor @p scale.
+ *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
+ *  @param scale factor by which to rescale (>1: stretch, <1: contract)
+ */
+static void rescale_particles(int dir, double scale) {
+  for (auto &p : ::cell_structure.local_particles()) {
+    if (dir < 3)
+      p.pos()[dir] *= scale;
+    else {
+      p.pos() *= scale;
+    }
+  }
+  on_particle_change();
 }
 
 Variant System::do_call_method(std::string const &name,
@@ -79,28 +95,16 @@ Variant System::do_call_method(std::string const &name,
     }
     return {};
   }
-#ifdef EXCLUSIONS
-  if (name == "auto_exclusions") {
-    auto const distance = get_value<int>(parameters, "distance");
-    auto_exclusions(distance);
-    return {};
-  }
-#endif
   if (name == "setup_type_map") {
-    if (context()->is_head_node()) {
-      auto const types = get_value<std::vector<int>>(parameters, "type_list");
-      for (auto const type : types) {
-        init_type_map(type);
-      }
+    auto const types = get_value<std::vector<int>>(parameters, "type_list");
+    for (auto const type : types) {
+      ::init_type_map(type);
     }
     return {};
   }
   if (name == "number_of_particles") {
-    if (context()->is_head_node()) {
-      auto const type = get_value<int>(parameters, "type");
-      return number_of_particles_with_type(type);
-    }
-    return {};
+    auto const type = get_value<int>(parameters, "type");
+    return ::number_of_particles_with_type(type);
   }
   if (name == "velocity_difference") {
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");

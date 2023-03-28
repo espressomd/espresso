@@ -401,25 +401,16 @@ struct ParticleRattle {
 
 /** Struct holding all information for one particle. */
 struct Particle { // NOLINT(bugprone-exception-escape)
-  ///
-  ParticleProperties p;
-  ///
-  ParticlePosition r;
-  ///
-  ParticleMomentum m;
-  ///
-  ParticleForce f;
-  ///
-  ParticleLocal l;
-
 private:
+  ParticleProperties p;
+  ParticlePosition r;
+  ParticleMomentum m;
+  ParticleForce f;
+  ParticleLocal l;
 #ifdef BOND_CONSTRAINT
-  ///
   ParticleRattle rattle;
 #endif
-
   BondList bl;
-
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no non-bonded
    *  interactions
@@ -448,6 +439,8 @@ public:
   auto &v() { return m.v; }
   auto const &force() const { return f.f; }
   auto &force() { return f.f; }
+  auto const &force_and_torque() const { return f; }
+  auto &force_and_torque() { return f; }
 
   bool is_ghost() const { return l.ghost; }
   void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
@@ -467,8 +460,8 @@ public:
   constexpr auto &mass() const { return p.mass; }
 #endif
 #ifdef ROTATION
+  auto const &rotation() const { return p.rotation; }
   auto &rotation() { return p.rotation; }
-  auto rotation() const { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
   bool can_rotate_around(int const axis) const {
     detail::check_axis_idx_valid(axis);
@@ -492,12 +485,14 @@ public:
   auto &torque() { return f.torque; }
   auto const &omega() const { return m.omega; }
   auto &omega() { return m.omega; }
+#ifdef EXTERNAL_FORCES
   auto const &ext_torque() const { return p.ext_torque; }
   auto &ext_torque() { return p.ext_torque; }
+#endif // EXTERNAL_FORCES
   auto calc_director() const { return r.calc_director(); }
 #else  // ROTATION
-  bool can_rotate() const { return false; }
-  bool can_rotate_around(int const axis) const { return false; }
+  auto can_rotate() const { return false; }
+  auto can_rotate_around(int const axis) const { return false; }
 #endif // ROTATION
 #ifdef DIPOLES
   auto const &dipm() const { return p.dipm; }
@@ -521,8 +516,9 @@ public:
   auto &mu_E() { return p.mu_E; }
 #endif
 #ifdef VIRTUAL_SITES
-  bool &virtual_flag() { return p.is_virtual; }
-  bool is_virtual() const { return p.is_virtual; }
+  auto &virtual_flag() { return p.is_virtual; }
+  auto const &virtual_flag() const { return p.is_virtual; }
+  auto is_virtual() const { return p.is_virtual; }
   void set_virtual(bool const virt_flag) { p.is_virtual = virt_flag; }
 #ifdef VIRTUAL_SITES_RELATIVE
   auto const &vs_relative() const { return p.vs_relative; }
@@ -540,6 +536,7 @@ public:
 #endif // ROTATION
 #endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
+  auto const &fixed() const { return p.ext_flag; }
   auto &fixed() { return p.ext_flag; }
   bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
   bool is_fixed_along(int const axis) const {
@@ -556,7 +553,6 @@ public:
   }
   auto const &ext_force() const { return p.ext_force; }
   auto &ext_force() { return p.ext_force; }
-
 #else  // EXTERNAL_FORCES
   constexpr bool has_fixed_coordinates() const { return false; }
   constexpr bool is_fixed_along(int const) const { return false; }
@@ -577,9 +573,6 @@ public:
 #ifdef EXCLUSIONS
   Utils::compact_vector<int> &exclusions() { return el; }
   Utils::compact_vector<int> const &exclusions() const { return el; }
-  std::vector<int> const exclusions_as_vector() const {
-    return {el.begin(), el.end()};
-  }
   bool has_exclusion(int pid) const {
     return std::find(el.begin(), el.end(), pid) != el.end();
   }

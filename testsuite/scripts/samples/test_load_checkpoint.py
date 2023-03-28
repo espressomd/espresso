@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
+import numpy as np
 import importlib_wrapper
 
 
@@ -31,6 +32,10 @@ class Sample(ut.TestCase):
         self.assertEqual(set(sample.checkpoint.get_registered_objects()),
                          {'myvar', 'system', 'p3m'})
         self.assertEqual(sample.myvar, "some script variable (updated value)")
+
+    def test_trajectory_reproducibility(self):
+        self.assertTrue(sample.p3m.is_tuned)
+        np.testing.assert_array_less(sample.forces_diff, 1e-16)
 
 
 if __name__ == "__main__":

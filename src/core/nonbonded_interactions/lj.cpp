@@ -25,31 +25,24 @@
 #include "lj.hpp"
 
 #ifdef LENNARD_JONES
-#include "interactions.hpp"
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
+#include <algorithm>
+#include <stdexcept>
 
-int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
-                             double sig, double cut, double shift,
-                             double offset, double min) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->lj.eps = eps;
-  data->lj.sig = sig;
-  data->lj.cut = cut;
-  data->lj.shift = shift;
-  data->lj.offset = offset;
-  if (min > 0) {
-    data->lj.min = min;
+LJ_Parameters::LJ_Parameters(double epsilon, double sigma, double cutoff,
+                             double offset, double min, double shift)
+    : eps{epsilon}, sig{sigma}, cut{cutoff}, shift{shift}, offset{offset},
+      min{std::max(min, 0.)} {
+  if (epsilon < 0.) {
+    throw std::domain_error("LJ parameter 'epsilon' has to be >= 0");
   }
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
+  if (sigma < 0.) {
+    throw std::domain_error("LJ parameter 'sigma' has to be >= 0");
+  }
+  if (cutoff < 0.) {
+    throw std::domain_error("LJ parameter 'cutoff' has to be >= 0");
+  }
 }
 
 #endif /* ifdef LENNARD_JONES */

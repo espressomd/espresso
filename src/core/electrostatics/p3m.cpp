@@ -270,10 +270,15 @@ void CoulombP3M::init() {
 }
 
 CoulombP3M::CoulombP3M(P3MParameters &&parameters, double prefactor,
-                       int tune_timings, bool tune_verbose)
+                       int tune_timings, bool tune_verbose,
+                       bool check_complex_residuals)
     : p3m{std::move(parameters)}, tune_timings{tune_timings},
-      tune_verbose{tune_verbose} {
+      tune_verbose{tune_verbose}, check_complex_residuals{
+                                      check_complex_residuals} {
 
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
+  }
   m_is_tuned = !p3m.params.tuning;
   p3m.params.tuning = false;
   set_prefactor(prefactor);
@@ -490,7 +495,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     }
 
     /* Back FFT force component mesh */
-    auto const check_complex = !p3m.params.tuning;
+    auto const check_complex = !p3m.params.tuning and check_complex_residuals;
     for (int d = 0; d < 3; d++) {
       fft_perform_back(p3m.E_mesh[d].data(), check_complex, p3m.fft, comm_cart);
     }
@@ -652,8 +657,8 @@ public:
   TuningAlgorithm::Parameters get_time() override {
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
-    for (auto mesh_density = m_mesh_density_min;
-         mesh_density <= m_mesh_density_max; mesh_density += 0.1) {
+    auto mesh_density = m_mesh_density_min;
+    while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       if (m_tune_mesh) {
         for (int i : {0, 1, 2}) {
@@ -671,26 +676,25 @@ public:
           get_m_time(trial_params.mesh, trial_params.cao, trial_params.r_cut_iL,
                      trial_params.alpha_L, trial_params.accuracy);
 
-      /* this mesh does not work at all */
-      if (trial_time < 0.)
-        continue;
+      if (trial_time >= 0.) {
+        /* the optimum r_cut for this mesh is the upper limit for higher meshes,
+           everything else is slower */
+        if (has_actor_of_type<CoulombP3M>(electrostatics_actor)) {
+          m_r_cut_iL_max = trial_params.r_cut_iL;
+        }
 
-      /* the optimum r_cut for this mesh is the upper limit for higher meshes,
-         everything else is slower */
-      if (has_actor_of_type<CoulombP3M>(electrostatics_actor)) {
-        m_r_cut_iL_max = trial_params.r_cut_iL;
+        if (trial_time < time_best) {
+          /* new optimum */
+          reset_n_trials();
+          tuned_params = trial_params;
+          time_best = tuned_params.time = trial_time;
+        } else if (trial_time > time_best + time_granularity or
+                   get_n_trials() > max_n_consecutive_trials) {
+          /* no hope of further optimisation */
+          break;
+        }
       }
-
-      if (trial_time < time_best) {
-        /* new optimum */
-        reset_n_trials();
-        tuned_params = trial_params;
-        time_best = tuned_params.time = trial_time;
-      } else if (trial_time > time_best + time_granularity or
-                 get_n_trials() > max_n_consecutive_trials) {
-        /* no hope of further optimisation */
-        break;
-      }
+      mesh_density += 0.1;
     }
     return tuned_params;
   }
@@ -765,9 +769,17 @@ void CoulombP3M::sanity_checks_periodicity() const {
 
 void CoulombP3M::sanity_checks_cell_structure() const {
   if (local_geo.cell_structure_type() !=
-      CellStructureType::CELL_STRUCTURE_REGULAR) {
+          CellStructureType::CELL_STRUCTURE_REGULAR &&
+      local_geo.cell_structure_type() !=
+          CellStructureType::CELL_STRUCTURE_HYBRID) {
     throw std::runtime_error(
-        "CoulombP3M: requires the regular decomposition cell system");
+        "CoulombP3M: requires the regular or hybrid decomposition cell system");
+  }
+  if (n_nodes > 1 && local_geo.cell_structure_type() ==
+                         CellStructureType::CELL_STRUCTURE_HYBRID) {
+    throw std::runtime_error(
+        "CoulombP3M: does not work with the hybrid decomposition cell system, "
+        "if using more than one MPI node");
   }
 }
 

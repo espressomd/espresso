@@ -20,9 +20,9 @@
 set(TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER
     ${CMAKE_CURRENT_BINARY_DIR}/test_importlib_wrapper.py)
 configure_file(importlib_wrapper.py
-               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
+               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py COPYONLY)
 configure_file(test_importlib_wrapper.py
-               ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
+               ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER} COPYONLY)
 
 macro(PYTHON_SCRIPTS_TEST)
   cmake_parse_arguments(TEST "" "FILE;SUFFIX;TYPE" "DEPENDENCIES;LABELS"
@@ -42,7 +42,7 @@ macro(PYTHON_SCRIPTS_TEST)
   set_tests_properties(${TEST_NAME} PROPERTIES FIXTURES_REQUIRED
                                                IMPORTLIB_WRAPPER)
   set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
-  if("gpu" IN_LIST TEST_LABELS AND WITH_CUDA)
+  if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 endmacro(PYTHON_SCRIPTS_TEST)

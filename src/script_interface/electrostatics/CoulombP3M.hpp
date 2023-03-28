@@ -69,13 +69,15 @@ public:
         {"timings", AutoParameter::read_only,
          [this]() { return actor()->tune_timings; }},
         {"tune", AutoParameter::read_only, [this]() { return m_tune; }},
+        {"check_complex_residuals", AutoParameter::read_only,
+         [this]() { return actor()->check_complex_residuals; }},
     });
   }
 
   void do_construct(VariantMap const &params) override {
     m_tune = get_value<bool>(params, "tune");
     context()->parallel_try_catch([&]() {
-      auto p3m = P3MParameters{get_value<bool>(params, "tune"),
+      auto p3m = P3MParameters{!get_value_or<bool>(params, "is_tuned", !m_tune),
                                get_value<double>(params, "epsilon"),
                                get_value<double>(params, "r_cut"),
                                get_value<Utils::Vector3i>(params, "mesh"),
@@ -85,8 +87,8 @@ public:
                                get_value<double>(params, "accuracy")};
       m_actor = std::make_shared<CoreActorClass>(
           std::move(p3m), get_value<double>(params, "prefactor"),
-          get_value<int>(params, "timings"),
-          get_value<bool>(params, "verbose"));
+          get_value<int>(params, "timings"), get_value<bool>(params, "verbose"),
+          get_value<bool>(params, "check_complex_residuals"));
     });
     set_charge_neutrality_tolerance(params);
   }

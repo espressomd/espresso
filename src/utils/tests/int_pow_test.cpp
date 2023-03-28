@@ -31,10 +31,10 @@ using Utils::sqr;
 auto const eps = std::numeric_limits<double>::epsilon();
 
 /* Check that it can be used in constexpr context */
-static_assert((int_pow<11>(2.), true), "");
+static_assert((int_pow<11>(2.), true));
 
 /* Check that it can be used in constexpr context */
-static_assert((sqr(2.), true), "");
+static_assert((sqr(2.), true));
 
 BOOST_AUTO_TEST_CASE(even) {
   const double x = 3.14159;

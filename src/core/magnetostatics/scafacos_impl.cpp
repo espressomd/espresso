@@ -29,7 +29,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>

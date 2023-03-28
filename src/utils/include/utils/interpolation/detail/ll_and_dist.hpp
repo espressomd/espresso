@@ -24,8 +24,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <type_traits>
-#include <utility>
 
 namespace Utils {
 namespace Interpolation {
@@ -38,46 +36,6 @@ struct Block {
   const Vector3d distance;
 };
 
-template <std::size_t order, typename = void> struct ll_and_dist_;
-
-template <std::size_t order>
-struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 1>> {
-  Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
-                   const Vector3d &offset) const {
-    Vector3d dist;
-    std::array<int, 3> ll;
-
-    for (int dim = 0; dim < 3; dim++) {
-      auto const fractional_index =
-          (pos[dim] - offset[dim]) / grid_spacing[dim];
-
-      auto const nmp = static_cast<int>(std::floor(fractional_index + 0.5));
-      dist[dim] = fractional_index - nmp;
-      ll[dim] = nmp - (order - 1) / 2;
-    }
-    return {ll, dist};
-  }
-};
-
-template <std::size_t order>
-struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 0>> {
-  Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
-                   const Vector3d &offset) const {
-    Vector3d dist;
-    std::array<int, 3> ll;
-
-    for (int dim = 0; dim < 3; dim++) {
-      auto const fractional_index =
-          (pos[dim] - offset[dim]) / grid_spacing[dim];
-
-      auto const nmp = static_cast<int>(std::floor(fractional_index));
-      dist[dim] = fractional_index - nmp - 0.5;
-      ll[dim] = nmp - (order - 1) / 2;
-    }
-    return {ll, dist};
-  }
-};
-
 /**
  * @brief Calculate the lower left index of a block
  *        stencil with order points side length.
@@ -85,7 +43,22 @@ struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 0>> {
 template <std::size_t order>
 Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
                   const Vector3d &offset) {
-  return ll_and_dist_<order>{}(pos, grid_spacing, offset);
+  Vector3d dist;
+  std::array<int, 3> ll;
+
+  for (unsigned int dim = 0; dim < 3; ++dim) {
+    auto const fractional_index = (pos[dim] - offset[dim]) / grid_spacing[dim];
+    int nmp;
+    if constexpr (order % 2 == 0) {
+      nmp = static_cast<int>(std::floor(fractional_index));
+      dist[dim] = fractional_index - nmp - 0.5;
+    } else {
+      nmp = static_cast<int>(std::floor(fractional_index + 0.5));
+      dist[dim] = fractional_index - nmp;
+    }
+    ll[dim] = nmp - (order - 1) / 2;
+  }
+  return {ll, dist};
 }
 } // namespace detail
 } // namespace Interpolation

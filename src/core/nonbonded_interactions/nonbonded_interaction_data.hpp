@@ -28,10 +28,12 @@
 #include "config/config.hpp"
 
 #include <utils/index.hpp>
+#include <utils/math/int_pow.hpp>
 
 #include <algorithm>
 #include <cassert>
-#include <string>
+#include <cmath>
+#include <memory>
 #include <vector>
 
 /** Cutoff for deactivated interactions. Must be negative, so that even
@@ -47,6 +49,18 @@ struct LJ_Parameters {
   double shift = 0.0;
   double offset = 0.0;
   double min = 0.0;
+  LJ_Parameters() = default;
+  LJ_Parameters(double epsilon, double sigma, double cutoff, double offset,
+                double min, double shift);
+  double get_auto_shift() const {
+    auto auto_shift = 0.;
+    if (cut != 0.) {
+      auto_shift = Utils::int_pow<6>(sig / cut) - Utils::int_pow<12>(sig / cut);
+    }
+    return auto_shift;
+  }
+  double max_cutoff() const { return cut + offset; }
+  double min_cutoff() const { return min + offset; }
 };
 
 /** WCA potential */
@@ -54,6 +68,9 @@ struct WCA_Parameters {
   double eps = 0.0;
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
+  WCA_Parameters() = default;
+  WCA_Parameters(double epsilon, double sigma);
+  double max_cutoff() const { return cut; }
 };
 
 /** Generic Lennard-Jones with shift */
@@ -63,12 +80,27 @@ struct LJGen_Parameters {
   double cut = INACTIVE_CUTOFF;
   double shift = 0.0;
   double offset = 0.0;
+  double lambda = 1.0;
+  double softrad = 0.0;
   double a1 = 0.0;
   double a2 = 0.0;
   double b1 = 0.0;
   double b2 = 0.0;
-  double lambda1 = 1.0;
-  double softrad = 0.0;
+  LJGen_Parameters() = default;
+  LJGen_Parameters(double epsilon, double sigma, double cutoff, double shift,
+                   double offset,
+#ifdef LJGEN_SOFTCORE
+                   double lam, double delta,
+#endif
+                   double e1, double e2, double b1, double b2);
+  double get_auto_shift() const {
+    auto auto_shift = 0.;
+    if (cut != 0.) {
+      auto_shift = b2 * std::pow(sig / cut, a2) - b1 * std::pow(sig / cut, a1);
+    }
+    return auto_shift;
+  }
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** smooth step potential */
@@ -79,12 +111,19 @@ struct SmoothStep_Parameters {
   double d = 0.0;
   int n = 0;
   double k0 = 0.0;
+  SmoothStep_Parameters() = default;
+  SmoothStep_Parameters(double eps, double sig, double cutoff, double d, int n,
+                        double k0);
+  double max_cutoff() const { return cut; }
 };
 
 /** Hertzian potential */
 struct Hertzian_Parameters {
   double eps = 0.0;
   double sig = INACTIVE_CUTOFF;
+  Hertzian_Parameters() = default;
+  Hertzian_Parameters(double eps, double sig);
+  double max_cutoff() const { return sig; }
 };
 
 /** Gaussian potential */
@@ -92,6 +131,9 @@ struct Gaussian_Parameters {
   double eps = 0.0;
   double sig = 1.0;
   double cut = INACTIVE_CUTOFF;
+  Gaussian_Parameters() = default;
+  Gaussian_Parameters(double eps, double sig, double cutoff);
+  double max_cutoff() const { return cut; }
 };
 
 /** BMHTF NaCl potential */
@@ -103,15 +145,22 @@ struct BMHTF_Parameters {
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
   double computed_shift = 0.0;
+  BMHTF_Parameters() = default;
+  BMHTF_Parameters(double A, double B, double C, double D, double sig,
+                   double cut);
+  double max_cutoff() const { return cut; }
 };
 
 /** Morse potential */
 struct Morse_Parameters {
-  double eps = INACTIVE_CUTOFF;
+  double eps = 0.;
   double alpha = INACTIVE_CUTOFF;
   double rmin = INACTIVE_CUTOFF;
   double cut = INACTIVE_CUTOFF;
   double rest = INACTIVE_CUTOFF;
+  Morse_Parameters() = default;
+  Morse_Parameters(double eps, double alpha, double rmin, double cutoff);
+  double max_cutoff() const { return cut; }
 };
 
 /** Buckingham potential */
@@ -125,6 +174,10 @@ struct Buckingham_Parameters {
   double shift = 0.0;
   double F1 = 0.0;
   double F2 = 0.0;
+  Buckingham_Parameters() = default;
+  Buckingham_Parameters(double a, double b, double c, double d, double cutoff,
+                        double discont, double shift);
+  double max_cutoff() const { return cut; }
 };
 
 /** soft-sphere potential */
@@ -133,12 +186,18 @@ struct SoftSphere_Parameters {
   double n = 0.0;
   double cut = INACTIVE_CUTOFF;
   double offset = 0.0;
+  SoftSphere_Parameters() = default;
+  SoftSphere_Parameters(double a, double n, double cutoff, double offset);
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** hat potential */
 struct Hat_Parameters {
   double Fmax = 0.0;
   double r = INACTIVE_CUTOFF;
+  Hat_Parameters() = default;
+  Hat_Parameters(double F_max, double cutoff);
+  double max_cutoff() const { return r; }
 };
 
 /** Lennard-Jones+Cos potential */
@@ -150,6 +209,9 @@ struct LJcos_Parameters {
   double alfa = 0.0;
   double beta = 0.0;
   double rmin = 0.0;
+  LJcos_Parameters() = default;
+  LJcos_Parameters(double epsilon, double sigma, double cutoff, double offset);
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** Lennard-Jones with a different Cos potential */
@@ -160,6 +222,9 @@ struct LJcos2_Parameters {
   double offset = 0.0;
   double w = 0.0;
   double rchange = 0.0;
+  LJcos2_Parameters() = default;
+  LJcos2_Parameters(double epsilon, double sigma, double offset, double width);
+  double max_cutoff() const { return cut + offset; }
 };
 
 /** Gay-Berne potential */
@@ -173,21 +238,40 @@ struct GayBerne_Parameters {
   double nu = 0.0;
   double chi1 = 0.0;
   double chi2 = 0.0;
+  GayBerne_Parameters() = default;
+  GayBerne_Parameters(double eps, double sig, double cut, double k1, double k2,
+                      double mu, double nu);
+  double max_cutoff() const { return cut; }
 };
 
 /** Thole potential */
 struct Thole_Parameters {
-  double scaling_coeff;
-  double q1q2;
+  double scaling_coeff = 0.; // inactive cutoff is 0
+  double q1q2 = 0.;
+  Thole_Parameters() = default;
+  Thole_Parameters(double scaling_coeff, double q1q2)
+      : scaling_coeff{scaling_coeff}, q1q2{q1q2} {}
 };
 
 /** DPD potential */
 struct DPDParameters {
   double gamma = 0.;
   double k = 1.;
-  double cutoff = -1.;
+  double cutoff = INACTIVE_CUTOFF;
   int wf = 0;
   double pref = 0.0;
+};
+
+struct DPD_Parameters {
+  DPDParameters radial;
+  DPDParameters trans;
+  DPD_Parameters() = default;
+  DPD_Parameters(double gamma, double k, double r_c, int wf, double tgamma,
+                 double tr_c, int twf) {
+    radial = DPDParameters{gamma, k, r_c, wf, -1.};
+    trans = DPDParameters{tgamma, k, tr_c, twf, -1.};
+  }
+  double max_cutoff() const { return std::max(radial.cutoff, trans.cutoff); }
 };
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -263,11 +347,7 @@ struct IA_parameters {
 #endif
 
 #ifdef DPD
-  /** \name DPD as interaction */
-  /**@{*/
-  DPDParameters dpd_radial;
-  DPDParameters dpd_trans;
-  /**@}*/
+  DPD_Parameters dpd;
 #endif
 
 #ifdef THOLE
@@ -275,7 +355,7 @@ struct IA_parameters {
 #endif
 };
 
-extern std::vector<IA_parameters> nonbonded_ia_params;
+extern std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
 
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
@@ -284,6 +364,13 @@ extern int max_seen_particle_type;
  *  interactions).
  */
 double maximal_cutoff_nonbonded();
+
+inline int get_ia_param_key(int i, int j) {
+  assert(i >= 0 && i < ::max_seen_particle_type);
+  assert(j >= 0 && j < ::max_seen_particle_type);
+  return Utils::upper_triangular(std::min(i, j), std::max(i, j),
+                                 ::max_seen_particle_type);
+}
 
 /**
  * @brief Get interaction parameters between particle types i and j
@@ -297,40 +384,14 @@ double maximal_cutoff_nonbonded();
  * @return Reference to interaction parameters for the type pair.
  */
 inline IA_parameters &get_ia_param(int i, int j) {
-  assert(i >= 0 && i < max_seen_particle_type);
-  assert(j >= 0 && j < max_seen_particle_type);
-
-  return nonbonded_ia_params[Utils::upper_triangular(
-      std::min(i, j), std::max(i, j), max_seen_particle_type)];
+  return *::nonbonded_ia_params[get_ia_param_key(i, j)];
 }
 
-/** Get interaction parameters between particle types i and j.
- *  Slower than @ref get_ia_param, but can also be used on not
- *  yet present particle types
- */
-IA_parameters *get_ia_param_safe(int i, int j);
-
-/** @brief Get the state of all non-bonded interactions.
- */
-std::string ia_params_get_state();
-
-/** @brief Set the state of all non-bonded interactions.
- */
-void ia_params_set_state(std::string const &);
-
-bool is_new_particle_type(int type);
 /** Make sure that ia_params is large enough to cover interactions
  *  for this particle type. The interactions are initialized with values
  *  such that no physical interaction occurs.
  */
 void make_particle_type_exist(int type);
-
-void make_particle_type_exist_local(int type);
-
-/**
- * @brief Reset all interaction parameters to their defaults.
- */
-void reset_ia_params();
 
 /** Check if a non-bonded interaction is defined */
 inline bool checkIfInteraction(IA_parameters const &data) {

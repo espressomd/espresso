@@ -52,6 +52,7 @@ tutorial_test(FILE test_langevin_dynamics.py)
 tutorial_test(FILE test_polymers.py SUFFIX rouse)
 tutorial_test(FILE test_polymers.py SUFFIX zimm LABELS "gpu")
 tutorial_test(FILE test_lattice_boltzmann_poiseuille_flow.py LABELS "gpu")
+tutorial_test(FILE test_lattice_boltzmann_sedimentation.py)
 tutorial_test(FILE test_raspberry_electrophoresis.py LABELS "gpu")
 tutorial_test(FILE test_active_matter.py LABELS "gpu")
 tutorial_test(FILE test_electrokinetics.py LABELS "gpu")
@@ -61,9 +62,11 @@ tutorial_test(FILE test_ferrofluid_2.py)
 tutorial_test(FILE test_ferrofluid_3.py)
 tutorial_test(FILE test_constant_pH__ideal.py)
 tutorial_test(FILE test_constant_pH__interactions.py)
+tutorial_test(FILE test_widom_insertion.py)
 
 add_custom_target(
-  check_tutorials COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
-                          ${CTEST_ARGS} --output-on-failure)
+  check_tutorials
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
+          ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
 add_dependencies(check_tutorials pypresso local_tutorials)

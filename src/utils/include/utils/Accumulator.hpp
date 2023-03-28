@@ -32,9 +32,8 @@
 namespace Utils {
 
 template <typename T> struct AccumulatorData {
-  AccumulatorData() = default;
-  T mean;
-  T m;
+  T mean = T{};
+  T m = T{};
 
 private:
   // Allow serialization to access non-public data members.

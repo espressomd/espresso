@@ -323,7 +323,7 @@ Stokesian Dynamics
 .. note::
 
     Requires ``STOKESIAN_DYNAMICS`` external feature, enabled with
-    ``-DWITH_STOKESIAN_DYNAMICS=ON``.
+    ``-D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON``.
 
 :meth:`espressomd.integrate.IntegratorHandle.set_stokesian_dynamics`
 
@@ -440,6 +440,7 @@ Best explained in an example::
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 
 The Langevin thermostat is based on an extension of Newton's equation of motion to
+account for drag and collisions with a fluid:
 
 .. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma v_i(t) + \sqrt{2\gamma k_B T} \eta_i(t).
 
@@ -680,7 +681,7 @@ Stokesian thermostat
 .. note::
 
     Requires ``STOKESIAN_DYNAMICS`` external feature, enabled with
-    ``-DWITH_STOKESIAN_DYNAMICS=ON``.
+    ``-D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON``.
 
 In order to thermalize a Stokesian Dynamics simulation, the SD thermostat
 needs to be activated via::

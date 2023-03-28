@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CLANG_FORMAT_VER=9.0
+CLANG_FORMAT_VER=14.0
 if hash clang-format-${CLANG_FORMAT_VER} 2>/dev/null; then
     CLANGFORMAT="$(which clang-format-${CLANG_FORMAT_VER})"
 elif hash clang-format-${CLANG_FORMAT_VER%.*} 2>/dev/null; then

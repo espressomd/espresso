@@ -316,6 +316,7 @@ The following tutorials are available:
 * :file:`active_matter`: Modelling of self-propelling particles.
 * :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
+* :file:`widom_insertion`: Measuring the excess chemical potential of a salt solution using the Widom particle insertion method
 
 The executed notebooks with solutions and plots are periodically deployed
 online to the `GitHub Pages <https://espressomd.github.io/tutorials.html>`__.

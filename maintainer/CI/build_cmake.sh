@@ -75,10 +75,26 @@ set_default_value() {
 }
 
 # the number of available processors depends on the CI runner
-if grep -q "i7-3820" /proc/cpuinfo; then
-   ci_procs=2
+ci_procs=2
+if [ "${GITLAB_CI}" = "true" ]; then
+    if [[ "${OSTYPE}" == "linux-gnu"* ]]; then
+        # Linux runner
+        if grep -q "i7-3820" /proc/cpuinfo; then
+            # communication bottleneck for more than 2 cores on Intel i7-3820
+            ci_procs=2
+        else
+            ci_procs=4
+        fi
+    elif [[ "${OSTYPE}" == "darwin"* ]]; then
+        # macOS runner
+        ci_procs=2
+    fi
+elif [ "${GITHUB_ACTIONS}" = "true" ]; then
+    # GitHub Actions only provide 1 core; request 2 cores to run tests
+    # in parallel (OpenMPI allows oversubscription)
+    ci_procs=2
 else
-   ci_procs=4
+    ci_procs=$(nproc)
 fi
 
 # handle environment variables
@@ -103,10 +119,12 @@ set_default_value make_check_benchmarks false
 set_default_value with_fast_math false
 set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
-set_default_value with_cxx_standard 14
+set_default_value with_cxx_standard 17
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_hdf5 true
+set_default_value with_fftw true
+set_default_value with_gsl true
 set_default_value with_scafacos false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
@@ -121,71 +139,90 @@ fi
 if [ "${with_coverage}" = true ]; then
     build_type="Coverage"
 fi
-if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ] ; then
-    bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
-fi
 
 if [ "${with_fast_math}" = true ]; then
     cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math -fno-finite-math-only"
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_CXX_STANDARD=${with_cxx_standard} -DWARNINGS_ARE_ERRORS=ON ${cmake_params}"
-cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -DINSIDE_DOCKER=ON"
-cmake_params="${cmake_params} -DCTEST_ARGS=-j${check_procs} -DTEST_TIMEOUT=${test_timeout}"
+cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D CMAKE_CXX_STANDARD=${with_cxx_standard} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
+cmake_params="${cmake_params} -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -D ESPRESSO_INSIDE_DOCKER=ON"
+cmake_params="${cmake_params} -D ESPRESSO_CTEST_ARGS=-j${check_procs} -D ESPRESSO_TEST_TIMEOUT=${test_timeout}"
 
 if [ "${make_check_benchmarks}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_BENCHMARKS=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=ON"
 fi
 
 if [ "${with_ccache}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_CCACHE=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=ON"
 fi
 
 if [ "${with_hdf5}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_HDF5=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=ON"
 else
-    cmake_params="${cmake_params} -DWITH_HDF5=OFF"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=OFF"
+fi
+
+if [ "${with_fftw}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=ON"
+else
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=OFF"
+fi
+
+if [ "${with_gsl}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=ON"
+else
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=OFF"
 fi
 
 if [ "${with_scafacos}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=ON"
 else
-    cmake_params="${cmake_params} -DWITH_SCAFACOS=OFF"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=OFF"
 fi
 
 if [ "${with_stokesian_dynamics}" = true ]; then
-    cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=ON"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON"
 else
-    cmake_params="${cmake_params} -DWITH_STOKESIAN_DYNAMICS=OFF"
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=OFF"
 fi
 
 if [ "${with_coverage}" = true ]; then
-    cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_COVERAGE=ON ${cmake_params}"
 fi
 
 if [ "${with_coverage_python}" = true ]; then
-    cmake_params="-DWITH_COVERAGE_PYTHON=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON=ON ${cmake_params}"
 fi
 
 if [ "${with_asan}" = true ]; then
-    cmake_params="-DWITH_ASAN=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_ASAN=ON ${cmake_params}"
 fi
 
 if [ "${with_ubsan}" = true ]; then
-    cmake_params="-DWITH_UBSAN=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_UBSAN=ON ${cmake_params}"
 fi
 
 if [ "${with_static_analysis}" = true ]; then
-    cmake_params="-DWITH_CLANG_TIDY=ON ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_CLANG_TIDY=ON ${cmake_params}"
+fi
+
+if [ "${run_checks}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_TESTS=ON"
+else
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_TESTS=OFF"
 fi
 
 if [ "${with_cuda}" = true ]; then
-    cmake_params="-DWITH_CUDA=ON -DWITH_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=ON -D CUDAToolkit_ROOT=/usr/lib/cuda ${cmake_params}"
+    if [ "${CUDACXX}" = "" ]; then
+        cmake_params="-D CMAKE_CUDA_FLAGS='--compiler-bindir=/usr/bin/g++-10' ${cmake_params}"
+    fi
 else
-    cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
+    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=OFF ${cmake_params}"
 fi
 
 command -v nvidia-smi && nvidia-smi || true
+nvidia-smi -L || true
 if [ "${hide_gpu}" = true ]; then
     echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
     export CUDA_VISIBLE_DEVICES=""
@@ -211,6 +248,7 @@ cd "${builddir}"
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
     grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
+    grep -q "Ubuntu 22.04" /etc/os-release && export MPIEXEC_PREFLAGS="--mca;btl_vader_single_copy_mechanism;none"
 fi
 
 # CONFIGURE
@@ -263,7 +301,7 @@ if [ "${run_checks}" = true ]; then
 
     # fail if built with CUDA but no compatible GPU was found
     if [ "${with_cuda}" = true ] && [ "${hide_gpu}" != true ]; then
-        ./pypresso -c "import espressomd.cuda_init as gpu;gpu.CudaInitHandle().device = 0" || exit 1
+        ./pypresso -c "import espressomd.cuda_init as gpu;gpu.CudaInitHandle().device = 0" || (command -v nvidia-smi && nvidia-smi || true ; exit 1)
     fi
 
     # unit tests
@@ -325,8 +363,24 @@ fi
 if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     start "COVERAGE"
     cd "${builddir}"
+
+    # import codecov key
+    gpg --import "${CODECOV_PUBLIC_KEY}"
+
+    # download uploader and signatures
+    curl -OSs https://uploader.codecov.io/latest/linux/codecov
+    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
+    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+
+    # check uploader integrity, exit script in case of failure
+    gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
+    shasum -a 256 -c codecov.SHA256SUM
+    chmod +x codecov
+
+    codecov_opts=""
     if [ "${with_coverage}" = true ]; then
         echo "Running lcov and gcov..."
+        codecov_opts="${codecov_opts} --gcov"
         lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
@@ -337,12 +391,20 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
         python3 -m coverage xml
     fi
     echo "Uploading to Codecov..."
-    codecov_opts="-X gcov -X coveragepy"
-    if [ -z "${CODECOV_TOKEN}" ]; then
-        codecov_opts="${codecov_opts} -t '${CODECOV_TOKEN}'"
-    fi
-    bash <(curl --fail --silent --show-error https://codecov.io/bash 2>./codecov_stderr) ${codecov_opts} || echo "Codecov did not collect coverage reports"
-    cat ./codecov_stderr
+    for codecov_trial in 1 2 3; do
+        codecov_errno="0"
+        ./codecov ${codecov_opts} -t "${CODECOV_TOKEN}" --nonZero || codecov_errno="${?}"
+        if [ "${codecov_errno}" = "0" ]; then
+            break
+        fi
+        echo "Codecov did not upload coverage reports (return code: ${codecov_errno})" >&2
+        echo "That was attempt ${codecov_trial}/3"
+        echo ""
+        if [ ! "${codecov_trial}" = "3" ]; then
+            sleep 10s
+        fi
+    done
+
     end "COVERAGE"
 fi
 

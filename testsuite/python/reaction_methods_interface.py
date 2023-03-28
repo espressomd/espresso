@@ -45,6 +45,9 @@ class ReactionMethods(ut.TestCase):
                     else:
                         self.assertEqual(getattr(reaction, key), params[key])
 
+        def count_by_type(types):
+            return [self.system.number_of_particles(type=x) for x in types]
+
         reaction_forward = {
             'gamma': gamma,
             'reactant_types': [5],
@@ -90,6 +93,7 @@ class ReactionMethods(ut.TestCase):
                 list(method.exclusion_radius_per_type.keys()), [2])
             self.assertAlmostEqual(
                 method.exclusion_radius_per_type[2], 0.2, delta=1e-10)
+            exclusion_radius_per_type = {2: 0.2}
         self.assertAlmostEqual(
             method.get_volume(), self.system.volume(), delta=1e-10)
         method.set_volume(volume=1.)
@@ -103,6 +107,12 @@ class ReactionMethods(ut.TestCase):
             self.assertAlmostEqual(method.constant_pH, 8., delta=1e-10)
         self.assertFalse(method.displacement_mc_move_for_particles_of_type(
             type_mc=0, particle_number_to_be_changed=0))
+        self.assertFalse(method.displacement_mc_move_for_particles_of_type(
+            type_mc=0, particle_number_to_be_changed=100000))
+        method.particle_inside_exclusion_range_touched = True
+        self.assertTrue(method.particle_inside_exclusion_range_touched)
+        method.particle_inside_exclusion_range_touched = False
+        self.assertFalse(method.particle_inside_exclusion_range_touched)
 
         # check constraints
         method.set_wall_constraints_in_z_direction(
@@ -116,6 +126,9 @@ class ReactionMethods(ut.TestCase):
         status = method.get_status()
         self.assertEqual(status['kT'], kT)
         self.assertEqual(status['exclusion_range'], exclusion_range)
+        self.assertEqual(
+            status['exclusion_radius_per_type'],
+            exclusion_radius_per_type)
         self.assertEqual(len(status['reactions']), 2)
         for reaction_flat, params in zip(
                 status['reactions'], reaction_parameters):
@@ -130,13 +143,21 @@ class ReactionMethods(ut.TestCase):
         reactions = method.reactions
         self.assertEqual(len(reactions), 2)
         check_reaction_parameters(method.reactions, reaction_parameters)
+        self.assertIsNone(reactions[0].call_method("unknown"))
 
-        # check reactions after parameter change
+        # check reactions after unsuccessful parameter change
+        with self.assertRaises(ValueError):
+            method.change_reaction_constant(reaction_id=0, gamma=0.)
+        check_reaction_parameters(method.reactions, reaction_parameters)
+        check_reaction_parameters(method._reactions_cache, reaction_parameters)
+
+        # check reactions after successful parameter change
         new_gamma = 634.
         reaction_forward['gamma'] = new_gamma
         reaction_backward['gamma'] = 1. / new_gamma
         method.change_reaction_constant(reaction_id=0, gamma=new_gamma)
         check_reaction_parameters(method.reactions, reaction_parameters)
+        check_reaction_parameters(method._reactions_cache, reaction_parameters)
         status = method.get_status()
         self.assertAlmostEqual(
             status['reactions'][0]['gamma'],
@@ -147,18 +168,24 @@ class ReactionMethods(ut.TestCase):
             reaction_backward['gamma'],
             delta=1e-10)
 
-        # check particle deletion
+        # check particle deletion on a worker node
         p1, _, p3 = self.system.part.add(
-            pos=3 * [(0., 0., 0.)], type=[5, 2, 3])
+            pos=3 * [(-1., -1., -1.)], type=[5, 2, 3])
         if isinstance(method, espressomd.reaction_methods.WidomInsertion):
             potential_energy = method.calculate_particle_insertion_potential_energy(
                 reaction_id=0)
             self.assertEqual(potential_energy, 0.)
+        if self.system.cell_system.get_state()["n_nodes"] > 1:
+            assert set(self.system.part.all().node) != {0}
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 1, 0])
         method.delete_particle(p_id=p3.id)
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [1, 1, 0, 0])
         self.assertEqual(len(self.system.part), 2)
-        method.delete_particle(p_id=p1.id)
+        p1.remove()
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [0, 1, 0, 0])
         self.assertEqual(len(self.system.part), 1)
         self.system.part.clear()
+        self.assertEqual(count_by_type([5, 2, 3, 0]), [0, 0, 0, 0])
 
         # check reaction deletion
         method.delete_reaction(reaction_id=0)
@@ -168,22 +195,25 @@ class ReactionMethods(ut.TestCase):
         params = {'exclusion_range': 0.8,
                   'exclusion_radius_per_type': {1: 0.1}}
 
-        # reaction ensemble
-        method = espressomd.reaction_methods.ReactionEnsemble(
-            kT=1.4, seed=12, search_algorithm="order_n", **params)
-        self.check_interface(method, kT=1.4, gamma=1.2,
-                             search_algorithm="order_n", **params)
+        with self.subTest(msg="reaction ensemble"):
+            method = espressomd.reaction_methods.ReactionEnsemble(
+                kT=1.4, seed=12, search_algorithm="order_n", **params)
+            self.check_interface(method, kT=1.4, gamma=1.2,
+                                 search_algorithm="order_n", **params)
 
-        # constant pH ensemble
-        method = espressomd.reaction_methods.ConstantpHEnsemble(
-            kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10., **params)
-        self.check_interface(method, kT=1.5, gamma=1.2,
-                             search_algorithm="parallel", **params)
+        with self.subTest(msg="constant pH ensemble"):
+            method = espressomd.reaction_methods.ConstantpHEnsemble(
+                kT=1.5, seed=14, search_algorithm="parallel", constant_pH=10.,
+                **params)
+            self.check_interface(method, kT=1.5, gamma=1.2,
+                                 search_algorithm="parallel", **params)
 
-        # Widom insertion
-        method = espressomd.reaction_methods.WidomInsertion(kT=1.6, seed=16)
-        self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
-                             exclusion_radius_per_type={}, search_algorithm=None)
+        with self.subTest(msg="Widom insertion"):
+            method = espressomd.reaction_methods.WidomInsertion(
+                kT=1.6, seed=16)
+            self.check_interface(method, kT=1.6, gamma=1., exclusion_range=0.,
+                                 exclusion_radius_per_type={},
+                                 search_algorithm=None)
 
     def test_exceptions(self):
         single_reaction_params = {
@@ -209,6 +239,10 @@ class ReactionMethods(ut.TestCase):
             method.add_reaction(**{**reaction_params, 'reactant_types': []})
         with self.assertRaisesRegex(ValueError, f'products: {err_msg}'):
             method.add_reaction(**{**reaction_params, 'product_types': []})
+        with self.assertRaisesRegex(ValueError, 'gamma'):
+            method.add_reaction(**{**reaction_params, 'gamma': 0.})
+        with self.assertRaisesRegex(ValueError, 'gamma'):
+            method.add_reaction(**{**reaction_params, 'gamma': -2.})
 
         # check charge conservation
         err_msg = 'Reaction system is not charge neutral'
@@ -218,15 +252,20 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, err_msg):
             method.add_reaction(default_charges={2: 1, 3: 0, 4: 1 + 1e-10},
                                 **single_reaction_params)
+        with self.assertRaisesRegex(TypeError, "needs to be a dict"):
+            method.add_reaction(default_charges=(1, 2),
+                                **single_reaction_params)
 
         # check invalid reaction id exceptions
         # (note: reactions id = 2 * reactions index)
         self.assertEqual(len(method.reactions), 2)
         for i in [-2, -1, 1, 2, 3]:
-            with self.assertRaisesRegex(IndexError, 'This reaction is not present'):
+            with self.assertRaisesRegex(IndexError, f"No reaction with id {i}"):
                 method.delete_reaction(reaction_id=i)
-            with self.assertRaisesRegex(IndexError, 'This reaction is not present'):
+            with self.assertRaisesRegex(IndexError, f"No reaction with id {2*i}"):
                 method.get_acceptance_rate_reaction(reaction_id=2 * i)
+        with self.assertRaisesRegex(ValueError, "Only forward reactions can be selected"):
+            method.change_reaction_constant(reaction_id=1, gamma=1.)
 
         # check constraint exceptions
         set_cyl_constraint = method.set_cylindrical_constraint_in_z_direction
@@ -265,6 +304,8 @@ class ReactionMethods(ut.TestCase):
         # check exceptions for missing particles
         with self.assertRaisesRegex(RuntimeError, "Particle id is greater than the max seen particle id"):
             method.delete_particle(p_id=0)
+        with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
+            method.delete_particle(p_id=-2)
         with self.assertRaisesRegex(RuntimeError, "Trying to remove some non-existing particles from the system via the inverse Widom scheme"):
             widom.calculate_particle_insertion_potential_energy(reaction_id=0)
         with self.assertRaisesRegex(RuntimeError, "No search algorithm for WidomInsertion"):
@@ -291,6 +332,18 @@ class ReactionMethods(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid value for 'kT'"):
             espressomd.reaction_methods.ReactionEnsemble(
                 kT=-1., exclusion_range=1., seed=12)
+        with self.assertRaisesRegex(ValueError, "Parameter 'particle_number_to_be_changed' must be >= 0"):
+            method.displacement_mc_move_for_particles_of_type(
+                type_mc=0, particle_number_to_be_changed=-1)
+        with self.assertRaisesRegex(ValueError, "Parameter 'type_mc' must be >= 0"):
+            method.displacement_mc_move_for_particles_of_type(
+                type_mc=-1, particle_number_to_be_changed=1)
+        with self.assertRaisesRegex(RuntimeError, "No chemical reaction is currently under way"):
+            method.call_method("calculate_factorial_expression")
+        with self.assertRaisesRegex(RuntimeError, "cannot be instantiated"):
+            espressomd.reaction_methods.ReactionAlgorithm()
+        with self.assertRaisesRegex(ValueError, "Invalid type: -1"):
+            method.set_non_interacting_type(type=-1)
 
         # check invalid exclusion ranges and radii
         with self.assertRaisesRegex(ValueError, "Invalid value for 'exclusion_range'"):

@@ -26,16 +26,20 @@ unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp DEPENDS
           Boost::serialization)
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp
           DEPENDS espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-unit_test(NAME EspressoSystemStandAlone_test SRC
+unit_test(NAME EspressoSystemStandAlone_parallel_test SRC
           EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
-          MPI::MPI_CXX NUM_PROC 2)
+          MPI::MPI_CXX NUM_PROC 4)
+unit_test(NAME EspressoSystemStandAlone_serial_test SRC
+          EspressoSystemStandAlone_test.cpp DEPENDS espresso::core Boost::mpi
+          MPI::MPI_CXX NUM_PROC 1)
 unit_test(NAME EspressoSystemInterface_test SRC
-          EspressoSystemInterface_test.cpp DEPENDS espresso::core Boost::mpi)
+          EspressoSystemInterface_test.cpp DEPENDS espresso::core Boost::mpi
+          NUM_PROC 2)
 unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS
           espresso::utils)
-unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS espresso::utils)
+unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS espresso::utils espresso::core)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS espresso::utils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS espresso::utils
           Boost::serialization)
@@ -70,3 +74,8 @@ unit_test(NAME bonded_interactions_map_test SRC
           bonded_interactions_map_test.cpp DEPENDS espresso::core)
 unit_test(NAME bond_breakage_test SRC bond_breakage_test.cpp DEPENDS
           espresso::core)
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+  # AppleClang doesn't implement C++17's mathematical special functions
+  unit_test(NAME specfunc_test SRC specfunc_test.cpp DEPENDS espresso::utils
+            espresso::core)
+endif()

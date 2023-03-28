@@ -485,4 +485,4 @@ class System(ScriptInterfaceHelper):
 
         """
         assert_features("EXCLUSIONS")
-        self.call_method("auto_exclusions", distance=distance)
+        self.part.auto_exclusions(distance=distance)

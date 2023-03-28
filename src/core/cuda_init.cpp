@@ -63,7 +63,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   int n_devices;
   try {
     n_devices = cuda_get_n_gpus();
-  } catch (cuda_runtime_error const &err) {
+  } catch (cuda_runtime_error const &) {
     n_devices = 0;
   }
 
@@ -80,7 +80,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
       device.proc_name[63] = '\0';
       device.node = this_node;
       devices_local.push_back(device);
-    } catch (cuda_runtime_error const &err) {
+    } catch (cuda_runtime_error const &) {
       // pass
     }
   }

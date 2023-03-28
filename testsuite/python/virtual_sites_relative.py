@@ -32,13 +32,14 @@ class VirtualSites(ut.TestCase):
 
     def setUp(self):
         self.system.box_l = [10.0, 10.0, 10.0]
+        self.system.cell_system.set_regular_decomposition(
+            use_verlet_lists=True)
 
     def tearDown(self):
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0., sigma=0., cutoff=0., shift=0.)
+        self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
 
     def multiply_quaternions(self, a, b):
@@ -85,12 +86,22 @@ class VirtualSites(ut.TestCase):
         self.assertIsInstance(
             self.system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesOff)
+        self.assertFalse(self.system.virtual_sites.have_quaternion)
+        self.assertFalse(self.system.virtual_sites.override_cutoff_check)
+
+        # Set properties
+        self.system.virtual_sites.have_quaternion = True
+        self.system.virtual_sites.override_cutoff_check = True
+        self.assertTrue(self.system.virtual_sites.have_quaternion)
+        self.assertTrue(self.system.virtual_sites.override_cutoff_check)
 
         # Switch implementation
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         self.assertIsInstance(
             self.system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesRelative)
+        self.assertFalse(self.system.virtual_sites.have_quaternion)
+        self.assertFalse(self.system.virtual_sites.override_cutoff_check)
 
     def test_vs_quat(self):
         self.system.time_step = 0.01
@@ -148,6 +159,8 @@ class VirtualSites(ut.TestCase):
         # relating to anything else other than a particle or id is not allowed
         with self.assertRaisesRegex(ValueError, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
+        with self.assertRaisesRegex(ValueError, "Invalid particle id: -2"):
+            p2.vs_auto_relate_to(-2)
         # relating to itself is not allowed
         with self.assertRaisesRegex(ValueError, "A virtual site cannot relate to itself"):
             p2.vs_auto_relate_to(p2)
@@ -159,6 +172,9 @@ class VirtualSites(ut.TestCase):
         if system.cell_system.get_state()["n_nodes"] > 1:
             with self.assertRaisesRegex(Exception, r"The distance between virtual and non-virtual particle \([0-9\.]+\) is larger than the minimum global cutoff"):
                 p2.vs_auto_relate_to(p1)
+            # If overridden this check should not raise an exception
+            system.virtual_sites.override_cutoff_check = True
+            p2.vs_auto_relate_to(p1)
 
     def test_pos_vel_forces(self):
         system = self.system
@@ -231,9 +247,11 @@ class VirtualSites(ut.TestCase):
             self.assertAlmostEqual(np.linalg.norm(t_exp - t), 0., delta=1E-6)
 
     def run_test_lj(self):
-        """This fills the system with vs-based dumbells, adds a lj potential,
-          integrates and verifies forces. This is to make sure that no pairs
-          get lost or are outdated in the short range loop"""
+        """
+        This fills the system with vs-based dumbbells, adds a LJ potential,
+        integrates and verifies forces. This is to make sure that no pairs
+        get lost or are outdated in the short range loop.
+        """
         system = self.system
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         # Parameters
@@ -252,13 +270,10 @@ class VirtualSites(ut.TestCase):
         # Setup
         system.box_l = [l, l, l]
         system.min_global_cut = 0.501
-        system.part.clear()
-
         system.time_step = 0.01
-        system.thermostat.turn_off()
 
-        # Dumbells consist of 2 virtual lj spheres + central particle w/o interactions
-        # For n spheres, n/2 dumbells.
+        # Dumbbells consist of 2 virtual lj spheres + central particle
+        # w/o interactions. For n spheres, n/2 dumbbells.
         for i in range(n // 2):
             # Type=1, i.e., no lj ia for the center of mass particles
             p3i = system.part.add(
@@ -286,8 +301,12 @@ class VirtualSites(ut.TestCase):
         # Remove overlap
         system.integrator.set_steepest_descent(
             f_max=0, gamma=0.1, max_displacement=0.1)
-        while system.analysis.energy()["total"] > 10 * n:
+        n_loops = 0
+        n_max = 10
+        while system.analysis.energy()["total"] > 10 * n and n_loops < n_max:
             system.integrator.run(20)
+            n_loops += 1
+        assert n_loops < n_max, "Steepest descent didn't converge"
         # Integrate
         system.integrator.set_vv()
         for i in range(10):
@@ -298,7 +317,7 @@ class VirtualSites(ut.TestCase):
             # Constant energy to get rid of thermostat forces in the
             # verification
             system.integrator.run(2)
-            # Check the virtual sites config,pos and vel of the lj spheres
+            # Check the virtual sites config, pos and vel of the lj spheres
             for j in range(int(n / 2)):
                 self.verify_vs(system.part.by_id(3 * j + 1))
                 self.verify_vs(system.part.by_id(3 * j + 2))
@@ -309,26 +328,33 @@ class VirtualSites(ut.TestCase):
             tests_common.verify_lj_forces(system, 1E-10, 3 * np.arange(n // 2))
 
         # Test applying changes
-        enegry_pre_change = system.analysis.energy()['total']
+        energy_pre_change = system.analysis.energy()['total']
         pressure_pre_change = system.analysis.pressure()['total']
         p0 = system.part.by_id(0)
         p0.pos = p0.pos + (2.2, -1.4, 4.2)
-        enegry_post_change = system.analysis.energy()['total']
+        energy_post_change = system.analysis.energy()['total']
         pressure_post_change = system.analysis.pressure()['total']
-        self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)
+        self.assertNotAlmostEqual(energy_pre_change, energy_post_change)
         self.assertNotAlmostEqual(pressure_pre_change, pressure_post_change)
 
     def test_lj(self):
         """Run LJ fluid test for different cell systems."""
-        system = self.system
 
-        system.cell_system.skin = 0.4
-        system.cell_system.set_n_square(use_verlet_lists=True)
-        self.run_test_lj()
-        system.cell_system.set_regular_decomposition(use_verlet_lists=True)
-        self.run_test_lj()
-        system.cell_system.set_regular_decomposition(use_verlet_lists=False)
-        self.run_test_lj()
+        self.system.cell_system.skin = 0.4
+        with self.subTest(msg='N-square cell system with Verlet lists'):
+            self.system.cell_system.set_n_square(use_verlet_lists=True)
+            self.run_test_lj()
+            self.tearDown()
+        with self.subTest(msg='regular decomposition cell system with Verlet lists'):
+            self.system.cell_system.set_regular_decomposition(
+                use_verlet_lists=True)
+            self.run_test_lj()
+            self.tearDown()
+        with self.subTest(msg='regular decomposition cell system without Verlet lists'):
+            self.system.cell_system.set_regular_decomposition(
+                use_verlet_lists=False)
+            self.run_test_lj()
+            self.tearDown()
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_zz_pressure_tensor(self):
@@ -380,4 +406,4 @@ class VirtualSites(ut.TestCase):
 
 
 if __name__ == "__main__":
-    ut.main()
+    ut.main(verbosity=2)

@@ -113,6 +113,7 @@ add_subdirectory(electrokinetics)
 add_subdirectory(visualization)
 add_subdirectory(ferrofluid)
 add_subdirectory(constant_pH)
+add_subdirectory(widom_insertion)
 
 configure_file(Readme.md ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(convert.py ${CMAKE_CURRENT_BINARY_DIR})

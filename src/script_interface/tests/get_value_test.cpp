@@ -57,9 +57,9 @@ BOOST_AUTO_TEST_CASE(conversions) {
   using ScriptInterface::Variant;
   using ScriptInterface::detail::allow_conversion;
 
-  static_assert(allow_conversion<int, int>::value, "");
-  static_assert(allow_conversion<double, int>::value, "");
-  static_assert(not allow_conversion<int, double>::value, "");
+  static_assert(allow_conversion<int, int>::value);
+  static_assert(allow_conversion<double, int>::value);
+  static_assert(not allow_conversion<int, double>::value);
 
   BOOST_CHECK_EQUAL(get_value<double>(3.1415), 3.1415);
   BOOST_CHECK_EQUAL(get_value<double>(3), 3.);

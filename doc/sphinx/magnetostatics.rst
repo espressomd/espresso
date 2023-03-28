@@ -123,42 +123,40 @@ system is periodic (as defined by ``system.periodicity``), it applies the
 minimum image convention, i.e. the interaction is effectively cut off at
 half a box length.
 
-The direct summation methods are mainly intended for non-periodic systems which cannot be solved using the dipolar P3M method.
-Due to the long-range nature of dipolar interactions, Direct summation with minimum image convention does not yield good accuracy with periodic systems.
-
+The direct summation methods are mainly intended for non-periodic systems
+which cannot be solved using the dipolar P3M method.
+Due to the long-range nature of dipolar interactions, direct summation with
+minimum image convention does not yield good accuracy with periodic systems.
 
 Two methods are available:
 
 * :class:`~espressomd.magnetostatics.DipolarDirectSumCpu`
-  performs the calculation in double precision on the Cpu.
+  performs the calculation in double-precision on the CPU,
+  optionally with replicas.
 
 * :class:`~espressomd.magnetostatics.DipolarDirectSumGpu`
-  performs the calculations in single precision on a Cuda-capable graphics card.
+  performs the calculations in single-precision on a CUDA-capable GPU.
   The implementation is optimized for large systems of several thousand
   particles. It makes use of one thread per particle. When there are fewer
-  particles than the number of threads the gpu can execute simultaneously,
-  the rest of the gpu remains idle. Hence, the method will perform poorly
+  particles than the number of threads the GPU can execute simultaneously,
+  the rest of the GPU remains idle. Hence, the method will perform poorly
   for small systems.
 
 To use the methods, create an instance of either
 :class:`~espressomd.magnetostatics.DipolarDirectSumCpu` or
 :class:`~espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the
-system's list of active actors. The only required parameter is the Prefactor
+system's list of active actors. The only required parameter is the prefactor
 :eq:`dipolar_prefactor`::
 
     import espressomd.magnetostatics
     dds = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1)
     system.actors.add(dds)
 
-For testing purposes, a variant of the dipolar direct sum is available which
-adds periodic copies to the system in periodic directions:
-:class:`~espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`.
-As it is very slow, this method is not intended to do simulations, but
-rather to check the results you get from more efficient methods like P3M.
+The CPU implementation has an optional argument ``n_replicas`` which
+adds periodic copies to the system along periodic directions. In that
+case, the minimum image convention is no longer used.
 
-:class:`~espressomd.magnetostatics.DipolarDirectSumCpu` and
-:class:`~espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`
-do not support MPI parallelization.
+Both implementations support MPI-parallelization.
 
 
 .. _Barnes-Hut octree sum on GPU:

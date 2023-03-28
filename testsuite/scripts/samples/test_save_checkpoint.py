@@ -28,8 +28,9 @@ class Sample(ut.TestCase):
     system = sample.system
 
     def test_file_generation(self):
-        # test .checkpoint files exist
         filepath = pathlib.Path("mycheckpoint") / "0.checkpoint"
+        self.assertTrue(filepath.exists(), f"File {filepath} not created")
+        filepath = pathlib.Path("mycheckpoint") / "forces.npy"
         self.assertTrue(filepath.exists(), f"File {filepath} not created")
 
 

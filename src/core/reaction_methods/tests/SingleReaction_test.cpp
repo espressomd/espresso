@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the SingleReaction. */
-
 #define BOOST_TEST_MODULE SingleReaction test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -27,8 +25,8 @@
 #include "reaction_methods/utils.hpp"
 
 #include <limits>
-#include <map>
 #include <memory>
+#include <unordered_map>
 
 // Check a simple chemical reaction, the Monte Carlo acceptance rate
 // and the configurational move probability for a given system state.
@@ -63,7 +61,7 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
       for (int k = 0; k < 3; ++k) {
         // system contains i x A, j x B, and k x C
         auto const p_numbers =
-            std::map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
+            std::unordered_map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const val = calculate_factorial_expression(reaction, p_numbers);
         auto const ref = g(i, -1) * g(j, 3) * g(k, 4);
         BOOST_CHECK_CLOSE(val, ref, 5 * tol);

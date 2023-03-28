@@ -82,7 +82,9 @@ LB_parameters_gpu lbpar_gpu = {
 /** this is the array that stores the hydrodynamic fields for the output */
 std::vector<LB_rho_v_pi_gpu> host_values(0);
 
+#ifdef ELECTROKINETICS
 bool ek_initialized = false;
+#endif
 
 /** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {

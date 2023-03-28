@@ -709,12 +709,12 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     // calculated within the array dq[i], which will
     // be compared later with squared distance between the particle
     // and the cell depending on a cell level.
-    // Original tree box edge (2*radiusd) should be divided *0.5
+    // Original tree box edge (2*radiusd) should be halved
     // as much as the tree depth takes place.
     dq[0] = radiusd * radiusd * *itolsqd;
     for (i = 1; i < maxdepthd; i++) {
-      dq[i] = dq[i - 1] * 0.25f;
-      dq[i - 1] += *epssqd;
+      dq[i] = dq[i - 1] * 0.25f; // halving of the squared distance
+      dq[i - 1] += *epssqd;      // increase thickness of previous cell
     }
     dq[i - 1] += *epssqd;
 
@@ -812,15 +812,11 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
 
             // Check if all threads agree that cell is far enough away (or is a
             // body, i.e. n < nbodiesd).
-#if defined(__CUDACC__) && CUDA_VERSION >= 9000
             if ((n < bhpara->nbodies) ||
                 __all_sync(__activemask(), tmp >= dq[depth])) {
-#else
-            if ((n < bhpara->nbodies) || __all(tmp >= dq[depth])) {
-#endif
               if (n != i) {
 
-                auto const d1 = sqrtf(tmp /*, 0.5f*/);
+                auto const d1 = sqrtf(tmp);
                 auto const dd5 = __fdividef(1.0f, tmp * tmp * d1);
                 auto b = 0.0f;
                 auto b2 = 0.0f;
@@ -891,7 +887,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
 __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
     float pf, float *energySum) {
   // NOTE: the algorithm of this kernel is almost identical to
-  // forceCalculationKernel. See comments there.
+  // @ref forceCalculationKernel. See comments there.
 
   int i, n, t;
   float dr[3], h[3], u[3], uc[3];
@@ -962,20 +958,12 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
               dr[l] = -bhpara->r[3 * n + l] + bhpara->r[3 * i + l];
               tmp += dr[l] * dr[l];
             }
-#if defined(__CUDACC__) && CUDA_VERSION >= 9000
+            // check if all threads agree that cell is far enough away
+            // (or is a body)
             if ((n < bhpara->nbodies) ||
-                __all_sync(
-                    __activemask(),
-                    tmp >= dq[depth])) { // check if all threads agree that cell
-                                         // is far enough away (or is a body)
-#else
-            if ((n < bhpara->nbodies) ||
-                __all(tmp >=
-                      dq[depth])) { // check if all threads agree that cell
-                                    // is far enough away (or is a body)
-#endif
+                __all_sync(__activemask(), tmp >= dq[depth])) {
               if (n != i) {
-                auto const d1 = sqrtf(tmp /*, 0.5f*/);
+                auto const d1 = sqrtf(tmp);
                 auto const dd5 = __fdividef(1.0f, tmp * tmp * d1);
                 auto b = 0.0f;
                 for (int l = 0; l < 3; l++) {
@@ -1275,4 +1263,4 @@ void fill_bh_data(float const *r, float const *dip, BHData const *bh_data) {
   cuda_safe_mem(cudaMemcpy(bh_data->u, dip, size, cudaMemcpyDeviceToDevice));
 }
 
-#endif // BARNES_HUT
+#endif // DIPOLAR_BARNES_HUT

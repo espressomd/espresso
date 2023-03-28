@@ -50,9 +50,8 @@ class CylindricalLBProfileObservable
       AutoParameters<CylindricalLBProfileObservable<CoreCylLBObs>, Observable>;
 
 public:
-  static_assert(std::is_base_of<::Observables::CylindricalLBProfileObservable,
-                                CoreCylLBObs>::value,
-                "");
+  static_assert(std::is_base_of_v<::Observables::CylindricalLBProfileObservable,
+                                  CoreCylLBObs>);
   using Base::Base;
   CylindricalLBProfileObservable() {
     this->add_parameters({

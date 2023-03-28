@@ -38,7 +38,7 @@ using ObjectId = std::size_t;
  */
 inline ObjectId object_id(const ObjectHandle *p) {
   // NOLINTNEXTLINE(bugprone-sizeof-expression)
-  static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId), "");
+  static_assert(sizeof(const ObjectHandle *) <= sizeof(ObjectId));
   // Use the pointer value as the unique identifier.
   // This function is only called on the head node.
   return reinterpret_cast<ObjectId>(p);
@@ -166,7 +166,7 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
  * @return Packed variant.
  */
 inline PackedVariant pack(const Variant &v) {
-  return boost::apply_visitor(PackVisitor{}, v);
+  return boost::apply_visitor(PackVisitor(), v);
 }
 
 /**
@@ -180,7 +180,7 @@ inline PackedVariant pack(const Variant &v) {
  */
 inline Variant unpack(const PackedVariant &v,
                       std::unordered_map<ObjectId, ObjectRef> const &objects) {
-  return boost::apply_visitor(UnpackVisitor{objects}, v);
+  return boost::apply_visitor(UnpackVisitor(objects), v);
 }
 
 /**

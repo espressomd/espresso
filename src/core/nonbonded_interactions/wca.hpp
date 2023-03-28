@@ -35,8 +35,6 @@
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
-int wca_set_params(int part_type_a, int part_type_b, double eps, double sig);
-
 /** Calculate WCA force factor */
 inline double wca_pair_force_factor(IA_parameters const &ia_params,
                                     double dist) {

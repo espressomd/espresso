@@ -108,7 +108,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
   }
 
   auto const prefactor =
-      boost::apply_visitor(GetCoulombPrefactor{}, *electrostatics_actor);
+      boost::apply_visitor(GetCoulombPrefactor(), *electrostatics_actor);
   auto const pref = 1. / (prefactor * 2. * Utils::pi());
   auto const kernel = Coulomb::pair_force_kernel();
   auto const elc_kernel = Coulomb::pair_force_elc_kernel();
@@ -236,7 +236,8 @@ struct SanityChecksICC : public boost::static_visitor<void> {
   void operator()(std::shared_ptr<T> const &actor) const {}
 #ifdef P3M
 #ifdef CUDA
-  void operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
+  [[noreturn]] void
+  operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
     throw std::runtime_error("ICC does not work with P3MGPU");
   }
 #endif // CUDA
@@ -248,10 +249,10 @@ struct SanityChecksICC : public boost::static_visitor<void> {
     boost::apply_visitor(*this, actor->base_solver);
   }
 #endif // P3M
-  void operator()(std::shared_ptr<DebyeHueckel> const &) const {
+  [[noreturn]] void operator()(std::shared_ptr<DebyeHueckel> const &) const {
     throw std::runtime_error("ICC does not work with DebyeHueckel.");
   }
-  void operator()(std::shared_ptr<ReactionField> const &) const {
+  [[noreturn]] void operator()(std::shared_ptr<ReactionField> const &) const {
     throw std::runtime_error("ICC does not work with ReactionField.");
   }
 };
@@ -267,7 +268,7 @@ void ICCStar::sanity_check() const {
 
 void ICCStar::sanity_checks_active_solver() const {
   if (electrostatics_actor) {
-    boost::apply_visitor(SanityChecksICC{}, *electrostatics_actor);
+    boost::apply_visitor(SanityChecksICC(), *electrostatics_actor);
   } else {
     throw std::runtime_error("An electrostatics solver is needed by ICC");
   }

@@ -66,6 +66,7 @@ class defs:
             line = line.strip()
             # Ignore empty and comment lines
             if not line or line.startswith(('#', '//', '/*')):
+                assert not line.startswith('/*') or line.endswith('*/')
                 continue
 
             # Tokenify line
@@ -166,3 +167,24 @@ class defs:
                     return None
 
         return newset
+
+
+class cmakedefs:
+    def __init__(self, filename):
+        self.externals = set()
+
+        re_pattern = re.compile(
+            "^#cmakedefine +ESPRESSO_BUILD_WITH_([A-Za-z0-9_]+) *$")
+        inside_multiline_comment = False
+        for line in fileinput.input(filename):
+            line = line.strip()
+            # Ignore empty and comment lines
+            if inside_multiline_comment or line.startswith('/*'):
+                inside_multiline_comment = not line.endswith('*/')
+                continue
+            if not line or line.startswith('//'):
+                continue
+
+            m = re_pattern.search(line)
+            if m:
+                self.externals.add(m.group(1))

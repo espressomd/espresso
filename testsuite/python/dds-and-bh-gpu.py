@@ -45,9 +45,8 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
         pf_bh_gpu = 2.34
         pf_dds_gpu = 3.524
         ratio_dawaanr_bh_gpu = pf_dds_gpu / pf_bh_gpu
-        l = 15
         system = self.system
-        system.box_l = 3 * [l]
+        system.box_l = [15., 15., 15.]
         system.periodicity = 3 * [False]
         system.time_step = 1E-4
         system.cell_system.skin = 0.1
@@ -56,7 +55,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
 
         for n in [128, 541]:
             dipole_modulus = 1.3
-            part_pos = np.random.random((n, 3)) * l
+            part_pos = np.random.random((n, 3)) * system.box_l[0]
             part_dip = dipole_modulus * tests_common.random_dipoles(n)
             system.part.add(pos=part_pos, dip=part_dip,
                             v=n * [(0, 0, 0)], omega_body=n * [(0, 0, 0)])
@@ -68,8 +67,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             g.kill_particle_motion(rotation=True)
             system.integrator.set_vv()
 
-            system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0, cutoff=-1, shift=0.0)
+            system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
             system.cell_system.skin = 0.0
             system.time_step = 0.01

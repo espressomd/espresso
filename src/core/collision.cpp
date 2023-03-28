@@ -37,8 +37,6 @@
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <boost/algorithm/clamp.hpp>
-#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/serialization.hpp>
 
@@ -195,7 +193,7 @@ void Collision_parameters::initialize() {
       throw std::domain_error("Collision detection particle type for virtual "
                               "sites needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.vs_particle_type);
+    make_particle_type_exist(collision_params.vs_particle_type);
   }
 
   if (collision_params.mode == CollisionModeType::GLUE_TO_SURF) {
@@ -203,25 +201,25 @@ void Collision_parameters::initialize() {
       throw std::domain_error("Collision detection particle type for virtual "
                               "sites needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.vs_particle_type);
+    make_particle_type_exist(collision_params.vs_particle_type);
 
     if (collision_params.part_type_to_be_glued < 0) {
       throw std::domain_error("Collision detection particle type to be glued "
                               "needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.part_type_to_be_glued);
+    make_particle_type_exist(collision_params.part_type_to_be_glued);
 
     if (collision_params.part_type_to_attach_vs_to < 0) {
       throw std::domain_error("Collision detection particle type to attach "
                               "the virtual site to needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.part_type_to_attach_vs_to);
+    make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
 
     if (collision_params.part_type_after_glueing < 0) {
       throw std::domain_error("Collision detection particle type after gluing "
                               "needs to be >=0");
     }
-    make_particle_type_exist_local(collision_params.part_type_after_glueing);
+    make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
   on_short_range_ia_change();
@@ -305,7 +303,8 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
            ((partner_ids[0] == id2) && (partner_ids[1] == id1));
   };
 
-  if (boost::algorithm::any_of(p.bonds(), [=](auto const &bond) {
+  auto const &bonds = p.bonds();
+  if (std::any_of(bonds.begin(), bonds.end(), [=](auto const &bond) {
         return is_collision_bond(bond) and has_same_partners(bond);
       })) {
     return;
@@ -319,8 +318,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
   /* vector from p to p2 */
   auto const vec2 = box_geo.get_mi_vector(p.pos(), p2.pos()).normalize();
 
-  auto const cosine =
-      boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
+  auto const cosine = std::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
 
   // Bond angle
   auto const phi = acos(cosine);
@@ -346,9 +344,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   new_part.id() = current_vs_pid;
   new_part.pos() = pos;
   auto p_vs = cell_structure.add_particle(std::move(new_part));
-
-  local_vs_relate_to(*p_vs, get_part(relate_to));
-
+  vs_relate_to(*p_vs, get_part(relate_to));
   p_vs->set_virtual(true);
   p_vs->type() = collision_params.vs_particle_type;
 }
@@ -401,9 +397,10 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
 
 std::vector<CollisionPair> gather_global_collision_queue() {
   std::vector<CollisionPair> res = local_collision_queue;
-  Utils::Mpi::gather_buffer(res, comm_cart);
-  boost::mpi::broadcast(comm_cart, res, 0);
-
+  if (comm_cart.size() > 1) {
+    Utils::Mpi::gather_buffer(res, comm_cart);
+    boost::mpi::broadcast(comm_cart, res, 0);
+  }
   return res;
 }
 

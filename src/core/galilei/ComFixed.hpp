@@ -90,10 +90,12 @@ public:
     std::vector<double> masses(m_type_index.size(), 0.0);
 
     /* Add contributions from all nodes and redistribute them to all. */
-    boost::mpi::all_reduce(comm, local_forces.data(), local_forces.size(),
-                           forces.data(), std::plus<Utils::Vector3d>{});
-    boost::mpi::all_reduce(comm, local_masses.data(), local_masses.size(),
-                           masses.data(), std::plus<double>{});
+    boost::mpi::all_reduce(comm, local_forces.data(),
+                           static_cast<int>(local_forces.size()), forces.data(),
+                           std::plus<Utils::Vector3d>{});
+    boost::mpi::all_reduce(comm, local_masses.data(),
+                           static_cast<int>(local_masses.size()), masses.data(),
+                           std::plus<double>{});
 
     for (auto &p : particles) {
       /* Check if type is of interest */

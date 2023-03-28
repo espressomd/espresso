@@ -113,7 +113,7 @@ Be aware of the following limitations:
 
 * Checkpointing only supports recursion on the head node. It is therefore
   impossible to checkpoint a :class:`espressomd.system.System` instance that
-  contains LB boundaries, constraints or auto-update accumulators when the
+  contains LB boundaries, constraint unions or auto-update accumulators when the
   simulation is running with 2 or more MPI nodes.
 
 * The active actors, i.e., the content of ``system.actors``, are checkpointed.
@@ -140,6 +140,56 @@ Be aware of the following limitations:
 * Checkpoints may depend on the presence of other Python modules at specific
   versions. It may therefore not be possible to load a checkpoint in a
   different environment than where it was written.
+  In particular, all |es| modules whose classes have been used to
+  instantiate objects in the checkpoint file also need to be imported
+  in the script that loads the checkpoint (because importing an |es|
+  module does more than just making classes visibles: it also registers
+  them as script interface classes).
+  Loading a checkpoint without the proper |es| module imports will generally
+  raise an exception indicating which module is missing.
+
+* It is only possible to checkpoint objects at global scope.
+  When wrapping the checkpointing logic in a function, objects local to
+  that function won't be checkpointed, since their origin cannot be safely
+  stored in the checkpoint file. To circumvent this limitation, make any
+  local object explicitly global, so that it belongs to the global scope::
+
+      import espressomd
+      import espressomd.checkpointing
+
+      def setup_system():
+          global system  # attach 'system' to global scope for checkpointing
+          checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
+          if not checkpoint.has_checkpoints():
+              system = espressomd.System(box_l=[1., 1., 1.])
+              system.part.add(pos=[0.1, 0.2, 0.3])
+              checkpoint.register("system")
+              checkpoint.save()
+          else:
+              checkpoint.load()
+              print(system.part.by_id(0).pos)
+          return system
+
+      system = setup_system()
+
+* To be fully deterministic when loading from a checkpoint with an active
+  thermostat, the first step of the integration should be called with the flag
+  ``reuse_forces=True``, e.g. ``system.integrator.run(2, reuse_forces=True)``.
+  This is because loading a checkpoint reinitializes the system and enforces
+  a recalculation of the forces. However, this computes the forces from the
+  velocities at the current time step and not at the previous half time step.
+  Please note that long-range actors can make trajectories non-reproducible.
+  For example, lattice-Boltzmann introduces errors of the order of 1e-15 with
+  binary checkpoint files, or 1e-7 with ASCII checkpoint files. In addition,
+  several electrostatic and magnetostatic actors automatically introduce
+  a deviation of the order of 1e-7, either due to floating-point rounding
+  errors (:class:`~espressomd.electrostatics.P3MGPU`), or due to re-tuning
+  using the most recent system state (:class:`~espressomd.electrostatics.MMM1D`,
+  :class:`~espressomd.electrostatics.MMM1DGPU`).
+  When in doubt, you can easily verify the absence of a "force jump" when
+  loading from a checkpoint by replacing the electrostatics actor with your
+  combination of features in files :file:`samples/save_checkpoint.py` and
+  :file:`samples/load_checkpoint.py` and running them sequentially.
 
 For additional methods of the checkpointing class, see
 :class:`espressomd.checkpointing.Checkpoint`.
@@ -151,9 +201,9 @@ Writing H5MD-files
 
 .. note::
 
-    Requires ``H5MD`` external feature, enabled with ``-DWITH_HDF5=ON``. Also
-    requires a parallel version of HDF5. On Ubuntu, this can be installed via
-    either ``libhdf5-openmpi-dev`` for OpenMPI or ``libhdf5-mpich-dev`` for
+    Requires ``H5MD`` external feature, enabled with ``-D ESPRESSO_BUILD_WITH_HDF5=ON``.
+    Also requires a parallel version of HDF5. On Ubuntu, this can be installed
+    via either ``libhdf5-openmpi-dev`` for OpenMPI or ``libhdf5-mpich-dev`` for
     MPICH, but not ``libhdf5-dev`` which is the serial version.
 
 For long simulations, it's a good idea to store data in the hdf5 file format
@@ -167,7 +217,7 @@ To write data in a hdf5-file according to the H5MD proposal
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd.io.writer.h5md
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
@@ -254,7 +304,7 @@ To read from the command line with
 `h5dump <https://support.hdfgroup.org/HDF5/doc/RM/Tools/h5dump.htm>`__
 (Ubuntu package ``hdf5-tools``):
 
-.. code:: sh
+.. code-block:: sh
 
     # show metadata only
     h5dump --header sample.h5 | less
@@ -280,7 +330,7 @@ data is easily accessible. In contrast to H5MD, the MPI-IO functionality
 outputs data in a *machine-dependent format*, but has write and read
 capabilities. The usage is quite simple:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io
@@ -356,7 +406,7 @@ to generate a timeframe of the simulation state. For example:
 
 A standalone VTF file can simply be
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf
@@ -404,7 +454,7 @@ timesteps. This is a restriction of VMD itself, not of the format.
 
 Writes a structure block describing the system's structure to the given channel, for example:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf
@@ -426,7 +476,7 @@ contains a trajectory of a whole simulation.
 Writes a coordinate (or timestep) block that contains all coordinates of
 the system's particles.
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf
@@ -445,7 +495,7 @@ Generates a dictionary which maps |es| particle ``id`` to VTF indices.
 This is motivated by the fact that the list of |es| particle ``id`` is allowed to contain *holes* but VMD
 requires increasing and continuous indexing. The |es| ``id`` can be used as *key* to obtain the VTF index as the *value*, for example:
 
-.. code:: python
+.. code-block:: python
 
     import espressomd
     import espressomd.io.writer.vtf

@@ -41,7 +41,6 @@ add_library(
   integrate.cpp
   npt.cpp
   partCfg_global.cpp
-  particle_data.cpp
   particle_node.cpp
   polymer.cpp
   pressure.cpp
@@ -55,23 +54,26 @@ add_library(
   virtual_sites.cpp
   exclusions.cpp
   PartCfg.cpp
-  EspressoSystemStandAlone.cpp)
+  EspressoSystemStandAlone.cpp
+  TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
+set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
+                                               "${ESPRESSO_CXX_CLANG_TIDY}")
 
-if(CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(
     espresso_core
     PRIVATE cuda_init.cpp cuda_interface.cpp
             grid_based_algorithms/electrokinetics.cpp
             grid_based_algorithms/lbgpu.cpp)
-  add_gpu_library(
+  espresso_add_gpu_library(
     espresso_cuda
     SHARED
     cuda_common_cuda.cu
     cuda_init_cuda.cu
     CudaHostAllocator.cu
     magnetostatics/barnes_hut_gpu_cuda.cu
-    magnetostatics/dds_gpu_cuda.cu
+    magnetostatics/dipolar_direct_sum_gpu_cuda.cu
     electrostatics/mmm1d_gpu_cuda.cu
     electrostatics/p3m_gpu_cuda.cu
     electrostatics/p3m_gpu_error_cuda.cu
@@ -91,6 +93,8 @@ if(CUDA)
             ${CMAKE_CURRENT_SOURCE_DIR}/grid_based_algorithms
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
+  set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
+                                                 "${ESPRESSO_CUDA_CLANG_TIDY}")
   target_link_libraries(espresso_core PUBLIC espresso::cuda)
   install(TARGETS espresso_cuda
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
@@ -131,6 +135,6 @@ add_subdirectory(scafacos)
 add_subdirectory(stokesian_dynamics)
 add_subdirectory(virtual_sites)
 
-if(WITH_TESTS)
+if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(unit_tests)
-endif(WITH_TESTS)
+endif()

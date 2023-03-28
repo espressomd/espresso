@@ -51,9 +51,8 @@ class CylindricalPidProfileObservable
       AutoParameters<CylindricalPidProfileObservable<CoreObs>, Observable>;
 
 public:
-  static_assert(std::is_base_of<::Observables::CylindricalPidProfileObservable,
-                                CoreObs>::value,
-                "");
+  static_assert(std::is_base_of_v<
+                ::Observables::CylindricalPidProfileObservable, CoreObs>);
   using Base::Base;
   CylindricalPidProfileObservable() {
     this->add_parameters({
@@ -100,7 +99,7 @@ public:
            return cylindrical_pid_profile_observable()->limits()[2].second;
          }},
     });
-  };
+  }
 
   void do_construct(VariantMap const &params) override {
     set_from_args(m_transform_params, params, "transform_params");

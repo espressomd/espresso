@@ -118,9 +118,9 @@ static void add_forces_and_torques(ParticleRange particles,
   int i = 0;
   for (auto &p : particles) {
     for (int j = 0; j < 3; j++) {
-      p.force()[j] += forces[3 * i + j];
+      p.force()[j] += static_cast<double>(forces[3 * i + j]);
 #ifdef ROTATION
-      p.torque()[j] += torques[3 * i + j];
+      p.torque()[j] += static_cast<double>(torques[3 * i + j]);
 #endif
     }
     i++;

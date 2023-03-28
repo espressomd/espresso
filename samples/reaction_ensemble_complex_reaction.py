@@ -100,10 +100,10 @@ numbers = {type_A: [], type_B: [], type_C: [], type_D: [], type_E: []}
 RE.set_non_interacting_type(type=max(types) + 1)
 
 # warmup
-RE.reaction(reaction_steps=200)
+RE.reaction(steps=200)
 
 for i in range(200):
-    RE.reaction(reaction_steps=10)
+    RE.reaction(steps=10)
     for _type in types:
         numbers[_type].append(system.number_of_particles(type=_type))
 

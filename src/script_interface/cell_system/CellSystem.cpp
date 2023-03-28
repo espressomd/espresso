@@ -25,7 +25,6 @@
 #include "core/cell_system/HybridDecomposition.hpp"
 #include "core/cell_system/RegularDecomposition.hpp"
 #include "core/cells.hpp"
-#include "core/communication.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
 #include "core/integrate.hpp"
@@ -34,7 +33,7 @@
 #include "core/tuning.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/as_const.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/variant.hpp>
@@ -54,12 +53,12 @@ namespace CellSystem {
 
 static auto const &get_regular_decomposition() {
   return dynamic_cast<RegularDecomposition const &>(
-      Utils::as_const(::cell_structure).decomposition());
+      std::as_const(::cell_structure).decomposition());
 }
 
 static auto const &get_hybrid_decomposition() {
   return dynamic_cast<HybridDecomposition const &>(
-      Utils::as_const(::cell_structure).decomposition());
+      std::as_const(::cell_structure).decomposition());
 }
 
 CellSystem::CellSystem() {
@@ -159,12 +158,13 @@ Variant CellSystem::do_call_method(std::string const &name,
               {"n_square", hd.count_particles_in_n_square()}}};
     }
     state["verlet_reuse"] = get_verlet_reuse();
-    state["n_nodes"] = ::n_nodes;
+    state["n_nodes"] = context()->get_comm().size();
     return state;
   }
   if (name == "get_pairs") {
+    on_observable_calc();
     std::vector<Variant> out;
-    context()->parallel_try_catch([&params, &out]() {
+    context()->parallel_try_catch([this, &params, &out]() {
       std::vector<std::pair<int, int>> pair_list;
       auto const distance = get_value<double>(params, "distance");
       if (boost::get<std::string>(&params.at("types")) != nullptr) {
@@ -177,6 +177,7 @@ Variant CellSystem::do_call_method(std::string const &name,
         auto const types = get_value<std::vector<int>>(params, "types");
         pair_list = get_pairs_of_types(distance, types);
       }
+      Utils::Mpi::gather_buffer(pair_list, context()->get_comm());
       std::transform(pair_list.begin(), pair_list.end(),
                      std::back_inserter(out),
                      [](std::pair<int, int> const &pair) {
@@ -186,16 +187,18 @@ Variant CellSystem::do_call_method(std::string const &name,
     return out;
   }
   if (name == "get_neighbors") {
+    on_observable_calc();
     std::vector<std::vector<int>> neighbors_global;
-    context()->parallel_try_catch([&neighbors_global, &params]() {
+    context()->parallel_try_catch([this, &neighbors_global, &params]() {
       auto const dist = get_value<double>(params, "distance");
       auto const pid = get_value<int>(params, "pid");
-      auto const ret = mpi_get_short_range_neighbors_local(pid, dist, true);
+      auto const ret = get_short_range_neighbors(pid, dist);
       std::vector<int> neighbors_local;
       if (ret) {
         neighbors_local = *ret;
       }
-      boost::mpi::gather(::comm_cart, neighbors_local, neighbors_global, 0);
+      boost::mpi::gather(context()->get_comm(), neighbors_local,
+                         neighbors_global, 0);
     });
     std::vector<int> neighbors;
     for (auto const &neighbors_local : neighbors_global) {
@@ -207,8 +210,10 @@ Variant CellSystem::do_call_method(std::string const &name,
     return neighbors;
   }
   if (name == "non_bonded_loop_trace") {
+    on_observable_calc();
     std::vector<Variant> out;
-    auto const pair_list = non_bonded_loop_trace();
+    auto pair_list = non_bonded_loop_trace(context()->get_comm().rank());
+    Utils::Mpi::gather_buffer(pair_list, context()->get_comm());
     std::transform(pair_list.begin(), pair_list.end(), std::back_inserter(out),
                    [](PairInfo const &pair) {
                      return std::vector<Variant>{pair.id1,   pair.id2,
@@ -225,17 +230,18 @@ Variant CellSystem::do_call_method(std::string const &name,
               get_value_or<bool>(params, "adjust_max_skin", false));
     return ::skin;
   }
+  if (name == "get_max_range") {
+    return ::cell_structure.max_range();
+  }
   return {};
 }
 
 std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
   ::cell_structure.resort_particles(global_flag, box_geo);
-  if (context()->is_head_node()) {
-    clear_particle_node();
-  }
+  clear_particle_node();
   auto const size = static_cast<int>(::cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;
-  boost::mpi::gather(::comm_cart, size, n_part_per_node, 0);
+  boost::mpi::gather(context()->get_comm(), size, n_part_per_node, 0);
   return n_part_per_node;
 }
 

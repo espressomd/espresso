@@ -27,15 +27,24 @@
 
 #include <string>
 
-Particle const &get_particle_data(int p_id);
-
 namespace ScriptInterface {
 namespace Particles {
 
 class ParticleHandle : public AutoParameters<ParticleHandle> {
   int m_pid;
 
-  Particle const &particle() const { return get_particle_data(m_pid); };
+  template <typename T>
+  T get_particle_property(T const &(Particle::*getter)() const) const;
+  template <typename T, class F> T get_particle_property(F const &fun) const;
+
+  template <typename T>
+  void set_particle_property(T &(Particle::*setter)(),
+                             Variant const &value) const;
+
+  template <class F> void set_particle_property(F const &fun) const;
+#ifdef EXCLUSIONS
+  void particle_exclusion_sanity_checks(int pid1, int pid2) const;
+#endif // EXCLUSIONS
 
 public:
   ParticleHandle();

@@ -45,7 +45,6 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
-#include <tuple>
 #include <vector>
 
 /* if you define this feature, the Bessel functions are calculated up
@@ -123,10 +122,19 @@ CoulombMMM1D::CoulombMMM1D(double prefactor, double maxPWerror,
     : maxPWerror{maxPWerror}, far_switch_radius{switch_rad},
       tune_timings{tune_timings}, tune_verbose{tune_verbose}, m_is_tuned{false},
       far_switch_radius_sq{-1.}, uz2{0.}, prefuz2{0.}, prefL3_i{0.} {
+  set_prefactor(prefactor);
+  if (maxPWerror <= 0.) {
+    throw std::domain_error("Parameter 'maxPWerror' must be > 0");
+  }
+  if (far_switch_radius <= 0. and far_switch_radius != -1.) {
+    throw std::domain_error("Parameter 'far_switch_radius' must be > 0");
+  }
   if (far_switch_radius > 0.) {
     far_switch_radius_sq = Utils::sqr(far_switch_radius);
   }
-  set_prefactor(prefactor);
+  if (tune_timings <= 0) {
+    throw std::domain_error("Parameter 'timings' must be > 0");
+  }
 }
 
 void CoulombMMM1D::sanity_checks_periodicity() const {
@@ -224,12 +232,11 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
         break;
 
       auto const fq = c_2pi * bp;
-      double k0, k1;
 #ifdef MMM1D_MACHINE_PREC
-      k0 = K0(fq * rxy_d);
-      k1 = K1(fq * rxy_d);
+      auto const k0 = K0(fq * rxy_d);
+      auto const k1 = K1(fq * rxy_d);
 #else
-      std::tie(k0, k1) = LPK01(fq * rxy_d);
+      auto const [k0, k1] = LPK01(fq * rxy_d);
 #endif
       sr += bp * k1 * cos(fq * z_d);
       sz += bp * k0 * sin(fq * z_d);
@@ -317,32 +324,30 @@ void CoulombMMM1D::tune() {
     auto const maxrad = box_geo.length()[2];
     auto min_time = std::numeric_limits<double>::infinity();
     auto min_rad = -1.;
-    double switch_radius;
+    auto switch_radius = 0.2 * maxrad;
     /* determine optimal switching radius. Should be around 0.33 */
-    for (switch_radius = 0.2 * maxrad; switch_radius < 0.4 * maxrad;
-         switch_radius += 0.025 * maxrad) {
-      if (switch_radius <= bessel_radii.back()) {
-        // this switching radius is too small for our Bessel series
-        continue;
+    while (switch_radius < 0.4 * maxrad) {
+      if (switch_radius > bessel_radii.back()) {
+        // this switching radius is large enough for our Bessel series
+        far_switch_radius_sq = Utils::sqr(switch_radius);
+        on_coulomb_change();
+
+        /* perform force calculation test */
+        auto const int_time = benchmark_integration_step(tune_timings);
+
+        if (tune_verbose) {
+          std::printf("r= %f t= %f ms\n", switch_radius, int_time);
+        }
+
+        if (int_time < min_time) {
+          min_time = int_time;
+          min_rad = switch_radius;
+        } else if (int_time > 2. * min_time) {
+          // simple heuristic to skip remaining radii when performance drops
+          break;
+        }
       }
-
-      far_switch_radius_sq = Utils::sqr(switch_radius);
-      on_coulomb_change();
-
-      /* perform force calculation test */
-      auto const int_time = benchmark_integration_step(tune_timings);
-
-      if (tune_verbose) {
-        std::printf("r= %f t= %f ms\n", switch_radius, int_time);
-      }
-
-      if (int_time < min_time) {
-        min_time = int_time;
-        min_rad = switch_radius;
-      } else if (int_time > 2. * min_time) {
-        // simple heuristic to skip remaining radii when performance is dropping
-        break;
-      }
+      switch_radius += 0.025 * maxrad;
     }
     switch_radius = min_rad;
     far_switch_radius_sq = Utils::sqr(switch_radius);

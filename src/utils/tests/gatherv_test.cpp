@@ -28,111 +28,86 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
-using Utils::Mpi::gatherv;
+struct identity {
+  template <class T> constexpr T &&operator()(T &&t) const noexcept {
+    return std::forward<T>(t);
+  }
+};
 
-namespace mpi = boost::mpi;
-
-/*
- * Check that implementation behaves
- * like MPI_Gatherv with an mpi datatype.
- * To test this we gather the rank from
- * every rank to one rank and then check
- * that the value was written to the
- * correct position in the output array.
- */
-BOOST_AUTO_TEST_CASE(mpi_type) {
-  mpi::communicator world;
+template <typename T, class F> void check(T default_value, F conversion) {
+  boost::mpi::communicator world;
   auto const rank = world.rank();
   auto const size = world.size();
   auto const root = world.size() - 1;
+  auto const in = conversion(rank);
 
   /* out-of-place */
   {
     if (rank == root) {
-      std::vector<int> out(size, -1);
+      std::vector<T> out(size, default_value);
       std::vector<int> sizes(size, 1);
 
-      gatherv(world, &rank, 1, out.data(), sizes.data(), root);
+      Utils::Mpi::gatherv(world, &in, 1, out.data(), sizes.data(), root);
 
       for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(i, out.at(i));
+        BOOST_CHECK_EQUAL(out.at(i), conversion(i));
       }
+    } else if (rank % 2 == 0) {
+      Utils::Mpi::gatherv(world, &in, 1, static_cast<T *>(nullptr), nullptr,
+                          root);
     } else {
-      Utils::Mpi::gatherv(world, &rank, 1, root);
+      Utils::Mpi::gatherv(world, &in, 1, root);
     }
   }
 
   /* in-place */
   {
     if (rank == root) {
-      std::vector<int> out(size, -1);
-      out[rank] = rank;
+      std::vector<T> out(size, default_value);
+      out[rank] = in;
       std::vector<int> sizes(size, 1);
 
-      gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
+      Utils::Mpi::gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
 
       for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(i, out.at(i));
+        BOOST_CHECK_EQUAL(out.at(i), conversion(i));
       }
+    } else if (rank % 2 == 0) {
+      Utils::Mpi::gatherv(world, &in, 1, static_cast<T *>(nullptr), nullptr,
+                          root);
     } else {
-      Utils::Mpi::gatherv(world, &rank, 1, root);
+      Utils::Mpi::gatherv(world, &in, 1, root);
     }
   }
 }
 
 /*
  * Check that implementation behaves
- * like MPI_Gatherv with an non-mpi datatype.
- * To test this we gather a string containing the rank from
+ * like @c MPI_Gatherv with an mpi datatype.
+ * To test this, we gather the rank from
+ * every rank to one rank and then check
+ * that the value was written to the
+ * correct position in the output array.
+ */
+BOOST_AUTO_TEST_CASE(mpi_type) { check(-1, identity{}); }
+
+/*
+ * Check that implementation behaves
+ * like @c MPI_Gatherv with a non-mpi datatype.
+ * To test this, we gather a string containing the rank from
  * every rank to one rank and then check
  * that the value was written to the
  * correct position in the output array.
  */
 BOOST_AUTO_TEST_CASE(non_mpi_type) {
-  mpi::communicator world;
-  auto const rank = world.rank();
-  auto const size = world.size();
-  auto const root = world.size() - 1;
-  auto const in = std::to_string(rank);
-
-  /* out-of-place */
-  {
-    if (rank == root) {
-      std::vector<std::string> out(size);
-      std::vector<int> sizes(size, 1);
-
-      gatherv(world, &in, 1, out.data(), sizes.data(), root);
-
-      for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
-      }
-    } else {
-      Utils::Mpi::gatherv(world, &in, 1, root);
-    }
-  }
-
-  /* in-place */
-  {
-    if (rank == root) {
-      std::vector<std::string> out(size);
-      out[rank] = in;
-      std::vector<int> sizes(size, 1);
-
-      gatherv(world, out.data(), 1, out.data(), sizes.data(), root);
-
-      for (int i = 0; i < size; i++) {
-        BOOST_CHECK_EQUAL(std::to_string(i), out.at(i));
-      }
-    } else {
-      Utils::Mpi::gatherv(world, &in, 1, root);
-    }
-  }
+  check(std::string{""}, static_cast<std::string (&)(int)>(std::to_string));
 }
 
 int main(int argc, char **argv) {
-  mpi::environment mpi_env(argc, argv);
+  boost::mpi::environment mpi_env(argc, argv);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

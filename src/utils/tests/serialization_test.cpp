@@ -208,11 +208,23 @@ auto sorted_view(InputIt const &buffer_it) {
   return subset;
 }
 
+/**
+ * @brief Simplistic test for endianness.
+ * Replace with @c std::endian once ESPResSo becomes a C++20 project.
+ */
+bool is_big_endian() {
+#ifdef __BYTE_ORDER__
+  return __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__;
+#else
+  return false;
+#endif
+}
+
 BOOST_AUTO_TEST_CASE(serialization_level_test) {
   boost::mpi::communicator comm;
   auto const buffer = create_mpi_archive<std::array>(comm);
 
-  /* Serialization should produce the following bytestring:
+  /* Serialization should produce the following bytestring (little-endian):
    *   3 0 0 0 0 0 0 0
    *   4 0 0 0
    *   5 0 0 0
@@ -228,7 +240,7 @@ BOOST_AUTO_TEST_CASE(serialization_level_test) {
 
   // check buffer metadata
   {
-    static_assert(Testing::N <= (1ul << (8ul * sizeof(Testing::Serial_T))), "");
+    static_assert(Testing::N <= (1ul << (8ul * sizeof(Testing::Serial_T))));
     auto constexpr N = sizeof(std::size_t);
     auto const array_length = sorted_view<N>(buffer.begin());
     // since the array length is smaller than the size of the buffer type,
@@ -267,7 +279,10 @@ BOOST_AUTO_TEST_CASE(mpi_archive_test) {
   BOOST_TEST(buffer_vector == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_storage == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_quat == buffer_ref, boost::test_tools::per_element());
-  BOOST_TEST(buffer_cv[0] == Testing::N);
+  auto const index_lsb = (is_big_endian()) ? 1 : 0;
+  auto const index_hsb = (is_big_endian()) ? 0 : 1;
+  BOOST_TEST(buffer_cv[index_lsb] == Testing::N);
+  BOOST_TEST(buffer_cv[index_hsb] == 0);
   buffer_cv.erase(buffer_cv.begin());
   buffer_cv.erase(buffer_cv.begin());
   BOOST_TEST(buffer_cv == buffer_ref, boost::test_tools::per_element());
@@ -288,19 +303,19 @@ BOOST_AUTO_TEST_CASE(text_archive_test) {
 template <template <class> class Trait> void constexpr assert_has_trait() {
   struct S {};
   // arrays of standard types have the trait
-  static_assert(Trait<Utils::detail::Storage<int, 2>>::value, "");
-  static_assert(Trait<Utils::Array<int, 2>>::value, "");
-  static_assert(Trait<Utils::Vector<int, 2>>::value, "");
-  static_assert(Trait<Utils::Vector3i>::value, "");
-  static_assert(Trait<Utils::Vector3d>::value, "");
-  static_assert(Trait<Utils::Quaternion<float>>::value, "");
+  static_assert(Trait<Utils::detail::Storage<int, 2>>::value);
+  static_assert(Trait<Utils::Array<int, 2>>::value);
+  static_assert(Trait<Utils::Vector<int, 2>>::value);
+  static_assert(Trait<Utils::Vector3i>::value);
+  static_assert(Trait<Utils::Vector3d>::value);
+  static_assert(Trait<Utils::Quaternion<float>>::value);
   BOOST_TEST_PASSPOINT();
   // arrays of non-standard types don't have the trait
-  static_assert(!Trait<S>::value, "");
-  static_assert(!Trait<Utils::detail::Storage<S, 2>>::value, "");
-  static_assert(!Trait<Utils::Array<S, 2>>::value, "");
-  static_assert(!Trait<Utils::Vector<S, 2>>::value, "");
-  static_assert(!Trait<Utils::Quaternion<S>>::value, "");
+  static_assert(!Trait<S>::value);
+  static_assert(!Trait<Utils::detail::Storage<S, 2>>::value);
+  static_assert(!Trait<Utils::Array<S, 2>>::value);
+  static_assert(!Trait<Utils::Vector<S, 2>>::value);
+  static_assert(!Trait<Utils::Quaternion<S>>::value);
 }
 
 BOOST_AUTO_TEST_CASE(serialization_traits_test) {
@@ -314,8 +329,8 @@ BOOST_AUTO_TEST_CASE(serialization_traits_test) {
 
 BOOST_AUTO_TEST_CASE(compact_vector_test) {
   using namespace Utils;
-  static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value, "");
-  static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>), "");
+  static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value);
+  static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>));
   BOOST_TEST_PASSPOINT();
 }
 

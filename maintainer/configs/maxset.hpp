@@ -17,39 +17,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /* maximal set of features usable at the same time */
+#define ROTATION
+#define ROTATIONAL_INERTIA
+#define MASS
+#define PARTICLE_ANISOTROPY
+#define EXTERNAL_FORCES
+#define THERMOSTAT_PER_PARTICLE
+#define BOND_CONSTRAINT
+#define NPT
+#define DPD
+
 #define ELECTROSTATICS
+#ifdef CUDA
+#define MMM1D_GPU
+#endif
 #define DIPOLES
 #ifdef SCAFACOS
 #define SCAFACOS_DIPOLES
 #endif
-#define ROTATION
-#define ROTATIONAL_INERTIA
-#define PARTICLE_ANISOTROPY
-#define EXTERNAL_FORCES
-
-#define MASS
-#define EXCLUSIONS
-
-#define BOND_CONSTRAINT
-#define COLLISION_DETECTION
-#define THERMOSTAT_PER_PARTICLE
-
-#define NPT
-
-#define DPD
-
-#define LB_BOUNDARIES
-#define LB_ELECTROHYDRODYNAMICS
 
 #define ENGINE
 
+#define LB_ELECTROHYDRODYNAMICS
+#define LB_BOUNDARIES
 #ifdef CUDA
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
 #define EK_DEBUG
-#define MMM1D_GPU
 #endif
+
+#define EXCLUSIONS
 
 #define TABULATED
 #define LENNARD_JONES
@@ -67,9 +65,13 @@
 #define BUCKINGHAM
 #define SOFT_SPHERE
 #define WCA
+
+#ifdef FFTW
 #define THOLE
+#endif
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
+#define COLLISION_DETECTION
 
 #define ADDITIONAL_CHECKS

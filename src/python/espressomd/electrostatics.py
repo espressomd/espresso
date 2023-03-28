@@ -38,10 +38,17 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
         self._check_required_features()
 
         if 'sip' not in kwargs:
+            for key in self.required_keys():
+                if key not in kwargs:
+                    raise RuntimeError(f"Parameter '{key}' is missing")
             params = self.default_params()
             params.update(kwargs)
             self.validate_params(params)
             super().__init__(**params)
+            for key in params:
+                if key not in self._valid_parameters():
+                    raise RuntimeError(
+                        f"Parameter '{key}' is not a valid parameter")
         else:
             super().__init__(**kwargs)
 
@@ -53,12 +60,9 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
         """Check validity of given parameters.
         """
         utils.check_type_or_throw_except(
-            params["prefactor"], 1, float, "prefactor should be a double")
+            params["prefactor"], 1, float, "Parameter 'prefactor' should be a float")
 
     def default_params(self):
-        raise NotImplementedError("Derived classes must implement this method")
-
-    def valid_keys(self):
         raise NotImplementedError("Derived classes must implement this method")
 
     def required_keys(self):
@@ -93,9 +97,6 @@ class DH(ElectrostaticInteraction):
     _so_name = "Coulomb::DebyeHueckel"
     _so_creation_policy = "GLOBAL"
 
-    def valid_keys(self):
-        return {"prefactor", "kappa", "r_cut", "check_neutrality"}
-
     def required_keys(self):
         return {"prefactor", "kappa", "r_cut"}
 
@@ -126,10 +127,6 @@ class ReactionField(ElectrostaticInteraction):
     _so_name = "Coulomb::ReactionField"
     _so_creation_policy = "GLOBAL"
 
-    def valid_keys(self):
-        return {"prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",
-                "check_neutrality"}
-
     def required_keys(self):
         return {"prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"}
 
@@ -138,10 +135,6 @@ class ReactionField(ElectrostaticInteraction):
 
 
 class _P3MBase(ElectrostaticInteraction):
-    def valid_keys(self):
-        return {"mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                "prefactor", "tune", "check_neutrality", "timings",
-                "verbose", "mesh_off"}
 
     def required_keys(self):
         return {"prefactor", "accuracy"}
@@ -155,6 +148,7 @@ class _P3MBase(ElectrostaticInteraction):
                 "mesh_off": [-1., -1., -1.],
                 "prefactor": 0.,
                 "check_neutrality": True,
+                "check_complex_residuals": True,
                 "tune": True,
                 "timings": 10,
                 "verbose": True}
@@ -164,8 +158,9 @@ class _P3MBase(ElectrostaticInteraction):
 
         if utils.is_valid_type(params["mesh"], int):
             params["mesh"] = 3 * [params["mesh"]]
-        utils.check_type_or_throw_except(params["mesh"], 3, int,
-                                         "P3M mesh has to be an integer or integer list of length 3")
+        utils.check_type_or_throw_except(
+            params["mesh"], 3, int,
+            "Parameter 'mesh' has to be an integer or integer list of length 3")
         if (params["mesh"][0] % 2 != 0 and params["mesh"][0] != -1) or \
            (params["mesh"][1] % 2 != 0 and params["mesh"][1] != -1) or \
            (params["mesh"][2] % 2 != 0 and params["mesh"][2] != -1):
@@ -177,18 +172,16 @@ class _P3MBase(ElectrostaticInteraction):
 
         utils.check_type_or_throw_except(
             params["epsilon"], 1, float,
-            "epsilon should be a double or 'metallic'")
+            "Parameter 'epsilon' has to be a float or 'metallic'")
 
         utils.check_type_or_throw_except(
             params["mesh_off"], 3, float,
-            "mesh_off should be a (3,) array_like of values between 0 and 1")
+            "Parameter 'mesh_off' has to be a (3,) array_like of values between 0.0 and 1.0")
 
         if not utils.is_valid_type(params["timings"], int):
-            raise TypeError("P3M timings has to be an integer")
-        if params["timings"] <= 0:
-            raise ValueError("P3M timings must be > 0")
+            raise TypeError("Parameter 'timings' has to be an integer")
         if not utils.is_valid_type(params["tune"], bool):
-            raise TypeError("P3M tune has to be a boolean")
+            raise TypeError("Parameter 'tune' has to be a boolean")
 
 
 @script_interface_register
@@ -231,6 +224,9 @@ class P3M(_P3MBase):
     check_neutrality : :obj:`bool`, optional
         Raise a warning if the system is not electrically neutral when
         set to ``True`` (default).
+    check_complex_residuals: :obj:`bool`, optional
+        Raise a warning if the backward Fourier transform has non-zero
+        complex residuals when set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombP3M"
@@ -281,6 +277,9 @@ class P3MGPU(_P3MBase):
     check_neutrality : :obj:`bool`, optional
         Raise a warning if the system is not electrically neutral when
         set to ``True`` (default).
+    check_complex_residuals: :obj:`bool`, optional
+        Raise a warning if the backward Fourier transform has non-zero
+        complex residuals when set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombP3MGPU"
@@ -364,11 +363,6 @@ class ELC(ElectrostaticInteraction):
         utils.check_type_or_throw_except(
             params["neutralize"], 1, bool, "neutralize has to be a bool")
 
-    def valid_keys(self):
-        return {"actor", "maxPWerror", "gap_size", "far_cut",
-                "neutralize", "delta_mid_top", "delta_mid_bot",
-                "const_pot", "pot_diff", "check_neutrality"}
-
     def required_keys(self):
         return {"actor", "maxPWerror", "gap_size"}
 
@@ -396,35 +390,23 @@ class MMM1D(ElectrostaticInteraction):
         Maximal pairwise error.
     far_switch_radius : :obj:`float`, optional
         Radius where near-field and far-field calculation are switched.
-    bessel_cutoff : :obj:`int`, optional
-    tune : :obj:`bool`, optional
-        Specify whether to automatically tune or not. Defaults to ``True``.
-    timings : :obj:`int`
+    verbose : :obj:`bool`, optional
+        If ``False``, disable log output during tuning.
+    timings : :obj:`int`, optional
         Number of force calculations during tuning.
+    check_neutrality : :obj:`bool`, optional
+        Raise a warning if the system is not electrically neutral when
+        set to ``True`` (default).
 
     """
     _so_name = "Coulomb::CoulombMMM1D"
     _so_creation_policy = "GLOBAL"
 
-    def validate_params(self, params):
-        default_params = self.default_params()
-        if params["prefactor"] <= 0:
-            raise ValueError("prefactor should be a positive float")
-        if params["maxPWerror"] < 0 and params["maxPWerror"] != default_params["maxPWerror"]:
-            raise ValueError("maxPWerror should be a positive double")
-        if params["far_switch_radius"] < 0 and params["far_switch_radius"] != default_params["far_switch_radius"]:
-            raise ValueError("switch radius should be a positive double")
-
     def default_params(self):
         return {"far_switch_radius": -1.,
                 "verbose": True,
                 "timings": 15,
-                "tune": True,
                 "check_neutrality": True}
-
-    def valid_keys(self):
-        return {"prefactor", "maxPWerror", "far_switch_radius",
-                "verbose", "timings", "tune", "check_neutrality"}
 
     def required_keys(self):
         return {"prefactor", "maxPWerror"}
@@ -445,8 +427,11 @@ class MMM1DGPU(ElectrostaticInteraction):
     far_switch_radius : :obj:`float`, optional
         Radius where near-field and far-field calculation are switched
     bessel_cutoff : :obj:`int`, optional
-    tune : :obj:`bool`, optional
-        Specify whether to automatically tune or not. Defaults to ``True``.
+    timings : :obj:`int`, optional
+        Number of force calculations during tuning.
+    check_neutrality : :obj:`bool`, optional
+        Raise a warning if the system is not electrically neutral when
+        set to ``True`` (default).
     """
     _so_name = "Coulomb::CoulombMMM1DGpu"
     _so_creation_policy = "GLOBAL"
@@ -455,26 +440,10 @@ class MMM1DGPU(ElectrostaticInteraction):
         if not has_features("MMM1D_GPU"):
             raise NotImplementedError("Feature MMM1D_GPU not compiled in")
 
-    def validate_params(self, params):
-        default_params = self.default_params()
-        if params["prefactor"] <= 0:
-            raise ValueError("prefactor should be a positive float")
-        if params["maxPWerror"] < 0 and params["maxPWerror"] != default_params["maxPWerror"]:
-            raise ValueError("maxPWerror should be a positive double")
-        if params["far_switch_radius"] < 0 and params["far_switch_radius"] != default_params["far_switch_radius"]:
-            raise ValueError("switch radius should be a positive double")
-        if params["bessel_cutoff"] < 0 and params["bessel_cutoff"] != default_params["bessel_cutoff"]:
-            raise ValueError("bessel_cutoff should be a positive integer")
-
     def default_params(self):
         return {"far_switch_radius": -1.,
                 "bessel_cutoff": -1,
-                "tune": True,
                 "check_neutrality": True}
-
-    def valid_keys(self):
-        return {"prefactor", "maxPWerror", "far_switch_radius",
-                "bessel_cutoff", "tune", "check_neutrality"}
 
     def required_keys(self):
         return {"prefactor", "maxPWerror"}
@@ -535,15 +504,8 @@ class Scafacos(ElectrostaticInteraction):
         if not has_features("SCAFACOS"):
             raise NotImplementedError("Feature SCAFACOS not compiled in")
 
-    def validate_params(self, params):
-        pass
-
     def default_params(self):
         return {"check_neutrality": True}
-
-    def valid_keys(self):
-        return {"method_name", "method_params",
-                "prefactor", "check_neutrality"}
 
     def required_keys(self):
         return {"method_name", "method_params", "prefactor"}

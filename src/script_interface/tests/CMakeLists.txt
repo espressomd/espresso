@@ -30,6 +30,8 @@ unit_test(NAME Variant_test SRC Variant_test.cpp DEPENDS
 unit_test(NAME get_value_test SRC get_value_test.cpp DEPENDS
           espresso::script_interface)
 unit_test(NAME None_test SRC None_test.cpp DEPENDS espresso::script_interface)
+unit_test(NAME reduction_test SRC reduction_test.cpp DEPENDS
+          espresso::script_interface Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME LocalContext_test SRC LocalContext_test.cpp DEPENDS
           espresso::script_interface Boost::mpi MPI::MPI_CXX NUM_PROC 1)
 unit_test(NAME GlobalContext_test SRC GlobalContext_test.cpp DEPENDS
@@ -42,9 +44,9 @@ unit_test(NAME ParallelExceptionHandler_test SRC
 unit_test(NAME packed_variant_test SRC packed_variant_test.cpp DEPENDS
           espresso::script_interface)
 unit_test(NAME ObjectList_test SRC ObjectList_test.cpp DEPENDS
-          espresso::script_interface espresso::core)
+          espresso::script_interface espresso::core Boost::mpi)
 unit_test(NAME ObjectMap_test SRC ObjectMap_test.cpp DEPENDS
-          espresso::script_interface espresso::core)
+          espresso::script_interface espresso::core Boost::mpi)
 unit_test(NAME serialization_mpi_guard_test SRC
           serialization_mpi_guard_test.cpp DEPENDS espresso::script_interface
           Boost::mpi MPI::MPI_CXX NUM_PROC 2)
@@ -54,3 +56,9 @@ unit_test(NAME Constraints_test SRC Constraints_test.cpp DEPENDS
           espresso::script_interface espresso::core)
 unit_test(NAME Actors_test SRC Actors_test.cpp DEPENDS
           espresso::script_interface espresso::core)
+unit_test(NAME ConstantpHEnsemble_test SRC ConstantpHEnsemble_test.cpp DEPENDS
+          espresso::core espresso::script_interface Boost::mpi MPI::MPI_CXX
+          NUM_PROC 2)
+unit_test(NAME ReactionEnsemble_test SRC ReactionEnsemble_test.cpp DEPENDS
+          espresso::core espresso::script_interface Boost::mpi MPI::MPI_CXX
+          NUM_PROC 2)

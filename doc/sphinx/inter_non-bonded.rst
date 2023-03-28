@@ -18,32 +18,61 @@ explicitly set. A bonded interaction between a set of particles has to
 be specified explicitly by the command, while the command is used to
 define the interaction parameters.
 
-.. _Isotropic non-bonded interactions:
-
-Isotropic non-bonded interactions
----------------------------------
-
-Non-bonded interaction are configured via the :class:`espressomd.interactions.NonBondedInteraction` class, which is a member of :class:`espressomd.system.System`::
+Non-bonded interaction are configured via the
+:class:`espressomd.interactions.NonBondedInteraction` class,
+which is a member of :class:`espressomd.system.System`::
 
     system.non_bonded_inter[type1, type2]
 
-This command defines an interaction between all particles of type ``type1`` and
-``type2``. Possible interaction types and their parameters are
-listed below.
+This command defines an interaction between all particles of type ``type1``
+and ``type2``. All available interaction potentials and their parameters are
+listed below. For example, the following adds a WCA potential between
+particles of type 0::
+
+    system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=2.)
+
+Each type pair can have multiple potentials active at the same time.
+To deactivate a specific potential for a given type pair, do::
+
+    system.non_bonded_inter[0, 0].wca.deactivate()
+
+To deactivate all potentials for a given type pair, do::
+
+    system.non_bonded_inter[0, 0].reset()
+
+To deactivate all potentials between all type pairs, do::
+
+    system.non_bonded_inter.reset()
 
 For many non-bonded interactions, it is possible to artificially cap the
 forces, which often allows to equilibrate the system much faster. See
 the subsection :ref:`Capping the force during warmup` for more details.
+
+It is possible to exclude particle pairs from the non-bonded interaction
+calculation. For example::
+
+    system.part.by_id(0).exclusions = [1, 2]
+
+excludes short-range interactions of the particle pairs ``0 <-> 1`` and ``0 <-> 2``.
+It is possible to automatically exclude particle pairs that are involved in
+bonded interactions, for example to prevent virtual sites from interacting
+with the real particles they are tracking, or to facilitate the use of custom
+potentials in polymers. This is achieved via the
+:meth:`espressomd.particle_data.ParticleList.auto_exclusions()` method.
+
+.. _Isotropic non-bonded interactions:
+
+Isotropic non-bonded interactions
+---------------------------------
 
 .. _Tabulated interaction:
 
 Tabulated interaction
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. note ::
+.. note::
 
     Feature ``TABULATED`` required.
-
 
 The interface for tabulated interactions are implemented in the
 :class:`~espressomd.interactions.TabulatedNonBonded` class. They can be configured
@@ -51,7 +80,6 @@ via the following syntax::
 
   system.non_bonded_inter[type1, type2].tabulated.set_params(
       min='min', max='max', energy='energy', force='force')
-
 
 This defines an interaction between particles of the types ``type1`` and
 ``type2`` according to an arbitrary tabulated pair potential by linear interpolation.
@@ -209,17 +237,17 @@ Lennard-Jones cosine interaction
 
    Feature ``LJCOS`` and/or ``LJCOS2`` required.
 
-.. code::
+:class:`espressomd.interactions.LennardJonesCosInteraction` and
+:class:`espressomd.interactions.LennardJonesCos2Interaction` specify
+a Lennard-Jones interaction with cosine tail :cite:`soddemann01a`
+between particles of the types ``type1`` and ``type2``. They
+are configured via the syntax::
 
    system.non_bonded_inter[type1, type2].lennard_jones_cos.set_params(**kwargs)
    system.non_bonded_inter[type1, type2].lennard_jones_cos2.set_params(**kwargs)
 
-:class:`espressomd.interactions.LennardJonesCosInteraction` and
-:class:`espressomd.interactions.LennardJonesCos2Interaction` specifies
-a Lennard-Jones interaction with cosine tail :cite:`soddemann01a`
-between particles of the types ``type1`` and ``type2``. The first variant
-behaves as follows: Until the minimum of the Lennard-Jones potential
-at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
+The first variant behaves as follows: until the minimum of the Lennard-Jones
+potential at :math:`r_\mathrm{min} = r_\mathrm{off} + 2^{\frac{1}{6}}\sigma`, it
 behaves identical to the unshifted Lennard-Jones potential
 (:math:`c_\mathrm{shift}=0`). Between :math:`r_\mathrm{min}` and :math:`r_\mathrm{cut}`, a cosine is used to
 smoothly connect the potential to 0, i.e.,
@@ -646,19 +674,6 @@ and involved types.
 
 The samples folder contains the script :file:`/samples/drude_bmimpf6.py` with a
 fully polarizable, coarse grained ionic liquid where this approach is applied.
-To use the script, compile espresso with the following features:
-
-.. code-block:: c++
-
-    #define EXTERNAL_FORCES
-    #define MASS
-    #define THERMOSTAT_PER_PARTICLE
-    #define ROTATION
-    #define ROTATIONAL_INERTIA
-    #define ELECTROSTATICS
-    #define VIRTUAL_SITES_RELATIVE
-    #define LENNARD_JONES
-    #define THOLE
 
 .. _Anisotropic non-bonded interactions:
 

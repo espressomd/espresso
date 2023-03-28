@@ -23,9 +23,10 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "config/version.hpp"
 #include "h5md_specification.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
+
+#include "config/version.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -56,10 +57,10 @@ static void backup_file(const std::string &from, const std::string &to) {
    * have gone wrong.
    */
   boost::filesystem::path pfrom(from), pto(to);
+  auto constexpr option_fail_if_exists = boost::filesystem::copy_options::none;
   try {
-    boost::filesystem::copy_file(
-        pfrom, pto, boost::filesystem::copy_option::fail_if_exists);
-  } catch (const boost::filesystem::filesystem_error &e) {
+    boost::filesystem::copy_file(pfrom, pto, option_fail_if_exists);
+  } catch (const boost::filesystem::filesystem_error &) {
     throw left_backupfile();
   }
 }
@@ -439,7 +440,6 @@ void File::write(const ParticleRange &particles, double time, int step,
 
 void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
-  int particle_index = 0;
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     for (auto const b : p.bonds()) {
@@ -451,7 +451,6 @@ void File::write_connectivity(const ParticleRange &particles) {
         nbonds_local++;
       }
     }
-    particle_index++;
   }
 
   auto const n_bonds_local = static_cast<int>(bond.shape()[1]);

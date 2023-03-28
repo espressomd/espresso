@@ -88,14 +88,14 @@ public:
         m_solver = so_solver;
       } else
 #endif // CUDA
-          if (auto so_solver = std::dynamic_pointer_cast<CoulombP3M>(so_ptr)) {
-        solver = so_solver->actor();
-        m_solver = so_solver;
-      } else {
-        throw std::invalid_argument("Parameter 'actor' of type " +
-                                    so_ptr->name().to_string() +
-                                    " isn't supported by ELC");
-      }
+        if (auto so_solver = std::dynamic_pointer_cast<CoulombP3M>(so_ptr)) {
+          solver = so_solver->actor();
+          m_solver = so_solver;
+        } else {
+          throw std::invalid_argument("Parameter 'actor' of type " +
+                                      so_ptr->name().to_string() +
+                                      " isn't supported by ELC");
+        }
     });
     context()->parallel_try_catch([&]() {
       auto elc = elc_data{get_value<double>(params, "maxPWerror"),

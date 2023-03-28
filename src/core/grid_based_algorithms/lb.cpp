@@ -32,6 +32,7 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
@@ -185,7 +186,7 @@ static LB_FluidData lbfluid_b;
 LB_Fluid lbfluid;
 /** Span of the velocity populations of the fluid (post-collision populations).
  */
-LB_Fluid lbfluid_post;
+static LB_Fluid lbfluid_post;
 
 std::vector<LB_FluidNode> lbfields;
 
@@ -207,6 +208,7 @@ void lb_initialize_fields(std::vector<LB_FluidNode> &lb_fields,
     field.boundary = false;
 #endif // LB_BOUNDARIES
   }
+  on_lbboundary_change();
 }
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
@@ -613,13 +615,6 @@ void lb_sanity_checks(const LB_Parameters &lb_parameters) {
   }
   if (lb_parameters.viscosity <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
-  }
-  if (local_geo.cell_structure_type() !=
-      CellStructureType::CELL_STRUCTURE_REGULAR) {
-    if (n_nodes > 1) {
-      runtimeErrorMsg() << "LB only works with regular decomposition, "
-                           "if using more than one MPI node";
-    }
   }
 }
 
@@ -1316,15 +1311,15 @@ Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index,
 }
 
 /** Calculate momentum of the LB fluid.
- *  @param[out] result         Fluid momentum in MD units
  *  @param[in]  lb_parameters  LB parameters
  *  @param[in]  lb_fields      Hydrodynamic fields of the fluid
  *  @param[in]  lb_lattice     The underlying lattice
  */
-void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
-                            const std::vector<LB_FluidNode> &lb_fields,
-                            const Lattice &lb_lattice) {
-  Utils::Vector3d momentum_density{}, momentum{};
+Utils::Vector3d
+mpi_lb_calc_fluid_momentum_local(LB_Parameters const &lb_parameters,
+                                 std::vector<LB_FluidNode> const &lb_fields,
+                                 Lattice const &lb_lattice) {
+  Utils::Vector3d momentum_density{}, momentum{}, result{};
 
   for (int x = 1; x <= lb_lattice.grid[0]; x++) {
     for (int y = 1; y <= lb_lattice.grid[1]; y++) {
@@ -1338,7 +1333,8 @@ void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
   }
 
   momentum *= lb_parameters.agrid / lb_parameters.tau;
-  boost::mpi::reduce(comm_cart, momentum.data(), 3, result, std::plus<>(), 0);
+  boost::mpi::reduce(::comm_cart, momentum, result, std::plus<>(), 0);
+  return result;
 }
 
 void lb_collect_boundary_forces(double *result) {

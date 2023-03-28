@@ -31,11 +31,10 @@
 
 #include "core/observables/Observable.hpp"
 
-#include <utils/as_const.hpp>
-
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -72,7 +71,7 @@ BOOST_AUTO_TEST_CASE(time_series) {
     auto const shape = get_value<std::vector<int>>(variant);
     BOOST_TEST(shape == shape_ref, boost::test_tools::per_element());
     // check const access
-    auto const shape_const = Utils::as_const(acc).accumulator()->shape();
+    auto const shape_const = std::as_const(acc).accumulator()->shape();
     BOOST_TEST(shape_const == shape_ref, boost::test_tools::per_element());
   }
   {
@@ -112,7 +111,7 @@ BOOST_AUTO_TEST_CASE(correlator) {
     auto const shape = get_value<std::vector<int>>(variant);
     BOOST_TEST(shape == shape_ref, boost::test_tools::per_element());
     // check const access
-    auto const shape_const = Utils::as_const(acc).accumulator()->shape();
+    auto const shape_const = std::as_const(acc).accumulator()->shape();
     BOOST_TEST(shape_const == shape_ref, boost::test_tools::per_element());
   }
   {
@@ -156,7 +155,7 @@ BOOST_AUTO_TEST_CASE(mean_variance) {
     auto const shape = get_value<std::vector<int>>(variant);
     BOOST_TEST(shape == shape_ref, boost::test_tools::per_element());
     // check const access
-    auto const shape_const = Utils::as_const(acc).accumulator()->shape();
+    auto const shape_const = std::as_const(acc).accumulator()->shape();
     BOOST_TEST(shape_const == shape_ref, boost::test_tools::per_element());
   }
   {
