@@ -187,7 +187,14 @@ public:
   Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                     const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
-      return lees_edwards_bc().distance(a - b, length(), length_half(),
+      auto const &shear_plane_normal = lees_edwards_bc().shear_plane_normal;
+      auto a_tmp = a;
+      auto b_tmp = b;
+      a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          a_tmp[shear_plane_normal], length()[shear_plane_normal]);
+      b_tmp[shear_plane_normal] = Algorithm::periodic_fold(
+          b_tmp[shear_plane_normal], length()[shear_plane_normal]);
+      return lees_edwards_bc().distance(a_tmp - b_tmp, length(), length_half(),
                                         length_inv(), m_periodic);
     }
     assert(type() == BoxType::CUBOID);
