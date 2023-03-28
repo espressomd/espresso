@@ -51,10 +51,12 @@ class ClusterAnalysis(ut.TestCase):
         system.part.add(id=4, pos=(0.5, 0.5, 0.5))
         system.part.add(id=5, pos=(0.55, 0.5, 0.5))
 
+    def setUp(self):
+        self.system.periodicity = [True, True, True]
+
     def tearDown(self):
         self.system.part.clear()
         self.cs.clear()
-        self.system.periodicity = [True, True, True]
 
     def test_00_fails_without_criterion_set(self):
         self.set_two_clusters()

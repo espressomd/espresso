@@ -28,43 +28,44 @@ import espressomd.polymer
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=3 * [1.0])
+    system.cell_system.set_n_square(use_verlet_lists=False)
+    fene = espressomd.interactions.FeneBond(k=30., d_r_max=2.)
+    system.bonded_inter.add(fene)
+
     np.random.seed(1234)
 
-    num_poly = 2
-    num_mono = 5
-
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         box_l = 20.0
-        # start with a small box
-        cls.system.box_l = np.array(3 * [box_l])
-        cls.system.cell_system.set_n_square(use_verlet_lists=False)
-        fene = espressomd.interactions.FeneBond(k=30, d_r_max=2)
-        cls.system.bonded_inter.add(fene)
+        self.system.box_l = np.array(3 * [box_l])
+
+    def tearDown(self):
+        self.system.part.clear()
+
+    def insert_polymers(self, num_poly, num_mono):
         positions = espressomd.polymer.linear_polymer_positions(
-            n_polymers=cls.num_poly, bond_length=0.9,
-            beads_per_chain=cls.num_mono, seed=42)
+            n_polymers=num_poly, bond_length=0.9,
+            beads_per_chain=num_mono, seed=42)
         for p in positions:
             for ndx, m in enumerate(p):
-                partcl = cls.system.part.add(pos=m)
+                partcl = self.system.part.add(pos=m)
                 if ndx > 0:
-                    partcl.add_bond((fene, partcl.id - 1))
+                    partcl.add_bond((self.fene, partcl.id - 1))
         # bring two polymers to opposite corners:
         # far in cell centre, but mirror images are close
-        pol_0_parts = cls.system.part.by_ids(range(0, cls.num_mono))
+        pol_0_parts = self.system.part.by_ids(range(0, num_mono))
         cm = np.mean(pol_0_parts.pos, axis=0)
-        pol_0_parts.pos += (- cm + cls.system.box_l)
-        head_id = cls.num_mono
-        tail_id = head_id + cls.num_mono
-        pol_1_parts = cls.system.part.by_ids(range(head_id, tail_id))
+        pol_0_parts.pos += (- cm + self.system.box_l)
+        head_id = num_mono
+        tail_id = head_id + num_mono
+        pol_1_parts = self.system.part.by_ids(range(head_id, tail_id))
         cm = np.mean(pol_1_parts.pos, axis=0)
         pol_1_parts.pos -= cm
 
     # python version of the espresso core function,
     # does not check mirror distances
-    def calc_re(self):
-        head_ids = np.arange(0, self.num_poly * self.num_mono, self.num_mono)
-        tail_ids = head_ids + self.num_mono - 1
+    def calc_re(self, num_poly, num_mono):
+        head_ids = np.arange(0, num_poly * num_mono, num_mono)
+        tail_ids = head_ids + num_mono - 1
         dist = self.system.part.by_ids(
             head_ids).pos - self.system.part.by_ids(tail_ids).pos
         dist = np.sum(dist**2, axis=-1)
@@ -73,11 +74,11 @@ class AnalyzeChain(ut.TestCase):
 
     # python version of the espresso core function,
     # does not check mirror distances
-    def calc_rg(self):
-        head_ids = np.arange(0, self.num_poly * self.num_mono, self.num_mono)
-        tail_ids = head_ids + self.num_mono
+    def calc_rg(self, num_poly, num_mono):
+        head_ids = np.arange(0, num_poly * num_mono, num_mono)
+        tail_ids = head_ids + num_mono
         rg2 = []
-        for p in range(self.num_poly):
+        for p in range(num_poly):
             ids = range(head_ids[p], tail_ids[p])
             r = np.copy(self.system.part.by_ids(ids).pos)
             rg2.append(np.var(r, axis=0))
@@ -88,11 +89,11 @@ class AnalyzeChain(ut.TestCase):
 
     # python version of the espresso core function,
     # does not check mirror distances
-    def calc_rh(self):
-        head_ids = np.arange(0, self.num_poly * self.num_mono, self.num_mono)
-        tail_ids = head_ids + self.num_mono - 1
+    def calc_rh(self, num_poly, num_mono):
+        head_ids = np.arange(0, num_poly * num_mono, num_mono)
+        tail_ids = head_ids + num_mono - 1
         rh = []
-        for p in range(self.num_poly):
+        for p in range(num_poly):
             ids = range(head_ids[p], tail_ids[p] + 1)
             r = np.copy(self.system.part.by_ids(ids).pos)
             # this generates indices for all i<j combinations
@@ -106,7 +107,10 @@ class AnalyzeChain(ut.TestCase):
     # python version of the espresso core function,
     # does not check mirror distances
     # test core results versus python results (no PBC)
-    def test_radii(self):
+    def test_observables_no_pbc(self):
+        num_poly = 2
+        num_mono = 5
+        self.insert_polymers(num_poly, num_mono)
         # increase PBC to remove interactions with periodic images
         all_partcls = self.system.part.all()
         old_pos = all_partcls.pos.copy()
@@ -114,24 +118,24 @@ class AnalyzeChain(ut.TestCase):
         all_partcls.pos = old_pos
         # compare calc_re()
         core_re = self.system.analysis.calc_re(chain_start=0,
-                                               number_of_chains=self.num_poly,
-                                               chain_length=self.num_mono)
-        np.testing.assert_allclose(core_re, self.calc_re())
+                                               number_of_chains=num_poly,
+                                               chain_length=num_mono)
+        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono))
         # compare calc_rg()
         core_rg = self.system.analysis.calc_rg(chain_start=0,
-                                               number_of_chains=self.num_poly,
-                                               chain_length=self.num_mono)
-        np.testing.assert_allclose(core_rg, self.calc_rg())
+                                               number_of_chains=num_poly,
+                                               chain_length=num_mono)
+        np.testing.assert_allclose(core_rg, self.calc_rg(num_poly, num_mono))
         # compare calc_rh()
         core_rh = self.system.analysis.calc_rh(chain_start=0,
-                                               number_of_chains=self.num_poly,
-                                               chain_length=self.num_mono)
-        np.testing.assert_allclose(core_rh, self.calc_rh())
-        # restore PBC
-        self.system.box_l = self.system.box_l / 2.
-        all_partcls.pos = old_pos
+                                               number_of_chains=num_poly,
+                                               chain_length=num_mono)
+        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono))
 
     def test_exceptions(self):
+        num_poly = 2
+        num_mono = 5
+        self.insert_polymers(num_poly, num_mono)
         err_msg = ("Particle with id 10 does not exist; cannot perform "
                    "analysis on the range chain_start=0, number_of_chains=2, "
                    "chain_length=10. Please provide a contiguous range of "
@@ -139,8 +143,8 @@ class AnalyzeChain(ut.TestCase):
         analysis = self.system.analysis
         for method in (analysis.calc_re, analysis.calc_rg, analysis.calc_rh):
             with self.assertRaisesRegex(RuntimeError, err_msg):
-                method(chain_start=0, number_of_chains=self.num_poly,
-                       chain_length=2 * self.num_mono)
+                method(chain_start=0, number_of_chains=num_poly,
+                       chain_length=2 * num_mono)
         self.assertIsNone(analysis.call_method("unknown"))
 
 
