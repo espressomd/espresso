@@ -99,17 +99,15 @@ class AnalyzeChain(ut.TestCase):
             ij = np.triu_indices(len(r), k=1)
             r_ij = r[ij[0]] - r[ij[1]]
             dist = np.linalg.norm(r_ij, axis=1)
-            # rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
-            # the other way do it, with the proper prefactor of N(N-1)
             rh.append(1. / np.mean(1. / dist))
         rh = np.array(rh)
         return np.mean(rh), np.std(rh)
 
     # python version of the espresso core function,
     # does not check mirror distances
-    # test core results versus python variants (no PBC)
+    # test core results versus python results (no PBC)
     def test_radii(self):
-        # increase PBC for remove mirror images
+        # increase PBC to remove interactions with periodic images
         all_partcls = self.system.part.all()
         old_pos = all_partcls.pos.copy()
         self.system.box_l = self.system.box_l * 2.

@@ -60,10 +60,12 @@
  *    double cutoff() const { return r0 + drmax; }
  *    @endcode
  *    The return value of \c cutoff() should be as large as the interaction
- *    range of the new interaction. This is only relevant to pairwise bonds
- *    and dihedral bonds. In all other cases, the return value should be -1,
- *    namely angle bonds as well as other bonds that don't have an interaction
- *    range.
+ *    range of the new interaction. This is only relevant to pairwise bonds.
+ *    In all other cases, the return value should be 0, namely angle bonds,
+ *    dihedral bonds as well as other bonds that don't have an interaction
+ *    range. The @ref VirtualBond is the exception to this rule; its range
+ *    is @ref BONDED_INACTIVE_CUTOFF to ensure that it is always skipped by
+ *    the short-range loop.
  *  * @code{.cpp}
  *    boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
  *    @endcode
