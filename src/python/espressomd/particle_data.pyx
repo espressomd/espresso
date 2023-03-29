@@ -616,7 +616,7 @@ cdef class ParticleHandle:
 
         def __set__(self, _propagation):
             cdef CPropagation cpropagation
-            cdef int temp = <int> _propagation
+            cdef int temp = <int> _propagation.value
             cpropagation = <CPropagation > temp
             set_particle_propagation(self._id, cpropagation)
 
