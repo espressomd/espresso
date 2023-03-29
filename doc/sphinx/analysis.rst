@@ -295,57 +295,16 @@ assuming the ``image_box`` values were properly set up. This is important to
 consider when setting up systems where the polymers are much longer than the
 box length, which is common when simulating polymer melts.
 
-.. _End to end distance:
+.. _Available chain analysis functions:
 
-End-to-end distance
-^^^^^^^^^^^^^^^^^^^
-:meth:`espressomd.analyze.Analysis.calc_re`
+Available chain analysis functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Returns the mean end-to-end-distance and its standard deviation,
-as well as its mean squared value over all chains.
+* :meth:`espressomd.analyze.Analysis.calc_re`: average end-to-end-distance
 
-.. _Radius of gyration:
+* :meth:`espressomd.analyze.Analysis.calc_rg`: average radius of gyration
 
-Radius of gyration
-^^^^^^^^^^^^^^^^^^
-:meth:`espressomd.analyze.Analysis.calc_rg`
-
-Returns the radius of gyration averaged over all chains.
-It is a radius of a sphere, which would have the same moment of inertia as the
-molecule, defined as
-
-.. math::
-
-   \label{eq:Rg}
-   R_{\mathrm G}^2 = \frac{1}{N} \sum\limits_{i=1}^{N} \left(\vec r_i - \vec r_{\mathrm{cm}}\right)^2\,,
-
-where :math:`\vec r_i` are position vectors of individual particles
-constituting a molecule and :math:`\vec r_{\mathrm{cm}}` is the position
-vector of its center of mass. The sum runs over all :math:`N` particles
-comprising the molecule. For more information see any polymer science
-book, e.g. :cite:`rubinstein03a`.
-
-
-.. _Hydrodynamic radius:
-
-Hydrodynamic radius
-^^^^^^^^^^^^^^^^^^^
-:meth:`espressomd.analyze.Analysis.calc_rh`
-
-Returns the hydrodynamic radius averaged over all chains.
-The following formula is used for the computation:
-
-.. math::
-
-   \label{eq:Rh}
-   \frac{1}{R_{\mathrm H}} = \frac{2}{N(N-1)} \sum\limits_{i=1}^{N} \sum\limits_{j<i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
-
-The above-mentioned formula is only valid under certain assumptions.
-For more information, see chapter 4 and equation 4.102 in :cite:`doi86a`.
-Note that the hydrodynamic radius is sometimes defined in a similar fashion
-but with a denominator of :math:`N^2` instead of :math:`N(N-1)` in the prefactor.
-Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give
-numerically different values for finite polymers.
+* :meth:`espressomd.analyze.Analysis.calc_rh`: average hydrodynamic radius
 
 
 .. _Observables framework:
