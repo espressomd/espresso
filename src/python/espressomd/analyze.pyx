@@ -417,6 +417,19 @@ class Analysis:
         numbered, the last particle in that topology having id number
         ``chain_start + number_of_chains * chain_length - 1``.
 
+        The radius of gyration is the radius of a sphere which would have
+        the same moment of inertia as a polymer, and is defined as
+
+        .. math::
+
+           R_{\\mathrm G}^2 = \\frac{1}{N} \\sum\\limits_{i=1}^{N} \\left(\\vec r_i - \\vec r_{\\mathrm{cm}}\\right)^2\\,,
+
+        where :math:`\\vec r_i` are position vectors of individual particles
+        constituting the polymer and :math:`\\vec r_{\\mathrm{cm}}` is the
+        position of its center of mass. The sum runs over all :math:`N`
+        particles comprising the polymer. For more information see any
+        polymer science book, e.g. :cite:`rubinstein03a`.
+
         Parameters
         ----------
         chain_start : :obj:`int`
@@ -448,6 +461,20 @@ class Analysis:
         with the particle number ``chain_start`` and are consecutively
         numbered, the last particle in that topology having id number
         ``chain_start + number_of_chains * chain_length - 1``.
+
+        The following formula is used for the calculation:
+
+        .. math::
+
+           \\frac{1}{R_{\\mathrm H}} = \\frac{2}{N(N-1)} \\sum\\limits_{i=1}^{N} \\sum\\limits_{j<i}^{N} \\frac{1}{|\\vec r_i - \\vec r_j|}\\,,
+
+        This formula is only valid under certain assumptions. For more
+        information, see chapter 4 and equation 4.102 in :cite:`doi86a`.
+        Note that the hydrodynamic radius is sometimes defined in a similar
+        fashion but with a denominator of :math:`N^2` instead of :math:`N(N-1)`
+        in the prefactor. Both versions are equivalent in the
+        :math:`N\\rightarrow \\infty` limit but give numerically different
+        values for finite polymers.
 
         Parameters
         ----------

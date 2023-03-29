@@ -76,6 +76,7 @@ private:
   inline int find_id_for(int x);
   /** @brief Get next free cluster id */
   inline int get_next_free_cluster_id();
+  void sanity_checks() const;
 };
 
 } // namespace ClusterAnalysis
