@@ -22,6 +22,7 @@ import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.interactions
+import espressomd.lees_edwards
 import espressomd.polymer
 
 
@@ -29,6 +30,8 @@ import espressomd.polymer
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=3 * [1.0])
     system.cell_system.set_n_square(use_verlet_lists=False)
+    system.time_step = 0.01
+    system.cell_system.skin = 0.1
     fene = espressomd.interactions.FeneBond(k=30., d_r_max=2.)
     system.bonded_inter.add(fene)
 
@@ -126,6 +129,47 @@ class AnalyzeChain(ut.TestCase):
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
         np.testing.assert_allclose(core_rg, self.calc_rg(num_poly, num_mono))
+        # compare calc_rh()
+        core_rh = self.system.analysis.calc_rh(chain_start=0,
+                                               number_of_chains=num_poly,
+                                               chain_length=num_mono)
+        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono))
+
+    def test_observables_lebc(self):
+        lin_protocol = espressomd.lees_edwards.LinearShear(
+            initial_pos_offset=-0.02, time_0=0., shear_velocity=0.)
+        self.system.lees_edwards.set_boundary_conditions(
+            shear_direction="y", shear_plane_normal="x", protocol=lin_protocol)
+
+        # place particles on a line across a Lees-Edwards periodic boundary
+        for x in np.arange(-0.2, 0.21, 0.01):
+            x += 1e-7  # small offset due to Lees-Edwards edge case at x=0
+            pos = [x, 0., 1.2 * x]
+            vel = [0., 0., 0.]
+            # for particles beyond the shear boundary, place them initially in
+            # the central box with an x-velocity that will cause them to cross
+            # the shear boundary in 1 time step; the shear y-offset is exactly
+            # compensated to form a straight line in unfolded coordinates
+            if x < 0.:
+                pos[0] += 0.2
+                vel[0] -= 0.2 / self.system.time_step
+                pos[1] -= lin_protocol.initial_pos_offset
+            self.system.part.add(pos=pos, v=vel)
+        self.system.integrator.run(1)
+        num_poly = 1
+        num_mono = len(self.system.part)
+
+        # compare calc_re()
+        core_re = self.system.analysis.calc_re(chain_start=0,
+                                               number_of_chains=num_poly,
+                                               chain_length=num_mono)
+        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono))
+        # compare calc_rg()
+        core_rg = self.system.analysis.calc_rg(chain_start=0,
+                                               number_of_chains=num_poly,
+                                               chain_length=num_mono)
+        np.testing.assert_allclose(core_rg, self.calc_rg(num_poly, num_mono),
+                                   atol=1e-8)
         # compare calc_rh()
         core_rh = self.system.analysis.calc_rh(chain_start=0,
                                                number_of_chains=num_poly,
