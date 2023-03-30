@@ -86,7 +86,7 @@ public:
         force += constraint->force(p, pos, t);
       }
 
-      p.f += force;
+      p.force_and_torque() += force;
     }
   }
 

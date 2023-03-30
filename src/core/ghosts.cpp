@@ -354,7 +354,7 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
     for (Particle &part : *part_list) {
       ParticleForce pf;
       archiver >> pf;
-      part.f += pf;
+      part.force_and_torque() += pf;
     }
   }
 }

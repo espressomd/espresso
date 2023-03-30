@@ -18,9 +18,11 @@
  */
 #include "ClusterStructure.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Cluster.hpp"
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "particle_node.hpp"
 
@@ -28,6 +30,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -49,6 +52,7 @@ inline bool ClusterStructure::part_of_cluster(const Particle &p) {
 void ClusterStructure::run_for_all_pairs() {
   // clear data structs
   clear();
+  sanity_checks();
 
   // Iterate over pairs
   Utils::for_each_pair(partCfg().begin(), partCfg().end(),
@@ -60,6 +64,7 @@ void ClusterStructure::run_for_all_pairs() {
 
 void ClusterStructure::run_for_bonded_particles() {
   clear();
+  sanity_checks();
   for (const auto &p : partCfg()) {
     for (auto const bond : p.bonds()) {
       if (bond.partner_ids().size() == 1) {
@@ -187,6 +192,13 @@ int ClusterStructure::get_next_free_cluster_id() {
     }
   }
   return max_seen_cluster + 1;
+}
+
+void ClusterStructure::sanity_checks() const {
+  if (::box_geo.type() != BoxType::CUBOID) {
+    throw std::runtime_error(
+        "Cluster analysis is not compatible with non-cuboid box types");
+  }
 }
 
 } // namespace ClusterAnalysis

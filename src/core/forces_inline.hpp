@@ -247,8 +247,8 @@ inline void add_non_bonded_pair_force(
   /* add total non-bonded forces to particles    */
   /***********************************************/
 
-  p1.f += pf;
-  p2.f += calc_opposing_force(pf, d);
+  p1.force_and_torque() += pf;
+  p2.force_and_torque() += calc_opposing_force(pf, d);
 }
 
 /** Compute the bonded interaction force between particle pairs.

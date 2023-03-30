@@ -116,17 +116,6 @@ void VirtualSitesRelative::update() const {
 
     auto const &p_ref = *p_ref_ptr;
     p.pos() = p_ref.pos() + connection_vector(p_ref, p);
-    //    auto new_pos = p_ref.pos() + connection_vector(p_ref, p);
-    //    /* The shift has to respect periodic boundaries: if the reference
-    //     * particles is not in the same image box, we potentially avoid
-    //     shifting
-    //     * to the other side of the box. */
-    //    auto shift = box_geo.get_mi_vector(new_pos, p.pos());
-    //    p.pos() += shift;
-    //    Utils::Vector3i image_shift{};
-    //    fold_position(shift, image_shift, box_geo);
-    //    p.image_box() = p_ref.image_box() - image_shift;
-    //
     p.v() = velocity(p_ref, p);
 
     if (box_geo.type() == BoxType::LEES_EDWARDS) {

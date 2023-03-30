@@ -313,7 +313,7 @@ Run the following commands:
 .. code-block:: bash
 
     brew install cmake python cython boost boost-mpi fftw \
-      doxygen gsl numpy scipy ipython jupyter
+      doxygen gsl numpy scipy ipython jupyter freeglut
     brew install hdf5-mpi
     brew link --force cython
     pip install -c requirements.txt PyOpenGL matplotlib

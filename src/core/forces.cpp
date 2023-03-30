@@ -126,20 +126,20 @@ static void init_forces(const ParticleRange &particles,
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_real_particle_force(p, time_step, kT);
+    p.force_and_torque() = init_real_particle_force(p, time_step, kT);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : ghost_particles) {
-    p.f = init_ghost_force(p);
+    p.force_and_torque() = init_ghost_force(p);
   }
 }
 
 void init_forces_ghosts(const ParticleRange &particles) {
   for (auto &p : particles) {
-    p.f = init_ghost_force(p);
+    p.force_and_torque() = init_ghost_force(p);
   }
 }
 

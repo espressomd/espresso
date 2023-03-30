@@ -314,8 +314,8 @@ void DipolarDirectSum::add_long_range_forces(
       });
 
       fi += fij;
-      (*q)->f.f += prefactor * fji.f;
-      (*q)->f.torque += prefactor * fji.torque;
+      (*q)->force() += prefactor * fji.f;
+      (*q)->torque() += prefactor * fji.torque;
     }
 
     (*p)->force() += prefactor * fi.f;

@@ -36,7 +36,6 @@ params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
 
 
-# pass in **params_lin
 def get_lin_pos_offset(time, initial_pos_offset=None,
                        time_0=None, shear_velocity=None):
     return initial_pos_offset + (time - time_0) * shear_velocity
@@ -433,7 +432,6 @@ class LeesEdwards(ut.TestCase):
         p2.vs_auto_relate_to(p1)
         p3 = system.part.add(pos=(2.5, 4.0, 2.5))
         p3.vs_auto_relate_to(p1)
-        #system.integrator.run(0, recalc_forces=True)
 
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)

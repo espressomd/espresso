@@ -327,7 +327,9 @@ class Test(ut.TestCase):
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["MMM1D_GPU"])
+    @ut.skipIf(n_nodes > 3, "only runs for 3 or less MPI ranks")
     def test_mmm1d_gpu_exceptions(self):
+        # VRAM peak memory usage: 700 MiB on 4 MPI cores, 500 on 3 MPI cores
         self.system.periodicity = (False, False, True)
         self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1DGPU)
 

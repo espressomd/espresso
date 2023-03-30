@@ -49,7 +49,7 @@
 struct SD_particle_data {
   SD_particle_data() = default;
   explicit SD_particle_data(Particle const &p)
-      : type(p.type()), pos(p.pos()), ext_force(p.f) {}
+      : type(p.type()), pos(p.pos()), ext_force(p.force_and_torque()) {}
 
   int type = 0;
 

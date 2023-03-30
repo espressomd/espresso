@@ -21,6 +21,7 @@ import espressomd
 import espressomd.utils
 import numpy as np
 import espressomd.interactions
+import espressomd.lees_edwards
 import espressomd.pair_criteria
 import espressomd.cluster_analysis
 
@@ -30,6 +31,8 @@ class ClusterAnalysis(ut.TestCase):
     """Tests the cluster analysis"""
 
     system = espressomd.System(box_l=(1, 1, 1))
+    system.time_step = 0.01
+    system.cell_system.skin = 0.1
 
     fene = espressomd.interactions.FeneBond(k=1, d_r_max=0.05)
     system.bonded_inter.add(fene)
@@ -51,10 +54,13 @@ class ClusterAnalysis(ut.TestCase):
         system.part.add(id=4, pos=(0.5, 0.5, 0.5))
         system.part.add(id=5, pos=(0.55, 0.5, 0.5))
 
+    def setUp(self):
+        self.system.periodicity = [True, True, True]
+        self.system.time = 0.
+
     def tearDown(self):
         self.system.part.clear()
         self.cs.clear()
-        self.system.periodicity = [True, True, True]
 
     def test_00_fails_without_criterion_set(self):
         self.set_two_clusters()
@@ -115,6 +121,32 @@ class ClusterAnalysis(ut.TestCase):
             visited_sizes.append(c[1].size())
         visited_sizes = sorted(visited_sizes)
         self.assertEqual(visited_sizes, [2, 4])
+
+    def test_single_cluster_analysis_lees_edwards(self):
+        self.set_two_clusters()
+        dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.12)
+        self.cs.set_params(pair_criterion=dc)
+        self.cs.run_for_all_pairs()
+
+        lin_protocol = espressomd.lees_edwards.LinearShear(
+            initial_pos_offset=-0.02, time_0=0., shear_velocity=0.)
+        self.system.lees_edwards.set_boundary_conditions(
+            shear_direction="y", shear_plane_normal="x", protocol=lin_protocol)
+
+        cluster = list(self.cs.clusters)[0][1]
+        if espressomd.has_features("GSL"):
+            with self.assertRaises(RuntimeError):
+                cluster.fractal_dimension(dr=0.)
+        with self.assertRaises(RuntimeError):
+            cluster.longest_distance()
+        with self.assertRaises(RuntimeError):
+            cluster.center_of_mass()
+        with self.assertRaises(RuntimeError):
+            cluster.radius_of_gyration()
+        with self.assertRaises(RuntimeError):
+            self.cs.run_for_all_pairs()
+        with self.assertRaises(RuntimeError):
+            self.cs.run_for_bonded_particles()
 
     def test_single_cluster_analysis(self):
         # Place particles on a line (crossing periodic boundaries)
