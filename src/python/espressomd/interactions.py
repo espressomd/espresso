@@ -783,6 +783,7 @@ class BONDED_IA(enum.IntEnum):
     TABULATED_ANGLE = enum.auto()
     TABULATED_DIHEDRAL = enum.auto()
     THERMALIZED_DIST = enum.auto()
+    TORSION_BOND = enum.auto()
     RIGID_BOND = enum.auto()
     IBM_TRIEL = enum.auto()
     IBM_VOLUME_CONSERVATION = enum.auto()
@@ -942,6 +943,29 @@ class HarmonicBond(BondedInteraction):
 
         """
         return {"r_cut": 0.}
+
+
+@script_interface_register
+class TorsionBond(BondedInteraction):
+
+    """
+    Torsion bond.
+
+    Parameters
+    ----------
+    k : :obj:`float`
+        Spring constant for the bond interaction.
+
+    """
+
+    _so_name = "Interactions::TorsionBond"
+    _type_number = BONDED_IA.TORSION_BOND
+
+    def get_default_params(self):
+        """Gets default values of optional parameters.
+
+        """
+        return {}
 
 
 @script_interface_register

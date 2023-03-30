@@ -41,6 +41,7 @@
 #include "quartic.hpp"
 #include "rigid_bond.hpp"
 #include "thermalized_bond.hpp"
+#include "torsion_bond.hpp"
 
 #include "TabulatedPotential.hpp"
 
@@ -96,7 +97,7 @@ using Bonded_IA_Parameters =
                    BondedCoulombSR, AngleHarmonicBond, AngleCosineBond,
                    AngleCossquareBond, DihedralBond, TabulatedDistanceBond,
                    TabulatedAngleBond, TabulatedDihedralBond, ThermalizedBond,
-                   RigidBond, IBMTriel, IBMVolCons, IBMTribend,
+                   TorsionBond, RigidBond, IBMTriel, IBMVolCons, IBMTribend,
                    OifGlobalForcesBond, OifLocalForcesBond, VirtualBond>;
 
 class BondedInteractionsMap {

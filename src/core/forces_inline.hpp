@@ -311,6 +311,16 @@ inline bool add_bonded_two_body_force(
 
       return false;
     }
+  } else if (auto const *iap = boost::get<TorsionBond>(&iaparams)) {
+    auto result = iap->torque(p1, p2);
+    if (result) {
+      auto const &torque = result.get();
+
+      p1.torque() -= torque;
+      p2.torque() += torque;
+
+      return false;
+    }
   } else {
     auto result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
     if (result) {

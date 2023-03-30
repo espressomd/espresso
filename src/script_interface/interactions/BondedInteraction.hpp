@@ -298,6 +298,21 @@ private:
   }
 };
 
+class TorsionBond : public BondedInteractionImpl<::TorsionBond> {
+public:
+  TorsionBond() {
+    add_parameters({
+        {"k", AutoParameter::read_only, [this]() { return get_struct().k; }},
+    });
+  }
+
+private:
+  void construct_bond(VariantMap const &params) override {
+    m_bonded_ia = std::make_shared<::Bonded_IA_Parameters>(
+        CoreBondedInteraction(get_value<double>(params, "k")));
+  }
+};
+
 class DihedralBond : public BondedInteractionImpl<::DihedralBond> {
 public:
   DihedralBond() {

@@ -61,7 +61,7 @@
  *    @endcode
  *    The return value of \c cutoff() should be as large as the interaction
  *    range of the new interaction. This is only relevant to pairwise bonds
- *    and dihedral bonds. In all other cases, the return value should be -1,
+ *    and dihedral bonds. In all other cases, the return value should be 0,
  *    namely angle bonds as well as other bonds that don't have an interaction
  *    range.
  *  * @code{.cpp}

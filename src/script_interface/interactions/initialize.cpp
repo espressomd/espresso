@@ -44,6 +44,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<TabulatedDihedralBond>(
       "Interactions::TabulatedDihedralBond");
   om->register_new<ThermalizedBond>("Interactions::ThermalizedBond");
+  om->register_new<TorsionBond>("Interactions::TorsionBond");
   om->register_new<RigidBond>("Interactions::RigidBond");
   om->register_new<IBMTriel>("Interactions::IBMTriel");
   om->register_new<IBMVolCons>("Interactions::IBMVolCons");

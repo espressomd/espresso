@@ -239,6 +239,11 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
       return iap->energy(dx);
     }
 #endif
+#ifdef ROTATION
+    if (auto const *iap = boost::get<TorsionBond>(&iaparams)) {
+      return iap->energy(p1, *p2);
+    }
+#endif
     if (boost::get<VirtualBond>(&iaparams)) {
       return {0.};
     }
