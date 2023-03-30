@@ -76,8 +76,8 @@ TorsionBond::torque(Particle const &p1, Particle const &p2) const {
 inline boost::optional<double> TorsionBond::energy(Particle const &p1,
                                                    Particle const &p2) const {
 #ifdef ROTATION
-  double const angle = std::acos(p1.calc_director() * p2.calc_director());
-  return 0.5 * k * angle * angle;
+  auto const cos_alpha = p1.calc_director() * p2.calc_director();
+  return k * (1. - cos_alpha);
 #else
   return {};
 #endif

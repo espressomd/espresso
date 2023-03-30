@@ -959,6 +959,7 @@ class TorsionBond(BondedInteraction):
     """
 
     _so_name = "Interactions::TorsionBond"
+    _so_feature = "ROTATION"
     _type_number = BONDED_IA.TORSION_BOND
 
     def get_default_params(self):

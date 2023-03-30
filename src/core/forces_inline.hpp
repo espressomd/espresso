@@ -311,7 +311,9 @@ inline bool add_bonded_two_body_force(
 
       return false;
     }
-  } else if (auto const *iap = boost::get<TorsionBond>(&iaparams)) {
+  }
+#ifdef ROTATION
+  else if (auto const *iap = boost::get<TorsionBond>(&iaparams)) {
     auto result = iap->torque(p1, p2);
     if (result) {
       auto const &torque = result.get();
@@ -321,7 +323,9 @@ inline bool add_bonded_two_body_force(
 
       return false;
     }
-  } else {
+  }
+#endif
+  else {
     auto result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
     if (result) {
       p1.force() += result.get();
