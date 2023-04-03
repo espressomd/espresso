@@ -83,6 +83,19 @@ public:
   virtual bool set_node_last_applied_force(Utils::Vector3i const &node,
                                            Utils::Vector3d const &force) = 0;
 
+  /** @brief Get stored force that was applied on slice in the last time step.
+   */
+  virtual std::vector<double>
+  get_slice_last_applied_force(Utils::Vector3i const &lower_corner,
+                               Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Set stored force that was applied on slice in the last time step.
+   */
+  virtual void
+  set_slice_last_applied_force(Utils::Vector3i const &lower_corner,
+                               Utils::Vector3i const &upper_corner,
+                               std::vector<double> const &force) = 0;
+
   /** @brief Get node population. */
   virtual boost::optional<std::vector<double>>
   get_node_population(Utils::Vector3i const &node,
@@ -91,6 +104,16 @@ public:
   /** @brief Set node population. */
   virtual bool set_node_population(Utils::Vector3i const &node,
                                    std::vector<double> const &population) = 0;
+
+  /** @brief Get slice population. */
+  virtual std::vector<double>
+  get_slice_population(Utils::Vector3i const &lower_corner,
+                       Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Set slice population. */
+  virtual void set_slice_population(Utils::Vector3i const &lower_corner,
+                                    Utils::Vector3i const &upper_corner,
+                                    std::vector<double> const &population) = 0;
 
   /** @brief Get node velocity. */
   virtual boost::optional<Utils::Vector3d>
@@ -101,6 +124,16 @@ public:
   virtual bool set_node_velocity(Utils::Vector3i const &node,
                                  Utils::Vector3d const &v) = 0;
 
+  /** @brief Get slice velocity. */
+  virtual std::vector<double>
+  get_slice_velocity(Utils::Vector3i const &lower_corner,
+                     Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Set slice velocity. */
+  virtual void set_slice_velocity(Utils::Vector3i const &lower_corner,
+                                  Utils::Vector3i const &upper_corner,
+                                  std::vector<double> const &velocity) = 0;
+
   /** @brief Get node density. */
   virtual boost::optional<double>
   get_node_density(Utils::Vector3i const &node,
@@ -110,6 +143,16 @@ public:
   virtual bool set_node_density(Utils::Vector3i const &node,
                                 double density) = 0;
 
+  /** @brief Get slice density. */
+  virtual std::vector<double>
+  get_slice_density(Utils::Vector3i const &lower_corner,
+                    Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Set slice density. */
+  virtual void set_slice_density(Utils::Vector3i const &lower_corner,
+                                 Utils::Vector3i const &upper_corner,
+                                 std::vector<double> const &density) = 0;
+
   /** @brief Get node velocity boundary conditions. */
   virtual boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(Utils::Vector3i const &node) const = 0;
@@ -118,6 +161,16 @@ public:
   virtual bool
   set_node_velocity_at_boundary(Utils::Vector3i const &node,
                                 Utils::Vector3d const &velocity) = 0;
+
+  /** @brief Get slice velocity boundary conditions. */
+  virtual std::vector<boost::optional<Utils::Vector3d>>
+  get_slice_velocity_at_boundary(Utils::Vector3i const &lower_corner,
+                                 Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Set slice velocity boundary conditions. */
+  virtual void set_slice_velocity_at_boundary(
+      Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
+      std::vector<boost::optional<Utils::Vector3d>> const &velocity) = 0;
 
   /** @brief Get (stored) force applied on node due to boundary condition. */
   virtual boost::optional<Utils::Vector3d>
@@ -130,6 +183,11 @@ public:
   virtual boost::optional<bool>
   get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const = 0;
+
+  /** @brief Check if slice has velocity boundary conditions. */
+  virtual std::vector<bool>
+  get_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const = 0;
 
   /** @brief Rebuild the UBB field. This is an expensive operation. */
   virtual void reallocate_ubb_field() = 0;
@@ -155,6 +213,11 @@ public:
   /** @brief Get node pressure tensor. */
   virtual boost::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(Utils::Vector3i const &node) const = 0;
+
+  /** @brief Get slice pressure tensor. */
+  virtual std::vector<double>
+  get_slice_pressure_tensor(Utils::Vector3i const &lower_corner,
+                            Utils::Vector3i const &upper_corner) const = 0;
 
   /** @brief Calculate average pressure tensor of the local domain. */
   virtual Utils::VectorXd<9> get_pressure_tensor() const = 0;

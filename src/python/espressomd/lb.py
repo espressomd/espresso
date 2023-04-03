@@ -483,8 +483,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
-                return LBFluidSliceWalberla(
-                    parent_sip=self, slice_range=key, node_grid=self.shape)
+                return LBFluidSliceWalberla(parent_sip=self, slice_range=key)
             else:
                 return LBFluidNodeWalberla(
                     parent_sip=self, index=np.array(key))
@@ -798,10 +797,10 @@ class LatticeSliceWalberla:
             return np.empty(0, dtype=type(None))
 
         value = getattr(node, attr)
-        shape_val = np.shape(value)
+        value_shape = np.shape(value)
         dtype = value.dtype if isinstance(value, np.ndarray) else type(value)
         np_gen = np.zeros if dtype in (int, float, bool) else np.empty
-        value_grid = np_gen((*self.dimensions, *shape_val), dtype=dtype)
+        value_grid = np_gen((*self.dimensions, *value_shape), dtype=dtype)
 
         indices = itertools.product(*map(enumerate, self.indices))
         for (i, x), (j, y), (k, z) in indices:
@@ -809,7 +808,7 @@ class LatticeSliceWalberla:
             assert err == 0
             value_grid[i, j, k] = getattr(node, attr)
 
-        if shape_val == (1,):
+        if value_shape == (1,):
             value_grid = np.squeeze(value_grid, axis=-1)
         return utils.array_locked(value_grid)
 
@@ -823,11 +822,11 @@ class LatticeSliceWalberla:
                 f"Cannot set properties of an empty '{self.__class__.__name__}' object")
 
         values = np.copy(values)
-        shape_val = np.shape(getattr(node, attr))
-        target_shape = (*self.dimensions, *shape_val)
+        value_shape = np.shape(getattr(node, attr))
+        target_shape = (*self.dimensions, *value_shape)
 
         # broadcast if only one element was provided
-        if values.shape == shape_val:
+        if values.shape == value_shape:
             values = np.full(target_shape, values)
 
         if values.shape != target_shape:
@@ -843,24 +842,194 @@ class LatticeSliceWalberla:
             setattr(node, attr, values[i, j, k])
 
 
-class LBFluidSliceWalberla(LatticeSliceWalberla):
-    _node_class = LBFluidNodeWalberla
+@script_interface_register
+class LBFluidSliceWalberla(ScriptInterfaceHelper):
+    _so_name = "walberla::LBSlice"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "slice_range"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+
+    def calc_dependent_values(self, slice_range, grid_size):
+        shape = []
+        slice_lower_corner = []
+        slice_upper_corner = []
+        for i in range(3):
+            indices = np.arange(grid_size[i])
+            if isinstance(slice_range[i], slice):
+                if slice_range[i].step not in [None, 1]:
+                    raise NotImplementedError(
+                        "Slices with step != 1 are not supported")
+                indices = indices[slice_range[i]]
+            else:
+                if isinstance(slice_range[i], (int, np.integer)):
+                    indices = [indices[slice_range[i]]]
+                else:
+                    raise NotImplementedError(
+                        "Tuple-based indexing is not supported")
+            if len(indices) == 0:
+                slice_lower_corner.append(0)
+                slice_upper_corner.append(0)
+                shape.append(0)
+            elif isinstance(slice_range[i], (int, np.integer)):
+                slice_lower_corner.append(indices[0])
+                slice_upper_corner.append(indices[0] + 1)
+            else:
+                slice_lower_corner.append(indices[0])
+                slice_upper_corner.append(indices[-1] + 1)
+                shape.append(len(indices))
+        return {"slice_lower_corner": slice_lower_corner,
+                "slice_upper_corner": slice_upper_corner,
+                "shape": shape}
+
+    def __init__(self, *args, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+        else:
+            self.validate_params(kwargs)
+            slice_range = kwargs.pop("slice_range")
+            grid_size = kwargs["parent_sip"].shape
+            extra_kwargs = self.calc_dependent_values(slice_range, grid_size)
+            node = LBFluidNodeWalberla(index=np.array([0, 0, 0]), **kwargs)
+            super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
+            utils.handle_errors("LBFluidSliceWalberla instantiation failed")
+
+    def __iter__(self):
+        lower, upper = self.call_method("get_slice_ranges")
+        indices = [list(range(lower[i], upper[i])) for i in range(3)]
+        lb_sip = self.call_method("get_lb_sip")
+        for index in itertools.product(*indices):
+            yield LBFluidNodeWalberla(parent_sip=lb_sip, index=np.array(index))
 
     def __reduce__(self):
         raise NotImplementedError("Cannot serialize LB fluid slice objects")
 
-    def setter_checks(self, attr, values):
-        node = self.__dict__.get("_node")
-        if attr == "boundary":
-            # Mach checks
-            lattice_speed = node.call_method("get_lattice_speed")
-            for value in values.flatten():
-                if isinstance(value, VelocityBounceBack):
-                    HydrodynamicInteraction._check_mach_limit(
-                        np.array(value.velocity) / lattice_speed)
-                elif value is not None:
-                    raise TypeError(
-                        "values must be instances of VelocityBounceBack or None")
+    def _getter(self, attr):
+        value_grid, shape = self.call_method(f"get_{attr}")
+        if attr == "velocity_at_boundary":
+            value_grid = [
+                None if x is None else VelocityBounceBack(x) for x in value_grid]
+        return utils.array_locked(np.reshape(value_grid, shape))
+
+    def _setter(self, attr, values):
+        dimensions = self.call_method("get_slice_size")
+        if 0 in dimensions:
+            raise AttributeError(
+                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
+
+        values = np.copy(values)
+        value_shape = tuple(self.call_method("get_value_shape", name=attr))
+        target_shape = (*dimensions, *value_shape)
+
+        # broadcast if only one element was provided
+        if values.shape == value_shape or values.shape == () and value_shape == (1,):
+            values = np.full(target_shape, values)
+
+        def shape_squeeze(shape):
+            return tuple(x for x in shape if x != 1)
+
+        if shape_squeeze(values.shape) != shape_squeeze(target_shape):
+            raise ValueError(
+                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}")
+
+        self.call_method(f"set_{attr}", values=values.flatten())
+
+    @property
+    def density(self):
+        return self._getter("density",)
+
+    @density.setter
+    def density(self, value):
+        self._setter("density", value)
+
+    @property
+    def population(self):
+        return self._getter("population")
+
+    @population.setter
+    def population(self, value):
+        self._setter("population", value)
+
+    @property
+    def pressure_tensor(self):
+        return self._getter("pressure_tensor")
+
+    @pressure_tensor.setter
+    def pressure_tensor(self, value):
+        raise RuntimeError("Property 'pressure_tensor' is read-only.")
+
+    @property
+    def is_boundary(self):
+        return self._getter("is_boundary")
+
+    @is_boundary.setter
+    def is_boundary(self, value):
+        raise RuntimeError("Property 'is_boundary' is read-only.")
+
+    @property
+    def boundary(self):
+        """
+        Returns
+        -------
+        (N, M, L) array_like of :class:`~espressomd.lb.VelocityBounceBack`
+            If the nodes are boundary nodes
+        (N, M, L) array_like of None
+            If the nodes are not boundary nodes
+        """
+
+        return self._getter("velocity_at_boundary")
+
+    @boundary.setter
+    def boundary(self, values):
+        """
+        Parameters
+        ----------
+        values : (N, M, L) array_like of :class:`~espressomd.lb.VelocityBounceBack` or None
+            If values are :class:`~espressomd.lb.VelocityBounceBack`,
+            set the nodes to be boundary nodes with the specified velocity.
+            If values are ``None``, the nodes will become fluid nodes.
+        """
+
+        type_error_msg = "Parameter 'values' must be an array_like of VelocityBounceBack or None"
+        values = np.copy(values)
+        lattice_speed = self.call_method("get_lattice_speed")
+        if values.dtype != np.dtype("O"):
+            raise TypeError(type_error_msg)
+        for index in np.ndindex(*values.shape):
+            if values[index] is not None:
+                if not isinstance(values[index], VelocityBounceBack):
+                    raise TypeError(type_error_msg)
+                HydrodynamicInteraction._check_mach_limit(
+                    np.array(values[index].velocity) / lattice_speed)
+                values[index] = np.array(values[index].velocity)
+        self._setter("velocity_at_boundary", values=values)
+
+    @property
+    def boundary_force(self):
+        return self._getter("boundary_force")
+
+    @boundary_force.setter
+    def boundary_force(self, value):
+        raise RuntimeError("Property 'boundary_force' is read-only.")
+
+    @property
+    def velocity(self):
+        return self._getter("velocity")
+
+    @velocity.setter
+    def velocity(self, value):
+        self._setter("velocity", value)
+
+    @property
+    def last_applied_force(self):
+        return self._getter("last_applied_force")
+
+    @last_applied_force.setter
+    def last_applied_force(self, value):
+        self._setter("last_applied_force", value)
 
 
 def edge_detection(boundary_mask, periodicity):

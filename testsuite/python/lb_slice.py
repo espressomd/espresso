@@ -47,7 +47,7 @@ class LBSliceTest(ut.TestCase):
         lb_fluid = self.lb_fluid
 
         # array locked
-        array = lb_fluid[1:-1:2, 5, 3:6:2].velocity
+        array = lb_fluid[1:-1:1, 5, 3:6].velocity
         with self.assertRaisesRegex(ValueError, "ESPResSo array properties return non-writable arrays"):
             array[0, 0, 0, 1] = 5.
 
@@ -60,21 +60,20 @@ class LBSliceTest(ut.TestCase):
         with self.assertRaisesRegex(ValueError, r"Input-dimensions of 'velocity' array \(9, 9, 9, 2\) does not match slice dimensions \(9, 9, 9, 3\)"):
             lb_fluid[:-1, :-1, :-1].velocity = input_vel[:, :, :, :2]
 
-        # velocity broadcast
+        # velocity broadcast (with type conversion from int to double)
         lb_fluid[:, :, 0].velocity = [1, 2, 3]
         np.testing.assert_array_almost_equal(
-            np.copy(lb_fluid[:, :, 0].velocity), 10 * [10 * [[[1, 2, 3]]]])
+            np.copy(lb_fluid[:, :, 0].velocity), 10 * [10 * [[1, 2, 3]]])
 
-        # density on test slice [1:-1:2, 5, 3:6:2]
-        input_dens = np.random.rand(4, 1, 2)
-        lb_fluid[1:-1:2, 5, 3:6:2].density = input_dens
-        output_dens = lb_fluid[1:-1:2, 5, 3:6:2].density
-        np.testing.assert_array_almost_equal(input_dens, np.copy(output_dens))
+        input_dens = np.random.rand(8, 3) + 1.
+        lb_fluid[1:-1, 5, 3:6].density = input_dens
+        output_dens = lb_fluid[1:-1, 5, 3:6].density
+        np.testing.assert_array_almost_equal(np.copy(output_dens), input_dens)
 
-        # density broadcast
-        lb_fluid[:, :, 0].density = 1.2
+        # density broadcast (with type conversion from int to double)
+        lb_fluid[:, :, 0].density = 2
         np.testing.assert_array_almost_equal(
-            np.copy(lb_fluid[:, :, 0].density), 1.2)
+            np.copy(lb_fluid[:, :, 0].density), 2.)
 
         # population on test slice [:, :, :]
         input_pop = np.random.rand(10, 10, 10, 19)
@@ -87,7 +86,7 @@ class LBSliceTest(ut.TestCase):
 
         # pressure tensor on test slice [3, 6, 2:5]
         output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor.shape
-        should_pressure_shape = (1, 1, 3, 3, 3)
+        should_pressure_shape = (3, 3, 3)
         np.testing.assert_array_equal(
             output_pressure_shape, should_pressure_shape)
 
@@ -95,23 +94,17 @@ class LBSliceTest(ut.TestCase):
             lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
                 should_pressure_shape)
 
-        # index on test slice [1, 1:5, 6:]
-        output_index_shape = lb_fluid[1, 1:5, 6:].index.shape
-        should_index_shape = (1, 4, 4, 3)
-        np.testing.assert_array_equal(
-            output_index_shape, should_index_shape)
-
-        with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
-            lb_fluid[1, 1:5, 6:].index = np.zeros(output_index_shape)
-
         # boundary velocity on test slice [1:, 1:, 1:]
         output_boundary_shape = lb_fluid[1:, 1:, 1:].boundary.shape
         should_boundary_shape = (9, 9, 9)
         np.testing.assert_array_equal(
             output_boundary_shape, should_boundary_shape)
 
-        with self.assertRaisesRegex(TypeError, "values must be instances of VelocityBounceBack or None"):
+        with self.assertRaisesRegex(TypeError, "Parameter 'values' must be an array_like of VelocityBounceBack or None"):
             lb_fluid[1:, 1:, 1:].boundary = np.zeros(should_boundary_shape)
+        with self.assertRaisesRegex(TypeError, "Parameter 'values' must be an array_like of VelocityBounceBack or None"):
+            lb_fluid[1:, 1:, 1:].boundary = np.array(
+                [None, [1, 2, 3]], dtype=object)
 
         vbb_ref = espressomd.lb.VelocityBounceBack([1e-6, 2e-6, 3e-6])
         lb_fluid[1:2, 1:, 0].boundary = vbb_ref
@@ -141,26 +134,21 @@ class LBSliceTest(ut.TestCase):
         lb_fluid[:, :, 0].last_applied_force = [1, 2, 3]
         np.testing.assert_array_almost_equal(
             np.copy(lb_fluid[:, :, 0].last_applied_force),
-            10 * [10 * [[[1, 2, 3]]]])
+            10 * [10 * [[1, 2, 3]]])
 
         # access out of bounds
         i = lb_fluid.shape[2] + 10
         lb_slice = lb_fluid[1, 2, i:i + 10]
         self.assertEqual(lb_slice.density.shape, (0,))
         self.assertIsInstance(lb_slice.density.dtype, object)
-        self.assertEqual(list(lb_slice.indices[0]), [1])
-        self.assertEqual(list(lb_slice.indices[1]), [2])
-        self.assertEqual(list(lb_slice.indices[2]), [])
-        np.testing.assert_array_equal(
-            np.copy(lb_fluid[1, 2, 8:i].index),
-            np.copy(lb_fluid[1, 2, 8:].index))
         with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty 'LBFluidSliceWalberla' object"):
             lb_slice.density = [1., 2., 3.]
 
     def test_iterator(self):
         lbslice_handle = self.lb_fluid[:, :, :]
         # arrange node indices using class methods
-        arranged_indices = list(itertools.product(*lbslice_handle.indices))
+        lb_indices = [np.arange(self.lb_fluid.shape[i]) for i in range(3)]
+        arranged_indices = list(itertools.product(*lb_indices))
         # arrange node indices using __iter__() enforced conversion
         iterator_indices = [node.index for node in lbslice_handle]
         # check the results correspond pairwise. order is implicitly preserved.

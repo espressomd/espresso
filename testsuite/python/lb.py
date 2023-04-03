@@ -169,24 +169,92 @@ class LBTest:
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.actors.add(lbf)
-        node = lbf[0, 0, 0]
+        lb_node = lbf[0, 0, 0]
         # check exceptions from LB node
         with self.assertRaisesRegex(RuntimeError, "Property 'boundary_force' is read-only"):
-            node.boundary_force = [1, 2, 3]
+            lb_node.boundary_force = [1, 2, 3]
         with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
-            node.pressure_tensor = np.eye(3, 3)
+            lb_node.pressure_tensor = np.eye(3, 3)
         with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
-            node.is_boundary = True
+            lb_node.is_boundary = True
         with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid node objects'):
-            node.__reduce__()
-        with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid slice objects'):
-            lbf[0, 0, 0:2].__reduce__()
+            lb_node.__reduce__()
         # check property types
         array_locked = espressomd.utils.array_locked
-        self.assertIsInstance(node.pressure_tensor, array_locked)
-        # self.assertIsInstance(node.boundary_force, array_locked) # TODO
-        self.assertIsInstance(node.velocity, array_locked)
-        self.assertIsInstance(node.last_applied_force, array_locked)
+        self.assertIsInstance(lb_node.pressure_tensor, array_locked)
+        # self.assertIsInstance(lb_node.boundary_force, array_locked) # TODO
+        self.assertIsInstance(lb_node.velocity, array_locked)
+        self.assertIsInstance(lb_node.last_applied_force, array_locked)
+
+    def test_slice_exceptions(self):
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.actors.add(lbf)
+        lb_slice = lbf[:, :, :]
+        # check exceptions from LB slice
+        with self.assertRaisesRegex(RuntimeError, "Property 'boundary_force' is read-only"):
+            lb_slice.boundary_force = [1, 2, 3]
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
+            lb_slice.pressure_tensor = np.eye(3, 3)
+        with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
+            lb_slice.is_boundary = True
+        with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid slice objects'):
+            lb_slice.__reduce__()
+        # check property types
+        array_locked = espressomd.utils.array_locked
+        self.assertIsInstance(lb_slice.pressure_tensor, array_locked)
+        # self.assertIsInstance(lb_slice.boundary_force, array_locked) # TODO
+        self.assertIsInstance(lb_slice.velocity, array_locked)
+        self.assertIsInstance(lb_slice.last_applied_force, array_locked)
+        # check exceptions from python slices
+        with self.assertRaisesRegex(NotImplementedError, "Slices with step != 1 are not supported"):
+            lbf[:10:2, :, :]
+        with self.assertRaisesRegex(NotImplementedError, "Tuple-based indexing is not supported"):
+            lbf[:2, (0, 1), (0, 1)]
+        with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty .+ object"):
+            lbf[0:1, 0:1, 0:0].density = []
+
+    def test_lb_slice_set_get(self):
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.actors.add(lbf)
+        ref_density = 1. + np.arange(np.prod(lbf.shape)).reshape(lbf.shape)
+        lbf[:, :, :].density = ref_density
+        densities = np.copy(lbf[:, :, :].density)
+        np.testing.assert_allclose(densities, ref_density, rtol=1e-5)
+        self.assertIsNone(lbf[:1, 0, 0].boundary[0])
+
+        # prepare various slicing operations
+        slices = []
+        for i in range(3):
+            slices.append([
+                slice(lbf.shape[i]), slice(0, lbf.shape[i]), slice(1, -1),
+                slice(0, 0), slice(5, 1), slice(0, -lbf.shape[i] + 1),
+                slice(-lbf.shape[i], None), slice(2, lbf.shape[i] - 1), 1])
+
+        # check gettters
+        for subset in itertools.product(*slices):
+            # skip indexing without any slice
+            if not any(isinstance(item, slice) for item in subset):
+                continue
+            np.testing.assert_allclose(
+                np.copy(lbf[subset].density), ref_density[subset], rtol=1e-5)
+
+        # check settters
+        for subset in itertools.product(*slices):
+            # skip indexing without any slice and skip slices with zero length
+            if not any(isinstance(item, slice) for item in subset) or any(
+                    isinstance(s, slice) and (s.start or 0) >= (s.stop or 0) for s in subset):
+                continue
+            lbf[:, :, :].density = ref_density
+            lbf[subset].density = -lbf[subset].density
+            densities = np.copy(lbf[:, :, :].density)
+            np.testing.assert_allclose(
+                densities[subset], -ref_density[subset], rtol=1e-5)
+            densities[subset] *= -1.
+            np.testing.assert_allclose(densities, ref_density, rtol=1e-5)
+
+        # empty slices
+        self.assertEqual(lbf[5:2, 0, 0].pressure_tensor.shape, (0, 3, 3))
+        self.assertEqual(lbf[5:2, 0:0, -1:-1].velocity.shape, (0, 0, 0, 3))
 
     def test_pressure_tensor_observable(self):
         """

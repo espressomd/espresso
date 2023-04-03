@@ -42,16 +42,23 @@ class LBBoundariesBase:
         self.system.actors.clear()
 
     def check_boundary_flags(self, slip_velocity1, slip_velocity2):
+        def vbb2vel(values):
+            velocities = np.empty((*values.shape, 3), dtype=float)
+            for index in np.ndindex(*values.shape):
+                velocities[index] = values[index].velocity
+            return velocities
         lbb1 = self.lbf[:5, :, :]
         lbb2 = self.lbf[15:, :, :]
         lbb3 = self.lbf[5:15, :, :]
+        ref_velocity1 = np.tile(slip_velocity1, [5, 10, 10, 1])
+        ref_velocity2 = np.tile(slip_velocity2, [5, 10, 10, 1])
         np.testing.assert_equal(np.copy(lbb1.is_boundary), True)
         np.testing.assert_equal(np.copy(lbb2.is_boundary), True)
         np.testing.assert_equal(np.copy(lbb3.is_boundary), False)
-        np.testing.assert_allclose(np.copy(lbb1.velocity),
-                                   np.tile(slip_velocity1, [5, 10, 10, 1]))
-        np.testing.assert_allclose(np.copy(lbb2.velocity),
-                                   np.tile(slip_velocity2, [5, 10, 10, 1]))
+        np.testing.assert_allclose(np.copy(lbb1.velocity), ref_velocity1)
+        np.testing.assert_allclose(np.copy(lbb2.velocity), ref_velocity2)
+        np.testing.assert_allclose(vbb2vel(lbb1.boundary), ref_velocity1)
+        np.testing.assert_allclose(vbb2vel(lbb2.boundary), ref_velocity2)
         self.lbf.clear_boundaries()
         np.testing.assert_equal(np.copy(self.lbf[:, :, :].is_boundary), False)
 

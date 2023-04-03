@@ -21,6 +21,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <memory>
 #include <utility>
 
@@ -53,6 +54,21 @@ public:
   [[nodiscard]] auto get_blocks() const { return m_blocks; }
   [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const;
+  [[nodiscard]] auto get_local_grid_range() const {
+    auto const conversion = [](Utils::Vector3d const &pos) -> Utils::Vector3i {
+      auto const dim =
+          Utils::Vector3i{{static_cast<int>(pos[0]), static_cast<int>(pos[1]),
+                           static_cast<int>(pos[2])}};
+#ifndef NDEBUG
+      for (auto const i : {0, 1, 2}) {
+        assert(std::abs(static_cast<double>(dim[i]) - pos[i]) < 1e-10);
+      }
+#endif
+      return dim;
+    };
+    auto const [lower_corner, upper_corner] = get_local_domain();
+    return std::make_pair(conversion(lower_corner), conversion(upper_corner));
+  }
 
   [[nodiscard]] bool node_in_local_domain(const Utils::Vector3i &node) const;
   [[nodiscard]] bool node_in_local_halo(const Utils::Vector3i &node) const;

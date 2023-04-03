@@ -104,11 +104,11 @@ class LBCouetteFlowCommon:
             np.testing.assert_allclose(u_lbf, u_ref, atol=1e-4, rtol=0.)
 
     def test_profile_xy(self):
-        self.check_profile(lambda lbf: lbf[5, :, 0].velocity[:, :, :, 0],
+        self.check_profile(lambda lbf: lbf[5, :, 0].velocity[:, 0],
                            shear_direction="x", shear_plane_normal="y")
 
     def test_profile_zy(self):
-        self.check_profile(lambda lbf: lbf[0, :, 5].velocity[:, :, :, 0],
+        self.check_profile(lambda lbf: lbf[0, :, 5].velocity[:, 0],
                            shear_direction="z", shear_plane_normal="y")
 
 

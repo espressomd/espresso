@@ -86,12 +86,11 @@ void set_boundary_from_grid(BoundaryModel &boundary,
 
   auto const &blocks = lattice.get_blocks();
   for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-    // lattice constant is 1
-    auto const left = block->getAABB().min();
-    auto const off_i = static_cast<int>(left[0]);
-    auto const off_j = static_cast<int>(left[1]);
-    auto const off_k = static_cast<int>(left[2]);
     auto const [size_i, size_j, size_k] = boundary.block_dims(*block);
+    auto const offset = lattice.get_local_grid_range().first;
+    auto const off_i = offset[0];
+    auto const off_j = offset[1];
+    auto const off_k = offset[2];
     // Get field data which knows about the indices
     // In the loop, x,y,z are in block-local coordinates
     auto const n_ghost_layers = lattice.get_ghost_layers();

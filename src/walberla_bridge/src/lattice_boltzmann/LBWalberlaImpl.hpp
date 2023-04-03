@@ -600,6 +600,79 @@ public:
     return true;
   }
 
+  std::vector<double>
+  get_slice_velocity(Utils::Vector3i const &lower_corner,
+                     Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    std::vector<double> out;
+    out.reserve(3 * Utils::product(upper_corner - lower_corner));
+    auto const &block = *(lattice.get_blocks()->begin());
+    auto const field = block.template getData<VectorField>(m_velocity_field_id);
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{x, y, z};
+          if (m_boundary->node_is_boundary(node)) {
+            auto const vec = m_boundary->get_node_value_at_boundary(node);
+            for (uint_t f = 0u; f < 3u; ++f) {
+              out.emplace_back(double_c(vec[f]));
+            }
+          } else {
+            auto const vec = lbm::accessor::Vector::get(field, Cell{x, y, z});
+            for (uint_t f = 0u; f < 3u; ++f) {
+              out.emplace_back(double_c(vec[f]));
+            }
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_velocity(Utils::Vector3i const &lower_corner,
+                          Utils::Vector3i const &upper_corner,
+                          std::vector<double> const &velocity) override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return;
+    }
+    auto &block = *(lattice.get_blocks()->begin());
+    // We have to set both, the pdf and the stored velocity field
+    auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+    auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
+    auto force_field =
+        block.template getData<VectorField>(m_last_applied_force_field_id);
+    auto it = velocity.begin();
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          Vector3<FloatType> vec;
+          for (uint_t f = 0u; f < 3u; ++f) {
+            vec[f] = FloatType_c(*it);
+            ++it;
+          }
+          auto const rho =
+              lbm::accessor::Density::get(pdf_field, Cell{x, y, z});
+          lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, vec,
+                                                 rho, Cell{x, y, z});
+          lbm::accessor::Vector::set(vel_field, vec, Cell{x, y, z});
+        }
+      }
+    }
+  }
+
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &pos,
                       bool consider_points_in_halo = false) const override {
@@ -706,6 +779,64 @@ public:
     return true;
   }
 
+  std::vector<double> get_slice_last_applied_force(
+      Utils::Vector3i const &lower_corner,
+      Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    std::vector<double> out;
+    out.reserve(3 * Utils::product(upper_corner - lower_corner));
+    auto const &block = *(lattice.get_blocks()->begin());
+    auto const field =
+        block.template getData<VectorField>(m_last_applied_force_field_id);
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const vec = lbm::accessor::Vector::get(field, Cell{x, y, z});
+          for (uint_t f = 0u; f < 3u; ++f) {
+            out.emplace_back(double_c(vec[f]));
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_last_applied_force(Utils::Vector3i const &lower_corner,
+                                    Utils::Vector3i const &upper_corner,
+                                    std::vector<double> const &force) override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return;
+    }
+    auto &block = *(lattice.get_blocks()->begin());
+    auto field =
+        block.template getData<VectorField>(m_last_applied_force_field_id);
+    auto it = force.begin();
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          Vector3<FloatType> vec;
+          for (uint_t f = 0u; f < 3u; ++f) {
+            vec[f] = FloatType_c(*it);
+            ++it;
+          }
+          lbm::accessor::Vector::set(field, vec, Cell{x, y, z});
+        }
+      }
+    }
+  }
+
   // Population
   boost::optional<std::vector<double>>
   get_node_population(Utils::Vector3i const &node,
@@ -740,6 +871,63 @@ public:
     return true;
   }
 
+  std::vector<double>
+  get_slice_population(Utils::Vector3i const &lower_corner,
+                       Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    std::vector<double> out;
+    out.reserve(Stencil::Size * Utils::product(upper_corner - lower_corner));
+    auto const &block = *(lattice.get_blocks()->begin());
+    auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const pop =
+              lbm::accessor::Population::get(pdf_field, Cell{x, y, z});
+          for (uint_t f = 0u; f < Stencil::Size; ++f) {
+            out.emplace_back(double_c(pop[f]));
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_population(Utils::Vector3i const &lower_corner,
+                            Utils::Vector3i const &upper_corner,
+                            std::vector<double> const &population) override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return;
+    }
+    auto &block = *(lattice.get_blocks()->begin());
+    auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+    auto it = population.begin();
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          std::array<FloatType, Stencil::Size> pop;
+          for (uint_t f = 0u; f < Stencil::Size; ++f) {
+            pop[f] = FloatType_c(*it);
+            ++it;
+          }
+          lbm::accessor::Population::set(pdf_field, pop, Cell{x, y, z});
+        }
+      }
+    }
+  }
+
   // Density
   boost::optional<double>
   get_node_density(Utils::Vector3i const &node,
@@ -769,6 +957,63 @@ public:
     return true;
   }
 
+  std::vector<double>
+  get_slice_density(Utils::Vector3i const &lower_corner,
+                    Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    std::vector<double> out;
+    out.reserve(Utils::product(upper_corner - lower_corner));
+    auto const &block = *(lattice.get_blocks()->begin());
+    auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          out.emplace_back(
+              lbm::accessor::Density::get(pdf_field, Cell{x, y, z}));
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_density(Utils::Vector3i const &lower_corner,
+                         Utils::Vector3i const &upper_corner,
+                         std::vector<double> const &density) override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return;
+    }
+    auto &block = *(lattice.get_blocks()->begin());
+    auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+    auto force_field =
+        block.template getData<VectorField>(m_last_applied_force_field_id);
+    auto it = density.begin();
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const velocity =
+              std::get<1>(lbm::accessor::DensityAndVelocity::get(
+                  pdf_field, force_field, Cell{x, y, z}));
+          lbm::accessor::DensityAndVelocity::set(pdf_field, force_field,
+                                                 velocity, FloatType_c(*it),
+                                                 Cell{x, y, z});
+          ++it;
+        }
+      }
+    }
+  }
+
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
@@ -787,6 +1032,65 @@ public:
     m_boundary->set_node_value_at_boundary(node, velocity, *bc);
 
     return true;
+  }
+
+  std::vector<boost::optional<Utils::Vector3d>> get_slice_velocity_at_boundary(
+      Utils::Vector3i const &lower_corner,
+      Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    std::vector<boost::optional<Utils::Vector3d>> out;
+    out.reserve(Utils::product(upper_corner - lower_corner));
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          if (m_boundary->node_is_boundary(node)) {
+            out.emplace_back(m_boundary->get_node_value_at_boundary(node));
+          } else {
+            out.emplace_back(boost::none);
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_velocity_at_boundary(
+      Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
+      std::vector<boost::optional<Utils::Vector3d>> const &velocity) override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return;
+    }
+    auto it = velocity.begin();
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          auto const bc = get_block_and_cell(lattice, node, false);
+          auto const &opt = *it;
+          if (opt) {
+            m_boundary->set_node_value_at_boundary(node, *opt, *bc);
+          } else {
+            m_boundary->remove_node_from_boundary(node, *bc);
+          }
+          ++it;
+        }
+      }
+    }
   }
 
   boost::optional<Utils::Vector3d>
@@ -818,6 +1122,31 @@ public:
     return {m_boundary->node_is_boundary(node)};
   }
 
+  std::vector<bool>
+  get_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    std::vector<bool> out;
+    out.reserve(Utils::product(upper_corner - lower_corner));
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          out.emplace_back(m_boundary->node_is_boundary(node));
+        }
+      }
+    }
+    return out;
+  }
+
   void reallocate_ubb_field() override { m_boundary->boundary_update(); }
 
   void clear_boundaries() override { reset_boundary_handling(); }
@@ -842,6 +1171,36 @@ public:
     pressure_tensor_correction(tensor);
 
     return to_vector9d(tensor);
+  }
+
+  std::vector<double> get_slice_pressure_tensor(
+      Utils::Vector3i const &lower_corner,
+      Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    std::vector<double> out;
+    out.reserve(9 * Utils::product(upper_corner - lower_corner));
+    auto const &block = *(lattice.get_blocks()->begin());
+    auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+    auto const lower_cell = lower_bc->cell;
+    auto const upper_cell = upper_bc->cell;
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto tensor =
+              lbm::accessor::PressureTensor::get(pdf_field, Cell{x, y, z});
+          pressure_tensor_correction(tensor);
+          for (auto i = 0; i < 9; ++i) {
+            out.emplace_back(tensor[i]);
+          }
+        }
+      }
+    }
+    return out;
   }
 
   // Global pressure tensor
