@@ -92,7 +92,7 @@ void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
           if (cpnode.is_boundary) {
             cpfile.read(cpnode.slip_velocity);
           }
-          lb_obj.set_node_pop(ind, cpnode.populations);
+          lb_obj.set_node_population(ind, cpnode.populations);
           lb_obj.set_node_last_applied_force(ind, cpnode.last_applied_force);
           if (cpnode.is_boundary) {
             lb_obj.set_node_velocity_at_boundary(ind, cpnode.slip_velocity);
@@ -139,7 +139,7 @@ void FluidWalberla::save_checkpoint(std::string const &filename, int mode) {
                                  Context const &context) {
     auto const get_node_checkpoint = [&](Utils::Vector3i const &ind)
         -> boost::optional<LBWalberlaNodeState> {
-      auto const pop = lb_obj.get_node_pop(ind);
+      auto const pop = lb_obj.get_node_population(ind);
       auto const laf = lb_obj.get_node_last_applied_force(ind);
       auto const lbb = lb_obj.get_node_is_boundary(ind);
       auto const vbb = lb_obj.get_node_velocity_at_boundary(ind);

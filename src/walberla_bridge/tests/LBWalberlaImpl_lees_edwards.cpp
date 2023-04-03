@@ -158,11 +158,11 @@ BOOST_AUTO_TEST_CASE(test_interpolation_pdf) {
     v = x;
     x += .1;
   });
-  lb->set_node_pop(source_node, source_pop);
+  lb->set_node_population(source_node, source_pop);
   lb->ghost_communication();
 
   auto const ghost_node = Vector3i{source_node[0] - offset, -1, source_node[2]};
-  auto const ghost_pop = *(lb->get_node_pop(ghost_node, true));
+  auto const ghost_pop = *(lb->get_node_population(ghost_node, true));
   for (int i = 0; i < source_pop.size(); i++) {
     BOOST_CHECK_EQUAL(source_pop[i], ghost_pop[i]);
   }

@@ -125,10 +125,23 @@ public:
       }
       return Variant{None{}};
     }
-    if (name == "set_velocity") {
-      auto const u =
-          get_value<Utils::Vector3d>(params, "value") * m_conv_velocity;
-      m_lb_fluid->set_node_velocity(m_index, u);
+    if (name == "get_density") {
+      auto const result = m_lb_fluid->get_node_density(m_index);
+      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
+    }
+    if (name == "set_density") {
+      auto const dens = get_value<double>(params, "value");
+      m_lb_fluid->set_node_density(m_index, dens * m_conv_dens);
+      m_lb_fluid->ghost_communication();
+      return {};
+    }
+    if (name == "get_population") {
+      auto const result = m_lb_fluid->get_node_population(m_index);
+      return mpi_reduce_optional(context()->get_comm(), result);
+    }
+    if (name == "set_population") {
+      auto const pop = get_value<std::vector<double>>(params, "value");
+      m_lb_fluid->set_node_population(m_index, pop);
       m_lb_fluid->ghost_communication();
       return {};
     }
@@ -137,25 +150,12 @@ public:
       return mpi_reduce_optional(context()->get_comm(), result) /
              m_conv_velocity;
     }
-    if (name == "set_density") {
-      auto const dens = get_value<double>(params, "value");
-      m_lb_fluid->set_node_density(m_index, dens * m_conv_dens);
+    if (name == "set_velocity") {
+      auto const u =
+          get_value<Utils::Vector3d>(params, "value") * m_conv_velocity;
+      m_lb_fluid->set_node_velocity(m_index, u);
       m_lb_fluid->ghost_communication();
       return {};
-    }
-    if (name == "get_density") {
-      auto const result = m_lb_fluid->get_node_density(m_index);
-      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
-    }
-    if (name == "set_population") {
-      auto const pop = get_value<std::vector<double>>(params, "value");
-      m_lb_fluid->set_node_pop(m_index, pop);
-      m_lb_fluid->ghost_communication();
-      return {};
-    }
-    if (name == "get_population") {
-      auto const result = m_lb_fluid->get_node_pop(m_index);
-      return mpi_reduce_optional(context()->get_comm(), result);
     }
     if (name == "get_is_boundary") {
       auto const result = m_lb_fluid->get_node_is_boundary(m_index);
@@ -185,15 +185,15 @@ public:
       }
       return {};
     }
+    if (name == "get_last_applied_force") {
+      auto const result = m_lb_fluid->get_node_last_applied_force(m_index);
+      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_force;
+    }
     if (name == "set_last_applied_force") {
       auto const f = get_value<Utils::Vector3d>(params, "value");
       m_lb_fluid->set_node_last_applied_force(m_index, f * m_conv_force);
       m_lb_fluid->ghost_communication();
       return {};
-    }
-    if (name == "get_last_applied_force") {
-      auto const result = m_lb_fluid->get_node_last_applied_force(m_index);
-      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_force;
     }
     if (name == "get_lattice_speed") {
       return 1. / m_conv_velocity;

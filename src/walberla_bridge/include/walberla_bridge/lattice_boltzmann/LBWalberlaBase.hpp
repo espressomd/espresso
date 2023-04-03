@@ -53,15 +53,6 @@ public:
   /** @brief Number of discretized velocities in the PDF. */
   virtual std::size_t stencil_size() const = 0;
 
-  /** @brief Get node velocity. */
-  virtual boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i &node,
-                    bool consider_ghosts = false) const = 0;
-
-  /** @brief Set node velocity. */
-  virtual bool set_node_velocity(const Utils::Vector3i &node,
-                                 const Utils::Vector3d &v) = 0;
-
   /** @brief Get interpolated velocities at a position. */
   virtual boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &position,
@@ -81,53 +72,63 @@ public:
 
   /** @brief Get stored force to be applied on node in the next time step. */
   virtual boost::optional<Utils::Vector3d>
-  get_node_force_to_be_applied(const Utils::Vector3i &node) const = 0;
+  get_node_force_to_be_applied(Utils::Vector3i const &node) const = 0;
 
   /** @brief Get stored force that was applied on node in the last time step. */
   virtual boost::optional<Utils::Vector3d>
-  get_node_last_applied_force(const Utils::Vector3i &node,
+  get_node_last_applied_force(Utils::Vector3i const &node,
                               bool consider_ghosts = false) const = 0;
 
   /** @brief Set stored force that was applied on node in the last time step. */
-  virtual bool set_node_last_applied_force(const Utils::Vector3i &node,
-                                           const Utils::Vector3d &force) = 0;
+  virtual bool set_node_last_applied_force(Utils::Vector3i const &node,
+                                           Utils::Vector3d const &force) = 0;
 
-  /** @brief Get node populations. */
+  /** @brief Get node population. */
   virtual boost::optional<std::vector<double>>
-  get_node_pop(const Utils::Vector3i &node,
-               bool consider_ghosts = false) const = 0;
+  get_node_population(Utils::Vector3i const &node,
+                      bool consider_ghosts = false) const = 0;
 
-  /** @brief Set node populations. */
-  virtual bool set_node_pop(const Utils::Vector3i &node,
-                            std::vector<double> const &population) = 0;
+  /** @brief Set node population. */
+  virtual bool set_node_population(Utils::Vector3i const &node,
+                                   std::vector<double> const &population) = 0;
 
-  /** @brief Set node density. */
-  virtual bool set_node_density(const Utils::Vector3i &node,
-                                double density) = 0;
+  /** @brief Get node velocity. */
+  virtual boost::optional<Utils::Vector3d>
+  get_node_velocity(Utils::Vector3i const &node,
+                    bool consider_ghosts = false) const = 0;
+
+  /** @brief Set node velocity. */
+  virtual bool set_node_velocity(Utils::Vector3i const &node,
+                                 Utils::Vector3d const &v) = 0;
 
   /** @brief Get node density. */
   virtual boost::optional<double>
-  get_node_density(const Utils::Vector3i &node,
+  get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const = 0;
+
+  /** @brief Set node density. */
+  virtual bool set_node_density(Utils::Vector3i const &node,
+                                double density) = 0;
 
   /** @brief Get node velocity boundary conditions. */
   virtual boost::optional<Utils::Vector3d>
-  get_node_velocity_at_boundary(const Utils::Vector3i &node) const = 0;
+  get_node_velocity_at_boundary(Utils::Vector3i const &node) const = 0;
 
   /** @brief Set node velocity boundary conditions. */
-  virtual bool set_node_velocity_at_boundary(const Utils::Vector3i &node,
-                                             const Utils::Vector3d &v) = 0;
+  virtual bool
+  set_node_velocity_at_boundary(Utils::Vector3i const &node,
+                                Utils::Vector3d const &velocity) = 0;
 
   /** @brief Get (stored) force applied on node due to boundary condition. */
   virtual boost::optional<Utils::Vector3d>
-  get_node_boundary_force(const Utils::Vector3i &node) const = 0;
+  get_node_boundary_force(Utils::Vector3i const &node) const = 0;
 
   /** @brief Remove a node from the boundaries. */
-  virtual bool remove_node_from_boundary(const Utils::Vector3i &node) = 0;
+  virtual bool remove_node_from_boundary(Utils::Vector3i const &node) = 0;
 
   /** @brief Check if node has velocity boundary conditions. */
   virtual boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node,
+  get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const = 0;
 
   /** @brief Rebuild the UBB field. This is an expensive operation. */
@@ -153,7 +154,7 @@ public:
 
   /** @brief Get node pressure tensor. */
   virtual boost::optional<Utils::VectorXd<9>>
-  get_node_pressure_tensor(const Utils::Vector3i &node) const = 0;
+  get_node_pressure_tensor(Utils::Vector3i const &node) const = 0;
 
   /** @brief Calculate average pressure tensor of the local domain. */
   virtual Utils::VectorXd<9> get_pressure_tensor() const = 0;

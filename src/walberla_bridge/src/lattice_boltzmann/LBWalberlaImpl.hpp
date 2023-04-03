@@ -679,6 +679,19 @@ public:
     return to_vector3d(vec);
   }
 
+  boost::optional<Utils::Vector3d>
+  get_node_last_applied_force(Utils::Vector3i const &node,
+                              bool consider_ghosts = false) const override {
+    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+    if (!bc)
+      return {};
+
+    auto const field =
+        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    auto const vec = lbm::accessor::Vector::get(field, bc->cell);
+    return to_vector3d(vec);
+  }
+
   bool set_node_last_applied_force(Utils::Vector3i const &node,
                                    Utils::Vector3d const &force) override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
@@ -693,39 +706,10 @@ public:
     return true;
   }
 
-  boost::optional<Utils::Vector3d>
-  get_node_last_applied_force(Utils::Vector3i const &node,
-                              bool consider_ghosts = false) const override {
-    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
-    if (!bc)
-      return {};
-
-    auto field =
-        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
-    auto const vec = lbm::accessor::Vector::get(field, bc->cell);
-    return to_vector3d(vec);
-  }
-
   // Population
-  bool set_node_pop(Utils::Vector3i const &node,
-                    std::vector<double> const &population) override {
-    auto bc = get_block_and_cell(get_lattice(), node, false);
-    if (!bc)
-      return false;
-
-    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
-    std::array<FloatType, Stencil::Size> pop;
-    for (uint_t f = 0u; f < Stencil::Size; ++f) {
-      pop[f] = FloatType_c(population[f]);
-    }
-    lbm::accessor::Population::set(pdf_field, pop, bc->cell);
-
-    return true;
-  }
-
   boost::optional<std::vector<double>>
-  get_node_pop(Utils::Vector3i const &node,
-               bool consider_ghosts = false) const override {
+  get_node_population(Utils::Vector3i const &node,
+                      bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {boost::none};
@@ -740,7 +724,35 @@ public:
     return {population};
   }
 
+  bool set_node_population(Utils::Vector3i const &node,
+                           std::vector<double> const &population) override {
+    auto bc = get_block_and_cell(get_lattice(), node, false);
+    if (!bc)
+      return false;
+
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    std::array<FloatType, Stencil::Size> pop;
+    for (uint_t f = 0u; f < Stencil::Size; ++f) {
+      pop[f] = FloatType_c(population[f]);
+    }
+    lbm::accessor::Population::set(pdf_field, pop, bc->cell);
+
+    return true;
+  }
+
   // Density
+  boost::optional<double>
+  get_node_density(Utils::Vector3i const &node,
+                   bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
+    if (!bc)
+      return {boost::none};
+
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto const density = lbm::accessor::Density::get(pdf_field, bc->cell);
+    return {double_c(density)};
+  }
+
   bool set_node_density(Utils::Vector3i const &node, double density) override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
@@ -757,18 +769,6 @@ public:
     return true;
   }
 
-  boost::optional<double>
-  get_node_density(Utils::Vector3i const &node,
-                   bool consider_ghosts = false) const override {
-    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
-    if (!bc)
-      return {boost::none};
-
-    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
-    auto const density = lbm::accessor::Density::get(pdf_field, bc->cell);
-    return {double_c(density)};
-  }
-
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
@@ -779,12 +779,12 @@ public:
   }
 
   bool set_node_velocity_at_boundary(Utils::Vector3i const &node,
-                                     Utils::Vector3d const &v) override {
+                                     Utils::Vector3d const &velocity) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
-    m_boundary->set_node_value_at_boundary(node, v, *bc);
+    m_boundary->set_node_value_at_boundary(node, velocity, *bc);
 
     return true;
   }
