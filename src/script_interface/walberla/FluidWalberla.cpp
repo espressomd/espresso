@@ -20,16 +20,17 @@
 
 #ifdef WALBERLA
 
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
-
 #include "FluidWalberla.hpp"
 #include "WalberlaCheckpoint.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
 
 #include "core/BoxGeometry.hpp"
+#include "core/event.hpp"
 #include "core/grid.hpp"
 
 #include "script_interface/communication.hpp"
+
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
@@ -50,6 +51,58 @@
 #include <vector>
 
 namespace ScriptInterface::walberla {
+
+Variant FluidWalberla::do_call_method(std::string const &name,
+                                      VariantMap const &params) {
+  if (name == "activate") {
+    auto const fail = ::activate_lb_walberla(m_lb_fluid, m_lb_params);
+    if (not fail) {
+      m_is_active = true;
+    }
+  }
+  if (name == "deactivate") {
+    ::deactivate_lb_walberla();
+    m_is_active = false;
+  }
+  if (name == "add_force_at_pos") {
+    auto const pos = get_value<Utils::Vector3d>(params, "pos");
+    auto const f = get_value<Utils::Vector3d>(params, "force");
+    auto const folded_pos = folded_position(pos, box_geo);
+    m_lb_fluid->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
+  }
+  if (name == "get_interpolated_velocity") {
+    auto const pos = get_value<Utils::Vector3d>(params, "pos");
+    return get_interpolated_velocity(pos);
+  }
+  if (name == "get_pressure_tensor") {
+    return get_average_pressure_tensor();
+  }
+  if (name == "load_checkpoint") {
+    auto const path = get_value<std::string>(params, "path");
+    auto const mode = get_value<int>(params, "mode");
+    load_checkpoint(path, mode);
+  }
+  if (name == "save_checkpoint") {
+    auto const path = get_value<std::string>(params, "path");
+    auto const mode = get_value<int>(params, "mode");
+    save_checkpoint(path, mode);
+  }
+  if (name == "clear_boundaries") {
+    m_lb_fluid->clear_boundaries();
+    m_lb_fluid->ghost_communication();
+    on_lb_boundary_conditions_change();
+  }
+  if (name == "add_boundary_from_shape") {
+    m_lb_fluid->update_boundary_from_shape(
+        get_value<std::vector<int>>(params, "raster"),
+        get_value<std::vector<double>>(params, "velocity"));
+  }
+  if (name == "get_lattice_speed") {
+    return 1. / m_conv_speed;
+  }
+
+  return {};
+}
 
 void FluidWalberla::load_checkpoint(std::string const &filename, int mode) {
   auto &lb_obj = *m_lb_fluid;

@@ -22,7 +22,8 @@
 
 #ifdef WALBERLA
 
-#include "EKSpecies.hpp"
+#include "FluidWalberla.hpp"
+
 #include "LatticeIndices.hpp"
 
 #include "core/errorhandling.hpp"
@@ -30,9 +31,10 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
-#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/math/int_pow.hpp>
 
 #include <cassert>
 #include <memory>
@@ -41,35 +43,43 @@
 
 namespace ScriptInterface::walberla {
 
-class EKSpeciesNode : public AutoParameters<EKSpeciesNode, LatticeIndices> {
-  std::shared_ptr<::EKinWalberlaBase> m_ek_species;
+class FluidNode : public AutoParameters<FluidNode, LatticeIndices> {
+  std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
   double m_conv_dens;
-  double m_conv_flux;
+  double m_conv_press;
+  double m_conv_force;
+  double m_conv_velocity;
 
 public:
-  EKSpeciesNode() {
+  FluidNode() {
     add_parameters(
         {{"_index", AutoParameter::read_only, [this]() { return m_index; }}});
   }
 
   void do_construct(VariantMap const &params) override {
     try {
-      auto const ek_sip =
-          get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
-      m_ek_species = ek_sip->get_ekinstance();
-      assert(m_ek_species);
-      m_conv_dens = ek_sip->get_conversion_factor_density();
-      m_conv_flux = ek_sip->get_conversion_factor_flux();
+      auto const lb_sip =
+          get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
+      m_lb_fluid = lb_sip->lb_fluid().lock();
+      assert(m_lb_fluid);
+      auto const &lb_params = lb_sip->lb_params().lock();
+      assert(lb_params);
+      auto const tau = lb_params->get_tau();
+      auto const agrid = lb_params->get_agrid();
+      m_conv_dens = Utils::int_pow<3>(agrid);
+      m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
+      m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
+      m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
     } catch (std::exception const &e) {
       if (context()->is_head_node()) {
-        runtimeErrorMsg() << "EKSpeciesNode failed: " << e.what();
+        runtimeErrorMsg() << "FluidNode failed: " << e.what();
       }
-      m_ek_species.reset();
+      m_lb_fluid.reset();
       return;
     }
-    m_grid_size = m_ek_species->get_lattice().get_grid_dimensions();
+    m_grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
     m_index = get_mapped_index(get_value<Utils::Vector3i>(params, "index"),
                                m_grid_size);
   }

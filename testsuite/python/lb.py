@@ -364,12 +364,6 @@ class LBTest:
         with self.assertRaisesRegex(RuntimeError, "Parameter 'index' is read-only"):
             node.index = [2, 4, 6]
         np.testing.assert_array_equal(node.index, [1, 2, 3])
-        retval = node.call_method("override_index", index=[2, 4, 6])
-        self.assertEqual(retval, 0)
-        np.testing.assert_array_equal(node.index, [2, 4, 6])
-        retval = node.call_method("override_index", index=[0, 0, shape[2]])
-        self.assertEqual(retval, 1)
-        np.testing.assert_array_equal(node.index, [2, 4, 6])
         np.testing.assert_array_equal(
             lbf[-1, -1, -1].index, np.array(shape) - 1)
 

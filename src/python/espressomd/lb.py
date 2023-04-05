@@ -637,7 +637,7 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
 
 @script_interface_register
 class LBFluidNodeWalberla(ScriptInterfaceHelper):
-    _so_name = "walberla::FluidNodeWalberla"
+    _so_name = "walberla::FluidNode"
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):
@@ -844,7 +844,7 @@ class LatticeSliceWalberla:
 
 @script_interface_register
 class LBFluidSliceWalberla(ScriptInterfaceHelper):
-    _so_name = "walberla::LBSlice"
+    _so_name = "walberla::FluidSlice"
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):

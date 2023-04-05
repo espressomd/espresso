@@ -21,9 +21,9 @@
 
 #ifdef WALBERLA
 
-#include "FluidNodeWalberla.hpp"
+#include "FluidNode.hpp"
+#include "FluidSlice.hpp"
 #include "FluidWalberla.hpp"
-#include "LBSlice.hpp"
 
 #include "EKContainer.hpp"
 #include "EKFFT.hpp"
@@ -55,8 +55,8 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
 
   om->register_new<FluidWalberla>("walberla::FluidWalberla");
-  om->register_new<FluidNodeWalberla>("walberla::FluidNodeWalberla");
-  om->register_new<LBSlice>("walberla::LBSlice");
+  om->register_new<FluidNode>("walberla::FluidNode");
+  om->register_new<FluidSlice>("walberla::FluidSlice");
   om->register_new<VTKHandle>("walberla::VTKHandle");
 
   om->register_new<EKContainer>("walberla::EKContainer");

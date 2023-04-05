@@ -16,25 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
-#define SCRIPT_INTERFACE_WALBERLA_FLUIDWALBERLA_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef WALBERLA
 
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
-
 #include "LatticeWalberla.hpp"
 
-#include "core/event.hpp"
-#include "core/grid.hpp"
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
-#include "core/integrate.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
@@ -42,6 +38,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace ScriptInterface::walberla {
 
@@ -139,56 +136,7 @@ public:
   }
 
   Variant do_call_method(std::string const &name,
-                         VariantMap const &params) override {
-    if (name == "activate") {
-      auto const fail = ::activate_lb_walberla(m_lb_fluid, m_lb_params);
-      if (not fail) {
-        m_is_active = true;
-      }
-    }
-    if (name == "deactivate") {
-      ::deactivate_lb_walberla();
-      m_is_active = false;
-    }
-    if (name == "add_force_at_pos") {
-      auto const pos = get_value<Utils::Vector3d>(params, "pos");
-      auto const f = get_value<Utils::Vector3d>(params, "force");
-      auto const folded_pos = folded_position(pos, box_geo);
-      m_lb_fluid->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
-    }
-    if (name == "get_interpolated_velocity") {
-      auto const pos = get_value<Utils::Vector3d>(params, "pos");
-      return get_interpolated_velocity(pos);
-    }
-    if (name == "get_pressure_tensor") {
-      return get_average_pressure_tensor();
-    }
-    if (name == "load_checkpoint") {
-      auto const path = get_value<std::string>(params, "path");
-      auto const mode = get_value<int>(params, "mode");
-      load_checkpoint(path, mode);
-    }
-    if (name == "save_checkpoint") {
-      auto const path = get_value<std::string>(params, "path");
-      auto const mode = get_value<int>(params, "mode");
-      save_checkpoint(path, mode);
-    }
-    if (name == "clear_boundaries") {
-      m_lb_fluid->clear_boundaries();
-      m_lb_fluid->ghost_communication();
-      on_lb_boundary_conditions_change();
-    }
-    if (name == "add_boundary_from_shape") {
-      m_lb_fluid->update_boundary_from_shape(
-          get_value<std::vector<int>>(params, "raster"),
-          get_value<std::vector<double>>(params, "velocity"));
-    }
-    if (name == "get_lattice_speed") {
-      return 1. / m_conv_speed;
-    }
-
-    return {};
-  }
+                         VariantMap const &params) override;
 
   /** Non-owning pointer to the LB fluid. */
   std::weak_ptr<::LBWalberlaBase> lb_fluid() { return m_lb_fluid; }
@@ -206,4 +154,3 @@ private:
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
-#endif
