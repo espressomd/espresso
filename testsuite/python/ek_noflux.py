@@ -67,7 +67,7 @@ class EKNoFlux(ut.TestCase):
         self.system.ekcontainer.tau = 1.0
         self.system.ekcontainer.solver = eksolver
 
-        center = np.asarray(self.system.box_l / 2, dtype=np.int)
+        center = np.asarray(self.system.box_l / 2, dtype=int)
 
         ekspecies[center[0], center[1], center[2]].density = self.DENSITY
 
@@ -78,7 +78,7 @@ class EKNoFlux(ut.TestCase):
         ekspecies.add_boundary_from_shape(
             sphere, [0, 0, 0], espressomd.EKSpecies.FluxBoundary)
 
-        positions = np.empty((*self.system.box_l.astype(np.int), 3))
+        positions = np.empty((*self.system.box_l.astype(int), 3))
         positions[..., 2], positions[..., 1], positions[..., 0] = np.meshgrid(
             *map(lambda x: np.arange(0, x) - x / 2, self.system.box_l))
         positions += 0.5
