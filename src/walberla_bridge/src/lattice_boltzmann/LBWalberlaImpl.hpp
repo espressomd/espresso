@@ -591,10 +591,8 @@ public:
         bc->block->template getData<VectorField>(m_velocity_field_id);
     auto force_field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
-    auto const rho = lbm::accessor::Density::get(pdf_field, bc->cell);
     auto const vel = to_vector3<FloatType>(v);
-    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, vel, rho,
-                                           bc->cell);
+    lbm::accessor::Velocity::set(pdf_field, force_field, vel, bc->cell);
     lbm::accessor::Vector::set(vel_field, vel, bc->cell);
 
     return true;
@@ -658,16 +656,14 @@ public:
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const cell = Cell{x, y, z};
           Vector3<FloatType> vec;
           for (uint_t f = 0u; f < 3u; ++f) {
             vec[f] = FloatType_c(*it);
             ++it;
           }
-          auto const rho =
-              lbm::accessor::Density::get(pdf_field, Cell{x, y, z});
-          lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, vec,
-                                                 rho, Cell{x, y, z});
-          lbm::accessor::Vector::set(vel_field, vec, Cell{x, y, z});
+          lbm::accessor::Velocity::set(pdf_field, force_field, vec, cell);
+          lbm::accessor::Vector::set(vel_field, vec, cell);
         }
       }
     }
@@ -947,12 +943,7 @@ public:
       return false;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
-    auto force_field =
-        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
-    auto const velocity = std::get<1>(lbm::accessor::DensityAndVelocity::get(
-        pdf_field, force_field, bc->cell));
-    lbm::accessor::DensityAndVelocity::set(pdf_field, force_field, velocity,
-                                           FloatType_c(density), bc->cell);
+    lbm::accessor::Density::set(pdf_field, FloatType_c(density), bc->cell);
 
     return true;
   }
@@ -994,20 +985,14 @@ public:
     }
     auto &block = *(lattice.get_blocks()->begin());
     auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-    auto force_field =
-        block.template getData<VectorField>(m_last_applied_force_field_id);
     auto it = density.begin();
     auto const lower_cell = lower_bc->cell;
     auto const upper_cell = upper_bc->cell;
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
-          auto const velocity =
-              std::get<1>(lbm::accessor::DensityAndVelocity::get(
-                  pdf_field, force_field, Cell{x, y, z}));
-          lbm::accessor::DensityAndVelocity::set(pdf_field, force_field,
-                                                 velocity, FloatType_c(*it),
-                                                 Cell{x, y, z});
+          lbm::accessor::Density::set(pdf_field, FloatType_c(*it),
+                                      Cell{x, y, z});
           ++it;
         }
       }

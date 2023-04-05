@@ -403,7 +403,93 @@ inline double get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
                      vel1Term + vel2Term;
   return rho;
 }
+
+inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
+                double const rho_in, Cell const &cell) {
+  const double &xyz0 = pdf_field->get(cell, 0);
+  const double f_0 = pdf_field->getF(&xyz0, 0);
+  const double f_1 = pdf_field->getF(&xyz0, 1);
+  const double f_2 = pdf_field->getF(&xyz0, 2);
+  const double f_3 = pdf_field->getF(&xyz0, 3);
+  const double f_4 = pdf_field->getF(&xyz0, 4);
+  const double f_5 = pdf_field->getF(&xyz0, 5);
+  const double f_6 = pdf_field->getF(&xyz0, 6);
+  const double f_7 = pdf_field->getF(&xyz0, 7);
+  const double f_8 = pdf_field->getF(&xyz0, 8);
+  const double f_9 = pdf_field->getF(&xyz0, 9);
+  const double f_10 = pdf_field->getF(&xyz0, 10);
+  const double f_11 = pdf_field->getF(&xyz0, 11);
+  const double f_12 = pdf_field->getF(&xyz0, 12);
+  const double f_13 = pdf_field->getF(&xyz0, 13);
+  const double f_14 = pdf_field->getF(&xyz0, 14);
+  const double f_15 = pdf_field->getF(&xyz0, 15);
+  const double f_16 = pdf_field->getF(&xyz0, 16);
+  const double f_17 = pdf_field->getF(&xyz0, 17);
+  const double f_18 = pdf_field->getF(&xyz0, 18);
+  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
+  const double momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
+  const double vel1Term = f_1 + f_11 + f_15 + f_7;
+  const double momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
+  const double vel2Term = f_12 + f_13 + f_5;
+  const double momdensity_2 =
+      f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+  const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
+                     vel1Term + vel2Term;
+
+  const double conversion = double(1) / rho;
+  Vector3<double> velocity;
+  velocity[0] = momdensity_0 * conversion;
+  velocity[1] = momdensity_1 * conversion;
+  velocity[2] = momdensity_2 * conversion;
+
+  Equilibrium::set(pdf_field, velocity, rho_in, cell);
+}
 } // namespace Density
+
+namespace Velocity {
+inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
+                GhostLayerField<double, uint_t{3u}> const *force_field,
+                Vector3<double> const &u, Cell const &cell) {
+  const double &xyz0 = pdf_field->get(cell, 0);
+  const double f_0 = pdf_field->getF(&xyz0, 0);
+  const double f_1 = pdf_field->getF(&xyz0, 1);
+  const double f_2 = pdf_field->getF(&xyz0, 2);
+  const double f_3 = pdf_field->getF(&xyz0, 3);
+  const double f_4 = pdf_field->getF(&xyz0, 4);
+  const double f_5 = pdf_field->getF(&xyz0, 5);
+  const double f_6 = pdf_field->getF(&xyz0, 6);
+  const double f_7 = pdf_field->getF(&xyz0, 7);
+  const double f_8 = pdf_field->getF(&xyz0, 8);
+  const double f_9 = pdf_field->getF(&xyz0, 9);
+  const double f_10 = pdf_field->getF(&xyz0, 10);
+  const double f_11 = pdf_field->getF(&xyz0, 11);
+  const double f_12 = pdf_field->getF(&xyz0, 12);
+  const double f_13 = pdf_field->getF(&xyz0, 13);
+  const double f_14 = pdf_field->getF(&xyz0, 14);
+  const double f_15 = pdf_field->getF(&xyz0, 15);
+  const double f_16 = pdf_field->getF(&xyz0, 16);
+  const double f_17 = pdf_field->getF(&xyz0, 17);
+  const double f_18 = pdf_field->getF(&xyz0, 18);
+  const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
+  const double vel1Term = f_1 + f_11 + f_15 + f_7;
+  const double vel2Term = f_12 + f_13 + f_5;
+  const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
+                     vel1Term + vel2Term;
+
+  const auto x = cell.x();
+  const auto y = cell.y();
+  const auto z = cell.z();
+  const double delta_rho = rho - 1;
+  const double u_0 =
+      -force_field->get(x, y, z, 0) * 0.50000000000000000 / rho + u[0];
+  const double u_1 =
+      -force_field->get(x, y, z, 1) * 0.50000000000000000 / rho + u[1];
+  const double u_2 =
+      -force_field->get(x, y, z, 2) * 0.50000000000000000 / rho + u[2];
+
+  Equilibrium::set(pdf_field, Vector3<double>(u_0, u_1, u_2), rho, cell);
+}
+} // namespace Velocity
 
 namespace DensityAndVelocity {
 inline std::tuple<double, Vector3<double>>
@@ -459,12 +545,10 @@ get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
 
 inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
                 GhostLayerField<double, uint_t{3u}> const *force_field,
-                Vector3<double> const &u, double const rho_in,
-                Cell const &cell) {
+                Vector3<double> const &u, double const rho, Cell const &cell) {
   const auto x = cell.x();
   const auto y = cell.y();
   const auto z = cell.z();
-  const double rho = rho_in;
   const double delta_rho = rho - 1;
   const double u_0 =
       -force_field->get(x, y, z, 0) * 0.50000000000000000 / rho + u[0];

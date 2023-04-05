@@ -191,7 +191,51 @@ namespace Density
         {{density_getters | indent(8)}}
         return rho;
     }
+
+    inline void
+    set( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
+         {{dtype}} const rho_in,
+         Cell const & cell )
+    {
+        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        {% for i in range(Q) -%}
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+        {% endfor -%}
+
+        {{unshifted_momentum_density_getter | indent(8)}}
+
+        const {{dtype}} conversion = {{dtype}}(1) / rho;
+        Vector{{D}}< {{dtype}} > velocity;
+        {% for i in range(D) -%}
+            velocity[{{i}}] = momdensity_{{i}} * conversion;
+        {% endfor %}
+
+        Equilibrium::set(pdf_field, velocity, rho_in {%if not compressible %} + {{dtype}}(1) {%endif%}, cell);
+    }
 } // namespace Density
+
+namespace Velocity
+{
+    inline void
+    set( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
+         GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > const * force_field,
+         Vector{{D}}< {{dtype}} > const & u,
+         Cell const & cell )
+    {
+        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        {% for i in range(Q) -%}
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+        {% endfor -%}
+        {{density_getters | indent(8)}}
+
+        {% for c in "xyz" -%}
+            const auto {{c}} = cell.{{c}}();
+        {% endfor -%}
+        {{density_velocity_setter_macroscopic_values | substitute_force_getter_cpp | indent(8)}}
+
+        Equilibrium::set(pdf_field, Vector{{D}}<{{dtype}}>({% for i in range(D) %}u_{{i}}{% if not loop.last %}, {% endif %}{% endfor %}), rho {%if not compressible %} + {{dtype}}(1) {%endif%}, cell);
+    }
+} // namespace Velocity
 
 namespace DensityAndVelocity
 {
@@ -222,7 +266,7 @@ namespace DensityAndVelocity
     set( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
          GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > const * force_field,
          Vector{{D}}< {{dtype}} > const & u,
-         {{dtype}} const rho_in,
+         {{dtype}} const rho,
          Cell const & cell )
     {
         {% for c in "xyz" -%}

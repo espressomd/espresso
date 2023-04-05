@@ -155,11 +155,19 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
         equilibrium, config, equilibrium_subs_dict)
 
     eq_input_from_input_eqs = cqc.equilibrium_input_equations_from_init_values(
-        sp.Symbol("rho_in"), vel_arr_symbols)
+        rho_sym, vel_arr_symbols)
+    eq = eq_input_from_input_eqs.main_assignments.pop(0)
+    assert eq.lhs == rho_sym and eq.rhs == rho_sym
     density_velocity_setter_macroscopic_values = equations_to_code(
-        eq_input_from_input_eqs, variables_without_prefix=["rho_in", "u"], **kwargs)
+        eq_input_from_input_eqs, variables_without_prefix=["rho", "u"], **kwargs)
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
+    unshifted_momentum_density_getter = cqc.output_equations_from_pdfs(
+        pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
+    for i, eq in reversed(
+            list(enumerate(unshifted_momentum_density_getter.main_assignments))):
+        if eq.lhs.name.startswith("md_"):
+            del unshifted_momentum_density_getter.main_assignments[i]
     second_momentum_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"moment2": second_momentum_symbols})
 
@@ -182,6 +190,7 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
         "second_momentum_getter": equations_to_code(
             second_momentum_getter, variables_without_prefix=pdfs_sym, **kwargs),
         "density_velocity_setter_macroscopic_values": density_velocity_setter_macroscopic_values,
+        "unshifted_momentum_density_getter": equations_to_code(unshifted_momentum_density_getter, variables_without_prefix=pdfs_sym, **kwargs),
 
         "namespace": "lbm",
     }
