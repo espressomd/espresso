@@ -78,7 +78,7 @@ namespace Population
             pdf_field->getF( &xyz0, {{i}}) = pop[{{i}}];
         {% endfor -%}
     }
-} // Population
+} // namespace Population
 
 
 namespace Vector
@@ -140,7 +140,7 @@ namespace Vector
              {% endfor -%}
          });
      }
-} // Vector
+} // namespace Vector
 
 
 namespace EquilibriumDistribution
@@ -155,7 +155,7 @@ namespace EquilibriumDistribution
         {% endif %}
         {{equilibrium_from_direction}}
     }
-} // EquilibriumDistribution
+} // namespace EquilibriumDistribution
 
 
 namespace Equilibrium
@@ -175,7 +175,7 @@ namespace Equilibrium
             pdf_field->getF( &xyz0, {{loop.index0 }}) = {{eqTerm}};
         {% endfor -%}
     }
-} // Equilibrium
+} // namespace Equilibrium
 
 
 namespace Density
@@ -191,8 +191,7 @@ namespace Density
         {{density_getters | indent(8)}}
         return rho;
     }
-} // Density
-
+} // namespace Density
 
 namespace DensityAndVelocity
 {
@@ -233,7 +232,7 @@ namespace DensityAndVelocity
 
         Equilibrium::set(pdf_field, Vector{{D}}<{{dtype}}>({% for i in range(D) %}u_{{i}}{% if not loop.last %}, {% endif %}{% endfor %}), rho {%if not compressible %} + {{dtype}}(1) {%endif%}, cell);
     }
-} // DensityAndVelocity
+} // namespace DensityAndVelocity
 
 
 namespace DensityAndMomentumDensity
@@ -259,7 +258,7 @@ namespace DensityAndMomentumDensity
         {% endfor %}
         return {rho, momentumDensity};
     }
-} // DensityAndMomentumDensity
+} // namespace DensityAndMomentumDensity
 
 namespace MomentumDensity
 {
@@ -282,7 +281,7 @@ namespace MomentumDensity
         });
         return momentumDensity;
     }
-} // MomentumDensity
+} // namespace MomentumDensity
 
 
 namespace PressureTensor
@@ -306,7 +305,7 @@ namespace PressureTensor
         {% endfor %}
         return pressureTensor;
    }
-} // PressureTensor
+} // namespace PressureTensor
 
 
 } // namespace accessor
