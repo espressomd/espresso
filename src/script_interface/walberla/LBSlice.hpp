@@ -22,6 +22,7 @@
 
 #ifdef WALBERLA
 
+#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include "FluidNodeWalberla.hpp"
@@ -164,13 +165,17 @@ public:
   }
 
 private:
+  auto get_sentinel_index(::LatticeWalberla const &lattice) const {
+    return -(static_cast<int>(lattice.get_ghost_layers()) + 1);
+  }
+
   auto get_slices_bounding_boxes() const {
     auto const &lattice = m_lb_fluid->get_lattice();
     auto const &slice_lower_corner = m_slice_lower_corner;
     auto const &slice_upper_corner = m_slice_upper_corner;
     assert(slice_upper_corner <= lattice.get_grid_dimensions());
     assert(slice_lower_corner >= Utils::Vector3i::broadcast(0));
-    auto const sentinel = -(static_cast<int>(lattice.get_ghost_layers()) + 1);
+    auto const sentinel = get_sentinel_index(lattice);
     auto [local_lower_corner, local_upper_corner] =
         lattice.get_local_grid_range();
     for (auto const i : {0, 1, 2}) {
@@ -288,6 +293,7 @@ private:
                     std::vector<T> (::LBWalberlaBase::*getter)(
                         Utils::Vector3i const &, Utils::Vector3i const &) const,
                     double units_conversion = 1.) const {
+    using VelocityBounceBackType = boost::optional<Utils::Vector3d>;
     auto const &comm = context()->get_comm();
     auto const [slice_lower_corner, slice_upper_corner, local_lower_corner,
                 local_upper_corner] = get_slices_bounding_boxes();
@@ -330,8 +336,7 @@ private:
       }
       if constexpr (std::is_same_v<T, int> or std::is_same_v<T, double>) {
         return {std::vector<Variant>{{Variant{out}, Variant{shape}}}};
-      } else if constexpr (std::is_same_v<T,
-                                          boost::optional<Utils::Vector3d>>) {
+      } else if constexpr (std::is_same_v<T, VelocityBounceBackType>) {
         std::vector<Variant> vec;
         vec.reserve(out.size());
         for (auto const &opt : out) {
@@ -356,6 +361,7 @@ private:
                                                    Utils::Vector3i const &,
                                                    std::vector<T> const &),
                   double units_conversion = 1.) {
+    using VelocityBounceBackType = boost::optional<Utils::Vector3d>;
     auto const &comm = context()->get_comm();
     auto const [slice_lower_corner, slice_upper_corner, local_lower_corner,
                 local_upper_corner] = get_slices_bounding_boxes();
@@ -363,11 +369,21 @@ private:
         gather_slices_topology(local_lower_corner, local_upper_corner);
     auto const data_size = std::accumulate(data_dims.cbegin(), data_dims.cend(),
                                            1, std::multiplies<>());
+    auto const sentinel = get_sentinel_index(m_lb_fluid->get_lattice());
     std::vector<std::vector<T>> nodes_values(comm.size());
     if (comm.rank() == 0) {
       auto const &variant = params.at("values");
       std::vector<T> values;
-      if constexpr (std::is_same_v<T, double>) {
+      if constexpr (std::is_same_v<T, VelocityBounceBackType>) {
+        auto const vector_variants = get_value<std::vector<Variant>>(variant);
+        for (auto const &value : vector_variants) {
+          if (is_none(value)) {
+            values.emplace_back(boost::none);
+          } else {
+            values.emplace_back(get_value<Utils::Vector3d>(value));
+          }
+        }
+      } else if constexpr (std::is_same_v<T, double>) {
         if (is_type<std::vector<int>>(variant)) {
           auto const values_int = get_value<std::vector<int>>(variant);
           values.reserve(values_int.size());
@@ -376,16 +392,6 @@ private:
           }
         } else {
           values = get_value<std::vector<T>>(variant);
-        }
-      } else if constexpr (std::is_same_v<T,
-                                          boost::optional<Utils::Vector3d>>) {
-        auto const vector_variants = get_value<std::vector<Variant>>(variant);
-        for (auto const &value : vector_variants) {
-          if (is_none(value)) {
-            values.emplace_back(boost::none);
-          } else {
-            values.emplace_back(get_value<Utils::Vector3d>(value));
-          }
         }
       } else {
         values = get_value<std::vector<T>>(variant);
@@ -398,12 +404,13 @@ private:
       detail::unflatten_grid(array, values);
       // partition the 3D array into individual flat arrays for each MPI rank
       for (std::size_t rank = 0; rank < nodes_lower_corners.size(); ++rank) {
-        auto const range_lower_corner =
-            nodes_lower_corners[rank] - slice_lower_corner;
-        auto const range_upper_corner =
-            nodes_upper_corners[rank] - slice_lower_corner;
+        auto const range_lower = nodes_lower_corners[rank] - slice_lower_corner;
+        auto const range_upper = nodes_upper_corners[rank] - slice_lower_corner;
+        if (not(range_lower > Utils::Vector3i::broadcast(sentinel))) {
+          continue;
+        }
         auto const local_range = [&](int j) {
-          return index_range(range_lower_corner[j], range_upper_corner[j]);
+          return index_range(range_lower[j], range_upper[j]);
         };
         typename array_type::template array_view<4>::type view =
             array[boost::indices[local_range(0)][local_range(1)][local_range(2)]
