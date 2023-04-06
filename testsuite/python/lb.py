@@ -27,7 +27,6 @@ import espressomd.lb
 import espressomd.utils
 import espressomd.observables
 import espressomd.electrostatics
-import sys
 import tests_common
 
 
@@ -199,6 +198,8 @@ class LBTest:
             lb_slice.is_boundary = True
         with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid slice objects'):
             lb_slice.__reduce__()
+        with self.assertRaisesRegex(RuntimeError, "Unknown fluid property 'unknown'"):
+            lb_slice.call_method("get_value_shape", name="unknown")
         # check property types
         array_locked = espressomd.utils.array_locked
         self.assertIsInstance(lb_slice.pressure_tensor, array_locked)
@@ -372,14 +373,10 @@ class LBTest:
         LB lattice initialization must raise an exception when either box_l or
         local_box_l aren't integer multiples of agrid.
         """
-        print("\nTesting LB runtime error messages:", file=sys.stderr)
-        sys.stderr.flush()
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(RuntimeError, "Box length not commensurate with agrid"):
             params = self.params.copy()
             params['agrid'] += 1e-6
             self.lb_class(**params, **self.lb_params)
-        print("End of LB runtime error messages", file=sys.stderr)
-        sys.stderr.flush()
 
     def test_agrid_rounding(self):
         """Tests agrid*n ~= box_l for a case where rounding down is needed"""

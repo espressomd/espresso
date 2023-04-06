@@ -25,8 +25,6 @@
 #include "EKSpecies.hpp"
 #include "LatticeIndices.hpp"
 
-#include "core/errorhandling.hpp"
-
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
@@ -55,20 +53,12 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    try {
-      auto const ek_sip =
-          get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
-      m_ek_species = ek_sip->get_ekinstance();
-      assert(m_ek_species);
-      m_conv_dens = ek_sip->get_conversion_factor_density();
-      m_conv_flux = ek_sip->get_conversion_factor_flux();
-    } catch (std::exception const &e) {
-      if (context()->is_head_node()) {
-        runtimeErrorMsg() << "EKSpeciesNode failed: " << e.what();
-      }
-      m_ek_species.reset();
-      return;
-    }
+    auto const ek_sip =
+        get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
+    m_ek_species = ek_sip->get_ekinstance();
+    assert(m_ek_species);
+    m_conv_dens = ek_sip->get_conversion_factor_density();
+    m_conv_flux = ek_sip->get_conversion_factor_flux();
     m_grid_size = m_ek_species->get_lattice().get_grid_dimensions();
     m_index = get_mapped_index(get_value<Utils::Vector3i>(params, "index"),
                                m_grid_size);

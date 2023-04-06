@@ -75,14 +75,10 @@ public:
         {"seed", AutoParameter::read_only, [this]() { return m_seed; }},
         {"rng_state",
          [this](const Variant &v) {
-           try {
+           context()->parallel_try_catch([&]() {
              m_lb_fluid->set_rng_state(
                  static_cast<uint64_t>(get_value<int>(v)));
-           } catch (const std::exception &) {
-             if (context()->is_head_node()) {
-               throw;
-             }
-           }
+           });
          },
          [this]() { return static_cast<int>(m_lb_fluid->get_rng_state()); }},
         {"density", AutoParameter::read_only,

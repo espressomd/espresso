@@ -16,9 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_WALBERLA_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_WALBERLA_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -68,13 +66,11 @@ public:
     m_agrid = agrid;
     m_n_ghost_layers = n_ghost_layers;
 
-    try {
+    context()->parallel_try_catch([&]() {
       auto const grid_dimensions = ::calc_grid_dimensions(box_size, agrid);
       m_lattice = std::make_shared<::LatticeWalberla>(
           grid_dimensions, node_grid, static_cast<unsigned>(n_ghost_layers));
-    } catch (const std::exception &e) {
-      runtimeErrorMsg() << "LatticeWalberla failed: " << e.what();
-    }
+    });
   }
 
   std::shared_ptr<::LatticeWalberla> lattice() { return m_lattice; }
@@ -84,4 +80,3 @@ public:
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
-#endif

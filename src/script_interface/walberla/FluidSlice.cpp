@@ -117,7 +117,9 @@ Variant FluidSlice::do_call_method(std::string const &name,
   if (name == "get_value_shape") {
     auto const name = get_value<std::string>(params, "name");
     if (m_shape_val.count(name) == 0) {
-      throw std::domain_error("Unknown fluid property '" + name + "'");
+      context()->parallel_try_catch([&]() {
+        throw std::runtime_error("Unknown fluid property '" + name + "'");
+      });
     }
     return m_shape_val.at(name);
   }

@@ -26,8 +26,6 @@
 
 #include "LatticeIndices.hpp"
 
-#include "core/errorhandling.hpp"
-
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
@@ -63,26 +61,17 @@ public:
   FluidSlice() { add_parameters({}); }
 
   void do_construct(VariantMap const &params) override {
-    try {
-      m_lb_sip =
-          get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
-      m_lb_fluid = m_lb_sip->lb_fluid().lock();
-      assert(m_lb_fluid);
-      auto const &lb_params = m_lb_sip->lb_params().lock();
-      assert(lb_params);
-      auto const tau = lb_params->get_tau();
-      auto const agrid = lb_params->get_agrid();
-      m_conv_dens = Utils::int_pow<3>(agrid);
-      m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
-      m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
-      m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
-    } catch (std::exception const &e) {
-      if (context()->is_head_node()) {
-        runtimeErrorMsg() << "FluidSlice failed: " << e.what();
-      }
-      m_lb_fluid.reset();
-      return;
-    }
+    m_lb_sip = get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
+    m_lb_fluid = m_lb_sip->lb_fluid().lock();
+    assert(m_lb_fluid);
+    auto const &lb_params = m_lb_sip->lb_params().lock();
+    assert(lb_params);
+    auto const tau = lb_params->get_tau();
+    auto const agrid = lb_params->get_agrid();
+    m_conv_dens = Utils::int_pow<3>(agrid);
+    m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
+    m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
+    m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
     m_shape = get_value<std::vector<int>>(params, "shape");
     m_slice_lower_corner =
         get_value<Utils::Vector3i>(params, "slice_lower_corner");

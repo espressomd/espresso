@@ -26,8 +26,6 @@
 
 #include "LatticeIndices.hpp"
 
-#include "core/errorhandling.hpp"
-
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
@@ -59,26 +57,18 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    try {
-      auto const lb_sip =
-          get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
-      m_lb_fluid = lb_sip->lb_fluid().lock();
-      assert(m_lb_fluid);
-      auto const &lb_params = lb_sip->lb_params().lock();
-      assert(lb_params);
-      auto const tau = lb_params->get_tau();
-      auto const agrid = lb_params->get_agrid();
-      m_conv_dens = Utils::int_pow<3>(agrid);
-      m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
-      m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
-      m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
-    } catch (std::exception const &e) {
-      if (context()->is_head_node()) {
-        runtimeErrorMsg() << "FluidNode failed: " << e.what();
-      }
-      m_lb_fluid.reset();
-      return;
-    }
+    auto const lb_sip =
+        get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
+    m_lb_fluid = lb_sip->lb_fluid().lock();
+    assert(m_lb_fluid);
+    auto const &lb_params = lb_sip->lb_params().lock();
+    assert(lb_params);
+    auto const tau = lb_params->get_tau();
+    auto const agrid = lb_params->get_agrid();
+    m_conv_dens = Utils::int_pow<3>(agrid);
+    m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
+    m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
+    m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
     m_grid_size = m_lb_fluid->get_lattice().get_grid_dimensions();
     m_index = get_mapped_index(get_value<Utils::Vector3i>(params, "index"),
                                m_grid_size);
