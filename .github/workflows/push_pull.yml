@@ -1,4 +1,4 @@
-name: run tests on mac
+name: run tests
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  regular_check:
+  macos:
     runs-on: macos-12
     if: github.event_name != 'schedule'
     steps:
@@ -26,7 +26,7 @@ jobs:
           asan: false
           ubsan: false
 
-  sanitizer_check:
+  macos_sanitizers:
     permissions:
       contents: read # to fetch code (actions/checkout)
       issues: write # to create an issue
@@ -55,3 +55,63 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: Scheduled CI job has failed
           body: ${{ env.job_link }}
+
+  debian:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jngrad/espresso-docker/debian:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
+      credentials:
+         username: ${{ github.actor }}
+         password: ${{ secrets.github_token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup Git environment
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build and check
+        uses: ./.github/actions/build_and_check
+        with:
+          asan: false
+          ubsan: false
+        env:
+          myconfig: 'maxset'
+          with_cuda: 'false'
+          with_hdf5: 'true'
+          with_fftw: 'true'
+          with_gsl: 'false'
+          with_scafacos: 'false'
+          with_stokesian_dynamics: 'false'
+          make_check_unit_tests: 'true'
+          make_check_python: 'false'
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+
+  ubuntu-without-dependencies:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/jngrad/espresso-docker/ubuntu-wo-dependencies:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
+      credentials:
+         username: ${{ github.actor }}
+         password: ${{ secrets.github_token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup Git environment
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build and check
+        uses: ./.github/actions/build_and_check
+        with:
+          asan: false
+          ubsan: false
+        env:
+          myconfig: 'maxset'
+          with_cuda: 'false'
+          with_hdf5: 'false'
+          with_fftw: 'false'
+          with_gsl: 'false'
+          with_scafacos: 'false'
+          with_stokesian_dynamics: 'false'
+          make_check_unit_tests: 'false'
+          make_check_python: 'false'
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
