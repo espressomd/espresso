@@ -34,6 +34,7 @@ protected:
   /** VTK writers that are executed manually */
   std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_manual;
 
+  /** Register VTK writers. Use the multi-piece uniform grid format. */
   virtual void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                           int flag_observables) = 0;
 

@@ -286,7 +286,7 @@ python_test(FILE lb_walberla.py MAX_NUM_PROC 2)
 python_test(FILE lb_stats.py MAX_NUM_PROC 2 GPU_SLOTS 2 LABELS long)
 python_test(FILE lb_stats.py MAX_NUM_PROC 1 GPU_SLOTS 2 LABELS long SUFFIX
             1_core)
-python_test(FILE lb_vtk.py MAX_NUM_PROC 1 GPU_SLOTS 1) # TODO walberla
+python_test(FILE lb_vtk.py MAX_NUM_PROC 4)
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
 python_test(FILE dpd.py MAX_NUM_PROC 4)
 python_test(FILE dpd_stats.py MAX_NUM_PROC 4 LABELS long)

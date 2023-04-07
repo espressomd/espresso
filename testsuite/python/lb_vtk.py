@@ -56,20 +56,56 @@ class TestLBWrite:
         return vtk.util.numpy_support.vtk_to_numpy(
             cell.GetArray(name)).reshape(shape, order='F')
 
-    def parse_vtk(self, filepath, shape):
+    def get_piece_topology(self, piece, agrid, bb_lower, bb_upper):
+        bounds = np.around(np.array(piece.GetBounds()) / agrid).astype(int)
+        xmin, xmax, ymin, ymax, zmin, zmax = bounds
+        domain_shape = (xmax - xmin, ymax - ymin, zmax - zmin)
+        domain_slice = (
+            slice(xmin, xmax),
+            slice(ymin, ymax),
+            slice(zmin, zmax))
+        for i in range(3):
+            if domain_slice[i].start < bb_lower[i]:
+                bb_lower[i] = domain_slice[i].start
+            if domain_slice[i].stop > bb_upper[i]:
+                bb_upper[i] = domain_slice[i].stop
+        return domain_shape, domain_slice
+
+    def parse_vtk(self, filepath, shape, agrid):
+        bounding_box_lower = list(shape)
+        bounding_box_upper = [0, 0, 0]
+
         reader = vtk.vtkXMLUnstructuredGridReader()
         reader.SetFileName(str(filepath))
         reader.Update()
 
-        data = reader.GetOutput()
-        cell = data.GetCellData()
+        vtk_density = np.empty(shape, dtype=float)
+        vtk_velocity = np.empty(shape + (3,), dtype=float)
+        vtk_pressure = np.empty(shape + (3, 3), dtype=float)
+        n_ghost_layers = 1
+        n_pieces = reader.GetNumberOfPieces()
+        for piece_index in range(n_pieces):
+            reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
+            piece = reader.GetOutput()
+            cell = piece.GetCellData()
+            domain_shape, domain_slice = self.get_piece_topology(
+                piece, agrid, bounding_box_lower, bounding_box_upper)
+            vtk_density[domain_slice] = self.get_cell_array(
+                cell, 'DensityFromPDF', domain_shape)
+            vtk_velocity[domain_slice] = self.get_cell_array(
+                cell, 'VelocityFromVelocityField', domain_shape + (3,))
+            vtk_pressure[domain_slice] = self.get_cell_array(
+                cell, 'PressureTensorFromPDF', domain_shape + (3, 3))
 
-        vtk_density = self.get_cell_array(cell, 'DensityFromPDF', shape)
-        vtk_velocity = self.get_cell_array(
-            cell, 'VelocityFromVelocityField', shape + [3])
-        vtk_pressure = self.get_cell_array(
-            cell, 'PressureTensorFromPDF', shape + [3, 3])
-        return vtk_density, vtk_velocity, vtk_pressure
+        xmin, ymin, zmin = bounding_box_lower
+        xmax, ymax, zmax = bounding_box_upper
+        global_slice = (
+            slice(xmin, xmax),
+            slice(ymin, ymax),
+            slice(zmin, zmax))
+        return (vtk_density[global_slice],
+                vtk_velocity[global_slice],
+                vtk_pressure[global_slice])
 
     def test_vtk(self):
         '''
@@ -79,10 +115,11 @@ class TestLBWrite:
             espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
         self.lbf.add_boundary_from_shape(
             espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5))
-        shape = [8, 14, 16]
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))
+        agrid = self.lbf.agrid
+        shape = tuple(self.lbf.shape)
 
         with tempfile.TemporaryDirectory() as tmp_directory:
             path_vtk_root = pathlib.Path(tmp_directory)
@@ -122,7 +159,7 @@ class TestLBWrite:
 
             # check velocity profile is symmetric at all time steps
             for filepath in filepaths:
-                vtk_velocity = self.parse_vtk(filepath, shape)[1]
+                vtk_velocity = self.parse_vtk(filepath, shape, agrid)[1]
                 v_profile = np.mean(
                     np.linalg.norm(vtk_velocity, axis=-1),
                     axis=(1, 2))
@@ -131,23 +168,22 @@ class TestLBWrite:
 
             # check scalar pressure is symmetric at all time steps
             for filepath in filepaths:
-                vtk_pressure = self.parse_vtk(filepath, shape)[2]
-                # TODO WALBERLA: VTK seems to be transposed with 2+ MPI ranks
+                vtk_pressure = self.parse_vtk(filepath, shape, agrid)[2]
                 p_profile = np.mean(
-                    np.trace(vtk_pressure.T, axis1=-2, axis2=-1),
+                    np.trace(vtk_pressure, axis1=-2, axis2=-1),
                     axis=(1, 2))
                 np.testing.assert_allclose(
                     p_profile, p_profile[::-1], atol=1e-6)
 
             # read VTK output of final time step
-            last_frame_outputs = []
+            last_frame = []
             for filepath in (path_vtk_end, path_vtk_continuous[-1]):
-                last_frame_outputs.append(self.parse_vtk(filepath, shape))
+                last_frame.append(self.parse_vtk(filepath, shape, agrid))
 
             # check VTK output is identical in both continuous and manual mode
-            for i in range(len(last_frame_outputs[0])):
-                np.testing.assert_allclose(last_frame_outputs[0][i],
-                                           last_frame_outputs[1][i], atol=1e-10)
+            for i in range(len(last_frame[0])):
+                np.testing.assert_allclose(last_frame[0][i],
+                                           last_frame[1][i], atol=1e-10)
 
             # check VTK values match node values in the final time step
             tau = self.lbf.tau
@@ -156,8 +192,7 @@ class TestLBWrite:
             lb_pressure = np.copy(
                 self.lbf[2:-2, :, :].pressure_tensor) * tau**2
 
-            for vtk_density, vtk_velocity, vtk_pressure in last_frame_outputs:
-                # TODO WALBERLA: VTK seems to be transposed with 2+ MPI ranks
+            for vtk_density, vtk_velocity, vtk_pressure in last_frame:
                 np.testing.assert_allclose(
                     vtk_density, lb_density, rtol=1e-10, atol=0.)
                 np.testing.assert_allclose(

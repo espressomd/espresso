@@ -279,6 +279,17 @@ The VTK format is readable by visualization software such as ParaView [1]_
 or Mayavi2 [2]_. If you plan to use ParaView for visualization, note that also the particle
 positions can be exported using the VTK format (see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
 
+Important: these VTK files are written in multi-piece format, i.e. each MPI
+rank writes its local domain to a new piece in the VTK uniform grid to avoid
+a MPI reduction. Paraview can handle the topology reconstruction natively.
+However, when reading the multi-piece file with the Python vtk package, the
+topology must be manually reconstructed. In particular, calling the XML reader
+``GetOutput()`` method directly after the update step will erase all topology
+information. While this is not an issue for VTK files obtained from simulations
+that ran with 1 MPI rank, for parallel simulations this is an issue.
+When in doubt, please use the ``parse_vtk()`` method in
+:file:`testsuite/python/lb_vtk.py` as a guide.
+
 .. _Choosing between the GPU and CPU implementations:
 
 Choosing between the GPU and CPU implementations
