@@ -59,6 +59,10 @@ class LBBoundariesBase:
         np.testing.assert_allclose(np.copy(lbb2.velocity), ref_velocity2)
         np.testing.assert_allclose(vbb2vel(lbb1.boundary), ref_velocity1)
         np.testing.assert_allclose(vbb2vel(lbb2.boundary), ref_velocity2)
+        self.assertTrue(self.lbf[4, 0, 0].is_boundary)
+        self.assertFalse(self.lbf[5, 0, 0].is_boundary)
+        self.assertFalse(self.lbf[14, 0, 0].is_boundary)
+        self.assertTrue(self.lbf[15, 0, 0].is_boundary)
         self.lbf.clear_boundaries()
         np.testing.assert_equal(np.copy(self.lbf[:, :, :].is_boundary), False)
 
@@ -90,6 +94,7 @@ class LBBoundariesBase:
             self.lbf.add_boundary_from_shape(
                 shape=self.wall_shape1, velocity=[0., 0., 0., 0.],
                 boundary_type=espressomd.lb.VelocityBounceBack)
+        self.lbf.add_boundary_from_shape(self.wall_shape1, [0., 0., 0.])
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])

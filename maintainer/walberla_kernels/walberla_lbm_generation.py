@@ -68,6 +68,16 @@ def pow_to_mul(eq):
     return eq
 
 
+def make_velocity_getters(cqc, rho_sym, vel_arr_symbols):
+    velocity_getter = cqc.equilibrium_input_equations_from_init_values(
+        rho_sym, vel_arr_symbols)
+    eq = velocity_getter.main_assignments.pop(0)
+    assert eq.lhs == rho_sym and eq.rhs == rho_sym
+    eq = velocity_getter.main_assignments.pop(0)
+    assert eq.lhs.name == f"delta_{rho_sym.name}"
+    return velocity_getter
+
+
 def equations_to_code(equations, variable_prefix="",
                       variables_without_prefix=None, dtype=None, backend=None):
     if dtype is None:
@@ -154,12 +164,9 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
     equilibrium = __type_equilibrium_assignments(
         equilibrium, config, equilibrium_subs_dict)
 
-    eq_input_from_input_eqs = cqc.equilibrium_input_equations_from_init_values(
-        rho_sym, vel_arr_symbols)
-    eq = eq_input_from_input_eqs.main_assignments.pop(0)
-    assert eq.lhs == rho_sym and eq.rhs == rho_sym
+    velocity_getters = make_velocity_getters(cqc, rho_sym, vel_arr_symbols)
     density_velocity_setter_macroscopic_values = equations_to_code(
-        eq_input_from_input_eqs, variables_without_prefix=["rho", "u"], **kwargs)
+        velocity_getters, variables_without_prefix=["rho", "u"], **kwargs)
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
     unshifted_momentum_density_getter = cqc.output_equations_from_pdfs(

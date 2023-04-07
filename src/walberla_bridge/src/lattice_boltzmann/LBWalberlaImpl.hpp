@@ -42,7 +42,6 @@
 #include <lbm/communication/PdfFieldPackInfo.h>
 #include <lbm/field/AddToStorage.h>
 #include <lbm/field/PdfField.h>
-#include <lbm/sweeps/CellwiseSweep.h>
 
 #include <stencil/D3Q19.h>
 #include <stencil/D3Q27.h>
@@ -689,7 +688,7 @@ public:
             v += *res * weight;
           }
         });
-    return {v};
+    return {std::move(v)};
   }
 
   boost::optional<double> get_interpolated_density_at_pos(
@@ -712,7 +711,7 @@ public:
             dens += *res * weight;
           }
         });
-    return {dens};
+    return {std::move(dens)};
   }
 
   // Local force
@@ -848,7 +847,7 @@ public:
       population[f] = double_c(pop[f]);
     }
 
-    return {population};
+    return {std::move(population)};
   }
 
   bool set_node_population(Utils::Vector3i const &node,

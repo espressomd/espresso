@@ -53,7 +53,6 @@ namespace walberla {
 namespace {{namespace}} {
 namespace accessor {
 
-
 namespace Population
 {
     inline std::array<{{dtype}}, {{Q}}u>
@@ -79,7 +78,6 @@ namespace Population
         {% endfor -%}
     }
 } // namespace Population
-
 
 namespace Vector
 {
@@ -142,7 +140,6 @@ namespace Vector
      }
 } // namespace Vector
 
-
 namespace EquilibriumDistribution
 {
     inline {{dtype}}
@@ -156,7 +153,6 @@ namespace EquilibriumDistribution
         {{equilibrium_from_direction}}
     }
 } // namespace EquilibriumDistribution
-
 
 namespace Equilibrium
 {
@@ -176,7 +172,6 @@ namespace Equilibrium
         {% endfor -%}
     }
 } // namespace Equilibrium
-
 
 namespace Density
 {
@@ -204,11 +199,9 @@ namespace Density
 
         {{unshifted_momentum_density_getter | indent(8)}}
 
+        // calculate current velocity (before density change)
         const {{dtype}} conversion = {{dtype}}(1) / rho;
-        Vector{{D}}< {{dtype}} > velocity;
-        {% for i in range(D) -%}
-            velocity[{{i}}] = momdensity_{{i}} * conversion;
-        {% endfor %}
+        const {{dtype}} u_old[{{D}}] = { {% for i in range(D) %}momdensity_{{i}} * conversion{% if not loop.last %}, {% endif %}{% endfor %} };
 
         Equilibrium::set(pdf_field, velocity, rho_in {%if not compressible %} + {{dtype}}(1) {%endif%}, cell);
     }
@@ -278,7 +271,6 @@ namespace DensityAndVelocity
     }
 } // namespace DensityAndVelocity
 
-
 namespace DensityAndMomentumDensity
 {
     inline std::tuple< {{dtype}} , Vector{{D}}< {{dtype}} > >
@@ -327,7 +319,6 @@ namespace MomentumDensity
     }
 } // namespace MomentumDensity
 
-
 namespace PressureTensor
 {
     inline Matrix{{D}}< {{dtype}} >
@@ -350,7 +341,6 @@ namespace PressureTensor
         return pressureTensor;
    }
 } // namespace PressureTensor
-
 
 } // namespace accessor
 } // namespace {{namespace}}

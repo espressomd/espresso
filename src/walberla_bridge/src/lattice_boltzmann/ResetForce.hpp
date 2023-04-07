@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef WALBERLA_BRIDGE_RESET_FORCE_HPP
-#define WALBERLA_BRIDGE_RESET_FORCE_HPP
+#pragma once
 
 #include <domain_decomposition/SharedSweep.h>
 
@@ -71,4 +70,3 @@ private:
   Vector3<FloatType> m_ext_force;
 };
 } // namespace walberla
-#endif
