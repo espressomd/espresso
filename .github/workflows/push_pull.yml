@@ -16,6 +16,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: macos
       - name: Setup Python environment
         uses: actions/setup-python@v4.3.1
         with:
@@ -30,6 +34,7 @@ jobs:
         env:
           build_procs: 3
           check_procs: 3
+          with_ccache: 'true'
 
   macos_sanitizers:
     permissions:
@@ -41,6 +46,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: macos_sanitizers
       - name: Setup Python environment
         uses: actions/setup-python@v4.3.1
         with:
@@ -55,6 +64,7 @@ jobs:
         env:
           build_procs: 3
           check_procs: 3
+          with_ccache: 'true'
       - name: Setting job link variable
         if: ${{ failure() }}
         run: |
@@ -77,6 +87,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: debian
       - name: Setup Git environment
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Get runner specifications
@@ -90,6 +104,7 @@ jobs:
           build_procs: 2
           check_procs: 2
           myconfig: 'maxset'
+          with_ccache: 'true'
           with_cuda: 'false'
           with_hdf5: 'true'
           with_fftw: 'true'
@@ -112,6 +127,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ubuntu-without-dependencies
       - name: Setup Git environment
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Get runner specifications
@@ -125,6 +144,7 @@ jobs:
           build_procs: 2
           check_procs: 2
           myconfig: 'maxset'
+          with_ccache: 'true'
           with_cuda: 'false'
           with_hdf5: 'false'
           with_fftw: 'false'
