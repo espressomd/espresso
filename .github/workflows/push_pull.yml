@@ -27,6 +27,9 @@ jobs:
         with:
           asan: false
           ubsan: false
+        env:
+          build_procs: 3
+          check_procs: 3
 
   macos_sanitizers:
     permissions:
@@ -49,6 +52,9 @@ jobs:
         with:
           asan: true
           ubsan: true
+        env:
+          build_procs: 3
+          check_procs: 3
       - name: Setting job link variable
         if: ${{ failure() }}
         run: |
@@ -67,6 +73,7 @@ jobs:
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
+      options: --cpus 2
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -80,6 +87,8 @@ jobs:
           asan: false
           ubsan: false
         env:
+          build_procs: 2
+          check_procs: 2
           myconfig: 'maxset'
           with_cuda: 'false'
           with_hdf5: 'true'
@@ -99,6 +108,7 @@ jobs:
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
+      options: --cpus 2
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -112,6 +122,8 @@ jobs:
           asan: false
           ubsan: false
         env:
+          build_procs: 2
+          check_procs: 2
           myconfig: 'maxset'
           with_cuda: 'false'
           with_hdf5: 'false'
