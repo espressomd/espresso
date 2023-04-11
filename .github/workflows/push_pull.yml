@@ -26,55 +26,12 @@ jobs:
           python-version: '3.9'
       - name: Get runner specifications
         run: system_profiler SPHardwareDataType
-      - name: Check without sanitizer
+      - name: Build and check
         uses: ./.github/actions/build_and_check
-        with:
-          asan: false
-          ubsan: false
         env:
           build_procs: 3
           check_procs: 3
           with_ccache: 'true'
-
-  macos_sanitizers:
-    permissions:
-      contents: read # to fetch code (actions/checkout)
-      issues: write # to create an issue
-
-    runs-on: macos-12
-    if: (github.event_name == 'schedule' && github.repository == 'espressomd/espresso')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: macos_sanitizers
-      - name: Setup Python environment
-        uses: actions/setup-python@v4.3.1
-        with:
-          python-version: '3.9'
-      - name: Get runner specifications
-        run: system_profiler SPHardwareDataType
-      - name: Check with sanitizer
-        uses: ./.github/actions/build_and_check
-        with:
-          asan: true
-          ubsan: true
-        env:
-          build_procs: 3
-          check_procs: 3
-          with_ccache: 'true'
-      - name: Setting job link variable
-        if: ${{ failure() }}
-        run: |
-          echo "job_link=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> $GITHUB_ENV
-      - uses: alialaa/issue-action@v1
-        if: ${{ failure() }}
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: Scheduled CI job has failed
-          body: ${{ env.job_link }}
 
   debian:
     runs-on: ubuntu-latest
@@ -97,9 +54,6 @@ jobs:
         run: lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
       - name: Build and check
         uses: ./.github/actions/build_and_check
-        with:
-          asan: false
-          ubsan: false
         env:
           build_procs: 2
           check_procs: 2
@@ -137,9 +91,6 @@ jobs:
         run: lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
       - name: Build and check
         uses: ./.github/actions/build_and_check
-        with:
-          asan: false
-          ubsan: false
         env:
           build_procs: 2
           check_procs: 2
