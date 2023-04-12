@@ -3,8 +3,6 @@ name: run tests
 on:
   push:
   pull_request:
-  schedule:
-    - cron: '0 3 * * *'
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -12,7 +10,7 @@ permissions:
 jobs:
   macos:
     runs-on: macos-12
-    if: github.event_name != 'schedule'
+    if: ${{ github.repository == 'espressomd/espresso' }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -20,6 +18,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: macos
+          save: ${{ ! startsWith(github.ref, 'refs/pull') }}
       - name: Setup Python environment
         uses: actions/setup-python@v4.3.1
         with:
@@ -36,7 +35,7 @@ jobs:
   debian:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/jngrad/espresso-docker/debian:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
+      image: ghcr.io/espressomd/docker/debian:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -48,6 +47,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: debian
+          save: ${{ ! startsWith(github.ref, 'refs/pull') }}
       - name: Setup Git environment
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Get runner specifications
@@ -70,10 +70,11 @@ jobs:
           OMPI_ALLOW_RUN_AS_ROOT: 1
           OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
 
-  ubuntu-without-dependencies:
+  ubuntu:
     runs-on: ubuntu-latest
+    if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/jngrad/espresso-docker/ubuntu-wo-dependencies:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -84,7 +85,8 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ubuntu-without-dependencies
+          key: ubuntu
+          save: ${{ ! startsWith(github.ref, 'refs/pull') }}
       - name: Setup Git environment
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Get runner specifications
