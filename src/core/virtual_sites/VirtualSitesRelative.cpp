@@ -115,12 +115,15 @@ void VirtualSitesRelative::update() const {
       continue;
 
     auto const &p_ref = *p_ref_ptr;
+    p.image_box() = p_ref.image_box();
     p.pos() = p_ref.pos() + connection_vector(p_ref, p);
     p.v() = velocity(p_ref, p);
 
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
       auto push = LeesEdwards::Push(box_geo);
-      push(p, -1);
+      push(p, -1); // includes a position fold
+    } else {
+      fold_position(p.pos(), p.image_box(), box_geo);
     }
 
     if (have_quaternions())
