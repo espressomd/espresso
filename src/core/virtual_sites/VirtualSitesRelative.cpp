@@ -82,6 +82,11 @@ static Particle *get_reference_particle(Particle const &p) {
     return nullptr;
   }
   auto const &vs_rel = p.vs_relative();
+  if (vs_rel.to_particle_id == -1) {
+    runtimeErrorMsg() << "Particle with id " << p.id()
+                      << " is a dangling virtual site";
+    return nullptr;
+  }
   auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref_ptr) {
     runtimeErrorMsg() << "No real particle with id " << vs_rel.to_particle_id

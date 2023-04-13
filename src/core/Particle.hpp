@@ -161,7 +161,7 @@ struct ParticleProperties {
    *  quaternion attribute.
    */
   struct VirtualSitesRelativeParameters {
-    int to_particle_id = 0;
+    int to_particle_id = -1;
     double distance = 0.;
     /** Relative position of the virtual site. */
     Utils::Quaternion<double> rel_orientation =

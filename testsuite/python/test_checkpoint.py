@@ -496,12 +496,21 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertTrue(system.part.by_id(1).virtual)
         self.assertIsInstance(
             system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesRelative)
         self.assertTrue(system.virtual_sites.have_quaternion)
         self.assertTrue(system.virtual_sites.override_cutoff_check)
+        p_real = system.part.by_id(0)
+        p_virt = system.part.by_id(1)
+        self.assertTrue(p_virt.virtual)
+        self.assertFalse(p_real.virtual)
+        self.assertEqual(p_real.vs_relative[0], -1)
+        self.assertEqual(p_virt.vs_relative[0], p_real.id)
+        self.assertEqual(p_real.vs_relative[1], 0.)
+        self.assertEqual(p_virt.vs_relative[1], np.sqrt(2.))
+        np.testing.assert_allclose(
+            p_real.vs_relative[2], [1., 0., 0., 0.], atol=1e-10)
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(

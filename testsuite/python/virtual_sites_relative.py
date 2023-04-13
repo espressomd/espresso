@@ -57,7 +57,7 @@ class VirtualSites(ut.TestCase):
              - quat[2] * quat[2] + quat[3] * quat[3])))
 
     def verify_vs(self, vs, verify_velocity=True):
-        """Verify vs position and (if compiled in) velocity."""
+        """Verify virtual site position and velocity."""
         self.assertTrue(vs.virtual)
 
         vs_r = vs.vs_relative
@@ -156,6 +156,13 @@ class VirtualSites(ut.TestCase):
         p1 = system.part.add(pos=[0.0, 0.0, 0.0], rotation=3 * [True], id=1)
         p2 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=2)
         p3 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=3)
+        p4 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=4)
+        # dangling virtual sites are not allowed
+        with self.assertRaisesRegex(Exception, "Particle with id 4 is a dangling virtual site"):
+            p4.virtual = True
+            self.assertEqual(p4.vs_relative[0], -1)
+            system.integrator.run(0, recalc_forces=True)
+        p4.remove()
         # relating to anything else other than a particle or id is not allowed
         with self.assertRaisesRegex(ValueError, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int"):
             p2.vs_auto_relate_to('0')
