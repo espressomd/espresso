@@ -506,3 +506,26 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
     vtf_index[3]
 
 Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
+
+.. _Reading VTK files:
+
+Reading VTK files
+-----------------
+
+The waLBerla library writes VTK multi-piece uniform grids in XML format.
+Each piece contains information about its spatial extent, from which it is
+possible to deduce the grid dimensions. Each piece may contain one or more
+array, which are uniquely identified by name. While the Python package ``vtk``
+provides tools to read VTK files as numpy arrays, it doesn't automatically
+reconstruct the 3D grids using the topology information of each piece; this
+functionality is provided by the wrapper :class:`~espressomd.io.vtk.VTKReader`:
+
+.. code-block:: python
+
+    import espressomd.io.vtk
+    vtk_reader = espressomd.io.vtk.VTKReader()
+    vtk_grids = vtk_reader.parse("simulation_step_0.vtu")
+    vtk_density = vtk_grids["DensityFromPDF"]
+    print(vtk_density.shape)
+
+For a self-contained example, please refer to :ref:`LB VTK output`.

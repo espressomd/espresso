@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,13 +24,13 @@ import tempfile
 import contextlib
 import numpy as np
 
-with contextlib.suppress(ImportError):
-    import vtk
-    import vtk.util.numpy_support
-
 import espressomd
 import espressomd.lb
 import espressomd.shapes
+
+with contextlib.suppress(ImportError):
+    import vtk  # pylint: disable=unused-import
+    import espressomd.io.vtk
 
 
 class TestLBWrite:
@@ -38,7 +38,7 @@ class TestLBWrite:
     Set up a planar Poiseuille flow and write fluid to VTK files.
     """
 
-    system = espressomd.System(box_l=[12, 14, 16])
+    system = espressomd.System(box_l=[12, 14, 10])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
@@ -52,61 +52,6 @@ class TestLBWrite:
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
-    def get_cell_array(self, cell, name, shape):
-        return vtk.util.numpy_support.vtk_to_numpy(
-            cell.GetArray(name)).reshape(shape, order='F')
-
-    def get_piece_topology(self, piece, agrid, bb_lower, bb_upper):
-        bounds = np.around(np.array(piece.GetBounds()) / agrid).astype(int)
-        xmin, xmax, ymin, ymax, zmin, zmax = bounds
-        domain_shape = (xmax - xmin, ymax - ymin, zmax - zmin)
-        domain_slice = (
-            slice(xmin, xmax),
-            slice(ymin, ymax),
-            slice(zmin, zmax))
-        for i in range(3):
-            if domain_slice[i].start < bb_lower[i]:
-                bb_lower[i] = domain_slice[i].start
-            if domain_slice[i].stop > bb_upper[i]:
-                bb_upper[i] = domain_slice[i].stop
-        return domain_shape, domain_slice
-
-    def parse_vtk(self, filepath, shape, agrid):
-        bounding_box_lower = list(shape)
-        bounding_box_upper = [0, 0, 0]
-
-        reader = vtk.vtkXMLUnstructuredGridReader()
-        reader.SetFileName(str(filepath))
-        reader.Update()
-
-        vtk_density = np.empty(shape, dtype=float)
-        vtk_velocity = np.empty(shape + (3,), dtype=float)
-        vtk_pressure = np.empty(shape + (3, 3), dtype=float)
-        n_ghost_layers = 1
-        n_pieces = reader.GetNumberOfPieces()
-        for piece_index in range(n_pieces):
-            reader.UpdatePiece(piece_index, n_pieces, n_ghost_layers)
-            piece = reader.GetOutput()
-            cell = piece.GetCellData()
-            domain_shape, domain_slice = self.get_piece_topology(
-                piece, agrid, bounding_box_lower, bounding_box_upper)
-            vtk_density[domain_slice] = self.get_cell_array(
-                cell, 'DensityFromPDF', domain_shape)
-            vtk_velocity[domain_slice] = self.get_cell_array(
-                cell, 'VelocityFromVelocityField', domain_shape + (3,))
-            vtk_pressure[domain_slice] = self.get_cell_array(
-                cell, 'PressureTensorFromPDF', domain_shape + (3, 3))
-
-        xmin, ymin, zmin = bounding_box_lower
-        xmax, ymax, zmax = bounding_box_upper
-        global_slice = (
-            slice(xmin, xmax),
-            slice(ymin, ymax),
-            slice(zmin, zmax))
-        return (vtk_density[global_slice],
-                vtk_velocity[global_slice],
-                vtk_pressure[global_slice])
-
     def test_vtk(self):
         '''
         Check VTK files. Keep in mind the VTK module writes in single-precision.
@@ -118,8 +63,12 @@ class TestLBWrite:
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))
-        agrid = self.lbf.agrid
         shape = tuple(self.lbf.shape)
+        shape = (shape[0] - 4, *shape[1:])
+        vtk_reader = espressomd.io.vtk.VTKReader()
+        label_density = 'DensityFromPDF'
+        label_velocity = 'VelocityFromVelocityField'
+        label_pressure = 'PressureTensorFromPDF'
 
         with tempfile.TemporaryDirectory() as tmp_directory:
             path_vtk_root = pathlib.Path(tmp_directory)
@@ -159,7 +108,7 @@ class TestLBWrite:
 
             # check velocity profile is symmetric at all time steps
             for filepath in filepaths:
-                vtk_velocity = self.parse_vtk(filepath, shape, agrid)[1]
+                vtk_velocity = vtk_reader.parse(filepath)[label_velocity]
                 v_profile = np.mean(
                     np.linalg.norm(vtk_velocity, axis=-1),
                     axis=(1, 2))
@@ -168,7 +117,8 @@ class TestLBWrite:
 
             # check scalar pressure is symmetric at all time steps
             for filepath in filepaths:
-                vtk_pressure = self.parse_vtk(filepath, shape, agrid)[2]
+                vtk_pressure = vtk_reader.parse(filepath)[label_pressure]
+                vtk_pressure = vtk_pressure.reshape(shape + (3, 3))
                 p_profile = np.mean(
                     np.trace(vtk_pressure, axis1=-2, axis2=-1),
                     axis=(1, 2))
@@ -178,7 +128,12 @@ class TestLBWrite:
             # read VTK output of final time step
             last_frame = []
             for filepath in (path_vtk_end, path_vtk_continuous[-1]):
-                last_frame.append(self.parse_vtk(filepath, shape, agrid))
+                grids = vtk_reader.parse(filepath)
+                last_frame.append((
+                    grids[label_density],
+                    grids[label_velocity],
+                    grids[label_pressure].reshape(shape + (3, 3)),
+                ))
 
             # check VTK output is identical in both continuous and manual mode
             for i in range(len(last_frame[0])):
@@ -200,6 +155,8 @@ class TestLBWrite:
                 np.testing.assert_allclose(
                     vtk_pressure, lb_pressure, rtol=1e-7, atol=0.)
 
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 4,
+               "slow test on more than 4 MPI ranks")
     def test_exceptions(self):
         label_invalid_obs = f'test_lb_vtk_{self.lb_vtk_id}_invalid_obs'
         error_msg = r"Only the following VTK observables are supported: \['density', 'pressure_tensor', 'velocity_vector'\], got 'dens'"

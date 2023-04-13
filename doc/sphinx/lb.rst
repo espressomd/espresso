@@ -276,19 +276,72 @@ to disk continuously, use the optional argument ``delta_N`` to indicate
 the level of subsampling. Such a stream can be deactivated.
 
 The VTK format is readable by visualization software such as ParaView [1]_
-or Mayavi2 [2]_. If you plan to use ParaView for visualization, note that also the particle
-positions can be exported using the VTK format (see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
+or Mayavi2 [2]_, as well as in |es| (see :ref:`Reading VTK files`).
+If you plan to use ParaView for visualization, note that also the particle
+positions can be exported using the VTK format
+(see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
 
 Important: these VTK files are written in multi-piece format, i.e. each MPI
 rank writes its local domain to a new piece in the VTK uniform grid to avoid
-a MPI reduction. Paraview can handle the topology reconstruction natively.
-However, when reading the multi-piece file with the Python vtk package, the
-topology must be manually reconstructed. In particular, calling the XML reader
-``GetOutput()`` method directly after the update step will erase all topology
-information. While this is not an issue for VTK files obtained from simulations
-that ran with 1 MPI rank, for parallel simulations this is an issue.
-When in doubt, please use the ``parse_vtk()`` method in
-:file:`testsuite/python/lb_vtk.py` as a guide.
+a MPI reduction. ParaView can handle the topology reconstruction natively.
+However, when reading the multi-piece file with the Python ``vtk`` package,
+the topology must be manually reconstructed. In particular, calling the XML
+reader ``GetOutput()`` method directly after the update step will erase all
+topology information. While this is not an issue for VTK files obtained from
+simulations that ran with 1 MPI rank, for parallel simulations this will lead
+to 3D grids with incorrectly ordered data. Automatic topology reconstruction
+is available through :class:`~espressomd.io.vtk.VTKReader`::
+
+    import pathlib
+    import tempfile
+    import numpy as np
+    import espressomd
+    import espressomd.lb
+    import espressomd.io.vtk
+
+    system = espressomd.System(box_l=[12., 14., 10.])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
+
+    lbf = espressomd.lb.LBFluidWalberla(
+        agrid=1., tau=0.1, density=1., kinematic_viscosity=1.)
+    system.actors.add(lbf)
+    system.integrator.run(10)
+
+    vtk_reader = espressomd.io.vtk.VTKReader()
+    label_density = "DensityFromPDF"
+    label_velocity = "VelocityFromVelocityField"
+    label_pressure = "PressureTensorFromPDF"
+
+    with tempfile.TemporaryDirectory() as tmp_directory:
+        path_vtk_root = pathlib.Path(tmp_directory)
+        label_vtk = "lb_vtk"
+        path_vtk = path_vtk_root / label_vtk / "simulation_step_0.vtu"
+
+        # write VTK file
+        lb_vtk = espressomd.lb.VTKOutput(
+            lb_fluid=lbf, identifier=label_vtk, delta_N=0,
+            observables=["density", "velocity_vector", "pressure_tensor"],
+            base_folder=str(path_vtk_root))
+        lb_vtk.write()
+
+        # read VTK file
+        vtk_grids = vtk_reader.parse(path_vtk)
+        vtk_density = vtk_grids[label_density]
+        vtk_velocity = vtk_grids[label_velocity]
+        vtk_pressure = vtk_grids[label_pressure]
+        vtk_pressure = vtk_pressure.reshape(vtk_pressure.shape[:-1] + (3, 3))
+
+        # check VTK values match node values
+        lb_density = np.copy(lbf[:, :, :].density)
+        lb_velocity = np.copy(lbf[:, :, :].velocity) * lbf.tau
+        lb_pressure = np.copy(lbf[:, :, :].pressure_tensor) * lbf.tau**2
+        np.testing.assert_allclose(
+            vtk_density, lb_density, rtol=1e-10, atol=0.)
+        np.testing.assert_allclose(
+            vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
+        np.testing.assert_allclose(
+            vtk_pressure, lb_pressure, rtol=1e-7, atol=0.)
 
 .. _Choosing between the GPU and CPU implementations:
 
