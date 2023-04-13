@@ -28,11 +28,10 @@
 #include <sstream>
 #include <string>
 
-std::shared_ptr<VTKHandle>
-LatticeModel::create_vtk(int delta_N, int initial_count, int flag_observables,
-                         std::string const &identifier,
-                         std::string const &base_folder,
-                         std::string const &prefix) {
+std::shared_ptr<VTKHandle> LatticeModel::create_vtk(
+    int delta_N, int initial_count, int flag_observables,
+    units_map const &units_conversion, std::string const &identifier,
+    std::string const &base_folder, std::string const &prefix) {
 
   using walberla::uint_c;
 
@@ -56,7 +55,7 @@ LatticeModel::create_vtk(int delta_N, int initial_count, int flag_observables,
   register_vtk_field_filters(*vtk_obj);
 
   // add writers
-  register_vtk_field_writers(*vtk_obj, flag_observables);
+  register_vtk_field_writers(*vtk_obj, units_conversion, flag_observables);
 
   auto vtk_handle = std::make_shared<VTKHandle>(vtk_obj, initial_count, true);
   if (delta_N) {

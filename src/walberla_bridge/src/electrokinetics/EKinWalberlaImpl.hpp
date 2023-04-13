@@ -514,6 +514,7 @@ public:
   }
 
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                  LatticeModel::units_map const & /* units */,
                                   int flag_observables) override {
     if (flag_observables & static_cast<int>(EKOutputVTK::density)) {
       vtk_obj.addCellDataWriter(

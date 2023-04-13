@@ -49,7 +49,9 @@
 #include "../BoundaryHandling.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
-#include "vtk_writers.hpp"
+#include "vtk/Density.hpp"
+#include "vtk/Pressure.hpp"
+#include "vtk/Velocity.hpp"
 
 #include "walberla_bridge/Architecture.hpp"
 #include "walberla_bridge/BlockAndCell.hpp"
@@ -1259,21 +1261,26 @@ public:
   }
 
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                  LatticeModel::units_map const &units,
                                   int flag_observables) override {
     if (flag_observables & static_cast<int>(OutputVTK::density)) {
+      auto const unit_conversion = FloatType_c(units.at("density"));
       vtk_obj.addCellDataWriter(
           make_shared<lbm::DensityVTKWriter<LBWalberlaImpl, float>>(
-              m_pdf_field_id, "DensityFromPDF"));
+              m_pdf_field_id, "DensityFromPDF", unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
+      auto const unit_conversion = FloatType_c(units.at("velocity"));
       vtk_obj.addCellDataWriter(
-          make_shared<field::VTKWriter<VectorField, float>>(
-              m_velocity_field_id, "VelocityFromVelocityField"));
+          make_shared<lbm::VelocityVTKWriter<LBWalberlaImpl, float>>(
+              m_velocity_field_id, "VelocityFromVelocityField",
+              unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
+      auto const unit_conversion = FloatType_c(units.at("pressure"));
       vtk_obj.addCellDataWriter(
           make_shared<lbm::PressureTensorVTKWriter<LBWalberlaImpl, float>>(
-              m_pdf_field_id, "PressureTensorFromPDF",
+              m_pdf_field_id, "PressureTensorFromPDF", unit_conversion,
               pressure_tensor_correction_factor()));
     }
   }

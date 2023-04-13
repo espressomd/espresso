@@ -25,9 +25,13 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 /** @brief Abstract representation of a lattice-based model. */
 class LatticeModel {
+public:
+  using units_map = std::unordered_map<std::string, double>;
+
 protected:
   /** VTK writers that are executed automatically */
   std::map<std::string, std::shared_ptr<VTKHandle>> m_vtk_auto;
@@ -36,6 +40,7 @@ protected:
 
   /** Register VTK writers. Use the multi-piece uniform grid format. */
   virtual void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
+                                          units_map const &units_conversion,
                                           int flag_observables) = 0;
 
   virtual void
@@ -56,16 +61,16 @@ public:
    *                          @p delta_N EK steps to a new file
    *  @param initial_count    Initial execution count
    *  @param flag_observables Which observables to measure (OR'ing of
-   *                          @ref OutputVTK  or @ref EKOutputVTK values)
+   *                          @ref OutputVTK or @ref EKOutputVTK values)
+   *  @param units_conversion Lattice-to-MD units conversion
    *  @param identifier       Name of the VTK dataset
    *  @param base_folder      Path to the VTK folder
    *  @param prefix           Prefix of the VTK files
    */
-  std::shared_ptr<VTKHandle> create_vtk(int delta_N, int initial_count,
-                                        int flag_observables,
-                                        std::string const &identifier,
-                                        std::string const &base_folder,
-                                        std::string const &prefix);
+  std::shared_ptr<VTKHandle>
+  create_vtk(int delta_N, int initial_count, int flag_observables,
+             units_map const &units_conversion, std::string const &identifier,
+             std::string const &base_folder, std::string const &prefix);
 
   /** @brief Write a VTK observable to disk.
    *

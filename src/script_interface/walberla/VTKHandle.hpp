@@ -23,6 +23,7 @@
 
 #ifdef WALBERLA
 
+#include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/VTKHandle.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
@@ -54,6 +55,7 @@ private:
   std::string m_base_folder;
   std::string m_prefix;
   std::shared_ptr<::VTKHandle> m_vtk_handle;
+  LatticeModel::units_map m_units;
 
   [[nodiscard]] auto get_vtk_uid() const {
     return m_base_folder + '/' + m_identifier;
@@ -63,6 +65,7 @@ protected:
   virtual void setup_field_instance(VariantMap const &params) = 0;
   [[nodiscard]] virtual std::shared_ptr<Field> get_field_instance() = 0;
   virtual std::unordered_map<std::string, int> const &get_obs_map() const = 0;
+  virtual LatticeModel::units_map get_units(VariantMap const &params) const = 0;
 
 private:
   [[nodiscard]] auto get_valid_observable_names() const {
@@ -117,6 +120,8 @@ public:
          [this]() { return serialize_obs_flag(m_flag_obs); }},
         {"execution_count", read_only,
          [this]() { return m_vtk_handle->execution_count; }},
+        {"units", read_only,
+         [this]() { return make_unordered_map_of_variants(m_units); }},
     });
   }
 
@@ -180,9 +185,10 @@ public:
     ObjectHandle::context()->parallel_try_catch([&]() {
       setup_field_instance(params);
       auto &field_instance = *get_field_instance();
-      m_vtk_handle =
-          field_instance.create_vtk(m_delta_N, execution_count, m_flag_obs,
-                                    m_identifier, m_base_folder, m_prefix);
+      m_units = get_units(params);
+      m_vtk_handle = field_instance.create_vtk(
+          m_delta_N, execution_count, m_flag_obs, m_units, m_identifier,
+          m_base_folder, m_prefix);
       if (m_delta_N and not get_value<bool>(params, "enabled")) {
         field_instance.switch_vtk(get_vtk_uid(), false);
       }
@@ -214,6 +220,16 @@ class VTKHandle : public VTKHandleBase<LBWalberlaBase> {
 
   std::unordered_map<std::string, int> const &get_obs_map() const override {
     return obs_map;
+  }
+
+protected:
+  LatticeModel::units_map get_units(VariantMap const &params) const override {
+    if (params.count("flag_obs")) {
+      // object built from a checkpoint
+      return get_value<LatticeModel::units_map>(params, "units");
+    }
+    return get_value<std::shared_ptr<FluidWalberla>>(params, "lb_fluid")
+        ->get_lb_to_md_units_conversion();
   }
 };
 
@@ -248,6 +264,11 @@ public:
 
   std::unordered_map<std::string, int> const &get_obs_map() const override {
     return obs_map;
+  }
+
+protected:
+  LatticeModel::units_map get_units(VariantMap const &params) const override {
+    return {};
   }
 };
 

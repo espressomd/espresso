@@ -29,6 +29,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
+#include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
@@ -139,6 +140,14 @@ public:
 
   /** Non-owning pointer to the LB parameters. */
   std::weak_ptr<::LBWalberlaParams> lb_params() { return m_lb_params; }
+
+  LatticeModel::units_map get_lb_to_md_units_conversion() {
+    return {
+        {"pressure", 1. / m_conv_press},
+        {"velocity", 1. / m_conv_speed},
+        {"density", 1. / m_conv_dens},
+    };
+  }
 
 private:
   void load_checkpoint(std::string const &filename, int mode);

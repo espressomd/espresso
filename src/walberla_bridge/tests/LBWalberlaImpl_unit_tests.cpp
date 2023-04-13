@@ -44,6 +44,7 @@
 
 #include <functional>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 using Utils::hadamard_product;
@@ -540,18 +541,20 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
 BOOST_DATA_TEST_CASE(vtk_exceptions,
                      bdata::make(LbGeneratorVector{unthermalized_lbs()[0]}),
                      lb_generator) {
+  std::unordered_map<std::string, double> const units = {{"density", 1.}};
   auto lb = lb_generator(params);
   auto const flag =
       static_cast<std::underlying_type_t<OutputVTK>>(OutputVTK::density);
   // cannot create the same observable twice
-  lb->create_vtk(1u, 0u, flag, "density", "vtk_out", "step");
-  BOOST_CHECK_THROW(lb->create_vtk(1u, 0u, flag, "density", "vtk_out", "step"),
-                    std::runtime_error);
+  lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step");
+  BOOST_CHECK_THROW(
+      lb->create_vtk(1u, 0u, flag, units, "density", "vtk_out", "step"),
+      std::runtime_error);
   // cannot manually call an automatic observable
-  lb->create_vtk(1u, 0u, flag, "auto", "vtk_out", "step");
+  lb->create_vtk(1u, 0u, flag, units, "auto", "vtk_out", "step");
   BOOST_CHECK_THROW(lb->write_vtk("vtk_out/auto"), std::runtime_error);
   // cannot activate a manual observable
-  lb->create_vtk(0u, 0u, flag, "manual", "vtk_out", "step");
+  lb->create_vtk(0u, 0u, flag, units, "manual", "vtk_out", "step");
   BOOST_CHECK_THROW(lb->switch_vtk("vtk_out/manual", 0), std::runtime_error);
   // cannot call or activate observables that haven't been registered yet
   BOOST_CHECK_THROW(lb->write_vtk("unknown"), std::runtime_error);

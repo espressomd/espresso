@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 import unittest as ut
 import unittest_decorators as utx
 
@@ -38,14 +39,14 @@ class TestLBWrite:
     Set up a planar Poiseuille flow and write fluid to VTK files.
     """
 
-    system = espressomd.System(box_l=[12, 14, 10])
+    system = espressomd.System(box_l=[6, 7, 5])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
 
     def setUp(self):
         self.lbf = self.lb_class(
-            kT=0, agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.1,
-            ext_force_density=[0, 0.03, 0], **self.lb_params)
+            agrid=0.5, tau=0.1, density=1.0, kinematic_viscosity=1.0,
+            ext_force_density=[0., 0.03, 0.], **self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
@@ -56,10 +57,11 @@ class TestLBWrite:
         '''
         Check VTK files. Keep in mind the VTK module writes in single-precision.
         '''
+        dist = 1.5 * self.lbf.agrid
         self.lbf.add_boundary_from_shape(
-            espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
+            espressomd.shapes.Wall(normal=[1, 0, 0], dist=dist))
         self.lbf.add_boundary_from_shape(
-            espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5))
+            espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-(self.system.box_l[0] - dist)))
 
         n_steps = 100
         lb_steps = int(np.floor(n_steps * self.lbf.tau))
@@ -113,7 +115,7 @@ class TestLBWrite:
                     np.linalg.norm(vtk_velocity, axis=-1),
                     axis=(1, 2))
                 np.testing.assert_allclose(
-                    v_profile, v_profile[::-1], atol=1e-7)
+                    v_profile, v_profile[::-1], rtol=5e-5, atol=0.)
 
             # check scalar pressure is symmetric at all time steps
             for filepath in filepaths:
@@ -123,7 +125,7 @@ class TestLBWrite:
                     np.trace(vtk_pressure, axis1=-2, axis2=-1),
                     axis=(1, 2))
                 np.testing.assert_allclose(
-                    p_profile, p_profile[::-1], atol=1e-6)
+                    p_profile, p_profile[::-1], rtol=5e-5, atol=0.)
 
             # read VTK output of final time step
             last_frame = []
@@ -141,11 +143,9 @@ class TestLBWrite:
                                            last_frame[1][i], atol=1e-10)
 
             # check VTK values match node values in the final time step
-            tau = self.lbf.tau
             lb_density = np.copy(self.lbf[2:-2, :, :].density)
-            lb_velocity = np.copy(self.lbf[2:-2, :, :].velocity) * tau
-            lb_pressure = np.copy(
-                self.lbf[2:-2, :, :].pressure_tensor) * tau**2
+            lb_velocity = np.copy(self.lbf[2:-2, :, :].velocity)
+            lb_pressure = np.copy(self.lbf[2:-2, :, :].pressure_tensor)
 
             for vtk_density, vtk_velocity, vtk_pressure in last_frame:
                 np.testing.assert_allclose(
@@ -153,10 +153,10 @@ class TestLBWrite:
                 np.testing.assert_allclose(
                     vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
                 np.testing.assert_allclose(
-                    vtk_pressure, lb_pressure, rtol=1e-7, atol=0.)
+                    vtk_pressure, lb_pressure, rtol=1e-6, atol=0.)
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 4,
-               "slow test on more than 4 MPI ranks")
+               "this test is slow on more than 4 MPI ranks")
     def test_exceptions(self):
         label_invalid_obs = f'test_lb_vtk_{self.lb_vtk_id}_invalid_obs'
         error_msg = r"Only the following VTK observables are supported: \['density', 'pressure_tensor', 'velocity_vector'\], got 'dens'"
