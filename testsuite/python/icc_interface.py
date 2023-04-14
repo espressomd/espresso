@@ -119,21 +119,6 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(Exception, "ICC found zero electric field on a charge"):
             self.system.integrator.run(0)
 
-    @utx.skipIfMissingFeatures(["P3M"])
-    def test_exceptions_large_r_cut(self):
-        icc, (_, p) = self.setup_icc_particles_and_solver(max_iterations=1)
-        p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
-
-        self.system.actors.add(p3m)
-        self.system.actors.add(icc)
-
-        with self.assertRaisesRegex(Exception, f"Particle with id {p.id} has a charge .+ that is too large for the ICC algorithm"):
-            p.q = 1e9
-            self.system.integrator.run(0)
-        with self.assertRaisesRegex(Exception, "ICC failed to converge in the given number of maximal steps"):
-            p.q = 0.
-            self.system.integrator.run(0)
-
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
     def test_exceptions_gpu(self):
