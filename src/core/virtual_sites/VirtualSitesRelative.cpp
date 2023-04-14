@@ -82,6 +82,11 @@ static Particle *get_reference_particle(Particle const &p) {
     return nullptr;
   }
   auto const &vs_rel = p.vs_relative();
+  if (vs_rel.to_particle_id == -1) {
+    runtimeErrorMsg() << "Particle with id " << p.id()
+                      << " is a dangling virtual site";
+    return nullptr;
+  }
   auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref_ptr) {
     runtimeErrorMsg() << "No real particle with id " << vs_rel.to_particle_id
@@ -115,12 +120,15 @@ void VirtualSitesRelative::update() const {
       continue;
 
     auto const &p_ref = *p_ref_ptr;
+    p.image_box() = p_ref.image_box();
     p.pos() = p_ref.pos() + connection_vector(p_ref, p);
     p.v() = velocity(p_ref, p);
 
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
       auto push = LeesEdwards::Push(box_geo);
-      push(p, -1);
+      push(p, -1); // includes a position fold
+    } else {
+      fold_position(p.pos(), p.image_box(), box_geo);
     }
 
     if (have_quaternions())

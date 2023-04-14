@@ -198,6 +198,7 @@ python_test(FILE brownian_dynamics_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE lees_edwards.py MAX_NUM_PROC 4)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
+python_test(FILE virtual_sites_relative_pbc.py MAX_NUM_PROC 2)
 python_test(FILE virtual_sites_tracers.py MAX_NUM_PROC 2 DEPENDENCIES
             virtual_sites_tracers_common.py)
 python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 LABELS gpu

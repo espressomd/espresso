@@ -187,7 +187,7 @@ public:
   Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                     const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
-      auto const &shear_plane_normal = lees_edwards_bc().shear_plane_normal;
+      auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
       auto a_tmp = a;
       auto b_tmp = b;
       a_tmp[shear_plane_normal] = Algorithm::periodic_fold(

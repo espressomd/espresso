@@ -29,7 +29,9 @@
  * - a "GhostCommunication" is always named "ghost_comm".
  */
 #include "ghosts.hpp"
+
 #include "Particle.hpp"
+#include "grid.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
@@ -143,6 +145,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
           /* ok, this is not nice, but perhaps fast */
           auto pp = part.r;
           pp.p += ghost_comm.shift;
+          fold_position(pp.p, pp.i, ::box_geo);
           archiver << pp;
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
@@ -296,6 +299,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
           /* ok, this is not nice, but perhaps fast */
           part2.r = part1.r;
           part2.pos() += ghost_comm.shift;
+          fold_position(part2.pos(), part2.image_box(), ::box_geo);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           part2.m = part1.m;
