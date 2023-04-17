@@ -189,6 +189,14 @@ class AnalyzeChain(ut.TestCase):
             with self.assertRaisesRegex(RuntimeError, err_msg):
                 method(chain_start=0, number_of_chains=num_poly,
                        chain_length=2 * num_mono)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 bead per chain"):
+                method(chain_start=0, number_of_chains=1, chain_length=0)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 bead per chain"):
+                method(chain_start=0, number_of_chains=1, chain_length=-1)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 chain"):
+                method(chain_start=0, number_of_chains=0, chain_length=1)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 chain"):
+                method(chain_start=0, number_of_chains=-1, chain_length=1)
         self.assertIsNone(analysis.call_method("unknown"))
 
 
