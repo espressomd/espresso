@@ -141,7 +141,7 @@ if [ "${with_coverage}" = true ]; then
 fi
 
 if [ "${with_fast_math}" = true ]; then
-    cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math -fno-finite-math-only"
+    cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math"
 fi
 
 cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D CMAKE_CXX_STANDARD=${with_cxx_standard} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"

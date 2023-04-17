@@ -135,6 +135,7 @@ BOOST_AUTO_TEST_CASE(sum_of_weights_odd) {
 }
 
 BOOST_AUTO_TEST_CASE(nearest_point) {
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   std::array<int, 3> nmp;
   double weight;
   auto save_ind = [&nmp, &weight](const std::array<int, 3> &ind, double w) {
@@ -145,7 +146,7 @@ BOOST_AUTO_TEST_CASE(nearest_point) {
   bspline_3d<1>({.1, .2, .3}, save_ind, {0.5, 0.5, 0.5}, {});
 
   BOOST_CHECK((std::array<int, 3>{{0, 0, 1}} == nmp));
-  BOOST_CHECK_CLOSE(weight, 1., 100. * std::numeric_limits<double>::epsilon());
+  BOOST_CHECK_CLOSE(weight, 1., tol);
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_points_3) {

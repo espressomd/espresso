@@ -457,18 +457,6 @@ static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
   return true;
 }
 
-void particle_checks(int p_id, Utils::Vector3d const &pos) {
-  if (p_id < 0) {
-    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
-  }
-#ifndef __FAST_MATH__
-  if (std::isnan(pos[0]) or std::isnan(pos[1]) or std::isnan(pos[2]) or
-      std::isinf(pos[0]) or std::isinf(pos[1]) or std::isinf(pos[2])) {
-    throw std::domain_error("Particle position must be finite");
-  }
-#endif // __FAST_MATH__
-}
-
 void remove_all_particles() {
   ::cell_structure.remove_all_particles();
   on_particle_change();
