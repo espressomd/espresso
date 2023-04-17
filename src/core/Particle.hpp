@@ -161,7 +161,7 @@ struct ParticleProperties {
    *  quaternion attribute.
    */
   struct VirtualSitesRelativeParameters {
-    int to_particle_id = 0;
+    int to_particle_id = -1;
     double distance = 0.;
     /** Relative position of the virtual site. */
     Utils::Quaternion<double> rel_orientation =
@@ -265,6 +265,8 @@ struct ParticleProperties {
 struct ParticlePosition {
   /** periodically folded position. */
   Utils::Vector3d p = {0., 0., 0.};
+  /** index of the simulation box image where the particle really sits. */
+  Utils::Vector3i i = {0, 0, 0};
 
 #ifdef ROTATION
   /** quaternion to define particle orientation */
@@ -282,6 +284,7 @@ struct ParticlePosition {
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &p;
+    ar &i;
 #ifdef ROTATION
     ar &quat;
 #endif
@@ -363,8 +366,6 @@ struct ParticleLocal {
   /** is particle a ghost particle. */
   bool ghost = false;
   short int lees_edwards_flag = 0;
-  /** index of the simulation box image where the particle really sits. */
-  Utils::Vector3i i = {0, 0, 0};
   /** position from the last Verlet list update. */
   Utils::Vector3d p_old = {0., 0., 0.};
   /** Accumulated applied Lees-Edwards offset. */
@@ -373,7 +374,6 @@ struct ParticleLocal {
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &ghost;
     ar &lees_edwards_flag;
-    ar &i;
     ar &p_old;
     ar &lees_edwards_offset;
   }
@@ -446,8 +446,8 @@ public:
   void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
   auto &pos_at_last_verlet_update() { return l.p_old; }
   auto const &pos_at_last_verlet_update() const { return l.p_old; }
-  auto const &image_box() const { return l.i; }
-  auto &image_box() { return l.i; }
+  auto const &image_box() const { return r.i; }
+  auto &image_box() { return r.i; }
   auto const &lees_edwards_offset() const { return l.lees_edwards_offset; }
   auto &lees_edwards_offset() { return l.lees_edwards_offset; }
   auto const &lees_edwards_flag() const { return l.lees_edwards_flag; }

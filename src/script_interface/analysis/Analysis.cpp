@@ -48,6 +48,12 @@ namespace Analysis {
 
 /** @brief Check if a contiguous range of particle ids exists. */
 static void check_topology(int chain_start, int chain_length, int n_chains) {
+  if (n_chains <= 0) {
+    throw std::domain_error("Chain analysis needs at least 1 chain");
+  }
+  if (chain_length <= 0) {
+    throw std::domain_error("Chain analysis needs at least 1 bead per chain");
+  }
   for (int i = 0; i < chain_length * n_chains; ++i) {
     auto const pid = chain_start + i;
     if (not particle_exists(pid)) {

@@ -29,7 +29,9 @@
  * - a "GhostCommunication" is always named "ghost_comm".
  */
 #include "ghosts.hpp"
+
 #include "Particle.hpp"
+#include "grid.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
@@ -168,9 +170,13 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
     if (direction == SerializationDirection::SAVE and ghost_shift != nullptr) {
       /* ok, this is not nice, but perhaps fast */
       auto pos = p.pos() + *ghost_shift;
+      auto img = p.image_box();
+      fold_position(pos, img, ::box_geo);
       ar &pos;
+      ar &img;
     } else {
       ar &p.pos();
+      ar &p.image_box();
     }
 #ifdef ROTATION
     ar &p.quat();

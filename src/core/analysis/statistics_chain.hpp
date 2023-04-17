@@ -34,11 +34,10 @@
  * of monodisperse polymers with continuous ids.
  *
  * @param chain_start The id of the first monomer of the first chain.
- * @param chain_n_chains Number of chains contained in the range.
+ * @param n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
-                              int chain_length);
+std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length);
 
 /**
  * @brief Calculate the radius of gyration.
@@ -47,11 +46,10 @@ std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
  * of monodisperse polymers with continuous ids.
  *
  * @param chain_start The id of the first monomer of the first chain.
- * @param chain_n_chains Number of chains contained in the range.
+ * @param n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
-                              int chain_length);
+std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length);
 
 /**
  * @brief Calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory).
@@ -60,10 +58,9 @@ std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
  * of monodisperse polymers with continuous ids.
  *
  * @param chain_start The id of the first monomer of the first chain.
- * @param chain_n_chains Number of chains contained in the range.
+ * @param n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
-                              int chain_length);
+std::array<double, 2> calc_rh(int chain_start, int n_chains, int chain_length);
 
 #endif

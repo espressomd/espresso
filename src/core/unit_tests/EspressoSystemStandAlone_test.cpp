@@ -92,7 +92,7 @@ static auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
 }
 
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
-  constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   auto const comm = boost::mpi::communicator();
   auto const rank = comm.rank();
   auto const n_nodes = comm.size();

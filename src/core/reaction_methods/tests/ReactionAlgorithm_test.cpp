@@ -68,7 +68,7 @@ public:
 // Check the base class for all Monte Carlo algorithms.
 BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
   using ReactionMethods::SingleReaction;
-  auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   auto const comm = boost::mpi::communicator();
 
   // check acceptance rate

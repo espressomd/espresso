@@ -35,12 +35,11 @@
 #include <cmath>
 #include <stdexcept>
 
-std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
-                              int chain_length) {
+std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length) {
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
   std::array<double, 4> re;
 
-  for (int i = 0; i < chain_n_chains; i++) {
+  for (int i = 0; i < n_chains; i++) {
     auto const &p1 =
         get_particle_data(chain_start + i * chain_length + chain_length - 1);
     auto const &p2 = get_particle_data(chain_start + i * chain_length);
@@ -53,20 +52,19 @@ std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
     dist2 += norm2;
     dist4 += norm2 * norm2;
   }
-  auto const tmp = static_cast<double>(chain_n_chains);
+  auto const tmp = static_cast<double>(n_chains);
   re[0] = dist / tmp;
   re[2] = dist2 / tmp;
-  re[1] = sqrt(re[2] - re[0] * re[0]);
-  re[3] = sqrt(dist4 / tmp - re[2] * re[2]);
+  re[1] = (n_chains == 1) ? 0. : std::sqrt(re[2] - Utils::sqr(re[0]));
+  re[3] = (n_chains == 1) ? 0. : std::sqrt(dist4 / tmp - Utils::sqr(re[2]));
   return re;
 }
 
-std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
-                              int chain_length) {
+std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length) {
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
   std::array<double, 4> rg;
 
-  for (int i = 0; i < chain_n_chains; i++) {
+  for (int i = 0; i < n_chains; i++) {
     double M = 0.0;
     Utils::Vector3d r_CM{};
     for (int j = 0; j < chain_length; j++) {
@@ -94,22 +92,21 @@ std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
     r_G2 += tmp;
     r_G4 += tmp * tmp;
   }
-  auto const tmp = static_cast<double>(chain_n_chains);
+  auto const tmp = static_cast<double>(n_chains);
   rg[0] = r_G / tmp;
   rg[2] = r_G2 / tmp;
-  rg[1] = sqrt(rg[2] - Utils::sqr(rg[0]));
-  rg[3] = sqrt(r_G4 / tmp - Utils::sqr(rg[2]));
+  rg[1] = (n_chains == 1) ? 0. : std::sqrt(rg[2] - Utils::sqr(rg[0]));
+  rg[3] = (n_chains == 1) ? 0. : std::sqrt(r_G4 / tmp - Utils::sqr(rg[2]));
   return rg;
 }
 
-std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
-                              int chain_length) {
+std::array<double, 2> calc_rh(int chain_start, int n_chains, int chain_length) {
   double r_H = 0.0, r_H2 = 0.0;
   std::array<double, 2> rh;
 
   auto const chain_l = static_cast<double>(chain_length);
   auto const prefac = 0.5 * chain_l * (chain_l - 1.);
-  for (int p = 0; p < chain_n_chains; p++) {
+  for (int p = 0; p < n_chains; p++) {
     double ri = 0.0;
     for (int i = chain_start + chain_length * p;
          i < chain_start + chain_length * (p + 1); i++) {
@@ -126,8 +123,8 @@ std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
     r_H += tmp;
     r_H2 += tmp * tmp;
   }
-  auto const tmp = static_cast<double>(chain_n_chains);
+  auto const tmp = static_cast<double>(n_chains);
   rh[0] = r_H / tmp;
-  rh[1] = sqrt(r_H2 / tmp - Utils::sqr(rh[0]));
+  rh[1] = (n_chains == 1) ? 0. : std::sqrt(r_H2 / tmp - Utils::sqr(rh[0]));
   return rh;
 }

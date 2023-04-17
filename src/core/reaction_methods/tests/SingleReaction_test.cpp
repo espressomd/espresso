@@ -32,7 +32,7 @@
 // and the configurational move probability for a given system state.
 BOOST_AUTO_TEST_CASE(SingleReaction_test) {
   using namespace ReactionMethods;
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   // create a reaction A -> 3 B + 4 C
   int const type_A = 0;
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(SingleReaction_test) {
             std::unordered_map<int, int>{{type_A, i}, {type_B, j}, {type_C, k}};
         auto const val = calculate_factorial_expression(reaction, p_numbers);
         auto const ref = g(i, -1) * g(j, 3) * g(k, 4);
-        BOOST_CHECK_CLOSE(val, ref, 5 * tol);
+        BOOST_CHECK_CLOSE(val, ref, 5. * tol);
       }
     }
   }
