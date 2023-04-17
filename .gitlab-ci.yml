@@ -136,42 +136,6 @@ no_rotation:
     - no-cuda
     - numa
 
-ubuntu:wo-dependencies:
-  <<: *global_job_definition
-  stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:3fd42369f84239b8c4f5d77067d404789c55ff44
-  variables:
-     myconfig: 'maxset'
-     with_cuda: 'false'
-     with_hdf5: 'false'
-     with_fftw: 'false'
-     with_gsl: 'false'
-     make_check_unit_tests: 'false'
-     make_check_python: 'false'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - no-cuda
-
-### Builds with different distributions
-
-debian:10:
-  <<: *global_job_definition
-  stage: build
-  image: ghcr.io/espressomd/docker/debian:3fd42369f84239b8c4f5d77067d404789c55ff44
-  variables:
-     with_cuda: 'false'
-     with_gsl: 'false'
-     myconfig: 'maxset'
-     make_check_python: 'false'
-     with_stokesian_dynamics: 'true'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - no-cuda
-
 fedora:36:
   <<: *global_job_definition
   stage: build
