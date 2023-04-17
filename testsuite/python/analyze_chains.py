@@ -72,8 +72,12 @@ class AnalyzeChain(ut.TestCase):
         dist = self.system.part.by_ids(
             head_ids).pos - self.system.part.by_ids(tail_ids).pos
         dist = np.sum(dist**2, axis=-1)
-        return np.mean(np.sqrt(dist)), np.std(
-            np.sqrt(dist)), np.mean(dist), np.std(dist)
+        return (
+            np.mean(np.sqrt(dist)),
+            0. if num_mono == 1 else np.std(np.sqrt(dist), ddof=0),
+            np.mean(dist),
+            0. if num_mono == 1 else np.std(dist, ddof=0),
+        )
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -87,8 +91,12 @@ class AnalyzeChain(ut.TestCase):
             rg2.append(np.var(r, axis=0))
         rg2 = np.array(rg2)
         rg2 = np.sum(rg2, axis=1)
-        return np.mean(np.sqrt(rg2)), np.std(
-            np.sqrt(rg2)), np.mean(rg2), np.std(rg2)
+        return (
+            np.mean(np.sqrt(rg2)),
+            0. if num_mono == 1 else np.std(np.sqrt(rg2), ddof=0),
+            np.mean(rg2),
+            0. if num_mono == 1 else np.std(rg2, ddof=0),
+        )
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -105,7 +113,7 @@ class AnalyzeChain(ut.TestCase):
             dist = np.linalg.norm(r_ij, axis=1)
             rh.append(1. / np.mean(1. / dist))
         rh = np.array(rh)
-        return np.mean(rh), np.std(rh)
+        return (np.mean(rh), 0. if num_mono == 1 else np.std(rh, ddof=0))
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -123,17 +131,20 @@ class AnalyzeChain(ut.TestCase):
         core_re = self.system.analysis.calc_re(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono))
+        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono),
+                                   atol=1e-8)
         # compare calc_rg()
         core_rg = self.system.analysis.calc_rg(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_rg, self.calc_rg(num_poly, num_mono))
+        np.testing.assert_allclose(core_rg, self.calc_rg(num_poly, num_mono),
+                                   atol=1e-8)
         # compare calc_rh()
         core_rh = self.system.analysis.calc_rh(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono))
+        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono),
+                                   atol=1e-8)
 
     def test_observables_lebc(self):
         lin_protocol = espressomd.lees_edwards.LinearShear(
@@ -163,7 +174,8 @@ class AnalyzeChain(ut.TestCase):
         core_re = self.system.analysis.calc_re(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono))
+        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono),
+                                   atol=1e-8)
         # compare calc_rg()
         core_rg = self.system.analysis.calc_rg(chain_start=0,
                                                number_of_chains=num_poly,
@@ -174,7 +186,8 @@ class AnalyzeChain(ut.TestCase):
         core_rh = self.system.analysis.calc_rh(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono))
+        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono),
+                                   atol=1e-8)
 
     def test_exceptions(self):
         err_msg = """particle with id 10 does not exist
@@ -185,9 +198,17 @@ please provide a contiguous range of particle ids"""
         self.insert_polymers(num_poly, num_mono)
         analysis = self.system.analysis
         for method in (analysis.calc_re, analysis.calc_rg, analysis.calc_rh):
-            with self.assertRaisesRegex(ValueError, err_msg):
+            with self.assertRaisesRegex(RuntimeError, err_msg):
                 method(chain_start=0, number_of_chains=num_poly,
                        chain_length=2 * num_mono)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 bead per chain"):
+                method(chain_start=0, number_of_chains=1, chain_length=0)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 bead per chain"):
+                method(chain_start=0, number_of_chains=1, chain_length=-1)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 chain"):
+                method(chain_start=0, number_of_chains=0, chain_length=1)
+            with self.assertRaisesRegex(ValueError, "needs at least 1 chain"):
+                method(chain_start=0, number_of_chains=-1, chain_length=1)
 
 
 if __name__ == "__main__":

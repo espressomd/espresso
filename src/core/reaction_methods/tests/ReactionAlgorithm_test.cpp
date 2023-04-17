@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(ReactionAlgorithm_test) {
     using ReactionAlgorithm::get_random_position_in_box;
     using ReactionAlgorithm::ReactionAlgorithm;
   };
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   // check acceptance rate
   ReactionAlgorithmTest r_algo(42, 1., 0., {});

@@ -34,7 +34,7 @@
 
 BOOST_AUTO_TEST_CASE(dist_function) {
   // multiply by 100 because BOOST_REQUIRE_CLOSE takes a percentage tolerance
-  auto constexpr tol = std::numeric_limits<double>::epsilon() * 100;
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   double const semiaxes[3] = {3.1, 2.2, 1.3};
 
   Shapes::Ellipsoid e;

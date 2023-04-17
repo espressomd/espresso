@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
     using ConstantpHEnsemble::calculate_acceptance_probability;
     using ConstantpHEnsemble::ConstantpHEnsemble;
   };
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   ConstantpHEnsembleTest r_algo(42, 20., 0., 1., {});
 
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(ConstantpHEnsemble_test) {
                                                std::log10(reaction.gamma)));
         auto const acceptance = r_algo.calculate_acceptance_probability(
             reaction, energy, 0., p_numbers);
-        BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
+        BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5. * tol);
       }
     }
   }

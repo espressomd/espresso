@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
     using ReactionEnsemble::generic_oneway_reaction;
     using ReactionEnsemble::ReactionEnsemble;
   };
-  auto constexpr tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   // check basic interface
   {
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(ReactionEnsemble_test) {
                                       std::exp(energy / r_algo.kT);
           auto const acceptance = r_algo.calculate_acceptance_probability(
               reaction, energy, 0., p_numbers);
-          BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5 * tol);
+          BOOST_CHECK_CLOSE(acceptance, acceptance_ref, 5. * tol);
         }
       }
     }

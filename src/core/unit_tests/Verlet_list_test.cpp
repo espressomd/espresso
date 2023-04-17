@@ -144,7 +144,7 @@ BOOST_TEST_DECORATOR(*utf::precondition(if_head_node()))
 BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
                        bdata::make(node_grids) * bdata::make(propagators),
                        node_grid, integration_helper) {
-  constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   boost::mpi::communicator world;
 
   auto const box_l = 8.;

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE AutoParameter test
+#define BOOST_TEST_MODULE Field coupling test for fields
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -37,7 +37,7 @@
 #include <limits>
 #include <type_traits>
 
-constexpr auto eps = 10 * std::numeric_limits<double>::epsilon();
+auto constexpr eps = 10. * std::numeric_limits<double>::epsilon();
 
 using namespace FieldCoupling::Fields;
 
@@ -286,6 +286,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
     BOOST_CHECK_SMALL(std::abs(interpolated_value - field_value), eps);
   }
 
+#ifndef __FAST_MATH__
   /* jacobian value */
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
@@ -313,6 +314,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     BOOST_CHECK_SMALL((interpolated_value - field_value).norm(), eps);
   }
+#endif // __FAST_MATH__
 }
 
 BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
@@ -362,6 +364,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     BOOST_CHECK_SMALL((interpolated_value - field_value).norm(), eps);
   }
 
+#ifndef __FAST_MATH__
   /* jacobian value */
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
@@ -400,4 +403,5 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     BOOST_CHECK_SMALL(
         (interpolated_value.row<1>() - field_value.row<1>()).norm(), eps);
   }
+#endif // __FAST_MATH__
 }

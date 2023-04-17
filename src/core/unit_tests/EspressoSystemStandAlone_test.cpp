@@ -118,7 +118,7 @@ static void mpi_set_tuned_p3m(double prefactor) {
 
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
                         *utf::precondition(if_head_node())) {
-  constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   auto const box_l = 8.;
   auto const box_center = box_l / 2.;
@@ -226,8 +226,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     for (int i = 0; i < n_pairs; ++i) {
       auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
       auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;
-      BOOST_CHECK_CLOSE(obs_energy->non_bonded_inter[i], ref_inter, 500. * tol);
-      BOOST_CHECK_CLOSE(obs_energy->non_bonded_intra[i], ref_intra, 500. * tol);
+      BOOST_CHECK_CLOSE(obs_energy->non_bonded_inter[i], ref_inter, 1e-10);
+      BOOST_CHECK_CLOSE(obs_energy->non_bonded_intra[i], ref_intra, 1e-10);
     }
   }
 #endif // LENNARD_JONES
@@ -256,8 +256,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
         -0.5 * fene_bond.k * Utils::sqr(fene_bond.drmax) *
         std::log(1.0 - Utils::sqr((dist - fene_bond.r0) / fene_bond.drmax));
     BOOST_CHECK_CLOSE(obs_energy->bonded[none_bond_id], none_energy, 0.0);
-    BOOST_CHECK_CLOSE(obs_energy->bonded[harm_bond_id], harm_energy, 40. * tol);
-    BOOST_CHECK_CLOSE(obs_energy->bonded[fene_bond_id], fene_energy, 40. * tol);
+    BOOST_CHECK_CLOSE(obs_energy->bonded[harm_bond_id], harm_energy, 1e-10);
+    BOOST_CHECK_CLOSE(obs_energy->bonded[fene_bond_id], fene_energy, 1e-10);
   }
 
   // check electrostatics

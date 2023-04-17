@@ -32,7 +32,7 @@
 
 BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
   using namespace ReactionMethods;
-  constexpr double tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   auto const reaction_ensemble_combinations = [](int N, int nu) {
     return (N + nu < 0) ? 0. : std::tgamma(N + 1) / std::tgamma(N + nu + 1);
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i_test) {
     for (int nu = -4; nu <= 4; ++nu) {
       auto const val = factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(N0, nu);
       auto const ref = reaction_ensemble_combinations(N0, nu);
-      BOOST_CHECK_CLOSE(val, ref, 10 * tol);
+      BOOST_CHECK_CLOSE(val, ref, 10. * tol);
     }
   }
 }

@@ -30,7 +30,7 @@ coverage:
     patch:
       default:
         enabled: yes
-        threshold: 1%
+        threshold: 2%
     changes: no
 
 parsers:

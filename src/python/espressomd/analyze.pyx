@@ -505,15 +505,19 @@ class Analysis:
             number_of_chains, 1, int, "number_of_chains=int is a required argument")
         utils.check_type_or_throw_except(
             chain_length, 1, int, "chain_length=int is a required argument")
+        if number_of_chains <= 0:
+            raise ValueError("Chain analysis needs at least 1 chain")
+        if chain_length <= 0:
+            raise ValueError("Chain analysis needs at least 1 bead per chain")
         id_min = chain_start
         id_max = chain_start + chain_length * number_of_chains
         for i in range(id_min, id_max):
             if not self._system.part.exists(i):
-                raise ValueError(f'particle with id {i} does not exist\n'
-                                 f'cannot perform analysis on the range '
-                                 f'chain_start={chain_start}, number_of_chains='
-                                 f'{number_of_chains}, chain_length={chain_length}\n'
-                                 f'please provide a contiguous range of particle ids')
+                raise RuntimeError(f'particle with id {i} does not exist\n'
+                                   f'cannot perform analysis on the range '
+                                   f'chain_start={chain_start}, number_of_chains='
+                                   f'{number_of_chains}, chain_length={chain_length}\n'
+                                   f'please provide a contiguous range of particle ids')
 
     #
     # Structure factor
