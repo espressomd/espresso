@@ -55,8 +55,8 @@ std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length) {
   auto const tmp = static_cast<double>(n_chains);
   re[0] = dist / tmp;
   re[2] = dist2 / tmp;
-  re[1] = sqrt(re[2] - re[0] * re[0]);
-  re[3] = sqrt(dist4 / tmp - re[2] * re[2]);
+  re[1] = (n_chains == 1) ? 0. : std::sqrt(re[2] - Utils::sqr(re[0]));
+  re[3] = (n_chains == 1) ? 0. : std::sqrt(dist4 / tmp - Utils::sqr(re[2]));
   return re;
 }
 
@@ -95,8 +95,8 @@ std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length) {
   auto const tmp = static_cast<double>(n_chains);
   rg[0] = r_G / tmp;
   rg[2] = r_G2 / tmp;
-  rg[1] = sqrt(rg[2] - Utils::sqr(rg[0]));
-  rg[3] = sqrt(r_G4 / tmp - Utils::sqr(rg[2]));
+  rg[1] = (n_chains == 1) ? 0. : std::sqrt(rg[2] - Utils::sqr(rg[0]));
+  rg[3] = (n_chains == 1) ? 0. : std::sqrt(r_G4 / tmp - Utils::sqr(rg[2]));
   return rg;
 }
 
@@ -125,6 +125,6 @@ std::array<double, 2> calc_rh(int chain_start, int n_chains, int chain_length) {
   }
   auto const tmp = static_cast<double>(n_chains);
   rh[0] = r_H / tmp;
-  rh[1] = sqrt(r_H2 / tmp - Utils::sqr(rh[0]));
+  rh[1] = (n_chains == 1) ? 0. : std::sqrt(r_H2 / tmp - Utils::sqr(rh[0]));
   return rh;
 }
