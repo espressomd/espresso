@@ -55,3 +55,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: Scheduled CI job has failed
           body: ${{ env.job_link }}
+  

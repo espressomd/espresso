@@ -1,0 +1,40 @@
+name: Build packages
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  ubuntupackage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Build
+        run: |
+          mkdir -p ./artifacts/deb-build
+          git archive --prefix=espresso-espresso-4.2/ -o ./artifacts/espresso-4.2.tar.gz HEAD
+          cd ./artifacts
+          cp *.tar.gz deb-build && cd deb-build
+          tar xf *.tar.gz
+      # - name: Build package
+      #   id: build
+      #   uses: ./.github/actions/build_ubuntu_package
+      # - name: Test package
+      #   uses: ./.github/actions/test_ubuntu_package
+      #   with:
+      ##     package_file: ${{steps.build.outputs.package_file }}
+
+      - name: Publish PPA
+        uses: ./.github/actions/publish-ppa-package
+        with:
+          repository: 'ppa:bishwash369/espressoppa'
+          gpg_private_key: ${{ secrets.ESPRESSO_PPA_PRIVATE_KEY }}
+          gpg_passphrase: ${{ secrets.ESPRESSO_PPA_PASSPHRASE }}
+          pkgdir: '${{ github.workspace }}/artifacts/deb-build/espresso*/'
+
+          
+

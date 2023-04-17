@@ -1,0 +1,11 @@
+name: 'Ubuntu Package'
+outputs:
+  package_file:
+    description: Name of package file generated
+description: 'Build Ubuntu package'
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  entrypoint: "/entrypoint.sh"
+
+
