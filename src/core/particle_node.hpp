@@ -82,7 +82,6 @@ void clear_particle_node();
  * @param pos   The particle position.
  */
 void make_new_particle(int p_id, Utils::Vector3d const &pos);
-void particle_checks(int p_id, Utils::Vector3d const &pos);
 
 /**
  * @brief Move particle to a new position.
