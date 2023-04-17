@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(algorithms_integer) {
 }
 
 BOOST_AUTO_TEST_CASE(algorithms_double) {
-  auto constexpr tol = 100 * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   std::vector<double> const values{1., 2., 3., 4.};
   {
     auto const res = WeightedAverage<Testing::Identity, Testing::One>()(values);

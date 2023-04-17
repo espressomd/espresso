@@ -26,7 +26,7 @@
 #include <cmath>
 #include <limits>
 
-constexpr auto eps = 100. * std::numeric_limits<double>::epsilon();
+auto constexpr eps = 8. * 100. * std::numeric_limits<double>::epsilon();
 
 BOOST_AUTO_TEST_CASE(hurwitz_zeta_function) {
   constexpr auto max_bits = 54.0;

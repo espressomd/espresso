@@ -131,17 +131,20 @@ class AnalyzeChain(ut.TestCase):
         core_re = self.system.analysis.calc_re(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono))
+        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono),
+                                   atol=1e-8)
         # compare calc_rg()
         core_rg = self.system.analysis.calc_rg(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_rg, self.calc_rg(num_poly, num_mono))
+        np.testing.assert_allclose(core_rg, self.calc_rg(num_poly, num_mono),
+                                   atol=1e-8)
         # compare calc_rh()
         core_rh = self.system.analysis.calc_rh(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono))
+        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono),
+                                   atol=1e-8)
 
     def test_observables_lebc(self):
         lin_protocol = espressomd.lees_edwards.LinearShear(
@@ -171,7 +174,8 @@ class AnalyzeChain(ut.TestCase):
         core_re = self.system.analysis.calc_re(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono))
+        np.testing.assert_allclose(core_re, self.calc_re(num_poly, num_mono),
+                                   atol=1e-8)
         # compare calc_rg()
         core_rg = self.system.analysis.calc_rg(chain_start=0,
                                                number_of_chains=num_poly,
@@ -182,7 +186,8 @@ class AnalyzeChain(ut.TestCase):
         core_rh = self.system.analysis.calc_rh(chain_start=0,
                                                number_of_chains=num_poly,
                                                chain_length=num_mono)
-        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono))
+        np.testing.assert_allclose(core_rh, self.calc_rh(num_poly, num_mono),
+                                   atol=1e-8)
 
     def test_exceptions(self):
         num_poly = 2

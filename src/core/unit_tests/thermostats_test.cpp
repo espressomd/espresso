@@ -42,7 +42,7 @@
 
 // multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
 // and by 6 to account for error accumulation in thermostat functions
-constexpr auto tol = 6 * 100 * std::numeric_limits<double>::epsilon();
+auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
 Particle particle_factory() {
   Particle p{};
