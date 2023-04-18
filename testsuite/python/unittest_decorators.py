@@ -19,7 +19,7 @@
 
 import sys
 import importlib
-import setuptools
+import pkg_resources
 import unittest
 
 import espressomd
@@ -74,7 +74,7 @@ def skipIfUnmetModuleVersionRequirement(module, version_requirement):
         _module = importlib.import_module(module)
     except ImportError:
         return skipIfMissingModules(module)
-    if not setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet(
+    if not pkg_resources.packaging.specifiers.SpecifierSet(
             version_requirement).contains(_module.__version__):
         return unittest.skip(
             "Skipping test: version requirement not met for module {}".format(module))
