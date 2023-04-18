@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -22,7 +22,7 @@
 
 #ifdef WALBERLA
 
-#include "FluidWalberla.hpp"
+#include "EKSpecies.hpp"
 
 #include "LatticeSlice.hpp"
 
@@ -30,7 +30,7 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
@@ -44,11 +44,14 @@
 
 namespace ScriptInterface::walberla {
 
-using VelocityBounceBackType = boost::optional<Utils::Vector3d>;
+using DensityBoundaryType = boost::optional<double>;
+using FluxBoundaryType = boost::optional<Utils::Vector3d>;
 
-struct LBFieldSerializer {
+struct EKFieldSerializer {
+
   template <typename T> static Variant serialize(std::vector<T> const &values) {
-    if constexpr (std::is_same_v<T, VelocityBounceBackType>) {
+    if constexpr (std::is_same_v<T, FluxBoundaryType> or
+                  std::is_same_v<T, DensityBoundaryType>) {
       std::vector<Variant> vec;
       vec.reserve(values.size());
       for (auto const &opt : values) {
@@ -69,13 +72,29 @@ struct LBFieldSerializer {
   template <typename T>
   static std::vector<T> deserialize(Variant const &variant) {
     std::vector<T> values;
-    if constexpr (std::is_same_v<T, VelocityBounceBackType>) {
+    if constexpr (std::is_same_v<T, FluxBoundaryType>) {
       auto const vector_variants = get_value<std::vector<Variant>>(variant);
       for (auto const &value : vector_variants) {
         if (is_none(value)) {
           values.emplace_back(boost::none);
         } else {
           values.emplace_back(get_value<Utils::Vector3d>(value));
+        }
+      }
+    } else if constexpr (std::is_same_v<T, DensityBoundaryType>) {
+      std::vector<Variant> vector_variants;
+      if (is_type<std::vector<double>>(variant)) {
+        for (auto const v : get_value<std::vector<double>>(variant)) {
+          vector_variants.emplace_back(v);
+        }
+      } else {
+        vector_variants = get_value<std::vector<Variant>>(variant);
+      }
+      for (auto const &value : vector_variants) {
+        if (is_none(value)) {
+          values.emplace_back(boost::none);
+        } else {
+          values.emplace_back(get_value<double>(value));
         }
       }
     } else if constexpr (std::is_same_v<T, double>) {
@@ -95,47 +114,36 @@ struct LBFieldSerializer {
   }
 };
 
-class FluidSlice : public LatticeSlice<LBFieldSerializer> {
-  std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
-  std::shared_ptr<FluidWalberla> m_lb_sip;
+class EKSpeciesSlice : public LatticeSlice<EKFieldSerializer> {
+  std::shared_ptr<::EKinWalberlaBase> m_ek_species;
+  std::shared_ptr<EKSpecies> m_ek_sip;
   double m_conv_dens;
-  double m_conv_press;
-  double m_conv_force;
-  double m_conv_velocity;
+  double m_conv_flux;
   std::unordered_map<std::string, std::vector<int>> m_shape_val;
 
 public:
   void do_construct(VariantMap const &params) override {
-    m_lb_sip = get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
-    m_lb_fluid = m_lb_sip->lb_fluid().lock();
-    assert(m_lb_fluid);
-    auto const &lb_params = m_lb_sip->lb_params().lock();
-    assert(lb_params);
-    auto const tau = lb_params->get_tau();
-    auto const agrid = lb_params->get_agrid();
-    m_conv_dens = Utils::int_pow<3>(agrid);
-    m_conv_press = Utils::int_pow<1>(agrid) * Utils::int_pow<2>(tau);
-    m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
-    m_conv_velocity = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
+    m_ek_sip = get_value<std::shared_ptr<EKSpecies>>(params, "parent_sip");
+    m_ek_species = m_ek_sip->get_ekinstance();
+    assert(m_ek_species);
+    m_conv_dens = m_ek_sip->get_conversion_factor_density();
+    m_conv_flux = m_ek_sip->get_conversion_factor_flux();
     m_shape = get_value<std::vector<int>>(params, "shape");
     m_slice_lower_corner =
         get_value<Utils::Vector3i>(params, "slice_lower_corner");
     m_slice_upper_corner =
         get_value<Utils::Vector3i>(params, "slice_upper_corner");
     m_shape_val["density"] = {1};
-    m_shape_val["population"] = {static_cast<int>(m_lb_fluid->stencil_size())};
-    m_shape_val["velocity"] = {3};
-    m_shape_val["velocity_at_boundary"] = {1};
+    m_shape_val["flux_at_boundary"] = {1};
+    m_shape_val["density_at_boundary"] = {1};
     m_shape_val["is_boundary"] = {1};
-    m_shape_val["last_applied_force"] = {3};
-    m_shape_val["pressure_tensor"] = {3, 3};
   }
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
 
   ::LatticeWalberla const &get_lattice() const override {
-    return m_lb_fluid->get_lattice();
+    return m_ek_species->get_lattice();
   }
 };
 

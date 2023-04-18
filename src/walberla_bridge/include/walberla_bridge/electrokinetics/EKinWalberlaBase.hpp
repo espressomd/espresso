@@ -42,34 +42,87 @@ public:
   /** @brief Number of discretized fluxes */
   [[nodiscard]] virtual std::size_t stencil_size() const = 0;
 
-  // Density
-  virtual bool set_node_density(const Utils::Vector3i &node,
+  /** @brief Set node density. */
+  virtual bool set_node_density(Utils::Vector3i const &node,
                                 double density) = 0;
-  [[nodiscard]] virtual boost::optional<double>
-  get_node_density(const Utils::Vector3i &node) const = 0;
 
-  virtual bool set_node_flux_boundary(const Utils::Vector3i &node,
-                                      const Utils::Vector3d &flux) = 0;
-  [[nodiscard]] virtual boost::optional<Utils::Vector3d>
-  get_node_flux_at_boundary(const Utils::Vector3i &node,
-                            bool consider_ghosts = false) const = 0;
-  virtual bool remove_node_from_flux_boundary(const Utils::Vector3i &node) = 0;
-  virtual bool set_node_density_boundary(const Utils::Vector3i &node,
-                                         double density) = 0;
+  /** @brief Get node density. */
   [[nodiscard]] virtual boost::optional<double>
-  get_node_density_at_boundary(const Utils::Vector3i &node,
-                               bool consider_ghosts = false) const = 0;
-  virtual bool
-  remove_node_from_density_boundary(const Utils::Vector3i &node) = 0;
-  [[nodiscard]] virtual boost::optional<bool>
-  get_node_is_flux_boundary(const Utils::Vector3i &node,
+  get_node_density(Utils::Vector3i const &node) const = 0;
+
+  /** @brief Set slice density. */
+  virtual void set_slice_density(Utils::Vector3i const &lower_corner,
+                                 Utils::Vector3i const &upper_corner,
+                                 std::vector<double> const &density) = 0;
+
+  /** @brief Get slice density. */
+  [[nodiscard]] virtual std::vector<double>
+  get_slice_density(Utils::Vector3i const &lower_corner,
+                    Utils::Vector3i const &upper_corner) const = 0;
+
+  /** @brief Set node flux boundary conditions. */
+  virtual bool set_node_flux_boundary(Utils::Vector3i const &node,
+                                      Utils::Vector3d const &flux) = 0;
+
+  /** @brief Get node flux boundary conditions. */
+  [[nodiscard]] virtual boost::optional<Utils::Vector3d>
+  get_node_flux_at_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts = false) const = 0;
-  [[nodiscard]] virtual boost::optional<bool>
-  get_node_is_density_boundary(const Utils::Vector3i &node,
+
+  /** @brief Set slice flux boundary conditions. */
+  virtual void set_slice_flux_boundary(
+      Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
+      std::vector<boost::optional<Utils::Vector3d>> const &flux) = 0;
+
+  /** @brief Get slice flux boundary conditions. */
+  [[nodiscard]] virtual std::vector<boost::optional<Utils::Vector3d>>
+  get_slice_flux_at_boundary(Utils::Vector3i const &lower_corner,
+                             Utils::Vector3i const &upper_corner) const = 0;
+
+  virtual bool remove_node_from_flux_boundary(Utils::Vector3i const &node) = 0;
+
+  /** @brief Set node density boundary conditions. */
+  virtual bool set_node_density_boundary(Utils::Vector3i const &node,
+                                         double density) = 0;
+
+  /** @brief Get node density boundary conditions. */
+  [[nodiscard]] virtual boost::optional<double>
+  get_node_density_at_boundary(Utils::Vector3i const &node,
                                bool consider_ghosts = false) const = 0;
+
+  /** @brief Set slice density boundary conditions. */
+  virtual void set_slice_density_boundary(
+      Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
+      std::vector<boost::optional<double>> const &density) = 0;
+
+  /** @brief Get slice density boundary conditions. */
+  [[nodiscard]] virtual std::vector<boost::optional<double>>
+  get_slice_density_at_boundary(Utils::Vector3i const &lower_corner,
+                                Utils::Vector3i const &upper_corner) const = 0;
+
+  virtual bool
+  remove_node_from_density_boundary(Utils::Vector3i const &node) = 0;
+
+  /** @brief Check if node has flux boundary conditions. */
   [[nodiscard]] virtual boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node,
+  get_node_is_flux_boundary(Utils::Vector3i const &node,
+                            bool consider_ghosts = false) const = 0;
+
+  /** @brief Check if node has density boundary conditions. */
+  [[nodiscard]] virtual boost::optional<bool>
+  get_node_is_density_boundary(Utils::Vector3i const &node,
+                               bool consider_ghosts = false) const = 0;
+
+  /** @brief Check if node has any boundary conditions. */
+  [[nodiscard]] virtual boost::optional<bool>
+  get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const = 0;
+
+  /** @brief Check if slice has any boundary conditions. */
+  [[nodiscard]] virtual std::vector<bool>
+  get_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const = 0;
+
   virtual void clear_flux_boundaries() = 0;
   virtual void clear_density_boundaries() = 0;
 

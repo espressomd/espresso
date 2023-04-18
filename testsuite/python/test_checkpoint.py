@@ -250,7 +250,7 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_equal(np.copy(slice3.is_boundary), False)
             # check boundary conditions
             field = f"{attr}_boundary"
-            shape = [1] + list(ek_species.shape)[1:] + [1]
+            shape = list(ek_species.shape)[-2:] + [1]
             np.testing.assert_allclose(
                 accessor(np.copy(getattr(slice1, field))),
                 generator(value1, shape))

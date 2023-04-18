@@ -114,6 +114,18 @@ protected:
 
   [[nodiscard]] std::size_t stencil_size() const override { return FluxCount; }
 
+  boost::optional<CellInterval>
+  get_interval(Utils::Vector3i const &lower_corner,
+               Utils::Vector3i const &upper_corner) const {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    return {CellInterval(lower_bc->cell, upper_bc->cell)};
+  }
+
   void reset_density_boundary_handling() {
     auto const &blocks = get_lattice().get_blocks();
     m_boundary_density = std::make_unique<BoundaryModelDensity>(
@@ -353,7 +365,6 @@ public:
     return static_cast<std::size_t>(m_density_field_id);
   }
 
-  // Density
   bool set_node_density(const Utils::Vector3i &node, double density) override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
@@ -379,7 +390,57 @@ public:
     return {double_c(density_field->get((*bc).cell))};
   }
 
+  [[nodiscard]] std::vector<double>
+  get_slice_density(Utils::Vector3i const &lower_corner,
+                    Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
+      return {};
+    }
+    std::vector<double> out;
+    out.reserve(Utils::product(upper_corner - lower_corner));
+    auto const &block = *(lattice.get_blocks()->begin());
+    auto const density_field =
+        block.template getData<DensityField>(m_density_field_id);
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          out.emplace_back(density_field->get(Cell{x, y, z}));
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_density(Utils::Vector3i const &lower_corner,
+                         Utils::Vector3i const &upper_corner,
+                         std::vector<double> const &density) override {
+    auto const &lattice = get_lattice();
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
+      return;
+    }
+    auto &block = *(lattice.get_blocks()->begin());
+    auto density_field =
+        block.template getData<DensityField>(m_density_field_id);
+    auto it = density.begin();
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          density_field->get(Cell{x, y, z}) = FloatType_c(*it);
+          ++it;
+        }
+      }
+    }
+  }
+
   void clear_flux_boundaries() override { reset_flux_boundary_handling(); }
+
   void clear_density_boundaries() override {
     reset_density_boundary_handling();
   }
@@ -435,6 +496,148 @@ public:
       return {boost::none};
 
     return {double_c(m_boundary_density->get_node_value_at_boundary(node))};
+  }
+
+  void set_slice_density_boundary(
+      Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
+      std::vector<boost::optional<double>> const &density) override {
+    auto const &lattice = get_lattice();
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
+      return;
+    }
+    auto it = density.begin();
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          auto const bc = get_block_and_cell(lattice, node, false);
+          auto const &opt = *it;
+          if (opt) {
+            m_boundary_density->set_node_value_at_boundary(node, *opt, *bc);
+          } else {
+            m_boundary_density->remove_node_from_boundary(node, *bc);
+          }
+          ++it;
+        }
+      }
+    }
+  }
+
+  [[nodiscard]] std::vector<boost::optional<double>>
+  get_slice_density_at_boundary(
+      Utils::Vector3i const &lower_corner,
+      Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
+      return {};
+    }
+    std::vector<boost::optional<double>> out;
+    out.reserve(Utils::product(upper_corner - lower_corner));
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          if (m_boundary_density->node_is_boundary(node)) {
+            out.emplace_back(
+                m_boundary_density->get_node_value_at_boundary(node));
+          } else {
+            out.emplace_back(boost::none);
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_flux_boundary(
+      Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
+      std::vector<boost::optional<Utils::Vector3d>> const &flux) override {
+    auto const &lattice = get_lattice();
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
+      return;
+    }
+    auto it = flux.begin();
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          auto const bc = get_block_and_cell(lattice, node, false);
+          auto const &opt = *it;
+          if (opt) {
+            m_boundary_flux->set_node_value_at_boundary(node, *opt, *bc);
+          } else {
+            m_boundary_flux->remove_node_from_boundary(node, *bc);
+          }
+          ++it;
+        }
+      }
+    }
+  }
+
+  [[nodiscard]] std::vector<boost::optional<Utils::Vector3d>>
+  get_slice_flux_at_boundary(
+      Utils::Vector3i const &lower_corner,
+      Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
+      return {};
+    }
+    std::vector<boost::optional<Utils::Vector3d>> out;
+    out.reserve(Utils::product(upper_corner - lower_corner));
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          if (m_boundary_flux->node_is_boundary(node)) {
+            out.emplace_back(m_boundary_flux->get_node_value_at_boundary(node));
+          } else {
+            out.emplace_back(boost::none);
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  [[nodiscard]] std::vector<bool>
+  get_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const override {
+    auto const &lattice = get_lattice();
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
+      return {};
+    }
+    std::vector<bool> out;
+    out.reserve(Utils::product(upper_corner - lower_corner));
+    auto const local_offset = std::get<0>(lattice.get_local_grid_range());
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
+    for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
+      for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
+        for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
+          auto const node = local_offset + Utils::Vector3i{{x, y, z}};
+          out.emplace_back(m_boundary_density->node_is_boundary(node) or
+                           m_boundary_flux->node_is_boundary(node));
+        }
+      }
+    }
+    return out;
   }
 
   bool remove_node_from_density_boundary(const Utils::Vector3i &node) override {

@@ -330,7 +330,7 @@ python_test(FILE drude.py MAX_NUM_PROC 2)
 python_test(FILE thermostats_anisotropic.py MAX_NUM_PROC 4)
 python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
-python_test(FILE lb_slice.py MAX_NUM_PROC 1)
+python_test(FILE lb_slice.py MAX_NUM_PROC 2)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
 # python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO WALBERLA
 python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2 GPU_SLOTS 1)
@@ -393,6 +393,7 @@ python_test(FILE ek_bulk_reactions.py MAX_NUM_PROC 1)
 python_test(FILE ek_indexed_reactions.py MAX_NUM_PROC 1)
 python_test(FILE ek_fixeddensity.py MAX_NUM_PROC 1)
 python_test(FILE ek_boundary.py MAX_NUM_PROC 2)
+python_test(FILE ek_slice.py MAX_NUM_PROC 2)
 
 set(ESPRESSO_CTEST_RESOURCE_SPEC_FILE resources.json)
 configure_file(

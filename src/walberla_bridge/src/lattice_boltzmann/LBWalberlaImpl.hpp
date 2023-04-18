@@ -255,6 +255,18 @@ protected:
     return static_cast<std::size_t>(Stencil::Size);
   }
 
+  boost::optional<CellInterval>
+  get_interval(Utils::Vector3i const &lower_corner,
+               Utils::Vector3i const &upper_corner) const {
+    auto const &lattice = get_lattice();
+    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
+    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
+    if (not lower_bc or not upper_bc) {
+      return {};
+    }
+    return {CellInterval(lower_bc->cell, upper_bc->cell)};
+  }
+
   /**
    * @brief Convenience function to add a field with a custom allocator.
    *
@@ -603,9 +615,8 @@ public:
   get_slice_velocity(Utils::Vector3i const &lower_corner,
                      Utils::Vector3i const &upper_corner) const override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return {};
     }
     std::vector<double> out;
@@ -613,8 +624,8 @@ public:
     auto const &block = *(lattice.get_blocks()->begin());
     auto const field = block.template getData<VectorField>(m_velocity_field_id);
     auto const local_offset = std::get<0>(lattice.get_local_grid_range());
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -640,9 +651,8 @@ public:
                           Utils::Vector3i const &upper_corner,
                           std::vector<double> const &velocity) override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return;
     }
     auto &block = *(lattice.get_blocks()->begin());
@@ -652,8 +662,8 @@ public:
     auto force_field =
         block.template getData<VectorField>(m_last_applied_force_field_id);
     auto it = velocity.begin();
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -780,9 +790,8 @@ public:
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return {};
     }
     std::vector<double> out;
@@ -790,8 +799,8 @@ public:
     auto const &block = *(lattice.get_blocks()->begin());
     auto const field =
         block.template getData<VectorField>(m_last_applied_force_field_id);
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -809,17 +818,16 @@ public:
                                     Utils::Vector3i const &upper_corner,
                                     std::vector<double> const &force) override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return;
     }
     auto &block = *(lattice.get_blocks()->begin());
     auto field =
         block.template getData<VectorField>(m_last_applied_force_field_id);
     auto it = force.begin();
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -872,17 +880,16 @@ public:
   get_slice_population(Utils::Vector3i const &lower_corner,
                        Utils::Vector3i const &upper_corner) const override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return {};
     }
     std::vector<double> out;
     out.reserve(Stencil::Size * Utils::product(upper_corner - lower_corner));
     auto const &block = *(lattice.get_blocks()->begin());
     auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -901,16 +908,15 @@ public:
                             Utils::Vector3i const &upper_corner,
                             std::vector<double> const &population) override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return;
     }
     auto &block = *(lattice.get_blocks()->begin());
     auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
     auto it = population.begin();
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -953,17 +959,16 @@ public:
   get_slice_density(Utils::Vector3i const &lower_corner,
                     Utils::Vector3i const &upper_corner) const override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return {};
     }
     std::vector<double> out;
     out.reserve(Utils::product(upper_corner - lower_corner));
     auto const &block = *(lattice.get_blocks()->begin());
     auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -979,16 +984,15 @@ public:
                          Utils::Vector3i const &upper_corner,
                          std::vector<double> const &density) override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return;
     }
     auto &block = *(lattice.get_blocks()->begin());
     auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
     auto it = density.begin();
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -1024,16 +1028,15 @@ public:
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return {};
     }
     std::vector<boost::optional<Utils::Vector3d>> out;
     out.reserve(Utils::product(upper_corner - lower_corner));
     auto const local_offset = std::get<0>(lattice.get_local_grid_range());
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -1053,15 +1056,14 @@ public:
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<boost::optional<Utils::Vector3d>> const &velocity) override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return;
     }
     auto it = velocity.begin();
     auto const local_offset = std::get<0>(lattice.get_local_grid_range());
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -1112,16 +1114,15 @@ public:
   get_slice_is_boundary(Utils::Vector3i const &lower_corner,
                         Utils::Vector3i const &upper_corner) const override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return {};
     }
     std::vector<bool> out;
     out.reserve(Utils::product(upper_corner - lower_corner));
     auto const local_offset = std::get<0>(lattice.get_local_grid_range());
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {
@@ -1163,17 +1164,16 @@ public:
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
     auto const &lattice = get_lattice();
-    auto const lower_bc = get_block_and_cell(lattice, lower_corner, true);
-    auto const upper_bc = get_block_and_cell(lattice, upper_corner, true);
-    if (not lower_bc or not upper_bc) {
+    auto const ci = get_interval(lower_corner, upper_corner);
+    if (not ci) {
       return {};
     }
     std::vector<double> out;
     out.reserve(9 * Utils::product(upper_corner - lower_corner));
     auto const &block = *(lattice.get_blocks()->begin());
     auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-    auto const lower_cell = lower_bc->cell;
-    auto const upper_cell = upper_bc->cell;
+    auto const lower_cell = ci->min();
+    auto const upper_cell = ci->max();
     for (auto x = lower_cell.x(); x < upper_cell.x(); ++x) {
       for (auto y = lower_cell.y(); y < upper_cell.y(); ++y) {
         for (auto z = lower_cell.z(); z < upper_cell.z(); ++z) {

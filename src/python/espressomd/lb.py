@@ -705,7 +705,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        value : :class:`~espressomd.lb.VelocityBounceBack` or None
+        value : :class:`~espressomd.lb.VelocityBounceBack` or obj:`None`
             If value is :class:`~espressomd.lb.VelocityBounceBack`,
             set the node to be a boundary node with the specified velocity.
             If value is ``None``, the node will become a fluid node.
@@ -850,7 +850,7 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
         -------
         (N, M, L) array_like of :class:`~espressomd.lb.VelocityBounceBack`
             If the nodes are boundary nodes
-        (N, M, L) array_like of None
+        (N, M, L) array_like of obj:`None`
             If the nodes are not boundary nodes
         """
 
@@ -861,10 +861,10 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        values : (N, M, L) array_like of :class:`~espressomd.lb.VelocityBounceBack` or None
+        values : (N, M, L) array_like of :class:`~espressomd.lb.VelocityBounceBack` or obj:`None`
             If values are :class:`~espressomd.lb.VelocityBounceBack`,
             set the nodes to be boundary nodes with the specified velocity.
-            If values are ``None``, the nodes will become fluid nodes.
+            If values are obj:`None`, the nodes will become fluid nodes.
         """
 
         type_error_msg = "Parameter 'values' must be an array_like of VelocityBounceBack or None"

@@ -224,6 +224,9 @@ cdef Variant python_object_to_variant(value) except *:
     if value is None:
         return Variant()
 
+    if isinstance(value, np.ndarray) and value.ndim == 0:
+        value = value.item()
+
     # The order is important, the object character should
     # be preserved even if the PScriptInterface derived class
     # is iterable.

@@ -26,7 +26,8 @@ import itertools
 from . import utils
 from .code_features import has_features
 from .shapes import Shape
-from .detail.walberla import VTKRegistry, LatticeSliceWalberla
+from .detail.walberla import VTKRegistry
+import espressomd.detail.walberla
 
 
 class EKFFT(ScriptInterfaceHelper):
@@ -475,14 +476,158 @@ class EKSpeciesNode(ScriptInterfaceHelper):
                 "Parameter 'value' must be an instance of FluxBoundary or None")
 
 
-class EKSpeciesSlice(LatticeSliceWalberla):
-    _node_class = EKSpeciesNode
+@script_interface_register
+class EKSpeciesSlice(ScriptInterfaceHelper):
+    _so_name = "walberla::EKSpeciesSlice"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "slice_range"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+
+    def __init__(self, *args, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+        else:
+            self.validate_params(kwargs)
+            slice_range = kwargs.pop("slice_range")
+            grid_size = kwargs["parent_sip"].shape
+            extra_kwargs = espressomd.detail.walberla.get_slice_bounding_box(
+                slice_range, grid_size)
+            node = EKSpeciesNode(index=np.array([0, 0, 0]), **kwargs)
+            super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
+            utils.handle_errors("EKSpeciesSlice instantiation failed")
+
+    def __iter__(self):
+        lower, upper = self.call_method("get_slice_ranges")
+        indices = [list(range(lower[i], upper[i])) for i in range(3)]
+        lb_sip = self.call_method("get_ek_sip")
+        for index in itertools.product(*indices):
+            yield EKSpeciesNode(parent_sip=lb_sip, index=np.array(index))
 
     def __reduce__(self):
         raise NotImplementedError("Cannot serialize EK species slice objects")
 
-    def setter_checks(self, attr, values):
-        pass
+    def _getter(self, attr):
+        value_grid, shape = self.call_method(f"get_{attr}")
+        if attr == "flux_at_boundary":
+            value_grid = [
+                None if x is None else FluxBoundary(x) for x in value_grid]
+        elif attr == "density_at_boundary":
+            value_grid = [
+                None if x is None else DensityBoundary(x) for x in value_grid]
+        return utils.array_locked(np.reshape(value_grid, shape))
+
+    def _setter(self, attr, values):
+        dimensions = self.call_method("get_slice_size")
+        if 0 in dimensions:
+            raise AttributeError(
+                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
+
+        values = np.copy(values)
+        value_shape = tuple(self.call_method("get_value_shape", name=attr))
+        target_shape = (*dimensions, *value_shape)
+
+        # broadcast if only one element was provided
+        if values.shape == value_shape or values.shape == () and value_shape == (1,):
+            values = np.full(target_shape, values)
+
+        def shape_squeeze(shape):
+            return tuple(x for x in shape if x != 1)
+
+        if shape_squeeze(values.shape) != shape_squeeze(target_shape):
+            raise ValueError(
+                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}")
+
+        self.call_method(f"set_{attr}", values=values.flatten())
+
+    @property
+    def density(self):
+        return self._getter("density",)
+
+    @density.setter
+    def density(self, value):
+        self._setter("density", value)
+
+    @property
+    def is_boundary(self):
+        return self._getter("is_boundary")
+
+    @is_boundary.setter
+    def is_boundary(self, value):
+        raise RuntimeError("Property 'is_boundary' is read-only.")
+
+    @property
+    def density_boundary(self):
+        """
+        Returns
+        -------
+        (N, M, L) array_like of :class:`~espressomd.EKSpecies.DensityBoundary`
+            If the nodes are boundary nodes
+        (N, M, L) array_like of :obj:`None`
+            If the nodes are not boundary nodes
+        """
+
+        return self._getter("density_at_boundary")
+
+    @density_boundary.setter
+    def density_boundary(self, values):
+        """
+        Parameters
+        ----------
+        values : (N, M, L) array_like of :class:`~espressomd.EKSpecies.DensityBoundary` or obj:`None`
+            If values are :class:`~espressomd.EKSpecies.DensityBoundary`,
+            set the nodes to be boundary nodes with the specified density.
+            If values are obj:`None`, the nodes will become domain nodes.
+        """
+
+        type_error_msg = "Parameter 'values' must be an array_like of DensityBoundary or None"
+        values = np.copy(values)
+        if values.dtype != np.dtype("O"):
+            raise TypeError(type_error_msg)
+        for index in np.ndindex(*values.shape):
+            if values[index] is not None:
+                if not isinstance(values[index], DensityBoundary):
+                    raise TypeError(type_error_msg)
+                values[index] = np.array(values[index].density)
+        self._setter("density_at_boundary", values=values)
+
+    @property
+    def flux_boundary(self):
+        """
+        Returns
+        -------
+        (N, M, L) array_like of :class:`~espressomd.EKSpecies.FluxBoundary`
+            If the nodes are boundary nodes
+        (N, M, L) array_like of :obj:`None`
+            If the nodes are not boundary nodes
+        """
+
+        return self._getter("flux_at_boundary")
+
+    @flux_boundary.setter
+    def flux_boundary(self, values):
+        """
+        Parameters
+        ----------
+        values : (N, M, L) array_like of :class:`~espressomd.EKSpecies.FluxBoundary` or obj:`None`
+            If values are :class:`~espressomd.lb.FluxBoundary`,
+            set the nodes to be boundary nodes with the specified flux.
+            If values are obj:`None`, the nodes will become domain nodes.
+        """
+
+        type_error_msg = "Parameter 'values' must be an array_like of FluxBoundary or None"
+        values = np.copy(values)
+        if values.dtype != np.dtype("O"):
+            raise TypeError(type_error_msg)
+        for index in np.ndindex(*values.shape):
+            if values[index] is not None:
+                if not isinstance(values[index], FluxBoundary):
+                    raise TypeError(type_error_msg)
+                values[index] = np.array(values[index].flux)
+        self._setter("flux_at_boundary", values=values)
 
 
 @script_interface_register

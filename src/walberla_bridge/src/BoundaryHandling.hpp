@@ -99,6 +99,7 @@ template <typename T, typename BoundaryClass> class BoundaryHandling {
   }
 
 public:
+  using value_type = T;
   using FlagField = field::FlagField<uint8_t>;
 
   BoundaryHandling(std::shared_ptr<StructuredBlockForest> blocks,
