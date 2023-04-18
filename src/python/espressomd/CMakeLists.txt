@@ -47,6 +47,7 @@ file(GLOB cython_AUX *.py)
 set(cython_AUX "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
+add_subdirectory(detail)
 
 list(REMOVE_DUPLICATES cython_SRC)
 

@@ -25,9 +25,8 @@ import itertools
 
 from . import utils
 from .code_features import has_features
-
 from .shapes import Shape
-from .lb import VTKRegistry, LatticeSliceWalberla
+from .detail.walberla import VTKRegistry, LatticeSliceWalberla
 
 
 class EKFFT(ScriptInterfaceHelper):

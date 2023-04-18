@@ -24,6 +24,8 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register, 
 from .shapes import Shape
 from . import utils
 from .code_features import has_features
+from .detail.walberla import VTKRegistry
+import espressomd.detail.walberla
 
 
 class VelocityBounceBack:
@@ -226,30 +228,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     @pressure_tensor.setter
     def pressure_tensor(self, value):
         raise RuntimeError(f"Property 'pressure_tensor' is read-only")
-
-
-class VTKRegistry:
-
-    def __init__(self):
-        if not has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-        self.map = {}
-        self.collisions = {}
-
-    def _register_vtk_object(self, vtk_obj):
-        vtk_uid = vtk_obj.vtk_uid
-        self.map[vtk_uid] = vtk_obj
-        self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
-
-    def __getstate__(self):
-        return self.map
-
-    def __setstate__(self, active_vtk_objects):
-        self.map = {}
-        self.collisions = {}
-        for vtk_uid, vtk_obj in active_vtk_objects.items():
-            self.map[vtk_uid] = vtk_obj
-            self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
 
 
 if has_features("WALBERLA"):
@@ -769,79 +747,6 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         self.call_method("set_last_applied_force", value=value)
 
 
-class LatticeSliceWalberla:
-
-    def __init__(self, parent_sip, node_grid, slice_range):
-        self.indices = [np.atleast_1d(np.arange(node_grid[i])[slice_range[i]])
-                        for i in range(3)]
-        self.dimensions = [ind.size for ind in self.indices]
-        self._sip = parent_sip
-        self._node = self._node_class(parent_sip=self._sip, index=[0, 0, 0])
-
-    def __iter__(self):
-        for index in itertools.product(*self.indices):
-            yield self._node_class(parent_sip=self._sip, index=np.array(index))
-
-    def setter_checks(self, attr, values):
-        raise NotImplementedError("Derived classes must implement this method")
-
-    def __getattr__(self, attr):
-        node = self.__dict__.get("_node")
-        if node is None or not hasattr(node, attr):
-            if attr in self.__dict__:
-                return self.__dict__[attr]
-            raise AttributeError(
-                f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
-
-        if 0 in self.dimensions:
-            return np.empty(0, dtype=type(None))
-
-        value = getattr(node, attr)
-        value_shape = np.shape(value)
-        dtype = value.dtype if isinstance(value, np.ndarray) else type(value)
-        np_gen = np.zeros if dtype in (int, float, bool) else np.empty
-        value_grid = np_gen((*self.dimensions, *value_shape), dtype=dtype)
-
-        indices = itertools.product(*map(enumerate, self.indices))
-        for (i, x), (j, y), (k, z) in indices:
-            err = node.call_method("override_index", index=[x, y, z])
-            assert err == 0
-            value_grid[i, j, k] = getattr(node, attr)
-
-        if value_shape == (1,):
-            value_grid = np.squeeze(value_grid, axis=-1)
-        return utils.array_locked(value_grid)
-
-    def __setattr__(self, attr, values):
-        node = self.__dict__.get("_node")
-        if node is None or not hasattr(node, attr):
-            self.__dict__[attr] = values
-            return
-        elif 0 in self.dimensions:
-            raise AttributeError(
-                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
-
-        values = np.copy(values)
-        value_shape = np.shape(getattr(node, attr))
-        target_shape = (*self.dimensions, *value_shape)
-
-        # broadcast if only one element was provided
-        if values.shape == value_shape:
-            values = np.full(target_shape, values)
-
-        if values.shape != target_shape:
-            raise ValueError(
-                f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}")
-
-        self.setter_checks(attr, values)
-
-        indices = itertools.product(*map(enumerate, self.indices))
-        for (i, x), (j, y), (k, z) in indices:
-            err = node.call_method("override_index", index=[x, y, z])
-            assert err == 0
-            setattr(node, attr, values[i, j, k])
-
-
 @script_interface_register
 class LBFluidSliceWalberla(ScriptInterfaceHelper):
     _so_name = "walberla::FluidSlice"
@@ -853,38 +758,6 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
     def validate_params(self, params):
         utils.check_required_keys(self.required_keys(), params.keys())
 
-    def calc_dependent_values(self, slice_range, grid_size):
-        shape = []
-        slice_lower_corner = []
-        slice_upper_corner = []
-        for i in range(3):
-            indices = np.arange(grid_size[i])
-            if isinstance(slice_range[i], slice):
-                if slice_range[i].step not in [None, 1]:
-                    raise NotImplementedError(
-                        "Slices with step != 1 are not supported")
-                indices = indices[slice_range[i]]
-            else:
-                if isinstance(slice_range[i], (int, np.integer)):
-                    indices = [indices[slice_range[i]]]
-                else:
-                    raise NotImplementedError(
-                        "Tuple-based indexing is not supported")
-            if len(indices) == 0:
-                slice_lower_corner.append(0)
-                slice_upper_corner.append(0)
-                shape.append(0)
-            elif isinstance(slice_range[i], (int, np.integer)):
-                slice_lower_corner.append(indices[0])
-                slice_upper_corner.append(indices[0] + 1)
-            else:
-                slice_lower_corner.append(indices[0])
-                slice_upper_corner.append(indices[-1] + 1)
-                shape.append(len(indices))
-        return {"slice_lower_corner": slice_lower_corner,
-                "slice_upper_corner": slice_upper_corner,
-                "shape": shape}
-
     def __init__(self, *args, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
@@ -892,7 +765,8 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
             self.validate_params(kwargs)
             slice_range = kwargs.pop("slice_range")
             grid_size = kwargs["parent_sip"].shape
-            extra_kwargs = self.calc_dependent_values(slice_range, grid_size)
+            extra_kwargs = espressomd.detail.walberla.get_slice_bounding_box(
+                slice_range, grid_size)
             node = LBFluidNodeWalberla(index=np.array([0, 0, 0]), **kwargs)
             super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
             utils.handle_errors("LBFluidSliceWalberla instantiation failed")
