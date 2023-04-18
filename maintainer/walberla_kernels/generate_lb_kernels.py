@@ -18,7 +18,7 @@
 #
 
 import argparse
-import setuptools
+import pkg_resources
 
 import sympy as sp
 
@@ -52,9 +52,8 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-SpecifierSet = setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet
 for module, requirement in [(ps, "==1.1.1"), (lbmpy, "==1.1.1")]:
-    assert SpecifierSet(requirement).contains(module.__version__), \
+    assert pkg_resources.packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
 

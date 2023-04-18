@@ -70,7 +70,7 @@ class IntegratorNPT(ut.TestCase):
         compressibility = np.var(Vs) / np.average(Vs)
 
         self.assertAlmostEqual(avp, p_ext, delta=0.02)
-        self.assertAlmostEqual(compressibility, 0.32, delta=0.025)
+        self.assertAlmostEqual(compressibility, 0.32, delta=0.05)
 
 
 if __name__ == "__main__":

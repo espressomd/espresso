@@ -60,6 +60,10 @@ target_link_libraries(
   PUBLIC espresso::utils MPI::MPI_CXX Boost::mpi espresso::shapes
   PRIVATE espresso::cpp_flags)
 
+set_source_files_properties(
+  ${CMAKE_CURRENT_SOURCE_DIR}/particle_data/ParticleHandle.cpp
+  PROPERTIES COMPILE_FLAGS -fno-finite-math-only)
+
 target_include_directories(espresso_script_interface
                            PUBLIC ${CMAKE_SOURCE_DIR}/src)
 

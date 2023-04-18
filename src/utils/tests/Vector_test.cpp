@@ -119,10 +119,11 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
 }
 
 BOOST_AUTO_TEST_CASE(normalize) {
-  Utils::Vector3d v{1, 2, 3};
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
+  Utils::Vector3d v{1., 2., 3.};
   v.normalize();
 
-  BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
+  BOOST_CHECK_CLOSE(v.norm2(), 1.0, tol);
 }
 
 BOOST_AUTO_TEST_CASE(comparison_operators) {

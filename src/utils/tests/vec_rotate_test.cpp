@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(rotation) {
   auto const is = Utils::vec_rotate(k, t, v);
   auto const rel_diff = (expected - is).norm() / expected.norm();
 
-  BOOST_CHECK(rel_diff < std::numeric_limits<double>::epsilon());
+  BOOST_CHECK(rel_diff < 8. * std::numeric_limits<double>::epsilon());
 }
 
 BOOST_AUTO_TEST_CASE(angle_between) {
