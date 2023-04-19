@@ -115,7 +115,8 @@ struct EKFieldSerializer {
 };
 
 class EKSpeciesSlice : public LatticeSlice<EKFieldSerializer> {
-  std::shared_ptr<::EKinWalberlaBase> m_ek_species;
+  using LatticeModel = ::EKinWalberlaBase;
+  std::shared_ptr<LatticeModel> m_ek_species;
   std::shared_ptr<EKSpecies> m_ek_sip;
   double m_conv_dens;
   double m_conv_flux;

@@ -96,7 +96,8 @@ struct LBFieldSerializer {
 };
 
 class FluidSlice : public LatticeSlice<LBFieldSerializer> {
-  std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
+  using LatticeModel = ::LBWalberlaBase;
+  std::shared_ptr<LatticeModel> m_lb_fluid;
   std::shared_ptr<FluidWalberla> m_lb_sip;
   double m_conv_dens;
   double m_conv_press;

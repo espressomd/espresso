@@ -25,10 +25,9 @@
 
 #include "LatticeSlice.impl.hpp"
 
-#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace ScriptInterface::walberla {
@@ -53,38 +52,44 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
     }
     return m_shape_val.at(name);
   }
+
+  // slice getter/setter callback
+  auto const call = [this, params](auto method_ptr,
+                                   std::vector<int> const &data_dims,
+                                   double units = 1.) -> Variant {
+    auto &obj = *m_ek_species;
+    if constexpr (std::is_invocable_v<decltype(method_ptr), LatticeModel *,
+                                      Utils::Vector3i const &,
+                                      Utils::Vector3i const &>) {
+      return gather_3d(params, data_dims, obj, method_ptr, units);
+    } else {
+      scatter_3d(params, data_dims, obj, method_ptr, units);
+      return {};
+    }
+  };
+
   if (name == "get_density") {
-    return gather_3d(params, {1}, *m_ek_species,
-                     &::EKinWalberlaBase::get_slice_density, 1. / m_conv_dens);
+    return call(&LatticeModel::get_slice_density, {1}, 1. / m_conv_dens);
   }
   if (name == "set_density") {
-    scatter_3d(params, {1}, *m_ek_species,
-               &::EKinWalberlaBase::set_slice_density, m_conv_dens);
-    return {};
+    return call(&LatticeModel::set_slice_density, {1}, m_conv_dens);
   }
   if (name == "get_is_boundary") {
-    return gather_3d(params, {1}, *m_ek_species,
-                     &::EKinWalberlaBase::get_slice_is_boundary);
+    return call(&LatticeModel::get_slice_is_boundary, {1});
   }
   if (name == "get_flux_at_boundary") {
-    return gather_3d(params, {1}, *m_ek_species,
-                     &::EKinWalberlaBase::get_slice_flux_at_boundary,
-                     1. / m_conv_flux);
+    return call(&LatticeModel::get_slice_flux_at_boundary, {1},
+                1. / m_conv_flux);
   }
   if (name == "set_flux_at_boundary") {
-    scatter_3d(params, {1}, *m_ek_species,
-               &::EKinWalberlaBase::set_slice_flux_boundary, m_conv_flux);
-    return {};
+    return call(&LatticeModel::set_slice_flux_boundary, {1}, m_conv_flux);
   }
   if (name == "get_density_at_boundary") {
-    return gather_3d(params, {1}, *m_ek_species,
-                     &::EKinWalberlaBase::get_slice_density_at_boundary,
-                     1. / m_conv_dens);
+    return call(&LatticeModel::get_slice_density_at_boundary, {1},
+                1. / m_conv_dens);
   }
   if (name == "set_density_at_boundary") {
-    scatter_3d(params, {1}, *m_ek_species,
-               &::EKinWalberlaBase::set_slice_density_boundary, m_conv_dens);
-    return {};
+    return call(&LatticeModel::set_slice_density_boundary, {1}, m_conv_dens);
   }
 
   return {};
