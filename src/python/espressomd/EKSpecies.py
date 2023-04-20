@@ -412,7 +412,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         -------
         :class:`~espressomd.EKSpecies.DensityBoundary`
             If the node is a boundary node
-        None
+        ``None``
             If the node is not a boundary node
         """
         density = self.call_method("get_node_density_at_boundary")
@@ -425,7 +425,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        value : :class:`~espressomd.EKSpecies.DensityBoundary` or None
+        value : :class:`~espressomd.EKSpecies.DensityBoundary` or ``None``
             If value is :class:`~espressomd.EkSpecies.DensityBoundary`,
             set the node to be a boundary node with the specified density.
             If value is ``None``, the node will become a domain node.
@@ -448,7 +448,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         -------
         :class:`~espressomd.EKSpecies.FluxBoundary`
             If the node is a boundary node
-        None
+        ``None``
             If the node is not a boundary node
         """
         flux = self.call_method("get_node_flux_at_boundary")
@@ -461,7 +461,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        value : :class:`~espressomd.EKSpecies.FluxBoundary` or None
+        value : :class:`~espressomd.EKSpecies.FluxBoundary` or ``None``
             If value is :class:`~espressomd.EkSpecies.FluxBoundary`,
             set the node to be a boundary node with the specified flux.
             If value is ``None``, the node will become a domain node.
@@ -566,7 +566,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         -------
         (N, M, L) array_like of :class:`~espressomd.EKSpecies.DensityBoundary`
             If the nodes are boundary nodes
-        (N, M, L) array_like of :obj:`None`
+        (N, M, L) array_like of ``None``
             If the nodes are not boundary nodes
         """
 
@@ -601,7 +601,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         -------
         (N, M, L) array_like of :class:`~espressomd.EKSpecies.FluxBoundary`
             If the nodes are boundary nodes
-        (N, M, L) array_like of :obj:`None`
+        (N, M, L) array_like of `None``
             If the nodes are not boundary nodes
         """
 
