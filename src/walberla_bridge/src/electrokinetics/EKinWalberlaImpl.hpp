@@ -716,13 +716,51 @@ public:
     vtk_obj.addCellExclusionFilter(fluid_filter);
   }
 
+protected:
+  template <typename Field_T, uint_t F_SIZE_ARG, typename OutputType>
+  class VTKWriter : public vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG> {
+  public:
+    VTKWriter(ConstBlockDataID const &block_id, std::string const &id,
+              FloatType unit_conversion)
+        : vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG>(id),
+          m_block_id(block_id), m_field(nullptr),
+          m_conversion(unit_conversion) {}
+
+  protected:
+    void configure() override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+      m_field = this->block_->template getData<Field_T>(m_block_id);
+    }
+
+    ConstBlockDataID const m_block_id;
+    Field_T const *m_field;
+    FloatType const m_conversion;
+  };
+
+  template <typename OutputType = float,
+            class Base = VTKWriter<DensityField, 1u, OutputType>>
+  class DensityVTKWriter : public Base {
+  public:
+    using Base::VTKWriter;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const density = VectorTrait<typename DensityField::value_type>::get(
+          this->m_field->get(x, y, z, 0), uint_c(0));
+      return numeric_cast<OutputType>(this->m_conversion * density);
+    }
+  };
+
+public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
-                                  LatticeModel::units_map const & /* units */,
+                                  LatticeModel::units_map const &units,
                                   int flag_observables) override {
     if (flag_observables & static_cast<int>(EKOutputVTK::density)) {
-      vtk_obj.addCellDataWriter(
-          make_shared<field::VTKWriter<DensityField, float>>(m_density_field_id,
-                                                             "density"));
+      auto const unit_conversion = FloatType_c(units.at("density"));
+      vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
+          m_density_field_id, "density", unit_conversion));
     }
   }
 

@@ -128,26 +128,26 @@ class TestLBWrite:
                     p_profile, p_profile[::-1], rtol=5e-5, atol=0.)
 
             # read VTK output of final time step
-            last_frame = []
+            last_frames = []
             for filepath in (path_vtk_end, path_vtk_continuous[-1]):
                 grids = vtk_reader.parse(filepath)
-                last_frame.append((
+                last_frames.append((
                     grids[label_density],
                     grids[label_velocity],
                     grids[label_pressure].reshape(shape + (3, 3)),
                 ))
 
             # check VTK output is identical in both continuous and manual mode
-            for i in range(len(last_frame[0])):
-                np.testing.assert_allclose(last_frame[0][i],
-                                           last_frame[1][i], atol=1e-10)
+            for i in range(len(last_frames[0])):
+                np.testing.assert_allclose(last_frames[0][i],
+                                           last_frames[1][i], atol=1e-10)
 
             # check VTK values match node values in the final time step
             lb_density = np.copy(self.lbf[2:-2, :, :].density)
             lb_velocity = np.copy(self.lbf[2:-2, :, :].velocity)
             lb_pressure = np.copy(self.lbf[2:-2, :, :].pressure_tensor)
 
-            for vtk_density, vtk_velocity, vtk_pressure in last_frame:
+            for vtk_density, vtk_velocity, vtk_pressure in last_frames:
                 np.testing.assert_allclose(
                     vtk_density, lb_density, rtol=1e-10, atol=0.)
                 np.testing.assert_allclose(

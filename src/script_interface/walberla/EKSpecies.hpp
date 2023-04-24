@@ -25,14 +25,14 @@
 #ifdef WALBERLA
 
 #include "LatticeWalberla.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
 
-#include "walberla_bridge/electrokinetics/ek_walberla_init.hpp"
+#include <walberla_bridge/LatticeModel.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
-
-#include <walberla_bridge/electrokinetics/EKWalberlaNodeState.hpp>
 
 #include <utils/math/int_pow.hpp>
 
@@ -183,6 +183,13 @@ public:
   }
   [[nodiscard]] double get_conversion_factor_flux() const noexcept {
     return m_conv_flux;
+  }
+
+  LatticeModel::units_map get_latice_to_md_units_conversion() const {
+    return {
+        {"density", 1. / m_conv_density},
+        {"flux", 1. / m_conv_flux},
+    };
   }
 
 private:

@@ -25,17 +25,17 @@ import tempfile
 import contextlib
 import numpy as np
 
-with contextlib.suppress(ImportError):
-    import vtk
-    import vtk.util.numpy_support
-
 import espressomd
 import espressomd.EKSpecies
 import espressomd.shapes
 
+with contextlib.suppress(ImportError):
+    import vtk  # pylint: disable=unused-import
+    import espressomd.io.vtk
+
 
 class EKWalberlaWrite:
-    system = espressomd.System(box_l=[12, 14, 16])
+    system = espressomd.System(box_l=[6, 7, 5])
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
@@ -47,7 +47,7 @@ class EKWalberlaWrite:
     @classmethod
     def setUpClass(cls):
         cls.lattice = espressomd.lb.LatticeWalberla(
-            n_ghost_layers=1, agrid=1.0)
+            n_ghost_layers=1, agrid=0.5)
         cls.solver = espressomd.EKSpecies.EKNone(lattice=cls.lattice)
 
     def setUp(self):
@@ -63,36 +63,25 @@ class EKWalberlaWrite:
     def tearDown(self):
         self.system.ekcontainer.clear()
 
-    def get_cell_array(self, cell, name, shape):
-        return vtk.util.numpy_support.vtk_to_numpy(
-            cell.GetArray(name)).reshape(shape, order='F')
-
-    def parse_vtk(self, filepath, shape):
-        reader = vtk.vtkXMLUnstructuredGridReader()
-        reader.SetFileName(str(filepath))
-        reader.Update()
-
-        data = reader.GetOutput()
-        cell = data.GetCellData()
-
-        vtk_density = self.get_cell_array(cell, 'density', shape)
-        return vtk_density
-
     def test_vtk(self):
         '''
         Check VTK files. Keep in mind the VTK module writes in single-precision.
         '''
+        dist = 1.5 * self.lattice.agrid
         self.species.add_boundary_from_shape(
-            shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5),
+            shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=dist),
             value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
         self.species.add_boundary_from_shape(
-            shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-10.5),
+            shape=espressomd.shapes.Wall(
+                normal=[-1, 0, 0], dist=-(self.system.box_l[0] - dist)),
             value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
-        shape = [8, 14, 16]
-        x_offset = 2
 
         n_steps = 100
         ek_steps = int(np.floor(n_steps * self.system.ekcontainer.tau))
+        shape = tuple(self.lattice.shape)
+        shape = (shape[0] - 4, *shape[1:])
+        vtk_reader = espressomd.io.vtk.VTKReader()
+        label_density = 'density'
 
         with tempfile.TemporaryDirectory() as tmp_directory:
             path_vtk_root = pathlib.Path(tmp_directory)
@@ -130,21 +119,24 @@ class EKWalberlaWrite:
                     f'VTK summary file "{filepath}" not written to disk')
 
         # read VTK output of final time step
-        last_frame_outputs = []
+        last_frames = []
         for filepath in (path_vtk_end, path_vtk_continuous[-1]):
-            last_frame_outputs.append(self.parse_vtk(filepath, shape))
+            grids = vtk_reader.parse(filepath)
+            last_frames.append(grids[label_density])
 
-            # check VTK output is identical in both continuous and manual mode
-        for i in range(len(last_frame_outputs[0])):
-            np.testing.assert_allclose(last_frame_outputs[0][i],
-                                       last_frame_outputs[1][i], atol=1e-10)
+        # check VTK output is identical in both continuous and manual mode
+        for i in range(len(last_frames[0])):
+            np.testing.assert_allclose(last_frames[0][i],
+                                       last_frames[1][i], atol=1e-10)
 
         # check VTK values match node values in the final time step
-        node_density = np.copy(self.species[x_offset:-x_offset, :, :].density)
+        node_density = np.copy(self.species[2:-2, :, :].density)
 
-        for vtk_density in last_frame_outputs:
+        for vtk_density in last_frames:
             np.testing.assert_allclose(vtk_density, node_density, rtol=5e-7)
 
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 4,
+               "this test is slow on more than 4 MPI ranks")
     def test_exceptions(self):
         label_invalid_obs = f'test_lb_vtk_{self.ek_vtk_id}_invalid_obs'
         error_msg = r"Only the following VTK observables are supported: \['density'\], got 'dens'"

@@ -16,8 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_WALBERLA_VTKWALBERLA_HPP
-#define SCRIPT_INTERFACE_WALBERLA_VTKWALBERLA_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -229,7 +228,7 @@ protected:
       return get_value<LatticeModel::units_map>(params, "units");
     }
     return get_value<std::shared_ptr<FluidWalberla>>(params, "lb_fluid")
-        ->get_lb_to_md_units_conversion();
+        ->get_latice_to_md_units_conversion();
   }
 };
 
@@ -268,7 +267,12 @@ public:
 
 protected:
   LatticeModel::units_map get_units(VariantMap const &params) const override {
-    return {};
+    if (params.count("flag_obs")) {
+      // object built from a checkpoint
+      return get_value<LatticeModel::units_map>(params, "units");
+    }
+    return get_value<std::shared_ptr<EKSpecies>>(params, "species")
+        ->get_latice_to_md_units_conversion();
   }
 };
 
@@ -279,4 +283,3 @@ std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
-#endif

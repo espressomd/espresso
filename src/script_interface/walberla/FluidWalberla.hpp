@@ -141,11 +141,11 @@ public:
   /** Non-owning pointer to the LB parameters. */
   std::weak_ptr<::LBWalberlaParams> lb_params() { return m_lb_params; }
 
-  LatticeModel::units_map get_lb_to_md_units_conversion() {
+  LatticeModel::units_map get_latice_to_md_units_conversion() const {
     return {
-        {"pressure", 1. / m_conv_press},
-        {"velocity", 1. / m_conv_speed},
         {"density", 1. / m_conv_dens},
+        {"velocity", 1. / m_conv_speed},
+        {"pressure", 1. / m_conv_press},
     };
   }
 
