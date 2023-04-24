@@ -93,14 +93,8 @@ static double verlet_reuse = 0.0;
 
 static int fluid_step = 0;
 
-bool set_py_interrupt = false;
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
-
-void notify_sig_int() {
-  ctrl_C = 0;              // reset
-  set_py_interrupt = true; // global to notify Python
-}
 } // namespace
 
 namespace LeesEdwards {
@@ -259,10 +253,11 @@ int integrate(int n_steps, int reuse_forces) {
 
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
-    return 0;
+    return INTEG_ERROR_RUNTIME;
 
   // Additional preparations for the first integration step
-  if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
+  if (reuse_forces == INTEG_REUSE_FORCES_NEVER or
+      (recalc_forces and reuse_forces != INTEG_REUSE_FORCES_ALWAYS)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     lb_lbcoupling_deactivate();
 
@@ -287,10 +282,16 @@ int integrate(int n_steps, int reuse_forces) {
   lb_lbcoupling_activate();
 
   if (check_runtime_errors(comm_cart))
-    return 0;
+    return INTEG_ERROR_RUNTIME;
 
   // Keep track of the number of Verlet updates (i.e. particle resorts)
   int n_verlet_updates = 0;
+
+  // Keep track of whether an interrupt signal was caught (only in singleton
+  // mode, since signal handlers are unreliable with more than 1 MPI rank)
+  auto const singleton_mode = comm_cart.size() == 1;
+  auto caught_sigint = false;
+  auto caught_error = false;
 
 #ifdef VALGRIND_MARKERS
   CALLGRIND_START_INSTRUMENTATION;
@@ -384,12 +385,14 @@ int integrate(int n_steps, int reuse_forces) {
 
     integrated_steps++;
 
-    if (check_runtime_errors(comm_cart))
+    if (check_runtime_errors(comm_cart)) {
+      caught_error = true;
       break;
+    }
 
     // Check if SIGINT has been caught.
-    if (ctrl_C == 1) {
-      notify_sig_int();
+    if (singleton_mode and ctrl_C == 1) {
+      caught_sigint = true;
       break;
     }
 
@@ -416,40 +419,50 @@ int integrate(int n_steps, int reuse_forces) {
     synchronize_npt_state();
   }
 #endif
+  if (caught_sigint) {
+    ctrl_C = 0;
+    return INTEG_ERROR_SIGINT;
+  }
+  if (caught_error) {
+    return INTEG_ERROR_RUNTIME;
+  }
   return integrated_steps;
 }
 
-int python_integrate(int n_steps, bool recalc_forces_par,
-                     bool reuse_forces_par) {
+int integrate_with_signal_handler(int n_steps, int reuse_forces,
+                                  bool update_accumulators) {
 
   assert(n_steps >= 0);
 
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
-  int reuse_forces = reuse_forces_par;
-
-  if (recalc_forces_par) {
-    if (reuse_forces) {
-      runtimeErrorMsg() << "cannot reuse old forces and recalculate forces";
-    }
-    reuse_forces = -1;
+  if (not update_accumulators or n_steps == 0) {
+    return integrate(n_steps, reuse_forces);
   }
+
+  auto const is_head_node = comm_cart.rank() == 0;
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
     auto const max_cut = maximal_cutoff(n_nodes);
     if (max_cut <= 0.0) {
-      runtimeErrorMsg()
-          << "cannot automatically determine skin, please set it manually";
-      return ES_ERROR;
+      if (is_head_node) {
+        throw std::runtime_error(
+            "cannot automatically determine skin, please set it manually");
+      }
+      return INTEG_ERROR_RUNTIME;
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    auto const new_skin =
-        std::min(0.4 * max_cut,
-                 *boost::min_element(cell_structure.max_cutoff()) - max_cut);
-    mpi_call_all(mpi_set_skin_local, new_skin);
+    auto const max_range = *boost::min_element(::cell_structure.max_cutoff());
+    auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
+    ::set_skin(new_skin);
+  }
+
+  // re-acquire MpiCallbacks listener on worker nodes
+  if (not is_head_node) {
+    return 0;
   }
 
   using Accumulators::auto_update;
@@ -459,47 +472,23 @@ int python_integrate(int n_steps, bool recalc_forces_par,
     /* Integrate to either the next accumulator update, or the
      * end, depending on what comes first. */
     auto const steps = std::min((n_steps - i), auto_update_next_update());
-    if (mpi_integrate(steps, reuse_forces))
-      return ES_ERROR;
+    auto const retval = mpi_call(Communication::Result::main_rank, integrate,
+                                 steps, reuse_forces);
+    if (retval < 0) {
+      return retval; // propagate error code
+    }
 
-    reuse_forces = 1;
+    reuse_forces = INTEG_REUSE_FORCES_ALWAYS;
 
     auto_update(steps);
 
     i += steps;
   }
 
-  if (n_steps == 0) {
-    if (mpi_integrate(0, reuse_forces))
-      return ES_ERROR;
-  }
-
-  return ES_OK;
+  return 0;
 }
 
-static int mpi_steepest_descent_local(int steps) {
-  return integrate(steps, -1);
-}
-
-REGISTER_CALLBACK_MAIN_RANK(mpi_steepest_descent_local)
-
-int mpi_steepest_descent(int steps) {
-  return mpi_call(Communication::Result::main_rank, mpi_steepest_descent_local,
-                  steps);
-}
-
-static int mpi_integrate_local(int n_steps, int reuse_forces) {
-  integrate(n_steps, reuse_forces);
-
-  return check_runtime_errors_local();
-}
-
-REGISTER_CALLBACK_REDUCTION(mpi_integrate_local, std::plus<int>())
-
-int mpi_integrate(int n_steps, int reuse_forces) {
-  return mpi_call(Communication::Result::reduction, std::plus<int>(),
-                  mpi_integrate_local, n_steps, reuse_forces);
-}
+REGISTER_CALLBACK_MAIN_RANK(integrate)
 
 double interaction_range() {
   /* Consider skin only if there are actually interactions */
@@ -524,13 +513,11 @@ void set_time_step(double value) {
   on_timestep_change();
 }
 
-void mpi_set_skin_local(double value) {
+void set_skin(double value) {
   ::skin = value;
-  skin_set = true;
+  ::skin_set = true;
   on_skin_change();
 }
-
-REGISTER_CALLBACK(mpi_set_skin_local)
 
 void set_time(double value) {
   ::sim_time = value;

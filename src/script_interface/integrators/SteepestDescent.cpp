@@ -32,6 +32,19 @@
 namespace ScriptInterface {
 namespace Integrators {
 
+Variant SteepestDescent::integrate(VariantMap const &params) {
+  auto constexpr reuse_forces = INTEG_REUSE_FORCES_NEVER;
+  auto constexpr update_accumulators = false;
+  auto const steps = get_value<int>(params, "steps");
+  context()->parallel_try_catch([&]() {
+    if (steps < 0) {
+      throw std::domain_error("Parameter 'steps' must be positive");
+    }
+  });
+  return ::integrate_with_signal_handler(steps, reuse_forces,
+                                         update_accumulators);
+}
+
 SteepestDescent::SteepestDescent() {
   add_parameters({
       {"f_max", AutoParameter::read_only,

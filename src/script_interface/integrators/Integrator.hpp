@@ -31,6 +31,9 @@ namespace Integrators {
 
 class Integrator : public ObjectHandle {
 public:
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override;
+  virtual Variant integrate(VariantMap const &params);
   virtual void activate() const = 0;
 };
 

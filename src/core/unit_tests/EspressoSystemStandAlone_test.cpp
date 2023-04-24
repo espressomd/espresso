@@ -312,7 +312,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     reset_particle_positions();
 
     // recalculate forces without propagating the system
-    integrate(0, 0);
+    integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
 
     // particles are arranged in a right triangle
     auto const p1_opt = copy_particle_to_head_node(comm, pid1);
@@ -355,7 +355,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
           expected[pid] = p.pos();
         }
       }
-      integrate(1, 0);
+      integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
       for (auto pid : pids) {
         auto const p_opt = copy_particle_to_head_node(comm, pid);
         if (rank == 0) {

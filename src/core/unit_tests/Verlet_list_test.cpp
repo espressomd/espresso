@@ -224,7 +224,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
 
     // integrate until both particles are closer than cutoff
     {
-      integrate(11, 0);
+      integrate(11, INTEG_REUSE_FORCES_CONDITIONALLY);
       auto const p1_opt = copy_particle_to_head_node(comm, pid1);
       auto const p2_opt = copy_particle_to_head_node(comm, pid2);
       if (rank == 0) {
@@ -236,7 +236,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
 
     // check forces and Verlet update
     {
-      integrate(1, 0);
+      integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
       auto const p1_opt = copy_particle_to_head_node(comm, pid1);
 #ifdef EXTERNAL_FORCES
       auto const p2_opt = copy_particle_to_head_node(comm, pid2);
@@ -273,7 +273,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
       }
     }
     {
-      integrate(0, 0);
+      integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
       auto const p3_opt = copy_particle_to_head_node(comm, pid3);
       if (rank == 0) {
         auto const &p3 = *p3_opt;

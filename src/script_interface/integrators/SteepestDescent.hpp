@@ -40,6 +40,7 @@ public:
   SteepestDescent();
 
   void do_construct(VariantMap const &params) override;
+  Variant integrate(VariantMap const &params) override;
   void activate() const override;
 
   ::SteepestDescentParameters const &get_instance() const {

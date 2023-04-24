@@ -28,7 +28,7 @@ from . import highlander
 from . import utils
 from . cimport utils
 from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d
-from .integrate cimport get_time_step
+from .lb cimport get_time_step
 
 
 cdef class FluidActor:

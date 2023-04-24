@@ -96,7 +96,7 @@ CellSystem::CellSystem() {
            }
            throw Exception("");
          }
-         mpi_set_skin_local(new_skin);
+         ::set_skin(new_skin);
        },
        []() { return ::skin; }},
       {"decomposition_type", AutoParameter::read_only,

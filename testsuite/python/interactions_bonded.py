@@ -253,7 +253,7 @@ class InteractionsBondedTest(ut.TestCase):
                 p_tensor_sim, p_tensor_expected, atol=1E-12)
         if test_breakage:
             p2.pos = p1.pos + self.axis * cutoff * 1.01
-            with self.assertRaisesRegex(Exception, "Encountered errors during integrate"):
+            with self.assertRaisesRegex(Exception, r"while calling method integrate\(\)"):
                 self.system.integrator.run(recalc_forces=True, steps=0)
         if test_same_pos_exception:
             p2.pos = p1.pos

@@ -16,12 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
-include "myconfig.pxi"
-from . import utils
-from . cimport integrate
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .code_features import assert_features
+import signal
 
 
 @script_interface_register
@@ -115,22 +112,17 @@ class Integrator(ScriptInterfaceHelper):
             Reuse the forces from previous time step.
 
         """
-        utils.check_type_or_throw_except(steps, 1, int, "steps must be an int")
-        utils.check_type_or_throw_except(
-            recalc_forces, 1, bool, "recalc_forces has to be a bool")
-        utils.check_type_or_throw_except(
-            reuse_forces, 1, bool, "reuse_forces has to be a bool")
-        if steps < 0:
-            raise ValueError("steps must be positive")
+        status = self.call_method(
+            "integrate",
+            with_nogil=True,
+            steps=steps,
+            recalc_forces=recalc_forces,
+            reuse_forces=reuse_forces)
+        self.handle_sigint(status)
 
-        _integrate(steps, recalc_forces, reuse_forces)
-
-        if integrate.set_py_interrupt:
-            PyErr_SetInterrupt()
-            integrate.set_py_interrupt = False
-            PyErr_CheckSignals()
-
-        utils.handle_errors("Encountered errors during integrate")
+    def handle_sigint(self, error_code):
+        if error_code == -2:
+            signal.raise_signal(signal.Signals.SIGINT)
 
 
 @script_interface_register
@@ -161,7 +153,7 @@ class SteepestDescent(Integrator):
     _so_name = "Integrators::SteepestDescent"
     _so_creation_policy = "GLOBAL"
 
-    def run(self, steps=1, **kwargs):
+    def run(self, steps=1):
         """
         Run the steepest descent.
 
@@ -176,12 +168,9 @@ class SteepestDescent(Integrator):
             Number of integrated steps.
 
         """
-        utils.check_type_or_throw_except(steps, 1, int, "steps must be an int")
-        assert steps >= 0, "steps has to be positive"
-
-        integrated = mpi_steepest_descent(steps)
-
-        utils.handle_errors("Encountered errors during integrate")
+        integrated = self.call_method(
+            "integrate", with_nogil=True, steps=steps)
+        self.handle_sigint(integrated)
 
         return integrated
 

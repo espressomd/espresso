@@ -31,7 +31,7 @@ class SigintTest(ut.TestCase):
         self.process = subprocess.Popen([sys.executable, script])
 
     def test_signal_handling(self):
-        self.process.send_signal(signal.SIGINT)
+        self.process.send_signal(signal.Signals.SIGINT)
         # Wait for the signal to arrive and one integration step to be finished
         time.sleep(1)
         self.assertIsNotNone(self.process.poll())

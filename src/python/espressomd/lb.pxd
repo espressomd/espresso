@@ -119,6 +119,9 @@ cdef extern from "grid_based_algorithms/lb_interpolation.hpp" namespace "Interpo
     cdef InterpolationOrder linear
     cdef InterpolationOrder quadratic
 
+cdef extern from "integrate.hpp":
+    double get_time_step()
+
 ##############################################
 #
 # Wrapper-functions to handle unit conversions
