@@ -1278,11 +1278,10 @@ protected:
     FloatType const m_conversion;
   };
 
-  template <typename OutputType = float,
-            class Base = VTKWriter<PdfField, 1u, OutputType>>
-  class DensityVTKWriter : public Base {
+  template <typename OutputType = float>
+  class DensityVTKWriter : public VTKWriter<PdfField, 1u, OutputType> {
   public:
-    using Base::VTKWriter;
+    using VTKWriter<PdfField, 1u, OutputType>::VTKWriter;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
@@ -1294,14 +1293,29 @@ protected:
     }
   };
 
-  template <typename OutputType = float,
-            class Base = VTKWriter<PdfField, 9u, OutputType>>
-  class PressureTensorVTKWriter : public Base {
+  template <typename OutputType = float>
+  class VelocityVTKWriter : public VTKWriter<VectorField, 3u, OutputType> {
+  public:
+    using VTKWriter<VectorField, 3u, OutputType>::VTKWriter;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const f) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const velocity =
+          lbm::accessor::Vector::get(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * velocity[f]);
+    }
+  };
+
+  template <typename OutputType = float>
+  class PressureTensorVTKWriter : public VTKWriter<PdfField, 9u, OutputType> {
   public:
     PressureTensorVTKWriter(ConstBlockDataID const &block_id,
                             std::string const &id, FloatType unit_conversion,
                             FloatType off_diag_factor)
-        : Base::VTKWriter(block_id, id, unit_conversion),
+        : VTKWriter<PdfField, 9u, OutputType>::VTKWriter(block_id, id,
+                                                         unit_conversion),
           m_off_diag_factor(off_diag_factor) {}
 
   protected:
@@ -1316,22 +1330,6 @@ protected:
                                       pressure[f]);
     }
     FloatType const m_off_diag_factor;
-  };
-
-  template <typename OutputType = float,
-            class Base = VTKWriter<VectorField, 3u, OutputType>>
-  class VelocityVTKWriter : public Base {
-  public:
-    using Base::VTKWriter;
-
-  protected:
-    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
-                        cell_idx_t const z, cell_idx_t const f) override {
-      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
-      auto const velocity =
-          lbm::accessor::Vector::get(this->m_field, {x, y, z});
-      return numeric_cast<OutputType>(this->m_conversion * velocity[f]);
-    }
   };
 
 public:

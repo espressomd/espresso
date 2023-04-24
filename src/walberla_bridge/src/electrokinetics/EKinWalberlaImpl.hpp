@@ -739,9 +739,9 @@ protected:
 
   template <typename OutputType = float,
             class Base = VTKWriter<DensityField, 1u, OutputType>>
-  class DensityVTKWriter : public Base {
+  class DensityVTKWriter : public VTKWriter<DensityField, 1u, OutputType> {
   public:
-    using Base::VTKWriter;
+    using VTKWriter<DensityField, 1u, OutputType>::VTKWriter;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
