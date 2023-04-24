@@ -70,7 +70,8 @@ cpdef check_type_or_throw_except(x, n, t, msg):
 
 def to_char_pointer(s):
     """
-    Returns a char pointer which contains the information of the provided python string.
+    Returns a Cython bytes object which contains the information of the provided
+    Python string. Cython bytes objects implicitly cast to raw char pointers.
 
     Parameters
     ----------

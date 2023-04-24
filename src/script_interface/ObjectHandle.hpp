@@ -133,7 +133,7 @@ public:
 
 protected:
   /**
-   * @brief Local implementation of @c do_call_method.
+   * @brief Local implementation of @c call_method.
    *
    * If not overridden by the implementation, this does nothing.
    */

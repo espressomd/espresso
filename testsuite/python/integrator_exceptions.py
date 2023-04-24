@@ -24,11 +24,11 @@ import unittest as ut
 import unittest_decorators as utx
 
 
-class Integrator_test(ut.TestCase):
+class Test(ut.TestCase):
 
     system = espressomd.System(box_l=[1., 1., 1.])
     system.time_step = 0.01
-    msg = 'Encountered errors during integrate: ERROR: '
+    msg = r'while calling method integrate\(\): ERROR: '
 
     def setUp(self):
         self.system.part.add(pos=(0, 0, 0))
@@ -47,13 +47,14 @@ class Integrator_test(ut.TestCase):
             self.system.time_step = -2.
         with self.assertRaisesRegex(ValueError, 'time_step must be > 0.'):
             self.system.time_step = 0.
-        with self.assertRaisesRegex(ValueError, 'steps must be positive'):
+        with self.assertRaisesRegex(ValueError, "Parameter 'steps' must be positive"):
             self.system.integrator.run(steps=-1)
-        with self.assertRaisesRegex(Exception, self.msg + 'cannot automatically determine skin, please set it manually'):
+        with self.assertRaisesRegex(RuntimeError, 'cannot automatically determine skin, please set it manually'):
             self.system.integrator.run()
         self.system.cell_system.skin = 0.4
-        with self.assertRaisesRegex(Exception, self.msg + 'cannot reuse old forces and recalculate forces'):
+        with self.assertRaisesRegex(ValueError, 'cannot reuse old forces and recalculate forces'):
             self.system.integrator.run(recalc_forces=True, reuse_forces=True)
+        self.assertIsNone(self.system.integrator.integrator.call_method("unk"))
         if espressomd.has_features("WCA"):
             wca = self.system.non_bonded_inter[0, 0].wca
             wca.set_params(epsilon=1., sigma=0.01)
