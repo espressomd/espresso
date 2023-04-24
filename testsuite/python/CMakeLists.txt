@@ -23,7 +23,11 @@
 
   Configure a python test case.
 
-  Flag arguments: none.
+  Flag arguments:
+
+  * ``NO_MPI``: run test case without MPI, i.e. in singleton mode. Only use
+    this option when relevant to the test, e.g. to check signal propagation
+    (MPI vendors introduce their own implementation-defined signal handlers).
 
   Single-value arguments:
 
@@ -50,7 +54,7 @@
 
 #]=======================================================================]
 function(python_test)
-  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;GPU_SLOTS;SUFFIX"
+  cmake_parse_arguments(TEST "NO_MPI" "FILE;MAX_NUM_PROC;GPU_SLOTS;SUFFIX"
                         "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
@@ -65,7 +69,13 @@ function(python_test)
   set(TEST_FILE ${TEST_FILE_CONFIGURED})
 
   if(NOT DEFINED TEST_MAX_NUM_PROC)
-    set(TEST_MAX_NUM_PROC 4)
+    if(${TEST_NO_MPI})
+      set(TEST_MAX_NUM_PROC 1)
+    else()
+      set(TEST_MAX_NUM_PROC 4)
+    endif()
+  elseif(${TEST_NO_MPI} AND NOT ${TEST_MAX_NUM_PROC} EQUAL 1)
+    message(FATAL_ERROR "NO_MPI and MAX_NUM_PROC are mutually exclusive")
   endif()
   if(NOT DEFINED TEST_GPU_SLOTS)
     set(TEST_GPU_SLOTS 0)
@@ -77,7 +87,7 @@ function(python_test)
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
   endif()
 
-  if(EXISTS ${MPIEXEC})
+  if(EXISTS ${MPIEXEC} AND NOT ${TEST_NO_MPI})
     espresso_set_mpiexec_tmpdir(${TEST_NAME})
     add_test(
       NAME ${TEST_NAME}
@@ -354,8 +364,8 @@ python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS
             long SUFFIX 1_core)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE p3m_madelung.py MAX_NUM_PROC 2 GPU_SLOTS 2 LABELS long)
-python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)
-python_test(FILE lb_density.py MAX_NUM_PROC 2)
+python_test(FILE sigint.py DEPENDENCIES sigint_child.py NO_MPI)
+python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 2)
 python_test(FILE observable_chain.py MAX_NUM_PROC 4)
 python_test(FILE mpiio.py MAX_NUM_PROC 4)
 python_test(FILE mpiio_exceptions.py MAX_NUM_PROC 1)

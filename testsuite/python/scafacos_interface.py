@@ -383,6 +383,7 @@ class ScafacosInterface(ut.TestCase):
             gamma=0.001,
             max_displacement=0.01)
         system.integrator.run(100)
+        system.integrator.set_vv()
 
         # compute forces and energies
         p3m_E_coulomb, p3m_E_dipoles, p3m_forces, p3m_torques = self.p3m_data()

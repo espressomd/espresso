@@ -36,6 +36,22 @@
 #define INTEG_METHOD_SD 7
 /**@}*/
 
+/** \name Integrator error codes */
+/**@{*/
+#define INTEG_ERROR_RUNTIME -1
+#define INTEG_ERROR_SIGINT -2
+/**@}*/
+
+/** \name Integrator flags */
+/**@{*/
+/// recalculate forces unconditionally (mostly used for timing)
+#define INTEG_REUSE_FORCES_NEVER -1
+/// recalculate forces if @ref recalc_forces is set
+#define INTEG_REUSE_FORCES_CONDITIONALLY 0
+/// do not recalculate forces (mostly when reading checkpoints with forces)
+#define INTEG_REUSE_FORCES_ALWAYS 1
+/**@}*/
+
 /** Switch determining which integrator to use. */
 extern int integ_switch;
 
@@ -44,9 +60,6 @@ extern double skin;
 
 /** If true, the forces will be recalculated before the next integration. */
 extern bool recalc_forces;
-
-/** Communicate signal handling to the Python interpreter */
-extern bool set_py_interrupt;
 
 double interaction_range();
 
@@ -57,13 +70,7 @@ void integrator_sanity_checks();
 
 /** Integrate equations of motion
  *  @param n_steps       Number of integration steps, can be zero
- *  @param reuse_forces  Decide when to re-calculate forces:
- *                       - -1: recalculate forces unconditionally
- *                         (mostly used for timing)
- *                       - 0: recalculate forces if @ref recalc_forces is set,
- *                         meaning it is probably necessary
- *                       - 1: do not recalculate forces (mostly when reading
- *                         checkpoints with forces)
+ *  @param reuse_forces  Decide when to re-calculate forces
  *
  *  @details This function calls two hooks for propagation kernels such as
  *  velocity verlet, velocity verlet + npt box changes, and steepest_descent.
@@ -90,37 +97,12 @@ void integrator_sanity_checks();
  *  High-level documentation of the integration and thermostatting schemes
  *  can be found in doc/sphinx/system_setup.rst and /doc/sphinx/running.rst
  *
- *  @return number of steps that have been integrated
+ *  @return number of steps that have been integrated, or a negative error code
  */
 int integrate(int n_steps, int reuse_forces);
 
-/** @brief Run the integration loop. Can be interrupted with Ctrl+C.
- *
- *  @param n_steps        Number of integration steps, can be zero
- *  @param recalc_forces  Whether to recalculate forces
- *  @param reuse_forces   Whether to re-use forces
- *  @retval ES_OK on success
- *  @retval ES_ERROR on error
- */
-int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
-
-/** Start integrator.
- *  @param n_steps       how many steps to do.
- *  @param reuse_forces  whether to trust the old forces for the first half step
- *  @return nonzero on error
- */
-int mpi_integrate(int n_steps, int reuse_forces);
-
-/** Steepest descent main integration loop
- *
- *  Integration stops when the maximal force is lower than the user limit
- *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
- *  of steps @p steps is reached.
- *
- *  @param steps Maximal number of integration steps
- *  @return number of integrated steps
- */
-int mpi_steepest_descent(int steps);
+int integrate_with_signal_handler(int n_steps, int reuse_forces,
+                                  bool update_accumulators);
 
 /** Get @c verlet_reuse */
 double get_verlet_reuse();
@@ -138,7 +120,7 @@ void increment_sim_time(double amount);
 void set_time_step(double value);
 
 /** @brief Set new skin. */
-void mpi_set_skin_local(double value);
+void set_skin(double value);
 
 /** @brief Set the simulation time. */
 void set_time(double value);

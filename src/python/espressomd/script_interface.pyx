@@ -136,19 +136,23 @@ cdef class PScriptInterface:
 
         self.sip = sip
 
-    def call_method(self, method, handle_errors_message=None, **kwargs):
+    def call_method(self, method, handle_errors_message=None,
+                    with_nogil=False, **kwargs):
         """
         Call a method of the core class.
 
         Parameters
         ----------
-        method : Creation policy.
+        method : :obj:`str`
             Name of the core method.
         handle_errors_message : :obj:`str`, optional
             Custom error message for runtime errors raised in a MPI context.
+        with_nogil : :obj:`bool`, optional
+            Run the core method without the GIL if ``True``.
         **kwargs
             Arguments for the method.
         """
+        cdef ObjectHandle * handle = self.sip.get()
         cdef VariantMap parameters
         cdef Variant value
 
@@ -156,7 +160,16 @@ cdef class PScriptInterface:
             parameters[utils.to_char_pointer(name)] = python_object_to_variant(
                 kwargs[name])
 
-        value = self.sip.get().call_method(utils.to_char_pointer(method), parameters)
+        # the internal buffer of a cython bytestring object can be accessed as
+        # a raw char pointer, but then the bytestring object must be kept alive
+        method_name_bytes_counted_reference = utils.to_char_pointer(method)
+        cdef char * method_name_char = method_name_bytes_counted_reference
+
+        if with_nogil:
+            with nogil:
+                value = handle.call_method_nogil(method_name_char, parameters)
+        else:
+            value = handle.call_method(method_name_char, parameters)
         res = variant_to_python_object(value)
         if handle_errors_message is None:
             handle_errors_message = f"while calling method {method}()"

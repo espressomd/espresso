@@ -67,7 +67,7 @@ class LBMassCommon:
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBMassWalberla(LBMassCommon, ut.TestCase):
+class LBMassWalberlaDoublePrecision(LBMassCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 

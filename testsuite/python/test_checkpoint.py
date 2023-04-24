@@ -467,7 +467,10 @@ class CheckpointTest(ut.TestCase):
         p3, p4 = system.part.by_ids([3, 4])
         old_force = np.copy(p3.f)
         system.constraints.remove(system.constraints[0])
+        old_integrator = system.integrator.integrator
+        system.integrator.set_vv()
         system.integrator.run(0, recalc_forces=True)
+        system.integrator.integrator = old_integrator
         np.testing.assert_allclose(
             np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
         self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)

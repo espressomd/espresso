@@ -45,6 +45,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
         Variant call_method(const string & name, const VariantMap & parameters) except +
+        Variant call_method_nogil "call_method"(const string & name, const VariantMap & parameters) nogil except +
         string_ref name()
 
 cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface::ContextManager":
