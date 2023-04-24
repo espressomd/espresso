@@ -49,9 +49,6 @@
 #include "../BoundaryHandling.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
-#include "vtk/Density.hpp"
-#include "vtk/Pressure.hpp"
-#include "vtk/Velocity.hpp"
 
 #include "walberla_bridge/Architecture.hpp"
 #include "walberla_bridge/BlockAndCell.hpp"
@@ -1260,28 +1257,102 @@ public:
     vtk_obj.addCellExclusionFilter(fluid_filter);
   }
 
+protected:
+  template <typename Field_T, uint_t F_SIZE_ARG, typename OutputType>
+  class VTKWriter : public vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG> {
+  public:
+    VTKWriter(ConstBlockDataID const &block_id, std::string const &id,
+              FloatType unit_conversion)
+        : vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG>(id),
+          m_block_id(block_id), m_field(nullptr),
+          m_conversion(unit_conversion) {}
+
+  protected:
+    void configure() override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+      m_field = this->block_->template getData<Field_T>(m_block_id);
+    }
+
+    ConstBlockDataID const m_block_id;
+    Field_T const *m_field;
+    FloatType const m_conversion;
+  };
+
+  template <typename OutputType = float,
+            class Base = VTKWriter<PdfField, 1u, OutputType>>
+  class DensityVTKWriter : public Base {
+  public:
+    using Base::VTKWriter;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const density =
+          lbm::accessor::Density::get(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * density);
+    }
+  };
+
+  template <typename OutputType = float,
+            class Base = VTKWriter<PdfField, 9u, OutputType>>
+  class PressureTensorVTKWriter : public Base {
+  public:
+    PressureTensorVTKWriter(ConstBlockDataID const &block_id,
+                            std::string const &id, FloatType unit_conversion,
+                            FloatType off_diag_factor)
+        : Base::VTKWriter(block_id, id, unit_conversion),
+          m_off_diag_factor(off_diag_factor) {}
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const f) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const pressure =
+          lbm::accessor::PressureTensor::get(this->m_field, {x, y, z});
+      auto const revert_factor =
+          (f == 0 or f == 4 or f == 8) ? FloatType{1} : m_off_diag_factor;
+      return numeric_cast<OutputType>(this->m_conversion * revert_factor *
+                                      pressure[f]);
+    }
+    FloatType const m_off_diag_factor;
+  };
+
+  template <typename OutputType = float,
+            class Base = VTKWriter<VectorField, 3u, OutputType>>
+  class VelocityVTKWriter : public Base {
+  public:
+    using Base::VTKWriter;
+
+  protected:
+    OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
+                        cell_idx_t const z, cell_idx_t const f) override {
+      WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
+      auto const velocity =
+          lbm::accessor::Vector::get(this->m_field, {x, y, z});
+      return numeric_cast<OutputType>(this->m_conversion * velocity[f]);
+    }
+  };
+
+public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
                                   int flag_observables) override {
     if (flag_observables & static_cast<int>(OutputVTK::density)) {
       auto const unit_conversion = FloatType_c(units.at("density"));
-      vtk_obj.addCellDataWriter(
-          make_shared<lbm::DensityVTKWriter<LBWalberlaImpl, float>>(
-              m_pdf_field_id, "DensityFromPDF", unit_conversion));
+      vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
+          m_pdf_field_id, "DensityFromPDF", unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
       auto const unit_conversion = FloatType_c(units.at("velocity"));
-      vtk_obj.addCellDataWriter(
-          make_shared<lbm::VelocityVTKWriter<LBWalberlaImpl, float>>(
-              m_velocity_field_id, "VelocityFromVelocityField",
-              unit_conversion));
+      vtk_obj.addCellDataWriter(make_shared<VelocityVTKWriter<float>>(
+          m_velocity_field_id, "VelocityFromVelocityField", unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
       auto const unit_conversion = FloatType_c(units.at("pressure"));
-      vtk_obj.addCellDataWriter(
-          make_shared<lbm::PressureTensorVTKWriter<LBWalberlaImpl, float>>(
-              m_pdf_field_id, "PressureTensorFromPDF", unit_conversion,
-              pressure_tensor_correction_factor()));
+      vtk_obj.addCellDataWriter(make_shared<PressureTensorVTKWriter<float>>(
+          m_pdf_field_id, "PressureTensorFromPDF", unit_conversion,
+          pressure_tensor_correction_factor()));
     }
   }
 
