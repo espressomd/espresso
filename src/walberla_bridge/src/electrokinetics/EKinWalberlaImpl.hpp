@@ -114,7 +114,7 @@ protected:
 
   [[nodiscard]] std::size_t stencil_size() const override { return FluxCount; }
 
-  boost::optional<CellInterval>
+  [[nodiscard]] boost::optional<CellInterval>
   get_interval(Utils::Vector3i const &lower_corner,
                Utils::Vector3i const &upper_corner) const {
     auto const &lattice = get_lattice();

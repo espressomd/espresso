@@ -210,8 +210,18 @@ protected:
   BlockDataID m_velocity_field_id;
   BlockDataID m_vec_tmp_field_id;
 
+  /**
+   * @brief Full communicator.
+   * We use the D3Q27 directions to update cells along the diagonals during
+   * a full ghost communication. This is needed to properly update the corners
+   * of the ghost layer when setting cell velocities or populations.
+   */
   using FullCommunicator = blockforest::communication::UniformBufferedScheme<
       typename stencil::D3Q27>;
+  /**
+   * @brief Regular communicator.
+   * We use the same directions as the stencil during integration.
+   */
   using PDFStreamingCommunicator =
       blockforest::communication::UniformBufferedScheme<Stencil>;
   template <class Field>
@@ -248,11 +258,11 @@ protected:
   // lattice
   std::shared_ptr<LatticeWalberla> m_lattice;
 
-  std::size_t stencil_size() const override {
+  [[nodiscard]] std::size_t stencil_size() const override {
     return static_cast<std::size_t>(Stencil::Size);
   }
 
-  boost::optional<CellInterval>
+  [[nodiscard]] boost::optional<CellInterval>
   get_interval(Utils::Vector3i const &lower_corner,
                Utils::Vector3i const &upper_corner) const {
     auto const &lattice = get_lattice();
@@ -390,8 +400,9 @@ private:
     }
   }
 
-  bool lees_edwards_bc() {
-    return boost::get<CollisionModelLeesEdwards>(&*m_collision_model);
+  auto has_lees_edwards_bc() const {
+    return boost::get<CollisionModelLeesEdwards>(&*m_collision_model) !=
+           nullptr;
   }
 
   void apply_lees_edwards_pdf_interpolation(
@@ -471,7 +482,7 @@ protected:
 public:
   void integrate() override {
     reallocate_ubb_field();
-    if (lees_edwards_bc()) {
+    if (has_lees_edwards_bc()) {
       integrate_pull_scheme();
     } else {
       integrate_push_scheme();
@@ -482,7 +493,7 @@ public:
 
   void ghost_communication() override {
     m_full_communication->communicate();
-    if (lees_edwards_bc()) {
+    if (has_lees_edwards_bc()) {
       auto const &blocks = get_lattice().get_blocks();
       apply_lees_edwards_pdf_interpolation(blocks);
       apply_lees_edwards_vel_interpolation_and_shift(blocks);
@@ -569,11 +580,11 @@ public:
     m_viscosity = FloatType_c(viscosity);
   }
 
-  double get_viscosity() const override {
+  [[nodiscard]] double get_viscosity() const override {
     return numeric_cast<double>(m_viscosity);
   }
 
-  double get_density() const override {
+  [[nodiscard]] double get_density() const override {
     return numeric_cast<double>(m_density);
   }
 
@@ -1150,7 +1161,7 @@ public:
   }
 
   // Global pressure tensor
-  Utils::VectorXd<9> get_pressure_tensor() const override {
+  [[nodiscard]] Utils::VectorXd<9> get_pressure_tensor() const override {
     auto const &blocks = get_lattice().get_blocks();
     Matrix3<FloatType> tensor(FloatType{0});
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
@@ -1166,7 +1177,7 @@ public:
   }
 
   // Global momentum
-  Utils::Vector3d get_momentum() const override {
+  [[nodiscard]] Utils::Vector3d get_momentum() const override {
     auto const &blocks = get_lattice().get_blocks();
     Vector3<FloatType> mom(FloatType{0});
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
@@ -1183,18 +1194,21 @@ public:
     m_reset_force->set_ext_force(ext_force);
   }
 
-  Utils::Vector3d get_external_force() const override {
+  [[nodiscard]] Utils::Vector3d get_external_force() const override {
     return m_reset_force->get_ext_force();
   }
 
-  double get_kT() const override { return numeric_cast<double>(m_kT); }
+  [[nodiscard]] double get_kT() const override {
+    return numeric_cast<double>(m_kT);
+  }
 
-  uint64_t get_rng_state() const override {
+  [[nodiscard]] uint64_t get_rng_state() const override {
     auto const *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.)
       throw std::runtime_error("The LB does not use a random number generator");
     return cm->time_step_;
   }
+
   void set_rng_state(uint64_t counter) override {
     auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.)
@@ -1202,7 +1216,7 @@ public:
     cm->time_step_ = counter;
   }
 
-  LatticeWalberla const &get_lattice() const noexcept override {
+  [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {
     return *m_lattice;
   }
 
