@@ -66,50 +66,50 @@ inline std::array<float, 19u>
 get(GhostLayerField<float, uint_t{19u}> const *pdf_field, Cell const &cell) {
   float const &xyz0 = pdf_field->get(cell, uint_t{0u});
   std::array<float, 19u> pop;
-  pop[0] = pdf_field->getF(&xyz0, 0);
-  pop[1] = pdf_field->getF(&xyz0, 1);
-  pop[2] = pdf_field->getF(&xyz0, 2);
-  pop[3] = pdf_field->getF(&xyz0, 3);
-  pop[4] = pdf_field->getF(&xyz0, 4);
-  pop[5] = pdf_field->getF(&xyz0, 5);
-  pop[6] = pdf_field->getF(&xyz0, 6);
-  pop[7] = pdf_field->getF(&xyz0, 7);
-  pop[8] = pdf_field->getF(&xyz0, 8);
-  pop[9] = pdf_field->getF(&xyz0, 9);
-  pop[10] = pdf_field->getF(&xyz0, 10);
-  pop[11] = pdf_field->getF(&xyz0, 11);
-  pop[12] = pdf_field->getF(&xyz0, 12);
-  pop[13] = pdf_field->getF(&xyz0, 13);
-  pop[14] = pdf_field->getF(&xyz0, 14);
-  pop[15] = pdf_field->getF(&xyz0, 15);
-  pop[16] = pdf_field->getF(&xyz0, 16);
-  pop[17] = pdf_field->getF(&xyz0, 17);
-  pop[18] = pdf_field->getF(&xyz0, 18);
+  pop[0u] = pdf_field->getF(&xyz0, uint_t{0u});
+  pop[1u] = pdf_field->getF(&xyz0, uint_t{1u});
+  pop[2u] = pdf_field->getF(&xyz0, uint_t{2u});
+  pop[3u] = pdf_field->getF(&xyz0, uint_t{3u});
+  pop[4u] = pdf_field->getF(&xyz0, uint_t{4u});
+  pop[5u] = pdf_field->getF(&xyz0, uint_t{5u});
+  pop[6u] = pdf_field->getF(&xyz0, uint_t{6u});
+  pop[7u] = pdf_field->getF(&xyz0, uint_t{7u});
+  pop[8u] = pdf_field->getF(&xyz0, uint_t{8u});
+  pop[9u] = pdf_field->getF(&xyz0, uint_t{9u});
+  pop[10u] = pdf_field->getF(&xyz0, uint_t{10u});
+  pop[11u] = pdf_field->getF(&xyz0, uint_t{11u});
+  pop[12u] = pdf_field->getF(&xyz0, uint_t{12u});
+  pop[13u] = pdf_field->getF(&xyz0, uint_t{13u});
+  pop[14u] = pdf_field->getF(&xyz0, uint_t{14u});
+  pop[15u] = pdf_field->getF(&xyz0, uint_t{15u});
+  pop[16u] = pdf_field->getF(&xyz0, uint_t{16u});
+  pop[17u] = pdf_field->getF(&xyz0, uint_t{17u});
+  pop[18u] = pdf_field->getF(&xyz0, uint_t{18u});
   return pop;
 }
 
 inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
                 std::array<float, 19u> const &pop, Cell const &cell) {
   float &xyz0 = pdf_field->get(cell, uint_t{0u});
-  pdf_field->getF(&xyz0, 0) = pop[0];
-  pdf_field->getF(&xyz0, 1) = pop[1];
-  pdf_field->getF(&xyz0, 2) = pop[2];
-  pdf_field->getF(&xyz0, 3) = pop[3];
-  pdf_field->getF(&xyz0, 4) = pop[4];
-  pdf_field->getF(&xyz0, 5) = pop[5];
-  pdf_field->getF(&xyz0, 6) = pop[6];
-  pdf_field->getF(&xyz0, 7) = pop[7];
-  pdf_field->getF(&xyz0, 8) = pop[8];
-  pdf_field->getF(&xyz0, 9) = pop[9];
-  pdf_field->getF(&xyz0, 10) = pop[10];
-  pdf_field->getF(&xyz0, 11) = pop[11];
-  pdf_field->getF(&xyz0, 12) = pop[12];
-  pdf_field->getF(&xyz0, 13) = pop[13];
-  pdf_field->getF(&xyz0, 14) = pop[14];
-  pdf_field->getF(&xyz0, 15) = pop[15];
-  pdf_field->getF(&xyz0, 16) = pop[16];
-  pdf_field->getF(&xyz0, 17) = pop[17];
-  pdf_field->getF(&xyz0, 18) = pop[18];
+  pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
+  pdf_field->getF(&xyz0, uint_t{1u}) = pop[1u];
+  pdf_field->getF(&xyz0, uint_t{2u}) = pop[2u];
+  pdf_field->getF(&xyz0, uint_t{3u}) = pop[3u];
+  pdf_field->getF(&xyz0, uint_t{4u}) = pop[4u];
+  pdf_field->getF(&xyz0, uint_t{5u}) = pop[5u];
+  pdf_field->getF(&xyz0, uint_t{6u}) = pop[6u];
+  pdf_field->getF(&xyz0, uint_t{7u}) = pop[7u];
+  pdf_field->getF(&xyz0, uint_t{8u}) = pop[8u];
+  pdf_field->getF(&xyz0, uint_t{9u}) = pop[9u];
+  pdf_field->getF(&xyz0, uint_t{10u}) = pop[10u];
+  pdf_field->getF(&xyz0, uint_t{11u}) = pop[11u];
+  pdf_field->getF(&xyz0, uint_t{12u}) = pop[12u];
+  pdf_field->getF(&xyz0, uint_t{13u}) = pop[13u];
+  pdf_field->getF(&xyz0, uint_t{14u}) = pop[14u];
+  pdf_field->getF(&xyz0, uint_t{15u}) = pop[15u];
+  pdf_field->getF(&xyz0, uint_t{16u}) = pop[16u];
+  pdf_field->getF(&xyz0, uint_t{17u}) = pop[17u];
+  pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
 }
 
 inline void broadcast(GhostLayerField<float, uint_t{19u}> *pdf_field,
@@ -209,47 +209,47 @@ inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
 namespace Vector {
 inline Vector3<float> get(GhostLayerField<float, uint_t{3u}> const *vec_field,
                           Cell const &cell) {
-  const float &xyz0 = vec_field->get(cell, 0);
+  const float &xyz0 = vec_field->get(cell, uint_t{0u});
   Vector3<float> vec;
-  vec[0] = vec_field->getF(&xyz0, 0);
-  vec[1] = vec_field->getF(&xyz0, 1);
-  vec[2] = vec_field->getF(&xyz0, 2);
+  vec[0] = vec_field->getF(&xyz0, uint_t{0u});
+  vec[1] = vec_field->getF(&xyz0, uint_t{1u});
+  vec[2] = vec_field->getF(&xyz0, uint_t{2u});
   return vec;
 }
 
 inline void set(GhostLayerField<float, uint_t{3u}> *vec_field,
                 Vector3<float> const &vec, Cell const &cell) {
-  float &xyz0 = vec_field->get(cell, 0);
-  vec_field->getF(&xyz0, 0) = vec[0];
-  vec_field->getF(&xyz0, 1) = vec[1];
-  vec_field->getF(&xyz0, 2) = vec[2];
+  float &xyz0 = vec_field->get(cell, uint_t{0u});
+  vec_field->getF(&xyz0, uint_t{0u}) = vec[0u];
+  vec_field->getF(&xyz0, uint_t{1u}) = vec[1u];
+  vec_field->getF(&xyz0, uint_t{2u}) = vec[2u];
 }
 
 inline void add(GhostLayerField<float, uint_t{3u}> *vec_field,
                 Vector3<float> const &vec, Cell const &cell) {
-  float &xyz0 = vec_field->get(cell, 0);
-  vec_field->getF(&xyz0, 0) += vec[0];
-  vec_field->getF(&xyz0, 1) += vec[1];
-  vec_field->getF(&xyz0, 2) += vec[2];
+  float &xyz0 = vec_field->get(cell, uint_t{0u});
+  vec_field->getF(&xyz0, uint_t{0u}) += vec[0u];
+  vec_field->getF(&xyz0, uint_t{1u}) += vec[1u];
+  vec_field->getF(&xyz0, uint_t{2u}) += vec[2u];
 }
 
 inline void broadcast(GhostLayerField<float, uint_t{3u}> *vec_field,
                       Vector3<float> const &vec) {
   WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
-    float &xyz0 = vec_field->get(x, y, z, 0);
-    vec_field->getF(&xyz0, 0) = vec[0];
-    vec_field->getF(&xyz0, 1) = vec[1];
-    vec_field->getF(&xyz0, 2) = vec[2];
+    float &xyz0 = vec_field->get(x, y, z, uint_t{0u});
+    vec_field->getF(&xyz0, uint_t{0u}) = vec[0u];
+    vec_field->getF(&xyz0, uint_t{1u}) = vec[1u];
+    vec_field->getF(&xyz0, uint_t{2u}) = vec[2u];
   });
 }
 
 inline void add_to_all(GhostLayerField<float, uint_t{3u}> *vec_field,
                        Vector3<float> const &vec) {
   WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
-    float &xyz0 = vec_field->get(x, y, z, 0);
-    vec_field->getF(&xyz0, 0) += vec[0];
-    vec_field->getF(&xyz0, 1) += vec[1];
-    vec_field->getF(&xyz0, 2) += vec[2];
+    float &xyz0 = vec_field->get(x, y, z, uint_t{0u});
+    vec_field->getF(&xyz0, uint_t{0u}) += vec[0u];
+    vec_field->getF(&xyz0, uint_t{1u}) += vec[1u];
+    vec_field->getF(&xyz0, uint_t{2u}) += vec[2u];
   });
 }
 
@@ -410,97 +410,97 @@ namespace Equilibrium {
 inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
                 Vector3<float> const &u, float const rho, Cell const &cell) {
 
-  float &xyz0 = pdf_field->get(cell, 0);
-  pdf_field->getF(&xyz0, 0) = rho * -0.33333333333333331f * (u[0] * u[0]) +
-                              rho * -0.33333333333333331f * (u[1] * u[1]) +
-                              rho * -0.33333333333333331f * (u[2] * u[2]) +
-                              rho * 0.33333333333333331f;
-  pdf_field->getF(&xyz0, 1) = rho * -0.16666666666666666f * (u[0] * u[0]) +
-                              rho * -0.16666666666666666f * (u[2] * u[2]) +
-                              rho * 0.055555555555555552f +
-                              rho * 0.16666666666666666f * u[1] +
-                              rho * 0.16666666666666666f * (u[1] * u[1]);
-  pdf_field->getF(&xyz0, 2) = rho * -0.16666666666666666f * u[1] +
-                              rho * -0.16666666666666666f * (u[0] * u[0]) +
-                              rho * -0.16666666666666666f * (u[2] * u[2]) +
-                              rho * 0.055555555555555552f +
-                              rho * 0.16666666666666666f * (u[1] * u[1]);
-  pdf_field->getF(&xyz0, 3) = rho * -0.16666666666666666f * u[0] +
-                              rho * -0.16666666666666666f * (u[1] * u[1]) +
-                              rho * -0.16666666666666666f * (u[2] * u[2]) +
-                              rho * 0.055555555555555552f +
-                              rho * 0.16666666666666666f * (u[0] * u[0]);
-  pdf_field->getF(&xyz0, 4) = rho * -0.16666666666666666f * (u[1] * u[1]) +
-                              rho * -0.16666666666666666f * (u[2] * u[2]) +
-                              rho * 0.055555555555555552f +
-                              rho * 0.16666666666666666f * u[0] +
-                              rho * 0.16666666666666666f * (u[0] * u[0]);
-  pdf_field->getF(&xyz0, 5) = rho * -0.16666666666666666f * (u[0] * u[0]) +
-                              rho * -0.16666666666666666f * (u[1] * u[1]) +
-                              rho * 0.055555555555555552f +
-                              rho * 0.16666666666666666f * u[2] +
-                              rho * 0.16666666666666666f * (u[2] * u[2]);
-  pdf_field->getF(&xyz0, 6) = rho * -0.16666666666666666f * u[2] +
-                              rho * -0.16666666666666666f * (u[0] * u[0]) +
-                              rho * -0.16666666666666666f * (u[1] * u[1]) +
-                              rho * 0.055555555555555552f +
-                              rho * 0.16666666666666666f * (u[2] * u[2]);
-  pdf_field->getF(&xyz0, 7) =
+  float &xyz0 = pdf_field->get(cell, uint_t{0u});
+  pdf_field->getF(&xyz0, uint_t{0u}) =
+      rho * -0.33333333333333331f * (u[0] * u[0]) +
+      rho * -0.33333333333333331f * (u[1] * u[1]) +
+      rho * -0.33333333333333331f * (u[2] * u[2]) + rho * 0.33333333333333331f;
+  pdf_field->getF(&xyz0, uint_t{1u}) =
+      rho * -0.16666666666666666f * (u[0] * u[0]) +
+      rho * -0.16666666666666666f * (u[2] * u[2]) +
+      rho * 0.055555555555555552f + rho * 0.16666666666666666f * u[1] +
+      rho * 0.16666666666666666f * (u[1] * u[1]);
+  pdf_field->getF(&xyz0, uint_t{2u}) =
+      rho * -0.16666666666666666f * u[1] +
+      rho * -0.16666666666666666f * (u[0] * u[0]) +
+      rho * -0.16666666666666666f * (u[2] * u[2]) +
+      rho * 0.055555555555555552f + rho * 0.16666666666666666f * (u[1] * u[1]);
+  pdf_field->getF(&xyz0, uint_t{3u}) =
+      rho * -0.16666666666666666f * u[0] +
+      rho * -0.16666666666666666f * (u[1] * u[1]) +
+      rho * -0.16666666666666666f * (u[2] * u[2]) +
+      rho * 0.055555555555555552f + rho * 0.16666666666666666f * (u[0] * u[0]);
+  pdf_field->getF(&xyz0, uint_t{4u}) =
+      rho * -0.16666666666666666f * (u[1] * u[1]) +
+      rho * -0.16666666666666666f * (u[2] * u[2]) +
+      rho * 0.055555555555555552f + rho * 0.16666666666666666f * u[0] +
+      rho * 0.16666666666666666f * (u[0] * u[0]);
+  pdf_field->getF(&xyz0, uint_t{5u}) =
+      rho * -0.16666666666666666f * (u[0] * u[0]) +
+      rho * -0.16666666666666666f * (u[1] * u[1]) +
+      rho * 0.055555555555555552f + rho * 0.16666666666666666f * u[2] +
+      rho * 0.16666666666666666f * (u[2] * u[2]);
+  pdf_field->getF(&xyz0, uint_t{6u}) =
+      rho * -0.16666666666666666f * u[2] +
+      rho * -0.16666666666666666f * (u[0] * u[0]) +
+      rho * -0.16666666666666666f * (u[1] * u[1]) +
+      rho * 0.055555555555555552f + rho * 0.16666666666666666f * (u[2] * u[2]);
+  pdf_field->getF(&xyz0, uint_t{7u}) =
       rho * -0.083333333333333329f * u[0] + rho * -0.25f * u[0] * u[1] +
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[1] +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
       rho * 0.083333333333333329f * (u[1] * u[1]);
-  pdf_field->getF(&xyz0, 8) =
+  pdf_field->getF(&xyz0, uint_t{8u}) =
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] +
       rho * 0.083333333333333329f * u[1] +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
       rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.25f * u[0] * u[1];
-  pdf_field->getF(&xyz0, 9) =
+  pdf_field->getF(&xyz0, uint_t{9u}) =
       rho * -0.083333333333333329f * u[0] +
       rho * -0.083333333333333329f * u[1] + rho * 0.027777777777777776f +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
       rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.25f * u[0] * u[1];
-  pdf_field->getF(&xyz0, 10) =
+  pdf_field->getF(&xyz0, uint_t{10u}) =
       rho * -0.083333333333333329f * u[1] + rho * -0.25f * u[0] * u[1] +
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
       rho * 0.083333333333333329f * (u[1] * u[1]);
-  pdf_field->getF(&xyz0, 11) =
+  pdf_field->getF(&xyz0, uint_t{11u}) =
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[1] +
       rho * 0.083333333333333329f * u[2] +
       rho * 0.083333333333333329f * (u[1] * u[1]) +
       rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[1] * u[2];
-  pdf_field->getF(&xyz0, 12) =
+  pdf_field->getF(&xyz0, uint_t{12u}) =
       rho * -0.083333333333333329f * u[1] + rho * -0.25f * u[1] * u[2] +
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[2] +
       rho * 0.083333333333333329f * (u[1] * u[1]) +
       rho * 0.083333333333333329f * (u[2] * u[2]);
-  pdf_field->getF(&xyz0, 13) =
+  pdf_field->getF(&xyz0, uint_t{13u}) =
       rho * -0.083333333333333329f * u[0] + rho * -0.25f * u[0] * u[2] +
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[2] +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
       rho * 0.083333333333333329f * (u[2] * u[2]);
-  pdf_field->getF(&xyz0, 14) =
+  pdf_field->getF(&xyz0, uint_t{14u}) =
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] +
       rho * 0.083333333333333329f * u[2] +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
       rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[0] * u[2];
-  pdf_field->getF(&xyz0, 15) =
+  pdf_field->getF(&xyz0, uint_t{15u}) =
       rho * -0.083333333333333329f * u[2] + rho * -0.25f * u[1] * u[2] +
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[1] +
       rho * 0.083333333333333329f * (u[1] * u[1]) +
       rho * 0.083333333333333329f * (u[2] * u[2]);
-  pdf_field->getF(&xyz0, 16) =
+  pdf_field->getF(&xyz0, uint_t{16u}) =
       rho * -0.083333333333333329f * u[1] +
       rho * -0.083333333333333329f * u[2] + rho * 0.027777777777777776f +
       rho * 0.083333333333333329f * (u[1] * u[1]) +
       rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[1] * u[2];
-  pdf_field->getF(&xyz0, 17) =
+  pdf_field->getF(&xyz0, uint_t{17u}) =
       rho * -0.083333333333333329f * u[0] +
       rho * -0.083333333333333329f * u[2] + rho * 0.027777777777777776f +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
       rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[0] * u[2];
-  pdf_field->getF(&xyz0, 18) =
+  pdf_field->getF(&xyz0, uint_t{18u}) =
       rho * -0.083333333333333329f * u[2] + rho * -0.25f * u[0] * u[2] +
       rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] +
       rho * 0.083333333333333329f * (u[0] * u[0]) +
@@ -511,26 +511,26 @@ inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
 namespace Density {
 inline float get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
                  Cell const &cell) {
-  const float &xyz0 = pdf_field->get(cell, 0);
-  const float f_0 = pdf_field->getF(&xyz0, 0);
-  const float f_1 = pdf_field->getF(&xyz0, 1);
-  const float f_2 = pdf_field->getF(&xyz0, 2);
-  const float f_3 = pdf_field->getF(&xyz0, 3);
-  const float f_4 = pdf_field->getF(&xyz0, 4);
-  const float f_5 = pdf_field->getF(&xyz0, 5);
-  const float f_6 = pdf_field->getF(&xyz0, 6);
-  const float f_7 = pdf_field->getF(&xyz0, 7);
-  const float f_8 = pdf_field->getF(&xyz0, 8);
-  const float f_9 = pdf_field->getF(&xyz0, 9);
-  const float f_10 = pdf_field->getF(&xyz0, 10);
-  const float f_11 = pdf_field->getF(&xyz0, 11);
-  const float f_12 = pdf_field->getF(&xyz0, 12);
-  const float f_13 = pdf_field->getF(&xyz0, 13);
-  const float f_14 = pdf_field->getF(&xyz0, 14);
-  const float f_15 = pdf_field->getF(&xyz0, 15);
-  const float f_16 = pdf_field->getF(&xyz0, 16);
-  const float f_17 = pdf_field->getF(&xyz0, 17);
-  const float f_18 = pdf_field->getF(&xyz0, 18);
+  const float &xyz0 = pdf_field->get(cell, uint_t{0u});
+  const float f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+  const float f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+  const float f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+  const float f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+  const float f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+  const float f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+  const float f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+  const float f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+  const float f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+  const float f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+  const float f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+  const float f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+  const float f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+  const float f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+  const float f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+  const float f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+  const float f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+  const float f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+  const float f_18 = pdf_field->getF(&xyz0, uint_t{18u});
   const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const float vel1Term = f_1 + f_11 + f_15 + f_7;
   const float vel2Term = f_12 + f_13 + f_5;
@@ -541,26 +541,26 @@ inline float get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
 
 inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
                 float const rho_in, Cell const &cell) {
-  const float &xyz0 = pdf_field->get(cell, 0);
-  const float f_0 = pdf_field->getF(&xyz0, 0);
-  const float f_1 = pdf_field->getF(&xyz0, 1);
-  const float f_2 = pdf_field->getF(&xyz0, 2);
-  const float f_3 = pdf_field->getF(&xyz0, 3);
-  const float f_4 = pdf_field->getF(&xyz0, 4);
-  const float f_5 = pdf_field->getF(&xyz0, 5);
-  const float f_6 = pdf_field->getF(&xyz0, 6);
-  const float f_7 = pdf_field->getF(&xyz0, 7);
-  const float f_8 = pdf_field->getF(&xyz0, 8);
-  const float f_9 = pdf_field->getF(&xyz0, 9);
-  const float f_10 = pdf_field->getF(&xyz0, 10);
-  const float f_11 = pdf_field->getF(&xyz0, 11);
-  const float f_12 = pdf_field->getF(&xyz0, 12);
-  const float f_13 = pdf_field->getF(&xyz0, 13);
-  const float f_14 = pdf_field->getF(&xyz0, 14);
-  const float f_15 = pdf_field->getF(&xyz0, 15);
-  const float f_16 = pdf_field->getF(&xyz0, 16);
-  const float f_17 = pdf_field->getF(&xyz0, 17);
-  const float f_18 = pdf_field->getF(&xyz0, 18);
+  const float &xyz0 = pdf_field->get(cell, uint_t{0u});
+  const float f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+  const float f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+  const float f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+  const float f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+  const float f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+  const float f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+  const float f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+  const float f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+  const float f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+  const float f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+  const float f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+  const float f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+  const float f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+  const float f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+  const float f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+  const float f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+  const float f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+  const float f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+  const float f_18 = pdf_field->getF(&xyz0, uint_t{18u});
   const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const float momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
   const float vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -571,11 +571,12 @@ inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
   const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
                     vel1Term + vel2Term;
 
+  // calculate current velocity (before density change)
   const float conversion = float(1) / rho;
   Vector3<float> velocity;
-  velocity[0] = momdensity_0 * conversion;
-  velocity[1] = momdensity_1 * conversion;
-  velocity[2] = momdensity_2 * conversion;
+  velocity[0u] = momdensity_0 * conversion;
+  velocity[1u] = momdensity_1 * conversion;
+  velocity[2u] = momdensity_2 * conversion;
 
   Equilibrium::set(pdf_field, velocity, rho_in, cell);
 }
@@ -677,26 +678,26 @@ namespace Velocity {
 inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
                 GhostLayerField<float, uint_t{3u}> const *force_field,
                 Vector3<float> const &u, Cell const &cell) {
-  const float &xyz0 = pdf_field->get(cell, 0);
-  const float f_0 = pdf_field->getF(&xyz0, 0);
-  const float f_1 = pdf_field->getF(&xyz0, 1);
-  const float f_2 = pdf_field->getF(&xyz0, 2);
-  const float f_3 = pdf_field->getF(&xyz0, 3);
-  const float f_4 = pdf_field->getF(&xyz0, 4);
-  const float f_5 = pdf_field->getF(&xyz0, 5);
-  const float f_6 = pdf_field->getF(&xyz0, 6);
-  const float f_7 = pdf_field->getF(&xyz0, 7);
-  const float f_8 = pdf_field->getF(&xyz0, 8);
-  const float f_9 = pdf_field->getF(&xyz0, 9);
-  const float f_10 = pdf_field->getF(&xyz0, 10);
-  const float f_11 = pdf_field->getF(&xyz0, 11);
-  const float f_12 = pdf_field->getF(&xyz0, 12);
-  const float f_13 = pdf_field->getF(&xyz0, 13);
-  const float f_14 = pdf_field->getF(&xyz0, 14);
-  const float f_15 = pdf_field->getF(&xyz0, 15);
-  const float f_16 = pdf_field->getF(&xyz0, 16);
-  const float f_17 = pdf_field->getF(&xyz0, 17);
-  const float f_18 = pdf_field->getF(&xyz0, 18);
+  const float &xyz0 = pdf_field->get(cell, uint_t{0u});
+  const float f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+  const float f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+  const float f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+  const float f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+  const float f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+  const float f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+  const float f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+  const float f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+  const float f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+  const float f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+  const float f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+  const float f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+  const float f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+  const float f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+  const float f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+  const float f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+  const float f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+  const float f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+  const float f_18 = pdf_field->getF(&xyz0, uint_t{18u});
   const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const float vel1Term = f_1 + f_11 + f_15 + f_7;
   const float vel2Term = f_12 + f_13 + f_5;
@@ -706,7 +707,6 @@ inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
   const auto x = cell.x();
   const auto y = cell.y();
   const auto z = cell.z();
-  const float delta_rho = rho - 1;
   const float u_0 =
       -force_field->get(x, y, z, 0) * 0.50000000000000000f / rho + u[0];
   const float u_1 =
@@ -725,26 +725,26 @@ get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
   const auto x = cell.x();
   const auto y = cell.y();
   const auto z = cell.z();
-  const float &xyz0 = pdf_field->get(cell, 0);
-  const float f_0 = pdf_field->getF(&xyz0, 0);
-  const float f_1 = pdf_field->getF(&xyz0, 1);
-  const float f_2 = pdf_field->getF(&xyz0, 2);
-  const float f_3 = pdf_field->getF(&xyz0, 3);
-  const float f_4 = pdf_field->getF(&xyz0, 4);
-  const float f_5 = pdf_field->getF(&xyz0, 5);
-  const float f_6 = pdf_field->getF(&xyz0, 6);
-  const float f_7 = pdf_field->getF(&xyz0, 7);
-  const float f_8 = pdf_field->getF(&xyz0, 8);
-  const float f_9 = pdf_field->getF(&xyz0, 9);
-  const float f_10 = pdf_field->getF(&xyz0, 10);
-  const float f_11 = pdf_field->getF(&xyz0, 11);
-  const float f_12 = pdf_field->getF(&xyz0, 12);
-  const float f_13 = pdf_field->getF(&xyz0, 13);
-  const float f_14 = pdf_field->getF(&xyz0, 14);
-  const float f_15 = pdf_field->getF(&xyz0, 15);
-  const float f_16 = pdf_field->getF(&xyz0, 16);
-  const float f_17 = pdf_field->getF(&xyz0, 17);
-  const float f_18 = pdf_field->getF(&xyz0, 18);
+  const float &xyz0 = pdf_field->get(cell, uint_t{0u});
+  const float f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+  const float f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+  const float f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+  const float f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+  const float f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+  const float f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+  const float f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+  const float f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+  const float f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+  const float f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+  const float f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+  const float f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+  const float f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+  const float f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+  const float f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+  const float f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+  const float f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+  const float f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+  const float f_18 = pdf_field->getF(&xyz0, uint_t{18u});
   const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const float momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
   const float vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -763,9 +763,9 @@ get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
 
   const float conversion = float(1) / rho;
   Vector3<float> velocity;
-  velocity[0] = md_0 * conversion;
-  velocity[1] = md_1 * conversion;
-  velocity[2] = md_2 * conversion;
+  velocity[0u] = md_0 * conversion;
+  velocity[1u] = md_1 * conversion;
+  velocity[2u] = md_2 * conversion;
 
   return {rho, velocity};
 }
@@ -776,7 +776,6 @@ inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
   const auto x = cell.x();
   const auto y = cell.y();
   const auto z = cell.z();
-  const float delta_rho = rho - 1;
   const float u_0 =
       -force_field->get(x, y, z, 0) * 0.50000000000000000f / rho + u[0];
   const float u_1 =
@@ -795,26 +794,26 @@ get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
   const auto x = cell.x();
   const auto y = cell.y();
   const auto z = cell.z();
-  const float &xyz0 = pdf_field->get(cell, 0);
-  const float f_0 = pdf_field->getF(&xyz0, 0);
-  const float f_1 = pdf_field->getF(&xyz0, 1);
-  const float f_2 = pdf_field->getF(&xyz0, 2);
-  const float f_3 = pdf_field->getF(&xyz0, 3);
-  const float f_4 = pdf_field->getF(&xyz0, 4);
-  const float f_5 = pdf_field->getF(&xyz0, 5);
-  const float f_6 = pdf_field->getF(&xyz0, 6);
-  const float f_7 = pdf_field->getF(&xyz0, 7);
-  const float f_8 = pdf_field->getF(&xyz0, 8);
-  const float f_9 = pdf_field->getF(&xyz0, 9);
-  const float f_10 = pdf_field->getF(&xyz0, 10);
-  const float f_11 = pdf_field->getF(&xyz0, 11);
-  const float f_12 = pdf_field->getF(&xyz0, 12);
-  const float f_13 = pdf_field->getF(&xyz0, 13);
-  const float f_14 = pdf_field->getF(&xyz0, 14);
-  const float f_15 = pdf_field->getF(&xyz0, 15);
-  const float f_16 = pdf_field->getF(&xyz0, 16);
-  const float f_17 = pdf_field->getF(&xyz0, 17);
-  const float f_18 = pdf_field->getF(&xyz0, 18);
+  const float &xyz0 = pdf_field->get(cell, uint_t{0u});
+  const float f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+  const float f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+  const float f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+  const float f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+  const float f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+  const float f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+  const float f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+  const float f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+  const float f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+  const float f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+  const float f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+  const float f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+  const float f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+  const float f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+  const float f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+  const float f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+  const float f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+  const float f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+  const float f_18 = pdf_field->getF(&xyz0, uint_t{18u});
   const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const float momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
   const float vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -832,9 +831,9 @@ get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
       force_field->get(x, y, z, 2) * 0.50000000000000000f + momdensity_2;
 
   Vector3<float> momentumDensity;
-  momentumDensity[0] = md_0;
-  momentumDensity[1] = md_1;
-  momentumDensity[2] = md_2;
+  momentumDensity[0u] = md_0;
+  momentumDensity[1u] = md_1;
+  momentumDensity[2u] = md_2;
 
   return {rho, momentumDensity};
 }
@@ -846,26 +845,26 @@ reduce(GhostLayerField<float, uint_t{19u}> const *pdf_field,
        GhostLayerField<float, uint_t{3u}> const *force_field) {
   Vector3<float> momentumDensity(float{0});
   WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-    const float &xyz0 = pdf_field->get(x, y, z, 0);
-    const float f_0 = pdf_field->getF(&xyz0, 0);
-    const float f_1 = pdf_field->getF(&xyz0, 1);
-    const float f_2 = pdf_field->getF(&xyz0, 2);
-    const float f_3 = pdf_field->getF(&xyz0, 3);
-    const float f_4 = pdf_field->getF(&xyz0, 4);
-    const float f_5 = pdf_field->getF(&xyz0, 5);
-    const float f_6 = pdf_field->getF(&xyz0, 6);
-    const float f_7 = pdf_field->getF(&xyz0, 7);
-    const float f_8 = pdf_field->getF(&xyz0, 8);
-    const float f_9 = pdf_field->getF(&xyz0, 9);
-    const float f_10 = pdf_field->getF(&xyz0, 10);
-    const float f_11 = pdf_field->getF(&xyz0, 11);
-    const float f_12 = pdf_field->getF(&xyz0, 12);
-    const float f_13 = pdf_field->getF(&xyz0, 13);
-    const float f_14 = pdf_field->getF(&xyz0, 14);
-    const float f_15 = pdf_field->getF(&xyz0, 15);
-    const float f_16 = pdf_field->getF(&xyz0, 16);
-    const float f_17 = pdf_field->getF(&xyz0, 17);
-    const float f_18 = pdf_field->getF(&xyz0, 18);
+    const float &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+    const float f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+    const float f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+    const float f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+    const float f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+    const float f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+    const float f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+    const float f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+    const float f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+    const float f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+    const float f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+    const float f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+    const float f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+    const float f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+    const float f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+    const float f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+    const float f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+    const float f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+    const float f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+    const float f_18 = pdf_field->getF(&xyz0, uint_t{18u});
     const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const float momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -882,9 +881,9 @@ reduce(GhostLayerField<float, uint_t{19u}> const *pdf_field,
     const float md_2 =
         force_field->get(x, y, z, 2) * 0.50000000000000000f + momdensity_2;
 
-    momentumDensity[0] += md_0;
-    momentumDensity[1] += md_1;
-    momentumDensity[2] += md_2;
+    momentumDensity[0u] += md_0;
+    momentumDensity[1u] += md_1;
+    momentumDensity[2u] += md_2;
   });
   return momentumDensity;
 }
@@ -893,26 +892,26 @@ reduce(GhostLayerField<float, uint_t{19u}> const *pdf_field,
 namespace PressureTensor {
 inline Matrix3<float> get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
                           Cell const &cell) {
-  const float &xyz0 = pdf_field->get(cell, 0);
-  const float f_0 = pdf_field->getF(&xyz0, 0);
-  const float f_1 = pdf_field->getF(&xyz0, 1);
-  const float f_2 = pdf_field->getF(&xyz0, 2);
-  const float f_3 = pdf_field->getF(&xyz0, 3);
-  const float f_4 = pdf_field->getF(&xyz0, 4);
-  const float f_5 = pdf_field->getF(&xyz0, 5);
-  const float f_6 = pdf_field->getF(&xyz0, 6);
-  const float f_7 = pdf_field->getF(&xyz0, 7);
-  const float f_8 = pdf_field->getF(&xyz0, 8);
-  const float f_9 = pdf_field->getF(&xyz0, 9);
-  const float f_10 = pdf_field->getF(&xyz0, 10);
-  const float f_11 = pdf_field->getF(&xyz0, 11);
-  const float f_12 = pdf_field->getF(&xyz0, 12);
-  const float f_13 = pdf_field->getF(&xyz0, 13);
-  const float f_14 = pdf_field->getF(&xyz0, 14);
-  const float f_15 = pdf_field->getF(&xyz0, 15);
-  const float f_16 = pdf_field->getF(&xyz0, 16);
-  const float f_17 = pdf_field->getF(&xyz0, 17);
-  const float f_18 = pdf_field->getF(&xyz0, 18);
+  const float &xyz0 = pdf_field->get(cell, uint_t{0u});
+  const float f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+  const float f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+  const float f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+  const float f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+  const float f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+  const float f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+  const float f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+  const float f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+  const float f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+  const float f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+  const float f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+  const float f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+  const float f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+  const float f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+  const float f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+  const float f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+  const float f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+  const float f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+  const float f_18 = pdf_field->getF(&xyz0, uint_t{18u});
   const float p_0 =
       f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
   const float p_1 = -f_10 - f_7 + f_8 + f_9;
@@ -927,17 +926,17 @@ inline Matrix3<float> get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
       f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
 
   Matrix3<float> pressureTensor;
-  pressureTensor[0] = p_0;
-  pressureTensor[1] = p_1;
-  pressureTensor[2] = p_2;
+  pressureTensor[0u] = p_0;
+  pressureTensor[1u] = p_1;
+  pressureTensor[2u] = p_2;
 
-  pressureTensor[3] = p_3;
-  pressureTensor[4] = p_4;
-  pressureTensor[5] = p_5;
+  pressureTensor[3u] = p_3;
+  pressureTensor[4u] = p_4;
+  pressureTensor[5u] = p_5;
 
-  pressureTensor[6] = p_6;
-  pressureTensor[7] = p_7;
-  pressureTensor[8] = p_8;
+  pressureTensor[6u] = p_6;
+  pressureTensor[7u] = p_7;
+  pressureTensor[8u] = p_8;
 
   return pressureTensor;
 }

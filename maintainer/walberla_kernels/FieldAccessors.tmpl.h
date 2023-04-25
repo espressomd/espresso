@@ -66,7 +66,7 @@ namespace Population
         {{dtype}} const & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         std::array<{{dtype}}, {{Q}}u> pop;
         {% for i in range(Q) -%}
-            pop[{{i}}] = pdf_field->getF( &xyz0, {{i}});
+            pop[{{i}}u] = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
         return pop;
     }
@@ -78,7 +78,7 @@ namespace Population
     {
         {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
-            pdf_field->getF( &xyz0, {{i}}) = pop[{{i}}];
+            pdf_field->getF( &xyz0, uint_t{ {{i}}u }) = pop[{{i}}u];
         {% endfor -%}
     }
 
@@ -136,37 +136,37 @@ namespace Population
 
 namespace Vector
 {
-    inline Vector{{D}}<{{dtype}}>
+    inline Vector{{D}}< {{dtype}} >
     get( GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > const * vec_field,
          Cell const & cell )
     {
-        const {{dtype}} & xyz0 = vec_field->get(cell, 0);
-        Vector{{D}}<{{dtype}}> vec;
+        const {{dtype}} & xyz0 = vec_field->get(cell, uint_t{ 0u });
+        Vector{{D}}< {{dtype}} > vec;
         {% for i in range(D) -%}
-            vec[{{i}}] = vec_field->getF( &xyz0, {{i}});
+            vec[{{i}}] = vec_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
         return vec;
     }
 
     inline void
     set( GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * vec_field,
-         Vector{{D}}<{{dtype}}> const & vec,
+         Vector{{D}}< {{dtype}} > const & vec,
          Cell const & cell )
     {
-        {{dtype}} & xyz0 = vec_field->get(cell, 0);
+        {{dtype}} & xyz0 = vec_field->get(cell, uint_t{ 0u });
         {% for i in range(D) -%}
-            vec_field->getF( &xyz0, {{i}}) = vec[{{i}}];
+            vec_field->getF( &xyz0, uint_t{ {{i}}u }) = vec[{{i}}u];
         {% endfor -%}
     }
 
     inline void
     add( GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * vec_field,
-         Vector{{D}}<{{dtype}}> const & vec,
+         Vector{{D}}< {{dtype}} > const & vec,
          Cell const & cell )
     {
-        {{dtype}} & xyz0 = vec_field->get(cell, 0);
+        {{dtype}} & xyz0 = vec_field->get(cell, uint_t{ 0u });
         {% for i in range(D) -%}
-            vec_field->getF( &xyz0, {{i}}) += vec[{{i}}];
+            vec_field->getF( &xyz0, uint_t{ {{i}}u }) += vec[{{i}}u];
         {% endfor -%}
     }
 
@@ -175,9 +175,9 @@ namespace Vector
                Vector{{D}}< {{dtype}} > const & vec)
      {
          WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
-             {{dtype}} & xyz0 = vec_field->get(x, y, z, 0);
+             {{dtype}} & xyz0 = vec_field->get(x, y, z, uint_t{ 0u });
              {% for i in range(D) -%}
-                 vec_field->getF( &xyz0, {{i}}) = vec[{{i}}];
+                 vec_field->getF( &xyz0, uint_t{ {{i}}u }) = vec[{{i}}u];
              {% endfor -%}
          });
      }
@@ -187,9 +187,9 @@ namespace Vector
                 Vector{{D}}< {{dtype}} > const & vec)
      {
          WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
-             {{dtype}} & xyz0 = vec_field->get(x, y, z, 0);
+             {{dtype}} & xyz0 = vec_field->get(x, y, z, uint_t{ 0u });
              {% for i in range(D) -%}
-                 vec_field->getF( &xyz0, {{i}}) += vec[{{i}}];
+                 vec_field->getF( &xyz0, uint_t{ {{i}}u }) += vec[{{i}}u];
              {% endfor -%}
          });
      }
@@ -260,9 +260,9 @@ namespace Equilibrium
         rho -= {{dtype}}(1.0);
         {%endif %}
 
-        {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for eqTerm in equilibrium -%}
-            pdf_field->getF( &xyz0, {{loop.index0 }}) = {{eqTerm}};
+            pdf_field->getF( &xyz0, uint_t{ {{ loop.index0 }}u }) = {{eqTerm}};
         {% endfor -%}
     }
 } // namespace Equilibrium
@@ -273,9 +273,9 @@ namespace Density
     get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
          Cell const & cell )
     {
-        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
-            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
         {{density_getters | indent(8)}}
         return rho;
@@ -286,16 +286,19 @@ namespace Density
          {{dtype}} const rho_in,
          Cell const & cell )
     {
-        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
-            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
 
         {{unshifted_momentum_density_getter | indent(8)}}
 
         // calculate current velocity (before density change)
         const {{dtype}} conversion = {{dtype}}(1) / rho;
-        const {{dtype}} u_old[{{D}}] = { {% for i in range(D) %}momdensity_{{i}} * conversion{% if not loop.last %}, {% endif %}{% endfor %} };
+        Vector{{D}}< {{dtype}} > velocity;
+        {% for i in range(D) -%}
+            velocity[{{i}}u] = momdensity_{{i}} * conversion;
+        {% endfor %}
 
         Equilibrium::set(pdf_field, velocity, rho_in {%if not compressible %} + {{dtype}}(1) {%endif%}, cell);
     }
@@ -361,9 +364,9 @@ namespace Velocity
          Vector{{D}}< {{dtype}} > const & u,
          Cell const & cell )
     {
-        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
-            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
         {{density_getters | indent(8)}}
 
@@ -386,9 +389,9 @@ namespace DensityAndVelocity
         {% for c in "xyz" -%}
             const auto {{c}} = cell.{{c}}();
         {% endfor -%}
-        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
-            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
 
         {{momentum_density_getter | substitute_force_getter_cpp | indent(8) }}
@@ -396,7 +399,7 @@ namespace DensityAndVelocity
         const {{dtype}} conversion = {{dtype}}(1) / rho;
         Vector{{D}}< {{dtype}} > velocity;
         {% for i in range(D) -%}
-            velocity[{{i}}] = md_{{i}} * conversion;
+            velocity[{{i}}u] = md_{{i}} * conversion;
         {% endfor %}
         return {rho, velocity};
     }
@@ -427,16 +430,16 @@ namespace DensityAndMomentumDensity
         {% for c in "xyz" -%}
             const auto {{c}} = cell.{{c}}();
         {% endfor -%}
-        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
-            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
 
         {{momentum_density_getter | substitute_force_getter_cpp | indent(8) }}
 
         Vector{{D}}< {{dtype}} > momentumDensity;
         {% for i in range(D) -%}
-            momentumDensity[{{i}}] = md_{{i}};
+            momentumDensity[{{i}}u] = md_{{i}};
         {% endfor %}
         return {rho, momentumDensity};
     }
@@ -450,15 +453,15 @@ namespace MomentumDensity
     {
         Vector{{D}}< {{dtype}} > momentumDensity({{dtype}} {0});
         WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-            const {{dtype}} & xyz0 = pdf_field->get(x, y, z, 0);
+            const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
             {% for i in range(Q) -%}
-                const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+                const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
             {% endfor -%}
 
             {{momentum_density_getter | substitute_force_getter_cpp | indent(8) }}
 
             {% for i in range(D) -%}
-                momentumDensity[{{i}}] += md_{{i}};
+                momentumDensity[{{i}}u] += md_{{i}};
             {% endfor %}
         });
         return momentumDensity;
@@ -471,9 +474,9 @@ namespace PressureTensor
     get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
          Cell const & cell )
    {
-        const {{dtype}} & xyz0 = pdf_field->get(cell, 0);
+        const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
-            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, {{i}});
+            const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
         {% endfor -%}
 
         {{second_momentum_getter | indent(8) }}
@@ -481,7 +484,7 @@ namespace PressureTensor
         Matrix{{D}}< {{dtype}} > pressureTensor;
         {% for i in range(D) -%}
             {% for j in range(D) -%}
-                pressureTensor[{{i*D+j}}] = p_{{i*D+j}};
+                pressureTensor[{{i*D+j}}u] = p_{{i*D+j}};
             {% endfor %}
         {% endfor %}
         return pressureTensor;
