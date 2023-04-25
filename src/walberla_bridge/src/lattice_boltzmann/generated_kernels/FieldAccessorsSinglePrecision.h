@@ -41,6 +41,7 @@
 #include <stencil/D3Q19.h>
 
 #include <array>
+#include <cassert>
 #include <tuple>
 #include <vector>
 
@@ -583,7 +584,7 @@ inline std::vector<float>
 get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
     CellInterval const &ci) {
   std::vector<float> out;
-  out.reserve(ci.numCells() * uint_t(3u));
+  out.reserve(ci.numCells());
   for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
     for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
       for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
@@ -621,7 +622,7 @@ get(GhostLayerField<float, uint_t{19u}> const *pdf_field,
 
 inline void set(GhostLayerField<float, uint_t{19u}> *pdf_field,
                 std::vector<float> const &values, CellInterval const &ci) {
-  assert(uint_c(values.size()) == ci.numCells() * uint_t(3u));
+  assert(uint_c(values.size()) == ci.numCells());
   auto values_it = values.begin();
   for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
     for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {

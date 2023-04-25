@@ -1090,7 +1090,7 @@ public:
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
-      auto const n_values = 3u * ci->numCells();
+      auto const n_values = ci->numCells();
       out.reserve(n_values);
       for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
         for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {

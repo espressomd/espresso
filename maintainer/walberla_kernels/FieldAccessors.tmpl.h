@@ -37,6 +37,7 @@
 #include <stencil/{{stencil_name}}.h>
 
 #include <array>
+#include <cassert>
 #include <tuple>
 #include <vector>
 
@@ -304,7 +305,7 @@ namespace Density
          CellInterval const & ci )
     {
         std::vector< {{dtype}} > out;
-        out.reserve(ci.numCells() * uint_t({{D}}u));
+        out.reserve(ci.numCells());
         for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
             for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
                 for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
@@ -325,7 +326,7 @@ namespace Density
          std::vector< {{dtype}} > const & values,
          CellInterval const & ci )
     {
-        assert(uint_c(values.size()) == ci.numCells() * uint_t({{D}}u));
+        assert(uint_c(values.size()) == ci.numCells());
         auto values_it = values.begin();
         for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
             for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
