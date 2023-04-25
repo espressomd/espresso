@@ -68,6 +68,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -166,7 +167,7 @@ private:
 
   void pressure_tensor_correction(Matrix3<FloatType> &tensor) const {
     auto const revert_factor = pressure_tensor_correction_factor();
-    for (auto const i : {1, 2, 3, 5, 6, 7}) {
+    for (auto const i : {1u, 2u, 3u, 5u, 6u, 7u}) {
       tensor[i] *= revert_factor;
     }
   }
@@ -511,9 +512,10 @@ public:
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {
           auto const &blocks = get_lattice().get_blocks();
-          block_offset_0 = blocks->getBlockCellBB(*block).xMin();
-          block_offset_1 = blocks->getBlockCellBB(*block).yMin();
-          block_offset_2 = blocks->getBlockCellBB(*block).zMin();
+          auto const &ci = blocks->getBlockCellBB(*block);
+          block_offset_0 = static_cast<uint32_t>(ci.xMin());
+          block_offset_1 = static_cast<uint32_t>(ci.yMin());
+          block_offset_2 = static_cast<uint32_t>(ci.zMin());
         };
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
   }
@@ -1204,14 +1206,16 @@ public:
     auto const *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.)
       throw std::runtime_error("The LB does not use a random number generator");
-    return cm->time_step_;
+    return static_cast<uint64_t>(cm->time_step_);
   }
 
   void set_rng_state(uint64_t counter) override {
     auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.)
       throw std::runtime_error("The LB does not use a random number generator");
-    cm->time_step_ = counter;
+    assert(counter <=
+           static_cast<uint32_t>(std::numeric_limits<uint_t>::max()));
+    cm->time_step_ = static_cast<uint32_t>(counter);
   }
 
   [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {
@@ -1279,7 +1283,7 @@ protected:
       WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
       auto const velocity =
           lbm::accessor::Vector::get(this->m_field, {x, y, z});
-      return numeric_cast<OutputType>(this->m_conversion * velocity[f]);
+      return numeric_cast<OutputType>(this->m_conversion * velocity[uint_c(f)]);
     }
   };
 
@@ -1302,7 +1306,7 @@ protected:
       auto const revert_factor =
           (f == 0 or f == 4 or f == 8) ? FloatType{1} : m_off_diag_factor;
       return numeric_cast<OutputType>(this->m_conversion * revert_factor *
-                                      pressure[f]);
+                                      pressure[uint_c(f)]);
     }
     FloatType const m_off_diag_factor;
   };

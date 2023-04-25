@@ -22,6 +22,7 @@
 #include <utils/Vector.hpp>
 
 #include <cassert>
+#include <initializer_list>
 #include <memory>
 #include <utility>
 
@@ -60,7 +61,7 @@ public:
           Utils::Vector3i{{static_cast<int>(pos[0]), static_cast<int>(pos[1]),
                            static_cast<int>(pos[2])}};
 #ifndef NDEBUG
-      for (auto const i : {0, 1, 2}) {
+      for (auto const i : {0u, 1u, 2u}) {
         assert(std::abs(static_cast<double>(dim[i]) - pos[i]) < 1e-10);
       }
 #endif

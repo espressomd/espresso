@@ -32,6 +32,7 @@
 
 #include <boost/optional.hpp>
 
+#include <initializer_list>
 #include <stdexcept>
 #include <utility>
 
@@ -42,7 +43,7 @@ LatticeWalberla::LatticeWalberla(Utils::Vector3i const &grid_dimensions,
   using walberla::real_t;
   using walberla::uint_c;
 
-  for (int i : {0, 1, 2}) {
+  for (auto const i : {0u, 1u, 2u}) {
     if (m_grid_dimensions[i] % node_grid[i] != 0) {
       throw std::runtime_error(
           "LB grid dimensions and mpi node grid are not compatible.");

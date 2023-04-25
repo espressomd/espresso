@@ -30,6 +30,7 @@
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -59,7 +60,7 @@ Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,
       static_cast<int>(std::round(box_size[0] / agrid)),
       static_cast<int>(std::round(box_size[1] / agrid)),
       static_cast<int>(std::round(box_size[2] / agrid))};
-  for (int i : {0, 1, 2}) {
+  for (auto const i : {0u, 1u, 2u}) {
     if (std::abs(grid_dimensions[i] * agrid - box_size[i]) / box_size[i] >
         std::numeric_limits<double>::epsilon()) {
       throw std::runtime_error(

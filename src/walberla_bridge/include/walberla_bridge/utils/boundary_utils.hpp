@@ -26,6 +26,7 @@
 #include <boost/multi_array/multi_array_ref.hpp>
 
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 #include <vector>
 
@@ -34,19 +35,20 @@ namespace walberla {
 inline std::vector<Utils::Vector3d>
 fill_3D_vector_array(std::vector<double> const &vec_flat,
                      Utils::Vector3i const &grid_size) {
-  auto const n_grid_points = Utils::product(grid_size);
-  assert(vec_flat.size() == 3 * n_grid_points or vec_flat.size() == 3);
+  auto const n_grid_points =
+      static_cast<std::size_t>(Utils::product(grid_size));
+  assert(vec_flat.size() == 3u * n_grid_points or vec_flat.size() == 3u);
   std::vector<Utils::Vector3d> output_vector;
 
   auto const vec_begin = std::begin(vec_flat);
   auto const vec_end = std::end(vec_flat);
-  if (vec_flat.size() == 3) {
+  if (vec_flat.size() == 3u) {
     auto const uniform_vector = Utils::Vector3d(vec_begin, vec_end);
     output_vector.assign(n_grid_points, uniform_vector);
   } else {
     output_vector.reserve(n_grid_points);
-    for (auto it = vec_begin; it < vec_end; it += 3) {
-      output_vector.emplace_back(Utils::Vector3d(it, it + 3));
+    for (auto it = vec_begin; it < vec_end; it += 3u) {
+      output_vector.emplace_back(Utils::Vector3d(it, it + 3u));
     }
   }
 
@@ -56,13 +58,14 @@ fill_3D_vector_array(std::vector<double> const &vec_flat,
 inline std::vector<double>
 fill_3D_scalar_array(std::vector<double> const &vec_flat,
                      Utils::Vector3i const &grid_size) {
-  auto const n_grid_points = Utils::product(grid_size);
-  assert(vec_flat.size() == n_grid_points or vec_flat.size() == 1);
+  auto const n_grid_points =
+      static_cast<std::size_t>(Utils::product(grid_size));
+  assert(vec_flat.size() == n_grid_points or vec_flat.size() == 1u);
   std::vector<double> output_vector;
 
   auto const vec_begin = std::begin(output_vector);
   auto const vec_end = std::end(output_vector);
-  if (vec_flat.size() == 1) {
+  if (vec_flat.size() == 1u) {
     auto const uniform_value = vec_flat[0];
     output_vector.assign(n_grid_points, uniform_value);
   } else {
