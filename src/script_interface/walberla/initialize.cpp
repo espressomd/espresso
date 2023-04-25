@@ -44,10 +44,8 @@
 
 #include <utils/Factory.hpp>
 
-#ifdef WALBERLA
 #ifdef WALBERLA_STATIC_ASSERT
 #error "waLberla headers should not be visible to the ESPResSo script interface"
-#endif
 #endif
 
 namespace ScriptInterface::walberla {

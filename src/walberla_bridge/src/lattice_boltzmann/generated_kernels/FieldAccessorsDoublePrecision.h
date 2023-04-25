@@ -32,6 +32,8 @@
 #pragma once
 
 #include <core/DataTypes.h>
+#include <core/cell/Cell.h>
+#include <core/cell/CellInterval.h>
 #include <core/math/Matrix3.h>
 #include <core/math/Vector3.h>
 
@@ -40,6 +42,7 @@
 
 #include <array>
 #include <tuple>
+#include <vector>
 
 #ifdef WALBERLA_CXX_COMPILER_IS_GNU
 #pragma GCC diagnostic push
@@ -107,6 +110,99 @@ inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
   pdf_field->getF(&xyz0, 17) = pop[17];
   pdf_field->getF(&xyz0, 18) = pop[18];
 }
+
+inline void broadcast(GhostLayerField<double, uint_t{19u}> *pdf_field,
+                      std::array<double, 19u> const &pop) {
+  WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(pdf_field, {
+    double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+    pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
+    pdf_field->getF(&xyz0, uint_t{1u}) = pop[1u];
+    pdf_field->getF(&xyz0, uint_t{2u}) = pop[2u];
+    pdf_field->getF(&xyz0, uint_t{3u}) = pop[3u];
+    pdf_field->getF(&xyz0, uint_t{4u}) = pop[4u];
+    pdf_field->getF(&xyz0, uint_t{5u}) = pop[5u];
+    pdf_field->getF(&xyz0, uint_t{6u}) = pop[6u];
+    pdf_field->getF(&xyz0, uint_t{7u}) = pop[7u];
+    pdf_field->getF(&xyz0, uint_t{8u}) = pop[8u];
+    pdf_field->getF(&xyz0, uint_t{9u}) = pop[9u];
+    pdf_field->getF(&xyz0, uint_t{10u}) = pop[10u];
+    pdf_field->getF(&xyz0, uint_t{11u}) = pop[11u];
+    pdf_field->getF(&xyz0, uint_t{12u}) = pop[12u];
+    pdf_field->getF(&xyz0, uint_t{13u}) = pop[13u];
+    pdf_field->getF(&xyz0, uint_t{14u}) = pop[14u];
+    pdf_field->getF(&xyz0, uint_t{15u}) = pop[15u];
+    pdf_field->getF(&xyz0, uint_t{16u}) = pop[16u];
+    pdf_field->getF(&xyz0, uint_t{17u}) = pop[17u];
+    pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
+  });
+}
+
+inline std::vector<double>
+get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
+    CellInterval const &ci) {
+  std::vector<double> out;
+  out.reserve(ci.numCells() * uint_t(19u));
+  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+        double const &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{0u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{1u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{2u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{3u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{4u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{5u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{6u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{7u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{8u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{9u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{10u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{11u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{12u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{13u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{14u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{15u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{16u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{17u}));
+        out.emplace_back(pdf_field->getF(&xyz0, uint_t{18u}));
+      }
+    }
+  }
+  return out;
+}
+
+inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
+                std::vector<double> const &values, CellInterval const &ci) {
+  assert(uint_c(values.size()) == ci.numCells() * uint_t(19u));
+  auto values_ptr = values.data();
+  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+        double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+        pdf_field->getF(&xyz0, uint_t{0u}) = values_ptr[0u];
+        pdf_field->getF(&xyz0, uint_t{1u}) = values_ptr[1u];
+        pdf_field->getF(&xyz0, uint_t{2u}) = values_ptr[2u];
+        pdf_field->getF(&xyz0, uint_t{3u}) = values_ptr[3u];
+        pdf_field->getF(&xyz0, uint_t{4u}) = values_ptr[4u];
+        pdf_field->getF(&xyz0, uint_t{5u}) = values_ptr[5u];
+        pdf_field->getF(&xyz0, uint_t{6u}) = values_ptr[6u];
+        pdf_field->getF(&xyz0, uint_t{7u}) = values_ptr[7u];
+        pdf_field->getF(&xyz0, uint_t{8u}) = values_ptr[8u];
+        pdf_field->getF(&xyz0, uint_t{9u}) = values_ptr[9u];
+        pdf_field->getF(&xyz0, uint_t{10u}) = values_ptr[10u];
+        pdf_field->getF(&xyz0, uint_t{11u}) = values_ptr[11u];
+        pdf_field->getF(&xyz0, uint_t{12u}) = values_ptr[12u];
+        pdf_field->getF(&xyz0, uint_t{13u}) = values_ptr[13u];
+        pdf_field->getF(&xyz0, uint_t{14u}) = values_ptr[14u];
+        pdf_field->getF(&xyz0, uint_t{15u}) = values_ptr[15u];
+        pdf_field->getF(&xyz0, uint_t{16u}) = values_ptr[16u];
+        pdf_field->getF(&xyz0, uint_t{17u}) = values_ptr[17u];
+        pdf_field->getF(&xyz0, uint_t{18u}) = values_ptr[18u];
+        values_ptr += 19u;
+      }
+    }
+  }
+}
 } // namespace Population
 
 namespace Vector {
@@ -154,6 +250,41 @@ inline void add_to_all(GhostLayerField<double, uint_t{3u}> *vec_field,
     vec_field->getF(&xyz0, 1) += vec[1];
     vec_field->getF(&xyz0, 2) += vec[2];
   });
+}
+
+inline std::vector<double>
+get(GhostLayerField<double, uint_t{3u}> const *vec_field,
+    CellInterval const &ci) {
+  std::vector<double> out;
+  out.reserve(ci.numCells() * uint_t(3u));
+  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+        const double &xyz0 = vec_field->get(x, y, z, uint_t{0u});
+        out.emplace_back(vec_field->getF(&xyz0, uint_t{0u}));
+        out.emplace_back(vec_field->getF(&xyz0, uint_t{1u}));
+        out.emplace_back(vec_field->getF(&xyz0, uint_t{2u}));
+      }
+    }
+  }
+  return out;
+}
+
+inline void set(GhostLayerField<double, uint_t{3u}> *vec_field,
+                std::vector<double> const &values, CellInterval const &ci) {
+  assert(uint_c(values.size()) == ci.numCells() * uint_t(3u));
+  auto values_ptr = values.data();
+  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+        double &xyz0 = vec_field->get(x, y, z, uint_t{0u});
+        vec_field->getF(&xyz0, uint_t{0u}) = values_ptr[0u];
+        vec_field->getF(&xyz0, uint_t{1u}) = values_ptr[1u];
+        vec_field->getF(&xyz0, uint_t{2u}) = values_ptr[2u];
+        values_ptr += 3u;
+      }
+    }
+  }
 }
 } // namespace Vector
 
@@ -443,6 +574,98 @@ inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
   velocity[2] = momdensity_2 * conversion;
 
   Equilibrium::set(pdf_field, velocity, rho_in, cell);
+}
+
+inline std::vector<double>
+get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
+    CellInterval const &ci) {
+  std::vector<double> out;
+  out.reserve(ci.numCells() * uint_t(3u));
+  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
+        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
+        const double vel1Term = f_1 + f_11 + f_15 + f_7;
+        const double vel2Term = f_12 + f_13 + f_5;
+        const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                           vel0Term + vel1Term + vel2Term;
+        out.emplace_back(rho);
+      }
+    }
+  }
+  return out;
+}
+
+inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
+                std::vector<double> const &values, CellInterval const &ci) {
+  assert(uint_c(values.size()) == ci.numCells() * uint_t(3u));
+  auto values_it = values.begin();
+  for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+    for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+      for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
+        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
+        const double momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
+        const double vel1Term = f_1 + f_11 + f_15 + f_7;
+        const double momdensity_1 =
+            -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
+        const double vel2Term = f_12 + f_13 + f_5;
+        const double momdensity_2 =
+            f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+        const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                           vel0Term + vel1Term + vel2Term;
+
+        // calculate current velocity (before density change)
+        const double conversion = double(1) / rho;
+        Vector3<double> velocity;
+        velocity[0u] = momdensity_0 * conversion;
+        velocity[1u] = momdensity_1 * conversion;
+        velocity[2u] = momdensity_2 * conversion;
+
+        Equilibrium::set(pdf_field, velocity, *values_it, Cell{x, y, z});
+        ++values_it;
+      }
+    }
+  }
 }
 } // namespace Density
 

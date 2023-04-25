@@ -425,12 +425,12 @@ class LBTest:
         for pos in ([0, 0, 0], self.system.box_l, self.system.box_l / 2,
                     self.system.box_l / 2 - self.params['agrid'] / 2):
             p = self.system.part.add(pos=pos, v=[1, 2, 3])
+            v_part = np.copy(p.v)
 
-            v_part = p.v
             # In the first time step after a system change, LB coupling forces
             # are ignored. Hence, the coupling position is shifted
             coupling_pos = p.pos + self.system.time_step * p.v
-            v_fluid = lbf.get_interpolated_velocity(pos=coupling_pos)
+            v_fluid = np.copy(lbf.get_interpolated_velocity(pos=coupling_pos))
             # Nodes to which forces will be interpolated
             lb_nodes = tests_common.get_lb_nodes_around_pos(coupling_pos, lbf)
 
@@ -557,23 +557,16 @@ class LBTest:
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density
         # / dens * tau * (n_time_steps + 0.5)
-        # Walberla TODO: 0.5 needs to be added to time step once f/2
-        # correction is back
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps + 0.5) / self.params['density']
-        # Chck global linear momentum = density * volume * velocity
+        # Check global linear momentum = density * volume * velocity
         rtol = self.rtol
-        ratio = self.system.analysis.linear_momentum() \
-            / (fluid_velocity * self.params['density'] * self.system.volume())
-        print(ratio, 1 / ratio)
         if hasattr(lbf, 'is_single_precision') and lbf.is_single_precision:
             rtol *= 10.
-        # Walberla todo: The factor 1.5 can go, once f/2 correction is back
         np.testing.assert_allclose(
             np.copy(self.system.analysis.linear_momentum()),
             fluid_velocity * self.params['density'] * self.system.volume(),
             rtol=rtol)
-
         # Check node velocities
         for node_velocity in lbf[:, :, :].velocity.reshape((-1, 3)):
             np.testing.assert_allclose(
@@ -646,13 +639,13 @@ class LBTest:
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBTestWalberla(LBTest, ut.TestCase):
+class LBTestWalberlaDoublePrecision(LBTest, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     atol = 1e-10
     rtol = 1e-7
 
@@ -664,7 +657,7 @@ class LBTestWalberlaSinglePrecision(LBTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     atol = 1e-7
     rtol = 5e-5
 

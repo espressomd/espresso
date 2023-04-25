@@ -24,8 +24,7 @@ import numpy as np
 import itertools
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
-class LBSliceTest(ut.TestCase):
+class LBTest:
 
     """This simple test first writes random numbers and then reads them
     to same slices of LB nodes and compares if the results are the same,
@@ -33,15 +32,18 @@ class LBSliceTest(ut.TestCase):
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.time_step = .01
+    system.time_step = 0.01
     system.cell_system.skin = 0.1
     np.random.seed(seed=42)
 
-    @classmethod
-    def setUpClass(cls):
-        cls.lb_fluid = espressomd.lb.LBFluidWalberla(
-            agrid=1.0, density=1., kinematic_viscosity=1., tau=0.01)
-        cls.system.actors.add(cls.lb_fluid)
+    def setUp(self):
+        self.lb_fluid = self.lb_class(
+            agrid=1., density=1., kinematic_viscosity=1.,
+            tau=self.system.time_step, **self.lb_params)
+        self.system.actors.add(self.lb_fluid)
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def test_slicing(self):
         lb_fluid = self.lb_fluid
@@ -50,6 +52,11 @@ class LBSliceTest(ut.TestCase):
         array = lb_fluid[1:-1:1, 5, 3:6].velocity
         with self.assertRaisesRegex(ValueError, "ESPResSo array properties return non-writable arrays"):
             array[0, 0, 0, 1] = 5.
+
+        # density broadcast (with type conversion from int to double)
+        lb_fluid[:, :, 0].density = 2
+        np.testing.assert_array_almost_equal(
+            np.copy(lb_fluid[:, :, 0].density), 2.)
 
         # velocity on test slice [:-1, :-1, -1]
         input_vel = np.random.rand(9, 9, 9, 3)
@@ -69,11 +76,6 @@ class LBSliceTest(ut.TestCase):
         lb_fluid[1:-1, 5, 3:6].density = input_dens
         output_dens = lb_fluid[1:-1, 5, 3:6].density
         np.testing.assert_array_almost_equal(np.copy(output_dens), input_dens)
-
-        # density broadcast (with type conversion from int to double)
-        lb_fluid[:, :, 0].density = 2
-        np.testing.assert_array_almost_equal(
-            np.copy(lb_fluid[:, :, 0].density), 2.)
 
         # population on test slice [:, :, :]
         input_pop = np.random.rand(10, 10, 10, 19)
@@ -156,6 +158,18 @@ class LBSliceTest(ut.TestCase):
         # use __eq()__ method form LBFluidRoutines()
         assert all([x == y for x, y in zip(
             arranged_indices, iterator_indices)])
+
+
+@utx.skipIfMissingFeatures("WALBERLA")
+class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_lattice_class = espressomd.lb.LatticeWalberla
+    lb_params = {"single_precision": True}
+    atol = 1e-7
+    rtol = 5e-5
 
 
 if __name__ == "__main__":

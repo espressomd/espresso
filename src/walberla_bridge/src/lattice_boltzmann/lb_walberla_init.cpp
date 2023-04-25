@@ -19,11 +19,11 @@
 
 #include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
 
-#include "walberla_bridge/Architecture.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
-#include "walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp"
-
 #include "LBWalberlaImpl.hpp"
+
+#include <walberla_bridge/Architecture.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include <core/mpi/Environment.h>
 

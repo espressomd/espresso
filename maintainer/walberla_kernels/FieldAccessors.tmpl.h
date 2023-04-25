@@ -28,6 +28,8 @@
 #pragma once
 
 #include <core/DataTypes.h>
+#include <core/cell/Cell.h>
+#include <core/cell/CellInterval.h>
 #include <core/math/Matrix{{D}}.h>
 #include <core/math/Vector{{D}}.h>
 
@@ -36,6 +38,7 @@
 
 #include <array>
 #include <tuple>
+#include <vector>
 
 #ifdef WALBERLA_CXX_COMPILER_IS_GNU
 #pragma GCC diagnostic push
@@ -76,6 +79,57 @@ namespace Population
         {% for i in range(Q) -%}
             pdf_field->getF( &xyz0, {{i}}) = pop[{{i}}];
         {% endfor -%}
+    }
+
+    inline void
+    broadcast( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
+               std::array<{{dtype}}, {{Q}}u> const & pop)
+     {
+         WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(pdf_field, {
+             {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+             {% for i in range(Q) -%}
+                 pdf_field->getF( &xyz0, uint_t{ {{i}}u }) = pop[{{i}}u];
+             {% endfor -%}
+         });
+     }
+
+    inline std::vector< {{dtype}} >
+    get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
+         CellInterval const & ci )
+    {
+        std::vector< {{dtype}} > out;
+        out.reserve(ci.numCells() * uint_t({{Q}}u));
+        for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+            for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+                for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+                    {{dtype}} const & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(Q) -%}
+                        out.emplace_back(pdf_field->getF( &xyz0, uint_t{ {{i}}u }));
+                    {% endfor -%}
+                }
+            }
+        }
+        return out;
+    }
+
+    inline void
+    set( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
+         std::vector< {{dtype}} > const & values,
+         CellInterval const & ci )
+    {
+        assert(uint_c(values.size()) == ci.numCells() * uint_t({{Q}}u));
+        auto values_ptr = values.data();
+        for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+            for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+                for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+                    {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(Q) -%}
+                        pdf_field->getF( &xyz0, uint_t{ {{i}}u }) = values_ptr[{{i}}u];
+                    {% endfor -%}
+                    values_ptr += {{Q}}u;
+                }
+            }
+        }
     }
 } // namespace Population
 
@@ -138,6 +192,45 @@ namespace Vector
              {% endfor -%}
          });
      }
+
+    inline std::vector< {{dtype}} >
+    get( GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > const * vec_field,
+         CellInterval const & ci )
+    {
+        std::vector< {{dtype}} > out;
+        out.reserve(ci.numCells() * uint_t({{D}}u));
+        for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+            for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+                for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+                    const {{dtype}} & xyz0 = vec_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(D) -%}
+                      out.emplace_back(vec_field->getF( &xyz0, uint_t{ {{i}}u }));
+                    {% endfor -%}
+                }
+            }
+        }
+        return out;
+    }
+
+    inline void
+    set( GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * vec_field,
+         std::vector< {{dtype}} > const & values,
+         CellInterval const & ci )
+    {
+        assert(uint_c(values.size()) == ci.numCells() * uint_t({{D}}u));
+        auto values_ptr = values.data();
+        for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+            for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+                for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+                    {{dtype}} & xyz0 = vec_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(D) -%}
+                        vec_field->getF( &xyz0, uint_t{ {{i}}u }) = values_ptr[{{i}}u];
+                    {% endfor -%}
+                    values_ptr += {{D}}u;
+                }
+            }
+        }
+    }
 } // namespace Vector
 
 namespace EquilibriumDistribution
@@ -204,6 +297,58 @@ namespace Density
         const {{dtype}} u_old[{{D}}] = { {% for i in range(D) %}momdensity_{{i}} * conversion{% if not loop.last %}, {% endif %}{% endfor %} };
 
         Equilibrium::set(pdf_field, velocity, rho_in {%if not compressible %} + {{dtype}}(1) {%endif%}, cell);
+    }
+
+    inline std::vector< {{dtype}} >
+    get( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field,
+         CellInterval const & ci )
+    {
+        std::vector< {{dtype}} > out;
+        out.reserve(ci.numCells() * uint_t({{D}}u));
+        for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+            for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+                for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+                    const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(Q) -%}
+                        const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
+                    {% endfor -%}
+                    {{density_getters | indent(12)}}
+                    out.emplace_back(rho);
+                }
+            }
+        }
+        return out;
+    }
+
+    inline void
+    set( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
+         std::vector< {{dtype}} > const & values,
+         CellInterval const & ci )
+    {
+        assert(uint_c(values.size()) == ci.numCells() * uint_t({{D}}u));
+        auto values_it = values.begin();
+        for (auto x = ci.xMin(); x <= ci.xMax(); ++x) {
+            for (auto y = ci.yMin(); y <= ci.yMax(); ++y) {
+                for (auto z = ci.zMin(); z <= ci.zMax(); ++z) {
+                    const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(Q) -%}
+                        const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
+                    {% endfor -%}
+
+                    {{unshifted_momentum_density_getter | indent(12)}}
+
+                    // calculate current velocity (before density change)
+                    const {{dtype}} conversion = {{dtype}}(1) / rho;
+                    Vector{{D}}< {{dtype}} > velocity;
+                    {% for i in range(D) -%}
+                        velocity[{{i}}u] = momdensity_{{i}} * conversion;
+                    {% endfor %}
+
+                    Equilibrium::set(pdf_field, velocity, *values_it {%if not compressible %} + {{dtype}}(1) {%endif%}, Cell{x, y, z});
+                    ++values_it;
+                }
+            }
+        }
     }
 } // namespace Density
 

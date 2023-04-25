@@ -90,10 +90,9 @@ class LBStreamingCommon:
     setting all populations to zero except for one cell.
 
     """
-    system = espressomd.System(box_l=[3.0] * 3)
-    system.cell_system.skin = 0.4 * AGRID
+    system = espressomd.System(box_l=[3., 2., 2.])
+    system.cell_system.skin = 0.1 * AGRID
     system.time_step = TAU
-    grid = np.array(system.box_l / AGRID, dtype=int)
 
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
@@ -105,20 +104,21 @@ class LBStreamingCommon:
     def test_population_streaming(self):
         pop_default = np.zeros(19) + 1e-10
         pop_source = np.arange(1, 20, dtype=float)
+        grid = np.array(self.system.box_l / AGRID, dtype=int)
 
         # reset fluid populations
-        for i in itertools.product(range(self.grid[0]), range(
-                self.grid[1]), range(self.grid[2])):
+        for i in itertools.product(
+                range(grid[0]), range(grid[1]), range(grid[2])):
             self.lbf[i].population = pop_default
 
         # check streaming
         for grid_index in itertools.product(
-                range(0, self.grid[0]), range(0, self.grid[1]), range(0, self.grid[2])):
+                range(grid[0]), range(grid[1]), range(grid[2])):
             self.lbf[grid_index].population = pop_source
             self.system.integrator.run(1)
             for n_v in range(19):
                 target_node_index = np.mod(
-                    grid_index + VELOCITY_VECTORS[n_v], self.grid)
+                    grid_index + VELOCITY_VECTORS[n_v], grid)
                 np.testing.assert_allclose(
                     self.lbf[target_node_index].population[n_v],
                     REFERENCE_POPULATIONS[n_v], rtol=self.rtol,
