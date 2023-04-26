@@ -3,7 +3,7 @@
 // e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
 
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *

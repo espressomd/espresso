@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 The ESPResSo project
+ * Copyright (C) 2019-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
