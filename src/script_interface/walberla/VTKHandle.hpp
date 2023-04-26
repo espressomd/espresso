@@ -210,8 +210,8 @@ class VTKHandle : public VTKHandleBase<LBWalberlaBase> {
 
   void setup_field_instance(VariantMap const &params) override {
     if (params.count("lb_fluid")) {
-      m_lb_fluid = get_value<std::shared_ptr<FluidWalberla>>(params, "lb_fluid")
-                       ->lb_fluid();
+      m_lb_fluid =
+          get_value<std::shared_ptr<Fluid>>(params, "lb_fluid")->lb_fluid();
     } else {
       m_lb_fluid = std::weak_ptr<LBWalberlaBase>{::lb_walberla()};
     }
@@ -227,7 +227,7 @@ protected:
       // object built from a checkpoint
       return get_value<LatticeModel::units_map>(params, "units");
     }
-    return get_value<std::shared_ptr<FluidWalberla>>(params, "lb_fluid")
+    return get_value<std::shared_ptr<Fluid>>(params, "lb_fluid")
         ->get_latice_to_md_units_conversion();
   }
 };

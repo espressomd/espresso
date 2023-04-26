@@ -22,7 +22,7 @@
 
 #ifdef WALBERLA
 
-#include "FluidWalberla.hpp"
+#include "Fluid.hpp"
 
 #include "LatticeIndices.hpp"
 
@@ -57,8 +57,7 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    auto const lb_sip =
-        get_value<std::shared_ptr<FluidWalberla>>(params, "parent_sip");
+    auto const lb_sip = get_value<std::shared_ptr<Fluid>>(params, "parent_sip");
     m_lb_fluid = lb_sip->lb_fluid().lock();
     assert(m_lb_fluid);
     auto const &lb_params = lb_sip->lb_params().lock();

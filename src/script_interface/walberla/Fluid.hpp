@@ -43,7 +43,7 @@
 
 namespace ScriptInterface::walberla {
 
-class FluidWalberla : public AutoParameters<FluidWalberla> {
+class Fluid : public AutoParameters<Fluid> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
   bool m_is_single_precision;
@@ -59,7 +59,7 @@ class FluidWalberla : public AutoParameters<FluidWalberla> {
   int m_seed;
 
 public:
-  FluidWalberla() {
+  Fluid() {
     add_parameters({
         {"is_single_precision", AutoParameter::read_only,
          [this]() { return m_is_single_precision; }},

@@ -23,7 +23,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/FluidNode.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/FluidSlice.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/FluidWalberla.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/Fluid.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpecies.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpeciesNode.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpeciesSlice.cpp)

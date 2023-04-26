@@ -391,7 +391,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
     ``agrid`` is provided.
 
     """
-    _so_name = "walberla::FluidWalberla"
+    _so_name = "walberla::Fluid"
     _so_creation_policy = "GLOBAL"
     # TODO WALBERLA: here we cannot use _so_bind_methods without lb_vtk.py
     # failing: the walberla::FluidWalberla script interface object doesn't
