@@ -189,7 +189,7 @@ else
 fi
 
 if [ "${with_walberla}" = true ]; then
-  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=ON"
+  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON"
   # disable default OpenMPI CPU binding mechanism to avoid stale references to
   # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
   mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
@@ -246,7 +246,7 @@ outp srcdir builddir \
     with_ubsan with_asan \
     check_odd_only \
     with_static_analysis with_fast_math myconfig \
-    build_procs check_procs with_walberla \
+    build_procs check_procs \
     with_cuda with_cuda_compiler with_ccache
 
 echo "Creating ${builddir}..."
