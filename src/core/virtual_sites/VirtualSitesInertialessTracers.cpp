@@ -30,6 +30,14 @@
 
 #include <algorithm>
 
+static void check_no_vs_exist(char const *const message) {
+  if (std::any_of(cell_structure.local_particles().begin(),
+                  cell_structure.local_particles().end(),
+                  [](Particle const &p) { return p.is_virtual(); })) {
+    runtimeErrorMsg() << "Inertialess Tracers: " << message;
+  }
+}
+
 void VirtualSitesInertialessTracers::after_force_calc() {
   // Now the forces are computed and need to go into the LB fluid
   if (lattice_switch == ActiveLB::CPU) {
@@ -39,16 +47,15 @@ void VirtualSitesInertialessTracers::after_force_calc() {
 #ifdef CUDA
   if (lattice_switch == ActiveLB::GPU) {
     IBM_ForcesIntoFluid_GPU(cell_structure.local_particles(), this_node);
+    if (comm_cart.size() != 1 and this_node != 0) {
+      check_no_vs_exist("The LB GPU method cannot integrate virtual sites when "
+                        "more than 1 MPI ranks are used. The particles on MPI "
+                        "rank >= 2 are now in an undeterminate state.");
+    }
     return;
   }
 #endif
-  if (std::any_of(cell_structure.local_particles().begin(),
-                  cell_structure.local_particles().end(),
-                  [](Particle &p) { return p.is_virtual(); })) {
-    runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
-                         "virtual sites present.";
-    return;
-  }
+  check_no_vs_exist("No LB method was active but virtual sites present.");
 }
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
