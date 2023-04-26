@@ -858,7 +858,7 @@ double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
 }
 
 void DipolarP3M::sanity_checks_boxl() const {
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     /* check k-space cutoff */
     if (dp3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;

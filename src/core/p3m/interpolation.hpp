@@ -149,7 +149,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   /* nearest mesh point */
   Utils::Vector3i nmp;
 
-  for (int d = 0; d < 3; d++) {
+  for (unsigned int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
     auto const pos = ((position[d] - local_mesh.ld_pos[d]) * ai[d]) - pos_shift;
 

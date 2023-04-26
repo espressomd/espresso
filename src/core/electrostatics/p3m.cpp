@@ -734,7 +734,7 @@ void CoulombP3M::tune() {
 }
 
 void CoulombP3M::sanity_checks_boxl() const {
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     /* check k-space cutoff */
     if (p3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;

@@ -23,6 +23,7 @@
 
 #include <bitset>
 #include <cmath>
+#include <initializer_list>
 
 struct LeesEdwardsBC {
   double pos_offset = 0.;
@@ -37,14 +38,16 @@ struct LeesEdwardsBC {
     Utils::Vector3d n_jumps{};
     Utils::Vector3d res = d;
 
-    double n_le_crossings =
-        std::round(res[shear_plane_normal] * l_inv[shear_plane_normal]);
-    if (n_le_crossings >= 1)
-      res[shear_direction] += pos_offset;
-    if (n_le_crossings <= -1)
-      res[shear_direction] -= pos_offset;
+    auto const le_plane_normal = static_cast<unsigned int>(shear_plane_normal);
+    auto const le_direction = static_cast<unsigned int>(shear_direction);
+    auto const n_le_crossings =
+        std::round(res[le_plane_normal] * l_inv[le_plane_normal]);
+    if (n_le_crossings >= 1.)
+      res[le_direction] += pos_offset;
+    if (n_le_crossings <= -1.)
+      res[le_direction] -= pos_offset;
 
-    for (int i : {0, 1, 2}) {
+    for (auto const i : {0u, 1u, 2u}) {
       if (periodic[i]) {
         n_jumps[i] = std::round(res[i] * l_inv[i]);
         res[i] -= n_jumps[i] * l[i];

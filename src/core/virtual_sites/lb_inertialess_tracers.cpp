@@ -92,7 +92,7 @@ void IBM_UpdateParticlePositions(ParticleRange const &particles,
   // Euler integrator
   for (auto &p : particles) {
     if (p.is_virtual()) {
-      for (int axis = 0; axis < 3; axis++) {
+      for (unsigned int axis = 0; axis < 3; axis++) {
 #ifdef EXTERNAL_FORCES
         if (not p.is_fixed_along(axis))
 #endif

@@ -139,9 +139,9 @@ public:
       auto const id_pos = find_end(m_it);
       auto const partners_begin = m_it;
       auto const partners_end = id_pos;
-      return {-(*id_pos) - 1,
-              Utils::make_span(std::addressof(*partners_begin),
-                               std::distance(partners_begin, partners_end))};
+      auto const dist = std::distance(partners_begin, partners_end);
+      return {-(*id_pos) - 1, Utils::make_span(std::addressof(*partners_begin),
+                                               static_cast<size_type>(dist))};
     }
   };
 
@@ -206,7 +206,9 @@ public:
    * @brief Number of bonds.
    * @return The number of bonds in the list.
    */
-  size_type size() const { return std::distance(begin(), end()); }
+  auto size() const {
+    return static_cast<size_type>(std::distance(begin(), end()));
+  }
 
   /**
    * @brief Erase all bonds from the list.

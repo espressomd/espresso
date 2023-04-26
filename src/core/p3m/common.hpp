@@ -49,8 +49,9 @@ auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
 #include "LocalBox.hpp"
 
-#include <cstddef>
+#include <array>
 #include <stdexcept>
+#include <vector>
 
 namespace detail {
 /** @brief Index helpers for direct and reciprocal space.
@@ -205,7 +206,7 @@ struct P3MLocalMesh {
    */
   void recalc_ld_pos(P3MParameters const &params) {
     // spatial position of left down mesh point
-    for (int i = 0; i < 3; i++) {
+    for (unsigned int i = 0; i < 3; i++) {
       ld_pos[i] = (ld_ind[i] + params.mesh_off[i]) * params.a[i];
     }
   }
@@ -243,7 +244,7 @@ std::array<std::vector<int>, 3> inline calc_meshift(
     Utils::Vector3i const &mesh_size, bool zero_out_midpoint = false) {
   std::array<std::vector<int>, 3> ret{};
 
-  for (std::size_t i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     ret[i] = std::vector<int>(mesh_size[i]);
 
     for (int j = 1; j <= mesh_size[i] / 2; j++) {

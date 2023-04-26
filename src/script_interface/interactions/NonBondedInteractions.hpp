@@ -59,7 +59,7 @@ public:
     auto const size = ::max_seen_particle_type;
     for (int i = 0; i < size; i++) {
       for (int j = i; j < size; j++) {
-        auto const key = Utils::upper_triangular(i, j, size);
+        auto const key = get_ia_param_key(i, j);
         ::nonbonded_ia_params[i] = std::make_shared<::IA_parameters>();
         m_nonbonded_ia_params[key] = make_interaction(i, j);
       }
@@ -72,7 +72,7 @@ public:
     make_particle_type_exist(size);
     for (int i = 0; i < size; i++) {
       for (int j = i; j < size; j++) {
-        auto const key = Utils::upper_triangular(i, j, size);
+        auto const key = get_ia_param_key(i, j);
         m_nonbonded_ia_params[key] = make_interaction(i, j);
       }
     }

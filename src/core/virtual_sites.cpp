@@ -118,9 +118,9 @@ calculate_vs_relate_to_params(Particle const &p_vs,
 
   // Verify result
   Utils::Quaternion<double> qtemp = relate_to_quat * quat;
-  for (int i = 0; i < 4; i++) {
+  for (unsigned int i = 0; i < 4; i++) {
     if (fabs(qtemp[i] - quat_director[i]) > 1E-9) {
-      fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n", i,
+      fprintf(stderr, "vs_relate_to: component %u: %f instead of %f\n", i,
               qtemp[i], quat_director[i]);
     }
   }
