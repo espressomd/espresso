@@ -41,7 +41,8 @@ namespace Interactions {
 
 class NonBondedInteractions : public ObjectHandle {
   using container_type =
-      std::unordered_map<int, std::shared_ptr<NonBondedInteractionHandle>>;
+      std::unordered_map<unsigned int,
+                         std::shared_ptr<NonBondedInteractionHandle>>;
 
   auto make_interaction(int i, int j) {
     assert(i <= j);

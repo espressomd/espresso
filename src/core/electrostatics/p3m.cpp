@@ -751,10 +751,10 @@ void CoulombP3M::sanity_checks_boxl() const {
   }
 
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    if (!((box_geo.length()[0] == box_geo.length()[1]) and
-          (box_geo.length()[1] == box_geo.length()[2])) or
-        !((p3m.params.mesh[0] == p3m.params.mesh[1]) and
-          (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+    if ((box_geo.length()[0] != box_geo.length()[1]) or
+        (box_geo.length()[1] != box_geo.length()[2]) or
+        (p3m.params.mesh[0] != p3m.params.mesh[1]) or
+        (p3m.params.mesh[1] != p3m.params.mesh[2])) {
       throw std::runtime_error(
           "CoulombP3M: non-metallic epsilon requires cubic box");
     }

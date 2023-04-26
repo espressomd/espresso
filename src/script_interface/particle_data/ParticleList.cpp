@@ -76,15 +76,12 @@ std::string ParticleList::get_internal_state() const {
     auto state = Utils::unpack<ObjectState>(packed_state);
     state.name = "Particles::ParticleHandle";
     auto const bonds_view = p_handle.call_method("get_bonds_view", {});
-    state.params.emplace_back(
-        std::pair<std::string, PackedVariant>{"bonds", pack(bonds_view)});
+    state.params.emplace_back(std::string{"bonds"}, pack(bonds_view));
 #ifdef EXCLUSIONS
     auto const exclusions = p_handle.call_method("get_exclusions", {});
-    state.params.emplace_back(
-        std::pair<std::string, PackedVariant>{"exclusions", pack(exclusions)});
+    state.params.emplace_back(std::string{"exclusions"}, pack(exclusions));
 #endif // EXCLUSIONS
-    state.params.emplace_back(
-        std::pair<std::string, PackedVariant>{"__cpt_sentinel", pack(None{})});
+    state.params.emplace_back(std::string{"__cpt_sentinel"}, pack(None{}));
     return Utils::pack(state);
   });
 
@@ -157,7 +154,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
       for (auto const &partner : partners[pid1])
         if (partner.first == pid2)
           return;
-      partners[pid1].emplace_back(std::pair{pid2, n_bonds});
+      partners[pid1].emplace_back(pid2, n_bonds);
     };
 
     for (auto it = bonded_pairs.begin(); it != bonded_pairs.end(); it += 2) {

@@ -136,9 +136,8 @@ struct P3MParameters {
     }
 
     if (not(mesh >= Utils::Vector3i::broadcast(1) or
-            ((mesh[0] >= 1) and
-             (mesh == Utils::Vector3i{{mesh[0], -1, -1}}))) and
-        not(tuning and mesh == Utils::Vector3i::broadcast(-1))) {
+            ((mesh[0] >= 1) and (mesh == Utils::Vector3i{{mesh[0], -1, -1}})) or
+            (tuning and mesh == Utils::Vector3i::broadcast(-1)))) {
       throw std::domain_error("Parameter 'mesh' must be > 0");
     }
 
@@ -151,7 +150,7 @@ struct P3MParameters {
       }
     }
 
-    if ((cao < 1 or cao > 7) and not(tuning and cao == -1)) {
+    if ((cao < 1 or cao > 7) and (not tuning or cao != -1)) {
       throw std::domain_error("Parameter 'cao' must be >= 1 and <= 7");
     }
 
