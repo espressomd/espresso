@@ -20,7 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 import numpy as np
 
 
@@ -72,20 +72,20 @@ class EKReaction(ut.TestCase):
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
         self.system.ekcontainer.tau = self.TAU
 
         self.system.ekcontainer.solver = eksolver
 
-        species_A = espressomd.EKSpecies.EKSpecies(
+        species_A = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=self.INITIAL_DENSITIES[0], kT=0.0,
             diffusion=self.DIFFUSION_COEFFICIENTS[0], valency=0.0,
             advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
             single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(species_A)
 
-        species_B = espressomd.EKSpecies.EKSpecies(
+        species_B = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=self.INITIAL_DENSITIES[1], kT=0.0,
             diffusion=self.DIFFUSION_COEFFICIENTS[1], valency=0.0,
             advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
@@ -94,32 +94,32 @@ class EKReaction(ut.TestCase):
 
         coeffs_left = [-1.0, 1.0]
         reactants_left = [
-            espressomd.EKSpecies.EKReactant(
+            espressomd.electrokinetics.EKReactant(
                 ekspecies=species_A,
                 stoech_coeff=coeffs_left[0],
                 order=1.0),
-            espressomd.EKSpecies.EKReactant(
+            espressomd.electrokinetics.EKReactant(
                 ekspecies=species_B,
                 stoech_coeff=coeffs_left[1],
                 order=0.0)]
 
-        reaction_left = espressomd.EKSpecies.EKIndexedReaction(
+        reaction_left = espressomd.electrokinetics.EKIndexedReaction(
             reactants=reactants_left, coefficient=self.REACTION_RATES[0],
             lattice=lattice, tau=self.TAU)
         reaction_left[1, :, :] = True
 
         coeffs_right = [1.0, -1.0]
         reactants_right = [
-            espressomd.EKSpecies.EKReactant(
+            espressomd.electrokinetics.EKReactant(
                 ekspecies=species_A,
                 stoech_coeff=coeffs_right[0],
                 order=0.0),
-            espressomd.EKSpecies.EKReactant(
+            espressomd.electrokinetics.EKReactant(
                 ekspecies=species_B,
                 stoech_coeff=coeffs_right[1],
                 order=1.0)]
 
-        reaction_right = espressomd.EKSpecies.EKIndexedReaction(
+        reaction_right = espressomd.electrokinetics.EKIndexedReaction(
             reactants=reactants_right, coefficient=self.REACTION_RATES[1],
             lattice=lattice, tau=self.TAU)
         reaction_right[-2, :, :] = True
@@ -133,9 +133,9 @@ class EKReaction(ut.TestCase):
             normal=[-1, 0, 0], dist=-self.BOX_L[0] + self.PADDING * self.AGRID)
         for obj in (wall_left, wall_right):
             species_A.add_boundary_from_shape(
-                obj, [0.0, 0.0, 0.0], espressomd.EKSpecies.FluxBoundary)
+                obj, [0.0, 0.0, 0.0], espressomd.electrokinetics.FluxBoundary)
             species_B.add_boundary_from_shape(
-                obj, [0.0, 0.0, 0.0], espressomd.EKSpecies.FluxBoundary)
+                obj, [0.0, 0.0, 0.0], espressomd.electrokinetics.FluxBoundary)
 
         self.system.integrator.run(self.TIME)
 

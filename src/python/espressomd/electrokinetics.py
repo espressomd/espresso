@@ -410,7 +410,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
         Returns
         -------
-        :class:`~espressomd.EKSpecies.DensityBoundary`
+        :class:`~espressomd.electrokinetics.DensityBoundary`
             If the node is a boundary node
         ``None``
             If the node is not a boundary node
@@ -425,7 +425,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        value : :class:`~espressomd.EKSpecies.DensityBoundary` or ``None``
+        value : :class:`~espressomd.electrokinetics.DensityBoundary` or ``None``
             If value is :class:`~espressomd.EkSpecies.DensityBoundary`,
             set the node to be a boundary node with the specified density.
             If value is ``None``, the node will become a domain node.
@@ -446,7 +446,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
         Returns
         -------
-        :class:`~espressomd.EKSpecies.FluxBoundary`
+        :class:`~espressomd.electrokinetics.FluxBoundary`
             If the node is a boundary node
         ``None``
             If the node is not a boundary node
@@ -461,7 +461,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        value : :class:`~espressomd.EKSpecies.FluxBoundary` or ``None``
+        value : :class:`~espressomd.electrokinetics.FluxBoundary` or ``None``
             If value is :class:`~espressomd.EkSpecies.FluxBoundary`,
             set the node to be a boundary node with the specified flux.
             If value is ``None``, the node will become a domain node.
@@ -564,7 +564,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         """
         Returns
         -------
-        (N, M, L) array_like of :class:`~espressomd.EKSpecies.DensityBoundary`
+        (N, M, L) array_like of :class:`~espressomd.electrokinetics.DensityBoundary`
             If the nodes are boundary nodes
         (N, M, L) array_like of ``None``
             If the nodes are not boundary nodes
@@ -577,8 +577,8 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        values : (N, M, L) array_like of :class:`~espressomd.EKSpecies.DensityBoundary` or obj:`None`
-            If values are :class:`~espressomd.EKSpecies.DensityBoundary`,
+        values : (N, M, L) array_like of :class:`~espressomd.electrokinetics.DensityBoundary` or obj:`None`
+            If values are :class:`~espressomd.electrokinetics.DensityBoundary`,
             set the nodes to be boundary nodes with the specified density.
             If values are obj:`None`, the nodes will become domain nodes.
         """
@@ -599,7 +599,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         """
         Returns
         -------
-        (N, M, L) array_like of :class:`~espressomd.EKSpecies.FluxBoundary`
+        (N, M, L) array_like of :class:`~espressomd.electrokinetics.FluxBoundary`
             If the nodes are boundary nodes
         (N, M, L) array_like of `None``
             If the nodes are not boundary nodes
@@ -612,7 +612,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
         """
         Parameters
         ----------
-        values : (N, M, L) array_like of :class:`~espressomd.EKSpecies.FluxBoundary` or obj:`None`
+        values : (N, M, L) array_like of :class:`~espressomd.electrokinetics.FluxBoundary` or obj:`None`
             If values are :class:`~espressomd.lb.FluxBoundary`,
             set the nodes to be boundary nodes with the specified flux.
             If values are obj:`None`, the nodes will become domain nodes.

@@ -33,7 +33,7 @@ from . import galilei
 from . import interactions
 from . import integrate
 from . import lb
-from . import EKSpecies
+from . import electrokinetics
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
@@ -91,8 +91,8 @@ class System(ScriptInterfaceHelper):
     collision_detection: :class:`espressomd.collision_detection.CollisionDetection`
     comfixed: :class:`espressomd.comfixed.ComFixed`
     constraints: :class:`espressomd.constraints.Constraints`
-    ekcontainer: :class:`espressomd.EKSpecies.EKContainer`
-    ekreactions: :class:`espressomd.EKSpecies.EKReactions`
+    ekcontainer: :class:`espressomd.electrokinetics.EKContainer`
+    ekreactions: :class:`espressomd.electrokinetics.EKReactions`
     cuda_init_handle: :class:`espressomd.cuda_init.CudaInitHandle`
     galilei: :class:`espressomd.galilei.GalileiTransform`
     integrator: :class:`espressomd.integrate.IntegratorHandle`
@@ -211,8 +211,8 @@ class System(ScriptInterfaceHelper):
         if has_features("CUDA"):
             self.cuda_init_handle = cuda_init.CudaInitHandle()
         if has_features("WALBERLA"):
-            self.ekcontainer = EKSpecies.EKContainer()
-            self.ekreactions = EKSpecies.EKReactions()
+            self.ekcontainer = electrokinetics.EKContainer()
+            self.ekreactions = electrokinetics.EKReactions()
         self.galilei = galilei.GalileiTransform()
         self.lees_edwards = lees_edwards.LeesEdwards()
         self.non_bonded_inter = interactions.NonBondedInteractions()
@@ -257,7 +257,7 @@ class System(ScriptInterfaceHelper):
             odict[property_name] = System.__getattribute__(self, property_name)
         if has_features("WALBERLA"):
             odict["_lb_vtk_registry"] = lb._vtk_registry
-            odict["_ek_vtk_registry"] = EKSpecies._ek_vtk_registry
+            odict["_ek_vtk_registry"] = electrokinetics._ek_vtk_registry
         return odict
 
     def __setstate__(self, params):
@@ -270,7 +270,7 @@ class System(ScriptInterfaceHelper):
         self.call_method("lock_system_creation")
         if has_features("WALBERLA"):
             lb._vtk_registry = lb_vtk_registry
-            EKSpecies._vtk_registry = ek_vtk_registry
+            electrokinetics._vtk_registry = ek_vtk_registry
 
     @property
     def box_l(self):

@@ -36,7 +36,7 @@ import espressomd.accumulators
 import espressomd.observables
 import espressomd.io.writer
 import espressomd.lb
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
@@ -86,22 +86,22 @@ if lbf_class:
     lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
-    ek_species = espressomd.EKSpecies.EKSpecies(
+    ek_species = espressomd.electrokinetics.EKSpecies(
         lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
         advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
         single_precision=False, tau=0.01)
     ek_species.add_boundary_from_shape(
         shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
-        boundary_type=espressomd.EKSpecies.FluxBoundary)
+        boundary_type=espressomd.electrokinetics.FluxBoundary)
     ek_species.add_boundary_from_shape(
         shape=wall2, value=1e-3 * np.array([4., 5., 6.]),
-        boundary_type=espressomd.EKSpecies.FluxBoundary)
+        boundary_type=espressomd.electrokinetics.FluxBoundary)
     ek_species.add_boundary_from_shape(
         shape=wall1, value=1.,
-        boundary_type=espressomd.EKSpecies.DensityBoundary)
+        boundary_type=espressomd.electrokinetics.DensityBoundary)
     ek_species.add_boundary_from_shape(
         shape=wall2, value=2.,
-        boundary_type=espressomd.EKSpecies.DensityBoundary)
+        boundary_type=espressomd.electrokinetics.DensityBoundary)
 
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
@@ -394,11 +394,11 @@ if lbf_class:
     ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
     config.recursive_unlink(vtk_root / ek_vtk_auto_id)
     config.recursive_unlink(vtk_root / ek_vtk_manual_id)
-    ek_vtk_auto = espressomd.EKSpecies.EKVTKOutput(
+    ek_vtk_auto = espressomd.electrokinetics.EKVTKOutput(
         species=ek_species, identifier=ek_vtk_auto_id,
         observables=('density',), delta_N=1, base_folder=str(vtk_root))
     ek_vtk_auto.disable()
-    ek_vtk_manual = espressomd.EKSpecies.EKVTKOutput(
+    ek_vtk_manual = espressomd.electrokinetics.EKVTKOutput(
         species=ek_species, identifier=ek_vtk_manual_id,
         observables=('density',), delta_N=0, base_folder=str(vtk_root))
     ek_vtk_manual.write()

@@ -21,7 +21,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import espressomd.lb
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 import espressomd.shapes
 import numpy as np
 
@@ -88,10 +88,10 @@ class EKBoundariesBase:
         ek_species = self.make_default_ek_species()
         ek_species.add_boundary_from_shape(
             shape=self.wall_shape1,
-            value=flux1, boundary_type=espressomd.EKSpecies.FluxBoundary)
+            value=flux1, boundary_type=espressomd.electrokinetics.FluxBoundary)
         ek_species.add_boundary_from_shape(
             shape=self.wall_shape2,
-            value=flux2, boundary_type=espressomd.EKSpecies.FluxBoundary)
+            value=flux2, boundary_type=espressomd.electrokinetics.FluxBoundary)
         self.check_boundary_flags(ek_species, "flux", flux1, flux2)
 
         # check with union of two shapes
@@ -100,7 +100,7 @@ class EKBoundariesBase:
         union.add([self.wall_shape1, self.wall_shape2])
         ek_species.add_boundary_from_shape(
             shape=union,
-            value=flux1, boundary_type=espressomd.EKSpecies.FluxBoundary)
+            value=flux1, boundary_type=espressomd.electrokinetics.FluxBoundary)
         self.check_boundary_flags(ek_species, "flux", flux1, flux1)
 
     def test_density_boundary_flags(self):
@@ -111,10 +111,10 @@ class EKBoundariesBase:
         ek_species = self.make_default_ek_species()
         ek_species.add_boundary_from_shape(
             shape=self.wall_shape1,
-            value=density1, boundary_type=espressomd.EKSpecies.DensityBoundary)
+            value=density1, boundary_type=espressomd.electrokinetics.DensityBoundary)
         ek_species.add_boundary_from_shape(
             shape=self.wall_shape2,
-            value=density2, boundary_type=espressomd.EKSpecies.DensityBoundary)
+            value=density2, boundary_type=espressomd.electrokinetics.DensityBoundary)
         self.check_boundary_flags(ek_species, "density", density1, density2)
 
         # check with union of two shapes
@@ -123,7 +123,7 @@ class EKBoundariesBase:
         union.add([self.wall_shape1, self.wall_shape2])
         ek_species.add_boundary_from_shape(
             shape=union,
-            value=density1, boundary_type=espressomd.EKSpecies.DensityBoundary)
+            value=density1, boundary_type=espressomd.electrokinetics.DensityBoundary)
         self.check_boundary_flags(ek_species, "density", density1, density1)
 
     def test_exceptions(self):
@@ -135,15 +135,15 @@ class EKBoundariesBase:
         with self.assertRaisesRegex(ValueError, "expected an espressomd.shapes.Shape"):
             ek_species.add_boundary_from_shape(
                 shape=ek_species, value=[0., 0., 0.],
-                boundary_type=espressomd.EKSpecies.FluxBoundary)
+                boundary_type=espressomd.electrokinetics.FluxBoundary)
         with self.assertRaisesRegex(ValueError, r"Cannot process density value grid of shape \(3,\)"):
             ek_species.add_boundary_from_shape(
                 shape=self.wall_shape1, value=[0., 0., 0.],
-                boundary_type=espressomd.EKSpecies.DensityBoundary)
+                boundary_type=espressomd.electrokinetics.DensityBoundary)
         with self.assertRaisesRegex(ValueError, r"Cannot process flux value grid of shape \(1,\)"):
             ek_species.add_boundary_from_shape(
                 shape=self.wall_shape1, value=0.,
-                boundary_type=espressomd.EKSpecies.FluxBoundary)
+                boundary_type=espressomd.electrokinetics.FluxBoundary)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
@@ -152,7 +152,7 @@ class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
     """Test for the Walberla implementation of the LB in double-precision."""
 
     ek_lattice_class = espressomd.lb.LatticeWalberla
-    ek_species_class = espressomd.EKSpecies.EKSpecies
+    ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {'single_precision': False}
 
 
@@ -162,7 +162,7 @@ class EKBoundariesWalberlaSinglePrecision(EKBoundariesBase, ut.TestCase):
     """Test for the Walberla implementation of the LB in single-precision."""
 
     ek_lattice_class = espressomd.lb.LatticeWalberla
-    ek_species_class = espressomd.EKSpecies.EKSpecies
+    ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {'single_precision': True}
 
 

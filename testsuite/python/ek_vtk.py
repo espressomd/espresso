@@ -26,7 +26,7 @@ import contextlib
 import numpy as np
 
 import espressomd
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 import espressomd.shapes
 
 with contextlib.suppress(ImportError):
@@ -48,10 +48,10 @@ class EKWalberlaWrite:
     def setUpClass(cls):
         cls.lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=0.5)
-        cls.solver = espressomd.EKSpecies.EKNone(lattice=cls.lattice)
+        cls.solver = espressomd.electrokinetics.EKNone(lattice=cls.lattice)
 
     def setUp(self):
-        self.species = espressomd.EKSpecies.EKSpecies(
+        self.species = espressomd.electrokinetics.EKSpecies(
             lattice=self.lattice, density=self.density, kT=self.kT,
             diffusion=self.diffusion, valency=self.valency,
             advection=False, friction_coupling=False, ext_efield=[0., 0., 0.],
@@ -70,11 +70,11 @@ class EKWalberlaWrite:
         dist = 1.5 * self.lattice.agrid
         self.species.add_boundary_from_shape(
             shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=dist),
-            value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
+            value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
         self.species.add_boundary_from_shape(
             shape=espressomd.shapes.Wall(
                 normal=[-1, 0, 0], dist=-(self.system.box_l[0] - dist)),
-            value=0.0, boundary_type=espressomd.EKSpecies.DensityBoundary)
+            value=0.0, boundary_type=espressomd.electrokinetics.DensityBoundary)
 
         n_steps = 100
         ek_steps = int(np.floor(n_steps * self.system.ekcontainer.tau))
@@ -94,13 +94,13 @@ class EKWalberlaWrite:
 
         # write VTK files
         vtk_obs = ['density']
-        ek_vtk = espressomd.EKSpecies.EKVTKOutput(
+        ek_vtk = espressomd.electrokinetics.EKVTKOutput(
             species=self.species, identifier=label_vtk_continuous,
             observables=vtk_obs, delta_N=1, base_folder=str(path_vtk_root))
         ek_vtk.disable()
         ek_vtk.enable()
         self.system.integrator.run(n_steps)
-        ek_vtk = espressomd.EKSpecies.EKVTKOutput(
+        ek_vtk = espressomd.electrokinetics.EKVTKOutput(
             species=self.species, identifier=label_vtk_end,
             observables=vtk_obs, delta_N=0, base_folder=str(path_vtk_root))
         ek_vtk.write()
@@ -141,15 +141,15 @@ class EKWalberlaWrite:
         label_invalid_obs = f'test_lb_vtk_{self.ek_vtk_id}_invalid_obs'
         error_msg = r"Only the following VTK observables are supported: \['density'\], got 'dens'"
         with self.assertRaisesRegex(ValueError, error_msg):
-            espressomd.EKSpecies.EKVTKOutput(
+            espressomd.electrokinetics.EKVTKOutput(
                 species=self.species, identifier=label_invalid_obs, delta_N=0,
                 observables=['dens'])
         ek_vtk_manual_id = f'test_ek_vtk_{self.ek_vtk_id}_manual'
         ek_vtk_auto_id = f'test_ek_vtk_{self.ek_vtk_id}_auto'
-        vtk_manual = espressomd.EKSpecies.EKVTKOutput(
+        vtk_manual = espressomd.electrokinetics.EKVTKOutput(
             species=self.species, identifier=ek_vtk_manual_id, delta_N=0,
             observables=['density'])
-        vtk_auto = espressomd.EKSpecies.EKVTKOutput(
+        vtk_auto = espressomd.electrokinetics.EKVTKOutput(
             species=self.species, identifier=ek_vtk_auto_id, delta_N=1,
             observables=['density'])
         with self.assertRaisesRegex(RuntimeError, 'Automatic VTK callbacks cannot be triggered manually'):
@@ -161,14 +161,14 @@ class EKWalberlaWrite:
 
         # can still use VTK when the EK actor has been cleared but not deleted
         label_cleared = f'test_ek_vtk_{self.ek_vtk_id}_cleared'
-        vtk_cleared = espressomd.EKSpecies.EKVTKOutput(
+        vtk_cleared = espressomd.electrokinetics.EKVTKOutput(
             species=self.species, identifier=label_cleared,
             observables=['density'])
         self.system.actors.clear()
         vtk_cleared.write()
-        espressomd.EKSpecies.EKVTKOutput(species=self.species,
-                                         identifier=label_cleared + '_1',
-                                         observables=['density'])
+        espressomd.electrokinetics.EKVTKOutput(species=self.species,
+                                               identifier=label_cleared + '_1',
+                                               observables=['density'])
 
 
 @utx.skipIfMissingModules("vtk")

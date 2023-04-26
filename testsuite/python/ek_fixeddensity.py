@@ -57,12 +57,12 @@ class EKFixedDensity(ut.TestCase):
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             kT=0.0, valency=0.0, advection=False, friction_coupling=False,
             ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
 
-        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = self.TAU
@@ -70,17 +70,17 @@ class EKFixedDensity(ut.TestCase):
 
         # left and right no flux
         ekspecies[0, :, :].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
         ekspecies[-1, :, :].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
 
         left_slice = ekspecies[1, :, :]
         left_slice.density = 1.0
-        left_slice.density_boundary = espressomd.EKSpecies.DensityBoundary(
+        left_slice.density_boundary = espressomd.electrokinetics.DensityBoundary(
             self.INLET_CONCENTRATION)
 
         right_slice = ekspecies[-2, :, :]
-        right_slice.density_boundary = espressomd.EKSpecies.DensityBoundary(
+        right_slice.density_boundary = espressomd.electrokinetics.DensityBoundary(
             self.OUTLET_CONCENTRATION)
 
         self.system.integrator.run(self.TIME)

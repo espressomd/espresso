@@ -20,7 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 import numpy as np
 import scipy.optimize
 
@@ -61,11 +61,13 @@ class EKDiffusion(ut.TestCase):
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(lattice=lattice,
-                                                   density=0.0, kT=0.0, diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
-                                                   advection=False, friction_coupling=False, ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
+        ekspecies = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=0.0, kT=0.0, valency=0.0, advection=False,
+            diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
+            ext_efield=[0., 0., 0.], single_precision=single_precision,
+            tau=self.TAU)
 
-        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = self.TAU

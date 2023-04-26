@@ -56,12 +56,12 @@ class EKNoFlux(ut.TestCase):
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             kT=0.0, valency=0.0, advection=False, friction_coupling=False,
             ext_efield=[0., 0., 0.], single_precision=single_precision, tau=1.0)
 
-        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = 1.0
@@ -76,7 +76,7 @@ class EKNoFlux(ut.TestCase):
             radius=self.RADIUS,
             direction=-1)
         ekspecies.add_boundary_from_shape(
-            sphere, [0, 0, 0], espressomd.EKSpecies.FluxBoundary)
+            sphere, [0, 0, 0], espressomd.electrokinetics.FluxBoundary)
 
         positions = np.empty((*self.system.box_l.astype(int), 3))
         positions[..., 2], positions[..., 1], positions[..., 0] = np.meshgrid(

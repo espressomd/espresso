@@ -69,17 +69,17 @@ class EKEOF(ut.TestCase):
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=density, kT=kT, valency=valency,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=True,
             advection=True, ext_efield=external_electric_field,
             single_precision=single_precision, tau=self.TAU)
-        ekwallcharge = espressomd.EKSpecies.EKSpecies(
+        ekwallcharge = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, kT=kT, diffusion=0.0, tau=self.TAU,
             valency=-valency, friction_coupling=False, advection=False,
             ext_efield=[0.0, 0.0, 0.0], single_precision=single_precision)
 
-        eksolver = espressomd.EKSpecies.EKFFT(
+        eksolver = espressomd.electrokinetics.EKFFT(
             lattice=lattice, permittivity=eps0 * epsR, single_precision=single_precision)
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.add(ekwallcharge)
@@ -97,9 +97,9 @@ class EKEOF(ut.TestCase):
             normal=[-1, 0, 0], dist=-self.BOX_L[0] + offset)
         for obj in (wall_bot, wall_top):
             ekspecies.add_boundary_from_shape(
-                obj, [0.0, 0.0, 0.0], espressomd.EKSpecies.FluxBoundary)
+                obj, [0.0, 0.0, 0.0], espressomd.electrokinetics.FluxBoundary)
             ekspecies.add_boundary_from_shape(
-                obj, 0.0, espressomd.EKSpecies.DensityBoundary)
+                obj, 0.0, espressomd.electrokinetics.DensityBoundary)
             lb_fluid.add_boundary_from_shape(obj, [0.0, 0.0, 0.0])
 
         ekspecies[0, :, :].density = 0.0

@@ -18,7 +18,7 @@
 #
 
 import espressomd.lb
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -49,7 +49,7 @@ class Test(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.lattice = espressomd.lb.LatticeWalberla(agrid=1., n_ghost_layers=1)
-        cls.ek_species = espressomd.EKSpecies.EKSpecies(
+        cls.ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=cls.lattice,
             single_precision=False,
             **cls.ek_species_params)
@@ -85,7 +85,7 @@ class Test(ut.TestCase):
             ek_species[1:, 1:, 1:].flux_boundary = np.array(
                 [None, [1, 2, 3]], dtype=object)
 
-        flux_ref = espressomd.EKSpecies.FluxBoundary([1e-6, 2e-6, 3e-6])
+        flux_ref = espressomd.electrokinetics.FluxBoundary([1e-6, 2e-6, 3e-6])
         ek_species[1:2, 1:, 0].flux_boundary = flux_ref
         ek_species[1:2, 2:, 0].flux_boundary = None
         for flux in ek_species[1:2, 1, 0].flux_boundary.flatten():
@@ -107,7 +107,7 @@ class Test(ut.TestCase):
             ek_species[1:, 1:, 1:].density_boundary = np.array(
                 [None, 1.], dtype=object)
 
-        dens_ref = espressomd.EKSpecies.DensityBoundary(1e-6)
+        dens_ref = espressomd.electrokinetics.DensityBoundary(1e-6)
         ek_species[2:3, 1:, 0].density_boundary = dens_ref
         ek_species[2:3, 2:, 0].density_boundary = None
         for dens in ek_species[2:3, 1, 0].density_boundary.flatten():

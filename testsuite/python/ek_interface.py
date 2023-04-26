@@ -25,7 +25,7 @@ import sys
 
 import espressomd
 import espressomd.lb
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 
 
 class EKTest:
@@ -76,7 +76,7 @@ class EKTest:
             self.assertEqual(status, EKTest.ek_solver_set)
 
         check()
-        ek_solver = espressomd.EKSpecies.EKNone(lattice=self.lattice)
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
         check()
         self.system.ekcontainer.solver = ek_solver
         EKTest.ek_solver_set = True
@@ -87,7 +87,7 @@ class EKTest:
         ek_species = self.make_default_ek_species()
         self.check_ek_species_properties(ek_species)
 
-        ek_solver = espressomd.EKSpecies.EKNone(lattice=self.lattice)
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
         self.system.ekcontainer.tau = self.system.time_step
         self.system.ekcontainer.solver = ek_solver
         self.assertAlmostEqual(
@@ -108,7 +108,7 @@ class EKTest:
 
         # reactive species
         ek_species = self.make_default_ek_species()
-        espressomd.EKSpecies.EKReactant(
+        espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         self.check_ek_species_properties(ek_species)
 
@@ -154,16 +154,17 @@ class EKTest:
         node = species[1, 1, 1]
         self.assertIsNone(node.density_boundary)
         self.assertIsNone(node.flux_boundary)
-        node.flux_boundary = espressomd.EKSpecies.FluxBoundary([1., 2., 3.])
+        node.flux_boundary = espressomd.electrokinetics.FluxBoundary(
+            [1., 2., 3.])
         self.assertIsInstance(
             node.flux_boundary,
-            espressomd.EKSpecies.FluxBoundary)
+            espressomd.electrokinetics.FluxBoundary)
         np.testing.assert_allclose(
             np.copy(node.flux_boundary.flux), [1., 2., 3.], atol=self.atol)
-        node.density_boundary = espressomd.EKSpecies.DensityBoundary(4.5)
+        node.density_boundary = espressomd.electrokinetics.DensityBoundary(4.5)
         self.assertIsInstance(
             node.density_boundary,
-            espressomd.EKSpecies.DensityBoundary)
+            espressomd.electrokinetics.DensityBoundary)
         np.testing.assert_allclose(
             np.copy(node.density_boundary.density), 4.5, atol=self.atol)
         node.density_boundary = None
@@ -176,7 +177,7 @@ class EKTest:
             node.flux_boundary = 4.6
 
     def test_ek_fft_solvers(self):
-        ek_solver = espressomd.EKSpecies.EKFFT(
+        ek_solver = espressomd.electrokinetics.EKFFT(
             lattice=self.lattice, permittivity=0.01,
             single_precision=self.ek_params["single_precision"])
         self.assertEqual(
@@ -187,7 +188,7 @@ class EKTest:
         self.assertAlmostEqual(ek_solver.permittivity, 0.05, delta=self.atol)
 
     def test_ek_none_solvers(self):
-        ek_solver = espressomd.EKSpecies.EKNone(
+        ek_solver = espressomd.electrokinetics.EKNone(
             lattice=self.lattice,
             single_precision=self.ek_params["single_precision"])
         self.assertEqual(
@@ -196,7 +197,7 @@ class EKTest:
 
     def test_ek_reactants(self):
         ek_species = self.make_default_ek_species()
-        ek_reactant = espressomd.EKSpecies.EKReactant(
+        ek_reactant = espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         self.assertAlmostEqual(ek_reactant.stoech_coeff, -2.0, delta=self.atol)
         self.assertAlmostEqual(ek_reactant.order, 2.0, delta=self.atol)
@@ -208,9 +209,9 @@ class EKTest:
 
     def test_ek_indexed_reactions(self):
         ek_species = self.make_default_ek_species()
-        ek_reactant = espressomd.EKSpecies.EKReactant(
+        ek_reactant = espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
-        ek_reaction = espressomd.EKSpecies.EKIndexedReaction(
+        ek_reaction = espressomd.electrokinetics.EKIndexedReaction(
             reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice, tau=self.params["tau"])
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
@@ -226,9 +227,9 @@ class EKTest:
 
     def test_grid_index(self):
         ek_species = self.make_default_ek_species()
-        ek_reactant = espressomd.EKSpecies.EKReactant(
+        ek_reactant = espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
-        ek_reaction = espressomd.EKSpecies.EKIndexedReaction(
+        ek_reaction = espressomd.electrokinetics.EKIndexedReaction(
             reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice, tau=self.params["tau"])
         # check ranges and out-of-bounds access
         shape = np.around(self.system.box_l / self.params["agrid"]).astype(int)
@@ -305,9 +306,9 @@ class EKTest:
 
     def test_ek_bulk_reactions(self):
         ek_species = self.make_default_ek_species()
-        ek_reactant = espressomd.EKSpecies.EKReactant(
+        ek_reactant = espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
-        ek_reaction = espressomd.EKSpecies.EKBulkReaction(
+        ek_reaction = espressomd.electrokinetics.EKBulkReaction(
             reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice, tau=self.params["tau"])
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
@@ -344,7 +345,7 @@ class EKTestWalberla(EKTest, ut.TestCase):
 
     lb_fluid_class = espressomd.lb.LBFluidWalberla
     ek_lattice_class = espressomd.lb.LatticeWalberla
-    ek_species_class = espressomd.EKSpecies.EKSpecies
+    ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {"single_precision": False}
     lb_params = {"single_precision": False}
     atol = 1e-10
@@ -358,7 +359,7 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
 
     lb_fluid_class = espressomd.lb.LBFluidWalberla
     ek_lattice_class = espressomd.lb.LatticeWalberla
-    ek_species_class = espressomd.EKSpecies.EKSpecies
+    ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {"single_precision": True}
     lb_params = {"single_precision": True}
     atol = 1e-7

@@ -20,7 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 import numpy as np
 
 
@@ -70,7 +70,7 @@ class EKReaction(ut.TestCase):
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
         self.system.ekcontainer.tau = self.TAU
 
@@ -81,7 +81,7 @@ class EKReaction(ut.TestCase):
         educt_species = []
         reactants = []
         for coeff in stoech_coeffs:
-            species = espressomd.EKSpecies.EKSpecies(
+            species = espressomd.electrokinetics.EKSpecies(
                 lattice=lattice, density=coeff * self.INITIAL_DENSITY, kT=0.0,
                 diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
                 advection=False, friction_coupling=False,
@@ -89,26 +89,26 @@ class EKReaction(ut.TestCase):
                 tau=self.TAU)
             self.system.ekcontainer.add(species)
             reactants.append(
-                espressomd.EKSpecies.EKReactant(
+                espressomd.electrokinetics.EKReactant(
                     ekspecies=species,
                     stoech_coeff=-coeff,
                     order=coeff))
             educt_species.append(species)
 
-        ek_species_product = espressomd.EKSpecies.EKSpecies(
+        ek_species_product = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             kT=0.0, valency=0.0, advection=False, friction_coupling=False,
             ext_efield=[0., 0., 0.], single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(ek_species_product)
         reactants.append(
-            espressomd.EKSpecies.EKReactant(
+            espressomd.electrokinetics.EKReactant(
                 ekspecies=ek_species_product,
                 stoech_coeff=product_coeff,
                 order=0.0))
 
         self.system.ekcontainer.solver = eksolver
 
-        reaction = espressomd.EKSpecies.EKBulkReaction(
+        reaction = espressomd.electrokinetics.EKBulkReaction(
             reactants=reactants, coefficient=reaction_rate, lattice=lattice, tau=self.TAU)
 
         self.system.ekreactions.add(reaction)

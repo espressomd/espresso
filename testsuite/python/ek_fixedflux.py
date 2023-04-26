@@ -58,12 +58,12 @@ class EKFixedFlux(ut.TestCase):
         lattice = espressomd.lb.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.EKSpecies.EKSpecies(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
             kT=0.0, valency=0.0, advection=False, friction_coupling=False,
             ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
 
-        eksolver = espressomd.EKSpecies.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = self.TAU
@@ -72,25 +72,25 @@ class EKFixedFlux(ut.TestCase):
         ekspecies[1:-1, 1:-1, 1:-1].density = self.DENSITY
 
         ekspecies[:, :, 0].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
         ekspecies[:, :, -1].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
         ekspecies[:, 0, :].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
         ekspecies[:, -1, :].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
         ekspecies[0, :, :].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
         ekspecies[-1, :, :].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary([0, 0, 0])
+            espressomd.electrokinetics.FluxBoundary([0, 0, 0])
 
         # set fixed flux in +z-direction
-        ekspecies[:, :, -1].flux_boundary = espressomd.EKSpecies.FluxBoundary(
+        ekspecies[:, :, -1].flux_boundary = espressomd.electrokinetics.FluxBoundary(
             [0, 0, -self.INFLOW_FLUX])
         additional_center_flux = 3 * self.INFLOW_FLUX
         midpoint = int(lattice.shape[0] // 2)
         ekspecies[midpoint, midpoint, -1].flux_boundary = \
-            espressomd.EKSpecies.FluxBoundary(
+            espressomd.electrokinetics.FluxBoundary(
                 [0, 0, -self.INFLOW_FLUX - additional_center_flux])
 
         # check density before integration

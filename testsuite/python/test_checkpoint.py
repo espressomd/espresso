@@ -36,7 +36,7 @@ import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
-import espressomd.EKSpecies
+import espressomd.electrokinetics
 
 with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
@@ -302,11 +302,11 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
     def test_ek_vtk(self):
         vtk_suffix = config.test_name
-        vtk_registry = espressomd.EKSpecies._ek_vtk_registry
+        vtk_registry = espressomd.electrokinetics._ek_vtk_registry
         key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
         self.assertIn(key_auto, vtk_registry.map)
         obj = vtk_registry.map[key_auto]
-        self.assertIsInstance(obj, espressomd.EKSpecies.EKVTKOutput)
+        self.assertIsInstance(obj, espressomd.electrokinetics.EKVTKOutput)
         self.assertEqual(obj.vtk_uid, key_auto)
         self.assertEqual(obj.delta_N, 1)
         self.assertFalse(obj.enabled)
@@ -316,7 +316,7 @@ class CheckpointTest(ut.TestCase):
         key_manual = f"vtk_out/manual_ek_{vtk_suffix}"
         self.assertIn(key_manual, vtk_registry.map)
         obj = vtk_registry.map[key_manual]
-        self.assertIsInstance(obj, espressomd.EKSpecies.EKVTKOutput)
+        self.assertIsInstance(obj, espressomd.electrokinetics.EKVTKOutput)
         self.assertEqual(obj.vtk_uid, key_manual)
         self.assertEqual(obj.delta_N, 0)
         self.assertEqual(set(obj.observables), {"density"})
@@ -324,7 +324,7 @@ class CheckpointTest(ut.TestCase):
         # check file numbering when resuming VTK write operations
         vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
         filename = "simulation_step_{}.vtu"
-        vtk_manual = espressomd.EKSpecies._vtk_registry.map[key_manual]
+        vtk_manual = espressomd.electrokinetics._vtk_registry.map[key_manual]
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())

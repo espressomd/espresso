@@ -143,14 +143,14 @@ Here is a minimal working example::
 
     import espressomd
     import espressomd.lb
-    import espressomd.EKSpecies
+    import espressomd.electrokinetics
 
     system = espressomd.System(box_l=3 * [6.0])
     system.time_step = 0.01
     system.cell_system.skin = 1.0
 
     ek_lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.EKSpecies.EKNone(lattice=ek_lattice)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=ek_lattice)
     system.ekcontainer.tau = system.time_step
     system.ekcontainer.solver = ek_solver
 
@@ -172,7 +172,7 @@ Diffusive species
 ~~~~~~~~~~~~~~~~~
 ::
 
-    ek_species = espressomd.EKSpecies.EKSpecies(
+    ek_species = espressomd.electrokinetics.EKSpecies(
         lattice=ek_lattice,
         single_precision=False,
         kT=1.0,
@@ -184,7 +184,7 @@ Diffusive species
         ext_efield=[0., 0., 0.]
     )
 
-:class:`~espressomd.EKSpecies.EKSpecies` is used to initialize a diffusive
+:class:`~espressomd.electrokinetics.EKSpecies` is used to initialize a diffusive
 species. Here the options specify: the number density ``density``,
 the diffusion coefficient ``diffusion``, the valency of the particles
 of that species ``valency``, and an optional external (electric) force
@@ -214,11 +214,11 @@ VTK output
 The waLBerla library implements a globally-accessible VTK registry.
 A VTK stream can be attached to an EK species to periodically write
 one or multiple fluid field data into a single file using
-:class:`~espressomd.EKSpecies.EKVTKOutput`::
+:class:`~espressomd.electrokinetics.EKVTKOutput`::
 
     vtk_obs = ["density"]
     # create a VTK callback that automatically writes every 10 EK steps
-    ek_vtk = espressomd.EKSpecies.EKVTKOutput(
+    ek_vtk = espressomd.electrokinetics.EKVTKOutput(
         species=ek_species, identifier="ek_vtk_automatic",
         observables=vtk_obs, delta_N=10)
     self.system.integrator.run(100)
@@ -227,7 +227,7 @@ one or multiple fluid field data into a single file using
     self.system.integrator.run(10)
     ek_vtk.enable()
     # create a VTK callback that writes only when explicitly called
-    ek_vtk_on_demand = espressomd.EKSpecies.EKVTKOutput(
+    ek_vtk_on_demand = espressomd.electrokinetics.EKVTKOutput(
         species=ek_species, identifier="ek_vtk_now",
         observables=vtk_obs)
     ek_vtk_on_demand.write()
@@ -261,19 +261,19 @@ One can set (or update) the boundary conditions of individual nodes::
 
     import espressomd
     import espressomd.lb
-    import espressomd.EKSpecies
+    import espressomd.electrokinetics
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
-    ek_species = espressomd.EKSpecies.EKSpecies(
+    ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
         advection=False, friction_coupling=False, ext_efield=[0., 0., 0.])
     system.ekcontainer.add(ek_species)
     # set node fixed density boundary conditions
-    lbf[0, 0, 0].boundary = espressomd.EKSpecies.DensityBoundary(1.)
+    lbf[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(1.)
     # update node fixed density boundary conditions
-    lbf[0, 0, 0].boundary = espressomd.EKSpecies.DensityBoundary(2.)
+    lbf[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(2.)
     # remove node boundary conditions
     lbf[0, 0, 0].boundary = None
 
@@ -286,20 +286,20 @@ Adding a shape-based boundary is straightforward::
 
     import espressomd
     import espressomd.lb
-    import espressomd.EKSpecies
+    import espressomd.electrokinetics
     import espressomd.shapes
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
-    ek_species = espressomd.EKSpecies.EKSpecies(
+    ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
         advection=False, friction_coupling=False, ext_efield=[0., 0., 0.])
     system.ekcontainer.add(ek_species)
     # set fixed density boundary conditions
     wall = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
     ek_species.add_boundary_from_shape(
-        shape=wall, value=1., boundary_type=espressomd.EKSpecies.DensityBoundary)
+        shape=wall, value=1., boundary_type=espressomd.electrokinetics.DensityBoundary)
     # clear fixed density boundary conditions
     ek_species.clear_density_boundaries()
 
