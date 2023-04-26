@@ -45,9 +45,10 @@ void walberla_mpi_init() {
 std::shared_ptr<LBWalberlaBase>
 new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
                 double viscosity, double density, bool single_precision) {
-  if (single_precision)
+  if (single_precision) {
     return std::make_shared<walberla::LBWalberlaImpl<float, lbmpy::Arch::CPU>>(
         lattice, viscosity, density);
+  }
   return std::make_shared<walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>>(
       lattice, viscosity, density);
 }

@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTIONIMPLBULK_HPP
-#define ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTIONIMPLBULK_HPP
+#pragma once
 
 #include "walberla_bridge/LatticeWalberla.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
@@ -43,6 +42,5 @@ public:
 
   void perform_reaction() override;
 };
-} // namespace walberla
 
-#endif
+} // namespace walberla

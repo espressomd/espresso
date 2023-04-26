@@ -19,8 +19,8 @@
 
 #pragma once
 
+#include <core/math/Vector3.h>
 #include <domain_decomposition/SharedSweep.h>
-
 #include <lbm/sweeps/CellwiseSweep.h>
 
 #include "walberla_bridge/utils/walberla_utils.hpp"
@@ -39,13 +39,13 @@ template <typename PdfField, typename ForceField> class ResetForce {
   using FloatType = typename PdfField::value_type;
 
 public:
-  ResetForce(const BlockDataID &last_applied_force_field_id,
-             const BlockDataID &force_to_be_applied_id)
+  ResetForce(BlockDataID const &last_applied_force_field_id,
+             BlockDataID const &force_to_be_applied_id)
       : m_last_applied_force_field_id(last_applied_force_field_id),
         m_force_to_be_applied_id(force_to_be_applied_id),
         m_ext_force(Vector3<FloatType>{0, 0, 0}) {}
 
-  void set_ext_force(const Utils::Vector3d &ext_force) {
+  void set_ext_force(Utils::Vector3d const &ext_force) {
     m_ext_force = to_vector3<FloatType>(ext_force);
   }
 
@@ -69,4 +69,5 @@ private:
   const BlockDataID m_force_to_be_applied_id;
   Vector3<FloatType> m_ext_force;
 };
+
 } // namespace walberla

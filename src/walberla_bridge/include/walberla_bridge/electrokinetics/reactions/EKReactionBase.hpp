@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_WALBERLA_BRIDGE_EKREACTIONBASE_HPP
-#define ESPRESSO_WALBERLA_BRIDGE_EKREACTIONBASE_HPP
+#pragma once
 
 #include "EKReactant.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
@@ -58,5 +57,3 @@ public:
 };
 
 } // namespace walberla
-
-#endif

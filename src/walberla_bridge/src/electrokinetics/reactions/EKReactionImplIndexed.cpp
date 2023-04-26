@@ -38,9 +38,9 @@
 namespace walberla {
 
 /// Flag for domain cells, i.e. all cells
-const FlagUID Domain_flag("domain");
+FlagUID const Domain_flag("domain");
 /// Flag for boundary cells
-const FlagUID Boundary_flag("boundary");
+FlagUID const Boundary_flag("boundary");
 
 namespace detail {
 // FlagField to use
@@ -164,7 +164,7 @@ void EKReactionImplIndexed::perform_reaction() {
   }
 }
 
-void EKReactionImplIndexed::set_node_is_boundary(const Utils::Vector3i &node,
+void EKReactionImplIndexed::set_node_is_boundary(Utils::Vector3i const &node,
                                                  bool is_boundary) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
@@ -182,7 +182,7 @@ void EKReactionImplIndexed::set_node_is_boundary(const Utils::Vector3i &node,
 }
 
 boost::optional<bool>
-EKReactionImplIndexed::get_node_is_boundary(const Utils::Vector3i &node) {
+EKReactionImplIndexed::get_node_is_boundary(Utils::Vector3i const &node) {
   auto bc = get_block_and_cell(*get_lattice(), node, true);
   if (!bc)
     return {boost::none};

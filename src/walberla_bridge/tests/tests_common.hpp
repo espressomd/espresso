@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #include "config/config.hpp"
@@ -136,4 +137,4 @@ std::vector<Utils::Vector3i> corner_nodes(Utils::Vector3i const &n) {
   return res;
 }
 
-#endif
+#endif // WALBERLA

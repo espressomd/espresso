@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTANT_HPP
-#define ESPRESSO_SRC_WALBERLA_BRIDGE_EKREACTANT_HPP
+#pragma once
 
 #include "walberla_bridge/electrokinetics/EKinWalberlaBase.hpp"
 
@@ -59,5 +58,3 @@ public:
 };
 
 } // namespace walberla
-
-#endif

@@ -34,8 +34,6 @@
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
 
-#include <domain_decomposition/SharedSweep.h>
-
 #include <field/AddToStorage.h>
 #include <field/FlagField.h>
 #include <field/communication/PackInfo.h>
@@ -715,7 +713,7 @@ public:
   }
 
   boost::optional<double> get_interpolated_density_at_pos(
-      const Utils::Vector3d &pos,
+      Utils::Vector3d const &pos,
       bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
       return {};

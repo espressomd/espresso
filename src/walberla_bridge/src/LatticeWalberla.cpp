@@ -75,19 +75,19 @@ LatticeWalberla::get_local_domain() const {
 }
 
 [[nodiscard]] bool
-LatticeWalberla::node_in_local_domain(const Utils::Vector3i &node) const {
+LatticeWalberla::node_in_local_domain(Utils::Vector3i const &node) const {
   // Note: Lattice constant =1, cell centers offset by .5
   return ::walberla::get_block_and_cell(*this, node, false) != boost::none;
 }
 [[nodiscard]] bool
-LatticeWalberla::node_in_local_halo(const Utils::Vector3i &node) const {
+LatticeWalberla::node_in_local_halo(Utils::Vector3i const &node) const {
   return ::walberla::get_block_and_cell(*this, node, true) != boost::none;
 }
 [[nodiscard]] bool
-LatticeWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {
+LatticeWalberla::pos_in_local_domain(Utils::Vector3d const &pos) const {
   return ::walberla::get_block(*this, pos, false) != nullptr;
 }
 [[nodiscard]] bool
-LatticeWalberla::pos_in_local_halo(const Utils::Vector3d &pos) const {
+LatticeWalberla::pos_in_local_halo(Utils::Vector3d const &pos) const {
   return ::walberla::get_block(*this, pos, true) != nullptr;
 }

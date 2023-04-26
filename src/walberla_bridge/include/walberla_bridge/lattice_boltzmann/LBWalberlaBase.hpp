@@ -55,20 +55,20 @@ public:
 
   /** @brief Get interpolated velocities at a position. */
   virtual boost::optional<Utils::Vector3d>
-  get_velocity_at_pos(const Utils::Vector3d &position,
+  get_velocity_at_pos(Utils::Vector3d const &position,
                       bool consider_points_in_halo = false) const = 0;
 
   /** @brief Get interpolated densities at a position. */
   virtual boost::optional<double> get_interpolated_density_at_pos(
-      const Utils::Vector3d &position,
+      Utils::Vector3d const &position,
       bool consider_points_in_halo = false) const = 0;
 
   /**
    * @brief Interpolate a force to the stored forces to be applied on nodes
    * in the next time step.
    */
-  virtual bool add_force_at_pos(const Utils::Vector3d &position,
-                                const Utils::Vector3d &force) = 0;
+  virtual bool add_force_at_pos(Utils::Vector3d const &position,
+                                Utils::Vector3d const &force) = 0;
 
   /** @brief Get stored force to be applied on node in the next time step. */
   virtual boost::optional<Utils::Vector3d>
@@ -226,7 +226,7 @@ public:
   virtual Utils::Vector3d get_momentum() const = 0;
 
   /** @brief Set a global external force. */
-  virtual void set_external_force(const Utils::Vector3d &ext_force) = 0;
+  virtual void set_external_force(Utils::Vector3d const &ext_force) = 0;
 
   /** @brief Get the global external force. */
   virtual Utils::Vector3d get_external_force() const = 0;

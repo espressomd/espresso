@@ -52,7 +52,7 @@
 namespace walberla {
 
 /** @brief Class that runs and controls the EK on waLBerla. */
-template <size_t FluxCount = 13, typename FloatType = double>
+template <std::size_t FluxCount = 13, typename FloatType = double>
 class EKinWalberlaImpl : public EKinWalberlaBase {
   template <typename T> inline FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
@@ -147,7 +147,7 @@ protected:
 
 public:
   EKinWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double diffusion,
-                   double kT, double valency, const Utils::Vector3d &ext_efield,
+                   double kT, double valency, Utils::Vector3d const &ext_efield,
                    double density, bool advection, bool friction_coupling)
       : m_diffusion(FloatType_c(diffusion)), m_kT(FloatType_c(kT)),
         m_valency(FloatType_c(valency)), m_ext_efield(ext_efield),
@@ -225,7 +225,7 @@ public:
   void set_friction_coupling(bool friction_coupling) noexcept override {
     m_friction_coupling = friction_coupling;
   }
-  void set_ext_efield(const Utils::Vector3d &field) noexcept override {
+  void set_ext_efield(Utils::Vector3d const &field) noexcept override {
     m_ext_efield = field;
   }
 
@@ -310,9 +310,8 @@ protected:
   }
 
 public:
-  void integrate(const std::size_t &potential_id,
-                 const std::size_t &velocity_id,
-                 const std::size_t &force_id) override {
+  void integrate(std::size_t potential_id, std::size_t velocity_id,
+                 std::size_t force_id) override {
 
     updated_boundary_fields();
 
@@ -368,7 +367,7 @@ public:
     return static_cast<std::size_t>(m_density_field_id);
   }
 
-  bool set_node_density(const Utils::Vector3i &node, double density) override {
+  bool set_node_density(Utils::Vector3i const &node, double density) override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
@@ -381,7 +380,7 @@ public:
   }
 
   [[nodiscard]] boost::optional<double>
-  get_node_density(const Utils::Vector3i &node) const override {
+  get_node_density(Utils::Vector3i const &node) const override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
 
     if (!bc)
@@ -447,8 +446,8 @@ public:
     reset_density_boundary_handling();
   }
 
-  bool set_node_flux_boundary(const Utils::Vector3i &node,
-                              const Utils::Vector3d &flux) override {
+  bool set_node_flux_boundary(Utils::Vector3i const &node,
+                              Utils::Vector3d const &flux) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -459,7 +458,7 @@ public:
   }
 
   [[nodiscard]] boost::optional<Utils::Vector3d>
-  get_node_flux_at_boundary(const Utils::Vector3i &node,
+  get_node_flux_at_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary_flux->node_is_boundary(node))
@@ -468,7 +467,7 @@ public:
     return {m_boundary_flux->get_node_value_at_boundary(node)};
   }
 
-  bool remove_node_from_flux_boundary(const Utils::Vector3i &node) override {
+  bool remove_node_from_flux_boundary(Utils::Vector3i const &node) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -478,7 +477,7 @@ public:
     return true;
   }
 
-  bool set_node_density_boundary(const Utils::Vector3i &node,
+  bool set_node_density_boundary(Utils::Vector3i const &node,
                                  double density) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
@@ -491,7 +490,7 @@ public:
   }
 
   [[nodiscard]] boost::optional<double>
-  get_node_density_at_boundary(const Utils::Vector3i &node,
+  get_node_density_at_boundary(Utils::Vector3i const &node,
                                bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary_density->node_is_boundary(node))
@@ -641,7 +640,7 @@ public:
     return out;
   }
 
-  bool remove_node_from_density_boundary(const Utils::Vector3i &node) override {
+  bool remove_node_from_density_boundary(Utils::Vector3i const &node) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -652,7 +651,7 @@ public:
   }
 
   [[nodiscard]] boost::optional<bool>
-  get_node_is_flux_boundary(const Utils::Vector3i &node,
+  get_node_is_flux_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
@@ -662,7 +661,7 @@ public:
   }
 
   [[nodiscard]] boost::optional<bool>
-  get_node_is_density_boundary(const Utils::Vector3i &node,
+  get_node_is_density_boundary(Utils::Vector3i const &node,
                                bool consider_ghosts) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
@@ -672,7 +671,7 @@ public:
   }
 
   [[nodiscard]] boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node,
+  get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)

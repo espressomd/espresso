@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #include <blockforest/StructuredBlockForest.h>
@@ -35,9 +36,9 @@
 namespace walberla {
 
 /// Flag for domain cells, i.e. all cells
-const FlagUID Domain_flag("domain");
+FlagUID const Domain_flag("domain");
 /// Flag for boundary cells
-const FlagUID Boundary_flag("boundary");
+FlagUID const Boundary_flag("boundary");
 
 template <typename T, typename BoundaryClass> class BoundaryHandling {
   /** Container for the map between cells and values. */
@@ -124,7 +125,7 @@ public:
   }
 
   [[nodiscard]] auto
-  get_node_value_at_boundary(const Utils::Vector3i &node) const {
+  get_node_value_at_boundary(Utils::Vector3i const &node) const {
     return m_callback.get_node_boundary_value(node);
   }
 

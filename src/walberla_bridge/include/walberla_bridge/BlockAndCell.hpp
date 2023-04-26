@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #include <blockforest/StructuredBlockForest.h>
@@ -26,6 +27,8 @@
 #include "LatticeWalberla.hpp"
 
 #include <boost/optional.hpp>
+
+#include <memory>
 
 namespace walberla {
 // Helpers to retrieve blocks and cells
@@ -46,7 +49,7 @@ IBlock *get_block_extended(std::shared_ptr<StructuredBlockForest> const &blocks,
     }
   }
   // Cell not in local blocks
-  return {};
+  return nullptr;
 }
 
 inline boost::optional<BlockAndCell>

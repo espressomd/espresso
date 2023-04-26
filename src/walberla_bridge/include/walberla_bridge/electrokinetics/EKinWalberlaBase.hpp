@@ -27,14 +27,14 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 /** @brief Interface of a lattice-based electrokinetic model. */
 class EKinWalberlaBase : public LatticeModel {
 public:
   /** @brief Integrate EKin for one time step */
-  virtual void integrate(const std::size_t &potential_id,
-                         const std::size_t &velocity_id,
-                         const std::size_t &force_id) = 0;
+  virtual void integrate(std::size_t potential_id, std::size_t velocity_id,
+                         std::size_t force_id) = 0;
 
   /** @brief perform ghost communication of densities */
   virtual void ghost_communication() = 0;

@@ -17,12 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONIMPLINDEXED_HPP
-#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_REACTIONS_EKREACTIONIMPLINDEXED_HPP
+#pragma once
 
 #include "walberla_bridge/LatticeWalberla.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
 
@@ -51,9 +52,9 @@ public:
 
   void perform_reaction() override;
 
-  void set_node_is_boundary(const Utils::Vector3i &node, bool is_boundary);
+  void set_node_is_boundary(Utils::Vector3i const &node, bool is_boundary);
   [[nodiscard]] boost::optional<bool>
-  get_node_is_boundary(const Utils::Vector3i &node);
+  get_node_is_boundary(Utils::Vector3i const &node);
 
   [[nodiscard]] auto get_indexvector_id() const noexcept {
     return m_indexvector_id;
@@ -66,5 +67,3 @@ public:
 };
 
 } // namespace walberla
-
-#endif

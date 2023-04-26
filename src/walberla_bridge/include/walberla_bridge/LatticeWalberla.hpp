@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_WALBERLA_LATTICE_HPP
-#define ESPRESSO_WALBERLA_LATTICE_HPP
+
+#pragma once
 
 #include <utils/Vector.hpp>
 
@@ -70,10 +70,8 @@ public:
     return std::make_pair(conversion(lower_corner), conversion(upper_corner));
   }
 
-  [[nodiscard]] bool node_in_local_domain(const Utils::Vector3i &node) const;
-  [[nodiscard]] bool node_in_local_halo(const Utils::Vector3i &node) const;
-  [[nodiscard]] bool pos_in_local_domain(const Utils::Vector3d &pos) const;
-  [[nodiscard]] bool pos_in_local_halo(const Utils::Vector3d &pos) const;
+  [[nodiscard]] bool node_in_local_domain(Utils::Vector3i const &node) const;
+  [[nodiscard]] bool node_in_local_halo(Utils::Vector3i const &node) const;
+  [[nodiscard]] bool pos_in_local_domain(Utils::Vector3d const &pos) const;
+  [[nodiscard]] bool pos_in_local_halo(Utils::Vector3d const &pos) const;
 };
-
-#endif // ESPRESSO_WALBERLA_LATTICE_HPP

@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_FFT_HPP
-#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_POISSONSOLVER_FFT_HPP
+#pragma once
 
 #include "PoissonSolver.hpp"
 
@@ -64,7 +63,7 @@ public:
     Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
                         m_blocks->getNumberOfYCells(),
                         m_blocks->getNumberOfZCells());
-    const auto greens = [dim](uint_t x, uint_t y, uint_t z) -> real_t {
+    auto const greens = [dim](uint_t x, uint_t y, uint_t z) -> real_t {
       if (x == 0 && y == 0 && z == 0)
         return 0;
       return -0.5 /
@@ -91,7 +90,7 @@ public:
 
   void reset_charge_field() override {
     // the FFT-solver re-uses the potential field for the charge
-    const auto potential_id = walberla::BlockDataID(get_potential_field_id());
+    auto const potential_id = walberla::BlockDataID(get_potential_field_id());
 
     for (auto &block : *get_lattice()->get_blocks()) {
       auto field = block.template getData<PotentialField>(potential_id);
@@ -139,5 +138,3 @@ private:
 };
 
 } // namespace walberla
-
-#endif

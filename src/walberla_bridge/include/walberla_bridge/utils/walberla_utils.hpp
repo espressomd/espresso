@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef WALBERLA_UTILS_H
-#define WALBERLA_UTILS_H
+
+#pragma once
 
 #include <core/DataTypes.h>
 #include <core/math/Matrix3.h>
@@ -31,19 +31,19 @@ namespace walberla {
 template <typename T, typename U = T> inline U es2walberla(T v) {
   return numeric_cast<U>(v);
 }
-template <> inline Vector3<float> es2walberla(const Utils::Vector3d v) {
+template <> inline Vector3<float> es2walberla(Utils::Vector3d const v) {
   return Vector3<float>{numeric_cast<float>(v[0]), numeric_cast<float>(v[1]),
                         numeric_cast<float>(v[2])};
 }
-template <> inline Vector3<double> es2walberla(const Utils::Vector3d v) {
+template <> inline Vector3<double> es2walberla(Utils::Vector3d const v) {
   return Vector3<double>{v[0], v[1], v[2]};
 }
 
 template <typename T> inline T walberla2es(T v) { return v; }
-inline Utils::Vector3d walberla2es(const Vector3<float> v) {
+inline Utils::Vector3d walberla2es(Vector3<float> const v) {
   return Utils::Vector3d{double_c(v[0]), double_c(v[1]), double_c(v[2])};
 }
-inline Utils::Vector3d walberla2es(const Vector3<double> v) {
+inline Utils::Vector3d walberla2es(Vector3<double> const v) {
   return Utils::Vector3d{v[0], v[1], v[2]};
 }
 
@@ -77,5 +77,3 @@ void interpolate_bspline_at_pos(Utils::Vector3d const &pos, Function const &f) {
 }
 
 } // namespace walberla
-
-#endif

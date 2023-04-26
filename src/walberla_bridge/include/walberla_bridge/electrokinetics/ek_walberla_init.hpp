@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_EK_WALBERLA_INIT_HPP
-#define ESPRESSO_SRC_WALBERLA_BRIDGE_ELECTROKINETICS_EK_WALBERLA_INIT_HPP
+#pragma once
 
 #include "EKinWalberlaBase.hpp"
 
@@ -43,5 +42,3 @@ new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
                    double permittivity, bool single_precision);
-
-#endif

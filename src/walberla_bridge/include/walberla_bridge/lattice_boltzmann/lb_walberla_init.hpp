@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LB_WALBERLA_INIT_HPP
-#define LB_WALBERLA_INIT_HPP
+
+#pragma once
 
 #include "LBWalberlaBase.hpp"
 #include "walberla_bridge/LatticeWalberla.hpp"
@@ -35,5 +35,3 @@ new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
 
 Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,
                                      double agrid);
-
-#endif
