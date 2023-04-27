@@ -37,7 +37,7 @@
 #include <functional>
 #include <vector>
 
-inline std::size_t max_non_bonded_pairs() {
+static auto max_non_bonded_pairs() {
   auto const n = static_cast<std::size_t>(max_seen_particle_type);
   return (n * (n + 1)) / 2;
 }
@@ -52,7 +52,8 @@ Observable_stat::Observable_stat(std::size_t chunk_size)
 #else
   constexpr std::size_t n_vs = 0;
 #endif
-  auto const n_bonded = bonded_ia_params.get_next_key();
+  auto const n_bonded =
+      static_cast<std::size_t>(bonded_ia_params.get_next_key());
   auto const n_non_bonded = max_non_bonded_pairs();
   constexpr std::size_t n_ext_fields = 1; // reduction over all fields
   constexpr std::size_t n_kinetic = 1; // linear+angular kinetic contributions

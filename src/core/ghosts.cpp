@@ -107,10 +107,10 @@ static std::size_t calc_transmit_size(unsigned data_parts) {
 static std::size_t calc_transmit_size(const GhostCommunication &ghost_comm,
                                       unsigned int data_parts) {
   if (data_parts & GHOSTTRANS_PARTNUM)
-    return sizeof(int) * ghost_comm.part_lists.size();
+    return sizeof(unsigned int) * ghost_comm.part_lists.size();
 
   auto const n_part = boost::accumulate(
-      ghost_comm.part_lists, 0ul,
+      ghost_comm.part_lists, std::size_t{0},
       [](std::size_t sum, auto part_list) { return sum + part_list->size(); });
 
   return n_part * calc_transmit_size(data_parts);
@@ -134,7 +134,8 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      int np = static_cast<int>(part_list->size());
+      assert(part_list->size() <= std::numeric_limits<unsigned int>::max());
+      auto np = static_cast<unsigned int>(part_list->size());
       archiver << np;
     } else {
       for (Particle &part : *part_list) {
@@ -169,7 +170,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   assert(archiver.bytes_written() == send_buffer.size());
 }
 
-static void prepare_ghost_cell(ParticleList *cell, int size) {
+static void prepare_ghost_cell(ParticleList *cell, std::size_t size) {
   /* Adapt size */
   cell->resize(size);
 
@@ -196,7 +197,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
 
   if (data_parts & GHOSTTRANS_PARTNUM) {
     for (auto part_list : ghost_comm.part_lists) {
-      int np;
+      unsigned int np;
       archiver >> np;
       prepare_ghost_cell(part_list, np);
     }
@@ -279,7 +280,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
     auto *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, static_cast<int>(src_list->size()));
+      prepare_ghost_cell(dst_list, src_list->size());
     } else {
       auto const &src_part = *src_list;
       auto &dst_part = *dst_list;

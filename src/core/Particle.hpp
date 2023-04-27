@@ -38,11 +38,9 @@
 #include <vector>
 
 namespace detail {
-inline void check_axis_idx_valid(int const axis) {
-  assert(axis >= 0 and axis <= 2);
-}
+inline void check_axis_idx_valid(unsigned int const axis) { assert(axis <= 2); }
 
-inline bool get_nth_bit(uint8_t const bitfield, int const bit_idx) {
+inline bool get_nth_bit(uint8_t const bitfield, unsigned int const bit_idx) {
   return bitfield & (1u << bit_idx);
 }
 } // namespace detail
@@ -469,11 +467,11 @@ public:
 #ifdef ROTATION
   auto rotation() const { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
-  bool can_rotate_around(int const axis) const {
+  bool can_rotate_around(unsigned int const axis) const {
     detail::check_axis_idx_valid(axis);
     return detail::get_nth_bit(p.rotation, axis);
   }
-  void set_can_rotate_around(int const axis, bool const rot_flag) {
+  void set_can_rotate_around(unsigned int const axis, bool const rot_flag) {
     detail::check_axis_idx_valid(axis);
     if (rot_flag) {
       p.rotation |= static_cast<uint8_t>(1u << axis);
@@ -491,8 +489,10 @@ public:
   auto &torque() { return f.torque; }
   auto const &omega() const { return m.omega; }
   auto &omega() { return m.omega; }
+#ifdef EXTERNAL_FORCES
   auto const &ext_torque() const { return p.ext_torque; }
   auto &ext_torque() { return p.ext_torque; }
+#endif // EXTERNAL_FORCES
   auto calc_director() const { return r.calc_director(); }
 #else  // ROTATION
   bool can_rotate() const { return false; }
@@ -539,7 +539,7 @@ public:
 #endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
   bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
-  bool is_fixed_along(int const axis) const {
+  bool is_fixed_along(unsigned int const axis) const {
     detail::check_axis_idx_valid(axis);
     return detail::get_nth_bit(p.ext_flag, axis);
   }
@@ -555,7 +555,7 @@ public:
   auto &ext_force() { return p.ext_force; }
 #else  // EXTERNAL_FORCES
   constexpr bool has_fixed_coordinates() const { return false; }
-  constexpr bool is_fixed_along(int const) const { return false; }
+  constexpr bool is_fixed_along(unsigned int const) const { return false; }
 #endif // EXTERNAL_FORCES
 #ifdef ENGINE
   auto const &swimming() const { return p.swim; }

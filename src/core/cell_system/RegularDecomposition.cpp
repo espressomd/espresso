@@ -53,7 +53,7 @@
 Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   Utils::Vector3i cpos;
 
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     cpos[i] = static_cast<int>(std::floor(pos[i] * inv_cell_size[i])) + 1 -
               cell_offset[i];
 
@@ -266,8 +266,9 @@ void RegularDecomposition::fill_comm_cell_lists(ParticleList **part_lists,
         *part_lists++ = &(cells.at(i).particles());
       }
 }
+
 Utils::Vector3d RegularDecomposition::max_cutoff() const {
-  auto dir_max_range = [this](int i) {
+  auto dir_max_range = [this](unsigned int i) {
     return std::min(0.5 * m_box.length()[i], m_local_box.length()[i]);
   };
 
@@ -307,7 +308,7 @@ void RegularDecomposition::create_cell_grid(double range) {
     auto const volume = Utils::product(local_box_l);
     auto const scale = std::cbrt(RegularDecomposition::max_num_cells / volume);
 
-    for (int i = 0; i < 3; i++) {
+    for (unsigned int i = 0; i < 3; i++) {
       /* this is at least 1 */
       cell_grid[i] = static_cast<int>(std::ceil(local_box_l[i] * scale));
       cell_range[i] = local_box_l[i] / static_cast<double>(cell_grid[i]);
@@ -370,7 +371,7 @@ void RegularDecomposition::create_cell_grid(double range) {
 
   /* now set all dependent variables */
   int new_cells = 1;
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     ghost_cell_grid[i] = cell_grid[i] + 2;
     new_cells *= ghost_cell_grid[i];
     cell_size[i] = m_local_box.length()[i] / static_cast<double>(cell_grid[i]);
@@ -380,7 +381,7 @@ void RegularDecomposition::create_cell_grid(double range) {
 
   /* allocate cell array and cell pointer arrays */
   cells.clear();
-  cells.resize(new_cells);
+  cells.resize(static_cast<unsigned int>(new_cells));
   m_local_cells.resize(n_local_cells);
   m_ghost_cells.resize(new_cells - n_local_cells);
 }

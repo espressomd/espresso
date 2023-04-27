@@ -65,7 +65,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
 #endif
 
   Utils::Vector3d position = {};
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     // Second (deterministic) term of the Eq. (14.39) of schlick10a.
     // Only a conservative part of the force is used here
 #ifdef PARTICLE_ANISOTROPY
@@ -118,7 +118,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
 #endif
 
   Utils::Vector3d velocity = {};
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     // First (deterministic) term of the eq. (14.34) of schlick10a taking
     // into account eq. (14.35). Only conservative part of the force is used
     // here.
@@ -171,7 +171,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
   Utils::Vector3d delta_pos_body{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
 #ifndef PARTICLE_ANISOTROPY
       if (sigma_pos > 0.0) {
@@ -200,7 +200,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
 #endif
 
   Utils::Vector3d position = {};
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
 #ifdef PARTICLE_ANISOTROPY
       position[j] += aniso_flag ? delta_pos_lab[j] : delta_pos_body[j];
@@ -226,7 +226,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   Utils::Vector3d velocity = {};
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     if (!p.is_fixed_along(j)) {
       // Random (heat) velocity. See eq. (10.2.16) taking into account eq.
       // (10.2.18) and (10.2.29), pottier10a. Note, that the pottier10a units
@@ -264,7 +264,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
   }
 
   Utils::Vector3d dphi = {};
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
@@ -303,7 +303,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
   }
 
   Utils::Vector3d omega = {};
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
 #ifdef PARTICLE_ANISOTROPY
       omega[j] = p.torque()[j] / gamma[j];
@@ -341,7 +341,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
   Utils::Vector3d dphi = {};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
 #ifndef PARTICLE_ANISOTROPY
       if (sigma_pos > 0.0) {
@@ -376,7 +376,7 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
   Utils::Vector3d domega{};
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
-  for (int j = 0; j < 3; j++) {
+  for (unsigned int j = 0; j < 3; j++) {
     if (p.can_rotate_around(j)) {
       domega[j] = sigma_vel * noise[j] / sqrt(p.rinertia()[j]);
     }
