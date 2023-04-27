@@ -173,7 +173,7 @@ static void remove_pair_bonds_to(Particle &p, int other_pid) {
   std::vector<std::pair<int, int>> to_delete;
   for (auto b : p.bonds()) {
     if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
-      to_delete.emplace_back(std::pair<int, int>{b.bond_id(), other_pid});
+      to_delete.emplace_back(b.bond_id(), other_pid);
   }
   for (auto const &b : to_delete) {
     remove_bond(p, BondView(b.first, {&b.second, 1}));

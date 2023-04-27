@@ -36,7 +36,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 
 BoxGeometry box_geo;
 LocalBox<double> local_geo;
@@ -49,7 +48,7 @@ int map_position_node_array(const Utils::Vector3d &pos) {
   auto const f_pos = folded_position(pos, box_geo);
 
   Utils::Vector3i im;
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     im[i] = static_cast<int>(std::floor(f_pos[i] / local_geo.length()[i]));
     im[i] = std::clamp(im[i], 0, node_grid[i] - 1);
   }
@@ -72,13 +71,13 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
   Utils::Vector3d local_length;
   Utils::Vector3d my_left;
 
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     local_length[i] = box.length()[i] / node_grid_par[i];
     my_left[i] = node_pos[i] * local_length[i];
   }
 
   Utils::Array<int, 6> boundaries;
-  for (std::size_t dir = 0; dir < 3; dir++) {
+  for (unsigned int dir = 0; dir < 3; dir++) {
     /* left boundary ? */
     boundaries[2 * dir] = (node_pos[dir] == 0);
     /* right boundary ? */

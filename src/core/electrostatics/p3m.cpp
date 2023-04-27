@@ -285,7 +285,7 @@ CoulombP3M::CoulombP3M(P3MParameters &&parameters, double prefactor,
 }
 
 namespace {
-template <std::size_t cao> struct AssignCharge {
+template <int cao> struct AssignCharge {
   void operator()(p3m_data_struct &p3m, double q,
                   Utils::Vector3d const &real_pos,
                   p3m_interpolation_cache &inter_weights) {
@@ -325,22 +325,23 @@ void CoulombP3M::charge_assign(ParticleRange const &particles) {
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, p3m, particles);
+  Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m,
+                                                     particles);
 }
 
 void CoulombP3M::assign_charge(double q, Utils::Vector3d const &real_pos,
                                p3m_interpolation_cache &inter_weights) {
-  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
-                                                real_pos, inter_weights);
+  Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
+                                                     real_pos, inter_weights);
 }
 
 void CoulombP3M::assign_charge(double q, Utils::Vector3d const &real_pos) {
-  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
-                                                real_pos);
+  Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
+                                                     real_pos);
 }
 
 namespace {
-template <std::size_t cao> struct AssignForces {
+template <int cao> struct AssignForces {
   void operator()(p3m_data_struct &p3m, double force_prefac,
                   ParticleRange const &particles) const {
     using Utils::make_const_span;
@@ -507,8 +508,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                        p3m.local_mesh.dim);
 
     auto const force_prefac = prefactor / volume;
-    Utils::integral_parameter<AssignForces, 1, 7>(p3m.params.cao, p3m,
-                                                  force_prefac, particles);
+    Utils::integral_parameter<int, AssignForces, 1, 7>(p3m.params.cao, p3m,
+                                                       force_prefac, particles);
 
     // add dipole forces
     if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
@@ -733,7 +734,7 @@ void CoulombP3M::tune() {
 }
 
 void CoulombP3M::sanity_checks_boxl() const {
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     /* check k-space cutoff */
     if (p3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;
@@ -750,10 +751,10 @@ void CoulombP3M::sanity_checks_boxl() const {
   }
 
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    if (!((box_geo.length()[0] == box_geo.length()[1]) and
-          (box_geo.length()[1] == box_geo.length()[2])) or
-        !((p3m.params.mesh[0] == p3m.params.mesh[1]) and
-          (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+    if ((box_geo.length()[0] != box_geo.length()[1]) or
+        (box_geo.length()[1] != box_geo.length()[2]) or
+        (p3m.params.mesh[0] != p3m.params.mesh[1]) or
+        (p3m.params.mesh[1] != p3m.params.mesh[2])) {
       throw std::runtime_error(
           "CoulombP3M: non-metallic epsilon requires cubic box");
     }

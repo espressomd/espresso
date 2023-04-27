@@ -115,9 +115,9 @@ void cuda_mpi_get_particles(
 static void add_forces_and_torques(ParticleRange particles,
                                    Utils::Span<const float> forces,
                                    Utils::Span<const float> torques) {
-  int i = 0;
+  unsigned int i = 0;
   for (auto &p : particles) {
-    for (int j = 0; j < 3; j++) {
+    for (unsigned int j = 0; j < 3; j++) {
       p.force()[j] += static_cast<double>(forces[3 * i + j]);
 #ifdef ROTATION
       p.torque()[j] += static_cast<double>(torques[3 * i + j]);

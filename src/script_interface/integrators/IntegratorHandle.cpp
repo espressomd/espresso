@@ -86,15 +86,15 @@ static bool checkpoint_filter(typename VariantMap::value_type const &kv) {
   /* When loading from a checkpoint file, defer the integrator object to last,
    * and skip the time_step if it is -1 to avoid triggering sanity checks.
    */
-  return kv.first != "integrator" and
-         not(kv.first == "time_step" and ::integ_switch == INTEG_METHOD_NVT and
-             get_time_step() == -1. and is_type<double>(kv.second) and
-             get_value<double>(kv.second) == -1.);
+  return kv.first == "integrator" or
+         (kv.first == "time_step" and ::integ_switch == INTEG_METHOD_NVT and
+          get_time_step() == -1. and is_type<double>(kv.second) and
+          get_value<double>(kv.second) == -1.);
 }
 
 void IntegratorHandle::do_construct(VariantMap const &params) {
   for (auto const &kv : params) {
-    if (checkpoint_filter(kv)) {
+    if (not checkpoint_filter(kv)) {
       do_set_parameter(kv.first, kv.second);
     }
   }
