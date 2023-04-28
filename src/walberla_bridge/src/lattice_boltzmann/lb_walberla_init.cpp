@@ -17,15 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
-
 #include "LBWalberlaImpl.hpp"
 
 #include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
-
-#include <core/mpi/Environment.h>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -35,13 +32,6 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-
-void walberla_mpi_init() {
-  int argc = 0;
-  char **argv = nullptr;
-  static walberla::mpi::Environment m_env =
-      walberla::mpi::Environment(argc, argv);
-}
 
 std::shared_ptr<LBWalberlaBase>
 new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,

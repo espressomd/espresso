@@ -45,17 +45,17 @@
 #include <stencil/D3Q27.h>
 
 #include "../BoundaryHandling.hpp"
+#include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
 
-#include "walberla_bridge/Architecture.hpp"
-#include "walberla_bridge/BlockAndCell.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
-#include "walberla_bridge/lattice_boltzmann/InterpolateAndShiftAtBoundary.hpp"
-#include "walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp"
-#include "walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp"
-#include "walberla_bridge/utils/boundary_utils.hpp"
-#include "walberla_bridge/utils/walberla_utils.hpp"
+#include <walberla_bridge/Architecture.hpp>
+#include <walberla_bridge/BlockAndCell.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
+#include <walberla_bridge/utils/boundary_utils.hpp>
+#include <walberla_bridge/utils/walberla_utils.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -119,7 +119,7 @@ public:
   using FlagField = typename BoundaryModel::FlagField;
 
 public:
-  template <typename T> inline FloatType FloatType_c(T t) const {
+  template <typename T> FloatType FloatType_c(T t) const {
     return numeric_cast<FloatType>(t);
   }
 

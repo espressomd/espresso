@@ -23,7 +23,7 @@
 
 #include "FluidNode.hpp"
 
-#include "script_interface/communication.hpp"
+#include <script_interface/communication.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>

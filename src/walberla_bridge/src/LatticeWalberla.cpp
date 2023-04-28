@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "walberla_bridge/LatticeWalberla.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>

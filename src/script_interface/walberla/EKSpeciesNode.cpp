@@ -25,7 +25,7 @@
 
 #include "LatticeIndices.hpp"
 
-#include "script_interface/communication.hpp"
+#include <script_interface/communication.hpp>
 
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 

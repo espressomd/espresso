@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "walberla_bridge/LatticeWalberla.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <cstddef>
 #include <memory>

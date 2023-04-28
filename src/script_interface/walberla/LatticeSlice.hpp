@@ -24,7 +24,7 @@
 
 #include "LatticeIndices.hpp"
 
-#include "script_interface/ScriptInterface.hpp"
+#include <script_interface/ScriptInterface.hpp>
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 

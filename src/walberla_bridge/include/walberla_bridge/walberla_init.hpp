@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2019-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,14 +17,5 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
-namespace ScriptInterface::walberla {
-void initialize(Utils::Factory<ObjectHandle> *om);
-} // namespace ScriptInterface::walberla
-
-#endif // WALBERLA
+/** @brief Initialize waLBerla's MPI manager */
+void walberla_mpi_init();

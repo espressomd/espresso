@@ -26,4 +26,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
   target_sources(espresso_walberla PRIVATE ek_poisson_fft_init.cpp)
 endif()
 
-set_source_files_properties(ek_walberla_init.cpp TARGET_DIRECTORY espresso_walberla PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
+set_source_files_properties(
+    ek_walberla_init.cpp TARGET_DIRECTORY espresso_walberla
+    PROPERTIES COMPILE_FLAGS -Wno-unused-variable)

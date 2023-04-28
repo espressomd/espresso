@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "walberla_bridge/electrokinetics/ek_walberla_init.hpp"
-
 #include "EKinWalberlaImpl.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
+
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 

@@ -21,7 +21,7 @@
 
 #include "EKinWalberlaBase.hpp"
 
-#include "walberla_bridge/LatticeWalberla.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include "PoissonSolver/PoissonSolver.hpp"
 

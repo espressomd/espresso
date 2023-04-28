@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "LeesEdwardsPack.hpp"
+#include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
 
-#include "blockforest/StructuredBlockForest.h"
-#include "domain_decomposition/all.h"
-#include "stencil/D3Q19.h"
+#include <blockforest/StructuredBlockForest.h>
+#include <domain_decomposition/all.h>
+#include <stencil/D3Q19.h>
 
 #include <cmath>
 #include <functional>
@@ -33,17 +33,17 @@
 
 namespace walberla {
 
-/** Lees-Edwards sweep.
- * TODO WALBERLA
- *   Currently only works for 1 MPI rank! It should work in parallel if the MPI
- *   domain decomposition for the structured block forest doesn't partition
- *   along the shear direction. For example if the shear direction goes along
- *   the z-axis, it should be possible to run on 4 MPI ranks with [2, 2, 1].
- *   At the moment, ESPResSo requires system.cell_system.node_grid to be in
- *   decreasing order, therefore parallelization requires a shear direction
- *   along the z-axis and a MPI node_grid of [x, y, 1] with x >= y. This
- *   restriction on the ordering of the node_grid may be lifted in the
- *   distant future, when our FFT algorithm is replaced by a new one.
+/**
+ * Lees-Edwards sweep.
+ * @todo Currently only works for 1 MPI rank! It should work in parallel if the
+ * MPI domain decomposition for the structured block forest doesn't partition
+ * along the shear direction. For example if the shear direction goes along
+ * the z-axis, it should be possible to run on 4 MPI ranks with [2, 2, 1].
+ * At the moment, ESPResSo requires system.cell_system.node_grid to be in
+ * decreasing order, therefore parallelization requires a shear direction
+ * along the z-axis and a MPI node_grid of [x, y, 1] with x >= y. This
+ * restriction on the ordering of the node_grid may be lifted in the
+ * distant future, when our FFT algorithm is replaced by a new one.
  */
 template <class FieldType, typename FloatType>
 class InterpolateAndShiftAtBoundary {
@@ -75,7 +75,6 @@ public:
       m_slab_max = stencil::T;
     }
   }
-  typedef stencil::D3Q19 Stencil;
 
   FloatType get_pos_offset() const {
     return numeric_cast<FloatType>(m_get_pos_offset());
@@ -154,4 +153,5 @@ private:
   stencil::Direction m_slab_min;
   stencil::Direction m_slab_max;
 };
+
 } // namespace walberla

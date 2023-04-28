@@ -20,9 +20,9 @@
 #include "EKReactionImplIndexed.hpp"
 
 #include "walberla_bridge/BlockAndCell.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
 #include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include "generated_kernels/ReactionKernelIndexed_all.h"
 

@@ -27,12 +27,11 @@
 #include "event.hpp"
 #include "grid.hpp"
 
-#include <utils/mpi/cart_comm.hpp>
-
-// TODO: extract mpi-init from lb_walberla_init to separate file
 #ifdef WALBERLA
-#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 #endif
+
+#include <utils/mpi/cart_comm.hpp>
 
 #include <boost/mpi.hpp>
 

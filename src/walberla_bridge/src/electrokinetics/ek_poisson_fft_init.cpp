@@ -17,11 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "walberla_bridge/electrokinetics/ek_poisson_fft_init.hpp"
-
-#include "walberla_bridge/LatticeWalberla.hpp"
-
-#include "walberla_bridge/electrokinetics/PoissonSolver/FFT.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/PoissonSolver/FFT.hpp>
+#include <walberla_bridge/electrokinetics/ek_poisson_fft_init.hpp>
 
 #include <memory>
 

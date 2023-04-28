@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_FFT_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_FFT_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -27,10 +26,10 @@
 
 #include "EKPoissonSolver.hpp"
 
-#include "walberla_bridge/electrokinetics/ek_walberla_init.hpp"
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/auto_parameters/AutoParameter.hpp"
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <memory>
 
@@ -82,4 +81,3 @@ private:
 
 #endif // WALBERLA_FFT
 #endif // WALBERLA
-#endif

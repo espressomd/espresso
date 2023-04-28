@@ -36,7 +36,6 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/mpi/inplace.hpp>
 
 #include <mpi.h>
 
@@ -49,8 +48,8 @@ using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
 
-static LBTestParameters params; // populated in main()
-static Vector3i mpi_shape;      // populated in main
+static LatticeTestParameters params; // populated in main()
+static Vector3i mpi_shape;           // populated in main
 
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::xrange(3u), n_ghost_layers) {
   auto const lattice =

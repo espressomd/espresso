@@ -28,7 +28,7 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "tests_common.hpp"
+#include "tests_common_lb.hpp"
 
 #include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
 

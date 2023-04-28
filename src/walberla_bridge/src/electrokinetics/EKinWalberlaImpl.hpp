@@ -29,13 +29,14 @@
 #include <lbm/lattice_model/D3Q27.h>
 #include <timeloop/SweepTimeloop.h>
 
-#include "walberla_bridge/BlockAndCell.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
-#include "walberla_bridge/electrokinetics/EKinWalberlaBase.hpp"
-#include "walberla_bridge/utils/boundary_utils.hpp"
-#include "walberla_bridge/utils/walberla_utils.hpp"
-
+#include "../BoundaryHandling.hpp"
 #include "ek_kernels.hpp"
+
+#include <walberla_bridge/BlockAndCell.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/boundary_utils.hpp>
+#include <walberla_bridge/utils/walberla_utils.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -47,14 +48,12 @@
 #include <type_traits>
 #include <vector>
 
-#include "../BoundaryHandling.hpp"
-
 namespace walberla {
 
 /** @brief Class that runs and controls the EK on waLBerla. */
 template <std::size_t FluxCount = 13, typename FloatType = double>
 class EKinWalberlaImpl : public EKinWalberlaBase {
-  template <typename T> inline FloatType FloatType_c(T t) {
+  template <typename T> FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
   }
 

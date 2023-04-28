@@ -20,7 +20,7 @@
 #pragma once
 
 #include "PoissonSolver.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>

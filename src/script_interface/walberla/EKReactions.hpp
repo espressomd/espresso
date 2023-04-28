@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_REACTIONS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_REACTIONS_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -28,8 +27,10 @@
 
 #include "core/grid_based_algorithms/ek_reactions.hpp"
 
-#include "script_interface/ObjectList.hpp"
-#include "script_interface/ScriptInterface.hpp"
+#include <script_interface/ObjectList.hpp>
+#include <script_interface/ScriptInterface.hpp>
+
+#include <memory>
 
 namespace ScriptInterface::walberla {
 
@@ -44,4 +45,3 @@ class EKReactions : public ObjectList<EKReaction> {
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
-#endif

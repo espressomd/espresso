@@ -38,7 +38,8 @@ if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
   add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
   target_link_libraries(
     espresso_walberla_cuda PRIVATE CUDA::cuda_driver CUDA::cudart)
-  target_link_libraries(espresso_walberla_cuda PUBLIC espresso::utils PRIVATE ${WALBERLA_LIBS})
+  target_link_libraries(
+    espresso_walberla_cuda PUBLIC espresso::utils PRIVATE ${WALBERLA_LIBS})
   target_include_directories(espresso_walberla_cuda PUBLIC include)
   target_include_directories(
     espresso_walberla_cuda PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
@@ -57,11 +58,6 @@ target_include_directories(
   PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)
 
 add_subdirectory(src)
-# TODO WALBERLA: find why `TARGET_DIRECTORY espresso_walberla` doesn't work
-# in subfolders where these source files are added to `espresso_walberla`
-set_source_files_properties(
-  src/electrokinetics/ek_walberla_init.cpp
-  PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)

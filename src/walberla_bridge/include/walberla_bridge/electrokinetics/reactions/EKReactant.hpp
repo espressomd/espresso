@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "walberla_bridge/electrokinetics/EKinWalberlaBase.hpp"
+#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
 #include <memory>
 #include <utility>

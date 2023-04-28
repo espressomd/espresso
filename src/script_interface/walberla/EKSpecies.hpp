@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_SPECIES_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_SPECIES_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -28,13 +27,17 @@
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
-
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/auto_parameters/AutoParameter.hpp"
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <utils/math/int_pow.hpp>
+
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace ScriptInterface::walberla {
 
@@ -203,4 +206,3 @@ private:
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
-#endif

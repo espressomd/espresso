@@ -20,7 +20,7 @@
 #pragma once
 
 #include "EKReactant.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <memory>
 #include <utility>

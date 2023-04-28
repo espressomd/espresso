@@ -40,7 +40,7 @@ namespace walberla {
 
 template <typename FloatType> class FFT : public PoissonSolver {
 private:
-  template <typename T> inline FloatType FloatType_c(T t) {
+  template <typename T> FloatType FloatType_c(T t) {
     return numeric_cast<FloatType>(t);
   }
 
@@ -64,8 +64,8 @@ public:
                         m_blocks->getNumberOfYCells(),
                         m_blocks->getNumberOfZCells());
     auto const greens = [dim](uint_t x, uint_t y, uint_t z) -> real_t {
-      if (x == 0 && y == 0 && z == 0)
-        return 0;
+      if (x == 0u && y == 0u && z == 0u)
+        return 0.;
       return -0.5 /
              (std::cos(2. * Utils::pi() * real_c(x) / real_c(dim[0])) +
               std::cos(2. * Utils::pi() * real_c(y) / real_c(dim[1])) +

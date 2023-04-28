@@ -19,14 +19,13 @@
 
 #pragma once
 
-#include "walberla_bridge/LatticeModel.hpp"
-
-#include <boost/optional.hpp>
+#include <walberla_bridge/LatticeModel.hpp>
 
 #include <utils/Vector.hpp>
 
+#include <boost/optional.hpp>
+
 #include <cstddef>
-#include <string>
 #include <vector>
 
 /** @brief Interface of a lattice-based electrokinetic model. */

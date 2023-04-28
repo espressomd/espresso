@@ -25,8 +25,8 @@
 #include "EKSpecies.hpp"
 #include "LatticeIndices.hpp"
 
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 

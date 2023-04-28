@@ -27,8 +27,8 @@
  * by @ref walberla::LBWalberlaImpl.
  */
 
-#include "LeesEdwardsPack.hpp"
-#include "walberla_bridge/LatticeModel.hpp"
+#include <walberla_bridge/LatticeModel.hpp>
+#include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -36,7 +36,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <string>
 #include <vector>
 
 /** @brief Interface of a lattice-based fluid model. */

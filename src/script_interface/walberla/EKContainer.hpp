@@ -17,20 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_CONTAINER_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_CONTAINER_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef WALBERLA
 
+#include "EKPoissonSolver.hpp"
 #include "EKSpecies.hpp"
+
 #include "core/grid_based_algorithms/ek_container.hpp"
 
-#include "script_interface/ObjectList.hpp"
-#include "script_interface/ScriptInterface.hpp"
+#include <script_interface/ObjectList.hpp>
+#include <script_interface/ScriptInterface.hpp>
 
-#include "EKPoissonSolver.hpp"
+#include <memory>
 
 namespace ScriptInterface::walberla {
 
@@ -67,4 +68,3 @@ class EKContainer : public ObjectList<EKSpecies> {
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
-#endif

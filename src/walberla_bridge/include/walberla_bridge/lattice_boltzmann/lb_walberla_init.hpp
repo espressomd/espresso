@@ -20,14 +20,12 @@
 #pragma once
 
 #include "LBWalberlaBase.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
+
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <utils/Vector.hpp>
 
 #include <memory>
-
-/** @brief Initialize Walberla's MPI manager */
-void walberla_mpi_init();
 
 std::shared_ptr<LBWalberlaBase>
 new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,

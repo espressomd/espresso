@@ -24,7 +24,7 @@
 
 #include "EKSpecies.hpp"
 #include "WalberlaCheckpoint.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>

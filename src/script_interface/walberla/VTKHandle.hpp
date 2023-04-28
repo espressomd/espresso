@@ -30,8 +30,8 @@
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include "EKSpecies.hpp"
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <boost/algorithm/string/join.hpp>
 

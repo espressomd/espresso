@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_INDICES_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_LATTICE_INDICES_HPP
+#pragma once
 
-#include "script_interface/ScriptInterface.hpp"
+#include <script_interface/ScriptInterface.hpp>
 
 #include <utils/Vector.hpp>
 
+#include <initializer_list>
 #include <sstream>
 #include <stdexcept>
 
@@ -53,7 +53,7 @@ protected:
   get_mapped_index(Utils::Vector3i const &index,
                    Utils::Vector3i const &shape) const {
     auto output = index;
-    for (auto i : {0, 1, 2}) {
+    for (auto i : {0u, 1u, 2u}) {
       if (output[i] < 0) {
         output[i] += shape[i];
       }
@@ -66,5 +66,3 @@ protected:
 };
 
 } // namespace ScriptInterface
-
-#endif

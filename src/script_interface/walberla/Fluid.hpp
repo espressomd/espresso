@@ -26,8 +26,8 @@
 
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>

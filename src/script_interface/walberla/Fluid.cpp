@@ -22,14 +22,14 @@
 
 #include "Fluid.hpp"
 #include "WalberlaCheckpoint.hpp"
-#include "walberla_bridge/LatticeWalberla.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
 
-#include "script_interface/communication.hpp"
+#include <script_interface/communication.hpp>
 
+#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include <utils/Vector.hpp>

@@ -17,17 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_POISSON_SOLVER_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_WALBERLA_EK_POISSON_SOLVER_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef WALBERLA
 
-#include "walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp"
+#include <script_interface/ScriptInterface.hpp>
+#include <script_interface/auto_parameters/AutoParameters.hpp>
 
-#include "script_interface/ScriptInterface.hpp"
-#include "script_interface/auto_parameters/AutoParameter.hpp"
+#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
 
 #include <memory>
 
@@ -41,4 +40,3 @@ public:
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
-#endif
