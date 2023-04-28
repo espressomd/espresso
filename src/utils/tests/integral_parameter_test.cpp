@@ -26,23 +26,25 @@
 #include <type_traits>
 #include <utility>
 
-template <std::size_t I> struct F {
+using Int = std::size_t;
+
+template <Int I> struct F {
   template <class T> auto operator()(T arg) const {
     return std::make_pair(I, arg);
   }
 };
 
 BOOST_AUTO_TEST_CASE(integral_parameter_) {
-  static_assert(
-      std::is_same_v<decltype(Utils::integral_parameter<F, 1, 5>(5, 13)),
-                     std::pair<std::size_t, int>>);
+  static_assert(std::is_same_v<decltype(Utils::integral_parameter<Int, F, 1, 5>(
+                                   Int{5}, 13)),
+                               std::pair<Int, int>>);
 
-  BOOST_CHECK(std::make_pair(std::size_t{1u}, 13) ==
-              (Utils::integral_parameter<F, 1, 5>(1, 13)));
-  BOOST_CHECK(std::make_pair(std::size_t{3u}, 13) ==
-              (Utils::integral_parameter<F, 1, 5>(3, 13)));
-  BOOST_CHECK(std::make_pair(std::size_t{5u}, 13) ==
-              (Utils::integral_parameter<F, 1, 5>(5, 13)));
-  BOOST_CHECK_THROW((Utils::integral_parameter<F, 1, 5>(6, 13)),
+  BOOST_CHECK(std::make_pair(Int{1}, 13) ==
+              (Utils::integral_parameter<Int, F, 1, 5>(Int{1}, 13)));
+  BOOST_CHECK(std::make_pair(Int{3}, 13) ==
+              (Utils::integral_parameter<Int, F, 1, 5>(Int{3}, 13)));
+  BOOST_CHECK(std::make_pair(Int{5}, 13) ==
+              (Utils::integral_parameter<Int, F, 1, 5>(Int{5}, 13)));
+  BOOST_CHECK_THROW((Utils::integral_parameter<Int, F, 1, 5>(Int{6}, 13)),
                     std::exception);
 }

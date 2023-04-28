@@ -164,7 +164,7 @@ DipolarP3M::DipolarP3M(P3MParameters &&parameters, double prefactor,
 }
 
 namespace {
-template <std::size_t cao> struct AssignDipole {
+template <int cao> struct AssignDipole {
   void operator()(dp3m_data_struct &dp3m, Utils::Vector3d const &real_pos,
                   Utils::Vector3d const &dip) const {
     auto const weights = p3m_calculate_interpolation_weights<cao>(
@@ -191,14 +191,14 @@ void DipolarP3M::dipole_assign(ParticleRange const &particles) {
 
   for (auto const &p : particles) {
     if (p.dipm() != 0.) {
-      Utils::integral_parameter<AssignDipole, 1, 7>(dp3m.params.cao, dp3m,
-                                                    p.pos(), p.calc_dip());
+      Utils::integral_parameter<int, AssignDipole, 1, 7>(dp3m.params.cao, dp3m,
+                                                         p.pos(), p.calc_dip());
     }
   }
 }
 
 namespace {
-template <std::size_t cao> struct AssignTorques {
+template <int cao> struct AssignTorques {
   void operator()(dp3m_data_struct const &dp3m, double prefac, int d_rs,
                   ParticleRange const &particles) const {
 
@@ -222,7 +222,7 @@ template <std::size_t cao> struct AssignTorques {
   }
 };
 
-template <std::size_t cao> struct AssignForces {
+template <int cao> struct AssignForces {
   void operator()(dp3m_data_struct const &dp3m, double prefac, int d_rs,
                   ParticleRange const &particles) const {
 
@@ -397,7 +397,7 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
         dp3m.sm.spread_grid(dp3m.rs_mesh.data(), comm_cart,
                             dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
-        Utils::integral_parameter<AssignTorques, 1, 7>(
+        Utils::integral_parameter<int, AssignTorques, 1, 7>(
             dp3m.params.cao, dp3m, dipole_prefac * two_pi_L_i, d_rs, particles);
       }
 
@@ -484,7 +484,7 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
         dp3m.sm.spread_grid(Utils::make_span(meshes), comm_cart,
                             dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
-        Utils::integral_parameter<AssignForces, 1, 7>(
+        Utils::integral_parameter<int, AssignForces, 1, 7>(
             dp3m.params.cao, dp3m, dipole_prefac * Utils::sqr(two_pi_L_i), d_rs,
             particles);
       }
@@ -858,7 +858,7 @@ double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
 }
 
 void DipolarP3M::sanity_checks_boxl() const {
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     /* check k-space cutoff */
     if (dp3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;
@@ -874,14 +874,14 @@ void DipolarP3M::sanity_checks_boxl() const {
     }
   }
 
-  if ((box_geo.length()[0] != box_geo.length()[1]) ||
+  if ((box_geo.length()[0] != box_geo.length()[1]) or
       (box_geo.length()[1] != box_geo.length()[2])) {
     throw std::runtime_error("DipolarP3M: requires a cubic box");
   }
 }
 
 void DipolarP3M::sanity_checks_periodicity() const {
-  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
+  if (!box_geo.periodic(0) or !box_geo.periodic(1) or !box_geo.periodic(2)) {
     throw std::runtime_error(
         "DipolarP3M: requires periodicity (True, True, True)");
   }

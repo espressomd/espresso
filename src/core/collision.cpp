@@ -93,7 +93,7 @@ static bool bind_centers() {
   // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
   // time step
-  return collision_params.mode != CollisionModeType::OFF &&
+  return collision_params.mode != CollisionModeType::OFF and
          collision_params.mode != CollisionModeType::GLUE_TO_SURF;
 }
 
@@ -130,7 +130,7 @@ void Collision_parameters::initialize() {
 #ifdef VIRTUAL_SITES
   // Check vs placement parameter
   if (collision_params.mode == CollisionModeType::BIND_VS) {
-    if ((collision_params.vs_placement < 0.) ||
+    if ((collision_params.vs_placement < 0.) or
         (collision_params.vs_placement > 1.)) {
       throw std::domain_error(
           "Parameter 'vs_placement' must be between 0 and 1");
@@ -139,13 +139,13 @@ void Collision_parameters::initialize() {
 #endif
 
   // Check if bonded ia exist
-  if ((collision_params.mode == CollisionModeType::BIND_CENTERS) &&
+  if ((collision_params.mode == CollisionModeType::BIND_CENTERS) and
       !bonded_ia_params.contains(collision_params.bond_centers)) {
     throw std::runtime_error(
         "Bond in parameter 'bond_centers' was not added to the system");
   }
 
-  if ((collision_params.mode == CollisionModeType::BIND_VS) &&
+  if ((collision_params.mode == CollisionModeType::BIND_VS) and
       !bonded_ia_params.contains(collision_params.bond_vs)) {
     throw std::runtime_error(
         "Bond in parameter 'bond_vs' was not added to the system");
@@ -153,16 +153,16 @@ void Collision_parameters::initialize() {
 
   // If the bond type to bind particle centers is not a pair bond...
   // Check that the bonds have the right number of partners
-  if ((collision_params.mode == CollisionModeType::BIND_CENTERS) &&
+  if ((collision_params.mode == CollisionModeType::BIND_CENTERS) and
       (get_bond_num_partners(collision_params.bond_centers) != 1)) {
     throw std::runtime_error("The bond type to be used for binding particle "
                              "centers needs to be a pair bond");
   }
 
   // The bond between the virtual sites can be pair or triple
-  if ((collision_params.mode == CollisionModeType::BIND_VS) &&
-      !(get_bond_num_partners(collision_params.bond_vs) == 1 ||
-        get_bond_num_partners(collision_params.bond_vs) == 2)) {
+  if ((collision_params.mode == CollisionModeType::BIND_VS) and
+      (get_bond_num_partners(collision_params.bond_vs) != 1 and
+       get_bond_num_partners(collision_params.bond_vs) != 2)) {
     throw std::runtime_error("The bond type to be used for binding virtual "
                              "sites needs to be a pair or three-particle bond");
   }
@@ -242,10 +242,10 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   const double dist_betw_part = vec21.norm();
 
   // Find out, which is the particle to be glued.
-  if ((p1.type() == collision_params.part_type_to_be_glued) &&
+  if ((p1.type() == collision_params.part_type_to_be_glued) and
       (p2.type() == collision_params.part_type_to_attach_vs_to)) {
     c = 1 - collision_params.dist_glued_part_to_vs / dist_betw_part;
-  } else if ((p2.type() == collision_params.part_type_to_be_glued) &&
+  } else if ((p2.type() == collision_params.part_type_to_be_glued) and
              (p1.type() == collision_params.part_type_to_attach_vs_to)) {
     c = collision_params.dist_glued_part_to_vs / dist_betw_part;
   } else {
@@ -299,8 +299,8 @@ void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
                             id2 = p2.id()](BondView const &bond) {
     auto const partner_ids = bond.partner_ids();
 
-    return ((partner_ids[0] == id1) && (partner_ids[1] == id2)) ||
-           ((partner_ids[0] == id2) && (partner_ids[1] == id1));
+    return ((partner_ids[0] == id1) and (partner_ids[1] == id2)) or
+           ((partner_ids[0] == id2) and (partner_ids[1] == id1));
   };
 
   auto const &bonds = p.bonds();
@@ -450,7 +450,7 @@ void three_particle_binding_domain_decomposition(
   for (auto &c : gathered_queue) {
     // If we have both particles, at least as ghosts, Get the corresponding cell
     // indices
-    if (cell_structure.get_local_particle(c.pp1) &&
+    if (cell_structure.get_local_particle(c.pp1) and
         cell_structure.get_local_particle(c.pp2)) {
       Particle &p1 = *cell_structure.get_local_particle(c.pp1);
       Particle &p2 = *cell_structure.get_local_particle(c.pp2);
@@ -459,7 +459,7 @@ void three_particle_binding_domain_decomposition(
 
       if (cell1)
         three_particle_binding_do_search(cell1, p1, p2);
-      if (cell2 && cell1 != cell2)
+      if (cell2 and cell1 != cell2)
         three_particle_binding_do_search(cell2, p1, p2);
 
     } // If local particles exist

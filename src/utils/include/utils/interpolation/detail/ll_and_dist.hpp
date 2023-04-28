@@ -23,7 +23,6 @@
 
 #include <array>
 #include <cmath>
-#include <cstddef>
 
 namespace Utils {
 namespace Interpolation {
@@ -40,7 +39,7 @@ struct Block {
  * @brief Calculate the lower left index of a block
  *        stencil with order points side length.
  */
-template <std::size_t order>
+template <int order>
 Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
                   const Vector3d &offset) {
   Vector3d dist;

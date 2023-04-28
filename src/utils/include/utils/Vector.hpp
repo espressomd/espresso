@@ -140,7 +140,7 @@ public:
   Vector &normalize() {
     auto const l = norm();
     if (l > T(0)) {
-      for (int i = 0; i < N; i++)
+      for (std::size_t i = 0; i < N; i++)
         this->operator[](i) /= l;
     }
 
@@ -187,7 +187,7 @@ Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
 
 template <std::size_t N, typename T, typename Op>
 constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
-  for (int i = 0; i < a.size(); i++) {
+  for (unsigned int i = 0; i < N; i++) {
     /* Short circuit */
     if (!static_cast<bool>(op(a[i], b[i]))) {
       return false;

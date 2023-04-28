@@ -277,7 +277,7 @@ python_test(FILE lb_planar_couette.py MAX_NUM_PROC 1)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
 python_test(FILE virtual_sites_relative_pbc.py MAX_NUM_PROC 2)
-python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 2 DEPENDENCIES
+python_test(FILE virtual_sites_tracers_cpu.py MAX_NUM_PROC 2 DEPENDENCIES
             virtual_sites_tracers_common.py)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)

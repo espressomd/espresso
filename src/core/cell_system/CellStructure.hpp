@@ -166,10 +166,10 @@ public:
     // cppcheck-suppress assertWithSideEffect
     assert(not p or p->id() == id);
 
-    if (id >= m_particle_index.size())
-      m_particle_index.resize(id + 1);
+    if (static_cast<unsigned int>(id) >= m_particle_index.size())
+      m_particle_index.resize(static_cast<unsigned int>(id + 1));
 
-    m_particle_index[id] = p;
+    m_particle_index[static_cast<unsigned int>(id)] = p;
   }
 
   /**
@@ -234,20 +234,20 @@ public:
   Particle *get_local_particle(int id) {
     assert(id >= 0);
 
-    if (id >= m_particle_index.size())
+    if (static_cast<unsigned int>(id) >= m_particle_index.size())
       return nullptr;
 
-    return m_particle_index[id];
+    return m_particle_index[static_cast<unsigned int>(id)];
   }
 
   /** @overload */
   const Particle *get_local_particle(int id) const {
     assert(id >= 0);
 
-    if (id >= m_particle_index.size())
+    if (static_cast<unsigned int>(id) >= m_particle_index.size())
       return nullptr;
 
-    return m_particle_index[id];
+    return m_particle_index[static_cast<unsigned int>(id)];
   }
 
   template <class InputRange, class OutputIterator>

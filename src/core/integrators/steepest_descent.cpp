@@ -51,7 +51,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
     auto f = 0.0;
 
     // For all Cartesian coordinates
-    for (int j = 0; j < 3; j++) {
+    for (unsigned int j = 0; j < 3; j++) {
       // Skip, if coordinate is fixed
       if (!p.is_fixed_along(j)) {
         // Skip positional increments of virtual particles

@@ -93,7 +93,7 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
       return;
     }
     p.v() = lb_lbinterpolation_get_interpolated_velocity(p.pos()) * to_md_units;
-    for (int i = 0; i < 3; i++) {
+    for (unsigned int i = 0; i < 3; i++) {
       if (!p.is_fixed_along(i)) {
         p.pos()[i] += p.v()[i] * time_step;
       }

@@ -477,7 +477,7 @@ void remove_particle(int p_id) {
     } else if (this_node == 0) {
       ::comm_cart.recv(boost::mpi::any_source, 42, p_type);
     }
-    assert(not(this_node == 0 and p_type == -1));
+    assert(this_node != 0 or p_type != -1);
     boost::mpi::broadcast(::comm_cart, p_type, 0);
     remove_id_from_map(p_id, p_type);
   }

@@ -25,13 +25,9 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 @utx.skipIfMissingFeatures(
     ['VIRTUAL_SITES_INERTIALESS_TRACERS', 'WALBERLA'])
-class VirtualSitesTracersWalberla(ut.TestCase, VirtualSitesTracersCommon):
+class VirtualSitesTracers(VirtualSitesTracersCommon, ut.TestCase):
 
-    def setUp(self):
-        self.LBClass = espressomd.lb.LBFluidWalberla
-
-    def tearDown(self):
-        VirtualSitesTracersCommon.tearDown(self)
+    LBClass = espressomd.lb.LBFluidWalberla
 
 
 if __name__ == "__main__":
