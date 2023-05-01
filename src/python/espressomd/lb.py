@@ -585,16 +585,6 @@ class LBFluidWalberla(HydrodynamicInteraction):
                                       grid_offset=0.5)
         return np.reshape(mask_flat, self.shape).astype(type(True))
 
-    # TODO WALBERLA: deprecated function, consider removing it
-    def add_vtk_writer(self, identifier, observables, **kwargs):
-        """
-        Create a VTK observable.
-
-        """
-        print("add_vtk_writer() is a deprecated function")
-        return VTKOutput(lb_fluid=self, identifier=identifier,
-                         observables=observables, **kwargs)
-
 
 class LBFluidWalberlaGPU(HydrodynamicInteraction):
     """

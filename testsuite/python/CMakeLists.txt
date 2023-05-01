@@ -362,10 +362,10 @@ python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 1 LABELS
             long)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS
             long SUFFIX 1_core)
+python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 2)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE p3m_madelung.py MAX_NUM_PROC 2 GPU_SLOTS 2 LABELS long)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py NO_MPI)
-python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 2)
 python_test(FILE observable_chain.py MAX_NUM_PROC 4)
 python_test(FILE mpiio.py MAX_NUM_PROC 4)
 python_test(FILE mpiio_exceptions.py MAX_NUM_PROC 1)

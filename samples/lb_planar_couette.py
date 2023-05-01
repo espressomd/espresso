@@ -71,13 +71,13 @@ system.time_step = 1.
 system.cell_system.skin = 0.1
 system.cell_system.set_n_square()
 
-system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-    shear_velocity=v, initial_pos_offset=0.0, time_0=0.0)
-system.lees_edwards.shear_direction = 0
-system.lees_edwards.shear_plane_normal = 1
+system.lees_edwards.set_boundary_conditions(
+    shear_direction="x", shear_plane_normal="y",
+    protocol=espressomd.lees_edwards.LinearShear(
+        shear_velocity=v, initial_pos_offset=0.0, time_0=0.0))
 
 lbf = espressomd.lb.LBFluidWalberla(
-    agrid=1, density=1., kinematic_viscosity=nu, tau=1.)
+    agrid=1., density=1., kinematic_viscosity=nu, tau=1.)
 system.actors.add(lbf)
 
 # sampling
@@ -90,7 +90,7 @@ for steps in time_breakpoints:
     position_ref = np.linspace(0.5, 63.5, pos_breakpoints)
     position_lbf = np.linspace(0.5, 63.5, 64)
     velocity_ref = analytical(position_ref, time, nu, v, h, k_max)
-    velocity_lbf = np.copy(lbf[5, :, 0].velocity[:, :, :, 0].reshape([-1]))
+    velocity_lbf = np.copy(lbf[5, :, 0].velocity[:, 0].reshape([-1]))
     ax = plt.gca()
     color = next(ax._get_lines.prop_cycler)['color']
     plt.plot(velocity_ref, position_ref, '-', color=color,
