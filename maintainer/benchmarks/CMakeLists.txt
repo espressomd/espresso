@@ -101,14 +101,42 @@ function(PYTHON_BENCHMARK)
   endif()
 endfunction(PYTHON_BENCHMARK)
 
-# TODO WALBERLA: restore the other benchmarks
+python_benchmark(FILE lj.py ARGUMENTS
+                 "--particles_per_core=1000;--volume_fraction=0.50")
+python_benchmark(FILE lj.py ARGUMENTS
+                 "--particles_per_core=1000;--volume_fraction=0.02")
+python_benchmark(FILE lj.py ARGUMENTS
+                 "--particles_per_core=10000;--volume_fraction=0.50")
+python_benchmark(FILE lj.py ARGUMENTS
+                 "--particles_per_core=10000;--volume_fraction=0.02")
+python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
+                 "--particles_per_core=500;--mode=benchmark")
+python_benchmark(
+  FILE lj.py ARGUMENTS
+  "--particles_per_core=1000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI FALSE)
+python_benchmark(
+  FILE lj.py ARGUMENTS
+  "--particles_per_core=10000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI
+  FALSE)
+python_benchmark(
+  FILE p3m.py ARGUMENTS
+  "--particles_per_core=1000;--volume_fraction=0.25;--prefactor=4")
+python_benchmark(
+  FILE p3m.py ARGUMENTS
+  "--particles_per_core=10000;--volume_fraction=0.25;--prefactor=4")
+python_benchmark(
+  FILE lb.py ARGUMENTS
+  "--particles_per_core=125;--volume_fraction=0.03;--lb_sites_per_particle=28")
+python_benchmark(FILE ferrofluid.py ARGUMENTS "--particles_per_core=400")
+python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
+                 "--particles_per_core=500" RUN_WITH_MPI FALSE)
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=32;--single_precision")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=32")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--single_precision")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=64")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=128;--single_precision")
 python_benchmark(FILE lb.py ARGUMENTS "--box_l=128")
-if(NOT WALBERLA_USE_AVX)
+if(NOT ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
   python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--single_precision")
   python_benchmark(FILE lb.py ARGUMENTS "--box_l=196")
 endif()

@@ -52,9 +52,9 @@ system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 print(f"Parallelization: {system.cell_system.node_grid}")
 
 force = 0.001
+from addSoft import AddSoft
 k1 = 0.1
 k2 = 1
-from addSoft import AddSoft
 AddSoft(system, 10, 10, 10, k1, k2)
 
 # case without bending and volCons

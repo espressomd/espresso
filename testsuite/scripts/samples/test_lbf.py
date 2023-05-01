@@ -21,7 +21,8 @@ import numpy as np
 
 implementation = "gpu" if "gpu" in "@TEST_LABELS@".split(";") else "cpu"
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lbf.py")
+    "@SAMPLES_DIR@/lbf.py", gpu=implementation == "gpu",
+    cmd_arguments=["--" + implementation], script_suffix=implementation)
 
 
 @skipIfMissingFeatures
@@ -33,7 +34,7 @@ class Sample(ut.TestCase):
         gradient = np.mean(np.gradient(sample.f_list.T, axis=1), axis=1)
         self.assertAlmostEqual(gradient[0], 0.0, places=11)
         self.assertAlmostEqual(gradient[1], 0.0, places=11)
-        self.assertAlmostEqual(gradient[2], -7.78814e-7, delta=0.788E-7 * 0.05)
+        self.assertAlmostEqual(gradient[2], -7.816e-7, delta=1e-9)
 
 
 if __name__ == "__main__":

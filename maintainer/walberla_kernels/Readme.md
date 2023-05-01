@@ -1,12 +1,12 @@
 # Generation of kernels for Walberla
 
-The scripts in this directory generate the .cpp/hpp kernels for lattice-based
-algorithm.
+The scripts in this directory generate the .cpp/.hpp kernels for lattice-based algorithms.
 
 WARNING: The code generation sorts the arguments alphabetically by symbol name.
-If you rename something, you may have to adapt the order of arguments in calling code!
+If you rename something, you may have to adapt the order of arguments in the
+calling code!
 
-The following dependencies needs to be in the Python path:
+The following dependencies need to be in the Python path:
 
 * pystencils (https://i10git.cs.fau.de/pycodegen/pystencils)
 * lbmpy (https://i10git.cs.fau.de/pycodegen/lbmpy/)

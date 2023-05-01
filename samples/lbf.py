@@ -39,6 +39,13 @@ print("""
 """)
 
 required_features = ["WALBERLA", "EXTERNAL_FORCES"]
+if args.gpu:
+    print("Using GPU implementation")
+    required_features.append("CUDA")
+else:
+    print("Using CPU implementation")
+    if not args.cpu:
+        print("(select the implementation with --cpu or --gpu)")
 
 espressomd.assert_features(required_features)
 
@@ -55,7 +62,10 @@ particle = system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
 lb_params = {'agrid': 1, 'density': 1, 'kinematic_viscosity': 1, 'tau': 0.01,
              'ext_force_density': [0, 0, -1.0 / (box_l**3)]}
 
-lbf = espressomd.lb.LBFluidWalberla(**lb_params)
+if args.gpu:
+    lbf = espressomd.lb.LBFluidWalberlaGPU(**lb_params)
+else:
+    lbf = espressomd.lb.LBFluidWalberla(**lb_params)
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 print(lbf.get_params())
