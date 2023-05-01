@@ -19,12 +19,10 @@
 
 add_subdirectory(generated_kernels)
 
-target_sources(
-        espresso_walberla
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_init.cpp)
+target_sources(espresso_walberla
+               PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_init.cpp)
 
 if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-  target_sources(
-          espresso_walberla_cuda
-          PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_init.cu)
+  target_sources(espresso_walberla_cuda
+                 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_init.cu)
 endif()

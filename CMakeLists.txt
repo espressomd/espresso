@@ -93,7 +93,8 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
-option(ESPRESSO_BUILD_WITH_WALBERLA "Build with waLBerla lattice-Boltzmann support" OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA
+       "Build with waLBerla lattice-Boltzmann support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX
        "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" OFF)
@@ -594,6 +595,7 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
   cmake_minimum_required(VERSION 3.19)
+  # cmake-format: off
   include(FetchContent)
   FetchContent_Declare(
     walberla
@@ -606,8 +608,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")
     FetchContent_Populate(walberla)
   endif()
+  # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
-         "${walberla_SOURCE_DIR}")
+                       "${walberla_SOURCE_DIR}")
   set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
   set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
   set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
@@ -616,8 +619,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(WALBERLA_BUILD_DOC off CACHE BOOL "")
   set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   if(ESPRESSO_BUILD_WITH_CUDA)
-    set(WALBERLA_BUILD_WITH_CUDA "on"  CACHE BOOL "")
-     if(CMAKE_VERSION VERSION_LESS 3.25 OR NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
+    set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
+    if(CMAKE_VERSION VERSION_LESS 3.25 OR NOT ESPRESSO_CUDA_COMPILER STREQUAL
+                                          "clang")
       if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
         set(CMAKE_CUDA_ARCHITECTURES 75)
       endif()
