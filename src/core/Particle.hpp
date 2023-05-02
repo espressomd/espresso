@@ -88,7 +88,7 @@ struct ParticleProperties {
   /** particle type, used for non-bonded interactions. */
   int type = 0;
   /** determines which propagation schemes should be applied to the particle **/
-  int propagation = 0;
+  int propagation = 1;
 
 #ifdef VIRTUAL_SITES
   /** is particle virtual */
