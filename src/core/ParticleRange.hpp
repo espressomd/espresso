@@ -45,7 +45,7 @@ class ParticleRangeFiltered
 
 public:
   using base_type::base_type;
-  auto  size() const{ return std::distance(this->begin(), this->end()); } ;
+  auto size() const { return std::distance(this->begin(), this->end()); };
 };
 
 using CellParticleIterator = ParticleIterator<Cell **>;

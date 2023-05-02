@@ -205,8 +205,6 @@ void velocity_verlet_npt_step_2(const ParticleIterable &particles,
   velocity_verlet_npt_finalize_p_inst(time_step);
 }
 
-
-
 template void velocity_verlet_npt_step_1(const ParticleRange &particles,
                                          double time_step);
 template void velocity_verlet_npt_step_1(const ParticleRangeDefault &particles,
