@@ -29,6 +29,25 @@
 
 #include <cassert>
 
+template <PropagationMode criterion> struct PropagationPredicate {
+  bool operator()(Particle const &p) {
+    // return p.p.propagation == criterion;
+    return true;
+  };
+};
+
+template <PropagationMode criterion>
+class ParticleRangeFiltered
+    : public boost::iterator_range<boost::iterators::filter_iterator<
+          PropagationPredicate<criterion>, ParticleIterator<Cell **>>> {
+  using base_type = boost::iterator_range<boost::iterators::filter_iterator<
+      PropagationPredicate<criterion>, ParticleIterator<Cell **>>>;
+
+public:
+  using base_type::base_type;
+  auto size() { return std::distance(this->begin(), this->end()); };
+};
+
 using CellParticleIterator = ParticleIterator<Cell **>;
 
 /**
@@ -51,41 +70,23 @@ public:
     return assert(m_size >= 0), static_cast<base_type::size_type>(m_size);
   }
 
-  template <class Predicate> auto filter() const {
-    return boost::make_iterator_range(
-        boost::make_filter_iterator<Predicate>(begin(), end()),
-        boost::make_filter_iterator<Predicate>(end(), end()));
+  template <PropagationMode criterion>
+  ParticleRangeFiltered<criterion> filter() const {
+    return {boost::make_filter_iterator<PropagationPredicate<criterion>>(
+                begin(), end()),
+            boost::make_filter_iterator<PropagationPredicate<criterion>>(
+                end(), end())};
   }
 
 private:
   base_type::difference_type mutable m_size = -1;
 };
 
-template <PropagationMode criterion> struct PropagationPredicate {
-  bool operator()(Particle const &p) {
-    return p.p.propagation == criterion;
-    // return true;
-  };
-};
-template <class Filteredlist> int getsize(const Filteredlist &list) {
-  return std::distance(list->begin(), list->end());
-}
-
-class ParticleRangeDefault
-    : public boost::iterator_range<boost::iterators::filter_iterator<
-          PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>,
-          ParticleIterator<Cell **>>> {
-  auto size() { return getsize(this); };
-};
-typedef boost::iterator_range<boost::iterators::filter_iterator<
-    PropagationPredicate<PropagationMode::TRANS_LANGEVIN>,
-    ParticleIterator<Cell **>>>
-    ParticleRangeLangevin;
-class ParticleRangeStokesiaN
-    : public boost::iterator_range<boost::iterators::filter_iterator<
-          PropagationPredicate<PropagationMode::TRANS_STOKESIAN>,
-          ParticleIterator<Cell **>>> {
-  auto size() { return getsize(this); };
-};
+using ParticleRangeDefault =
+    ParticleRangeFiltered<PropagationMode::TRANS_SYSTEM_DEFAULT>;
+using ParticleRangeLangevin =
+    ParticleRangeFiltered<PropagationMode::TRANS_LANGEVIN>;
+using ParticleRangeStokesian =
+    ParticleRangeFiltered<PropagationMode::TRANS_STOKESIAN>;
 
 #endif

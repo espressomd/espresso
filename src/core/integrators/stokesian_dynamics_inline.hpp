@@ -29,8 +29,9 @@
 #include "stokesian_dynamics/sd_interface.hpp"
 
 template <typename ParticleIterable>
-inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
-                                                 double time_step) {
+inline void
+stokesian_dynamics_propagate_vel_pos(const ParticleIterable &particles,
+                                     double time_step) {
 
   // Compute new (translational and rotational) velocities
   propagate_vel_pos_sd(particles, comm_cart, time_step);

@@ -229,8 +229,8 @@ static bool integrator_step_1(ParticleIterable const &particles,
 static bool integrator_step_1_full(ParticleRange const &particles) {
   if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return steepest_descent_step(particles);
-  auto filtered_particles = particles.filter<
-      PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>>();
+  auto filtered_particles =
+      particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT>();
   integrator_step_1(filtered_particles, integ_switch);
   return false;
 }
@@ -267,8 +267,8 @@ static void integrator_step_2(ParticleIterable const &particles, double kT,
 }
 
 static void integrator_step_2_full(ParticleRange const &particles, double kT) {
-  auto filtered_particles = particles.filter<
-      PropagationPredicate<PropagationMode::TRANS_SYSTEM_DEFAULT>>();
+  auto filtered_particles =
+      particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT>();
   integrator_step_2(filtered_particles, kT, integ_switch);
 }
 
