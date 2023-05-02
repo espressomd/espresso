@@ -49,7 +49,6 @@ sample_test(FILE test_diffusion_coefficient.py)
 sample_test(FILE test_dpd.py)
 sample_test(FILE test_drude_bmimpf6.py SUFFIX cpu)
 sample_test(FILE test_drude_bmimpf6.py SUFFIX gpu LABELS "gpu")
-# sample_test(FILE test_ekboundaries.py LABELS "gpu") # TODO WALBERLA
 sample_test(FILE test_electrophoresis.py)
 sample_test(FILE test_espresso_logo.py)
 sample_test(FILE test_gibbs_ensemble.py)

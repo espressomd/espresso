@@ -57,8 +57,7 @@ tutorial_test(FILE test_lattice_boltzmann_sedimentation.py)
 # tutorial_test(FILE test_raspberry_electrophoresis.py)  # TODO WALBERLA:
 # simulation is too short
 tutorial_test(FILE test_active_matter.py)
-# tutorial_test(FILE test_electrokinetics.py LABELS gpu)  # TODO WALBERLA:
-# requires ekin
+tutorial_test(FILE test_electrokinetics.py)
 tutorial_test(FILE test_visualization.py)
 tutorial_test(FILE test_ferrofluid_1.py)
 tutorial_test(FILE test_ferrofluid_2.py)

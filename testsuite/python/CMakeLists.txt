@@ -264,7 +264,6 @@ python_test(FILE writevtf.py MAX_NUM_PROC 4)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 3 LABELS long
 )# TODO WALBERLA
 # python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1) # TODO WALBERLA
-# python_test(FILE ek_charged_plate.py MAX_NUM_PROC 1) # TODO WALBERLA
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
