@@ -112,7 +112,7 @@ maxset:
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
-     cmake_params: '-D ESPRESSO_TEST_NP=8 -D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
+     cmake_params: '-D ESPRESSO_TEST_NP=8'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -240,6 +240,7 @@ cuda11-maxset:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
+     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:

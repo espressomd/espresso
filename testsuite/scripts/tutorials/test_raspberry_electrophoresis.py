@@ -18,11 +18,10 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
-np.random.seed(41)
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/raspberry_electrophoresis/raspberry_electrophoresis.py",
-    box_l=20., num_iterations=30, num_steps_per_iteration=30)
+    box_l=16., num_iterations=80, num_steps_per_iteration=80)
 
 
 @skipIfMissingFeatures
