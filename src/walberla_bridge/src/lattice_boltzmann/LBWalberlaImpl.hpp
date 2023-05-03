@@ -535,13 +535,15 @@ public:
     auto const n_ghost_layers = lattice.get_ghost_layers();
     auto const blocks = lattice.get_blocks();
     auto const agrid =
-        FloatType_c(lattice.get_grid_dimensions()[static_cast<unsigned int>(
-            shear_plane_normal)]);
+        FloatType_c(lattice.get_grid_dimensions()[shear_plane_normal]);
     auto obj = CollisionModelLeesEdwards(
         m_last_applied_force_field_id, m_pdf_field_id, agrid, omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
+    auto const get_pos_offset_back = [callbacks = m_lees_edwards_callbacks]() {
+      return -1. * callbacks->get_pos_offset();
+    };
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,
@@ -561,9 +563,8 @@ public:
     m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             blocks, m_force_to_be_applied_id, m_vec_tmp_field_id,
-            n_ghost_layers, shear_direction, shear_plane_normal, [this]() {
-              return -1.0 * m_lees_edwards_callbacks->get_pos_offset();
-            });
+            n_ghost_layers, shear_direction, shear_plane_normal,
+            get_pos_offset_back);
   }
 
   void check_lebc(int shear_direction, int shear_plane_normal) const override {

@@ -54,12 +54,12 @@ using Utils::Vector3d;
 using Utils::Vector3i;
 
 namespace bdata = boost::unit_test::data;
-constexpr auto v0 = 0.064;
+auto constexpr v0 = 0.064;
 static Vector3i mpi_shape{};
 
-double u_expected(double x, double t, double nu, double v_0, double h,
-                  int k_max = 100) {
-  double u = x / h - 0.5;
+static double u_expected(double x, double t, double nu, double v_0, double h,
+                         int k_max = 100) {
+  auto u = x / h - 0.5;
   for (int k = 1; k <= k_max; k++) {
     u += 1.0 / (M_PI * k) * exp(-4 * M_PI * M_PI * nu * k * k / (h * h) * t) *
          sin(2 * M_PI / h * k * x);
@@ -92,10 +92,10 @@ BOOST_AUTO_TEST_CASE(test_transient_shear) {
   }
 }
 
-auto setup_lb_with_offset(double offset) {
+static auto setup_lb_with_offset(double offset) {
   using LBImplementation = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
-  double density = 1;
-  double viscosity = 1. / 7.;
+  auto density = 1.;
+  auto viscosity = 1. / 7.;
   auto lattice =
       std::make_shared<LatticeWalberla>(Vector3i{10, 10, 10}, mpi_shape, 1);
   auto lb = std::make_shared<LBImplementation>(lattice, viscosity, density);
@@ -107,11 +107,11 @@ auto setup_lb_with_offset(double offset) {
 }
 
 BOOST_AUTO_TEST_CASE(test_interpolation_force) {
-  const int offset = 2;
+  auto const offset = 2;
   auto lb = setup_lb_with_offset(offset);
   auto const shape = lb->get_lattice().get_grid_dimensions();
-  const int xz = shape[0] / 2;
-  const int y_max = shape[1] - 1;
+  auto const xz = shape[0] / 2;
+  auto const y_max = shape[1] - 1;
 
   auto const force_pos = Vector3d{xz + 0.5, y_max + 0.5, xz + 0.5};
   auto const force_node = Vector3i{xz, y_max, xz};
@@ -126,11 +126,11 @@ BOOST_AUTO_TEST_CASE(test_interpolation_force) {
 }
 
 BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
-  const int offset = 2;
+  auto const offset = 2;
   auto lb = setup_lb_with_offset(offset);
   auto const shape = lb->get_lattice().get_grid_dimensions();
-  const int xz = shape[0] / 2;
-  const int y_max = shape[1] - 1;
+  auto const xz = shape[0] / 2;
+  auto const y_max = shape[1] - 1;
 
   auto const source_node = Vector3i{xz, y_max, xz};
   auto const v = Vector3d{0.3, -0.2, 0.3};
@@ -144,16 +144,16 @@ BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
 }
 
 BOOST_AUTO_TEST_CASE(test_interpolation_pdf) {
-  const int offset = 2;
+  auto const offset = 2;
   auto lb = setup_lb_with_offset(offset);
   auto const shape = lb->get_lattice().get_grid_dimensions();
-  const int xz = shape[0] / 2;
-  const int y_max = shape[1] - 1;
+  auto const xz = shape[0] / 2;
+  auto const y_max = shape[1] - 1;
 
   auto const source_node = Vector3i{xz, y_max, xz};
 
   std::vector<double> source_pop(19);
-  double x = -1;
+  auto x = -1.;
   std::for_each(source_pop.begin(), source_pop.end(), [&x](auto &v) {
     v = x;
     x += .1;
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(test_interpolation_pdf) {
 
   auto const ghost_node = Vector3i{source_node[0] - offset, -1, source_node[2]};
   auto const ghost_pop = *(lb->get_node_population(ghost_node, true));
-  for (int i = 0; i < source_pop.size(); i++) {
+  for (unsigned int i = 0u; i < source_pop.size(); ++i) {
     BOOST_CHECK_EQUAL(source_pop[i], ghost_pop[i]);
   }
 }

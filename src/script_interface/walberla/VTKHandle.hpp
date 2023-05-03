@@ -62,7 +62,7 @@ private:
 
 protected:
   virtual void setup_field_instance(VariantMap const &params) = 0;
-  [[nodiscard]] virtual std::shared_ptr<Field> get_field_instance() = 0;
+  virtual std::shared_ptr<Field> get_field_instance() = 0;
   virtual std::unordered_map<std::string, int> const &get_obs_map() const = 0;
   virtual LatticeModel::units_map get_units(VariantMap const &params) const = 0;
 

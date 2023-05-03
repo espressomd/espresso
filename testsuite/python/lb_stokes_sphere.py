@@ -92,9 +92,6 @@ class Stokes:
                 tmp += k * k
             return np.sqrt(tmp)
 
-        # TODO WALBERLA: (#4381)
-        self.skipTest("boundary forces not implemented at the moment")
-
         last_force = -1000.
         dynamic_viscosity = self.lbf.viscosity * DENS
         stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)

@@ -130,8 +130,6 @@ namespace Walberla {
 
 static Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
 
-REGISTER_CALLBACK_REDUCTION(get_momentum, std::plus<>())
-
 static boost::optional<Utils::Vector3d>
 get_velocity_at_pos(Utils::Vector3d pos) {
   return lb_walberla()->get_velocity_at_pos(pos);
@@ -152,15 +150,10 @@ static Utils::VectorXd<9> get_pressure_tensor() {
 
 REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<>())
 
-std::size_t get_velocity_field_id() {
-  return lb_walberla()->get_velocity_field_id();
-}
-std::size_t get_force_field_id() { return lb_walberla()->get_force_field_id(); }
-
 } // namespace Walberla
 #endif // WALBERLA
 
-const Utils::VectorXd<9> get_pressure_tensor() {
+Utils::VectorXd<9> const get_pressure_tensor() {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
     return ::Communication::mpiCallbacks().call(
@@ -180,7 +173,7 @@ Utils::Vector3d calc_fluid_momentum() {
   throw NoLBActive();
 }
 
-const Utils::Vector3d get_interpolated_velocity(const Utils::Vector3d &pos) {
+Utils::Vector3d const get_interpolated_velocity(Utils::Vector3d const &pos) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
     auto const folded_pos = folded_position(pos, box_geo);
@@ -191,7 +184,7 @@ const Utils::Vector3d get_interpolated_velocity(const Utils::Vector3d &pos) {
   throw NoLBActive();
 }
 
-double get_interpolated_density(const Utils::Vector3d &pos) {
+double get_interpolated_density(Utils::Vector3d const &pos) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
     auto const folded_pos = folded_position(pos, box_geo);

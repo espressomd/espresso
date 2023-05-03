@@ -259,11 +259,9 @@ python_test(FILE constant_pH.py MAX_NUM_PROC 1)
 python_test(FILE constant_pH_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE canonical_ensemble.py MAX_NUM_PROC 2)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
-# python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 GPU_SLOTS 1 LABELS long) #
-# TODO WALBERLA
-python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 3 LABELS long
-)# TODO WALBERLA
-# python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1) # TODO WALBERLA
+# python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 GPU_SLOTS 1 LABELS long)
+python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 3 LABELS long)
+# python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1) # TODO
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE langevin_thermostat_stats.py MAX_NUM_PROC 1 LABELS long)
@@ -341,7 +339,7 @@ python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_slice.py MAX_NUM_PROC 2)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
-# python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO WALBERLA
+# python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO
 python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4 GPU_SLOTS 1)
@@ -356,7 +354,6 @@ python_test(FILE lb_streaming.py MAX_NUM_PROC 4 GPU_SLOTS 1)
 python_test(FILE lb_shear.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 # python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 2 GPU_SLOTS 1) # TODO
-# WALBERLA
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 GPU_SLOTS 1 LABELS
             long)
 python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 LABELS
@@ -396,16 +393,16 @@ python_test(FILE ek_interface.py MAX_NUM_PROC 2)
 python_test(FILE ek_diffusion.py MAX_NUM_PROC 1)
 python_test(FILE ek_noflux.py MAX_NUM_PROC 1)
 python_test(FILE ek_eof.py MAX_NUM_PROC 1)
-python_test(FILE ek_vtk.py MAX_NUM_PROC 4)
-if(${ESPRESSO_TEST_NP} GREATER_EQUAL 6)
-  python_test(FILE ek_vtk.py MAX_NUM_PROC 6 SUFFIX 6_cores)
-endif()
 python_test(FILE ek_fixedflux.py MAX_NUM_PROC 1)
 python_test(FILE ek_bulk_reactions.py MAX_NUM_PROC 1)
 python_test(FILE ek_indexed_reactions.py MAX_NUM_PROC 1)
 python_test(FILE ek_fixeddensity.py MAX_NUM_PROC 1)
 python_test(FILE ek_boundary.py MAX_NUM_PROC 2)
 python_test(FILE ek_slice.py MAX_NUM_PROC 2)
+python_test(FILE ek_vtk.py MAX_NUM_PROC 4)
+if(${ESPRESSO_TEST_NP} GREATER_EQUAL 6)
+  python_test(FILE ek_vtk.py MAX_NUM_PROC 6 SUFFIX 6_cores)
+endif()
 
 set(ESPRESSO_CTEST_RESOURCE_SPEC_FILE resources.json)
 configure_file(

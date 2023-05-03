@@ -34,7 +34,7 @@ enum class ActiveLB : int { NONE, WALBERLA_LB };
 extern ActiveLB lattice_switch;
 
 struct NoLBActive : public std::exception {
-  const char *what() const noexcept override { return "LB not activated"; }
+  char const *what() const noexcept override { return "LB not activated"; }
 };
 
 namespace LB {
@@ -75,7 +75,7 @@ void lebc_sanity_checks(int shear_direction, int shear_plane_normal);
 /**
  * @brief Set the LB fluid velocity for a single node.
  */
-void set_velocity(const Utils::Vector3i &ind, const Utils::Vector3d &u);
+void set_velocity(Utils::Vector3i const &ind, Utils::Vector3d const &u);
 
 /**
  * @brief Get the LB time step.
@@ -101,7 +101,7 @@ double get_lattice_speed();
  *  over all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB pressure tensor.
  */
-const Utils::VectorXd<9> get_pressure_tensor();
+Utils::VectorXd<9> const get_pressure_tensor();
 
 Utils::Vector3d calc_fluid_momentum();
 
@@ -110,30 +110,14 @@ Utils::Vector3d calc_fluid_momentum();
  * @param pos Position at which the velocity is to be calculated.
  * @retval interpolated fluid velocity.
  */
-const Utils::Vector3d get_interpolated_velocity(const Utils::Vector3d &pos);
+Utils::Vector3d const get_interpolated_velocity(Utils::Vector3d const &pos);
 
 /**
  * @brief Calculates the interpolated fluid density on the head node process.
  * @param pos Position at which the density is to be calculated.
  * @retval interpolated fluid density.
  */
-double get_interpolated_density(const Utils::Vector3d &pos);
-
-namespace Walberla {
-
-/**
- * @brief Access the ID of the velocity field
- * @return velocity field id
- */
-std::size_t get_velocity_field_id();
-
-/**
- * @brief Access the ID of the force field
- * @return force field id
- */
-std::size_t get_force_field_id();
-
-} // namespace Walberla
+double get_interpolated_density(Utils::Vector3d const &pos);
 
 } // namespace LB
 
