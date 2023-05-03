@@ -50,6 +50,7 @@ namespace utf = boost::unit_test;
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -128,24 +129,29 @@ static std::shared_ptr<LBWalberlaParams> lb_params;
 static std::shared_ptr<LatticeWalberla> lb_lattice;
 static std::shared_ptr<LBWalberlaBase> lb_fluid;
 
-void add_lb_actor(double kT) {
-  constexpr unsigned int n_ghost_layers = 1u;
-  params.kT = kT;
+static auto make_lb_actor() {
+  auto constexpr n_ghost_layers = 1u;
+  auto constexpr single_precision = false;
   lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
   lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
                                                  node_grid, n_ghost_layers);
-  lb_fluid = init_lb_walberla(lb_lattice, *lb_params, params.viscosity,
-                              params.density, params.kT, params.seed, false);
-  activate_lb_walberla(lb_fluid, lb_params);
+  lb_fluid = new_lb_walberla(lb_lattice, params.viscosity, params.density,
+                             single_precision);
+  lb_fluid->set_collision_model(params.kT, params.seed);
+  lb_fluid->ghost_communication();
 }
 
-void remove_lb_actor() { deactivate_lb_walberla(); }
+static void add_lb_actor() { activate_lb_walberla(lb_fluid, lb_params); }
 
-void set_lb_kT(double kT) { lb_fluid->set_collision_model(kT, params.seed); }
+static void remove_lb_actor() { deactivate_lb_walberla(); }
+
+static void set_lb_kT(double kT) {
+  lb_fluid->set_collision_model(kT, params.seed);
+}
 } // namespace espresso
 
 namespace LB {
-auto get_force_to_be_applied(Utils::Vector3d const &pos) {
+static auto get_force_to_be_applied(Utils::Vector3d const &pos) {
   auto const agrid = espresso::lb_params->get_agrid();
   auto const ind = Utils::Vector3i{static_cast<int>(pos[0] / agrid),
                                    static_cast<int>(pos[1] / agrid),
@@ -164,7 +170,11 @@ auto get_force_to_be_applied(Utils::Vector3d const &pos) {
 
 /** Fixture to manage the lifetime of the LB actor. */
 struct CleanupActorLB : public ParticleFactory {
-  CleanupActorLB() : ParticleFactory() { espresso::add_lb_actor(0.); }
+  CleanupActorLB() : ParticleFactory() {
+    params.kT = 0.;
+    espresso::make_lb_actor();
+    espresso::add_lb_actor();
+  }
 
   // NOLINTNEXTLINE(bugprone-exception-escape)
   ~CleanupActorLB() { espresso::remove_lb_actor(); }
@@ -554,7 +564,8 @@ bool test_lb_domain_mismatch_local() {
   ::node_grid = node_grid_reversed;
   auto const lattice = std::make_shared<LatticeWalberla>(
       Utils::Vector3i{12, 12, 12}, node_grid_original, n_ghost_layers);
-  auto const ptr = init_lb_walberla(lattice, params, 1.0, 1.0, 0.0, 0, false);
+  auto const ptr = new_lb_walberla(lattice, 1.0, 1.0, false);
+  ptr->set_collision_model(0.0, 0);
   ::node_grid = node_grid_original;
   if (world.rank() == 0) {
     try {
@@ -566,15 +577,6 @@ bool test_lb_domain_mismatch_local() {
     }
   }
   return false;
-}
-
-bool test_init_lb_walberla_nullptr_local() {
-  auto const n_ghost_layers = 0u;
-  auto const lattice =
-      std::make_shared<LatticeWalberla>(node_grid, node_grid, n_ghost_layers);
-  auto const params = LBWalberlaParams(0.5, 0.01);
-  auto const ptr = init_lb_walberla(lattice, params, 1.0, 1.0, 0.0, 0, false);
-  return ptr == nullptr;
 }
 
 BOOST_AUTO_TEST_CASE(exceptions) {
@@ -602,25 +604,6 @@ BOOST_AUTO_TEST_CASE(exceptions) {
     BOOST_CHECK_THROW(LB::get_interpolated_velocity({}), exception);
     BOOST_CHECK_THROW(LB::get_interpolated_density({}), exception);
     BOOST_CHECK_THROW(LB::calc_fluid_momentum(), exception);
-  }
-
-  // lattices without a ghost layer are not suitable for LB
-  {
-    boost::mpi::communicator world;
-    auto const is_nullptr = test_init_lb_walberla_nullptr_local();
-    auto const n_errors = check_runtime_errors_local();
-    auto const error_queue =
-        ErrorHandling::mpi_gather_runtime_errors_all(world.rank() == 0);
-    if (world.rank() == 0) {
-      BOOST_TEST_REQUIRE(is_nullptr);
-      BOOST_REQUIRE_EQUAL(n_errors, 1);
-      BOOST_REQUIRE_EQUAL(error_queue.size(), world.size());
-      auto const what_ref = std::string("during waLBerla initialization: At "
-                                        "least one ghost layer must be used");
-      for (auto const &error : error_queue) {
-        BOOST_CHECK_EQUAL(error.what(), what_ref);
-      }
-    }
   }
 
   // waLBerla and ESPResSo must agree on domain decomposition

@@ -123,6 +123,10 @@ public:
     return numeric_cast<FloatType>(t);
   }
 
+  [[nodiscard]] std::size_t stencil_size() const override {
+    return static_cast<std::size_t>(Stencil::Size);
+  }
+
 private:
   class : public boost::static_visitor<> {
   public:
@@ -256,10 +260,6 @@ protected:
 
   // lattice
   std::shared_ptr<LatticeWalberla> m_lattice;
-
-  [[nodiscard]] std::size_t stencil_size() const override {
-    return static_cast<std::size_t>(Stencil::Size);
-  }
 
   [[nodiscard]] boost::optional<CellInterval>
   get_interval(Utils::Vector3i const &lower_corner,
@@ -528,7 +528,7 @@ public:
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
     if (shear_plane_normal != 1) {
-      throw std::runtime_error(
+      throw std::domain_error(
           "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
     }
     auto const &lattice = get_lattice();

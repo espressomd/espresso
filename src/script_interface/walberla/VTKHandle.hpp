@@ -68,7 +68,7 @@ protected:
 
 private:
   [[nodiscard]] auto get_valid_observable_names() const {
-    std::vector<std::string> names;
+    std::vector<std::string> names{};
     for (auto const &kv : get_obs_map()) {
       names.emplace_back(kv.first);
     }
@@ -95,7 +95,7 @@ private:
   }
 
   [[nodiscard]] Variant serialize_obs_flag(int flag) const {
-    std::vector<Variant> observables;
+    std::vector<Variant> observables{};
     for (auto const &kv : get_obs_map()) {
       if (flag & kv.second) {
         observables.emplace_back(kv.first);

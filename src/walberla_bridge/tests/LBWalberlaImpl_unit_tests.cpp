@@ -30,6 +30,7 @@
 
 #include "tests_common_lb.hpp"
 
+#include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/VTKHandle.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
@@ -81,18 +82,26 @@ BOOST_DATA_TEST_CASE(set_viscosity, bdata::make(all_lbs()), lb_generator) {
 
 BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(params);
+  auto const pressure = Utils::VectorXd<9>{1., 0., 0., 0., 1., 0., 0., 0., 1.} *
+                        params.density / 3.;
   for (auto const &node : local_nodes_incl_ghosts(lb->get_lattice())) {
     bool const consider_ghosts = !lb->get_lattice().node_in_local_domain(node);
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, consider_ghosts)));
     if (lb->get_lattice().node_in_local_domain(node)) {
       BOOST_CHECK((*lb->get_node_force_to_be_applied(node)) == Vector3d{});
       BOOST_CHECK((*lb->get_node_last_applied_force(node)) == Vector3d{});
+      BOOST_CHECK((*lb->get_node_velocity(node)) == Vector3d{});
       BOOST_CHECK_CLOSE((*lb->get_node_density(node)), params.density, 1E-10);
+      BOOST_CHECK_LE((*lb->get_node_pressure_tensor(node) - pressure).norm(),
+                     1E-9);
     }
-    // Todo: add initial pressure tensor check
   }
 
+  boost::mpi::communicator world;
+  auto const local_pressure_tensor = lb->get_pressure_tensor();
   BOOST_CHECK(lb->get_momentum() == Vector3d{});
+  BOOST_CHECK_LE((local_pressure_tensor * world.size() - pressure).norm(),
+                 1E-9);
   BOOST_CHECK_CLOSE(lb->get_viscosity(), params.viscosity, 1E-11);
 }
 
@@ -562,6 +571,30 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
   // cannot call or activate observables that haven't been registered yet
   BOOST_CHECK_THROW(lb->write_vtk("unknown"), std::runtime_error);
   BOOST_CHECK_THROW(lb->switch_vtk("unknown", 0), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(le_sweep) {
+  auto const get_pos_offset = []() { return 0.123; };
+  auto const get_shift = []() { return 0.456; };
+  auto const make_kernel = [&](unsigned int n_ghost_layers,
+                               unsigned int shear_direction,
+                               unsigned int shear_plane_normal) {
+    using LB = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
+    using VectorField = typename LB::VectorField;
+    using Sweep = walberla::InterpolateAndShiftAtBoundary<VectorField, double>;
+    auto const sweep = std::make_shared<Sweep>(
+        nullptr, walberla::BlockDataID{}, walberla::BlockDataID{},
+        n_ghost_layers, shear_direction, shear_plane_normal, get_pos_offset,
+        get_shift);
+    BOOST_CHECK_CLOSE(sweep->get_pos_offset(), 0.123, 1e-10);
+    BOOST_CHECK_CLOSE(sweep->get_shift(), 0.456, 1e-10);
+  };
+  auto constexpr n_ghost_layers = 1u;
+  make_kernel(n_ghost_layers, 0u, 1u);
+  make_kernel(n_ghost_layers, 1u, 2u);
+  make_kernel(n_ghost_layers, 2u, 0u);
+  BOOST_CHECK_THROW(make_kernel(2u, 0u, 1u), std::domain_error);
+  BOOST_CHECK_THROW(make_kernel(0u, 0u, 1u), std::domain_error);
 }
 
 int main(int argc, char **argv) {

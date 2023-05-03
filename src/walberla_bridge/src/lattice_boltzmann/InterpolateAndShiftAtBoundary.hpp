@@ -61,8 +61,8 @@ public:
         m_get_pos_offset(std::move(get_pos_offset)),
         m_get_shift(std::move(get_shift)) {
     if (m_n_ghost_layers != 1u) {
-      throw std::runtime_error("The Lees-Edwards sweep is implemented "
-                               "for a ghost layer of thickness 1");
+      throw std::domain_error("The Lees-Edwards sweep is implemented "
+                              "for a ghost layer of thickness 1");
     }
     if (m_shear_plane_normal == 0u) {
       m_slab_min = stencil::W;
@@ -126,17 +126,17 @@ private:
       source2[dir] = cell_idx_c(static_cast<FloatType>(source2[dir]) + length);
       source2[dir] = cell_idx_c(source2[dir] % dim);
 
-      for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
-        tmp_field->get(cell, q) = field->get(source1, q) * (1 - weight) +
-                                  field->get(source2, q) * weight;
+      for (uint_t f = 0; f < FieldType::F_SIZE; ++f) {
+        tmp_field->get(cell, f) = field->get(source1, f) * (1 - weight) +
+                                  field->get(source2, f) * weight;
       }
       tmp_field->get(cell, m_shear_direction) -= prefactor * shift;
     }
 
     // swap
     for (auto const &&cell : ci) {
-      for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
-        field->get(cell, q) = tmp_field->get(cell, q);
+      for (uint_t f = 0; f < FieldType::F_SIZE; ++f) {
+        field->get(cell, f) = tmp_field->get(cell, f);
       }
     }
   }

@@ -22,9 +22,8 @@
 #include "config/config.hpp"
 
 #ifdef WALBERLA
-#include <walberla_bridge/LatticeWalberla.hpp>
+
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
-#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <memory>
 
@@ -43,21 +42,6 @@ std::shared_ptr<LBWalberlaBase> lb_walberla();
 
 /** @brief Access the waLBerla parameters */
 std::shared_ptr<LBWalberlaParams> lb_walberla_params();
-
-/** @brief Create the LBWalberla instance.
- *
- *  @param lb_lattice  LB lattice
- *  @param lb_params   LB parameters
- *  @param viscosity   Fluid viscosity
- *  @param density     Fluid density
- *  @param kT          Temperature
- *  @param seed        LB random seed
- *  @param single_precision   Use single precision
- */
-std::shared_ptr<LBWalberlaBase>
-init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
-                 LBWalberlaParams const &lb_params, double viscosity,
-                 double density, double kT, int seed, bool single_precision);
 
 void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
                       LBWalberlaParams const &lb_params, double md_time_step);

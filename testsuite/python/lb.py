@@ -152,18 +152,27 @@ class LBTest:
                 setattr(lbf, key, 0)
 
     def test_ctor_exceptions(self):
-        lattice = self.lb_lattice_class(
-            agrid=2 * self.params['agrid'], n_ghost_layers=1)
-        with self.assertRaisesRegex(ValueError, "cannot provide both 'lattice' and 'agrid'"):
-            self.lb_class(lattice=lattice, **self.params, **self.lb_params)
-        with self.assertRaisesRegex(ValueError, "density must be a strictly positive number"):
-            params = self.params.copy()
-            params['density'] = 0.
-            self.lb_class(**params, **self.lb_params)
-        with self.assertRaisesRegex(ValueError, "kT must be a positive number"):
-            params = self.params.copy()
-            params['kT'] = -1e-12
-            self.lb_class(**params, **self.lb_params)
+        def make_kwargs(**kwargs):
+            lb_kwargs = {}
+            lb_kwargs.update(self.params)
+            lb_kwargs.update(self.lb_params)
+            lb_kwargs.update(kwargs)
+            return lb_kwargs
+
+        with self.assertRaisesRegex(ValueError, "Parameter 'agrid' must be > 0"):
+            self.lb_class(**make_kwargs(agrid=0.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'agrid' must be > 0"):
+            self.lb_class(**make_kwargs(agrid=-1.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'tau' must be > 0"):
+            self.lb_class(**make_kwargs(tau=0.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'density' must be > 0"):
+            self.lb_class(**make_kwargs(density=0.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'kinematic_viscosity' must be >= 0"):
+            self.lb_class(**make_kwargs(kinematic_viscosity=-1.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'kT' must be >= 0"):
+            self.lb_class(**make_kwargs(kT=-1., seed=42))
+        with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
+            self.lb_class(**make_kwargs(kT=0., seed=-42))
 
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)

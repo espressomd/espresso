@@ -26,11 +26,17 @@
 #include "core/BoxGeometry.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
+#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
+#include "core/integrate.hpp"
+#include "core/lees_edwards/lees_edwards.hpp"
+#include "core/lees_edwards/protocols.hpp"
 
 #include <script_interface/communication.hpp>
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
+#include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
@@ -102,6 +108,73 @@ Variant LBFluid::do_call_method(std::string const &name,
   }
 
   return {};
+}
+
+void LBFluid::do_construct(VariantMap const &params) {
+  context()->parallel_try_catch([&]() {
+    auto const lb_lattice_si =
+        get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
+    auto const tau = get_value<double>(params, "tau");
+    auto const agrid = get_value<double>(lb_lattice_si->get_parameter("agrid"));
+    if (tau <= 0.) {
+      throw std::domain_error("Parameter 'tau' must be > 0");
+    }
+    m_conv_dist = 1. / agrid;
+    m_conv_visc = Utils::int_pow<1>(tau) / Utils::int_pow<2>(agrid);
+    m_conv_temp = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
+    m_conv_dens = Utils::int_pow<3>(agrid);
+    m_conv_speed = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
+    m_conv_press = Utils::int_pow<2>(tau) * Utils::int_pow<1>(agrid);
+    m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
+    m_conv_force_dens = Utils::int_pow<2>(tau) * Utils::int_pow<2>(agrid);
+    m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
+    m_is_active = false;
+    m_seed = get_value<int>(params, "seed");
+    auto const lb_lattice = lb_lattice_si->lattice();
+    auto const lb_visc =
+        m_conv_visc * get_value<double>(params, "kinematic_viscosity");
+    auto const lb_dens = m_conv_dens * get_value<double>(params, "density");
+    auto const lb_kT = m_conv_temp * get_value<double>(params, "kT");
+    auto const ext_f = m_conv_force_dens *
+                       get_value<Utils::Vector3d>(params, "ext_force_density");
+    m_is_single_precision = get_value<bool>(params, "single_precision");
+    if (m_seed < 0) {
+      throw std::domain_error("Parameter 'seed' must be >= 0");
+    }
+    if (lb_kT < 0.) {
+      throw std::domain_error("Parameter 'kT' must be >= 0");
+    }
+    if (lb_dens <= 0.) {
+      throw std::domain_error("Parameter 'density' must be > 0");
+    }
+    if (lb_visc < 0.) {
+      throw std::domain_error("Parameter 'kinematic_viscosity' must be >= 0");
+    }
+    m_lb_fluid =
+        new_lb_walberla(lb_lattice, lb_visc, lb_dens, m_is_single_precision);
+    if (auto le_protocol = LeesEdwards::get_protocol().lock()) {
+      if (lb_kT != 0.) {
+        throw std::runtime_error(
+            "Lees-Edwards LB doesn't support thermalization");
+      }
+      auto const &le_bc = ::box_geo.lees_edwards_bc();
+      auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
+          le_bc.shear_direction, le_bc.shear_plane_normal,
+          [this, le_protocol]() {
+            return get_pos_offset(get_sim_time(), *le_protocol) /
+                   m_lb_params->get_agrid();
+          },
+          [this, le_protocol]() {
+            return get_shear_velocity(get_sim_time(), *le_protocol) *
+                   (m_lb_params->get_tau() / m_lb_params->get_agrid());
+          });
+      m_lb_fluid->set_collision_model(std::move(lees_edwards_object));
+    } else {
+      m_lb_fluid->set_collision_model(lb_kT, m_seed);
+    }
+    m_lb_fluid->ghost_communication(); // synchronize ghost layers
+    m_lb_fluid->set_external_force(ext_f);
+  });
 }
 
 void LBFluid::load_checkpoint(std::string const &filename, int mode) {

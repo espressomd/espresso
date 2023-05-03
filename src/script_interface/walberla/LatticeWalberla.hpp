@@ -33,7 +33,6 @@
 
 #include <utils/Vector.hpp>
 
-#include <cassert>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -58,18 +57,20 @@ public:
   }
 
   void do_construct(VariantMap const &args) override {
-    auto const box_size = box_geo.length();
-    auto const agrid = get_value<double>(args, "agrid");
-    auto const n_ghost_layers = get_value<int>(args, "n_ghost_layers");
-    assert(agrid > 0.);
-    assert(n_ghost_layers >= 0);
-    m_agrid = agrid;
-    m_n_ghost_layers = n_ghost_layers;
+    m_agrid = get_value<double>(args, "agrid");
+    m_n_ghost_layers = get_value<int>(args, "n_ghost_layers");
 
     context()->parallel_try_catch([&]() {
-      auto const grid_dimensions = ::calc_grid_dimensions(box_size, agrid);
+      if (m_agrid <= 0.) {
+        throw std::domain_error("Parameter 'agrid' must be > 0");
+      }
+      if (m_n_ghost_layers < 0.) {
+        throw std::domain_error("Parameter 'n_ghost_layers' must be >= 0");
+      }
+      auto const box_size = ::box_geo.length();
+      auto const grid_dimensions = ::calc_grid_dimensions(box_size, m_agrid);
       m_lattice = std::make_shared<::LatticeWalberla>(
-          grid_dimensions, node_grid, static_cast<unsigned>(n_ghost_layers));
+          grid_dimensions, node_grid, static_cast<unsigned>(m_n_ghost_layers));
     });
   }
 

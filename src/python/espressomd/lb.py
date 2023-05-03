@@ -100,28 +100,11 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         return self._params
 
     def validate_params(self, params):
-        for key in ('agrid', 'tau', 'density', 'kinematic_viscosity'):
-            if key not in params or key not in self.valid_keys():
-                continue
-            utils.check_type_or_throw_except(
-                params[key], 1, float, f'{key} must be a number')
-            if params[key] <= 0.:
-                raise ValueError(f'{key} must be a strictly positive number')
-        utils.check_type_or_throw_except(
-            params['kT'], 1, float, 'kT must be a number')
-        if params['kT'] < 0.:
-            raise ValueError('kT must be a positive number')
-        if params['kT'] > 0.:
-            utils.check_type_or_throw_except(
-                params['seed'], 1, int, 'seed must be a number')
-            if params['seed'] < 0:
-                raise ValueError(f'seed must be a positive number')
-        utils.check_type_or_throw_except(
-            params['ext_force_density'], 3, float, 'ext_force_density must be 3 floats')
+        pass
 
     def valid_keys(self):
-        return {"agrid", "tau", "density", "ext_force_density", "kinematic_viscosity",
-                "lattice", "kT", "seed"}
+        return {"agrid", "tau", "density", "ext_force_density",
+                "kinematic_viscosity", "lattice", "kT", "seed"}
 
     def required_keys(self):
         return {"lattice", "density", "kinematic_viscosity", "tau"}
@@ -355,24 +338,11 @@ class LatticeWalberla(ScriptInterfaceHelper):
         if 'sip' not in kwargs:
             params = self.default_params()
             params.update(kwargs)
-            self.validate_params(params)
             super().__init__(*args, **params)
             utils.handle_errors("LatticeWalberla initialization failed")
             self._params = {k: getattr(self, k) for k in self.valid_keys()}
         else:
             super().__init__(**kwargs)
-
-    def validate_params(self, params):
-        utils.check_required_keys(self.required_keys(), params.keys())
-        utils.check_valid_keys(self.valid_keys(), params.keys())
-        utils.check_type_or_throw_except(
-            params['agrid'], 1, float, 'agrid must be a real number')
-        utils.check_type_or_throw_except(
-            params['n_ghost_layers'], 1, int, 'n_ghost_layers must be an integer')
-        if params['agrid'] <= 0.:
-            raise ValueError('agrid has to be a positive double')
-        if params['n_ghost_layers'] < 0:
-            raise ValueError('n_ghost_layers has to be a positive integer')
 
     def valid_keys(self):
         return {"agrid", "n_ghost_layers"}
@@ -615,14 +585,8 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
     def required_keys(self):
         return {"parent_sip", "index"}
 
-    def validate_params(self, params):
-        utils.check_required_keys(self.required_keys(), params.keys())
-        utils.check_type_or_throw_except(
-            params["index"], 3, int, "The index of a LB fluid node consists of three integers.")
-
     def __init__(self, *args, **kwargs):
         if "sip" not in kwargs:
-            self.validate_params(kwargs)
             super().__init__(*args, **kwargs)
             utils.handle_errors("LBFluidNode instantiation failed")
         else:

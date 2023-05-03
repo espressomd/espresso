@@ -36,9 +36,12 @@ class LBContextManager:
     Add an LB actor and remove it from the actor list at the end.
     """
 
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
     def __enter__(self):
         self.lbf = espressomd.lb.LBFluidWalberla(
-            agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
+            agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step, **self.kwargs)
         system.actors.add(self.lbf)
         system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
         return self.lbf
@@ -299,7 +302,7 @@ class LBLeesEdwards(ut.TestCase):
         err_msg = "Lees-Edwards LB only supports shear_plane_normal=\"y\""
         for shear_dir, shear_plane_normal in itertools.product("xyz", "xz"):
             if shear_dir != shear_plane_normal:
-                with self.assertRaisesRegex(Exception, err_msg):
+                with self.assertRaisesRegex(ValueError, err_msg):
                     with LEContextManager(shear_dir, shear_plane_normal, 1.):
                         system.actors.add(espressomd.lb.LBFluidWalberla(
                             agrid=1., density=1., kinematic_viscosity=1.,
@@ -311,12 +314,19 @@ class LBLeesEdwards(ut.TestCase):
             system.actors.add(lbf)
             system.actors.clear()
         # no thermalization
-        with self.assertRaisesRegex(Exception, "Lees-Edwards LB doesn't support thermalization"):
+        with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
             with LEContextManager('x', 'y', 1.):
                 system.actors.add(espressomd.lb.LBFluidWalberla(
                     agrid=1., density=1., kinematic_viscosity=1., kT=1., seed=42,
                     tau=system.time_step))
         self.assertEqual(len(system.actors), 0)
+
+        with self.assertRaisesRegex(ValueError, "Lees-Edwards sweep is implemented for a ghost layer of thickness 1"):
+            lattice = espressomd.lb.LatticeWalberla(agrid=1., n_ghost_layers=2)
+            with LEContextManager('x', 'y', 1.):
+                system.actors.add(espressomd.lb.LBFluidWalberla(
+                    lattice=lattice, density=1., kinematic_viscosity=1.,
+                    tau=system.time_step))
 
 
 if __name__ == "__main__":

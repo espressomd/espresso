@@ -25,7 +25,7 @@ import numpy as np
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
-class TestLattice(ut.TestCase):
+class Test(ut.TestCase):
 
     """
     Basic tests of the block forest.
@@ -52,13 +52,13 @@ class TestLattice(ut.TestCase):
             obj.agrid = 2.
         with self.assertRaisesRegex(RuntimeError, "Parameter 'n_ghost_layers' is read-only"):
             obj.n_ghost_layers = 2
-        with self.assertRaisesRegex(ValueError, 'The following keys have to be given as keyword arguments'):
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'n_ghost_layers' is missing"):
             LatticeWalberla(agrid=1.)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Parameter 'n_ghost_layers' must be >= 0"):
             LatticeWalberla(agrid=1., n_ghost_layers=-1)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Parameter 'agrid' must be > 0"):
             LatticeWalberla(agrid=0., n_ghost_layers=1)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Parameter 'agrid' must be > 0"):
             LatticeWalberla(agrid=-1., n_ghost_layers=1)
 
 

@@ -26,13 +26,8 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "lb_interface.hpp"
-#include "lees_edwards/lees_edwards.hpp"
-#include "lees_edwards/protocols.hpp"
 
-#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
-#include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
-#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -98,7 +93,7 @@ bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
   try {
     assert(::lattice_switch == ActiveLB::NONE);
     lb_sanity_checks(*lb_fluid, *lb_params, get_time_step());
-    auto const &lebc = box_geo.lees_edwards_bc();
+    auto const &lebc = ::box_geo.lees_edwards_bc();
     lb_fluid->check_lebc(lebc.shear_direction, lebc.shear_plane_normal);
   } catch (std::exception const &e) {
     runtimeErrorMsg() << "during waLBerla activation: " << e.what();
@@ -119,43 +114,4 @@ void deactivate_lb_walberla() {
   ::lattice_switch = ActiveLB::NONE;
 }
 
-std::shared_ptr<LBWalberlaBase>
-init_lb_walberla(std::shared_ptr<LatticeWalberla> const &lb_lattice,
-                 LBWalberlaParams const &lb_params, double viscosity,
-                 double density, double kT, int seed, bool single_precision) {
-  bool flag_failure = false;
-  std::shared_ptr<LBWalberlaBase> lb_ptr;
-  try {
-    assert(seed >= 0);
-    lb_ptr = new_lb_walberla(lb_lattice, viscosity, density, single_precision);
-    if (auto le_protocol = LeesEdwards::get_protocol().lock()) {
-      if (kT != 0.) {
-        throw std::runtime_error(
-            "Lees-Edwards LB doesn't support thermalization");
-      }
-      auto const &le_bc = box_geo.lees_edwards_bc();
-      auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
-          le_bc.shear_direction, le_bc.shear_plane_normal,
-          [le_protocol, lb_params]() {
-            return get_pos_offset(get_sim_time(), *le_protocol) /
-                   lb_params.get_agrid();
-          },
-          [le_protocol, lb_params]() {
-            return get_shear_velocity(get_sim_time(), *le_protocol) *
-                   (lb_params.get_tau() / lb_params.get_agrid());
-          });
-      lb_ptr->set_collision_model(std::move(lees_edwards_object));
-    } else {
-      lb_ptr->set_collision_model(kT, seed);
-    }
-    lb_ptr->ghost_communication(); // synchronize ghost layers
-  } catch (std::exception const &e) {
-    runtimeErrorMsg() << "during waLBerla initialization: " << e.what();
-    flag_failure = true;
-  }
-  if (boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>())) {
-    return nullptr;
-  }
-  return lb_ptr;
-}
 #endif

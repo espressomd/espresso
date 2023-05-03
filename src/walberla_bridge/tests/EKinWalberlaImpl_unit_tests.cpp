@@ -73,6 +73,14 @@ BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_eks()), ek_generator) {
   BOOST_TEST(my_right <= params.grid_dimensions, per_element());
 }
 
+BOOST_AUTO_TEST_CASE(stencil_size) {
+  auto constexpr stencil_size = std::size_t{9u};
+  auto ek = std::make_shared<walberla::EKinWalberlaImpl<stencil_size, float>>(
+      params.lattice, params.diffusion, 0., params.valency, params.ext_efield,
+      params.density, params.advection, params.friction_coupling);
+  BOOST_CHECK_EQUAL(ek->stencil_size(), stencil_size);
+}
+
 BOOST_DATA_TEST_CASE(set_diffusion, bdata::make(all_eks()), ek_generator) {
   auto ek = ek_generator(params);
   auto new_diffusion = 0.005;
@@ -532,6 +540,17 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
   // cannot call or activate observables that haven't been registered yet
   BOOST_CHECK_THROW(ek->write_vtk("unknown"), std::runtime_error);
   BOOST_CHECK_THROW(ek->switch_vtk("unknown", 0), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(ek_exceptions) {
+  auto ek = std::make_shared<walberla::EKinWalberlaImpl<>>(
+      params.lattice, params.diffusion, 0., params.valency, params.ext_efield,
+      params.density, params.advection, params.friction_coupling);
+  BOOST_CHECK_THROW(ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}),
+                    std::runtime_error);
+  // no diffusion leads to early exit
+  ek->set_diffusion(0.);
+  ek->integrate(std::size_t{}, std::size_t{}, std::size_t{});
 }
 
 int main(int argc, char **argv) {

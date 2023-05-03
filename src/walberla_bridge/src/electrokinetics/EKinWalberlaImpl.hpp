@@ -53,10 +53,6 @@ namespace walberla {
 /** @brief Class that runs and controls the EK on waLBerla. */
 template <std::size_t FluxCount = 13, typename FloatType = double>
 class EKinWalberlaImpl : public EKinWalberlaBase {
-  template <typename T> FloatType FloatType_c(T t) {
-    return numeric_cast<FloatType>(t);
-  }
-
   using ContinuityKernel =
       typename detail::KernelTrait<FloatType>::ContinuityKernel;
   using DiffusiveFluxKernel =
@@ -79,6 +75,13 @@ protected:
 
   using BoundaryModelDensity = BoundaryHandling<FloatType, Dirichlet>;
   using BoundaryModelFlux = BoundaryHandling<Vector3<FloatType>, FixedFlux>;
+
+public:
+  template <typename T> FloatType FloatType_c(T t) {
+    return numeric_cast<FloatType>(t);
+  }
+
+  [[nodiscard]] std::size_t stencil_size() const override { return FluxCount; }
 
 private:
   FloatType m_diffusion;
@@ -110,8 +113,6 @@ protected:
   // ResetFlux + external force
   // TODO: kernel for that
   // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
-
-  [[nodiscard]] std::size_t stencil_size() const override { return FluxCount; }
 
   [[nodiscard]] boost::optional<CellInterval>
   get_interval(Utils::Vector3i const &lower_corner,
@@ -351,8 +352,6 @@ public:
       kernel_advection(velocity_id);
     }
     kernel_continuity();
-    // is not necessary when reactions are done
-    //    ghost_communication();
 
     // is this the expected behavior when reactions are included?
     kernel_boundary_density();
@@ -372,8 +371,8 @@ public:
       return false;
 
     auto density_field =
-        (*bc).block->template getData<DensityField>(m_density_field_id);
-    density_field->get((*bc).cell) = FloatType_c(density);
+        bc->block->template getData<DensityField>(m_density_field_id);
+    density_field->get(bc->cell) = FloatType_c(density);
 
     return true;
   }
@@ -385,10 +384,10 @@ public:
     if (!bc)
       return {boost::none};
 
-    auto density_field =
-        (*bc).block->template getData<DensityField>(m_density_field_id);
+    auto const density_field =
+        bc->block->template getData<DensityField>(m_density_field_id);
 
-    return {double_c(density_field->get((*bc).cell))};
+    return {double_c(density_field->get(bc->cell))};
   }
 
   [[nodiscard]] std::vector<double>

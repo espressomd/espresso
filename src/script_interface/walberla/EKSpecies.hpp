@@ -27,17 +27,15 @@
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
+#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <utils/math/int_pow.hpp>
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace ScriptInterface::walberla {
 
@@ -102,33 +100,7 @@ public:
           [this]() { return m_lattice; }}});
   }
 
-  void do_construct(VariantMap const &args) override {
-    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
-    const auto single_precision =
-        get_value_or<bool>(args, "single_precision", false);
-
-    // unit conversions
-    auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
-    m_tau = get_value<double>(args, "tau");
-
-    m_conv_diffusion = m_tau / Utils::int_pow<2>(agrid);
-    m_conv_ext_efield = Utils::int_pow<2>(m_tau) / agrid;
-    m_conv_density = Utils::int_pow<3>(agrid);
-    m_conv_flux = m_tau * Utils::int_pow<2>(agrid);
-
-    auto const ek_diffusion =
-        get_value<double>(args, "diffusion") * m_conv_diffusion;
-    auto const ek_ext_efield =
-        get_value<Utils::Vector3d>(args, "ext_efield") * m_conv_ext_efield;
-    auto const ek_density = m_density =
-        get_value<double>(args, "density") * m_conv_density;
-
-    m_ekinstance = new_ek_walberla(
-        m_lattice->lattice(), ek_diffusion, get_value<double>(args, "kT"),
-        get_value<double>(args, "valency"), ek_ext_efield, ek_density,
-        get_value<bool>(args, "advection"),
-        get_value<bool>(args, "friction_coupling"), single_precision);
-  }
+  void do_construct(VariantMap const &args) override;
 
   [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> const
   get_ekinstance() const {
@@ -139,47 +111,8 @@ public:
     return m_lattice;
   }
 
-  [[nodiscard]] Variant do_call_method(std::string const &method,
-                                       VariantMap const &parameters) override {
-    if (method == "update_flux_boundary_from_shape") {
-      auto value_view =
-          get_value<std::vector<double>>(parameters, "value_view");
-      std::transform(value_view.begin(), value_view.end(), value_view.begin(),
-                     [this](double v) { return v * m_conv_flux; });
-
-      m_ekinstance->update_flux_boundary_from_shape(
-          get_value<std::vector<int>>(parameters, "raster_view"), value_view);
-      return none;
-    }
-    if (method == "update_density_boundary_from_shape") {
-      auto value_view =
-          get_value<std::vector<double>>(parameters, "value_view");
-      std::transform(value_view.begin(), value_view.end(), value_view.begin(),
-                     [this](double v) { return v * m_conv_density; });
-      m_ekinstance->update_density_boundary_from_shape(
-          get_value<std::vector<int>>(parameters, "raster_view"), value_view);
-      return none;
-    }
-    if (method == "clear_flux_boundaries") {
-      m_ekinstance->clear_flux_boundaries();
-      return none;
-    }
-    if (method == "clear_density_boundaries") {
-      m_ekinstance->clear_density_boundaries();
-      return none;
-    }
-    if (method == "save_checkpoint") {
-      auto const path = get_value<std::string>(parameters, "path");
-      auto const mode = get_value<int>(parameters, "mode");
-      save_checkpoint(path, mode);
-    }
-    if (method == "load_checkpoint") {
-      auto const path = get_value<std::string>(parameters, "path");
-      auto const mode = get_value<int>(parameters, "mode");
-      load_checkpoint(path, mode);
-    }
-    return none;
-  }
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override;
 
   [[nodiscard]] double get_conversion_factor_density() const noexcept {
     return m_conv_density;
