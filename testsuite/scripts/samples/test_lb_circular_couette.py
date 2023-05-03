@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 The ESPResSo project
+# Copyright (C) 2021-2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
