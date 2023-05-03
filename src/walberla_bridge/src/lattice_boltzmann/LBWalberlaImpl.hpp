@@ -595,7 +595,7 @@ public:
     auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
     if (is_boundary)    // is info available locally
       if (*is_boundary) // is the node a boundary
-        return get_node_velocity_at_boundary(node);
+        return get_node_velocity_at_boundary(node, consider_ghosts);
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return {};
@@ -977,8 +977,9 @@ public:
   }
 
   boost::optional<Utils::Vector3d>
-  get_node_velocity_at_boundary(Utils::Vector3i const &node) const override {
-    auto const bc = get_block_and_cell(get_lattice(), node, true);
+  get_node_velocity_at_boundary(Utils::Vector3i const &node,
+                                bool consider_ghosts = false) const override {
+    auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary->node_is_boundary(node))
       return {boost::none};
 

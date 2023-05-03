@@ -38,8 +38,6 @@ public:
 private:
   container_type m_ekcontainer;
   double m_tau{};
-
-  // TODO: this could be moved to the Scriptinterface
   std::shared_ptr<walberla::PoissonSolver> m_poissonsolver;
 
 public:
@@ -49,6 +47,7 @@ public:
 
     m_ekcontainer.emplace_back(c);
   }
+
   void remove(std::shared_ptr<EKSpecies> const &c) {
     assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), c) !=
            m_ekcontainer.end());
@@ -73,9 +72,11 @@ public:
   }
 
   [[nodiscard]] double get_tau() const noexcept { return m_tau; }
+
   void set_tau(double tau) noexcept { m_tau = tau; }
 
   void reset_charge() const { m_poissonsolver->reset_charge_field(); }
+
   void add_charge(std::size_t const id, double valency,
                   bool is_double_precision) const {
     m_poissonsolver->add_charge_to_field(id, valency, is_double_precision);

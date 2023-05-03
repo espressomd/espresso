@@ -82,14 +82,7 @@ struct EKFieldSerializer {
         }
       }
     } else if constexpr (std::is_same_v<T, DensityBoundaryType>) {
-      std::vector<Variant> vector_variants;
-      if (is_type<std::vector<double>>(variant)) {
-        for (auto const v : get_value<std::vector<double>>(variant)) {
-          vector_variants.emplace_back(v);
-        }
-      } else {
-        vector_variants = get_value<std::vector<Variant>>(variant);
-      }
+      auto const vector_variants = get_value<std::vector<Variant>>(variant);
       for (auto const &value : vector_variants) {
         if (is_none(value)) {
           values.emplace_back(boost::none);

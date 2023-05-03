@@ -51,7 +51,7 @@ struct LBTestParameters : public LatticeTestParameters {
 using LbGeneratorVector = std::vector<
     std::function<std::shared_ptr<LBWalberlaBase>(LBTestParameters const &)>>;
 
-LbGeneratorVector unthermalized_lbs() {
+inline LbGeneratorVector unthermalized_lbs() {
   using LBImplementation = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
   LbGeneratorVector lbs;
 
@@ -66,7 +66,7 @@ LbGeneratorVector unthermalized_lbs() {
   return lbs;
 }
 
-LbGeneratorVector thermalized_lbs() {
+inline LbGeneratorVector thermalized_lbs() {
   using LBImplementation = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
   LbGeneratorVector lbs;
 
@@ -81,7 +81,7 @@ LbGeneratorVector thermalized_lbs() {
   return lbs;
 }
 
-LbGeneratorVector all_lbs() {
+inline LbGeneratorVector all_lbs() {
   auto lbs = unthermalized_lbs();
   auto thermalized = thermalized_lbs();
   lbs.insert(lbs.end(), thermalized.begin(), thermalized.end());

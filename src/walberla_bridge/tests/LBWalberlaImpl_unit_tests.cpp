@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define BOOST_TEST_MODULE Walberla node setters and getters test
+#define BOOST_TEST_MODULE LB walberla node setters and getters test
 #define BOOST_TEST_DYN_LINK
 #include "config/config.hpp"
 
@@ -43,7 +43,9 @@
 #include <mpi.h>
 
 #include <functional>
-#include <type_traits>
+#include <initializer_list>
+#include <memory>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
@@ -72,7 +74,7 @@ BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
 
 BOOST_DATA_TEST_CASE(set_viscosity, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(params);
-  double new_viscosity = 2.0;
+  auto new_viscosity = 2.;
   lb->set_viscosity(new_viscosity);
   BOOST_CHECK_CLOSE(lb->get_viscosity(), new_viscosity, 1E-11);
 }
@@ -97,7 +99,7 @@ BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
 BOOST_DATA_TEST_CASE(kT_unthermalized, bdata::make(unthermalized_lbs()),
                      lb_generator) {
   auto lb = lb_generator(params);
-  BOOST_CHECK_EQUAL(lb->get_kT(), 0.0);
+  BOOST_CHECK_EQUAL(lb->get_kT(), 0.);
 }
 
 BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
@@ -130,7 +132,7 @@ BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
         BOOST_CHECK(*res == true);
       }
       {
-        auto const vel_check = lb->get_node_velocity_at_boundary(node);
+        auto const vel_check = lb->get_node_velocity_at_boundary(node, true);
         // Do we have a value
         BOOST_REQUIRE(vel_check);
         // Check the value
@@ -202,7 +204,7 @@ BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
         BOOST_CHECK(*res == true);
       }
       {
-        auto const vel_check = lb->get_node_velocity_at_boundary(node);
+        auto const vel_check = lb->get_node_velocity_at_boundary(node, true);
         // Do we have a value
         BOOST_REQUIRE(vel_check);
         // Check the value
@@ -258,7 +260,7 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
     // If the cell is in the global physical domain
     // check that only one mpi rank said the node was local
-    constexpr auto origin = Vector3i{0, 0, 0};
+    auto constexpr origin = Vector3i{0, 0, 0};
     if (n >= origin and n < params.grid_dimensions) {
       boost::mpi::communicator world;
       auto const is_local_sum =
@@ -268,12 +270,13 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   }
 }
 
-auto fold_node(Vector3i n) {
-  for (int i = 0; i < 3; i++) {
-    if (n[i] < 0)
+static auto fold_node(Vector3i n) {
+  for (unsigned int i = 0; i < 3; i++) {
+    if (n[i] < 0) {
       n[i] += params.grid_dimensions[i];
-    else if (n[i] >= params.grid_dimensions[i])
+    } else if (n[i] >= params.grid_dimensions[i]) {
       n[i] -= params.grid_dimensions[i];
+    }
   }
   return n;
 }
@@ -343,7 +346,7 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
   auto n_pos = [](Vector3i const &n) { return n + Vector3d::broadcast(.5); };
 
   auto n_dens = [](Vector3i const &node) {
-    return 1.0 + static_cast<double>(Utils::product(fold_node(node))) * 1e-6;
+    return 1. + static_cast<double>(Utils::product(fold_node(node))) * 1e-6;
   };
 
   // Assign densities
@@ -437,7 +440,7 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
             auto const check_node = Vector3i{{n[0] - x, n[1] - y, n[2] - z}};
             if (lb->get_lattice().node_in_local_halo(check_node)) {
               auto const res = lb->get_node_force_to_be_applied(check_node);
-              BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), 1E-10);
+              BOOST_CHECK_SMALL(((*res) - f / 8.).norm(), 1E-10);
             }
           }
       // Apply counter force to clear force field
@@ -516,7 +519,7 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
   for (auto const &c : corner_nodes(params.grid_dimensions)) {
     auto const res = lb->get_node_force_to_be_applied(c);
     if (res) {
-      BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), tol);
+      BOOST_CHECK_SMALL(((*res) - f / 8.).norm(), tol);
       ++count_local;
     }
   };
@@ -530,7 +533,7 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
   for (auto const &c : corner_nodes(params.grid_dimensions)) {
     auto const res = lb->get_node_last_applied_force(c);
     if (res) {
-      BOOST_CHECK_SMALL(((*res) - f / 8.0).norm(), tol);
+      BOOST_CHECK_SMALL(((*res) - f / 8.).norm(), tol);
       ++count_local;
     }
   };

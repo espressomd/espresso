@@ -200,7 +200,7 @@ class LBLeesEdwards(ut.TestCase):
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
 
-        # TODO WALBERLA
+        # TODO: re-enable this check once LB can be sheared in any direction
 #        # East and West are sheared vertically
 #        with LEContextManager('y', 'x', le_offset):
 #            stencil = {'E~': (0, 8 - le_offset),
@@ -257,7 +257,7 @@ class LBLeesEdwards(ut.TestCase):
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
 
-        # TODO WALBERLA
+        # TODO: re-enable this check once LB can be sheared in any direction
 #        # East and West are sheared vertically
 #        with LEContextManager('y', 'x', le_offset):
 #            stencil = {'E~': (1, 8 - le_offset),

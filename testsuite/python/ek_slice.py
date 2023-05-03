@@ -138,6 +138,10 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(AttributeError, "Cannot set properties of an empty 'EKSpeciesSlice' object"):
             ek_slice.density = [1., 2., 3.]
 
+        # other exceptions
+        with self.assertRaisesRegex(RuntimeError, "Unknown EK property 'unknown'"):
+            ek_species[:, :, :].call_method("get_value_shape", name="unknown")
+
     def test_iterator(self):
         ekslice_handle = self.ek_species[:, :, :]
         # arrange node indices using class methods

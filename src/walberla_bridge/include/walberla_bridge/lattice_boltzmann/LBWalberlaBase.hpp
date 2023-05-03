@@ -154,7 +154,8 @@ public:
 
   /** @brief Get node velocity boundary conditions. */
   virtual boost::optional<Utils::Vector3d>
-  get_node_velocity_at_boundary(Utils::Vector3i const &node) const = 0;
+  get_node_velocity_at_boundary(Utils::Vector3i const &node,
+                                bool consider_ghosts = false) const = 0;
 
   /** @brief Set node velocity boundary conditions. */
   virtual bool

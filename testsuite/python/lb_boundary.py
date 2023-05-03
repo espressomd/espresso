@@ -69,8 +69,10 @@ class LBBoundariesBase:
     def test_boundary_flags(self):
         slip_velocity1 = 1e-3 * np.array([1., 2., 3.])
         slip_velocity2 = 1e-3 * np.array([4., 5., 6.])
+        value_shape = tuple(self.lbf.shape) + (3,)
+        slip_velocity2_all = slip_velocity2 * np.ones(value_shape)
         self.lbf.add_boundary_from_shape(self.wall_shape1, slip_velocity1)
-        self.lbf.add_boundary_from_shape(self.wall_shape2, slip_velocity2)
+        self.lbf.add_boundary_from_shape(self.wall_shape2, slip_velocity2_all)
         self.check_boundary_flags(slip_velocity1, slip_velocity2)
 
     def test_union(self):

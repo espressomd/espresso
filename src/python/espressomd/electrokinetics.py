@@ -125,8 +125,7 @@ class EKSpecies(ScriptInterfaceHelper):
         """
         self.call_method("clear_flux_boundaries")
 
-    def add_boundary_from_shape(self, shape,
-                                value, boundary_type):
+    def add_boundary_from_shape(self, shape, value, boundary_type):
         """
         Set boundary conditions from a shape.
 
@@ -134,9 +133,14 @@ class EKSpecies(ScriptInterfaceHelper):
         ----------
         shape : :obj:`espressomd.shapes.Shape`
             Shape to rasterize.
-        value :
-        boundary_type :
+        value : (O,) or (L, M, N, O) array_like of :obj:`float`, optional
+            Boundary numerical value. If a single value of shape ``(O,)``
+            is given, it will be broadcast to all nodes inside the shape,
+            otherwise ``L, M, N`` must be equal to the EK grid dimensions.
+        boundary_type : Union[:class:`~espressomd.electrokinetics.DensityBoundary`,
+                              :class:`~espressomd.electrokinetics.FluxBoundary`] (optional)
             Type of the boundary condition.
+
         """
         if not issubclass(boundary_type, (FluxBoundary, DensityBoundary)):
             raise TypeError(
@@ -176,7 +180,9 @@ class EKSpecies(ScriptInterfaceHelper):
                 value_view=value_view)
 
     def get_nodes_in_shape(self, shape):
-        """Provides a generator for iterating over all ek nodes inside the given shape"""
+        """
+        Provide a generator for iterating over all nodes inside the given shape.
+        """
         utils.check_type_or_throw_except(
             shape, 1, Shape, "expected a espressomd.shapes.Shape")
         ek_shape = self.shape
@@ -221,8 +227,9 @@ class EKSpecies(ScriptInterfaceHelper):
 
 class FluxBoundary:
     """
-    Holds flux information for the flux boundary
+    Hold flux information for the flux boundary
     condition at a single node.
+
     """
 
     def __init__(self, flux):
@@ -233,8 +240,9 @@ class FluxBoundary:
 
 class DensityBoundary:
     """
-    Holds density information for the density boundary
+    Hold density information for the density boundary
     condition at a single node.
+
     """
 
     def __init__(self, density):
@@ -429,6 +437,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
             If value is :class:`~espressomd.EkSpecies.DensityBoundary`,
             set the node to be a boundary node with the specified density.
             If value is ``None``, the node will become a domain node.
+
         """
 
         if isinstance(value, DensityBoundary):
@@ -450,6 +459,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
             If the node is a boundary node
         ``None``
             If the node is not a boundary node
+
         """
         flux = self.call_method("get_node_flux_at_boundary")
         if flux is not None:
@@ -465,6 +475,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
             If value is :class:`~espressomd.EkSpecies.FluxBoundary`,
             set the node to be a boundary node with the specified flux.
             If value is ``None``, the node will become a domain node.
+
         """
 
         if isinstance(value, FluxBoundary):
@@ -568,6 +579,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
             If the nodes are boundary nodes
         (N, M, L) array_like of ``None``
             If the nodes are not boundary nodes
+
         """
 
         return self._getter("density_at_boundary")
@@ -581,6 +593,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
             If values are :class:`~espressomd.electrokinetics.DensityBoundary`,
             set the nodes to be boundary nodes with the specified density.
             If values are obj:`None`, the nodes will become domain nodes.
+
         """
 
         type_error_msg = "Parameter 'values' must be an array_like of DensityBoundary or None"
@@ -603,6 +616,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
             If the nodes are boundary nodes
         (N, M, L) array_like of `None``
             If the nodes are not boundary nodes
+
         """
 
         return self._getter("flux_at_boundary")
@@ -616,6 +630,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
             If values are :class:`~espressomd.lb.FluxBoundary`,
             set the nodes to be boundary nodes with the specified flux.
             If values are obj:`None`, the nodes will become domain nodes.
+
         """
 
         type_error_msg = "Parameter 'values' must be an array_like of FluxBoundary or None"

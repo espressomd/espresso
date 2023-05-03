@@ -23,6 +23,7 @@
 #include "ek_reactions.hpp"
 #include "errorhandling.hpp"
 #include "lb_interface.hpp"
+#include "lb_walberla_instance.hpp"
 
 #ifdef WALBERLA
 #include <walberla_bridge/electrokinetics/EKContainer.hpp>
@@ -74,28 +75,21 @@ void propagate() {
 
   ek_container.solve_poisson();
 
-  // TODO: find a way for a proper interface
-  const std::size_t velocity_field_id = []() -> std::size_t {
-    try {
-      return LB::Walberla::get_velocity_field_id();
-    } catch (const std::runtime_error &) {
-      return {};
-    }
-  }();
-  const std::size_t force_field_id = []() -> std::size_t {
-    try {
-      return LB::Walberla::get_force_field_id();
-    } catch (const std::runtime_error &) {
-      return {};
-    }
-  }();
+  auto velocity_field_id = std::size_t{};
+  auto force_field_id = std::size_t{};
+  try {
+    auto const lbf = ::lb_walberla();
+    velocity_field_id = lbf->get_velocity_field_id();
+    force_field_id = lbf->get_force_field_id();
+  } catch (std::runtime_error const &) {
+  }
 
   std::for_each(ek_container.begin(), ek_container.end(),
                 [velocity_field_id, force_field_id](auto const &ek) {
                   try {
                     ek->integrate(ek_container.get_potential_field_id(),
                                   velocity_field_id, force_field_id);
-                  } catch (const std::runtime_error &e) {
+                  } catch (std::runtime_error const &e) {
                     runtimeErrorMsg() << e.what();
                   }
                 });

@@ -30,8 +30,9 @@ import espressomd.detail.walberla
 
 class VelocityBounceBack:
     """
-    Holds velocity information for the velocity bounce back boundary
+    Hold velocity information for the velocity bounce back boundary
     condition at a single node.
+
     """
 
     def __init__(self, velocity):
@@ -66,6 +67,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     seed : :obj:`int`, optional
         Initial counter value (or seed) of the philox RNG.
         Required for a thermalized fluid. Must be positive.
+
     """
 
     def __getitem__(self, key):
@@ -340,8 +342,8 @@ class VTKOutput(ScriptInterfaceHelper):
 
 @script_interface_register
 class LatticeWalberla(ScriptInterfaceHelper):
-    """Interface to the Walberla lattice
-
+    """
+    Interface to a waBLerla lattice.
     """
     _so_name = "walberla::LatticeWalberla"
     _so_creation_policy = "GLOBAL"
@@ -492,6 +494,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
             otherwise ``L, M, N`` must be equal to the LB grid dimensions.
         boundary_type : Union[:class:`~espressomd.lb.VelocityBounceBack`] (optional)
             Type of the boundary condition.
+
         """
         if not issubclass(boundary_type, VelocityBounceBack):
             raise TypeError(
@@ -536,6 +539,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
             otherwise ``N`` must be identical to the ``N`` of ``nodes``.
         boundary_type : Union[:class:`~espressomd.lb.VelocityBounceBack`] (optional)
             Type of the boundary condition.
+
         """
         if not issubclass(boundary_type, VelocityBounceBack):
             raise ValueError(
@@ -683,6 +687,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
             If the node is a boundary node
         None
             If the node is not a boundary node
+
         """
 
         velocity = self.call_method("get_velocity_at_boundary")
@@ -699,6 +704,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
             If value is :class:`~espressomd.lb.VelocityBounceBack`,
             set the node to be a boundary node with the specified velocity.
             If value is ``None``, the node will become a fluid node.
+
         """
 
         if isinstance(value, VelocityBounceBack):
@@ -842,6 +848,7 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
             If the nodes are boundary nodes
         (N, M, L) array_like of ``None``
             If the nodes are not boundary nodes
+
         """
 
         return self._getter("velocity_at_boundary")
@@ -855,6 +862,7 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
             If values are :class:`~espressomd.lb.VelocityBounceBack`,
             set the nodes to be boundary nodes with the specified velocity.
             If values are ``None``, the nodes will become fluid nodes.
+
         """
 
         type_error_msg = "Parameter 'values' must be an array_like of VelocityBounceBack or None"
@@ -912,6 +920,7 @@ def edge_detection(boundary_mask, periodicity):
     -------
     (N, 3) array_like of :obj:`int`
         The indices of the boundary nodes at the interface with the fluid.
+
     """
     import scipy.signal
     import itertools
@@ -962,6 +971,7 @@ def calc_cylinder_tangential_vectors(center, agrid, offset, node_indices):
     -------
     (N, 3) array_like of :obj:`float`
         The unit vectors tangential to the surface of a cylinder.
+
     """
     velocities = []
     for ijk in node_indices:

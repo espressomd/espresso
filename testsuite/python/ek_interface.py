@@ -154,6 +154,7 @@ class EKTest:
         node = species[1, 1, 1]
         self.assertIsNone(node.density_boundary)
         self.assertIsNone(node.flux_boundary)
+        self.assertFalse(node.is_boundary)
         node.flux_boundary = espressomd.electrokinetics.FluxBoundary(
             [1., 2., 3.])
         self.assertIsInstance(
@@ -161,14 +162,18 @@ class EKTest:
             espressomd.electrokinetics.FluxBoundary)
         np.testing.assert_allclose(
             np.copy(node.flux_boundary.flux), [1., 2., 3.], atol=self.atol)
+        self.assertTrue(node.is_boundary)
         node.density_boundary = espressomd.electrokinetics.DensityBoundary(4.5)
         self.assertIsInstance(
             node.density_boundary,
             espressomd.electrokinetics.DensityBoundary)
         np.testing.assert_allclose(
             np.copy(node.density_boundary.density), 4.5, atol=self.atol)
+        self.assertTrue(node.is_boundary)
         node.density_boundary = None
+        self.assertTrue(node.is_boundary)
         node.flux_boundary = None
+        self.assertFalse(node.is_boundary)
         self.assertIsNone(node.density_boundary)
         self.assertIsNone(node.flux_boundary)
         with self.assertRaisesRegex(TypeError, "must be an instance of DensityBoundary or None"):

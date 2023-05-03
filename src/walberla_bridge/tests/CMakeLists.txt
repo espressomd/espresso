@@ -63,3 +63,8 @@ espresso_walberla_unit_test(
   NAME LBWalberlaImpl_lees_edwards_test SRC LBWalberlaImpl_lees_edwards.cpp
   DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
   Boost::mpi)
+
+espresso_walberla_unit_test(
+  NAME EKinWalberlaImpl_unit_tests SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS
+  espresso::walberla espresso::walberla::cpp_flags espresso::utils Boost::mpi
+  NUM_PROC 2)

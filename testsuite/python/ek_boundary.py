@@ -86,12 +86,13 @@ class EKBoundariesBase:
 
         # check with two shapes
         ek_species = self.make_default_ek_species()
+        value_shape = tuple(ek_species.shape) + (3,)
         ek_species.add_boundary_from_shape(
-            shape=self.wall_shape1,
-            value=flux1, boundary_type=espressomd.electrokinetics.FluxBoundary)
+            shape=self.wall_shape1, value=flux1,
+            boundary_type=espressomd.electrokinetics.FluxBoundary)
         ek_species.add_boundary_from_shape(
-            shape=self.wall_shape2,
-            value=flux2, boundary_type=espressomd.electrokinetics.FluxBoundary)
+            shape=self.wall_shape2, value=flux2 * np.ones(value_shape),
+            boundary_type=espressomd.electrokinetics.FluxBoundary)
         self.check_boundary_flags(ek_species, "flux", flux1, flux2)
 
         # check with union of two shapes
@@ -99,8 +100,8 @@ class EKBoundariesBase:
         union = espressomd.shapes.Union()
         union.add([self.wall_shape1, self.wall_shape2])
         ek_species.add_boundary_from_shape(
-            shape=union,
-            value=flux1, boundary_type=espressomd.electrokinetics.FluxBoundary)
+            shape=union, value=flux1,
+            boundary_type=espressomd.electrokinetics.FluxBoundary)
         self.check_boundary_flags(ek_species, "flux", flux1, flux1)
 
     def test_density_boundary_flags(self):
@@ -109,12 +110,13 @@ class EKBoundariesBase:
 
         # check with two shapes
         ek_species = self.make_default_ek_species()
+        value_shape = tuple(ek_species.shape) + (1,)
         ek_species.add_boundary_from_shape(
-            shape=self.wall_shape1,
-            value=density1, boundary_type=espressomd.electrokinetics.DensityBoundary)
+            shape=self.wall_shape1, value=density1,
+            boundary_type=espressomd.electrokinetics.DensityBoundary)
         ek_species.add_boundary_from_shape(
-            shape=self.wall_shape2,
-            value=density2, boundary_type=espressomd.electrokinetics.DensityBoundary)
+            shape=self.wall_shape2, value=density2 * np.ones(value_shape),
+            boundary_type=espressomd.electrokinetics.DensityBoundary)
         self.check_boundary_flags(ek_species, "density", density1, density2)
 
         # check with union of two shapes
@@ -122,8 +124,8 @@ class EKBoundariesBase:
         union = espressomd.shapes.Union()
         union.add([self.wall_shape1, self.wall_shape2])
         ek_species.add_boundary_from_shape(
-            shape=union,
-            value=density1, boundary_type=espressomd.electrokinetics.DensityBoundary)
+            shape=union, value=density1,
+            boundary_type=espressomd.electrokinetics.DensityBoundary)
         self.check_boundary_flags(ek_species, "density", density1, density1)
 
     def test_exceptions(self):

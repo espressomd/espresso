@@ -39,6 +39,7 @@ fill_3D_vector_array(std::vector<double> const &vec_flat,
       static_cast<std::size_t>(Utils::product(grid_size));
   assert(vec_flat.size() == 3u * n_grid_points or vec_flat.size() == 3u);
   std::vector<Utils::Vector3d> output_vector;
+  output_vector.reserve(3u * n_grid_points);
 
   auto const vec_begin = std::begin(vec_flat);
   auto const vec_end = std::end(vec_flat);
@@ -62,9 +63,10 @@ fill_3D_scalar_array(std::vector<double> const &vec_flat,
       static_cast<std::size_t>(Utils::product(grid_size));
   assert(vec_flat.size() == n_grid_points or vec_flat.size() == 1u);
   std::vector<double> output_vector;
+  output_vector.reserve(n_grid_points);
 
-  auto const vec_begin = std::begin(output_vector);
-  auto const vec_end = std::end(output_vector);
+  auto const vec_begin = std::begin(vec_flat);
+  auto const vec_end = std::end(vec_flat);
   if (vec_flat.size() == 1u) {
     auto const uniform_value = vec_flat[0];
     output_vector.assign(n_grid_points, uniform_value);

@@ -47,6 +47,7 @@ public:
   void set_permittivity(double permittivity) noexcept {
     m_permittivity = permittivity;
   }
+
   [[nodiscard]] double get_permittivity() const noexcept {
     return m_permittivity;
   }

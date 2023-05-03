@@ -272,6 +272,7 @@ tutorials-samples-maxset:
      make_check_samples: 'true'
      make_check_benchmarks: 'true'
      test_timeout: '1200'
+     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -297,6 +298,7 @@ tutorials-samples-default:
      make_check_samples: 'true'
      make_check_benchmarks: 'true'
      test_timeout: '1200'
+     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -352,6 +354,7 @@ tutorials-samples-no-gpu:
      make_check_benchmarks: 'true'
      test_timeout: '1200'
      hide_gpu: 'true'
+     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
