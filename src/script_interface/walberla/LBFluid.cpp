@@ -20,7 +20,7 @@
 
 #ifdef WALBERLA
 
-#include "Fluid.hpp"
+#include "LBFluid.hpp"
 #include "WalberlaCheckpoint.hpp"
 
 #include "core/BoxGeometry.hpp"
@@ -52,8 +52,8 @@
 
 namespace ScriptInterface::walberla {
 
-Variant Fluid::do_call_method(std::string const &name,
-                              VariantMap const &params) {
+Variant LBFluid::do_call_method(std::string const &name,
+                                VariantMap const &params) {
   if (name == "activate") {
     auto const fail = ::activate_lb_walberla(m_lb_fluid, m_lb_params);
     if (not fail) {
@@ -104,7 +104,7 @@ Variant Fluid::do_call_method(std::string const &name,
   return {};
 }
 
-void Fluid::load_checkpoint(std::string const &filename, int mode) {
+void LBFluid::load_checkpoint(std::string const &filename, int mode) {
   auto &lb_obj = *m_lb_fluid;
 
   auto const read_metadata = [&lb_obj](CheckpointFile &cpfile) {
@@ -164,7 +164,7 @@ void Fluid::load_checkpoint(std::string const &filename, int mode) {
                          read_data, on_success);
 }
 
-void Fluid::save_checkpoint(std::string const &filename, int mode) {
+void LBFluid::save_checkpoint(std::string const &filename, int mode) {
   auto &lb_obj = *m_lb_fluid;
 
   auto const write_metadata = [&lb_obj,
@@ -261,7 +261,7 @@ void Fluid::save_checkpoint(std::string const &filename, int mode) {
                          write_data, on_failure);
 }
 
-std::vector<Variant> Fluid::get_average_pressure_tensor() const {
+std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
   auto const local = m_lb_fluid->get_pressure_tensor() / m_conv_press;
   auto const tensor_flat = mpi_reduce_sum(context()->get_comm(), local);
   auto tensor = Utils::Matrix<double, 3, 3>{};
@@ -271,7 +271,7 @@ std::vector<Variant> Fluid::get_average_pressure_tensor() const {
                               tensor.row<2>().as_vector()};
 }
 
-Variant Fluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
+Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
   auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
   auto const result = m_lb_fluid->get_velocity_at_pos(lb_pos);
   return mpi_reduce_optional(context()->get_comm(), result) / m_conv_speed;

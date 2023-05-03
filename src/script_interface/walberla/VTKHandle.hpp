@@ -195,7 +195,7 @@ public:
   }
 };
 
-class VTKHandle : public VTKHandleBase<LBWalberlaBase> {
+class LBVTKHandle : public VTKHandleBase<LBWalberlaBase> {
   static std::unordered_map<std::string, int> const obs_map;
   std::weak_ptr<LBWalberlaBase> m_lb_fluid;
 
@@ -211,7 +211,7 @@ class VTKHandle : public VTKHandleBase<LBWalberlaBase> {
   void setup_field_instance(VariantMap const &params) override {
     if (params.count("lb_fluid")) {
       m_lb_fluid =
-          get_value<std::shared_ptr<Fluid>>(params, "lb_fluid")->lb_fluid();
+          get_value<std::shared_ptr<LBFluid>>(params, "lb_fluid")->lb_fluid();
     } else {
       m_lb_fluid = std::weak_ptr<LBWalberlaBase>{::lb_walberla()};
     }
@@ -227,12 +227,12 @@ protected:
       // object built from a checkpoint
       return get_value<LatticeModel::units_map>(params, "units");
     }
-    return get_value<std::shared_ptr<Fluid>>(params, "lb_fluid")
+    return get_value<std::shared_ptr<LBFluid>>(params, "lb_fluid")
         ->get_latice_to_md_units_conversion();
   }
 };
 
-std::unordered_map<std::string, int> const VTKHandle::obs_map = {
+std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
     {"density", static_cast<int>(OutputVTK::density)},
     {"velocity_vector", static_cast<int>(OutputVTK::velocity_vector)},
     {"pressure_tensor", static_cast<int>(OutputVTK::pressure_tensor)},

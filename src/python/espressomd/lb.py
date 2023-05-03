@@ -269,7 +269,7 @@ class VTKOutput(ScriptInterfaceHelper):
         Prefix for VTK files.
 
     """
-    _so_name = "walberla::VTKHandle"
+    _so_name = "walberla::LBVTKHandle"
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("enable", "disable", "write")
 
@@ -393,7 +393,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
     ``agrid`` is provided.
 
     """
-    _so_name = "walberla::Fluid"
+    _so_name = "walberla::LBFluid"
     _so_creation_policy = "GLOBAL"
     # TODO WALBERLA: here we cannot use _so_bind_methods without lb_vtk.py
     # failing: the walberla::FluidWalberla script interface object doesn't
@@ -609,7 +609,7 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
 
 @script_interface_register
 class LBFluidNodeWalberla(ScriptInterfaceHelper):
-    _so_name = "walberla::FluidNode"
+    _so_name = "walberla::LBFluidNode"
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):
@@ -745,7 +745,7 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
 
 @script_interface_register
 class LBFluidSliceWalberla(ScriptInterfaceHelper):
-    _so_name = "walberla::FluidSlice"
+    _so_name = "walberla::LBFluidSlice"
     _so_creation_policy = "GLOBAL"
 
     def required_keys(self):

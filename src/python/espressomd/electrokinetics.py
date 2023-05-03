@@ -256,7 +256,7 @@ if has_features("WALBERLA"):
 
 
 @script_interface_register
-class EKVTKOutput(ScriptInterfaceHelper):
+class VTKOutput(ScriptInterfaceHelper):
     """
     Create a VTK writer.
 

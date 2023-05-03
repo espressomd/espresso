@@ -214,11 +214,11 @@ VTK output
 The waLBerla library implements a globally-accessible VTK registry.
 A VTK stream can be attached to an EK species to periodically write
 one or multiple fluid field data into a single file using
-:class:`~espressomd.electrokinetics.EKVTKOutput`::
+:class:`~espressomd.electrokinetics.VTKOutput`::
 
     vtk_obs = ["density"]
     # create a VTK callback that automatically writes every 10 EK steps
-    ek_vtk = espressomd.electrokinetics.EKVTKOutput(
+    ek_vtk = espressomd.electrokinetics.VTKOutput(
         species=ek_species, identifier="ek_vtk_automatic",
         observables=vtk_obs, delta_N=10)
     self.system.integrator.run(100)
@@ -227,7 +227,7 @@ one or multiple fluid field data into a single file using
     self.system.integrator.run(10)
     ek_vtk.enable()
     # create a VTK callback that writes only when explicitly called
-    ek_vtk_on_demand = espressomd.electrokinetics.EKVTKOutput(
+    ek_vtk_on_demand = espressomd.electrokinetics.VTKOutput(
         species=ek_species, identifier="ek_vtk_now",
         observables=vtk_obs)
     ek_vtk_on_demand.write()

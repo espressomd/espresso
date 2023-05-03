@@ -22,7 +22,7 @@
 
 #ifdef WALBERLA
 
-#include "Fluid.hpp"
+#include "LBFluid.hpp"
 
 #include "LatticeIndices.hpp"
 
@@ -41,7 +41,7 @@
 
 namespace ScriptInterface::walberla {
 
-class FluidNode : public AutoParameters<FluidNode, LatticeIndices> {
+class LBFluidNode : public AutoParameters<LBFluidNode, LatticeIndices> {
   std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
   Utils::Vector3i m_index;
   Utils::Vector3i m_grid_size;
@@ -51,13 +51,14 @@ class FluidNode : public AutoParameters<FluidNode, LatticeIndices> {
   double m_conv_velocity;
 
 public:
-  FluidNode() {
+  LBFluidNode() {
     add_parameters(
         {{"_index", AutoParameter::read_only, [this]() { return m_index; }}});
   }
 
   void do_construct(VariantMap const &params) override {
-    auto const lb_sip = get_value<std::shared_ptr<Fluid>>(params, "parent_sip");
+    auto const lb_sip =
+        get_value<std::shared_ptr<LBFluid>>(params, "parent_sip");
     m_lb_fluid = lb_sip->lb_fluid().lock();
     assert(m_lb_fluid);
     auto const &lb_params = lb_sip->lb_params().lock();

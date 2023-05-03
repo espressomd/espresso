@@ -21,9 +21,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   target_sources(
     espresso_script_interface
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/FluidNode.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/FluidSlice.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/Fluid.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/LBFluidNode.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/LBFluidSlice.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/LBFluid.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpecies.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpeciesNode.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/EKSpeciesSlice.cpp)

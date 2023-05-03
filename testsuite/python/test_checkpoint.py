@@ -306,7 +306,7 @@ class CheckpointTest(ut.TestCase):
         key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
         self.assertIn(key_auto, vtk_registry.map)
         obj = vtk_registry.map[key_auto]
-        self.assertIsInstance(obj, espressomd.electrokinetics.EKVTKOutput)
+        self.assertIsInstance(obj, espressomd.electrokinetics.VTKOutput)
         self.assertEqual(obj.vtk_uid, key_auto)
         self.assertEqual(obj.delta_N, 1)
         self.assertFalse(obj.enabled)
@@ -316,7 +316,7 @@ class CheckpointTest(ut.TestCase):
         key_manual = f"vtk_out/manual_ek_{vtk_suffix}"
         self.assertIn(key_manual, vtk_registry.map)
         obj = vtk_registry.map[key_manual]
-        self.assertIsInstance(obj, espressomd.electrokinetics.EKVTKOutput)
+        self.assertIsInstance(obj, espressomd.electrokinetics.VTKOutput)
         self.assertEqual(obj.vtk_uid, key_manual)
         self.assertEqual(obj.delta_N, 0)
         self.assertEqual(set(obj.observables), {"density"})

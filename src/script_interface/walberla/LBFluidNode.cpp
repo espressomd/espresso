@@ -21,7 +21,7 @@
 
 #ifdef WALBERLA
 
-#include "FluidNode.hpp"
+#include "LBFluidNode.hpp"
 
 #include <script_interface/communication.hpp>
 
@@ -43,8 +43,8 @@ static bool is_boundary_all_reduce(boost::mpi::communicator const &comm,
                                 std::logical_or<>());
 }
 
-Variant FluidNode::do_call_method(std::string const &name,
-                                  VariantMap const &params) {
+Variant LBFluidNode::do_call_method(std::string const &name,
+                                    VariantMap const &params) {
   if (name == "set_velocity_at_boundary") {
     if (is_none(params.at("value"))) {
       m_lb_fluid->remove_node_from_boundary(m_index);

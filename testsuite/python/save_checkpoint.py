@@ -394,11 +394,11 @@ if lbf_class:
     ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
     config.recursive_unlink(vtk_root / ek_vtk_auto_id)
     config.recursive_unlink(vtk_root / ek_vtk_manual_id)
-    ek_vtk_auto = espressomd.electrokinetics.EKVTKOutput(
+    ek_vtk_auto = espressomd.electrokinetics.VTKOutput(
         species=ek_species, identifier=ek_vtk_auto_id,
         observables=('density',), delta_N=1, base_folder=str(vtk_root))
     ek_vtk_auto.disable()
-    ek_vtk_manual = espressomd.electrokinetics.EKVTKOutput(
+    ek_vtk_manual = espressomd.electrokinetics.VTKOutput(
         species=ek_species, identifier=ek_vtk_manual_id,
         observables=('density',), delta_N=0, base_folder=str(vtk_root))
     ek_vtk_manual.write()

@@ -21,7 +21,7 @@
 
 #ifdef WALBERLA
 
-#include "FluidSlice.hpp"
+#include "LBFluidSlice.hpp"
 
 #include "LatticeSlice.impl.hpp"
 
@@ -32,8 +32,8 @@
 
 namespace ScriptInterface::walberla {
 
-Variant FluidSlice::do_call_method(std::string const &name,
-                                   VariantMap const &params) {
+Variant LBFluidSlice::do_call_method(std::string const &name,
+                                     VariantMap const &params) {
   if (name == "get_slice_size") {
     return {m_slice_upper_corner - m_slice_lower_corner};
   }
