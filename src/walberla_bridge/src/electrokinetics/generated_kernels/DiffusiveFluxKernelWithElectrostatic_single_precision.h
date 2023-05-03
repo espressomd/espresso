@@ -1,7 +1,3 @@
-// kernel generated with pystencils v1.0, lbmpy v1.0,
-// lbmpy_walberla/pystencils_walberla from commit
-// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
-
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -20,6 +16,10 @@
 //! \\file DiffusiveFluxKernelWithElectrostatic_single_precision.h
 //! \\author pystencils
 //======================================================================================================================
+
+// kernel generated with pystencils v1.2, lbmpy v1.2,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
+// refs/heads/boundaries-codegen
 
 #pragma once
 #include "core/DataTypes.h"

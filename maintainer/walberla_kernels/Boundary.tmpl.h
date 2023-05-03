@@ -18,20 +18,22 @@
 //======================================================================================================================
 
 #pragma once
-#include "core/DataTypes.h"
+
+#include <core/DataTypes.h>
 
 {% if target is equalto 'cpu' -%}
-#include "field/GhostLayerField.h"
+#include <field/GhostLayerField.h>
 {%- elif target is equalto 'gpu' -%}
-#include "cuda/GPUField.h"
-#include "cuda/FieldCopy.h"
+#include <cuda/GPUField.h>
+#include <cuda/FieldCopy.h>
 {%- endif %}
-#include "domain_decomposition/BlockDataID.h"
-#include "domain_decomposition/IBlock.h"
-#include "blockforest/StructuredBlockForest.h"
-#include "field/FlagField.h"
-#include "core/debug/Debug.h"
+#include <domain_decomposition/BlockDataID.h>
+#include <domain_decomposition/IBlock.h>
+#include <blockforest/StructuredBlockForest.h>
+#include <field/FlagField.h>
+#include <core/debug/Debug.h>
 
+#include <functional>
 #include <set>
 #include <vector>
 
@@ -70,7 +72,7 @@ public:
         };
 
         IndexVectors() = default;
-        bool operator==(IndexVectors & other) { return other.cpuVectors_ == cpuVectors_; }
+        bool operator==(IndexVectors const &other) const { return other.cpuVectors_ == cpuVectors_; }
 
         {% if target == 'gpu' -%}
         ~IndexVectors() {
@@ -80,7 +82,7 @@ public:
         {% endif -%}
 
         CpuIndexVector & indexVector(Type t) { return cpuVectors_[t]; }
-        {{StructName}} * pointerCpu(Type t)  { return &(cpuVectors_[t][0]); }
+        {{StructName}} * pointerCpu(Type t)  { return cpuVectors_[t].data(); }
 
         {% if target == 'gpu' -%}
         {{StructName}} * pointerGpu(Type t)  { return gpuVectors_[t]; }
@@ -120,7 +122,7 @@ public:
         auto createIdxVector = []( IBlock * const , StructuredBlockStorage * const ) { return new IndexVectors(); };
         indexVectorID = blocks->addStructuredBlockData< IndexVectors >( createIdxVector, "IndexField_{{class_name}}");
     };
-    
+
     {{class_name}}({{kernel|generate_constructor_parameters(['indexVectorSize'])}}{{additional_data_handler.constructor_arguments}})
         : {{additional_data_handler.initialiser_list}} {{ kernel|generate_constructor_initializer_list(['indexVectorSize']) }}
     {};
@@ -221,10 +223,12 @@ public:
         }
         {%else%}
         auto flagWithGLayers = flagField->xyzSizeWithGhostLayer();
-        real_t dot = 0.0; real_t maxn = 0.0;
+        {% if single_link %}
+        {{dtype}} dot = 0.0; {{dtype}} maxn = 0.0;
         cell_idx_t calculated_idx = 0;
         cell_idx_t dx = 0; cell_idx_t dy = 0; {%if dim == 3%}  cell_idx_t dz = 0; {% endif %}
         cell_idx_t sum_x = 0; cell_idx_t sum_y = 0; {%if dim == 3%} cell_idx_t sum_z = 0; {%endif %}
+        {% endif -%}
         for( auto it = flagField->beginWithGhostLayerXYZ(); it != flagField->end(); ++it )
         {
             {% if single_link -%}
@@ -255,7 +259,7 @@ public:
             {
             {%- for dirIdx, dirVec, offset in additional_data_handler.stencil_info %}
                 dx = {{dirVec[0]}}; dy = {{dirVec[1]}}; {%if dim == 3%} dz = {{dirVec[2]}}; {% endif %}
-                dot = real_c( dx*sum_x + dy*sum_y {%if dim == 3%} + dz*sum_z {% endif %});
+                dot = numeric_cast< {{dtype}} >( dx*sum_x + dy*sum_y {%if dim == 3%} + dz*sum_z {% endif %});
                 if (dot > maxn)
                 {
                     maxn = dot;
@@ -290,8 +294,6 @@ private:
 public:
     {{kernel|generate_members(('indexVector', 'indexVectorSize'))|indent(4)}}
 };
-
-
 
 } // namespace {{namespace}}
 } // namespace walberla

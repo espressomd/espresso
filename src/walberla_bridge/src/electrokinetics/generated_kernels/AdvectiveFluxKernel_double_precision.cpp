@@ -1,7 +1,3 @@
-// kernel generated with pystencils v1.0+25.gfe5cece, lbmpy v1.0+16.g030bd5a,
-// lbmpy_walberla/pystencils_walberla from commit
-// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
-
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -22,6 +18,8 @@
 //! \\author lbmpy
 //======================================================================================================================
 
+// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: refs/heads/boundaries-codegen
+
 #include <cmath>
 
 #include "AdvectiveFluxKernel_double_precision.h"
@@ -30,8 +28,7 @@
 
 #define FUNC_PREFIX
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) || (defined WALBERLA_CXX_COMPILER_IS_CLANG)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic ignored "-Wshadow"
@@ -50,16 +47,7 @@ namespace walberla {
 namespace pystencils {
 
 namespace internal_5255e1c780a944d646f270232511968b {
-static FUNC_PREFIX void
-advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
-    double *RESTRICT const _data_j, double *RESTRICT const _data_rho,
-    double *RESTRICT const _data_u, int64_t const _size_j_0,
-    int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0,
-    int64_t const _stride_j_1, int64_t const _stride_j_2,
-    int64_t const _stride_j_3, int64_t const _stride_rho_0,
-    int64_t const _stride_rho_1, int64_t const _stride_rho_2,
-    int64_t const _stride_u_0, int64_t const _stride_u_1,
-    int64_t const _stride_u_2, int64_t const _stride_u_3) {
+static FUNC_PREFIX void advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(double *RESTRICT const _data_j, double *RESTRICT const _data_rho, double *RESTRICT const _data_u, int64_t const _size_j_0, int64_t const _size_j_1, int64_t const _size_j_2, int64_t const _stride_j_0, int64_t const _stride_j_1, int64_t const _stride_j_2, int64_t const _stride_j_3, int64_t const _stride_rho_0, int64_t const _stride_rho_1, int64_t const _stride_rho_2, int64_t const _stride_u_0, int64_t const _stride_u_1, int64_t const _stride_u_2, int64_t const _stride_u_3) {
   {
     {
       {
@@ -80,29 +68,9 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
           double *RESTRICT _data_u_21_30_11 = _stride_u_1 + _data_u_21_30;
           double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
           double *RESTRICT _data_u_21_31_11 = _stride_u_1 + _data_u_21_31;
-          double *RESTRICT _data_u_21_32 =
-              _data_u + _stride_u_2 + 2 * _stride_u_3;
+          double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
           double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
-          _data_j_20_312_10[_stride_j_0] =
-              -1.0 *
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                              0.0 < _data_u_20_31_10[_stride_u_0] &&
-                              0.0 < _data_u_20_32_10[_stride_u_0])
-                                 ? (1)
-                                 : (0)))) *
-                  _data_rho_20_10[_stride_rho_0] *
-                  _data_u_20_30_10[_stride_u_0] *
-                  _data_u_20_31_10[_stride_u_0] *
-                  _data_u_20_32_10[_stride_u_0] -
-              1.0 *
-                  ((double)(((0.0 > _data_u_21_31_11[0] &&
-                              0.0 > _data_u_21_32_11[0] &&
-                              0.0 < _data_u_21_30_11[0])
-                                 ? (1)
-                                 : (0)))) *
-                  _data_rho_21_11[0] * _data_u_21_30_11[0] *
-                  _data_u_21_31_11[0] * _data_u_21_32_11[0] +
-              _data_j_20_312_10[_stride_j_0];
+          _data_j_20_312_10[_stride_j_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[0] && 0.0 > _data_u_21_32_11[0] && 0.0 < _data_u_21_30_11[0]) ? (1) : (0)))) * _data_rho_21_11[0] * _data_u_21_30_11[0] * _data_u_21_31_11[0] * _data_u_21_32_11[0] + _data_j_20_312_10[_stride_j_0];
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
           if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
@@ -120,37 +88,11 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
             double *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
             double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
             double *RESTRICT _data_u_21_30_11 = _stride_u_1 + _data_u_21_30;
-            double *RESTRICT _data_u_21_31 =
-                _data_u + _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
             double *RESTRICT _data_u_21_31_11 = _stride_u_1 + _data_u_21_31;
-            double *RESTRICT _data_u_21_32 =
-                _data_u + _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
             double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
-            _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                -1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                    _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                1.0 *
-                    ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
-                                                       _stride_u_0] &&
-                                0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
-                                                       _stride_u_0] &&
-                                0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
-                                                       _stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                    _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                _data_j_20_312_10[_stride_j_0 * ctr_0];
+            _data_j_20_312_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * ctr_0];
           }
         }
         if (0 < _size_j_1 - 1 && 0 < _size_j_2 - 1) {
@@ -170,40 +112,9 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
           double *RESTRICT _data_u_21_30_11 = _stride_u_1 + _data_u_21_30;
           double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
           double *RESTRICT _data_u_21_31_11 = _stride_u_1 + _data_u_21_31;
-          double *RESTRICT _data_u_21_32 =
-              _data_u + _stride_u_2 + 2 * _stride_u_3;
+          double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
           double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
-          _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-              -1.0 *
-                  ((double)((
-                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                          ? (1)
-                          : (0)))) *
-                  _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                  _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-              1.0 *
-                  ((double)((
-                      (0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                       0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0] &&
-                       0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                  _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                  _stride_rho_0] *
-                  _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                   _stride_u_0] *
-                  _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                   _stride_u_0] *
-                  _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                   _stride_u_0] +
-              _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
+          _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
         }
       }
       for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
@@ -211,613 +122,238 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
           {
             if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               double *RESTRICT _data_j_20_36 = _data_j + 6 * _stride_j_3;
-              double *RESTRICT _data_j_20_36_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_36;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_31;
+              double *RESTRICT _data_j_20_36_10 = _stride_j_1 * ctr_1 + _data_j_20_36;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_10 = _stride_u_1 * ctr_1 + _data_u_21_31;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_10 = _stride_rho_1 * ctr_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_32;
+              double *RESTRICT _data_u_21_30_10 = _stride_u_1 * ctr_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_10 = _stride_u_1 * ctr_1 + _data_u_21_32;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_36_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_21_31_10[0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_21_32_10[0] &&
-                                  0.0 < _data_u_21_30_10[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_10[0] * _data_u_21_30_10[0] *
-                      _data_u_21_32_10[0] +
-                  _data_j_20_36_10[_stride_j_0];
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_36_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_21_31_10[0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_10[0] && 0.0 < _data_u_21_30_10[0]) ? (1) : (0)))) * _data_rho_21_10[0] * _data_u_21_30_10[0] * _data_u_21_32_10[0] + _data_j_20_36_10[_stride_j_0];
             }
             if (ctr_1 > 0 && 0 < _size_j_2 - 1 && 1 < _size_j_0 - 1) {
               double *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
-              double *RESTRICT _data_j_20_38_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_38;
+              double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_38_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                                  0.0 < _data_u_21_31_1m1[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0] *
-                      _data_u_21_31_1m1[_stride_u_0] *
-                      _data_u_21_32_1m1[_stride_u_0] +
-                  _data_j_20_38_10[_stride_j_0];
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_38_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0] * _data_u_21_31_1m1[_stride_u_0] * _data_u_21_32_1m1[_stride_u_0] + _data_j_20_38_10[_stride_j_0];
             }
             if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
               double *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
-              double *RESTRICT _data_j_20_310_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_310;
+              double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
-              _data_j_20_310_10[_stride_j_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                              0.0 > _data_u_20_31_10[_stride_u_0] &&
-                              0.0 < _data_u_20_32_10[_stride_u_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  ((double)(((0.0 > _data_u_21_32_1m1[0] &&
-                              0.0 < _data_u_21_30_1m1[0] &&
-                              0.0 < _data_u_21_31_1m1[0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
-                      _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
-                  _data_j_20_310_10[_stride_j_0];
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
+              _data_j_20_310_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] && 0.0 < _data_u_21_31_1m1[0]) ? (1) : (0)))) * _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] * _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] + _data_j_20_310_10[_stride_j_0];
             }
             if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               double *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
-              double *RESTRICT _data_j_20_312_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_312;
+              double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
-              _data_j_20_312_10[_stride_j_0] =
-                  -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_21_31_11[0] &&
-                                  0.0 > _data_u_21_32_11[0] &&
-                                  0.0 < _data_u_21_30_11[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_11[0] * _data_u_21_30_11[0] *
-                      _data_u_21_31_11[0] * _data_u_21_32_11[0] +
-                  _data_j_20_312_10[_stride_j_0];
+              double *RESTRICT _data_u_21_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
+              _data_j_20_312_10[_stride_j_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[0] && 0.0 > _data_u_21_32_11[0] && 0.0 < _data_u_21_30_11[0]) ? (1) : (0)))) * _data_rho_21_11[0] * _data_u_21_30_11[0] * _data_u_21_31_11[0] * _data_u_21_32_11[0] + _data_j_20_312_10[_stride_j_0];
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
             if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               double *RESTRICT _data_j_20_36 = _data_j + 6 * _stride_j_3;
-              double *RESTRICT _data_j_20_36_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_36;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_31;
+              double *RESTRICT _data_j_20_36_10 = _stride_j_1 * ctr_1 + _data_j_20_36;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_10 = _stride_u_1 * ctr_1 + _data_u_21_31;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_10 = _stride_rho_1 * ctr_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_32;
+              double *RESTRICT _data_u_21_30_10 = _stride_u_1 * ctr_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_10 = _stride_u_1 * ctr_1 + _data_u_21_32;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_36_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 -
-                                                _stride_u_0]) +
-                   1.0) *
-                      ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 < _data_u_21_30_10[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_36_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_36_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_10[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_36_10[_stride_j_0 * ctr_0];
             }
             if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_0 < _size_j_0 - 1) {
               double *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
-              double *RESTRICT _data_j_20_38_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_38;
+              double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)((
-                          (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                           0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_38_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_38_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_38_10[_stride_j_0 * ctr_0];
             }
             if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
               double *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
-              double *RESTRICT _data_j_20_310_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_310;
+              double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
-              _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                              0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                              0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((double)((
-                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 <
-                           _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_310_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
+              _data_j_20_310_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * ctr_0];
             }
             if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               double *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
-              double *RESTRICT _data_j_20_312_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_312;
+              double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
-              _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                  -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_312_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_u_21_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
+              _data_j_20_312_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * ctr_0];
             }
           }
           {
             if (ctr_1 > 0 && 0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               double *RESTRICT _data_j_20_36 = _data_j + 6 * _stride_j_3;
-              double *RESTRICT _data_j_20_36_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_36;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_31;
+              double *RESTRICT _data_j_20_36_10 = _stride_j_1 * ctr_1 + _data_j_20_36;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_10 = _stride_u_1 * ctr_1 + _data_u_21_31;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_10 = _stride_rho_1 * ctr_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_21_32;
+              double *RESTRICT _data_u_21_30_10 = _stride_u_1 * ctr_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_10 = _stride_u_1 * ctr_1 + _data_u_21_32;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  (-1.0 *
-                       fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 <
-                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0]) +
-                   1.0) *
-                      ((double)((
-                          (0.0 >
-                               _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                           0.0 <
-                               _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_21_10[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] *
-                      _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                      _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] +
-                  _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_10[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (ctr_1 > 0 && 0 < _size_j_2 - 1) {
               double *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
-              double *RESTRICT _data_j_20_310_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_310;
+              double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
-              _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((double)((
-                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((double)((
-                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                       _stride_rho_0] *
-                      _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] +
-                  _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
+              _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (0 < _size_j_2 - 1 && ctr_1 < _size_j_1 - 1) {
               double *RESTRICT _data_j_20_312 = _data_j + 12 * _stride_j_3;
-              double *RESTRICT _data_j_20_312_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_312;
+              double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
               double *RESTRICT _data_rho_20 = _data_rho;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
               double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
               double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-              double *RESTRICT _data_rho_21_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_rho_21_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
               double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-              double *RESTRICT _data_u_21_30_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
-              _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 < _data_u_20_31_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 <
-                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  1.0 *
-                      ((double)((
-                          (0.0 >
-                               _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                           0.0 >
-                               _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                           0.0 <
-                               _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] *
-                      _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                      _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                      _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] +
-                  _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_u_21_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
+              _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
             }
           }
         }
@@ -826,2689 +362,796 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
         {
           if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1 && 1 < _size_j_0 - 1) {
             double *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
-            double *RESTRICT _data_j_20_38_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
+            double *RESTRICT _data_j_20_38_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
             double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-            double *RESTRICT _data_u_21_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+            double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
             double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-            double *RESTRICT _data_rho_21_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
-            double *RESTRICT _data_u_21_31 =
-                _data_u + _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_21_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-            double *RESTRICT _data_u_21_32 =
-                _data_u + _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_21_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+            double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+            double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+            double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
             double *RESTRICT _data_u_20_30 = _data_u;
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
             double *RESTRICT _data_rho_20 = _data_rho;
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
             double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
             double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-            _data_j_20_38_10[_stride_j_0] =
-                (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                0.0 < _data_u_20_32_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                    ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                                0.0 < _data_u_21_31_1m1[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_21_1m1[_stride_rho_0] *
-                    _data_u_21_31_1m1[_stride_u_0] *
-                    _data_u_21_32_1m1[_stride_u_0] +
-                _data_j_20_38_10[_stride_j_0];
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            _data_j_20_38_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0] * _data_u_21_31_1m1[_stride_u_0] * _data_u_21_32_1m1[_stride_u_0] + _data_j_20_38_10[_stride_j_0];
           }
           if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
             double *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
-            double *RESTRICT _data_j_20_310_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
+            double *RESTRICT _data_j_20_310_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
             double *RESTRICT _data_rho_20 = _data_rho;
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
             double *RESTRICT _data_u_20_30 = _data_u;
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
             double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
             double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-            double *RESTRICT _data_rho_21_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+            double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
             double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-            double *RESTRICT _data_u_21_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
-            double *RESTRICT _data_u_21_31 =
-                _data_u + _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_21_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-            double *RESTRICT _data_u_21_32 =
-                _data_u + _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_21_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
-            _data_j_20_310_10[_stride_j_0] =
-                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                            0.0 > _data_u_20_31_10[_stride_u_0] &&
-                            0.0 < _data_u_20_32_10[_stride_u_0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                ((double)(((0.0 > _data_u_21_32_1m1[0] &&
-                            0.0 < _data_u_21_30_1m1[0] &&
-                            0.0 < _data_u_21_31_1m1[0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
-                    _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
-                _data_j_20_310_10[_stride_j_0];
+            double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+            double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+            double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+            _data_j_20_310_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] && 0.0 < _data_u_21_31_1m1[0]) ? (1) : (0)))) * _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] * _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] + _data_j_20_310_10[_stride_j_0];
           }
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
           if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1 && ctr_0 < _size_j_0 - 1) {
             double *RESTRICT _data_j_20_38 = _data_j + 8 * _stride_j_3;
-            double *RESTRICT _data_j_20_38_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
+            double *RESTRICT _data_j_20_38_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
             double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-            double *RESTRICT _data_u_21_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+            double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
             double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-            double *RESTRICT _data_rho_21_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
-            double *RESTRICT _data_u_21_31 =
-                _data_u + _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_21_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-            double *RESTRICT _data_u_21_32 =
-                _data_u + _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_21_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+            double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+            double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+            double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
             double *RESTRICT _data_u_20_30 = _data_u;
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
             double *RESTRICT _data_rho_20 = _data_rho;
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
             double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
             double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-            _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                    -1.0 *
-                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                    ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                                0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
-                    _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
-                    _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
-                _data_j_20_38_10[_stride_j_0 * ctr_0];
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            _data_j_20_38_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_38_10[_stride_j_0 * ctr_0];
           }
           if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
             double *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
-            double *RESTRICT _data_j_20_310_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
+            double *RESTRICT _data_j_20_310_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
             double *RESTRICT _data_rho_20 = _data_rho;
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
             double *RESTRICT _data_u_20_30 = _data_u;
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
             double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
             double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
             double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-            double *RESTRICT _data_rho_21_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+            double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
             double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-            double *RESTRICT _data_u_21_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
-            double *RESTRICT _data_u_21_31 =
-                _data_u + _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_21_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-            double *RESTRICT _data_u_21_32 =
-                _data_u + _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_21_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
-            _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                            0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                            0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                    _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                ((double)((
-                    (0.0 >
-                         _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                     0.0 <
-                         _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                     0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                        ? (1)
-                        : (0)))) *
-                    _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                    _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
-                _data_j_20_310_10[_stride_j_0 * ctr_0];
+            double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+            double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+            double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+            _data_j_20_310_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * ctr_0];
           }
         }
         if (_size_j_1 - 1 > 0 && 0 < _size_j_2 - 1) {
           double *RESTRICT _data_j_20_310 = _data_j + 10 * _stride_j_3;
-          double *RESTRICT _data_j_20_310_10 =
-              _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
+          double *RESTRICT _data_j_20_310_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
           double *RESTRICT _data_rho_20 = _data_rho;
-          double *RESTRICT _data_rho_20_10 =
-              _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+          double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
           double *RESTRICT _data_u_20_30 = _data_u;
-          double *RESTRICT _data_u_20_30_10 =
-              _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+          double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
           double *RESTRICT _data_u_20_31 = _data_u + _stride_u_3;
-          double *RESTRICT _data_u_20_31_10 =
-              _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+          double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
           double *RESTRICT _data_u_20_32 = _data_u + 2 * _stride_u_3;
-          double *RESTRICT _data_u_20_32_10 =
-              _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+          double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
           double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2;
-          double *RESTRICT _data_rho_21_1m1 =
-              _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+          double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
           double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2;
-          double *RESTRICT _data_u_21_30_1m1 =
-              _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+          double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
           double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 + _stride_u_3;
-          double *RESTRICT _data_u_21_31_1m1 =
-              _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-          double *RESTRICT _data_u_21_32 =
-              _data_u + _stride_u_2 + 2 * _stride_u_3;
-          double *RESTRICT _data_u_21_32_1m1 =
-              _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
-          _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-              ((double)((
-                  (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                      ? (1)
-                      : (0)))) *
-                  _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                  _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-              ((double)((
-                  (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0] &&
-                   0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0] &&
-                   0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0])
-                      ? (1)
-                      : (0)))) *
-                  _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                   _stride_rho_0] *
-                  _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                    _stride_u_0] *
-                  _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                    _stride_u_0] *
-                  _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                    _stride_u_0] +
-              _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
+          double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+          double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 + 2 * _stride_u_3;
+          double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+          _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
         }
       }
     }
     for (int64_t ctr_2 = 1; ctr_2 < _size_j_2 - 1; ctr_2 += 1) {
-      double *RESTRICT _data_j_20_31 =
-          _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
-      double *RESTRICT _data_j_20_32 =
-          _data_j + _stride_j_2 * ctr_2 + 2 * _stride_j_3;
-      double *RESTRICT _data_j_20_37 =
-          _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
-      double *RESTRICT _data_j_20_38 =
-          _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
+      double *RESTRICT _data_j_20_31 = _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
+      double *RESTRICT _data_j_20_32 = _data_j + _stride_j_2 * ctr_2 + 2 * _stride_j_3;
+      double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
+      double *RESTRICT _data_j_20_38 = _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
       double *RESTRICT _data_j_20_30 = _data_j + _stride_j_2 * ctr_2;
-      double *RESTRICT _data_j_20_33 =
-          _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
-      double *RESTRICT _data_j_20_34 =
-          _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
-      double *RESTRICT _data_j_20_35 =
-          _data_j + _stride_j_2 * ctr_2 + 5 * _stride_j_3;
-      double *RESTRICT _data_j_20_36 =
-          _data_j + _stride_j_2 * ctr_2 + 6 * _stride_j_3;
-      double *RESTRICT _data_j_20_39 =
-          _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
-      double *RESTRICT _data_j_20_310 =
-          _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
-      double *RESTRICT _data_j_20_311 =
-          _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
-      double *RESTRICT _data_j_20_312 =
-          _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
+      double *RESTRICT _data_j_20_33 = _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
+      double *RESTRICT _data_j_20_34 = _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
+      double *RESTRICT _data_j_20_35 = _data_j + _stride_j_2 * ctr_2 + 5 * _stride_j_3;
+      double *RESTRICT _data_j_20_36 = _data_j + _stride_j_2 * ctr_2 + 6 * _stride_j_3;
+      double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
+      double *RESTRICT _data_j_20_310 = _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
+      double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
+      double *RESTRICT _data_j_20_312 = _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
       {
         {
           {
             if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_34 =
-                  _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
+              double *RESTRICT _data_j_20_34 = _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
               double *RESTRICT _data_j_20_34_10 = _data_j_20_34;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_11 = _stride_u_1 + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_11 = _stride_rho_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_11 = _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_11 = _stride_u_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              _data_j_20_34_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_20_32_11[0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_31_11[0] &&
-                                  0.0 < _data_u_20_30_11[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_11[0] * _data_u_20_30_11[0] *
-                      _data_u_20_31_11[0] +
-                  _data_j_20_34_10[_stride_j_0];
+              _data_j_20_34_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] + (-1.0 * fabs(_data_u_20_32_11[0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_11[0] && 0.0 < _data_u_20_30_11[0]) ? (1) : (0)))) * _data_rho_20_11[0] * _data_u_20_30_11[0] * _data_u_20_31_11[0] + _data_j_20_34_10[_stride_j_0];
             }
             if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_311 =
-                  _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
+              double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               double *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
               double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
               double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
               double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 + _data_u_2m1_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-              _data_j_20_311_10[_stride_j_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                              0.0 > _data_u_20_32_10[_stride_u_0] &&
-                              0.0 < _data_u_20_31_10[_stride_u_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  ((double)(((0.0 > _data_u_2m1_31_11[0] &&
-                              0.0 < _data_u_2m1_30_11[0] &&
-                              0.0 < _data_u_2m1_32_11[0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
-                      _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
-                  _data_j_20_311_10[_stride_j_0];
+              _data_j_20_311_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] && 0.0 < _data_u_2m1_32_11[0]) ? (1) : (0)))) * _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] * _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] + _data_j_20_311_10[_stride_j_0];
             }
             if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_312 =
-                  _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
+              double *RESTRICT _data_j_20_312 = _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               double *RESTRICT _data_j_20_312_10 = _data_j_20_312;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
               double *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
               double *RESTRICT _data_u_21_30_11 = _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
               double *RESTRICT _data_u_21_31_11 = _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
-              _data_j_20_312_10[_stride_j_0] =
-                  -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_21_31_11[0] &&
-                                  0.0 > _data_u_21_32_11[0] &&
-                                  0.0 < _data_u_21_30_11[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_11[0] * _data_u_21_30_11[0] *
-                      _data_u_21_31_11[0] * _data_u_21_32_11[0] +
-                  _data_j_20_312_10[_stride_j_0];
+              _data_j_20_312_10[_stride_j_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[0] && 0.0 > _data_u_21_32_11[0] && 0.0 < _data_u_21_30_11[0]) ? (1) : (0)))) * _data_rho_21_11[0] * _data_u_21_30_11[0] * _data_u_21_31_11[0] * _data_u_21_32_11[0] + _data_j_20_312_10[_stride_j_0];
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
             if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_34 =
-                  _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
+              double *RESTRICT _data_j_20_34 = _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
               double *RESTRICT _data_j_20_34_10 = _data_j_20_34;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_11 = _stride_u_1 + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_11 = _stride_rho_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_11 = _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_11 = _stride_u_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              _data_j_20_34_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 -
-                                                _stride_u_0]) +
-                   1.0) *
-                      ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 < _data_u_20_30_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_34_10[_stride_j_0 * ctr_0];
+              _data_j_20_34_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_34_10[_stride_j_0 * ctr_0];
             }
             if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_311 =
-                  _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
+              double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               double *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
               double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
               double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
               double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 + _data_u_2m1_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-              _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                              0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                              0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((double)((
-                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 <
-                           _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_311_10[_stride_j_0 * ctr_0];
+              _data_j_20_311_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * ctr_0];
             }
             if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_312 =
-                  _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
+              double *RESTRICT _data_j_20_312 = _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               double *RESTRICT _data_j_20_312_10 = _data_j_20_312;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
               double *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
               double *RESTRICT _data_u_21_30_11 = _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
               double *RESTRICT _data_u_21_31_11 = _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
-              _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                  -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_312_10[_stride_j_0 * ctr_0];
+              _data_j_20_312_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * ctr_0];
             }
           }
           {
             if (ctr_2 > 0 && 0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_34 =
-                  _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
+              double *RESTRICT _data_j_20_34 = _data_j + _stride_j_2 * ctr_2 + 4 * _stride_j_3;
               double *RESTRICT _data_j_20_34_10 = _data_j_20_34;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_11 = _stride_u_1 + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_11 = _stride_rho_1 + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_11 = _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_11 = _stride_u_1 + _data_u_20_31;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  (-1.0 *
-                       fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 <
-                               _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0]) +
-                   1.0) *
-                      ((double)((
-                          (0.0 >
-                               _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                           0.0 <
-                               _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] *
-                      _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                      _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] +
-                  _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)];
+              _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (ctr_2 > 0 && 0 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_311 =
-                  _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
+              double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * ctr_2 + 11 * _stride_j_3;
               double *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
               double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
               double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
               double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 + _data_u_2m1_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-              _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((double)((
-                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((double)((
-                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                       _stride_rho_0] *
-                      _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] +
-                  _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
+              _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (0 < _size_j_1 - 1 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_312 =
-                  _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
+              double *RESTRICT _data_j_20_312 = _data_j + _stride_j_2 * ctr_2 + 12 * _stride_j_3;
               double *RESTRICT _data_j_20_312_10 = _data_j_20_312;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
               double *RESTRICT _data_rho_20_10 = _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
               double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
               double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
               double *RESTRICT _data_rho_21_11 = _stride_rho_1 + _data_rho_21;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
               double *RESTRICT _data_u_21_30_11 = _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
               double *RESTRICT _data_u_21_31_11 = _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
               double *RESTRICT _data_u_21_32_11 = _stride_u_1 + _data_u_21_32;
-              _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 < _data_u_20_31_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 <
-                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                  1.0 *
-                      ((double)((
-                          (0.0 >
-                               _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                           0.0 >
-                               _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                           0.0 <
-                               _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] *
-                      _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                      _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                      _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] +
-                  _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
+              _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
             }
           }
         }
         for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
-          double *RESTRICT _data_j_20_31_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_31;
-          double *RESTRICT _data_j_20_32_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_32;
-          double *RESTRICT _data_j_20_37_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_37;
-          double *RESTRICT _data_j_20_38_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_38;
-          double *RESTRICT _data_j_20_30_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_30;
-          double *RESTRICT _data_j_20_33_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_33;
-          double *RESTRICT _data_j_20_34_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_34;
-          double *RESTRICT _data_j_20_35_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_35;
-          double *RESTRICT _data_j_20_36_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_36;
-          double *RESTRICT _data_j_20_39_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_39;
-          double *RESTRICT _data_j_20_310_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_310;
-          double *RESTRICT _data_j_20_311_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_311;
-          double *RESTRICT _data_j_20_312_10 =
-              _stride_j_1 * ctr_1 + _data_j_20_312;
+          double *RESTRICT _data_j_20_31_10 = _stride_j_1 * ctr_1 + _data_j_20_31;
+          double *RESTRICT _data_j_20_32_10 = _stride_j_1 * ctr_1 + _data_j_20_32;
+          double *RESTRICT _data_j_20_37_10 = _stride_j_1 * ctr_1 + _data_j_20_37;
+          double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
+          double *RESTRICT _data_j_20_30_10 = _stride_j_1 * ctr_1 + _data_j_20_30;
+          double *RESTRICT _data_j_20_33_10 = _stride_j_1 * ctr_1 + _data_j_20_33;
+          double *RESTRICT _data_j_20_34_10 = _stride_j_1 * ctr_1 + _data_j_20_34;
+          double *RESTRICT _data_j_20_35_10 = _stride_j_1 * ctr_1 + _data_j_20_35;
+          double *RESTRICT _data_j_20_36_10 = _stride_j_1 * ctr_1 + _data_j_20_36;
+          double *RESTRICT _data_j_20_39_10 = _stride_j_1 * ctr_1 + _data_j_20_39;
+          double *RESTRICT _data_j_20_310_10 = _stride_j_1 * ctr_1 + _data_j_20_310;
+          double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
+          double *RESTRICT _data_j_20_312_10 = _stride_j_1 * ctr_1 + _data_j_20_312;
           {
-            double *RESTRICT _data_u_20_31 =
-                _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * ctr_1 + _data_u_20_31;
-            double *RESTRICT _data_u_20_32 =
-                _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * ctr_1 + _data_u_20_32;
+            double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+            double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
             double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * ctr_1 + _data_rho_20;
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
             double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * ctr_1 + _data_u_20_30;
-            _data_j_20_30_10[_stride_j_0] =
-                (-1.0 * fabs(_data_u_20_31_10[0]) + 1.0) *
-                    (-1.0 * fabs(_data_u_20_32_10[0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 < _data_u_20_30_10[0]) ? (1) : (0)))) *
-                    _data_rho_20_10[0] * _data_u_20_30_10[0] +
-                (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
-                    (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0]) ? (1)
-                                                                     : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] +
-                _data_j_20_30_10[_stride_j_0];
-            double *RESTRICT _data_u_20_32_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_32;
-            double *RESTRICT _data_rho_20_1m1 =
-                _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_20;
-            double *RESTRICT _data_u_20_30_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_30;
-            double *RESTRICT _data_u_20_31_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_31;
-            _data_j_20_33_10[_stride_j_0] =
-                (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                0.0 > _data_u_20_31_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] +
-                (-1.0 * fabs(_data_u_20_32_1m1[0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 < _data_u_20_30_1m1[0] &&
-                                0.0 < _data_u_20_31_1m1[0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_1m1[0] * _data_u_20_30_1m1[0] *
-                    _data_u_20_31_1m1[0] +
-                _data_j_20_33_10[_stride_j_0];
-            double *RESTRICT _data_u_20_32_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_32;
-            double *RESTRICT _data_rho_20_11 =
-                _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_20;
-            double *RESTRICT _data_u_20_30_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_30;
-            double *RESTRICT _data_u_20_31_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_31;
-            _data_j_20_34_10[_stride_j_0] =
-                (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                0.0 < _data_u_20_31_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] +
-                (-1.0 * fabs(_data_u_20_32_11[0]) + 1.0) *
-                    ((double)((
-                        (0.0 > _data_u_20_31_11[0] && 0.0 < _data_u_20_30_11[0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_11[0] * _data_u_20_30_11[0] *
-                    _data_u_20_31_11[0] +
-                _data_j_20_34_10[_stride_j_0];
-            double *RESTRICT _data_u_2m1_31 =
-                _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_2m1_31_10 =
-                _stride_u_1 * ctr_1 + _data_u_2m1_31;
-            double *RESTRICT _data_rho_2m1 =
-                _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-            double *RESTRICT _data_rho_2m1_10 =
-                _stride_rho_1 * ctr_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_30 =
-                _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-            double *RESTRICT _data_u_2m1_30_10 =
-                _stride_u_1 * ctr_1 + _data_u_2m1_30;
-            double *RESTRICT _data_u_2m1_32 =
-                _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_2m1_32_10 =
-                _stride_u_1 * ctr_1 + _data_u_2m1_32;
-            _data_j_20_35_10[_stride_j_0] =
-                (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                0.0 > _data_u_20_32_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                (-1.0 * fabs(_data_u_2m1_31_10[0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 < _data_u_2m1_30_10[0] &&
-                                0.0 < _data_u_2m1_32_10[0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_2m1_10[0] * _data_u_2m1_30_10[0] *
-                    _data_u_2m1_32_10[0] +
-                _data_j_20_35_10[_stride_j_0];
-            double *RESTRICT _data_u_21_31 =
-                _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_21_31_10 =
-                _stride_u_1 * ctr_1 + _data_u_21_31;
-            double *RESTRICT _data_rho_21 =
-                _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
-            double *RESTRICT _data_rho_21_10 =
-                _stride_rho_1 * ctr_1 + _data_rho_21;
-            double *RESTRICT _data_u_21_30 =
-                _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
-            double *RESTRICT _data_u_21_30_10 =
-                _stride_u_1 * ctr_1 + _data_u_21_30;
-            double *RESTRICT _data_u_21_32 =
-                _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_21_32_10 =
-                _stride_u_1 * ctr_1 + _data_u_21_32;
-            _data_j_20_36_10[_stride_j_0] =
-                (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                0.0 < _data_u_20_32_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                (-1.0 * fabs(_data_u_21_31_10[0]) + 1.0) *
-                    ((double)((
-                        (0.0 > _data_u_21_32_10[0] && 0.0 < _data_u_21_30_10[0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_21_10[0] * _data_u_21_30_10[0] *
-                    _data_u_21_32_10[0] +
-                _data_j_20_36_10[_stride_j_0];
-            double *RESTRICT _data_rho_2m1_1m1 =
-                _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_30_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
-            double *RESTRICT _data_u_2m1_31_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
-            double *RESTRICT _data_u_2m1_32_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
-            _data_j_20_39_10[_stride_j_0] =
-                -1.0 *
-                    ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
-                                0.0 < _data_u_2m1_31_1m1[0] &&
-                                0.0 < _data_u_2m1_32_1m1[0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                    _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
-                1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                0.0 > _data_u_20_32_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                _data_j_20_39_10[_stride_j_0];
-            double *RESTRICT _data_rho_21_1m1 =
-                _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
-            double *RESTRICT _data_u_21_30_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
-            double *RESTRICT _data_u_21_31_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
-            double *RESTRICT _data_u_21_32_1m1 =
-                _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
-            _data_j_20_310_10[_stride_j_0] =
-                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                            0.0 > _data_u_20_31_10[_stride_u_0] &&
-                            0.0 < _data_u_20_32_10[_stride_u_0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                ((double)(((0.0 > _data_u_21_32_1m1[0] &&
-                            0.0 < _data_u_21_30_1m1[0] &&
-                            0.0 < _data_u_21_31_1m1[0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
-                    _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
-                _data_j_20_310_10[_stride_j_0];
-            double *RESTRICT _data_rho_2m1_11 =
-                _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_30_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
-            double *RESTRICT _data_u_2m1_31_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
-            double *RESTRICT _data_u_2m1_32_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
-            _data_j_20_311_10[_stride_j_0] =
-                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                            0.0 > _data_u_20_32_10[_stride_u_0] &&
-                            0.0 < _data_u_20_31_10[_stride_u_0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                ((double)(((0.0 > _data_u_2m1_31_11[0] &&
-                            0.0 < _data_u_2m1_30_11[0] &&
-                            0.0 < _data_u_2m1_32_11[0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
-                    _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
-                _data_j_20_311_10[_stride_j_0];
-            double *RESTRICT _data_rho_21_11 =
-                _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
-            double *RESTRICT _data_u_21_30_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
-            double *RESTRICT _data_u_21_31_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
-            double *RESTRICT _data_u_21_32_11 =
-                _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
-            _data_j_20_312_10[_stride_j_0] =
-                -1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                0.0 < _data_u_20_31_10[_stride_u_0] &&
-                                0.0 < _data_u_20_32_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] -
-                1.0 *
-                    ((double)(((0.0 > _data_u_21_31_11[0] &&
-                                0.0 > _data_u_21_32_11[0] &&
-                                0.0 < _data_u_21_30_11[0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_21_11[0] * _data_u_21_30_11[0] *
-                    _data_u_21_31_11[0] * _data_u_21_32_11[0] +
-                _data_j_20_312_10[_stride_j_0];
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+            _data_j_20_30_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_31_10[0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_10[0]) ? (1) : (0)))) * _data_rho_20_10[0] * _data_u_20_30_10[0] + (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] + _data_j_20_30_10[_stride_j_0];
+            double *RESTRICT _data_u_20_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_32;
+            double *RESTRICT _data_rho_20_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_20;
+            double *RESTRICT _data_u_20_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_30;
+            double *RESTRICT _data_u_20_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_31;
+            _data_j_20_33_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] + (-1.0 * fabs(_data_u_20_32_1m1[0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_1m1[0] && 0.0 < _data_u_20_31_1m1[0]) ? (1) : (0)))) * _data_rho_20_1m1[0] * _data_u_20_30_1m1[0] * _data_u_20_31_1m1[0] + _data_j_20_33_10[_stride_j_0];
+            double *RESTRICT _data_u_20_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_32;
+            double *RESTRICT _data_rho_20_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_20;
+            double *RESTRICT _data_u_20_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_30;
+            double *RESTRICT _data_u_20_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_20_31;
+            _data_j_20_34_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] + (-1.0 * fabs(_data_u_20_32_11[0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_11[0] && 0.0 < _data_u_20_30_11[0]) ? (1) : (0)))) * _data_rho_20_11[0] * _data_u_20_30_11[0] * _data_u_20_31_11[0] + _data_j_20_34_10[_stride_j_0];
+            double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_2m1_31_10 = _stride_u_1 * ctr_1 + _data_u_2m1_31;
+            double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+            double *RESTRICT _data_rho_2m1_10 = _stride_rho_1 * ctr_1 + _data_rho_2m1;
+            double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+            double *RESTRICT _data_u_2m1_30_10 = _stride_u_1 * ctr_1 + _data_u_2m1_30;
+            double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_2m1_32_10 = _stride_u_1 * ctr_1 + _data_u_2m1_32;
+            _data_j_20_35_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_31_10[0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_30_10[0] && 0.0 < _data_u_2m1_32_10[0]) ? (1) : (0)))) * _data_rho_2m1_10[0] * _data_u_2m1_30_10[0] * _data_u_2m1_32_10[0] + _data_j_20_35_10[_stride_j_0];
+            double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_21_31_10 = _stride_u_1 * ctr_1 + _data_u_21_31;
+            double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+            double *RESTRICT _data_rho_21_10 = _stride_rho_1 * ctr_1 + _data_rho_21;
+            double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+            double *RESTRICT _data_u_21_30_10 = _stride_u_1 * ctr_1 + _data_u_21_30;
+            double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_21_32_10 = _stride_u_1 * ctr_1 + _data_u_21_32;
+            _data_j_20_36_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_21_31_10[0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_10[0] && 0.0 < _data_u_21_30_10[0]) ? (1) : (0)))) * _data_rho_21_10[0] * _data_u_21_30_10[0] * _data_u_21_32_10[0] + _data_j_20_36_10[_stride_j_0];
+            double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
+            double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
+            double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
+            double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
+            _data_j_20_39_10[_stride_j_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[0] && 0.0 < _data_u_2m1_31_1m1[0] && 0.0 < _data_u_2m1_32_1m1[0]) ? (1) : (0)))) * _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] * _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + _data_j_20_39_10[_stride_j_0];
+            double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
+            double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
+            double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
+            double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
+            _data_j_20_310_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] && 0.0 < _data_u_21_31_1m1[0]) ? (1) : (0)))) * _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] * _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] + _data_j_20_310_10[_stride_j_0];
+            double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+            double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
+            double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
+            double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
+            _data_j_20_311_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] && 0.0 < _data_u_2m1_32_11[0]) ? (1) : (0)))) * _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] * _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] + _data_j_20_311_10[_stride_j_0];
+            double *RESTRICT _data_rho_21_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_21;
+            double *RESTRICT _data_u_21_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_30;
+            double *RESTRICT _data_u_21_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_31;
+            double *RESTRICT _data_u_21_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_21_32;
+            _data_j_20_312_10[_stride_j_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[0] && 0.0 > _data_u_21_32_11[0] && 0.0 < _data_u_21_30_11[0]) ? (1) : (0)))) * _data_rho_21_11[0] * _data_u_21_30_11[0] * _data_u_21_31_11[0] * _data_u_21_32_11[0] + _data_j_20_312_10[_stride_j_0];
             {
-              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 &&
-                  ctr_2 < _size_j_2 - 1) {
-                double *RESTRICT _data_j_20_31 =
-                    _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
-                double *RESTRICT _data_j_20_31_10 =
-                    _stride_j_1 * ctr_1 + _data_j_20_31;
+              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
+                double *RESTRICT _data_j_20_31 = _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
+                double *RESTRICT _data_j_20_31_10 = _stride_j_1 * ctr_1 + _data_j_20_31;
                 double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-                double *RESTRICT _data_u_20_30_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_30;
-                double *RESTRICT _data_u_20_32 =
-                    _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-                double *RESTRICT _data_u_20_32_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_32;
-                double *RESTRICT _data_rho_20 =
-                    _data_rho + _stride_rho_2 * ctr_2;
-                double *RESTRICT _data_rho_20_10 =
-                    _stride_rho_1 * ctr_1 + _data_rho_20;
-                double *RESTRICT _data_u_20_31 =
-                    _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-                double *RESTRICT _data_u_20_31_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_31;
-                double *RESTRICT _data_u_20_30_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_30;
-                double *RESTRICT _data_u_20_32_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_32;
-                double *RESTRICT _data_rho_20_1m1 =
-                    _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_20;
-                double *RESTRICT _data_u_20_31_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_31;
-                _data_j_20_31_10[_stride_j_0] =
-                    (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                        (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
-                        -1.0 *
-                        ((double)(((0.0 > _data_u_20_31_10[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_20_10[_stride_rho_0] *
-                        _data_u_20_31_10[_stride_u_0] +
-                    (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0) *
-                        (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0) *
-                        -1.0 *
-                        ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_20_1m1[_stride_rho_0] *
-                        _data_u_20_31_1m1[_stride_u_0] +
-                    _data_j_20_31_10[_stride_j_0];
+                double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+                double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+                double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+                double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
+                double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+                double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+                double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+                double *RESTRICT _data_u_20_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_30;
+                double *RESTRICT _data_u_20_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_32;
+                double *RESTRICT _data_rho_20_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_20;
+                double *RESTRICT _data_u_20_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_20_31;
+                _data_j_20_31_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] + (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0] * _data_u_20_31_1m1[_stride_u_0] + _data_j_20_31_10[_stride_j_0];
               }
-              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 &&
-                  ctr_1 < _size_j_1 - 1) {
-                double *RESTRICT _data_j_20_32 =
-                    _data_j + _stride_j_2 * ctr_2 + 2 * _stride_j_3;
-                double *RESTRICT _data_j_20_32_10 =
-                    _stride_j_1 * ctr_1 + _data_j_20_32;
-                double *RESTRICT _data_u_2m1_30 =
-                    _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-                double *RESTRICT _data_u_2m1_30_10 =
-                    _stride_u_1 * ctr_1 + _data_u_2m1_30;
-                double *RESTRICT _data_u_2m1_31 =
-                    _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-                double *RESTRICT _data_u_2m1_31_10 =
-                    _stride_u_1 * ctr_1 + _data_u_2m1_31;
-                double *RESTRICT _data_rho_2m1 =
-                    _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-                double *RESTRICT _data_rho_2m1_10 =
-                    _stride_rho_1 * ctr_1 + _data_rho_2m1;
-                double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                  _stride_u_2 * ctr_2 -
-                                                  _stride_u_2 + 2 * _stride_u_3;
-                double *RESTRICT _data_u_2m1_32_10 =
-                    _stride_u_1 * ctr_1 + _data_u_2m1_32;
+              if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1 && ctr_1 < _size_j_1 - 1) {
+                double *RESTRICT _data_j_20_32 = _data_j + _stride_j_2 * ctr_2 + 2 * _stride_j_3;
+                double *RESTRICT _data_j_20_32_10 = _stride_j_1 * ctr_1 + _data_j_20_32;
+                double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+                double *RESTRICT _data_u_2m1_30_10 = _stride_u_1 * ctr_1 + _data_u_2m1_30;
+                double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+                double *RESTRICT _data_u_2m1_31_10 = _stride_u_1 * ctr_1 + _data_u_2m1_31;
+                double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+                double *RESTRICT _data_rho_2m1_10 = _stride_rho_1 * ctr_1 + _data_rho_2m1;
+                double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+                double *RESTRICT _data_u_2m1_32_10 = _stride_u_1 * ctr_1 + _data_u_2m1_32;
                 double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-                double *RESTRICT _data_u_20_30_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_30;
-                double *RESTRICT _data_u_20_31 =
-                    _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-                double *RESTRICT _data_u_20_31_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_31;
-                double *RESTRICT _data_rho_20 =
-                    _data_rho + _stride_rho_2 * ctr_2;
-                double *RESTRICT _data_rho_20_10 =
-                    _stride_rho_1 * ctr_1 + _data_rho_20;
-                double *RESTRICT _data_u_20_32 =
-                    _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-                double *RESTRICT _data_u_20_32_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_32;
-                _data_j_20_32_10[_stride_j_0] =
-                    (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                        (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
-                        -1.0 *
-                        ((double)(((0.0 > _data_u_20_32_10[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_20_10[_stride_rho_0] *
-                        _data_u_20_32_10[_stride_u_0] +
-                    (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0) *
-                        (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0) *
-                        -1.0 *
-                        ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_2m1_10[_stride_rho_0] *
-                        _data_u_2m1_32_10[_stride_u_0] +
-                    _data_j_20_32_10[_stride_j_0];
+                double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+                double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+                double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+                double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
+                double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+                double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+                double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+                _data_j_20_32_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0] * _data_u_2m1_32_10[_stride_u_0] + _data_j_20_32_10[_stride_j_0];
               }
               if (ctr_1 > 0 && ctr_2 > 0 && 1 < _size_j_0 - 1) {
-                double *RESTRICT _data_j_20_37 =
-                    _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
-                double *RESTRICT _data_j_20_37_10 =
-                    _stride_j_1 * ctr_1 + _data_j_20_37;
+                double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
+                double *RESTRICT _data_j_20_37_10 = _stride_j_1 * ctr_1 + _data_j_20_37;
                 double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-                double *RESTRICT _data_u_20_30_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_30;
-                double *RESTRICT _data_rho_20 =
-                    _data_rho + _stride_rho_2 * ctr_2;
-                double *RESTRICT _data_rho_20_10 =
-                    _stride_rho_1 * ctr_1 + _data_rho_20;
-                double *RESTRICT _data_u_20_31 =
-                    _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-                double *RESTRICT _data_u_20_31_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_31;
-                double *RESTRICT _data_u_20_32 =
-                    _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-                double *RESTRICT _data_u_20_32_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_32;
-                double *RESTRICT _data_u_2m1_30 =
-                    _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-                double *RESTRICT _data_u_2m1_30_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
-                double *RESTRICT _data_rho_2m1 =
-                    _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-                double *RESTRICT _data_rho_2m1_1m1 =
-                    _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
-                double *RESTRICT _data_u_2m1_31 =
-                    _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-                double *RESTRICT _data_u_2m1_31_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
-                double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                  _stride_u_2 * ctr_2 -
-                                                  _stride_u_2 + 2 * _stride_u_3;
-                double *RESTRICT _data_u_2m1_32_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
-                _data_j_20_37_10[_stride_j_0] =
-                    (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                        ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                    0.0 > _data_u_20_32_10[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_20_10[_stride_rho_0] *
-                        _data_u_20_31_10[_stride_u_0] *
-                        _data_u_20_32_10[_stride_u_0] +
-                    (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) *
-                        -1.0 *
-                        ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                                    0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_2m1_1m1[_stride_rho_0] *
-                        _data_u_2m1_31_1m1[_stride_u_0] *
-                        _data_u_2m1_32_1m1[_stride_u_0] +
-                    _data_j_20_37_10[_stride_j_0];
+                double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+                double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
+                double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+                double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+                double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+                double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+                double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+                double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+                double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
+                double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+                double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
+                double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+                double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
+                double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+                double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
+                _data_j_20_37_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0] * _data_u_2m1_31_1m1[_stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0] + _data_j_20_37_10[_stride_j_0];
               }
               if (ctr_1 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
-                double *RESTRICT _data_j_20_38 =
-                    _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
-                double *RESTRICT _data_j_20_38_10 =
-                    _stride_j_1 * ctr_1 + _data_j_20_38;
-                double *RESTRICT _data_u_21_30 =
-                    _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
-                double *RESTRICT _data_u_21_30_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
-                double *RESTRICT _data_rho_21 =
-                    _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
-                double *RESTRICT _data_rho_21_1m1 =
-                    _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
-                double *RESTRICT _data_u_21_31 =
-                    _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
-                double *RESTRICT _data_u_21_31_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
-                double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 +
-                                                 _stride_u_2 + 2 * _stride_u_3;
-                double *RESTRICT _data_u_21_32_1m1 =
-                    _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
+                double *RESTRICT _data_j_20_38 = _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
+                double *RESTRICT _data_j_20_38_10 = _stride_j_1 * ctr_1 + _data_j_20_38;
+                double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+                double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_30;
+                double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+                double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_21;
+                double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+                double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_31;
+                double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+                double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_21_32;
                 double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-                double *RESTRICT _data_u_20_30_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_30;
-                double *RESTRICT _data_rho_20 =
-                    _data_rho + _stride_rho_2 * ctr_2;
-                double *RESTRICT _data_rho_20_10 =
-                    _stride_rho_1 * ctr_1 + _data_rho_20;
-                double *RESTRICT _data_u_20_31 =
-                    _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-                double *RESTRICT _data_u_20_31_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_31;
-                double *RESTRICT _data_u_20_32 =
-                    _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-                double *RESTRICT _data_u_20_32_10 =
-                    _stride_u_1 * ctr_1 + _data_u_20_32;
-                _data_j_20_38_10[_stride_j_0] =
-                    (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                        ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                    0.0 < _data_u_20_32_10[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_20_10[_stride_rho_0] *
-                        _data_u_20_31_10[_stride_u_0] *
-                        _data_u_20_32_10[_stride_u_0] +
-                    (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                        ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                                    0.0 < _data_u_21_31_1m1[_stride_u_0])
-                                       ? (1)
-                                       : (0)))) *
-                        _data_rho_21_1m1[_stride_rho_0] *
-                        _data_u_21_31_1m1[_stride_u_0] *
-                        _data_u_21_32_1m1[_stride_u_0] +
-                    _data_j_20_38_10[_stride_j_0];
+                double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+                double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
+                double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+                double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+                double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+                double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+                double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+                _data_j_20_38_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0] * _data_u_21_31_1m1[_stride_u_0] * _data_u_21_32_1m1[_stride_u_0] + _data_j_20_38_10[_stride_j_0];
               }
             }
             for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-              _data_j_20_30_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0 -
-                                                _stride_u_0]) +
-                   1.0) *
-                      (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0 -
-                                                    _stride_u_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 <
-                           _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] +
-                  _data_j_20_30_10[_stride_j_0 * ctr_0];
-              _data_j_20_31_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_31_10[_stride_j_0 * ctr_0];
-              _data_j_20_32_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_10[_stride_rho_0 * ctr_0] *
-                      _data_u_2m1_32_10[_stride_u_0 * ctr_0] +
-                  _data_j_20_32_10[_stride_j_0 * ctr_0];
-              _data_j_20_33_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0] &&
-                                  0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_33_10[_stride_j_0 * ctr_0];
-              _data_j_20_34_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 -
-                                                _stride_u_0]) +
-                   1.0) *
-                      ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 < _data_u_20_30_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_34_10[_stride_j_0 * ctr_0];
-              _data_j_20_35_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_35_10[_stride_j_0 * ctr_0];
-              _data_j_20_36_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 -
-                                                _stride_u_0]) +
-                   1.0) *
-                      ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 < _data_u_21_30_10[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_36_10[_stride_j_0 * ctr_0];
-              _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                           0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_37_10[_stride_j_0 * ctr_0];
-              _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)((
-                          (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                           0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_38_10[_stride_j_0 * ctr_0];
-              _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                  -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  _data_j_20_39_10[_stride_j_0 * ctr_0];
-              _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                              0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                              0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((double)((
-                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 <
-                           _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_310_10[_stride_j_0 * ctr_0];
-              _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                              0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                              0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((double)((
-                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 <
-                           _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_311_10[_stride_j_0 * ctr_0];
-              _data_j_20_312_10[_stride_j_0 * ctr_0] =
-                  -1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                  0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_312_10[_stride_j_0 * ctr_0];
+              _data_j_20_30_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_20_30_10[_stride_u_0 * ctr_0 - _stride_u_0] + (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] + _data_j_20_30_10[_stride_j_0 * ctr_0];
+              _data_j_20_31_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0 * ctr_0] * _data_u_20_31_1m1[_stride_u_0 * ctr_0] + _data_j_20_31_10[_stride_j_0 * ctr_0];
+              _data_j_20_32_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0 * ctr_0] * _data_u_2m1_32_10[_stride_u_0 * ctr_0] + _data_j_20_32_10[_stride_j_0 * ctr_0];
+              _data_j_20_33_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_33_10[_stride_j_0 * ctr_0];
+              _data_j_20_34_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_20_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_20_31_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_34_10[_stride_j_0 * ctr_0];
+              _data_j_20_35_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_35_10[_stride_j_0 * ctr_0];
+              _data_j_20_36_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_10[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_10[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_10[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_36_10[_stride_j_0 * ctr_0];
+              _data_j_20_37_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_37_10[_stride_j_0 * ctr_0];
+              _data_j_20_38_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_38_10[_stride_j_0 * ctr_0];
+              _data_j_20_39_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + _data_j_20_39_10[_stride_j_0 * ctr_0];
+              _data_j_20_310_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * ctr_0];
+              _data_j_20_311_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * ctr_0];
+              _data_j_20_312_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * ctr_0];
             }
-            _data_j_20_30_10[_stride_j_0 * (_size_j_0 - 1)] =
-                (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0]) +
-                 1.0) *
-                    (-1.0 *
-                         fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0]) +
-                     1.0) *
-                    -1.0 *
-                    ((double)((
-                        (0.0 < _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] +
-                (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                 1.0) *
-                    (-1.0 *
-                         fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                     1.0) *
-                    -1.0 *
-                    ((double)((
-                        (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] +
-                _data_j_20_30_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)] =
-                (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                 1.0) *
-                    ((double)((
-                        (0.0 >
-                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
-                (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0]) +
-                 1.0) *
-                    -1.0 *
-                    ((double)((
-                        (0.0 < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                         0.0 < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                     _stride_rho_0] *
-                    _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] *
-                    _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] +
-                _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)] =
-                (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                 1.0) *
-                    -1.0 *
-                    ((double)((
-                        (0.0 >
-                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
-                (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0]) +
-                 1.0) *
-                    ((double)((
-                        (0.0 > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                         0.0 < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] *
-                    _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] *
-                    _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] +
-                _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)] =
-                (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                 1.0) *
-                    ((double)((
-                        (0.0 >
-                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0]) +
-                 1.0) *
-                    -1.0 *
-                    ((double)((
-                        (0.0 < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                         0.0 < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_2m1_10[_stride_rho_0 * (_size_j_0 - 1) -
-                                     _stride_rho_0] *
-                    _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] *
-                    _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] +
-                _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)] =
-                (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                 1.0) *
-                    -1.0 *
-                    ((double)((
-                        (0.0 >
-                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                              _stride_u_0]) +
-                 1.0) *
-                    ((double)((
-                        (0.0 > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                         0.0 < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_21_10[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] *
-                    _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] *
-                    _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] +
-                _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-                -1.0 *
-                    ((double)((
-                        (0.0 <
-                             _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                         0.0 <
-                             _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                         0.0 <
-                             _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                      _stride_rho_0] *
-                    _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                    _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] *
-                    _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                       _stride_u_0] -
-                1.0 *
-                    ((double)((
-                        (0.0 >
-                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 >
-                             _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-                ((double)((
-                    (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                        ? (1)
-                        : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                ((double)((
-                    (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                     0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                     0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0])
-                        ? (1)
-                        : (0)))) *
-                    _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                     _stride_rho_0] *
-                    _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] *
-                    _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] *
-                    _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] +
-                _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-                ((double)((
-                    (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                     0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                        ? (1)
-                        : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                ((double)((
-                    (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                     0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0] &&
-                     0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                             _stride_u_0])
-                        ? (1)
-                        : (0)))) *
-                    _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                     _stride_rho_0] *
-                    _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] *
-                    _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] *
-                    _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                      _stride_u_0] +
-                _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
-            _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] =
-                -1.0 *
-                    ((double)((
-                        (0.0 >
-                             _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 <
-                             _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                         0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                    _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                    _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] -
-                1.0 *
-                    ((double)((
-                        (0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                         0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                         0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                            ? (1)
-                            : (0)))) *
-                    _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] *
-                    _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] *
-                    _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] *
-                    _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] +
-                _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
-            {}
+            _data_j_20_30_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] + _data_j_20_30_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_20_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_20_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_20_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_34_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_21_31_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_10[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_36_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
+            _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] - 1.0 * ((double)(((0.0 > _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 > _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_312_10[_stride_j_0 * (_size_j_0 - 1)];
+            {
+            }
           }
         }
         {
           {
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 &&
-                ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_31 =
-                  _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
-              double *RESTRICT _data_j_20_31_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_31;
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
+              double *RESTRICT _data_j_20_31 = _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
+              double *RESTRICT _data_j_20_31_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_31;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
-              double *RESTRICT _data_rho_20_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_20;
-              double *RESTRICT _data_u_20_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
-              _data_j_20_31_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_31_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_1m1[_stride_rho_0] *
-                      _data_u_20_31_1m1[_stride_u_0] +
-                  _data_j_20_31_10[_stride_j_0];
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
+              double *RESTRICT _data_rho_20_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
+              _data_j_20_31_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] + (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0] * _data_u_20_31_1m1[_stride_u_0] + _data_j_20_31_10[_stride_j_0];
             }
             if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_33 =
-                  _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
-              double *RESTRICT _data_j_20_33_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_33;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_j_20_33 = _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
+              double *RESTRICT _data_j_20_33_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_33;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
-              double *RESTRICT _data_rho_20_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_20;
-              double *RESTRICT _data_u_20_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
-              _data_j_20_33_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_20_32_1m1[0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 < _data_u_20_30_1m1[0] &&
-                                  0.0 < _data_u_20_31_1m1[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_1m1[0] * _data_u_20_30_1m1[0] *
-                      _data_u_20_31_1m1[0] +
-                  _data_j_20_33_10[_stride_j_0];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
+              double *RESTRICT _data_rho_20_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
+              _data_j_20_33_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] + (-1.0 * fabs(_data_u_20_32_1m1[0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_1m1[0] && 0.0 < _data_u_20_31_1m1[0]) ? (1) : (0)))) * _data_rho_20_1m1[0] * _data_u_20_30_1m1[0] * _data_u_20_31_1m1[0] + _data_j_20_33_10[_stride_j_0];
             }
             if (ctr_2 > 0 && _size_j_1 - 1 > 0 && 1 < _size_j_0 - 1) {
-              double *RESTRICT _data_j_20_37 =
-                  _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
-              double *RESTRICT _data_j_20_37_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
+              double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
+              double *RESTRICT _data_j_20_37_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
-              _data_j_20_37_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0] +
-                  _data_j_20_37_10[_stride_j_0];
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+              _data_j_20_37_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0] * _data_u_2m1_31_1m1[_stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0] + _data_j_20_37_10[_stride_j_0];
             }
-            if (_size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 &&
-                ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_38 =
-                  _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
-              double *RESTRICT _data_j_20_38_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_21;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+            if (_size_j_1 - 1 > 0 && 1 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
+              double *RESTRICT _data_j_20_38 = _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
+              double *RESTRICT _data_j_20_38_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              _data_j_20_38_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] &&
-                                  0.0 < _data_u_21_31_1m1[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0] *
-                      _data_u_21_31_1m1[_stride_u_0] *
-                      _data_u_21_32_1m1[_stride_u_0] +
-                  _data_j_20_38_10[_stride_j_0];
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              _data_j_20_38_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0] * _data_u_21_31_1m1[_stride_u_0] * _data_u_21_32_1m1[_stride_u_0] + _data_j_20_38_10[_stride_j_0];
             }
             if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
-              double *RESTRICT _data_j_20_39 =
-                  _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
-              double *RESTRICT _data_j_20_39_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
+              double *RESTRICT _data_j_20_39_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              _data_j_20_39_10[_stride_j_0] =
-                  -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
-                                  0.0 < _data_u_2m1_31_1m1[0] &&
-                                  0.0 < _data_u_2m1_32_1m1[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                      _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  _data_j_20_39_10[_stride_j_0];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              _data_j_20_39_10[_stride_j_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[0] && 0.0 < _data_u_2m1_31_1m1[0] && 0.0 < _data_u_2m1_32_1m1[0]) ? (1) : (0)))) * _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] * _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + _data_j_20_39_10[_stride_j_0];
             }
             if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_310 =
-                  _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
-              double *RESTRICT _data_j_20_310_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
+              double *RESTRICT _data_j_20_310 = _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
+              double *RESTRICT _data_j_20_310_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_21;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
-              _data_j_20_310_10[_stride_j_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                              0.0 > _data_u_20_31_10[_stride_u_0] &&
-                              0.0 < _data_u_20_32_10[_stride_u_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  ((double)(((0.0 > _data_u_21_32_1m1[0] &&
-                              0.0 < _data_u_21_30_1m1[0] &&
-                              0.0 < _data_u_21_31_1m1[0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] *
-                      _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] +
-                  _data_j_20_310_10[_stride_j_0];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+              _data_j_20_310_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 < _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_21_32_1m1[0] && 0.0 < _data_u_21_30_1m1[0] && 0.0 < _data_u_21_31_1m1[0]) ? (1) : (0)))) * _data_rho_21_1m1[0] * _data_u_21_30_1m1[0] * _data_u_21_31_1m1[0] * _data_u_21_32_1m1[0] + _data_j_20_310_10[_stride_j_0];
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 &&
-                ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_31 =
-                  _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
-              double *RESTRICT _data_j_20_31_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_31;
+            if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
+              double *RESTRICT _data_j_20_31 = _data_j + _stride_j_2 * ctr_2 + _stride_j_3;
+              double *RESTRICT _data_j_20_31_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_31;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
-              double *RESTRICT _data_rho_20_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_20;
-              double *RESTRICT _data_u_20_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
-              _data_j_20_31_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_31_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
+              double *RESTRICT _data_rho_20_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
+              _data_j_20_31_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_20_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0 * ctr_0] * _data_u_20_31_1m1[_stride_u_0 * ctr_0] + _data_j_20_31_10[_stride_j_0 * ctr_0];
             }
             if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_33 =
-                  _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
-              double *RESTRICT _data_j_20_33_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_33;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_j_20_33 = _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
+              double *RESTRICT _data_j_20_33_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_33;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
-              double *RESTRICT _data_rho_20_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_20;
-              double *RESTRICT _data_u_20_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
-              _data_j_20_33_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0] &&
-                                  0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_33_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
+              double *RESTRICT _data_rho_20_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
+              _data_j_20_33_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_20_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_20_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_33_10[_stride_j_0 * ctr_0];
             }
             if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
-              double *RESTRICT _data_j_20_37 =
-                  _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
-              double *RESTRICT _data_j_20_37_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
+              double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * ctr_2 + 7 * _stride_j_3;
+              double *RESTRICT _data_j_20_37_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
-              _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                           0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_37_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+              _data_j_20_37_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_37_10[_stride_j_0 * ctr_0];
             }
-            if (_size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 &&
-                ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_38 =
-                  _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
-              double *RESTRICT _data_j_20_38_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_21;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+            if (_size_j_1 - 1 > 0 && ctr_0 < _size_j_0 - 1 && ctr_2 < _size_j_2 - 1) {
+              double *RESTRICT _data_j_20_38 = _data_j + _stride_j_2 * ctr_2 + 8 * _stride_j_3;
+              double *RESTRICT _data_j_20_38_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_38;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              _data_j_20_38_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)((
-                          (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] &&
-                           0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * ctr_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_38_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              _data_j_20_38_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_21_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_38_10[_stride_j_0 * ctr_0];
             }
             if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
-              double *RESTRICT _data_j_20_39 =
-                  _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
-              double *RESTRICT _data_j_20_39_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
+              double *RESTRICT _data_j_20_39_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                  -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  _data_j_20_39_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              _data_j_20_39_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + _data_j_20_39_10[_stride_j_0 * ctr_0];
             }
             if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_310 =
-                  _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
-              double *RESTRICT _data_j_20_310_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
+              double *RESTRICT _data_j_20_310 = _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
+              double *RESTRICT _data_j_20_310_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_21;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
-              _data_j_20_310_10[_stride_j_0 * ctr_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                              0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                              0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((double)((
-                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 <
-                           _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_310_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+              _data_j_20_310_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * ctr_0];
             }
           }
           {
             if (ctr_2 > 0 && _size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_33 =
-                  _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
-              double *RESTRICT _data_j_20_33_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_33;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_j_20_33 = _data_j + _stride_j_2 * ctr_2 + 3 * _stride_j_3;
+              double *RESTRICT _data_j_20_33_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_33;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
-              double *RESTRICT _data_rho_20_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_20;
-              double *RESTRICT _data_u_20_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
-              _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  (-1.0 *
-                       fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                   1.0) *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 >
-                               _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 <
-                               _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                           0.0 <
-                               _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                       _stride_rho_0] *
-                      _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] +
-                  _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_32;
+              double *RESTRICT _data_rho_20_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_20_31;
+              _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_20_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_20_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_20_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_20_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_33_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (ctr_2 > 0 && _size_j_1 - 1 > 0) {
-              double *RESTRICT _data_j_20_39 =
-                  _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
-              double *RESTRICT _data_j_20_39_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 =
-                  _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * ctr_2 + 9 * _stride_j_3;
+              double *RESTRICT _data_j_20_39_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * ctr_2 - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * ctr_2 - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 *
-                                                               (_size_j_0 - 1) -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 *
-                                                               (_size_j_0 - 1) -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 *
-                                                               (_size_j_0 - 1) -
-                                                           _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] *
-                      _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] -
-                  1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 > _data_u_20_31_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 >
-                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (_size_j_1 - 1 > 0 && ctr_2 < _size_j_2 - 1) {
-              double *RESTRICT _data_j_20_310 =
-                  _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
-              double *RESTRICT _data_j_20_310_10 =
-                  _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
+              double *RESTRICT _data_j_20_310 = _data_j + _stride_j_2 * ctr_2 + 10 * _stride_j_3;
+              double *RESTRICT _data_j_20_310_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_310;
               double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * ctr_2;
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
               double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * ctr_2;
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-              double *RESTRICT _data_rho_21 =
-                  _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
-              double *RESTRICT _data_rho_21_1m1 =
-                  _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 +
-                  _data_rho_21;
-              double *RESTRICT _data_u_21_30 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
-              double *RESTRICT _data_u_21_30_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
-              double *RESTRICT _data_u_21_31 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_21_31_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
-              double *RESTRICT _data_u_21_32 =
-                  _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_21_32_1m1 =
-                  _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
-              _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((double)((
-                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((double)((
-                      (0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                       _stride_rho_0] *
-                      _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] +
-                  _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * ctr_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+              double *RESTRICT _data_rho_21 = _data_rho + _stride_rho_2 * ctr_2 + _stride_rho_2;
+              double *RESTRICT _data_rho_21_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_21;
+              double *RESTRICT _data_u_21_30 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2;
+              double *RESTRICT _data_u_21_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_30;
+              double *RESTRICT _data_u_21_31 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_21_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_31;
+              double *RESTRICT _data_u_21_32 = _data_u + _stride_u_2 * ctr_2 + _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_21_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_21_32;
+              _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_21_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_21_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_21_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_310_10[_stride_j_0 * (_size_j_0 - 1)];
             }
           }
         }
@@ -3517,1000 +1160,350 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
     {
       {
         if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
-          double *RESTRICT _data_j_20_311 =
-              _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
+          double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
           double *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-          double *RESTRICT _data_rho_2m1 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+          double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
           double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-          double *RESTRICT _data_u_2m1_30 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+          double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
           double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 + _data_u_2m1_30;
-          double *RESTRICT _data_u_2m1_31 = _data_u +
-                                            _stride_u_2 * (_size_j_2 - 1) -
-                                            _stride_u_2 + _stride_u_3;
+          double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
           double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 + _data_u_2m1_31;
-          double *RESTRICT _data_u_2m1_32 = _data_u +
-                                            _stride_u_2 * (_size_j_2 - 1) -
-                                            _stride_u_2 + 2 * _stride_u_3;
+          double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
           double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 + _data_u_2m1_32;
-          double *RESTRICT _data_rho_20 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+          double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
           double *RESTRICT _data_rho_20_10 = _data_rho_20;
-          double *RESTRICT _data_u_20_30 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1);
+          double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
           double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-          double *RESTRICT _data_u_20_31 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+          double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
           double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-          double *RESTRICT _data_u_20_32 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+          double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
           double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-          _data_j_20_311_10[_stride_j_0] =
-              ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                          0.0 > _data_u_20_32_10[_stride_u_0] &&
-                          0.0 < _data_u_20_31_10[_stride_u_0])
-                             ? (1)
-                             : (0)))) *
-                  _data_rho_20_10[_stride_rho_0] *
-                  _data_u_20_30_10[_stride_u_0] *
-                  _data_u_20_31_10[_stride_u_0] *
-                  _data_u_20_32_10[_stride_u_0] +
-              ((double)(((0.0 > _data_u_2m1_31_11[0] &&
-                          0.0 < _data_u_2m1_30_11[0] &&
-                          0.0 < _data_u_2m1_32_11[0])
-                             ? (1)
-                             : (0)))) *
-                  _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
-                  _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
-              _data_j_20_311_10[_stride_j_0];
+          _data_j_20_311_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] && 0.0 < _data_u_2m1_32_11[0]) ? (1) : (0)))) * _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] * _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] + _data_j_20_311_10[_stride_j_0];
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
           if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
-            double *RESTRICT _data_j_20_311 =
-                _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
+            double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
             double *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-            double *RESTRICT _data_rho_2m1 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+            double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
             double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+            double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
             double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 + _data_u_2m1_30;
-            double *RESTRICT _data_u_2m1_31 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
             double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 + _data_u_2m1_31;
-            double *RESTRICT _data_u_2m1_32 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
             double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 + _data_u_2m1_32;
-            double *RESTRICT _data_rho_20 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
             double *RESTRICT _data_rho_20_10 = _data_rho_20;
-            double *RESTRICT _data_u_20_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
             double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-            double *RESTRICT _data_u_20_31 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+            double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
             double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-            double *RESTRICT _data_u_20_32 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+            double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
             double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-            _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                            0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                            0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                               ? (1)
-                               : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                    _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                ((double)((
-                    (0.0 >
-                         _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                     0.0 <
-                         _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] &&
-                     0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                        ? (1)
-                        : (0)))) *
-                    _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                    _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                _data_j_20_311_10[_stride_j_0 * ctr_0];
+            _data_j_20_311_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * ctr_0];
           }
         }
         if (_size_j_2 - 1 > 0 && 0 < _size_j_1 - 1) {
-          double *RESTRICT _data_j_20_311 =
-              _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
+          double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
           double *RESTRICT _data_j_20_311_10 = _data_j_20_311;
-          double *RESTRICT _data_rho_2m1 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+          double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
           double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 + _data_rho_2m1;
-          double *RESTRICT _data_u_2m1_30 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+          double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
           double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 + _data_u_2m1_30;
-          double *RESTRICT _data_u_2m1_31 = _data_u +
-                                            _stride_u_2 * (_size_j_2 - 1) -
-                                            _stride_u_2 + _stride_u_3;
+          double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
           double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 + _data_u_2m1_31;
-          double *RESTRICT _data_u_2m1_32 = _data_u +
-                                            _stride_u_2 * (_size_j_2 - 1) -
-                                            _stride_u_2 + 2 * _stride_u_3;
+          double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
           double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 + _data_u_2m1_32;
-          double *RESTRICT _data_rho_20 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+          double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
           double *RESTRICT _data_rho_20_10 = _data_rho_20;
-          double *RESTRICT _data_u_20_30 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1);
+          double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
           double *RESTRICT _data_u_20_30_10 = _data_u_20_30;
-          double *RESTRICT _data_u_20_31 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+          double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
           double *RESTRICT _data_u_20_31_10 = _data_u_20_31;
-          double *RESTRICT _data_u_20_32 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+          double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
           double *RESTRICT _data_u_20_32_10 = _data_u_20_32;
-          _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-              ((double)((
-                  (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                   0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                      ? (1)
-                      : (0)))) *
-                  _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                  _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-              ((double)((
-                  (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0] &&
-                   0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0] &&
-                   0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                           _stride_u_0])
-                      ? (1)
-                      : (0)))) *
-                  _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                   _stride_rho_0] *
-                  _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                    _stride_u_0] *
-                  _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                    _stride_u_0] *
-                  _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                    _stride_u_0] +
-              _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
+          _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
         }
       }
       for (int64_t ctr_1 = 1; ctr_1 < _size_j_1 - 1; ctr_1 += 1) {
         {
           {
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1 &&
-                ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_32 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3;
-              double *RESTRICT _data_j_20_32_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_32;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_31;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_32;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_32_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_10[_stride_rho_0] *
-                      _data_u_2m1_32_10[_stride_u_0] +
-                  _data_j_20_32_10[_stride_j_0];
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1 && ctr_1 < _size_j_1 - 1) {
+              double *RESTRICT _data_j_20_32 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3;
+              double *RESTRICT _data_j_20_32_10 = _stride_j_1 * ctr_1 + _data_j_20_32;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_10 = _stride_u_1 * ctr_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_10 = _stride_u_1 * ctr_1 + _data_u_2m1_31;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_10 = _stride_rho_1 * ctr_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_10 = _stride_u_1 * ctr_1 + _data_u_2m1_32;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_32_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0]) + 1.0) * (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0] * _data_u_2m1_32_10[_stride_u_0] + _data_j_20_32_10[_stride_j_0];
             }
             if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_35 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
-              double *RESTRICT _data_j_20_35_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_35;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_31;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_32;
-              _data_j_20_35_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_2m1_31_10[0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_10[0] &&
-                                  0.0 < _data_u_2m1_32_10[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_10[0] * _data_u_2m1_30_10[0] *
-                      _data_u_2m1_32_10[0] +
-                  _data_j_20_35_10[_stride_j_0];
+              double *RESTRICT _data_j_20_35 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
+              double *RESTRICT _data_j_20_35_10 = _stride_j_1 * ctr_1 + _data_j_20_35;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_10 = _stride_u_1 * ctr_1 + _data_u_2m1_31;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_10 = _stride_rho_1 * ctr_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_10 = _stride_u_1 * ctr_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_10 = _stride_u_1 * ctr_1 + _data_u_2m1_32;
+              _data_j_20_35_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_31_10[0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_30_10[0] && 0.0 < _data_u_2m1_32_10[0]) ? (1) : (0)))) * _data_rho_2m1_10[0] * _data_u_2m1_30_10[0] * _data_u_2m1_32_10[0] + _data_j_20_35_10[_stride_j_0];
             }
             if (ctr_1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1) {
-              double *RESTRICT _data_j_20_37 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
-              double *RESTRICT _data_j_20_37_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_37;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
-              _data_j_20_37_10[_stride_j_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0] +
-                  _data_j_20_37_10[_stride_j_0];
+              double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
+              double *RESTRICT _data_j_20_37_10 = _stride_j_1 * ctr_1 + _data_j_20_37;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
+              _data_j_20_37_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0] * _data_u_2m1_31_1m1[_stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0] + _data_j_20_37_10[_stride_j_0];
             }
             if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
-              double *RESTRICT _data_j_20_39 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
-              double *RESTRICT _data_j_20_39_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_39;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_39_10[_stride_j_0] =
-                  -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
-                                  0.0 < _data_u_2m1_31_1m1[0] &&
-                                  0.0 < _data_u_2m1_32_1m1[0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                      _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  _data_j_20_39_10[_stride_j_0];
+              double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
+              double *RESTRICT _data_j_20_39_10 = _stride_j_1 * ctr_1 + _data_j_20_39;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_39_10[_stride_j_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[0] && 0.0 < _data_u_2m1_31_1m1[0] && 0.0 < _data_u_2m1_32_1m1[0]) ? (1) : (0)))) * _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] * _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + _data_j_20_39_10[_stride_j_0];
             }
             if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_311 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
-              double *RESTRICT _data_j_20_311_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_311;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_311_10[_stride_j_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                              0.0 > _data_u_20_32_10[_stride_u_0] &&
-                              0.0 < _data_u_20_31_10[_stride_u_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0] *
-                      _data_u_20_30_10[_stride_u_0] *
-                      _data_u_20_31_10[_stride_u_0] *
-                      _data_u_20_32_10[_stride_u_0] +
-                  ((double)(((0.0 > _data_u_2m1_31_11[0] &&
-                              0.0 < _data_u_2m1_30_11[0] &&
-                              0.0 < _data_u_2m1_32_11[0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] *
-                      _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] +
-                  _data_j_20_311_10[_stride_j_0];
+              double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
+              double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_311_10[_stride_j_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0] && 0.0 < _data_u_20_31_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + ((double)(((0.0 > _data_u_2m1_31_11[0] && 0.0 < _data_u_2m1_30_11[0] && 0.0 < _data_u_2m1_32_11[0]) ? (1) : (0)))) * _data_rho_2m1_11[0] * _data_u_2m1_30_11[0] * _data_u_2m1_31_11[0] * _data_u_2m1_32_11[0] + _data_j_20_311_10[_stride_j_0];
             }
           }
           for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
-            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1 &&
-                ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_32 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3;
-              double *RESTRICT _data_j_20_32_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_32;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_31;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_32;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_32_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) +
-                       1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_10[_stride_rho_0 * ctr_0] *
-                      _data_u_2m1_32_10[_stride_u_0 * ctr_0] +
-                  _data_j_20_32_10[_stride_j_0 * ctr_0];
+            if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1 && ctr_1 < _size_j_1 - 1) {
+              double *RESTRICT _data_j_20_32 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 2 * _stride_j_3;
+              double *RESTRICT _data_j_20_32_10 = _stride_j_1 * ctr_1 + _data_j_20_32;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_10 = _stride_u_1 * ctr_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_10 = _stride_u_1 * ctr_1 + _data_u_2m1_31;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_10 = _stride_rho_1 * ctr_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_10 = _stride_u_1 * ctr_1 + _data_u_2m1_32;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_32_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_30_10[_stride_u_0 * ctr_0]) + 1.0) * (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0 * ctr_0] * _data_u_2m1_32_10[_stride_u_0 * ctr_0] + _data_j_20_32_10[_stride_j_0 * ctr_0];
             }
             if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_35 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
-              double *RESTRICT _data_j_20_35_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_35;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_31;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_32;
-              _data_j_20_35_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 -
-                                                 _stride_u_0]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 -
-                                                          _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_10[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_35_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_j_20_35 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
+              double *RESTRICT _data_j_20_35_10 = _stride_j_1 * ctr_1 + _data_j_20_35;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_10 = _stride_u_1 * ctr_1 + _data_u_2m1_31;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_10 = _stride_rho_1 * ctr_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_10 = _stride_u_1 * ctr_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_10 = _stride_u_1 * ctr_1 + _data_u_2m1_32;
+              _data_j_20_35_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * ctr_0 - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_10[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_10[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_35_10[_stride_j_0 * ctr_0];
             }
             if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
-              double *RESTRICT _data_j_20_37 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
-              double *RESTRICT _data_j_20_37_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_37;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
-              _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                  (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                      ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                           0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
-                  _data_j_20_37_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
+              double *RESTRICT _data_j_20_37_10 = _stride_j_1 * ctr_1 + _data_j_20_37;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
+              _data_j_20_37_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_37_10[_stride_j_0 * ctr_0];
             }
             if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
-              double *RESTRICT _data_j_20_39 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
-              double *RESTRICT _data_j_20_39_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_39;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                  -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
-                                                           _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
-                  1.0 *
-                      ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                  0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  _data_j_20_39_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
+              double *RESTRICT _data_j_20_39_10 = _stride_j_1 * ctr_1 + _data_j_20_39;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_39_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + _data_j_20_39_10[_stride_j_0 * ctr_0];
             }
             if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_311 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
-              double *RESTRICT _data_j_20_311_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_311;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_311_10[_stride_j_0 * ctr_0] =
-                  ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                              0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] &&
-                              0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0])
-                                 ? (1)
-                                 : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                      _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                      _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                  ((double)((
-                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 -
-                                               _stride_u_0] &&
-                       0.0 <
-                           _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                      _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] *
-                      _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] +
-                  _data_j_20_311_10[_stride_j_0 * ctr_0];
+              double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
+              double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_311_10[_stride_j_0 * ctr_0] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0] && 0.0 < _data_u_20_31_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * ctr_0 - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * ctr_0];
             }
           }
           {
             if (ctr_1 > 0 && _size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_35 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
-              double *RESTRICT _data_j_20_35_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_35;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_31;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_2m1_32;
-              _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  (-1.0 *
-                       fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) +
-                   1.0) *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 >
-                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0]) +
-                   1.0) *
-                      -1.0 *
-                      ((double)((
-                          (0.0 <
-                               _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0] &&
-                           0.0 <
-                               _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                                 _stride_u_0])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_2m1_10[_stride_rho_0 * (_size_j_0 - 1) -
-                                       _stride_rho_0] *
-                      _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] +
-                  _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_j_20_35 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 5 * _stride_j_3;
+              double *RESTRICT _data_j_20_35_10 = _stride_j_1 * ctr_1 + _data_j_20_35;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_10 = _stride_u_1 * ctr_1 + _data_u_2m1_31;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_10 = _stride_rho_1 * ctr_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_10 = _stride_u_1 * ctr_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_10 = _stride_u_1 * ctr_1 + _data_u_2m1_32;
+              _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)] = (-1.0 * fabs(_data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) + 1.0) * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + (-1.0 * fabs(_data_u_2m1_31_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_10[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_10[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_35_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (ctr_1 > 0 && _size_j_2 - 1 > 0) {
-              double *RESTRICT _data_j_20_39 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
-              double *RESTRICT _data_j_20_39_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_39;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_1m1 =
-                  _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_1m1 =
-                  _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  -1.0 *
-                      ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 *
-                                                               (_size_j_0 - 1) -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_31_1m1[_stride_u_0 *
-                                                               (_size_j_0 - 1) -
-                                                           _stride_u_0] &&
-                                  0.0 < _data_u_2m1_32_1m1[_stride_u_0 *
-                                                               (_size_j_0 - 1) -
-                                                           _stride_u_0])
-                                     ? (1)
-                                     : (0)))) *
-                      _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                        _stride_rho_0] *
-                      _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] *
-                      _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] *
-                      _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                         _stride_u_0] -
-                  1.0 *
-                      ((double)((
-                          (0.0 > _data_u_20_30_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 > _data_u_20_31_10[_stride_u_0 *
-                                                  (_size_j_0 - 1)] &&
-                           0.0 >
-                               _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                              ? (1)
-                              : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
+              double *RESTRICT _data_j_20_39_10 = _stride_j_1 * ctr_1 + _data_j_20_39;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * ctr_1 - _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * ctr_1 - _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
             }
             if (_size_j_2 - 1 > 0 && ctr_1 < _size_j_1 - 1) {
-              double *RESTRICT _data_j_20_311 =
-                  _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
-              double *RESTRICT _data_j_20_311_10 =
-                  _stride_j_1 * ctr_1 + _data_j_20_311;
-              double *RESTRICT _data_rho_2m1 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-              double *RESTRICT _data_rho_2m1_11 =
-                  _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
-              double *RESTRICT _data_u_2m1_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-              double *RESTRICT _data_u_2m1_30_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
-              double *RESTRICT _data_u_2m1_31 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + _stride_u_3;
-              double *RESTRICT _data_u_2m1_31_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
-              double *RESTRICT _data_u_2m1_32 = _data_u +
-                                                _stride_u_2 * (_size_j_2 - 1) -
-                                                _stride_u_2 + 2 * _stride_u_3;
-              double *RESTRICT _data_u_2m1_32_11 =
-                  _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
-              double *RESTRICT _data_rho_20 =
-                  _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_rho_20_10 =
-                  _stride_rho_1 * ctr_1 + _data_rho_20;
-              double *RESTRICT _data_u_20_30 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1);
-              double *RESTRICT _data_u_20_30_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_30;
-              double *RESTRICT _data_u_20_31 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-              double *RESTRICT _data_u_20_31_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_31;
-              double *RESTRICT _data_u_20_32 =
-                  _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-              double *RESTRICT _data_u_20_32_10 =
-                  _stride_u_1 * ctr_1 + _data_u_20_32;
-              _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] =
-                  ((double)((
-                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                      _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                      _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-                  ((double)((
-                      (0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0] &&
-                       0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                               _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                      _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) -
-                                       _stride_rho_0] *
-                      _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] *
-                      _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) -
-                                        _stride_u_0] +
-                  _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
+              double *RESTRICT _data_j_20_311 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 11 * _stride_j_3;
+              double *RESTRICT _data_j_20_311_10 = _stride_j_1 * ctr_1 + _data_j_20_311;
+              double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+              double *RESTRICT _data_rho_2m1_11 = _stride_rho_1 * ctr_1 + _stride_rho_1 + _data_rho_2m1;
+              double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+              double *RESTRICT _data_u_2m1_30_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_30;
+              double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+              double *RESTRICT _data_u_2m1_31_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_31;
+              double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+              double *RESTRICT _data_u_2m1_32_11 = _stride_u_1 * ctr_1 + _stride_u_1 + _data_u_2m1_32;
+              double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_rho_20_10 = _stride_rho_1 * ctr_1 + _data_rho_20;
+              double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+              double *RESTRICT _data_u_20_30_10 = _stride_u_1 * ctr_1 + _data_u_20_30;
+              double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+              double *RESTRICT _data_u_20_31_10 = _stride_u_1 * ctr_1 + _data_u_20_31;
+              double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+              double *RESTRICT _data_u_20_32_10 = _stride_u_1 * ctr_1 + _data_u_20_32;
+              _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)] = ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 < _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + ((double)(((0.0 > _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_11[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_11[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] + _data_j_20_311_10[_stride_j_0 * (_size_j_0 - 1)];
             }
           }
         }
@@ -4518,320 +1511,112 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
       {
         {
           if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0 && 1 < _size_j_0 - 1) {
-            double *RESTRICT _data_j_20_37 =
-                _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
-            double *RESTRICT _data_j_20_37_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
-            double *RESTRICT _data_u_20_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-            double *RESTRICT _data_rho_20 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-            double *RESTRICT _data_u_20_31 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-            double *RESTRICT _data_u_20_32 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-            double *RESTRICT _data_u_2m1_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-            double *RESTRICT _data_u_2m1_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-            double *RESTRICT _data_rho_2m1 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-            double *RESTRICT _data_rho_2m1_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_31 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_2m1_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-            double *RESTRICT _data_u_2m1_32 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_2m1_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
-            _data_j_20_37_10[_stride_j_0] =
-                (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) *
-                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                0.0 > _data_u_20_32_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 *
-                    ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] &&
-                                0.0 < _data_u_2m1_32_1m1[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_2m1_1m1[_stride_rho_0] *
-                    _data_u_2m1_31_1m1[_stride_u_0] *
-                    _data_u_2m1_32_1m1[_stride_u_0] +
-                _data_j_20_37_10[_stride_j_0];
+            double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
+            double *RESTRICT _data_j_20_37_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
+            double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+            double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+            double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+            double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+            double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+            double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+            _data_j_20_37_10[_stride_j_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0] * _data_u_2m1_31_1m1[_stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0] + _data_j_20_37_10[_stride_j_0];
           }
           if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
-            double *RESTRICT _data_j_20_39 =
-                _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
-            double *RESTRICT _data_j_20_39_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
-            double *RESTRICT _data_rho_2m1 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-            double *RESTRICT _data_rho_2m1_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-            double *RESTRICT _data_u_2m1_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-            double *RESTRICT _data_u_2m1_31 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_2m1_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-            double *RESTRICT _data_u_2m1_32 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_2m1_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
-            double *RESTRICT _data_rho_20 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-            double *RESTRICT _data_u_20_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-            double *RESTRICT _data_u_20_31 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-            double *RESTRICT _data_u_20_32 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-            _data_j_20_39_10[_stride_j_0] =
-                -1.0 *
-                    ((double)(((0.0 < _data_u_2m1_30_1m1[0] &&
-                                0.0 < _data_u_2m1_31_1m1[0] &&
-                                0.0 < _data_u_2m1_32_1m1[0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] *
-                    _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] -
-                1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] &&
-                                0.0 > _data_u_20_31_10[_stride_u_0] &&
-                                0.0 > _data_u_20_32_10[_stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0] *
-                    _data_u_20_30_10[_stride_u_0] *
-                    _data_u_20_31_10[_stride_u_0] *
-                    _data_u_20_32_10[_stride_u_0] +
-                _data_j_20_39_10[_stride_j_0];
+            double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
+            double *RESTRICT _data_j_20_39_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
+            double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+            double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+            double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+            double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+            double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+            double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+            double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            _data_j_20_39_10[_stride_j_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[0] && 0.0 < _data_u_2m1_31_1m1[0] && 0.0 < _data_u_2m1_32_1m1[0]) ? (1) : (0)))) * _data_rho_2m1_1m1[0] * _data_u_2m1_30_1m1[0] * _data_u_2m1_31_1m1[0] * _data_u_2m1_32_1m1[0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0] && 0.0 > _data_u_20_31_10[_stride_u_0] && 0.0 > _data_u_20_32_10[_stride_u_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0] * _data_u_20_30_10[_stride_u_0] * _data_u_20_31_10[_stride_u_0] * _data_u_20_32_10[_stride_u_0] + _data_j_20_39_10[_stride_j_0];
           }
         }
         for (int64_t ctr_0 = 2; ctr_0 < _size_j_0 - 1; ctr_0 += 1) {
           if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0 && ctr_0 < _size_j_0 - 1) {
-            double *RESTRICT _data_j_20_37 =
-                _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
-            double *RESTRICT _data_j_20_37_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
-            double *RESTRICT _data_u_20_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-            double *RESTRICT _data_rho_20 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-            double *RESTRICT _data_u_20_31 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-            double *RESTRICT _data_u_20_32 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-            double *RESTRICT _data_u_2m1_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-            double *RESTRICT _data_u_2m1_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-            double *RESTRICT _data_rho_2m1 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-            double *RESTRICT _data_rho_2m1_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_31 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_2m1_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-            double *RESTRICT _data_u_2m1_32 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_2m1_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
-            _data_j_20_37_10[_stride_j_0 * ctr_0] =
-                (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) *
-                    ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) *
-                    -1.0 *
-                    ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] &&
-                                0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] *
-                    _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] *
-                    _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] +
-                _data_j_20_37_10[_stride_j_0 * ctr_0];
+            double *RESTRICT _data_j_20_37 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 7 * _stride_j_3;
+            double *RESTRICT _data_j_20_37_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_37;
+            double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+            double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+            double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+            double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+            double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+            double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+            _data_j_20_37_10[_stride_j_0 * ctr_0] = (-1.0 * fabs(_data_u_20_30_10[_stride_u_0 * ctr_0]) + 1.0) * ((double)(((0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + (-1.0 * fabs(_data_u_2m1_30_1m1[_stride_u_0 * ctr_0]) + 1.0) * -1.0 * ((double)(((0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0] + _data_j_20_37_10[_stride_j_0 * ctr_0];
           }
           if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
-            double *RESTRICT _data_j_20_39 =
-                _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
-            double *RESTRICT _data_j_20_39_10 =
-                _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
-            double *RESTRICT _data_rho_2m1 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-            double *RESTRICT _data_rho_2m1_1m1 =
-                _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
-            double *RESTRICT _data_u_2m1_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-            double *RESTRICT _data_u_2m1_30_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-            double *RESTRICT _data_u_2m1_31 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + _stride_u_3;
-            double *RESTRICT _data_u_2m1_31_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-            double *RESTRICT _data_u_2m1_32 = _data_u +
-                                              _stride_u_2 * (_size_j_2 - 1) -
-                                              _stride_u_2 + 2 * _stride_u_3;
-            double *RESTRICT _data_u_2m1_32_1m1 =
-                _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
-            double *RESTRICT _data_rho_20 =
-                _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_rho_20_10 =
-                _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-            double *RESTRICT _data_u_20_30 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1);
-            double *RESTRICT _data_u_20_30_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-            double *RESTRICT _data_u_20_31 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-            double *RESTRICT _data_u_20_31_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-            double *RESTRICT _data_u_20_32 =
-                _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-            double *RESTRICT _data_u_20_32_10 =
-                _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-            _data_j_20_39_10[_stride_j_0 * ctr_0] =
-                -1.0 *
-                    ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0] &&
-                                0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 -
-                                                         _stride_u_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] *
-                    _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] *
-                    _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] -
-                1.0 *
-                    ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] &&
-                                0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] &&
-                                0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0])
-                                   ? (1)
-                                   : (0)))) *
-                    _data_rho_20_10[_stride_rho_0 * ctr_0] *
-                    _data_u_20_30_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_31_10[_stride_u_0 * ctr_0] *
-                    _data_u_20_32_10[_stride_u_0 * ctr_0] +
-                _data_j_20_39_10[_stride_j_0 * ctr_0];
+            double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
+            double *RESTRICT _data_j_20_39_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
+            double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+            double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+            double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+            double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+            double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+            double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+            double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+            double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+            double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+            double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+            double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+            double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+            double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+            double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+            double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+            _data_j_20_39_10[_stride_j_0 * ctr_0] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * ctr_0 - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * ctr_0 - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * ctr_0 - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_31_10[_stride_u_0 * ctr_0] && 0.0 > _data_u_20_32_10[_stride_u_0 * ctr_0]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * ctr_0] * _data_u_20_30_10[_stride_u_0 * ctr_0] * _data_u_20_31_10[_stride_u_0 * ctr_0] * _data_u_20_32_10[_stride_u_0 * ctr_0] + _data_j_20_39_10[_stride_j_0 * ctr_0];
           }
         }
         if (_size_j_1 - 1 > 0 && _size_j_2 - 1 > 0) {
-          double *RESTRICT _data_j_20_39 =
-              _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
-          double *RESTRICT _data_j_20_39_10 =
-              _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
-          double *RESTRICT _data_rho_2m1 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
-          double *RESTRICT _data_rho_2m1_1m1 =
-              _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
-          double *RESTRICT _data_u_2m1_30 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
-          double *RESTRICT _data_u_2m1_30_1m1 =
-              _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
-          double *RESTRICT _data_u_2m1_31 = _data_u +
-                                            _stride_u_2 * (_size_j_2 - 1) -
-                                            _stride_u_2 + _stride_u_3;
-          double *RESTRICT _data_u_2m1_31_1m1 =
-              _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
-          double *RESTRICT _data_u_2m1_32 = _data_u +
-                                            _stride_u_2 * (_size_j_2 - 1) -
-                                            _stride_u_2 + 2 * _stride_u_3;
-          double *RESTRICT _data_u_2m1_32_1m1 =
-              _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
-          double *RESTRICT _data_rho_20 =
-              _data_rho + _stride_rho_2 * (_size_j_2 - 1);
-          double *RESTRICT _data_rho_20_10 =
-              _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
-          double *RESTRICT _data_u_20_30 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1);
-          double *RESTRICT _data_u_20_30_10 =
-              _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
-          double *RESTRICT _data_u_20_31 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
-          double *RESTRICT _data_u_20_31_10 =
-              _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
-          double *RESTRICT _data_u_20_32 =
-              _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
-          double *RESTRICT _data_u_20_32_10 =
-              _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
-          _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] =
-              -1.0 *
-                  ((double)((
-                      (0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                       0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0] &&
-                       0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                                _stride_u_0])
-                          ? (1)
-                          : (0)))) *
-                  _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) -
-                                    _stride_rho_0] *
-                  _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] *
-                  _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] *
-                  _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) -
-                                     _stride_u_0] -
-              1.0 *
-                  ((double)((
-                      (0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] &&
-                       0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)])
-                          ? (1)
-                          : (0)))) *
-                  _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] *
-                  _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] *
-                  _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] +
-              _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
+          double *RESTRICT _data_j_20_39 = _data_j + _stride_j_2 * (_size_j_2 - 1) + 9 * _stride_j_3;
+          double *RESTRICT _data_j_20_39_10 = _stride_j_1 * (_size_j_1 - 1) + _data_j_20_39;
+          double *RESTRICT _data_rho_2m1 = _data_rho + _stride_rho_2 * (_size_j_2 - 1) - _stride_rho_2;
+          double *RESTRICT _data_rho_2m1_1m1 = _stride_rho_1 * (_size_j_1 - 1) - _stride_rho_1 + _data_rho_2m1;
+          double *RESTRICT _data_u_2m1_30 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2;
+          double *RESTRICT _data_u_2m1_30_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_30;
+          double *RESTRICT _data_u_2m1_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + _stride_u_3;
+          double *RESTRICT _data_u_2m1_31_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_31;
+          double *RESTRICT _data_u_2m1_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) - _stride_u_2 + 2 * _stride_u_3;
+          double *RESTRICT _data_u_2m1_32_1m1 = _stride_u_1 * (_size_j_1 - 1) - _stride_u_1 + _data_u_2m1_32;
+          double *RESTRICT _data_rho_20 = _data_rho + _stride_rho_2 * (_size_j_2 - 1);
+          double *RESTRICT _data_rho_20_10 = _stride_rho_1 * (_size_j_1 - 1) + _data_rho_20;
+          double *RESTRICT _data_u_20_30 = _data_u + _stride_u_2 * (_size_j_2 - 1);
+          double *RESTRICT _data_u_20_30_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_30;
+          double *RESTRICT _data_u_20_31 = _data_u + _stride_u_2 * (_size_j_2 - 1) + _stride_u_3;
+          double *RESTRICT _data_u_20_31_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_31;
+          double *RESTRICT _data_u_20_32 = _data_u + _stride_u_2 * (_size_j_2 - 1) + 2 * _stride_u_3;
+          double *RESTRICT _data_u_20_32_10 = _stride_u_1 * (_size_j_1 - 1) + _data_u_20_32;
+          _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)] = -1.0 * ((double)(((0.0 < _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] && 0.0 < _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0]) ? (1) : (0)))) * _data_rho_2m1_1m1[_stride_rho_0 * (_size_j_0 - 1) - _stride_rho_0] * _data_u_2m1_30_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_31_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] * _data_u_2m1_32_1m1[_stride_u_0 * (_size_j_0 - 1) - _stride_u_0] - 1.0 * ((double)(((0.0 > _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] && 0.0 > _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)]) ? (1) : (0)))) * _data_rho_20_10[_stride_rho_0 * (_size_j_0 - 1)] * _data_u_20_30_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_31_10[_stride_u_0 * (_size_j_0 - 1)] * _data_u_20_32_10[_stride_u_0 * (_size_j_0 - 1)] + _data_j_20_39_10[_stride_j_0 * (_size_j_0 - 1)];
         }
       }
     }
@@ -4840,9 +1625,9 @@ advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
 } // namespace internal_5255e1c780a944d646f270232511968b
 
 void AdvectiveFluxKernel_double_precision::run(IBlock *block) {
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   double *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -4850,14 +1635,11 @@ void AdvectiveFluxKernel_double_precision::run(IBlock *block) {
   double *RESTRICT const _data_rho = rho->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(u->nrOfGhostLayers()));
   double *RESTRICT const _data_u = u->dataAt(-1, -1, -1, 0);
-  WALBERLA_ASSERT_GREATER_EQUAL(j->xSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(j->xSize()) + 2));
+  WALBERLA_ASSERT_GREATER_EQUAL(j->xSizeWithGhostLayer(), int64_t(cell_idx_c(j->xSize()) + 2));
   const int64_t _size_j_0 = int64_t(cell_idx_c(j->xSize()) + 2);
-  WALBERLA_ASSERT_GREATER_EQUAL(j->ySizeWithGhostLayer(),
-                                int64_t(cell_idx_c(j->ySize()) + 2));
+  WALBERLA_ASSERT_GREATER_EQUAL(j->ySizeWithGhostLayer(), int64_t(cell_idx_c(j->ySize()) + 2));
   const int64_t _size_j_1 = int64_t(cell_idx_c(j->ySize()) + 2);
-  WALBERLA_ASSERT_GREATER_EQUAL(j->zSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(j->zSize()) + 2));
+  WALBERLA_ASSERT_GREATER_EQUAL(j->zSizeWithGhostLayer(), int64_t(cell_idx_c(j->zSize()) + 2));
   const int64_t _size_j_2 = int64_t(cell_idx_c(j->zSize()) + 2);
   const int64_t _stride_j_0 = int64_t(j->xStride());
   const int64_t _stride_j_1 = int64_t(j->yStride());
@@ -4870,18 +1652,10 @@ void AdvectiveFluxKernel_double_precision::run(IBlock *block) {
   const int64_t _stride_u_1 = int64_t(u->yStride());
   const int64_t _stride_u_2 = int64_t(u->zStride());
   const int64_t _stride_u_3 = int64_t(1 * int64_t(u->fStride()));
-  internal_5255e1c780a944d646f270232511968b::
-      advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
-          _data_j, _data_rho, _data_u, _size_j_0, _size_j_1, _size_j_2,
-          _stride_j_0, _stride_j_1, _stride_j_2, _stride_j_3, _stride_rho_0,
-          _stride_rho_1, _stride_rho_2, _stride_u_0, _stride_u_1, _stride_u_2,
-          _stride_u_3);
+  internal_5255e1c780a944d646f270232511968b::advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(_data_j, _data_rho, _data_u, _size_j_0, _size_j_1, _size_j_2, _stride_j_0, _stride_j_1, _stride_j_2, _stride_j_3, _stride_rho_0, _stride_rho_1, _stride_rho_2, _stride_u_0, _stride_u_1, _stride_u_2, _stride_u_3);
 }
 
-void AdvectiveFluxKernel_double_precision::runOnCellInterval(
-    const shared_ptr<StructuredBlockStorage> &blocks,
-    const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
-    IBlock *block) {
+void AdvectiveFluxKernel_double_precision::runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks, const CellInterval &globalCellInterval, cell_idx_t ghostLayers, IBlock *block) {
   CellInterval ci = globalCellInterval;
   CellInterval blockBB = blocks->getBlockCellBB(*block);
   blockBB.expand(ghostLayers);
@@ -4890,33 +1664,27 @@ void AdvectiveFluxKernel_double_precision::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
-  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
   auto u = block->getData<field::GhostLayerField<double, 3>>(uID);
+  auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(j->nrOfGhostLayers()));
-  double *RESTRICT const _data_j =
-      j->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
+  double *RESTRICT const _data_j = j->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(rho->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(rho->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(rho->nrOfGhostLayers()));
-  double *RESTRICT const _data_rho =
-      rho->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
+  double *RESTRICT const _data_rho = rho->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(u->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(u->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(u->nrOfGhostLayers()));
-  double *RESTRICT const _data_u =
-      u->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
-  WALBERLA_ASSERT_GREATER_EQUAL(j->xSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(ci.xSize()) + 2));
+  double *RESTRICT const _data_u = u->dataAt(ci.xMin() - 1, ci.yMin() - 1, ci.zMin() - 1, 0);
+  WALBERLA_ASSERT_GREATER_EQUAL(j->xSizeWithGhostLayer(), int64_t(cell_idx_c(ci.xSize()) + 2));
   const int64_t _size_j_0 = int64_t(cell_idx_c(ci.xSize()) + 2);
-  WALBERLA_ASSERT_GREATER_EQUAL(j->ySizeWithGhostLayer(),
-                                int64_t(cell_idx_c(ci.ySize()) + 2));
+  WALBERLA_ASSERT_GREATER_EQUAL(j->ySizeWithGhostLayer(), int64_t(cell_idx_c(ci.ySize()) + 2));
   const int64_t _size_j_1 = int64_t(cell_idx_c(ci.ySize()) + 2);
-  WALBERLA_ASSERT_GREATER_EQUAL(j->zSizeWithGhostLayer(),
-                                int64_t(cell_idx_c(ci.zSize()) + 2));
+  WALBERLA_ASSERT_GREATER_EQUAL(j->zSizeWithGhostLayer(), int64_t(cell_idx_c(ci.zSize()) + 2));
   const int64_t _size_j_2 = int64_t(cell_idx_c(ci.zSize()) + 2);
   const int64_t _stride_j_0 = int64_t(j->xStride());
   const int64_t _stride_j_1 = int64_t(j->yStride());
@@ -4929,19 +1697,13 @@ void AdvectiveFluxKernel_double_precision::runOnCellInterval(
   const int64_t _stride_u_1 = int64_t(u->yStride());
   const int64_t _stride_u_2 = int64_t(u->zStride());
   const int64_t _stride_u_3 = int64_t(1 * int64_t(u->fStride()));
-  internal_5255e1c780a944d646f270232511968b::
-      advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(
-          _data_j, _data_rho, _data_u, _size_j_0, _size_j_1, _size_j_2,
-          _stride_j_0, _stride_j_1, _stride_j_2, _stride_j_3, _stride_rho_0,
-          _stride_rho_1, _stride_rho_2, _stride_u_0, _stride_u_1, _stride_u_2,
-          _stride_u_3);
+  internal_5255e1c780a944d646f270232511968b::advectivefluxkernel_double_precision_advectivefluxkernel_double_precision(_data_j, _data_rho, _data_u, _size_j_0, _size_j_1, _size_j_2, _stride_j_0, _stride_j_1, _stride_j_2, _stride_j_3, _stride_rho_0, _stride_rho_1, _stride_rho_2, _stride_u_0, _stride_u_1, _stride_u_2, _stride_u_3);
 }
 
 } // namespace pystencils
 } // namespace walberla
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) || (defined WALBERLA_CXX_COMPILER_IS_CLANG)
 #pragma GCC diagnostic pop
 #endif
 

@@ -1,6 +1,7 @@
-// kernel generated with pystencils v1.0, lbmpy v1.0,
-// lbmpy_walberla/pystencils_walberla from commit
-// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
+
+// kernel generated with pystencils v1.2, lbmpy v1.2,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
+// refs/heads/boundaries-codegen
 
 #pragma once
 #include "communication/UniformPackInfo.h"

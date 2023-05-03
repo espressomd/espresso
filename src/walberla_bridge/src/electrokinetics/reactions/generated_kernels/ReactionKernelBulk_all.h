@@ -1,9 +1,5 @@
-// kernel generated with pystencils v1.0+12.g54b91e2.dirty, lbmpy
-// v1.0+8.gac750b5, lbmpy_walberla/pystencils_walberla from commit
-// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
-
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -20,6 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+// kernel generated with pystencils v1.2, lbmpy v1.2,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
+// refs/heads/boundaries-codegen
 
 #pragma once
 

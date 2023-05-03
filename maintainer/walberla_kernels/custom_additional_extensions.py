@@ -131,11 +131,13 @@ class DirichletAdditionalDataHandler(
     def __init__(self, stencil, boundary_object):
         assert isinstance(boundary_object, ps.boundaries.Dirichlet)
         self._boundary_object = boundary_object
+        assert boundary_object.data_type in ("float32", "float64", "double")
+        self.data_type = "float" if boundary_object.data_type == "float32" else "double"
         super().__init__(stencil=stencil)
 
     @property
     def constructor_arguments(self):
-        return ", std::function<real_t(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& " \
+        return f", std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& " \
                "dirichletCallback "
 
     @property
@@ -151,14 +153,14 @@ class DirichletAdditionalDataHandler(
         return " const shared_ptr<StructuredBlockForest> &blocks, "
 
     def data_initialisation(self, _):
-        init_list = ["real_t InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), "
+        init_list = [f"{self.data_type} InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), "
                      "blocks, *block);", "element.value = InitialisatonAdditionalData;"]
 
         return "\n".join(init_list)
 
     @property
     def additional_member_variable(self):
-        return "std::function<real_t(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> " \
+        return f"std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> " \
                "elementInitaliser; "
 
 
@@ -166,11 +168,13 @@ class FluxAdditionalDataHandler(
         pystencils_walberla.additional_data_handler.AdditionalDataHandler):
     def __init__(self, stencil, boundary_object):
         self._boundary_object = boundary_object
+        assert boundary_object.data_type in ("float32", "float64", "double")
+        self.data_type = "float" if boundary_object.data_type == "float32" else "double"
         super().__init__(stencil=stencil)
 
     @property
     def constructor_arguments(self):
-        return ", std::function<Vector3<real_t>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& " \
+        return f", std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& " \
                "fluxCallback "
 
     @property
@@ -189,7 +193,7 @@ class FluxAdditionalDataHandler(
         dirVec = self.stencil_info[direction][1]
 
         init_list = [
-            f"Vector3<real_t> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + {dirVec[0]}, it.y() + {dirVec[1]}, it.z() + {dirVec[2]}), "
+            f"Vector3<{self.data_type}> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + {dirVec[0]}, it.y() + {dirVec[1]}, it.z() + {dirVec[2]}), "
             "blocks, *block);", "element.flux_0 = InitialisatonAdditionalData[0];",
             "element.flux_1 = InitialisatonAdditionalData[1];"]
         if self._dim == 3:
@@ -200,7 +204,7 @@ class FluxAdditionalDataHandler(
 
     @property
     def additional_member_variable(self):
-        return "std::function<Vector3<real_t>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> " \
+        return f"std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> " \
                "elementInitaliser; "
 
 

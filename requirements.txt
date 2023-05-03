@@ -13,9 +13,10 @@ vtk>=9.1.0
 PyOpenGL>=3.1.5
 pygame>=2.1.2
 # waLBerla dependencies
-pystencils==1.0
-lbmpy==1.0
-sympy==1.8
+pystencils==1.2
+lbmpy==1.2
+sympy==1.9
+islpy==2022.2.1
 # CI-related
 requests>=2.25.1
 lxml>=4.8.0

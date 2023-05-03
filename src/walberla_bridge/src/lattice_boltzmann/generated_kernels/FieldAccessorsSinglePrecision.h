@@ -1,7 +1,3 @@
-// kernel generated with pystencils v1.1.1, lbmpy v1.1.1,
-// lbmpy_walberla/pystencils_walberla from commit
-// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
-
 /*
  * Copyright (C) 2021-2023 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
@@ -21,6 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+// kernel generated with pystencils v1.2, lbmpy v1.2,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
 
 /**
  * @file

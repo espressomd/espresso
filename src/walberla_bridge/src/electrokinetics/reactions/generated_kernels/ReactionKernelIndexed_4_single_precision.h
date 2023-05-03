@@ -1,7 +1,3 @@
-// kernel generated with pystencils v1.0, lbmpy v1.0,
-// lbmpy_walberla/pystencils_walberla from commit
-// 01a28162ae1aacf7b96152c9f886ce54cc7f53ff
-
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -21,16 +17,22 @@
 //! \\author pystencils
 //======================================================================================================================
 
+// kernel generated with pystencils v1.2, lbmpy v1.2,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
+// refs/heads/boundaries-codegen
+
 #pragma once
-#include "core/DataTypes.h"
 
-#include "blockforest/StructuredBlockForest.h"
-#include "core/debug/Debug.h"
-#include "domain_decomposition/BlockDataID.h"
-#include "domain_decomposition/IBlock.h"
-#include "field/FlagField.h"
-#include "field/GhostLayerField.h"
+#include <core/DataTypes.h>
 
+#include <blockforest/StructuredBlockForest.h>
+#include <core/debug/Debug.h>
+#include <domain_decomposition/BlockDataID.h>
+#include <domain_decomposition/IBlock.h>
+#include <field/FlagField.h>
+#include <field/GhostLayerField.h>
+
+#include <functional>
 #include <set>
 #include <vector>
 
@@ -64,12 +66,12 @@ public:
     enum Type { ALL = 0, INNER = 1, OUTER = 2, NUM_TYPES = 3 };
 
     IndexVectors() = default;
-    bool operator==(IndexVectors &other) {
+    bool operator==(IndexVectors const &other) const {
       return other.cpuVectors_ == cpuVectors_;
     }
 
     CpuIndexVector &indexVector(Type t) { return cpuVectors_[t]; }
-    IndexInfo *pointerCpu(Type t) { return &(cpuVectors_[t][0]); }
+    IndexInfo *pointerCpu(Type t) { return cpuVectors_[t].data(); }
 
     void syncGPU() {}
 
@@ -160,15 +162,6 @@ public:
     indexVectorOuter.clear();
 
     auto flagWithGLayers = flagField->xyzSizeWithGhostLayer();
-    real_t dot = 0.0;
-    real_t maxn = 0.0;
-    cell_idx_t calculated_idx = 0;
-    cell_idx_t dx = 0;
-    cell_idx_t dy = 0;
-    cell_idx_t dz = 0;
-    cell_idx_t sum_x = 0;
-    cell_idx_t sum_y = 0;
-    cell_idx_t sum_z = 0;
     for (auto it = flagField->beginWithGhostLayerXYZ(); it != flagField->end();
          ++it) {
 

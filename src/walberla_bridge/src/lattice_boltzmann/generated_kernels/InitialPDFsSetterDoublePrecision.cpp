@@ -1,5 +1,3 @@
-// kernel generated with pystencils v1.1.1, lbmpy v1.1.1, lbmpy_walberla/pystencils_walberla from commit e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
-
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -19,6 +17,8 @@
 //! \\ingroup lbm
 //! \\author lbmpy
 //======================================================================================================================
+
+// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
 
 #include <cmath>
 
@@ -131,9 +131,9 @@ static FUNC_PREFIX void initialpdfssetterdoubleprecision_initialpdfssetterdouble
 } // namespace internal_2df07fce91f5444fc18533f996cd1a79
 
 void InitialPDFsSetterDoublePrecision::run(IBlock *block) {
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
@@ -178,9 +178,9 @@ void InitialPDFsSetterDoublePrecision::runOnCellInterval(const shared_ptr<Struct
   if (ci.empty())
     return;
 
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
   auto &rho_0 = this->rho_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()));

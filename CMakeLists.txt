@@ -600,9 +600,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        ad7168aa523af17dbb4c16585b7534d53500c903
-    PATCH_COMMAND  git apply --ignore-whitespace
-                   ${PROJECT_SOURCE_DIR}/cmake/waLBerla.patch
+    GIT_TAG        4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
   )
   # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
   if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")

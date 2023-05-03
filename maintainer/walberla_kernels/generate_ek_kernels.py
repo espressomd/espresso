@@ -37,20 +37,10 @@ args = parser.parse_args()
 
 double_precision: bool = not args.single_precision
 
-data_type_np = pystencils_espresso.data_type_np["double" if double_precision else "float"]
+data_type_cpp = "double" if double_precision else "float"
+data_type_np = pystencils_espresso.data_type_np[data_type_cpp]
 precision_suffix = pystencils_espresso.precision_suffix[double_precision]
 precision_rng = pystencils_espresso.precision_rng[double_precision]
-
-
-def replace_real_t(filename: str, data_type: str) -> None:
-    with open(filename, "r+") as f:
-        content = f.read()
-        f.seek(0)
-        f.truncate(0)
-        # patch for floating point accuracy
-        content = content.replace('real_t', data_type)
-        content = content.replace('real_c', f"numeric_cast<{data_type}>")
-        f.write(content)
 
 
 def replace_getData_with_uncheckedFastGetData(filename: str) -> None:
@@ -179,11 +169,6 @@ with code_generation_context.CodeGeneration() as ctx:
         target=target,
         additional_data_handler=dynamic_flux_additional_data)
 
-    filename_stem: str = f"FixedFlux_{precision_suffix}"
-    replace_real_t(
-        filename=f"{filename_stem}.h",
-        data_type=config.data_type.default_factory().c_name)
-
     # generate dynamic fixed density
     dirichlet_stencil = lbmpy.stencils.LBStencil(stencil=((0, 0, 0),))
     dirichlet = custom_additional_extensions.Dirichlet_Custom(
@@ -196,15 +181,10 @@ with code_generation_context.CodeGeneration() as ctx:
         class_name=f"Dirichlet_{precision_suffix}",
         boundary_object=dirichlet,
         additional_data_handler=dirichlet_additional_data,
-        field_name='field',
+        field_name="field",
         neighbor_stencil=stencil,
         index_shape=density_field.index_shape,
         target=target)
-
-    filename_stem: str = f"Dirichlet_{precision_suffix}"
-    replace_real_t(
-        filename=f"{filename_stem}.h",
-        data_type=config.data_type.default_factory().c_name)
 
     pystencils_walberla.generate_pack_info_from_kernel(
         ctx,

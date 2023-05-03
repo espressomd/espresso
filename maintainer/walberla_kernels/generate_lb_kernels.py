@@ -52,7 +52,7 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-for module, requirement in [(ps, "==1.1.1"), (lbmpy, "==1.1.1")]:
+for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
     assert pkg_resources.packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
@@ -203,14 +203,3 @@ with code_generation_context.CodeGeneration() as ctx:
             content = content.replace("real_t",
                                       config.data_type.default_factory().c_name)
             f.write(content)
-
-#    # communication
-#    for _, target_suffix in paramlist(parameters, ("GPU", "CPU")):
-#        lbmpy_walberla.generate_lb_pack_info(
-#            ctx,
-#            f"PushPackInfo{precision_prefix}{target_suffix}",
-#            method.stencil,
-#            fields["pdfs"],
-#            streaming_pattern="push",
-#            target=target
-#        )

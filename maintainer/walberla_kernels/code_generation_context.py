@@ -28,82 +28,89 @@ import pystencils_walberla
 
 
 def adapt_pystencils():
-    '''
+    """
     Adapt pystencils to the SFINAE method (add the block offset lambda
     callback and the time_step increment).
-    '''
+    """
     old_add_pystencils_filters_to_jinja_env = pystencils_walberla.codegen.add_pystencils_filters_to_jinja_env
 
     def new_add_pystencils_filters_to_jinja_env(jinja_env):
         # save original pystencils to adapt
         old_add_pystencils_filters_to_jinja_env(jinja_env)
-        old_generate_members = jinja_env.filters['generate_members']
+        old_generate_members = jinja_env.filters["generate_members"]
         old_generate_refs_for_kernel_parameters = jinja_env.filters[
-            'generate_refs_for_kernel_parameters']
+            "generate_refs_for_kernel_parameters"]
 
         @jinja2.pass_context
         def new_generate_members(*args, **kwargs):
             output = old_generate_members(*args, **kwargs)
-            token = ' block_offset_0_;'
+            token = " block_offset_0_;"
             if token in output:
                 i = output.index(token)
-                vartype = output[:i].split('\n')[-1].strip()
-                output += f'\nstd::function<void(IBlock *, {vartype}&, {vartype}&, {vartype}&)> block_offset_generator = [](IBlock * const, {vartype}&, {vartype}&, {vartype}&) {{ }};'
+                vartype = output[:i].split("\n")[-1].strip()
+                output += f"\nstd::function<void(IBlock *, {vartype}&, {vartype}&, {vartype}&)> block_offset_generator = [](IBlock * const, {vartype}&, {vartype}&, {vartype}&) {{ }};"
             return output
 
         def new_generate_refs_for_kernel_parameters(*args, **kwargs):
             output = old_generate_refs_for_kernel_parameters(*args, **kwargs)
-            if 'block_offset_0' in output:
-                old_token = 'auto & block_offset_'
-                new_token = 'auto block_offset_'
+            if "block_offset_0" in output:
+                old_token = "auto & block_offset_"
+                new_token = "auto block_offset_"
                 assert output.count(old_token) == 3, \
-                    f'could not find "{old_token}" in """\n{output}\n"""'
+                    f"could not find '{old_token}' in '''\n{output}\n'''"
                 output = output.replace(old_token, new_token)
-                output += '\nblock_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);'
+                output += "\nblock_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);"
             return output
 
         # replace pystencils
-        jinja_env.filters['generate_members'] = new_generate_members
-        jinja_env.filters['generate_refs_for_kernel_parameters'] = new_generate_refs_for_kernel_parameters
+        jinja_env.filters["generate_members"] = new_generate_members
+        jinja_env.filters["generate_refs_for_kernel_parameters"] = new_generate_refs_for_kernel_parameters
 
     pystencils_walberla.codegen.add_pystencils_filters_to_jinja_env = new_add_pystencils_filters_to_jinja_env
 
 
 def earmark_generated_kernels():
-    '''
+    """
     Add an earmark at the beginning of generated kernels to document the
     pystencils/lbmpy toolchain that was used to create them.
-    '''
-    walberla_root = lbmpy_walberla.__file__.split('/python/lbmpy_walberla/')[0]
-    with open(os.path.join(walberla_root, '.git/HEAD')) as f:
+    """
+    walberla_root = lbmpy_walberla.__file__.split("/python/lbmpy_walberla/")[0]
+    with open(os.path.join(walberla_root, ".git/HEAD")) as f:
         walberla_commit = f.read()
-    if walberla_commit.startswith('ref: refs/heads/master'):
+    if walberla_commit.startswith("ref: refs/heads/master"):
         ref = walberla_commit.split()[1]
-        with open(os.path.join(walberla_root, f'.git/{ref}')) as f:
+        with open(os.path.join(walberla_root, f".git/{ref}")) as f:
             walberla_commit = f.read()
-    token = '// kernel generated with'
+    token = "// kernel generated with"
     earmark = (
-        f'{token} pystencils v{pystencils.__version__}, lbmpy v{lbmpy.__version__}, '
-        f'lbmpy_walberla/pystencils_walberla from commit {walberla_commit}\n'
+        f"{token} pystencils v{pystencils.__version__}, lbmpy v{lbmpy.__version__}, "
+        f"lbmpy_walberla/pystencils_walberla from waLBerla commit {walberla_commit}"
     )
-    for filename in os.listdir('.'):
+    for filename in os.listdir("."):
         if not filename.endswith(
-                '.tmpl.h') and filename.endswith(('.h', '.cpp')):
-            with open(filename, 'r+') as f:
+                ".tmpl.h") and filename.endswith((".h", ".cpp", ".cu")):
+            with open(filename, "r+") as f:
                 content = f.read()
-                if not content.startswith(token):
-                    f.seek(0)
-                    f.write(earmark + content)
+                if token not in content:
+                    pos = 0
+                    if content.startswith("/*"):
+                        pos = content.find("*/")
+                        pos = content.find("\n", pos) + 1
+                    elif content.startswith("//====="):
+                        pos = content.find("//=====", 5)
+                        pos = content.find("\n", pos) + 1
+                    f.seek(pos)
+                    f.write(f"\n{earmark}\n{content[pos:]}")
 
 
 def guard_generated_kernels_clang_format():
-    '''
+    """
     Some namespaces are too long and will break ``clang-format`` versions
     9 and 10. Replace them with a unique string of reasonable size.
-    '''
-    for filename in os.listdir('.'):
-        if filename.endswith('.cpp'):
-            with open(filename, 'r') as f:
+    """
+    for filename in os.listdir("."):
+        if filename.endswith(".cpp"):
+            with open(filename, "r") as f:
                 content = f.read()
             all_ns = re.findall(r"^namespace (internal_[a-zA-Z0-9_]{54,}) \{$",
                                 content, flags=re.MULTILINE)
@@ -113,7 +120,7 @@ def guard_generated_kernels_clang_format():
                 content = re.sub(rf"(?<=[^a-zA-Z0-9_]){ns}(?=[^a-zA-Z0-9_])",
                                  f"internal_{hashlib.md5(ns.encode('utf-8')).hexdigest()}",
                                  content)
-            with open(filename, 'w') as f:
+            with open(filename, "w") as f:
                 f.write(content)
 
 

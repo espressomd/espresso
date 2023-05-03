@@ -1,7 +1,3 @@
-// kernel generated with pystencils v1.0+25.gfe5cece, lbmpy v1.0+16.g030bd5a,
-// lbmpy_walberla/pystencils_walberla from commit
-// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
-
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -20,6 +16,8 @@
 //! \\file Dirichlet_double_precision.cpp
 //! \\author pystencils
 //======================================================================================================================
+
+// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: refs/heads/boundaries-codegen
 
 #include <cmath>
 
@@ -51,30 +49,19 @@ namespace pystencils {
 #endif
 
 namespace internal_74da74b67a122b7887d3d21c7ea5f414 {
-static FUNC_PREFIX void
-dirichlet_double_precision_boundary_Dirichlet_double_precision(
-    double *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector,
-    int64_t const _stride_field_0, int64_t const _stride_field_1,
-    int64_t const _stride_field_2, int32_t indexVectorSize) {
+static FUNC_PREFIX void dirichlet_double_precision_boundary_Dirichlet_double_precision(double *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int32_t indexVectorSize) {
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
     const int32_t x = *((int32_t *)(&_data_indexVector[24 * ctr_0]));
     const int32_t y = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 4]));
     const int32_t z = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 8]));
 
-    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0,  -1, 1,  -1, 1,  0, 0, -1,
-                          1, 0, 0, -1, 1, 1, -1, 1,  -1, 1,  -1, 1, -1};
-    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1,  1,  -1, -1, 1,  -1, 0,
-                          0, 1, -1, 0, 0, 1, 1, -1, -1, 1,  1,  -1, -1};
-    const int32_t cz[] = {0, 0,  0,  0,  0,  1, -1, 0, 0, 0,  0,  1,  1, 1,
-                          1, -1, -1, -1, -1, 1, 1,  1, 1, -1, -1, -1, -1};
-    const int32_t invdir[] = {0,  2,  1,  4,  3,  6,  5,  10, 9,
-                              8,  7,  16, 15, 18, 17, 12, 11, 14,
-                              13, 26, 25, 24, 23, 22, 21, 20, 19};
+    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
+    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
+    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
+    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
 
     const int32_t dir = *((int32_t *)(&_data_indexVector[24 * ctr_0 + 12]));
-    _data_field[_stride_field_0 * x + _stride_field_1 * y +
-                _stride_field_2 * z] =
-        *((double *)(&_data_indexVector[24 * ctr_0 + 16]));
+    _data_field[_stride_field_0 * x + _stride_field_1 * y + _stride_field_2 * z] = *((double *)(&_data_indexVector[24 * ctr_0 + 16]));
   }
 }
 } // namespace internal_74da74b67a122b7887d3d21c7ea5f414
@@ -87,8 +74,7 @@ dirichlet_double_precision_boundary_Dirichlet_double_precision(
 #pragma pop
 #endif
 
-void Dirichlet_double_precision::run_impl(IBlock *block,
-                                          IndexVectors::Type type) {
+void Dirichlet_double_precision::run_impl(IBlock *block, IndexVectors::Type type) {
   auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
   int32_t indexVectorSize = int32_c(indexVectors->indexVector(type).size());
   if (indexVectorSize == 0)
@@ -105,10 +91,7 @@ void Dirichlet_double_precision::run_impl(IBlock *block,
   const int64_t _stride_field_0 = int64_t(field->xStride());
   const int64_t _stride_field_1 = int64_t(field->yStride());
   const int64_t _stride_field_2 = int64_t(field->zStride());
-  internal_74da74b67a122b7887d3d21c7ea5f414::
-      dirichlet_double_precision_boundary_Dirichlet_double_precision(
-          _data_field, _data_indexVector, _stride_field_0, _stride_field_1,
-          _stride_field_2, indexVectorSize);
+  internal_74da74b67a122b7887d3d21c7ea5f414::dirichlet_double_precision_boundary_Dirichlet_double_precision(_data_field, _data_indexVector, _stride_field_0, _stride_field_1, _stride_field_2, indexVectorSize);
 }
 
 void Dirichlet_double_precision::run(IBlock *block) {

@@ -1,7 +1,3 @@
-// kernel generated with pystencils v1.1.1, lbmpy v1.1.1,
-// lbmpy_walberla/pystencils_walberla from commit
-// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
-
 //======================================================================================================================
 //
 //  This file is part of waLBerla. waLBerla is free software: you can
@@ -20,6 +16,10 @@
 //! \\file InitialPDFsSetterSinglePrecision.h
 //! \\author pystencils
 //======================================================================================================================
+
+// kernel generated with pystencils v1.2, lbmpy v1.2,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
 
 #pragma once
 #include "core/DataTypes.h"

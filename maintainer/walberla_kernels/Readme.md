@@ -1,4 +1,4 @@
-# Generation of kernels for Walberla
+# Generation of kernels for waLBerla
 
 The scripts in this directory generate the .cpp/.hpp kernels for lattice-based algorithms.
 
@@ -17,18 +17,37 @@ The following dependencies need to be in the Python path:
 ## Example
 
 ```sh
-export VERSION=1.1.1
+# adapt these paths to the build environment
+export VERSION=1.2
 export DEPS="${HOME}/walberla_deps"
 export PYTHONPATH="${DEPS}/${VERSION}/lbmpy:${DEPS}/${VERSION}/pystencils:${DEPS}/devel/walberla/python/"
+
+# functions
+function generate_lb_kernels {
+  python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py $@
+}
+function generate_ek_kernels {
+  python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py $@
+}
+function format_lb_kernels {
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+}
+function format_ek_kernels {
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+}
+
+# LB kernels
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
-python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py
-python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py --single-precision
-$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
-$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+generate_lb_kernels
+generate_lb_kernels --single-precision
+format_lb_kernels
+
+# EK kernels
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
-python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py
-python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py --single-precision
-$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
-$(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+generate_ek_kernels
+generate_ek_kernels --single-precision
+format_ek_kernels
 mv ReactionKernel*.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
 ```
