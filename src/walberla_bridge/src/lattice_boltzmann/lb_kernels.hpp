@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "walberla_bridge/Architecture.hpp"
+#include <walberla_bridge/Architecture.hpp>
 
 #include "generated_kernels/Dynamic_UBB_double_precision.h"
 #include "generated_kernels/Dynamic_UBB_single_precision.h"

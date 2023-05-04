@@ -57,6 +57,7 @@ using Utils::Vector3i;
 namespace bdata = boost::unit_test::data;
 
 static LBTestParameters params; // populated in main()
+static Vector3i mpi_shape;
 
 BOOST_DATA_TEST_CASE(dimensions, bdata::make(all_lbs()), lb_generator) {
   using boost::test_tools::per_element;
@@ -573,6 +574,13 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
   BOOST_CHECK_THROW(lb->switch_vtk("unknown", 0), std::runtime_error);
 }
 
+BOOST_AUTO_TEST_CASE(lb_exceptions) {
+  using LB = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
+  auto lb_lattice_without_ghosts =
+      std::make_shared<LatticeWalberla>(params.grid_dimensions, mpi_shape, 0u);
+  BOOST_CHECK_THROW(LB(lb_lattice_without_ghosts, 1., 1.), std::runtime_error);
+}
+
 BOOST_AUTO_TEST_CASE(le_sweep) {
   auto const get_pos_offset = []() { return 0.123; };
   auto const get_shift = []() { return 0.456; };
@@ -599,7 +607,6 @@ BOOST_AUTO_TEST_CASE(le_sweep) {
 
 int main(int argc, char **argv) {
   int n_nodes;
-  Vector3i mpi_shape{};
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);

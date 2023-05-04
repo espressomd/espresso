@@ -19,18 +19,20 @@
 
 #include "EKReactionImplIndexed.hpp"
 
-#include "walberla_bridge/BlockAndCell.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
-#include <walberla_bridge/LatticeWalberla.hpp>
-
 #include "generated_kernels/ReactionKernelIndexed_all.h"
 
+#include <walberla_bridge/BlockAndCell.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactant.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
+
 #include <domain_decomposition/BlockDataID.h>
+#include <domain_decomposition/IBlock.h>
 #include <field/AddToStorage.h>
 
 #include <boost/optional.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <tuple>
 #include <vector>
@@ -49,7 +51,7 @@ using FlagField = FlagField<uint8_t>;
 template <typename FlagField>
 inline auto
 get_flag_field_and_flag(IBlock *block,
-                        const domain_decomposition::BlockDataID &flagfield_id) {
+                        domain_decomposition::BlockDataID const &flagfield_id) {
   auto const flag_field =
       block->template uncheckedFastGetData<FlagField>(flagfield_id);
   auto const boundary_flag = flag_field->getFlag(Boundary_flag);

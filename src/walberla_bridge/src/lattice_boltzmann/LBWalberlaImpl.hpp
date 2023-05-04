@@ -249,8 +249,6 @@ protected:
       m_lees_edwards_vel_interpol_sweep;
   std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
       m_lees_edwards_last_applied_force_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
-      m_lees_edwards_force_to_be_applied_backwards_interpol_sweep;
 
   // Collision sweep
   std::shared_ptr<CollisionModel> m_collision_model;
@@ -323,7 +321,7 @@ public:
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
-    if (n_ghost_layers == 0)
+    if (n_ghost_layers == 0u)
       throw std::runtime_error("At least one ghost layer must be used");
 
     // Initialize and register fields
@@ -422,12 +420,6 @@ private:
       (*m_lees_edwards_last_applied_force_interpol_sweep)(&*b);
   }
 
-  void apply_lees_edwards_force_to_be_applied_backwards_interpolation(
-      std::shared_ptr<Lattice_T> const &blocks) {
-    for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_lees_edwards_force_to_be_applied_backwards_interpol_sweep)(&*b);
-  }
-
   void integrate_reset_force(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_reset_force)(&*b);
@@ -462,7 +454,6 @@ private:
     integrate_stream(blocks);
     // LB collide
     integrate_collide(blocks);
-
     // Refresh ghost layers
     ghost_communication();
   }
@@ -541,9 +532,6 @@ public:
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
-    auto const get_pos_offset_back = [callbacks = m_lees_edwards_callbacks]() {
-      return -1. * callbacks->get_pos_offset();
-    };
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,
@@ -560,11 +548,6 @@ public:
             blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
             n_ghost_layers, shear_direction, shear_plane_normal,
             m_lees_edwards_callbacks->get_pos_offset);
-    m_lees_edwards_force_to_be_applied_backwards_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            blocks, m_force_to_be_applied_id, m_vec_tmp_field_id,
-            n_ghost_layers, shear_direction, shear_plane_normal,
-            get_pos_offset_back);
   }
 
   void check_lebc(unsigned int shear_direction,

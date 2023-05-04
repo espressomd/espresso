@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 static struct {
   double kT = 1.3E-4;
@@ -117,8 +118,12 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
 BOOST_AUTO_TEST_CASE(ek_interface) {
   {
     EK::propagate(); // no-op
+    BOOST_CHECK_THROW(EK::get_tau(), NoEKActive);
     BOOST_CHECK_THROW(EK::get_tau(), std::exception);
     BOOST_CHECK_THROW(EK::get_steps_per_md_step(1.), std::exception);
+    auto const err_msg = std::string(NoEKActive().what());
+    auto const ref_msg = std::string("EK not activated");
+    BOOST_CHECK_EQUAL(err_msg, ref_msg);
   }
 }
 

@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
 #include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactant.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
 
 #include <memory>
 #include <vector>

@@ -19,14 +19,14 @@
 
 #pragma once
 
+#include "generated_kernels/FieldAccessorsDoublePrecision.h"
+#include "generated_kernels/FieldAccessorsSinglePrecision.h"
+
+#include <walberla_bridge/utils/walberla_utils.hpp>
+
 #include <core/math/Vector3.h>
 #include <domain_decomposition/SharedSweep.h>
 #include <lbm/sweeps/CellwiseSweep.h>
-
-#include "walberla_bridge/utils/walberla_utils.hpp"
-
-#include "generated_kernels/FieldAccessorsDoublePrecision.h"
-#include "generated_kernels/FieldAccessorsSinglePrecision.h"
 
 #include <utils/Vector.hpp>
 

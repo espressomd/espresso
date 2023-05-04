@@ -19,8 +19,6 @@
 
 #include "EKReactionImplBulk.hpp"
 
-#include "walberla_bridge/electrokinetics/reactions/EKReactant.hpp"
-
 #include "generated_kernels/ReactionKernelBulk_all.h"
 
 #include <blockforest/StructuredBlockForest.h>

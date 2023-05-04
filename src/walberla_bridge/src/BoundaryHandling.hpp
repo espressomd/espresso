@@ -19,11 +19,11 @@
 
 #pragma once
 
+#include <walberla_bridge/BlockAndCell.hpp>
+#include <walberla_bridge/utils/walberla_utils.hpp>
+
 #include <blockforest/StructuredBlockForest.h>
 #include <field/FlagField.h>
-
-#include "walberla_bridge/BlockAndCell.hpp"
-#include "walberla_bridge/utils/walberla_utils.hpp"
 
 #include <utils/Vector.hpp>
 
