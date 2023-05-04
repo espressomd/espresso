@@ -16,6 +16,3 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-configure_file(__init__.py __init__.py COPYONLY)
-configure_file(walberla.py walberla.py COPYONLY)

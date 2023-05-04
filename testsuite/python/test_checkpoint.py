@@ -267,10 +267,10 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_vtk(self):
         vtk_suffix = config.test_name
-        vtk_registry = espressomd.lb._vtk_registry
+        vtk_registry = espressomd.lb._walberla_vtk_registry
         key_auto = f"vtk_out/auto_lb_{vtk_suffix}"
-        self.assertIn(key_auto, vtk_registry.map)
-        obj = vtk_registry.map[key_auto]
+        self.assertIn(key_auto, vtk_registry)
+        obj = vtk_registry[key_auto]
         self.assertIsInstance(obj, espressomd.lb.VTKOutput)
         self.assertEqual(obj.vtk_uid, key_auto)
         self.assertEqual(obj.delta_N, 1)
@@ -279,8 +279,8 @@ class CheckpointTest(ut.TestCase):
         self.assertIn(
             f"write to '{key_auto}' every 1 LB steps (disabled)>", repr(obj))
         key_manual = f"vtk_out/manual_lb_{vtk_suffix}"
-        self.assertIn(key_manual, vtk_registry.map)
-        obj = vtk_registry.map[key_manual]
+        self.assertIn(key_manual, vtk_registry)
+        obj = vtk_registry[key_manual]
         self.assertIsInstance(obj, espressomd.lb.VTKOutput)
         self.assertEqual(obj.vtk_uid, key_manual)
         self.assertEqual(obj.delta_N, 0)
@@ -289,7 +289,7 @@ class CheckpointTest(ut.TestCase):
         # check file numbering when resuming VTK write operations
         vtk_root = pathlib.Path("vtk_out") / f"manual_lb_{vtk_suffix}"
         filename = "simulation_step_{}.vtu"
-        vtk_manual = espressomd.lb._vtk_registry.map[key_manual]
+        vtk_manual = vtk_registry[key_manual]
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
@@ -302,10 +302,10 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
     def test_ek_vtk(self):
         vtk_suffix = config.test_name
-        vtk_registry = espressomd.electrokinetics._ek_vtk_registry
+        vtk_registry = espressomd.electrokinetics._walberla_vtk_registry
         key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
-        self.assertIn(key_auto, vtk_registry.map)
-        obj = vtk_registry.map[key_auto]
+        self.assertIn(key_auto, vtk_registry)
+        obj = vtk_registry[key_auto]
         self.assertIsInstance(obj, espressomd.electrokinetics.VTKOutput)
         self.assertEqual(obj.vtk_uid, key_auto)
         self.assertEqual(obj.delta_N, 1)
@@ -314,8 +314,8 @@ class CheckpointTest(ut.TestCase):
         self.assertIn(
             f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(obj))
         key_manual = f"vtk_out/manual_ek_{vtk_suffix}"
-        self.assertIn(key_manual, vtk_registry.map)
-        obj = vtk_registry.map[key_manual]
+        self.assertIn(key_manual, vtk_registry)
+        obj = vtk_registry[key_manual]
         self.assertIsInstance(obj, espressomd.electrokinetics.VTKOutput)
         self.assertEqual(obj.vtk_uid, key_manual)
         self.assertEqual(obj.delta_N, 0)
@@ -324,7 +324,7 @@ class CheckpointTest(ut.TestCase):
         # check file numbering when resuming VTK write operations
         vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
         filename = "simulation_step_{}.vtu"
-        vtk_manual = espressomd.electrokinetics._vtk_registry.map[key_manual]
+        vtk_manual = vtk_registry[key_manual]
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())

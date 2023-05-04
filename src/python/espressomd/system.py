@@ -256,8 +256,9 @@ class System(ScriptInterfaceHelper):
         for property_name in checkpointable_properties:
             odict[property_name] = System.__getattribute__(self, property_name)
         if has_features("WALBERLA"):
-            odict["_lb_vtk_registry"] = lb._vtk_registry
-            odict["_ek_vtk_registry"] = electrokinetics._ek_vtk_registry
+            ek = electrokinetics
+            odict["_lb_vtk_registry"] = lb._walberla_vtk_registry
+            odict["_ek_vtk_registry"] = ek._walberla_vtk_registry
         return odict
 
     def __setstate__(self, params):
@@ -269,8 +270,9 @@ class System(ScriptInterfaceHelper):
             System.__setattr__(self, property_name, params[property_name])
         self.call_method("lock_system_creation")
         if has_features("WALBERLA"):
-            lb._vtk_registry = lb_vtk_registry
-            electrokinetics._vtk_registry = ek_vtk_registry
+            ek = electrokinetics
+            lb._walberla_vtk_registry = lb_vtk_registry
+            ek._walberla_vtk_registry = ek_vtk_registry
 
     @property
     def box_l(self):

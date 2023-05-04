@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
 import numpy as np
 
 import espressomd.code_features
@@ -63,22 +62,24 @@ class VTKRegistry:
         if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
         self.map = {}
-        self.collisions = {}
+
+    def __getitem__(self, vtk_uid):
+        return self.map[vtk_uid]
+
+    def __contains__(self, vtk_uid):
+        return vtk_uid in self.map
 
     def _register_vtk_object(self, vtk_obj):
         vtk_uid = vtk_obj.vtk_uid
         self.map[vtk_uid] = vtk_obj
-        self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
 
     def __getstate__(self):
         return self.map
 
     def __setstate__(self, active_vtk_objects):
         self.map = {}
-        self.collisions = {}
         for vtk_uid, vtk_obj in active_vtk_objects.items():
             self.map[vtk_uid] = vtk_obj
-            self.collisions[os.path.abspath(vtk_uid)] = vtk_uid
 
 
 class VTKOutputBase(ScriptInterfaceHelper):
@@ -86,18 +87,19 @@ class VTKOutputBase(ScriptInterfaceHelper):
     def __init__(self, *args, **kwargs):
         if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
-        if 'sip' not in kwargs:
+        if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)
-            if isinstance(params['observables'], str):
-                params['observables'] = [params['observables']]
+            if isinstance(params["observables"], str):
+                params["observables"] = [params["observables"]]
             super().__init__(*args, **params)
         else:
             super().__init__(**kwargs)
+        self._add_to_registry()
 
     def valid_observables(self):
         return set(self.call_method("get_valid_observable_names"))
 
     def default_params(self):
-        return {'delta_N': 0, 'enabled': True, 'execution_count': 0,
-                'base_folder': 'vtk_out', 'prefix': 'simulation_step'}
+        return {"delta_N": 0, "enabled": True, "execution_count": 0,
+                "base_folder": "vtk_out", "prefix": "simulation_step"}

@@ -216,7 +216,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
 
 if has_features("WALBERLA"):
-    _vtk_registry = VTKRegistry()
+    _walberla_vtk_registry = VTKRegistry()
 
 
 @script_interface_register
@@ -256,9 +256,8 @@ class VTKOutput(VTKOutputBase):
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("enable", "disable", "write")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        _vtk_registry._register_vtk_object(self)
+    def _add_to_registry(self):
+        _walberla_vtk_registry._register_vtk_object(self)
 
     def valid_keys(self):
         return {'lb_fluid', 'delta_N', 'execution_count', 'observables',
