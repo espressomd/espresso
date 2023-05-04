@@ -127,6 +127,7 @@ set_default_value with_fftw true
 set_default_value with_gsl true
 set_default_value with_scafacos false
 set_default_value with_walberla false
+set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
 set_default_value hide_gpu false
@@ -190,6 +191,9 @@ fi
 
 if [ "${with_walberla}" = true ]; then
   cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON"
+  if [ "${with_walberla_avx}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
+  fi
   # disable default OpenMPI CPU binding mechanism to avoid stale references to
   # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
   mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"

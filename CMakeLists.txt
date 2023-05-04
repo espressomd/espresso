@@ -95,7 +95,7 @@ option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA
        "Build with waLBerla lattice-Boltzmann support" OFF)
-option(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX
+option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
        "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
@@ -593,13 +593,12 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  cmake_minimum_required(VERSION 3.19)
   # cmake-format: off
   include(FetchContent)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
+    GIT_TAG        a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
   )
   # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
   if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")
@@ -614,6 +613,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
   set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
   set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+  set(WALBERLA_LOGLEVEL "INFO" CACHE STRING "")
   set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   if(ESPRESSO_BUILD_WITH_CUDA)
     set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
@@ -646,7 +646,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     string(REPLACE "walberla::" "" target_wo_namespace ${target_w_namespace})
     add_library(${target_w_namespace} ALIAS ${target_wo_namespace})
   endforeach()
-  if(ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
+  if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(
         espresso_avx_flags INTERFACE "${COMPILER_AVX2_FLAG}"

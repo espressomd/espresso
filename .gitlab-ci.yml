@@ -239,8 +239,8 @@ cuda11-maxset:
      srcdir: '${CI_PROJECT_DIR}'
      with_scafacos: 'true'
      with_walberla: 'true'
+     with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
-     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -265,6 +265,7 @@ tutorials-samples-maxset:
      with_coverage_python: 'true'
      with_scafacos: 'true'
      with_walberla: 'true'
+     with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
@@ -272,7 +273,6 @@ tutorials-samples-maxset:
      make_check_samples: 'true'
      make_check_benchmarks: 'true'
      test_timeout: '1200'
-     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -292,13 +292,13 @@ tutorials-samples-default:
      with_coverage: 'false'
      with_scafacos: 'true'
      with_walberla: 'true'
+     with_walberla_avx: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
      make_check_benchmarks: 'true'
      test_timeout: '1200'
-     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -347,6 +347,7 @@ tutorials-samples-no-gpu:
      with_coverage: 'false'
      with_scafacos: 'true'
      with_walberla: 'true'
+     with_walberla_avx: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
@@ -354,7 +355,6 @@ tutorials-samples-no-gpu:
      make_check_benchmarks: 'true'
      test_timeout: '1200'
      hide_gpu: 'true'
-     cmake_params: '-D ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
