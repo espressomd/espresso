@@ -18,7 +18,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: macos
-          save: ${{ ! startsWith(github.ref, 'refs/pull') }}
+          save: ${{ github.ref == 'refs/heads/python' }}
       - name: Setup Python environment
         uses: actions/setup-python@v4.3.1
         with:
@@ -35,7 +35,7 @@ jobs:
   debian:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/espressomd/docker/debian:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
+      image: ghcr.io/espressomd/docker/debian:fbdf2f2f9d76b761c0aa1308f17fb17e38501850-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -47,7 +47,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: debian
-          save: ${{ ! startsWith(github.ref, 'refs/pull') }}
+          save: ${{ github.ref == 'refs/heads/python' || ( github.repository != 'espressomd/espresso' && ! startsWith(github.ref, 'refs/pull') ) }}
       - name: Setup Git environment
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Get runner specifications
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:f6cf74049a2521b2b5580d23d42c8290c5f7611e-base-layer
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:fbdf2f2f9d76b761c0aa1308f17fb17e38501850-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -86,7 +86,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ubuntu
-          save: ${{ ! startsWith(github.ref, 'refs/pull') }}
+          save: ${{ github.ref == 'refs/heads/python' }}
       - name: Setup Git environment
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Get runner specifications
