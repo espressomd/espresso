@@ -20,6 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 
+import os
 import pathlib
 import tempfile
 import contextlib
@@ -30,11 +31,10 @@ import espressomd.electrokinetics
 import espressomd.shapes
 
 with contextlib.suppress(ImportError):
-    import vtk  # pylint: disable=unused-import
     import espressomd.io.vtk
 
 
-class EKWalberlaWrite:
+class TestVTK:
     system = espressomd.System(box_l=[6, 7, 5])
     system.time_step = 1.0
     system.cell_system.skin = 0.4
@@ -158,6 +158,20 @@ class EKWalberlaWrite:
             vtk_manual.disable()
         with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be enabled'):
             vtk_manual.enable()
+        with self.assertRaisesRegex(RuntimeError, 'already exists'):
+            espressomd.electrokinetics.VTKOutput(
+                species=self.species, identifier=ek_vtk_manual_id, delta_N=0,
+                observables=[])
+        with self.assertRaisesRegex(ValueError, "Parameter 'delta_N' must be >= 0"):
+            espressomd.electrokinetics.VTKOutput(
+                species=self.species, identifier="a", delta_N=-1, observables=[])
+        with self.assertRaisesRegex(ValueError, "Parameter 'identifier' cannot be empty"):
+            espressomd.electrokinetics.VTKOutput(
+                species=self.species, identifier="", delta_N=0, observables=[])
+        with self.assertRaisesRegex(ValueError, "cannot be a filepath"):
+            espressomd.electrokinetics.VTKOutput(
+                species=self.species, identifier=f"test{os.sep}test", delta_N=0,
+                observables=[])
 
         # can still use VTK when the EK actor has been cleared but not deleted
         label_cleared = f'test_ek_vtk_{self.ek_vtk_id}_cleared'
@@ -173,14 +187,14 @@ class EKWalberlaWrite:
 
 @utx.skipIfMissingModules("vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBWalberlaWrite(EKWalberlaWrite, ut.TestCase):
+class EKWalberlaWrite(TestVTK, ut.TestCase):
     ek_params = {'single_precision': False}
     ek_vtk_id = 'double_precision'
 
 
 @utx.skipIfMissingModules("vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBWalberlaWriteSinglePrecision(EKWalberlaWrite, ut.TestCase):
+class EKWalberlaWriteSinglePrecision(TestVTK, ut.TestCase):
     ek_params = {'single_precision': True}
     ek_vtk_id = 'single_precision'
 

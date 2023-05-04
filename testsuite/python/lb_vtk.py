@@ -20,6 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 
+import os
 import pathlib
 import tempfile
 import contextlib
@@ -30,11 +31,10 @@ import espressomd.lb
 import espressomd.shapes
 
 with contextlib.suppress(ImportError):
-    import vtk  # pylint: disable=unused-import
     import espressomd.io.vtk
 
 
-class TestLBWrite:
+class TestVTK:
     """
     Set up a planar Poiseuille flow and write fluid to VTK files.
     """
@@ -178,6 +178,20 @@ class TestLBWrite:
             vtk_manual.disable()
         with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be enabled'):
             vtk_manual.enable()
+        with self.assertRaisesRegex(RuntimeError, 'already exists'):
+            espressomd.lb.VTKOutput(
+                lb_fluid=self.lbf, identifier=lb_vtk_manual_id, delta_N=0,
+                observables=[])
+        with self.assertRaisesRegex(ValueError, "Parameter 'delta_N' must be >= 0"):
+            espressomd.lb.VTKOutput(
+                lb_fluid=self.lbf, identifier="a", delta_N=-1, observables=[])
+        with self.assertRaisesRegex(ValueError, "Parameter 'identifier' cannot be empty"):
+            espressomd.lb.VTKOutput(
+                lb_fluid=self.lbf, identifier="", delta_N=0, observables=[])
+        with self.assertRaisesRegex(ValueError, "cannot be a filepath"):
+            espressomd.lb.VTKOutput(
+                lb_fluid=self.lbf, identifier=f"test{os.sep}test", delta_N=0,
+                observables=[])
 
         # can still use VTK when the LB actor has been cleared but not deleted
         label_cleared = f'test_lb_vtk_{self.lb_vtk_id}_cleared'
@@ -211,7 +225,7 @@ class TestLBWrite:
 
 @utx.skipIfMissingModules("vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBWalberlaWrite(TestLBWrite, ut.TestCase):
+class LBWalberlaWrite(TestVTK, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': False}
     lb_vtk_id = 'double_precision'
@@ -219,7 +233,7 @@ class LBWalberlaWrite(TestLBWrite, ut.TestCase):
 
 @utx.skipIfMissingModules("vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBWalberlaWriteSinglePrecision(TestLBWrite, ut.TestCase):
+class LBWalberlaWriteSinglePrecision(TestVTK, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
     lb_vtk_id = 'single_precision'

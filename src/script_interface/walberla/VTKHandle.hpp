@@ -36,6 +36,7 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -182,6 +183,17 @@ public:
     m_prefix = get_value<std::string>(params, "prefix");
     auto const execution_count = get_value<int>(params, "execution_count");
     ObjectHandle::context()->parallel_try_catch([&]() {
+      if (m_delta_N < 0) {
+        throw std::domain_error("Parameter 'delta_N' must be >= 0");
+      }
+      if (m_identifier.empty()) {
+        throw std::domain_error("Parameter 'identifier' cannot be empty");
+      }
+      if (m_identifier.find(std::filesystem::path::preferred_separator) !=
+          std::string::npos) {
+        throw std::invalid_argument(
+            "Parameter 'identifier' cannot be a filepath");
+      }
       setup_field_instance(params);
       auto &field_instance = *get_field_instance();
       m_units = get_units(params);

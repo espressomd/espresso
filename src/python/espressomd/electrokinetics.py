@@ -24,9 +24,9 @@ import numpy as np
 import itertools
 
 from . import utils
-from .code_features import has_features
 from .shapes import Shape
-from .detail.walberla import VTKRegistry
+from .code_features import has_features
+from .detail.walberla import VTKRegistry, VTKOutputBase
 import espressomd.detail.walberla
 
 
@@ -256,7 +256,7 @@ if has_features("WALBERLA"):
 
 
 @script_interface_register
-class VTKOutput(ScriptInterfaceHelper):
+class VTKOutput(VTKOutputBase):
     """
     Create a VTK writer.
 
@@ -293,49 +293,8 @@ class VTKOutput(ScriptInterfaceHelper):
     _so_bind_methods = ("enable", "disable", "write")
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-        if 'sip' not in kwargs:
-            params = self.default_params()
-            params.update(kwargs)
-            if isinstance(params['observables'], str):
-                params['observables'] = [params['observables']]
-            self.validate_params(params)
-            super().__init__(*args, **params)
-            utils.handle_errors(
-                f"{self.__class__.__name__} initialization failed")
-        else:
-            super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         _ek_vtk_registry._register_vtk_object(self)
-
-    def validate_params(self, params):
-        if not self.required_keys().issubset(params):
-            raise ValueError(
-                f"At least the following keys have to be given as keyword arguments: {sorted(self.required_keys())}")
-        if not isinstance(params['species'], EKSpecies):
-            raise ValueError("'species' must be an EKSpecies")
-        utils.check_type_or_throw_except(
-            params['delta_N'], 1, int, "'delta_N' must be 1 integer")
-        if params['delta_N'] < 0:
-            raise ValueError("'delta_N' must be a positive integer")
-        utils.check_type_or_throw_except(
-            params['base_folder'], 1, str, "'base_folder' must be a string")
-        utils.check_type_or_throw_except(
-            params['identifier'], 1, str, "'identifier' must be a string")
-        if os.path.sep in params['identifier']:
-            raise ValueError(
-                "'identifier' must be a string, not a filepath")
-        vtk_uid = os.path.join(params['base_folder'],
-                               params['identifier'])
-        vtk_path = os.path.abspath(vtk_uid)
-        if vtk_path in _ek_vtk_registry.collisions:
-            raise RuntimeError(
-                f"VTK object '{vtk_uid}' would overwrite files written "
-                f"by VTK object '{_ek_vtk_registry.collisions[vtk_path]}'")
-        params['vtk_uid'] = vtk_uid
-
-    def valid_observables(self):
-        return set(self.call_method("get_valid_observable_names"))
 
     def valid_keys(self):
         return {'species', 'delta_N', 'execution_count', 'observables',
@@ -343,10 +302,6 @@ class VTKOutput(ScriptInterfaceHelper):
 
     def required_keys(self):
         return self.valid_keys() - self.default_params().keys()
-
-    def default_params(self):
-        return {'delta_N': 0, 'enabled': True, 'execution_count': 0,
-                'base_folder': 'vtk_out', 'prefix': 'simulation_step'}
 
     def __repr__(self):
         class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
