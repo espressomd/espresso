@@ -14,6 +14,12 @@ The following dependencies need to be in the Python path:
   the one used to build ESPResSo. One way is to use the copy fetched in
   ESPResSo's `build/_deps/walberla-src/python/` directory.
 
+The Python dependencies can be pip installed locally with the following command:
+
+```sh
+python3 -m pip install --user -c requirements.txt numpy sympy lbmpy pystencils islpy
+```
+
 ## Example
 
 ```sh

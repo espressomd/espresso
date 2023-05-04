@@ -310,6 +310,35 @@ dimension has size 3 for the flux).
 For a complete description of all available shapes, refer to
 :mod:`espressomd.shapes`.
 
+.. _Prototyping new EK methods:
+
+Prototyping new EK methods
+--------------------------
+
+Start by installing the code generator dependencies:
+
+.. code-block:: bash
+
+    python3 -m pip install --user -c requirements.txt numpy sympy lbmpy pystencils islpy
+
+Next, edit the code generator script to configure new kernels, then execute it:
+
+.. code-block:: bash
+
+    python3 maintainer/walberla_kernels/generate_lb_kernels.py
+
+The script takes optional arguments to control the CPU or GPU architecture,
+as well as the floating-point precision. The generated source code files need
+to be written to :file:`src/walberla_bridge/src/electrokinetics/generated_kernels/`
+and :file:`src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/`.
+These steps can be automated with the convenience shell functions documented in
+:file:`maintainer/walberla_kernels/Readme.md`.
+Edit the :file:`CMakeLists.txt` file in the destination folders to include the
+new kernels in the build system.
+Then, adapt :file:`src/walberla_bridge/src/electrokinetics/EKinWalberlaImpl.hpp`
+to use the new EK kernels.
+
+
 .. [5]
    https://www.paraview.org/
 .. [6]

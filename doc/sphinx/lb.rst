@@ -463,7 +463,7 @@ Start by installing the code generator dependencies:
 
 .. code-block:: bash
 
-    pip3 install --user -c requirements.txt numpy sympy pystencils lbmpy
+    python3 -m pip install --user -c requirements.txt numpy sympy lbmpy pystencils islpy
 
 Next, edit the code generator script to configure new kernels, then execute it:
 
@@ -471,16 +471,18 @@ Next, edit the code generator script to configure new kernels, then execute it:
 
     python3 maintainer/walberla_kernels/generate_lb_kernels.py
 
-The generated source code files will be written to
-:file:`src/walberla_bridge/src/lattice_boltzmann/generated_kernels/`.
-Edit the :file:`src/walberla_bridge/src/lattice_boltzmann/generated_kernels/CMakeLists.txt`
-file to include the new kernels in the build system. Then, adapt
-:file:`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`
+The script takes optional arguments to control the CPU or GPU architecture,
+as well as the floating-point precision. The generated source code files need
+to be written to :file:`src/walberla_bridge/src/lattice_boltzmann/generated_kernels/`.
+These steps can be automated with the convenience shell functions documented in
+:file:`maintainer/walberla_kernels/Readme.md`.
+Edit the :file:`CMakeLists.txt` file in the destination folder to include the
+new kernels in the build system.
+Then, adapt :file:`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`
 to use the new LB kernels.
 
 
 .. [1]
    https://www.paraview.org/
-
 .. [2]
    http://code.enthought.com/projects/mayavi/
