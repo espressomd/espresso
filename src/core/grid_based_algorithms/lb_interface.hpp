@@ -34,7 +34,7 @@ enum class ActiveLB : int { NONE, WALBERLA_LB };
 extern ActiveLB lattice_switch;
 
 struct NoLBActive : public std::exception {
-  char const *what() const noexcept override { return "LB not activated"; }
+  const char *what() const noexcept override { return "LB not activated"; }
 };
 
 namespace LB {

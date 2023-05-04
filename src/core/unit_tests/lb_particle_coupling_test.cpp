@@ -67,36 +67,24 @@ namespace utf = boost::unit_test;
 #include <string>
 #include <vector>
 
-// multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
-// and by 6 to account for error accumulation
-constexpr auto tol = 6 * 100 * std::numeric_limits<double>::epsilon();
+// multiply by 6 to account for error accumulation
+auto constexpr eps = 6. * std::numeric_limits<double>::epsilon();
 
-struct LBTestParameters {
-  int seed;
-  double kT;
-  double viscosity;
-  double density;
-  double tau;
-  double time_step;
-  double agrid;
-  double skin;
-  Utils::Vector3d box_dimensions;
-  Utils::Vector3i grid_dimensions;
+static struct {
+  unsigned int seed = 23u;
+  double kT = 0.;
+  double viscosity = 1e-3;
+  double density = 0.5;
+  double tau = 0.01;
+  double time_step = 0.01;
+  double agrid = 1.;
+  double skin = 0.5;
+  Utils::Vector3d box_dimensions = Utils::Vector3d::broadcast(8.);
+  Utils::Vector3i grid_dimensions = Utils::Vector3i::broadcast(8);
   auto force_md_to_lb(Utils::Vector3d const &md_force) const {
     return (-this->time_step * this->tau / this->agrid) * md_force;
   }
-};
-
-static LBTestParameters params{23,
-                               0.,
-                               1e-3,
-                               0.5,
-                               0.01,
-                               0.01,
-                               1.,
-                               0.5,
-                               Utils::Vector3d::broadcast(8.),
-                               Utils::Vector3i::broadcast(8)};
+} params;
 
 /** Boost unit test dataset */
 std::vector<double> const kTs{0., 1E-4};
@@ -114,7 +102,7 @@ static auto make_lb_actor() {
   auto constexpr single_precision = false;
   lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
   lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
-                                                 node_grid, n_ghost_layers);
+                                                 ::node_grid, n_ghost_layers);
   lb_fluid = new_lb_walberla(lb_lattice, params.viscosity, params.density,
                              single_precision);
   lb_fluid->set_collision_model(params.kT, params.seed);
@@ -242,7 +230,7 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   expected += p.mu_E();
 #endif
   BOOST_CHECK_SMALL(
-      (lb_particle_coupling_drift_vel_offset(p) - expected).norm(), tol);
+      (lb_particle_coupling_drift_vel_offset(p) - expected).norm(), eps);
 }
 
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
@@ -257,7 +245,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   {
     auto const observed = lb_drag_force(p, p.pos(), drift_offset);
     const Utils::Vector3d expected{0.3, -0.1, -.2};
-    BOOST_CHECK_SMALL((observed - expected).norm(), tol);
+    BOOST_CHECK_SMALL((observed - expected).norm(), eps);
   }
 }
 
@@ -288,7 +276,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
           params.force_md_to_lb(Utils::Vector3d{0., 0., p.swimming().f_swim});
 
       // interpolation happened on the expected LB cell
-      BOOST_CHECK_SMALL((interpolated - expected).norm(), tol);
+      BOOST_CHECK_SMALL((interpolated - expected).norm(), eps);
     }
 
     // all other LB cells have no force
@@ -304,7 +292,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
             continue;
           if (in_local_halo(pos)) {
             auto const interpolated = LB::get_force_to_be_applied(pos);
-            BOOST_CHECK_SMALL(interpolated.norm(), tol);
+            BOOST_CHECK_SMALL(interpolated.norm(), eps);
           }
         }
       }
@@ -317,7 +305,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
       add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.swimming().f_swim},
                    params.time_step);
       auto const reset = LB::get_force_to_be_applied(coupling_pos);
-      BOOST_REQUIRE_SMALL(reset.norm(), tol);
+      BOOST_REQUIRE_SMALL(reset.norm(), eps);
     }
   }
 }
@@ -352,11 +340,11 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   {
     if (in_local_halo(p.pos())) {
       couple_particle(p, false, noise, rng, params.time_step);
-      BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
+      BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
 
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
-                        tol);
+                        eps);
     }
   }
 
@@ -504,11 +492,11 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         if (rank == 0) {
           auto const &p = *p_opt;
           // check particle force
-          BOOST_CHECK_SMALL((p.force() - expected).norm(), tol);
+          BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
           // check LB force
           auto const lb_after = LB::get_force_to_be_applied(p.pos());
           auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
-          BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), tol);
+          BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), eps);
         }
       }
       // remove force of the particle from the fluid
@@ -536,9 +524,9 @@ BOOST_AUTO_TEST_SUITE_END()
 
 bool test_lb_domain_mismatch_local() {
   boost::mpi::communicator world;
-  auto const node_grid_original = node_grid;
+  auto const node_grid_original = ::node_grid;
   auto const node_grid_reversed =
-      Utils::Vector3i{{node_grid[2], node_grid[1], node_grid[0]}};
+      Utils::Vector3i{{::node_grid[2], ::node_grid[1], ::node_grid[0]}};
   auto const n_ghost_layers = 1u;
   auto const params = LBWalberlaParams(0.5, 0.01);
   ::node_grid = node_grid_reversed;

@@ -119,7 +119,7 @@ BOOST_DATA_TEST_CASE(set_coupling, bdata::make(all_eks()), ek_generator) {
 BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_eks()), ek_generator) {
   auto ek = ek_generator(params);
   for (auto const &node : local_nodes_incl_ghosts(ek->get_lattice())) {
-    bool const consider_ghosts = !ek->get_lattice().node_in_local_domain(node);
+    auto const consider_ghosts = !ek->get_lattice().node_in_local_domain(node);
     BOOST_CHECK(!(*ek->get_node_is_boundary(node, consider_ghosts)));
     if (ek->get_lattice().node_in_local_domain(node)) {
       BOOST_CHECK_CLOSE((*ek->get_node_density(node)), params.density, 1E-10);
@@ -505,13 +505,11 @@ BOOST_DATA_TEST_CASE(set_node_density, bdata::make(all_eks()), ek_generator) {
   for (auto const &node : all_nodes_incl_ghosts(ek->get_lattice())) {
     auto constexpr eps = 1E-8;
     if (ek->get_lattice().node_in_local_halo(node)) {
-      if (ek->get_lattice().node_in_local_domain(node)) {
-        auto res = ek->get_node_density(node);
-        BOOST_REQUIRE(res);                          // value available?
-        BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
-      } else {
-        BOOST_CHECK(!ek->get_node_density(node));
-      }
+      auto const consider_ghosts =
+          !ek->get_lattice().node_in_local_domain(node);
+      auto res = ek->get_node_density(node, consider_ghosts);
+      BOOST_REQUIRE(res);                          // value available?
+      BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
     } else {
       // Check that access to node density is not possible
       BOOST_CHECK(!ek->get_node_density(node));

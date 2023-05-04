@@ -23,8 +23,6 @@
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 
-#include "PoissonSolver/PoissonSolver.hpp"
-
 #include <utils/Vector.hpp>
 
 #include <memory>
@@ -34,11 +32,3 @@ new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
                 double diffusion, double kT, double valency,
                 Utils::Vector3d ext_efield, double density, bool advection,
                 bool friction_coupling, bool single_precision);
-
-std::shared_ptr<walberla::PoissonSolver>
-new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
-                    bool single_precision);
-
-std::shared_ptr<walberla::PoissonSolver>
-new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
-                   double permittivity, bool single_precision);

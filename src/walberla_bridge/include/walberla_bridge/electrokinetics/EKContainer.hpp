@@ -41,18 +41,18 @@ private:
   std::shared_ptr<walberla::PoissonSolver> m_poissonsolver;
 
 public:
-  void add(std::shared_ptr<EKSpecies> const &c) {
-    assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), c) ==
+  void add(std::shared_ptr<EKSpecies> const &ek_species) {
+    assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species) ==
            m_ekcontainer.end());
 
-    m_ekcontainer.emplace_back(c);
+    m_ekcontainer.emplace_back(ek_species);
   }
 
-  void remove(std::shared_ptr<EKSpecies> const &c) {
-    assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), c) !=
+  void remove(std::shared_ptr<EKSpecies> const &ek_species) {
+    assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species) !=
            m_ekcontainer.end());
     m_ekcontainer.erase(
-        std::remove(m_ekcontainer.begin(), m_ekcontainer.end(), c),
+        std::remove(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species),
         m_ekcontainer.end());
   }
 

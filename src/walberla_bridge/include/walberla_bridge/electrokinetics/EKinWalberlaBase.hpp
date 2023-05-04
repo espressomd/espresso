@@ -47,7 +47,8 @@ public:
 
   /** @brief Get node density. */
   [[nodiscard]] virtual boost::optional<double>
-  get_node_density(Utils::Vector3i const &node) const = 0;
+  get_node_density(Utils::Vector3i const &node,
+                   bool consider_ghosts = false) const = 0;
 
   /** @brief Set slice density. */
   virtual void set_slice_density(Utils::Vector3i const &lower_corner,

@@ -85,7 +85,7 @@ BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
   auto const pressure = Utils::VectorXd<9>{1., 0., 0., 0., 1., 0., 0., 0., 1.} *
                         params.density / 3.;
   for (auto const &node : local_nodes_incl_ghosts(lb->get_lattice())) {
-    bool const consider_ghosts = !lb->get_lattice().node_in_local_domain(node);
+    auto const consider_ghosts = !lb->get_lattice().node_in_local_domain(node);
     BOOST_CHECK(!(*lb->get_node_is_boundary(node, consider_ghosts)));
     if (lb->get_lattice().node_in_local_domain(node)) {
       BOOST_CHECK((*lb->get_node_force_to_be_applied(node)) == Vector3d{});
@@ -317,7 +317,7 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   for (auto const &node : all_nodes_incl_ghosts(lb->get_lattice())) {
     auto constexpr eps = 1E-8;
     if (lb->get_lattice().node_in_local_halo(node)) {
-      bool const consider_ghosts =
+      auto const consider_ghosts =
           !lb->get_lattice().node_in_local_domain(node);
       auto res = lb->get_node_velocity(node, consider_ghosts);
       BOOST_REQUIRE(res);                                  // value available?

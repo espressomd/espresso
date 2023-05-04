@@ -378,8 +378,9 @@ public:
   }
 
   [[nodiscard]] boost::optional<double>
-  get_node_density(Utils::Vector3i const &node) const override {
-    auto bc = get_block_and_cell(get_lattice(), node, false);
+  get_node_density(Utils::Vector3i const &node,
+                   bool consider_ghosts = false) const override {
+    auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)
       return {boost::none};

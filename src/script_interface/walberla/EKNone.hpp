@@ -25,7 +25,7 @@
 
 #include "EKPoissonSolver.hpp"
 
-#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
+#include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
