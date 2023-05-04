@@ -447,7 +447,7 @@ auto hadamard_division(T const &a, U const &b) {
   return a / b;
 }
 
-template <typename T> Vector<T, 3> unit_vector(int i) {
+template <typename T> Vector<T, 3> unit_vector(unsigned int i) {
   if (i == 0)
     return {T{1}, T{0}, T{0}};
   if (i == 1)
