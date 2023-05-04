@@ -309,7 +309,8 @@ def generate_boundary(
     pystencils_walberla.jinja_filters.add_pystencils_filters_to_jinja_env(
         custom_env)
 
-    header = custom_env.get_template("Boundary.tmpl.h").render(**context)
+    header = custom_env.get_template(
+        "templates/Boundary.tmpl.h").render(**context)
     source = env.get_template("Boundary.tmpl.cpp").render(**context)
 
     source_extension = "cpp" if target == ps.enums.Target.CPU else "cu"
@@ -343,6 +344,6 @@ def generate_kernel_selector(
     )
 
     header = custom_env.get_template(
-        "ReactionKernelSelector.tmpl.h").render(**context)
+        "templates/ReactionKernelSelector.tmpl.h").render(**context)
 
     generation_context.write_file(f"{class_name}_all.h", header)

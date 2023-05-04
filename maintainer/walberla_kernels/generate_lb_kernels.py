@@ -172,12 +172,12 @@ with code_generation_context.CodeGeneration() as ctx:
         filename = f"FieldAccessors{precision_prefix}{target_suffix}"
         if target == ps.Target.GPU:
             templates = {
-                f"{filename}.h": "FieldAccessors.tmpl.cuh",
-                f"{filename}.cu": "FieldAccessors.tmpl.cu",
+                f"{filename}.h": "templates/FieldAccessors.tmpl.cuh",
+                f"{filename}.cu": "templates/FieldAccessors.tmpl.cu",
             }
         else:
             templates = {
-                f"{filename}.h": "FieldAccessors.tmpl.h",
+                f"{filename}.h": "templates/FieldAccessors.tmpl.h",
             }
         walberla_lbm_generation.generate_macroscopic_values_accessors(
             ctx, config, method, templates

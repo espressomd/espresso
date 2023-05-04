@@ -1,25 +1,32 @@
-//======================================================================================================================
-//
-//  This file is part of waLBerla. waLBerla is free software: you can
-//  redistribute it and/or modify it under the terms of the GNU General Public
-//  License as published by the Free Software Foundation, either version 3 of
-//  the License, or (at your option) any later version.
-//
-//  waLBerla is distributed in the hope that it will be useful, but WITHOUT
-//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-//  for more details.
-//
-//  You should have received a copy of the GNU General Public License along
-//  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
-//
-//! \\file ReactionKernelIndexed_1_single_precision.h
-//! \\author pystencils
-//======================================================================================================================
+/*
+ * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2020-2023 The waLBerla project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 // kernel generated with pystencils v1.2, lbmpy v1.2,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
-// refs/heads/boundaries-codegen
+// a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+
+/*
+ * Boundary class.
+ * Adapted from the waLBerla source file
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/fb076cd18daa6e2f24448349d1fffb974c845269/python/pystencils_walberla/templates/Boundary.tmpl.h
+ */
 
 #pragma once
 

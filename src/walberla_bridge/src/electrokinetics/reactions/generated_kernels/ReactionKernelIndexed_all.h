@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.2, lbmpy v1.2,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
-// refs/heads/boundaries-codegen
+// a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
 
 #pragma once
 

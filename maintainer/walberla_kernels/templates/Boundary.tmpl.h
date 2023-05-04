@@ -1,21 +1,28 @@
-//======================================================================================================================
-//
-//  This file is part of waLBerla. waLBerla is free software: you can
-//  redistribute it and/or modify it under the terms of the GNU General Public
-//  License as published by the Free Software Foundation, either version 3 of
-//  the License, or (at your option) any later version.
-//
-//  waLBerla is distributed in the hope that it will be useful, but WITHOUT
-//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-//  for more details.
-//
-//  You should have received a copy of the GNU General Public License along
-//  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
-//
-//! \\file {{class_name}}.h
-//! \\author pystencils
-//======================================================================================================================
+/*
+ * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2020-2023 The waLBerla project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Boundary class.
+ * Adapted from the waLBerla source file
+ * https://i10git.cs.fau.de/walberla/walberla/-/blob/fb076cd18daa6e2f24448349d1fffb974c845269/python/pystencils_walberla/templates/Boundary.tmpl.h
+ */
 
 #pragma once
 
