@@ -527,7 +527,7 @@ public:
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
     auto const omega = shear_mode_relaxation_rate();
-    if (shear_plane_normal != 1) {
+    if (shear_plane_normal != 1u) {
       throw std::domain_error(
           "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
     }
@@ -567,7 +567,8 @@ public:
             get_pos_offset_back);
   }
 
-  void check_lebc(int shear_direction, int shear_plane_normal) const override {
+  void check_lebc(unsigned int shear_direction,
+                  unsigned int shear_plane_normal) const override {
     if (m_lees_edwards_callbacks) {
       if (m_lees_edwards_callbacks->shear_direction != shear_direction or
           m_lees_edwards_callbacks->shear_plane_normal != shear_plane_normal) {

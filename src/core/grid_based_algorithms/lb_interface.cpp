@@ -72,7 +72,8 @@ void sanity_checks(double time_step) {
   }
 }
 
-void lebc_sanity_checks(int shear_direction, int shear_plane_normal) {
+void lebc_sanity_checks(unsigned int shear_direction,
+                        unsigned int shear_plane_normal) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
     lb_walberla()->check_lebc(shear_direction, shear_plane_normal);

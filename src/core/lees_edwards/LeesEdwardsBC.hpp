@@ -26,10 +26,11 @@
 #include <initializer_list>
 
 struct LeesEdwardsBC {
+  static auto constexpr invalid_dir = 3u;
   double pos_offset = 0.;
   double shear_velocity = 0.;
-  int shear_direction = -1;
-  int shear_plane_normal = -1;
+  unsigned int shear_direction = invalid_dir;
+  unsigned int shear_plane_normal = invalid_dir;
   Utils::Vector3d distance(Utils::Vector3d const &d, Utils::Vector3d const &l,
                            Utils::Vector3d const &hal_l,
                            Utils::Vector3d const &l_inv,

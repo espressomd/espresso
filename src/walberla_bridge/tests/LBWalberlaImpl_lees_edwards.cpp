@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(test_transient_shear) {
       std::make_shared<LatticeWalberla>(Vector3i{8, 64, 8}, mpi_shape, 1);
   auto lb = LBImplementation(lattice, viscosity, density);
   auto le_pack = std::make_unique<LeesEdwardsPack>(
-      0, 1, []() { return 0.0; }, [=]() { return v0; });
+      0u, 1u, []() { return 0.0; }, [=]() { return v0; });
   lb.set_collision_model(std::move(le_pack));
   lb.ghost_communication();
   auto const grid_size_y = lattice->get_grid_dimensions()[1];
@@ -100,7 +100,7 @@ static auto setup_lb_with_offset(double offset) {
       std::make_shared<LatticeWalberla>(Vector3i{10, 10, 10}, mpi_shape, 1);
   auto lb = std::make_shared<LBImplementation>(lattice, viscosity, density);
   auto le_pack = std::make_unique<LeesEdwardsPack>(
-      0, 1, [=]() { return offset; }, []() { return 0.0; });
+      0u, 1u, [=]() { return offset; }, []() { return 0.0; });
   lb->set_collision_model(std::move(le_pack));
   lb->ghost_communication();
   return lb;

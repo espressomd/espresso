@@ -207,8 +207,8 @@ public:
   set_collision_model(std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) = 0;
 
   /** @brief Check Lees-Edwards boundary conditions. */
-  virtual void check_lebc(int shear_direction,
-                          int shear_plane_normal) const = 0;
+  virtual void check_lebc(unsigned int shear_direction,
+                          unsigned int shear_plane_normal) const = 0;
 
   /** @brief Get node pressure tensor. */
   virtual boost::optional<Utils::VectorXd<9>>

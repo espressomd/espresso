@@ -24,15 +24,15 @@
 
 /** Pack Lees-Edwards parameters for LB. */
 struct LeesEdwardsPack {
-  LeesEdwardsPack(int shear_direction, int shear_plane_normal,
+  LeesEdwardsPack(unsigned int shear_direction, unsigned int shear_plane_normal,
                   std::function<double()> get_pos_offset,
                   std::function<double()> get_shear_velocity)
       : shear_direction(shear_direction),
         shear_plane_normal(shear_plane_normal),
         get_pos_offset(std::move(get_pos_offset)),
         get_shear_velocity(std::move(get_shear_velocity)) {}
-  int shear_direction;
-  int shear_plane_normal;
+  unsigned int shear_direction;
+  unsigned int shear_plane_normal;
   std::function<double()> get_pos_offset;
   std::function<double()> get_shear_velocity;
 };

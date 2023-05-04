@@ -70,7 +70,8 @@ void sanity_checks(double time_step);
 /**
  * @brief Perform LB LEbc parameter checks.
  */
-void lebc_sanity_checks(int shear_direction, int shear_plane_normal);
+void lebc_sanity_checks(unsigned int shear_direction,
+                        unsigned int shear_plane_normal);
 
 /**
  * @brief Set the LB fluid velocity for a single node.

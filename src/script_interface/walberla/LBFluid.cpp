@@ -158,8 +158,11 @@ void LBFluid::do_construct(VariantMap const &params) {
             "Lees-Edwards LB doesn't support thermalization");
       }
       auto const &le_bc = ::box_geo.lees_edwards_bc();
+      assert(le_bc.shear_direction >= 0);
+      assert(le_bc.shear_plane_normal >= 0);
       auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
-          le_bc.shear_direction, le_bc.shear_plane_normal,
+          static_cast<unsigned int>(le_bc.shear_direction),
+          static_cast<unsigned int>(le_bc.shear_plane_normal),
           [this, le_protocol]() {
             return get_pos_offset(get_sim_time(), *le_protocol) /
                    m_lb_params->get_agrid();
