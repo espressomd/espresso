@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for LB particle coupling. */
-
 #define BOOST_TEST_MODULE LB particle coupling test
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_NO_MAIN
@@ -33,6 +31,7 @@ namespace utf = boost::unit_test;
 #ifdef WALBERLA
 
 #include "ParticleFactory.hpp"
+#include "particle_management.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
@@ -101,25 +100,6 @@ static LBTestParameters params{23,
 
 /** Boost unit test dataset */
 std::vector<double> const kTs{0., 1E-4};
-
-static auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
-                                       int p_id) {
-  boost::optional<Particle> result{};
-  auto p = ::cell_structure.get_local_particle(p_id);
-  if (p and not p->is_ghost()) {
-    if (comm.rank() == 0) {
-      result = *p;
-    } else {
-      comm.send(0, p_id, *p);
-    }
-  }
-  if (comm.rank() == 0 and not result) {
-    Particle p{};
-    comm.recv(boost::mpi::any_source, p_id, p);
-    result = p;
-  }
-  return result;
-}
 
 namespace espresso {
 // ESPResSo system instance
