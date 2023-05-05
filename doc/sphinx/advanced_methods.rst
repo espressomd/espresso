@@ -143,9 +143,11 @@ Several modes are available for different types of binding.
   degrees of freedom being integrated. Virtual sites are not required.
   The method, along with the corresponding bonds are setup as follows::
 
+        first_angle_bond_id = 0
         n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
         for i in range(0, n_angle_bonds, 1):
-            system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
+            bond_id = first_angle_bond_id + i
+            system.bonded_inter[bond_id] = espressomd.interactions.AngleHarmonic(
                 bend=1., phi0=float(i) / float(n_angle_bonds - 1) * np.pi)
 
         bond_centers = espressomd.interactions.HarmonicBond(k=1., r_0=0.1, r_cut=0.5)
@@ -154,7 +156,7 @@ Several modes are available for different types of binding.
         system.collision_detection.set_params(
             mode="bind_three_particles",
             bond_centers=bond_centers,
-            bond_three_particles=0,
+            bond_three_particles=first_angle_bond_id,
             three_particle_binding_angle_resolution=n_angle_bonds,
             distance=0.1)
 
@@ -192,6 +194,8 @@ Several modes are available:
 * ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
 * ``"none"``: cancel an existing bond breakage specification
 
+For a pair bond, the breakage distance refers to the minimum image distance between the primary particle and its bond partner.
+For an angle bond, the distance refers to the distance *between the two bond partners* of the primary particle.
 Example::
 
     import espressomd
