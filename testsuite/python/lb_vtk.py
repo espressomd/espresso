@@ -214,12 +214,8 @@ class TestVTK:
 
         # cannot use VTK when there are no LB objects available
         label_unavailable = f'test_lb_vtk_{self.lb_vtk_id}_unavailable_lbf'
-
-        class VTKOutputWithoutLbfluid(espressomd.lb.VTKOutput):
-            def validate_params(self, params):
-                pass
         with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
-            VTKOutputWithoutLbfluid(identifier=label_unavailable,
+            espressomd.lb.VTKOutput(identifier=label_unavailable,
                                     observables=['density'])
 
 

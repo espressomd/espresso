@@ -16,17 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Tests particle property setters/getters
-from __future__ import print_function
-import unittest as ut
-import espressomd
-if espressomd.has_features("WALBERLA"):
-    from espressomd.lb import LBFluidWalberla
 import numpy as np
+import unittest as ut
+import unittest_decorators as utx
+
+import espressomd
+import espressomd.lb
 
 
-@ut.skipIf(not espressomd.has_features("WALBERLA"),
-           "Skipping for LACK of WALBERLA")
+@utx.skipIfMissingFeatures("WALBERLA")
 class LbWalberlaTest(ut.TestCase):
 
     def test(self):
@@ -34,7 +32,7 @@ class LbWalberlaTest(ut.TestCase):
         system.time_step = 0.2
         system.cell_system.skin = 0.
         dens_init = 1.3
-        lbf = LBFluidWalberla(
+        lbf = espressomd.lb.LBFluidWalberla(
             agrid=.6,
             density=dens_init,
             kinematic_viscosity=2.5,
@@ -52,7 +50,7 @@ class LbWalberlaTest(ut.TestCase):
                     np.testing.assert_allclose(
                         lbf[i, j, k].velocity, v, atol=1E-10)
                     # density
-                    self.assertAlmostEqual( 
+                    self.assertAlmostEqual(
                         lbf[i, j, k].density, dens_init, delta=1E-10)
                     rho = i * j * k * 0.5 + 0.8
                     lbf[i, j, k].density = rho
