@@ -338,16 +338,18 @@ static void write_le_off(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
 }
 
 static void write_le_dir(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const shear_direction = static_cast<int>(lebc.shear_direction);
   auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
   extend_dataset(dataset, Vector2hs{1, 0});
-  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_direction},
+  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{shear_direction},
                       h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
 }
 
 static void write_le_normal(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
+  auto const shear_plane_normal = static_cast<int>(lebc.shear_plane_normal);
   auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
   extend_dataset(dataset, Vector2hs{1, 0});
-  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{lebc.shear_plane_normal},
+  h5xx::write_dataset(dataset, Utils::Vector<int, 1>{shear_plane_normal},
                       h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
 }
 

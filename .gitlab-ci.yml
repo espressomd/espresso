@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-22.04:cb0a2886ebd6a4fbd372503d7b46fc05fb1da5d5
+image: ghcr.io/espressomd/docker/ubuntu-22.04:fbdf2f2f9d76b761c0aa1308f17fb17e38501850
 
 stages:
   - prepare
@@ -139,7 +139,7 @@ no_rotation:
 fedora:36:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:3fd42369f84239b8c4f5d77067d404789c55ff44
+  image: ghcr.io/espressomd/docker/fedora:fbdf2f2f9d76b761c0aa1308f17fb17e38501850
   variables:
      with_cuda: 'false'
      with_gsl: 'false'

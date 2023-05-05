@@ -44,5 +44,5 @@ if(CLANG_TIDY_EXE)
 endif()
 
 include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( ClangTidy REQUIRED_VARS CLANG_TIDY_EXE
+find_package_handle_standard_args( ClangTidy REQUIRED_VARS CLANG_TIDY_EXE
                                    VERSION_VAR CLANG_TIDY_VERSION)

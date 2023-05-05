@@ -70,6 +70,9 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
     if re.search('^no uniquely matching class member found for $', warning):
         # known bug, not fixed yet
         continue
+    if re.search('^no matching (class|file) member found for $', warning):
+        # known bug, not fixed yet
+        continue
     if re.search(
             '^The following parameters? of .+ (is|are) not documented:$', warning):
         # non-critical warning, enforcing it would encourage bad behavior, i.e.
