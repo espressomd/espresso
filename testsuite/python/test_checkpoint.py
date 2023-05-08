@@ -309,7 +309,7 @@ class CheckpointTest(ut.TestCase):
         if "espressomd.io.vtk" in sys.modules:
             vtk_reader = espressomd.io.vtk.VTKReader()
             vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
-            lb_density = vtk_data["DensityFromPDF"]
+            lb_density = vtk_data["density"]
             self.assertAlmostEqual(
                 lb_density[0, 0, 0], new_density, delta=1e-5)
 

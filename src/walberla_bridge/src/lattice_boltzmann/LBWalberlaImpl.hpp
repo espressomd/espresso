@@ -1310,17 +1310,17 @@ public:
     if (flag_observables & static_cast<int>(OutputVTK::density)) {
       auto const unit_conversion = FloatType_c(units.at("density"));
       vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
-          m_pdf_field_id, "DensityFromPDF", unit_conversion));
+          m_pdf_field_id, "density", unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
       auto const unit_conversion = FloatType_c(units.at("velocity"));
       vtk_obj.addCellDataWriter(make_shared<VelocityVTKWriter<float>>(
-          m_velocity_field_id, "VelocityFromVelocityField", unit_conversion));
+          m_velocity_field_id, "velocity_vector", unit_conversion));
     }
     if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
       auto const unit_conversion = FloatType_c(units.at("pressure"));
       vtk_obj.addCellDataWriter(make_shared<PressureTensorVTKWriter<float>>(
-          m_pdf_field_id, "PressureTensorFromPDF", unit_conversion,
+          m_pdf_field_id, "pressure_tensor", unit_conversion,
           pressure_tensor_correction_factor()));
     }
   }

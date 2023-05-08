@@ -533,7 +533,7 @@ functionality is provided by the wrapper :class:`~espressomd.io.vtk.VTKReader`:
     import espressomd.io.vtk
     vtk_reader = espressomd.io.vtk.VTKReader()
     vtk_grids = vtk_reader.parse("simulation_step_0.vtu")
-    vtk_density = vtk_grids["DensityFromPDF"]
+    vtk_density = vtk_grids["density"]
     print(vtk_density.shape)
 
 For a self-contained example, please refer to :ref:`LB VTK output`.

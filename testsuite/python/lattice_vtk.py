@@ -138,9 +138,9 @@ class TestLBVTK(TestVTK):
         shape = tuple(actor.shape)
         shape = (shape[0] - 4, *shape[1:])
         vtk_reader = espressomd.io.vtk.VTKReader()
-        label_density = "DensityFromPDF"
-        label_velocity = "VelocityFromVelocityField"
-        label_pressure = "PressureTensorFromPDF"
+        label_density = "density"
+        label_velocity = "velocity_vector"
+        label_pressure = "pressure_tensor"
 
         with tempfile.TemporaryDirectory() as tmp_directory:
             path_vtk_root = pathlib.Path(tmp_directory)
