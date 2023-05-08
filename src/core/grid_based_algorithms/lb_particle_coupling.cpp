@@ -136,26 +136,6 @@ Utils::Vector3d lb_drag_force(Particle const &p,
   return -lb_lbcoupling_get_gamma() * (p.v() - v_drift);
 }
 
-template <class T, std::size_t N>
-using Box = std::pair<Utils::Vector<T, N>, Utils::Vector<T, N>>;
-
-/**
- * @brief Check if a position is in a box.
- *
- * The left boundary belong to the box, the
- * right one does not. Periodic boundaries are
- * not considered.
- *
- * @param pos Position to check
- * @param box Box to check
- *
- * @return True iff the point is inside of the box.
- */
-template <class T, std::size_t N>
-bool in_box(Utils::Vector<T, N> const &pos, Box<T, N> const &box) {
-  return (pos >= box.first) and (pos < box.second);
-}
-
 /**
  * @brief Check if a position is within the local box + halo.
  *
@@ -166,9 +146,10 @@ bool in_box(Utils::Vector<T, N> const &pos, Box<T, N> const &box) {
  */
 inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
+  auto const lower_corner = local_geo.my_left() - halo_vec;
+  auto const upper_corner = local_geo.my_right() + halo_vec;
 
-  return in_box(
-      pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
+  return pos >= lower_corner and pos < upper_corner;
 }
 
 bool in_local_halo(Utils::Vector3d const &pos) {
@@ -177,8 +158,10 @@ bool in_local_halo(Utils::Vector3d const &pos) {
   return in_local_domain(pos, halo);
 }
 
-/** @brief Return a vector of positions shifted by +,- box length in each
- ** coordinate */
+/**
+ * @brief Return a vector of positions shifted by +,- box length in each
+ * coordinate
+ */
 std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
                                                const BoxGeometry &box) {
   std::vector<Utils::Vector3d> res;
@@ -207,16 +190,20 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
   return res;
 }
 
-/** @brief Return if locally there exists a physical particle
- ** for a given (ghost) particle */
+/**
+ * @brief Return if locally there exists a physical particle
+ * for a given (ghost) particle
+ */
 bool is_ghost_for_local_particle(const Particle &p) {
   return !cell_structure.get_local_particle(p.id())->is_ghost();
 }
 
-/** @brief Determine if a given particle should be coupled.
- ** In certain cases, there may be more than one ghost for the same particle.
- ** To make sure, that these are only coupled once, ghosts' ids are stored
- ** in an unordered_set. */
+/**
+ * @brief Determine if a given particle should be coupled.
+ * In certain cases, there may be more than one ghost for the same particle.
+ * To make sure, that these are only coupled once, ghosts' ids are stored
+ * in an unordered_set.
+ */
 bool should_be_coupled(const Particle &p,
                        std::unordered_set<int> &coupled_ghost_particles) {
   // always couple physical particles

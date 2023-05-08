@@ -385,7 +385,7 @@ int integrate(int n_steps, int reuse_forces) {
 
         if (lb_steps_per_md_step != ek_steps_per_md_step) {
           runtimeErrorMsg()
-              << "LB and EK are active but with different timesteps.";
+              << "LB and EK are active but with different time steps.";
         }
 
         // only use fluid_step in this case

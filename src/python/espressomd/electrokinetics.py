@@ -69,7 +69,7 @@ class EKContainer(ScriptObjectList):
 
     @solver.setter
     def solver(self, solver):
-        self.call_method("set_poissonsolver", object=solver)
+        self.call_method("set_poisson_solver", object=solver)
 
     def add(self, ekspecies):
         if not isinstance(ekspecies, EKSpecies):
@@ -91,6 +91,28 @@ class EKSpecies(ScriptInterfaceHelper,
                 espressomd.detail.walberla.LatticeModel):
     """
     The advection-diffusion-reaction method for chemical species using waLBerla.
+
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object.
+    tau : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
+    density : :obj:`float`
+        Species density.
+    diffusion : :obj:`float`
+        Species diffusion coefficient.
+    valency : :obj:`float`
+        Species valency.
+    ext_efield : (3,) array_like of :obj:`float`, optional
+        External electrical field.
+    kT : :obj:`float`, optional
+        Thermal energy of the simulated heat bath (for thermalized species).
+        Set it to 0 for an unthermalized species.
+    advection : :obj:`bool`, optional
+        Whether to enable advection.
+    friction_coupling : :obj:`bool`, optional
+        Whether to enable friction coupling.
 
     Methods
     -------

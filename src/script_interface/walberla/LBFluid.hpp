@@ -50,24 +50,23 @@ class LBVTKHandle;
 class LBFluid : public LatticeModel<::LBWalberlaBase, LBVTKHandle> {
   using Base = LatticeModel<::LBWalberlaBase, LBVTKHandle>;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
-  bool m_single_precision;
   bool m_is_active;
   int m_seed;
   double m_conv_dist;
   double m_conv_visc;
-  double m_conv_temp;
   double m_conv_dens;
   double m_conv_speed;
   double m_conv_press;
   double m_conv_force;
   double m_conv_force_dens;
+  double m_conv_energy;
 
 public:
   LBFluid() {
     add_parameters({
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
         {"single_precision", AutoParameter::read_only,
-         [this]() { return m_single_precision; }},
+         [this]() { return not m_instance->is_double_precision(); }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
         {"agrid", AutoParameter::read_only,
@@ -77,7 +76,7 @@ public:
         {"shape", AutoParameter::read_only,
          [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
         {"kT", AutoParameter::read_only,
-         [this]() { return m_instance->get_kT() / m_conv_temp; }},
+         [this]() { return m_instance->get_kT() / m_conv_energy; }},
         {"seed", AutoParameter::read_only, [this]() { return m_seed; }},
         {"rng_state",
          [this](Variant const &v) {

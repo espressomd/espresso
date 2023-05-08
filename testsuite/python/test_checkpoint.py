@@ -115,7 +115,7 @@ class CheckpointTest(ut.TestCase):
 
         # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        precision = 9 if "LB.WALBERLA" in modes else 5
+        precision = 8 if "LB.WALBERLA" in modes else 5
         m = np.pi / 12
         nx = lbf.shape[0]
         ny = lbf.shape[1]

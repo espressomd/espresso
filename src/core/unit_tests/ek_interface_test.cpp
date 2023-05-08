@@ -96,11 +96,11 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
 
     BOOST_REQUIRE(EK::ek_reactions.empty());
     BOOST_REQUIRE(EK::ek_container.empty());
-    BOOST_REQUIRE(not EK::ek_container.is_poissonsolver_set());
+    BOOST_REQUIRE(not EK::ek_container.is_poisson_solver_set());
     EK::propagate(); // no-op
     BOOST_REQUIRE_EQUAL(get_n_runtime_errors(), 0);
-    EK::ek_container.set_poissonsolver(ek_solver_none);
-    BOOST_REQUIRE(EK::ek_container.is_poissonsolver_set());
+    EK::ek_container.set_poisson_solver(ek_solver_none);
+    BOOST_REQUIRE(EK::ek_container.is_poisson_solver_set());
     BOOST_REQUIRE(EK::ek_container.empty());
     EK::ek_container.add(ek_species);
     BOOST_REQUIRE(not EK::ek_container.empty());

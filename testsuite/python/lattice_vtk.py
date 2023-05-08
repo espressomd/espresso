@@ -42,7 +42,7 @@ class TestVTK:
 
     def setUp(self):
         self.lattice = self.lattice_class(n_ghost_layers=1, agrid=0.5)
-        self.actor = self.make_actor()
+        self.actor = self.add_actor()
 
     def tearDown(self):
         self.clear_actors()
@@ -111,9 +111,12 @@ class TestLBVTK(TestVTK):
     valid_obs = ["density", "velocity_vector", "pressure_tensor"]
 
     def make_actor(self):
-        self.lbf = self.lb_class(
+        return self.lb_class(
             lattice=self.lattice, tau=0.1, density=1., kinematic_viscosity=1.,
             ext_force_density=[0., 0.03, 0.], **self.lb_params)
+
+    def add_actor(self):
+        self.lbf = self.make_actor()
         self.system.actors.add(self.lbf)
         return self.lbf
 
@@ -229,11 +232,14 @@ class TestEKVTK(TestVTK):
     valid_obs = ["density"]
 
     def make_actor(self):
-        self.solver = self.ek_solver(lattice=self.lattice)
-        self.species = self.ek_class(
+        return self.ek_class(
             lattice=self.lattice, density=1., kT=1., diffusion=0.1, valency=0.,
             advection=False, friction_coupling=False, ext_efield=[0., 0., 0.],
             tau=0.1, **self.ek_params)
+
+    def add_actor(self):
+        self.solver = self.ek_solver(lattice=self.lattice)
+        self.species = self.make_actor()
         self.system.ekcontainer.add(self.species)
         self.system.ekcontainer.tau = 0.1
         self.system.ekcontainer.solver = self.solver

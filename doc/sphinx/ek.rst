@@ -137,7 +137,7 @@ Setup
 .. _EK Initialization:
 
 Initialization
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 Here is a minimal working example::
 
@@ -169,7 +169,7 @@ contribution to the diffusive species' fluxes from the LB fluid.
 .. _Diffusive species:
 
 Diffusive species
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 ::
 
     ek_species = espressomd.electrokinetics.EKSpecies(
@@ -206,13 +206,39 @@ Individual nodes and slices of the species lattice can be accessed and
 modified using the syntax outlined in :ref:`Reading and setting properties
 of single lattice nodes`.
 
+Performance considerations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The CPU implementation of the EK has an extra flag ``single_precision`` to
+use single-precision floating point values. These are approximately 10%
+faster than double-precision, at the cost of a small loss in precision.
+
+.. _Checkpointing EK:
+
+Checkpointing
+-------------
+
+::
+
+    ek.save_checkpoint(path, binary)
+    ek.load_checkpoint(path, binary)
+
+The first command saves all of the EK nodes' properties to an ASCII
+(``binary=False``) or binary (``binary=True``) format respectively.
+The second command loads the EK nodes' properties.
+In both cases ``path`` specifies the location of the
+checkpoint file. This is useful for restarting a simulation either on the same
+machine or a different machine. Some care should be taken when using the binary
+format as the format of doubles can depend on both the computer being used as
+well as the compiler.
+
 .. _EK VTK output:
 
 VTK output
-~~~~~~~~~~
+----------
 
 The waLBerla library implements a globally-accessible VTK registry.
-A VTK stream can be attached to an EK species to periodically write
+A VTK stream can be attached to an EK actor to periodically write
 one or multiple fluid field data into a single file using
 :class:`~espressomd.electrokinetics.VTKOutput`::
 
@@ -220,32 +246,87 @@ one or multiple fluid field data into a single file using
     # create a VTK callback that automatically writes every 10 EK steps
     ek_vtk = espressomd.electrokinetics.VTKOutput(
         identifier="ek_vtk_automatic", observables=vtk_obs, delta_N=10)
-    ek_species.add_vtk_writer(vtk=ek_vtk)
-    self.system.integrator.run(100)
+    ek.add_vtk_writer(vtk=ek_vtk)
+    system.integrator.run(100)
     # can be deactivated
     ek_vtk.disable()
-    self.system.integrator.run(10)
+    system.integrator.run(10)
     ek_vtk.enable()
     # create a VTK callback that writes only when explicitly called
     ek_vtk_on_demand = espressomd.electrokinetics.VTKOutput(
         identifier="ek_vtk_now", observables=vtk_obs)
-    ek_species.add_vtk_writer(vtk=ek_vtk_on_demand)
+    ek.add_vtk_writer(vtk=ek_vtk_on_demand)
     ek_vtk_on_demand.write()
 
-Currently supported species properties are the density.
+Currently only supports the species density.
 By default, the properties of the current state
-of the fluid are written to disk on demand. To add a stream that writes
+of the species are written to disk on demand. To add a stream that writes
 to disk continuously, use the optional argument ``delta_N`` to indicate
 the level of subsampling. Such a stream can be deactivated.
 
 The VTK format is readable by visualization software such as ParaView [5]_
-or Mayavi2 [6]_. If you plan to use ParaView for visualization, note that also the particle
-positions can be exported using the VTK format (see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
+or Mayavi2 [6]_, as well as in |es| (see :ref:`Reading VTK files`).
+If you plan to use ParaView for visualization, note that also the particle
+positions can be exported using the VTK format
+(see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
+
+Important: these VTK files are written in multi-piece format, i.e. each MPI
+rank writes its local domain to a new piece in the VTK uniform grid to avoid
+a MPI reduction. ParaView can handle the topology reconstruction natively.
+However, when reading the multi-piece file with the Python ``vtk`` package,
+the topology must be manually reconstructed. In particular, calling the XML
+reader ``GetOutput()`` method directly after the update step will erase all
+topology information. While this is not an issue for VTK files obtained from
+simulations that ran with 1 MPI rank, for parallel simulations this will lead
+to 3D grids with incorrectly ordered data. Automatic topology reconstruction
+is available through :class:`~espressomd.io.vtk.VTKReader`::
+
+    import pathlib
+    import tempfile
+    import numpy as np
+    import espressomd
+    import espressomd.lb
+    import espressomd.io.vtk
+
+    system = espressomd.System(box_l=[12., 14., 10.])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
+
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=1.)
+    species = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
+            advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer.add(species)
+    system.integrator.run(10)
+
+    vtk_reader = espressomd.io.vtk.VTKReader()
+    label_density = "density"
+
+    with tempfile.TemporaryDirectory() as tmp_directory:
+        path_vtk_root = pathlib.Path(tmp_directory)
+        label_vtk = "ek_vtk"
+        path_vtk = path_vtk_root / label_vtk / "simulation_step_0.vtu"
+
+        # write VTK file
+        ek_vtk = espressomd.electrokinetics.VTKOutput(
+            identifier=label_vtk, delta_N=0,
+            observables=["density"],
+            base_folder=str(path_vtk_root))
+        species.add_vtk_writer(vtk=ek_vtk)
+        ek_vtk.write()
+
+        # read VTK file
+        vtk_grids = vtk_reader.parse(path_vtk)
+        vtk_density = vtk_grids[label_density]
+
+        # check VTK values match node values
+        ek_density = np.copy(lbf[:, :, :].density)
+        np.testing.assert_allclose(vtk_density, ek_density, rtol=1e-10, atol=0.)
 
 .. _Setting up EK boundary conditions:
 
 Setting up boundary conditions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 It is possible to impose a fixed density and a fixed flux on EK species.
 
@@ -255,7 +336,7 @@ pre-calculated information for the streaming operations.
 .. _Per-node EK boundary conditions:
 
 Per-node boundary conditions
-""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One can set (or update) the boundary conditions of individual nodes::
 
@@ -280,7 +361,7 @@ One can set (or update) the boundary conditions of individual nodes::
 .. _Shape-based EK boundary conditions:
 
 Shape-based boundary conditions
-"""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Adding a shape-based boundary is straightforward::
 

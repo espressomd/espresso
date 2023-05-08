@@ -123,8 +123,12 @@ public:
     return numeric_cast<FloatType>(t);
   }
 
-  [[nodiscard]] std::size_t stencil_size() const override {
+  [[nodiscard]] std::size_t stencil_size() const noexcept override {
     return static_cast<std::size_t>(Stencil::Size);
+  }
+
+  [[nodiscard]] virtual bool is_double_precision() const noexcept override {
+    return std::is_same<FloatType, double>::value;
   }
 
 private:
@@ -565,11 +569,11 @@ public:
     m_viscosity = FloatType_c(viscosity);
   }
 
-  [[nodiscard]] double get_viscosity() const override {
+  [[nodiscard]] double get_viscosity() const noexcept override {
     return numeric_cast<double>(m_viscosity);
   }
 
-  [[nodiscard]] double get_density() const override {
+  [[nodiscard]] double get_density() const noexcept override {
     return numeric_cast<double>(m_density);
   }
 
@@ -1180,11 +1184,11 @@ public:
     m_reset_force->set_ext_force(ext_force);
   }
 
-  [[nodiscard]] Utils::Vector3d get_external_force() const override {
+  [[nodiscard]] Utils::Vector3d get_external_force() const noexcept override {
     return m_reset_force->get_ext_force();
   }
 
-  [[nodiscard]] double get_kT() const override {
+  [[nodiscard]] double get_kT() const noexcept override {
     return numeric_cast<double>(m_kT);
   }
 
@@ -1210,11 +1214,11 @@ public:
     return *m_lattice;
   }
 
-  [[nodiscard]] std::size_t get_velocity_field_id() const override {
+  [[nodiscard]] std::size_t get_velocity_field_id() const noexcept override {
     return m_velocity_field_id;
   }
 
-  [[nodiscard]] std::size_t get_force_field_id() const override {
+  [[nodiscard]] std::size_t get_force_field_id() const noexcept override {
     return m_force_to_be_applied_id;
   }
 

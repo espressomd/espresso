@@ -67,6 +67,11 @@ void propagate() {
     return;
   }
 
+  if (!ek_container.is_poisson_solver_set()) {
+    runtimeErrorMsg() << "EK requires a Poisson solver.";
+    return;
+  }
+
   ek_container.reset_charge();
   std::for_each(ek_container.begin(), ek_container.end(), [](auto const &ek) {
     ek_container.add_charge(ek->get_density_id(), ek->get_valency(),

@@ -38,7 +38,7 @@ public:
 private:
   container_type m_ekcontainer;
   double m_tau{};
-  std::shared_ptr<walberla::PoissonSolver> m_poissonsolver;
+  std::shared_ptr<walberla::PoissonSolver> m_poisson_solver;
 
 public:
   void add(std::shared_ptr<EKSpecies> const &ek_species) {
@@ -62,29 +62,29 @@ public:
   const_iterator end() const noexcept { return m_ekcontainer.end(); }
   [[nodiscard]] bool empty() const noexcept { return m_ekcontainer.empty(); }
 
-  void set_poissonsolver(
+  void set_poisson_solver(
       std::shared_ptr<walberla::PoissonSolver> const &solver) noexcept {
-    m_poissonsolver = solver;
+    m_poisson_solver = solver;
   }
 
-  [[nodiscard]] bool is_poissonsolver_set() const noexcept {
-    return m_poissonsolver != nullptr;
+  [[nodiscard]] bool is_poisson_solver_set() const noexcept {
+    return m_poisson_solver != nullptr;
   }
 
   [[nodiscard]] double get_tau() const noexcept { return m_tau; }
 
   void set_tau(double tau) noexcept { m_tau = tau; }
 
-  void reset_charge() const { m_poissonsolver->reset_charge_field(); }
+  void reset_charge() const { m_poisson_solver->reset_charge_field(); }
 
   void add_charge(std::size_t const id, double valency,
                   bool is_double_precision) const {
-    m_poissonsolver->add_charge_to_field(id, valency, is_double_precision);
+    m_poisson_solver->add_charge_to_field(id, valency, is_double_precision);
   }
 
-  void solve_poisson() const { m_poissonsolver->solve(); }
+  void solve_poisson() const { m_poisson_solver->solve(); }
 
   [[nodiscard]] std::size_t get_potential_field_id() const {
-    return m_poissonsolver->get_potential_field_id();
+    return m_poisson_solver->get_potential_field_id();
   }
 };

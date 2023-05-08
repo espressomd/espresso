@@ -47,7 +47,7 @@ void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
                       LBWalberlaParams const &lb_params, double md_time_step);
 
 /** @brief Register a waLBerla LB instance and update lattice switch. */
-bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
+void activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
                           std::shared_ptr<LBWalberlaParams> lb_params);
 
 /** @brief De-register a waLBerla LB instance and update lattice switch. */

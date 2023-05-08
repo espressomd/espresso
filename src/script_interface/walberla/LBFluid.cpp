@@ -67,10 +67,9 @@ std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
 Variant LBFluid::do_call_method(std::string const &name,
                                 VariantMap const &params) {
   if (name == "activate") {
-    auto const fail = ::activate_lb_walberla(m_instance, m_lb_params);
-    if (not fail) {
-      m_is_active = true;
-    }
+    context()->parallel_try_catch(
+        [&]() { ::activate_lb_walberla(m_instance, m_lb_params); });
+    m_is_active = true;
     return {};
   }
   if (name == "deactivate") {
@@ -133,9 +132,9 @@ void LBFluid::do_construct(VariantMap const &params) {
   auto const dens = get_value<double>(params, "density");
   auto const kT = get_value<double>(params, "kT");
   auto const ext_f = get_value<Utils::Vector3d>(params, "ext_force_density");
+  auto const single_precision = get_value<bool>(params, "single_precision");
   m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
   m_is_active = false;
-  m_single_precision = get_value<bool>(params, "single_precision");
   m_seed = get_value<int>(params, "seed");
   context()->parallel_try_catch([&]() {
     if (tau <= 0.) {
@@ -143,7 +142,7 @@ void LBFluid::do_construct(VariantMap const &params) {
     }
     m_conv_dist = 1. / agrid;
     m_conv_visc = Utils::int_pow<1>(tau) / Utils::int_pow<2>(agrid);
-    m_conv_temp = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
+    m_conv_energy = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
     m_conv_dens = Utils::int_pow<3>(agrid);
     m_conv_speed = Utils::int_pow<1>(tau) / Utils::int_pow<1>(agrid);
     m_conv_press = Utils::int_pow<2>(tau) * Utils::int_pow<1>(agrid);
@@ -152,7 +151,7 @@ void LBFluid::do_construct(VariantMap const &params) {
     auto const lb_lattice = m_lattice->lattice();
     auto const lb_visc = m_conv_visc * visc;
     auto const lb_dens = m_conv_dens * dens;
-    auto const lb_kT = m_conv_temp * kT;
+    auto const lb_kT = m_conv_energy * kT;
     auto const lb_ext_f = m_conv_force_dens * ext_f;
     if (m_seed < 0) {
       throw std::domain_error("Parameter 'seed' must be >= 0");
@@ -167,7 +166,7 @@ void LBFluid::do_construct(VariantMap const &params) {
       throw std::domain_error("Parameter 'kinematic_viscosity' must be >= 0");
     }
     m_instance =
-        new_lb_walberla(lb_lattice, lb_visc, lb_dens, m_single_precision);
+        new_lb_walberla(lb_lattice, lb_visc, lb_dens, single_precision);
     if (auto le_protocol = LeesEdwards::get_protocol().lock()) {
       if (lb_kT != 0.) {
         throw std::runtime_error(

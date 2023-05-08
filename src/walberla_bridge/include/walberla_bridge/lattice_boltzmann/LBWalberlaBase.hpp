@@ -50,7 +50,10 @@ public:
   virtual void ghost_communication() = 0;
 
   /** @brief Number of discretized velocities in the PDF. */
-  virtual std::size_t stencil_size() const = 0;
+  virtual std::size_t stencil_size() const noexcept = 0;
+
+  /** @brief Whether kernels use double-precision floating point numbers. */
+  [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
   /** @brief Get interpolated velocities at a position. */
   virtual boost::optional<Utils::Vector3d>
@@ -229,19 +232,19 @@ public:
   virtual void set_external_force(Utils::Vector3d const &ext_force) = 0;
 
   /** @brief Get the global external force. */
-  virtual Utils::Vector3d get_external_force() const = 0;
+  virtual Utils::Vector3d get_external_force() const noexcept = 0;
 
   /** @brief Set the fluid viscosity. */
   virtual void set_viscosity(double viscosity) = 0;
 
   /** @brief Get the fluid viscosity. */
-  virtual double get_viscosity() const = 0;
+  virtual double get_viscosity() const noexcept = 0;
 
   /** @brief Get the fluid density. */
-  virtual double get_density() const = 0;
+  virtual double get_density() const noexcept = 0;
 
   /** @brief Get the fluid temperature (if thermalized). */
-  virtual double get_kT() const = 0;
+  virtual double get_kT() const noexcept = 0;
 
   /** @brief Set the RNG counter (if thermalized). */
   [[nodiscard]] virtual boost::optional<uint64_t> get_rng_state() const = 0;
@@ -250,8 +253,8 @@ public:
   virtual void set_rng_state(uint64_t counter) = 0;
 
   /** @brief get the velocity field id */
-  [[nodiscard]] virtual std::size_t get_velocity_field_id() const = 0;
+  [[nodiscard]] virtual std::size_t get_velocity_field_id() const noexcept = 0;
 
   /** @brief get the force field id */
-  [[nodiscard]] virtual std::size_t get_force_field_id() const = 0;
+  [[nodiscard]] virtual std::size_t get_force_field_id() const noexcept = 0;
 };

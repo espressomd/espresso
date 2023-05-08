@@ -34,7 +34,6 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/optional.hpp>
 
-#include <cassert>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -87,26 +86,17 @@ void lb_sanity_checks(LBWalberlaBase const &lb_fluid,
   }
 }
 
-bool activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
+void activate_lb_walberla(std::shared_ptr<LBWalberlaBase> lb_fluid,
                           std::shared_ptr<LBWalberlaParams> lb_params) {
-  bool flag_failure = false;
-  try {
-    assert(::lattice_switch == ActiveLB::NONE);
-    lb_sanity_checks(*lb_fluid, *lb_params, get_time_step());
-    auto const &lebc = ::box_geo.lees_edwards_bc();
-    lb_fluid->check_lebc(static_cast<unsigned int>(lebc.shear_direction),
-                         static_cast<unsigned int>(lebc.shear_plane_normal));
-  } catch (std::exception const &e) {
-    runtimeErrorMsg() << "during waLBerla activation: " << e.what();
-    flag_failure = true;
+  if (::lattice_switch != ActiveLB::NONE) {
+    throw std::runtime_error("Cannot add a second LB instance");
   }
-  if (boost::mpi::all_reduce(comm_cart, flag_failure, std::logical_or<>())) {
-    return true;
-  }
+  lb_sanity_checks(*lb_fluid, *lb_params, get_time_step());
+  auto const &lebc = ::box_geo.lees_edwards_bc();
+  lb_fluid->check_lebc(lebc.shear_direction, lebc.shear_plane_normal);
   ::lb_walberla_instance = std::weak_ptr<LBWalberlaBase>{lb_fluid};
   ::lb_walberla_params_instance = lb_params;
   ::lattice_switch = ActiveLB::WALBERLA_LB;
-  return false;
 }
 
 void deactivate_lb_walberla() {

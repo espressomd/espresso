@@ -93,31 +93,35 @@ void EKSpecies::do_construct(VariantMap const &args) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
   m_vtk_writers =
       get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
-  const auto single_precision =
+  auto const single_precision =
       get_value_or<bool>(args, "single_precision", false);
-
-  // unit conversions
   auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
-  m_tau = get_value<double>(args, "tau");
-  m_conv_diffusion = m_tau / Utils::int_pow<2>(agrid);
-  m_conv_ext_efield = Utils::int_pow<2>(m_tau) / agrid;
-  m_conv_density = Utils::int_pow<3>(agrid);
-  m_conv_flux = m_tau * Utils::int_pow<2>(agrid);
-
+  auto const diffusion = get_value<double>(args, "diffusion");
+  auto const ext_efield = get_value<Utils::Vector3d>(args, "ext_efield");
+  auto const density = get_value<double>(args, "density");
+  auto const kT = get_value<double>(args, "kT");
+  auto const tau = m_tau = get_value<double>(args, "tau");
   context()->parallel_try_catch([&]() {
-    if (m_tau <= 0.) {
+    if (tau <= 0.) {
       throw std::domain_error("Parameter 'tau' must be > 0");
     }
-
-    auto const ek_diffusion =
-        get_value<double>(args, "diffusion") * m_conv_diffusion;
-    auto const ek_ext_efield =
-        get_value<Utils::Vector3d>(args, "ext_efield") * m_conv_ext_efield;
-    auto const ek_density = m_density =
-        get_value<double>(args, "density") * m_conv_density;
-
+    if (kT < 0.) {
+      throw std::domain_error("Parameter 'kT' must be >= 0");
+    }
+    if (density < 0.) {
+      throw std::domain_error("Parameter 'density' must be >= 0");
+    }
+    m_conv_energy = Utils::int_pow<2>(tau) / Utils::int_pow<2>(agrid);
+    m_conv_diffusion = tau / Utils::int_pow<2>(agrid);
+    m_conv_ext_efield = Utils::int_pow<2>(tau) / agrid;
+    m_conv_density = Utils::int_pow<3>(agrid);
+    m_conv_flux = tau * Utils::int_pow<2>(agrid);
+    auto const ek_diffusion = diffusion * m_conv_diffusion;
+    auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
+    auto const ek_density = m_density = density * m_conv_density;
+    auto const ek_kT = kT * m_conv_energy;
     m_instance = new_ek_walberla(
-        m_lattice->lattice(), ek_diffusion, get_value<double>(args, "kT"),
+        m_lattice->lattice(), ek_diffusion, ek_kT,
         get_value<double>(args, "valency"), ek_ext_efield, ek_density,
         get_value<bool>(args, "advection"),
         get_value<bool>(args, "friction_coupling"), single_precision);

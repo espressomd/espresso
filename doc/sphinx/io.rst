@@ -116,14 +116,22 @@ Be aware of the following limitations:
   contains LB boundaries, constraint unions or auto-update accumulators when the
   simulation is running with 2 or more MPI nodes.
 
-* The active actors, i.e., the content of ``system.actors``, are checkpointed.
-  For lattice-Boltzmann fluids, this only includes the parameters such as the
-  lattice constant (``agrid``). The actual flow field has to be saved
-  separately with the lattice-Boltzmann specific methods
-  :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
-  and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint`
+* The active actors, i.e., the content of ``system.actors`` resp.
+  ``system.ekcontainers``, are checkpointed. For lattice-based methods like
+  lattice-Boltzmann fluids and advection-diffusion-reaction models, this only
+  includes the parameters such as the lattice constant (``agrid``) and initial
+  densities.
+  The actual fields have to be saved separately with the lattice-specific
+  methods :meth:`espressomd.lb.LBFluidWalberla.save_checkpoint
+  <espressomd.detail.walberla.LatticeModel.save_checkpoint>` resp.
+  :meth:`espressomd.electrokinetics.EKSpecies.save_checkpoint
+  <espressomd.detail.walberla.LatticeModel.save_checkpoint>`
+  and loaded via :meth:`espressomd.lb.LBFluidWalberla.load_checkpoint
+  <espressomd.detail.walberla.LatticeModel.load_checkpoint>` resp.
+  :meth:`espressomd.electrokinetics.EKSpecies.load_checkpoint
+  <espressomd.detail.walberla.LatticeModel.load_checkpoint>`
   after restoring the checkpoint. See :ref:`LB checkpointing <Checkpointing LB>`
-  for more details.
+  resp. :ref:`EK checkpointing <Checkpointing EK>` for more details.
 
 * References between Python objects are not maintained during checkpointing.
   For example, if an instance of a shape and an instance of a constraint

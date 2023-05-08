@@ -81,7 +81,13 @@ public:
     return numeric_cast<FloatType>(t);
   }
 
-  [[nodiscard]] std::size_t stencil_size() const override { return FluxCount; }
+  [[nodiscard]] std::size_t stencil_size() const noexcept override {
+    return FluxCount;
+  }
+
+  [[nodiscard]] bool is_double_precision() const noexcept override {
+    return std::is_same<FloatType, double>::value;
+  }
 
 private:
   FloatType m_diffusion;
@@ -208,24 +214,19 @@ public:
   [[nodiscard]] Utils::Vector3d get_ext_efield() const noexcept override {
     return m_ext_efield;
   }
-  [[nodiscard]] bool is_double_precision() const noexcept override {
-    return std::is_same<double, FloatType>::value;
-  }
 
-  void set_diffusion(double diffusion) noexcept override {
+  void set_diffusion(double diffusion) override {
     m_diffusion = FloatType_c(diffusion);
   }
-  void set_kT(double kT) noexcept override { m_kT = FloatType_c(kT); }
-  void set_valency(double valency) noexcept override {
+  void set_kT(double kT) override { m_kT = FloatType_c(kT); }
+  void set_valency(double valency) override {
     m_valency = FloatType_c(valency);
   }
-  void set_advection(bool advection) noexcept override {
-    m_advection = advection;
-  }
-  void set_friction_coupling(bool friction_coupling) noexcept override {
+  void set_advection(bool advection) override { m_advection = advection; }
+  void set_friction_coupling(bool friction_coupling) override {
     m_friction_coupling = friction_coupling;
   }
-  void set_ext_efield(Utils::Vector3d const &field) noexcept override {
+  void set_ext_efield(Utils::Vector3d const &field) override {
     m_ext_efield = field;
   }
 

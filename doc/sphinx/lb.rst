@@ -106,9 +106,8 @@ The CPU implementation of the LB has an extra flag ``single_precision`` to
 use single-precision floating point values. These are approximately 10%
 faster than double-precision, at the cost of a small loss in precision.
 
-To enable vectorization, run ``cmake . -DWALBERLA_USE_AVX=ON``.
-An AVX2-capable microprocessor is required. Currently only works
-for double-precision kernels.
+To enable vectorization, run ``cmake . -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON``.
+An AVX2-capable microprocessor is required.
 
 .. _Checkpointing LB:
 
@@ -321,9 +320,10 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
 
         # write VTK file
         lb_vtk = espressomd.lb.VTKOutput(
-            lb_fluid=lbf, identifier=label_vtk, delta_N=0,
+            identifier=label_vtk, delta_N=0,
             observables=["density", "velocity_vector", "pressure_tensor"],
             base_folder=str(path_vtk_root))
+        lbf.add_vtk_writer(vtk=lb_vtk)
         lb_vtk.write()
 
         # read VTK file
@@ -335,14 +335,11 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
 
         # check VTK values match node values
         lb_density = np.copy(lbf[:, :, :].density)
-        lb_velocity = np.copy(lbf[:, :, :].velocity) * lbf.tau
-        lb_pressure = np.copy(lbf[:, :, :].pressure_tensor) * lbf.tau**2
-        np.testing.assert_allclose(
-            vtk_density, lb_density, rtol=1e-10, atol=0.)
-        np.testing.assert_allclose(
-            vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
-        np.testing.assert_allclose(
-            vtk_pressure, lb_pressure, rtol=1e-7, atol=0.)
+        lb_velocity = np.copy(lbf[:, :, :].velocity)
+        lb_pressure = np.copy(lbf[:, :, :].pressure_tensor)
+        np.testing.assert_allclose(vtk_density, lb_density, rtol=1e-10, atol=0.)
+        np.testing.assert_allclose(vtk_velocity, lb_velocity, rtol=1e-7, atol=0.)
+        np.testing.assert_allclose(vtk_pressure, lb_pressure, rtol=1e-7, atol=0.)
 
 .. _Choosing between the GPU and CPU implementations:
 

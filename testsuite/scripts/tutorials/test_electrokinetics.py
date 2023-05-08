@@ -20,8 +20,7 @@ import importlib_wrapper as iw
 import numpy as np
 
 tutorial, skipIfMissingFeatures = iw.configure_and_import(
-    "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py",
-    integration_length=400, dt=0.5)
+    "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py", integration_length=400)
 
 
 @skipIfMissingFeatures

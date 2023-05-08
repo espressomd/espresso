@@ -21,7 +21,7 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/raspberry_electrophoresis/raspberry_electrophoresis.py",
-    box_l=16., num_iterations=80, num_steps_per_iteration=80)
+    box_l=16., num_iterations=100, num_steps_per_iteration=80)
 
 
 @skipIfMissingFeatures

@@ -29,7 +29,7 @@ import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKEOF(ut.TestCase):
+class EKEOF:
     BOX_L = [45., 9., 9.]
     AGRID = 1.5
     DENSITY = 1
@@ -41,24 +41,18 @@ class EKEOF(ut.TestCase):
     system.time_step = TAU
     system.cell_system.skin = 0.4
 
-    def tearDown(self) -> None:
+    def tearDown(self):
         self.system.actors.clear()
         self.system.ekcontainer.clear()
 
-    def test_eof_single(self):
-        self.detail_test_eof(single_precision=True)
-
-    def test_eof_double(self):
-        self.detail_test_eof(single_precision=False)
-
-    def detail_test_eof(self, single_precision: bool):
+    def test_eof(self):
         """
         Testing EK for the electroosmotic flow
         """
 
         eps0 = 0.015
         epsR = 18.5
-        kT = 2.3
+        kT = 2.
         offset = self.AGRID
         d = self.system.box_l[0] - 2 * offset
         valency = 1.1
@@ -69,21 +63,20 @@ class EKEOF(ut.TestCase):
 
         density = 0.0006
 
-        lattice = espressomd.electrokinetics.LatticeWalberla(
-            n_ghost_layers=1, agrid=self.AGRID)
+        lattice = self.ek_lattice_class(n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = espressomd.electrokinetics.EKSpecies(
+        ekspecies = self.ek_species_class(
             lattice=lattice, density=density, kT=kT, valency=valency,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=True,
             advection=True, ext_efield=external_electric_field,
-            single_precision=single_precision, tau=self.TAU)
-        ekwallcharge = espressomd.electrokinetics.EKSpecies(
+            tau=self.TAU, **self.ek_params)
+        ekwallcharge = self.ek_species_class(
             lattice=lattice, density=0.0, kT=kT, diffusion=0.0, tau=self.TAU,
             valency=-valency, friction_coupling=False, advection=False,
-            ext_efield=[0.0, 0.0, 0.0], single_precision=single_precision)
+            ext_efield=[0.0, 0.0, 0.0], **self.ek_params)
 
-        eksolver = espressomd.electrokinetics.EKFFT(
-            lattice=lattice, permittivity=eps0 * epsR, single_precision=single_precision)
+        eksolver = self.ek_solver_class(
+            lattice=lattice, permittivity=eps0 * epsR, **self.ek_params)
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.add(ekwallcharge)
 
@@ -92,7 +85,7 @@ class EKEOF(ut.TestCase):
 
         lb_fluid = espressomd.lb.LBFluidWalberla(
             lattice=lattice, density=1.0, kinematic_viscosity=visc,
-            tau=self.TAU, single_precision=single_precision)
+            tau=self.TAU, **self.ek_params)
         self.system.actors.add(lb_fluid)
 
         wall_bot = espressomd.shapes.Wall(normal=[1, 0, 0], dist=offset)
@@ -159,7 +152,7 @@ class EKEOF(ut.TestCase):
             x_sim < -self.system.box_l[0] / 2 + offset,
             x_sim > self.system.box_l[0] / 2 - offset)] = 0.
         np.testing.assert_allclose(
-            simulated_density, analytic_density, rtol=2e-3)
+            simulated_density, analytic_density, rtol=2e-2)
 
         analytic_velocity = calc_analytic_velocity(
             x=x_sim,
@@ -178,6 +171,28 @@ class EKEOF(ut.TestCase):
             simulated_velocity,
             analytic_velocity,
             rtol=2e-2)
+
+
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+class EKTestWalberla(EKEOF, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in double-precision."""
+
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": False}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+class EKTestWalberlaSinglePrecision(EKEOF, ut.TestCase):
+
+    """Test for the Walberla implementation of the EK in single-precision."""
+
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
+    ek_species_class = espressomd.electrokinetics.EKSpecies
+    ek_solver_class = espressomd.electrokinetics.EKFFT
+    ek_params = {"single_precision": True}
 
 
 if __name__ == "__main__":

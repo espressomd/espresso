@@ -49,12 +49,10 @@ class EKTest:
     system.periodicity = [True, True, True]
     system.time_step = params["tau"]
     system.cell_system.skin = 1.0
-    ek_solver_set = False
 
-    @classmethod
-    def setUpClass(cls):
-        cls.lattice = cls.ek_lattice_class(
-            n_ghost_layers=1, agrid=cls.params["agrid"])
+    def setUp(self):
+        self.lattice = self.ek_lattice_class(
+            n_ghost_layers=1, agrid=self.params["agrid"])
 
     def tearDown(self):
         self.system.actors.clear()
@@ -64,23 +62,20 @@ class EKTest:
         self.system.time_step = self.params["tau"]
 
     def make_default_ek_species(self):
-        return self.ek_species_class(
-            lattice=self.lattice,
-            single_precision=self.ek_params["single_precision"],
-            **self.ek_species_params)
-
-    def test_00_ek_container(self):
-        def check():
-            status = self.system.ekcontainer.call_method(
-                "is_poissonsolver_set")
-            self.assertEqual(status, EKTest.ek_solver_set)
-
-        check()
+        ek_species = self.ek_species_class(
+            lattice=self.lattice, **self.ek_params, **self.ek_species_params)
         ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
-        check()
         self.system.ekcontainer.solver = ek_solver
-        EKTest.ek_solver_set = True
-        check()
+        return ek_species
+
+    def test_ek_container_poisson_solver(self):
+        ekcontainer = self.system.ekcontainer
+        ekcontainer.call_method("reset_poisson_solver")
+        self.assertFalse(ekcontainer.call_method("is_poisson_solver_set"))
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
+        self.assertFalse(ekcontainer.call_method("is_poisson_solver_set"))
+        self.system.ekcontainer.solver = ek_solver
+        self.assertTrue(ekcontainer.call_method("is_poisson_solver_set"))
 
     def test_ek_species(self):
         # inactive species
@@ -276,6 +271,13 @@ class EKTest:
         print("\nTesting EK runtime error messages:", file=sys.stderr)
         sys.stderr.flush()
 
+        # check exceptions without EK Poisson solver
+        with self.assertRaisesRegex(Exception, "EK requires a Poisson solver"):
+            self.system.ekcontainer.call_method("reset_poisson_solver")
+            self.system.integrator.run(1)
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
+        self.system.ekcontainer.solver = ek_solver
+
         # check exceptions without LB force field
         with self.assertRaisesRegex(Exception, "friction coupling enabled but no force field accessible"):
             ek_species.friction_coupling = True
@@ -295,7 +297,7 @@ class EKTest:
         self.system.integrator.run(1)
 
         # check exceptions with an incompatible LB time step
-        with self.assertRaisesRegex(Exception, "LB and EK are active but with different timesteps"):
+        with self.assertRaisesRegex(Exception, "LB and EK are active but with different time steps"):
             lb = self.lb_fluid_class(
                 lattice=self.lattice, density=0.5, kinematic_viscosity=3.,
                 tau=2. * self.params["tau"], **self.lb_params)
@@ -324,6 +326,21 @@ class EKTest:
         for key in {"lattice", "shape", "single_precision"}:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(ek_species, key, 0)
+
+    def test_ctor_exceptions(self):
+        def make_kwargs(**kwargs):
+            ek_kwargs = {"lattice": self.lattice}
+            ek_kwargs.update(self.ek_species_params)
+            ek_kwargs.update(self.ek_params)
+            ek_kwargs.update(kwargs)
+            return ek_kwargs
+
+        with self.assertRaisesRegex(ValueError, "Parameter 'tau' must be > 0"):
+            self.ek_species_class(**make_kwargs(tau=0.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'density' must be >= 0"):
+            self.ek_species_class(**make_kwargs(density=-1.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'kT' must be >= 0"):
+            self.ek_species_class(**make_kwargs(kT=-1.))
 
     def test_bool_operations_on_node(self):
         ekspecies = self.make_default_ek_species()

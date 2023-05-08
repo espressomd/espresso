@@ -52,14 +52,18 @@ class EKContainer : public ObjectList<EKSpecies> {
     if (method == "get_tau") {
       return EK::ek_container.get_tau();
     }
-    if (method == "set_poissonsolver") {
+    if (method == "set_poisson_solver") {
       auto obj_ptr =
           get_value<std::shared_ptr<EKPoissonSolver>>(parameters.at("object"));
-      EK::ek_container.set_poissonsolver(obj_ptr->get_instance());
+      EK::ek_container.set_poisson_solver(obj_ptr->get_instance());
       return none;
     }
-    if (method == "is_poissonsolver_set") {
-      return EK::ek_container.is_poissonsolver_set();
+    if (method == "reset_poisson_solver") {
+      EK::ek_container.set_poisson_solver(nullptr);
+      return none;
+    }
+    if (method == "is_poisson_solver_set") {
+      return EK::ek_container.is_poisson_solver_set();
     }
 
     return ObjectList<EKSpecies>::do_call_method(method, parameters);

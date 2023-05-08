@@ -46,6 +46,7 @@ class EKSpecies : public LatticeModel<::EKinWalberlaBase, EKVTKHandle> {
   using Base = LatticeModel<::EKinWalberlaBase, EKVTKHandle>;
   double m_conv_diffusion;
   double m_conv_ext_efield;
+  double m_conv_energy;
   double m_conv_density;
   double m_conv_flux;
   double m_tau;
@@ -61,8 +62,10 @@ public:
          },
          [this]() { return m_instance->get_diffusion() / m_conv_diffusion; }},
         {"kT",
-         [this](Variant const &v) { m_instance->set_kT(get_value<double>(v)); },
-         [this]() { return m_instance->get_kT(); }},
+         [this](Variant const &v) {
+           m_instance->set_kT(get_value<double>(v) * m_conv_energy);
+         },
+         [this]() { return m_instance->get_kT() / m_conv_energy; }},
         {"valency",
          [this](Variant const &v) {
            m_instance->set_valency(get_value<double>(v));

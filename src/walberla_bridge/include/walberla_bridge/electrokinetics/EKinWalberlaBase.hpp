@@ -39,7 +39,7 @@ public:
   virtual void ghost_communication() = 0;
 
   /** @brief Number of discretized fluxes */
-  [[nodiscard]] virtual std::size_t stencil_size() const = 0;
+  [[nodiscard]] virtual std::size_t stencil_size() const noexcept = 0;
 
   /** @brief Set node density. */
   virtual bool set_node_density(Utils::Vector3i const &node,
@@ -141,12 +141,12 @@ public:
   [[nodiscard]] virtual Utils::Vector3d get_ext_efield() const noexcept = 0;
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
-  virtual void set_diffusion(double diffusion) noexcept = 0;
-  virtual void set_kT(double kT) noexcept = 0;
-  virtual void set_valency(double valency) noexcept = 0;
-  virtual void set_advection(bool advection) noexcept = 0;
-  virtual void set_friction_coupling(bool friction_coupling) noexcept = 0;
-  virtual void set_ext_efield(const Utils::Vector3d &field) noexcept = 0;
+  virtual void set_diffusion(double diffusion) = 0;
+  virtual void set_kT(double kT) = 0;
+  virtual void set_valency(double valency) = 0;
+  virtual void set_advection(bool advection) = 0;
+  virtual void set_friction_coupling(bool friction_coupling) = 0;
+  virtual void set_ext_efield(Utils::Vector3d const &field) = 0;
 
   [[nodiscard]] virtual std::size_t get_density_id() const noexcept = 0;
 

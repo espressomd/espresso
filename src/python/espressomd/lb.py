@@ -45,29 +45,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     """
     Base class for LB implementations.
 
-    Parameters
-    ----------
-    lattice :
-        Lattice object. If not provided, a default one can be constructed
-        using the ``agrid`` parameter.
-    agrid : :obj:`float`
-        Lattice constant. The box size in every direction must be an integer
-        multiple of ``agrid``. Cannot be provided together with ``lattice``
-    tau : :obj:`float`
-        LB time step, must be an integer multiple of the MD time step.
-    density : :obj:`float`
-        Fluid density.
-    kinematic_viscosity : :obj:`float`
-        Fluid kinematic viscosity.
-    ext_force_density : (3,) array_like of :obj:`float`, optional
-        Force density applied on the fluid.
-    kT : :obj:`float`, optional
-        Thermal energy of the simulated heat bath (for thermalized fluids).
-        Set it to 0 for an unthermalized fluid.
-    seed : :obj:`int`, optional
-        Initial counter value (or seed) of the philox RNG.
-        Required for a thermalized fluid. Must be positive.
-
     """
 
     def __getitem__(self, key):
@@ -213,9 +190,31 @@ class LBFluidWalberla(HydrodynamicInteraction,
                       espressomd.detail.walberla.LatticeModel):
     """
     The lattice-Boltzmann method for hydrodynamics using waLBerla.
-    See :class:`HydrodynamicInteraction` for the list of parameters.
     If argument ``lattice`` is not provided, one will be default
     constructed if an argument ``agrid`` is provided.
+
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object. If not provided, a default one will be constructed
+        using the ``agrid`` parameter.
+    agrid : :obj:`float`
+        Lattice constant. The box size in every direction must be an integer
+        multiple of ``agrid``. Cannot be provided together with ``lattice``.
+    tau : :obj:`float`
+        LB time step, must be an integer multiple of the MD time step.
+    density : :obj:`float`
+        Fluid density.
+    kinematic_viscosity : :obj:`float`
+        Fluid kinematic viscosity.
+    ext_force_density : (3,) array_like of :obj:`float`, optional
+        Force density applied on the fluid.
+    kT : :obj:`float`, optional
+        Thermal energy of the simulated heat bath (for thermalized fluids).
+        Set it to 0 for an unthermalized fluid.
+    seed : :obj:`int`, optional
+        Initial counter value (or seed) of the philox RNG.
+        Required for a thermalized fluid. Must be positive.
 
     Methods
     -------

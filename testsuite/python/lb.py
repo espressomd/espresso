@@ -83,7 +83,7 @@ class LBTest:
         self.check_properties(lbf)
 
     def check_properties(self, lbf):
-        agrid = self.params['agrid']
+        agrid = self.params["agrid"]
         tau = self.system.time_step
         # check LB object
         self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
@@ -94,7 +94,7 @@ class LBTest:
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
             lbf.single_precision,
-            self.lb_params['single_precision'])
+            self.lb_params["single_precision"])
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), [0., 0., 0.], atol=self.atol)
         lbf.kinematic_viscosity = 2.
@@ -115,7 +115,7 @@ class LBTest:
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
             lbf.single_precision,
-            self.lb_params['single_precision'])
+            self.lb_params["single_precision"])
         lbf.kinematic_viscosity = 3.
         self.assertAlmostEqual(lbf.kinematic_viscosity, 3., delta=self.atol)
         ext_force_density = [0.02, 0.05, 0.07]
@@ -173,6 +173,10 @@ class LBTest:
             self.lb_class(**make_kwargs(kT=-1., seed=42))
         with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
             self.lb_class(**make_kwargs(kT=0., seed=-42))
+        with self.assertRaisesRegex(RuntimeError, "Cannot add a second LB instance"):
+            lbf = self.lb_class(**make_kwargs())
+            self.system.actors.add(lbf)
+            lbf.call_method("activate")
 
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -185,7 +189,7 @@ class LBTest:
             lb_node.pressure_tensor = np.eye(3, 3)
         with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
             lb_node.is_boundary = True
-        with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid node objects'):
+        with self.assertRaisesRegex(NotImplementedError, "Cannot serialize LB fluid node objects"):
             lb_node.__reduce__()
         # check property types
         array_locked = espressomd.utils.array_locked
