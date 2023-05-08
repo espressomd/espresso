@@ -66,6 +66,15 @@ class LatticeWalberla(ScriptInterfaceHelper):
             if shape.is_inside(position=pos):
                 yield idx
 
+    def get_shape_bitmask(self, shape):
+        """Create a bitmask for the given shape."""
+        if not isinstance(shape, espressomd.shapes.Shape):
+            raise ValueError(
+                "Parameter 'shape' must be derived from espressomd.shapes.Shape")
+        mask_flat = shape.call_method("rasterize", grid_size=self.shape,
+                                      grid_spacing=self.agrid, grid_offset=0.5)
+        return np.reshape(mask_flat, self.shape).astype(bool)
+
 
 class LatticeModel:
 
@@ -76,6 +85,31 @@ class LatticeModel:
 
     def load_checkpoint(self, path, binary):
         return self.call_method("load_checkpoint", path=path, mode=int(binary))
+
+    def get_nodes_inside_shape(self, shape=None):
+        """
+        Provide a generator for iterating over all nodes inside the given shape.
+
+        Parameters
+        ----------
+        shape : :class:`espressomd.shapes.Shape`
+            Shape to use as filter.
+
+        """
+        for idx in self.lattice.get_node_indices_inside_shape(shape):
+            yield self[idx]
+
+    def get_shape_bitmask(self, shape=None):
+        """
+        Create a bitmask for the given shape.
+
+        Parameters
+        ----------
+        shape : :class:`espressomd.shapes.Shape`
+            Shape to rasterize.
+
+        """
+        return self.lattice.get_shape_bitmask(shape=shape)
 
 
 def get_slice_bounding_box(slices, grid_size):
@@ -111,32 +145,6 @@ def get_slice_bounding_box(slices, grid_size):
             "shape": shape}
 
 
-class VTKRegistry:
-
-    def __init__(self):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-        self.map = {}
-
-    def __getitem__(self, vtk_uid):
-        return self.map[vtk_uid]
-
-    def __contains__(self, vtk_uid):
-        return vtk_uid in self.map
-
-    def _register_vtk_object(self, vtk_obj):
-        vtk_uid = vtk_obj.vtk_uid
-        self.map[vtk_uid] = vtk_obj
-
-    def __getstate__(self):
-        return self.map
-
-    def __setstate__(self, active_vtk_objects):
-        self.map = {}
-        for vtk_uid, vtk_obj in active_vtk_objects.items():
-            self.map[vtk_uid] = vtk_obj
-
-
 class VTKOutputBase(ScriptInterfaceHelper):
 
     def __init__(self, *args, **kwargs):
@@ -150,10 +158,13 @@ class VTKOutputBase(ScriptInterfaceHelper):
             super().__init__(*args, **params)
         else:
             super().__init__(**kwargs)
-        self._add_to_registry()
 
     def valid_observables(self):
         return set(self.call_method("get_valid_observable_names"))
+
+    def valid_keys(self):
+        return {"delta_N", "execution_count", "observables", "identifier",
+                "base_folder", "prefix", "enabled"}
 
     def default_params(self):
         return {"delta_N": 0, "enabled": True, "execution_count": 0,

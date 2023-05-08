@@ -123,6 +123,7 @@ class TestLBVTK(TestVTK):
     def clear_actors(self):
         self.system.actors.clear()
 
+    @utx.skipIfMissingModules("espressomd.io.vtk")
     def test_vtk(self):
         """
         Check VTK files. Keep in mind the VTK module writes in single-precision.
@@ -248,6 +249,7 @@ class TestEKVTK(TestVTK):
     def clear_actors(self):
         self.system.ekcontainer.clear()
 
+    @utx.skipIfMissingModules("espressomd.io.vtk")
     def test_vtk(self):
         """
         Check VTK files. Keep in mind the VTK module writes in single-precision.
@@ -324,7 +326,6 @@ class TestEKVTK(TestVTK):
                     vtk_density, ek_density, rtol=5e-7)
 
 
-@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBWalberlaWrite(TestLBVTK, ut.TestCase):
     vtk_class = espressomd.lb.VTKOutput
@@ -334,7 +335,6 @@ class LBWalberlaWrite(TestLBVTK, ut.TestCase):
     vtk_id = "lb_double_precision"
 
 
-@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBWalberlaWriteSinglePrecision(TestLBVTK, ut.TestCase):
     vtk_class = espressomd.lb.VTKOutput
@@ -344,7 +344,6 @@ class LBWalberlaWriteSinglePrecision(TestLBVTK, ut.TestCase):
     vtk_id = "lb_single_precision"
 
 
-@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class EKWalberlaWrite(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput
@@ -355,7 +354,6 @@ class EKWalberlaWrite(TestEKVTK, ut.TestCase):
     vtk_id = "ek_double_precision"
 
 
-@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class EKWalberlaWriteSinglePrecision(TestEKVTK, ut.TestCase):
     vtk_class = espressomd.electrokinetics.VTKOutput

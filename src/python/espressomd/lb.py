@@ -21,7 +21,7 @@ import itertools
 import numpy as np
 
 from . import utils
-from .detail.walberla import VTKRegistry, VTKOutputBase, LatticeWalberla
+from .detail.walberla import VTKOutputBase, LatticeWalberla
 from .script_interface import ScriptInterfaceHelper, script_interface_register, array_variant
 import espressomd.detail.walberla
 import espressomd.shapes
@@ -60,11 +60,11 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         self._deactivate_method()
 
     def _activate_method(self):
-        self.call_method('activate')
+        self.call_method("activate")
         utils.handle_errors("HydrodynamicInteraction activation failed")
 
     def _deactivate_method(self):
-        self.call_method('deactivate')
+        self.call_method("deactivate")
         utils.handle_errors("HydrodynamicInteraction deactivation failed")
 
     def validate_params(self, params):
@@ -111,7 +111,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         if np.any(np.linalg.norm(velocities, axis=1) > vel_max):
             speed_of_sound = 1. / np.sqrt(3.)
             mach_number = vel_max / speed_of_sound
-            raise ValueError(f'Slip velocity exceeds Mach {mach_number:.2f}')
+            raise ValueError(f"Slip velocity exceeds Mach {mach_number:.2f}")
 
     @property
     def pressure_tensor(self):
@@ -121,10 +121,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     @pressure_tensor.setter
     def pressure_tensor(self, value):
         raise RuntimeError(f"Property 'pressure_tensor' is read-only")
-
-
-if espressomd.code_features.has_features("WALBERLA"):
-    _walberla_vtk_registry = VTKRegistry()
 
 
 @script_interface_register
@@ -163,13 +159,6 @@ class VTKOutput(VTKOutputBase):
     _so_name = "walberla::LBVTKHandle"
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("enable", "disable", "write")
-
-    def _add_to_registry(self):
-        _walberla_vtk_registry._register_vtk_object(self)
-
-    def valid_keys(self):
-        return {'lb_fluid', 'delta_N', 'execution_count', 'observables',
-                'identifier', 'base_folder', 'prefix', 'enabled'}
 
     def required_keys(self):
         return self.valid_keys() - self.default_params().keys()
@@ -297,7 +286,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
                 raise ValueError("missing argument 'lattice' or 'agrid'")
             params["lattice"] = LatticeWalberla(
                 agrid=params.pop("agrid"), n_ghost_layers=1)
-        elif 'agrid' in params:
+        elif "agrid" in params:
             raise ValueError("cannot provide both 'lattice' and 'agrid'")
 
         utils.check_required_keys(self.required_keys(), params.keys())
@@ -350,80 +339,16 @@ class LBFluidWalberla(HydrodynamicInteraction,
                 f'Cannot process velocity value grid of shape {np.shape(velocity)}')
 
         # range checks
-        lattice_speed = self.call_method('get_lattice_speed')
+        lattice_speed = self.call_method("get_lattice_speed")
         velocity = np.array(velocity, dtype=float).reshape((-1, 3))
         velocity *= 1. / lattice_speed
         self._check_mach_limit(velocity)
 
-        velocity_flat = velocity.reshape((-1,))
-        mask_flat = shape.call_method("rasterize", grid_size=self.shape,
-                                      grid_spacing=self.agrid, grid_offset=0.5)
-
+        mask = self.get_shape_bitmask(shape=shape).astype(int)
         self.call_method(
             "add_boundary_from_shape",
-            raster=array_variant(mask_flat),
-            velocity=array_variant(velocity_flat))
-
-    def add_boundary_from_list(self, nodes,
-                               velocity=np.zeros(3, dtype=float),
-                               boundary_type=VelocityBounceBack):
-        """
-        Set boundary conditions from a list of node indices.
-
-        Parameters
-        ----------
-        nodes : (N, 3) array_like of :obj:`int`
-            List of node indices to update. If they were originally not
-            boundary nodes, they will become boundary nodes.
-        velocity : (3,) or (N, 3) array_like of :obj:`float`, optional
-            Slip velocity. By default no-slip boundary conditions are used.
-            If a vector of 3 values, a uniform slip velocity is used,
-            otherwise ``N`` must be identical to the ``N`` of ``nodes``.
-        boundary_type : Union[:class:`~espressomd.lb.VelocityBounceBack`] (optional)
-            Type of the boundary condition.
-
-        """
-        if not issubclass(boundary_type, VelocityBounceBack):
-            raise ValueError(
-                "boundary_type must be a subclass of VelocityBounceBack")
-
-        nodes = np.array(nodes, dtype=int)
-        velocity = np.array(velocity, dtype=float)
-        if len(nodes.shape) != 2 or nodes.shape[1] != 3:
-            raise ValueError(
-                f'Cannot process node list of shape {nodes.shape}')
-        if velocity.shape == (3,):
-            velocity = np.tile(velocity, (nodes.shape[0], 1))
-        elif nodes.shape != velocity.shape:
-            raise ValueError(
-                f'Node indices and velocities must have the same shape, got {nodes.shape} and {velocity.shape}')
-
-        # range checks
-        lattice_speed = self.call_method('get_lattice_speed')
-        velocity *= 1. / lattice_speed
-        self._check_mach_limit(velocity)
-        if np.any(np.logical_or(np.max(nodes, axis=0) >= self.shape,
-                                np.min(nodes, axis=0) < 0)):
-            raise ValueError(
-                f'Node indices must be in the range (0, 0, 0) to {self.shape}')
-
-        self.call_method('add_boundary_from_list', nodes=array_variant(
-            nodes.reshape((-1,))), velocity=array_variant(velocity.reshape((-1,))))
-
-    def get_nodes_inside_shape(self, shape):
-        """
-        Provide a generator for iterating over all nodes inside the given shape.
-        """
-        for idx in self.lattice.get_node_indices_inside_shape(shape):
-            yield self[idx]
-
-    def get_shape_bitmask(self, shape):
-        """Create a bitmask for the given shape."""
-        utils.check_type_or_throw_except(
-            shape, 1, espressomd.shapes.Shape, "expected a espressomd.shapes.Shape")
-        mask_flat = shape.call_method('rasterize', grid_size=self.shape,
-                                      grid_spacing=self.agrid, grid_offset=0.5)
-        return np.reshape(mask_flat, self.shape).astype(type(True))
+            raster=array_variant(mask.flatten()),
+            values=array_variant(velocity.flatten()))
 
 
 class LBFluidWalberlaGPU(HydrodynamicInteraction):
@@ -764,7 +689,7 @@ def edge_detection(boundary_mask, periodicity):
     edge[1, 1, 1] = -np.sum(edge)
 
     # periodic convolution
-    wrapped_mask = np.pad(fluid_mask.astype(int), 3 * [(2, 2)], mode='wrap')
+    wrapped_mask = np.pad(fluid_mask.astype(int), 3 * [(2, 2)], mode="wrap")
     if not periodicity[0]:
         wrapped_mask[:2, :, :] = 0
         wrapped_mask[-2:, :, :] = 0
@@ -775,7 +700,7 @@ def edge_detection(boundary_mask, periodicity):
         wrapped_mask[:, :, :2] = 0
         wrapped_mask[:, :, -2:] = 0
     convolution = scipy.signal.convolve(
-        wrapped_mask, edge, mode='same', method='direct')[2:-2, 2:-2, 2:-2]
+        wrapped_mask, edge, mode="same", method="direct")[2:-2, 2:-2, 2:-2]
     convolution = np.multiply(convolution, boundary_mask)
 
     return np.array(np.nonzero(convolution < 0)).T

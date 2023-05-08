@@ -21,8 +21,8 @@ import itertools
 import numpy as np
 
 from . import utils
-from .detail.walberla import VTKRegistry, VTKOutputBase, LatticeWalberla  # pylint: disable=unused-import
-from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList
+from .detail.walberla import VTKOutputBase, LatticeWalberla  # pylint: disable=unused-import
+from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList, array_variant
 import espressomd.detail.walberla
 import espressomd.shapes
 import espressomd.code_features
@@ -104,15 +104,15 @@ class EKSpecies(ScriptInterfaceHelper,
         Species diffusion coefficient.
     valency : :obj:`float`
         Species valency.
+    advection : :obj:`bool`
+        Whether to enable advection.
+    friction_coupling : :obj:`bool`
+        Whether to enable friction coupling.
     ext_efield : (3,) array_like of :obj:`float`, optional
         External electrical field.
     kT : :obj:`float`, optional
         Thermal energy of the simulated heat bath (for thermalized species).
         Set it to 0 for an unthermalized species.
-    advection : :obj:`bool`, optional
-        Whether to enable advection.
-    friction_coupling : :obj:`bool`, optional
-        Whether to enable friction coupling.
 
     Methods
     -------
@@ -163,6 +163,10 @@ class EKSpecies(ScriptInterfaceHelper,
 
         super().__init__(*args, **kwargs)
 
+    def default_params(self):
+        return {"single_precision": False, "kT": 0.,
+                "ext_efield": [0.0, 0.0, 0.0]}
+
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(item, slice) for item in key):
@@ -211,39 +215,15 @@ class EKSpecies(ScriptInterfaceHelper,
                 raise ValueError(
                     f"Cannot process density value grid of shape {np.shape(value)}")
 
-        value_flat = value.reshape((-1,))
-        mask_flat = shape.call_method('rasterize', grid_size=self.shape,
-                                      grid_spacing=self.lattice.agrid,
-                                      grid_offset=0.5)
-
-        value_view = np.ascontiguousarray(value_flat, dtype=np.double)
-        raster_view = np.ascontiguousarray(mask_flat, dtype=np.int32)
+        mask = self.get_shape_bitmask(shape=shape).astype(int)
         if issubclass(boundary_type, FluxBoundary):
-            self.call_method(
-                "update_flux_boundary_from_shape",
-                raster_view=raster_view,
-                value_view=value_view)
-        if issubclass(boundary_type, DensityBoundary):
-            self.call_method(
-                "update_density_boundary_from_shape",
-                raster_view=raster_view,
-                value_view=value_view)
-
-    def get_nodes_inside_shape(self, shape):
-        """
-        Provide a generator for iterating over all nodes inside the given shape.
-        """
-        for idx in self.lattice.get_node_indices_inside_shape(shape):
-            yield self[idx]
-
-    def get_shape_bitmask(self, shape):
-        """Create a bitmask for the given shape."""
-        utils.check_type_or_throw_except(
-            shape, 1, espressomd.shapes.Shape, "expected a espressomd.shapes.Shape")
-        mask_flat = shape.call_method("rasterize", grid_size=self.shape,
-                                      grid_spacing=self.lattice.agrid,
-                                      grid_offset=0.5)
-        return np.reshape(mask_flat, self.shape).astype(type(True))
+            boundaries_update_method = "update_flux_boundary_from_shape"
+        else:
+            boundaries_update_method = "update_density_boundary_from_shape"
+        self.call_method(
+            boundaries_update_method,
+            raster=array_variant(mask.flatten()),
+            values=array_variant(value.flatten()))
 
 
 class FluxBoundary:
@@ -270,10 +250,6 @@ class DensityBoundary:
         utils.check_type_or_throw_except(
             density, 1, float, "DensityBoundary flux must be one float")
         self.density = density
-
-
-if espressomd.code_features.has_features("WALBERLA"):
-    _walberla_vtk_registry = VTKRegistry()
 
 
 @script_interface_register
@@ -312,13 +288,6 @@ class VTKOutput(VTKOutputBase):
     _so_name = "walberla::EKVTKHandle"
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("enable", "disable", "write")
-
-    def _add_to_registry(self):
-        _walberla_vtk_registry._register_vtk_object(self)
-
-    def valid_keys(self):
-        return {'species', 'delta_N', 'execution_count', 'observables',
-                'identifier', 'base_folder', 'prefix', 'enabled'}
 
     def required_keys(self):
         return self.valid_keys() - self.default_params().keys()

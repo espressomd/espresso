@@ -269,35 +269,33 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('WALBERLA')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_vtk(self):
+        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
+        self.assertEqual(len(lbf.vtk_writers), 2)
         vtk_suffix = config.test_name
-        vtk_registry = espressomd.lb._walberla_vtk_registry
         key_auto = f"vtk_out/auto_lb_{vtk_suffix}"
-        self.assertIn(key_auto, vtk_registry)
-        obj = vtk_registry[key_auto]
-        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
-        self.assertEqual(obj.vtk_uid, key_auto)
-        self.assertEqual(obj.delta_N, 1)
-        self.assertFalse(obj.enabled)
-        self.assertEqual(set(obj.observables), {"density", "velocity_vector"})
+        vtk_auto = lbf.vtk_writers[0]
+        self.assertIsInstance(vtk_auto, espressomd.lb.VTKOutput)
+        self.assertEqual(vtk_auto.vtk_uid, key_auto)
+        self.assertEqual(vtk_auto.delta_N, 1)
+        self.assertFalse(vtk_auto.enabled)
+        self.assertEqual(set(vtk_auto.observables),
+                         {"density", "velocity_vector"})
         self.assertIn(
-            f"write to '{key_auto}' every 1 LB steps (disabled)>", repr(obj))
+            f"write to '{key_auto}' every 1 LB steps (disabled)>", repr(vtk_auto))
         key_manual = f"vtk_out/manual_lb_{vtk_suffix}"
-        self.assertIn(key_manual, vtk_registry)
-        obj = vtk_registry[key_manual]
-        self.assertIsInstance(obj, espressomd.lb.VTKOutput)
-        self.assertEqual(obj.vtk_uid, key_manual)
-        self.assertEqual(obj.delta_N, 0)
-        self.assertEqual(set(obj.observables), {"density"})
-        self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
+        vtk_manual = lbf.vtk_writers[1]
+        self.assertIsInstance(vtk_manual, espressomd.lb.VTKOutput)
+        self.assertEqual(vtk_manual.vtk_uid, key_manual)
+        self.assertEqual(vtk_manual.delta_N, 0)
+        self.assertEqual(set(vtk_manual.observables), {"density"})
+        self.assertIn(f"write to '{key_manual}' on demand>", repr(vtk_manual))
         # check file numbering when resuming VTK write operations
         vtk_root = pathlib.Path("vtk_out") / f"manual_lb_{vtk_suffix}"
         filename = "simulation_step_{}.vtu"
-        vtk_manual = vtk_registry[key_manual]
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
         # check VTK objects are still synchronized with their LB objects
-        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
         old_density = lbf[0, 0, 0].density
         new_density = 1.5 * old_density
         lbf[0, 0, 0].density = new_density
@@ -317,29 +315,25 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
     def test_ek_vtk(self):
         vtk_suffix = config.test_name
-        vtk_registry = espressomd.electrokinetics._walberla_vtk_registry
         key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
-        self.assertIn(key_auto, vtk_registry)
-        obj = vtk_registry[key_auto]
-        self.assertIsInstance(obj, espressomd.electrokinetics.VTKOutput)
-        self.assertEqual(obj.vtk_uid, key_auto)
-        self.assertEqual(obj.delta_N, 1)
-        self.assertFalse(obj.enabled)
-        self.assertEqual(set(obj.observables), {"density"})
+        vtk_auto = ek_species.vtk_writers[0]
+        self.assertIsInstance(vtk_auto, espressomd.electrokinetics.VTKOutput)
+        self.assertEqual(vtk_auto.vtk_uid, key_auto)
+        self.assertEqual(vtk_auto.delta_N, 1)
+        self.assertFalse(vtk_auto.enabled)
+        self.assertEqual(set(vtk_auto.observables), {"density"})
         self.assertIn(
-            f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(obj))
+            f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(vtk_auto))
         key_manual = f"vtk_out/manual_ek_{vtk_suffix}"
-        self.assertIn(key_manual, vtk_registry)
-        obj = vtk_registry[key_manual]
-        self.assertIsInstance(obj, espressomd.electrokinetics.VTKOutput)
-        self.assertEqual(obj.vtk_uid, key_manual)
-        self.assertEqual(obj.delta_N, 0)
-        self.assertEqual(set(obj.observables), {"density"})
-        self.assertIn(f"write to '{key_manual}' on demand>", repr(obj))
+        vtk_manual = ek_species.vtk_writers[1]
+        self.assertIsInstance(vtk_manual, espressomd.electrokinetics.VTKOutput)
+        self.assertEqual(vtk_manual.vtk_uid, key_manual)
+        self.assertEqual(vtk_manual.delta_N, 0)
+        self.assertEqual(set(vtk_manual.observables), {"density"})
+        self.assertIn(f"write to '{key_manual}' on demand>", repr(vtk_manual))
         # check file numbering when resuming VTK write operations
         vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
         filename = "simulation_step_{}.vtu"
-        vtk_manual = vtk_registry[key_manual]
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())

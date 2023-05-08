@@ -112,7 +112,7 @@ Variant LBFluid::do_call_method(std::string const &name,
   if (name == "add_boundary_from_shape") {
     m_instance->update_boundary_from_shape(
         get_value<std::vector<int>>(params, "raster"),
-        get_value<std::vector<double>>(params, "velocity"));
+        get_value<std::vector<double>>(params, "values"));
     return {};
   }
   if (name == "get_lattice_speed") {

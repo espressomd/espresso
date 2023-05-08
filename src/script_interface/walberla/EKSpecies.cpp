@@ -50,20 +50,20 @@ std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
 Variant EKSpecies::do_call_method(std::string const &method,
                                   VariantMap const &parameters) {
   if (method == "update_flux_boundary_from_shape") {
-    auto value_view = get_value<std::vector<double>>(parameters, "value_view");
-    std::transform(value_view.begin(), value_view.end(), value_view.begin(),
+    auto values = get_value<std::vector<double>>(parameters, "values");
+    std::transform(values.begin(), values.end(), values.begin(),
                    [this](double v) { return v * m_conv_flux; });
 
     m_instance->update_flux_boundary_from_shape(
-        get_value<std::vector<int>>(parameters, "raster_view"), value_view);
+        get_value<std::vector<int>>(parameters, "raster"), values);
     return {};
   }
   if (method == "update_density_boundary_from_shape") {
-    auto value_view = get_value<std::vector<double>>(parameters, "value_view");
-    std::transform(value_view.begin(), value_view.end(), value_view.begin(),
+    auto values = get_value<std::vector<double>>(parameters, "values");
+    std::transform(values.begin(), values.end(), values.begin(),
                    [this](double v) { return v * m_conv_density; });
     m_instance->update_density_boundary_from_shape(
-        get_value<std::vector<int>>(parameters, "raster_view"), value_view);
+        get_value<std::vector<int>>(parameters, "raster"), values);
     return {};
   }
   if (method == "clear_flux_boundaries") {
@@ -93,8 +93,7 @@ void EKSpecies::do_construct(VariantMap const &args) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
   m_vtk_writers =
       get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
-  auto const single_precision =
-      get_value_or<bool>(args, "single_precision", false);
+  auto const single_precision = get_value<bool>(args, "single_precision");
   auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
   auto const diffusion = get_value<double>(args, "diffusion");
   auto const ext_efield = get_value<Utils::Vector3d>(args, "ext_efield");
