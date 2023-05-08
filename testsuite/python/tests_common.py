@@ -18,6 +18,7 @@
 #
 
 import pathlib
+import itertools
 import numpy as np
 
 
@@ -356,24 +357,16 @@ def fold_index(idx, shape):
 
 
 def get_lb_nodes_around_pos(pos, lbf):
-    """Returns lb node(s) relevant for interpolation around the given position"""
+    """Returns LB node(s) relevant for interpolation around the given position"""
 
-    pos_lb_units = pos / lbf.agrid - .5  # Rel to node centers
-
+    pos_lb_units = pos / lbf.agrid - 0.5  # relative to node centers
     lower_left_index = np.array(np.floor(pos_lb_units), dtype=int)
 
-    # Position exactly on a node? Return just that node
-    if np.all(lower_left_index == pos_lb_units):
-        return [lbf[fold_index(lower_left_index, lbf.shape)]]
-
-    # Otherwise return 8 surrounding nodes
-    res = []
-    for i in (0, 1):
-        for j in (0, 1):
-            for k in (0, 1):
-                res.append(lbf[fold_index(lower_left_index +
-                                          np.array((i, j, k), dtype=int), lbf.shape)])
-    return res
+    nodes = []
+    for i, j, k in itertools.product([0, 1], repeat=3):
+        index = lower_left_index + np.array((i, j, k), dtype=int)
+        nodes.append(lbf[fold_index(index, lbf.shape)])
+    return nodes
 
 
 def random_dipoles(n_particles):
@@ -416,11 +409,11 @@ def check_non_bonded_loop_trace(ut_obj, system, cutoff=None):
             msg=f"Extra pair from core {p}")
         if (p[0], p[1]) in py_distances:
             np.testing.assert_allclose(
-                np.copy(p[4]), -np.copy(py_distances[p[0], p[1]]))
+                np.copy(p[4]), -py_distances[p[0], p[1]])
             del py_distances[p[0], p[1]]
         elif (p[1], p[0]) in py_distances:
             np.testing.assert_allclose(
-                np.copy(p[4]), np.copy(py_distances[p[1], p[0]]))
+                np.copy(p[4]), py_distances[p[1], p[0]])
             del py_distances[p[1], p[0]]
 
     for ids, dist in py_distances.items():

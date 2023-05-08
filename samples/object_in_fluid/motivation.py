@@ -26,6 +26,7 @@ required_features = ["WALBERLA", "EXTERNAL_FORCES", "SOFT_SPHERE", "MASS"]
 espressomd.assert_features(required_features)
 
 import os
+import tqdm
 import argparse
 import warnings
 
@@ -46,8 +47,8 @@ else:
 
 boxX = 22.0
 boxY = 14.0
-boxZ = 15.0
-time_step = 0.1
+boxZ = 6.0
+time_step = 0.05
 
 system = espressomd.System(box_l=(boxX, boxY, boxZ))
 system.time_step = time_step
@@ -63,18 +64,15 @@ cell_type = oif.OifCellType(
 # creating the RBCs
 cell0 = oif.OifCell(cell_type=cell_type,
                     particle_type=0, origin=[5.0, 5.0, 3.0])
-cell1 = oif.OifCell(cell_type=cell_type,
-                    particle_type=1, origin=[5.0, 5.0, 7.0])
 
 # cell-wall interactions
-system.non_bonded_inter[0, 10].soft_sphere.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
-system.non_bonded_inter[1, 10].soft_sphere.set_params(
+system.non_bonded_inter[cell0.particle_type, 10].soft_sphere.set_params(
     a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
 
 # fluid
-lbf = espressomd.lb.LBFluidWalberla(agrid=1., density=1., kinematic_viscosity=1.5,
-                                    tau=0.1, ext_force_density=[0.002, 0., 0.])
+lbf = espressomd.lb.LBFluidWalberla(
+    agrid=1., density=1., kinematic_viscosity=1.5, tau=system.time_step,
+    ext_force_density=[0.025, 0., 0.], single_precision=True)
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
@@ -140,15 +138,15 @@ for shape in boundary_shapes:
     system.constraints.add(shape=shape, particle_type=10)
 
 
-maxCycle = 50
+def write_cells_vtk(i):
+    filepath = os.path.join(output_path, "cell{cell_id}_{index}.vtk")
+    cell0.output_vtk_pos_folded(file_name=filepath.format(cell_id=0, index=i))
+
+
+maxCycle = 100
 # main integration loop
-cell0.output_vtk_pos_folded(file_name=os.path.join(output_path, "cell0_0.vtk"))
-cell1.output_vtk_pos_folded(file_name=os.path.join(output_path, "cell1_0.vtk"))
-for i in range(1, maxCycle):
-    system.integrator.run(steps=500)
-    cell0.output_vtk_pos_folded(
-        file_name=os.path.join(output_path, f"cell0_{i}.vtk"))
-    cell1.output_vtk_pos_folded(
-        file_name=os.path.join(output_path, f"cell1_{i}.vtk"))
-    print(f"time: {i * time_step:.1f}")
+for i in tqdm.tqdm(range(maxCycle)):
+    write_cells_vtk(i)
+    system.integrator.run(steps=100)
+write_cells_vtk(maxCycle)
 print("Simulation completed.")

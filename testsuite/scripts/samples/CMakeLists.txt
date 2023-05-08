@@ -99,7 +99,7 @@ sample_test(FILE test_visualization_elc.py)
 sample_test(FILE test_visualization_npt.py)
 sample_test(FILE test_visualization_poiseuille.py)
 sample_test(FILE test_widom_insertion.py)
-# sample_test(FILE test_object_in_fluid__motivation.py) # TODO WALBERLA
+sample_test(FILE test_object_in_fluid__motivation.py)
 sample_test(FILE test_immersed_boundary.py)
 
 add_custom_target(

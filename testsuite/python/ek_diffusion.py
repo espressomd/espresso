@@ -95,8 +95,7 @@ class EKDiffusion(ut.TestCase):
         # check that the density is conserved
         np.testing.assert_almost_equal(
             np.sum(simulated_density), self.DENSITY, decimal_precision)
-        if np.any(simulated_density < 0.):
-            self.fail("EK density array contains negative densities!")
+        assert np.all(simulated_density >= 0.), "EK has negative densities"
 
         # check that the maximum is in the right place
         peak = np.unravel_index(
@@ -124,7 +123,7 @@ class EKDiffusion(ut.TestCase):
             calc_density,
             simulated_density,
             atol=1e-5,
-            rtol=0)
+            rtol=0.)
 
 
 if __name__ == "__main__":
