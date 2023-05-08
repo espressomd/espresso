@@ -1188,17 +1188,19 @@ public:
     return numeric_cast<double>(m_kT);
   }
 
-  [[nodiscard]] uint64_t get_rng_state() const override {
+  [[nodiscard]] boost::optional<uint64_t> get_rng_state() const override {
     auto const *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
-    if (!cm or m_kT == 0.)
-      throw std::runtime_error("The LB does not use a random number generator");
-    return static_cast<uint64_t>(cm->time_step_);
+    if (!cm or m_kT == 0.) {
+      return {boost::none};
+    }
+    return {static_cast<uint64_t>(cm->time_step_)};
   }
 
   void set_rng_state(uint64_t counter) override {
     auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
-    if (!cm or m_kT == 0.)
-      throw std::runtime_error("The LB does not use a random number generator");
+    if (!cm or m_kT == 0.) {
+      throw std::runtime_error("This LB instance is unthermalized");
+    }
     assert(counter <=
            static_cast<uint32_t>(std::numeric_limits<uint_t>::max()));
     cm->time_step_ = static_cast<uint32_t>(counter);

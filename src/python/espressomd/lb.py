@@ -17,15 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
 import itertools
 import numpy as np
-from .script_interface import ScriptInterfaceHelper, script_interface_register, array_variant
-from .shapes import Shape
+
 from . import utils
-from .code_features import has_features
-from .detail.walberla import VTKRegistry, VTKOutputBase
+from .detail.walberla import VTKRegistry, VTKOutputBase, LatticeWalberla
+from .script_interface import ScriptInterfaceHelper, script_interface_register, array_variant
 import espressomd.detail.walberla
+import espressomd.shapes
+import espressomd.code_features
 
 
 class VelocityBounceBack:
@@ -90,15 +90,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         self.call_method('deactivate')
         utils.handle_errors("HydrodynamicInteraction deactivation failed")
 
-    def get_params(self):
-        """Get interaction parameters"""
-        # If this instance refers to an actual interaction defined in the es
-        # core, load current parameters from there
-        if self.is_active:
-            update = self._get_params_from_es_core()
-            self._params.update(update)
-        return self._params
-
     def validate_params(self, params):
         pass
 
@@ -145,69 +136,9 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
             mach_number = vel_max / speed_of_sound
             raise ValueError(f'Slip velocity exceeds Mach {mach_number:.2f}')
 
-    def _set_params_in_es_core(self):
-        pass
-
-    def _get_params_from_es_core(self):
-        self._params['agrid'] = self.agrid
-        self._params['tau'] = self.tau
-        self._params['dens'] = self.density
-        self._params['kT'] = self.kT
-        if self._params['kT'] > 0.0:
-            self._params['seed'] = self.seed
-        self._params['kinematic_viscosity'] = self.kinematic_viscosity
-        self._params['ext_force_density'] = self.ext_force_density
-
-        return self._params
-
-    def get_interpolated_velocity(self, pos):
-        """Get LB fluid velocity at specified position.
-
-        Parameters
-        ----------
-        pos : (3,) array_like of :obj:`float`
-            The position at which velocity is requested.
-
-        Returns
-        -------
-        v : (3,) array_like :obj:`float`
-            The LB fluid velocity at ``pos``.
-
-        """
-        return self.call_method('get_interpolated_velocity', pos=pos)
-
-    def add_force_at_pos(self, pos, force):
-        """Adds a force to the fluid at given position
-
-        Parameters
-        ----------
-        pos : (3,) array_like of :obj:`float`
-              The position at which the force will be added.
-        force : (3,) array_like of :obj:`float`
-              The force vector which will be distributed at the position.
-
-        """
-        return self.call_method('add_force_at_pos', pos=pos, force=force)
-
-    def save_checkpoint(self, path, binary):
-        """
-        Write LB node populations and boundary conditions to a file.
-        """
-        tmp_path = path + ".__tmp__"
-        self.call_method(
-            'save_checkpoint', path=tmp_path, mode=int(binary))
-        os.rename(tmp_path, path)
-
-    def load_checkpoint(self, path, binary):
-        """
-        Load LB node populations and boundary conditions from a file.
-        """
-        return self.call_method(
-            'load_checkpoint', path=path, mode=int(binary))
-
     @property
     def pressure_tensor(self):
-        tensor = self.call_method('get_pressure_tensor')
+        tensor = self.call_method("get_pressure_tensor")
         return utils.array_locked(tensor)
 
     @pressure_tensor.setter
@@ -215,7 +146,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
         raise RuntimeError(f"Property 'pressure_tensor' is read-only")
 
 
-if has_features("WALBERLA"):
+if espressomd.code_features.has_features("WALBERLA"):
     _walberla_vtk_registry = VTKRegistry()
 
 
@@ -278,105 +209,100 @@ class VTKOutput(VTKOutputBase):
 
 
 @script_interface_register
-class LatticeWalberla(ScriptInterfaceHelper):
+class LBFluidWalberla(HydrodynamicInteraction,
+                      espressomd.detail.walberla.LatticeModel):
     """
-    Interface to a waBLerla lattice.
+    The lattice-Boltzmann method for hydrodynamics using waLBerla.
+    See :class:`HydrodynamicInteraction` for the list of parameters.
+    If argument ``lattice`` is not provided, one will be default
+    constructed if an argument ``agrid`` is provided.
+
+    Methods
+    -------
+    get_interpolated_velocity()
+        Get LB fluid velocity at specified position.
+
+        Parameters
+        ----------
+        pos : (3,) array_like of :obj:`float`
+            The position at which velocity is requested.
+
+        Returns
+        -------
+        v : (3,) array_like :obj:`float`
+            The LB fluid velocity at ``pos``.
+
+    add_force_at_pos():
+        Adds a force to the fluid at given position.
+
+        Parameters
+        ----------
+        pos : (3,) array_like of :obj:`float`
+            The position at which the force will be added.
+        force : (3,) array_like of :obj:`float`
+            The force vector which will be distributed at the position.
+
+    clear_boundaries()
+        Remove velocity bounce-back boundary conditions.
+
+    save_checkpoint(path, binary)
+        Write LB node populations and boundary conditions to a file.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Destination file path.
+        binary : :obj:`bool`
+            Whether to write in binary or ASCII mode.
+
+    load_checkpoint(path, binary)
+        Load LB node populations and boundary conditions from a file.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            File path to read from.
+        binary : :obj:`bool`
+            Whether to read in binary or ASCII mode.
+
     """
-    _so_name = "walberla::LatticeWalberla"
-    _so_creation_policy = "GLOBAL"
 
-    def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-        if 'sip' not in kwargs:
-            params = self.default_params()
-            params.update(kwargs)
-            super().__init__(*args, **params)
-            utils.handle_errors("LatticeWalberla initialization failed")
-            self._params = {k: getattr(self, k) for k in self.valid_keys()}
-        else:
-            super().__init__(**kwargs)
-
-    def valid_keys(self):
-        return {"agrid", "n_ghost_layers"}
-
-    def required_keys(self):
-        return self.valid_keys()
-
-    def default_params(self):
-        return {}
-
-
-@script_interface_register
-class LBFluidWalberla(HydrodynamicInteraction):
-    """
-    Initialize the lattice-Boltzmann method for hydrodynamic flow using waLBerla.
-    See :class:`HydrodynamicInteraction` for the list of parameters. If argument
-    ``lattice`` is not provided, one will be default constructed if an argument
-    ``agrid`` is provided.
-
-    """
     _so_name = "walberla::LBFluid"
     _so_creation_policy = "GLOBAL"
-    # TODO WALBERLA: here we cannot use _so_bind_methods without lb_vtk.py
-    # failing: the walberla::FluidWalberla script interface object doesn't
-    # expire even when the LBFluidWalberla is removed from the actors list
-    # and the last python variable holding a reference to it is deleted.
-    # _so_bind_methods = (
-    #    "add_force_at_pos",
-    #    "clear_boundaries",
-    #    "get_interpolated_velocity",
-    #    "get_pressure_tensor")
+    _so_bind_methods = (
+        "add_force_at_pos",
+        "clear_boundaries",
+        "get_interpolated_velocity",
+        "add_vtk_writer",
+        "remove_vtk_writer",
+    )
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA"):
+        if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
 
-        if 'sip' not in kwargs:
+        if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)
             self.validate_params(params)
             super().__init__(*args, **params)
-            utils.handle_errors(
-                "HydrodynamicInteraction initialization failed")
-            self._params = {k: params.get(k) for k in self.valid_keys()}
-            self._params['agrid'] = self.agrid
-            self._lattice_default_constructed = kwargs.get('lattice') is None
         else:
             super().__init__(**kwargs)
-
-    @classmethod
-    def _construct_from_cpt(cls, params):
-        del params['agrid']
-        lattice = params.pop('lattice')
-        params['lattice'] = LatticeWalberla(
-            agrid=lattice.agrid,
-            n_ghost_layers=lattice.n_ghost_layers)
-        obj = cls(**params)
-        obj._params = params
-        return obj
-
-    def __reduce__(self):
-        return self._construct_from_cpt, (self._params,), None
 
     def validate_params(self, params):
         super().validate_params(params)
 
         # construct default lattice if necessary
-        if params.get('lattice') is None:
-            if 'agrid' not in params:
-                raise ValueError('missing argument "lattice" or "agrid"')
-            params['lattice'] = LatticeWalberla(
-                agrid=params.pop('agrid'), n_ghost_layers=1)
+        if params.get("lattice") is None:
+            if "agrid" not in params:
+                raise ValueError("missing argument 'lattice' or 'agrid'")
+            params["lattice"] = LatticeWalberla(
+                agrid=params.pop("agrid"), n_ghost_layers=1)
         elif 'agrid' in params:
             raise ValueError("cannot provide both 'lattice' and 'agrid'")
 
         utils.check_required_keys(self.required_keys(), params.keys())
         utils.check_valid_keys(self.valid_keys(), params.keys())
-
-    def _set_params_in_es_core(self):
-        pass
 
     def default_params(self):
         return {"single_precision": False, **super().default_params()}
@@ -395,12 +321,6 @@ class LBFluidWalberla(HydrodynamicInteraction):
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
             "nodegrid e.g. lbf[0,0,0], or a slice e.g. lbf[:,0,0]")
-
-    def clear_boundaries(self):
-        """
-        Remove velocity bounce-back boundary conditions.
-        """
-        self.call_method("clear_boundaries")
 
     def add_boundary_from_shape(self, shape,
                                 velocity=np.zeros(3, dtype=float),
@@ -425,7 +345,7 @@ class LBFluidWalberla(HydrodynamicInteraction):
                 "Parameter 'boundary_type' must be a subclass of VelocityBounceBack")
 
         utils.check_type_or_throw_except(
-            shape, 1, Shape, "expected an espressomd.shapes.Shape")
+            shape, 1, espressomd.shapes.Shape, "expected an espressomd.shapes.Shape")
         if np.shape(velocity) not in [(3,), tuple(self.shape) + (3,)]:
             raise ValueError(
                 f'Cannot process velocity value grid of shape {np.shape(velocity)}')
@@ -437,12 +357,11 @@ class LBFluidWalberla(HydrodynamicInteraction):
         self._check_mach_limit(velocity)
 
         velocity_flat = velocity.reshape((-1,))
-        mask_flat = shape.call_method('rasterize', grid_size=self.shape,
-                                      grid_spacing=self._params['agrid'],
-                                      grid_offset=0.5)
+        mask_flat = shape.call_method("rasterize", grid_size=self.shape,
+                                      grid_spacing=self.agrid, grid_offset=0.5)
 
         self.call_method(
-            'add_boundary_from_shape',
+            "add_boundary_from_shape",
             raster=array_variant(mask_flat),
             velocity=array_variant(velocity_flat))
 
@@ -492,25 +411,19 @@ class LBFluidWalberla(HydrodynamicInteraction):
         self.call_method('add_boundary_from_list', nodes=array_variant(
             nodes.reshape((-1,))), velocity=array_variant(velocity.reshape((-1,))))
 
-    def get_nodes_in_shape(self, shape):
-        """Provides a generator for iterating over all lb nodes inside the given shape"""
-        utils.check_type_or_throw_except(
-            shape, 1, Shape, "expected a espressomd.shapes.Shape")
-        lb_shape = self.shape
-        idxs = itertools.product(
-            range(lb_shape[0]), range(lb_shape[1]), range(lb_shape[2]))
-        for idx in idxs:
-            pos = (np.asarray(idx) + 0.5) * self._params['agrid']
-            if shape.is_inside(position=pos):
-                yield self[idx]
+    def get_nodes_inside_shape(self, shape):
+        """
+        Provide a generator for iterating over all nodes inside the given shape.
+        """
+        for idx in self.lattice.get_node_indices_inside_shape(shape):
+            yield self[idx]
 
     def get_shape_bitmask(self, shape):
         """Create a bitmask for the given shape."""
         utils.check_type_or_throw_except(
-            shape, 1, Shape, "expected a espressomd.shapes.Shape")
+            shape, 1, espressomd.shapes.Shape, "expected a espressomd.shapes.Shape")
         mask_flat = shape.call_method('rasterize', grid_size=self.shape,
-                                      grid_spacing=self._params['agrid'],
-                                      grid_offset=0.5)
+                                      grid_spacing=self.agrid, grid_offset=0.5)
         return np.reshape(mask_flat, self.shape).astype(type(True))
 
 
@@ -524,9 +437,9 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
 
     # pylint: disable=unused-argument
     def __init__(self, *args, **kwargs):
-        if not has_features("CUDA"):
+        if not espressomd.code_features.has_features("CUDA"):
             raise NotImplementedError("Feature CUDA not compiled in")
-        if not has_features("WALBERLA"):
+        if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
         raise NotImplementedError("Not implemented yet")
 

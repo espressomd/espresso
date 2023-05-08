@@ -17,12 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy as np
+import scipy.optimize
 import unittest as ut
 import unittest_decorators as utx
+
 import espressomd
-import numpy as np
+import espressomd.lb
 import espressomd.shapes
-import scipy.optimize
+import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
@@ -66,7 +69,7 @@ class EKEOF(ut.TestCase):
 
         density = 0.0006
 
-        lattice = espressomd.lb.LatticeWalberla(
+        lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.electrokinetics.EKSpecies(

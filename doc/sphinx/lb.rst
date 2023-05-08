@@ -257,8 +257,8 @@ one or multiple fluid field data into a single file using
     vtk_obs = ["density", "velocity_vector"]
     # create a VTK callback that automatically writes every 10 LB steps
     lb_vtk = espressomd.lb.VTKOutput(
-        lb_fluid=lb, identifier="lb_vtk_automatic", observables=vtk_obs,
-        delta_N=10)
+        identifier="lb_vtk_automatic", observables=vtk_obs, delta_N=10)
+    lb.add_vtk_writer(vtk=lb_vtk)
     self.system.integrator.run(100)
     # can be deactivated
     lb_vtk.disable()
@@ -266,7 +266,8 @@ one or multiple fluid field data into a single file using
     lb_vtk.enable()
     # create a VTK callback that writes only when explicitly called
     lb_vtk_on_demand = espressomd.lb.VTKOutput(
-        lb_fluid=lb, identifier="lb_vtk_now", observables=vtk_obs)
+        identifier="lb_vtk_now", observables=vtk_obs)
+    lb.add_vtk_writer(vtk=lb_vtk_on_demand)
     lb_vtk_on_demand.write()
 
 Currently supported fluid properties are the density, velocity vector

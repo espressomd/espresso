@@ -17,12 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import espressomd.lb
-import espressomd.electrokinetics
+import itertools
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
-import numpy as np
-import itertools
+
+import espressomd
+import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
@@ -48,7 +49,8 @@ class Test(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.lattice = espressomd.lb.LatticeWalberla(agrid=1., n_ghost_layers=1)
+        cls.lattice = espressomd.electrokinetics.LatticeWalberla(
+            agrid=1., n_ghost_layers=1)
         cls.ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=cls.lattice,
             single_precision=False,

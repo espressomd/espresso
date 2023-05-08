@@ -23,14 +23,15 @@
 
 #ifdef WALBERLA
 
+#include "LatticeModel.hpp"
 #include "LatticeWalberla.hpp"
+#include "VTKHandle.hpp"
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
-#include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <utils/math/int_pow.hpp>
 
@@ -39,8 +40,10 @@
 
 namespace ScriptInterface::walberla {
 
-class EKSpecies : public AutoParameters<EKSpecies> {
-private:
+class EKVTKHandle;
+
+class EKSpecies : public LatticeModel<::EKinWalberlaBase, EKVTKHandle> {
+  using Base = LatticeModel<::EKinWalberlaBase, EKVTKHandle>;
   double m_conv_diffusion;
   double m_conv_ext_efield;
   double m_conv_density;
@@ -50,78 +53,65 @@ private:
 
 public:
   EKSpecies() {
-    add_parameters(
-        {{"diffusion",
-          [this](Variant const &v) {
-            m_ekinstance->set_diffusion(get_value<double>(v) *
-                                        m_conv_diffusion);
-          },
-          [this]() {
-            return m_ekinstance->get_diffusion() / m_conv_diffusion;
-          }},
-         {"kT",
-          [this](Variant const &v) {
-            m_ekinstance->set_kT(get_value<double>(v));
-          },
-          [this]() { return m_ekinstance->get_kT(); }},
-         {"valency",
-          [this](Variant const &v) {
-            m_ekinstance->set_valency(get_value<double>(v));
-          },
-          [this]() { return m_ekinstance->get_valency(); }},
-         {"ext_efield",
-          [this](Variant const &v) {
-            m_ekinstance->set_ext_efield(get_value<Utils::Vector3d>(v) *
-                                         m_conv_ext_efield);
-          },
-          [this]() {
-            return m_ekinstance->get_ext_efield() / m_conv_ext_efield;
-          }},
-         {"advection",
-          [this](Variant const &v) {
-            m_ekinstance->set_advection(get_value<bool>(v));
-          },
-          [this]() { return m_ekinstance->get_advection(); }},
-         {"friction_coupling",
-          [this](Variant const &v) {
-            m_ekinstance->set_friction_coupling(get_value<bool>(v));
-          },
-          [this]() { return m_ekinstance->get_friction_coupling(); }},
-         {"is_single_precision", AutoParameter::read_only,
-          [this]() { return not m_ekinstance->is_double_precision(); }},
-         {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
-         {"density", AutoParameter::read_only,
-          [this]() { return m_density / m_conv_density; }},
-         {"shape", AutoParameter::read_only,
-          [this]() {
-            return m_ekinstance->get_lattice().get_grid_dimensions();
-          }},
-         {"lattice", AutoParameter::read_only,
-          [this]() { return m_lattice; }}});
+    add_parameters({
+        {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+        {"diffusion",
+         [this](Variant const &v) {
+           m_instance->set_diffusion(get_value<double>(v) * m_conv_diffusion);
+         },
+         [this]() { return m_instance->get_diffusion() / m_conv_diffusion; }},
+        {"kT",
+         [this](Variant const &v) { m_instance->set_kT(get_value<double>(v)); },
+         [this]() { return m_instance->get_kT(); }},
+        {"valency",
+         [this](Variant const &v) {
+           m_instance->set_valency(get_value<double>(v));
+         },
+         [this]() { return m_instance->get_valency(); }},
+        {"ext_efield",
+         [this](Variant const &v) {
+           m_instance->set_ext_efield(get_value<Utils::Vector3d>(v) *
+                                      m_conv_ext_efield);
+         },
+         [this]() { return m_instance->get_ext_efield() / m_conv_ext_efield; }},
+        {"advection",
+         [this](Variant const &v) {
+           m_instance->set_advection(get_value<bool>(v));
+         },
+         [this]() { return m_instance->get_advection(); }},
+        {"friction_coupling",
+         [this](Variant const &v) {
+           m_instance->set_friction_coupling(get_value<bool>(v));
+         },
+         [this]() { return m_instance->get_friction_coupling(); }},
+        {"single_precision", AutoParameter::read_only,
+         [this]() { return not m_instance->is_double_precision(); }},
+        {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
+        {"density", AutoParameter::read_only,
+         [this]() { return m_density / m_conv_density; }},
+        {"shape", AutoParameter::read_only,
+         [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
+        {"vtk_writers", AutoParameter::read_only,
+         [this]() { return serialize_vtk_writers(); }},
+    });
   }
 
   void do_construct(VariantMap const &args) override;
 
-  [[nodiscard]] std::shared_ptr<::EKinWalberlaBase> const
-  get_ekinstance() const {
-    return m_ekinstance;
-  }
-
-  [[nodiscard]] std::shared_ptr<LatticeWalberla> get_lattice() {
-    return m_lattice;
-  }
+  [[nodiscard]] auto get_ekinstance() const { return m_instance; }
+  [[nodiscard]] auto get_lattice() const { return m_lattice; }
 
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override;
 
-  [[nodiscard]] double get_conversion_factor_density() const noexcept {
+  [[nodiscard]] auto get_conversion_factor_density() const noexcept {
     return m_conv_density;
   }
-  [[nodiscard]] double get_conversion_factor_flux() const noexcept {
+  [[nodiscard]] auto get_conversion_factor_flux() const noexcept {
     return m_conv_flux;
   }
 
-  LatticeModel::units_map get_latice_to_md_units_conversion() const {
+  ::LatticeModel::units_map get_latice_to_md_units_conversion() const override {
     return {
         {"density", 1. / m_conv_density},
         {"flux", 1. / m_conv_flux},
@@ -129,13 +119,18 @@ public:
   }
 
 private:
-  std::shared_ptr<::EKinWalberlaBase> m_ekinstance;
-
-  std::shared_ptr<LatticeWalberla> m_lattice;
-
   void load_checkpoint(std::string const &filename, int mode);
   void save_checkpoint(std::string const &filename, int mode);
 };
+
+class EKVTKHandle : public VTKHandleBase<::EKinWalberlaBase> {
+  static std::unordered_map<std::string, int> const obs_map;
+
+  std::unordered_map<std::string, int> const &get_obs_map() const override {
+    return obs_map;
+  }
+};
+
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA

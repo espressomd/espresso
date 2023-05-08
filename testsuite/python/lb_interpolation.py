@@ -84,16 +84,17 @@ class LBInterpolation:
         # box_l[0]-agrid/2.
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
-                [self.system.box_l[0] - AGRID / 2, 0, 0])),
+                pos=[self.system.box_l[0] - AGRID / 2, 0, 0])),
             np.array([0, 0, V_BOUNDARY]))
 
         # Check interpolated velocity involving boundary and neighboring node.
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary.
         node_next_to_boundary = self.lbf[self.lbf.shape[0] - 2, 0, 0]
+        pos_at_boundary = [BOX_L - AGRID, 0, 0]
         # The midpoint between the boundary and that node is box_l - agrid.
         np.testing.assert_allclose(
-            np.copy(self.lbf.get_interpolated_velocity([BOX_L - AGRID, 0, 0])),
+            np.copy(self.lbf.get_interpolated_velocity(pos=pos_at_boundary)),
             ([0, 0, V_BOUNDARY] + np.copy(node_next_to_boundary.velocity)) / 2.,
             atol=1e-4)
 
@@ -103,7 +104,7 @@ class LBInterpolation:
                 np.arange(0.5 * AGRID, BOX_L, AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_allclose(
-                self.lbf.get_interpolated_velocity(pos)[2],
+                self.lbf.get_interpolated_velocity(pos=pos)[2],
                 velocity_profile(pos[0]), atol=1e-3)
 
     def test_mach_limit_check(self):

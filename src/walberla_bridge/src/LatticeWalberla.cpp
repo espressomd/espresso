@@ -31,8 +31,11 @@
 
 #include <boost/optional.hpp>
 
+#include <cmath>
 #include <initializer_list>
+#include <limits>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 LatticeWalberla::LatticeWalberla(Utils::Vector3i const &grid_dimensions,
@@ -45,7 +48,7 @@ LatticeWalberla::LatticeWalberla(Utils::Vector3i const &grid_dimensions,
   for (auto const i : {0u, 1u, 2u}) {
     if (m_grid_dimensions[i] % node_grid[i] != 0) {
       throw std::runtime_error(
-          "LB grid dimensions and mpi node grid are not compatible.");
+          "Lattice grid dimensions and MPI node grid are not compatible.");
     }
   }
 
@@ -90,4 +93,23 @@ LatticeWalberla::pos_in_local_domain(Utils::Vector3d const &pos) const {
 [[nodiscard]] bool
 LatticeWalberla::pos_in_local_halo(Utils::Vector3d const &pos) const {
   return ::walberla::get_block(*this, pos, true) != nullptr;
+}
+
+[[nodiscard]] Utils::Vector3i
+LatticeWalberla::calc_grid_dimensions(Utils::Vector3d const &box_size,
+                                      double agrid) {
+  auto const grid_dimensions =
+      Utils::Vector3i{{static_cast<int>(std::round(box_size[0] / agrid)),
+                       static_cast<int>(std::round(box_size[1] / agrid)),
+                       static_cast<int>(std::round(box_size[2] / agrid))}};
+  for (auto const i : {0u, 1u, 2u}) {
+    if (std::abs(grid_dimensions[i] * agrid - box_size[i]) / box_size[i] >
+        std::numeric_limits<double>::epsilon()) {
+      throw std::runtime_error(
+          "Box length not commensurate with agrid in direction " +
+          std::to_string(i) + " length " + std::to_string(box_size[i]) +
+          " agrid " + std::to_string(agrid));
+    }
+  }
+  return grid_dimensions;
 }

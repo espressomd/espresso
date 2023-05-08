@@ -17,11 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
+
 import espressomd
-import numpy as np
 import espressomd.shapes
+import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
@@ -53,7 +55,7 @@ class EKNoFlux(ut.TestCase):
 
         decimal_precision: int = 7 if single_precision else 10
 
-        lattice = espressomd.lb.LatticeWalberla(
+        lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.electrokinetics.EKSpecies(

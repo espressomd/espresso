@@ -21,6 +21,8 @@
 
 #ifdef WALBERLA
 
+#include "LatticeWalberla.hpp"
+
 #include "LBFluid.hpp"
 #include "LBFluidNode.hpp"
 #include "LBFluidSlice.hpp"
@@ -28,6 +30,7 @@
 #include "EKContainer.hpp"
 #include "EKFFT.hpp"
 #include "EKNone.hpp"
+
 #include "EKSpecies.hpp"
 #include "EKSpeciesNode.hpp"
 #include "EKSpeciesSlice.hpp"
@@ -36,11 +39,7 @@
 #include "EKReaction.hpp"
 #include "EKReactions.hpp"
 
-#include "VTKHandle.hpp"
-
 #include <script_interface/ObjectHandle.hpp>
-
-#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <utils/Factory.hpp>
 

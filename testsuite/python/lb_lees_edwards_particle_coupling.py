@@ -80,7 +80,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             n.velocity = - v0
         p.update(dict(pos=pos, v=np.zeros(3)))
         np.testing.assert_allclose(
-            np.copy(lbf.get_interpolated_velocity(pos)),
+            np.copy(lbf.get_interpolated_velocity(pos=pos)),
             np.zeros(3))
         system.integrator.run(1)
         np.testing.assert_allclose(np.copy(p.pos), pos)

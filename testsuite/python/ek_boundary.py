@@ -17,13 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
+
 import espressomd
 import espressomd.lb
-import espressomd.electrokinetics
 import espressomd.shapes
-import numpy as np
+import espressomd.electrokinetics
 
 
 class EKBoundariesBase:
@@ -153,7 +154,7 @@ class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
-    ek_lattice_class = espressomd.lb.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {'single_precision': False}
 
@@ -163,7 +164,7 @@ class EKBoundariesWalberlaSinglePrecision(EKBoundariesBase, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
-    ek_lattice_class = espressomd.lb.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {'single_precision': True}
 

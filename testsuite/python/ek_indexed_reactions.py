@@ -17,11 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
+
 import espressomd
+import espressomd.lb
 import espressomd.electrokinetics
-import numpy as np
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
@@ -69,7 +71,7 @@ class EKReaction(ut.TestCase):
 
     def detail_test_reaction(self, single_precision: bool):
 
-        lattice = espressomd.lb.LatticeWalberla(
+        lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)

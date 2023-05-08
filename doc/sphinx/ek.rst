@@ -219,8 +219,8 @@ one or multiple fluid field data into a single file using
     vtk_obs = ["density"]
     # create a VTK callback that automatically writes every 10 EK steps
     ek_vtk = espressomd.electrokinetics.VTKOutput(
-        species=ek_species, identifier="ek_vtk_automatic",
-        observables=vtk_obs, delta_N=10)
+        identifier="ek_vtk_automatic", observables=vtk_obs, delta_N=10)
+    ek_species.add_vtk_writer(vtk=ek_vtk)
     self.system.integrator.run(100)
     # can be deactivated
     ek_vtk.disable()
@@ -228,8 +228,8 @@ one or multiple fluid field data into a single file using
     ek_vtk.enable()
     # create a VTK callback that writes only when explicitly called
     ek_vtk_on_demand = espressomd.electrokinetics.VTKOutput(
-        species=ek_species, identifier="ek_vtk_now",
-        observables=vtk_obs)
+        identifier="ek_vtk_now", observables=vtk_obs)
+    ek_species.add_vtk_writer(vtk=ek_vtk_on_demand)
     ek_vtk_on_demand.write()
 
 Currently supported species properties are the density.

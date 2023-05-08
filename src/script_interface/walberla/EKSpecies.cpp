@@ -20,12 +20,12 @@
 
 #ifdef WALBERLA
 
-#include <walberla_bridge/electrokinetics/EKWalberlaNodeState.hpp>
-#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
-
 #include "EKSpecies.hpp"
 #include "WalberlaCheckpoint.hpp"
+
 #include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/EKWalberlaNodeState.hpp>
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -43,6 +43,10 @@
 
 namespace ScriptInterface::walberla {
 
+std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
+    {"density", static_cast<int>(EKOutputVTK::density)},
+};
+
 Variant EKSpecies::do_call_method(std::string const &method,
                                   VariantMap const &parameters) {
   if (method == "update_flux_boundary_from_shape") {
@@ -50,69 +54,81 @@ Variant EKSpecies::do_call_method(std::string const &method,
     std::transform(value_view.begin(), value_view.end(), value_view.begin(),
                    [this](double v) { return v * m_conv_flux; });
 
-    m_ekinstance->update_flux_boundary_from_shape(
+    m_instance->update_flux_boundary_from_shape(
         get_value<std::vector<int>>(parameters, "raster_view"), value_view);
-    return none;
+    return {};
   }
   if (method == "update_density_boundary_from_shape") {
     auto value_view = get_value<std::vector<double>>(parameters, "value_view");
     std::transform(value_view.begin(), value_view.end(), value_view.begin(),
                    [this](double v) { return v * m_conv_density; });
-    m_ekinstance->update_density_boundary_from_shape(
+    m_instance->update_density_boundary_from_shape(
         get_value<std::vector<int>>(parameters, "raster_view"), value_view);
-    return none;
+    return {};
   }
   if (method == "clear_flux_boundaries") {
-    m_ekinstance->clear_flux_boundaries();
-    return none;
+    m_instance->clear_flux_boundaries();
+    return {};
   }
   if (method == "clear_density_boundaries") {
-    m_ekinstance->clear_density_boundaries();
-    return none;
+    m_instance->clear_density_boundaries();
+    return {};
   }
   if (method == "save_checkpoint") {
     auto const path = get_value<std::string>(parameters, "path");
     auto const mode = get_value<int>(parameters, "mode");
     save_checkpoint(path, mode);
+    return {};
   }
   if (method == "load_checkpoint") {
     auto const path = get_value<std::string>(parameters, "path");
     auto const mode = get_value<int>(parameters, "mode");
     load_checkpoint(path, mode);
+    return {};
   }
-  return none;
+  return Base::do_call_method(method, parameters);
 }
 
 void EKSpecies::do_construct(VariantMap const &args) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
+  m_vtk_writers =
+      get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
   const auto single_precision =
       get_value_or<bool>(args, "single_precision", false);
 
   // unit conversions
   auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
   m_tau = get_value<double>(args, "tau");
-
   m_conv_diffusion = m_tau / Utils::int_pow<2>(agrid);
   m_conv_ext_efield = Utils::int_pow<2>(m_tau) / agrid;
   m_conv_density = Utils::int_pow<3>(agrid);
   m_conv_flux = m_tau * Utils::int_pow<2>(agrid);
 
-  auto const ek_diffusion =
-      get_value<double>(args, "diffusion") * m_conv_diffusion;
-  auto const ek_ext_efield =
-      get_value<Utils::Vector3d>(args, "ext_efield") * m_conv_ext_efield;
-  auto const ek_density = m_density =
-      get_value<double>(args, "density") * m_conv_density;
+  context()->parallel_try_catch([&]() {
+    if (m_tau <= 0.) {
+      throw std::domain_error("Parameter 'tau' must be > 0");
+    }
 
-  m_ekinstance = new_ek_walberla(
-      m_lattice->lattice(), ek_diffusion, get_value<double>(args, "kT"),
-      get_value<double>(args, "valency"), ek_ext_efield, ek_density,
-      get_value<bool>(args, "advection"),
-      get_value<bool>(args, "friction_coupling"), single_precision);
+    auto const ek_diffusion =
+        get_value<double>(args, "diffusion") * m_conv_diffusion;
+    auto const ek_ext_efield =
+        get_value<Utils::Vector3d>(args, "ext_efield") * m_conv_ext_efield;
+    auto const ek_density = m_density =
+        get_value<double>(args, "density") * m_conv_density;
+
+    m_instance = new_ek_walberla(
+        m_lattice->lattice(), ek_diffusion, get_value<double>(args, "kT"),
+        get_value<double>(args, "valency"), ek_ext_efield, ek_density,
+        get_value<bool>(args, "advection"),
+        get_value<bool>(args, "friction_coupling"), single_precision);
+    for (auto &vtk : m_vtk_writers) {
+      vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
+    }
+  });
 }
 
 void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
-  auto &ek_obj = *get_ekinstance();
+  auto &ek_obj = *m_instance;
 
   auto const read_metadata = [&ek_obj](CheckpointFile &cpfile) {
     auto const expected_grid_size = ek_obj.get_lattice().get_grid_dimensions();
@@ -165,7 +181,7 @@ void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
 }
 
 void EKSpecies::save_checkpoint(std::string const &filename, int mode) {
-  auto &ek_obj = *get_ekinstance();
+  auto &ek_obj = *m_instance;
 
   auto const write_metadata = [&ek_obj,
                                mode](std::shared_ptr<CheckpointFile> cpfile_ptr,

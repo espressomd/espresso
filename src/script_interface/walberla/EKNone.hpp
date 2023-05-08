@@ -43,7 +43,7 @@ public:
 
     m_instance = new_ek_poisson_none(lattice, m_single_precision);
 
-    add_parameters({{"is_single_precision", AutoParameter::read_only,
+    add_parameters({{"single_precision", AutoParameter::read_only,
                      [this]() { return m_single_precision; }}});
   }
 

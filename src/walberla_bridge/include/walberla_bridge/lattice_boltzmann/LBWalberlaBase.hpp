@@ -244,7 +244,7 @@ public:
   virtual double get_kT() const = 0;
 
   /** @brief Set the RNG counter (if thermalized). */
-  virtual uint64_t get_rng_state() const = 0;
+  [[nodiscard]] virtual boost::optional<uint64_t> get_rng_state() const = 0;
 
   /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;

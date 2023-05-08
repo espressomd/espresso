@@ -62,7 +62,7 @@ public:
                        return m_instance->get_permittivity() /
                               m_conv_permittivity;
                      }},
-                    {"is_single_precision", AutoParameter::read_only,
+                    {"single_precision", AutoParameter::read_only,
                      [this]() { return m_single_precision; }}});
   }
 

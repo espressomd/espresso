@@ -93,7 +93,7 @@ class LBTest:
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
-            lbf.is_single_precision,
+            lbf.single_precision,
             self.lb_params['single_precision'])
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), [0., 0., 0.], atol=self.atol)
@@ -114,7 +114,7 @@ class LBTest:
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
-            lbf.is_single_precision,
+            lbf.single_precision,
             self.lb_params['single_precision'])
         lbf.kinematic_viscosity = 3.
         self.assertAlmostEqual(lbf.kinematic_viscosity, 3., delta=self.atol)
@@ -146,7 +146,7 @@ class LBTest:
 
     def test_raise_if_read_only(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-        for key in {'agrid', 'tau', 'density', 'kT', 'is_single_precision',
+        for key in {'agrid', 'tau', 'density', 'kT', 'single_precision',
                     'shape', 'pressure_tensor', 'seed', 'is_active'}:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(lbf, key, 0)
@@ -325,19 +325,23 @@ class LBTest:
 
         self.assertEqual(lbf[3, 2, 1].index, (3, 2, 1))
         ext_force_density = [0.1, 0.2, 1.2]
+        last_applied_force = [0.2, 0.4, 0.6]
         lbf.ext_force_density = ext_force_density
-        lbf[1, 2, 3].velocity = v_fluid
+        node = lbf[1, 2, 3]
+        node.velocity = v_fluid
+        node.last_applied_force = last_applied_force
+        np.testing.assert_allclose(np.copy(node.velocity), v_fluid, atol=1e-4)
         np.testing.assert_allclose(
-            np.copy(lbf[1, 2, 3].velocity), v_fluid, atol=1e-4)
+            np.copy(node.last_applied_force), last_applied_force, atol=1e-4)
         np.testing.assert_allclose(
             np.copy(lbf.ext_force_density), ext_force_density, atol=1e-4)
 
         self.assertEqual(lbf.kT, 0.0)
-        rng_error_msg = 'The LB does not use a random number generator'
-        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
-            lbf.rng_state
-        with self.assertRaisesRegex(RuntimeError, rng_error_msg):
+        self.assertIsNone(lbf.rng_state)
+        with self.assertRaisesRegex(RuntimeError, "This LB instance is unthermalized"):
             lbf.rng_state = 5
+        with self.assertRaisesRegex(ValueError, "Parameter 'rng_state' must be >= 0"):
+            lbf.rng_state = -5
 
     def test_parameter_change_without_seed(self):
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
@@ -570,7 +574,7 @@ class LBTest:
             n_time_steps + 0.5) / self.params['density']
         # Check global linear momentum = density * volume * velocity
         rtol = self.rtol
-        if hasattr(lbf, 'is_single_precision') and lbf.is_single_precision:
+        if hasattr(lbf, "single_precision") and lbf.single_precision:
             rtol *= 10.
         np.testing.assert_allclose(
             np.copy(self.system.analysis.linear_momentum()),

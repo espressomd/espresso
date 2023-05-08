@@ -382,12 +382,14 @@ if lbf_class:
     config.recursive_unlink(vtk_root / lb_vtk_auto_id)
     config.recursive_unlink(vtk_root / lb_vtk_manual_id)
     lb_vtk_auto = espressomd.lb.VTKOutput(
-        lb_fluid=lbf, identifier=lb_vtk_auto_id, delta_N=1,
+        identifier=lb_vtk_auto_id, delta_N=1,
         observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
+    lbf.add_vtk_writer(vtk=lb_vtk_auto)
     lb_vtk_auto.disable()
     lb_vtk_manual = espressomd.lb.VTKOutput(
-        lb_fluid=lbf, identifier=lb_vtk_manual_id, delta_N=0,
+        identifier=lb_vtk_manual_id, delta_N=0,
         observables=('density',), base_folder=str(vtk_root))
+    lbf.add_vtk_writer(vtk=lb_vtk_manual)
     lb_vtk_manual.write()
     # create EK VTK callbacks
     ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
@@ -395,12 +397,14 @@ if lbf_class:
     config.recursive_unlink(vtk_root / ek_vtk_auto_id)
     config.recursive_unlink(vtk_root / ek_vtk_manual_id)
     ek_vtk_auto = espressomd.electrokinetics.VTKOutput(
-        species=ek_species, identifier=ek_vtk_auto_id,
+        identifier=ek_vtk_auto_id,
         observables=('density',), delta_N=1, base_folder=str(vtk_root))
+    ek_species.add_vtk_writer(vtk=ek_vtk_auto)
     ek_vtk_auto.disable()
     ek_vtk_manual = espressomd.electrokinetics.VTKOutput(
-        species=ek_species, identifier=ek_vtk_manual_id,
+        identifier=ek_vtk_manual_id,
         observables=('density',), delta_N=0, base_folder=str(vtk_root))
+    ek_species.add_vtk_writer(vtk=ek_vtk_manual)
     ek_vtk_manual.write()
 
 

@@ -44,14 +44,17 @@ class TestVTK:
     system.cell_system.skin = 0.4
 
     def setUp(self):
-        self.lbf = self.lb_class(
-            agrid=0.5, tau=0.1, density=1.0, kinematic_viscosity=1.0,
-            ext_force_density=[0., 0.03, 0.], **self.lb_params)
+        self.lbf = self.make_lbf()
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
         self.system.actors.clear()
         self.system.thermostat.turn_off()
+
+    def make_lbf(self):
+        return self.lb_class(
+            agrid=0.5, tau=0.1, density=1.0, kinematic_viscosity=1.0,
+            ext_force_density=[0., 0.03, 0.], **self.lb_params)
 
     def test_vtk(self):
         '''
@@ -84,14 +87,16 @@ class TestVTK:
             # write VTK files
             vtk_obs = ['density', 'velocity_vector', 'pressure_tensor']
             lb_vtk = espressomd.lb.VTKOutput(
-                lb_fluid=self.lbf, identifier=label_vtk_continuous, delta_N=1,
-                observables=vtk_obs, base_folder=str(path_vtk_root))
+                identifier=label_vtk_continuous, delta_N=1, observables=vtk_obs,
+                base_folder=str(path_vtk_root))
+            self.lbf.add_vtk_writer(vtk=lb_vtk)
             lb_vtk.disable()
             lb_vtk.enable()
             self.system.integrator.run(n_steps)
             lb_vtk = espressomd.lb.VTKOutput(
-                lb_fluid=self.lbf, identifier=label_vtk_end, delta_N=0,
-                observables=vtk_obs, base_folder=str(path_vtk_root))
+                identifier=label_vtk_end, delta_N=0, observables=vtk_obs,
+                base_folder=str(path_vtk_root))
+            self.lbf.add_vtk_writer(vtk=lb_vtk)
             lb_vtk.write()
             self.assertEqual(sorted(lb_vtk.observables), sorted(vtk_obs))
             self.assertEqual(lb_vtk.valid_observables(),
@@ -162,64 +167,59 @@ class TestVTK:
         error_msg = r"Only the following VTK observables are supported: \['density', 'pressure_tensor', 'velocity_vector'\], got 'dens'"
         with self.assertRaisesRegex(ValueError, error_msg):
             espressomd.lb.VTKOutput(
-                lb_fluid=self.lbf, identifier=label_invalid_obs, delta_N=0,
-                observables=['dens'])
+                identifier=label_invalid_obs, delta_N=0, observables=['dens'])
         lb_vtk_manual_id = f'test_lb_vtk_{self.lb_vtk_id}_manual'
         lb_vtk_auto_id = f'test_lb_vtk_{self.lb_vtk_id}_auto'
         vtk_manual = espressomd.lb.VTKOutput(
-            lb_fluid=self.lbf, identifier=lb_vtk_manual_id, delta_N=0,
-            observables=['density'])
+            identifier=lb_vtk_manual_id, delta_N=0, observables=['density'])
         vtk_auto = espressomd.lb.VTKOutput(
-            lb_fluid=self.lbf, identifier=lb_vtk_auto_id, delta_N=1,
-            observables=['density'])
-        with self.assertRaisesRegex(RuntimeError, 'Automatic VTK callbacks cannot be triggered manually'):
+            identifier=lb_vtk_auto_id, delta_N=1, observables=['density'])
+        self.lbf.add_vtk_writer(vtk=vtk_manual)
+        self.lbf.add_vtk_writer(vtk=vtk_auto)
+        with self.assertRaisesRegex(RuntimeError, "Automatic VTK callbacks cannot be triggered manually"):
             vtk_auto.write()
-        with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be disabled'):
+        with self.assertRaisesRegex(RuntimeError, "Manual VTK callbacks cannot be disabled"):
             vtk_manual.disable()
-        with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be enabled'):
+        with self.assertRaisesRegex(RuntimeError, "Manual VTK callbacks cannot be enabled"):
             vtk_manual.enable()
-        with self.assertRaisesRegex(RuntimeError, 'already exists'):
-            espressomd.lb.VTKOutput(
-                lb_fluid=self.lbf, identifier=lb_vtk_manual_id, delta_N=0,
-                observables=[])
+        with self.assertRaisesRegex(RuntimeError, "already exists"):
+            self.lbf.add_vtk_writer(vtk=espressomd.lb.VTKOutput(
+                identifier=lb_vtk_manual_id, delta_N=0, observables=[]))
+        with self.assertRaisesRegex(RuntimeError, "already attached to this lattice"):
+            self.lbf.add_vtk_writer(vtk=self.lbf.vtk_writers[0])
+        with self.assertRaisesRegex(RuntimeError, "not attached to this lattice"):
+            self.lbf.remove_vtk_writer(vtk=espressomd.lb.VTKOutput(
+                identifier=lb_vtk_manual_id, delta_N=0, observables=[]))
+        with self.assertRaisesRegex(RuntimeError, "Cannot attach VTK object to multiple lattices"):
+            self.make_lbf().add_vtk_writer(vtk=vtk_manual)
+        with self.assertRaisesRegex(RuntimeError, "Detached VTK objects cannot be attached again"):
+            self.lbf.remove_vtk_writer(vtk=vtk_manual)
+            self.lbf.add_vtk_writer(vtk=vtk_manual)
         with self.assertRaisesRegex(ValueError, "Parameter 'delta_N' must be >= 0"):
-            espressomd.lb.VTKOutput(
-                lb_fluid=self.lbf, identifier="a", delta_N=-1, observables=[])
+            espressomd.lb.VTKOutput(identifier="a", delta_N=-1, observables=[])
         with self.assertRaisesRegex(ValueError, "Parameter 'identifier' cannot be empty"):
-            espressomd.lb.VTKOutput(
-                lb_fluid=self.lbf, identifier="", delta_N=0, observables=[])
+            espressomd.lb.VTKOutput(identifier="", delta_N=0, observables=[])
         with self.assertRaisesRegex(ValueError, "cannot be a filepath"):
             espressomd.lb.VTKOutput(
-                lb_fluid=self.lbf, identifier=f"test{os.sep}test", delta_N=0,
-                observables=[])
+                identifier=f"test{os.sep}test", delta_N=0, observables=[])
 
         # can still use VTK when the LB actor has been cleared but not deleted
         label_cleared = f'test_lb_vtk_{self.lb_vtk_id}_cleared'
         vtk_cleared = espressomd.lb.VTKOutput(
-            lb_fluid=self.lbf, identifier=label_cleared,
-            observables=['density'])
+            identifier=label_cleared, observables=['density'])
+        self.lbf.add_vtk_writer(vtk=vtk_cleared)
         self.system.actors.clear()
         vtk_cleared.write()
-        espressomd.lb.VTKOutput(lb_fluid=self.lbf,
-                                identifier=label_cleared + '_1',
-                                observables=['density'])
 
-        # cannot use VTK when the LB actor has expired
-        label_expired = f'test_lb_vtk_{self.lb_vtk_id}_expired_lbf'
-        vtk_expired = espressomd.lb.VTKOutput(
-            lb_fluid=self.lbf, identifier=label_expired, observables=['density'])
-        self.lbf = None
-        with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
-            vtk_expired.write()
-
-        # cannot use VTK when there are no LB objects available
-        label_unavailable = f'test_lb_vtk_{self.lb_vtk_id}_unavailable_lbf'
-        with self.assertRaisesRegex(RuntimeError, 'Attempted access to uninitialized LBWalberla instance'):
-            espressomd.lb.VTKOutput(identifier=label_unavailable,
-                                    observables=['density'])
+        # cannot use VTK when no lattice is attached to it
+        label_unattached = f'test_lb_vtk_{self.lb_vtk_id}_unattached_lbf'
+        label_unattached = espressomd.lb.VTKOutput(
+            identifier=label_unattached, observables=[])
+        with self.assertRaisesRegex(RuntimeError, "This VTK object isn't attached to a lattice"):
+            label_unattached.write()
 
 
-@utx.skipIfMissingModules("vtk")
+@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBWalberlaWrite(TestVTK, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
@@ -227,7 +227,7 @@ class LBWalberlaWrite(TestVTK, ut.TestCase):
     lb_vtk_id = 'double_precision'
 
 
-@utx.skipIfMissingModules("vtk")
+@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBWalberlaWriteSinglePrecision(TestVTK, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla

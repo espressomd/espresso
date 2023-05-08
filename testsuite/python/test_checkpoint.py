@@ -24,6 +24,7 @@ import unittest_generator as utg
 import numpy as np
 import contextlib
 import pathlib
+import sys
 
 import espressomd
 import espressomd.checkpointing
@@ -37,6 +38,8 @@ import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
 import espressomd.electrokinetics
+with contextlib.suppress(ImportError):
+    import espressomd.io.vtk
 
 with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
@@ -142,7 +145,7 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(state[key]), reference[key],
                                        atol=1E-7, err_msg=f"{key} differs")
         self.assertTrue(lbf.is_active)
-        self.assertFalse(lbf.is_single_precision)
+        self.assertFalse(lbf.single_precision)
 
         # check boundary objects
         slip_velocity1 = np.array([1e-4, 1e-4, 0.])
@@ -222,7 +225,7 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(state[key]), reference[key],
                                        atol=1E-7, err_msg=f"{key} differs")
         # self.assertFalse(ek_species.is_active)
-        self.assertFalse(ek_species.is_single_precision)
+        self.assertFalse(ek_species.single_precision)
 
         def generator(value, shape):
             value_grid = np.tile(value, shape)
@@ -293,10 +296,22 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
+        # check VTK objects are still synchronized with their LB objects
+        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
+        old_density = lbf[0, 0, 0].density
+        new_density = 1.5 * old_density
+        lbf[0, 0, 0].density = new_density
         vtk_manual.write()
+        lbf[0, 0, 0].density = old_density
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertTrue((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
+        if "espressomd.io.vtk" in sys.modules:
+            vtk_reader = espressomd.io.vtk.VTKReader()
+            vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
+            lb_density = vtk_data["DensityFromPDF"]
+            self.assertAlmostEqual(
+                lb_density[0, 0, 0], new_density, delta=1e-5)
 
     @utx.skipIfMissingFeatures('WALBERLA')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
@@ -328,10 +343,21 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
+        # check VTK objects are still synchronized with their EK objects
+        old_density = ek_species[0, 0, 0].density
+        new_density = 1.5 * old_density
+        ek_species[0, 0, 0].density = new_density
         vtk_manual.write()
+        ek_species[0, 0, 0].density = old_density
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertTrue((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
+        if "espressomd.io.vtk" in sys.modules:
+            vtk_reader = espressomd.io.vtk.VTKReader()
+            vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
+            ek_density = vtk_data["density"]
+            self.assertAlmostEqual(
+                ek_density[0, 0, 0], new_density, delta=1e-5)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()

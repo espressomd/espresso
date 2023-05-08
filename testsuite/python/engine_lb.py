@@ -134,7 +134,7 @@ class SwimmerTest():
                 0.5 * self.system.time_step * swimmer.f / swimmer.mass
             # for friction coupling, the old fluid at the new position is used
             v_fluid = self.lbf.get_interpolated_velocity(
-                swimmer.pos + self.system.time_step * v_swimmer)
+                pos=swimmer.pos + self.system.time_step * v_swimmer)
             force = -self.gamma * (v_swimmer - v_fluid) + \
                 f_swim * director + self.gamma * v_swim * director
 

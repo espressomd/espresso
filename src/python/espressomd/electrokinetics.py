@@ -17,17 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-
-from .script_interface import ScriptObjectList, ScriptInterfaceHelper, script_interface_register
-import numpy as np
 import itertools
+import numpy as np
 
 from . import utils
-from .shapes import Shape
-from .code_features import has_features
-from .detail.walberla import VTKRegistry, VTKOutputBase
+from .detail.walberla import VTKRegistry, VTKOutputBase, LatticeWalberla  # pylint: disable=unused-import
+from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList
 import espressomd.detail.walberla
+import espressomd.shapes
+import espressomd.code_features
 
 
 class EKFFT(ScriptInterfaceHelper):
@@ -35,7 +33,7 @@ class EKFFT(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA"):
+        if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
 
         super().__init__(*args, **kwargs)
@@ -46,7 +44,7 @@ class EKNone(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA"):
+        if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
 
         super().__init__(*args, **kwargs)
@@ -89,14 +87,56 @@ class EKContainer(ScriptObjectList):
 
 
 @script_interface_register
-class EKSpecies(ScriptInterfaceHelper):
-    """Interface to the Walberla EKSpecies
+class EKSpecies(ScriptInterfaceHelper,
+                espressomd.detail.walberla.LatticeModel):
     """
+    The advection-diffusion-reaction method for chemical species using waLBerla.
+
+    Methods
+    -------
+    clear_density_boundaries()
+        Remove density boundary conditions.
+
+    clear_flux_boundaries()
+        Remove flux boundary conditions.
+
+    clear_boundaries()
+        Remove all boundary conditions.
+
+    save_checkpoint()
+        Write EK densities and boundary conditions to a file.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            Destination file path.
+        binary : :obj:`bool`
+            Whether to write in binary or ASCII mode.
+
+    load_checkpoint()
+        Load EK densities and boundary conditions from a file.
+
+        Parameters
+        ----------
+        path : :obj:`str`
+            File path to read from.
+        binary : :obj:`bool`
+            Whether to read in binary or ASCII mode.
+
+    """
+
     _so_name = "walberla::EKSpecies"
     _so_creation_policy = "GLOBAL"
+    _so_bind_methods = (
+        "clear_density_boundaries",
+        "clear_flux_boundaries",
+        "clear_boundaries",
+        "add_vtk_writer",
+        "remove_vtk_writer",
+    )
 
     def __init__(self, *args, **kwargs):
-        if not has_features("WALBERLA"):
+        if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
 
         super().__init__(*args, **kwargs)
@@ -112,18 +152,6 @@ class EKSpecies(ScriptInterfaceHelper):
         raise TypeError(
             f"{key} is not a valid index. Should be a point on the "
             "nodegrid e.g. ek[0,0,0], or a slice, e.g. ek[:,0,0]")
-
-    def clear_density_boundaries(self):
-        """
-        Remove density boundary conditions.
-        """
-        self.call_method("clear_density_boundaries")
-
-    def clear_flux_boundaries(self):
-        """
-        Remove flux boundary conditions.
-        """
-        self.call_method("clear_flux_boundaries")
 
     def add_boundary_from_shape(self, shape, value, boundary_type):
         """
@@ -151,15 +179,15 @@ class EKSpecies(ScriptInterfaceHelper):
 
         value = np.array(value, dtype=float)
         utils.check_type_or_throw_except(
-            shape, 1, Shape, "expected an espressomd.shapes.Shape")
+            shape, 1, espressomd.shapes.Shape, "expected an espressomd.shapes.Shape")
         if issubclass(boundary_type, FluxBoundary):
             if np.shape(value) not in [(3,), tuple(self.shape) + (3,)]:
                 raise ValueError(
-                    f'Cannot process flux value grid of shape {np.shape(value)}')
+                    f"Cannot process flux value grid of shape {np.shape(value)}")
         if issubclass(boundary_type, DensityBoundary):
             if np.shape(value) not in [(1,), tuple(self.shape) + (1,)]:
                 raise ValueError(
-                    f'Cannot process density value grid of shape {np.shape(value)}')
+                    f"Cannot process density value grid of shape {np.shape(value)}")
 
         value_flat = value.reshape((-1,))
         mask_flat = shape.call_method('rasterize', grid_size=self.shape,
@@ -179,50 +207,21 @@ class EKSpecies(ScriptInterfaceHelper):
                 raster_view=raster_view,
                 value_view=value_view)
 
-    def get_nodes_in_shape(self, shape):
+    def get_nodes_inside_shape(self, shape):
         """
         Provide a generator for iterating over all nodes inside the given shape.
         """
-        utils.check_type_or_throw_except(
-            shape, 1, Shape, "expected a espressomd.shapes.Shape")
-        ek_shape = self.shape
-        idxs = itertools.product(
-            range(ek_shape[0]), range(ek_shape[1]), range(ek_shape[2]))
-        for idx in idxs:
-            pos = (np.asarray(idx) + 0.5) * self._params['agrid']
-            if shape.is_inside(position=pos):
-                yield self[idx]
-
-    def clear_boundaries(self):
-        """
-        Remove boundary conditions.
-        """
-        self.call_method("clear_boundary")
+        for idx in self.lattice.get_node_indices_inside_shape(shape):
+            yield self[idx]
 
     def get_shape_bitmask(self, shape):
         """Create a bitmask for the given shape."""
         utils.check_type_or_throw_except(
-            shape, 1, Shape, "expected a espressomd.shapes.Shape")
-        mask_flat = shape.call_method('rasterize', grid_size=self.shape,
+            shape, 1, espressomd.shapes.Shape, "expected a espressomd.shapes.Shape")
+        mask_flat = shape.call_method("rasterize", grid_size=self.shape,
                                       grid_spacing=self.lattice.agrid,
                                       grid_offset=0.5)
         return np.reshape(mask_flat, self.shape).astype(type(True))
-
-    def save_checkpoint(self, path, binary):
-        """
-        Write EK densities and boundary conditions to a file.
-        """
-        tmp_path = path + ".__tmp__"
-        self.call_method(
-            'save_checkpoint', path=tmp_path, mode=int(binary))
-        os.rename(tmp_path, path)
-
-    def load_checkpoint(self, path, binary):
-        """
-        Load EK densities and boundary conditions from a file.
-        """
-        return self.call_method(
-            'load_checkpoint', path=path, mode=int(binary))
 
 
 class FluxBoundary:
@@ -251,7 +250,7 @@ class DensityBoundary:
         self.density = density
 
 
-if has_features("WALBERLA"):
+if espressomd.code_features.has_features("WALBERLA"):
     _walberla_vtk_registry = VTKRegistry()
 
 

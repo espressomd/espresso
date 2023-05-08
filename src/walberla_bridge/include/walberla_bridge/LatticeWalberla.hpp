@@ -22,6 +22,7 @@
 #include <utils/Vector.hpp>
 
 #include <cassert>
+#include <cmath>
 #include <initializer_list>
 #include <memory>
 #include <utility>
@@ -31,8 +32,7 @@ namespace walberla::blockforest {
 class StructuredBlockForest;
 } // namespace walberla::blockforest
 
-/** Class that runs and controls the BlockForest in walberla
- */
+/** Class that runs and controls the BlockForest in waLBerla. */
 class LatticeWalberla {
 public:
   using Lattice_T = walberla::blockforest::StructuredBlockForest;
@@ -75,4 +75,6 @@ public:
   [[nodiscard]] bool node_in_local_halo(Utils::Vector3i const &node) const;
   [[nodiscard]] bool pos_in_local_domain(Utils::Vector3d const &pos) const;
   [[nodiscard]] bool pos_in_local_halo(Utils::Vector3d const &pos) const;
+  [[nodiscard]] static Utils::Vector3i
+  calc_grid_dimensions(Utils::Vector3d const &box_size, double agrid);
 };

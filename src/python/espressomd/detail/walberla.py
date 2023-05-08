@@ -17,10 +17,65 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+import itertools
 import numpy as np
 
+import espressomd.shapes
 import espressomd.code_features
-from espressomd.script_interface import ScriptInterfaceHelper
+from espressomd.script_interface import ScriptInterfaceHelper, script_interface_register
+
+
+@script_interface_register
+class LatticeWalberla(ScriptInterfaceHelper):
+    """
+    Interface to a waBLerla lattice.
+    """
+    _so_name = "walberla::LatticeWalberla"
+    _so_creation_policy = "GLOBAL"
+
+    def __init__(self, *args, **kwargs):
+        if not espressomd.code_features.has_features("WALBERLA"):
+            raise NotImplementedError("Feature WALBERLA not compiled in")
+
+        if "sip" not in kwargs:
+            params = self.default_params()
+            params.update(kwargs)
+            super().__init__(*args, **params)
+            self._params = {k: getattr(self, k) for k in self.valid_keys()}
+        else:
+            super().__init__(**kwargs)
+
+    def valid_keys(self):
+        return {"agrid", "n_ghost_layers"}
+
+    def required_keys(self):
+        return self.valid_keys()
+
+    def default_params(self):
+        return {}
+
+    def get_node_indices_inside_shape(self, shape):
+        if not isinstance(shape, espressomd.shapes.Shape):
+            raise ValueError(
+                "Parameter 'shape' must be derived from espressomd.shapes.Shape")
+        agrid = self.agrid
+        idxs = itertools.product(*map(range, self.shape))
+        for idx in idxs:
+            pos = (np.asarray(idx) + 0.5) * agrid
+            if shape.is_inside(position=pos):
+                yield idx
+
+
+class LatticeModel:
+
+    def save_checkpoint(self, path, binary):
+        tmp_path = path + ".__tmp__"
+        self.call_method("save_checkpoint", path=tmp_path, mode=int(binary))
+        os.rename(tmp_path, path)
+
+    def load_checkpoint(self, path, binary):
+        return self.call_method("load_checkpoint", path=path, mode=int(binary))
 
 
 def get_slice_bounding_box(slices, grid_size):

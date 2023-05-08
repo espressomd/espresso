@@ -24,14 +24,7 @@
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
-#include <utils/Vector.hpp>
-
-#include <cmath>
-#include <initializer_list>
-#include <limits>
 #include <memory>
-#include <stdexcept>
-#include <string>
 
 std::shared_ptr<LBWalberlaBase>
 new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
@@ -42,22 +35,4 @@ new_lb_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
   }
   return std::make_shared<walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>>(
       lattice, viscosity, density);
-}
-
-Utils::Vector3i calc_grid_dimensions(Utils::Vector3d const &box_size,
-                                     double agrid) {
-  Utils::Vector3i const grid_dimensions{
-      static_cast<int>(std::round(box_size[0] / agrid)),
-      static_cast<int>(std::round(box_size[1] / agrid)),
-      static_cast<int>(std::round(box_size[2] / agrid))};
-  for (auto const i : {0u, 1u, 2u}) {
-    if (std::abs(grid_dimensions[i] * agrid - box_size[i]) / box_size[i] >
-        std::numeric_limits<double>::epsilon()) {
-      throw std::runtime_error(
-          "Box length not commensurate with agrid in direction " +
-          std::to_string(i) + " length " + std::to_string(box_size[i]) +
-          " agrid " + std::to_string(agrid));
-    }
-  }
-  return grid_dimensions;
 }

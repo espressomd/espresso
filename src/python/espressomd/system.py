@@ -32,7 +32,6 @@ from . import constraints
 from . import galilei
 from . import interactions
 from . import integrate
-from . import lb
 from . import electrokinetics
 from . import lees_edwards
 from . import particle_data
@@ -255,24 +254,13 @@ class System(ScriptInterfaceHelper):
         odict = collections.OrderedDict()
         for property_name in checkpointable_properties:
             odict[property_name] = System.__getattribute__(self, property_name)
-        if has_features("WALBERLA"):
-            ek = electrokinetics
-            odict["_lb_vtk_registry"] = lb._walberla_vtk_registry
-            odict["_ek_vtk_registry"] = ek._walberla_vtk_registry
         return odict
 
     def __setstate__(self, params):
         # note: this class is initialized twice by pickle
-        if has_features("WALBERLA"):
-            lb_vtk_registry = params.pop("_lb_vtk_registry")
-            ek_vtk_registry = params.pop("_ek_vtk_registry")
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
         self.call_method("lock_system_creation")
-        if has_features("WALBERLA"):
-            ek = electrokinetics
-            lb._walberla_vtk_registry = lb_vtk_registry
-            ek._walberla_vtk_registry = ek_vtk_registry
 
     @property
     def box_l(self):

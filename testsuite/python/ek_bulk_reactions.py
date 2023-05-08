@@ -67,7 +67,7 @@ class EKReaction(ut.TestCase):
 
         relative_precision: float = 1E-6 if single_precision else 1E-7
 
-        lattice = espressomd.lb.LatticeWalberla(
+        lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=self.AGRID)
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)

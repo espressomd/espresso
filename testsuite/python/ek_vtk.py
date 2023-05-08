@@ -27,8 +27,8 @@ import contextlib
 import numpy as np
 
 import espressomd
-import espressomd.electrokinetics
 import espressomd.shapes
+import espressomd.electrokinetics
 
 with contextlib.suppress(ImportError):
     import espressomd.io.vtk
@@ -46,7 +46,7 @@ class TestVTK:
 
     @classmethod
     def setUpClass(cls):
-        cls.lattice = espressomd.lb.LatticeWalberla(
+        cls.lattice = espressomd.electrokinetics.LatticeWalberla(
             n_ghost_layers=1, agrid=0.5)
         cls.solver = espressomd.electrokinetics.EKNone(lattice=cls.lattice)
 
@@ -95,14 +95,16 @@ class TestVTK:
         # write VTK files
         vtk_obs = ['density']
         ek_vtk = espressomd.electrokinetics.VTKOutput(
-            species=self.species, identifier=label_vtk_continuous,
-            observables=vtk_obs, delta_N=1, base_folder=str(path_vtk_root))
+            identifier=label_vtk_continuous, observables=vtk_obs, delta_N=1,
+            base_folder=str(path_vtk_root))
+        self.species.add_vtk_writer(vtk=ek_vtk)
         ek_vtk.disable()
         ek_vtk.enable()
         self.system.integrator.run(n_steps)
         ek_vtk = espressomd.electrokinetics.VTKOutput(
-            species=self.species, identifier=label_vtk_end,
-            observables=vtk_obs, delta_N=0, base_folder=str(path_vtk_root))
+            identifier=label_vtk_end, observables=vtk_obs, delta_N=0,
+            base_folder=str(path_vtk_root))
+        self.species.add_vtk_writer(vtk=ek_vtk)
         ek_vtk.write()
         self.assertEqual(sorted(ek_vtk.observables), sorted(vtk_obs))
         self.assertEqual(ek_vtk.valid_observables(), {"density"})
@@ -142,16 +144,15 @@ class TestVTK:
         error_msg = r"Only the following VTK observables are supported: \['density'\], got 'dens'"
         with self.assertRaisesRegex(ValueError, error_msg):
             espressomd.electrokinetics.VTKOutput(
-                species=self.species, identifier=label_invalid_obs, delta_N=0,
-                observables=['dens'])
-        ek_vtk_manual_id = f'test_ek_vtk_{self.ek_vtk_id}_manual'
-        ek_vtk_auto_id = f'test_ek_vtk_{self.ek_vtk_id}_auto'
+                identifier=label_invalid_obs, delta_N=0, observables=["dens"])
+        ek_vtk_manual_id = f"test_ek_vtk_{self.ek_vtk_id}_manual"
+        ek_vtk_auto_id = f"test_ek_vtk_{self.ek_vtk_id}_auto"
         vtk_manual = espressomd.electrokinetics.VTKOutput(
-            species=self.species, identifier=ek_vtk_manual_id, delta_N=0,
-            observables=['density'])
+            identifier=ek_vtk_manual_id, delta_N=0, observables=["density"])
+        self.species.add_vtk_writer(vtk=vtk_manual)
         vtk_auto = espressomd.electrokinetics.VTKOutput(
-            species=self.species, identifier=ek_vtk_auto_id, delta_N=1,
-            observables=['density'])
+            identifier=ek_vtk_auto_id, delta_N=1, observables=["density"])
+        self.species.add_vtk_writer(vtk=vtk_auto)
         with self.assertRaisesRegex(RuntimeError, 'Automatic VTK callbacks cannot be triggered manually'):
             vtk_auto.write()
         with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be disabled'):
@@ -159,40 +160,42 @@ class TestVTK:
         with self.assertRaisesRegex(RuntimeError, 'Manual VTK callbacks cannot be enabled'):
             vtk_manual.enable()
         with self.assertRaisesRegex(RuntimeError, 'already exists'):
-            espressomd.electrokinetics.VTKOutput(
-                species=self.species, identifier=ek_vtk_manual_id, delta_N=0,
-                observables=[])
+            self.species.add_vtk_writer(vtk=espressomd.electrokinetics.VTKOutput(
+                identifier=ek_vtk_manual_id, delta_N=0, observables=[]))
         with self.assertRaisesRegex(ValueError, "Parameter 'delta_N' must be >= 0"):
             espressomd.electrokinetics.VTKOutput(
-                species=self.species, identifier="a", delta_N=-1, observables=[])
+                identifier="a", delta_N=-1, observables=[])
         with self.assertRaisesRegex(ValueError, "Parameter 'identifier' cannot be empty"):
             espressomd.electrokinetics.VTKOutput(
-                species=self.species, identifier="", delta_N=0, observables=[])
+                identifier="", delta_N=0, observables=[])
         with self.assertRaisesRegex(ValueError, "cannot be a filepath"):
             espressomd.electrokinetics.VTKOutput(
-                species=self.species, identifier=f"test{os.sep}test", delta_N=0,
-                observables=[])
+                identifier=f"test{os.sep}test", delta_N=0, observables=[])
 
         # can still use VTK when the EK actor has been cleared but not deleted
-        label_cleared = f'test_ek_vtk_{self.ek_vtk_id}_cleared'
+        label_cleared = f"test_ek_vtk_{self.ek_vtk_id}_cleared"
         vtk_cleared = espressomd.electrokinetics.VTKOutput(
-            species=self.species, identifier=label_cleared,
-            observables=['density'])
+            identifier=label_cleared, observables=["density"])
+        self.species.add_vtk_writer(vtk=vtk_cleared)
         self.system.actors.clear()
         vtk_cleared.write()
-        espressomd.electrokinetics.VTKOutput(species=self.species,
-                                             identifier=label_cleared + '_1',
-                                             observables=['density'])
+
+        # cannot use VTK when no lattice is attached to it
+        label_unattached = f'test_ek_vtk_{self.ek_vtk_id}_unattached_lbf'
+        label_unattached = espressomd.electrokinetics.VTKOutput(
+            identifier=label_unattached, observables=[])
+        with self.assertRaisesRegex(RuntimeError, "This VTK object isn't attached to a lattice"):
+            label_unattached.write()
 
 
-@utx.skipIfMissingModules("vtk")
+@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class EKWalberlaWrite(TestVTK, ut.TestCase):
     ek_params = {'single_precision': False}
     ek_vtk_id = 'double_precision'
 
 
-@utx.skipIfMissingModules("vtk")
+@utx.skipIfMissingModules("espressomd.io.vtk")
 @utx.skipIfMissingFeatures("WALBERLA")
 class EKWalberlaWriteSinglePrecision(TestVTK, ut.TestCase):
     ek_params = {'single_precision': True}

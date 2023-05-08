@@ -58,23 +58,32 @@
 
 namespace ScriptInterface::walberla {
 
+std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
+    {"density", static_cast<int>(OutputVTK::density)},
+    {"velocity_vector", static_cast<int>(OutputVTK::velocity_vector)},
+    {"pressure_tensor", static_cast<int>(OutputVTK::pressure_tensor)},
+};
+
 Variant LBFluid::do_call_method(std::string const &name,
                                 VariantMap const &params) {
   if (name == "activate") {
-    auto const fail = ::activate_lb_walberla(m_lb_fluid, m_lb_params);
+    auto const fail = ::activate_lb_walberla(m_instance, m_lb_params);
     if (not fail) {
       m_is_active = true;
     }
+    return {};
   }
   if (name == "deactivate") {
     ::deactivate_lb_walberla();
     m_is_active = false;
+    return {};
   }
   if (name == "add_force_at_pos") {
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
     auto const f = get_value<Utils::Vector3d>(params, "force");
     auto const folded_pos = folded_position(pos, box_geo);
-    m_lb_fluid->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
+    m_instance->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
+    return {};
   }
   if (name == "get_interpolated_velocity") {
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
@@ -87,35 +96,48 @@ Variant LBFluid::do_call_method(std::string const &name,
     auto const path = get_value<std::string>(params, "path");
     auto const mode = get_value<int>(params, "mode");
     load_checkpoint(path, mode);
+    return {};
   }
   if (name == "save_checkpoint") {
     auto const path = get_value<std::string>(params, "path");
     auto const mode = get_value<int>(params, "mode");
     save_checkpoint(path, mode);
+    return {};
   }
   if (name == "clear_boundaries") {
-    m_lb_fluid->clear_boundaries();
-    m_lb_fluid->ghost_communication();
+    m_instance->clear_boundaries();
+    m_instance->ghost_communication();
     on_lb_boundary_conditions_change();
+    return {};
   }
   if (name == "add_boundary_from_shape") {
-    m_lb_fluid->update_boundary_from_shape(
+    m_instance->update_boundary_from_shape(
         get_value<std::vector<int>>(params, "raster"),
         get_value<std::vector<double>>(params, "velocity"));
+    return {};
   }
   if (name == "get_lattice_speed") {
     return 1. / m_conv_speed;
   }
 
-  return {};
+  return Base::do_call_method(name, params);
 }
 
 void LBFluid::do_construct(VariantMap const &params) {
+  m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
+  m_vtk_writers =
+      get_value_or<decltype(m_vtk_writers)>(params, "vtk_writers", {});
+  auto const tau = get_value<double>(params, "tau");
+  auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
+  auto const visc = get_value<double>(params, "kinematic_viscosity");
+  auto const dens = get_value<double>(params, "density");
+  auto const kT = get_value<double>(params, "kT");
+  auto const ext_f = get_value<Utils::Vector3d>(params, "ext_force_density");
+  m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
+  m_is_active = false;
+  m_single_precision = get_value<bool>(params, "single_precision");
+  m_seed = get_value<int>(params, "seed");
   context()->parallel_try_catch([&]() {
-    auto const lb_lattice_si =
-        get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
-    auto const tau = get_value<double>(params, "tau");
-    auto const agrid = get_value<double>(lb_lattice_si->get_parameter("agrid"));
     if (tau <= 0.) {
       throw std::domain_error("Parameter 'tau' must be > 0");
     }
@@ -127,17 +149,11 @@ void LBFluid::do_construct(VariantMap const &params) {
     m_conv_press = Utils::int_pow<2>(tau) * Utils::int_pow<1>(agrid);
     m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
     m_conv_force_dens = Utils::int_pow<2>(tau) * Utils::int_pow<2>(agrid);
-    m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
-    m_is_active = false;
-    m_seed = get_value<int>(params, "seed");
-    auto const lb_lattice = lb_lattice_si->lattice();
-    auto const lb_visc =
-        m_conv_visc * get_value<double>(params, "kinematic_viscosity");
-    auto const lb_dens = m_conv_dens * get_value<double>(params, "density");
-    auto const lb_kT = m_conv_temp * get_value<double>(params, "kT");
-    auto const ext_f = m_conv_force_dens *
-                       get_value<Utils::Vector3d>(params, "ext_force_density");
-    m_is_single_precision = get_value<bool>(params, "single_precision");
+    auto const lb_lattice = m_lattice->lattice();
+    auto const lb_visc = m_conv_visc * visc;
+    auto const lb_dens = m_conv_dens * dens;
+    auto const lb_kT = m_conv_temp * kT;
+    auto const lb_ext_f = m_conv_force_dens * ext_f;
     if (m_seed < 0) {
       throw std::domain_error("Parameter 'seed' must be >= 0");
     }
@@ -150,8 +166,8 @@ void LBFluid::do_construct(VariantMap const &params) {
     if (lb_visc < 0.) {
       throw std::domain_error("Parameter 'kinematic_viscosity' must be >= 0");
     }
-    m_lb_fluid =
-        new_lb_walberla(lb_lattice, lb_visc, lb_dens, m_is_single_precision);
+    m_instance =
+        new_lb_walberla(lb_lattice, lb_visc, lb_dens, m_single_precision);
     if (auto le_protocol = LeesEdwards::get_protocol().lock()) {
       if (lb_kT != 0.) {
         throw std::runtime_error(
@@ -168,17 +184,36 @@ void LBFluid::do_construct(VariantMap const &params) {
             return get_shear_velocity(get_sim_time(), *le_protocol) *
                    (m_lb_params->get_tau() / m_lb_params->get_agrid());
           });
-      m_lb_fluid->set_collision_model(std::move(lees_edwards_object));
+      m_instance->set_collision_model(std::move(lees_edwards_object));
     } else {
-      m_lb_fluid->set_collision_model(lb_kT, m_seed);
+      m_instance->set_collision_model(lb_kT, m_seed);
     }
-    m_lb_fluid->ghost_communication(); // synchronize ghost layers
-    m_lb_fluid->set_external_force(ext_f);
+    m_instance->ghost_communication(); // synchronize ghost layers
+    m_instance->set_external_force(lb_ext_f);
+    for (auto &vtk : m_vtk_writers) {
+      vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
+    }
   });
 }
 
+std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
+  auto const local = m_instance->get_pressure_tensor() / m_conv_press;
+  auto const tensor_flat = mpi_reduce_sum(context()->get_comm(), local);
+  auto tensor = Utils::Matrix<double, 3, 3>{};
+  std::copy(tensor_flat.begin(), tensor_flat.end(), tensor.m_data.begin());
+  return std::vector<Variant>{tensor.row<0>().as_vector(),
+                              tensor.row<1>().as_vector(),
+                              tensor.row<2>().as_vector()};
+}
+
+Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
+  auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
+  auto const result = m_instance->get_velocity_at_pos(lb_pos);
+  return mpi_reduce_optional(context()->get_comm(), result) / m_conv_speed;
+}
+
 void LBFluid::load_checkpoint(std::string const &filename, int mode) {
-  auto &lb_obj = *m_lb_fluid;
+  auto &lb_obj = *m_instance;
 
   auto const read_metadata = [&lb_obj](CheckpointFile &cpfile) {
     auto const expected_grid_size = lb_obj.get_lattice().get_grid_dimensions();
@@ -238,7 +273,7 @@ void LBFluid::load_checkpoint(std::string const &filename, int mode) {
 }
 
 void LBFluid::save_checkpoint(std::string const &filename, int mode) {
-  auto &lb_obj = *m_lb_fluid;
+  auto &lb_obj = *m_instance;
 
   auto const write_metadata = [&lb_obj,
                                mode](std::shared_ptr<CheckpointFile> cpfile_ptr,
@@ -332,22 +367,6 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
 
   save_checkpoint_common(*context(), "LB", filename, mode, write_metadata,
                          write_data, on_failure);
-}
-
-std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
-  auto const local = m_lb_fluid->get_pressure_tensor() / m_conv_press;
-  auto const tensor_flat = mpi_reduce_sum(context()->get_comm(), local);
-  auto tensor = Utils::Matrix<double, 3, 3>{};
-  std::copy(tensor_flat.begin(), tensor_flat.end(), tensor.m_data.begin());
-  return std::vector<Variant>{tensor.row<0>().as_vector(),
-                              tensor.row<1>().as_vector(),
-                              tensor.row<2>().as_vector()};
-}
-
-Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
-  auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
-  auto const result = m_lb_fluid->get_velocity_at_pos(lb_pos);
-  return mpi_reduce_optional(context()->get_comm(), result) / m_conv_speed;
 }
 
 } // namespace ScriptInterface::walberla

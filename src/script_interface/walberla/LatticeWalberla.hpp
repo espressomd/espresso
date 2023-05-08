@@ -23,19 +23,15 @@
 
 #ifdef WALBERLA
 
-#include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
-
-#include "core/errorhandling.hpp"
 #include "core/grid.hpp"
+
+#include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
-#include <utils/Vector.hpp>
-
 #include <cmath>
-#include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -43,7 +39,6 @@ namespace ScriptInterface::walberla {
 
 class LatticeWalberla : public AutoParameters<LatticeWalberla> {
   std::shared_ptr<::LatticeWalberla> m_lattice;
-  int m_n_ghost_layers;
   double m_agrid;
 
 public:
@@ -51,7 +46,7 @@ public:
     add_parameters({
         {"agrid", AutoParameter::read_only, [this]() { return m_agrid; }},
         {"n_ghost_layers", AutoParameter::read_only,
-         [this]() { return m_n_ghost_layers; }},
+         [this]() { return static_cast<int>(m_lattice->get_ghost_layers()); }},
         {"shape", AutoParameter::read_only,
          [this]() { return m_lattice->get_grid_dimensions(); }},
     });
@@ -59,19 +54,20 @@ public:
 
   void do_construct(VariantMap const &args) override {
     m_agrid = get_value<double>(args, "agrid");
-    m_n_ghost_layers = get_value<int>(args, "n_ghost_layers");
+    auto const n_ghost_layers = get_value<int>(args, "n_ghost_layers");
 
     context()->parallel_try_catch([&]() {
       if (m_agrid <= 0.) {
         throw std::domain_error("Parameter 'agrid' must be > 0");
       }
-      if (m_n_ghost_layers < 0.) {
+      if (n_ghost_layers < 0) {
         throw std::domain_error("Parameter 'n_ghost_layers' must be >= 0");
       }
       auto const box_size = ::box_geo.length();
-      auto const grid_dimensions = ::calc_grid_dimensions(box_size, m_agrid);
+      auto const grid_dim =
+          ::LatticeWalberla::calc_grid_dimensions(box_size, m_agrid);
       m_lattice = std::make_shared<::LatticeWalberla>(
-          grid_dimensions, node_grid, static_cast<unsigned>(m_n_ghost_layers));
+          grid_dim, node_grid, static_cast<unsigned int>(n_ghost_layers));
     });
   }
 

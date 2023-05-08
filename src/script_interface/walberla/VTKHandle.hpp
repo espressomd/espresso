@@ -25,12 +25,7 @@
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/VTKHandle.hpp>
-#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
-#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
-
-#include "EKSpecies.hpp"
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
 
@@ -56,17 +51,28 @@ private:
   std::string m_base_folder;
   std::string m_prefix;
   std::shared_ptr<::VTKHandle> m_vtk_handle;
-  LatticeModel::units_map m_units;
+  std::weak_ptr<Field> m_field;
+  ::LatticeModel::units_map m_units;
+  std::vector<Variant> m_pending_arguments;
 
   [[nodiscard]] auto get_vtk_uid() const {
     return m_base_folder + '/' + m_identifier;
   }
 
+  [[nodiscard]] std::shared_ptr<Field> get_field_instance() const {
+    if (auto const field = m_field.lock()) {
+      return field;
+    }
+    auto const has_lattice_expired = m_pending_arguments.empty();
+    auto const err_msg = std::vector<std::string>{
+        "Attempted access to an expired lattice object",
+        "This VTK object isn't attached to a lattice",
+    };
+    throw std::runtime_error(has_lattice_expired ? err_msg[0] : err_msg[1]);
+  }
+
 protected:
-  virtual void setup_field_instance(VariantMap const &params) = 0;
-  virtual std::shared_ptr<Field> get_field_instance() = 0;
   virtual std::unordered_map<std::string, int> const &get_obs_map() const = 0;
-  virtual LatticeModel::units_map get_units(VariantMap const &params) const = 0;
 
 private:
   [[nodiscard]] auto get_valid_observable_names() const {
@@ -112,7 +118,6 @@ public:
     AutoParameters<VTKHandleBase<Field>>::add_parameters({
         {"enabled", read_only, [this]() { return m_vtk_handle->enabled; }},
         {"delta_N", read_only, [this]() { return m_delta_N; }},
-        {"flag_obs", read_only, [this]() { return m_flag_obs; }},
         {"vtk_uid", read_only, [this]() { return get_vtk_uid(); }},
         {"identifier", read_only, [this]() { return m_identifier; }},
         {"base_folder", read_only, [this]() { return m_base_folder; }},
@@ -164,26 +169,15 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    if (params.count("flag_obs")) {
-      // object built from a checkpoint
-      m_flag_obs = get_value<int>(params, "flag_obs");
-      // TODO WALBERLA: here we assume all VTK objects belong to the
-      // same LB actor, which should always be the case (users cannot
-      // create multiple actors with different VTK objects, unless
-      // the system is checkpointed multiple times)
-    } else {
-      // object built by the user
-      ObjectHandle::context()->parallel_try_catch([&]() {
-        m_flag_obs = deserialize_obs_flag(
-            get_value<std::vector<std::string>>(params, "observables"));
-      });
-    }
     m_delta_N = get_value<int>(params, "delta_N");
     m_identifier = get_value<std::string>(params, "identifier");
     m_base_folder = get_value<std::string>(params, "base_folder");
     m_prefix = get_value<std::string>(params, "prefix");
+    auto const is_enabled = get_value<bool>(params, "enabled");
     auto const execution_count = get_value<int>(params, "execution_count");
     ObjectHandle::context()->parallel_try_catch([&]() {
+      m_flag_obs = deserialize_obs_flag(
+          get_value<std::vector<std::string>>(params, "observables"));
       if (m_delta_N < 0) {
         throw std::domain_error("Parameter 'delta_N' must be >= 0");
       }
@@ -195,102 +189,36 @@ public:
         throw std::invalid_argument(
             "Parameter 'identifier' cannot be a filepath");
       }
-      setup_field_instance(params);
-      auto &field_instance = *get_field_instance();
-      m_units = get_units(params);
-      m_vtk_handle = field_instance.create_vtk(
-          m_delta_N, execution_count, m_flag_obs, m_units, m_identifier,
-          m_base_folder, m_prefix);
-      if (m_delta_N and not get_value<bool>(params, "enabled")) {
-        field_instance.switch_vtk(get_vtk_uid(), false);
-      }
     });
+    m_pending_arguments.emplace_back(is_enabled);
+    m_pending_arguments.emplace_back(execution_count);
   }
-};
 
-class LBVTKHandle : public VTKHandleBase<LBWalberlaBase> {
-  static std::unordered_map<std::string, int> const obs_map;
-  std::weak_ptr<LBWalberlaBase> m_lb_fluid;
+  void detach_from_lattice() { m_field.reset(); }
 
-  [[nodiscard]] std::shared_ptr<LBWalberlaBase> get_field_instance() override {
-    auto lb_walberla_instance_handle = m_lb_fluid.lock();
-    if (!lb_walberla_instance_handle) {
-      throw std::runtime_error(
-          "Attempted access to uninitialized LBWalberla instance.");
+  void attach_to_lattice(std::weak_ptr<Field> field,
+                         ::LatticeModel::units_map const &units) {
+    auto const was_attached_once = m_pending_arguments.empty();
+    if (not m_field.expired()) {
+      throw std::runtime_error("Cannot attach VTK object to multiple lattices");
     }
-    return lb_walberla_instance_handle;
-  }
-
-  void setup_field_instance(VariantMap const &params) override {
-    if (params.count("lb_fluid")) {
-      m_lb_fluid =
-          get_value<std::shared_ptr<LBFluid>>(params, "lb_fluid")->lb_fluid();
-    } else {
-      m_lb_fluid = std::weak_ptr<LBWalberlaBase>{::lb_walberla()};
+    if (was_attached_once) {
+      throw std::runtime_error("Detached VTK objects cannot be attached again");
     }
-  }
-
-  std::unordered_map<std::string, int> const &get_obs_map() const override {
-    return obs_map;
-  }
-
-protected:
-  LatticeModel::units_map get_units(VariantMap const &params) const override {
-    if (params.count("flag_obs")) {
-      // object built from a checkpoint
-      return get_value<LatticeModel::units_map>(params, "units");
+    assert(m_pending_arguments.size() == 2u);
+    auto const is_enabled = get_value<bool>(m_pending_arguments[0]);
+    auto const execution_count = get_value<int>(m_pending_arguments[1]);
+    m_units = units;
+    m_field = field;
+    auto instance = get_field_instance();
+    m_vtk_handle =
+        instance->create_vtk(m_delta_N, execution_count, m_flag_obs, m_units,
+                             m_identifier, m_base_folder, m_prefix);
+    if (m_delta_N and not is_enabled) {
+      instance->switch_vtk(get_vtk_uid(), false);
     }
-    return get_value<std::shared_ptr<LBFluid>>(params, "lb_fluid")
-        ->get_latice_to_md_units_conversion();
+    m_pending_arguments.clear();
   }
-};
-
-std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
-    {"density", static_cast<int>(OutputVTK::density)},
-    {"velocity_vector", static_cast<int>(OutputVTK::velocity_vector)},
-    {"pressure_tensor", static_cast<int>(OutputVTK::pressure_tensor)},
-};
-
-class EKVTKHandle : public VTKHandleBase<EKinWalberlaBase> {
-  static std::unordered_map<std::string, int> const obs_map;
-  std::shared_ptr<EKinWalberlaBase> m_ekinstance;
-  std::shared_ptr<EKSpecies> m_ekspecies;
-
-  [[nodiscard]] std::shared_ptr<EKinWalberlaBase>
-  get_field_instance() override {
-    return m_ekinstance;
-  }
-
-public:
-  EKVTKHandle() {
-    constexpr auto read_only = AutoParameter::read_only;
-    add_parameters({
-        {"species", read_only, [this]() { return m_ekspecies; }},
-    });
-  }
-
-  void setup_field_instance(VariantMap const &params) override {
-    m_ekspecies = get_value<std::shared_ptr<EKSpecies>>(params, "species");
-    m_ekinstance = m_ekspecies->get_ekinstance();
-  }
-
-  std::unordered_map<std::string, int> const &get_obs_map() const override {
-    return obs_map;
-  }
-
-protected:
-  LatticeModel::units_map get_units(VariantMap const &params) const override {
-    if (params.count("flag_obs")) {
-      // object built from a checkpoint
-      return get_value<LatticeModel::units_map>(params, "units");
-    }
-    return get_value<std::shared_ptr<EKSpecies>>(params, "species")
-        ->get_latice_to_md_units_conversion();
-  }
-};
-
-std::unordered_map<std::string, int> const EKVTKHandle::obs_map = {
-    {"density", static_cast<int>(EKOutputVTK::density)},
 };
 
 } // namespace ScriptInterface::walberla

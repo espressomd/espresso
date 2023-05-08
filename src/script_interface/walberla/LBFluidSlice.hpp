@@ -109,10 +109,8 @@ class LBFluidSlice : public LatticeSlice<LBFieldSerializer> {
 public:
   void do_construct(VariantMap const &params) override {
     m_lb_sip = get_value<std::shared_ptr<LBFluid>>(params, "parent_sip");
-    m_lb_fluid = m_lb_sip->lb_fluid().lock();
-    assert(m_lb_fluid);
-    auto const &lb_params = m_lb_sip->lb_params().lock();
-    assert(lb_params);
+    m_lb_fluid = m_lb_sip->get_lb_fluid();
+    auto const lb_params = m_lb_sip->get_lb_params();
     auto const tau = lb_params->get_tau();
     auto const agrid = lb_params->get_agrid();
     m_conv_dens = Utils::int_pow<3>(agrid);

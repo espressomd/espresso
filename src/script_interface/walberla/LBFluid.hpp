@@ -23,12 +23,13 @@
 
 #ifdef WALBERLA
 
+#include "LatticeModel.hpp"
 #include "LatticeWalberla.hpp"
+#include "VTKHandle.hpp"
 
 #include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include <script_interface/ScriptInterface.hpp>
-#include <script_interface/auto_parameters/AutoParameters.hpp>
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
@@ -44,11 +45,14 @@
 
 namespace ScriptInterface::walberla {
 
-class LBFluid : public AutoParameters<LBFluid> {
-  std::shared_ptr<::LBWalberlaBase> m_lb_fluid;
+class LBVTKHandle;
+
+class LBFluid : public LatticeModel<::LBWalberlaBase, LBVTKHandle> {
+  using Base = LatticeModel<::LBWalberlaBase, LBVTKHandle>;
   std::shared_ptr<::LBWalberlaParams> m_lb_params;
-  bool m_is_single_precision;
+  bool m_single_precision;
   bool m_is_active;
+  int m_seed;
   double m_conv_dist;
   double m_conv_visc;
   double m_conv_temp;
@@ -57,13 +61,13 @@ class LBFluid : public AutoParameters<LBFluid> {
   double m_conv_press;
   double m_conv_force;
   double m_conv_force_dens;
-  int m_seed;
 
 public:
   LBFluid() {
     add_parameters({
-        {"is_single_precision", AutoParameter::read_only,
-         [this]() { return m_is_single_precision; }},
+        {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+        {"single_precision", AutoParameter::read_only,
+         [this]() { return m_single_precision; }},
         {"is_active", AutoParameter::read_only,
          [this]() { return m_is_active; }},
         {"agrid", AutoParameter::read_only,
@@ -71,34 +75,42 @@ public:
         {"tau", AutoParameter::read_only,
          [this]() { return m_lb_params->get_tau(); }},
         {"shape", AutoParameter::read_only,
-         [this]() { return m_lb_fluid->get_lattice().get_grid_dimensions(); }},
+         [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
         {"kT", AutoParameter::read_only,
-         [this]() { return m_lb_fluid->get_kT() / m_conv_temp; }},
+         [this]() { return m_instance->get_kT() / m_conv_temp; }},
         {"seed", AutoParameter::read_only, [this]() { return m_seed; }},
         {"rng_state",
-         [this](const Variant &v) {
+         [this](Variant const &v) {
+           auto const rng_state = get_value<int>(v);
            context()->parallel_try_catch([&]() {
-             m_lb_fluid->set_rng_state(
-                 static_cast<uint64_t>(get_value<int>(v)));
+             if (rng_state < 0) {
+               throw std::domain_error("Parameter 'rng_state' must be >= 0");
+             }
+             m_instance->set_rng_state(static_cast<uint64_t>(rng_state));
            });
          },
-         [this]() { return static_cast<int>(m_lb_fluid->get_rng_state()); }},
+         [this]() {
+           auto const opt = m_instance->get_rng_state();
+           return (opt) ? Variant{static_cast<int>(*opt)} : Variant{None{}};
+         }},
         {"density", AutoParameter::read_only,
-         [this]() { return m_lb_fluid->get_density() / m_conv_dens; }},
+         [this]() { return m_instance->get_density() / m_conv_dens; }},
         {"kinematic_viscosity",
-         [this](const Variant &v) {
+         [this](Variant const &v) {
            auto const visc = m_conv_visc * get_value<double>(v);
-           m_lb_fluid->set_viscosity(visc);
+           m_instance->set_viscosity(visc);
          },
-         [this]() { return m_lb_fluid->get_viscosity() / m_conv_visc; }},
+         [this]() { return m_instance->get_viscosity() / m_conv_visc; }},
         {"ext_force_density",
-         [this](const Variant &v) {
+         [this](Variant const &v) {
            auto const ext_f = m_conv_force_dens * get_value<Utils::Vector3d>(v);
-           m_lb_fluid->set_external_force(ext_f);
+           m_instance->set_external_force(ext_f);
          },
          [this]() {
-           return m_lb_fluid->get_external_force() / m_conv_force_dens;
+           return m_instance->get_external_force() / m_conv_force_dens;
          }},
+        {"vtk_writers", AutoParameter::read_only,
+         [this]() { return serialize_vtk_writers(); }},
     });
   }
 
@@ -107,13 +119,10 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
 
-  /** Non-owning pointer to the LB fluid. */
-  std::weak_ptr<::LBWalberlaBase> lb_fluid() { return m_lb_fluid; }
+  [[nodiscard]] auto get_lb_fluid() const { return m_instance; }
+  [[nodiscard]] auto get_lb_params() const { return m_lb_params; }
 
-  /** Non-owning pointer to the LB parameters. */
-  std::weak_ptr<::LBWalberlaParams> lb_params() { return m_lb_params; }
-
-  LatticeModel::units_map get_latice_to_md_units_conversion() const {
+  ::LatticeModel::units_map get_latice_to_md_units_conversion() const override {
     return {
         {"density", 1. / m_conv_dens},
         {"velocity", 1. / m_conv_speed},
@@ -126,6 +135,14 @@ private:
   void save_checkpoint(std::string const &filename, int mode);
   std::vector<Variant> get_average_pressure_tensor() const;
   Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
+};
+
+class LBVTKHandle : public VTKHandleBase<::LBWalberlaBase> {
+  static std::unordered_map<std::string, int> const obs_map;
+
+  std::unordered_map<std::string, int> const &get_obs_map() const override {
+    return obs_map;
+  }
 };
 
 } // namespace ScriptInterface::walberla

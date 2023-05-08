@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import unittest as ut
-import unittest_decorators as utx
+import sys
 import numpy as np
 import itertools
-import sys
+import unittest as ut
+import unittest_decorators as utx
 
 import espressomd
 import espressomd.lb
@@ -125,7 +125,7 @@ class EKTest:
         self.assertFalse(species.advection)
         self.assertFalse(species.friction_coupling)
         self.assertEqual(
-            species.is_single_precision,
+            species.single_precision,
             self.ek_params["single_precision"])
         # check setters
         species.diffusion = 0.2
@@ -186,7 +186,7 @@ class EKTest:
             lattice=self.lattice, permittivity=0.01,
             single_precision=self.ek_params["single_precision"])
         self.assertEqual(
-            ek_solver.is_single_precision,
+            ek_solver.single_precision,
             self.ek_params["single_precision"])
         self.assertAlmostEqual(ek_solver.permittivity, 0.01, delta=self.atol)
         ek_solver.permittivity = 0.05
@@ -197,7 +197,7 @@ class EKTest:
             lattice=self.lattice,
             single_precision=self.ek_params["single_precision"])
         self.assertEqual(
-            ek_solver.is_single_precision,
+            ek_solver.single_precision,
             self.ek_params["single_precision"])
 
     def test_ek_reactants(self):
@@ -321,7 +321,7 @@ class EKTest:
 
     def test_raise_if_read_only(self):
         ek_species = self.make_default_ek_species()
-        for key in {"lattice", "shape", "is_single_precision"}:
+        for key in {"lattice", "shape", "single_precision"}:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(ek_species, key, 0)
 
@@ -349,7 +349,7 @@ class EKTestWalberla(EKTest, ut.TestCase):
     """Test for the Walberla implementation of the EK in double-precision."""
 
     lb_fluid_class = espressomd.lb.LBFluidWalberla
-    ek_lattice_class = espressomd.lb.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {"single_precision": False}
     lb_params = {"single_precision": False}
@@ -363,7 +363,7 @@ class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
     """Test for the Walberla implementation of the EK in single-precision."""
 
     lb_fluid_class = espressomd.lb.LBFluidWalberla
-    ek_lattice_class = espressomd.lb.LatticeWalberla
+    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
     ek_params = {"single_precision": True}
     lb_params = {"single_precision": True}

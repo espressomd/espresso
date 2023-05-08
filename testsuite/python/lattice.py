@@ -60,6 +60,9 @@ class Test(ut.TestCase):
             LatticeWalberla(agrid=0., n_ghost_layers=1)
         with self.assertRaisesRegex(ValueError, "Parameter 'agrid' must be > 0"):
             LatticeWalberla(agrid=-1., n_ghost_layers=1)
+        with self.assertRaisesRegex(ValueError, "Parameter 'shape' must be derived from espressomd.shapes.Shape"):
+            obj = LatticeWalberla(agrid=1., n_ghost_layers=1)
+            next(obj.get_node_indices_inside_shape(10))
 
 
 if __name__ == "__main__":
