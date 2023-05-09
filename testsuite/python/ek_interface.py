@@ -55,6 +55,7 @@ class EKTest:
             n_ghost_layers=1, agrid=self.params["agrid"])
         ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
         self.system.ekcontainer.solver = ek_solver
+        self.system.ekcontainer.tau = self.system.time_step
 
     def tearDown(self):
         self.system.actors.clear()
@@ -85,9 +86,6 @@ class EKTest:
         ek_species = self.make_default_ek_species()
         self.check_ek_species_properties(ek_species)
 
-        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
-        self.system.ekcontainer.tau = self.system.time_step
-        self.system.ekcontainer.solver = ek_solver
         self.assertAlmostEqual(
             self.system.ekcontainer.tau,
             self.system.time_step,
@@ -228,6 +226,12 @@ class EKTest:
             self.system.ekcontainer.clear()
             self.system.ekcontainer.add(incompatible_ek_species)
             self.system.ekcontainer.solver = ek_solver
+        with self.assertRaisesRegex(ValueError, "Parameter 'tau' must be > 0"):
+            self.system.ekcontainer.tau = 0.
+        self.assertAlmostEqual(
+            self.system.ekcontainer.tau,
+            self.system.time_step,
+            delta=self.atol)
 
     def test_ek_reactants(self):
         ek_species = self.make_default_ek_species()

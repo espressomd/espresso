@@ -60,9 +60,15 @@ public:
     add_parameters({
         {"tau",
          [this](Variant const &v) {
+           auto const tau = get_value<double>(v);
+           context()->parallel_try_catch([tau]() {
+             if (tau <= 0.) {
+               throw std::domain_error("Parameter 'tau' must be > 0");
+             }
+           });
            EK::ek_container.set_tau(get_value<double>(v));
          },
-         [this]() { return EK::ek_container.get_tau(); }},
+         []() { return EK::ek_container.get_tau(); }},
         {"solver", [this](Variant const &v) { set_solver(v); },
          [this]() { return get_solver(); }},
     });
