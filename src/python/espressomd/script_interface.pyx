@@ -486,15 +486,6 @@ class ScriptObjectList(ScriptInterfaceHelper):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        if args:
-            params, (_unpickle_so_class, (_so_name, bytestring)) = args
-            assert _so_name == self._so_name
-            self = _unpickle_so_class(_so_name, bytestring)
-            self.__setstate__(params)
-        else:
-            super().__init__(**kwargs)
-
     def __getitem__(self, key):
         return self.call_method("get_elements")[key]
 
@@ -505,24 +496,6 @@ class ScriptObjectList(ScriptInterfaceHelper):
 
     def __len__(self):
         return self.call_method("size")
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.__setstate__(state)
-        return so
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (ScriptObjectList._restore_object,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
-
-    def __getstate__(self):
-        return self.call_method("get_elements")
-
-    def __setstate__(self, object_list):
-        for item in object_list:
-            self.add(item)
 
 
 class ScriptObjectMap(ScriptInterfaceHelper):

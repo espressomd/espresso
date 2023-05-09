@@ -23,7 +23,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "script_interface/GlobalContext.hpp"
-#include "script_interface/ObjectList.hpp"
+#include "script_interface/ObjectMap.hpp"
 
 #include <boost/mpi.hpp>
 
@@ -36,17 +36,16 @@
 using ScriptInterface::ObjectHandle;
 
 namespace Testing {
-struct ObjectContainer : ScriptInterface::ObjectList<ObjectHandle> {
-  std::vector<std::shared_ptr<ObjectHandle>> objects;
-
+class ObjectContainer : public ScriptInterface::ObjectMap<ObjectHandle> {
 private:
-  void add_in_core(std::shared_ptr<ObjectHandle> const &obj_ptr) override {
-    objects.push_back(obj_ptr);
+  int insert_in_core(std::shared_ptr<ObjectHandle> const &) override {
+    return 1;
   }
-  void remove_in_core(std::shared_ptr<ObjectHandle> const &obj_ptr) override {
-    objects.erase(std::remove(objects.begin(), objects.end(), obj_ptr),
-                  objects.end());
+  void insert_in_core(int const &,
+                      std::shared_ptr<ObjectHandle> const &ptr) override {
+    insert_in_core(ptr);
   }
+  void erase_in_core(int const &) override {}
 };
 } // namespace Testing
 
@@ -71,12 +70,12 @@ BOOST_AUTO_TEST_CASE(parallel_exception) {
     auto &list = dynamic_cast<Testing::ObjectContainer &>(*list_so);
     BOOST_CHECK_NO_THROW(list.serialize());
 
-    list.add(obj_ptr);
+    list.insert(0, obj_ptr);
     if (world.size() > 1) {
       BOOST_CHECK_EXCEPTION(list.serialize(), std::runtime_error, predicate);
     }
 
-    list.remove(obj_ptr);
+    list.erase(0);
     BOOST_CHECK_NO_THROW(list.serialize());
   } else {
     cb.loop();

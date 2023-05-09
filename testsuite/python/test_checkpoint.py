@@ -58,7 +58,6 @@ class CheckpointTest(ut.TestCase):
         **config.get_checkpoint_params())
     checkpoint.load(0)
     path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
-    n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
     def setUpClass(cls):
@@ -904,9 +903,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
     def test_constraints(self):
-        n_contraints = 7
-        if self.n_nodes == 1:
-            n_contraints += 1
+        n_contraints = 8
         if espressomd.has_features("ELECTROSTATICS"):
             n_contraints += 1
         self.assertEqual(len(system.constraints), n_contraints)
@@ -955,20 +952,19 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
                                    atol=1e-10)
 
-        if self.n_nodes == 1:
-            union = c[7].shape
-            self.assertIsInstance(union, espressomd.shapes.Union)
-            self.assertEqual(c[7].particle_type, 2)
-            self.assertEqual(len(union), 2)
-            wall1, wall2 = union.call_method('get_elements')
-            self.assertIsInstance(wall1, espressomd.shapes.Wall)
-            self.assertIsInstance(wall2, espressomd.shapes.Wall)
-            np.testing.assert_allclose(np.copy(wall1.normal),
-                                       [1., 0., 0.], atol=1e-10)
-            np.testing.assert_allclose(np.copy(wall2.normal),
-                                       [0., 1., 0.], atol=1e-10)
-            np.testing.assert_allclose(wall1.dist, 0.5, atol=1e-10)
-            np.testing.assert_allclose(wall2.dist, 1.5, atol=1e-10)
+        union = c[7].shape
+        self.assertIsInstance(union, espressomd.shapes.Union)
+        self.assertEqual(c[7].particle_type, 2)
+        self.assertEqual(len(union), 2)
+        wall1, wall2 = union.call_method('get_elements')
+        self.assertIsInstance(wall1, espressomd.shapes.Wall)
+        self.assertIsInstance(wall2, espressomd.shapes.Wall)
+        np.testing.assert_allclose(np.copy(wall1.normal),
+                                   [1., 0., 0.], atol=1e-10)
+        np.testing.assert_allclose(np.copy(wall2.normal),
+                                   [0., 1., 0.], atol=1e-10)
+        np.testing.assert_allclose(wall1.dist, 0.5, atol=1e-10)
+        np.testing.assert_allclose(wall2.dist, 1.5, atol=1e-10)
 
         if espressomd.has_features("ELECTROSTATICS"):
             wave = c[n_contraints - 1]
@@ -978,6 +974,23 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(wave.k), [-.1, .2, .3])
             self.assertAlmostEqual(wave.omega, 5., delta=1E-10)
             self.assertAlmostEqual(wave.phi, 1.4, delta=1E-10)
+
+    @utx.skipIfMissingFeatures("WCA")
+    @ut.skipIf("INT.SDM" in modes, "Stokesian integrator not supported")
+    @ut.skipIf("INT.BD" in modes, "Brownian integrator not supported")
+    @ut.skipIf("INT.SD" in modes, "Steepest descent not supported")
+    def test_union(self):
+        # the union shape is an object list, and should be properly
+        # deserialized on all MPI ranks
+        system.non_bonded_inter[2, 6].wca.set_params(epsilon=1., sigma=1.)
+        p1 = system.part.add(pos=[1., 1.6, 0.], type=6)
+        p2 = system.part.add(pos=[system.box_l[0] - 1., 1.6, 0.], type=6)
+        system.integrator.run(0, recalc_forces=True)
+        np.testing.assert_allclose(p1.f, [0., 1e8, 0.], atol=1e-3)
+        np.testing.assert_allclose(p2.f, [0., 1e8, 0.], atol=1e-3)
+        p1.remove()
+        p2.remove()
+        system.non_bonded_inter[2, 6].reset()
 
 
 if __name__ == '__main__':
