@@ -102,6 +102,9 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     EK::ek_container.set_poisson_solver(ek_solver_none);
     BOOST_REQUIRE(EK::ek_container.is_poisson_solver_set());
     BOOST_REQUIRE(EK::ek_container.empty());
+    EK::ek_container.set_tau(0.);
+    BOOST_CHECK_THROW(EK::ek_container.add(ek_species), std::runtime_error);
+    EK::ek_container.set_tau(2.);
     EK::ek_container.add(ek_species);
     BOOST_REQUIRE(not EK::ek_container.empty());
     EK::propagate(); // no-op

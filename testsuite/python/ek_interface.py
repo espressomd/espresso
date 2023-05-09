@@ -222,6 +222,8 @@ class EKTest:
         with self.assertRaisesRegex(RuntimeError, "EKSpecies lattice incompatible with existing EKSpecies lattice"):
             self.system.ekcontainer.solver = None
             self.system.ekcontainer.add(incompatible_ek_species)
+        with self.assertRaisesRegex(ValueError, "Parameter 'tau' is required when container isn't empty"):
+            self.system.ekcontainer.tau = None
         with self.assertRaisesRegex(RuntimeError, "Poisson solver lattice incompatible with existing EKSpecies lattice"):
             self.system.ekcontainer.clear()
             self.system.ekcontainer.add(incompatible_ek_species)
@@ -229,9 +231,10 @@ class EKTest:
         with self.assertRaisesRegex(ValueError, "Parameter 'tau' must be > 0"):
             self.system.ekcontainer.tau = 0.
         self.assertAlmostEqual(
-            self.system.ekcontainer.tau,
-            self.system.time_step,
-            delta=self.atol)
+            self.system.ekcontainer.tau, self.system.time_step, delta=1e-7)
+        self.system.ekcontainer.clear()
+        self.system.ekcontainer.tau = None
+        self.assertIsNone(self.system.ekcontainer.tau)
 
     def test_ek_reactants(self):
         ek_species = self.make_default_ek_species()

@@ -60,6 +60,16 @@ public:
     add_parameters({
         {"tau",
          [this](Variant const &v) {
+           if (is_none(v)) {
+             if (get_value<int>(do_call_method("size", {})) == 0) {
+               EK::ek_container.set_tau(0.);
+               return;
+             }
+             context()->parallel_try_catch([]() {
+               throw std::domain_error(
+                   "Parameter 'tau' is required when container isn't empty");
+             });
+           }
            auto const tau = get_value<double>(v);
            context()->parallel_try_catch([tau]() {
              if (tau <= 0.) {
@@ -68,20 +78,24 @@ public:
            });
            EK::ek_container.set_tau(get_value<double>(v));
          },
-         []() { return EK::ek_container.get_tau(); }},
+         []() {
+           auto const tau = EK::ek_container.get_tau();
+           return (tau == 0.) ? Variant{none} : Variant{tau};
+         }},
         {"solver", [this](Variant const &v) { set_solver(v); },
          [this]() { return get_solver(); }},
     });
   }
 
   void do_construct(VariantMap const &params) override {
-    Base::do_construct(params);
     if (params.count("solver")) {
       set_solver(params.at("solver"));
     }
     if (params.count("tau")) {
       do_set_parameter("tau", params.at("tau"));
     }
+    // EK species must be added after tau
+    Base::do_construct(params);
   }
 
 protected:

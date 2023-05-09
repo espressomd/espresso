@@ -65,9 +65,9 @@ class EKNoFlux(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = 1.0
         self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer.add(ekspecies)
 
         center = np.asarray(self.system.box_l / 2, dtype=int)
 

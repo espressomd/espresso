@@ -59,20 +59,18 @@ public:
                                     m_single_precision);
 
     add_parameters({
-    {"permittivity",
-             [this](Variant const &v) {
-               m_instance->set_permittivity(get_value<double>(v) *
-                                            m_conv_permittivity);
-             },
-             [this]() {
-               return m_instance->get_permittivity() /
-                      m_conv_permittivity;
-             }},
-            {"single_precision", AutoParameter::read_only,
-             [this]() { return m_single_precision; }},
-        {"lattice", AutoParameter::read_only,
-             [this]() { return m_lattice; }},
-     });
+        {"permittivity",
+         [this](Variant const &v) {
+           m_instance->set_permittivity(get_value<double>(v) *
+                                        m_conv_permittivity);
+         },
+         [this]() {
+           return m_instance->get_permittivity() / m_conv_permittivity;
+         }},
+        {"single_precision", AutoParameter::read_only,
+         [this]() { return m_single_precision; }},
+        {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+    });
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver>

@@ -67,9 +67,9 @@ class EKFixedFlux(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = self.TAU
         self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer.add(ekspecies)
 
         ekspecies[1:-1, 1:-1, 1:-1].density = self.DENSITY
 

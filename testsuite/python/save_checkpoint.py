@@ -88,10 +88,13 @@ if lbf_class:
     lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
     ek_species = espressomd.electrokinetics.EKSpecies(
         lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
         advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-        single_precision=False, tau=0.01)
+        single_precision=False, tau=system.time_step)
+    system.ekcontainer.solver = ek_solver
+    system.ekcontainer.tau = ek_species.tau
     system.ekcontainer.add(ek_species)
     ek_species.add_boundary_from_shape(
         shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
@@ -105,8 +108,6 @@ if lbf_class:
     ek_species.add_boundary_from_shape(
         shape=wall2, value=2.,
         boundary_type=espressomd.electrokinetics.DensityBoundary)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
-    system.ekcontainer.solver = ek_solver
 
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])

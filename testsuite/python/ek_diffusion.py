@@ -68,9 +68,9 @@ class EKDiffusion(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = self.TAU
         self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer.add(ekspecies)
 
         center = np.asarray(lattice.shape // 2, dtype=int)
 

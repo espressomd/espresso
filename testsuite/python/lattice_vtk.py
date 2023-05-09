@@ -240,9 +240,9 @@ class TestEKVTK(TestVTK):
     def add_actor(self):
         self.solver = self.ek_solver(lattice=self.lattice)
         self.species = self.make_actor()
-        self.system.ekcontainer.add(self.species)
         self.system.ekcontainer.tau = 0.1
         self.system.ekcontainer.solver = self.solver
+        self.system.ekcontainer.add(self.species)
         return self.species
 
     def clear_actors(self):

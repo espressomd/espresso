@@ -66,9 +66,9 @@ class EKFixedDensity(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.tau = self.TAU
         self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer.add(ekspecies)
 
         # left and right no flux
         ekspecies[0, :, :].flux_boundary = \

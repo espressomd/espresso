@@ -26,6 +26,7 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 template <class EKSpecies> class EKContainer {
@@ -48,6 +49,9 @@ private:
   }
 
   void sanity_checks(std::shared_ptr<EKSpecies> const &new_ek_epecies) const {
+    if (m_tau == 0.) {
+      throw std::runtime_error("EKContainer parameter 'tau' needs to be set");
+    }
     if (is_poisson_solver_set()) {
       if (not lattice_equal(new_ek_epecies->get_lattice(),
                             m_poisson_solver->get_lattice())) {

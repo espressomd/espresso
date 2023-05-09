@@ -11,6 +11,12 @@ interpolated on the LB grid. In the following paragraph we briefly
 explain the electrokinetic model implemented in |es|, before we come to the
 description of the interface.
 
+.. note::
+
+    Requires external features ``WALBERLA`` and optionally ``WALBERLA_FFT``
+    (for the FFT-based Poisson solver), enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON``.
+
 .. _Electrokinetic equations:
 
 Electrokinetic equations
@@ -142,30 +148,24 @@ Initialization
 Here is a minimal working example::
 
     import espressomd
-    import espressomd.lb
     import espressomd.electrokinetics
 
     system = espressomd.System(box_l=3 * [6.0])
     system.time_step = 0.01
     system.cell_system.skin = 1.0
 
-    ek_lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
     ek_solver = espressomd.electrokinetics.EKNone(lattice=ek_lattice)
-    system.ekcontainer.tau = system.time_step
     system.ekcontainer.solver = ek_solver
+    system.ekcontainer.tau = system.time_step
 
-.. note::
-
-    Requires external features ``WALBERLA`` and optionally ``WALBERLA_FFT``
-    (for the FFT-based Poisson solver), enabled with the CMake options
-    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON``.
-
-An EK system can be set up at the same time as a LB system. The EK ``density``
-represents the electrokinetic *number densities* and is independent of the
-LB ``density``. The thermal energy ``kT`` controls thermal fluctuations,
-``friction_coupling`` controls coupling of the diffusive species with the
-LB fluid force, ``advection`` controls whether there should be an advective
-contribution to the diffusive species' fluxes from the LB fluid.
+where ``system.ekcontainer`` is the EK system, ``ek_solver`` is the Poisson
+solver (here ``EKNone`` doesn't actually solve the electrostatic field, but
+instead imposes a zero field), and ``ek_lattice`` contains the grid parameters.
+In this setup, the EK system doesn't contain any species. The following
+sections will show how to add species that can diffuse, advect, react and/or
+electrostatically interact. An EK system can be set up at the same time as a
+LB system.
 
 .. _Diffusive species:
 
@@ -186,26 +186,32 @@ Diffusive species
     )
 
 :class:`~espressomd.electrokinetics.EKSpecies` is used to initialize a diffusive
-species. Here the options specify: the number density ``density``,
-the diffusion coefficient ``diffusion``, the valency of the particles
-of that species ``valency``, and an optional external (electric) force
-``ext_efield`` which is applied to the diffusive species. As mentioned
-before, the LB density is completely decoupled from the electrokinetic
-densities. This has the advantage that greater freedom can be achieved
-in matching the internal parameters to an experimental system. Moreover,
-it is possible to choose parameters for which the LB is more stable.
+species. Here the options specify: the electrokinetic *number densities*
+``density`` (independent from the LB ``density``), the diffusion coefficient
+``diffusion``, the valency of the particles of that species ``valency``,
+the optional external (electric) force ``ext_efield`` which is applied to
+the diffusive species, the thermal energy ``kT`` for thermal fluctuations,
+``friction_coupling`` to enable coupling of the diffusive species to the
+LB fluid force and ``advection`` to add an advective contribution to the
+diffusive species' fluxes from the LB fluid.
+Multiple species can be added to the EK system.
 
-To add species to the EK solver::
+To add species to the EK system::
 
     system.ekcontainer.add(ek_species)
 
-To remove species from the EK solver::
+To remove species from the EK system::
 
     system.ekcontainer.remove(ek_species)
 
 Individual nodes and slices of the species lattice can be accessed and
 modified using the syntax outlined in :ref:`Reading and setting properties
 of single lattice nodes`.
+
+As mentioned before, the LB density is completely decoupled from the
+electrokinetic densities. This has the advantage that greater freedom can
+be achieved in matching the internal parameters to an experimental system.
+Moreover, it is possible to choose parameters for which the LB is more stable.
 
 Performance considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -286,7 +292,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
     import tempfile
     import numpy as np
     import espressomd
-    import espressomd.lb
+    import espressomd.electrokinetics
     import espressomd.io.vtk
 
     system = espressomd.System(box_l=[12., 14., 10.])
@@ -297,6 +303,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
     species = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
             advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer.tau = species.tau
     system.ekcontainer.add(species)
     system.integrator.run(10)
 
@@ -342,15 +349,15 @@ Per-node boundary conditions
 One can set (or update) the boundary conditions of individual nodes::
 
     import espressomd
-    import espressomd.lb
     import espressomd.electrokinetics
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
     ek_species = espressomd.electrokinetics.EKSpecies(
-        kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
-        advection=False, friction_coupling=False, ext_efield=[0., 0., 0.])
+        kT=1.5, lattice=self.lattice, density=0.85, valency=0., diffusion=0.1,
+        advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer.tau = species.tau
     system.ekcontainer.add(ek_species)
     # set node fixed density boundary conditions
     lbf[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(1.)
@@ -367,16 +374,16 @@ Shape-based boundary conditions
 Adding a shape-based boundary is straightforward::
 
     import espressomd
-    import espressomd.lb
     import espressomd.electrokinetics
     import espressomd.shapes
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    lattice = espressomd.lb.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
     ek_species = espressomd.electrokinetics.EKSpecies(
         kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
-        advection=False, friction_coupling=False, ext_efield=[0., 0., 0.])
+        advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer.tau = species.tau
     system.ekcontainer.add(ek_species)
     # set fixed density boundary conditions
     wall = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)

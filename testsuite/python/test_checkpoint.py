@@ -179,6 +179,8 @@ class CheckpointTest(ut.TestCase):
         ek_species = system.ekcontainer[0]
         self.assertTrue(
             system.ekcontainer.call_method("is_poisson_solver_set"))
+        self.assertAlmostEqual(system.ekcontainer.tau, system.time_step,
+                               delta=1e-7)
         self.assertIsInstance(system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
 

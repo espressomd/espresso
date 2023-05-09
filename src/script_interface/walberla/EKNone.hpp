@@ -49,17 +49,15 @@ public:
 
     add_parameters({
         {"single_precision", AutoParameter::read_only,
-             [this]() { return m_single_precision; }},
-        {"lattice", AutoParameter::read_only,
-             [this]() { return m_lattice; }},
-     });
+         [this]() { return m_single_precision; }},
+        {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+    });
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver>
   get_instance() const noexcept override {
     return m_instance;
   }
-
 };
 
 } // namespace ScriptInterface::walberla
