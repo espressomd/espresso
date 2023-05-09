@@ -30,11 +30,16 @@ import espressomd.code_features
 
 @script_interface_register
 class EKFFT(ScriptInterfaceHelper):
+    """
+    A FFT-based Poisson solver.
+
+    """
+
     _so_name = "walberla::EKFFT"
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
+        if not espressomd.code_features.has_features("WALBERLA_FFT"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
 
         super().__init__(*args, **kwargs)
@@ -42,6 +47,11 @@ class EKFFT(ScriptInterfaceHelper):
 
 @script_interface_register
 class EKNone(ScriptInterfaceHelper):
+    """
+    The default Poisson solver.
+    Imposes a null electrostatic potential everywhere.
+
+    """
     _so_name = "walberla::EKNone"
     _so_creation_policy = "GLOBAL"
 

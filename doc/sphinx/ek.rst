@@ -156,8 +156,9 @@ Here is a minimal working example::
 
 .. note::
 
-    Requires external features ``WALBERLA`` and ``WALBERLA_FFT``, enabled with
-    the CMake options ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON``.
+    Requires external features ``WALBERLA`` and optionally ``WALBERLA_FFT``
+    (for the FFT-based Poisson solver), enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON``.
 
 An EK system can be set up at the same time as a LB system. The EK ``density``
 represents the electrokinetic *number densities* and is independent of the

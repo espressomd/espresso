@@ -58,7 +58,7 @@ private:
 public:
   FFT(std::shared_ptr<LatticeWalberla> lattice, double permittivity)
       : PoissonSolver(std::move(lattice), permittivity) {
-    m_blocks = get_lattice()->get_blocks();
+    m_blocks = get_lattice().get_blocks();
 
     Vector3<uint_t> dim(m_blocks->getNumberOfXCells(),
                         m_blocks->getNumberOfYCells(),
@@ -74,14 +74,14 @@ public:
     };
 
     m_potential_field_id = field::addToStorage<PotentialField>(
-        get_lattice()->get_blocks(), "potential field", 0.0, field::fzyx,
-        get_lattice()->get_ghost_layers());
+        get_lattice().get_blocks(), "potential field", 0.0, field::fzyx,
+        get_lattice().get_ghost_layers());
 
     m_ft = std::make_shared<fft::FourierTransform<PotentialField>>(
         m_blocks, m_potential_field_id, greens);
 
     m_full_communication =
-        std::make_shared<FullCommunicator>(get_lattice()->get_blocks());
+        std::make_shared<FullCommunicator>(get_lattice().get_blocks());
     m_full_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<PotentialField>>(
             m_potential_field_id));
@@ -92,7 +92,7 @@ public:
     // the FFT-solver re-uses the potential field for the charge
     auto const potential_id = walberla::BlockDataID(get_potential_field_id());
 
-    for (auto &block : *get_lattice()->get_blocks()) {
+    for (auto &block : *get_lattice().get_blocks()) {
       auto field = block.template getData<PotentialField>(potential_id);
       WALBERLA_FOR_ALL_CELLS_XYZ(field, field->get(x, y, z) = 0.;)
     }
@@ -104,7 +104,7 @@ public:
     // the FFT-solver re-uses the potential field for the charge
     const auto charge_id = walberla::BlockDataID(get_potential_field_id());
     const auto density_id = walberla::BlockDataID(id);
-    for (auto &block : *get_lattice()->get_blocks()) {
+    for (auto &block : *get_lattice().get_blocks()) {
       auto charge_field = block.template getData<PotentialField>(charge_id);
       if (is_double_precision) {
         auto density_field =

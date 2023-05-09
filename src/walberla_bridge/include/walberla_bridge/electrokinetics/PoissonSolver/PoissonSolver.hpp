@@ -52,7 +52,7 @@ public:
     return m_permittivity;
   }
 
-  [[nodiscard]] auto const &get_lattice() const noexcept { return m_lattice; }
+  [[nodiscard]] auto const &get_lattice() const noexcept { return *m_lattice; }
 
   virtual void solve() = 0;
 };

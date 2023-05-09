@@ -20,6 +20,7 @@
 #pragma once
 
 #include "PoissonSolver.hpp"
+
 #include <walberla_bridge/LatticeWalberla.hpp>
 
 #include <field/AddToStorage.h>
@@ -41,8 +42,8 @@ public:
   explicit None(std::shared_ptr<LatticeWalberla> lattice)
       : PoissonSolver(std::move(lattice), 0.0) {
     m_potential_field_id = field::addToStorage<PotentialField>(
-        get_lattice()->get_blocks(), "potential field", 0.0, field::fzyx,
-        get_lattice()->get_ghost_layers());
+        get_lattice().get_blocks(), "potential field", 0.0, field::fzyx,
+        get_lattice().get_ghost_layers());
   }
   ~None() override = default;
 

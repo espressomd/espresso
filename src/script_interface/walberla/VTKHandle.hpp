@@ -64,17 +64,13 @@ private:
       return field;
     }
     auto const has_lattice_expired = m_pending_arguments.empty();
-    auto const err_msg = std::vector<std::string>{
-        "Attempted access to an expired lattice object",
-        "This VTK object isn't attached to a lattice",
-    };
-    throw std::runtime_error(has_lattice_expired ? err_msg[0] : err_msg[1]);
+    auto const err_expired = "Attempted access to an expired lattice object";
+    auto const err_detached = "This VTK object isn't attached to a lattice";
+    throw std::runtime_error(has_lattice_expired ? err_expired : err_detached);
   }
 
-protected:
   virtual std::unordered_map<std::string, int> const &get_obs_map() const = 0;
 
-private:
   [[nodiscard]] auto get_valid_observable_names() const {
     std::vector<std::string> names{};
     for (auto const &kv : get_obs_map()) {
@@ -131,6 +127,34 @@ public:
     });
   }
 
+private:
+  void do_construct(VariantMap const &params) override {
+    m_delta_N = get_value<int>(params, "delta_N");
+    m_identifier = get_value<std::string>(params, "identifier");
+    m_base_folder = get_value<std::string>(params, "base_folder");
+    m_prefix = get_value<std::string>(params, "prefix");
+    auto const is_enabled = get_value<bool>(params, "enabled");
+    auto const execution_count = get_value<int>(params, "execution_count");
+    ObjectHandle::context()->parallel_try_catch([&]() {
+      m_flag_obs = deserialize_obs_flag(
+          get_value<std::vector<std::string>>(params, "observables"));
+      if (m_delta_N < 0) {
+        throw std::domain_error("Parameter 'delta_N' must be >= 0");
+      }
+      if (m_identifier.empty()) {
+        throw std::domain_error("Parameter 'identifier' cannot be empty");
+      }
+      if (m_identifier.find(std::filesystem::path::preferred_separator) !=
+          std::string::npos) {
+        throw std::invalid_argument(
+            "Parameter 'identifier' cannot be a filepath");
+      }
+    });
+    m_pending_arguments.emplace_back(is_enabled);
+    m_pending_arguments.emplace_back(execution_count);
+  }
+
+protected:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "enable") {
@@ -168,32 +192,7 @@ public:
     return {};
   }
 
-  void do_construct(VariantMap const &params) override {
-    m_delta_N = get_value<int>(params, "delta_N");
-    m_identifier = get_value<std::string>(params, "identifier");
-    m_base_folder = get_value<std::string>(params, "base_folder");
-    m_prefix = get_value<std::string>(params, "prefix");
-    auto const is_enabled = get_value<bool>(params, "enabled");
-    auto const execution_count = get_value<int>(params, "execution_count");
-    ObjectHandle::context()->parallel_try_catch([&]() {
-      m_flag_obs = deserialize_obs_flag(
-          get_value<std::vector<std::string>>(params, "observables"));
-      if (m_delta_N < 0) {
-        throw std::domain_error("Parameter 'delta_N' must be >= 0");
-      }
-      if (m_identifier.empty()) {
-        throw std::domain_error("Parameter 'identifier' cannot be empty");
-      }
-      if (m_identifier.find(std::filesystem::path::preferred_separator) !=
-          std::string::npos) {
-        throw std::invalid_argument(
-            "Parameter 'identifier' cannot be a filepath");
-      }
-    });
-    m_pending_arguments.emplace_back(is_enabled);
-    m_pending_arguments.emplace_back(execution_count);
-  }
-
+public:
   void detach_from_lattice() { m_field.reset(); }
 
   void attach_to_lattice(std::weak_ptr<Field> field,

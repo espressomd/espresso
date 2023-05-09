@@ -48,7 +48,8 @@ class EKContainer : public ObjectList<EKSpecies> {
       m_poisson_solver{std::shared_ptr<EKNone>()};
 
   void add_in_core(std::shared_ptr<EKSpecies> const &obj_ptr) override {
-    EK::ek_container.add(obj_ptr->get_ekinstance());
+    context()->parallel_try_catch(
+        [&obj_ptr]() { EK::ek_container.add(obj_ptr->get_ekinstance()); });
   }
   void remove_in_core(std::shared_ptr<EKSpecies> const &obj_ptr) override {
     EK::ek_container.remove(obj_ptr->get_ekinstance());
@@ -128,7 +129,8 @@ private:
     m_poisson_solver = *solver;
     auto const visitor = GetPoissonSolverInstance();
     auto const instance = boost::apply_visitor(visitor, m_poisson_solver);
-    EK::ek_container.set_poisson_solver(instance);
+    context()->parallel_try_catch(
+        [&instance]() { EK::ek_container.set_poisson_solver(instance); });
   }
 };
 

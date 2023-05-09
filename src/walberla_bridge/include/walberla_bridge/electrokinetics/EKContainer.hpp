@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
 
 #include <algorithm>
@@ -40,11 +41,48 @@ private:
   double m_tau{};
   std::shared_ptr<walberla::PoissonSolver> m_poisson_solver;
 
+  bool lattice_equal(LatticeWalberla const &lhs,
+                     LatticeWalberla const &rhs) const {
+    return (lhs.get_ghost_layers() == rhs.get_ghost_layers()) and
+           (lhs.get_grid_dimensions() == rhs.get_grid_dimensions());
+  }
+
+  void sanity_checks(std::shared_ptr<EKSpecies> const &new_ek_epecies) const {
+    if (is_poisson_solver_set()) {
+      if (not lattice_equal(new_ek_epecies->get_lattice(),
+                            m_poisson_solver->get_lattice())) {
+        throw std::runtime_error("EKSpecies lattice incompatible with existing "
+                                 "Poisson solver lattice");
+      }
+    }
+    if (not m_ekcontainer.empty()) {
+      auto const &old_ek_species = m_ekcontainer.front();
+      if (not lattice_equal(new_ek_epecies->get_lattice(),
+                            old_ek_species->get_lattice())) {
+        throw std::runtime_error(
+            "EKSpecies lattice incompatible with existing EKSpecies lattice");
+      }
+    }
+  }
+
+  void sanity_checks(
+      std::shared_ptr<walberla::PoissonSolver> const &new_solver) const {
+    if (not m_ekcontainer.empty()) {
+      auto const &old_ek_species = m_ekcontainer.front();
+      if (not lattice_equal(new_solver->get_lattice(),
+                            old_ek_species->get_lattice())) {
+        throw std::runtime_error("Poisson solver lattice incompatible with "
+                                 "existing EKSpecies lattice");
+      }
+    }
+  }
+
 public:
   void add(std::shared_ptr<EKSpecies> const &ek_species) {
     assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species) ==
            m_ekcontainer.end());
 
+    sanity_checks(ek_species);
     m_ekcontainer.emplace_back(ek_species);
   }
 
@@ -62,8 +100,11 @@ public:
   const_iterator end() const noexcept { return m_ekcontainer.end(); }
   [[nodiscard]] bool empty() const noexcept { return m_ekcontainer.empty(); }
 
-  void set_poisson_solver(
-      std::shared_ptr<walberla::PoissonSolver> const &solver) noexcept {
+  void
+  set_poisson_solver(std::shared_ptr<walberla::PoissonSolver> const &solver) {
+    if (solver != nullptr) {
+      sanity_checks(solver);
+    }
     m_poisson_solver = solver;
   }
 

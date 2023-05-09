@@ -53,6 +53,8 @@ class EKTest:
     def setUp(self):
         self.lattice = self.ek_lattice_class(
             n_ghost_layers=1, agrid=self.params["agrid"])
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
+        self.system.ekcontainer.solver = ek_solver
 
     def tearDown(self):
         self.system.actors.clear()
@@ -60,13 +62,11 @@ class EKTest:
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.time_step = self.params["tau"]
+        self.system.ekcontainer.solver = None
 
     def make_default_ek_species(self):
-        ek_species = self.ek_species_class(
+        return self.ek_species_class(
             lattice=self.lattice, **self.ek_params, **self.ek_species_params)
-        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
-        self.system.ekcontainer.solver = ek_solver
-        return ek_species
 
     def test_ek_container_poisson_solver(self):
         ekcontainer = self.system.ekcontainer
@@ -210,6 +210,24 @@ class EKTest:
             self.system.ekcontainer.call_method("is_poisson_solver_set"))
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
+
+    def test_ek_solver_exceptions(self):
+        ek_solver = self.system.ekcontainer.solver
+        ek_species = self.make_default_ek_species()
+        self.system.ekcontainer.add(ek_species)
+        incompatible_lattice = self.ek_lattice_class(
+            n_ghost_layers=2, agrid=self.params["agrid"])
+        incompatible_ek_species = self.ek_species_class(
+            lattice=incompatible_lattice, **self.ek_params, **self.ek_species_params)
+        with self.assertRaisesRegex(RuntimeError, "EKSpecies lattice incompatible with existing Poisson solver lattice"):
+            self.system.ekcontainer.add(incompatible_ek_species)
+        with self.assertRaisesRegex(RuntimeError, "EKSpecies lattice incompatible with existing EKSpecies lattice"):
+            self.system.ekcontainer.solver = None
+            self.system.ekcontainer.add(incompatible_ek_species)
+        with self.assertRaisesRegex(RuntimeError, "Poisson solver lattice incompatible with existing EKSpecies lattice"):
+            self.system.ekcontainer.clear()
+            self.system.ekcontainer.add(incompatible_ek_species)
+            self.system.ekcontainer.solver = ek_solver
 
     def test_ek_reactants(self):
         ek_species = self.make_default_ek_species()

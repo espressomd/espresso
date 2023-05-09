@@ -37,6 +37,7 @@ public:
   virtual std::shared_ptr<::walberla::PoissonSolver>
   get_instance() const noexcept = 0;
 };
+
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA
