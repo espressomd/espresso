@@ -64,7 +64,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef WALBERLA_FFT
   om->register_new<EKFFT>("walberla::EKFFT");
 #endif // WALBERLA_FFT
-  om->register_new<EKNone>("walberla::None");
+  om->register_new<EKNone>("walberla::EKNone");
   om->register_new<EKVTKHandle>("walberla::EKVTKHandle");
 
   om->register_new<EKReactant>("walberla::EKReactant");

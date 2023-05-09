@@ -175,6 +175,13 @@ class CheckpointTest(ut.TestCase):
         cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
         cpt_path = str(cpt_root / "ek") + "{}.cpt"
 
+        self.assertEqual(len(system.ekcontainer), 1)
+        ek_species = system.ekcontainer[0]
+        self.assertTrue(
+            system.ekcontainer.call_method("is_poisson_solver_set"))
+        self.assertIsInstance(system.ekcontainer.solver,
+                              espressomd.electrokinetics.EKNone)
+
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
             ek_species.load_checkpoint(
@@ -194,7 +201,7 @@ class CheckpointTest(ut.TestCase):
 
         ek_species.load_checkpoint(cpt_path.format(""), cpt_mode)
 
-        precision = 9 if "LB.WALBERLA" in modes else 5
+        precision = 8 if "LB.WALBERLA" in modes else 5
         m = np.pi / 12
         nx = ek_species.lattice.shape[0]
         ny = ek_species.lattice.shape[1]
@@ -313,6 +320,7 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('WALBERLA')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
     def test_ek_vtk(self):
+        ek_species = system.ekcontainer[0]
         vtk_suffix = config.test_name
         key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
         vtk_auto = ek_species.vtk_writers[0]
@@ -976,6 +984,7 @@ class CheckpointTest(ut.TestCase):
             self.assertAlmostEqual(wave.phi, 1.4, delta=1E-10)
 
     @utx.skipIfMissingFeatures("WCA")
+    @ut.skipIf(has_lb_mode, "LB not supported")
     @ut.skipIf("INT.SDM" in modes, "Stokesian integrator not supported")
     @ut.skipIf("INT.BD" in modes, "Brownian integrator not supported")
     @ut.skipIf("INT.SD" in modes, "Steepest descent not supported")

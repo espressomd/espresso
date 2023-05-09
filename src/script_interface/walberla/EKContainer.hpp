@@ -23,7 +23,8 @@
 
 #ifdef WALBERLA
 
-#include "EKPoissonSolver.hpp"
+#include "EKFFT.hpp"
+#include "EKNone.hpp"
 #include "EKSpecies.hpp"
 
 #include "core/grid_based_algorithms/ek_container.hpp"
@@ -32,10 +33,20 @@
 #include <script_interface/ScriptInterface.hpp>
 
 #include <memory>
+#include <string>
 
 namespace ScriptInterface::walberla {
 
 class EKContainer : public ObjectList<EKSpecies> {
+  using Base = ObjectList<EKSpecies>;
+
+  boost::variant<
+#ifdef WALBERLA_FFT
+      std::shared_ptr<EKFFT>,
+#endif
+      std::shared_ptr<EKNone>>
+      m_poisson_solver{std::shared_ptr<EKNone>()};
+
   void add_in_core(std::shared_ptr<EKSpecies> const &obj_ptr) override {
     EK::ek_container.add(obj_ptr->get_ekinstance());
   }
@@ -43,32 +54,84 @@ class EKContainer : public ObjectList<EKSpecies> {
     EK::ek_container.remove(obj_ptr->get_ekinstance());
   }
 
+public:
+  EKContainer() : Base::ObjectList() {
+    add_parameters({
+        {"tau",
+         [this](Variant const &v) {
+           EK::ek_container.set_tau(get_value<double>(v));
+         },
+         [this]() { return EK::ek_container.get_tau(); }},
+        {"solver", [this](Variant const &v) { set_solver(v); },
+         [this]() { return get_solver(); }},
+    });
+  }
+
+  void do_construct(VariantMap const &params) override {
+    Base::do_construct(params);
+    if (params.count("solver")) {
+      set_solver(params.at("solver"));
+    }
+    if (params.count("tau")) {
+      do_set_parameter("tau", params.at("tau"));
+    }
+  }
+
+protected:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
-    if (method == "set_tau") {
-      EK::ek_container.set_tau(get_value<double>(parameters, "tau"));
-      return none;
-    }
-    if (method == "get_tau") {
-      return EK::ek_container.get_tau();
-    }
-    if (method == "set_poisson_solver") {
-      auto obj_ptr =
-          get_value<std::shared_ptr<EKPoissonSolver>>(parameters.at("object"));
-      EK::ek_container.set_poisson_solver(obj_ptr->get_instance());
-      return none;
-    }
-    if (method == "reset_poisson_solver") {
-      EK::ek_container.set_poisson_solver(nullptr);
-      return none;
-    }
     if (method == "is_poisson_solver_set") {
       return EK::ek_container.is_poisson_solver_set();
     }
 
-    return ObjectList<EKSpecies>::do_call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
+  }
+
+private:
+  struct GetPoissonSolverVariant : public boost::static_visitor<Variant> {
+    template <typename T>
+    auto operator()(std::shared_ptr<T> const &solver) const {
+      return (solver) ? Variant{solver} : Variant{none};
+    }
+  };
+
+  struct GetPoissonSolverInstance
+      : public boost::static_visitor<
+            std::shared_ptr<::walberla::PoissonSolver>> {
+    template <typename T>
+    auto operator()(std::shared_ptr<T> const &solver) const {
+      return (solver) ? solver->get_instance()
+                      : std::shared_ptr<::walberla::PoissonSolver>();
+    }
+  };
+
+  Variant get_solver() const {
+    auto const visitor = GetPoissonSolverVariant();
+    return boost::apply_visitor(visitor, m_poisson_solver);
+  }
+
+  void set_solver(Variant const &solver_variant) {
+    boost::optional<decltype(m_poisson_solver)> solver;
+    if (is_none(solver_variant)) {
+      solver = std::shared_ptr<EKNone>();
+    } else {
+#ifdef WALBERLA_FFT
+      try {
+        solver = get_value<std::shared_ptr<EKFFT>>(solver_variant);
+      } catch (...) {
+      }
+#endif
+      if (not solver) {
+        solver = get_value<std::shared_ptr<EKNone>>(solver_variant);
+      }
+    }
+    m_poisson_solver = *solver;
+    auto const visitor = GetPoissonSolverInstance();
+    auto const instance = boost::apply_visitor(visitor, m_poisson_solver);
+    EK::ek_container.set_poisson_solver(instance);
   }
 };
+
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA

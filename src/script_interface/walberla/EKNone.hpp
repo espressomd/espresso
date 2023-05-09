@@ -25,6 +25,7 @@
 
 #include "EKPoissonSolver.hpp"
 
+#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
@@ -35,16 +36,23 @@
 namespace ScriptInterface::walberla {
 
 class EKNone : public EKPoissonSolver {
+  std::shared_ptr<::walberla::PoissonSolver> m_instance;
+  std::shared_ptr<LatticeWalberla> m_lattice;
+  bool m_single_precision;
+
 public:
   void do_construct(VariantMap const &args) override {
     m_single_precision = get_value_or<bool>(args, "single_precision", false);
-    auto lattice =
-        get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice")->lattice();
+    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
 
-    m_instance = new_ek_poisson_none(lattice, m_single_precision);
+    m_instance = new_ek_poisson_none(m_lattice->lattice(), m_single_precision);
 
-    add_parameters({{"single_precision", AutoParameter::read_only,
-                     [this]() { return m_single_precision; }}});
+    add_parameters({
+        {"single_precision", AutoParameter::read_only,
+             [this]() { return m_single_precision; }},
+        {"lattice", AutoParameter::read_only,
+             [this]() { return m_lattice; }},
+     });
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver>
@@ -52,12 +60,8 @@ public:
     return m_instance;
   }
 
-private:
-  /* The actual instance */
-  std::shared_ptr<::walberla::PoissonSolver> m_instance;
-
-  bool m_single_precision;
 };
+
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA

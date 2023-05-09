@@ -32,7 +32,7 @@
 
 namespace ScriptInterface::walberla {
 
-class EKPoissonSolver : public AutoParameters<::walberla::PoissonSolver> {
+class EKPoissonSolver : public AutoParameters<EKPoissonSolver> {
 public:
   virtual std::shared_ptr<::walberla::PoissonSolver>
   get_instance() const noexcept = 0;

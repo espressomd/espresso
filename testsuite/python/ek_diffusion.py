@@ -120,10 +120,7 @@ class EKDiffusion(ut.TestCase):
         np.testing.assert_allclose(
             popt[1], self.DIFFUSION_COEFFICIENT, rtol=0.1)
         np.testing.assert_allclose(
-            calc_density,
-            simulated_density,
-            atol=1e-5,
-            rtol=0.)
+            calc_density, simulated_density, atol=1e-5, rtol=0.)
 
 
 if __name__ == "__main__":

@@ -92,6 +92,7 @@ if lbf_class:
         lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
         advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
         single_precision=False, tau=0.01)
+    system.ekcontainer.add(ek_species)
     ek_species.add_boundary_from_shape(
         shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
         boundary_type=espressomd.electrokinetics.FluxBoundary)
@@ -104,6 +105,8 @@ if lbf_class:
     ek_species.add_boundary_from_shape(
         shape=wall2, value=2.,
         boundary_type=espressomd.electrokinetics.DensityBoundary)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
+    system.ekcontainer.solver = ek_solver
 
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
@@ -373,7 +376,6 @@ if lbf_class:
     ek_species[:, :, :].density = grid_3D
     ek_cpt_path = path_cpt_root / "ek.cpt"
     ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
-    checkpoint.register("ek_species")
     # setup VTK folder
     vtk_suffix = config.test_name
     vtk_root = pathlib.Path("vtk_out")

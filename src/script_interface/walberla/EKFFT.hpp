@@ -26,57 +26,61 @@
 
 #include "EKPoissonSolver.hpp"
 
+#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_poisson_fft_init.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
+
+#include <utils/math/int_pow.hpp>
 
 #include <memory>
 
 namespace ScriptInterface::walberla {
 
 class EKFFT : public EKPoissonSolver {
-private:
+  std::shared_ptr<::walberla::PoissonSolver> m_instance;
+  std::shared_ptr<LatticeWalberla> m_lattice;
   double m_conv_permittivity;
+  bool m_single_precision;
 
 public:
   void do_construct(VariantMap const &args) override {
     m_single_precision = get_value_or<bool>(args, "single_precision", false);
-    auto lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
+    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
 
     // unit conversions
-    auto const agrid = get_value<double>(lattice->get_parameter("agrid"));
+    auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
     m_conv_permittivity = Utils::int_pow<2>(agrid);
     auto const permittivity =
         get_value<double>(args, "permittivity") * m_conv_permittivity;
 
-    m_instance = new_ek_poisson_fft(lattice->lattice(), permittivity,
+    m_instance = new_ek_poisson_fft(m_lattice->lattice(), permittivity,
                                     m_single_precision);
 
-    add_parameters({{"permittivity",
-                     [this](Variant const &v) {
-                       m_instance->set_permittivity(get_value<double>(v) *
-                                                    m_conv_permittivity);
-                     },
-                     [this]() {
-                       return m_instance->get_permittivity() /
-                              m_conv_permittivity;
-                     }},
-                    {"single_precision", AutoParameter::read_only,
-                     [this]() { return m_single_precision; }}});
+    add_parameters({
+    {"permittivity",
+             [this](Variant const &v) {
+               m_instance->set_permittivity(get_value<double>(v) *
+                                            m_conv_permittivity);
+             },
+             [this]() {
+               return m_instance->get_permittivity() /
+                      m_conv_permittivity;
+             }},
+            {"single_precision", AutoParameter::read_only,
+             [this]() { return m_single_precision; }},
+        {"lattice", AutoParameter::read_only,
+             [this]() { return m_lattice; }},
+     });
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver>
   get_instance() const noexcept override {
     return m_instance;
   }
-
-private:
-  /* The actual instance */
-  std::shared_ptr<::walberla::PoissonSolver> m_instance;
-
-  bool m_single_precision;
 };
+
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA_FFT

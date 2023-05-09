@@ -70,12 +70,15 @@ class EKTest:
 
     def test_ek_container_poisson_solver(self):
         ekcontainer = self.system.ekcontainer
-        ekcontainer.call_method("reset_poisson_solver")
+        ekcontainer.solver = None
         self.assertFalse(ekcontainer.call_method("is_poisson_solver_set"))
+        self.assertIsNone(ekcontainer.solver)
         ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
         self.assertFalse(ekcontainer.call_method("is_poisson_solver_set"))
-        self.system.ekcontainer.solver = ek_solver
+        ekcontainer.solver = ek_solver
         self.assertTrue(ekcontainer.call_method("is_poisson_solver_set"))
+        self.assertIsInstance(self.system.ekcontainer.solver,
+                              espressomd.electrokinetics.EKNone)
 
     def test_ek_species(self):
         # inactive species
@@ -176,7 +179,8 @@ class EKTest:
         with self.assertRaisesRegex(TypeError, "must be an instance of FluxBoundary or None"):
             node.flux_boundary = 4.6
 
-    def test_ek_fft_solvers(self):
+    @utx.skipIfMissingFeatures(["WALBERLA_FFT"])
+    def test_ek_fft_solver(self):
         ek_solver = espressomd.electrokinetics.EKFFT(
             lattice=self.lattice, permittivity=0.01,
             single_precision=self.ek_params["single_precision"])
@@ -187,13 +191,25 @@ class EKTest:
         ek_solver.permittivity = 0.05
         self.assertAlmostEqual(ek_solver.permittivity, 0.05, delta=self.atol)
 
-    def test_ek_none_solvers(self):
+        self.system.ekcontainer.solver = ek_solver
+        self.assertTrue(
+            self.system.ekcontainer.call_method("is_poisson_solver_set"))
+        self.assertIsInstance(self.system.ekcontainer.solver,
+                              espressomd.electrokinetics.EKFFT)
+
+    def test_ek_none_solver(self):
         ek_solver = espressomd.electrokinetics.EKNone(
             lattice=self.lattice,
             single_precision=self.ek_params["single_precision"])
         self.assertEqual(
             ek_solver.single_precision,
             self.ek_params["single_precision"])
+
+        self.system.ekcontainer.solver = ek_solver
+        self.assertTrue(
+            self.system.ekcontainer.call_method("is_poisson_solver_set"))
+        self.assertIsInstance(self.system.ekcontainer.solver,
+                              espressomd.electrokinetics.EKNone)
 
     def test_ek_reactants(self):
         ek_species = self.make_default_ek_species()
@@ -273,7 +289,7 @@ class EKTest:
 
         # check exceptions without EK Poisson solver
         with self.assertRaisesRegex(Exception, "EK requires a Poisson solver"):
-            self.system.ekcontainer.call_method("reset_poisson_solver")
+            self.system.ekcontainer.solver = None
             self.system.integrator.run(1)
         ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
         self.system.ekcontainer.solver = ek_solver
@@ -360,7 +376,7 @@ class EKTest:
         assert len(set(subset1 + subset2)) == len(subset1) + len(subset2)
 
 
-@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class EKTestWalberla(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in double-precision."""
@@ -374,7 +390,7 @@ class EKTestWalberla(EKTest, ut.TestCase):
     rtol = 1e-7
 
 
-@utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class EKTestWalberlaSinglePrecision(EKTest, ut.TestCase):
 
     """Test for the Walberla implementation of the EK in single-precision."""

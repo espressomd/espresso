@@ -28,6 +28,7 @@ import espressomd.shapes
 import espressomd.code_features
 
 
+@script_interface_register
 class EKFFT(ScriptInterfaceHelper):
     _so_name = "walberla::EKFFT"
     _so_creation_policy = "GLOBAL"
@@ -39,8 +40,9 @@ class EKFFT(ScriptInterfaceHelper):
         super().__init__(*args, **kwargs)
 
 
+@script_interface_register
 class EKNone(ScriptInterfaceHelper):
-    _so_name = "walberla::None"
+    _so_name = "walberla::EKNone"
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, *args, **kwargs):
@@ -54,30 +56,14 @@ class EKNone(ScriptInterfaceHelper):
 class EKContainer(ScriptObjectList):
     _so_name = "walberla::EKContainer"
 
-    @property
-    def tau(self):
-        return self.call_method("get_tau")
+    def __init__(self, *args, **kwargs):
+        if not espressomd.code_features.has_features("WALBERLA"):
+            raise NotImplementedError("Feature WALBERLA not compiled in")
 
-    @tau.setter
-    def tau(self, tau):
-        self.call_method("set_tau", tau=tau)
-
-    @property
-    def solver(self):
-        raise NotImplementedError(
-            "PoissonSolver object property is not implemented")
-
-    @solver.setter
-    def solver(self, solver):
-        self.call_method("set_poisson_solver", object=solver)
+        super().__init__(*args, **kwargs)
 
     def add(self, ekspecies):
-        if not isinstance(ekspecies, EKSpecies):
-            raise TypeError("EKSpecies object is not of correct type.")
-
         self.call_method("add", object=ekspecies)
-
-        return ekspecies
 
     def remove(self, ekspecies):
         self.call_method("remove", object=ekspecies)
