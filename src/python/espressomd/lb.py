@@ -465,15 +465,14 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         """
 
         if isinstance(value, VelocityBounceBack):
+            value = value.velocity
             lattice_speed = self.call_method("get_lattice_speed")
             HydrodynamicInteraction._check_mach_limit(
-                np.array(value.velocity) / lattice_speed)
-            self.call_method("set_velocity_at_boundary", value=value.velocity)
-        elif value is None:
-            self.call_method("set_velocity_at_boundary", value=None)
-        else:
+                np.array(value) / lattice_speed)
+        elif value is not None:
             raise TypeError(
                 "Parameter 'value' must be an instance of VelocityBounceBack or None")
+        self.call_method("set_velocity_at_boundary", value=value)
 
     @property
     def boundary_force(self):

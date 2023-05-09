@@ -167,7 +167,8 @@ class EKSpecies(ScriptInterfaceHelper,
             super().__init__(**kwargs)
 
     def default_params(self):
-        return {"single_precision": False, "kT": 0., "ext_efield": [0., 0., 0.]}
+        return {"single_precision": False,
+                "kT": 0., "ext_efield": [0., 0., 0.]}
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
@@ -387,14 +388,11 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
 
         if isinstance(value, DensityBoundary):
-            self.call_method(
-                "set_node_density_at_boundary",
-                value=value.density)
-        elif value is None:
-            self.call_method("set_node_density_at_boundary", value=None)
-        else:
+            value = value.density
+        elif value is not None:
             raise TypeError(
                 "Parameter 'value' must be an instance of DensityBoundary or None")
+        self.call_method("set_node_density_at_boundary", value=value)
 
     @property
     def flux_boundary(self):
@@ -425,12 +423,11 @@ class EKSpeciesNode(ScriptInterfaceHelper):
         """
 
         if isinstance(value, FluxBoundary):
-            self.call_method("set_node_flux_at_boundary", value=value.flux)
-        elif value is None:
-            self.call_method("set_node_flux_at_boundary", value=None)
-        else:
+            value = value.flux
+        elif value is not None:
             raise TypeError(
                 "Parameter 'value' must be an instance of FluxBoundary or None")
+        self.call_method("set_node_flux_at_boundary", value=value)
 
 
 @script_interface_register
