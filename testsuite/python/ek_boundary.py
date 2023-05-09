@@ -36,7 +36,6 @@ class EKBoundariesBase:
                          "diffusion": 0.1,
                          "advection": False,
                          "friction_coupling": False,
-                         "ext_efield": [0., 0., 0.],
                          "tau": 1.0}
 
     wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)

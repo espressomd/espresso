@@ -61,8 +61,8 @@ class EKFixedDensity(ut.TestCase):
 
         ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
-            kT=0.0, valency=0.0, advection=False, friction_coupling=False,
-            ext_efield=[0, 0, 0], single_precision=single_precision, tau=self.TAU)
+            valency=0.0, advection=False, friction_coupling=False,
+            single_precision=single_precision, tau=self.TAU)
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 

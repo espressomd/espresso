@@ -204,6 +204,8 @@ class LBFluidWalberla(HydrodynamicInteraction,
     seed : :obj:`int`, optional
         Initial counter value (or seed) of the philox RNG.
         Required for a thermalized fluid. Must be positive.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
 
     Methods
     -------

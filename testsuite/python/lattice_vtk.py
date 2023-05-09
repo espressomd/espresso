@@ -234,9 +234,8 @@ class TestEKVTK(TestVTK):
 
     def make_actor(self):
         return self.ek_class(
-            lattice=self.lattice, density=1., kT=1., diffusion=0.1, valency=0.,
-            advection=False, friction_coupling=False, ext_efield=[0., 0., 0.],
-            tau=0.1, **self.ek_params)
+            lattice=self.lattice, density=1., diffusion=0.1, valency=0.,
+            advection=False, friction_coupling=False, tau=0.1, **self.ek_params)
 
     def add_actor(self):
         self.solver = self.ek_solver(lattice=self.lattice)

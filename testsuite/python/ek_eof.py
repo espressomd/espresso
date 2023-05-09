@@ -73,7 +73,7 @@ class EKEOF:
         ekwallcharge = self.ek_species_class(
             lattice=lattice, density=0.0, kT=kT, diffusion=0.0, tau=self.TAU,
             valency=-valency, friction_coupling=False, advection=False,
-            ext_efield=[0.0, 0.0, 0.0], **self.ek_params)
+            **self.ek_params)
 
         eksolver = self.ek_solver_class(
             lattice=lattice, permittivity=eps0 * epsR, **self.ek_params)

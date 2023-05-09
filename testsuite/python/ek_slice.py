@@ -43,7 +43,6 @@ class Test(ut.TestCase):
                          "diffusion": 0.1,
                          "advection": False,
                          "friction_coupling": False,
-                         "ext_efield": [0., 0., 0.],
                          "tau": 1.0}
     np.random.seed(seed=42)
 

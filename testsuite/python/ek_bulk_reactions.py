@@ -82,11 +82,10 @@ class EKReaction(ut.TestCase):
         reactants = []
         for coeff in stoech_coeffs:
             species = espressomd.electrokinetics.EKSpecies(
-                lattice=lattice, density=coeff * self.INITIAL_DENSITY, kT=0.0,
+                lattice=lattice, density=coeff * self.INITIAL_DENSITY,
                 diffusion=self.DIFFUSION_COEFFICIENT, valency=0.0,
                 advection=False, friction_coupling=False,
-                ext_efield=[0., 0., 0.], single_precision=single_precision,
-                tau=self.TAU)
+                single_precision=single_precision, tau=self.TAU)
             self.system.ekcontainer.add(species)
             reactants.append(
                 espressomd.electrokinetics.EKReactant(
@@ -97,8 +96,8 @@ class EKReaction(ut.TestCase):
 
         ek_species_product = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,
-            kT=0.0, valency=0.0, advection=False, friction_coupling=False,
-            ext_efield=[0., 0., 0.], single_precision=single_precision, tau=self.TAU)
+            valency=0.0, advection=False, friction_coupling=False,
+            single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(ek_species_product)
         reactants.append(
             espressomd.electrokinetics.EKReactant(

@@ -109,6 +109,8 @@ class EKSpecies(ScriptInterfaceHelper,
     kT : :obj:`float`, optional
         Thermal energy of the simulated heat bath (for thermalized species).
         Set it to 0 for an unthermalized species.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
 
     Methods
     -------
@@ -157,11 +159,15 @@ class EKSpecies(ScriptInterfaceHelper,
         if not espressomd.code_features.has_features("WALBERLA"):
             raise NotImplementedError("Feature WALBERLA not compiled in")
 
-        super().__init__(*args, **kwargs)
+        if "sip" not in kwargs:
+            params = self.default_params()
+            params.update(kwargs)
+            super().__init__(*args, **params)
+        else:
+            super().__init__(**kwargs)
 
     def default_params(self):
-        return {"single_precision": False, "kT": 0.,
-                "ext_efield": [0.0, 0.0, 0.0]}
+        return {"single_precision": False, "kT": 0., "ext_efield": [0., 0., 0.]}
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
@@ -310,7 +316,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
     def validate_params(self, params):
         utils.check_required_keys(self.required_keys(), params.keys())
         utils.check_type_or_throw_except(
-            params["index"], 3, int, "The index of a LB fluid node consists of three integers.")
+            params["index"], 3, int, "The index of an EK species node consists of three integers.")
 
     def __init__(self, *args, **kwargs):
         if "sip" not in kwargs:

@@ -62,10 +62,9 @@ class EKDiffusion(ut.TestCase):
             n_ghost_layers=1, agrid=self.AGRID)
 
         ekspecies = espressomd.electrokinetics.EKSpecies(
-            lattice=lattice, density=0.0, kT=0.0, valency=0.0, advection=False,
+            lattice=lattice, density=0.0, valency=0.0, advection=False,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
-            ext_efield=[0., 0., 0.], single_precision=single_precision,
-            tau=self.TAU)
+            single_precision=single_precision, tau=self.TAU)
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 

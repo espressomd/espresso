@@ -81,16 +81,16 @@ class EKReaction(ut.TestCase):
         self.system.ekcontainer.solver = eksolver
 
         species_A = espressomd.electrokinetics.EKSpecies(
-            lattice=lattice, density=self.INITIAL_DENSITIES[0], kT=0.0,
+            lattice=lattice, density=self.INITIAL_DENSITIES[0],
             diffusion=self.DIFFUSION_COEFFICIENTS[0], valency=0.0,
-            advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
+            advection=False, friction_coupling=False,
             single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(species_A)
 
         species_B = espressomd.electrokinetics.EKSpecies(
-            lattice=lattice, density=self.INITIAL_DENSITIES[1], kT=0.0,
+            lattice=lattice, density=self.INITIAL_DENSITIES[1],
             diffusion=self.DIFFUSION_COEFFICIENTS[1], valency=0.0,
-            advection=False, friction_coupling=False, ext_efield=[0, 0, 0],
+            advection=False, friction_coupling=False,
             single_precision=single_precision, tau=self.TAU)
         self.system.ekcontainer.add(species_B)
 
