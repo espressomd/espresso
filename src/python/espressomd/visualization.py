@@ -1000,7 +1000,7 @@ class openGLLive():
     def _determine_radius(self, part_type):
         def radius_by_lj(part_type):
             ia = self.system.non_bonded_inter[part_type, part_type]
-            radius = 0.5
+            radius = 0.0
             if hasattr(ia, "lennard_jones"):
                 radius = ia.lennard_jones.get_params()["sigma"] * 0.5
             if radius == 0.0 and hasattr(ia, "wca"):
