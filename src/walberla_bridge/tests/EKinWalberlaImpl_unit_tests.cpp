@@ -558,7 +558,7 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   MPI_Dims_create(n_nodes, 3, mpi_shape.data());
-  walberla_mpi_init();
+  walberla::mpi_init();
 
   params.seed = 0u;
   params.kT = 1.3E-4;

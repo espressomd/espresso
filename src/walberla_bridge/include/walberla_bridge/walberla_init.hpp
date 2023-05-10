@@ -17,5 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @brief Initialize waLBerla's MPI manager */
-void walberla_mpi_init();
+#pragma once
+
+#include <walberla_bridge/utils/ResourceManager.hpp>
+
+#include <memory>
+
+namespace walberla {
+
+/** @brief Initialize waLBerla's MPI manager. */
+void mpi_init();
+
+/** @brief Get a lock on waLBerla's global resources for VTK. */
+std::unique_ptr<ResourceManager> get_vtk_dependent_resources();
+
+} // namespace walberla

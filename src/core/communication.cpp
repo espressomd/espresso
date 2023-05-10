@@ -80,7 +80,7 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   ErrorHandling::init_error_handling(mpiCallbacks());
 
 #ifdef WALBERLA
-  walberla_mpi_init();
+  walberla::mpi_init();
 #endif
 
   on_program_start();

@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
   params.grid_dimensions = Vector3i{12, 12, 18};
   params.box_dimensions = Vector3d{12, 12, 18};
 
-  walberla_mpi_init();
+  walberla::mpi_init();
   auto const res = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
   MPI_Finalize();
   return res;

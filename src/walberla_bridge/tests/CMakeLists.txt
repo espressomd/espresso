@@ -30,6 +30,10 @@ function(ESPRESSO_WALBERLA_UNIT_TEST)
 endfunction()
 
 espresso_walberla_unit_test(
+  NAME ResourceManager_test SRC ResourceManager_test.cpp DEPENDS
+  espresso::walberla espresso::walberla::cpp_flags)
+
+espresso_walberla_unit_test(
   NAME kernels_unit_tests SRC kernels_unit_tests.cpp DEPENDS espresso::walberla
   espresso::walberla::cpp_flags espresso::utils)
 

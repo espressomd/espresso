@@ -17,10 +17,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <core/mpi/Environment.h>
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
 
-void walberla_mpi_init() {
+#include <core/mpi/Environment.h>
+#include <core/mpi/MPIManager.h>
+
+#include <cassert>
+#include <memory>
+
+/** @brief waLBerla MPI communicator. */
+static std::shared_ptr<walberla::mpi::MPIManager> walberla_mpi_comm;
+/** @brief waLBerla MPI environment (destructor depends on the communicator). */
+static std::shared_ptr<walberla::mpi::Environment> walberla_mpi_env;
+
+namespace walberla {
+
+void mpi_init() {
+  assert(::walberla_mpi_env == nullptr);
+  assert(::walberla_mpi_comm == nullptr);
   int argc = 0;
   char **argv = nullptr;
-  static walberla::mpi::Environment m_env(argc, argv);
+  ::walberla_mpi_env = std::make_shared<walberla::mpi::Environment>(argc, argv);
+  ::walberla_mpi_comm = walberla::MPIManager::instance();
 }
+
+std::unique_ptr<ResourceManager> get_vtk_dependent_resources() {
+  auto vtk_dependencies = std::make_unique<ResourceManager>();
+  // waLBerla MPI communicator (singleton)
+  vtk_dependencies->acquire_lock(::walberla_mpi_comm);
+  // waLBerla MPI environment (destructor depends on the MPI communicator)
+  vtk_dependencies->acquire_lock(::walberla_mpi_env);
+  return vtk_dependencies;
+}
+
+} // namespace walberla

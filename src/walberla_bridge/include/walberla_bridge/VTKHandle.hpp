@@ -19,6 +19,9 @@
 
 #pragma once
 
+#include <walberla_bridge/utils/ResourceManager.hpp>
+#include <walberla_bridge/walberla_init.hpp>
+
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -30,9 +33,21 @@ class VTKOutput;
 } // namespace walberla::vtk
 
 /** @brief Handle to a VTK object */
-struct VTKHandle {
+class VTKHandle {
+  std::unique_ptr<ResourceManager> m_vtk_resources_lock;
+
+public:
   VTKHandle(std::shared_ptr<walberla::vtk::VTKOutput> sp, int ec, bool en)
-      : ptr(std::move(sp)), execution_count(ec), enabled(en) {}
+      : ptr(std::move(sp)), execution_count(ec), enabled(en) {
+    m_vtk_resources_lock = ::walberla::get_vtk_dependent_resources();
+  }
+  ~VTKHandle() {
+    // vtk objects must be cleared *before* the MPI resources can be freed,
+    // because file handles need to closed on all ranks
+    ptr.reset();
+    m_vtk_resources_lock.reset();
+  }
+
   std::shared_ptr<walberla::vtk::VTKOutput> ptr;
   int execution_count;
   bool enabled;

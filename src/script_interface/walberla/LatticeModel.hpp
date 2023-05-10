@@ -81,6 +81,12 @@ public:
       m_vtk_writers.erase(needle);
       return {};
     }
+    if (method_name == "clear_vtk_writers") {
+      for (auto const &vtk : m_vtk_writers) {
+        vtk->detach_from_lattice();
+      }
+      m_vtk_writers.clear();
+    }
     return {};
   }
 };
