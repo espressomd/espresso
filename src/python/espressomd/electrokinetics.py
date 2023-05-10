@@ -143,6 +143,25 @@ class EKSpecies(ScriptInterfaceHelper,
         binary : :obj:`bool`
             Whether to read in binary or ASCII mode.
 
+    add_vtk_writer()
+        Attach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    remove_vtk_writer()
+        Detach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.electrokinetics.VTKOutput`
+            VTK writer.
+
+    clear_vtk_writers()
+        Detach all VTK writers.
+
     """
 
     _so_name = "walberla::EKSpecies"
@@ -153,6 +172,7 @@ class EKSpecies(ScriptInterfaceHelper,
         "clear_boundaries",
         "add_vtk_writer",
         "remove_vtk_writer",
+        "clear_vtk_writers",
     )
 
     def __init__(self, *args, **kwargs):
@@ -253,57 +273,6 @@ class DensityBoundary:
         utils.check_type_or_throw_except(
             density, 1, float, "DensityBoundary flux must be one float")
         self.density = density
-
-
-@script_interface_register
-class VTKOutput(VTKOutputBase):
-    """
-    Create a VTK writer.
-
-    Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
-    Summary is written to ``<base_folder>/<identifier>.pvd``.
-
-    Manual VTK callbacks can be called at any time to take a snapshot
-    of the current state of the EK species.
-
-    Automatic VTK callbacks can be disabled at any time and re-enabled later.
-    Please note that the internal VTK counter is no longer incremented when
-    an automatic callback is disabled, which means the number of EK steps
-    between two frames will not always be an integer multiple of ``delta_N``.
-
-    Parameters
-    ----------
-    identifier : :obj:`str`
-        Name of the VTK writer.
-    observables : :obj:`list`, {'density',}
-        List of observables to write to the VTK files.
-    delta_N : :obj:`int`
-        Write frequency. If this value is 0 (default), the object is a
-        manual VTK callback that must be triggered manually. Otherwise,
-        it is an automatic callback that is added to the time loop and
-        writes every ``delta_N`` EK steps.
-    base_folder : :obj:`str` (optional), default is 'vtk_out'
-        Path to the output VTK folder.
-    prefix : :obj:`str` (optional), default is 'simulation_step'
-        Prefix for VTK files.
-
-    """
-    _so_name = "walberla::EKVTKHandle"
-    _so_creation_policy = "GLOBAL"
-    _so_bind_methods = ("enable", "disable", "write")
-
-    def required_keys(self):
-        return self.valid_keys() - self.default_params().keys()
-
-    def __repr__(self):
-        class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
-        if self.delta_N:
-            write_when = f"every {self.delta_N} EK steps"
-            if not self.enabled:
-                write_when += " (disabled)"
-        else:
-            write_when = "on demand"
-        return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
 
 
 @script_interface_register
@@ -586,6 +555,57 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
                     raise TypeError(type_error_msg)
                 values[index] = np.array(values[index].flux)
         self._setter("flux_at_boundary", values=values)
+
+
+@script_interface_register
+class VTKOutput(VTKOutputBase):
+    """
+    Create a VTK writer.
+
+    Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
+    Summary is written to ``<base_folder>/<identifier>.pvd``.
+
+    Manual VTK callbacks can be called at any time to take a snapshot
+    of the current state of the EK species.
+
+    Automatic VTK callbacks can be disabled at any time and re-enabled later.
+    Please note that the internal VTK counter is no longer incremented when
+    an automatic callback is disabled, which means the number of EK steps
+    between two frames will not always be an integer multiple of ``delta_N``.
+
+    Parameters
+    ----------
+    identifier : :obj:`str`
+        Name of the VTK writer.
+    observables : :obj:`list`, {'density',}
+        List of observables to write to the VTK files.
+    delta_N : :obj:`int`
+        Write frequency. If this value is 0 (default), the object is a
+        manual VTK callback that must be triggered manually. Otherwise,
+        it is an automatic callback that is added to the time loop and
+        writes every ``delta_N`` EK steps.
+    base_folder : :obj:`str` (optional), default is 'vtk_out'
+        Path to the output VTK folder.
+    prefix : :obj:`str` (optional), default is 'simulation_step'
+        Prefix for VTK files.
+
+    """
+    _so_name = "walberla::EKVTKHandle"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("enable", "disable", "write")
+
+    def required_keys(self):
+        return self.valid_keys() - self.default_params().keys()
+
+    def __repr__(self):
+        class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        if self.delta_N:
+            write_when = f"every {self.delta_N} EK steps"
+            if not self.enabled:
+                write_when += " (disabled)"
+        else:
+            write_when = "on demand"
+        return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
 
 
 @script_interface_register

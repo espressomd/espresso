@@ -41,7 +41,6 @@ public:
 } // namespace Testing
 
 BOOST_AUTO_TEST_CASE(destruction_order) {
-
   // instantiate three resources in a specific order
   auto obj_a = std::make_shared<Testing::LogWriter<'A'>>();
   auto obj_b = std::make_shared<Testing::LogWriter<'B'>>();

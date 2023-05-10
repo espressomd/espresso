@@ -62,7 +62,6 @@
 #include <utils/math/make_lin_space.hpp>
 
 #include <boost/optional.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/variant.hpp>
 
 #include <array>

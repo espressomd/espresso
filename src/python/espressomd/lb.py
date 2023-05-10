@@ -124,57 +124,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class VTKOutput(VTKOutputBase):
-    """
-    Create a VTK writer.
-
-    Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
-    Summary is written to ``<base_folder>/<identifier>.pvd``.
-
-    Manual VTK callbacks can be called at any time to take a snapshot
-    of the current state of the LB fluid.
-
-    Automatic VTK callbacks can be disabled at any time and re-enabled later.
-    Please note that the internal VTK counter is no longer incremented when
-    an automatic callback is disabled, which means the number of LB steps
-    between two frames will not always be an integer multiple of ``delta_N``.
-
-    Parameters
-    ----------
-    identifier : :obj:`str`
-        Name of the VTK writer.
-    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor'}
-        List of observables to write to the VTK files.
-    delta_N : :obj:`int`
-        Write frequency. If this value is 0 (default), the object is a
-        manual VTK callback that must be triggered manually. Otherwise,
-        it is an automatic callback that is added to the time loop and
-        writes every ``delta_N`` LB steps.
-    base_folder : :obj:`str` (optional), default is 'vtk_out'
-        Path to the output VTK folder.
-    prefix : :obj:`str` (optional), default is 'simulation_step'
-        Prefix for VTK files.
-
-    """
-    _so_name = "walberla::LBVTKHandle"
-    _so_creation_policy = "GLOBAL"
-    _so_bind_methods = ("enable", "disable", "write")
-
-    def required_keys(self):
-        return self.valid_keys() - self.default_params().keys()
-
-    def __repr__(self):
-        class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
-        if self.delta_N:
-            write_when = f"every {self.delta_N} LB steps"
-            if not self.enabled:
-                write_when += " (disabled)"
-        else:
-            write_when = "on demand"
-        return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
-
-
-@script_interface_register
 class LBFluidWalberla(HydrodynamicInteraction,
                       espressomd.detail.walberla.LatticeModel):
     """
@@ -235,7 +184,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
     clear_boundaries()
         Remove velocity bounce-back boundary conditions.
 
-    save_checkpoint(path, binary)
+    save_checkpoint()
         Write LB node populations and boundary conditions to a file.
 
         Parameters
@@ -245,7 +194,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
         binary : :obj:`bool`
             Whether to write in binary or ASCII mode.
 
-    load_checkpoint(path, binary)
+    load_checkpoint()
         Load LB node populations and boundary conditions from a file.
 
         Parameters
@@ -254,6 +203,25 @@ class LBFluidWalberla(HydrodynamicInteraction,
             File path to read from.
         binary : :obj:`bool`
             Whether to read in binary or ASCII mode.
+
+    add_vtk_writer()
+        Attach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.lb.VTKOutput`
+            VTK writer.
+
+    remove_vtk_writer()
+        Detach a VTK writer.
+
+        Parameters
+        ----------
+        vtk : :class:`espressomd.lb.VTKOutput`
+            VTK writer.
+
+    clear_vtk_writers()
+        Detach all VTK writers.
 
     """
 
@@ -265,6 +233,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
         "get_interpolated_velocity",
         "add_vtk_writer",
         "remove_vtk_writer",
+        "clear_vtk_writers",
     )
 
     def __init__(self, *args, **kwargs):
@@ -658,6 +627,57 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
     @last_applied_force.setter
     def last_applied_force(self, value):
         self._setter("last_applied_force", value)
+
+
+@script_interface_register
+class VTKOutput(VTKOutputBase):
+    """
+    Create a VTK writer.
+
+    Files are written to ``<base_folder>/<identifier>/<prefix>_*.vtu``.
+    Summary is written to ``<base_folder>/<identifier>.pvd``.
+
+    Manual VTK callbacks can be called at any time to take a snapshot
+    of the current state of the LB fluid.
+
+    Automatic VTK callbacks can be disabled at any time and re-enabled later.
+    Please note that the internal VTK counter is no longer incremented when
+    an automatic callback is disabled, which means the number of LB steps
+    between two frames will not always be an integer multiple of ``delta_N``.
+
+    Parameters
+    ----------
+    identifier : :obj:`str`
+        Name of the VTK writer.
+    observables : :obj:`list`, {'density', 'velocity_vector', 'pressure_tensor'}
+        List of observables to write to the VTK files.
+    delta_N : :obj:`int`
+        Write frequency. If this value is 0 (default), the object is a
+        manual VTK callback that must be triggered manually. Otherwise,
+        it is an automatic callback that is added to the time loop and
+        writes every ``delta_N`` LB steps.
+    base_folder : :obj:`str` (optional), default is 'vtk_out'
+        Path to the output VTK folder.
+    prefix : :obj:`str` (optional), default is 'simulation_step'
+        Prefix for VTK files.
+
+    """
+    _so_name = "walberla::LBVTKHandle"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("enable", "disable", "write")
+
+    def required_keys(self):
+        return self.valid_keys() - self.default_params().keys()
+
+    def __repr__(self):
+        class_id = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        if self.delta_N:
+            write_when = f"every {self.delta_N} LB steps"
+            if not self.enabled:
+                write_when += " (disabled)"
+        else:
+            write_when = "on demand"
+        return f"<{class_id}: write to '{self.vtk_uid}' {write_when}>"
 
 
 def edge_detection(boundary_mask, periodicity):

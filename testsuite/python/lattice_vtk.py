@@ -324,6 +324,10 @@ class TestEKVTK(TestVTK):
                 np.testing.assert_allclose(
                     vtk_density, ek_density, rtol=5e-7)
 
+        self.assertEqual(len(actor.vtk_writers), 2)
+        actor.clear_vtk_writers()
+        self.assertEqual(len(actor.vtk_writers), 0)
+
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBWalberlaWrite(TestLBVTK, ut.TestCase):
