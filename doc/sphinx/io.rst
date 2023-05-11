@@ -111,11 +111,6 @@ Be aware of the following limitations:
   for a specific combination of features, please share your findings
   with the |es| community.
 
-* Checkpointing only supports recursion on the head node. It is therefore
-  impossible to checkpoint a :class:`espressomd.system.System` instance that
-  contains LB boundaries, constraint unions or auto-update accumulators when the
-  simulation is running with 2 or more MPI nodes.
-
 * The active actors, i.e., the content of ``system.actors`` resp.
   ``system.ekcontainers``, are checkpointed. For lattice-based methods like
   lattice-Boltzmann fluids and advection-diffusion-reaction models, this only

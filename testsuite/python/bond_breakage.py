@@ -22,7 +22,7 @@ import espressomd
 import numpy as np
 import espressomd.interactions
 from espressomd.bond_breakage import BreakageSpec
-from espressomd.interactions import HarmonicBond
+from espressomd.interactions import HarmonicBond, AngleHarmonic
 
 
 class BondBreakageCommon:
@@ -39,8 +39,10 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
     def setUpClass(cls):
         pos1 = cls.system.box_l / 2 - 0.5
         pos2 = cls.system.box_l / 2 + 0.5
+        pos3 = cls.system.box_l / 2 - 1.5
         cls.p1 = cls.system.part.add(pos=pos1)
         cls.p2 = cls.system.part.add(pos=pos2)
+        cls.p3 = cls.system.part.add(pos=pos3)
 
         cls.p1v = cls.system.part.add(pos=pos1)
         cls.p1v.vs_auto_relate_to(cls.p1)
@@ -50,8 +52,10 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
 
         cls.h1 = HarmonicBond(k=1, r_0=0)
         cls.h2 = HarmonicBond(k=1, r_0=0)
+        cls.angle = AngleHarmonic(bend=1, phi0=np.pi)
         cls.system.bonded_inter.add(cls.h1)
         cls.system.bonded_inter.add(cls.h2)
+        cls.system.bonded_inter.add(cls.angle)
 
     @classmethod
     def tearDownClass(cls):
@@ -80,12 +84,12 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         self.system.bond_breakage.clear()
         self.assertEqual(len(self.system.bond_breakage), 0)
         self.assertEqual(self.system.bond_breakage.keys(), [])
-        with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
+        with self.assertRaisesRegex(ValueError, "Key has to be of type 'int'"):
             self.system.bond_breakage[None]
-        with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
-            self.system.bond_breakage[None] = None
-        with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
-            self.system.bond_breakage.remove(None)
+        with self.assertRaisesRegex(ValueError, "Key has to be of type 'int'"):
+            self.system.bond_breakage[None] = spec2
+        with self.assertRaisesRegex(ValueError, "Key has to be of type 'int', got type 'double'"):
+            self.system.bond_breakage.remove(1.)
         with self.assertRaisesRegex(ValueError, "Bond needs to be added to the system first"):
             self.system.bond_breakage[HarmonicBond(k=1, r_0=0)]
         with self.assertRaisesRegex(RuntimeError, "Inserting breakage spec without a bond type is not permitted"):
@@ -130,7 +134,24 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         system.integrator.run(1)
         self.assertEqual(self.p2.bonds, ())
 
-    def test_revert_bind_at_point_of_collision(self):
+    def test_delete_angle_bond(self):
+        system = self.system
+
+        # Particles closer than cutoff
+        system.bond_breakage[self.angle] = BreakageSpec(
+            breakage_length=5, action_type="delete_bond")
+        self.p1.bonds = ((self.angle, self.p2, self.p3),)
+        bonds = self.p1.bonds
+        system.integrator.run(1)
+        # should still be there. Not bfeyond breakage disst
+        self.assertEqual(self.p1.bonds, bonds)
+        self.system.bond_breakage.clear()
+        system.bond_breakage[self.angle] = BreakageSpec(
+            breakage_length=1, action_type="delete_bond")
+        system.integrator.run(1)
+        self.assertEqual(self.p1.bonds, ())
+
+    def test_revert_bind_at_point_of_collision_pair(self):
         system = self.system
 
         # Particles closer than cutoff
@@ -149,6 +170,23 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         self.assertEqual(self.p1.bonds, ())
         self.assertEqual(self.p1v.bonds, ())
 
+    def test_revert_bind_at_point_of_collision_angle(self):
+        system = self.system
+
+        # Particles closer than cutoff
+        system.bond_breakage[self.angle] = BreakageSpec(
+            breakage_length=0.5, action_type="revert_bind_at_point_of_collision")
+
+        self.p1.bonds = [(self.h2, self.p2)]
+        self.p2.bonds = [(self.h2, self.p1)]
+        self.p1v.bonds = [(self.angle, self.p1, self.p2)]
+        self.p2v.bonds = [(self.angle, self.p1, self.p2)]
+        system.integrator.run(1)
+        self.assertEqual(self.p1v.bonds, ())
+        self.assertEqual(self.p2v.bonds, ())
+        self.assertEqual(self.p1.bonds, ())
+        self.assertEqual(self.p2.bonds, ())
+
     def test_exceptions(self):
         system = self.system
 
@@ -158,6 +196,18 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
 
         self.p1.bonds = [(self.h2, self.p2)]
         self.p1v.bonds = [(self.h1, self.p2v)]
+        with self.assertRaisesRegex(Exception, "The REVERT_BIND_AT_POINT_OF_COLLISION bond breakage action has to be configured for the bond on the virtual site"):
+            system.integrator.run(1)
+
+        self.system.bond_breakage.clear()
+
+        # Particles closer than cutoff
+        system.bond_breakage[self.angle] = BreakageSpec(
+            breakage_length=0.5, action_type="revert_bind_at_point_of_collision")
+
+        self.p1.bonds = [(self.h2, self.p2)]
+        self.p2.bonds = [(self.h2, self.p1)]
+        self.p1.bonds = [(self.angle, self.p1v, self.p2)]
         with self.assertRaisesRegex(Exception, "The REVERT_BIND_AT_POINT_OF_COLLISION bond breakage action has to be configured for the bond on the virtual site"):
             system.integrator.run(1)
 

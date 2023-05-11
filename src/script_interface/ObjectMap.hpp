@@ -22,11 +22,10 @@
 #ifndef SCRIPT_INTERFACE_OBJECT_MAP_HPP
 #define SCRIPT_INTERFACE_OBJECT_MAP_HPP
 
+#include "script_interface/ObjectContainer.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
-#include "script_interface/object_container_mpi_guard.hpp"
-
-#include <utils/serialization/pack.hpp>
 
 #include <memory>
 #include <string>
@@ -38,13 +37,18 @@ namespace ScriptInterface {
 /**
  * @brief Owning map of ObjectHandles
  * @tparam ManagedType Type of the managed objects, needs to be
- *         derived from ObjectHandle
+ *         derived from @ref ObjectHandle
  */
-template <
-    typename ManagedType, class BaseType = ObjectHandle, class KeyType = int,
-    class = std::enable_if_t<std::is_base_of_v<ObjectHandle, ManagedType>>>
-class ObjectMap : public BaseType {
+template <typename ManagedType, class BaseType = ObjectHandle,
+          class KeyType = int>
+class ObjectMap : public ObjectContainer<ObjectMap, ManagedType, BaseType> {
+public:
+  using Base = ObjectContainer<ObjectMap, ManagedType, BaseType>;
+  using Base::add_parameters;
+
 private:
+  std::unordered_map<KeyType, std::shared_ptr<ManagedType>> m_elements;
+
   virtual KeyType
   insert_in_core(std::shared_ptr<ManagedType> const &obj_ptr) = 0;
   virtual void insert_in_core(KeyType const &key,
@@ -52,6 +56,20 @@ private:
   virtual void erase_in_core(KeyType const &key) = 0;
 
 public:
+  ObjectMap() {
+    add_parameters({
+        {"_objects", AutoParameter::read_only,
+         [this]() { return make_unordered_map_of_variants(m_elements); }},
+    });
+  }
+
+  void do_construct(VariantMap const &params) override {
+    m_elements = get_value_or<decltype(m_elements)>(params, "_objects", {});
+    for (auto const &[key, element] : m_elements) {
+      insert_in_core(key, element);
+    }
+  }
+
   /**
    * @brief Add an element to the map.
    *
@@ -110,7 +128,7 @@ protected:
           get_value<std::shared_ptr<ManagedType>>(parameters.at("object"));
 
       if (parameters.count("key")) {
-        auto key = get_value<KeyType>(parameters.at("key"));
+        auto const key = get_key(parameters.at("key"));
         insert(key, obj_ptr);
         return none;
       }
@@ -118,14 +136,13 @@ protected:
     }
 
     if (method == "erase") {
-      auto key = get_value<KeyType>(parameters.at("key"));
-
+      auto const key = get_key(parameters.at("key"));
       erase(key);
       return none;
     }
 
     if (method == "get") {
-      auto key = get_value<KeyType>(parameters.at("key"));
+      auto const key = get_key(parameters.at("key"));
       return Variant{m_elements.at(key)};
     }
 
@@ -155,40 +172,26 @@ protected:
     }
 
     if (method == "contains") {
-      return m_elements.find(get_value<KeyType>(parameters.at("key"))) !=
-             m_elements.end();
+      return m_elements.find(get_key(parameters.at("key"))) != m_elements.end();
     }
 
-    return BaseType::do_call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
   }
 
-private:
-  std::string get_internal_state() const override {
-    object_container_mpi_guard(BaseType::name(), m_elements.size(),
-                               BaseType::context()->get_comm().size());
-
-    using packed_type = std::pair<KeyType, std::string>;
-    std::vector<packed_type> object_states(m_elements.size());
-
-    boost::transform(m_elements, object_states.begin(), [](auto const &kv) {
-      return std::make_pair(kv.first, kv.second->serialize());
-    });
-
-    return Utils::pack(object_states);
-  }
-
-  void set_internal_state(std::string const &state) override {
-    using packed_type = std::pair<KeyType, std::string>;
-    auto const object_states = Utils::unpack<std::vector<packed_type>>(state);
-
-    for (auto const &packed_object : object_states) {
-      auto o = std::dynamic_pointer_cast<ManagedType>(
-          BaseType::deserialize(packed_object.second, *BaseType::context()));
-      insert(packed_object.first, std::move(o));
+  KeyType get_key(Variant const &key) const {
+    try {
+      return get_value<KeyType>(key);
+    } catch (...) {
+      using namespace detail::demangle;
+      auto const actual = simplify_symbol_variant(key);
+      auto const target = simplify_symbol(static_cast<KeyType *>(nullptr));
+      if (Base::context()->is_head_node()) {
+        throw std::invalid_argument("Key has to be of type '" + target +
+                                    "', got type '" + actual + "'");
+      }
+      throw;
     }
   }
-
-  std::unordered_map<KeyType, std::shared_ptr<ManagedType>> m_elements;
 };
 } // Namespace ScriptInterface
 #endif
