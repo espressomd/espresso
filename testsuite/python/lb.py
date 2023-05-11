@@ -143,6 +143,25 @@ class LBTest:
         # TODO WALBERLA: remove next line (no-op to get code coverage) once
         # the boundary force getter is implemented from the waLBerla side
         self.assertEqual(len(node.boundary_force), 3)
+        # momentum update: check density conservation when velocity changes,
+        # and velocity conservation when density changes
+        node = lbf[1, 2, 3]
+        density_old = node.density
+        density_new = 0.5
+        velocity_old = node.velocity
+        velocity_new = [0.01, 0.02, 0.03]
+        node.velocity = velocity_new
+        np.testing.assert_allclose(np.copy(node.density),
+                                   np.copy(density_old), atol=self.atol)
+        np.testing.assert_allclose(np.copy(node.velocity),
+                                   np.copy(velocity_new), atol=self.atol)
+        node.density = density_new
+        np.testing.assert_allclose(np.copy(node.density),
+                                   np.copy(density_new), atol=self.atol)
+        np.testing.assert_allclose(np.copy(node.velocity),
+                                   np.copy(velocity_new), atol=self.atol)
+        node.density = density_old
+        node.velocity = velocity_old
 
     def test_raise_if_read_only(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
