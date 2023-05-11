@@ -1,10 +1,6 @@
-# Generation of kernels for waLBerla
+# Automated kernel generation with waLBerla
 
-The scripts in this directory generate the .cpp/.hpp kernels for lattice-based algorithms.
-
-WARNING: The code generation sorts the arguments alphabetically by symbol name.
-If you rename something, you may have to adapt the order of arguments in the
-calling code!
+The scripts in this directory generate the kernels for lattice-based algorithms.
 
 The following dependencies need to be in the Python path:
 
@@ -20,7 +16,7 @@ The Python dependencies can be pip installed locally with the following command:
 python3 -m pip install --user -c requirements.txt numpy sympy lbmpy pystencils islpy
 ```
 
-## Example
+The kernels can be regenerated with this shell script:
 
 ```sh
 # adapt these paths to the build environment
@@ -28,7 +24,7 @@ export VERSION=1.2
 export DEPS="${HOME}/walberla_deps"
 export PYTHONPATH="${DEPS}/${VERSION}/lbmpy:${DEPS}/${VERSION}/pystencils:${DEPS}/devel/walberla/python/"
 
-# functions
+# convenience functions
 function generate_lb_kernels {
   python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py $@
 }
@@ -57,3 +53,7 @@ generate_ek_kernels --single-precision
 format_ek_kernels
 mv ReactionKernel*.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
 ```
+
+WARNING: The code generation sorts the arguments alphabetically by symbol name.
+If you rename something, you may have to adapt the order of arguments in the
+calling code!
