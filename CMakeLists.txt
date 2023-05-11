@@ -598,7 +598,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+    GIT_TAG        584c421722658fa8be564565156a371e9d946319
   )
   # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
   if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")
@@ -613,6 +613,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
   set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
   set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+  set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
   set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   if(ESPRESSO_BUILD_WITH_CUDA)
     set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
