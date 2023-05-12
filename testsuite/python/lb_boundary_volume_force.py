@@ -98,7 +98,7 @@ class LBBoundaryForceWalberla(LBBoundaryForceCommon, ut.TestCase):
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
@@ -108,7 +108,7 @@ class LBBoundaryForceWalberlaSinglePrecision(
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':

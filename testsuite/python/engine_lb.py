@@ -88,7 +88,7 @@ class SwimmerTest():
         """friction as well as 'active' forces apply to particles
         and to the fluid, so total momentum is conserved
         """
-        if self.lbf.get_params().get('single_precision', False):
+        if self.lbf.get_params().get("single_precision", False):
             self.skipTest('Momentum is not conserved on single precision')
 
         self.add_all_types_of_swimmers(rotation=False)
@@ -184,7 +184,7 @@ class SwimmerTest():
 class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -196,7 +196,7 @@ class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -208,7 +208,7 @@ class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -220,7 +220,7 @@ class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -232,7 +232,7 @@ class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -245,7 +245,7 @@ class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -258,7 +258,7 @@ class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -271,7 +271,7 @@ class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
 class SwimmerTestHybrid1CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     tol = 1e-10
 
     def set_cellsystem(self):

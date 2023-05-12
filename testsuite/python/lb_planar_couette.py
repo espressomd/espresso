@@ -27,7 +27,7 @@ import numpy as np
 
 def analytical(x, t, nu, v, h, k_max):
     """
-    Analytical solution with Fourier series of Navier-Stokes equation
+    Analytical solution with Fourier series of the Navier-Stokes equation.
 
     Parameters
     ----------
@@ -43,6 +43,7 @@ def analytical(x, t, nu, v, h, k_max):
         Distance between shear planes
     k_max : :obj:`int`
         Upper limit of sums for sinus series
+
     """
     u = x / h - 0.5
     for k in np.arange(1, k_max + 1):
@@ -112,22 +113,22 @@ class LBCouetteFlowCommon:
                            shear_direction="z", shear_plane_normal="y")
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCouetteFlowWalberla(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCouetteFlowWalberlaSinglePrecision(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':

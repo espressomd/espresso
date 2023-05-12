@@ -132,7 +132,7 @@ class LBStreamingWalberla(LBStreamingCommon, ut.TestCase):
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     rtol = 1e-10
 
 
@@ -142,7 +142,7 @@ class LBStreamingWalberlaSinglePrecision(LBStreamingCommon, ut.TestCase):
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     rtol = 1e-5
 
 

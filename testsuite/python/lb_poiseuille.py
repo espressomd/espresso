@@ -119,22 +119,22 @@ class LBPoiseuilleCommon:
         np.testing.assert_allclose(v_measured, v_expected, rtol=5E-5)
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBPoiseuilleWalberlaSinglePrecision(LBPoiseuilleCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':

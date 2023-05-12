@@ -94,7 +94,6 @@ class LBShearCommon:
         """
         Integrate the LB fluid and regularly compare with
         the exact solution.
-
         """
         self.tearDown()
         self.system.box_l = np.max(
@@ -183,24 +182,24 @@ class LBShearCommon:
         self.check_profile(y, -z)
 
 
-@utx.skipIfMissingFeatures(['WALBERLA'])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBShearWalberla(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     atol = 5e-5
     rtol = 5e-4
 
 
-@utx.skipIfMissingFeatures(['WALBERLA'])
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     atol = 5e-5
     rtol = 5e-3
 

@@ -155,7 +155,7 @@ class EKBoundariesWalberla(EKBoundariesBase, ut.TestCase):
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {'single_precision': False}
+    ek_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
@@ -165,7 +165,7 @@ class EKBoundariesWalberlaSinglePrecision(EKBoundariesBase, ut.TestCase):
 
     ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
     ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {'single_precision': True}
+    ek_params = {"single_precision": True}
 
 
 if __name__ == "__main__":

@@ -61,7 +61,6 @@ class LBLinearMomentum:
     def test(self):
         """
         Compare direct calculation of fluid momentum with analysis function.
-
         """
         # setup random node velocities
         for index in itertools.product(
@@ -83,7 +82,7 @@ class LBLinearMomentumWalberla(LBLinearMomentum, ut.TestCase):
     """Test for the Walberla implementation of the LB in double-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
     atol = 1e-10
 
 
@@ -93,7 +92,7 @@ class LBLinearMomentumWalberlaSinglePrecision(LBLinearMomentum, ut.TestCase):
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
     atol = 5e-6
 
 

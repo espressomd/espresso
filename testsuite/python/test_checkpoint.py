@@ -83,7 +83,7 @@ class CheckpointTest(ut.TestCase):
         with self.assertRaisesRegex(AssertionError, "system doesn't have an actor of type Wall"):
             self.get_active_actor_of_type(espressomd.shapes.Wall)
 
-    @utx.skipIfMissingFeatures('WALBERLA')
+    @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_fluid(self):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
@@ -168,7 +168,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_equal(
             np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
 
-    @utx.skipIfMissingFeatures('WALBERLA')
+    @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
     def test_ek_species(self):
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
@@ -274,7 +274,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_equal(
             np.copy(ek_species[:, :, :].is_boundary), False)
 
-    @utx.skipIfMissingFeatures('WALBERLA')
+    @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_vtk(self):
         lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
@@ -319,7 +319,7 @@ class CheckpointTest(ut.TestCase):
             self.assertAlmostEqual(
                 lb_density[0, 0, 0], new_density, delta=1e-5)
 
-    @utx.skipIfMissingFeatures('WALBERLA')
+    @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
     def test_ek_vtk(self):
         ek_species = system.ekcontainer[0]
@@ -504,7 +504,7 @@ class CheckpointTest(ut.TestCase):
             np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
         self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
-    @utx.skipIfMissingFeatures('WALBERLA')
+    @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):

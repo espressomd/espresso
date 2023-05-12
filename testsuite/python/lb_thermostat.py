@@ -113,7 +113,7 @@ class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
     """Test for the CPU implementation of the LB."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': False}
+    lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
@@ -122,7 +122,7 @@ class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
     """Test for the CPU implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {'single_precision': True}
+    lb_params = {"single_precision": True}
 
 
 # @utx.skipIfMissingGPU()
@@ -132,7 +132,7 @@ class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
 #    """Test for the GPU implementation of the LB."""
 
 #    lb_class = espressomd.lb.LBFluidWalberlaGPU
-#    lb_params = {}
+#    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':
