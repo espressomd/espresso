@@ -598,7 +598,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        584c421722658fa8be564565156a371e9d946319
+    GIT_TAG        065ce5f311850371a97ac4766f47dbb5ca8424ba
   )
   # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
   if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")
@@ -630,6 +630,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   else()
     set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
   endif()
+  set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
   add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
   set(WALBERLA_LIBS
       walberla::core walberla::domain_decomposition walberla::blockforest

@@ -116,17 +116,15 @@ class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
     lb_params = {'single_precision': False}
 
 
-# TODO WALBERLA: Each thermostat test takes ~150s, but timeout is at 300s
-# @utx.skipIfMissingFeatures(["WALBERLA"])
-# class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
 
-#    """Test for the CPU implementation of the LB in single-precision."""
+    """Test for the CPU implementation of the LB in single-precision."""
 
-#    lb_class = espressomd.lb.LBFluidWalberla
-#    lb_params = {'single_precision': True}
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {'single_precision': True}
 
 
-# TODO WALBERLA
 # @utx.skipIfMissingGPU()
 # @utx.skipIfMissingFeatures(["WALBERLA"])
 # class LBWalberlaGPUThermostat(LBThermostatCommon, ut.TestCase):

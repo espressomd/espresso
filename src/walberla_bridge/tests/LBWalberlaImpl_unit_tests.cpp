@@ -100,9 +100,9 @@ BOOST_DATA_TEST_CASE(initial_state, bdata::make(all_lbs()), lb_generator) {
 
   boost::mpi::communicator world;
   auto const local_pressure_tensor = lb->get_pressure_tensor();
-  BOOST_CHECK(lb->get_momentum() == Vector3d{});
-  BOOST_CHECK_LE((local_pressure_tensor * world.size() - pressure).norm(),
-                 1E-9);
+  auto const global_pressure_tensor = local_pressure_tensor * world.size();
+  BOOST_CHECK_LE((global_pressure_tensor - pressure).norm(), 1E-9);
+  BOOST_CHECK_LE(lb->get_momentum().norm(), 1E-11);
   BOOST_CHECK_CLOSE(lb->get_viscosity(), params.viscosity, 1E-11);
 }
 

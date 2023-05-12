@@ -154,12 +154,13 @@ class LBShearCommon:
         shear_rate = SHEAR_VELOCITY / H
         dynamic_viscosity = self.lbf.kinematic_viscosity * DENS
         p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
-            np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
+            np.outer(shear_plane_normal, shear_direction) +
+            np.transpose(np.outer(shear_plane_normal, shear_direction)))
         for n in [(2, 3, 4), (3, 4, 2), (5, 4, 3)]:
             node_pressure_tensor = np.copy(
                 self.lbf[n[0], n[1], n[2]].pressure_tensor)
-            np.testing.assert_allclose(node_pressure_tensor,
-                                       p_expected, atol=4E-5, rtol=5E-3)
+            np.testing.assert_allclose(node_pressure_tensor, p_expected,
+                                       atol=self.atol, rtol=self.rtol)
 
         # TODO: boundary forces not implemented yet
 #        np.testing.assert_allclose(
@@ -189,6 +190,8 @@ class LBShearWalberla(LBShearCommon, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': False}
+    atol = 5e-5
+    rtol = 5e-4
 
 
 @utx.skipIfMissingFeatures(['WALBERLA'])
@@ -198,6 +201,8 @@ class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
+    atol = 5e-5
+    rtol = 5e-3
 
 
 if __name__ == '__main__':

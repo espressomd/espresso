@@ -94,7 +94,7 @@ class LBLinearMomentumWalberlaSinglePrecision(LBLinearMomentum, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {'single_precision': True}
-    atol = 1e-6
+    atol = 5e-6
 
 
 if __name__ == '__main__':

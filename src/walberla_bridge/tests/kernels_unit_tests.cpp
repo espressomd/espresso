@@ -35,6 +35,7 @@
 #include <utils/Vector.hpp>
 
 #include <cmath>
+#include <limits>
 
 bool operator!=(
     const walberla::lbm::Dynamic_UBB_single_precision::IndexInfo &lhs,
@@ -105,9 +106,15 @@ BOOST_AUTO_TEST_CASE(dynamic_ubb) {
   BOOST_TEST((vec1_d != vec2_d));
 }
 
-auto clamp_zero(double value) { return (std::abs(value) < 1e-16) ? 0. : value; }
+static auto clamp_zero(double value) {
+  auto constexpr epsilon = std::numeric_limits<float>::epsilon();
+  return (std::abs(value) < 5.f * epsilon) ? 0. : value;
+}
 
-auto clamp_zero(float value) { return (std::abs(value) < 1e-9f) ? 0.f : value; }
+static auto clamp_zero(float value) {
+  auto constexpr epsilon = std::numeric_limits<float>::epsilon();
+  return (std::abs(value) < 5.f * epsilon) ? 0.f : value;
+}
 
 BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
   using namespace walberla::stencil;

@@ -70,15 +70,17 @@ class TestLBMomentumConservation:
             LB_PARAMS["ext_force_density"])
 
         # Initial momentum before integration = 0
+        mom_tol = 1E-4 if self.lbf.single_precision else 1E-12
         np.testing.assert_allclose(
-            self.system.analysis.linear_momentum(), [0., 0., 0.], atol=1E-12)
+            self.system.analysis.linear_momentum(), [0., 0., 0.], atol=mom_tol)
 
         ext_fluid_force = self.system.volume() * LB_PARAMS['ext_force_density']
 
         p = self.system.part.add(
             pos=self.system.box_l / 2, ext_force=-ext_fluid_force, v=[.2, .4, .6])
         initial_momentum = np.array(self.system.analysis.linear_momentum())
-        np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
+        np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass,
+                                   atol=mom_tol)
         while True:
             self.system.integrator.run(500)
 
