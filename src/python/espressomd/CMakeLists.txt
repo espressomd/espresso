@@ -66,7 +66,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     Espresso_pyx_flags
     INTERFACE -Wno-pedantic -Wno-cpp -Wno-strict-aliasing
               -Wno-maybe-uninitialized -Wno-unused-variable
-              -Wno-deprecated-declarations)
+              -Wno-deprecated-declarations -Wno-volatile)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
                                                  "AppleClang")
   target_compile_options(
