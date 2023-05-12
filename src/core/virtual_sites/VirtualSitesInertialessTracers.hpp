@@ -29,7 +29,7 @@
  * instantaneously transferred to the fluid
  */
 class VirtualSitesInertialessTracers : public VirtualSites {
-  void after_force_calc() override;
+  void after_force_calc(double time_step) override;
   void after_lb_propagation(double time_step) override;
 };
 

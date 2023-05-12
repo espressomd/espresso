@@ -50,3 +50,6 @@ ignore:
   - "doc/tutorials"
   - "samples"
   - "maintainer"
+  - "src/walberla_bridge/**/generated_kernels/*"
+  - "src/walberla_bridge/myintrin.h"
+  - "src/walberla_bridge/philox_rand.h"

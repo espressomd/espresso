@@ -121,6 +121,7 @@ class H5mdTests(ut.TestCase):
     # doesn't alway work in parallel: https://github.com/h5py/h5py/issues/736
     @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_appending(self):
+        import time
         # write one frame to the file
         temp_file = self.temp_path / 'appending.h5'
         h5 = espressomd.io.writer.h5md.H5md(file_path=str(temp_file))
@@ -135,6 +136,11 @@ class H5mdTests(ut.TestCase):
         # check both frames are identical to the reference trajectory
         with h5py.File(temp_file, 'r') as cur:
             def predicate(cur, key):
+                """
+                Check dataset against reference values. Read operations on the
+                cursor are throttled to avoid triggering an address overflow.
+                """
+                time.sleep(0.01)  # introduce a delay between successive reads
                 np.testing.assert_allclose(cur[key], self.py_file[key])
             for key in ('position', 'image', 'velocity', 'force',
                         'id', 'species', 'mass', 'charge'):

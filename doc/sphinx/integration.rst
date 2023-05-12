@@ -649,7 +649,7 @@ The backcoupling of friction forces and noise to the fluid is also done by distr
 Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99a` and :cite:`dunweg09a`.
 
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
-The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
+The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`espressomd.lb.LBFluidWalberlaGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid.
 
 The magnitude of the frictional coupling can be adjusted by the
@@ -658,7 +658,7 @@ parameter ``gamma``. To enable the LB thermostat, use::
     import espressomd
     import espressomd.lb
     system = espressomd.System(box_l=[1, 1, 1])
-    lbf = espressomd.lb.LBFluid(agrid=1, dens=1, visc=1, tau=0.01)
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1, kinematic_viscosity=1, tau=0.01)
     system.actors.add(lbf)
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 

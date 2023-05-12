@@ -550,8 +550,8 @@ the exception of a planar wall. For this, there is no ``direction`` option, but
 the ``normal`` vector of the wall points in the direction that is considered to
 yield positive distances.  Outside their use in constraints, shapes can also be
 used as a way to define LB boundary nodes. In this case, negative distances
-define nodes which are part of a boundary (please refer to :ref:`Using shapes
-as lattice-Boltzmann boundary`).
+define nodes which are part of a boundary (please refer to :ref:`Shape-based
+LB boundary conditions`).
 
 
 .. _External Fields:

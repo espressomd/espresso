@@ -33,99 +33,129 @@ Tests for the streaming of populations of the LB algorithm.
 AGRID = 0.5
 TAU = 0.1
 VISC = 1e18
-BULK_VISC = VISC
 VELOCITY_VECTORS = np.array([
     [0, 0, 0],
-    [1, 0, 0],
-    [-1, 0, 0],
     [0, 1, 0],
     [0, -1, 0],
+    [-1, 0, 0],
+    [1, 0, 0],
     [0, 0, 1],
     [0, 0, -1],
+    [-1, 1, 0],
     [1, 1, 0],
     [-1, -1, 0],
     [1, -1, 0],
-    [-1, 1, 0],
-    [1, 0, 1],
-    [-1, 0, -1],
-    [1, 0, -1],
-    [-1, 0, 1],
     [0, 1, 1],
-    [0, -1, -1],
+    [0, -1, 1],
+    [-1, 0, 1],
+    [1, 0, 1],
     [0, 1, -1],
-    [0, -1, 1]])
+    [0, -1, -1],
+    [-1, 0, -1],
+    [1, 0, -1]])
+# populations after streaming and relaxation using parameters omega_odd = 2
+# and omega_bulk = omega_even = omega_shear = 0
+REFERENCE_POPULATIONS = np.array([
+    1,
+    2 / 3,
+    4 + 1 / 3,
+    3 + 1 / 3,
+    5 + 2 / 3,
+    1 + 1 / 3,
+    11 + 2 / 3,
+    9,
+    9 + 2 / 3,
+    9 + 1 / 3,
+    10,
+    13,
+    14 + 1 / 3,
+    15 + 1 / 3,
+    16,
+    14 + 2 / 3,
+    16,
+    17,
+    17 + 2 / 3])
 LB_PARAMETERS = {
     'agrid': AGRID,
-    'visc': VISC,
-    'bulk_visc': BULK_VISC,
+    'kinematic_viscosity': VISC,
     'tau': TAU,
-    'dens': 1.0,
-    'gamma_odd': 1.0,
-    'gamma_even': 1.0
+    'density': 1.0,
 }
 
 
 class LBStreamingCommon:
 
     """
-    Check the streaming step of the LB fluid implementation by setting all populations
-    to zero except one. Relaxation is suppressed by choosing appropriate parameters.
+    Check the streaming and relaxation steps of the LB fluid implementation by
+    setting all populations to zero except for one cell.
 
     """
-    system = espressomd.System(box_l=[3.0] * 3)
-    system.cell_system.skin = 0.4 * AGRID
+    system = espressomd.System(box_l=[3., 2., 2.])
+    system.cell_system.skin = 0.1 * AGRID
     system.time_step = TAU
-    grid = np.array(system.box_l / AGRID, dtype=int)
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMETERS)
+        self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
         self.system.actors.clear()
 
-    def reset_fluid_populations(self):
-        """Set all populations to 0.0.
-
-        """
-        for i in itertools.product(range(self.grid[0]), range(
-                self.grid[1]), range(self.grid[2])):
-            self.lbf[i].population = np.zeros(19)
-
-    def set_fluid_populations(self, grid_index):
-        """Set the population of direction n_v of grid_index to n_v+1.
-
-        """
-        pop = np.arange(1, 20)
-        self.lbf[grid_index].population = pop
-
     def test_population_streaming(self):
-        self.reset_fluid_populations()
+        pop_default = np.zeros(19) + 1e-10
+        pop_source = np.arange(1, 20, dtype=float)
+        grid = np.array(self.system.box_l / AGRID, dtype=int)
+
+        # reset fluid populations
+        for i in itertools.product(
+                range(grid[0]), range(grid[1]), range(grid[2])):
+            self.lbf[i].population = pop_default
+
+        # check streaming
         for grid_index in itertools.product(
-                range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
-            self.set_fluid_populations(grid_index)
+                range(grid[0]), range(grid[1]), range(grid[2])):
+            self.lbf[grid_index].population = pop_source
             self.system.integrator.run(1)
             for n_v in range(19):
                 target_node_index = np.mod(
-                    grid_index + VELOCITY_VECTORS[n_v], self.grid)
-                np.testing.assert_almost_equal(
-                    self.lbf[target_node_index].population[n_v], float(n_v + 1))
-                self.lbf[target_node_index].population = np.zeros(19)
+                    grid_index + VELOCITY_VECTORS[n_v], grid)
+                np.testing.assert_allclose(
+                    self.lbf[target_node_index].population[n_v],
+                    REFERENCE_POPULATIONS[n_v], rtol=self.rtol,
+                    err_msg=f"streaming is incorrect in direction {VELOCITY_VECTORS[n_v]} from cell at {grid_index}")
+                self.lbf[target_node_index].population = pop_default
 
 
-class LBCPU(LBStreamingCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBStreamingWalberla(LBStreamingCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
+    rtol = 1e-10
 
 
-@utx.skipIfMissingGPU()
-class LBGPU(LBStreamingCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBStreamingWalberlaSinglePrecision(LBStreamingCommon, ut.TestCase):
 
-    """Test for the GPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in single-precision."""
 
-    lb_class = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    rtol = 1e-5
+
+
+# TODO WALBERLA
+# @utx.skipIfMissingGPU()
+# @utx.skipIfMissingFeatures(["WALBERLA"])
+# class LBGPU(LBStreamingCommon, ut.TestCase):
+
+#    """Test for the Walberla implementation of the LB on the GPU."""
+
+#    lb_class = espressomd.lb.LBFluidWalberlaGPU
+#    lb_params = {}
+#    rtol = 1e-7
 
 
 if __name__ == "__main__":

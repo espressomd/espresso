@@ -130,6 +130,16 @@ python_benchmark(
 python_benchmark(FILE ferrofluid.py ARGUMENTS "--particles_per_core=400")
 python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
                  "--particles_per_core=500" RUN_WITH_MPI FALSE)
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=32;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=32")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=64")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=128;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=128")
+if(NOT ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
+  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--single_precision")
+  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196")
+endif()
 
 add_custom_target(
   benchmarks_data

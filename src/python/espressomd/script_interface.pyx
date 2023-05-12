@@ -207,6 +207,19 @@ cdef class PScriptInterface:
 
         return odict
 
+
+class array_variant(np.ndarray):
+
+    """
+    Returns a numpy.ndarray that will be serialized as a ``std::vector``.
+
+    """
+
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        return obj
+
+
 cdef Variant python_object_to_variant(value) except *:
     """Convert Python objects to C++ Variant objects."""
 
@@ -216,9 +229,16 @@ cdef Variant python_object_to_variant(value) except *:
     cdef unordered_map[int, Variant] map_int2var
     cdef unordered_map[string, Variant] map_str2var
     cdef PObjectRef oref
+    cdef int[::1] view_int
+    cdef int * data_int
+    cdef double[::1] view_double
+    cdef double * data_double
 
     if value is None:
         return Variant()
+
+    if isinstance(value, np.ndarray) and value.ndim == 0:
+        value = value.item()
 
     # The order is important, the object character should
     # be preserved even if the PScriptInterface derived class
@@ -245,6 +265,16 @@ cdef Variant python_object_to_variant(value) except *:
                     f" to 'Variant[std::unordered_map<std::string, Variant>]'")
     elif type(value) in (str, np.str_):
         return make_variant[string](utils.to_char_pointer(str(value)))
+    elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.signedinteger):
+        view_int = np.ascontiguousarray(value, dtype=np.int32)
+        data_int = &view_int[0]
+        vec_int.assign(data_int, data_int + len(view_int))
+        return make_variant[vector[int]](vec_int)
+    elif isinstance(value, array_variant) and np.issubdtype(value.dtype, np.floating):
+        view_double = np.ascontiguousarray(value, dtype=np.float64)
+        data_double = &view_double[0]
+        vec_double.assign(data_double, data_double + len(view_double))
+        return make_variant[vector[double]](vec_double)
     elif hasattr(value, '__iter__'):
         if len(value) == 0:
             return make_variant[vector[Variant]](vec_variant)
@@ -448,8 +478,7 @@ class ScriptInterfaceHelper(PScriptInterface):
 class ScriptObjectList(ScriptInterfaceHelper):
     """
     Base class for container-like classes such as
-    :class:`~espressomd.constraints.Constraints` and
-    :class:`~espressomd.lbboundaries.LBBoundaries`. Derived classes must
+    :class:`~espressomd.constraints.Constraints`. Derived classes must
     implement an ``add()`` method which adds a single item to the container.
 
     The core objects must be managed by a container derived from

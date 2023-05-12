@@ -39,9 +39,8 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
 
   for (auto p : particles) {
     auto const pos = folded_position(traits.position(p), box_geo);
-    auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
-                   lb_lbfluid_get_lattice_speed();
-    auto const flux_dens = lb_lbfluid_get_interpolated_density(pos) * v;
+    auto const v = LB::get_interpolated_velocity(pos) * LB::get_lattice_speed();
+    auto const flux_dens = LB::get_interpolated_density(pos) * v;
 
     histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
                          pos - transform_params->center(),

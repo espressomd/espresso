@@ -28,11 +28,10 @@ import espressomd
 import espressomd.lb
 import espressomd.observables
 import espressomd.shapes
-import espressomd.lbboundaries
 import espressomd.accumulators
 import espressomd.math
 
-required_features = ["LB_BOUNDARIES"]
+required_features = ["WALBERLA"]
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
@@ -42,9 +41,9 @@ radius = 4.0
 n_steps_warmup = 1000
 n_steps = 800
 
-lb_fluid = espressomd.lb.LBFluid(
-    agrid=1.0, dens=1.0, visc=1.0, tau=0.01,
-    ext_force_density=[0, 0, 0.15], kT=1.0, seed=32)
+lb_fluid = espressomd.lb.LBFluidWalberla(
+    agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01,
+    ext_force_density=[0, 0, 0.15], kT=0.0)
 system.actors.add(lb_fluid)
 system.thermostat.set_lb(LB_fluid=lb_fluid, seed=23)
 ctp = espressomd.math.CylindricalTransformationParameters(
@@ -64,8 +63,7 @@ cylinder_shape = espressomd.shapes.Cylinder(
     direction=-1,
     radius=radius,
     length=20.0)
-cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
-system.lbboundaries.add(cylinder_boundary)
+lb_fluid.add_boundary_from_shape(cylinder_shape)
 
 # equilibrate fluid
 system.integrator.run(n_steps_warmup)

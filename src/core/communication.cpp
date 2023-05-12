@@ -19,11 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config/config.hpp"
+
 #include "communication.hpp"
 
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
+
+#ifdef WALBERLA
+#include <walberla_bridge/walberla_init.hpp>
+#endif
 
 #include <utils/mpi/cart_comm.hpp>
 
@@ -72,6 +78,10 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
 
   ErrorHandling::init_error_handling(mpiCallbacks());
+
+#ifdef WALBERLA
+  walberla::mpi_init();
+#endif
 
   on_program_start();
 }

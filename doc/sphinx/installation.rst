@@ -498,18 +498,8 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB_BOUNDARIES`` Enables the construction of LB boundaries from shape-based constraints on the CPU.
-
--  ``LB_BOUNDARIES_GPU`` Enables the construction of LB boundaries from shape-based constraints on the GPU.
-
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
-
--  ``ELECTROKINETICS`` Enables the description of chemical species advected by a LB fluid on the GPU.
-
--  ``EK_BOUNDARIES`` Enables the construction of electrokinetic boundaries from shape-based constraints on the GPU.
-
--  ``EK_DEBUG`` Enables additional checks in electrokinetic simulations.
 
 
 .. _Interaction features:
@@ -769,6 +759,9 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
+* ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
+* ``ESPRESSO_BUILD_WITH_WALBERLA_FFT``: Build waLBerla with FFT and PFFT support, used in FFT-based electrokinetics.
+* ``ESPRESSO_BUILD_WITH_WALBERLA_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 * ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 
 The following options control code instrumentation:
@@ -863,7 +856,12 @@ Configuring without a network connection
 Several :ref:`external features <External features>` in |es| rely on
 external libraries that are downloaded automatically by CMake. When a
 network connection cannot be established due to firewall restrictions,
-the CMake logic needs editing:
+the CMake logic needs editing.
+
+.. _Git submodules without a network connection:
+
+Git submodules without a network connection
+"""""""""""""""""""""""""""""""""""""""""""
 
 * ``ESPRESSO_BUILD_WITH_HDF5``: when cloning |es|, the :file:`libs/h5xx` folder
   will be a git submodule containing a :file:`.git` subfolder. To prevent CMake
@@ -876,13 +874,26 @@ the CMake logic needs editing:
   When installing a release version of |es|, no network communication
   is needed for HDF5.
 
-* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS``: this library is installed using
-  `FetchContent <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
-  The repository URL can be found in the ``GIT_REPOSITORY`` field of the
-  corresponding ``FetchContent_Declare()`` command. The ``GIT_TAG`` field
-  provides the commit. Clone this repository locally next to the |es|
-  folder and edit the |es| build system such that ``GIT_REPOSITORY`` points
-  to the absolute path of the Stokesian Dynamics clone, for example with:
+.. _CMake subprojects without a network connection:
+
+CMake subprojects without a network connection
+""""""""""""""""""""""""""""""""""""""""""""""
+
+Several libraries are downloaded and included into the CMake project using
+`FetchContent <https://cmake.org/cmake/help/latest/module/FetchContent.html>`__.
+The repository URLs can be found in the ``GIT_REPOSITORY`` field of the
+corresponding ``FetchContent_Declare()`` commands. The ``GIT_TAG`` field
+provides the commit. Clone these repositories locally and edit the |es|
+build system such that ``GIT_REPOSITORY`` points to the absolute path of
+the clone. You can automate this task by adapting the following commands:
+
+* ``ESPRESSO_BUILD_WITH_WALBERLA``
+
+  .. code-block:: bash
+
+    sed -ri 's|GIT_REPOSITORY +.+/walberla.git|GIT_REPOSITORY /work/username/walberla|' CMakeLists.txt
+
+* ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS``
 
   .. code-block:: bash
 

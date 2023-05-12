@@ -50,7 +50,7 @@ for config in ${configs}; do
   echo "### ${config}" | tee -a benchmarks.log
   cp ${config} myconfig.hpp
   rm -rf src/ maintainer/
-  cmake -D ESPRESSO_BUILD_BENCHMARKS=ON -D ESPRESSO_TEST_TIMEOUT=1200 -D ESPRESSO_BUILD_WITH_CUDA=OFF -D ESPRESSO_BUILD_WITH_CCACHE=OFF ..
+  cmake -D ESPRESSO_BUILD_BENCHMARKS=ON -D ESPRESSO_TEST_TIMEOUT=1200 -D ESPRESSO_BUILD_WITH_CUDA=OFF -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_CCACHE=OFF ..
   make -j$(nproc)
   rm -f benchmarks.csv.part
   touch benchmarks.csv.part

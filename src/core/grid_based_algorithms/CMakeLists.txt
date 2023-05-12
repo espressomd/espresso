@@ -19,11 +19,15 @@
 
 target_sources(
   espresso_core
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/halo.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lattice.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lb_boundaries.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lb_collective_interface.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lb.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lb_interface.cpp
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_interface.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/lb_interpolation.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lb_particle_coupling.cpp)
+          ${CMAKE_CURRENT_SOURCE_DIR}/lb_particle_coupling.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ek_container.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ek_reactions.cpp)
+
+if(ESPRESSO_BUILD_WITH_WALBERLA)
+  target_link_libraries(espresso_core PRIVATE espresso::walberla
+                                              ${WALBERLA_LIBS})
+  target_sources(espresso_core
+                 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_instance.cpp)
+endif()

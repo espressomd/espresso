@@ -24,10 +24,10 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
 @utx.skipIfMissingFeatures(
-    ['VIRTUAL_SITES_INERTIALESS_TRACERS', 'LB_BOUNDARIES'])
+    ["VIRTUAL_SITES_INERTIALESS_TRACERS", "WALBERLA"])
 class VirtualSitesTracers(VirtualSitesTracersCommon, ut.TestCase):
 
-    LBClass = espressomd.lb.LBFluid
+    LBClass = espressomd.lb.LBFluidWalberla
 
 
 if __name__ == "__main__":

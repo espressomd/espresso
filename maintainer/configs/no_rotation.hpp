@@ -41,18 +41,6 @@
 #define MMM1D_GPU
 #endif
 
-// Hydrodynamics
-#define LB_BOUNDARIES
-#ifdef CUDA
-#define LB_BOUNDARIES_GPU
-#endif
-
-// Electrokinetics
-#ifdef CUDA
-#define ELECTROKINETICS
-#define EK_BOUNDARIES
-#endif
-
 // Force/energy calculation
 #define EXCLUSIONS
 

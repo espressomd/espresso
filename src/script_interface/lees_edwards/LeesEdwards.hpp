@@ -22,6 +22,7 @@
 #include "Protocol.hpp"
 
 #include "core/grid.hpp"
+#include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/lees_edwards/LeesEdwardsBC.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
 
@@ -44,6 +45,10 @@ public:
         {{"protocol",
           [this](Variant const &value) {
             if (is_none(value)) {
+              context()->parallel_try_catch([]() {
+                auto constexpr invalid_dir = LeesEdwardsBC::invalid_dir;
+                LB::lebc_sanity_checks(invalid_dir, invalid_dir);
+              });
               m_protocol = nullptr;
               ::box_geo.set_lees_edwards_bc(LeesEdwardsBC{});
               ::LeesEdwards::unset_protocol();
@@ -95,6 +100,7 @@ public:
           throw std::invalid_argument("Parameters 'shear_direction' and "
                                       "'shear_plane_normal' must differ");
         }
+        LB::lebc_sanity_checks(shear_direction, shear_plane_normal);
         // update box geometry and cell structure
         ::box_geo.set_lees_edwards_bc(
             LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});

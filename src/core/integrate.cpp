@@ -44,6 +44,7 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/ek_container.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "interactions.hpp"
@@ -73,6 +74,12 @@
 #include <callgrind.h>
 #endif
 
+#ifdef WALBERLA
+#ifdef WALBERLA_STATIC_ASSERT
+#error "waLberla headers should not be visible to the ESPResSo core"
+#endif
+#endif
+
 int integ_switch = INTEG_METHOD_NVT;
 
 /** Time step for the integration. */
@@ -92,6 +99,7 @@ bool recalc_forces = true;
 static double verlet_reuse = 0.0;
 
 static int fluid_step = 0;
+static int ek_step = 0;
 
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
@@ -100,6 +108,8 @@ volatile std::sig_atomic_t ctrl_C = 0;
 namespace LeesEdwards {
 /** @brief Currently active Lees-Edwards protocol. */
 static std::shared_ptr<ActiveProtocol> protocol = nullptr;
+
+std::weak_ptr<ActiveProtocol> get_protocol() { return protocol; }
 
 /**
  * @brief Update the Lees-Edwards parameters of the box geometry
@@ -348,7 +358,7 @@ int integrate(int n_steps, int reuse_forces) {
     force_calc(cell_structure, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc();
+    virtual_sites()->after_force_calc(time_step);
 #endif
     integrator_step_2(particles, temperature);
     LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>();
@@ -361,16 +371,48 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
-        auto const tau = lb_lbfluid_get_tau();
-        auto const lb_steps_per_md_step =
-            static_cast<int>(std::round(tau / time_step));
+      auto const lb_active = LB::get_lattice_switch() != ActiveLB::NONE;
+#ifdef WALBERLA
+      auto const ek_active = not EK::ek_container.empty();
+#else
+      auto constexpr ek_active = false;
+#endif
+
+      if (lb_active and ek_active) {
+        // assume that they are coupled, which is not necessarily true
+        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
+        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
+
+        if (lb_steps_per_md_step != ek_steps_per_md_step) {
+          runtimeErrorMsg()
+              << "LB and EK are active but with different time steps.";
+        }
+
+        // only use fluid_step in this case
+        assert(fluid_step == ek_step);
+
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
-          lb_lbfluid_propagate();
+          LB::propagate();
+          EK::propagate();
         }
         lb_lbcoupling_propagate();
+      } else if (lb_active) {
+        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
+        fluid_step += 1;
+        if (fluid_step >= lb_steps_per_md_step) {
+          fluid_step = 0;
+          LB::propagate();
+        }
+        lb_lbcoupling_propagate();
+      } else if (ek_active) {
+        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
+        ek_step += 1;
+        if (ek_step >= ek_steps_per_md_step) {
+          ek_step = 0;
+          EK::propagate();
+        }
       }
 
 #ifdef VIRTUAL_SITES
@@ -507,8 +549,9 @@ void increment_sim_time(double amount) { sim_time += amount; }
 void set_time_step(double value) {
   if (value <= 0.)
     throw std::domain_error("time_step must be > 0.");
-  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), value);
+  if (LB::get_lattice_switch() != ActiveLB::NONE) {
+    LB::check_tau_time_step_consistency(LB::get_tau(), value);
+  }
   ::time_step = value;
   on_timestep_change();
 }
