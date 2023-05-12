@@ -64,8 +64,6 @@ path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
 for filepath in path_cpt_root.iterdir():
     filepath.unlink(missing_ok=True)
 
-n_nodes = system.cell_system.get_state()["n_nodes"]
-
 # Lees-Edwards boundary conditions
 if 'INT.NPT' not in modes:
     protocol = espressomd.lees_edwards.LinearShear(
@@ -182,8 +180,7 @@ system.constraints.add(espressomd.constraints.ForceField(
 union = espressomd.shapes.Union()
 union.add([espressomd.shapes.Wall(normal=[1., 0., 0.], dist=0.5),
            espressomd.shapes.Wall(normal=[0., 1., 0.], dist=1.5)])
-if n_nodes == 1:
-    system.constraints.add(shape=union, particle_type=2)
+system.constraints.add(shape=union, particle_type=2)
 if espressomd.has_features("ELECTROSTATICS"):
     system.constraints.add(espressomd.constraints.ElectricPlaneWave(
         E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))

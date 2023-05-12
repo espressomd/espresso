@@ -19,8 +19,8 @@
 
 add_library(
   Espresso_script_interface SHARED
-  initialize.cpp ObjectHandle.cpp object_container_mpi_guard.cpp
-  GlobalContext.cpp ContextManager.cpp ParallelExceptionHandler.cpp)
+  initialize.cpp ObjectHandle.cpp GlobalContext.cpp ContextManager.cpp
+  ParallelExceptionHandler.cpp)
 add_library(Espresso::script_interface ALIAS Espresso_script_interface)
 
 add_subdirectory(accumulators)
