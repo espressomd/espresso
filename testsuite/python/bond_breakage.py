@@ -84,12 +84,12 @@ class BondBreakage(BondBreakageCommon, ut.TestCase):
         self.system.bond_breakage.clear()
         self.assertEqual(len(self.system.bond_breakage), 0)
         self.assertEqual(self.system.bond_breakage.keys(), [])
-        with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
+        with self.assertRaisesRegex(ValueError, "Key has to be of type 'int'"):
             self.system.bond_breakage[None]
-        with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
-            self.system.bond_breakage[None] = None
-        with self.assertRaisesRegex(TypeError, "Key has to be of type int"):
-            self.system.bond_breakage.remove(None)
+        with self.assertRaisesRegex(ValueError, "Key has to be of type 'int'"):
+            self.system.bond_breakage[None] = spec2
+        with self.assertRaisesRegex(ValueError, "Key has to be of type 'int', got type 'double'"):
+            self.system.bond_breakage.remove(1.)
         with self.assertRaisesRegex(ValueError, "Bond needs to be added to the system first"):
             self.system.bond_breakage[HarmonicBond(k=1, r_0=0)]
         with self.assertRaisesRegex(RuntimeError, "Inserting breakage spec without a bond type is not permitted"):

@@ -22,9 +22,9 @@
 #ifndef SCRIPT_INTERFACE_OBJECT_LIST_HPP
 #define SCRIPT_INTERFACE_OBJECT_LIST_HPP
 
+#include "script_interface/ObjectContainer.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/get_value.hpp"
-#include "script_interface/object_container_mpi_guard.hpp"
 
 #include <utils/serialization/pack.hpp>
 
@@ -35,20 +35,39 @@
 #include <vector>
 
 namespace ScriptInterface {
+
 /**
  * @brief Owning list of ObjectHandles
  * @tparam ManagedType Type of the managed objects, needs to be
- *         derived from ObjectHandle
+ *         derived from @ref ObjectHandle
  */
-template <typename ManagedType, class BaseType = ObjectHandle,
-          class =
-              std::enable_if_t<std::is_base_of_v<ObjectHandle, ManagedType>>>
-class ObjectList : public BaseType {
+template <typename ManagedType, class BaseType = ObjectHandle>
+class ObjectList : public ObjectContainer<ObjectList, ManagedType, BaseType> {
+public:
+  using Base = ObjectContainer<ObjectList, ManagedType, BaseType>;
+  using Base::add_parameters;
+
 private:
+  std::vector<std::shared_ptr<ManagedType>> m_elements;
+
   virtual void add_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
   virtual void remove_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
 
 public:
+  ObjectList() {
+    add_parameters({
+        {"_objects", AutoParameter::read_only,
+         [this]() { return make_vector_of_variants(m_elements); }},
+    });
+  }
+
+  void do_construct(VariantMap const &params) override {
+    m_elements = get_value_or<decltype(m_elements)>(params, "_objects", {});
+    for (auto const &object : m_elements) {
+      add_in_core(object);
+    }
+  }
+
   /**
    * @brief Add an element to the list.
    *
@@ -107,12 +126,7 @@ protected:
     }
 
     if (method == "get_elements") {
-      std::vector<Variant> ret;
-      ret.reserve(m_elements.size());
-      for (auto const &e : m_elements)
-        ret.emplace_back(e);
-
-      return ret;
+      return make_vector_of_variants(m_elements);
     }
 
     if (method == "clear") {
@@ -128,33 +142,8 @@ protected:
       return m_elements.empty();
     }
 
-    return BaseType::do_call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
   }
-
-private:
-  std::string get_internal_state() const override {
-    object_container_mpi_guard(BaseType::name(), m_elements.size(),
-                               BaseType::context()->get_comm().size());
-
-    std::vector<std::string> object_states(m_elements.size());
-
-    boost::transform(m_elements, object_states.begin(),
-                     [](auto const &e) { return e->serialize(); });
-
-    return Utils::pack(object_states);
-  }
-
-  void set_internal_state(std::string const &state) override {
-    auto const object_states = Utils::unpack<std::vector<std::string>>(state);
-
-    for (auto const &packed_object : object_states) {
-      auto o = std::dynamic_pointer_cast<ManagedType>(
-          BaseType::deserialize(packed_object, *BaseType::context()));
-      add(std::move(o));
-    }
-  }
-
-  std::vector<std::shared_ptr<ManagedType>> m_elements;
 };
 } // Namespace ScriptInterface
 #endif

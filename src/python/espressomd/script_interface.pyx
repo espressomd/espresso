@@ -457,15 +457,6 @@ class ScriptObjectList(ScriptInterfaceHelper):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        if args:
-            params, (_unpickle_so_class, (_so_name, bytestring)) = args
-            assert _so_name == self._so_name
-            self = _unpickle_so_class(_so_name, bytestring)
-            self.__setstate__(params)
-        else:
-            super().__init__(**kwargs)
-
     def __getitem__(self, key):
         return self.call_method("get_elements")[key]
 
@@ -476,24 +467,6 @@ class ScriptObjectList(ScriptInterfaceHelper):
 
     def __len__(self):
         return self.call_method("size")
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.__setstate__(state)
-        return so
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (ScriptObjectList._restore_object,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
-
-    def __getstate__(self):
-        return self.call_method("get_elements")
-
-    def __setstate__(self, object_list):
-        for item in object_list:
-            self.add(item)
 
 
 class ScriptObjectMap(ScriptInterfaceHelper):
@@ -506,17 +479,6 @@ class ScriptObjectMap(ScriptInterfaceHelper):
     ``ScriptInterface::ObjectMap``.
 
     """
-
-    _key_type = int
-
-    def __init__(self, *args, **kwargs):
-        if args:
-            params, (_unpickle_so_class, (_so_name, bytestring)) = args
-            assert _so_name == self._so_name
-            self = _unpickle_so_class(_so_name, bytestring)
-            self.__setstate__(params)
-        else:
-            super().__init__(**kwargs)
 
     def remove(self, key):
         """
@@ -536,15 +498,12 @@ class ScriptObjectMap(ScriptInterfaceHelper):
         return self.call_method("size")
 
     def __getitem__(self, key):
-        self._assert_key_type(key)
         return self.call_method("get", key=key)
 
     def __setitem__(self, key, value):
-        self._assert_key_type(key)
         self.call_method("insert", key=key, object=value)
 
     def __delitem__(self, key):
-        self._assert_key_type(key)
         self.call_method("erase", key=key)
 
     def keys(self):
@@ -555,28 +514,6 @@ class ScriptObjectMap(ScriptInterfaceHelper):
 
     def items(self):
         for k in self.keys(): yield k, self[k]
-
-    def _assert_key_type(self, key):
-        if not utils.is_valid_type(key, self._key_type):
-            raise TypeError(f"Key has to be of type {self._key_type.__name__}")
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.__setstate__(state)
-        return so
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (ScriptObjectMap._restore_object,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
-
-    def __getstate__(self):
-        return dict(self.items())
-
-    def __setstate__(self, params):
-        for key, val in params.items():
-            self[key] = val
 
 
 # Map from script object names to their corresponding python classes
