@@ -38,8 +38,6 @@
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
@@ -97,13 +95,11 @@ void on_integration_start(double time_step) {
   integrator_npt_sanity_checks();
 #endif
   long_range_interactions_sanity_checks();
-  lb_lbfluid_sanity_checks(time_step);
+  LB::sanity_checks(time_step);
 
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
-
-  lb_lbfluid_on_integration_start();
 
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
@@ -167,12 +163,6 @@ void on_observable_calc() {
     reinit_magnetostatics = false;
   }
 #endif /* DIPOLES */
-
-#ifdef ELECTROKINETICS
-  if (ek_initialized) {
-    ek_integrate_electrostatics();
-  }
-#endif /* ELECTROKINETICS */
 
   clear_particle_node();
 }
@@ -248,13 +238,7 @@ void on_short_range_ia_change() {
 
 void on_constraint_change() { recalc_forces = true; }
 
-void on_lbboundary_change() {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  LBBoundaries::lb_init_boundaries();
-
-  recalc_forces = true;
-#endif
-}
+void on_lb_boundary_conditions_change() { recalc_forces = true; }
 
 void on_boxl_change(bool skip_method_adaption) {
   grid_changed_box_l(box_geo);
@@ -272,15 +256,19 @@ void on_boxl_change(bool skip_method_adaption) {
     Dipoles::on_boxl_change();
 #endif
 
-    lb_lbfluid_init();
-#ifdef LB_BOUNDARIES
-    LBBoundaries::lb_init_boundaries();
-#endif
+    LB::init();
   }
 }
 
 void on_cell_structure_change() {
   clear_particle_node();
+
+  if (lattice_switch == ActiveLB::WALBERLA_LB) {
+    throw std::runtime_error(
+        "LB does not currently support handling changes of the MD cell "
+        "geometry. Setup the cell system, skin and interactions before "
+        "activating the CPU LB.");
+  }
 
   /* Now give methods a chance to react to the change in cell structure.
    * Most ES methods need to reinitialize, as they depend on skin,
@@ -294,7 +282,11 @@ void on_cell_structure_change() {
 #endif
 }
 
-void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
+void on_temperature_change() {
+  if (lattice_switch != ActiveLB::NONE) {
+    throw std::runtime_error("Temperature change not supported by LB");
+  }
+}
 
 void on_periodicity_change() {
 #ifdef ELECTROSTATICS
@@ -323,7 +315,9 @@ void on_skin_change() {
 void on_thermostat_param_change() { reinit_thermo = true; }
 
 void on_timestep_change() {
-  lb_lbfluid_reinit_parameters();
+  if (lattice_switch != ActiveLB::NONE) {
+    throw std::runtime_error("Time step change not supported by LB");
+  }
   on_thermostat_param_change();
 }
 
@@ -349,7 +343,7 @@ unsigned global_ghost_flags() {
   /* Position and Properties are always requested. */
   unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
-  if (lattice_switch == ActiveLB::CPU)
+  if (lattice_switch == ActiveLB::WALBERLA_LB)
     data_parts |= Cells::DATA_PART_MOMENTUM;
 
   if (thermo_switch & THERMO_DPD)

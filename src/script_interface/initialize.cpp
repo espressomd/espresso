@@ -34,7 +34,6 @@
 #include "h5md/initialize.hpp"
 #include "integrators/initialize.hpp"
 #include "interactions/initialize.hpp"
-#include "lbboundaries/initialize.hpp"
 #include "lees_edwards/initialize.hpp"
 #include "magnetostatics/initialize.hpp"
 #include "math/initialize.hpp"
@@ -46,6 +45,7 @@
 #include "shapes/initialize.hpp"
 #include "system/initialize.hpp"
 #include "virtual_sites/initialize.hpp"
+#include "walberla/initialize.hpp"
 
 namespace ScriptInterface {
 void initialize(Utils::Factory<ObjectHandle> *f) {
@@ -62,7 +62,6 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Galilei::initialize(f);
   Integrators::initialize(f);
   Interactions::initialize(f);
-  LBBoundaries::initialize(f);
   LeesEdwards::initialize(f);
   Math::initialize(f);
   MPIIO::initialize(f);
@@ -75,6 +74,9 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   ReactionMethods::initialize(f);
 #ifdef H5MD
   Writer::initialize(f);
+#endif
+#ifdef WALBERLA
+  walberla::initialize(f);
 #endif
 }
 

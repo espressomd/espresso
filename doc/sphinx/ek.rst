@@ -11,6 +11,19 @@ interpolated on the LB grid. In the following paragraph we briefly
 explain the electrokinetic model implemented in |es|, before we come to the
 description of the interface.
 
+.. note::
+    Please cite :cite:t:`godenschwager13a` and :cite:t:`bauer21a` (BibTeX keys
+    ``godenschwager13a`` and ``bauer21a`` in :file:`doc/bibliography.bib`) if
+    you use the LB fluid. When generating your own kernels with pystencils and
+    lbmpy, please also cite :cite:t:`bauer19a` and :cite:t:`bauer21b` (BibTeX
+    key ``bauer19a`` resp. ``bauer21b`` in :file:`doc/bibliography.bib`).
+
+.. note::
+
+    Requires external features ``WALBERLA`` and optionally ``WALBERLA_FFT``
+    (for the FFT-based Poisson solver), enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON``.
+
 .. _Electrokinetic equations:
 
 Electrokinetic equations
@@ -129,203 +142,298 @@ The electrokinetic equations have the following properties:
    spectra at frequencies, high enough that they correspond to times
    faster than the diffusive time scales of the charged species.
 
-.. _Setup:
+.. _EK Setup:
 
 Setup
 -----
 
-.. _Initialization:
+.. _EK Initialization:
 
 Initialization
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
-:class:`~espressomd.electrokinetics.Electrokinetics` is used to initialize
-the LB fluid of the EK method::
+Here is a minimal working example::
 
     import espressomd
     import espressomd.electrokinetics
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    system.time_step = 0.0
-    system.cell_system.skin = 0.4
-    ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
-        viscosity=1.0, ext_force_density = [1,0,0], friction=1.0, T=1.0, prefactor=1.0,
-        stencil='linkcentered', advection=True, fluid_coupling='friction')
-    system.actors.add(ek)
 
-.. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
+    system = espressomd.System(box_l=3 * [6.0])
+    system.time_step = 0.01
+    system.cell_system.skin = 1.0
 
-It is very similar to the lattice-Boltzmann command in set-up.
-We therefore refer the reader to chapter :ref:`Lattice-Boltzmann`
-for details on the implementation of LB in |es| and describe only
-the major differences here.
+    ek_lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=ek_lattice)
+    system.ekcontainer.solver = ek_solver
+    system.ekcontainer.tau = system.time_step
 
-The first major difference with the LB implementation is that the
-electrokinetics set-up is a GPU-only implementation. A CPU version
-will become available in the 4.3 line of |es|. To use the electrokinetics
-features it is therefore imperative that your computer contains
-a CUDA-capable GPU.
-
-To set up a proper LB fluid using this command, one has to specify at
-least the following options: ``agrid``, ``lb_density``, ``viscosity``,
-``friction``, ``T``, and ``prefactor``. The other options can be
-used to modify the behavior of the LB fluid. Note that the command does
-not allow the user to set the time step parameter as is the case for the
-lattice-Boltzmann command, this parameter is instead taken directly from
-the value set for :attr:`~espressomd.system.System.time_step`.
-The LB *mass density* is set independently from the
-electrokinetic *number densities*, since the LB fluid serves only as a
-medium through which hydrodynamic interactions are propagated, as will
-be explained further in the next paragraph. If no ``lb_density`` is specified, then our
-algorithm assumes ``lb_density= 1.0``. The two 'new' parameters are the temperature ``T`` at
-which the diffusive species are simulated and the ``prefactor``
-associated with the electrostatic properties of the medium. See the
-above description of the electrokinetic equations for an explanation of
-the introduction of a temperature, which does not come in directly via a
-thermostat that produces thermal fluctuations.
-
-``advection`` can be set to ``True`` or ``False``. It controls whether there should be an
-advective contribution to the diffusive species' fluxes. Default is
-``True``.
-
-``fluid_coupling`` can be set to ``"friction"`` or ``"estatics"``.
-This option determines the force term acting on the fluid.
-The former specifies the force term to be the
-sum of the species fluxes divided by their respective mobilities while
-the latter simply uses the electrostatic force density acting on all
-species. Note that this switching is only possible for the ``"linkcentered"``
-stencil. For all other stencils, this choice is hardcoded. The default
-is ``"friction"``.
-
-``es_coupling`` enables the action of the electrostatic potential due to the
-electrokinetics species and charged boundaries on the MD particles. The
-forces on the particles are calculated by interpolation from the
-electric field which is in turn calculated from the potential via finite
-differences. This only includes interactions between the species and
-boundaries and MD particles, not between MD particles and MD particles.
-To get complete electrostatic interactions a particles Coulomb method
-like Ewald or P3M has to be activated too.
-
-The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
-This adds a white-noise term to the fluxes. The amplitude of this noise term
-can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
-lead to negative densities, they are modified by a smoothed Heaviside function,
-which decreases the magnitude of the fluctuation for densities close to 0.
-By default the fluctuations are turned off.
-
-Another difference with LB is that EK parameters are immutables,
-and the EK object cannot be checkpointed.
+where ``system.ekcontainer`` is the EK system, ``ek_solver`` is the Poisson
+solver (here ``EKNone`` doesn't actually solve the electrostatic field, but
+instead imposes a zero field), and ``ek_lattice`` contains the grid parameters.
+In this setup, the EK system doesn't contain any species. The following
+sections will show how to add species that can diffuse, advect, react and/or
+electrostatically interact. An EK system can be set up at the same time as a
+LB system.
 
 .. _Diffusive species:
 
 Diffusive species
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 ::
 
-    species = espressomd.electrokinetics.Species(density=density, D=D, valency=valency,
-        ext_force_density=ext_force)
+    ek_species = espressomd.electrokinetics.EKSpecies(
+        lattice=ek_lattice,
+        single_precision=False,
+        kT=1.0,
+        density=0.85,
+        valency=0.0,
+        diffusion=0.1,
+        advection=False,
+        friction_coupling=False,
+        ext_efield=[0., 0., 0.]
+    )
 
-:class:`~espressomd.electrokinetics.Species` is used to initialize a diffusive species. Here the
-options specify: the number density ``density``, the diffusion coefficient ``D``, the
-valency of the particles of that species ``valency``, and an optional external
-(electric) force which is applied to the diffusive species. As mentioned
-before, the LB density is completely decoupled from the electrokinetic
-densities. This has the advantage that greater freedom can be achieved
-in matching the internal parameters to an experimental system. Moreover,
-it is possible to choose parameters for which the LB is more stable.
-The species can be added to a LB fluid::
+:class:`~espressomd.electrokinetics.EKSpecies` is used to initialize a diffusive
+species. Here the options specify: the electrokinetic *number densities*
+``density`` (independent from the LB ``density``), the diffusion coefficient
+``diffusion``, the valency of the particles of that species ``valency``,
+the optional external (electric) force ``ext_efield`` which is applied to
+the diffusive species, the thermal energy ``kT`` for thermal fluctuations,
+``friction_coupling`` to enable coupling of the diffusive species to the
+LB fluid force and ``advection`` to add an advective contribution to the
+diffusive species' fluxes from the LB fluid.
+Multiple species can be added to the EK system.
 
-    ek.add_species(species)
+To add species to the EK system::
 
-One can also add the species during the initialization step of the
-:class:`~espressomd.electrokinetics.Electrokinetics` class by defining
-the list variable ``species``::
+    system.ekcontainer.add(ek_species)
 
-    ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
+To remove species from the EK system::
 
-The variables ``density``, ``D``, and
-``valency`` must be set to properly initialize the diffusive species; the
-``ext_force_density`` is optional.
+    system.ekcontainer.remove(ek_species)
 
-.. _EK boundaries:
+Individual nodes and slices of the species lattice can be accessed and
+modified using the syntax outlined in :ref:`Reading and setting properties
+of single lattice nodes`.
 
-EK boundaries
-~~~~~~~~~~~~~
+As mentioned before, the LB density is completely decoupled from the
+electrokinetic densities. This has the advantage that greater freedom can
+be achieved in matching the internal parameters to an experimental system.
+Moreover, it is possible to choose parameters for which the LB is more stable.
 
-:class:`~espressomd.ekboundaries.EKBoundary` is used to set up
-internal (or external) boundaries for the electrokinetics algorithm in much
-the same way as the :class:`~espressomd.lbboundaries.LBBoundary` class is
-used for the LB fluid::
+Performance considerations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    ek_boundary = espressomd.ekboundaries.EKBoundary(charge_density=1.0, shape=my_shape)
-    system.ekboundaries.add(ek_boundary)
+The CPU implementation of the EK has an extra flag ``single_precision`` to
+use single-precision floating point values. These are approximately 10%
+faster than double-precision, at the cost of a small loss in precision.
 
-.. note:: Feature ``EK_BOUNDARIES`` required
+.. _Checkpointing EK:
 
-The major difference with the LB class is the option ``charge_density``,
-with which a boundary can be endowed with a volume charge density.
-To create a surface charge density, a combination of two
-oppositely charged boundaries, one inside the other, can be used. However,
-care should be taken to maintain the surface charge density when the value of ``agrid``
-is changed. Examples for possible shapes are wall, sphere, ellipsoid, cylinder,
-rhomboid and hollow conical frustum. We refer to the documentation of the
-:class:`espressomd.shapes` module for more possible shapes and information on
-the options associated to these shapes. In order to properly set up the
-boundaries, the ``charge_density`` and ``shape`` must be specified.
-
-.. _Output:
-
-Output
-~~~~~~
-
-.. _Fields:
-
-Fields
-""""""
+Checkpointing
+-------------
 
 ::
 
-    ek.write_vtk_boundary(path)
-    ek.write_vtk_density(path)
-    ek.write_vtk_velocity(path)
-    ek.write_vtk_potential(path)
+    ek.save_checkpoint(path, binary)
+    ek.load_checkpoint(path, binary)
 
-A property of the fluid field can be exported into a file in one go.
-Currently supported fields are: density, velocity, potential and boundary,
-which give the LB fluid density, the LB fluid velocity,
-the electrostatic potential, and the location and type of the
-boundaries, respectively. The boundaries can only be printed when the
-``EK_BOUNDARIES`` is compiled in. The output is a vtk-file, which is readable by
-visualization software such as ParaView [5]_ and Mayavi2 [6]_.
+The first command saves all of the EK nodes' properties to an ASCII
+(``binary=False``) or binary (``binary=True``) format respectively.
+The second command loads the EK nodes' properties.
+In both cases ``path`` specifies the location of the
+checkpoint file. This is useful for restarting a simulation either on the same
+machine or a different machine. Some care should be taken when using the binary
+format as the format of doubles can depend on both the computer being used as
+well as the compiler.
 
-::
+.. _EK VTK output:
 
-    species.write_vtk_flux(path)
-    species.write_vtk_density(path)
+VTK output
+----------
 
-These commands are similar to the above. They enable the
-export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
-number density and flux of species ``species``, respectively.
+The waLBerla library implements a globally-accessible VTK registry.
+A VTK stream can be attached to an EK actor to periodically write
+one or multiple fluid field data into a single file using
+:class:`~espressomd.electrokinetics.VTKOutput`::
 
-.. _Local quantities:
+    vtk_obs = ["density"]
+    # create a VTK callback that automatically writes every 10 EK steps
+    ek_vtk = espressomd.electrokinetics.VTKOutput(
+        identifier="ek_vtk_automatic", observables=vtk_obs, delta_N=10)
+    ek.add_vtk_writer(vtk=ek_vtk)
+    system.integrator.run(100)
+    # can be deactivated
+    ek_vtk.disable()
+    system.integrator.run(10)
+    ek_vtk.enable()
+    # create a VTK callback that writes only when explicitly called
+    ek_vtk_on_demand = espressomd.electrokinetics.VTKOutput(
+        identifier="ek_vtk_now", observables=vtk_obs)
+    ek.add_vtk_writer(vtk=ek_vtk_on_demand)
+    ek_vtk_on_demand.write()
 
-Local quantities
-""""""""""""""""
+Currently only supports the species density.
+By default, the properties of the current state
+of the species are written to disk on demand. To add a stream that writes
+to disk continuously, use the optional argument ``delta_N`` to indicate
+the level of subsampling. Such a stream can be deactivated.
 
-Local quantities like velocity or fluid density for single nodes can be accessed in the same way
-as for an LB fluid, see :ref:`Lattice-Boltzmann`. The only EK-specific quantity is the potential.
+The VTK format is readable by visualization software such as ParaView [5]_
+or Mayavi2 [6]_, as well as in |es| (see :ref:`Reading VTK files`).
+If you plan to use ParaView for visualization, note that also the particle
+positions can be exported using the VTK format
+(see :meth:`~espressomd.particle_data.ParticleList.writevtk`).
 
-::
+Important: these VTK files are written in multi-piece format, i.e. each MPI
+rank writes its local domain to a new piece in the VTK uniform grid to avoid
+a MPI reduction. ParaView can handle the topology reconstruction natively.
+However, when reading the multi-piece file with the Python ``vtk`` package,
+the topology must be manually reconstructed. In particular, calling the XML
+reader ``GetOutput()`` method directly after the update step will erase all
+topology information. While this is not an issue for VTK files obtained from
+simulations that ran with 1 MPI rank, for parallel simulations this will lead
+to 3D grids with incorrectly ordered data. Automatic topology reconstruction
+is available through :class:`~espressomd.io.vtk.VTKReader`::
 
-    ek[0, 0, 0].potential
-    ek[0, 0, 0].velocity
-    ek[0, 0, 0].boundary
+    import pathlib
+    import tempfile
+    import numpy as np
+    import espressomd
+    import espressomd.electrokinetics
+    import espressomd.io.vtk
 
-The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
+    system = espressomd.System(box_l=[12., 14., 10.])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.1
 
-::
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=1.)
+    species = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
+            advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer.tau = species.tau
+    system.ekcontainer.add(species)
+    system.integrator.run(10)
 
-    species[0, 0, 0].density
-    species[0, 0, 0].flux
+    vtk_reader = espressomd.io.vtk.VTKReader()
+    label_density = "density"
+
+    with tempfile.TemporaryDirectory() as tmp_directory:
+        path_vtk_root = pathlib.Path(tmp_directory)
+        label_vtk = "ek_vtk"
+        path_vtk = path_vtk_root / label_vtk / "simulation_step_0.vtu"
+
+        # write VTK file
+        ek_vtk = espressomd.electrokinetics.VTKOutput(
+            identifier=label_vtk, delta_N=0,
+            observables=["density"],
+            base_folder=str(path_vtk_root))
+        species.add_vtk_writer(vtk=ek_vtk)
+        ek_vtk.write()
+
+        # read VTK file
+        vtk_grids = vtk_reader.parse(path_vtk)
+        vtk_density = vtk_grids[label_density]
+
+        # check VTK values match node values
+        ek_density = np.copy(lbf[:, :, :].density)
+        np.testing.assert_allclose(vtk_density, ek_density, rtol=1e-10, atol=0.)
+
+.. _Setting up EK boundary conditions:
+
+Setting up boundary conditions
+------------------------------
+
+It is possible to impose a fixed density and a fixed flux on EK species.
+
+Under the hood, a boundary field is added to the blockforest, which contains
+pre-calculated information for the streaming operations.
+
+.. _Per-node EK boundary conditions:
+
+Per-node boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One can set (or update) the boundary conditions of individual nodes::
+
+    import espressomd
+    import espressomd.electrokinetics
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_species = espressomd.electrokinetics.EKSpecies(
+        kT=1.5, lattice=self.lattice, density=0.85, valency=0., diffusion=0.1,
+        advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer.tau = species.tau
+    system.ekcontainer.add(ek_species)
+    # set node fixed density boundary conditions
+    lbf[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(1.)
+    # update node fixed density boundary conditions
+    lbf[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(2.)
+    # remove node boundary conditions
+    lbf[0, 0, 0].boundary = None
+
+.. _Shape-based EK boundary conditions:
+
+Shape-based boundary conditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Adding a shape-based boundary is straightforward::
+
+    import espressomd
+    import espressomd.electrokinetics
+    import espressomd.shapes
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
+    system.time_step = 0.01
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_species = espressomd.electrokinetics.EKSpecies(
+        kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
+        advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer.tau = species.tau
+    system.ekcontainer.add(ek_species)
+    # set fixed density boundary conditions
+    wall = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
+    ek_species.add_boundary_from_shape(
+        shape=wall, value=1., boundary_type=espressomd.electrokinetics.DensityBoundary)
+    # clear fixed density boundary conditions
+    ek_species.clear_density_boundaries()
+
+For a position-dependent flux, the argument to ``value`` must be a 4D grid
+(the first three dimensions must match the EK grid shape, the fourth
+dimension has size 3 for the flux).
+
+For a complete description of all available shapes, refer to
+:mod:`espressomd.shapes`.
+
+.. _Prototyping new EK methods:
+
+Prototyping new EK methods
+--------------------------
+
+Start by installing the code generator dependencies:
+
+.. code-block:: bash
+
+    python3 -m pip install --user -c requirements.txt numpy sympy lbmpy pystencils islpy
+
+Next, edit the code generator script to configure new kernels, then execute it:
+
+.. code-block:: bash
+
+    python3 maintainer/walberla_kernels/generate_lb_kernels.py
+
+The script takes optional arguments to control the CPU or GPU architecture,
+as well as the floating-point precision. The generated source code files need
+to be written to :file:`src/walberla_bridge/src/electrokinetics/generated_kernels/`
+and :file:`src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/`.
+These steps can be automated with the convenience shell functions documented in
+:file:`maintainer/walberla_kernels/Readme.md`.
+Edit the :file:`CMakeLists.txt` file in the destination folders to include the
+new kernels in the build system.
+Then, adapt :file:`src/walberla_bridge/src/electrokinetics/EKinWalberlaImpl.hpp`
+to use the new EK kernels.
+
 
 .. [5]
    https://www.paraview.org/

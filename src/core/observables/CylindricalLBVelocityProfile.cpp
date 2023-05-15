@@ -33,8 +33,8 @@ namespace Observables {
 std::vector<double> CylindricalLBVelocityProfile::operator()() const {
   Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
   for (auto const &p : sampling_positions) {
-    auto const velocity = lb_lbfluid_get_interpolated_velocity(p) *
-                          lb_lbfluid_get_lattice_speed();
+    auto const velocity =
+        LB::get_interpolated_velocity(p) * LB::get_lattice_speed();
     auto const pos_shifted = p - transform_params->center();
     auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
         pos_shifted, transform_params->axis(), transform_params->orientation());

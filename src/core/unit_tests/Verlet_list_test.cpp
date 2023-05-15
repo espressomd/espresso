@@ -33,6 +33,7 @@ namespace utf = boost::unit_test;
 namespace bdata = boost::unit_test::data;
 
 #include "ParticleFactory.hpp"
+#include "particle_management.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
@@ -60,25 +61,6 @@ namespace espresso {
 // ESPResSo system instance
 static std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
-
-static auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
-                                       int p_id) {
-  boost::optional<Particle> result{};
-  auto p = ::cell_structure.get_local_particle(p_id);
-  if (p and not p->is_ghost()) {
-    if (comm.rank() == 0) {
-      result = *p;
-    } else {
-      comm.send(0, p_id, *p);
-    }
-  }
-  if (comm.rank() == 0 and not result) {
-    Particle p{};
-    comm.recv(boost::mpi::any_source, p_id, p);
-    result = p;
-  }
-  return result;
-}
 
 namespace Testing {
 /**

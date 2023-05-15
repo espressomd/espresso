@@ -37,15 +37,7 @@
 #endif
 
 #define ENGINE
-
 #define LB_ELECTROHYDRODYNAMICS
-#define LB_BOUNDARIES
-#ifdef CUDA
-#define LB_BOUNDARIES_GPU
-#define ELECTROKINETICS
-#define EK_BOUNDARIES
-#define EK_DEBUG
-#endif
 
 #define EXCLUSIONS
 

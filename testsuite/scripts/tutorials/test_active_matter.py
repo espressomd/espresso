@@ -18,10 +18,10 @@
 import numpy as np
 import unittest as ut
 import importlib_wrapper
+import os
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/active_matter/active_matter.py",
-    gpu=True,
     ED_N_SAMPLING_STEPS=100000,
     RECT_N_SAMPLES=150,
     HYDRO_N_STEPS=150
@@ -73,6 +73,13 @@ class TestActMat(ut.TestCase):
         self.assertGreaterEqual(curl_percent[18, 16], threshold_percent)
         self.assertLessEqual(curl_percent[16, 16], -threshold_percent)
         self.assertLessEqual(curl_percent[18, 20], -threshold_percent)
+
+    def test_file_generation(self):
+        for name in ["position_0.vtk", "lb_velocity_0.vtu"]:
+            filepath = os.path.join(tutorial.vtk_outdir, name)
+            self.assertTrue(
+                os.path.isfile(filepath),
+                filepath + " not created")
 
 
 if __name__ == "__main__":

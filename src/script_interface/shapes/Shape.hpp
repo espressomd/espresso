@@ -51,6 +51,20 @@ public:
       return std::vector<Variant>{dist, vec};
     }
 
+    if (name == "is_inside") {
+      auto const pos = get_value<Utils::Vector3d>(params.at("position"));
+      auto is_in = shape()->is_inside(pos);
+      return {is_in};
+    }
+
+    if (name == "rasterize") {
+      auto const grid_size = get_value<Utils::Vector3i>(params.at("grid_size"));
+      auto const grid_spacing = get_value<double>(params.at("grid_spacing"));
+      auto const grid_offset = get_value<double>(params.at("grid_offset"));
+      auto raster = shape()->rasterize(grid_size, grid_spacing, grid_offset);
+      return {raster};
+    }
+
     return {};
   }
 };

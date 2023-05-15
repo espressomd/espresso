@@ -130,8 +130,10 @@ void on_node_grid_change();
 
 unsigned global_ghost_flags();
 
-/** called every time the walls for the lb fluid are changed */
-void on_lbboundary_change();
+/** @brief Called when the LB boundary conditions are changed
+ *  (geometry, slip velocity, or both).
+ */
+void on_lb_boundary_conditions_change();
 
 /** @brief Update particles with properties depending on other particles,
  *  namely virtual sites and ICC charges.

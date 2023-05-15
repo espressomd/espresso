@@ -19,14 +19,22 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
-#include "BoxGeometry.hpp"
-#include "OptionalCounter.hpp"
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "grid.hpp"
 
+#include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
+
+#include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/optional.hpp>
 
 #include <cstdint>
 #include <unordered_set>
+#include <vector>
+
+using OptionalCounter = boost::optional<Utils::Counter<uint64_t>>;
 
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.
@@ -58,6 +66,69 @@ void lb_lbcoupling_activate();
  */
 void lb_lbcoupling_deactivate();
 
+/**
+ * @brief Check if a position is within the local LB domain plus halo.
+ *
+ * @param pos Position to check
+ *
+ * @return True iff the point is inside of the domain.
+ */
+bool in_local_halo(Utils::Vector3d const &pos);
+
+/** @brief Determine if a given particle should be coupled.
+ *  In certain cases, there may be more than one ghost for the same particle.
+ *  To make sure, that these are only coupled once, ghosts' ids are stored
+ *  in an unordered_set.
+ */
+bool should_be_coupled(const Particle &p,
+                       std::unordered_set<int> &coupled_ghost_particles);
+
+/**
+ * @brief Add a force to the lattice force density.
+ * @param pos Position of the force
+ * @param force Force in MD units.
+ * @param time_step MD time step.
+ */
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
+                  double time_step);
+
+Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
+                                           const OptionalCounter &rng_counter);
+
+// internal function exposed for unit testing
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
+                                               const BoxGeometry &box);
+
+// internal function exposed for unit testing
+void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
+                     const OptionalCounter &rng_counter, double time_step);
+
+// internal function exposed for unit testing
+void add_swimmer_force(Particle const &p, double time_step);
+
+/**
+ * @brief Calculate particle drift velocity offset due to ENGINE and
+ * ELECTROHYDRODYNAMICS.
+ */
+Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p);
+
+void mpi_bcast_lb_particle_coupling();
+
+/** @brief Calculate drag force on a single particle.
+ *
+ *  See section II.C. @cite ahlrichs99a
+ *
+ *  @param[in] p           The coupled particle
+ *  @param[in] shifted_pos The particle position with optional shift
+ *  @param[in] vel_offset  Velocity offset to be added to interpolated LB
+ *                         velocity before calculating the force
+ *
+ *  @return The viscous coupling force
+ */
+Utils::Vector3d lb_drag_force(Particle const &p,
+                              Utils::Vector3d const &shifted_pos,
+                              Utils::Vector3d const &vel_offset);
+
 struct LB_Particle_Coupling {
   OptionalCounter rng_counter_coupling = {};
   /** @brief Friction coefficient for the particle coupling. */
@@ -74,32 +145,7 @@ private:
   }
 };
 
-// expose functions that are also used to couple lb_inertialess_tracers
-template <class T, std::size_t N>
-using Box = std::pair<Utils::Vector<T, N>, Utils::Vector<T, N>>;
-
-/**
- * @brief Check if a position is in a box.
- *
- * The left boundary belong to the box, the
- * right one does not. Periodic boundaries are
- * not considered.
- *
- * @param pos Position to check
- * @param box Box to check
- *
- * @return True iff the point is inside of the box.
- */
-template <class T, std::size_t N>
-bool in_box(Utils::Vector<T, N> const &pos, Box<T, N> const &box) {
-  return (pos >= box.first) and (pos < box.second);
-}
-
-bool in_local_halo(Utils::Vector3d const &pos);
-std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
-                                               const BoxGeometry &box);
-bool is_ghost_for_local_particle(const Particle &p);
-bool should_be_coupled(const Particle &p,
-                       std::unordered_set<int> &coupled_ghost_particles);
+// internal global exposed for unit testing
+extern LB_Particle_Coupling lb_particle_coupling;
 
 #endif

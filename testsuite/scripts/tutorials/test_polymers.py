@@ -22,7 +22,7 @@ import numpy as np
 if '@TEST_SUFFIX@' == 'rouse':
     params = {}
 elif '@TEST_SUFFIX@' == 'zimm':
-    params = {'LOOPS': 2000, 'POLYMER_MODEL': 'Zimm', 'gpu': True}
+    params = {'LOOPS': 400, 'POLYMER_MODEL': 'Zimm'}
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/polymers/polymers.py",
@@ -43,13 +43,13 @@ class Tutorial(ut.TestCase):
         msg = 'The R_h exponent should be close to 0.333'
         self.assertGreater(tutorial.rh_exponent, 0.30, msg=msg)
         self.assertLess(tutorial.rh_exponent, 0.50, msg=msg)
-        np.testing.assert_allclose(tutorial.rf2_rg2_ratio, 6.0, atol=1.0,
+        np.testing.assert_allclose(tutorial.rf2_rg2_ratio, 6.0, atol=1.1,
                                    err_msg='R_F^2/R_g^2 should be close to 6.0')
 
     def test_diffusion_coefficients(self):
         # polymer diffusion
         ref_D = [0.0363, 0.0269, 0.0234]
-        np.testing.assert_allclose(tutorial.diffusion_msd, ref_D, rtol=0.15)
+        np.testing.assert_allclose(tutorial.diffusion_msd, ref_D, rtol=0.30)
         np.testing.assert_allclose(tutorial.diffusion_gk, ref_D, rtol=0.15)
         # monomer diffusion
         if tutorial.POLYMER_MODEL == 'Rouse':

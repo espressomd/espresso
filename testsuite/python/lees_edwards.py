@@ -299,20 +299,19 @@ class LeesEdwards(ut.TestCase):
         pos = system.box_l - 0.01
         vel = np.array([0, 1, 0])
         p = system.part.add(pos=pos, v=vel)
-        old_x = p.pos_folded[0]
 
+        crossing_time = system.time
         system.integrator.run(1)
-        new_x = p.pos[0]
-
         np.testing.assert_almost_equal(
             p.lees_edwards_offset, 
-            -(new_x - old_x))
+            get_lin_pos_offset(crossing_time, **params_lin))
         np.testing.assert_almost_equal(p.lees_edwards_flag, -1)
 
         system.integrator.run(1)  # no boundary crossing
         np.testing.assert_almost_equal(
             p.lees_edwards_offset, 
-            -(new_x - old_x))  # unchanged
+            get_lin_pos_offset(crossing_time, **params_lin))
+
         np.testing.assert_almost_equal(p.lees_edwards_flag, 0)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")

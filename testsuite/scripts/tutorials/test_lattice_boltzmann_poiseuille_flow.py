@@ -21,8 +21,7 @@ import numpy as np
 
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/lattice_boltzmann/lattice_boltzmann_poiseuille_flow.py",
-    gpu=True)
+    "@TUTORIALS_DIR@/lattice_boltzmann/lattice_boltzmann_poiseuille_flow.py")
 
 
 @skipIfMissingFeatures

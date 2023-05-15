@@ -158,7 +158,6 @@ using Vector3d = VectorXd<3>;
 using Vector4d = VectorXd<4>;
 using Vector6d = VectorXd<6>;
 using Vector9d = VectorXd<9>;
-using Vector19d = VectorXd<19>;
 
 template <std::size_t N> using VectorXf = Vector<float, N>;
 using Vector3f = VectorXf<3>;

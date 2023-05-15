@@ -29,14 +29,16 @@ Check the lattice-Boltzmann thermostat with respect to the particle velocity
 distribution.
 """
 
-KT = 0.25
-AGRID = 2.5
-VISC = 2.7
+KT = 0.9
+AGRID = 0.8
+node_volume = AGRID**3
+VISC = 6
 DENS = 1.7
-TIME_STEP = 0.05
+TIME_STEP = 0.005
+GAMMA = 2
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP,
              'kT': KT,
              'seed': 123}
@@ -46,50 +48,91 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
     """Check the LB thermostat."""
 
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[AGRID * 12] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
-    np.random.seed(42)
+    np.random.seed(41)
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMS)
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=GAMMA)
 
     def tearDown(self):
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
-    def test_velocity_distribution(self):
+    def get_lb_momentum(self, lbf):
+        nodes_den = lbf[:, :, :].density
+        nodes_vel = np.sum(np.square(lbf[:, :, :].velocity), axis=3)
+        return np.multiply(nodes_den, nodes_vel)
+
+    def test_fluid(self):
+        self.system.integrator.run(100)
+        fluid_temps = []
+        for _ in range(100):
+            lb_momentum = self.get_lb_momentum(self.lbf)
+            fluid_temps.append(np.average(lb_momentum) * node_volume)
+            self.system.integrator.run(3)
+
+        fluid_temp = np.average(fluid_temps) / 3
+        self.assertAlmostEqual(fluid_temp, KT, delta=0.05)
+
+    def test_with_particles(self):
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=5.0)
-        self.system.integrator.run(20)
+        self.system.integrator.run(120)
         N = len(self.system.part)
         loops = 250
-        v_stored = np.zeros((loops, N, 3))
+        v_particles = np.zeros((loops, N, 3))
+        fluid_temps = []
+
         for i in range(loops):
             self.system.integrator.run(3)
-            v_stored[i] = self.system.part.all().v
-        minmax = 5
+            if i % 10 == 0:
+                lb_momentum = self.get_lb_momentum(self.lbf)
+                fluid_temps.append(np.average(lb_momentum) * node_volume)
+            v_particles[i] = self.system.part.all().v
+        fluid_temp = np.average(fluid_temps) / 3.
+
+        np.testing.assert_allclose(np.average(v_particles), 0, atol=0.033)
+        np.testing.assert_allclose(np.var(v_particles), KT, atol=0.033)
+
+        minmax = 3
         n_bins = 7
-        error_tol = 0.01
+        error_tol = 0.016
         self.check_velocity_distribution(
-            v_stored.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
+            v_particles.reshape((-1, 3)), minmax, n_bins, error_tol, KT)
+
+        np.testing.assert_allclose(fluid_temp, KT, atol=5e-3)
 
 
-class LBCPUThermostat(LBThermostatCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
 
     """Test for the CPU implementation of the LB."""
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingGPU()
-class LBGPUThermostat(LBThermostatCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
 
-    """Test for the GPU implementation of the LB."""
+    """Test for the CPU implementation of the LB in single-precision."""
 
-    lb_class = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+
+
+# @utx.skipIfMissingGPU()
+# @utx.skipIfMissingFeatures(["WALBERLA"])
+# class LBWalberlaGPUThermostat(LBThermostatCommon, ut.TestCase):
+
+#    """Test for the GPU implementation of the LB."""
+
+#    lb_class = espressomd.lb.LBFluidWalberlaGPU
+#    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':

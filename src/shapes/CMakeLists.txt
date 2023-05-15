@@ -20,8 +20,8 @@
 add_library(
   espresso_shapes SHARED
   src/HollowConicalFrustum.cpp src/Cylinder.cpp src/Ellipsoid.cpp
-  src/Rhomboid.cpp src/SimplePore.cpp src/Slitpore.cpp src/Sphere.cpp
-  src/SpheroCylinder.cpp src/Torus.cpp src/Wall.cpp)
+  src/Rhomboid.cpp src/Shape.cpp src/SimplePore.cpp src/Slitpore.cpp
+  src/Sphere.cpp src/SpheroCylinder.cpp src/Torus.cpp src/Wall.cpp)
 add_library(espresso::shapes ALIAS espresso_shapes)
 set_target_properties(espresso_shapes PROPERTIES CXX_CLANG_TIDY
                                                  "${ESPRESSO_CXX_CLANG_TIDY}")

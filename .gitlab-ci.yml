@@ -68,7 +68,7 @@ style_doxygen:
     - mkdir build
     - cd build
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso
@@ -87,6 +87,7 @@ default:
      myconfig: 'default'
      with_coverage: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
   script:
@@ -94,6 +95,7 @@ default:
   tags:
     - espresso
     - no-cuda
+    - numa
 
 maxset:
   <<: *global_job_definition
@@ -107,6 +109,7 @@ maxset:
      myconfig: 'maxset'
      with_coverage: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
      cmake_params: '-D ESPRESSO_TEST_NP=8'
@@ -116,6 +119,7 @@ maxset:
     - espresso
     - no-cuda
     - numa
+    - avx2
 
 no_rotation:
   <<: *global_job_definition
@@ -169,6 +173,7 @@ clang-sanitizer:
      with_asan: 'true'
      with_ubsan: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -210,6 +215,7 @@ cuda11-coverage:
      with_coverage: 'true'
      check_skip_long: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -232,6 +238,8 @@ cuda11-maxset:
      test_timeout: '900'
      srcdir: '${CI_PROJECT_DIR}'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -256,6 +264,8 @@ tutorials-samples-maxset:
      with_coverage: 'false'
      with_coverage_python: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
@@ -281,6 +291,8 @@ tutorials-samples-default:
      with_cuda: 'true'
      with_coverage: 'false'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
@@ -306,14 +318,14 @@ tutorials-samples-empty:
      myconfig: 'empty'
      with_cuda: 'true'
      with_coverage: 'false'
-     with_scafacos: 'true'
+     with_scafacos: 'false'
+     with_walberla: 'false'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
      make_check_benchmarks: 'true'
      test_timeout: '1200'
-     with_scafacos: 'false'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -334,6 +346,8 @@ tutorials-samples-no-gpu:
      with_cuda: 'true'
      with_coverage: 'false'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
@@ -362,6 +376,7 @@ installation:
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      srcdir: '${CI_PROJECT_DIR}'
      build_type: 'Release'
@@ -396,6 +411,7 @@ empty:
      with_cuda: 'true'
      with_static_analysis: 'true'
      with_scafacos: 'false'
+     with_walberla: 'false'
      with_stokesian_dynamics: 'false'
      with_coverage: 'false'
      with_coverage_python: 'true'

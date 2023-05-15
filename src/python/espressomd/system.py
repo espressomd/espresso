@@ -29,11 +29,10 @@ from . import cuda_init
 from . import collision_detection
 from . import comfixed
 from . import constraints
-from . import ekboundaries
 from . import galilei
 from . import interactions
 from . import integrate
-from . import lbboundaries
+from . import electrokinetics
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
@@ -91,11 +90,11 @@ class System(ScriptInterfaceHelper):
     collision_detection: :class:`espressomd.collision_detection.CollisionDetection`
     comfixed: :class:`espressomd.comfixed.ComFixed`
     constraints: :class:`espressomd.constraints.Constraints`
+    ekcontainer: :class:`espressomd.electrokinetics.EKContainer`
+    ekreactions: :class:`espressomd.electrokinetics.EKReactions`
     cuda_init_handle: :class:`espressomd.cuda_init.CudaInitHandle`
-    ekboundaries: :class:`espressomd.ekboundaries.EKBoundaries`
     galilei: :class:`espressomd.galilei.GalileiTransform`
     integrator: :class:`espressomd.integrate.IntegratorHandle`
-    lbboundaries: :class:`espressomd.lbboundaries.LBBoundaries`
     lees_edwards: :class:`espressomd.lees_edwards.LeesEdwards`
     non_bonded_inter: :class:`espressomd.interactions.NonBondedInteractions`
     part: :class:`espressomd.particle_data.ParticleList`
@@ -210,10 +209,10 @@ class System(ScriptInterfaceHelper):
         self.constraints = constraints.Constraints()
         if has_features("CUDA"):
             self.cuda_init_handle = cuda_init.CudaInitHandle()
+        if has_features("WALBERLA"):
+            self.ekcontainer = electrokinetics.EKContainer()
+            self.ekreactions = electrokinetics.EKReactions()
         self.galilei = galilei.GalileiTransform()
-        if has_features("LB_BOUNDARIES") or has_features("LB_BOUNDARIES_GPU"):
-            self.lbboundaries = lbboundaries.LBBoundaries()
-            self.ekboundaries = ekboundaries.EKBoundaries()
         self.lees_edwards = lees_edwards.LeesEdwards()
         self.non_bonded_inter = interactions.NonBondedInteractions()
         self.part = particle_data.ParticleList()
@@ -243,14 +242,14 @@ class System(ScriptInterfaceHelper):
             checkpointable_properties.append("_active_virtual_sites_handle")
         checkpointable_properties += [
             "non_bonded_inter", "bonded_inter", "cell_system", "lees_edwards",
-            "part", "actors", "analysis", "auto_update_accumulators",
-            "comfixed", "constraints", "galilei", "thermostat",
-            "bond_breakage"
+            "part", "analysis", "auto_update_accumulators",
+            "comfixed", "constraints", "galilei", "bond_breakage"
         ]
-        if has_features("LB_BOUNDARIES") or has_features("LB_BOUNDARIES_GPU"):
-            checkpointable_properties.append("lbboundaries")
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")
+        checkpointable_properties += ["actors", "thermostat"]
+        if has_features("WALBERLA"):
+            checkpointable_properties += ["ekcontainer", "ekreactions"]
 
         odict = collections.OrderedDict()
         for property_name in checkpointable_properties:

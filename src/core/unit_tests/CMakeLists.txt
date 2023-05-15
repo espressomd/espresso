@@ -59,8 +59,6 @@ unit_test(NAME lees_edwards_test SRC lees_edwards_test.cpp DEPENDS
           espresso::core)
 unit_test(NAME BoxGeometry_test SRC BoxGeometry_test.cpp DEPENDS espresso::core)
 unit_test(NAME LocalBox_test SRC LocalBox_test.cpp DEPENDS espresso::core)
-unit_test(NAME Lattice_test SRC Lattice_test.cpp DEPENDS espresso::core)
-unit_test(NAME lb_exceptions SRC lb_exceptions.cpp DEPENDS espresso::core)
 unit_test(NAME Verlet_list_test SRC Verlet_list_test.cpp DEPENDS espresso::core
           NUM_PROC 4)
 unit_test(NAME VerletCriterion_test SRC VerletCriterion_test.cpp DEPENDS
@@ -78,4 +76,15 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
   # AppleClang doesn't implement C++17's mathematical special functions
   unit_test(NAME specfunc_test SRC specfunc_test.cpp DEPENDS espresso::utils
             espresso::core)
+endif()
+unit_test(NAME lb_particle_coupling_test SRC lb_particle_coupling_test.cpp
+          DEPENDS espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+unit_test(NAME ek_interface_test SRC ek_interface_test.cpp DEPENDS
+          espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+if(ESPRESSO_BUILD_WITH_WALBERLA)
+  target_link_libraries(
+    lb_particle_coupling_test PRIVATE espresso::walberla
+                                      espresso::walberla::cpp_flags)
+  target_link_libraries(ek_interface_test PRIVATE espresso::walberla
+                                                  espresso::walberla::cpp_flags)
 endif()

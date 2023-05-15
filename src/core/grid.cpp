@@ -44,18 +44,6 @@ Utils::Vector3i node_grid{};
 
 void init_node_grid() { grid_changed_n_nodes(); }
 
-int map_position_node_array(const Utils::Vector3d &pos) {
-  auto const f_pos = folded_position(pos, box_geo);
-
-  Utils::Vector3i im;
-  for (unsigned int i = 0; i < 3; i++) {
-    im[i] = static_cast<int>(std::floor(f_pos[i] / local_geo.length()[i]));
-    im[i] = std::clamp(im[i], 0, node_grid[i] - 1);
-  }
-
-  return Utils::Mpi::cart_rank(comm_cart, im);
-}
-
 Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm) {
   return Utils::Mpi::cart_coords<3>(comm, comm.rank());
 }

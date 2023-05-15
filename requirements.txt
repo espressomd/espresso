@@ -2,7 +2,7 @@
 cython>=0.29.21,<3.0
 setuptools>=59.6.0
 # required scientific packages
-numpy>=1.21.5
+numpy>=1.23
 h5py>=3.6.0
 # optional scientific packages
 scipy>=1.8.0
@@ -12,6 +12,11 @@ matplotlib>=3.5.1
 vtk>=9.1.0
 PyOpenGL>=3.1.5
 pygame>=2.1.2
+# waLBerla dependencies
+pystencils==1.2
+lbmpy==1.2
+sympy==1.9
+islpy==2022.2.1
 # CI-related
 requests>=2.25.1
 lxml>=4.8.0

@@ -23,20 +23,19 @@ import numpy as np
 
 import espressomd.math
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.observables
 import espressomd.shapes
 
 AGRID = .5
 EXT_FORCE = .1
-VISC = 2.7
+KINEMATIC_VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.1
+TIME_STEP = 0.05
 BOX_L = 8.0
 EFFECTIVE_RADIUS = BOX_L / 2.0 - 1.0
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'kinematic_viscosity': KINEMATIC_VISC,
              'tau': TIME_STEP}
 
 OBS_PARAMS = {'n_r_bins': 6,
@@ -85,7 +84,6 @@ class LBPoiseuilleCommon:
 
     def tearDown(self):
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
 
     def prepare(self):
         """
@@ -99,21 +97,20 @@ class LBPoiseuilleCommon:
         local_lb_params = LB_PARAMS.copy()
         local_lb_params['ext_force_density'] = np.array(
             self.params['axis']) * EXT_FORCE
-        self.lbf = self.lb_class(**local_lb_params)
+        self.lbf = self.lb_class(**local_lb_params, **self.lb_params)
         self.system.actors.add(self.lbf)
 
         cylinder_shape = espressomd.shapes.Cylinder(
             center=self.system.box_l / 2.0, axis=self.params['axis'],
             direction=-1, radius=EFFECTIVE_RADIUS, length=BOX_L * 1.5)
-        cylinder = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
-        self.system.lbboundaries.add(cylinder)
+        self.lbf.add_boundary_from_shape(cylinder_shape)
 
         # simulate until profile converges
         mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
-        while diff > 0.001:
-            self.system.integrator.run(1)
+        while diff > 1E-5:
+            self.system.integrator.run(5)
             new_val = self.lbf[mid_indices].velocity[
                 np.nonzero(self.params['axis'])[0]]
             diff = abs(new_val - old_val)
@@ -143,8 +140,10 @@ class LBPoiseuilleCommon:
             positions[1:-1] - BOX_L / 2.0,
             EFFECTIVE_RADIUS,
             EXT_FORCE,
-            VISC * DENS)
-        np.testing.assert_allclose(v_measured, v_expected, atol=0.02, rtol=0.)
+            KINEMATIC_VISC * DENS)
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
+        np.testing.assert_allclose(v_measured + f_half_correction,
+                                   v_expected, atol=0.01, rtol=0.)
 
     def check_observable(self):
         if self.params['axis'] == [1, 0, 0]:
@@ -168,13 +167,15 @@ class LBPoiseuilleCommon:
             r,
             EFFECTIVE_RADIUS,
             EXT_FORCE,
-            VISC * DENS)
+            KINEMATIC_VISC * DENS)
         v_r, v_phi, v_z = np.copy(obs.calculate()).reshape([-1, 3]).T
         # check velocity is zero for the radial and azimuthal components
         np.testing.assert_allclose(v_r, 0., atol=1e-4, rtol=0.)
         np.testing.assert_allclose(v_phi, 0., atol=1e-4, rtol=0.)
         # check velocity is correct in the axial component
-        np.testing.assert_allclose(v_z, v_expected, atol=2.6e-3, rtol=0.)
+        f_half_correction = 0.5 * self.system.time_step * EXT_FORCE * AGRID**3 / DENS
+        np.testing.assert_allclose(v_z + f_half_correction,
+                                   v_expected, atol=3.6e-3, rtol=0.)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
@@ -195,21 +196,22 @@ class LBPoiseuilleCommon:
         self.check_observable()
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBCPUPoiseuille(LBPoiseuilleCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBGPUPoiseuille(LBPoiseuilleCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBPoiseuilleWalberlaSinglePrecision(LBPoiseuilleCommon, ut.TestCase):
 
-    """Test for the GPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in single-precision."""
 
-    lb_class = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':

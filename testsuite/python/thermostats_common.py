@@ -43,10 +43,11 @@ class ThermostatsCommon:
                 vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
             data = hist[0] / float(vel.shape[0])
             bins = hist[1]
+            expected = []
             for j in range(n_bins):
-                found = data[j]
-                expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertAlmostEqual(found, expected, delta=error_tol)
+                expected.append(single_component_maxwell(
+                    bins[j], bins[j + 1], kT))
+            np.testing.assert_allclose(data[:n_bins], expected, atol=error_tol)
 
     def test_00_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""

@@ -21,6 +21,7 @@ import unittest as ut
 import unittest_generator as utg
 import numpy as np
 import pathlib
+import tempfile
 
 import espressomd
 import espressomd.checkpointing
@@ -35,7 +36,7 @@ import espressomd.accumulators
 import espressomd.observables
 import espressomd.io.writer
 import espressomd.lb
-import espressomd.lbboundaries
+import espressomd.electrokinetics
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
@@ -45,7 +46,7 @@ config = utg.TestGenerator()
 modes = config.get_modes()
 
 # use a box with 3 different dimensions, unless DipolarP3M is used
-system = espressomd.System(box_l=[12.0, 14.0, 16.0])
+system = espressomd.System(box_l=[12.0, 8.0, 16.0])
 if 'DP3M' in modes:
     system.box_l = 3 * [float(np.max(system.box_l))]
 system.cell_system.skin = 0.1
@@ -56,6 +57,7 @@ system.min_global_cut = 2.0
 system.max_oif_objects = 5
 
 # create checkpoint folder
+config.cleanup_old_checkpoint()
 checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
 path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
@@ -71,27 +73,43 @@ if 'INT.NPT' not in modes:
     system.lees_edwards.set_boundary_conditions(
         shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
-lbf_actor = None
-if 'LB.CPU' in modes:
-    lbf_actor = espressomd.lb.LBFluid
-    has_lbb = espressomd.has_features("LB_BOUNDARIES")
-elif 'LB.GPU' in modes and espressomd.gpu_available():
-    lbf_actor = espressomd.lb.LBFluidGPU
-    has_lbb = espressomd.has_features("LB_BOUNDARIES_GPU")
-if lbf_actor:
+lbf_class = None
+lb_lattice = None
+if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
+    lbf_class = espressomd.lb.LBFluidWalberla
+    lb_lattice = espressomd.lb.LatticeWalberla(agrid=2.0, n_ghost_layers=1)
+if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
-    lbf = lbf_actor(agrid=0.5, visc=1.3, dens=1.5, tau=0.01, gamma_odd=0.2,
-                    gamma_even=0.3)
-    system.actors.add(lbf)
-    if 'THERM.LB' in modes:
-        system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if has_lbb:
-        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-            shape=espressomd.shapes.Wall(normal=(1, 0, 0), dist=0.5), velocity=(1e-4, 1e-4, 0)))
-        system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-            shape=espressomd.shapes.Wall(normal=(-1, 0, 0), dist=-(system.box_l[0] - 0.5)), velocity=(0, 0, 0)))
+    lbf = lbf_class(
+        lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5, tau=0.01)
+    wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=1.0)
+    wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
+                                   dist=-(system.box_l[0] - 1.0))
+    lbf.add_boundary_from_shape(wall1, (1e-4, 1e-4, 0))
+    lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
-p1 = system.part.add(id=0, pos=[1.0] * 3)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
+    ek_species = espressomd.electrokinetics.EKSpecies(
+        lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
+        advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
+        single_precision=False, tau=system.time_step)
+    system.ekcontainer.solver = ek_solver
+    system.ekcontainer.tau = ek_species.tau
+    system.ekcontainer.add(ek_species)
+    ek_species.add_boundary_from_shape(
+        shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
+        boundary_type=espressomd.electrokinetics.FluxBoundary)
+    ek_species.add_boundary_from_shape(
+        shape=wall2, value=1e-3 * np.array([4., 5., 6.]),
+        boundary_type=espressomd.electrokinetics.FluxBoundary)
+    ek_species.add_boundary_from_shape(
+        shape=wall1, value=1.,
+        boundary_type=espressomd.electrokinetics.DensityBoundary)
+    ek_species.add_boundary_from_shape(
+        shape=wall2, value=2.,
+        boundary_type=espressomd.electrokinetics.DensityBoundary)
+
+p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
 if espressomd.has_features('ELECTROSTATICS'):
@@ -103,7 +121,7 @@ if espressomd.has_features('DIPOLES'):
     p2.dip = (7.3, 6.1, -4)
 
 if espressomd.has_features('EXCLUSIONS'):
-    system.part.add(id=2, pos=[2.0] * 3, exclusions=[0, 1])
+    system.part.add(id=2, pos=[2.0, 2.0, 2.0], exclusions=[0, 1])
 
 # place particles at the interface between 2 MPI nodes
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
@@ -339,22 +357,60 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
             "p2nfft_r_cut": "11",
             "p2nfft_alpha": "0.37"}))
 
-if lbf_actor:
-    m = np.pi / 12
-    nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
-    ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
-    nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+if lbf_class:
+    system.actors.add(lbf)
+    if 'THERM.LB' in modes:
+        system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
+    m = np.pi / 12
     grid_3D = np.fromfunction(
         lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-        (nx, ny, nz), dtype=float)
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                lbf[i, j, k].population = grid_3D[i, j, k] * np.arange(1, 20)
+        lbf.shape, dtype=float)
+    lbf[:, :, :].population = np.einsum(
+        'abc,d->abcd', grid_3D, np.arange(1, 20))
+    lbf[:, :, :].last_applied_force = np.einsum(
+        'abc,d->abcd', grid_3D, np.arange(1, 4))
     # save LB checkpoint file
     lbf_cpt_path = path_cpt_root / "lb.cpt"
     lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
+    # save EK checkpoint file
+    ek_species[:, :, :].density = grid_3D
+    ek_cpt_path = path_cpt_root / "ek.cpt"
+    ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
+    # setup VTK folder
+    vtk_suffix = config.test_name
+    vtk_root = pathlib.Path("vtk_out")
+    # create LB VTK callbacks
+    lb_vtk_auto_id = f"auto_lb_{vtk_suffix}"
+    lb_vtk_manual_id = f"manual_lb_{vtk_suffix}"
+    config.recursive_unlink(vtk_root / lb_vtk_auto_id)
+    config.recursive_unlink(vtk_root / lb_vtk_manual_id)
+    lb_vtk_auto = espressomd.lb.VTKOutput(
+        identifier=lb_vtk_auto_id, delta_N=1,
+        observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
+    lbf.add_vtk_writer(vtk=lb_vtk_auto)
+    lb_vtk_auto.disable()
+    lb_vtk_manual = espressomd.lb.VTKOutput(
+        identifier=lb_vtk_manual_id, delta_N=0,
+        observables=('density',), base_folder=str(vtk_root))
+    lbf.add_vtk_writer(vtk=lb_vtk_manual)
+    lb_vtk_manual.write()
+    # create EK VTK callbacks
+    ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
+    ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
+    config.recursive_unlink(vtk_root / ek_vtk_auto_id)
+    config.recursive_unlink(vtk_root / ek_vtk_manual_id)
+    ek_vtk_auto = espressomd.electrokinetics.VTKOutput(
+        identifier=ek_vtk_auto_id,
+        observables=('density',), delta_N=1, base_folder=str(vtk_root))
+    ek_species.add_vtk_writer(vtk=ek_vtk_auto)
+    ek_vtk_auto.disable()
+    ek_vtk_manual = espressomd.electrokinetics.VTKOutput(
+        identifier=ek_vtk_manual_id,
+        observables=('density',), delta_N=0, base_folder=str(vtk_root))
+    ek_species.add_vtk_writer(vtk=ek_vtk_manual)
+    ek_vtk_manual.write()
+
 
 # set various properties
 p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
@@ -383,9 +439,9 @@ if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
         p3.gamma_rot = 2. * gamma
 if espressomd.has_features('ENGINE'):
     p3.swimming = {"f_swim": 0.03}
-if espressomd.has_features('ENGINE') and lbf_actor:
+if espressomd.has_features('ENGINE') and lbf_class:
     p4.swimming = {"v_swim": 0.02, "mode": "puller", "dipole_length": 1.}
-if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_actor:
+if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
 
 # h5md output
@@ -418,7 +474,7 @@ class TestCheckpoint(ut.TestCase):
         self.assertTrue(checkpoint_filepath.is_file(),
                         "checkpoint file not created")
 
-        if lbf_actor:
+        if lbf_class:
             self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
 
@@ -427,7 +483,7 @@ class TestCheckpoint(ut.TestCase):
             local_obj = "local"  # pylint: disable=unused-variable
             checkpoint.register("local_obj")
 
-    @ut.skipIf(lbf_actor is None, "Skipping test due to missing mode.")
+    @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
     def test_lb_checkpointing_exceptions(self):
         '''
         Check the LB checkpointing exception mechanism. Write corrupted
@@ -435,12 +491,21 @@ class TestCheckpoint(ut.TestCase):
         '''
 
         # check exception mechanism
-        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
-            invalid_path = lbf_cpt_path.parent / "unknown_dir" / "lb.cpt"
+        lbf_cpt_root = lbf_cpt_path.parent
+        with self.assertRaisesRegex(RuntimeError, "could not open file"):
+            invalid_path = lbf_cpt_root / "unknown_dir" / "lb.cpt"
             lbf.save_checkpoint(str(invalid_path), lbf_cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, "unit test error"):
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -1)
+        with self.assertRaisesRegex(RuntimeError, "could not write to"):
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -2)
+        with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), -3)
+        with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
+            lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), 2)
+
+        # deactivate LB actor
         system.actors.remove(lbf)
-        with self.assertRaisesRegex(RuntimeError, 'one needs to have already initialized the LB fluid'):
-            lbf.load_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
 
         # read the valid LB checkpoint file
         lbf_cpt_data = lbf_cpt_path.read_bytes()
@@ -452,13 +517,68 @@ class TestCheckpoint(ut.TestCase):
         with open(cpt_path.format("-extra-data"), "wb") as f:
             f.write(lbf_cpt_data + lbf_cpt_data[-8:])
         if lbf_cpt_mode == 0:
-            boxsize, data = lbf_cpt_data.split(b"\n", 1)
+            boxsize, popsize, data = lbf_cpt_data.split(b"\n", 2)
             # write checkpoint file with incorrectly formatted data
             with open(cpt_path.format("-wrong-format"), "wb") as f:
-                f.write(boxsize + b"\ntext string\n" + data)
+                f.write(boxsize + b"\n" + popsize + b"\ntext string\n" + data)
+            # write checkpoint file with different box dimensions
+            with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
+                f.write(b"2" + boxsize + b"\n" + popsize + b"\n" + data)
+            # write checkpoint file with different population size
+            with open(cpt_path.format("-wrong-popsize"), "wb") as f:
+                f.write(boxsize + b"\n" + b"2" + popsize + b"\n" + data)
+
+    @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
+    def test_ek_checkpointing_exceptions(self):
+        '''
+        Check the EK checkpointing exception mechanism. Write corrupted
+        EK checkpoint files that will be tested in ``test_checkpoint.py``.
+        '''
+
+        # check exception mechanism
+        ek_cpt_root = ek_cpt_path.parent
+        with self.assertRaisesRegex(RuntimeError, "could not open file"):
+            invalid_path = ek_cpt_root / "unknown_dir" / "ek.cpt"
+            ek_species.save_checkpoint(str(invalid_path), lbf_cpt_mode)
+        with self.assertRaisesRegex(RuntimeError, "unit test error"):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -1)
+        with self.assertRaisesRegex(RuntimeError, "could not write to"):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -2)
+        with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), -3)
+        with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
+            ek_species.save_checkpoint(str(ek_cpt_root / "ek_err.cpt"), 2)
+
+        # read the valid EK checkpoint file
+        ek_cpt_data = ek_cpt_path.read_bytes()
+        cpt_path = str(path_cpt_root / "ek") + "{}.cpt"
+        # write checkpoint file with missing data
+        with open(cpt_path.format("-missing-data"), "wb") as f:
+            f.write(ek_cpt_data[:len(ek_cpt_data) // 2])
+        # write checkpoint file with extra data
+        with open(cpt_path.format("-extra-data"), "wb") as f:
+            f.write(ek_cpt_data + ek_cpt_data[-8:])
+        if lbf_cpt_mode == 0:
+            boxsize, data = ek_cpt_data.split(b"\n", 1)
+            # write checkpoint file with incorrectly formatted data
+            with open(cpt_path.format("-wrong-format"), "wb") as f:
+                f.write(boxsize + b"\n" + b"\ntext string\n" + data)
             # write checkpoint file with different box dimensions
             with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
                 f.write(b"2" + boxsize + b"\n" + data)
+
+    def test_generator_recursive_unlink(self):
+        with tempfile.TemporaryDirectory() as tmp_directory:
+            root = pathlib.Path(tmp_directory)
+            tree = root / "level1" / "level2"
+            tree.mkdir(parents=True, exist_ok=False)
+            for dirname in root.iterdir():
+                filepath = dirname / "file"
+                filepath.write_text("")
+            config.recursive_unlink(root)
+            for path in root.iterdir():
+                self.assertTrue(path.is_dir(),
+                                f"Path '{path}' should be a folder")
 
     def test_reaction_methods_sanity_check(self):
         with self.assertRaisesRegex(RuntimeError, "Reaction methods do not support checkpointing"):
