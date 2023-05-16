@@ -397,6 +397,15 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
         raise RuntimeError("Property 'pressure_tensor' is read-only.")
 
     @property
+    def pressure_tensor_neq(self):
+        tensor = self.call_method("get_pressure_tensor_neq")
+        return utils.array_locked(tensor)
+
+    @pressure_tensor_neq.setter
+    def pressure_tensor_neq(self, value):
+        raise RuntimeError("Property 'pressure_tensor_neq' is read-only.")
+
+    @property
     def is_boundary(self):
         return self.call_method("get_is_boundary")
 
@@ -555,6 +564,14 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
     @pressure_tensor.setter
     def pressure_tensor(self, value):
         raise RuntimeError("Property 'pressure_tensor' is read-only.")
+
+    @property
+    def pressure_tensor_neq(self):
+        return self._getter("pressure_tensor_neq")
+
+    @pressure_tensor_neq.setter
+    def pressure_tensor_neq(self, value):
+        raise RuntimeError("Property 'pressure_tensor_neq' is read-only.")
 
     @property
     def is_boundary(self):

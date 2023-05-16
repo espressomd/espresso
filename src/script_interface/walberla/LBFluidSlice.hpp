@@ -129,6 +129,7 @@ public:
     m_shape_val["is_boundary"] = {1};
     m_shape_val["last_applied_force"] = {3};
     m_shape_val["pressure_tensor"] = {3, 3};
+    m_shape_val["pressure_tensor_neq"] = {3, 3};
   }
 
   Variant do_call_method(std::string const &name,

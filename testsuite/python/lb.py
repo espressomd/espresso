@@ -162,6 +162,20 @@ class LBTest:
                                    np.copy(velocity_new), atol=self.atol)
         node.density = density_old
         node.velocity = velocity_old
+        # check slice matches node
+        lbslice = lbf[0:5, 0:5, 0:5]
+        np.testing.assert_allclose(
+            np.copy(lbslice.velocity)[1, 2, 3, :],
+            np.copy(node.velocity), atol=self.atol)
+        np.testing.assert_allclose(
+            np.copy(lbslice.pressure_tensor)[1, 2, 3, :],
+            np.copy(node.pressure_tensor), atol=self.atol)
+        np.testing.assert_allclose(
+            np.copy(lbslice.pressure_tensor_neq)[1, 2, 3, :],
+            np.copy(node.pressure_tensor_neq), atol=self.atol)
+        np.testing.assert_allclose(
+            np.copy(lbslice.density)[1, 2, 3],
+            np.copy(node.density), atol=self.atol)
 
     def test_raise_if_read_only(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -206,6 +220,8 @@ class LBTest:
             lb_node.boundary_force = [1, 2, 3]
         with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
             lb_node.pressure_tensor = np.eye(3, 3)
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor_neq' is read-only"):
+            lb_node.pressure_tensor_neq = np.eye(3, 3)
         with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
             lb_node.is_boundary = True
         with self.assertRaisesRegex(NotImplementedError, "Cannot serialize LB fluid node objects"):
@@ -213,6 +229,7 @@ class LBTest:
         # check property types
         array_locked = espressomd.utils.array_locked
         self.assertIsInstance(lb_node.pressure_tensor, array_locked)
+        self.assertIsInstance(lb_node.pressure_tensor_neq, array_locked)
         # self.assertIsInstance(lb_node.boundary_force, array_locked) # TODO
         self.assertIsInstance(lb_node.velocity, array_locked)
         self.assertIsInstance(lb_node.last_applied_force, array_locked)
@@ -226,6 +243,8 @@ class LBTest:
             lb_slice.boundary_force = [1, 2, 3]
         with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
             lb_slice.pressure_tensor = np.eye(3, 3)
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor_neq' is read-only"):
+            lb_slice.pressure_tensor_neq = np.eye(3, 3)
         with self.assertRaisesRegex(RuntimeError, "Property 'is_boundary' is read-only"):
             lb_slice.is_boundary = True
         with self.assertRaisesRegex(NotImplementedError, 'Cannot serialize LB fluid slice objects'):
@@ -235,6 +254,7 @@ class LBTest:
         # check property types
         array_locked = espressomd.utils.array_locked
         self.assertIsInstance(lb_slice.pressure_tensor, array_locked)
+        self.assertIsInstance(lb_slice.pressure_tensor_neq, array_locked)
         # self.assertIsInstance(lb_slice.boundary_force, array_locked) # TODO
         self.assertIsInstance(lb_slice.velocity, array_locked)
         self.assertIsInstance(lb_slice.last_applied_force, array_locked)
@@ -287,6 +307,7 @@ class LBTest:
 
         # empty slices
         self.assertEqual(lbf[5:2, 0, 0].pressure_tensor.shape, (0, 3, 3))
+        self.assertEqual(lbf[5:2, 0, 0].pressure_tensor_neq.shape, (0, 3, 3))
         self.assertEqual(lbf[5:2, 0:0, -1:-1].velocity.shape, (0, 0, 0, 3))
 
     def test_pressure_tensor_observable(self):

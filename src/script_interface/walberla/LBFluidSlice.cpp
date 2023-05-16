@@ -57,9 +57,9 @@ Variant LBFluidSlice::do_call_method(std::string const &name,
   }
 
   // slice getter/setter callback
-  auto const call = [this, params](auto method_ptr,
-                                   std::vector<int> const &data_dims,
-                                   double units = 1.) -> Variant {
+  auto const call = [this, &params](auto method_ptr,
+                                    std::vector<int> const &data_dims,
+                                    double units = 1.) -> Variant {
     auto &obj = *m_lb_fluid;
     if constexpr (std::is_invocable_v<decltype(method_ptr), LatticeModel *,
                                       Utils::Vector3i const &,
@@ -105,6 +105,23 @@ Variant LBFluidSlice::do_call_method(std::string const &name,
   if (name == "get_pressure_tensor") {
     return call(&LatticeModel::get_slice_pressure_tensor, {3, 3},
                 1. / m_conv_press);
+  }
+  if (name == "get_pressure_tensor_neq") {
+    auto variant = do_call_method("get_pressure_tensor", params);
+    if (context()->is_head_node()) {
+      auto constexpr c_sound_sq = 1. / 3.;
+      auto const density = m_lb_fluid->get_density();
+      auto const diagonal_term = density * c_sound_sq / m_conv_press;
+      // modify existing variant in-place
+      auto &vec = *(boost::get<std::vector<double>>(
+          &(boost::get<std::vector<Variant>>(&variant)->at(0))));
+      for (auto it = vec.begin(); it < vec.end(); it += 9) {
+        *(it + 0) -= diagonal_term;
+        *(it + 4) -= diagonal_term;
+        *(it + 8) -= diagonal_term;
+      }
+    }
+    return variant;
   }
   if (name == "get_last_applied_force") {
     return call(&LatticeModel::get_slice_last_applied_force, {3},
