@@ -17,12 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy as np
 import sympy as sp
 import lbmpy.fieldaccess
 import lbmpy.macroscopic_value_kernels
 import lbmpy.updatekernels
 import pystencils as ps
 import pystencils_walberla
+
+from pystencils.astnodes import LoopOverCoordinate
+from pystencils.backends.cbackend import CustomCodeNode
 
 
 def skip_philox_unthermalized(code, result_symbols, rng_name):
@@ -44,10 +48,104 @@ class PhiloxTwoDoubles(ps.rng.PhiloxTwoDoubles):
         return skip_philox_unthermalized(code, self.result_symbols, self._name)
 
 
+class PhiloxTwoDoublesModulo(ps.rng.PhiloxTwoDoubles):
+    def __init__(self, dim, time_step=ps.typing.TypedSymbol(
+            "time_step", np.uint32), *args, **kwargs):
+        super().__init__(dim, time_step=time_step, *args, **kwargs)
+
+        if kwargs.get("keys") is None:
+            keys = (0,) * self._num_keys
+        else:
+            keys = kwargs.get("keys")
+
+        if kwargs.get("offsets") is None:
+            offsets = (0,) * dim
+        else:
+            offsets = kwargs.get("offsets")
+
+        coordinates = [
+            LoopOverCoordinate.get_loop_counter_symbol(i) +
+            offsets[i] for i in range(dim)]
+        if dim < 3:
+            coordinates.append(0)
+
+        # add folding to coordinates with symbols
+        field_sizes = [
+            ps.typing.TypedSymbol(
+                f"field_size_{i}",
+                np.uint32) for i in range(dim)]
+
+        new_coordinates = [
+            (coord) %
+            field_size for coord,
+            field_size in zip(
+                coordinates,
+                field_sizes)]
+        self._args = sp.sympify([time_step, *new_coordinates, *keys])
+        symbols_read = set.union(*[s.atoms(sp.Symbol) for s in self.args])
+
+        headers = self.headers
+        # set headers again, since the constructor of CustomCodeNode resets the
+        # header-list
+        CustomCodeNode.__init__(
+            self,
+            "",
+            symbols_read=symbols_read,
+            symbols_defined=self.result_symbols)
+        self.headers = headers
+
+
 class PhiloxFourFloats(ps.rng.PhiloxFourFloats):
     def get_code(self, *args, **kwargs):
         code = super().get_code(*args, **kwargs)
         return skip_philox_unthermalized(code, self.result_symbols, self._name)
+
+
+class PhiloxFourFloatsModulo(ps.rng.PhiloxFourFloats):
+    def __init__(self, dim, time_step=ps.typing.TypedSymbol(
+            "time_step", np.uint32), *args, **kwargs):
+        super().__init__(dim, time_step=time_step, *args, **kwargs)
+
+        if kwargs.get("keys") is None:
+            keys = (0,) * self._num_keys
+        else:
+            keys = kwargs.get("keys")
+
+        if kwargs.get("offsets") is None:
+            offsets = (0,) * dim
+        else:
+            offsets = kwargs.get("offsets")
+
+        coordinates = [
+            LoopOverCoordinate.get_loop_counter_symbol(i) +
+            offsets[i] for i in range(dim)]
+        if dim < 3:
+            coordinates.append(0)
+
+        # add folding to coordinates with symbols
+        field_sizes = [
+            ps.typing.TypedSymbol(
+                f"field_size_{i}",
+                np.uint32) for i in range(dim)]
+
+        new_coordinates = [
+            (coord) %
+            field_size for coord,
+            field_size in zip(
+                coordinates,
+                field_sizes)]
+        self._args = sp.sympify([time_step, *new_coordinates, *keys])
+        symbols_read = set.union(*[s.atoms(sp.Symbol) for s in self.args])
+
+        headers = self.headers
+        # set headers again, since the constructor of CustomCodeNode resets the
+        # header-list
+        CustomCodeNode.__init__(
+            self,
+            "",
+            symbols_read=symbols_read,
+            symbols_defined=self.result_symbols)
+        self.headers = headers
 
 
 precision_prefix = {
@@ -59,6 +157,9 @@ precision_suffix = {
 precision_rng = {
     True: PhiloxTwoDoubles,
     False: PhiloxFourFloats}
+precision_rng_modulo = {
+    True: PhiloxTwoDoublesModulo,
+    False: PhiloxFourFloatsModulo}
 data_type_np = {'double': 'float64', 'float': 'float32'}
 
 
