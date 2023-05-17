@@ -89,6 +89,24 @@ public:
          [this]() { return m_instance->get_friction_coupling(); }},
         {"single_precision", AutoParameter::read_only,
          [this]() { return not m_instance->is_double_precision(); }},
+        {"thermalized", AutoParameter::read_only,
+         [this]() { return m_instance->is_thermalized(); }},
+        {"seed", AutoParameter::read_only,
+         [this]() { return static_cast<int>(m_instance->get_seed()); }},
+        {"rng_state",
+         [this](Variant const &v) {
+           auto const rng_state = get_value<int>(v);
+           context()->parallel_try_catch([&]() {
+             if (rng_state < 0) {
+               throw std::domain_error("Parameter 'rng_state' must be >= 0");
+             }
+             m_instance->set_rng_state(static_cast<uint64_t>(rng_state));
+           });
+         },
+         [this]() {
+           auto const opt = m_instance->get_rng_state();
+           return (opt) ? Variant{static_cast<int>(*opt)} : Variant{None{}};
+         }},
         {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
         {"density", AutoParameter::read_only,
          [this]() { return m_density / m_conv_density; }},

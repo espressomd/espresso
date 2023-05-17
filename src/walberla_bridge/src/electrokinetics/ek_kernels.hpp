@@ -23,6 +23,8 @@
 #include "generated_kernels/AdvectiveFluxKernel_single_precision.h"
 #include "generated_kernels/ContinuityKernel_double_precision.h"
 #include "generated_kernels/ContinuityKernel_single_precision.h"
+#include "generated_kernels/DiffusiveFluxKernelThermalized_double_precision.h"
+#include "generated_kernels/DiffusiveFluxKernelThermalized_single_precision.h"
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_double_precision.h"
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision.h"
 #include "generated_kernels/DiffusiveFluxKernel_double_precision.h"
@@ -40,6 +42,8 @@ namespace detail {
 template <typename FloatType = double> struct KernelTrait {
   using ContinuityKernel = pystencils::ContinuityKernel_double_precision;
   using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision;
+  using DiffusiveFluxKernelThermalized =
+      pystencils::DiffusiveFluxKernelThermalized_double_precision;
   using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_double_precision;
   using FrictionCouplingKernel =
       pystencils::FrictionCouplingKernel_double_precision;
@@ -52,6 +56,8 @@ template <typename FloatType = double> struct KernelTrait {
 template <> struct KernelTrait<float> {
   using ContinuityKernel = pystencils::ContinuityKernel_single_precision;
   using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_single_precision;
+  using DiffusiveFluxKernelThermalized =
+      pystencils::DiffusiveFluxKernelThermalized_single_precision;
   using AdvectiveFluxKernel = pystencils::AdvectiveFluxKernel_single_precision;
   using FrictionCouplingKernel =
       pystencils::FrictionCouplingKernel_single_precision;
