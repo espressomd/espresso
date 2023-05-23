@@ -118,6 +118,10 @@ Variant LBFluid::do_call_method(std::string const &name,
   if (name == "get_lattice_speed") {
     return 1. / m_conv_speed;
   }
+  if (name == "deallocate_fields") {
+    m_instance.reset();
+    return {};
+  }
 
   return Base::do_call_method(name, params);
 }
