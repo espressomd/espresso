@@ -32,6 +32,7 @@ from . import constraints
 from . import galilei
 from . import interactions
 from . import integrate
+from . import lb
 from . import electrokinetics
 from . import lees_edwards
 from . import particle_data
@@ -223,6 +224,14 @@ class System(ScriptInterfaceHelper):
 
         # lock class
         self.call_method("lock_system_creation")
+
+    def __del__(self):
+        # cleanup ESPResSo global variables to avoid race conditions
+        if has_features("WALBERLA"):
+            for item in self.actors:
+                if isinstance(item, lb.LBFluidWalberlaBase):
+                    item.call_method("deallocate_fields")
+            self.ekcontainer.call_method("deallocate_fields")
 
     def __reduce__(self):
         so_callback, so_callback_args = super().__reduce__()
