@@ -109,14 +109,22 @@ Variant LBFluidNode::do_call_method(std::string const &name,
     }
     return Variant{None{}};
   }
-  if (name == "get_pressure_tensor") {
+  if (name == "get_pressure_tensor" or name == "get_pressure_tensor_neq") {
     auto const result = m_lb_fluid->get_node_pressure_tensor(m_index);
     auto value = boost::optional<std::vector<double>>{};
     if (result) {
       value = (*result / m_conv_press).as_vector();
     }
-    auto const vec = mpi_reduce_optional(context()->get_comm(), value);
+    auto vec = mpi_reduce_optional(context()->get_comm(), value);
     if (context()->is_head_node()) {
+      if (name == "get_pressure_tensor_neq") {
+        auto constexpr c_sound_sq = 1. / 3.;
+        auto const density = m_lb_fluid->get_density();
+        auto const diagonal_term = density * c_sound_sq / m_conv_press;
+        vec[0] -= diagonal_term;
+        vec[4] -= diagonal_term;
+        vec[8] -= diagonal_term;
+      }
       auto tensor = Utils::Matrix<double, 3, 3>{};
       std::copy(vec.begin(), vec.end(), tensor.m_data.begin());
       return std::vector<Variant>{tensor.row<0>().as_vector(),
