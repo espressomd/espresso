@@ -25,6 +25,12 @@ import pathlib
 import os
 
 
+EXPECTED_TRACEBACK_ENDING = """ in handle_sigint
+    signal.raise_signal(signal.Signals.SIGINT)
+KeyboardInterrupt
+"""
+
+
 class SigintTest(ut.TestCase):
 
     script = str(pathlib.Path(__file__).parent / 'sigint_child.py')
@@ -43,8 +49,8 @@ class SigintTest(ut.TestCase):
             self.assertEqual(traceback, "")
         elif sig == signal.Signals.SIGINT:
             self.assertIn(" self.integrator.run(", traceback)
-            self.assertTrue(traceback.endswith(
-                " in handle_sigint\n    signal.raise_signal(signal.Signals.SIGINT)\nKeyboardInterrupt\n"))
+            self.assertTrue(traceback.endswith(EXPECTED_TRACEBACK_ENDING),
+                            msg=f"Traceback failed string match:\n{traceback}")
 
     def test_signal_handling(self):
         signals = [signal.Signals.SIGINT, signal.Signals.SIGTERM]

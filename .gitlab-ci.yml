@@ -251,6 +251,7 @@ cuda11-maxset:
     - espresso
     - cuda
     - numa
+    - avx2
 
 tutorials-samples-maxset:
   <<: *global_job_definition
@@ -279,6 +280,7 @@ tutorials-samples-maxset:
     - espresso
     - cuda
     - numa
+    - avx2
 
 tutorials-samples-default:
   <<: *global_job_definition
@@ -305,6 +307,7 @@ tutorials-samples-default:
     - espresso
     - cuda
     - numa
+    - avx2
   only:
     - schedules
 
@@ -360,6 +363,7 @@ tutorials-samples-no-gpu:
   tags:
     - espresso
     - no-cuda
+    - avx2
   only:
     - schedules
 
