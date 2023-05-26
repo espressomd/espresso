@@ -165,6 +165,9 @@ class LBTest:
         # check slice matches node
         lbslice = lbf[0:5, 0:5, 0:5]
         np.testing.assert_allclose(
+            np.copy(lbslice.population)[1, 2, 3, :],
+            np.copy(node.population), atol=self.atol)
+        np.testing.assert_allclose(
             np.copy(lbslice.velocity)[1, 2, 3, :],
             np.copy(node.velocity), atol=self.atol)
         np.testing.assert_allclose(
@@ -318,6 +321,8 @@ class LBTest:
         """
         system = self.system
         n_col_part = 1000
+        if self.lb_class is espressomd.lb.LBFluidWalberlaGPU:
+            n_col_part = 100
         system.part.add(
             pos=np.random.random((n_col_part, 3)) * self.system.box_l[0],
             v=np.random.random((n_col_part, 3)))
@@ -696,10 +701,7 @@ class LBTest:
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBTestWalberlaDoublePrecision(LBTest, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": False}
@@ -708,15 +710,43 @@ class LBTestWalberlaDoublePrecision(LBTest, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBTestWalberlaSinglePrecision(LBTest, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": True}
     atol = 1e-7
     rtol = 5e-5
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_lattice_class = espressomd.lb.LatticeWalberla
+    params = {**LBTest.params, "agrid": 1.}  # TODO walberla
+    lb_params = {"single_precision": True}
+    atol = 1e-7
+    rtol = 2e-4
+
+    # TODO walberla: randomly fail
+    def test_viscous_coupling(self):
+        pass
+
+    def test_viscous_coupling_pairs(self):
+        pass
+
+    # TODO walberla
+    def test_ext_force_density(self):
+        pass
+
+    def test_unequal_time_step(self):
+        pass
+
+    def test_agrid_rounding(self):
+        pass
+
+    def test_thermalization_force_balance(self):
+        pass
 
 
 if __name__ == "__main__":

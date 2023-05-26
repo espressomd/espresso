@@ -16,3 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
+
+#pragma nv_diag_suppress 554
+#include "LBWalberlaImpl.hpp"
+#pragma nv_diag_default 554
+
+#include <walberla_bridge/Architecture.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+
+#include <memory>
+
+std::shared_ptr<LBWalberlaBase>
+new_lb_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
+                    double viscosity, double density, bool single_precision) {
+  if (single_precision) {
+    return std::make_shared<walberla::LBWalberlaImpl<float, lbmpy::Arch::GPU>>(
+        lattice, viscosity, density);
+  }
+  return std::make_shared<walberla::LBWalberlaImpl<double, lbmpy::Arch::GPU>>(
+      lattice, viscosity, density);
+}
