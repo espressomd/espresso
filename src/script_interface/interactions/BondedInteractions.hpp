@@ -55,6 +55,9 @@ public:
     });
   }
 
+private:
+  container_type m_bonds;
+
   key_type insert_in_core(mapped_type const &obj_ptr) override {
     auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
     m_bonds[key] = std::move(obj_ptr);
@@ -115,9 +118,6 @@ protected:
 
     return ObjectMap<BondedInteraction>::do_call_method(name, params);
   }
-
-private:
-  container_type m_bonds;
 };
 } // namespace Interactions
 } // namespace ScriptInterface

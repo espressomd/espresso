@@ -27,6 +27,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace ScriptInterface {
 class Context;
@@ -104,6 +105,11 @@ public:
    */
   virtual Utils::Span<const boost::string_ref> valid_parameters() const {
     return {};
+  }
+
+  auto get_valid_parameters() const {
+    auto const names = valid_parameters();
+    return std::vector<std::string>(names.begin(), names.end());
   }
 
   /**
