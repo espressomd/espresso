@@ -261,7 +261,7 @@ void on_cell_structure_change() {
     throw std::runtime_error(
         "LB does not currently support handling changes of the MD cell "
         "geometry. Setup the cell system, skin and interactions before "
-        "activating the CPU LB.");
+        "activating the LB.");
   }
 
   /* Now give methods a chance to react to the change in cell structure.

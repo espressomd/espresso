@@ -34,6 +34,8 @@ function generate_ek_kernels {
 function format_lb_kernels {
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cu  -style "{Language: Cpp, ColumnLimit: 0}"
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cuh -style "{Language: Cpp}"
 }
 function format_ek_kernels {
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
@@ -44,6 +46,8 @@ function format_ek_kernels {
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
 generate_lb_kernels
 generate_lb_kernels --single-precision
+generate_lb_kernels --gpu
+generate_lb_kernels --gpu --single-precision
 format_lb_kernels
 
 # EK kernels

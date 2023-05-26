@@ -34,6 +34,11 @@
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
 
+#if defined(__CUDACC__)
+#include <cuda/AddGPUFieldToStorage.h>
+#include <cuda/communication/GPUPackInfo.h>
+#endif
+
 #include <field/AddToStorage.h>
 #include <field/FlagField.h>
 #include <field/communication/PackInfo.h>
@@ -48,6 +53,9 @@
 #include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
+#if defined(__CUDACC__)
+#include "lb_kernels.cuh"
+#endif
 
 #include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/BlockAndCell.hpp>
@@ -112,10 +120,26 @@ protected:
     using PackInfo = field::communication::PackInfo<Field>;
   };
 
+#if defined(__CUDACC__)
+  template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
+    using PdfField = cuda::GPUField<FT>;
+    using VectorField = cuda::GPUField<FT>;
+    template <class Field>
+    using PackInfo = cuda::communication::GPUPackInfo<Field>;
+  };
+#endif
+
+  // "underlying" field types (`GPUField` has no f-size info at compile time)
+  using _PdfField = typename FieldTrait<FloatType>::PdfField;
+  using _VectorField = typename FieldTrait<FloatType>::VectorField;
+
 public:
   using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
   using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
   using FlagField = typename BoundaryModel::FlagField;
+#if defined(__CUDACC__)
+  using GPUField = cuda::GPUField<FloatType>;
+#endif
 
 public:
   template <typename T> FloatType FloatType_c(T t) const {
@@ -246,11 +270,11 @@ protected:
 
   // Lees Edwards boundary interpolation
   std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField, FloatType>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>
       m_lees_edwards_pdf_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<_VectorField, FloatType>>
       m_lees_edwards_vel_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<_VectorField, FloatType>>
       m_lees_edwards_last_applied_force_interpol_sweep;
 
   // Collision sweep
@@ -314,6 +338,24 @@ protected:
                                         n_ghost_layers);
 #endif // ESPRESSO_BUILD_WITH_AVX_KERNELS
     }
+#if defined(__CUDACC__)
+    else {
+      auto field_id = cuda::addGPUFieldToStorage<GPUField>(
+          blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
+      if constexpr (std::is_same_v<Field, _VectorField>) {
+        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+          auto vec_field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Vector::broadcast(vec_field, Vector3<FloatType>{0});
+        }
+      } else if constexpr (std::is_same_v<Field, _PdfField>) {
+        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+          auto vec_field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Vector::broadcast(vec_field, Vector3<FloatType>{0});
+        }
+      }
+      return field_id;
+    }
+#endif
   }
 
 public:
@@ -327,13 +369,13 @@ public:
     if (n_ghost_layers == 0u)
       throw std::runtime_error("At least one ghost layer must be used");
 
-    // Initialize and register fields
-    m_pdf_field_id = add_to_storage<PdfField>("pdfs");
-    m_pdf_tmp_field_id = add_to_storage<PdfField>("pdfs_tmp");
-    m_last_applied_force_field_id = add_to_storage<VectorField>("force field");
-    m_force_to_be_applied_id = add_to_storage<VectorField>("force field");
-    m_velocity_field_id = add_to_storage<VectorField>("velocity field");
-    m_vec_tmp_field_id = add_to_storage<VectorField>("velocity_tmp field");
+    // Initialize and register fields (must use the "underlying" types)
+    m_pdf_field_id = add_to_storage<_PdfField>("pdfs");
+    m_pdf_tmp_field_id = add_to_storage<_PdfField>("pdfs_tmp");
+    m_last_applied_force_field_id = add_to_storage<_VectorField>("force last");
+    m_force_to_be_applied_id = add_to_storage<_VectorField>("force next");
+    m_velocity_field_id = add_to_storage<_VectorField>("velocity");
+    m_vec_tmp_field_id = add_to_storage<_VectorField>("velocity_tmp");
 
     // Initialize and register pdf field
     auto pdf_setter =
@@ -536,21 +578,21 @@ public:
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
     run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
     m_lees_edwards_pdf_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
+        std::make_shared<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,
             shear_direction, shear_plane_normal,
             m_lees_edwards_callbacks->get_pos_offset);
-    m_lees_edwards_vel_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            blocks, m_velocity_field_id, m_vec_tmp_field_id, n_ghost_layers,
-            shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset,
-            m_lees_edwards_callbacks->get_shear_velocity);
-    m_lees_edwards_last_applied_force_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
-            n_ghost_layers, shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_vel_interpol_sweep = std::make_shared<
+        InterpolateAndShiftAtBoundary<_VectorField, FloatType>>(
+        blocks, m_velocity_field_id, m_vec_tmp_field_id, n_ghost_layers,
+        shear_direction, shear_plane_normal,
+        m_lees_edwards_callbacks->get_pos_offset,
+        m_lees_edwards_callbacks->get_shear_velocity);
+    m_lees_edwards_last_applied_force_interpol_sweep = std::make_shared<
+        InterpolateAndShiftAtBoundary<_VectorField, FloatType>>(
+        blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
+        n_ghost_layers, shear_direction, shear_plane_normal,
+        m_lees_edwards_callbacks->get_pos_offset);
   }
 
   void check_lebc(unsigned int shear_direction,
@@ -1222,9 +1264,13 @@ public:
   }
 
   void register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) override {
-    field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
-    fluid_filter.addFlag(Boundary_flag);
-    vtk_obj.addCellExclusionFilter(fluid_filter);
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      throw std::runtime_error("VTK output not supported for GPU");
+    } else {
+      field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
+      fluid_filter.addFlag(Boundary_flag);
+      vtk_obj.addCellExclusionFilter(fluid_filter);
+    }
   }
 
 protected:
@@ -1306,21 +1352,25 @@ public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
                                   int flag_observables) override {
-    if (flag_observables & static_cast<int>(OutputVTK::density)) {
-      auto const unit_conversion = FloatType_c(units.at("density"));
-      vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
-          m_pdf_field_id, "density", unit_conversion));
-    }
-    if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
-      auto const unit_conversion = FloatType_c(units.at("velocity"));
-      vtk_obj.addCellDataWriter(make_shared<VelocityVTKWriter<float>>(
-          m_velocity_field_id, "velocity_vector", unit_conversion));
-    }
-    if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
-      auto const unit_conversion = FloatType_c(units.at("pressure"));
-      vtk_obj.addCellDataWriter(make_shared<PressureTensorVTKWriter<float>>(
-          m_pdf_field_id, "pressure_tensor", unit_conversion,
-          pressure_tensor_correction_factor()));
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      throw std::runtime_error("VTK output not supported for GPU");
+    } else {
+      if (flag_observables & static_cast<int>(OutputVTK::density)) {
+        auto const unit_conversion = FloatType_c(units.at("density"));
+        vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
+            m_pdf_field_id, "density", unit_conversion));
+      }
+      if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
+        auto const unit_conversion = FloatType_c(units.at("velocity"));
+        vtk_obj.addCellDataWriter(make_shared<VelocityVTKWriter<float>>(
+            m_velocity_field_id, "velocity_vector", unit_conversion));
+      }
+      if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
+        auto const unit_conversion = FloatType_c(units.at("pressure"));
+        vtk_obj.addCellDataWriter(make_shared<PressureTensorVTKWriter<float>>(
+            m_pdf_field_id, "pressure_tensor", unit_conversion,
+            pressure_tensor_correction_factor()));
+      }
     }
   }
 
