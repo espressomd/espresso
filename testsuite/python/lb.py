@@ -392,14 +392,16 @@ class LBTest:
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=3.0)
-        actor = espressomd.electrostatics.DH(prefactor=1., kappa=1., r_cut=1.)
+        if espressomd.has_features("ELECTROSTATICS"):
+            actor = espressomd.electrostatics.DH(prefactor=1., kappa=1., r_cut=1.)
         with self.assertRaisesRegex(Exception, "Temperature change not supported by LB"):
             self.system.thermostat.turn_off()
         with self.assertRaisesRegex(Exception, "Time step change not supported by LB"):
             self.system.time_step /= 2.
-        with self.assertRaisesRegex(RuntimeError, "LB does not currently support handling changes of the MD cell geometry"):
-            self.system.actors.add(actor)
-        self.assertEqual(len(self.system.actors), 1)
+        if espressomd.has_features("ELECTROSTATICS"):
+            with self.assertRaisesRegex(RuntimeError, "LB does not currently support handling changes of the MD cell geometry"):
+                self.system.actors.add(actor)
+            self.assertEqual(len(self.system.actors), 1)
 
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
