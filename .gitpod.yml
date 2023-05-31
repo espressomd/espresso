@@ -3,8 +3,7 @@ tasks:
     init: |
        sudo apt-get update
        sudo apt-get install -y --no-install-recommends build-essential cmake ffmpeg libboost-all-dev libfftw3-dev libgsl-dev libpython3-dev openmpi-common
-       pip install --no-cache cython
-       pip install --no-cache numpy scipy matplotlib pint tqdm --constraint requirements.txt
+       pip install --no-cache cython numpy scipy matplotlib pint tqdm --constraint requirements.txt
        pip install --no-cache nbformat notebook jupyterlab 'jupyter_contrib_nbextensions==0.5.1'
        jupyter contrib nbextension install --user
        jupyter nbextension enable rubberband/main
@@ -18,12 +17,11 @@ tasks:
     command: |
        mkdir build
        cd build
-       cmake .. -D ESPRESSO_BUILD_WITH_GSL=ON
+       cmake .. -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON
        make
        make tutorials
        for f in doc/tutorials/*/*.ipynb; do echo "configuring ${f}"; ./pypresso doc/tutorials/convert.py exercise2 --to-vscode-jupyter ${f}; done
-       sed -i 's/espressomd.lb.LBFluidGPU/espressomd.lb.LBFluid/; s/LB_BOUNDARIES_GPU/LB_BOUNDARIES/;' doc/tutorials/lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb
-       sed -i 's/espressomd.lb.LBFluidGPU/espressomd.lb.LBFluid/; s/, \\"CUDA\\"\]/]/;' doc/tutorials/active_matter/active_matter.ipynb
+       sed -i 's/espressomd.lb.LBFluidWalberlaGPU/espressomd.lb.LBFluidWalberla/; s/, \\"CUDA\\"\]/]/;' doc/tutorials/lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb doc/tutorials/active_matter/active_matter.ipynb
 
 vscode:
   extensions:
