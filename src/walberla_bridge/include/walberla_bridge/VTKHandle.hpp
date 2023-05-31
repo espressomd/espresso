@@ -43,7 +43,7 @@ public:
   }
   ~VTKHandle() {
     // vtk objects must be cleared *before* the MPI resources can be freed,
-    // because file handles need to closed on all ranks
+    // because file handles need to be closed on all ranks
     ptr.reset();
     m_vtk_resources_lock.reset();
   }

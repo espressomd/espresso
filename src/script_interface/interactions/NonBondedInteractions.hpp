@@ -43,6 +43,7 @@ class NonBondedInteractions : public ObjectHandle {
   using container_type =
       std::unordered_map<unsigned int,
                          std::shared_ptr<NonBondedInteractionHandle>>;
+
 public:
   using key_type = typename container_type::key_type;
   using mapped_type = typename container_type::mapped_type;

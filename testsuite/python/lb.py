@@ -393,7 +393,8 @@ class LBTest:
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=3.0)
         if espressomd.has_features("ELECTROSTATICS"):
-            actor = espressomd.electrostatics.DH(prefactor=1., kappa=1., r_cut=1.)
+            actor = espressomd.electrostatics.DH(
+                prefactor=1., kappa=1., r_cut=1.)
         with self.assertRaisesRegex(Exception, "Temperature change not supported by LB"):
             self.system.thermostat.turn_off()
         with self.assertRaisesRegex(Exception, "Time step change not supported by LB"):

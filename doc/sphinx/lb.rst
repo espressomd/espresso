@@ -72,7 +72,7 @@ The detailed interface definition is available at :class:`~espressomd.lb.LBFluid
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
 the simulations and is adjusted with the parameter ``tau``, the LB time step.
-The parameters ``density`` and ``viscosity`` set up the density and (kinematic) viscosity of the
+The parameters ``density`` and ``kinematic_viscosity`` set up the density and kinematic viscosity of the
 LB fluid in (usual) MD units. Internally the LB implementation works
 with a different set of units: all lengths are expressed in ``agrid``, all times
 in ``tau`` and so on.
@@ -97,7 +97,7 @@ array_like of :obj:`float`, representing a homogeneous external body force densi
 units to be applied to the fluid.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``viscosity``, ``density``.
+set up: ``agrid``, ``tau``, ``kinematic_viscosity``, ``density``.
 
 Performance considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -107,7 +107,15 @@ use single-precision floating point values. These are approximately 10%
 faster than double-precision, at the cost of a small loss in precision.
 
 To enable vectorization, run ``cmake . -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON``.
-An AVX2-capable microprocessor is required.
+The SIMD kernels have better performance over the regular kernels, because
+they carry out the mathematical operations in batches of 4 values at a time
+(in double-precision mode) or 8 values at a time (in single-precision mode)
+along the x-axis. An AVX2-capable microprocessor is required; to check if
+your hardware supports it, run the following command:
+
+.. code-block:: bash
+
+    lscpu | grep avx2
 
 .. _Checkpointing LB:
 
@@ -211,12 +219,12 @@ Reading and setting properties of single lattice nodes
 Appending three indices to the ``lb`` object returns an object that represents
 the selected LB grid node and allows one to access all of its properties::
 
-    lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
-    lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
-    lb[x, y, z].pressure_tensor      # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
-    lb[x, y, z].pressure_tensor_neq  # fluid pressure tensor non-equilibrium part (a symmetric 3x3 numpy array of floats)
-    lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 1)
-    lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
+    lb[x, y, z].density              # fluid density (scalar)
+    lb[x, y, z].velocity             # fluid velocity (3-vector)
+    lb[x, y, z].pressure_tensor      # fluid pressure tensor (symmetric 3x3 matrix)
+    lb[x, y, z].pressure_tensor_neq  # fluid pressure tensor non-equilibrium part (symmetric 3x3 matrix)
+    lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (boolean)
+    lb[x, y, z].population           # LB populations (19-vector, check order from the stencil definition)
 
 All of these properties can be read and used in further calculations.
 Only the property ``population`` can be modified. The indices ``x, y, z``
@@ -243,6 +251,13 @@ these nodes with densities ranging from 1.1 to 1.4. You can set either
 a value that matches the length of the slice (which sets each node
 individually), or a single value that will be copied to every node
 (e.g. a scalar for density, or an array of length 3 for the velocity).
+
+The LB pressure tensor from property ``pressure_tensor`` is calculated as
+:math:`\Pi = \rho c_s^2 \mathbb{1} + \rho \mathbf{u} \otimes \mathbf{u}`
+with :math:`\rho` the fluid density at a particular node, :math:`\mathbf{u}`
+the fluid velocity at a particular node, :math:`c_s` the speed of sound and
+:math:`\mathbb{1}` the identity matrix. The non-equilibrium part from property
+``pressure_tensor_neq`` is defined as :math:`\Pi^{\text{neq}} = \rho \mathbf{u} \otimes \mathbf{u}`.
 
 .. _LB VTK output:
 
