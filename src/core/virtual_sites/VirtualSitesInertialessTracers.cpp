@@ -59,7 +59,8 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
       return;
     }
     if (should_be_coupled(p, coupled_ghost_particles)) {
-      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+      for (auto shift : positions_in_halo(p.pos(), box_geo)) {
+        auto const pos = shift.first;
         add_md_force(pos * to_lb_units, -p.force(), time_step);
       }
     }
@@ -71,7 +72,8 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
       return;
     }
     if (should_be_coupled(p, coupled_ghost_particles)) {
-      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+      for (auto shift : positions_in_halo(p.pos(), box_geo)) {
+        auto const pos = shift.first;
         add_md_force(pos * to_lb_units, -p.force(), time_step);
       }
     }
