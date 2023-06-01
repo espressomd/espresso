@@ -20,12 +20,16 @@
 from libcpp.unordered_map cimport unordered_map
 from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
+from libcpp.vector cimport vector
 from libcpp cimport bool
 
 from boost cimport string_ref
 
-from .utils cimport Span, Factory
 from .communication cimport MpiCallbacks
+
+cdef extern from "utils/Factory.hpp" namespace "Utils":
+    cdef cppclass Factory[T]:
+        pass
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass Variant:
@@ -41,7 +45,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 
     cdef cppclass ObjectHandle:
         VariantMap get_parameters() except +
-        Span[const string_ref] valid_parameters() except +
+        vector[string] get_valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
         Variant call_method(const string & name, const VariantMap & parameters) except +

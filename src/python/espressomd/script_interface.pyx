@@ -116,8 +116,7 @@ cdef class PScriptInterface:
         return self.sip.use_count()
 
     def _valid_parameters(self):
-        return [utils.to_str(p.data())
-                for p in self.sip.get().valid_parameters()]
+        return [utils.to_str(p) for p in self.sip.get().get_valid_parameters()]
 
     def get_sip(self):
         """

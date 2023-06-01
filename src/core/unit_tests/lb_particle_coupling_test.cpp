@@ -390,6 +390,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto expected =
       noise * Random::noise_uniform<RNGSalt::PARTICLES>(rng->value(), 0, pid);
   auto const p_opt = copy_particle_to_head_node(comm, pid);
+#if defined(ENGINE) or defined(LB_ELECTROHYDRODYNAMICS)
   if (rank == 0) {
     auto const &p = *p_opt;
 #ifdef ENGINE
@@ -399,6 +400,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     expected += gamma * p.mu_E();
 #endif
   }
+#endif // defined(ENGINE) or defined(LB_ELECTROHYDRODYNAMICS)
   boost::mpi::broadcast(comm, expected, 0);
   auto const p_pos = first_lb_node + Utils::Vector3d::broadcast(0.5);
   set_particle_pos(pid, p_pos);

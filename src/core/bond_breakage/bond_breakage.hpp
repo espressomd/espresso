@@ -20,11 +20,11 @@
 #ifndef CORE_BOND_BREAKAGE_BOND_BREAKAGE_HPP
 #define CORE_BOND_BREAKAGE_BOND_BREAKAGE_HPP
 
+#include <boost/optional.hpp>
+
 #include <array>
 #include <memory>
 #include <unordered_map>
-
-#include <boost/optional.hpp>
 
 namespace BondBreakage {
 
@@ -50,7 +50,7 @@ void erase_spec(int key);
  *  it.
  */
 bool check_and_handle_breakage(int particle_id,
-                               const BondPartners &bond_partners, int bond_type,
+                               BondPartners const &bond_partners, int bond_type,
                                double distance);
 
 void clear_queue();

@@ -90,7 +90,7 @@ void queue_breakage(int particle_id, const BondPartners &bond_partners,
 }
 
 bool check_and_handle_breakage(int particle_id,
-                               const BondPartners &bond_partners, int bond_type,
+                               BondPartners const &bond_partners, int bond_type,
                                double distance) {
   // Retrieve specification for this bond type
   auto const spec = get_breakage_spec(bond_type);

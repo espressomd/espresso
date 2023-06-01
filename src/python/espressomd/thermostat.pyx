@@ -22,7 +22,7 @@ from . cimport utils
 from .lb import HydrodynamicInteraction
 
 
-def AssertThermostatType(*allowedthermostats):
+def AssertThermostatType(*allowed_thermostats):
     """Assert that only a certain group of thermostats is active at a time.
 
     Decorator class to ensure that only specific combinations of thermostats
@@ -42,7 +42,7 @@ def AssertThermostatType(*allowedthermostats):
 
     Parameters
     ----------
-    allowedthermostats : :obj:`str`
+    allowed_thermostats : :obj:`str`
         Allowed list of thermostats which are known to be compatible
         with one another.
 
@@ -50,7 +50,7 @@ def AssertThermostatType(*allowedthermostats):
     def decoratorfunction(function):
         @functools.wraps(function, assigned=('__name__', '__doc__'))
         def wrapper(*args, **kwargs):
-            if (not (thermo_switch in allowedthermostats) and
+            if (not (thermo_switch in allowed_thermostats) and
                     (thermo_switch != THERMO_OFF)):
                 raise Exception(
                     "This combination of thermostats is not allowed!")
