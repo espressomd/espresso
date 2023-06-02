@@ -225,8 +225,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   immersed_boundaries.volume_conservation(cell_structure);
 
   if (lattice_switch != ActiveLB::NONE) {
-    lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                           ghost_particles, time_step);
+    LB::couple_particles(thermo_virtual, particles, ghost_particles, time_step);
   }
 
 #ifdef CUDA

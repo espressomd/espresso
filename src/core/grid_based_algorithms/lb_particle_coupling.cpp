@@ -32,17 +32,16 @@
 #include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
-#include <utils/math/sqr.hpp>
 
 #include <boost/mpi.hpp>
 
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
+#include <cstdint>
+#include <initializer_list>
+#include <limits>
 #include <stdexcept>
-#include <utility>
+#include <vector>
 
-LB_Particle_Coupling lb_particle_coupling;
+LB::ParticleCouplingConfig lb_particle_coupling;
 
 void mpi_bcast_lb_particle_coupling_local() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
@@ -190,36 +189,6 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
   return res;
 }
 
-/**
- * @brief Return if locally there exists a physical particle
- * for a given (ghost) particle
- */
-bool is_ghost_for_local_particle(const Particle &p) {
-  return !cell_structure.get_local_particle(p.id())->is_ghost();
-}
-
-/**
- * @brief Determine if a given particle should be coupled.
- * In certain cases, there may be more than one ghost for the same particle.
- * To make sure, that these are only coupled once, ghosts' ids are stored
- * in an unordered_set.
- */
-bool should_be_coupled(const Particle &p,
-                       std::unordered_set<int> &coupled_ghost_particles) {
-  // always couple physical particles
-  if (not p.is_ghost()) {
-    return true;
-  }
-  // for ghosts check that we don't have the physical particle and
-  // that a ghost for the same particle has not yet been coupled
-  if ((not is_ghost_for_local_particle(p)) and
-      (coupled_ghost_particles.find(p.id()) == coupled_ghost_particles.end())) {
-    coupled_ghost_particles.insert(p.id());
-    return true;
-  }
-  return false;
-}
-
 #ifdef ENGINE
 void add_swimmer_force(Particle const &p, double time_step) {
   if (p.swimming().swimming) {
@@ -239,34 +208,32 @@ void add_swimmer_force(Particle const &p, double time_step) {
 }
 #endif
 
-Utils::Vector3d lb_particle_coupling_noise(bool enabled, int part_id,
-                                           const OptionalCounter &rng_counter) {
-  if (enabled) {
-    if (rng_counter) {
-      return Random::noise_uniform<RNGSalt::PARTICLES>(rng_counter->value(), 0,
-                                                       part_id);
-    }
+namespace LB {
+
+Utils::Vector3d ParticleCoupling::get_noise_term(int pid) const {
+  if (not m_thermalized) {
+    return Utils::Vector3d{};
+  }
+  auto const &rng_counter = lb_particle_coupling.rng_counter_coupling;
+  if (not rng_counter) {
     throw std::runtime_error(
         "Access to uninitialized LB particle coupling RNG counter");
   }
-  return {};
+  auto const counter = rng_counter->value();
+  return m_noise * Random::noise_uniform<RNGSalt::PARTICLES>(counter, 0, pid);
 }
 
-void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
-                     const OptionalCounter &rng_counter, double time_step) {
-
-  if (p.is_virtual() and not couple_virtual)
+void ParticleCoupling::kernel(Particle &p) {
+  if (p.is_virtual() and not m_couple_virtual)
     return;
 
   // Calculate coupling force
   Utils::Vector3d coupling_force = {};
   for (auto pos : positions_in_halo(p.pos(), box_geo)) {
     if (in_local_halo(pos)) {
-      auto const drag_force =
-          lb_drag_force(p, pos, lb_particle_coupling_drift_vel_offset(p));
-      auto const random_force =
-          noise_amplitude * lb_particle_coupling_noise(noise_amplitude > 0.0,
-                                                       p.id(), rng_counter);
+      auto const vel_offset = lb_particle_coupling_drift_vel_offset(p);
+      auto const drag_force = lb_drag_force(p, pos, vel_offset);
+      auto const random_force = get_noise_term(p.id());
       coupling_force = drag_force + random_force;
       break;
     }
@@ -280,51 +247,37 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
        * is responsible to adding its force */
       p.force() += coupling_force;
     }
-    add_md_force(pos, coupling_force, time_step);
+    add_md_force(pos, coupling_force, m_time_step);
   }
 
 #ifdef ENGINE
-  add_swimmer_force(p, time_step);
+  add_swimmer_force(p, m_time_step);
 #endif
 }
 
-void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
-                                            const ParticleRange &particles,
-                                            const ParticleRange &more_particles,
-                                            double time_step) {
+bool CouplingBookkeeping::is_ghost_for_local_particle(Particle const &p) const {
+  return not ::cell_structure.get_local_particle(p.id())->is_ghost();
+}
+
+void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
+                      ParticleRange const &ghost_particles, double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
     if (lb_particle_coupling.couple_to_md) {
-      auto const kT = LB::get_kT() * Utils::sqr(LB::get_lattice_speed());
-      /* Eq. (16) @cite ahlrichs99a.
-       * The factor 12 comes from the fact that we use random numbers
-       * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-       * time_step comes from the discretization.
-       */
-      auto const noise_amplitude =
-          (kT > 0.)
-              ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT / time_step)
-              : 0.0;
-
-      std::unordered_set<int> coupled_ghost_particles;
-
-      /* Couple particles ranges */
-      for (auto &p : particles) {
-        if (should_be_coupled(p, coupled_ghost_particles)) {
-          couple_particle(p, couple_virtual, noise_amplitude,
-                          lb_particle_coupling.rng_counter_coupling, time_step);
-        }
-      }
-
-      for (auto &p : more_particles) {
-        if (should_be_coupled(p, coupled_ghost_particles)) {
-          couple_particle(p, couple_virtual, noise_amplitude,
-                          lb_particle_coupling.rng_counter_coupling, time_step);
+      ParticleCoupling coupling{couple_virtual, time_step};
+      CouplingBookkeeping bookkeeping{};
+      for (auto const &particle_range : {real_particles, ghost_particles}) {
+        for (auto &p : particle_range) {
+          if (bookkeeping.should_be_coupled(p)) {
+            coupling.kernel(p);
+          }
         }
       }
     }
   }
 }
+
+} // namespace LB
 
 void lb_lbcoupling_propagate() {
   if (lattice_switch != ActiveLB::NONE) {
