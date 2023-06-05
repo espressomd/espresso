@@ -22,8 +22,8 @@
  */
 
 #include "EspressoSystemInterface.hpp"
-#include "cuda_interface.hpp"
-#include "cuda_utils.cuh"
+#include "cuda/interface.hpp"
+#include "cuda/utils.cuh"
 #include "errorhandling.hpp"
 
 #include <cstddef>

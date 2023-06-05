@@ -26,7 +26,7 @@
 #include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
-#include "cuda_interface.hpp"
+#include "cuda/interface.hpp"
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"

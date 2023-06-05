@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CUDA_UTILS_HPP
-#define CORE_CUDA_UTILS_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -32,4 +32,3 @@ public:
 };
 
 #endif // CUDA
-#endif

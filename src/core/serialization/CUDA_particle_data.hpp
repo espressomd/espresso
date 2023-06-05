@@ -19,7 +19,7 @@
 #ifndef UTILS_SERIALIZATION_CUDA_PARTICLE_DATA_HPP
 #define UTILS_SERIALIZATION_CUDA_PARTICLE_DATA_HPP
 
-#include "cuda_interface.hpp"
+#include "cuda/interface.hpp"
 
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>

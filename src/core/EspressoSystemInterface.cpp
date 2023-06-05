@@ -20,7 +20,7 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "cuda_interface.hpp"
+#include "cuda/interface.hpp"
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>

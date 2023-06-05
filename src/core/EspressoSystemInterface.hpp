@@ -21,7 +21,7 @@
 
 #include "SystemInterface.hpp"
 #include "config/config.hpp"
-#include "cuda_interface.hpp"
+#include "cuda/interface.hpp"
 
 #include <utils/Vector.hpp>
 

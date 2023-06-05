@@ -26,8 +26,8 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda/interface.hpp"
+#include "cuda/utils.hpp"
 #include "errorhandling.hpp"
 
 DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,

@@ -21,8 +21,8 @@
 
 #ifdef CUDA
 
-#include "cuda_init.hpp"
-#include "cuda_utils.hpp"
+#include "init.hpp"
+#include "utils.hpp"
 
 #include "communication.hpp"
 #include "errorhandling.hpp"

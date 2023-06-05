@@ -25,7 +25,7 @@
 
 #include "p3m_gpu_error.hpp"
 
-#include "cuda_utils.cuh"
+#include "cuda/utils.cuh"
 
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>

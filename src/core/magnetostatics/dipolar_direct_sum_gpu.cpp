@@ -26,7 +26,7 @@
 
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "cuda_interface.hpp"
+#include "cuda/interface.hpp"
 #include "grid.hpp"
 
 static void get_simulation_box(float *box, int *per) {

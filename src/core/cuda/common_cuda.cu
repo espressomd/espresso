@@ -19,10 +19,10 @@
 #include "config/config.hpp"
 
 #include "ParticleRange.hpp"
-#include "cuda_init.hpp"
-#include "cuda_interface.hpp"
-#include "cuda_utils.cuh"
 #include "errorhandling.hpp"
+#include "init.hpp"
+#include "interface.hpp"
+#include "utils.cuh"
 
 #include "CudaDeviceAllocator.hpp"
 #include "CudaHostAllocator.hpp"

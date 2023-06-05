@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CUDA_UTILS_CUH
-#define CORE_CUDA_UTILS_CUH
+
+#pragma once
 
 #if !defined(__CUDACC__)
 #error Do not include CUDA headers in normal C++-code!!!
 #endif
 
-#include "cuda_utils.hpp"
+#include "utils.hpp"
 
 #include <cuda.h>
 
@@ -80,5 +80,3 @@ void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
 
 #define KERNELCALL(_function, _grid, _block, ...)                              \
   KERNELCALL_shared(_function, _grid, _block, 0, ##__VA_ARGS__)
-
-#endif

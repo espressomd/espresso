@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CUDA_INTERFACE_HPP
-#define CORE_CUDA_INTERFACE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -141,4 +141,3 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
 void cuda_bcast_global_part_params();
 
 #endif // CUDA
-#endif

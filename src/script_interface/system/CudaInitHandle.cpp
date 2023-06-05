@@ -21,8 +21,8 @@
 
 #include "config/config.hpp"
 
-#include "core/cuda_init.hpp"
-#include "core/cuda_utils.hpp"
+#include "core/cuda/init.hpp"
+#include "core/cuda/utils.hpp"
 
 #include <string>
 #include <unordered_map>

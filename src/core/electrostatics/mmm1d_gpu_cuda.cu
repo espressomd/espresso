@@ -31,7 +31,7 @@
 #include "electrostatics/specfunc.cuh"
 
 #include "EspressoSystemInterface.hpp"
-#include "cuda_utils.cuh"
+#include "cuda/utils.cuh"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

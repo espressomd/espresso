@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CUDA_DEVICE_ALLOCATOR_HPP
-#define ESPRESSO_CUDA_DEVICE_ALLOCATOR_HPP
+
+#pragma once
 
 #include <utils/device_qualifier.hpp>
 
@@ -71,4 +71,3 @@ template <class T> struct CudaDeviceAllocator {
     }
   }
 };
-#endif

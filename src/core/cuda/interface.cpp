@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cuda_interface.hpp"
+#include "interface.hpp"
 
 #ifdef CUDA
 

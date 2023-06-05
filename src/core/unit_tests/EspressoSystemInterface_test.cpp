@@ -53,8 +53,8 @@ inline void check_uninitialized_device_pointers() {
 
 #ifdef CUDA
 
-#include "cuda_init.hpp"
-#include "cuda_utils.hpp"
+#include "cuda/init.hpp"
+#include "cuda/utils.hpp"
 
 /* Decorator to run a unit test depending on GPU availability. */
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
