@@ -74,9 +74,5 @@ void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
   _function<<<_grid, _block, _stream, stream[0]>>>(__VA_ARGS__);               \
   cuda_check_errors_exit(_grid, _block, #_function, __FILE__, __LINE__);
 
-#define KERNELCALL_stream(_function, _grid, _block, _stream, ...)              \
-  _function<<<_grid, _block, 0, _stream>>>(__VA_ARGS__);                       \
-  cuda_check_errors_exit(_grid, _block, #_function, __FILE__, __LINE__);
-
 #define KERNELCALL(_function, _grid, _block, ...)                              \
   KERNELCALL_shared(_function, _grid, _block, 0, ##__VA_ARGS__)

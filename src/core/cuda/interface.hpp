@@ -29,59 +29,15 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-// Parameters for swimmers
-#ifdef ENGINE
-struct CUDA_ParticleParametersSwimming {
-  using Vector3f = Utils::Vector3f;
-
-  // v_cs has to stay in the front for memmove reasons
-  float v_cs[6];
-  float v_swim;
-  float f_swim;
-  Vector3f director;
-  int push_pull;
-  float dipole_length;
-  bool swimming;
-};
-#endif
-
 /** data structure which must be copied to the GPU at each step run on the GPU
  */
 struct CUDA_particle_data {
   using Vector3f = Utils::Vector3f;
-#ifdef ENGINE
-  // This has to stay in front of the struct for memmove reasons
-  CUDA_ParticleParametersSwimming swim;
-#endif
-
   Vector3f p;
-
   int identity;
-
-#ifdef VIRTUAL_SITES
-  bool is_virtual;
-#else
-  static constexpr const bool is_virtual = false;
-#endif
-
-  Vector3f v;
-
-#ifdef ROTATION
-  Vector3f director;
-#endif
-
-#ifdef LB_ELECTROHYDRODYNAMICS
-  Vector3f mu_E;
-#endif
-
 #ifdef ELECTROSTATICS
   float q;
 #endif
-
-#ifdef MASS
-  float mass;
-#endif
-
 #ifdef DIPOLES
   Vector3f dip;
 #endif

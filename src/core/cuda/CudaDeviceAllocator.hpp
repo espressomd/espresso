@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <utils/device_qualifier.hpp>
-
 #ifndef __CUDACC__
 #error "This header can only be used with a CUDA-capable compiler."
 #endif
@@ -67,7 +65,6 @@ template <class T> struct CudaDeviceAllocator {
     try {
       thrust::device_free(p);
     } catch (thrust::system::system_error const &) {
-      ;
     }
   }
 };

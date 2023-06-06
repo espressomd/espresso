@@ -18,10 +18,8 @@
  */
 #include "CudaHostAllocator.hpp"
 
-#include <cuda.h>
-
 #include <cstddef>
-#include <stdexcept>
+#include <new>
 
 void cuda_malloc_host(void **p, std::size_t n) {
   cudaError_t error = cudaMallocHost(p, n);

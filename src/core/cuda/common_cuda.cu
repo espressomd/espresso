@@ -27,11 +27,9 @@
 #include "CudaDeviceAllocator.hpp"
 #include "CudaHostAllocator.hpp"
 
-#include <utils/constants.hpp>
+#include <utils/Span.hpp>
 
 #include <thrust/device_vector.h>
-
-#include <cuda.h>
 
 #include <cstddef>
 #include <cstdio>

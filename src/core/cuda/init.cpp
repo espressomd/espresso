@@ -25,11 +25,9 @@
 #include "utils.hpp"
 
 #include "communication.hpp"
-#include "errorhandling.hpp"
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstring>
 #include <iterator>
 #include <set>

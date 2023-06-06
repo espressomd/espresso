@@ -41,42 +41,12 @@ static void pack_particles(ParticleRange particles,
   int i = 0;
   for (auto const &part : particles) {
     buffer[i].p = static_cast<Vector3f>(folded_position(part.pos(), box_geo));
-
     buffer[i].identity = part.id();
-    buffer[i].v = static_cast<Vector3f>(part.v());
-#ifdef VIRTUAL_SITES
-    buffer[i].is_virtual = part.is_virtual();
-#endif
-
 #ifdef DIPOLES
     buffer[i].dip = static_cast<Vector3f>(part.calc_dip());
 #endif
-
-#ifdef LB_ELECTROHYDRODYNAMICS
-    buffer[i].mu_E = static_cast<Vector3f>(part.mu_E());
-#endif
-
 #ifdef ELECTROSTATICS
     buffer[i].q = static_cast<float>(part.q());
-#endif
-
-#ifdef MASS
-    buffer[i].mass = static_cast<float>(part.mass());
-#endif
-
-#ifdef ROTATION
-    buffer[i].director = static_cast<Vector3f>(part.calc_director());
-#endif
-
-#ifdef ENGINE
-    buffer[i].swim.v_swim = static_cast<float>(part.swimming().v_swim);
-    buffer[i].swim.f_swim = static_cast<float>(part.swimming().f_swim);
-    buffer[i].swim.director = buffer[i].director;
-
-    buffer[i].swim.push_pull = part.swimming().push_pull;
-    buffer[i].swim.dipole_length =
-        static_cast<float>(part.swimming().dipole_length);
-    buffer[i].swim.swimming = part.swimming().swimming;
 #endif
     i++;
   }
