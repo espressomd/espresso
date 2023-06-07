@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2014-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,5 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "SystemInterface.hpp"
-#include "config/config.hpp"
+
+#include "System.hpp"
+#include "grid.hpp"
+
+#include <utils/Vector.hpp>
+
+System *System::m_instance = nullptr;
+
+Utils::Vector3d System::box() const { return ::box_geo.length(); }
