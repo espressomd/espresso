@@ -42,7 +42,7 @@ DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,
   if (m_epssq <= 0.) {
     throw std::domain_error("Parameter 'epssq' must be > 0");
   }
-  auto &gpu_particle_data = System::Instance().gpu;
+  auto &gpu_particle_data = System::get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::torque);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);
@@ -65,7 +65,7 @@ int call_kernel(void (*fp)(Args...), ArgRef &&...args) {
 }
 
 int DipolarBarnesHutGpu::initialize_data_structure() {
-  auto &gpu = System::Instance().gpu;
+  auto &gpu = System::get_system().gpu;
   auto const n_part = static_cast<int>(gpu.n_particles());
   auto const error_code = call_kernel(allocBHmemCopy, n_part, &m_bh_data);
 
@@ -84,7 +84,7 @@ int DipolarBarnesHutGpu::initialize_data_structure() {
 }
 
 void DipolarBarnesHutGpu::add_long_range_forces() {
-  auto &gpu_particle_data = System::Instance().gpu;
+  auto &gpu_particle_data = System::get_system().gpu;
   gpu_particle_data.update();
   if (this_node == 0) {
     if (initialize_data_structure() == ES_OK) {
@@ -97,7 +97,7 @@ void DipolarBarnesHutGpu::add_long_range_forces() {
 }
 
 void DipolarBarnesHutGpu::long_range_energy() {
-  auto &gpu_particle_data = System::Instance().gpu;
+  auto &gpu_particle_data = System::get_system().gpu;
   gpu_particle_data.update();
   if (this_node == 0) {
     if (initialize_data_structure() == ES_OK) {

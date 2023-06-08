@@ -45,7 +45,7 @@
 #include <memory>
 
 namespace espresso {
-static auto &system = System::Instance();
+static auto system = ::System::System{};
 }
 
 /* Decorator to run a unit test depending on GPU availability. */

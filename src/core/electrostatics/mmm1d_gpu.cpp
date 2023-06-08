@@ -52,7 +52,7 @@ CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
     throw std::domain_error("Parameter 'bessel_cutoff' must be > 0");
   }
 
-  auto &gpu_particle_data = System::Instance().gpu;
+  auto &gpu_particle_data = System::get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);
   gpu_particle_data.enable_property(GpuParticleData::prop::q);
@@ -75,7 +75,7 @@ void CoulombMMM1DGpu::sanity_checks_cell_structure() const {
 }
 
 void CoulombMMM1DGpu::tune() {
-  System::Instance().gpu.init();
+  System::get_system().gpu.init();
   if (this_node == 0) {
     setup();
     tune(maxPWerror, far_switch_radius, bessel_cutoff);

@@ -146,7 +146,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
 #ifdef CUDA
-  auto &espresso_system = System::Instance();
+  auto &espresso_system = System::get_system();
   espresso_system.gpu.update();
 #endif
 

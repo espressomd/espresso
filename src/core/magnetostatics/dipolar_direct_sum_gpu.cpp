@@ -38,7 +38,7 @@ static void get_simulation_box(float *box, int *per) {
 
 DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor)
     : prefactor{prefactor} {
-  auto &gpu_particle_data = System::Instance().gpu;
+  auto &gpu_particle_data = System::get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::torque);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);
@@ -46,7 +46,7 @@ DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor)
 }
 
 void DipolarDirectSumGpu::add_long_range_forces() const {
-  auto &gpu = System::Instance().gpu;
+  auto &gpu = System::get_system().gpu;
   gpu.update();
   if (this_node != 0) {
     return;
@@ -65,7 +65,7 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
 }
 
 void DipolarDirectSumGpu::long_range_energy() const {
-  auto &gpu = System::Instance().gpu;
+  auto &gpu = System::get_system().gpu;
   gpu.update();
   if (this_node != 0) {
     return;

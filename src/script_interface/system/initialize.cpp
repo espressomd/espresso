@@ -20,15 +20,15 @@
 #include "initialize.hpp"
 
 #include "CudaInitHandle.hpp"
-#include "Globals.hpp"
 #include "System.hpp"
+#include "SystemFacade.hpp"
 
 namespace ScriptInterface {
 namespace System {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<CudaInitHandle>("System::CudaInitHandle");
-  om->register_new<Globals>("System::Globals");
+  om->register_new<SystemFacade>("System::SystemFacade");
   om->register_new<System>("System::System");
 }
 

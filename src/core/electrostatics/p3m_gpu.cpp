@@ -50,7 +50,7 @@ void CoulombP3MGPU::init() {
 void CoulombP3MGPU::init_cpu_kernels() { CoulombP3M::init(); }
 
 void CoulombP3MGPU::request_gpu() const {
-  auto &gpu_particle_data = System::Instance().gpu;
+  auto &gpu_particle_data = System::get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::q);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);

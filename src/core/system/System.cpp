@@ -22,6 +22,18 @@
 
 #include <utils/Vector.hpp>
 
-System *System::m_instance = nullptr;
+#include <memory>
+
+namespace System {
+
+static std::shared_ptr<System> instance;
+
+void set_system(std::shared_ptr<System> new_instance) {
+  instance = new_instance;
+}
+
+System &get_system() { return *instance; }
 
 Utils::Vector3d System::box() const { return ::box_geo.length(); }
+
+} // namespace System

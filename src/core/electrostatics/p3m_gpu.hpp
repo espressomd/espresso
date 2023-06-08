@@ -39,6 +39,7 @@ struct CoulombP3MGPU : public CoulombP3M {
 
   void init();
   void on_activation() {
+    request_gpu();
     CoulombP3M::on_activation();
     if (is_tuned()) {
       init_cpu_kernels();

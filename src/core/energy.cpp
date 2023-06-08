@@ -51,7 +51,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 
   auto &obs_energy = *obs_energy_ptr;
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
-  auto &gpu_particle_data = System::Instance().gpu;
+  auto &gpu_particle_data = System::get_system().gpu;
   gpu_particle_data.clear_energy_on_device();
   gpu_particle_data.update();
 #endif

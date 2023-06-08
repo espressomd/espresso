@@ -26,22 +26,21 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <memory>
+
+namespace System {
 
 class System {
 public:
-  static System &Instance() {
-    if (!m_instance)
-      m_instance = new System;
-
-    return *m_instance;
-  }
-
 #ifdef CUDA
   GpuParticleData gpu;
 #endif // ifdef CUDA
 
   Utils::Vector3d box() const;
-
-protected:
-  static System *m_instance;
 };
+
+System &get_system();
+
+void set_system(std::shared_ptr<System> new_instance);
+
+} // namespace System

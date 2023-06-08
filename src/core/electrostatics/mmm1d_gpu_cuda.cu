@@ -146,8 +146,8 @@ static auto numBlocks(std::size_t n_part) {
 }
 
 void CoulombMMM1DGpu::setup() {
-  auto &gpu_particle_data = System::Instance().gpu;
-  auto const box_z = static_cast<float>(System::Instance().box()[2]);
+  auto &gpu_particle_data = System::get_system().gpu;
+  auto const box_z = static_cast<float>(System::get_system().box()[2]);
   auto const n_part = gpu_particle_data.n_particles();
   if (not m_is_tuned and n_part != 0) {
     set_params(box_z, prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
@@ -518,7 +518,7 @@ void CoulombMMM1DGpu::add_long_range_forces() {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
 
-  auto &gpu = System::Instance().gpu;
+  auto &gpu = System::get_system().gpu;
   auto const positions_device = gpu.get_particle_positions_device();
   auto const charges_device = gpu.get_particle_charges_device();
   auto const forces_device = gpu.get_particle_forces_device();
@@ -551,7 +551,7 @@ void CoulombMMM1DGpu::add_long_range_energy() {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
 
-  auto &gpu = System::Instance().gpu;
+  auto &gpu = System::get_system().gpu;
   auto const positions_device = gpu.get_particle_positions_device();
   auto const charges_device = gpu.get_particle_charges_device();
   auto const energy_device = gpu.get_energy_device();
@@ -573,7 +573,7 @@ float CoulombMMM1DGpu::force_benchmark() {
   float elapsedTime;
   float *dev_f_benchmark;
 
-  auto &gpu = System::Instance().gpu;
+  auto &gpu = System::get_system().gpu;
   auto const positions_device = gpu.get_particle_positions_device();
   auto const charges_device = gpu.get_particle_charges_device();
   auto const n_part = gpu.n_particles();

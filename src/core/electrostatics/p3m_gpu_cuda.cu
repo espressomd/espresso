@@ -552,8 +552,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   if (mesh[0] == -1 && mesh[1] == -1 && mesh[2] == -1)
     throw std::runtime_error("P3M: invalid mesh size");
 
-  auto &gpu_particle_data = System::Instance().gpu;
-
+  auto &gpu_particle_data = System::get_system().gpu;
   bool do_reinit = false, mesh_changed = false;
   p3m_gpu_data.n_part = static_cast<int>(gpu_particle_data.n_particles());
 
@@ -576,7 +575,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     do_reinit = true;
   }
 
-  auto const box_l = System::Instance().box();
+  auto const box_l = System::get_system().box();
 
   if (!p3m_gpu_data_initialized || (p3m_gpu_data.box[0] != box_l[0]) ||
       (p3m_gpu_data.box[1] != box_l[1]) || (p3m_gpu_data.box[2] != box_l[2])) {
@@ -680,7 +679,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
  *  \brief The long-range part of the P3M algorithm.
  */
 void p3m_gpu_add_farfield_force(double prefactor) {
-  auto &gpu = System::Instance().gpu;
+  auto &gpu = System::get_system().gpu;
   p3m_gpu_data.n_part = static_cast<int>(gpu.n_particles());
 
   if (p3m_gpu_data.n_part == 0)

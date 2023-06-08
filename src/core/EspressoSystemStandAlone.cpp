@@ -24,6 +24,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "system/System.hpp"
 #include "virtual_sites.hpp"
 #include "virtual_sites/VirtualSitesOff.hpp"
 
@@ -46,6 +47,7 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
 #ifdef VIRTUAL_SITES
   set_virtual_sites(std::make_shared<VirtualSitesOff>());
 #endif
+  ::System::set_system(std::make_shared<::System::System>());
 }
 
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {
