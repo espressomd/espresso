@@ -24,6 +24,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "random.hpp"
+#include "thermostat.hpp"
 
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
@@ -35,6 +36,7 @@
 
 #include <boost/mpi.hpp>
 
+#include <cmath>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
@@ -121,6 +123,21 @@ Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   return vel_offset;
 }
 
+static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p) {
+  auto const lb_gamma = lb_lbcoupling_get_gamma();
+#ifdef THERMOSTAT_PER_PARTICLE
+  auto const &partcl_gamma = p.gamma();
+#ifdef PARTICLE_ANISOTROPY
+  auto const default_gamma = Thermostat::GammaType::broadcast(lb_gamma);
+#else
+  auto const default_gamma = lb_gamma;
+#endif // PARTICLE_ANISOTROPY
+  return handle_particle_gamma(partcl_gamma, default_gamma);
+#else
+  return lb_gamma;
+#endif // THERMOSTAT_PER_PARTICLE
+}
+
 Utils::Vector3d lb_drag_force(Particle const &p,
                               Utils::Vector3d const &shifted_pos,
                               Utils::Vector3d const &vel_offset) {
@@ -131,8 +148,10 @@ Utils::Vector3d lb_drag_force(Particle const &p,
       LB::get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u + vel_offset;
+  auto const gamma = lb_handle_particle_anisotropy(p);
+
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
-  return -lb_lbcoupling_get_gamma() * (p.v() - v_drift);
+  return Utils::hadamard_product(gamma, v_drift - p.v());
 }
 
 /**
@@ -210,7 +229,7 @@ void add_swimmer_force(Particle const &p, double time_step) {
 
 namespace LB {
 
-Utils::Vector3d ParticleCoupling::get_noise_term(int pid) const {
+Utils::Vector3d ParticleCoupling::get_noise_term(Particle const &p) const {
   if (not m_thermalized) {
     return Utils::Vector3d{};
   }
@@ -219,8 +238,14 @@ Utils::Vector3d ParticleCoupling::get_noise_term(int pid) const {
     throw std::runtime_error(
         "Access to uninitialized LB particle coupling RNG counter");
   }
+  using std::sqrt;
+  using Utils::sqrt;
   auto const counter = rng_counter->value();
-  return m_noise * Random::noise_uniform<RNGSalt::PARTICLES>(counter, 0, pid);
+  auto const gamma = lb_handle_particle_anisotropy(p);
+  return m_noise_pref_wo_gamma *
+         Utils::hadamard_product(
+             sqrt(gamma),
+             Random::noise_uniform<RNGSalt::PARTICLES>(counter, 0, p.id()));
 }
 
 void ParticleCoupling::kernel(Particle &p) {
@@ -233,7 +258,7 @@ void ParticleCoupling::kernel(Particle &p) {
     if (in_local_halo(pos)) {
       auto const vel_offset = lb_particle_coupling_drift_vel_offset(p);
       auto const drag_force = lb_drag_force(p, pos, vel_offset);
-      auto const random_force = get_noise_term(p.id());
+      auto const random_force = get_noise_term(p);
       coupling_force = drag_force + random_force;
       break;
     }
@@ -259,6 +284,20 @@ bool CouplingBookkeeping::is_ghost_for_local_particle(Particle const &p) const {
   return not ::cell_structure.get_local_particle(p.id())->is_ghost();
 }
 
+#if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)
+static void lb_coupling_sanity_checks(Particle const &p) {
+  /*
+  lb does (at the moment) not support rotational particle coupling.
+  Consequently, anisotropic particles are also not supported.
+  */
+  auto const &p_gamma = p.gamma();
+  if (p_gamma[0] != p_gamma[1] or p_gamma[1] != p_gamma[2]) {
+    runtimeErrorMsg() << "anisotropic particle (id " << p.id()
+                      << ") coupled to LB.";
+  }
+}
+#endif
+
 void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
                       ParticleRange const &ghost_particles, double time_step) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
@@ -269,6 +308,9 @@ void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
       for (auto const &particle_range : {real_particles, ghost_particles}) {
         for (auto &p : particle_range) {
           if (bookkeeping.should_be_coupled(p)) {
+#if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)
+            lb_coupling_sanity_checks(p);
+#endif
             coupling.kernel(p);
           }
         }

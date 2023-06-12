@@ -139,31 +139,27 @@ class ParticleCoupling {
   bool m_couple_virtual;
   bool m_thermalized;
   double m_time_step;
-  double m_noise;
+  double m_noise_pref_wo_gamma;
 
 public:
-  auto get_noise(double kT, double gamma) const {
-    /* Eq. (16) @cite ahlrichs99a.
-     * The factor 12 comes from the fact that we use random numbers
-     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-     * The time step comes from the discretization.
-     */
-    auto constexpr variance_correction = 12.;
-    return std::sqrt(variance_correction * 2. * gamma * kT / m_time_step);
-  }
-
   ParticleCoupling(bool couple_virtual, double time_step, double kT)
       : m_couple_virtual{couple_virtual}, m_thermalized{kT != 0.},
         m_time_step{time_step} {
     assert(kT >= 0.);
-    m_noise = get_noise(kT, lb_particle_coupling.gamma);
+    /* Eq. (16) @cite ahlrichs99a, without the gamma term.
+     * The factor 12 comes from the fact that we use random numbers
+     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+     * The time step comes from the discretization.
+     */
+    auto constexpr variance_inv = 12.;
+    m_noise_pref_wo_gamma = std::sqrt(variance_inv * 2. * kT / time_step);
   }
 
   ParticleCoupling(bool couple_virtual, double time_step)
       : ParticleCoupling(couple_virtual, time_step,
                          LB::get_kT() * Utils::sqr(LB::get_lattice_speed())) {}
 
-  Utils::Vector3d get_noise_term(int pid) const;
+  Utils::Vector3d get_noise_term(Particle const &p) const;
   void kernel(Particle &p);
 };
 

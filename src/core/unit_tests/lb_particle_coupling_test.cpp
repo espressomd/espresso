@@ -183,9 +183,13 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 17);
   BOOST_CHECK(not lb_lbcoupling_is_seed_required());
-  auto const step1_random1 = coupling.get_noise_term(1);
-  auto const step1_random2 = coupling.get_noise_term(4);
-  auto const step1_random2_try2 = coupling.get_noise_term(4);
+  Particle test_partcl_1{};
+  test_partcl_1.id() = 1;
+  Particle test_partcl_2{};
+  test_partcl_2.id() = 4;
+  auto const step1_random1 = coupling.get_noise_term(test_partcl_1);
+  auto const step1_random2 = coupling.get_noise_term(test_partcl_2);
+  auto const step1_random2_try2 = coupling.get_noise_term(test_partcl_2);
   BOOST_REQUIRE(step1_random1.norm() > 1e-10);
   BOOST_CHECK(step1_random1 != step1_random2);
   BOOST_CHECK(step1_random2 == step1_random2_try2);
@@ -196,13 +200,14 @@ BOOST_AUTO_TEST_CASE(rng) {
 
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 18);
-  auto const step2_random1 = coupling.get_noise_term(1);
-  auto const step2_random2 = coupling.get_noise_term(4);
+  auto const step2_random1 = coupling.get_noise_term(test_partcl_1);
+  auto const step2_random2 = coupling.get_noise_term(test_partcl_2);
   BOOST_CHECK(step1_random1 != step2_random1);
   BOOST_CHECK(step1_random1 != step2_random2);
 
   LB::ParticleCoupling coupling_unthermalized{true, params.time_step, 0.};
-  auto const step3_norandom = coupling_unthermalized.get_noise_term(4);
+  auto const step3_norandom =
+      coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
 }
 
@@ -318,7 +323,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   lb_lbcoupling_set_gamma(gamma);
   Particle p{};
   LB::ParticleCoupling coupling{false, params.time_step};
-  auto expected = coupling.get_noise_term(p.id());
+  auto expected = coupling.get_noise_term(p);
 #ifdef ENGINE
   p.swimming().swimming = true;
   p.swimming().v_swim = 2.;
@@ -379,11 +384,11 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 #endif
 
   LB::ParticleCoupling coupling{thermo_virtual, params.time_step};
-  auto expected = coupling.get_noise_term(pid);
   auto const p_opt = copy_particle_to_head_node(comm, pid);
-#if defined(ENGINE) or defined(LB_ELECTROHYDRODYNAMICS)
+  auto expected = Utils::Vector3d{};
   if (rank == 0) {
     auto const &p = *p_opt;
+    expected += coupling.get_noise_term(p);
 #ifdef ENGINE
     expected += gamma * p.swimming().v_swim * p.calc_director();
 #endif
@@ -391,7 +396,6 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     expected += gamma * p.mu_E();
 #endif
   }
-#endif // defined(ENGINE) or defined(LB_ELECTROHYDRODYNAMICS)
   boost::mpi::broadcast(comm, expected, 0);
   auto const p_pos = first_lb_node + Utils::Vector3d::broadcast(0.5);
   set_particle_pos(pid, p_pos);
@@ -512,9 +516,10 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     }
     lb_particle_coupling.rng_counter_coupling = {};
     if (kT == 0.) {
-      BOOST_CHECK_EQUAL(coupling.get_noise_term(0).norm(), 0.);
+      BOOST_CHECK_EQUAL(coupling.get_noise_term(Particle{}).norm(), 0.);
     } else {
-      BOOST_CHECK_THROW(coupling.get_noise_term(0), std::runtime_error);
+      BOOST_CHECK_THROW(coupling.get_noise_term(Particle{}),
+                        std::runtime_error);
     }
   }
 }
