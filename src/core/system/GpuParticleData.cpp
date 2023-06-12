@@ -52,6 +52,15 @@ void GpuParticleData::copy_particles_to_device() {
   copy_particles_to_device(::cell_structure.local_particles(), ::this_node);
 }
 
+bool GpuParticleData::has_compatible_device() const {
+  auto result = false;
+  if (::this_node == 0) {
+    result = has_compatible_device_impl();
+  }
+  boost::mpi::broadcast(::comm_cart, result, 0);
+  return result;
+}
+
 BOOST_IS_BITWISE_SERIALIZABLE(GpuParticleData::GpuParticle)
 
 namespace boost {

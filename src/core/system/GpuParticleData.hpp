@@ -78,7 +78,7 @@ public:
 
 private:
   // forward declare
-  struct Storage;
+  class Storage;
   /** @brief Whether a device was found and data structures were allocated. */
   bool m_communication_enabled = false;
   /** @brief Whether to convert particle properties from AoS to SoA. */
@@ -86,8 +86,9 @@ private:
   /** @brief Whether particle transfer to the GPU was requested. */
   bool m_need_particles_update = false;
   /** @brief Host and device containers. */
-  std::unique_ptr<Storage> m_data;
+  std::shared_ptr<Storage> m_data;
 
+  bool has_compatible_device_impl() const;
   void gpu_init_particle_comm();
   void enable_particle_transfer();
   void copy_particles_to_device();
@@ -101,7 +102,7 @@ private:
                                 Utils::Span<float> host_torques) const;
 
 public:
-  GpuParticleData();
+  GpuParticleData() = default;
   ~GpuParticleData();
 
   void update() {
@@ -109,11 +110,12 @@ public:
       copy_particles_to_device();
     }
   }
-  void init() { update(); }
+  void init();
   void enable_property(std::size_t property);
   void clear_energy_on_device();
   void copy_forces_to_host(ParticleRange const &particles, int this_node);
   std::size_t n_particles() const;
+  bool has_compatible_device() const;
 
   GpuEnergy copy_energy_to_host() const;
   GpuEnergy *get_energy_device() const;

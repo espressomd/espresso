@@ -22,6 +22,7 @@
 #include "config/config.hpp"
 
 #include "GpuParticleData.hpp"
+#include "ResourceCleanup.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -34,13 +35,19 @@ class System {
 public:
 #ifdef CUDA
   GpuParticleData gpu;
-#endif // ifdef CUDA
+#endif
+  ResourceCleanup cleanup_queue;
 
   Utils::Vector3d box() const;
+  void init() {
+#ifdef CUDA
+    gpu.init();
+#endif
+  }
 };
 
 System &get_system();
-
 void set_system(std::shared_ptr<System> new_instance);
+void reset_system();
 
 } // namespace System

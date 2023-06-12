@@ -169,6 +169,7 @@ class System(ScriptInterfaceHelper):
     def __init__(self, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
+            self._setup_atexit()
             return
         super().__init__()
 
@@ -220,6 +221,14 @@ class System(ScriptInterfaceHelper):
 
         # lock class
         self.call_method("lock_system_creation")
+        self._setup_atexit()
+
+    def _setup_atexit(self):
+        import atexit
+
+        def session_shutdown():
+            self.call_method("session_shutdown")
+        atexit.register(session_shutdown)
 
     def __reduce__(self):
         so_callback, so_callback_args = super().__reduce__()

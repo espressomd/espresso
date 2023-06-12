@@ -24,11 +24,12 @@
 #include "config/config.hpp"
 
 #include "GpuParticleData.hpp"
+#include "ResourceCleanup.hpp"
+#include "System.hpp"
 
 #include "ParticleRange.hpp"
 #include "errorhandling.hpp"
 
-#include "cuda/CudaDeviceAllocator.hpp"
 #include "cuda/init.hpp"
 #include "cuda/utils.cuh"
 
@@ -47,11 +48,7 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-template <class T>
-using device_vector = thrust::device_vector<T, CudaDeviceAllocator<T>>;
-
-template <class T, class A>
-T *raw_data_pointer(thrust::device_vector<T, A> &vec) {
+template <class T> T *raw_data_pointer(thrust::device_vector<T> &vec) {
   return thrust::raw_pointer_cast(vec.data());
 }
 
@@ -60,7 +57,7 @@ template <class SpanLike> std::size_t byte_size(SpanLike const &v) {
 }
 
 /**
- * @brief Resize a @ref device_vector.
+ * @brief Resize a @c thrust::device_vector.
  *
  * Due to a bug in thrust (https://github.com/thrust/thrust/issues/939),
  * resizing or appending to default constructed containers causes undefined
@@ -68,36 +65,46 @@ template <class SpanLike> std::size_t byte_size(SpanLike const &v) {
  * function is used instead of the resize member function to side-step
  * the problem. This is done by replacing the existing vector by a new
  * one constructed with the desired size if resizing from capacity zero.
- * Behaves as-if vec.resize(n) was called.
+ * Behaves as-if @c vec.resize(n) was called.
  * This is fixed in Thrust 1.11, shipped in CUDA 11.3
  * (https://github.com/NVIDIA/thrust/commit/1c4f25d9).
  *
  * @tparam T Type contained in the vector.
- * @param vec Vector To resize.
- * @param n Desired new size of the element.
+ * @param vec Vector to resize.
+ * @param n Desired new size of the vector.
  */
 template <class T>
-void resize_or_replace(device_vector<T> &vec, std::size_t n) {
+void resize_or_replace(thrust::device_vector<T> &vec, std::size_t n) {
   if (vec.capacity() == 0) {
-    vec = device_vector<T>(n);
+    vec = thrust::device_vector<T>(n);
   } else {
     vec.resize(n);
   }
 }
 
+template <typename T> void free_device_vector(thrust::device_vector<T> &vec) {
+  vec.clear();
+  thrust::device_vector<T>().swap(vec);
+}
+
 /** @brief Host and device containers for particle data. */
-struct GpuParticleData::Storage {
+class GpuParticleData::Storage {
+  void free_device_memory();
+  using DeviceMemory = ResourceCleanup::Attorney<&Storage::free_device_memory>;
+  friend DeviceMemory;
+
+public:
   /** @brief Which particle properties are needed by GPU methods. */
   GpuParticleData::prop::bitset m_need;
   GpuParticleData::GpuEnergy *energy_device = nullptr;
   std::size_t current_size = 0ul;
   pinned_vector<GpuParticle> particle_data_host;
-  device_vector<GpuParticle> particle_data_device;
+  thrust::device_vector<GpuParticle> particle_data_device;
   pinned_vector<float> particle_forces_host;
-  device_vector<float> particle_forces_device;
+  thrust::device_vector<float> particle_forces_device;
 #ifdef ROTATION
   pinned_vector<float> particle_torques_host;
-  device_vector<float> particle_torques_device;
+  thrust::device_vector<float> particle_torques_device;
 #endif
   float *particle_pos_device = nullptr;
 #ifdef DIPOLES
@@ -107,6 +114,13 @@ struct GpuParticleData::Storage {
   float *particle_q_device = nullptr;
 #endif
 
+  static auto make_shared() {
+    auto obj = std::make_shared<GpuParticleData::Storage>();
+    System::get_system().cleanup_queue.push<DeviceMemory>(obj);
+    return obj;
+  }
+
+  ~Storage() { free_device_memory(); }
   void realloc_device_memory();
   void split_particle_struct();
   void copy_particles_to_device();
@@ -135,8 +149,8 @@ struct GpuParticleData::Storage {
 #endif
 };
 
-GpuParticleData::GpuParticleData() {
-  m_data = std::make_unique<GpuParticleData::Storage>();
+void GpuParticleData::init() {
+  m_data = GpuParticleData::Storage::make_shared();
 }
 
 GpuParticleData::~GpuParticleData() {}
@@ -182,6 +196,16 @@ void GpuParticleData::enable_property(std::size_t property) {
     m_split_particle_struct = true;
   }
   enable_particle_transfer();
+}
+
+bool GpuParticleData::has_compatible_device_impl() const {
+  auto result = true;
+  try {
+    cuda_check_device();
+  } catch (cuda_runtime_error const &err) {
+    result = false;
+  }
+  return result;
 }
 
 /**
@@ -396,4 +420,25 @@ void GpuParticleData::Storage::realloc_device_memory() {
   }
 #endif
   current_size = new_size;
+}
+
+void GpuParticleData::Storage::free_device_memory() {
+  auto const free_device_pointer = [](float *&ptr) {
+    if (ptr != nullptr) {
+      cuda_safe_mem(cudaFree(reinterpret_cast<void *>(ptr)));
+      ptr = nullptr;
+    }
+  };
+  free_device_vector(particle_data_device);
+  free_device_vector(particle_forces_device);
+#ifdef ROTATION
+  free_device_vector(particle_torques_device);
+#endif
+  free_device_pointer(particle_pos_device);
+#ifdef DIPOLES
+  free_device_pointer(particle_dip_device);
+#endif
+#ifdef ELECTROSTATICS
+  free_device_pointer(particle_q_device);
+#endif
 }

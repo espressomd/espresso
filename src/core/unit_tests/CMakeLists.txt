@@ -34,6 +34,8 @@ unit_test(NAME EspressoSystemStandAlone_serial_test SRC
           MPI::MPI_CXX NUM_PROC 1)
 unit_test(NAME EspressoSystem_test SRC EspressoSystem_test.cpp DEPENDS
           espresso::core Boost::mpi NUM_PROC 2)
+unit_test(NAME ResourceCleanup_test SRC ResourceCleanup_test.cpp DEPENDS
+          espresso::core Boost::mpi NUM_PROC 2)
 unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS

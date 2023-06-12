@@ -44,10 +44,6 @@
 #include <cassert>
 #include <memory>
 
-namespace espresso {
-static auto system = ::System::System{};
-}
-
 /* Decorator to run a unit test depending on GPU availability. */
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   bool has_compatible_gpu = false;
@@ -62,7 +58,11 @@ boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
 BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
                         *boost::unit_test::precondition(has_gpu)) {
   auto const rank = boost::mpi::communicator().rank();
-  auto &gpu = espresso::system.gpu;
+
+  auto system = std::make_shared<::System::System>();
+  System::set_system(system);
+  system->init();
+  auto &gpu = system->gpu;
 
   // check uninitialized device pointers
   BOOST_CHECK_EQUAL(gpu.get_energy_device(), nullptr);
@@ -142,6 +142,8 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   remove_particle(p_id);
   gpu.update();
   BOOST_CHECK_EQUAL(gpu.n_particles(), 0);
+
+  System::reset_system();
 }
 
 int main(int argc, char **argv) {
@@ -149,8 +151,6 @@ int main(int argc, char **argv) {
 
   // initialize the MpiCallbacks framework
   Communication::init(mpi_env);
-
-  espresso::system.gpu.init();
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

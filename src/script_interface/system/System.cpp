@@ -103,6 +103,7 @@ void System::do_construct(VariantMap const &params) {
 
   m_instance = std::make_shared<::System::System>();
   ::System::set_system(m_instance);
+  m_instance->init();
 
   do_set_parameter("box_l", params.at("box_l"));
   if (params.count("periodicity")) {
@@ -196,6 +197,16 @@ Variant System::do_call_method(std::string const &name,
     rotate_system(get_value<double>(parameters, "phi"),
                   get_value<double>(parameters, "theta"),
                   get_value<double>(parameters, "alpha"));
+    return {};
+  }
+  if (name == "session_shutdown") {
+    if (m_instance) {
+      if (&::System::get_system() == m_instance.get()) {
+        ::System::reset_system();
+      }
+      assert(m_instance.use_count() == 1l);
+      m_instance.reset();
+    }
     return {};
   }
   return {};

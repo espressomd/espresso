@@ -75,7 +75,7 @@ void CoulombMMM1DGpu::sanity_checks_cell_structure() const {
 }
 
 void CoulombMMM1DGpu::tune() {
-  System::get_system().gpu.init();
+  System::get_system().gpu.update();
   if (this_node == 0) {
     setup();
     tune(maxPWerror, far_switch_radius, bessel_cutoff);

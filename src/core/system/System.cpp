@@ -28,6 +28,8 @@ namespace System {
 
 static std::shared_ptr<System> instance;
 
+void reset_system() { instance.reset(); }
+
 void set_system(std::shared_ptr<System> new_instance) {
   instance = new_instance;
 }
