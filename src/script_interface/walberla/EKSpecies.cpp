@@ -99,8 +99,8 @@ void EKSpecies::do_construct(VariantMap const &args) {
   auto const density = get_value<double>(args, "density");
   auto const kT = get_value<double>(args, "kT");
   auto const tau = m_tau = get_value<double>(args, "tau");
-  auto const thermalized = get_value_or<bool>(args, "thermalized", false);
-  auto const seed = get_value_or<int>(args, "seed", 0);
+  auto const thermalized = get_value<bool>(args, "thermalized");
+  auto const seed = get_value<int>(args, "seed");
   context()->parallel_try_catch([&]() {
     if (seed < 0) {
       throw std::domain_error("Parameter 'seed' must be >= 0");

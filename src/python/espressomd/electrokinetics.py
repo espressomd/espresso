@@ -182,13 +182,27 @@ class EKSpecies(ScriptInterfaceHelper,
         if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)
+            self.validate_params(params)
             super().__init__(*args, **params)
         else:
             super().__init__(**kwargs)
 
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+        utils.check_valid_keys(self.valid_keys(), params.keys())
+
+    def required_keys(self):
+        return {"lattice", "diffusion", "density", "tau",
+                "valency", "advection", "friction_coupling"}
+
     def default_params(self):
         return {"single_precision": False,
-                "kT": 0., "ext_efield": [0., 0., 0.]}
+                "kT": 0., "ext_efield": [0., 0., 0.],
+                "thermalized": False, "seed": 0}
+
+    def valid_keys(self):
+        return {"single_precision", "ext_efield", "kT",
+                "thermalized", "seed", *self.required_keys()}
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:

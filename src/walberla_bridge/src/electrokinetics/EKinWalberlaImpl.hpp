@@ -66,11 +66,18 @@ class EKinWalberlaImpl : public EKinWalberlaBase {
       typename detail::KernelTrait<FloatType>::AdvectiveFluxKernel;
   using FrictionCouplingKernel =
       typename detail::KernelTrait<FloatType>::FrictionCouplingKernel;
-  using DiffusiveFluxKernelElectrostatic =
+  using DiffusiveFluxKernelElectrostaticUnthermalized =
       typename detail::KernelTrait<FloatType>::DiffusiveFluxKernelElectrostatic;
+  using DiffusiveFluxKernelElectrostaticThermalized =
+      typename detail::KernelTrait<
+          FloatType>::DiffusiveFluxKernelElectrostaticThermalized;
 
   using DiffusiveFluxKernel = boost::variant<DiffusiveFluxKernelUnthermalized,
                                              DiffusiveFluxKernelThermalized>;
+
+  using DiffusiveFluxKernelElectrostatic =
+      boost::variant<DiffusiveFluxKernelElectrostaticUnthermalized,
+                     DiffusiveFluxKernelElectrostaticThermalized>;
 
   using Dirichlet = typename detail::KernelTrait<FloatType>::Dirichlet;
   using FixedFlux = typename detail::KernelTrait<FloatType>::FixedFlux;
@@ -124,6 +131,8 @@ protected:
   std::unique_ptr<BoundaryModelFlux> m_boundary_flux;
 
   std::unique_ptr<DiffusiveFluxKernel> m_diffusive_flux_kernel;
+  std::unique_ptr<DiffusiveFluxKernelElectrostatic>
+      m_diffusive_flux_kernel_electrostatic;
   std::unique_ptr<ContinuityKernel> m_continuity;
 
   // ResetFlux + external force
@@ -251,13 +260,25 @@ public:
   void set_diffusion(double diffusion) override {
     m_diffusion = FloatType_c(diffusion);
 
-    boost::apply_visitor(
-        [m_diffusion = m_diffusion](auto &kernel) { kernel.D_ = m_diffusion; },
-        *m_diffusive_flux_kernel);
+    auto lambda = [m_diffusion = m_diffusion](auto &kernel) {
+      kernel.D_ = m_diffusion;
+    };
+
+    boost::apply_visitor(lambda, *m_diffusive_flux_kernel);
+    boost::apply_visitor(lambda, *m_diffusive_flux_kernel_electrostatic);
   }
-  void set_kT(double kT) override { m_kT = FloatType_c(kT); }
+  void set_kT(double kT) override {
+    m_kT = FloatType_c(kT);
+
+    boost::apply_visitor([m_kT = m_kT](auto &kernel) { kernel.kT_ = m_kT; },
+                         *m_diffusive_flux_kernel_electrostatic);
+  }
   void set_valency(double valency) override {
     m_valency = FloatType_c(valency);
+
+    boost::apply_visitor(
+        [m_valency = m_valency](auto &kernel) { kernel.z_ = m_valency; },
+        *m_diffusive_flux_kernel_electrostatic);
   }
   void set_advection(bool advection) override { m_advection = advection; }
   void set_friction_coupling(bool friction_coupling) override {
@@ -266,15 +287,28 @@ public:
   virtual void set_rng_state(uint64_t counter) override {
     auto *kernel =
         boost::get<DiffusiveFluxKernelThermalized>(&*m_diffusive_flux_kernel);
-    if (!kernel) {
+    auto *kernel_electrostatic =
+        boost::get<DiffusiveFluxKernelElectrostaticThermalized>(
+            &*m_diffusive_flux_kernel_electrostatic);
+    if (!kernel or !kernel_electrostatic) {
       throw std::runtime_error("This EK instance is unthermalized");
     }
     assert(counter <=
            static_cast<uint32_t>(std::numeric_limits<uint_t>::max()));
     kernel->time_step_ = static_cast<uint32_t>(counter);
+    kernel_electrostatic->time_step_ = static_cast<uint32_t>(counter);
   }
   void set_ext_efield(Utils::Vector3d const &field) override {
     m_ext_efield = field;
+
+    boost::apply_visitor(
+        [f_ext_0_ = FloatType_c(field[0]), f_ext_1_ = FloatType_c(field[1]),
+         f_ext_2_ = FloatType_c(field[2])](auto &kernel) {
+          kernel.f_ext_0_ = f_ext_0_;
+          kernel.f_ext_1_ = f_ext_1_;
+          kernel.f_ext_2_ = f_ext_2_;
+        },
+        *m_diffusive_flux_kernel_electrostatic);
   }
 
   void ghost_communication() override { (*m_full_communication)(); }
@@ -287,6 +321,15 @@ private:
 
     m_diffusive_flux_kernel =
         std::make_unique<DiffusiveFluxKernel>(std::move(obj));
+
+    auto obj_electrostatic = DiffusiveFluxKernelElectrostaticUnthermalized(
+        m_flux_field_flattened_id, BlockDataID{}, m_density_field_flattened_id,
+        FloatType_c(m_diffusion), FloatType_c(m_ext_efield[0]),
+        FloatType_c(m_ext_efield[1]), FloatType_c(m_ext_efield[2]),
+        FloatType_c(m_kT), FloatType_c(m_valency));
+    m_diffusive_flux_kernel_electrostatic =
+        std::make_unique<DiffusiveFluxKernelElectrostatic>(
+            std::move(obj_electrostatic));
   }
 
   void set_diffusion_kernels(unsigned int seed) {
@@ -310,6 +353,20 @@ private:
 
     m_diffusive_flux_kernel =
         std::make_unique<DiffusiveFluxKernel>(std::move(obj));
+
+    auto const ext_field = get_ext_efield();
+    auto obj_electrostatic = DiffusiveFluxKernelElectrostaticThermalized(
+        m_flux_field_flattened_id, BlockDataID{0}, m_density_field_flattened_id,
+        FloatType_c(m_diffusion), uint32_t{0u}, uint32_t{0u}, uint32_t{0u},
+        FloatType_c(ext_field[0]), FloatType_c(ext_field[1]),
+        FloatType_c(ext_field[2]), grid_dim[0], grid_dim[1], grid_dim[2],
+        FloatType_c(m_kT), seed, uint32_t{0u}, FloatType_c(m_valency));
+
+    obj_electrostatic.block_offset_generator = block_offset_gen;
+
+    m_diffusive_flux_kernel_electrostatic =
+        std::make_unique<DiffusiveFluxKernelElectrostatic>(
+            std::move(obj_electrostatic));
   }
 
   void kernel_boundary_density() {
@@ -339,6 +396,11 @@ private:
     if (auto *kernel = boost::get<DiffusiveFluxKernelThermalized>(
             &*m_diffusive_flux_kernel)) {
       kernel->time_step_++;
+
+      auto *kernel_electrostatic =
+          boost::get<DiffusiveFluxKernelElectrostaticThermalized>(
+              &*m_diffusive_flux_kernel_electrostatic);
+      kernel_electrostatic->time_step_++;
     }
   }
 
@@ -361,15 +423,24 @@ private:
   }
 
   void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
-    auto const ext_field = get_ext_efield();
-    auto kernel = DiffusiveFluxKernelElectrostatic(
-        m_flux_field_flattened_id, BlockDataID(potential_id),
-        m_density_field_flattened_id, FloatType_c(get_diffusion()),
-        FloatType_c(ext_field[0]), FloatType_c(ext_field[1]),
-        FloatType_c(ext_field[2]), FloatType_c(get_kT()),
-        FloatType_c(get_valency()));
+    auto const potential_id_blockdata = BlockDataID(potential_id);
+    boost::apply_visitor([phiID = potential_id_blockdata](
+                             auto &kernel) { kernel.phiID = phiID; },
+                         *m_diffusive_flux_kernel_electrostatic);
+
     for (auto &block : *m_lattice->get_blocks()) {
-      kernel.run(&block);
+      boost::apply_visitor([&block](auto &kernel) { kernel.run(&block); },
+                           *m_diffusive_flux_kernel_electrostatic);
+    }
+
+    if (auto *kernel_electrostatic =
+            boost::get<DiffusiveFluxKernelElectrostaticThermalized>(
+                &*m_diffusive_flux_kernel_electrostatic)) {
+      kernel_electrostatic->time_step_++;
+
+      auto *kernel =
+          boost::get<DiffusiveFluxKernelThermalized>(&*m_diffusive_flux_kernel);
+      kernel->time_step_++;
     }
   }
 

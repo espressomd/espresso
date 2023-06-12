@@ -25,6 +25,8 @@
 #include "generated_kernels/ContinuityKernel_single_precision.h"
 #include "generated_kernels/DiffusiveFluxKernelThermalized_double_precision.h"
 #include "generated_kernels/DiffusiveFluxKernelThermalized_single_precision.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalized_double_precision.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalized_single_precision.h"
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_double_precision.h"
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision.h"
 #include "generated_kernels/DiffusiveFluxKernel_double_precision.h"
@@ -49,6 +51,8 @@ template <typename FloatType = double> struct KernelTrait {
       pystencils::FrictionCouplingKernel_double_precision;
   using DiffusiveFluxKernelElectrostatic =
       pystencils::DiffusiveFluxKernelWithElectrostatic_double_precision;
+  using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
+      DiffusiveFluxKernelWithElectrostaticThermalized_double_precision;
 
   using Dirichlet = pystencils::Dirichlet_double_precision;
   using FixedFlux = pystencils::FixedFlux_double_precision;
@@ -63,6 +67,8 @@ template <> struct KernelTrait<float> {
       pystencils::FrictionCouplingKernel_single_precision;
   using DiffusiveFluxKernelElectrostatic =
       pystencils::DiffusiveFluxKernelWithElectrostatic_single_precision;
+  using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
+      DiffusiveFluxKernelWithElectrostaticThermalized_single_precision;
 
   using Dirichlet = pystencils::Dirichlet_single_precision;
   using FixedFlux = pystencils::FixedFlux_single_precision;
