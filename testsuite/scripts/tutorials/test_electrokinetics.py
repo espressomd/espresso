@@ -20,7 +20,7 @@ import importlib_wrapper as iw
 import numpy as np
 
 tutorial, skipIfMissingFeatures = iw.configure_and_import(
-    "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py", integration_length=400)
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/electrokinetics/electrokinetics.py", integration_length=400)
 
 
 @skipIfMissingFeatures
