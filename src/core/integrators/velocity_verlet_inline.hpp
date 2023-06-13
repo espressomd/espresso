@@ -79,11 +79,10 @@ inline void velocity_verlet_propagate_vel_final_par(Particle &p,
   if (p.is_virtual())
     return;
 
-    for (unsigned int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-        p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
-      }
+  for (unsigned int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+      p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
     }
   }
 }
