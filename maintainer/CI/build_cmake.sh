@@ -126,9 +126,12 @@ set_default_value with_hdf5 true
 set_default_value with_fftw true
 set_default_value with_gsl true
 set_default_value with_scafacos false
+set_default_value with_walberla false
+set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 300
 set_default_value hide_gpu false
+set_default_value mpiexec_preflags ""
 
 if [ "${make_check_unit_tests}" = true ] || [ "${make_check_python}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
@@ -141,7 +144,7 @@ if [ "${with_coverage}" = true ]; then
 fi
 
 if [ "${with_fast_math}" = true ]; then
-    cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math -fno-finite-math-only"
+    cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math"
 fi
 
 cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D CMAKE_CXX_STANDARD=${with_cxx_standard} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
@@ -184,6 +187,16 @@ if [ "${with_stokesian_dynamics}" = true ]; then
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON"
 else
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=OFF"
+fi
+
+if [ "${with_walberla}" = true ]; then
+  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON"
+  if [ "${with_walberla_avx}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
+  fi
+  # disable default OpenMPI CPU binding mechanism to avoid stale references to
+  # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
+  mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
 fi
 
 if [ "${with_coverage}" = true ]; then
@@ -248,7 +261,7 @@ cd "${builddir}"
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
     grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
-    grep -q "Ubuntu 22.04" /etc/os-release && export MPIEXEC_PREFLAGS="--mca;btl_vader_single_copy_mechanism;none"
+    grep -q "Ubuntu 22.04" /etc/os-release && export MPIEXEC_PREFLAGS="--mca;btl_vader_single_copy_mechanism;none${mpiexec_preflags:+;$mpiexec_preflags}"
 fi
 
 # CONFIGURE
@@ -288,8 +301,9 @@ end "BUILD"
 # library. See details in https://github.com/espressomd/espresso/issues/2249
 # Can't do this check on CUDA though because nvcc creates a host function
 # that just calls exit() for each device function, and can't do this with
-# coverage because gcov 9.0 adds code that calls exit().
-if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) ]]; then
+# coverage because gcov 9.0 adds code that calls exit(), and can't do this
+# with walberla because the library calls exit() in assertions.
+if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) && "${with_walberla}" != "true" ]]; then
     if nm -o -C $(find . -name '*.so') | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
@@ -384,6 +398,9 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
         lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+        if [ -d _deps/ ]; then
+          lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info $(realpath _deps/)'/*' --output-file coverage.info # filter out docs
+        fi
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."

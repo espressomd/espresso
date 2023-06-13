@@ -24,7 +24,7 @@ import benchmarks
 import espressomd
 import espressomd.electrostatics
 import espressomd.reaction_methods
-import setuptools
+import pkg_resources
 import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark MC simulations in the grand-reaction ensemble. "
@@ -45,7 +45,7 @@ args = parser.parse_args()
 # process and check arguments
 assert args.particles_per_core >= 100, "you need to use at least 100 particles per core to avoid finite-size effects in the simulation"
 espressomd.assert_features(['WCA', 'ELECTROSTATICS'])
-assert setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet('>=0.10.1').contains(pint.__version__), \
+assert pkg_resources.packaging.specifiers.SpecifierSet('>=0.10.1').contains(pint.__version__), \
     f'pint version {pint.__version__} is too old: several numpy operations can cast away the unit'
 
 
