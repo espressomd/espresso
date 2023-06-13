@@ -48,16 +48,19 @@ BOOST_AUTO_TEST_CASE(test_shear_direction) {
 }
 
 BOOST_AUTO_TEST_CASE(test_update_offset) {
+  auto const prefactor = 2.5;
+  auto const old_offset = 1.5;
   Particle p;
   p.image_box() = {2, 4, -1};
-  p.lees_edwards_offset() = 1.5;
+  p.lees_edwards_offset() = old_offset;
+  p.lees_edwards_flag() = 1;
 
   LeesEdwardsBC le{0., 3.5, 1, 2};
   BoxGeometry box;
   box.set_lees_edwards_bc(le);
-  UpdateOffset(box, 3.5)(p);
-  auto const expected_offset = 1.5 - le.shear_velocity * 0.5 * 3.5 *
-                                         (p.image_box()[le.shear_plane_normal]);
+  UpdateOffset{box}(p, prefactor);
+  // Disabled as long as we do not use a two step LE update
+  auto const expected_offset = old_offset; // - prefactor * le.pos_offset / 2.
   BOOST_CHECK_CLOSE(p.lees_edwards_offset(), expected_offset, tol);
 }
 
@@ -65,7 +68,7 @@ BOOST_AUTO_TEST_CASE(test_push) {
   auto const old_offset = -1.2;
   auto const shear_l = 6.;
   auto const shear_normal_l = 4.5;
-  auto const dt = 0.8;
+  auto const prefactor = 1.5;
   auto const old_pos = Utils::Vector3d{{3., shear_normal_l * 1.1, 10.}};
   auto const old_vel = Utils::Vector3d{{-1.2, 2., 4.1}};
 
@@ -85,23 +88,23 @@ BOOST_AUTO_TEST_CASE(test_push) {
   box.set_lees_edwards_bc(le);
 
   // Test transition in one direction
-  Push(box, dt)(p);
-  auto expected_pos = old_pos - shear_direction(box) * le.pos_offset;
+  Push{box}(p, prefactor);
+  auto expected_pos =
+      old_pos - prefactor * shear_direction(box) * le.pos_offset;
   auto expected_vel = old_vel - shear_direction(box) * le.shear_velocity;
-  auto expected_offset =
-      old_offset + le.pos_offset -
-      le.shear_velocity * 0.5 * dt * p.image_box()[le.shear_plane_normal];
+  auto expected_offset = old_offset + prefactor * le.pos_offset;
+  fold_position(expected_pos, p.image_box(), box);
   BOOST_CHECK_SMALL((p.pos() - expected_pos).norm(), eps);
   BOOST_CHECK_SMALL((p.v() - expected_vel).norm(), eps);
   BOOST_CHECK_CLOSE(p.lees_edwards_offset(), expected_offset, tol);
 
   // Test transition in the other direction
   p.pos()[le.shear_plane_normal] = -1;
-  Push(box, dt)(p);
+  Push{box}(p, prefactor);
   expected_pos = {old_pos[0], -1., old_pos[2]};
+  fold_position(expected_pos, p.image_box(), box);
   expected_vel = old_vel;
-  expected_offset = old_offset - le.shear_velocity * dt *
-                                     p.image_box()[le.shear_plane_normal];
+  expected_offset = old_offset;
   BOOST_CHECK_SMALL((p.pos() - expected_pos).norm(), eps);
   BOOST_CHECK_SMALL((p.v() - expected_vel).norm(), eps);
   BOOST_CHECK_CLOSE(p.lees_edwards_offset(), expected_offset, tol);

@@ -23,36 +23,85 @@
 #include "VirtualSitesInertialessTracers.hpp"
 
 #include "cells.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
+#include "forces.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "integrate.hpp"
 
-#include <algorithm>
+#include <unordered_set>
 
-void VirtualSitesInertialessTracers::after_force_calc() {
-  // Now the forces are computed and need to go into the LB fluid
-  if (lattice_switch == ActiveLB::CPU) {
-    IBM_ForcesIntoFluid_CPU();
-    return;
+static bool lb_active_check() {
+  if (lattice_switch == ActiveLB::NONE) {
+    runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
+    return false;
   }
-#ifdef CUDA
-  if (lattice_switch == ActiveLB::GPU) {
-    IBM_ForcesIntoFluid_GPU(cell_structure.local_particles(), this_node);
-    return;
+  return true;
+}
+
+void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
+  auto const to_lb_units =
+      (lattice_switch == ActiveLB::NONE) ? 0. : 1. / LB::get_agrid();
+
+  // Distribute summed-up forces from physical particles to ghosts
+  init_forces_ghosts(cell_structure.ghost_particles());
+  cells_update_ghosts(Cells::DATA_PART_FORCE);
+
+  // Set to store ghost particles (ids) that have already been coupled
+  std::unordered_set<int> coupled_ghost_particles;
+  // Apply particle forces to the LB fluid at particle positions
+  // For physical particles, also set particle velocity = fluid velocity
+  for (auto &p : cell_structure.local_particles()) {
+    if (!p.is_virtual())
+      continue;
+    if (!lb_active_check()) {
+      return;
+    }
+    if (should_be_coupled(p, coupled_ghost_particles)) {
+      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+        add_md_force(pos * to_lb_units, -p.force(), time_step);
+      }
+    }
   }
-#endif
-  if (std::any_of(cell_structure.local_particles().begin(),
-                  cell_structure.local_particles().end(),
-                  [](Particle &p) { return p.is_virtual(); })) {
-    runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
-                         "virtual sites present.";
-    return;
+  for (auto const &p : cell_structure.ghost_particles()) {
+    if (!p.is_virtual())
+      continue;
+    if (!lb_active_check()) {
+      return;
+    }
+    if (should_be_coupled(p, coupled_ghost_particles)) {
+      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+        add_md_force(pos * to_lb_units, -p.force(), time_step);
+      }
+    }
   }
+
+  // Clear ghost forces to avoid double counting later
+  init_forces_ghosts(cell_structure.ghost_particles());
 }
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
-  IBM_UpdateParticlePositions(cell_structure.local_particles(), time_step,
-                              this_node);
+  auto const to_md_units =
+      (lattice_switch == ActiveLB::NONE) ? 0. : LB::get_lattice_speed();
+
+  // Advect particles
+  for (auto &p : cell_structure.local_particles()) {
+    if (!p.is_virtual())
+      continue;
+    if (!lb_active_check()) {
+      return;
+    }
+    p.v() = lb_lbinterpolation_get_interpolated_velocity(p.pos()) * to_md_units;
+    for (unsigned int i = 0; i < 3; i++) {
+      if (!p.is_fixed_along(i)) {
+        p.pos()[i] += p.v()[i] * time_step;
+      }
+    }
+    // Verlet list update check
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > skin * skin) {
+      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+    }
+  }
 }
 #endif // VIRTUAL_SITES_INERTIALESS_TRACERS

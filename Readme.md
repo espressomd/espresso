@@ -1,6 +1,12 @@
+# Invitation to the ESPResSo Summer School 2023
+
+[![CECAM Flagship School registration link](https://img.shields.io/badge/CECAM%20Flagship%20School-Register%20Now-blue?style=for-the-badge)](https://www.cecam.org/workshop-details/1229)
+
+The summer school "Simulating energy materials with ESPResSo and waLBerla" will take place on October 9-13, 2023, in Stuttgart. Registration is now open on [CECAM](https://www.cecam.org/workshop-details/1229).
+
 # ESPResSo
 
-[![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/commits/python)
+[![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/commits/python)
 [![codecov](https://codecov.io/gh/espressomd/espresso/branch/python/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/espressomd/espresso)
@@ -69,8 +75,8 @@ Common installation issues are addressed in the
 For most users, we recommend downloading the latest release version of ESPResSo. You
 can find it in the [release page](https://github.com/espressomd/espresso/releases),
 together with past releases until 4.0. When choosing a release, we recommend that
-you get the latest bugfix release in that line. For example, for 4.1 you would like
-to use 4.1.4.
+you get the latest bugfix release in that line. For example, for 4.2 you would like
+to use 4.2.1.
 
 ### Join the community
 

@@ -39,6 +39,7 @@ public:
   using key_type = typename container_type::key_type;
   using mapped_type = typename container_type::mapped_type;
 
+private:
   key_type insert_in_core(mapped_type const &) override {
     if (context()->is_head_node()) {
       throw std::runtime_error(
@@ -54,11 +55,6 @@ public:
   void erase_in_core(key_type const &key) override {
     ::BondBreakage::erase_spec(key);
   }
-
-private:
-  // disable serialization: bond breakage has its own pickling logic
-  std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
 };
 } // namespace BondBreakage
 } // namespace ScriptInterface

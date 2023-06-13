@@ -58,6 +58,18 @@
 namespace ScriptInterface {
 namespace Particles {
 
+static void particle_checks(int p_id, Utils::Vector3d const &pos) {
+  if (p_id < 0) {
+    throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
+  }
+#ifndef __FAST_MATH__
+  if (std::isnan(pos[0]) or std::isnan(pos[1]) or std::isnan(pos[2]) or
+      std::isinf(pos[0]) or std::isinf(pos[1]) or std::isinf(pos[2])) {
+    throw std::domain_error("Particle position must be finite");
+  }
+#endif // __FAST_MATH__
+}
+
 static uint8_t bitfield_from_flag(Utils::Vector3i const &flag) {
   auto bitfield = static_cast<uint8_t>(0u);
   if (flag[0])
@@ -173,7 +185,9 @@ ParticleHandle::ParticleHandle() {
        [this]() { return get_particle_data(m_pid).type(); }},
       {"pos",
        [this](Variant const &value) {
-         set_particle_pos(m_pid, get_value<Utils::Vector3d>(value));
+         auto const pos = get_value<Utils::Vector3d>(value);
+         particle_checks(m_pid, pos);
+         set_particle_pos(m_pid, pos);
        },
        [this]() {
          auto const p = get_particle_data(m_pid);

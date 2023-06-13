@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/widom_insertion.py", cmd_arguments=["0.001"],
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/widom_insertion.py", cmd_arguments=["0.001"],
     n_iterations=20)
 
 

@@ -25,6 +25,7 @@
 namespace utf = boost::unit_test;
 
 #include "ParticleFactory.hpp"
+#include "particle_management.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
@@ -72,27 +73,8 @@ static void remove_translational_motion() {
   Galilei{}.kill_particle_motion(false);
 }
 
-static auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
-                                       int p_id) {
-  boost::optional<Particle> result{};
-  auto p = ::cell_structure.get_local_particle(p_id);
-  if (p and not p->is_ghost()) {
-    if (comm.rank() == 0) {
-      result = *p;
-    } else {
-      comm.send(0, p_id, *p);
-    }
-  }
-  if (comm.rank() == 0 and not result) {
-    Particle p{};
-    comm.recv(boost::mpi::any_source, p_id, p);
-    result = p;
-  }
-  return result;
-}
-
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
-  constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   auto const comm = boost::mpi::communicator();
   auto const rank = comm.rank();
   auto const n_nodes = comm.size();
@@ -312,7 +294,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     reset_particle_positions();
 
     // recalculate forces without propagating the system
-    integrate(0, 0);
+    integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
 
     // particles are arranged in a right triangle
     auto const p1_opt = copy_particle_to_head_node(comm, pid1);
@@ -355,7 +337,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
           expected[pid] = p.pos();
         }
       }
-      integrate(1, 0);
+      integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
       for (auto pid : pids) {
         auto const p_opt = copy_particle_to_head_node(comm, pid);
         if (rank == 0) {

@@ -70,7 +70,8 @@ cpdef check_type_or_throw_except(x, n, t, msg):
 
 def to_char_pointer(s):
     """
-    Returns a char pointer which contains the information of the provided python string.
+    Returns a Cython bytes object which contains the information of the provided
+    Python string. Cython bytes objects implicitly cast to raw char pointers.
 
     Parameters
     ----------
@@ -181,13 +182,6 @@ cdef make_array_locked(Vector3d v):
 
 cdef Vector3d make_Vector3d(a):
     cdef Vector3d v
-    for i, ai in enumerate(a):
-        v[i] = ai
-    return v
-
-
-cdef Vector3i make_Vector3i(a):
-    cdef Vector3i v
     for i, ai in enumerate(a):
         v[i] = ai
     return v

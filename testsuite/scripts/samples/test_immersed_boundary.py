@@ -20,7 +20,7 @@ import importlib_wrapper
 import pathlib
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/immersed_boundary/sampleImmersedBoundary.py",
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/immersed_boundary/sampleImmersedBoundary.py",
     stepSize=100, numSteps=4)
 
 

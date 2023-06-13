@@ -22,22 +22,22 @@ source BashUnitTests.sh
 # test installation and Python bindings
 function test_install() {
   # check Python files were installed in espressomd
-  local -r filepaths=("@ESPRESSO_INSTALL_BINDIR@/pypresso" \
-                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/espresso_core.so" \
-                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/_init.so" \
-                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/__init__.py"
+  local -r filepaths=("/usr/local/bin/pypresso" \
+                      "/usr/local/lib/python3.10/site-packages/espressomd/espresso_core.so" \
+                      "/usr/local/lib/python3.10/site-packages/espressomd/_init.so" \
+                      "/usr/local/lib/python3.10/site-packages/espressomd/__init__.py"
                      )
   for filepath in "${filepaths[@]}"; do
     assert_file_exists "${filepath}"
   done
 
   # check no Python file was installed outside espressomd
-  paths=$(find "@CMAKE_INSTALL_PREFIX@" -path "@ESPRESSO_INSTALL_PYTHON@/espressomd" -prune -o \( -name '*.py' -o -name '*.so' \) -print)
+  paths=$(find "/usr/local" -path "/usr/local/lib/python3.10/site-packages/espressomd" -prune -o \( -name '*.py' -o -name '*.so' \) -print)
   count=$(echo "${paths}" | wc -l)
   assert_string_equal "${paths}" "" "${count} files were installed in the wrong directories:"$'\n'"${paths}"
 
   # check the espressomd module can be imported from pypresso
-  assert_return_code "@CMAKE_INSTALL_FULL_BINDIR@/pypresso" -c "import espressomd"
+  assert_return_code "/usr/local/bin/pypresso" -c "import espressomd"
 }
 
 # run tests

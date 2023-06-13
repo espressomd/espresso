@@ -124,7 +124,7 @@ private:
   /**
    * @brief Get the local cell.
    */
-  Cell &local() { return cells.at(m_comm.rank()); }
+  Cell &local() { return cells.at(static_cast<unsigned int>(m_comm.rank())); }
 
   void configure_neighbors();
   GhostCommunicator prepare_comm();

@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/dpd.py", sample_size=100, int_steps=100)
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/dpd.py", sample_size=100, int_steps=100)
 
 
 @skipIfMissingFeatures

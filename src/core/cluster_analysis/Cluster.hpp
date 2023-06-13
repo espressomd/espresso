@@ -53,6 +53,9 @@ public:
    *
    *  @return fractal dimension, rms error of the fit */
   std::pair<double, double> fractal_dimension(double dr);
+
+private:
+  void sanity_checks() const;
 };
 
 } // namespace ClusterAnalysis

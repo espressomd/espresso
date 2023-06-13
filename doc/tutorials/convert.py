@@ -32,7 +32,7 @@ import os
 import ast
 import sys
 import uuid
-sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
+sys.path.append('/home/thilo/code/espresso2/espresso/testsuite/scripts')
 import importlib_wrapper as iw
 
 
@@ -220,7 +220,7 @@ def apply_autopep8(nb):
 
     def get_autopep8_options():
         options = {'aggressive': 0, 'ignore': [], 'max_line_length': 120}
-        with open('@CMAKE_SOURCE_DIR@/.pre-commit-config.yaml') as f:
+        with open('/home/thilo/code/espresso2/espresso/.pre-commit-config.yaml') as f:
             pre_config = yaml.safe_load(f)
         for repo in pre_config['repos']:
             for hook in repo['hooks']:

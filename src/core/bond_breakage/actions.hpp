@@ -23,6 +23,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/variant.hpp>
 
+#include <array>
 #include <cstddef>
 
 namespace BondBreakage {
@@ -44,6 +45,28 @@ struct DeleteBond {
            rhs.bond_partner_id == bond_partner_id and
            rhs.bond_type == bond_type;
   }
+  bool operator!=(DeleteBond const &rhs) const { return not(*this == rhs); }
+};
+
+struct DeleteAngleBond {
+  int particle_id;
+  std::array<int, 2> bond_partner_id;
+  int bond_type;
+  std::size_t hash_value() const {
+    std::size_t seed = 3876;
+    boost::hash_combine(seed, particle_id);
+    boost::hash_combine(seed, bond_partner_id);
+    boost::hash_combine(seed, bond_type);
+    return seed;
+  }
+  bool operator==(DeleteAngleBond const &rhs) const {
+    return rhs.particle_id == particle_id and
+           rhs.bond_partner_id == bond_partner_id and
+           rhs.bond_type == bond_type;
+  }
+  bool operator!=(DeleteAngleBond const &rhs) const {
+    return not(*this == rhs);
+  }
 };
 
 struct DeleteAllBonds {
@@ -59,7 +82,9 @@ struct DeleteAllBonds {
     return rhs.particle_id_1 == particle_id_1 and
            rhs.particle_id_2 == particle_id_2;
   }
+  bool operator!=(DeleteAllBonds const &rhs) const { return not(*this == rhs); }
 };
+
 } // namespace BondBreakage
 
 // Hash support for std::unordered_set
@@ -68,6 +93,12 @@ template <> struct hash<BondBreakage::DeleteBond> {
   std::size_t operator()(BondBreakage::DeleteBond const &t) const noexcept {
     return t.hash_value();
   }
+};
+template <> struct hash<BondBreakage::DeleteAngleBond> {
+  std::size_t
+  operator()(BondBreakage::DeleteAngleBond const &t) const noexcept {
+    return t.hash_value();
+  };
 };
 template <> struct hash<BondBreakage::DeleteAllBonds> {
   std::size_t operator()(BondBreakage::DeleteAllBonds const &t) const noexcept {

@@ -27,16 +27,25 @@ BOOST_AUTO_TEST_CASE(test_actions_equality) {
   {
     using Action = BondBreakage::DeleteBond;
     BOOST_CHECK((Action{1, 2, 3} == Action{1, 2, 3}));
-    BOOST_CHECK(!(Action{1, 2, 3} == Action{0, 2, 3}));
-    BOOST_CHECK(!(Action{1, 2, 3} == Action{1, 0, 3}));
-    BOOST_CHECK(!(Action{1, 2, 3} == Action{1, 2, 0}));
+    BOOST_CHECK((Action{1, 2, 3} != Action{0, 2, 3}));
+    BOOST_CHECK((Action{1, 2, 3} != Action{1, 0, 3}));
+    BOOST_CHECK((Action{1, 2, 3} != Action{1, 2, 0}));
+  }
+
+  {
+    using Action = BondBreakage::DeleteAngleBond;
+    BOOST_CHECK((Action{1, {2, 4}, 3} == Action{1, {2, 4}, 3}));
+    BOOST_CHECK((Action{1, {2, 4}, 3} != Action{0, {2, 4}, 3}));
+    BOOST_CHECK((Action{1, {2, 4}, 3} != Action{1, {0, 4}, 3}));
+    BOOST_CHECK((Action{1, {2, 4}, 3} != Action{1, {2, 0}, 3}));
+    BOOST_CHECK((Action{1, {2, 4}, 3} != Action{1, {2, 4}, 0}));
   }
 
   {
     using Action = BondBreakage::DeleteAllBonds;
     BOOST_CHECK((Action{1, 2} == Action{1, 2}));
-    BOOST_CHECK(!(Action{1, 2} == Action{0, 2}));
-    BOOST_CHECK(!(Action{1, 2} == Action{1, 0}));
+    BOOST_CHECK((Action{1, 2} != Action{0, 2}));
+    BOOST_CHECK((Action{1, 2} != Action{1, 0}));
   }
 }
 
@@ -47,6 +56,17 @@ BOOST_AUTO_TEST_CASE(test_actions_hash_value) {
     BOOST_CHECK((Action{1, 2, 3}.hash_value() != Action{0, 2, 3}.hash_value()));
     BOOST_CHECK((Action{1, 2, 3}.hash_value() != Action{1, 0, 3}.hash_value()));
     BOOST_CHECK((Action{1, 2, 3}.hash_value() != Action{1, 2, 0}.hash_value()));
+  }
+
+  {
+    // clang-format off
+    using Action = BondBreakage::DeleteAngleBond;
+    BOOST_CHECK((Action{1, {2, 4}, 3}.hash_value() == Action{1, {2, 4}, 3}.hash_value()));
+    BOOST_CHECK((Action{1, {2, 4}, 3}.hash_value() != Action{0, {2, 4}, 3}.hash_value()));
+    BOOST_CHECK((Action{1, {2, 4}, 3}.hash_value() != Action{1, {0, 4}, 3}.hash_value()));
+    BOOST_CHECK((Action{1, {2, 4}, 3}.hash_value() != Action{1, {2, 0}, 3}.hash_value()));
+    BOOST_CHECK((Action{1, {2, 4}, 3}.hash_value() != Action{1, {2, 4}, 0}.hash_value()));
+    // clang-format on
   }
 
   {

@@ -34,6 +34,9 @@
 #include <utils/math/tensor_product.hpp>
 #include <utils/quaternion.hpp>
 
+#include "integrate.hpp"
+#include "lees_edwards/lees_edwards.hpp"
+
 /**
  * @brief Vector pointing from the real particle to the virtual site.
  *
@@ -79,6 +82,11 @@ static Particle *get_reference_particle(Particle const &p) {
     return nullptr;
   }
   auto const &vs_rel = p.vs_relative();
+  if (vs_rel.to_particle_id == -1) {
+    runtimeErrorMsg() << "Particle with id " << p.id()
+                      << " is a dangling virtual site";
+    return nullptr;
+  }
   auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref_ptr) {
     runtimeErrorMsg() << "No real particle with id " << vs_rel.to_particle_id
@@ -112,26 +120,15 @@ void VirtualSitesRelative::update() const {
       continue;
 
     auto const &p_ref = *p_ref_ptr;
-    auto new_pos = p_ref.pos() + connection_vector(p_ref, p);
-    /* The shift has to respect periodic boundaries: if the reference
-     * particles is not in the same image box, we potentially avoid shifting
-     * to the other side of the box. */
-    auto shift = box_geo.get_mi_vector(new_pos, p.pos());
-    p.pos() += shift;
-    Utils::Vector3i image_shift{};
-    fold_position(shift, image_shift, box_geo);
-    p.image_box() = p_ref.image_box() - image_shift;
-
+    p.image_box() = p_ref.image_box();
+    p.pos() = p_ref.pos() + connection_vector(p_ref, p);
     p.v() = velocity(p_ref, p);
 
     if (box_geo.type() == BoxType::LEES_EDWARDS) {
-      auto const &lebc = box_geo.lees_edwards_bc();
-      auto const shear_dir = lebc.shear_direction;
-      auto const shear_normal = lebc.shear_plane_normal;
-      auto const le_vel = lebc.shear_velocity;
-      Utils::Vector3i n_shifts{};
-      fold_position(new_pos, n_shifts, box_geo);
-      p.v()[shear_dir] -= n_shifts[shear_normal] * le_vel;
+      auto push = LeesEdwards::Push(box_geo);
+      push(p, -1); // includes a position fold
+    } else {
+      fold_position(p.pos(), p.image_box(), box_geo);
     }
 
     if (have_quaternions())

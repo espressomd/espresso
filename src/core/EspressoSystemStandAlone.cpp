@@ -62,5 +62,5 @@ void EspressoSystemStandAlone::set_time_step(double time_step) const {
 }
 
 void EspressoSystemStandAlone::set_skin(double new_skin) const {
-  mpi_set_skin_local(new_skin);
+  ::set_skin(new_skin);
 }

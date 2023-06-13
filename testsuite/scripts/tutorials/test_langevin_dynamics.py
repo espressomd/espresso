@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/langevin_dynamics/langevin_dynamics.py")
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/langevin_dynamics/langevin_dynamics.py")
 
 
 @skipIfMissingFeatures

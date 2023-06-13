@@ -37,7 +37,6 @@
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
@@ -127,20 +126,20 @@ static void init_forces(const ParticleRange &particles,
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_real_particle_force(p, time_step, kT);
+    p.force_and_torque() = init_real_particle_force(p, time_step, kT);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : ghost_particles) {
-    p.f = init_ghost_force(p);
+    p.force_and_torque() = init_ghost_force(p);
   }
 }
 
 void init_forces_ghosts(const ParticleRange &particles) {
   for (auto &p : particles) {
-    p.f = init_ghost_force(p);
+    p.force_and_torque() = init_ghost_force(p);
   }
 }
 
@@ -225,8 +224,10 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation(cell_structure);
 
-  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                         ghost_particles, time_step);
+  if (lattice_switch != ActiveLB::NONE) {
+    lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
+                                           ghost_particles, time_step);
+  }
 
 #ifdef CUDA
   copy_forces_from_GPU(particles, this_node);

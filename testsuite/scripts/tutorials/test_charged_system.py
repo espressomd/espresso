@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/charged_system/charged_system.py", N_SAMPLES=2,
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/charged_system/charged_system.py", N_SAMPLES=2,
     STEPS_PER_SAMPLE=2, WARMUP_STEPS=1000, N_SAMPLES_SALT=200)
 
 

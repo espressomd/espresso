@@ -72,6 +72,7 @@ EOF
 for commit in ${commits}; do
   echo "### commit ${commit}" >> benchmarks.log
   git checkout ${commit} -- ${directories}
+  rm -rf _deps # commits might rely on a different version of dependencies
   bash ../maintainer/benchmarks/runner.sh
   sed -ri "s/^/\"${commit}\",/" benchmarks.csv
   tail -n +2 benchmarks.csv >> benchmarks_suite.csv

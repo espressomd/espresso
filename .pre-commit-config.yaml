@@ -8,8 +8,8 @@ repos:
         entry: sh maintainer/format/clang-format.sh
         language: system
         always_run: false
-        files: '.*\.(cpp|hpp|cu|cuh)'
-        exclude: '^libs/'
+        files: '.*\.(cpp|hpp|h|cu|cuh)'
+        exclude: '^libs/|^src/walberla_bridge/src/.*/generated_kernels/.*\.(cpp|cu)|^maintainer/walberla_kernels/templates/.*\.tmpl\.(cpp|hpp|h|cu|cuh)'
         args: ["-i", "-style=file"]
 
     -   id: autopep8

@@ -21,7 +21,6 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import itertools
-import sys
 
 import espressomd
 import espressomd.shapes
@@ -36,11 +35,11 @@ BOX_L = 18.0
 TIME_STEP = TAU
 LB_PARAMETERS = {
     'agrid': AGRID,
-    'visc': VISC,
-    'dens': DENS,
+    'kinematic_viscosity': VISC,
+    'density': DENS,
     'tau': TAU
 }
-V_BOUNDARY = 0.6
+V_BOUNDARY = 0.2
 
 
 def velocity_profile(x):
@@ -58,11 +57,10 @@ class LBInterpolation:
     system.time_step = TIME_STEP
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMETERS)
+        self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
 
     def set_boundaries(self, velocity):
@@ -71,10 +69,8 @@ class LBInterpolation:
             normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(BOX_L - AGRID))
-        self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=wall_shape1))
-        self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=wall_shape2, velocity=velocity))
+        self.lbf.add_boundary_from_shape(wall_shape1)
+        self.lbf.add_boundary_from_shape(wall_shape2, velocity)
 
     def test_interpolated_velocity(self):
         """
@@ -88,20 +84,19 @@ class LBInterpolation:
         # box_l[0]-agrid/2.
         np.testing.assert_allclose(
             np.copy(self.lbf.get_interpolated_velocity(
-                [self.system.box_l[0] - AGRID / 2, 0, 0])),
+                pos=[self.system.box_l[0] - AGRID / 2, 0, 0])),
             np.array([0, 0, V_BOUNDARY]))
 
         # Check interpolated velocity involving boundary and neighboring node.
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary.
         node_next_to_boundary = self.lbf[self.lbf.shape[0] - 2, 0, 0]
+        pos_at_boundary = [BOX_L - AGRID, 0, 0]
         # The midpoint between the boundary and that node is box_l - agrid.
         np.testing.assert_allclose(
-            np.copy(self.lbf.get_interpolated_velocity(
-                [self.system.box_l[0] - AGRID, 0, 0])),
-            0.5 * (np.array([0, 0, V_BOUNDARY]) +
-                   node_next_to_boundary.velocity),
-            atol=1e-7)
+            np.copy(self.lbf.get_interpolated_velocity(pos=pos_at_boundary)),
+            ([0, 0, V_BOUNDARY] + np.copy(node_next_to_boundary.velocity)) / 2.,
+            atol=1e-4)
 
         # Bulk
         for pos in itertools.product(
@@ -109,37 +104,44 @@ class LBInterpolation:
                 np.arange(0.5 * AGRID, BOX_L, AGRID),
                 np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_allclose(
-                self.lbf.get_interpolated_velocity(pos)[2],
-                velocity_profile(pos[0]), atol=5e-5)
+                self.lbf.get_interpolated_velocity(pos=pos)[2],
+                velocity_profile(pos[0]), atol=1e-3)
 
     def test_mach_limit_check(self):
         """
         Assert that the Mach number check fires an exception.
 
         """
-        max_vel = 0.21 * AGRID / TAU
-        print("Begin: Test error generation")
-        sys.stdout.flush()
-        sys.stderr.flush()
-        with self.assertRaises(Exception):
-            self.set_boundaries([0.0, 0.0, max_vel])
-            self.system.integrator.run(1)
-        sys.stdout.flush()
-        sys.stderr.flush()
-        print("End: Test error generation")
+        max_vel = 1.1 * self.lbf.mach_limit() * AGRID / TAU
+        vbb = espressomd.lb.VelocityBounceBack([0, 0, max_vel])
+        error_msg = 'Slip velocity exceeds Mach 0.35'
+
+        with self.assertRaisesRegex(ValueError, error_msg):
+            self.lbf[0, 0, 0].boundary = vbb
+        self.assertIsNone(self.lbf[0, 0, 0].boundary)
+
+        with self.assertRaisesRegex(ValueError, error_msg):
+            shape = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
+            self.lbf.add_boundary_from_shape(shape, vbb.velocity)
+        self.assertIsNone(self.lbf[0, 0, 0].boundary)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBInterpolationCPU(LBInterpolation, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBInterpolationWalberla(LBInterpolation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluid
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBInterpolationGPU(LBInterpolation, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBInterpolationWalberlaSinglePrecision(LBInterpolation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidGPU
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
 
 
 if __name__ == "__main__":

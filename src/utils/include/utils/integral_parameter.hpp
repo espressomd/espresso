@@ -27,22 +27,20 @@
 
 namespace Utils {
 namespace detail {
-template <template <std::size_t> class F, std::size_t I, std::size_t N>
+template <typename T, template <T> class F, T I, T N>
 struct integral_parameter_impl {
-  template <class... Args>
-  static decltype(auto) eval(std::size_t i, Args &&...args) {
+  template <class... Args> static decltype(auto) eval(T i, Args &&...args) {
     if (i == I)
       return F<I>{}(std::forward<Args>(args)...);
 
-    return integral_parameter_impl<F, I + 1, N>::eval(
+    return integral_parameter_impl<T, F, I + T{1}, N>::eval(
         i, std::forward<Args>(args)...);
   }
 };
 
-template <template <std::size_t> class F, std::size_t N>
-struct integral_parameter_impl<F, N, N> {
-  template <class... Args>
-  static decltype(auto) eval(std::size_t i, Args &&...args) {
+template <typename T, template <T> class F, T N>
+struct integral_parameter_impl<T, F, N, N> {
+  template <class... Args> static decltype(auto) eval(T i, Args &&...args) {
     if (i == N)
       return F<N>{}(std::forward<Args>(args)...);
 
@@ -52,12 +50,12 @@ struct integral_parameter_impl<F, N, N> {
 } // namespace detail
 
 /**
- * @brief Generate a call table for a integral non-type template parameter.
+ * @brief Generate a call table for an integral non-type template parameter.
+ * Can be used to dynamically create a switch statement for contiguous values.
  */
-template <template <std::size_t> class F, std::size_t min, std::size_t max,
-          class... Args>
-decltype(auto) integral_parameter(std::size_t i, Args &&...args) {
-  return detail::integral_parameter_impl<F, min, max>::eval(
+template <typename T, template <T> class F, T min, T max, class... Args>
+decltype(auto) integral_parameter(T i, Args &&...args) {
+  return detail::integral_parameter_impl<T, F, min, max>::eval(
       i, std::forward<Args>(args)...);
 }
 

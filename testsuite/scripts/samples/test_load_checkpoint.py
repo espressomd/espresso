@@ -21,7 +21,7 @@ import importlib_wrapper
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/load_checkpoint.py")
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/load_checkpoint.py")
 
 
 @skipIfMissingFeatures

@@ -140,7 +140,7 @@ public:
   Vector &normalize() {
     auto const l = norm();
     if (l > T(0)) {
-      for (int i = 0; i < N; i++)
+      for (std::size_t i = 0; i < N; i++)
         this->operator[](i) /= l;
     }
 
@@ -158,7 +158,6 @@ using Vector3d = VectorXd<3>;
 using Vector4d = VectorXd<4>;
 using Vector6d = VectorXd<6>;
 using Vector9d = VectorXd<9>;
-using Vector19d = VectorXd<19>;
 
 template <std::size_t N> using VectorXf = Vector<float, N>;
 using Vector3f = VectorXf<3>;
@@ -188,7 +187,7 @@ Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
 
 template <std::size_t N, typename T, typename Op>
 constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
-  for (int i = 0; i < a.size(); i++) {
+  for (unsigned int i = 0; i < N; i++) {
     /* Short circuit */
     if (!static_cast<bool>(op(a[i], b[i]))) {
       return false;
@@ -448,7 +447,7 @@ auto hadamard_division(T const &a, U const &b) {
   return a / b;
 }
 
-template <typename T> Vector<T, 3> unit_vector(int i) {
+template <typename T> Vector<T, 3> unit_vector(unsigned int i) {
   if (i == 0)
     return {T{1}, T{0}, T{0}};
   if (i == 1)

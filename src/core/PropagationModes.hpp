@@ -3,16 +3,16 @@
 
 enum PropagationMode {
   NONE = 0,
-  TRANS_SYSTEM_DEFAULT = 1,
-  TRANS_LANGEVIN = 2,
-  TRANS_VS_RELATIVE = 4,
-  TRANS_LB_MOMENTUM_EXCHANGE = 8,
-  TRANS_LB_TRACER = 16,
-  TRANS_BROWNIAN = 32,
-  TRANS_STOKESIAN = 64,
-  ROT_LANGEVIN = 128,
-  ROT_VS_RELATIVE = 256,
-  ROT_BROWNIAN = 512
+  TRANS_SYSTEM_DEFAULT = 1 << 0,
+  TRANS_LANGEVIN = 1 << 1,
+  TRANS_VS_RELATIVE = 1 << 2,
+  TRANS_LB_MOMENTUM_EXCHANGE = 1 << 3,
+  TRANS_LB_TRACER = 1 << 4,
+  TRANS_BROWNIAN = 1 << 5,
+  TRANS_STOKESIAN = 1 << 6,
+  ROT_LANGEVIN = 1 << 7,
+  ROT_VS_RELATIVE = 1 << 8,
+  ROT_BROWNIAN = 1 << 9
 };
 
 static bool is_valid_propagation_combination(int propagation) {

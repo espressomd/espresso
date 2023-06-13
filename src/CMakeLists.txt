@@ -40,6 +40,10 @@ if(ESPRESSO_BUILD_WITH_SCAFACOS)
   add_subdirectory(scafacos)
 endif()
 
+if(ESPRESSO_BUILD_WITH_WALBERLA)
+  add_subdirectory(walberla_bridge)
+endif()
+
 if(ESPRESSO_BUILD_WITH_PYTHON)
   add_subdirectory(script_interface)
   add_subdirectory(python)

@@ -38,8 +38,8 @@ class CylindricalLBObservableCommon:
     system.cell_system.skin = 0.4
 
     lb_params = {'agrid': 1.,
-                 'dens': 1.2,
-                 'visc': 2.7,
+                 'density': 1.2,
+                 'kinematic_viscosity': 2.7,
                  'tau': 0.1,
                  }
     cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
@@ -64,7 +64,7 @@ class CylindricalLBObservableCommon:
     v_z = 0.03
 
     def setUp(self):
-        self.lbf = self.lb_class(**self.lb_params)
+        self.lbf = self.lb_class(**self.lb_params, **self.lb_params_extra)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
@@ -243,11 +243,6 @@ class CylindricalLBObservableCommon:
             np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
                                                  np.copy(observable.transform_params.__getattr__(attr_name)))
 
-
-class CylindricalLBObservableCPU(CylindricalLBObservableCommon, ut.TestCase):
-
-    lb_class = espressomd.lb.LBFluid
-
     def test_cylindrical_lb_flux_density_obs(self):
         """
         Check that the result from the observable (in its own frame)
@@ -265,26 +260,40 @@ class CylindricalLBObservableCPU(CylindricalLBObservableCommon, ut.TestCase):
 
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_r,
             core_hist_fl_r)
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_phi,
             core_hist_fl_phi)
         np.testing.assert_array_almost_equal(
             np_hist_binary *
-            self.lb_params['dens'] *
+            self.lb_params['density'] *
             self.v_z,
             core_hist_fl_z)
         self.check_edges(flux_obs, np_edges)
 
 
-@utx.skipIfMissingGPU()
-class CylindricalLBObservableGPU(CylindricalLBObservableCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class CylindricalLBObservableWalberla(
+        CylindricalLBObservableCommon, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidGPU
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params_extra = {"single_precision": False}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class CylindricalLBObservableWalberlaSinglePrecision(
+        CylindricalLBObservableWalberla, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params_extra = {"single_precision": True}
 
 
 if __name__ == "__main__":

@@ -38,7 +38,6 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
-#include <set>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -57,8 +56,10 @@ public:
   using CoreInteraction = CoreIA;
 
 protected:
-  using AutoParameters<InteractionPotentialInterface<CoreIA>>::context;
-  using AutoParameters<InteractionPotentialInterface<CoreIA>>::valid_parameters;
+  using BaseClass = AutoParameters<InteractionPotentialInterface<CoreIA>>;
+  using BaseClass::context;
+  using BaseClass::get_valid_parameters;
+
   /** @brief Managed object. */
   std::shared_ptr<CoreInteraction> m_ia_si;
   /** @brief Pointer to the corresponding member in a handle. */
@@ -77,24 +78,15 @@ protected:
   }
 
 private:
-  std::set<std::string> get_valid_parameters() const {
-    auto const vec = valid_parameters();
-    auto valid_keys = std::set<std::string>();
-    std::transform(vec.begin(), vec.end(),
-                   std::inserter(valid_keys, valid_keys.begin()),
-                   [](auto const &key) { return std::string{key}; });
-    return valid_keys;
-  }
-
   void check_valid_parameters(VariantMap const &params) const {
-    auto const valid_keys = get_valid_parameters();
-    for (auto const &key : valid_keys) {
+    auto const keys = get_valid_parameters();
+    for (auto const &key : keys) {
       if (params.count(std::string(key)) == 0) {
         throw std::runtime_error("Parameter '" + key + "' is missing");
       }
     }
     for (auto const &kv : params) {
-      if (valid_keys.count(kv.first) == 0) {
+      if (std::find(keys.begin(), keys.end(), kv.first) == keys.end()) {
         throw std::runtime_error("Parameter '" + kv.first +
                                  "' is not recognized");
       }

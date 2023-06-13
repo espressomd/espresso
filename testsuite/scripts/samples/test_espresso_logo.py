@@ -28,7 +28,7 @@ def disable_GUI(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/espresso_logo.py",
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/espresso_logo.py",
     substitutions=disable_GUI, steps=100)
 
 

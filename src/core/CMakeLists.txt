@@ -61,27 +61,13 @@ set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
                                                "${ESPRESSO_CXX_CLANG_TIDY}")
 
 if(ESPRESSO_BUILD_WITH_CUDA)
-  target_sources(
-    espresso_core
-    PRIVATE cuda_init.cpp cuda_interface.cpp
-            grid_based_algorithms/electrokinetics.cpp
-            grid_based_algorithms/lbgpu.cpp)
+  target_sources(espresso_core PRIVATE cuda_init.cpp cuda_interface.cpp)
   espresso_add_gpu_library(
-    espresso_cuda
-    SHARED
-    cuda_common_cuda.cu
-    cuda_init_cuda.cu
-    CudaHostAllocator.cu
-    magnetostatics/barnes_hut_gpu_cuda.cu
+    espresso_cuda SHARED cuda_common_cuda.cu cuda_init_cuda.cu
+    CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
     magnetostatics/dipolar_direct_sum_gpu_cuda.cu
-    electrostatics/mmm1d_gpu_cuda.cu
-    electrostatics/p3m_gpu_cuda.cu
-    electrostatics/p3m_gpu_error_cuda.cu
-    EspressoSystemInterface_cuda.cu
-    grid_based_algorithms/electrokinetics_cuda.cu
-    grid_based_algorithms/lbgpu_cuda.cu
-    grid_based_algorithms/fd-electrostatics_cuda.cu
-    virtual_sites/lb_inertialess_tracers_cuda.cu)
+    electrostatics/mmm1d_gpu_cuda.cu electrostatics/p3m_gpu_cuda.cu
+    electrostatics/p3m_gpu_error_cuda.cu EspressoSystemInterface_cuda.cu)
   add_library(espresso::cuda ALIAS espresso_cuda)
   target_link_libraries(
     espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
@@ -89,8 +75,6 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   target_include_directories(
     espresso_cuda
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-            ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites
-            ${CMAKE_CURRENT_SOURCE_DIR}/grid_based_algorithms
             ${CMAKE_CURRENT_SOURCE_DIR}/electrostatics
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
   set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY

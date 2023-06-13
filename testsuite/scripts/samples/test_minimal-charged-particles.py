@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/minimal-charged-particles.py", box_l=6.0, int_steps=100)
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/minimal-charged-particles.py", box_l=6.0, int_steps=100)
 
 
 @skipIfMissingFeatures

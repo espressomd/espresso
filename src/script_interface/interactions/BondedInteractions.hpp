@@ -29,6 +29,7 @@
 
 #include <cassert>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -43,6 +44,19 @@ class BondedInteractions : public ObjectMap<BondedInteraction> {
 public:
   using key_type = typename container_type::key_type;
   using mapped_type = typename container_type::mapped_type;
+
+  BondedInteractions() : ObjectMap<BondedInteraction>::ObjectMap() {
+    add_parameters({
+        {"_objects", AutoParameter::read_only,
+         []() {
+           // deactivate serialization (done at the Python level)
+           return make_unordered_map_of_variants(container_type{});
+         }},
+    });
+  }
+
+private:
+  container_type m_bonds;
 
   key_type insert_in_core(mapped_type const &obj_ptr) override {
     auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
@@ -64,6 +78,7 @@ public:
     mpi_update_cell_system_ia_range_local();
   }
 
+protected:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_size") {
@@ -78,12 +93,12 @@ public:
     }
 
     if (name == "has_bond") {
-      auto const bond_id = get_value<int>(params, "bond_id");
+      auto const bond_id = get_key(params.at("bond_id"));
       return {m_bonds.count(bond_id) != 0};
     }
 
     if (name == "get_bond") {
-      auto const bond_id = get_value<int>(params, "bond_id");
+      auto const bond_id = get_key(params.at("bond_id"));
       // core and script interface must agree
       assert(m_bonds.count(bond_id) == ::bonded_ia_params.count(bond_id));
       if (not context()->is_head_node())
@@ -97,18 +112,12 @@ public:
     }
 
     if (name == "get_zero_based_type") {
-      auto const bond_id = get_value<int>(params, "bond_id");
+      auto const bond_id = get_key(params.at("bond_id"));
       return ::bonded_ia_params.get_zero_based_type(bond_id);
     }
 
     return ObjectMap<BondedInteraction>::do_call_method(name, params);
   }
-
-private:
-  // disable serialization: pickling done by the python interface
-  std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
-  container_type m_bonds;
 };
 } // namespace Interactions
 } // namespace ScriptInterface

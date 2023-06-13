@@ -23,12 +23,84 @@ Testmodule for the actor base class.
 """
 
 import unittest as ut
-import espressomd.lb
 import espressomd.actors
 import espressomd.highlander
+import espressomd.utils as utils
 
 
-class TestActor(espressomd.lb.FluidActor):
+class BaseActor:
+
+    """
+    Abstract base class for interactions affecting particles in the system,
+    such as LB fluids. Derived classes must implement the interface to the
+    relevant core objects and global variables.
+    """
+
+    # Keys in active_list have to match the method name.
+    active_list = dict(HydrodynamicInteraction=False)
+
+    def __init__(self, **kwargs):
+        self._isactive = False
+        utils.check_valid_keys(self.valid_keys(), kwargs.keys())
+        utils.check_required_keys(self.required_keys(), kwargs.keys())
+        self._params = self.default_params()
+        self._params.update(kwargs)
+
+    def _activate(self):
+        inter = self._get_interaction_type()
+        if inter in BaseActor.active_list:
+            if BaseActor.active_list[inter]:
+                raise espressomd.highlander.ThereCanOnlyBeOne(
+                    self.__class__.__bases__[0])
+            BaseActor.active_list[inter] = True
+
+        self.validate_params()
+        self._activate_method()
+        utils.handle_errors("Activation of an actor")
+        self._isactive = True
+
+    def _deactivate(self):
+        self._deactivate_method()
+        utils.handle_errors("Deactivation of an actor")
+        self._isactive = False
+        inter = self._get_interaction_type()
+        if inter in BaseActor.active_list:
+            if not BaseActor.active_list[inter]:
+                raise Exception(
+                    f"Class not registered in Actor.active_list: {self.__class__.__bases__[0].__name__}")
+            BaseActor.active_list[inter] = False
+
+    def get_params(self):
+        """Get interaction parameters"""
+        # If this instance refers to an actual interaction defined in the es
+        # core, load current parameters from there
+        if self.is_active():
+            update = self._get_params_from_es_core()
+            self._params.update(update)
+        return self._params
+
+    def set_params(self, **p):
+        """Update the given parameters."""
+        # Check if keys are valid
+        utils.check_valid_keys(self.valid_keys(), p.keys())
+
+        # When an interaction is newly activated, all required keys must be
+        # given
+        if not self.is_active():
+            utils.check_required_keys(self.required_keys(), p.keys())
+
+        self._params.update(p)
+        # validate updated parameters
+        self.validate_params()
+        # Put in values given by the user
+        if self.is_active():
+            self._set_params_in_es_core()
+
+    def is_active(self):
+        return self._isactive
+
+
+class TestActor(BaseActor):
 
     def __init__(self, *args, **kwargs):
         self._core_args = None
@@ -62,6 +134,15 @@ class TestActor(espressomd.lb.FluidActor):
     def validate_params(self):
         self._validated = True
 
+    def _get_interaction_type(self):
+        return None
+
+
+class TestHydrodynamicActor(TestActor):
+
+    def _get_interaction_type(self):
+        return "HydrodynamicInteraction"
+
 
 class ActorTest(ut.TestCase):
 
@@ -69,7 +150,6 @@ class ActorTest(ut.TestCase):
         a = TestActor(a=False, c=False)
         self.assertFalse(a.is_active())
         self.assertEqual(a.get_params(), a.default_params())
-        self.assertEqual(a.system, None)
 
     def test_params_non_active(self):
         a = TestActor(a=True, c=True)
@@ -160,14 +240,18 @@ class ActorsTest(ut.TestCase):
 
     def test_unique(self):
         # an actor can only be added once
-        actor = TestActor(a=False, c=False)
+        actor = TestHydrodynamicActor(a=False, c=False)
         self.actors.add(actor)
         with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
             self.actors.add(actor)
+        with self.assertRaises(espressomd.highlander.ThereCanOnlyBeOne):
+            actor._activate()
         # an actor can only be removed once
         self.actors.remove(actor)
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, "Actor is not active"):
             self.actors.remove(actor)
+        with self.assertRaisesRegex(Exception, "Class not registered.*: TestActor"):
+            actor._deactivate()
 
 
 if __name__ == "__main__":

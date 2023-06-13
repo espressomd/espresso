@@ -75,14 +75,7 @@ VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
 DPD
 
 /* Lattice-Boltzmann features */
-LB_BOUNDARIES
-LB_BOUNDARIES_GPU               requires CUDA
 LB_ELECTROHYDRODYNAMICS
-ELECTROKINETICS                 implies EXTERNAL_FORCES, ELECTROSTATICS
-ELECTROKINETICS                 requires CUDA
-EK_BOUNDARIES                   implies ELECTROKINETICS, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
-EK_BOUNDARIES                   requires CUDA
-EK_DEBUG                        requires ELECTROKINETICS
 
 /* Interaction features */
 TABULATED
@@ -120,4 +113,6 @@ HDF5 external
 SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
+WALBERLA external
+WALBERLA_FFT external
 VALGRIND_MARKERS external

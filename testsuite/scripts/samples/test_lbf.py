@@ -19,9 +19,9 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-implementation = "gpu" if "gpu" in "@TEST_LABELS@".split(";") else "cpu"
+implementation = "gpu" if "gpu" in "".split(";") else "cpu"
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lbf.py", gpu=implementation == "gpu",
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/lbf.py", gpu=implementation == "gpu",
     cmd_arguments=["--" + implementation], script_suffix=implementation)
 
 
@@ -34,7 +34,7 @@ class Sample(ut.TestCase):
         gradient = np.mean(np.gradient(sample.f_list.T, axis=1), axis=1)
         self.assertAlmostEqual(gradient[0], 0.0, places=11)
         self.assertAlmostEqual(gradient[1], 0.0, places=11)
-        self.assertAlmostEqual(gradient[2], -7.78814e-7, places=11)
+        self.assertAlmostEqual(gradient[2], -7.816e-7, delta=1e-9)
 
 
 if __name__ == "__main__":

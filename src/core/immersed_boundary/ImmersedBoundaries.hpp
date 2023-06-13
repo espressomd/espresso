@@ -44,7 +44,7 @@ public:
   double get_current_volume(int softID) const {
     assert(softID >= 0);
     assert(softID < VolumesCurrent.size());
-    return VolumesCurrent[softID];
+    return VolumesCurrent[static_cast<unsigned int>(softID)];
   }
 
 private:

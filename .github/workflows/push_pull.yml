@@ -1,57 +1,110 @@
-name: run tests on mac
+name: run tests
 
 on:
   push:
   pull_request:
-  schedule:
-    - cron: '0 3 * * *'
 
 permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  regular_check:
+  macos:
     runs-on: macos-12
-    if: github.event_name != 'schedule'
+    if: ${{ github.repository == 'espressomd/espresso' }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: macos
+          save: ${{ github.ref == 'refs/heads/python' }}
       - name: Setup Python environment
         uses: actions/setup-python@v4.3.1
         with:
           python-version: '3.9'
-      - name: Check without sanitizer
+      - name: Get runner specifications
+        run: system_profiler SPHardwareDataType
+      - name: Build and check
         uses: ./.github/actions/build_and_check
-        with:
-          asan: false
-          ubsan: false
+        env:
+          build_procs: 3
+          check_procs: 3
+          with_ccache: 'true'
 
-  sanitizer_check:
-    permissions:
-      contents: read # to fetch code (actions/checkout)
-      issues: write # to create an issue
-
-    runs-on: macos-12
-    if: (github.event_name == 'schedule' && github.repository == 'espressomd/espresso')
+  debian:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/espressomd/docker/debian:fbdf2f2f9d76b761c0aa1308f17fb17e38501850-base-layer
+      credentials:
+         username: ${{ github.actor }}
+         password: ${{ secrets.github_token }}
+      options: --cpus 2
     steps:
       - name: Checkout
         uses: actions/checkout@main
-      - name: Setup Python environment
-        uses: actions/setup-python@v4.3.1
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          python-version: '3.9'
-      - name: Check with sanitizer
+          key: debian
+          save: ${{ github.ref == 'refs/heads/python' || ( github.repository != 'espressomd/espresso' && ! startsWith(github.ref, 'refs/pull') ) }}
+      - name: Setup Git environment
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Get runner specifications
+        run: lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
+      - name: Build and check
         uses: ./.github/actions/build_and_check
+        env:
+          build_procs: 2
+          check_procs: 2
+          myconfig: 'maxset'
+          with_ccache: 'true'
+          with_cuda: 'false'
+          with_hdf5: 'true'
+          with_fftw: 'true'
+          with_gsl: 'false'
+          with_scafacos: 'false'
+          with_stokesian_dynamics: 'false'
+          make_check_unit_tests: 'true'
+          make_check_python: 'false'
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+
+  ubuntu:
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'espressomd/espresso' }}
+    container:
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:fbdf2f2f9d76b761c0aa1308f17fb17e38501850-base-layer
+      credentials:
+         username: ${{ github.actor }}
+         password: ${{ secrets.github_token }}
+      options: --cpus 2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          asan: true
-          ubsan: true
-      - name: Setting job link variable
-        if: ${{ failure() }}
-        run: |
-          echo "job_link=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> $GITHUB_ENV
-      - uses: alialaa/issue-action@v1
-        if: ${{ failure() }}
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: Scheduled CI job has failed
-          body: ${{ env.job_link }}
+          key: ubuntu
+          save: ${{ github.ref == 'refs/heads/python' }}
+      - name: Setup Git environment
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Get runner specifications
+        run: lscpu | egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
+      - name: Build and check
+        uses: ./.github/actions/build_and_check
+        env:
+          build_procs: 2
+          check_procs: 2
+          myconfig: 'maxset'
+          with_ccache: 'true'
+          with_cuda: 'false'
+          with_hdf5: 'false'
+          with_fftw: 'false'
+          with_gsl: 'false'
+          with_scafacos: 'false'
+          with_stokesian_dynamics: 'false'
+          make_check_unit_tests: 'false'
+          make_check_python: 'false'
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1

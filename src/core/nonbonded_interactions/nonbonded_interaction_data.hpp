@@ -365,11 +365,11 @@ extern int max_seen_particle_type;
  */
 double maximal_cutoff_nonbonded();
 
-inline int get_ia_param_key(int i, int j) {
+inline auto get_ia_param_key(int i, int j) {
   assert(i >= 0 && i < ::max_seen_particle_type);
   assert(j >= 0 && j < ::max_seen_particle_type);
-  return Utils::upper_triangular(std::min(i, j), std::max(i, j),
-                                 ::max_seen_particle_type);
+  return static_cast<unsigned int>(Utils::upper_triangular(
+      std::min(i, j), std::max(i, j), ::max_seen_particle_type));
 }
 
 /**

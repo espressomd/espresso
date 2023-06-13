@@ -27,6 +27,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace ScriptInterface {
 class Context;
@@ -106,6 +107,11 @@ public:
     return {};
   }
 
+  auto get_valid_parameters() const {
+    auto const names = valid_parameters();
+    return std::vector<std::string>(names.begin(), names.end());
+  }
+
   /**
    * @brief Get single parameter.
    *
@@ -133,7 +139,7 @@ public:
 
 protected:
   /**
-   * @brief Local implementation of @c do_call_method.
+   * @brief Local implementation of @c call_method.
    *
    * If not overridden by the implementation, this does nothing.
    */

@@ -18,6 +18,7 @@
 #
 
 import pathlib
+import itertools
 import numpy as np
 
 
@@ -343,15 +344,29 @@ def lj_force(espressomd, r, epsilon, sigma, cutoff, offset=0.):
     return f
 
 
-def count_fluid_nodes(lbf):
-    """Counts the non-boundary nodes in the passed lb fluid instance."""
+def fold_index(idx, shape):
+    """Fold index into the range 0<x<shape"""
 
-    fluid_nodes = 0
-    for n in lbf.nodes():
-        if not n.boundary:
-            fluid_nodes += 1
+    res = np.copy(idx)
+    for i in range(len(idx)):
+        while res[i] >= shape[i]:
+            res[i] -= shape[i]
+        while res[i] < 0:
+            res[i] += shape[i]
+    return res
 
-    return fluid_nodes
+
+def get_lb_nodes_around_pos(pos, lbf):
+    """Returns LB node(s) relevant for interpolation around the given position"""
+
+    pos_lb_units = pos / lbf.agrid - 0.5  # relative to node centers
+    lower_left_index = np.array(np.floor(pos_lb_units), dtype=int)
+
+    nodes = []
+    for i, j, k in itertools.product([0, 1], repeat=3):
+        index = lower_left_index + np.array((i, j, k), dtype=int)
+        nodes.append(lbf[fold_index(index, lbf.shape)])
+    return nodes
 
 
 def random_dipoles(n_particles):

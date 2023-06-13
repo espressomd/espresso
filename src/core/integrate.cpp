@@ -44,6 +44,7 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/ek_container.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "interactions.hpp"
@@ -73,6 +74,12 @@
 #include <callgrind.h>
 #endif
 
+#ifdef WALBERLA
+#ifdef WALBERLA_STATIC_ASSERT
+#error "waLberla headers should not be visible to the ESPResSo core"
+#endif
+#endif
+
 int integ_switch = INTEG_METHOD_NVT;
 
 /** Time step for the integration. */
@@ -92,20 +99,17 @@ bool recalc_forces = true;
 static double verlet_reuse = 0.0;
 
 static int fluid_step = 0;
+static int ek_step = 0;
 
-bool set_py_interrupt = false;
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
-
-void notify_sig_int() {
-  ctrl_C = 0;              // reset
-  set_py_interrupt = true; // global to notify Python
-}
 } // namespace
 
 namespace LeesEdwards {
 /** @brief Currently active Lees-Edwards protocol. */
 static std::shared_ptr<ActiveProtocol> protocol = nullptr;
+
+std::weak_ptr<ActiveProtocol> get_protocol() { return protocol; }
 
 /**
  * @brief Update the Lees-Edwards parameters of the box geometry
@@ -136,7 +140,7 @@ void unset_protocol() {
 
 template <class Kernel> void run_kernel() {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
-    auto const kernel = Kernel{box_geo, time_step};
+    auto const kernel = Kernel{box_geo};
     auto const particles = cell_structure.local_particles();
     std::for_each(particles.begin(), particles.end(),
                   [&kernel](auto &p) { kernel(p); });
@@ -280,10 +284,11 @@ int integrate(int n_steps, int reuse_forces) {
 
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
-    return 0;
+    return INTEG_ERROR_RUNTIME;
 
   // Additional preparations for the first integration step
-  if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
+  if (reuse_forces == INTEG_REUSE_FORCES_NEVER or
+      (recalc_forces and reuse_forces != INTEG_REUSE_FORCES_ALWAYS)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     lb_lbcoupling_deactivate();
 
@@ -308,10 +313,16 @@ int integrate(int n_steps, int reuse_forces) {
   lb_lbcoupling_activate();
 
   if (check_runtime_errors(comm_cart))
-    return 0;
+    return INTEG_ERROR_RUNTIME;
 
   // Keep track of the number of Verlet updates (i.e. particle resorts)
   int n_verlet_updates = 0;
+
+  // Keep track of whether an interrupt signal was caught (only in singleton
+  // mode, since signal handlers are unreliable with more than 1 MPI rank)
+  auto const singleton_mode = comm_cart.size() == 1;
+  auto caught_sigint = false;
+  auto caught_error = false;
 
 #ifdef VALGRIND_MARKERS
   CALLGRIND_START_INSTRUMENTATION;
@@ -368,7 +379,7 @@ int integrate(int n_steps, int reuse_forces) {
     force_calc(cell_structure, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc();
+    virtual_sites()->after_force_calc(time_step);
 #endif
     integrator_step_2_full(particles, temperature);
     LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>();
@@ -381,16 +392,48 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
-        auto const tau = lb_lbfluid_get_tau();
-        auto const lb_steps_per_md_step =
-            static_cast<int>(std::round(tau / time_step));
+      auto const lb_active = LB::get_lattice_switch() != ActiveLB::NONE;
+#ifdef WALBERLA
+      auto const ek_active = not EK::ek_container.empty();
+#else
+      auto constexpr ek_active = false;
+#endif
+
+      if (lb_active and ek_active) {
+        // assume that they are coupled, which is not necessarily true
+        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
+        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
+
+        if (lb_steps_per_md_step != ek_steps_per_md_step) {
+          runtimeErrorMsg()
+              << "LB and EK are active but with different time steps.";
+        }
+
+        // only use fluid_step in this case
+        assert(fluid_step == ek_step);
+
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
-          lb_lbfluid_propagate();
+          LB::propagate();
+          EK::propagate();
         }
         lb_lbcoupling_propagate();
+      } else if (lb_active) {
+        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
+        fluid_step += 1;
+        if (fluid_step >= lb_steps_per_md_step) {
+          fluid_step = 0;
+          LB::propagate();
+        }
+        lb_lbcoupling_propagate();
+      } else if (ek_active) {
+        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
+        ek_step += 1;
+        if (ek_step >= ek_steps_per_md_step) {
+          ek_step = 0;
+          EK::propagate();
+        }
       }
 
 #ifdef VIRTUAL_SITES
@@ -405,12 +448,14 @@ int integrate(int n_steps, int reuse_forces) {
 
     integrated_steps++;
 
-    if (check_runtime_errors(comm_cart))
+    if (check_runtime_errors(comm_cart)) {
+      caught_error = true;
       break;
+    }
 
     // Check if SIGINT has been caught.
-    if (ctrl_C == 1) {
-      notify_sig_int();
+    if (singleton_mode and ctrl_C == 1) {
+      caught_sigint = true;
       break;
     }
 
@@ -437,40 +482,50 @@ int integrate(int n_steps, int reuse_forces) {
     synchronize_npt_state();
   }
 #endif
+  if (caught_sigint) {
+    ctrl_C = 0;
+    return INTEG_ERROR_SIGINT;
+  }
+  if (caught_error) {
+    return INTEG_ERROR_RUNTIME;
+  }
   return integrated_steps;
 }
 
-int python_integrate(int n_steps, bool recalc_forces_par,
-                     bool reuse_forces_par) {
+int integrate_with_signal_handler(int n_steps, int reuse_forces,
+                                  bool update_accumulators) {
 
   assert(n_steps >= 0);
 
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
-  int reuse_forces = reuse_forces_par;
-
-  if (recalc_forces_par) {
-    if (reuse_forces) {
-      runtimeErrorMsg() << "cannot reuse old forces and recalculate forces";
-    }
-    reuse_forces = -1;
+  if (not update_accumulators or n_steps == 0) {
+    return integrate(n_steps, reuse_forces);
   }
+
+  auto const is_head_node = comm_cart.rank() == 0;
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
     auto const max_cut = maximal_cutoff(n_nodes);
     if (max_cut <= 0.0) {
-      runtimeErrorMsg()
-          << "cannot automatically determine skin, please set it manually";
-      return ES_ERROR;
+      if (is_head_node) {
+        throw std::runtime_error(
+            "cannot automatically determine skin, please set it manually");
+      }
+      return INTEG_ERROR_RUNTIME;
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    auto const new_skin =
-        std::min(0.4 * max_cut,
-                 *boost::min_element(cell_structure.max_cutoff()) - max_cut);
-    mpi_call_all(mpi_set_skin_local, new_skin);
+    auto const max_range = *boost::min_element(::cell_structure.max_cutoff());
+    auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
+    ::set_skin(new_skin);
+  }
+
+  // re-acquire MpiCallbacks listener on worker nodes
+  if (not is_head_node) {
+    return 0;
   }
 
   using Accumulators::auto_update;
@@ -480,47 +535,23 @@ int python_integrate(int n_steps, bool recalc_forces_par,
     /* Integrate to either the next accumulator update, or the
      * end, depending on what comes first. */
     auto const steps = std::min((n_steps - i), auto_update_next_update());
-    if (mpi_integrate(steps, reuse_forces))
-      return ES_ERROR;
+    auto const retval = mpi_call(Communication::Result::main_rank, integrate,
+                                 steps, reuse_forces);
+    if (retval < 0) {
+      return retval; // propagate error code
+    }
 
-    reuse_forces = 1;
+    reuse_forces = INTEG_REUSE_FORCES_ALWAYS;
 
     auto_update(steps);
 
     i += steps;
   }
 
-  if (n_steps == 0) {
-    if (mpi_integrate(0, reuse_forces))
-      return ES_ERROR;
-  }
-
-  return ES_OK;
+  return 0;
 }
 
-static int mpi_steepest_descent_local(int steps) {
-  return integrate(steps, -1);
-}
-
-REGISTER_CALLBACK_MAIN_RANK(mpi_steepest_descent_local)
-
-int mpi_steepest_descent(int steps) {
-  return mpi_call(Communication::Result::main_rank, mpi_steepest_descent_local,
-                  steps);
-}
-
-static int mpi_integrate_local(int n_steps, int reuse_forces) {
-  integrate(n_steps, reuse_forces);
-
-  return check_runtime_errors_local();
-}
-
-REGISTER_CALLBACK_REDUCTION(mpi_integrate_local, std::plus<int>())
-
-int mpi_integrate(int n_steps, int reuse_forces) {
-  return mpi_call(Communication::Result::reduction, std::plus<int>(),
-                  mpi_integrate_local, n_steps, reuse_forces);
-}
+REGISTER_CALLBACK_MAIN_RANK(integrate)
 
 double interaction_range() {
   /* Consider skin only if there are actually interactions */
@@ -539,19 +570,18 @@ void increment_sim_time(double amount) { sim_time += amount; }
 void set_time_step(double value) {
   if (value <= 0.)
     throw std::domain_error("time_step must be > 0.");
-  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), value);
+  if (LB::get_lattice_switch() != ActiveLB::NONE) {
+    LB::check_tau_time_step_consistency(LB::get_tau(), value);
+  }
   ::time_step = value;
   on_timestep_change();
 }
 
-void mpi_set_skin_local(double value) {
+void set_skin(double value) {
   ::skin = value;
-  skin_set = true;
+  ::skin_set = true;
   on_skin_change();
 }
-
-REGISTER_CALLBACK(mpi_set_skin_local)
 
 void set_time(double value) {
   ::sim_time = value;

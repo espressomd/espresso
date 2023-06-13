@@ -40,11 +40,9 @@
 #include <vector>
 
 namespace detail {
-inline void check_axis_idx_valid(int const axis) {
-  assert(axis >= 0 and axis <= 2);
-}
+inline void check_axis_idx_valid(unsigned int const axis) { assert(axis <= 2); }
 
-inline bool get_nth_bit(uint8_t const bitfield, int const bit_idx) {
+inline bool get_nth_bit(uint8_t const bitfield, unsigned int const bit_idx) {
   return bitfield & (1u << bit_idx);
 }
 } // namespace detail
@@ -88,7 +86,7 @@ struct ParticleProperties {
   /** particle type, used for non-bonded interactions. */
   int type = 0;
   /** determines which propagation schemes should be applied to the particle **/
-  int propagation = 1;
+  int propagation = PropagationMode::TRANS_SYSTEM_DEFAULT;
 
 #ifdef VIRTUAL_SITES
   /** is particle virtual */
@@ -165,7 +163,7 @@ struct ParticleProperties {
    *  quaternion attribute.
    */
   struct VirtualSitesRelativeParameters {
-    int to_particle_id = 0;
+    int to_particle_id = -1;
     double distance = 0.;
     /** Relative position of the virtual site. */
     Utils::Quaternion<double> rel_orientation =
@@ -271,6 +269,8 @@ struct ParticleProperties {
 struct ParticlePosition {
   /** periodically folded position. */
   Utils::Vector3d p = {0., 0., 0.};
+  /** index of the simulation box image where the particle really sits. */
+  Utils::Vector3i i = {0, 0, 0};
 
 #ifdef ROTATION
   /** quaternion to define particle orientation */
@@ -288,6 +288,7 @@ struct ParticlePosition {
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &p;
+    ar &i;
 #ifdef ROTATION
     ar &quat;
 #endif
@@ -369,8 +370,6 @@ struct ParticleLocal {
   /** is particle a ghost particle. */
   bool ghost = false;
   short int lees_edwards_flag = 0;
-  /** index of the simulation box image where the particle really sits. */
-  Utils::Vector3i i = {0, 0, 0};
   /** position from the last Verlet list update. */
   Utils::Vector3d p_old = {0., 0., 0.};
   /** Accumulated applied Lees-Edwards offset. */
@@ -379,7 +378,6 @@ struct ParticleLocal {
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &ghost;
     ar &lees_edwards_flag;
-    ar &i;
     ar &p_old;
     ar &lees_edwards_offset;
   }
@@ -407,25 +405,16 @@ struct ParticleRattle {
 
 /** Struct holding all information for one particle. */
 struct Particle { // NOLINT(bugprone-exception-escape)
-  ///
-  ParticleProperties p;
-  ///
-  ParticlePosition r;
-  ///
-  ParticleMomentum m;
-  ///
-  ParticleForce f;
-  ///
-  ParticleLocal l;
-
 private:
+  ParticleProperties p;
+  ParticlePosition r;
+  ParticleMomentum m;
+  ParticleForce f;
+  ParticleLocal l;
 #ifdef BOND_CONSTRAINT
-  ///
   ParticleRattle rattle;
 #endif
-
   BondList bl;
-
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no non-bonded
    *  interactions
@@ -463,13 +452,15 @@ public:
   auto &v() { return m.v; }
   auto const &force() const { return f.f; }
   auto &force() { return f.f; }
+  auto const &force_and_torque() const { return f; }
+  auto &force_and_torque() { return f; }
 
   bool is_ghost() const { return l.ghost; }
   void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
   auto &pos_at_last_verlet_update() { return l.p_old; }
   auto const &pos_at_last_verlet_update() const { return l.p_old; }
-  auto const &image_box() const { return l.i; }
-  auto &image_box() { return l.i; }
+  auto const &image_box() const { return r.i; }
+  auto &image_box() { return r.i; }
   auto const &lees_edwards_offset() const { return l.lees_edwards_offset; }
   auto &lees_edwards_offset() { return l.lees_edwards_offset; }
   auto const &lees_edwards_flag() const { return l.lees_edwards_flag; }
@@ -485,11 +476,11 @@ public:
   auto const &rotation() const { return p.rotation; }
   auto &rotation() { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
-  bool can_rotate_around(int const axis) const {
+  bool can_rotate_around(unsigned int const axis) const {
     detail::check_axis_idx_valid(axis);
     return detail::get_nth_bit(p.rotation, axis);
   }
-  void set_can_rotate_around(int const axis, bool const rot_flag) {
+  void set_can_rotate_around(unsigned int const axis, bool const rot_flag) {
     detail::check_axis_idx_valid(axis);
     if (rot_flag) {
       p.rotation |= static_cast<uint8_t>(1u << axis);
@@ -514,7 +505,7 @@ public:
   auto calc_director() const { return r.calc_director(); }
 #else  // ROTATION
   auto can_rotate() const { return false; }
-  auto can_rotate_around(int const axis) const { return false; }
+  auto can_rotate_around(unsigned int const axis) const { return false; }
 #endif // ROTATION
 #ifdef DIPOLES
   auto const &dipm() const { return p.dipm; }
@@ -561,7 +552,7 @@ public:
   auto const &fixed() const { return p.ext_flag; }
   auto &fixed() { return p.ext_flag; }
   bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
-  bool is_fixed_along(int const axis) const {
+  bool is_fixed_along(unsigned int const axis) const {
     detail::check_axis_idx_valid(axis);
     return detail::get_nth_bit(p.ext_flag, axis);
   }
@@ -577,7 +568,7 @@ public:
   auto &ext_force() { return p.ext_force; }
 #else  // EXTERNAL_FORCES
   constexpr bool has_fixed_coordinates() const { return false; }
-  constexpr bool is_fixed_along(int const) const { return false; }
+  constexpr bool is_fixed_along(unsigned int const) const { return false; }
 #endif // EXTERNAL_FORCES
 #ifdef ENGINE
   auto const &swimming() const { return p.swim; }

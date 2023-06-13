@@ -18,6 +18,7 @@
 #
 
 configure_file(mpiio.py mpiio.py COPYONLY)
+configure_file(vtk.py vtk.py COPYONLY)
 add_subdirectory(writer)
 set(cython_AUX ${cython_AUX}
                "${CMAKE_SOURCE_DIR}/src/python/espressomd/io/__init__.py"

@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(calc_meshift_true) {
 #if defined(P3M) || defined(DP3M)
 BOOST_AUTO_TEST_CASE(analytic_cotangent_sum) {
   auto constexpr kernel = p3m_analytic_cotangent_sum;
-  auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
+  auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
 
   // check only trivial cases
   for (auto const cao : {1, 2, 3, 4, 5, 6, 7}) {

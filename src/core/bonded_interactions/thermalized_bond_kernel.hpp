@@ -63,7 +63,7 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
       thermalized_bond.rng_counter(), thermalized_bond.rng_seed(), p1.id(),
       p2.id());
 
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0u; i < 3u; ++i) {
     double force_lv_com, force_lv_dist;
 
     // Langevin thermostat for center of mass

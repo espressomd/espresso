@@ -336,9 +336,9 @@ class ParticleSliceTest(ut.TestCase):
 
         self.assertEqual(repr(all_partcls.vs_relative),
                          repr([[1, 1.0, np.array([1., 1., 1., 1.])],
-                               [0, 0.0, np.array([1., 0., 0., 0.])],
-                               [0, 0.0, np.array([1., 0., 0., 0.])],
-                               [0, 0.0, np.array([1., 0., 0., 0.])]]))
+                               [-1, 0.0, np.array([1., 0., 0., 0.])],
+                               [-1, 0.0, np.array([1., 0., 0., 0.])],
+                               [-1, 0.0, np.array([1., 0., 0., 0.])]]))
 
         all_partcls.vs_relative = [1, 1.0, (1.0, 1.0, 1.0, 1.0)]
 

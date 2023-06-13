@@ -30,7 +30,6 @@
 #include "communication.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -284,12 +283,6 @@ void calc_long_range_force(ParticleRange const &particles) {
   if (electrostatics_actor) {
     boost::apply_visitor(LongRangeForce(particles), *electrostatics_actor);
   }
-#ifdef ELECTROKINETICS
-  /* Add fields from EK if enabled */
-  if (this_node == 0) {
-    ek_calculate_electrostatic_coupling();
-  }
-#endif
 }
 
 double calc_energy_long_range(ParticleRange const &particles) {

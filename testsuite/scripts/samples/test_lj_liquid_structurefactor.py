@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lj_liquid_structurefactor.py", int_steps=20, int_n_times=5)
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/lj_liquid_structurefactor.py", int_steps=20, int_n_times=5)
 
 
 @skipIfMissingFeatures

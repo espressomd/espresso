@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/grand_canonical.py", n_int_cycles=51, n_int_steps=5,
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/grand_canonical.py", n_int_cycles=51, n_int_steps=5,
     cmd_arguments=[8.523659e-04, -0.336])
 # Note: the command line arguments which are submitted are 1) the salt
 # concentration in 1/sigma^3 and 2) the excess chemical potential in kT.

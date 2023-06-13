@@ -143,9 +143,11 @@ Several modes are available for different types of binding.
   degrees of freedom being integrated. Virtual sites are not required.
   The method, along with the corresponding bonds are setup as follows::
 
+        first_angle_bond_id = 0
         n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
         for i in range(0, n_angle_bonds, 1):
-            system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
+            bond_id = first_angle_bond_id + i
+            system.bonded_inter[bond_id] = espressomd.interactions.AngleHarmonic(
                 bend=1., phi0=float(i) / float(n_angle_bonds - 1) * np.pi)
 
         bond_centers = espressomd.interactions.HarmonicBond(k=1., r_0=0.1, r_cut=0.5)
@@ -154,7 +156,7 @@ Several modes are available for different types of binding.
         system.collision_detection.set_params(
             mode="bind_three_particles",
             bond_centers=bond_centers,
-            bond_three_particles=0,
+            bond_three_particles=first_angle_bond_id,
             three_particle_binding_angle_resolution=n_angle_bonds,
             distance=0.1)
 
@@ -192,6 +194,8 @@ Several modes are available:
 * ``"revert_bind_at_point_of_collision"``: delete a bond between the virtual site
 * ``"none"``: cancel an existing bond breakage specification
 
+For a pair bond, the breakage distance refers to the minimum image distance between the primary particle and its bond partner.
+For an angle bond, the distance refers to the distance *between the two bond partners* of the primary particle.
 Example::
 
     import espressomd
@@ -370,7 +374,6 @@ Description of sample script
 .. note::
 
     The following features are required:
-    ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
     ``MASS``, ``SOFT_SPHERE``
 
@@ -455,17 +458,15 @@ Specification of fluid and movement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
-    lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5, fric=1.5,
-                                tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1.0, kinematic_viscosity=1.5,
+                                        tau=time_step, ext_force_density=[0.002, 0.0, 0.0])
     system.actors.add(lbf)
 
 This part of the script specifies the fluid that will get the system
 moving. Here ``agrid`` :math:`=\Delta x` is the spatial discretisation
 step, ``tau`` is the time step that will be the same as the time step
-for particles, viscosity ``visc`` and density ``dens`` of the fluid are
-physical parameters scaled to lattice units. ``fric`` is a
-(non-physical) friction parameter that enters the fluid-object
-interaction and has to be set carefully. Finally, ``ext_force_density`` sets the
+for particles, viscosity ``viscosity`` and density ``density`` of the fluid are
+physical parameters scaled to lattice units, ``ext_force_density`` sets the
 force-per-unit-volume vector that drives the fluid. Another option to
 add momentum to fluid is by specifying the velocity on the boundaries.
 
@@ -514,12 +515,12 @@ defined as follows. First we define the two shapes:
                                 direction=1)
 
 The ``direction=1`` determines that the fluid is on the *outside*. Next
-we create boundaries for the fluid:
+we mark the LB nodes within the shapes as boundaries:
 
 ::
 
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary1))
-    system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary2))
+    lbf.add_boundary_from_shape(boundary1)
+    lbf.add_boundary_from_shape(boundary2)
 
 Followed by creating the constraints for cells:
 

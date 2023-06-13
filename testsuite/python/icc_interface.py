@@ -137,6 +137,9 @@ class Test(ut.TestCase):
         icc, (_, p) = self.setup_icc_particles_and_solver(max_iterations=1)
         self.system.actors.add(icc)
         with self.assertRaisesRegex(Exception, "ICC failed to converge in the given number of maximal steps"):
+            p.q = 1.
+            self.system.integrator.run(0)
+        with self.assertRaisesRegex(Exception, "ICC found zero electric charge on a particle"):
             p.q = 0.
             self.system.integrator.run(0)
 

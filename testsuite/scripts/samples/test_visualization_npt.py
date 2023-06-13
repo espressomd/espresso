@@ -31,7 +31,7 @@ def disable_GUI(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/visualization_npt.py",
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/visualization_npt.py",
     substitutions=disable_GUI)
 
 

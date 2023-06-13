@@ -20,15 +20,9 @@ import functools
 include "myconfig.pxi"
 from . cimport utils
 from .lb import HydrodynamicInteraction
-from .lb cimport lb_lbcoupling_set_gamma
-from .lb cimport lb_lbcoupling_get_gamma
-from .lb cimport lb_lbcoupling_set_rng_state
-from .lb cimport lb_lbcoupling_get_rng_state
-from .lb cimport lb_lbcoupling_is_seed_required
-from .lb cimport lb_lbfluid_get_kT
 
 
-def AssertThermostatType(*allowedthermostats):
+def AssertThermostatType(*allowed_thermostats):
     """Assert that only a certain group of thermostats is active at a time.
 
     Decorator class to ensure that only specific combinations of thermostats
@@ -48,7 +42,7 @@ def AssertThermostatType(*allowedthermostats):
 
     Parameters
     ----------
-    allowedthermostats : :obj:`str`
+    allowed_thermostats : :obj:`str`
         Allowed list of thermostats which are known to be compatible
         with one another.
 
@@ -56,7 +50,7 @@ def AssertThermostatType(*allowedthermostats):
     def decoratorfunction(function):
         @functools.wraps(function, assigned=('__name__', '__doc__'))
         def wrapper(*args, **kwargs):
-            if (not (thermo_switch in allowedthermostats) and
+            if (not (thermo_switch in allowed_thermostats) and
                     (thermo_switch != THERMO_OFF)):
                 raise Exception(
                     "This combination of thermostats is not allowed!")
@@ -234,13 +228,17 @@ cdef class Thermostat:
                 thermo_list.append(sd_dict)
         return thermo_list
 
+    def _set_temperature(self, kT):
+        mpi_set_temperature(kT)
+        utils.handle_errors("Temperature change failed")
+
     def turn_off(self):
         """
         Turns off all the thermostat and sets all the thermostat variables to zero.
 
         """
 
-        mpi_set_temperature(0.)
+        self._set_temperature(0.)
         mpi_set_thermo_virtual(True)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(utils.make_Vector3d((0., 0., 0.)))
@@ -257,6 +255,7 @@ cdef class Thermostat:
 
         mpi_set_thermo_switch(THERMO_OFF)
         lb_lbcoupling_set_gamma(0.0)
+        mpi_bcast_lb_particle_coupling()
 
     @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
     def set_langevin(self, kT, gamma, gamma_rotation=None,
@@ -348,7 +347,7 @@ cdef class Thermostat:
                 raise ValueError("seed must be a positive integer")
             langevin_set_rng_seed(seed)
 
-        mpi_set_temperature(kT)
+        self._set_temperature(kT)
         IF PARTICLE_ANISOTROPY:
             cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
@@ -475,7 +474,7 @@ cdef class Thermostat:
                 raise ValueError("seed must be a positive integer")
             brownian_set_rng_seed(seed)
 
-        mpi_set_temperature(kT)
+        self._set_temperature(kT)
         IF PARTICLE_ANISOTROPY:
             cdef utils.Vector3d gamma_vec
             if scalar_gamma_def:
@@ -524,11 +523,11 @@ cdef class Thermostat:
         """
         Sets the LB thermostat.
 
-        This thermostat requires the feature ``LBFluid`` or ``LBFluidGPU``.
+        This thermostat requires the feature ``WALBERLA``.
 
         Parameters
         ----------
-        LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
+        LB_fluid : :class:`~espressomd.lb.LBFluidWalberla`
         seed : :obj:`int`
             Seed for the random number generator, required if kT > 0.
             Must be positive.
@@ -553,14 +552,17 @@ cdef class Thermostat:
                 if seed < 0:
                     raise ValueError("seed must be a positive integer")
                 lb_lbcoupling_set_rng_state(seed)
+                mpi_bcast_lb_particle_coupling()
         else:
             lb_lbcoupling_set_rng_state(0)
+            mpi_bcast_lb_particle_coupling()
 
         global thermo_switch
         mpi_set_thermo_switch(thermo_switch | THERMO_LB)
 
         mpi_set_thermo_virtual(act_on_virtual)
         lb_lbcoupling_set_gamma(gamma)
+        mpi_bcast_lb_particle_coupling()
 
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)
@@ -598,7 +600,7 @@ cdef class Thermostat:
                     raise ValueError("seed must be a positive integer")
                 npt_iso_set_rng_seed(seed)
 
-            mpi_set_temperature(kT)
+            self._set_temperature(kT)
             global thermo_switch
             mpi_set_thermo_switch(thermo_switch | THERMO_NPT_ISO)
             mpi_set_nptiso_gammas(gamma0, gammav)
@@ -635,7 +637,7 @@ cdef class Thermostat:
                     raise ValueError("seed must be a positive integer")
                 dpd_set_rng_seed(seed)
 
-            mpi_set_temperature(kT)
+            self._set_temperature(kT)
             global thermo_switch
             mpi_set_thermo_switch(thermo_switch | THERMO_DPD)
 

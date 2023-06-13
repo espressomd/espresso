@@ -22,121 +22,99 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.lbboundaries
-import itertools
 import numpy as np
 
 
 class LBBoundariesBase:
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[10.0, 5.0, 5.0])
     system.cell_system.skin = 0.1
 
     wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
     wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-7.5)
 
     def setUp(self):
-        self.lbf = self.lb_class(visc=1.0, dens=1.0, agrid=0.5, tau=1.0)
+        self.lbf = self.lb_class(
+            kinematic_viscosity=1.0, density=1.0, agrid=0.5, tau=1.0,
+            **self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
-        self.system.lbboundaries.clear()
         self.system.actors.clear()
 
-    def test_add(self):
-        boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
-
-        self.system.lbboundaries.add(boundary)
-        self.assertEqual(boundary, self.system.lbboundaries[0])
-
-    def test_remove(self):
-        lbb = self.system.lbboundaries
-
-        b1 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-
-        lbb.remove(b1)
-
-        self.assertNotIn(b1, lbb)
-        self.assertIn(b2, lbb)
-
-    def test_size(self):
-        lbb = self.system.lbboundaries
-        self.assertEqual(lbb.size(), 0)
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        self.assertEqual(lbb.size(), 1)
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        self.assertEqual(lbb.size(), 2)
-
-    def test_getters(self):
-        boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
-        with self.assertRaisesRegex(RuntimeError, "You probably tried to get the force of an lbboundary that was not added to system.lbboundaries"):
-            boundary.get_force()
-        self.system.lbboundaries.add(boundary)
-        np.testing.assert_equal(np.copy(boundary.get_force()), [0., 0., 0.])
-        self.assertIsNone(boundary.call_method('unknown'))
-
-    def test_empty(self):
-        lbb = self.system.lbboundaries
-        self.assertTrue(lbb.empty())
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        self.assertFalse(lbb.empty())
-
-    def test_clear(self):
-        lbb = self.system.lbboundaries
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-
-        lbb.clear()
-
-        self.assertTrue(lbb.empty())
-
-    def check_boundary_flags(self, boundarynumbers):
-        rng = range(20)
-
-        for i in itertools.product(range(0, 5), rng, rng):
-            self.assertEqual(self.lbf[i].boundary, boundarynumbers[0])
-
-        for i in itertools.product(range(5, 15), rng, rng):
-            self.assertEqual(self.lbf[i].boundary, boundarynumbers[1])
-
-        for i in itertools.product(range(15, 20), rng, rng):
-            self.assertEqual(self.lbf[i].boundary, boundarynumbers[2])
-
-        self.system.lbboundaries.clear()
-        for i in itertools.product(rng, rng, rng):
-            self.assertEqual(self.lbf[i].boundary, 0)
+    def check_boundary_flags(self, slip_velocity1, slip_velocity2):
+        def vbb2vel(values):
+            velocities = np.empty((*values.shape, 3), dtype=float)
+            for index in np.ndindex(*values.shape):
+                velocities[index] = values[index].velocity
+            return velocities
+        lbb1 = self.lbf[:5, :, :]
+        lbb2 = self.lbf[15:, :, :]
+        lbb3 = self.lbf[5:15, :, :]
+        ref_velocity1 = np.tile(slip_velocity1, [5, 10, 10, 1])
+        ref_velocity2 = np.tile(slip_velocity2, [5, 10, 10, 1])
+        np.testing.assert_equal(np.copy(lbb1.is_boundary), True)
+        np.testing.assert_equal(np.copy(lbb2.is_boundary), True)
+        np.testing.assert_equal(np.copy(lbb3.is_boundary), False)
+        np.testing.assert_allclose(np.copy(lbb1.velocity), ref_velocity1)
+        np.testing.assert_allclose(np.copy(lbb2.velocity), ref_velocity2)
+        np.testing.assert_allclose(vbb2vel(lbb1.boundary), ref_velocity1)
+        np.testing.assert_allclose(vbb2vel(lbb2.boundary), ref_velocity2)
+        self.assertTrue(self.lbf[4, 0, 0].is_boundary)
+        self.assertFalse(self.lbf[5, 0, 0].is_boundary)
+        self.assertFalse(self.lbf[14, 0, 0].is_boundary)
+        self.assertTrue(self.lbf[15, 0, 0].is_boundary)
+        self.lbf.clear_boundaries()
+        np.testing.assert_equal(np.copy(self.lbf[:, :, :].is_boundary), False)
 
     def test_boundary_flags(self):
-        lbb = self.system.lbboundaries
-
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape2))
-
-        self.check_boundary_flags([1, 0, 2])
+        slip_velocity1 = 1e-3 * np.array([1., 2., 3.])
+        slip_velocity2 = 1e-3 * np.array([4., 5., 6.])
+        value_shape = tuple(self.lbf.shape) + (3,)
+        slip_velocity2_all = slip_velocity2 * np.ones(value_shape)
+        self.lbf.add_boundary_from_shape(self.wall_shape1, slip_velocity1)
+        self.lbf.add_boundary_from_shape(self.wall_shape2, slip_velocity2_all)
+        self.check_boundary_flags(slip_velocity1, slip_velocity2)
 
     def test_union(self):
         union = espressomd.shapes.Union()
         union.add([self.wall_shape1, self.wall_shape2])
-        self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=union))
-        self.check_boundary_flags([1, 0, 1])
+
+        slip_velocity = 1e-3 * np.array([1., 2., 3.])
+        self.lbf.add_boundary_from_shape(union, slip_velocity)
+        self.check_boundary_flags(slip_velocity, slip_velocity)
+
+    def test_exceptions(self):
+        with self.assertRaisesRegex(TypeError, "Parameter 'boundary_type' must be a subclass of VelocityBounceBack"):
+            self.lbf.add_boundary_from_shape(
+                shape=self.wall_shape1, velocity=[0., 0., 0.],
+                boundary_type=self.lb_class)
+        with self.assertRaisesRegex(ValueError, "expected an espressomd.shapes.Shape"):
+            self.lbf.add_boundary_from_shape(
+                shape=self.lbf, velocity=[0., 0., 0.],
+                boundary_type=espressomd.lb.VelocityBounceBack)
+        with self.assertRaisesRegex(ValueError, r"Cannot process velocity value grid of shape \(4,\)"):
+            self.lbf.add_boundary_from_shape(
+                shape=self.wall_shape1, velocity=[0., 0., 0., 0.],
+                boundary_type=espressomd.lb.VelocityBounceBack)
+        self.lbf.add_boundary_from_shape(self.wall_shape1, [0., 0., 0.])
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
-class LBBoundariesCPU(LBBoundariesBase, ut.TestCase):
-    lb_class = espressomd.lb.LBFluid
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBBoundariesWalberlaDoublePrecision(LBBoundariesBase, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU"])
-class LBBoundariesGPU(LBBoundariesBase, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidGPU
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBBoundariesWalberlaSinglePrecision(LBBoundariesBase, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ import unittest as ut
 import importlib_wrapper
 
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@BENCHMARKS_DIR@/mc_acid_base_reservoir.py", TOTAL_NUM_MC_STEPS=int(1e4),
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/benchmarks/local_benchmarks/mc_acid_base_reservoir.py", TOTAL_NUM_MC_STEPS=int(1e4),
     cmd_arguments=["--particles_per_core", "100"])
 
 

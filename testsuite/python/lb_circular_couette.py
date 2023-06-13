@@ -21,34 +21,15 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
-import espressomd.math
 import espressomd.lb
-import espressomd.lbboundaries
-import espressomd.observables
 import espressomd.shapes
-import espressomd.accumulators
+import espressomd.observables
+import espressomd.math
+
 
 AGRID = .5
-VISC = 2.7
-DENS = 1.7
 TIME_STEP = 0.1
-BOX_L = 16.0
-EFFECTIVE_RADIUS = BOX_L / 2.0 - 1.0
-LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
-             'tau': TIME_STEP}
-
-OBS_PARAMS = {'n_r_bins': 12,
-              'n_phi_bins': 1,
-              'n_z_bins': 1,
-              'min_r': 1.0,
-              'min_phi': -np.pi,
-              'min_z': 0.0,
-              'max_r': EFFECTIVE_RADIUS,
-              'max_phi': np.pi,
-              'max_z': BOX_L / 2.,
-              'sampling_density': 1.0}
+GRID_SIZE = np.array([63, 63, 4])
 
 
 def taylor_couette(v1, v2, r1, r2):
@@ -61,72 +42,43 @@ def taylor_couette(v1, v2, r1, r2):
     return a, b
 
 
+@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCircularCouetteCommon:
 
-    """
-    Check the lattice-Boltzmann velocity-driven flow in a cylindrical
-    constraint by comparing to the analytical solution.
-    """
-
-    system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L / 2.])
+    system = espressomd.System(box_l=(GRID_SIZE + [1, 1, 0]) * AGRID)
     system.time_step = TIME_STEP
-    system.cell_system.skin = 0.4 * AGRID
-    params = {'axis': [0, 0, 1],
-              'orientation': [1, 0, 0]}
+    system.cell_system.skin = 0.1
+    system.periodicity = [False, False, True]
 
     def tearDown(self):
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
 
     def test_taylor_couette_flow(self):
         """
-        Rotate a shell filled with fluid with a non-rotating rod at the center.
-        The solution to the Navier-Stokes equation, assuming an infinite rod,
-        is the Taylor-Couette equation.
+        Rotate a rod in a cavity filled with fluid. The solution to the
+        Navier-Stokes equation, assuming an infinite rod, is the
+        Taylor-Couette equation.
         """
 
-        # disable periodicity except in the flow direction
-        self.system.periodicity = np.logical_not(self.params['axis'])
-        lbf = self.lb_class(**LB_PARAMS)
-        self.system.actors.add(lbf)
+        system = self.system
+        lb_fluid = espressomd.lb.LBFluidWalberla(
+            agrid=AGRID, density=0.5, kinematic_viscosity=3.2,
+            tau=system.time_step)
+        system.actors.add(lb_fluid)
 
-        # create an outer cylinder that is rotating; this is achieved by
-        # creating an octagon with a slip velocity parallel to each face
-        sc = np.cos(np.pi / 4.)
-        normals = [
-            [-1, 0, 0],
-            [0, -1, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [-sc, sc, 0],
-            [sc, -sc, 0],
-            [sc, sc, 0],
-            [-sc, -sc, 0],
-        ]
-        dists = [
-            2. * AGRID - BOX_L,
-            2. * AGRID - BOX_L,
-            2. * AGRID,
-            2. * AGRID,
-            2. * AGRID - BOX_L / 2.,
-            2. * AGRID - BOX_L / 2.,
-            2. * AGRID + BOX_L * (np.sqrt(2.) - 1.) / 2.,
-            2. * AGRID - BOX_L * (1. + (np.sqrt(2.) - 1.) / 2.),
-        ]
-        # outer cylinder with tangential slip velocity
-        slip_vel = 0.01
-        for normal, dist in zip(normals, dists):
-            self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-                shape=espressomd.shapes.Wall(normal=normal, dist=dist),
-                velocity=slip_vel * np.cross(normal, self.params['axis'])))
-        # inner cylinder without slip velocity
-        self.system.lbboundaries.add(espressomd.lbboundaries.LBBoundary(
-            shape=espressomd.shapes.Cylinder(
-                center=self.system.box_l / 2.0, axis=self.params['axis'],
-                direction=1, radius=1., length=BOX_L * 1.5)))
+        # set up two cylinders
+        cyl_center = AGRID * (GRID_SIZE // 2 + 0.5) * [1, 1, 0]
+        cyl1 = espressomd.shapes.Cylinder(
+            center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
+            radius=8.1 * AGRID, direction=1)
+        cyl2 = espressomd.shapes.Cylinder(
+            center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
+            radius=30.1 * AGRID, direction=-1)
+        lb_fluid.add_boundary_from_shape(cyl1)
+        lb_fluid.add_boundary_from_shape(cyl2)
 
         # the system needs to be fully symmetric
-        mask = np.copy(lbf[:, :, :].boundary.astype(bool))
+        mask = np.copy(lb_fluid[:63, :63, :].is_boundary.astype(int))
         np.testing.assert_array_equal(mask, np.flip(mask, axis=0))
         np.testing.assert_array_equal(mask, np.flip(mask, axis=1))
         np.testing.assert_array_equal(mask, np.flip(mask, axis=2))
@@ -137,58 +89,82 @@ class LBCircularCouetteCommon:
         np.testing.assert_array_equal(mask[:, 0, :], 1)
         np.testing.assert_array_equal(mask[:, -1, :], 1)
 
-        ctp = espressomd.math.CylindricalTransformationParameters(
-            center=[BOX_L / 2.0, BOX_L / 2.0, 0.0],
-            axis=self.params['axis'],
-            orientation=self.params['orientation'])
-        local_obs_params = OBS_PARAMS.copy()
-        local_obs_params['transform_params'] = ctp
-        obs = espressomd.observables.CylindricalLBVelocityProfile(
-            **local_obs_params)
+        # add tangential slip velocity to the inner cylinder
+        slip_vel = 0.01
+        surface_nodes = espressomd.lb.edge_detection(
+            lb_fluid.get_shape_bitmask(cyl1), system.periodicity)
+        tangents = espressomd.lb.calc_cylinder_tangential_vectors(
+            cyl1.center, AGRID, 0.5, surface_nodes)
+        for node, tangent in zip(surface_nodes, tangents):
+            lb_fluid[node].boundary = espressomd.lb.VelocityBounceBack(
+                slip_vel * tangent)
 
-        # simulate until profile converges
-        mid_indices = [int((EFFECTIVE_RADIUS / AGRID) / 2) - 2,
-                       int((BOX_L / AGRID) / 2), int((BOX_L / 2. / AGRID) / 2)]
-        diff = float("inf")
-        old_val = lbf[mid_indices].velocity[1]
-        while diff > 1e-6:
-            self.system.integrator.run(10)
-            new_val = lbf[mid_indices].velocity[1]
-            diff = abs(new_val - old_val)
-            old_val = new_val
+        # add observable for the fluid velocity in cylindrical coordinates
+        cyl_transform_params = espressomd.math.CylindricalTransformationParameters(
+            center=cyl_center, axis=[0, 0, 1], orientation=[1, 0, 0])
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            transform_params=cyl_transform_params,
+            n_r_bins=GRID_SIZE[0] // 2,
+            n_phi_bins=1,
+            n_z_bins=1,
+            min_r=0.0,
+            max_r=system.box_l[0] / 2,
+            min_phi=0.,
+            max_phi=2 * np.pi,
+            min_z=0.,
+            max_z=+system.box_l[2],
+            axis=[0.0, 0.0, 1.0],
+            sampling_density=1
+        )
 
-        r = obs.bin_centers()[:, :, :, 0].reshape(-1)
-        v_r, v_phi, v_z = np.copy(obs.calculate()).reshape([-1, 3]).T
+        # equilibrate the fluid and sample velocities
+        obs_data_baseline = observable.calculate()
+        system.integrator.run(200)
+        obs_data = observable.calculate()
+        profile_r = np.copy(observable.bin_centers()).reshape([-1, 3])[:, 0]
+        profile_v = np.copy(obs_data - obs_data_baseline).reshape([-1, 3])
+        v_r, v_phi, v_z = profile_v.T
 
         # check velocity is zero for the radial and axial components
-        np.testing.assert_allclose(v_r, 0., atol=1e-6)
-        np.testing.assert_allclose(v_z, 0., atol=1e-8)
+        np.testing.assert_allclose(v_r, 0., atol=1e-4)
+        np.testing.assert_allclose(v_z, 0., atol=1e-6)
+
+        # check azimuthal velocity is zero inside boundary
+        np.testing.assert_allclose(v_phi[:7], 0., atol=1e-7)
+
+        # check azimuthal velocity in the linear regime
+        self.assertGreater(v_phi[7], v_phi[6])
+        self.assertGreater(v_phi[8], v_phi[7])
+        self.assertGreater(v_phi[9], v_phi[8])
 
         # check azimuthal velocity in the Couette regime
-        a_ref, b_ref = taylor_couette(
-            0.0, slip_vel, 1., BOX_L / 2. - 2. * AGRID)
+        r = profile_r[10:-1]
+        v_phi = v_phi[10:-1]
+        a_ref, b_ref = taylor_couette(slip_vel, 0.0, cyl1.radius, cyl2.radius)
         v_phi_ref = a_ref * r + b_ref / r
         v_phi_drift = np.mean(v_phi) - np.mean(v_phi_ref)
-        np.testing.assert_allclose(v_phi_drift, 0., atol=5e-4)
-        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-3)
+        np.testing.assert_allclose(v_phi_drift, 0., atol=1.2e-4)
+        np.testing.assert_allclose(v_phi - v_phi_drift, v_phi_ref, atol=1e-4)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBCPUCircularCouette(LBCircularCouetteCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBCircularCouetteWalberla(LBCircularCouetteCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluid
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBGPUCircularCouette(LBCircularCouetteCommon, ut.TestCase):
-
-    """Test for the GPU implementation of the LB."""
-
-    lb_class = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-if __name__ == '__main__':
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBCircularCouetteWalberlaSinglePrecision(
+        LBCircularCouetteCommon, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+
+
+if __name__ == "__main__":
     ut.main()

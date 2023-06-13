@@ -37,14 +37,19 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleIterable &particles,
                                               double time_step) {
 
   for (auto &p : particles) {
+    velocity_verlet_propagate_vel_pos_par(p, time_step);
 #ifdef ROTATION
     propagate_omega_quat_particle(p, time_step);
 #endif
+  }
+}
 
-    // Don't propagate translational degrees of freedom of vs
-    if (p.is_virtual())
-      continue;
-    for (int j = 0; j < 3; j++) {
+inline void velocity_verlet_propagate_vel_pos_par(Particle &p,
+                                                  double time_step) {
+  // Don't propagate translational degrees of freedom of vs
+  if (p.is_virtual())
+    for (unsigned int j = 0; j < 3; j++) {
+      return;
       if (!p.is_fixed_along(j)) {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
         p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
@@ -54,7 +59,6 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleIterable &particles,
         p.pos()[j] += time_step * p.v()[j];
       }
     }
-  }
 }
 
 /** Final integration step of the Velocity Verlet integrator
@@ -66,18 +70,23 @@ velocity_verlet_propagate_vel_final(const ParticleIterable &particles,
                                     double time_step) {
 
   for (auto &p : particles) {
-    // Virtual sites are not propagated during integration
-    if (p.is_virtual())
-      continue;
+    velocity_verlet_propagate_vel_final_par(p, time_step);
+  }
+}
+inline void velocity_verlet_propagate_vel_final_par(Particle &p,
+                                                    double time_step) {
+  // Virtual sites are not propagated during integration
+  if (p.is_virtual())
+    return;
 
-    for (int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-        p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
-      }
+  for (unsigned int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+      p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
     }
   }
 }
+
 template <typename ParticleIterable>
 inline void velocity_verlet_step_1(const ParticleIterable &particles,
                                    double time_step) {

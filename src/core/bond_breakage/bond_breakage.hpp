@@ -20,10 +20,16 @@
 #ifndef CORE_BOND_BREAKAGE_BOND_BREAKAGE_HPP
 #define CORE_BOND_BREAKAGE_BOND_BREAKAGE_HPP
 
+#include <boost/optional.hpp>
+
+#include <array>
 #include <memory>
 #include <unordered_map>
 
 namespace BondBreakage {
+
+/** Stores one or two bond parnters for pair/angle bonds */
+using BondPartners = std::array<boost::optional<int>, 2>;
 
 enum class ActionType {
   NONE = 0,
@@ -43,8 +49,9 @@ void erase_spec(int key);
 /** @brief Check if the bond between the particles should break, if yes, queue
  *  it.
  */
-bool check_and_handle_breakage(int particle_id, int bond_partner_id,
-                               int bond_type, double distance);
+bool check_and_handle_breakage(int particle_id,
+                               BondPartners const &bond_partners, int bond_type,
+                               double distance);
 
 void clear_queue();
 

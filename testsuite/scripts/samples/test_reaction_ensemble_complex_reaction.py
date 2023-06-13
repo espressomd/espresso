@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/reaction_ensemble_complex_reaction.py")
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/reaction_ensemble_complex_reaction.py")
 
 
 @skipIfMissingFeatures

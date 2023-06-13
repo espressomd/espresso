@@ -28,7 +28,7 @@ def disable_GUI(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/visualization_lbboundaries.py",
+    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/visualization_lbboundaries.py",
     substitutions=disable_GUI, steps=100)
 
 

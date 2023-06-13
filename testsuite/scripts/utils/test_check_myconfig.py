@@ -23,7 +23,7 @@ import tempfile
 import importlib
 import unittest as ut
 
-sys.path.insert(0, "@CMAKE_SOURCE_DIR@/src/config")
+sys.path.insert(0, "/home/thilo/code/espresso2/espresso/src/config")
 module = importlib.import_module("check_myconfig")
 
 
@@ -35,7 +35,7 @@ class Test(ut.TestCase):
         path_myconfig = path_root / "myconfig.hpp"
         path_cmake_config = path_root / "cmake_config.hpp"
         path_cmakedefine = path_root / "cmake_config.cmakein"
-        with open("@CMAKE_SOURCE_DIR@/cmake/espresso_cmake_config.cmakein") as fp:
+        with open("/home/thilo/code/espresso2/espresso/cmake/espresso_cmake_config.cmakein") as fp:
             default_cmakedefine = fp.read()
 
         def run(myconfig="", cmake_config="", cmakedefine=default_cmakedefine):
@@ -43,8 +43,8 @@ class Test(ut.TestCase):
             path_cmake_config.write_text(cmake_config)
             path_cmakedefine.write_text(cmakedefine)
             module.check_myconfig(
-                "@CMAKE_CXX_COMPILER@",
-                "@CMAKE_SOURCE_DIR@/src/config/features.def",
+                "/usr/bin/c++",
+                "/home/thilo/code/espresso2/espresso/src/config/features.def",
                 str(path_cmakedefine),
                 str(path_myconfig),
                 str(path_cmake_config))

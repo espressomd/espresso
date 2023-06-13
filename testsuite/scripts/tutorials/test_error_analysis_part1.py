@@ -21,7 +21,7 @@ import numpy as np
 import scipy.signal
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    filepath="@TUTORIALS_DIR@/error_analysis/error_analysis_part1.py")
+    filepath="/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/error_analysis/error_analysis_part1.py")
 
 
 @skipIfMissingFeatures

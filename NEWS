@@ -2,6 +2,220 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.2.1
+==============
+
+This release provides a number of corrections for the ESPResSo 4.2 line.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between ESPResSo 4.2.0 and 4.2.1.
+However, some bugs were discovered which can affect simulation results.
+Please find the list of changes below. The numbers in brackets refer to
+ticket numbers on https://github.com/espressomd/espresso
+
+Added functionality
+-------------------
+
+* P3M and DipolarP3M can now be used with the hybrid decomposition cell
+  system with 1 MPI rank (#4678).
+
+* Lattice-Boltzmann can now be used with the N-square and hybrid
+  decomposition cell systems with 2 or more MPI ranks (#4676).
+
+Changed requirements
+--------------------
+
+* The nbconvert version requirement was bumped to 6.5.1 to patch an XSS
+  vulnerability (#4658).
+
+Improved documentation
+----------------------
+
+* The user guide now documents how to improve the reproducibility of
+  simulations that have checkpointing enabled (#4677).
+
+* The user guide now reflects that the lattice-Boltzmann profile observables
+  can be used in parallel (#4583).
+
+* The active matter tutorial now uses an adequate engine dipole for the
+  swimmer particle (#4585).
+
+* The error analysis tutorials have been improved (#4597).
+
+* The tutorials can now be used in VS Code Jupyter (both the desktop and web
+  versions) and the mathematical formula are now correctly displayed (#4531).
+
+* All ESPResSo-specific CMake options are now documented in the installation
+  chapter of the user guide (#4608).
+
+* Python package installation instructions no longer feature package version
+  numbers; instead, `requirements.txt` is used as a constraint file (#4638).
+
+* MMM1D algorithms now properly document their parameter names (#4677).
+
+* Reaction methods now cite the relevant literature (#4681).
+
+* Caveats for chain analysis methods are now documented (#4698).
+
+* Minor formatting issues in Sphinx and typos in Python docstrings were
+  addressed (#4608).
+
+Interface changes
+-----------------
+
+* A new boolean property `System.virtual_sites.override_cutoff_check` was
+  introduced to allow disabling the cutoff range checks from virtual sites
+  (#4623).
+
+Removed functionality
+---------------------
+
+* The unused and untested `Analysis.v_kappa()` method was removed (#4534).
+
+Improved testing
+----------------
+
+* Improve unit testing of core functionality: P3M, MMM1D, OIF, virtual sites,
+  script interface factory (#4631).
+
+Bug fixes
+---------
+
+* The checkpointing mechanism now properly restores the particle quaternion
+  and all derived quantities (#4637). Release 4.2.0 introduced a regression
+  that caused checkpoint files to overwrite the particle quaternion/director
+  by a unit vector pointing along the z direction, when the `DIPOLES` feature
+  was part of the myconfig file. This lead to incorrect trajectories when
+  reloading a simulation from a checkpoint file, if the particle director
+  played a role in the simulation (ex: relative virtual sites, Gay-Berne
+  potential, anisotropic particles, active particles, etc.). In addition,
+  the angular velocity in body frame was restored with the wrong orientation.
+  Since the default myconfig file contains `DIPOLES`, most ESPResSo users
+  were affected.
+
+* The checkpointing mechanism now properly restores LB boundaries (#4649).
+  Release 4.2.0 introduced a regression where reloading LB populations
+  would accidentally reset LB boundary flags.
+
+* The checkpointing mechanism now restores P3M and DipolarP3M solvers without
+  triggering a re-tune (#4677). In previous releases, the checkpointing code
+  would automatically re-tune these algorithms during a reload, causing tiny
+  deviations in the forces that were problematic for trajectory reproducibility.
+
+* Brownian dynamics now integrates the rotational dynamics of rotatable
+  particles whose position is fixed in 3D space (#4548).
+
+* Langevin dynamics now properly integrates particles with anisotropic
+  friction (#4683, #4690).
+
+* A regression that caused virtual sites to incorrectly count their image box
+  when crossing a periodic boundary has been fixed (#4564, #4707).
+
+* Particles can no longer be created or updated with a negative mass or a
+  null mass (#4679).
+
+* Particles created without a user-specified type can now participate in
+  reactions (#4589).
+
+* When a Monte Carlo displacement move is rejected, the original particle
+  velocity is now restored (#4589).
+
+* Reaction methods now raise an exception when accidentally calling
+  `method.reaction(steps=20)` instead of `method.reaction(reaction_steps=20)`
+  (#4666). Since 4.2.0 the `steps` argument was ignored, in which case the
+  default value `reaction_steps=1` would used by the core. Note that in the
+  next minor release of ESPResSo, the `reaction_steps` argument will be
+  renamed to `steps`.
+
+* Reaction methods now rebuild the list of free particle ids every time
+  `WidomInsertion::calculate_particle_insertion_potential_energy()` and
+  `ReactionAlgorithm::do_reaction()` are called (#4609). This was needed to
+  allow multiple concurrent reactions, as well as avoiding subtle bugs when
+  both the user and a reaction method tried to create a new particle with
+  an id that used to belong to a deleted particle.
+
+* When all particles are cleared, the reaction methods type map is now also
+  cleared (#4645). In the past, it was possible to attempt a reaction on
+  particles that had just been cleared from the system, which would raise
+  an exception. This bug affected all ESPResSo releases since 4.0.
+
+* The `System.part.pairs()` method now returns the correct particle pairs
+  when particle ids aren't both contiguous and starting from 0 (#4628).
+  The regression was introduced in release 4.2.0.
+
+* The auto-exclusions feature no longer adds spurious exclusions to particle
+  ids in the range [1, distance] (#4654). This bug would potentially break
+  the physics of the system and potentially raise an exception in a system
+  with non-contiguous particle ids. This regression was introduced in release
+  2.2.0b.
+
+* The structure factor analysis code no longer double-counts particles when
+  the same particle type is provided twice (#4534).
+
+* The minimal distance distribution analysis code no longer has an arbitrary
+  cutoff distance when the simulation box is aperiodic (open boundaries);
+  this would cause spurious artifacts to appear in the histogram at
+  `r = np.sum(system.box_l)` when particles were further apart than this
+  arbitrary distance (#4534).
+
+* The cluster analysis functions are now disabled for systems with
+  Lees-Edwards periodic boundaries, since the cluster analysis position
+  wrapping code doesn't properly handle the shear offset (#4698).
+
+* The chain analysis methods now raise an error when the number of chains or
+  beads per chain is invalid (#4708).
+
+* The observable tests now longer rely on deprecated numpy options that were
+  removed in numpy 1.24 (#4635).
+
+* The visualizer `*_arrows_type_materials` options now have an effect on
+  arrow materials (#4686).
+
+* The visualizer exception handling mechanism has been made less brittle
+  (#4686).
+
+* The visualizer no longer raises exception when the optional dependency
+  `freeglut` isn't installed (#4691).
+
+* The visualizer can randomly freeze when using collision detection or bond
+  breakage; a temporary workaround has been introduced that fixes the issue
+  for simulations that use only 1 MPI rank (#4686).
+
+* The `__dir__()` method of script interface objects no longer raises an
+  exception (#4674).
+
+* Compilation and testsuite issues involving missing or incorrect feature
+  guards were addressed (#4562, #4648).
+
+* The build system no longer silently ignores invalid external feature
+  definitions in `myconfig.hpp` and CMake files (#4608). This issue would
+  only affect feature developers, as well as users of very old compilers,
+  and would lead to ESPResSo builds missing features.
+
+Under the hood changes
+----------------------
+
+* The Clang 14 and AppleClang 14 compilers are now supported (#4601).
+
+* Several Clang 14 compiler diagnostics have been addressed (#4606).
+
+* Boost 1.81 and later versions are now supported (#4655).
+
+* Compiler errors on non-x86 architectures were addressed (#4538).
+
+* Test tolerances were adjusted for non-x86 architectures (#4708).
+
+* The pypresso script now prints a warning when running with MCA binding
+  policy "numa" on NUMA architectures that are not supported in singleton
+  mode by Open MPI 4.x (#4607).
+
+* The config file generator has been rewritten to properly handle external
+  features and compiler errors (#4608).
+
+* Security hardening for GitHub Workflows (#4577, #4638) and Codecov (#4600).
+
+* Deployment of the user guide to GitHub Pages now relies on cloud providers
+  to fetch JavaScript dependencies (#4656).
+
 ESPResSo 4.2.0
 ==============
 

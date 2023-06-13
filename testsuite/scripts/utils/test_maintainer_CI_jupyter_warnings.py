@@ -23,7 +23,7 @@ import nbconvert
 import importlib
 import unittest as ut
 
-sys.path.insert(0, '@CMAKE_SOURCE_DIR@/maintainer/CI')
+sys.path.insert(0, '/home/thilo/code/espresso2/espresso/maintainer/CI')
 module = importlib.import_module('jupyter_warnings')
 
 
@@ -58,7 +58,7 @@ invalid: [resource](file:///home/espresso/image.png)
             '"file:///usr/share/javascript/mathjax/MathJax.js?config=Safe" is an absolute path to a local file',
         ]
         issues = module.detect_invalid_urls(
-            nb, build_root='@CMAKE_BINARY_DIR@', html_exporter=html_exporter)
+            nb, build_root='/home/thilo/code/espresso2/espresso', html_exporter=html_exporter)
         self.assertEqual(issues, ref_issues)
 
 

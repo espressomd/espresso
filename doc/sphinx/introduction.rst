@@ -623,7 +623,7 @@ publications, using the BibTeX entries indicated in this user guide.
 
 A complete citation would look like this:
 
-    Simulations were carried out with ESPResSo 4.1[24] using the ICC\*
+    Simulations were carried out with ESPResSo 4.2[24] using the ICC\*
     algorithm[25].
 
     | ____________
@@ -641,7 +641,7 @@ You may also provide the patch level, when relevant. If you developed code
 for |es| and made it available in a publicly accessible repository, you
 should consider providing the corresponding URL, for example in a footnote:
 
-    The method was implemented for ESPResSo 4.1.4[24] and the source code is
+    The method was implemented for ESPResSo 4.2.1[24] and the source code is
     available online\ :superscript:`note 1`.
 
     | ____________

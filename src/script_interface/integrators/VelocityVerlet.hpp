@@ -28,7 +28,7 @@
 namespace ScriptInterface {
 namespace Integrators {
 
-class VelocityVerlet : public Integrator {
+class VelocityVerlet : public AutoParameters<VelocityVerlet, Integrator> {
   void activate() const override;
 };
 

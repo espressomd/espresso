@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.20)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -57,6 +57,7 @@ include(FeatureSummary)
 project(ESPResSo)
 include(GNUInstallDirs)
 include(espresso_option_enum)
+include(espresso_enable_avx2_support)
 if(POLICY CMP0074)
   # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
@@ -92,6 +93,11 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA
+       "Build with waLBerla lattice-Boltzmann support" OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
+       "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND_MARKERS
        "Build with valgrind instrumentation markers" OFF)
@@ -172,6 +178,15 @@ foreach(func_name __PRETTY_FUNCTION__ __FUNCSIG__ __FUNCTION__)
 endforeach()
 
 #
+# AVX2 support
+#
+
+include(CheckCXXCompilerFlag)
+
+add_library(espresso_avx_flags INTERFACE)
+add_library(espresso::avx_flags ALIAS espresso_avx_flags)
+
+#
 # Interface libraries
 #
 
@@ -234,8 +249,7 @@ endif()
 # Python interpreter and Cython interface library
 if(ESPRESSO_BUILD_WITH_PYTHON)
   find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development NumPy)
-  # use version range 0.29.21...<3.0.0 in CMake 3.19
-  find_package(Cython 0.29.21 REQUIRED)
+  find_package(Cython 0.29.21...<3.0 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif()
 
@@ -572,6 +586,75 @@ endif()
 if(ESPRESSO_BUILD_BENCHMARKS)
   add_custom_target(benchmark)
   add_subdirectory(maintainer/benchmarks)
+endif()
+
+#
+# waLBerla
+#
+
+if(ESPRESSO_BUILD_WITH_WALBERLA)
+  # cmake-format: off
+  include(FetchContent)
+  FetchContent_Declare(
+    walberla
+    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+    GIT_TAG        065ce5f311850371a97ac4766f47dbb5ca8424ba
+  )
+  # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
+  if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")
+    FetchContent_Populate(walberla)
+  endif()
+  # cmake-format: on
+  string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
+                       "${walberla_SOURCE_DIR}")
+  set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
+  set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
+  set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
+  set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
+  set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
+  set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+  set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
+  set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
+  if(ESPRESSO_BUILD_WITH_CUDA)
+    set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
+    if(CMAKE_VERSION VERSION_LESS 3.25 OR NOT ESPRESSO_CUDA_COMPILER STREQUAL
+                                          "clang")
+      if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES 75)
+      endif()
+    endif()
+  endif()
+  if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
+    set(ESPRESSO_USE_WALBERLA_FFT 1)
+    set(WALBERLA_BUILD_WITH_FFTW on CACHE BOOL "")
+  else()
+    set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
+  endif()
+  set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
+  add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
+  set(WALBERLA_LIBS
+      walberla::core walberla::domain_decomposition walberla::blockforest
+      walberla::boundary walberla::field walberla::lbm walberla::timeloop
+      walberla::vtk)
+  if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
+    set(WALBERLA_LIBS ${WALBERLA_LIBS} walberla::fft)
+  endif()
+  if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+    set(WALBERLA_LIBS ${WALBERLA_LIBS} walberla::cuda)
+  endif()
+  # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21283
+  foreach(target_w_namespace IN LISTS WALBERLA_LIBS)
+    string(REPLACE "walberla::" "" target_wo_namespace ${target_w_namespace})
+    add_library(${target_w_namespace} ALIAS ${target_wo_namespace})
+  endforeach()
+  if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
+    function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
+      target_compile_options(
+        espresso_avx_flags INTERFACE "${COMPILER_AVX2_FLAG}"
+                                     "-DESPRESSO_BUILD_WITH_AVX_KERNELS")
+    endfunction()
+    espresso_enable_avx2_support(espresso_avx_flags_callback)
+  endif()
 endif()
 
 #

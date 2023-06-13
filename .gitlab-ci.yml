@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-22.04:cb0a2886ebd6a4fbd372503d7b46fc05fb1da5d5
+image: ghcr.io/espressomd/docker/ubuntu-22.04:fbdf2f2f9d76b761c0aa1308f17fb17e38501850
 
 stages:
   - prepare
@@ -68,7 +68,7 @@ style_doxygen:
     - mkdir build
     - cd build
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso
@@ -87,6 +87,7 @@ default:
      myconfig: 'default'
      with_coverage: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
   script:
@@ -94,6 +95,7 @@ default:
   tags:
     - espresso
     - no-cuda
+    - numa
 
 maxset:
   <<: *global_job_definition
@@ -107,6 +109,7 @@ maxset:
      myconfig: 'maxset'
      with_coverage: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      check_skip_long: 'true'
      cmake_params: '-D ESPRESSO_TEST_NP=8'
@@ -116,6 +119,7 @@ maxset:
     - espresso
     - no-cuda
     - numa
+    - avx2
 
 no_rotation:
   <<: *global_job_definition
@@ -136,46 +140,10 @@ no_rotation:
     - no-cuda
     - numa
 
-ubuntu:wo-dependencies:
-  <<: *global_job_definition
-  stage: build
-  image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:3fd42369f84239b8c4f5d77067d404789c55ff44
-  variables:
-     myconfig: 'maxset'
-     with_cuda: 'false'
-     with_hdf5: 'false'
-     with_fftw: 'false'
-     with_gsl: 'false'
-     make_check_unit_tests: 'false'
-     make_check_python: 'false'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - no-cuda
-
-### Builds with different distributions
-
-debian:10:
-  <<: *global_job_definition
-  stage: build
-  image: ghcr.io/espressomd/docker/debian:3fd42369f84239b8c4f5d77067d404789c55ff44
-  variables:
-     with_cuda: 'false'
-     with_gsl: 'false'
-     myconfig: 'maxset'
-     make_check_python: 'false'
-     with_stokesian_dynamics: 'true'
-  script:
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - espresso
-    - no-cuda
-
 fedora:36:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:3fd42369f84239b8c4f5d77067d404789c55ff44
+  image: ghcr.io/espressomd/docker/fedora:fbdf2f2f9d76b761c0aa1308f17fb17e38501850
   variables:
      with_cuda: 'false'
      with_gsl: 'false'
@@ -205,6 +173,7 @@ clang-sanitizer:
      with_asan: 'true'
      with_ubsan: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -246,6 +215,7 @@ cuda11-coverage:
      with_coverage: 'true'
      check_skip_long: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -268,6 +238,8 @@ cuda11-maxset:
      test_timeout: '900'
      srcdir: '${CI_PROJECT_DIR}'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -279,6 +251,7 @@ cuda11-maxset:
     - espresso
     - cuda
     - numa
+    - avx2
 
 tutorials-samples-maxset:
   <<: *global_job_definition
@@ -292,6 +265,8 @@ tutorials-samples-maxset:
      with_coverage: 'false'
      with_coverage_python: 'true'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
@@ -305,6 +280,7 @@ tutorials-samples-maxset:
     - espresso
     - cuda
     - numa
+    - avx2
 
 tutorials-samples-default:
   <<: *global_job_definition
@@ -317,6 +293,8 @@ tutorials-samples-default:
      with_cuda: 'true'
      with_coverage: 'false'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
@@ -329,6 +307,7 @@ tutorials-samples-default:
     - espresso
     - cuda
     - numa
+    - avx2
   only:
     - schedules
 
@@ -342,14 +321,14 @@ tutorials-samples-empty:
      myconfig: 'empty'
      with_cuda: 'true'
      with_coverage: 'false'
-     with_scafacos: 'true'
+     with_scafacos: 'false'
+     with_walberla: 'false'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
      make_check_samples: 'true'
      make_check_benchmarks: 'true'
      test_timeout: '1200'
-     with_scafacos: 'false'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -370,6 +349,8 @@ tutorials-samples-no-gpu:
      with_cuda: 'true'
      with_coverage: 'false'
      with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      make_check_tutorials: 'true'
@@ -382,6 +363,7 @@ tutorials-samples-no-gpu:
   tags:
     - espresso
     - no-cuda
+    - avx2
   only:
     - schedules
 
@@ -398,6 +380,7 @@ installation:
      make_check_unit_tests: 'false'
      make_check_python: 'false'
      with_scafacos: 'true'
+     with_walberla: 'true'
      with_stokesian_dynamics: 'true'
      srcdir: '${CI_PROJECT_DIR}'
      build_type: 'Release'
@@ -432,6 +415,7 @@ empty:
      with_cuda: 'true'
      with_static_analysis: 'true'
      with_scafacos: 'false'
+     with_walberla: 'false'
      with_stokesian_dynamics: 'false'
      with_coverage: 'false'
      with_coverage_python: 'true'

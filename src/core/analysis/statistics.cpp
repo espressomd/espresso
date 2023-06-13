@@ -28,7 +28,6 @@
 
 #include "Particle.hpp"
 #include "cells.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
@@ -84,8 +83,8 @@ Utils::Vector3d calc_linear_momentum(bool include_particles,
                           return m + p.mass() * p.v();
                         });
   }
-  if (include_lbfluid) {
-    momentum += lb_lbfluid_calc_fluid_momentum();
+  if (include_lbfluid and lattice_switch != ActiveLB::NONE) {
+    momentum += LB::calc_fluid_momentum() * LB::get_lattice_speed();
   }
   return momentum;
 }

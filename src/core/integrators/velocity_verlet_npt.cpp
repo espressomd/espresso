@@ -55,7 +55,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleIterable &particles,
     if (p.is_virtual())
       continue;
     auto const noise = friction_therm0_nptiso<2>(npt_iso, p.v(), p.id());
-    for (int j = 0; j < 3; j++) {
+    for (unsigned int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & ::nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.v()[j] * time_step) * p.mass();
@@ -73,7 +73,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleIterable &particles,
 void velocity_verlet_npt_finalize_p_inst(double time_step) {
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     if (nptiso.geometry & ::nptgeom_dir[i]) {
       nptiso.p_vel[i] /= Utils::sqr(time_step);
       nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
@@ -126,7 +126,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleIterable &particles,
   for (auto &p : particles) {
     if (p.is_virtual())
       continue;
-    for (int j = 0; j < 3; j++) {
+    for (unsigned int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & ::nptgeom_dir[j]) {
           p.pos()[j] = scal[1] * (p.pos()[j] + scal[2] * p.v()[j] * time_step);
@@ -148,7 +148,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleIterable &particles,
   if (this_node == 0) {
     new_box = box_geo.length();
 
-    for (int i = 0; i < 3; i++) {
+    for (unsigned int i = 0; i < 3; i++) {
       if (nptiso.cubic_box || nptiso.geometry & ::nptgeom_dir[i]) {
         new_box[i] = L_new;
       }
@@ -174,7 +174,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleIterable &particles,
     // Don't propagate translational degrees of freedom of vs
     if (p.is_virtual())
       continue;
-    for (int j = 0; j < 3; j++) {
+    for (unsigned int j = 0; j < 3; j++) {
       if (!p.is_fixed_along(j)) {
         auto const noise = friction_therm0_nptiso<1>(npt_iso, p.v(), p.id());
         if (nptiso.geometry & ::nptgeom_dir[j]) {
