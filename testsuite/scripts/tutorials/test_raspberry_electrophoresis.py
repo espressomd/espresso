@@ -22,7 +22,7 @@ import numpy as np
 np.random.seed(42)
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/raspberry_electrophoresis/raspberry_electrophoresis.py",
+    "@TUTORIALS_DIR@/raspberry_electrophoresis/raspberry_electrophoresis.py",
     box_l=16., num_iterations=100, num_steps_per_iteration=80)
 
 

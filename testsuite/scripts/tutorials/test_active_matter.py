@@ -21,7 +21,7 @@ import importlib_wrapper
 import os
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/active_matter/active_matter.py",
+    "@TUTORIALS_DIR@/active_matter/active_matter.py",
     ED_N_SAMPLING_STEPS=100000,
     RECT_N_SAMPLES=150,
     HYDRO_N_STEPS=150
