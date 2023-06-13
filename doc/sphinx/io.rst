@@ -111,19 +111,22 @@ Be aware of the following limitations:
   for a specific combination of features, please share your findings
   with the |es| community.
 
-* Checkpointing only supports recursion on the head node. It is therefore
-  impossible to checkpoint a :class:`espressomd.system.System` instance that
-  contains LB boundaries, constraint unions or auto-update accumulators when the
-  simulation is running with 2 or more MPI nodes.
-
-* The active actors, i.e., the content of ``system.actors``, are checkpointed.
-  For lattice-Boltzmann fluids, this only includes the parameters such as the
-  lattice constant (``agrid``). The actual flow field has to be saved
-  separately with the lattice-Boltzmann specific methods
-  :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
-  and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint`
+* The active actors, i.e., the content of ``system.actors`` resp.
+  ``system.ekcontainers``, are checkpointed. For lattice-based methods like
+  lattice-Boltzmann fluids and advection-diffusion-reaction models, this only
+  includes the parameters such as the lattice constant (``agrid``) and initial
+  densities.
+  The actual fields have to be saved separately with the lattice-specific
+  methods :meth:`espressomd.lb.LBFluidWalberla.save_checkpoint
+  <espressomd.detail.walberla.LatticeModel.save_checkpoint>` resp.
+  :meth:`espressomd.electrokinetics.EKSpecies.save_checkpoint
+  <espressomd.detail.walberla.LatticeModel.save_checkpoint>`
+  and loaded via :meth:`espressomd.lb.LBFluidWalberla.load_checkpoint
+  <espressomd.detail.walberla.LatticeModel.load_checkpoint>` resp.
+  :meth:`espressomd.electrokinetics.EKSpecies.load_checkpoint
+  <espressomd.detail.walberla.LatticeModel.load_checkpoint>`
   after restoring the checkpoint. See :ref:`LB checkpointing <Checkpointing LB>`
-  for more details.
+  resp. :ref:`EK checkpointing <Checkpointing EK>` for more details.
 
 * References between Python objects are not maintained during checkpointing.
   For example, if an instance of a shape and an instance of a constraint
@@ -506,3 +509,26 @@ requires increasing and continuous indexing. The |es| ``id`` can be used as *key
     vtf_index[3]
 
 Note that the |es| particles are ordered in increasing order, thus ``id=3`` corresponds to the zeroth VTF index.
+
+.. _Reading VTK files:
+
+Reading VTK files
+-----------------
+
+The waLBerla library writes VTK multi-piece uniform grids in XML format.
+Each piece contains information about its spatial extent, from which it is
+possible to deduce the grid dimensions. Each piece may contain one or more
+array, which are uniquely identified by name. While the Python package ``vtk``
+provides tools to read VTK files as numpy arrays, it doesn't automatically
+reconstruct the 3D grids using the topology information of each piece; this
+functionality is provided by the wrapper :class:`~espressomd.io.vtk.VTKReader`:
+
+.. code-block:: python
+
+    import espressomd.io.vtk
+    vtk_reader = espressomd.io.vtk.VTKReader()
+    vtk_grids = vtk_reader.parse("simulation_step_0.vtu")
+    vtk_density = vtk_grids["density"]
+    print(vtk_density.shape)
+
+For a self-contained example, please refer to :ref:`LB VTK output`.
