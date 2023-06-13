@@ -90,9 +90,9 @@ class Test(ut.TestCase):
         DDSR = espressomd.magnetostatics.DipolarDirectSumCpu
         DDSG = espressomd.magnetostatics.DipolarDirectSumGpu
         MDLC = espressomd.magnetostatics.DLC
+        has_gpu = espressomd.gpu_available()
         # check runtime errors and input parameters
-        if espressomd.has_features(
-                "DIPOLAR_DIRECT_SUM") and espressomd.gpu_available():
+        if espressomd.has_features("DIPOLAR_DIRECT_SUM") and has_gpu:
             ddsg = DDSG(prefactor=1.)
             with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Dipoles::DipolarDirectSumGpu isn't supported by DLC"):
                 MDLC(gap_size=2., maxPWerror=0.1, actor=ddsg)
@@ -117,6 +117,15 @@ class Test(ut.TestCase):
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
             self.system.actors.add(mdlc)
         self.assertEqual(len(self.system.actors), 0)
+        if espressomd.has_features(
+                ["DIPOLAR_DIRECT_SUM", "DIPOLE_FIELD_TRACKING"]) and has_gpu:
+            ddsg = DDSG(prefactor=1.)
+            self.system.actors.add(ddsg)
+            with self.assertRaisesRegex(Exception, "Dipoles field calculation not implemented by dipolar method DipolarDirectSumGpu"):
+                self.system.part.add(pos=(0.2, 0.2, 0.2), dip=(0.0, 0.0, 1.0))
+                self.system.analysis.dipole_fields()
+            self.system.part.clear()
+            self.system.actors.clear()
         # check it's safe to resize the box, i.e. there are no currently
         # active sanity check in the core
         self.system.box_l = [10., 10., 10.]

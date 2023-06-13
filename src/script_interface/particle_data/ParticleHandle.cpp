@@ -323,6 +323,13 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dipm(); }},
 #endif // DIPOLES
+#ifdef DIPOLE_FIELD_TRACKING
+      {"dip_fld",
+       [this](Variant const &value) {
+         set_particle_property(&Particle::dip_fld, value);
+       },
+       [this]() { return get_particle_data(m_pid).dip_fld(); }},
+#endif
 #ifdef ROTATIONAL_INERTIA
       {"rinertia",
        [this](Variant const &value) {

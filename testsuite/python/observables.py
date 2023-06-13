@@ -50,6 +50,9 @@ class Observables(ut.TestCase):
     if espressomd.has_features(["DIPOLES"]):
         partcls.dip = np.random.random((N_PART, 3)) - .3
 
+    if espressomd.has_features(["DIPOLE_FIELD_TRACKING"]):
+        system.analysis.dipole_fields()
+
     if espressomd.has_features(["ROTATION"]):
         partcls.omega_body = np.random.random((N_PART, 3)) - .5
         partcls.torque_lab = np.random.random((N_PART, 3)) - .5
@@ -141,6 +144,10 @@ class Observables(ut.TestCase):
         test_mag_dip = generate_test_for_pid_observable(
             espressomd.observables.MagneticDipoleMoment, "dip", "sum")
 
+    if espressomd.has_features(["DIPOLE_FIELD_TRACKING"]):
+        test_dip_fld = generate_test_for_pid_observable(
+            espressomd.observables.ParticleDipoleFields, "dip_fld")
+
     if espressomd.has_features(["ROTATION"]):
         test_body_angular_velocity = generate_test_for_pid_observable(
             espressomd.observables.ParticleBodyAngularVelocities, "omega_body")
@@ -148,6 +155,15 @@ class Observables(ut.TestCase):
             espressomd.observables.ParticleAngularVelocities, "omega_lab")
         test_director = generate_test_for_pid_observable(
             espressomd.observables.ParticleDirectors, "director")
+
+    @ut.skipIf(espressomd.has_features(["DIPOLE_FIELD_TRACKING"]),
+               "default dipole fields are needed")
+    def test_director_no_dipole_fields(self):
+        id_list = self.system.part.all().id
+        observable = espressomd.observables.ParticleDipoleFields(ids=id_list)
+        obs_data = observable.calculate()
+        np.testing.assert_array_almost_equal(
+            obs_data, self.N_PART * [[0., 0., 0.]], decimal=11)
 
     @ut.skipIf(espressomd.has_features(["ROTATION"]),
                "check default directors")

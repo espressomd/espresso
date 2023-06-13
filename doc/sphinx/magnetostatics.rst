@@ -155,8 +155,13 @@ system's list of active actors. The only required parameter is the prefactor
 The CPU implementation has an optional argument ``n_replicas`` which
 adds periodic copies to the system along periodic directions. In that
 case, the minimum image convention is no longer used.
+Additionally, enabling the ``DIPOLE_FIELDS_TRACKING`` feature enables the CPU
+implementation to calculate the total dipole field at the position of each
+magnetic particle in the primary simulation box. These values are stored in
+the particle handle's ``dip_fld`` property and can be accessed directly or
+via an observable.
 
-Both implementations support MPI-parallelization.
+Both the CPU and GPU implementations support MPI-parallelization.
 
 
 .. _Barnes-Hut octree sum on GPU:
