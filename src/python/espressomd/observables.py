@@ -510,6 +510,28 @@ class ParticleDirectors(Observable):
 
 
 @script_interface_register
+class ParticleDipoleFields(Observable):
+
+    """Calculates the particle dipole fields for particles with given ids.
+
+    Output format: :math:`(h_d1_x,\\ h_d1_y,\\ h_d1_z),\\ (h_d2_x,\\ h_d2_y,\\ h_d2_z),\\ \\dots,\\ (h_dn_x,\\ h_dn_y,\\ h_dn_z)`.
+
+    The particles are ordered according to the list of ids passed to the observable.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+        The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
+
+    """
+    _so_name = "Observables::ParticleDipoleFields"
+
+
+@script_interface_register
 class ParticleDistances(Observable):
 
     """Calculates the distances between particles with given ids along a

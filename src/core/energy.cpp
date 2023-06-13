@@ -40,6 +40,7 @@
 #include "magnetostatics/dipoles.hpp"
 
 #include <utils/Span.hpp>
+#include <utils/mpi/iall_gatherv.hpp>
 
 #include <memory>
 
@@ -154,3 +155,14 @@ double particle_short_range_energy_contribution(int pid) {
   }
   return ret;
 }
+
+#ifdef DIPOLE_FIELD_TRACKING
+void calc_long_range_fields() {
+  auto particles = cell_structure.local_particles();
+  Dipoles::calc_long_range_field(particles);
+}
+
+REGISTER_CALLBACK(calc_long_range_fields)
+
+void mpi_calc_long_range_fields() { mpi_call_all(calc_long_range_fields); }
+#endif

@@ -88,6 +88,12 @@ namespace traits {
 template <typename T>
 using is_solver = std::is_convertible<std::shared_ptr<T>, MagnetostaticsActor>;
 
+/** @brief The dipolar method supports dipole fields calculation. */
+template <class T> struct has_dipole_fields : std::false_type {};
+#ifdef DIPOLE_FIELD_TRACKING
+template <> struct has_dipole_fields<DipolarDirectSum> : std::true_type {};
+#endif // DIPOLE_FIELD_TRACKING
+
 } // namespace traits
 
 void calc_pressure_long_range();
@@ -104,6 +110,9 @@ void on_cell_structure_change();
 
 void calc_long_range_force(ParticleRange const &particles);
 double calc_energy_long_range(ParticleRange const &particles);
+#ifdef DIPOLE_FIELD_TRACKING
+void calc_long_range_field(ParticleRange const &particles);
+#endif
 
 namespace detail {
 bool flag_all_reduce(bool flag);

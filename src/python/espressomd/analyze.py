@@ -572,6 +572,13 @@ class Analysis(ScriptInterfaceHelper):
         """
         return self.call_method("particle_energy", pid=particle.id)
 
+    def dipole_fields(self):
+        """
+        Calculate the total dipole field on each particle.
+        """
+        assert_features("DIPOLE_FIELD_TRACKING")
+        self.call_method("calc_long_range_fields")
+
     def dpd_stress(self):
         assert_features("DPD")
         return np.reshape(self.call_method("dpd_stress"), (3, 3))
