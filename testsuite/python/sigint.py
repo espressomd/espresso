@@ -22,19 +22,61 @@ import subprocess
 import time
 import sys
 import pathlib
+import os
+
+
+EXPECTED_TRACEBACK_ENDING = """ in handle_sigint
+    signal.raise_signal(signal.Signals.SIGINT)
+KeyboardInterrupt
+"""
 
 
 class SigintTest(ut.TestCase):
 
-    def setUp(self):
-        script = str(pathlib.Path(__file__).parent / 'sigint_child.py')
-        self.process = subprocess.Popen([sys.executable, script])
+    script = str(pathlib.Path(__file__).parent / 'sigint_child.py')
+
+    def check_signal_handling(self, process, sig):
+        # send signal
+        process.send_signal(sig)
+        # capture stderr and return code (negative of signum)
+        stdout, stderr = process.communicate(input=None, timeout=6.)
+        assert stdout is None
+        traceback = stderr.decode()
+        return_code = process.poll()
+        signum = -return_code
+        self.assertEqual(signum, sig.value)
+        if sig == signal.Signals.SIGTERM:
+            self.assertEqual(traceback, "")
+        elif sig == signal.Signals.SIGINT:
+            self.assertIn(" self.integrator.run(", traceback)
+            self.assertTrue(traceback.endswith(EXPECTED_TRACEBACK_ENDING),
+                            msg=f"Traceback failed string match:\n{traceback}")
 
     def test_signal_handling(self):
-        self.process.send_signal(signal.SIGINT)
-        # Wait for the signal to arrive and one integration step to be finished
-        time.sleep(1)
-        self.assertIsNotNone(self.process.poll())
+        signals = [signal.Signals.SIGINT, signal.Signals.SIGTERM]
+        processes = []
+        # open asynchronous processes with non-blocking read access on stderr
+        for _ in range(len(signals)):
+            process = subprocess.Popen([sys.executable, self.script],
+                                       stderr=subprocess.PIPE)
+            os.set_blocking(process.stderr.fileno(), False)
+            processes.append(process)
+
+        # wait for the script to reach the integration loop
+        time.sleep(0.5)
+        for process, sig in zip(processes, signals):
+            tick = time.time()
+            while True:
+                message = process.stderr.readline().decode()
+                if message == "start of integration loop\n":
+                    # wait for the script to enter the integrator run method
+                    time.sleep(0.1)
+                    # send signal and check process behavior
+                    self.check_signal_handling(process, sig)
+                    break
+                tock = time.time()
+                assert tock - tick < 8., "subprocess timed out"
+                time.sleep(0.1)
 
 
 if __name__ == '__main__':

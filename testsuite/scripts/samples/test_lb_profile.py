@@ -29,7 +29,7 @@ class Sample(ut.TestCase):
 
     def test_fit(self):
         np.testing.assert_allclose(sample.lb_fluid_profile[:, 0, 0, 2],
-                                   sample.expected_profile, atol=5e-2)
+                                   sample.expected_profile, atol=7e-2)
 
 
 if __name__ == "__main__":

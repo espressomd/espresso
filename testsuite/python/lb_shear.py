@@ -22,15 +22,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
-import espressomd.lbboundaries
 import espressomd.shapes
-
-"""
-Check the lattice-Boltzmann lid-driven shear flow in a slab system
-by comparing to the analytical solution.
-
-"""
-
 
 AGRID = 0.6
 VISC = 5.2
@@ -44,8 +36,8 @@ W = 6 * AGRID
 SHEAR_VELOCITY = 0.3
 
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP
              }
 
@@ -61,7 +53,7 @@ def shear_flow(x, t, nu, v, h, k_max):
     t : :obj:`float`
         Time since start of the shearing.
     nu : :obj:`float`
-        Kinematic viscosity.
+        Kinematic kinematic_viscosity.
     v : :obj:`float`
         Shear rate.
     h : :obj:`float`
@@ -84,40 +76,47 @@ def shear_flow(x, t, nu, v, h, k_max):
 
 class LBShearCommon:
 
-    """Base class of the test that holds the test logic."""
+    """
+    Check the lattice-Boltzmann lid-driven shear flow in a slab system
+    by comparing to the analytical solution.
+    """
     system = espressomd.System(box_l=[H + 2. * AGRID, W, W])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+
+    def tearDown(self):
+        self.system.actors.clear()
 
     def check_profile(self, shear_plane_normal, shear_direction):
         """
         Integrate the LB fluid and regularly compare with
         the exact solution.
-
         """
-        self.system.lbboundaries.clear()
-        self.system.actors.clear()
+        self.tearDown()
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
-
-        self.lbf = self.lb_class(**LB_PARAMS)
+        self.setUp()
         self.system.actors.add(self.lbf)
+        self.lbf.clear_boundaries()
 
         wall_shape1 = espressomd.shapes.Wall(
             normal=shear_plane_normal, dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=-1.0 * shear_plane_normal, dist=-(H + AGRID))
-        wall1 = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape1, velocity=-.5 * SHEAR_VELOCITY * shear_direction)
-        wall2 = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape2, velocity=.5 * SHEAR_VELOCITY * shear_direction)
 
-        self.system.lbboundaries.add(wall1)
-        self.system.lbboundaries.add(wall2)
+        self.lbf.add_boundary_from_shape(
+            wall_shape1, velocity=-.5 * SHEAR_VELOCITY * shear_direction)
+        self.lbf.add_boundary_from_shape(
+            wall_shape2, velocity=.5 * SHEAR_VELOCITY * shear_direction)
 
         t0 = self.system.time
         sample_points = int(H / AGRID - 1)
 
+        # warmup
+        self.system.integrator.run(40)
         for _ in range(9):
             self.system.integrator.run(20)
 
@@ -149,22 +148,27 @@ class LBShearCommon:
         # defined as \sigma = -p 1 + \mu [\nabla * u + (\nabla * u)^T]
         # where 'p' is the static pressure, '\mu' is the dynamic viscosity,
         # '*' denotes the outer product and 'u' is the velocity field
+        # NOTE: the so called stress property of the fluid is actually the
+        # pressure tensor not the viscous stress tensor!
         shear_rate = SHEAR_VELOCITY / H
-        dynamic_viscosity = self.lbf.viscosity * self.lbf.density
+        dynamic_viscosity = self.lbf.kinematic_viscosity * DENS
         p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
-            np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
-        for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
+            np.outer(shear_plane_normal, shear_direction) +
+            np.transpose(np.outer(shear_plane_normal, shear_direction)))
+        for n in [(2, 3, 4), (3, 4, 2), (5, 4, 3)]:
             node_pressure_tensor = np.copy(
                 self.lbf[n[0], n[1], n[2]].pressure_tensor)
-            np.testing.assert_allclose(node_pressure_tensor,
-                                       p_expected, atol=1E-5, rtol=5E-3)
+            np.testing.assert_allclose(node_pressure_tensor, p_expected,
+                                       atol=self.atol, rtol=self.rtol)
 
-        np.testing.assert_allclose(
-            np.copy(wall1.get_force()),
-            -np.copy(wall2.get_force()),
-            atol=1E-4)
-        np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()), shear_direction),
-                                   SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
+        # TODO: boundary forces not implemented yet
+#        np.testing.assert_allclose(
+#            np.copy(wall1.get_force()),
+#            -np.copy(wall2.get_force()),
+#            atol=1E-4)
+#        np.testing.assert_allclose(
+#            np.dot(np.copy(wall1.get_force()), shear_direction),
+#            SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
 
     def test(self):
         x = np.array((1, 0, 0), dtype=int)
@@ -178,23 +182,26 @@ class LBShearCommon:
         self.check_profile(y, -z)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBCPUShear(ut.TestCase, LBShearCommon):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBShearWalberla(LBShearCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
+    atol = 5e-5
+    rtol = 5e-4
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBGPUShear(ut.TestCase, LBShearCommon):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBShearWalberlaSinglePrecision(LBShearCommon, ut.TestCase):
 
-    """Test for the GPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in single-precision."""
 
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 5e-5
+    rtol = 5e-3
 
 
 if __name__ == '__main__':

@@ -22,33 +22,23 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
-import espressomd.lbboundaries
-import espressomd.electrokinetics
 import espressomd.shapes
 
 AGRID = .25
 EXT_FORCE = .1
-VISC = 2.7
+KINEMATIC_VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.1
+TIME_STEP = 0.07
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'kinematic_viscosity': KINEMATIC_VISC,
              'tau': TIME_STEP,
              'ext_force_density': [0.0, 0.0, EXT_FORCE]}
-
-EK_PARAMS = {'agrid': AGRID,
-             'lb_density': DENS,
-             'viscosity': VISC,
-             'ext_force_density': [0.0, 0.0, EXT_FORCE],
-             'friction': 0.,
-             'T': 1,
-             'prefactor': 0.}
 
 
 def poiseuille_flow(z, H, ext_force_density, dyn_visc):
     """
-    Analytical solution for plane Poiseuille flow.
+    Analytical solution for planar Poiseuille flow.
 
     Parameters
     ----------
@@ -76,28 +66,31 @@ class LBPoiseuilleCommon:
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
+    def setUp(self):
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.actors.clear()
+
     def prepare(self):
         """
         Integrate the LB fluid until steady state is reached within a certain
         accuracy.
 
         """
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
         wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
             normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
-        wall1 = espressomd.lbboundaries.LBBoundary(shape=wall_shape1)
-        wall2 = espressomd.lbboundaries.LBBoundary(shape=wall_shape2)
 
-        self.system.lbboundaries.add(wall1)
-        self.system.lbboundaries.add(wall2)
+        self.lbf.add_boundary_from_shape(wall_shape1)
+        self.lbf.add_boundary_from_shape(wall_shape2)
 
         mid_indices = (self.system.box_l / AGRID / 2).astype(int)
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.005:
-            self.system.integrator.run(100)
+            self.system.integrator.run(200)
             new_val = self.lbf[mid_indices].velocity[2]
             diff = abs(new_val - old_val)
             old_val = new_val
@@ -122,85 +115,26 @@ class LBPoiseuilleCommon:
         v_expected = poiseuille_flow(velocities[1:-1, 0] - 0.5 * self.system.box_l[0],
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
-                                     VISC * DENS)
-        atol = self.tolerance * AGRID / TIME_STEP
-        np.testing.assert_allclose(v_measured, v_expected, atol=atol)
+                                     KINEMATIC_VISC * DENS)
+        np.testing.assert_allclose(v_measured, v_expected, rtol=5E-5)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-        self.tolerance = 0.015
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-        self.tolerance = 0.00015
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(
-    ['LB_BOUNDARIES_GPU', "ELECTROKINETICS", "EXTERNAL_FORCES"])
-class LBEkinPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBPoiseuilleWalberlaSinglePrecision(LBPoiseuilleCommon, ut.TestCase):
 
-    """Test the LB part of electrokinetics. """
+    """Test for the Walberla implementation of the LB in single-precision."""
 
-    def setUp(self):
-        self.lbf = espressomd.electrokinetics.Electrokinetics(**EK_PARAMS)
-        species = espressomd.electrokinetics.Species(
-            density=0., D=1., valency=0.)
-        self.lbf.add_species(species)
-        self.tolerance = 0.00015
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the higher order interpolation scheme of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-        self.lbf.set_interpolation_order("quadratic")
-        self.tolerance = 0.015
-
-    def test_profile(self):
-        """
-        Compare against analytical function by calculating the RMSD.
-
-        """
-        self.prepare()
-        velocities = np.zeros((50, 2))
-        x_values = np.linspace(2 * AGRID, self.system.box_l[0] - 2 * AGRID, 50)
-
-        cnt = 0
-        for x in x_values:
-            v_tmp = []
-            for y in range(int(self.system.box_l[1] + 1)):
-                for z in range(int(self.system.box_l[2] + 1)):
-                    v_tmp.append(
-                        self.lbf.get_interpolated_velocity([x, y * AGRID, z * AGRID])[2])
-            velocities[cnt, 1] = np.mean(np.array(v_tmp))
-            velocities[cnt, 0] = x
-            cnt += 1
-
-        v_expected = poiseuille_flow(x_values - 0.5 * self.system.box_l[0],
-                                     self.system.box_l[0] - 2.0 * AGRID,
-                                     EXT_FORCE,
-                                     VISC * DENS)
-        v_measured = velocities[:, 1]
-        atol = self.tolerance * AGRID / TIME_STEP
-        np.testing.assert_allclose(v_measured, v_expected, atol=atol)
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':

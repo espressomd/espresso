@@ -22,6 +22,7 @@ import espressomd.lb
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import tests_common
 
 
 class SwimmerTest():
@@ -29,8 +30,8 @@ class SwimmerTest():
     system.cell_system.skin = 1
     system.time_step = 1e-2
     LB_params = {'agrid': 1,
-                 'dens': 1.1,
-                 'visc': 1.2,
+                 'density': 1.1,
+                 'kinematic_viscosity': 1.2,
                  'kT': 0,
                  'tau': system.time_step}
     gamma = 0.3
@@ -74,7 +75,7 @@ class SwimmerTest():
 
     def setUp(self):
         self.set_cellsystem()
-        self.lbf = self.lb_class(**self.LB_params)
+        self.lbf = self.lb_class(**self.LB_params, **self.lb_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
@@ -87,13 +88,32 @@ class SwimmerTest():
         """friction as well as 'active' forces apply to particles
         and to the fluid, so total momentum is conserved
         """
+        if self.lbf.get_params().get("single_precision", False):
+            self.skipTest('Momentum is not conserved on single precision')
+
         self.add_all_types_of_swimmers(rotation=False)
-        self.system.integrator.run(20, reuse_forces=True)
+
+        # Comments by Christoph Lohrmann from #3514:
+        # - why I used `reuse_forces=True` : If I don't use it, `force_calc()`
+        #   is called the first time without LB-coupling. That means no friction
+        #   for any swimmer and no additional force for the `v_swim` type swimmers.
+        #   The active force for the `f_swim` swimmers gets added anyway because
+        #   it is not derived from the coupling to LB. With `reuse_forces` at
+        #   least both types are treated the same.
+        # - Therefore, in the first halfstep, the active forces on the particles
+        #   are missing. This creates the first half of the missing momentum.
+        # - The LB fluid is always ahead by a half step (as checked by
+        #   `test_ext_force_density()` in `lb.py`). It is also not affected by
+        #   the `reuse_forces` in the first halfstep because `force_calc()`
+        #   with coupling is called in the main integration loop before
+        #   `lb_lbfluid_propagate()`
+        # - => in total, the fluid momentum is ahead by a full time step
+        self.system.integrator.run(100, reuse_forces=True)
         tot_mom = self.system.analysis.linear_momentum(include_particles=True,
                                                        include_lbfluid=True)
-        # compensate half-step offset between force calculation and LB-update
+        # compensate offset between force calculation and LB-update
         for part in self.system.part:
-            tot_mom += part.f * self.system.time_step / 2.
+            tot_mom += part.f * self.system.time_step
 
         np.testing.assert_allclose(tot_mom, 3 * [0.], atol=self.tol)
 
@@ -114,7 +134,7 @@ class SwimmerTest():
                 0.5 * self.system.time_step * swimmer.f / swimmer.mass
             # for friction coupling, the old fluid at the new position is used
             v_fluid = self.lbf.get_interpolated_velocity(
-                swimmer.pos + self.system.time_step * v_swimmer)
+                pos=swimmer.pos + self.system.time_step * v_swimmer)
             force = -self.gamma * (v_swimmer - v_fluid) + \
                 f_swim * director + self.gamma * v_swim * director
 
@@ -122,53 +142,97 @@ class SwimmerTest():
             np.testing.assert_allclose(
                 np.copy(swimmer.f), force, atol=self.tol)
 
+    def test_fluid_force(self):
+        """ forces on particles are already checked (self.test_particle_forces)
+        total force on the fluid matches (self.test_momentum_conservation)
+        only thing left to check is the location of the fluid force.
+        """
+        f_swim = 0.11
+        dip_length = 2 * self.LB_params['agrid']
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestRegularCPU(SwimmerTest, ut.TestCase):
+        sw0_pos = np.array([3.8, 1.1, 1.1])
+        sw1_pos = np.array([1.8, 4.1, 4.1])
+        sw0 = self.system.part.add(pos=sw0_pos, quat=np.sqrt([.5, 0, .5, 0]),
+                                   mass=0.9, rotation=3 * [False],
+                                   swimming={"mode": "pusher", "f_swim": f_swim,
+                                             "dipole_length": dip_length})
+        sw1 = self.system.part.add(pos=sw1_pos, quat=np.sqrt([.5, 0, .5, 0]),
+                                   mass=0.7, rotation=3 * [False],
+                                   swimming={"mode": "puller", "f_swim": f_swim,
+                                             "dipole_length": dip_length})
 
-    lb_class = espressomd.lb.LBFluid
+        self.system.integrator.run(2)
+
+        for sw in [sw0, sw1]:
+            push_pull = -1 if sw.swimming['mode'] == 'pusher' else 1
+            sw_source_pos = sw.pos + self.system.time_step * \
+                sw.v + push_pull * dip_length * sw.director
+            # fold into box
+            sw_source_pos -= np.floor(sw_source_pos /
+                                      self.system.box_l) * np.array(self.system.box_l)
+            sw_source_nodes = tests_common.get_lb_nodes_around_pos(
+                sw_source_pos, self.lbf)
+            sw_source_forces = np.array(
+                [n.last_applied_force for n in sw_source_nodes])
+            np.testing.assert_allclose(
+                np.sum(sw_source_forces, axis=0),
+                -f_swim * np.array(sw.director), atol=self.tol)
+
+
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
         self.system.cell_system.set_regular_decomposition()
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestRegularGPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidGPU
-    tol = 1e-5
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    tol = 1e-10
 
     def set_cellsystem(self):
         self.system.cell_system.set_regular_decomposition()
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestNSquareCPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
         self.system.cell_system.set_n_square()
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestNSquareGPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidGPU
-    tol = 1e-5
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    tol = 1e-10
 
     def set_cellsystem(self):
         self.system.cell_system.set_n_square()
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestHybrid0CPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -176,10 +240,25 @@ class SwimmerTestHybrid0CPU(SwimmerTest, ut.TestCase):
             n_square_types={0}, cutoff_regular=1)
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestHybrid1CPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    tol = 1e-10
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
+
+
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
     tol = 1e-10
 
     def set_cellsystem(self):
@@ -187,16 +266,17 @@ class SwimmerTestHybrid1CPU(SwimmerTest, ut.TestCase):
             n_square_types={1}, cutoff_regular=1)
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestHybrid0GPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+class SwimmerTestHybrid1CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidGPU
-    tol = 1e-5
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    tol = 1e-10
 
     def set_cellsystem(self):
         self.system.cell_system.set_hybrid_decomposition(
-            n_square_types={0}, cutoff_regular=1)
+            n_square_types={1}, cutoff_regular=1)
 
 
 if __name__ == "__main__":

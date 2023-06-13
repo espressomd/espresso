@@ -26,11 +26,6 @@ import espressomd.lb
 
 np.random.seed(seed=40)
 
-"""
-Check linear momentum calculation for lattice-Boltzmann.
-
-"""
-
 
 AGRID = .5
 EXT_FORCE = .1
@@ -40,21 +35,24 @@ TIME_STEP = 0.1
 BOX_L = 3.0
 
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP,
              'ext_force_density': [0.1, 0.2, 0.3]}
 
 
-class LinearMomentumTest:
+class LBLinearMomentum:
 
-    """Base class of the test that holds the test logic."""
+    """
+    Check linear momentum calculation for lattice-Boltzmann.
+    """
+
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMS)
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
@@ -63,7 +61,6 @@ class LinearMomentumTest:
     def test(self):
         """
         Compare direct calculation of fluid momentum with analysis function.
-
         """
         # setup random node velocities
         for index in itertools.product(
@@ -79,23 +76,24 @@ class LinearMomentumTest:
             linear_momentum, analyze_linear_momentum, atol=self.atol)
 
 
-@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class LBCPULinearMomentum(LinearMomentumTest, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBLinearMomentumWalberla(LBLinearMomentum, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
     atol = 1e-10
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPULinearMomentum(LinearMomentumTest, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBLinearMomentumWalberlaSinglePrecision(LBLinearMomentum, ut.TestCase):
 
-    """Test for the GPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in single-precision."""
 
-    lb_class = espressomd.lb.LBFluidGPU
-    atol = 1e-5
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 5e-6
 
 
 if __name__ == '__main__':

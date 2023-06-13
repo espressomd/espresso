@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import sys
 import numpy as np
 import espressomd
 
@@ -26,5 +27,6 @@ system.cell_system.skin = 0.1
 for i in range(100):
     system.part.add(pos=np.random.random() * system.box_l)
 
+print("start of integration loop", file=sys.stderr)
 while True:
-    system.integrator.run(1000)
+    system.integrator.run(100000)

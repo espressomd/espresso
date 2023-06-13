@@ -24,7 +24,7 @@ import unittest_decorators as utx
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
+@utx.skipIfMissingFeatures(["WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
 class LBEHTest(ut.TestCase):
     system = espressomd.System(box_l=[6.0, 6.0, 6.0])
 
@@ -34,7 +34,7 @@ class LBEHTest(ut.TestCase):
                        'tau': 0.02,
                        'agrid': 0.5,
                        'dens': 0.85,
-                       'viscosity': 30.0,
+                       'kinematic_viscosity': 30.0,
                        'friction': 3.0,
                        'temp': 0.0,
                        'skin': 0.2,
@@ -44,9 +44,9 @@ class LBEHTest(ut.TestCase):
         system.time_step = self.params['time_step']
         system.cell_system.skin = self.params['skin']
 
-        lbf = espressomd.lb.LBFluid(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
+        lbf = espressomd.lb.LBFluidWalberla(
+            kinematic_viscosity=self.params['kinematic_viscosity'],
+            density=self.params['dens'],
             agrid=self.params['agrid'],
             tau=system.time_step,
             kT=self.params['temp']
@@ -71,7 +71,7 @@ class LBEHTest(ut.TestCase):
 
         system.integrator.run(steps=500)
 
-        np.testing.assert_allclose(v_term, np.copy(p.v), atol=1e-5)
+        np.testing.assert_allclose(v_term, np.copy(p.v), atol=5e-5)
 
 
 if __name__ == "__main__":

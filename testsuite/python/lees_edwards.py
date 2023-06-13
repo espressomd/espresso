@@ -34,6 +34,13 @@ params_lin = {'initial_pos_offset': 0.1, 'time_0': 0.1, 'shear_velocity': 1.2}
 params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
               'omega': 2.51}
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
+
+
+def get_lin_pos_offset(time, initial_pos_offset=None,
+                       time_0=None, shear_velocity=None):
+    return initial_pos_offset + (time - time_0) * shear_velocity
+
+
 osc_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc)
 off_protocol = espressomd.lees_edwards.Off()
 
@@ -284,29 +291,27 @@ class LeesEdwards(ut.TestCase):
 
     def test_trajectory_reconstruction(self):
         system = self.system
+        system.time = 3.4
 
-        protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=1., initial_pos_offset=0.0, time_0=0.0)
         system.lees_edwards.set_boundary_conditions(
-            shear_direction="x", shear_plane_normal="y", protocol=protocol)
+            shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
 
         pos = system.box_l - 0.01
         vel = np.array([0, 1, 0])
         p = system.part.add(pos=pos, v=vel)
 
+        crossing_time = system.time
         system.integrator.run(1)
-
         np.testing.assert_almost_equal(
-            p.lees_edwards_flag * 1.0 * system.time_step * 0.5,
-            p.lees_edwards_offset)
+            p.lees_edwards_offset, 
+            get_lin_pos_offset(crossing_time, **params_lin))
         np.testing.assert_almost_equal(p.lees_edwards_flag, -1)
 
-        offset1 = p.lees_edwards_flag * 1.0 * system.time_step * 0.5
-
-        system.integrator.run(1)
-
+        system.integrator.run(1)  # no boundary crossing
         np.testing.assert_almost_equal(
-            offset1 - 1.0 * 0.5, p.lees_edwards_offset)
+            p.lees_edwards_offset, 
+            get_lin_pos_offset(crossing_time, **params_lin))
+
         np.testing.assert_almost_equal(p.lees_edwards_flag, 0)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
@@ -421,20 +426,33 @@ class LeesEdwards(ut.TestCase):
 
         # Construct pair of VS across normal boundary
         system.lees_edwards.protocol = None
-        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[False] * 3, id=0)
+        p1 = system.part.add(pos=(2.5, 0.0, 2.5), rotation=[
+                             False] * 3, id=0, v=np.array((-1, 2, 3)))
         p2 = system.part.add(pos=(2.5, 1.0, 2.5))
         p2.vs_auto_relate_to(p1)
         p3 = system.part.add(pos=(2.5, 4.0, 2.5))
         p3.vs_auto_relate_to(p1)
-        system.integrator.run(1)
 
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
-        system.integrator.run(1)
+        # Test position and velocity of VS with Le shift
+        old_p3_pos = p3.pos
+        expected_p3_pos = old_p3_pos - \
+            np.array((get_lin_pos_offset(system.time, **params_lin), 0, 0))
+        system.integrator.run(0, recalc_forces=True)
+        np.testing.assert_allclose(np.copy(p3.pos_folded), expected_p3_pos)
+        np.testing.assert_allclose(
+            p3.v, p1.v + np.array((params_lin["shear_velocity"], 0, 0)))
+
+        # Check distances
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
         np.testing.assert_allclose(
+            np.copy(system.distance_vec(p2, p3)), [0, -2, 0], atol=tol)
+        np.testing.assert_allclose(
             np.copy(system.velocity_difference(p3, p2)), [0, 0, 0], atol=tol)
+        np.testing.assert_allclose(
+            np.copy(system.velocity_difference(p2, p3)), [0, 0, 0], atol=tol)
         system.integrator.run(0)
         np.testing.assert_allclose(
             np.copy(system.distance_vec(p3, p2)), [0, 2, 0], atol=tol)
@@ -526,7 +544,7 @@ class LeesEdwards(ut.TestCase):
         ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
     def test_le_colldet(self):
         system = self.system
-        system.min_global_cut = 1.0
+        system.min_global_cut = 1.2
         system.time = 0
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)
@@ -615,7 +633,7 @@ class LeesEdwards(ut.TestCase):
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_le_breaking_bonds(self):
         system = self.system
-        system.min_global_cut = 1.0
+        system.min_global_cut = 1.2
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)

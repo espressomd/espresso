@@ -40,8 +40,8 @@ BOX_L_Z = 12.0 * AGRID
 VISC = .7
 DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': VISC,
+             'density': DENS,
+             'kinematic_viscosity': VISC,
              'tau': TIME_STEP
              }
 
@@ -70,7 +70,7 @@ class ObservableProfileLBCommon:
     system.cell_system.skin = 0.4 * AGRID
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMS)
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
@@ -199,19 +199,23 @@ class ObservableProfileLBCommon:
         self.assertEqual(obs.sampling_offset_z, 15)
 
 
-class LBCPU(ObservableProfileLBCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class ObservableProfileWalberla(ObservableProfileLBCommon, ut.TestCase):
 
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluid
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingGPU()
-class LBGPU(ObservableProfileLBCommon, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class ObservableProfileWalberlaSinglePrecision(
+        ObservableProfileLBCommon, ut.TestCase):
 
-    """Test for the GPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB in single-precision."""
 
-    lb_class = espressomd.lb.LBFluidGPU
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
 
 
 if __name__ == "__main__":

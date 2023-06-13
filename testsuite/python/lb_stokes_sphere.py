@@ -18,7 +18,6 @@
 #
 
 import espressomd
-import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
 import unittest_decorators as utx
@@ -30,8 +29,8 @@ AGRID = 0.6
 KVISC = 6
 DENS = 2.3
 LB_PARAMS = {'agrid': AGRID,
-             'dens': DENS,
-             'visc': KVISC,
+             'density': DENS,
+             'kinematic_viscosity': KVISC,
              'tau': TIME_STEP}
 # System setup
 radius = 7 * AGRID
@@ -60,36 +59,32 @@ class Stokes:
     system.cell_system.skin = 0.01
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMS)
+        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
 
     def tearDown(self):
         self.system.actors.clear()
-        self.system.lbboundaries.clear()
         self.system.thermostat.turn_off()
 
     def test_stokes(self):
         # Setup walls
-        walls = [None] * 4
-        walls[0] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
-            normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
-        walls[1] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
-            normal=[1, 0, 0], dist=1), velocity=v)
-        walls[2] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
-            normal=[0, -1, 0], dist=-(1 + box_width)), velocity=v)
-        walls[3] = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(
-            normal=[0, 1, 0], dist=1), velocity=v)
+        wall_shapes = [None] * 4
+        wall_shapes[0] = espressomd.shapes.Wall(
+            normal=[-1, 0, 0], dist=-(1 + box_width))
+        wall_shapes[1] = espressomd.shapes.Wall(normal=[1, 0, 0], dist=1)
+        wall_shapes[2] = espressomd.shapes.Wall(
+            normal=[0, -1, 0], dist=-(1 + box_width))
+        wall_shapes[3] = espressomd.shapes.Wall(normal=[0, 1, 0], dist=1)
 
-        for wall in walls:
-            self.system.lbboundaries.add(wall)
+        for wall_shape in wall_shapes:
+            self.lbf.add_boundary_from_shape(wall_shape)
 
         # setup sphere without slip in the middle
-        sphere = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Sphere(
-            radius=radius, center=[real_width / 2] * 2 + [box_length / 2],
-            direction=1))
+        sphere_shape = espressomd.shapes.Sphere(
+            radius=radius, center=[real_width / 2] * 2 + [box_length / 2], direction=1)
 
-        self.system.lbboundaries.add(sphere)
+        self.lbf.add_boundary_from_shape(sphere_shape)
 
         def size(vector):
             tmp = 0
@@ -98,17 +93,17 @@ class Stokes:
             return np.sqrt(tmp)
 
         last_force = -1000.
-        dynamic_viscosity = self.lbf.viscosity * self.lbf.density
+        dynamic_viscosity = self.lbf.viscosity * DENS
         stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
         self.system.integrator.run(50)
         while True:
             self.system.integrator.run(3)
-            force = np.linalg.norm(sphere.get_force())
+            force = np.linalg.norm(self.lbf.boundary['sphere'].get_force())
             if np.abs(last_force - force) < 0.01 * stokes_force:
                 break
             last_force = force
 
-        force = np.copy(sphere.get_force())
+        force = np.copy(self.lbf.boundary['sphere'].get_force())
         np.testing.assert_allclose(
             force,
             [0, 0, stokes_force],
@@ -116,15 +111,22 @@ class Stokes:
             atol=stokes_force * 0.03)
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUStokes(Stokes, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidGPU
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class StokesWalberla(Stokes, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in double-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUStokes(Stokes, ut.TestCase):
-    lb_class = espressomd.lb.LBFluid
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class StokesWalberlaSinglePrecision(Stokes, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
 
 
 if __name__ == "__main__":

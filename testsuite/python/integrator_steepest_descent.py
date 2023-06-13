@@ -152,6 +152,10 @@ class IntegratorSteepestDescent(ut.TestCase):
         with self.assertRaises(RuntimeError):
             self.system.integrator.set_steepest_descent(
                 f_max=0, gamma=1, max_displacement=-1)
+        with self.assertRaisesRegex(ValueError, "Parameter 'steps' must be positive"):
+            self.system.integrator.set_steepest_descent(
+                f_max=0, gamma=1, max_displacement=0.01)
+            self.system.integrator.run(steps=-1)
 
     def test_integrator_recovery(self):
         # the system is still in a valid state after a failure
