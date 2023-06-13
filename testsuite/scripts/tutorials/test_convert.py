@@ -99,7 +99,8 @@ plt.show()
             self.assertTrue(output.exists(), f"File {output} not created")
 
     def test_html_wrapper(self):
-        root = pathlib.Path("/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
+        root = pathlib.Path(
+            "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
         f_input = root / "test_convert_notebook.ipynb"
         f_output = root / "test_convert_notebook.run.ipynb"
         f_script = root / "test_convert_script.py"
@@ -154,7 +155,8 @@ plt.show()
         self.assertEqual(nb_output['cells'][4]['source'], 'global_var = 20')
 
     def test_exercise2_plugin(self):
-        root = pathlib.Path("/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
+        root = pathlib.Path(
+            "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
         f_input = root / "test_convert_exercise2.ipynb"
         f_output = root / "test_convert_exercise2.run.ipynb"
         # setup
@@ -225,7 +227,8 @@ plt.show()
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
     def test_exercise2_conversion(self):
-        root = pathlib.Path("/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
+        root = pathlib.Path(
+            "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
         f_input = root / "test_convert_exercise2_conversion.ipynb"
         # setup
         with open(f_input, 'w', encoding='utf-8') as f:
@@ -278,7 +281,8 @@ plt.show()
 
     @skipIfMissingModules
     def test_exercise2_autopep8(self):
-        root = pathlib.Path("/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
+        root = pathlib.Path(
+            "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials")
         f_input = root / "test_convert_exercise2_autopep8.ipynb"
         # setup
         with open(f_input, 'w', encoding='utf-8') as f:

@@ -31,7 +31,7 @@
 
 template <PropagationMode criterion> struct PropagationPredicate {
   bool operator()(Particle const &p) {
-    return (p.p.propagation & criterion);
+    return (p.propagation() & criterion);
     // return true;
   };
 };

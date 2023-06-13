@@ -48,17 +48,17 @@ inline void velocity_verlet_propagate_vel_pos_par(Particle &p,
                                                   double time_step) {
   // Don't propagate translational degrees of freedom of vs
   if (p.is_virtual())
-    for (unsigned int j = 0; j < 3; j++) {
-      return;
-      if (!p.is_fixed_along(j)) {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
-        p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
+    return;
+  for (unsigned int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
+      p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
 
-        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-         * v(t+0.5*dt) */
-        p.pos()[j] += time_step * p.v()[j];
-      }
+      /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+       * v(t+0.5*dt) */
+      p.pos()[j] += time_step * p.v()[j];
     }
+  }
 }
 
 /** Final integration step of the Velocity Verlet integrator
