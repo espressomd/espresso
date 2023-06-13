@@ -24,10 +24,12 @@
 #define VIRTUAL_SITES_CENTER_OF_MASS_HPP
 
 /** \file
- *  This file contains routine to handle virtual sites at the center of mass of a bunch of other particles (say, a molecule).
- *  Forces acting on this center of mass are distributed back onto the constituents.
- *  The position/velocity/mass of the virtual site at center of mass is calculated from the positions/velocities/masses of many particles.
- * 
+ *  This file contains routine to handle virtual sites at the center of mass of
+ * a bunch of other particles (say, a molecule). Forces acting on this center of
+ * mass are distributed back onto the constituents. The position/velocity/mass
+ * of the virtual site at center of mass is calculated from the
+ * positions/velocities/masses of many particles.
+ *
  *  Virtual sites are like particles, but they will not be integrated.
  *  Step performed for virtual sites:
  *  - update virtual sites
@@ -37,42 +39,40 @@
  *  - update virtual sites
  */
 
-#include <map>
+#include "script_interface/ObjectHandle.hpp"
 #include "config/config.hpp"
+#include <map>
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 
 /** @brief Base class for virtual sites implementations */
-class VirtualSitesCenterOfMass {
+class VirtualSitesCenterOfMass : ObjectHandle
+{
 public:
   VirtualSitesCenterOfMass() = default;
+
   virtual ~VirtualSitesCenterOfMass() = default;
 
   /**
    * @brief Update positions and velocities of virtual sites.
    */
   virtual void update() const {}
-  /** Back-transfer forces (and torques) to non-virtual particles. */
-  virtual void back_transfer_forces_and_torques() const {}
-  /** @brief Called after force calculation (and before rattle/shake) */
-  virtual void after_force_calc() {}
-  virtual void after_lb_propagation(double) {}
-  /** @brief Pressure contribution. */
-  virtual Utils::Matrix<double, 3, 3> pressure_tensor() const { return {}; }
-  /** @brief Enable/disable quaternion calculations for vs.*/
-  void set_have_quaternion(const bool &have_quaternion) {
-    m_have_quaternion = have_quaternion;
-  }
-  bool have_quaternions() const { return m_have_quaternion; }
-  /**  @brief Enable/disable override for the vs cutoff check */
-  void set_override_cutoff_check(const bool &override_cutoff_check) {
-    m_override_cutoff_check = override_cutoff_check;
-  }
-  bool get_override_cutoff_check() const { return m_override_cutoff_check; }
+  
+  /** @brief Back-transfer forces to non-virtual particles. */
+  virtual void back_transfer_forces() const {}
+  
   /**  @brief Store (mol_id, virtual_site_particle_id) pairs */
-  std::map<int,int> vitual_site_id_for_mol_id() {}  
+  std::unordered_map<int, int> vitual_site_id_for_mol_id() {}
 
 private:
+  struct ComInfo {
+    double total_mass = 0.0;
+    Utils::Vector3d weighted_position_sum = {0., 0., 0.};
+  };
+
+  /**  @brief Store (mol_id, com_info) pairs */
+  std::unordered_map<int, std::shared_ptr<ComInfo>> com_by_mol_id;
+
   bool m_have_quaternion = false;
   bool m_override_cutoff_check = false;
 };
