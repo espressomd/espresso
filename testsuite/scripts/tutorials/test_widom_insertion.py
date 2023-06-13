@@ -22,7 +22,7 @@ import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/widom_insertion/widom_insertion.py", sample_size=50,
+    "@TUTORIALS_DIR@/widom_insertion/widom_insertion.py", sample_size=50,
     ci_params={"mesh": (12, 12, 12), "cao": 6, "tune": True}
 )
 

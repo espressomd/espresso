@@ -26,6 +26,11 @@ import espressomd.lb
 
 np.random.seed(seed=40)
 
+"""
+Check linear momentum calculation for lattice-Boltzmann.
+
+"""
+
 
 AGRID = .5
 EXT_FORCE = .1
@@ -35,24 +40,21 @@ TIME_STEP = 0.1
 BOX_L = 3.0
 
 LB_PARAMS = {'agrid': AGRID,
-             'density': DENS,
-             'kinematic_viscosity': VISC,
+             'dens': DENS,
+             'visc': VISC,
              'tau': TIME_STEP,
              'ext_force_density': [0.1, 0.2, 0.3]}
 
 
-class LBLinearMomentum:
+class LinearMomentumTest:
 
-    """
-    Check linear momentum calculation for lattice-Boltzmann.
-    """
-
+    """Base class of the test that holds the test logic."""
     system = espressomd.System(box_l=[BOX_L] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
     def setUp(self):
-        self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
+        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
 
     def tearDown(self):
@@ -61,6 +63,7 @@ class LBLinearMomentum:
     def test(self):
         """
         Compare direct calculation of fluid momentum with analysis function.
+
         """
         # setup random node velocities
         for index in itertools.product(
@@ -76,24 +79,23 @@ class LBLinearMomentum:
             linear_momentum, analyze_linear_momentum, atol=self.atol)
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class LBLinearMomentumWalberla(LBLinearMomentum, ut.TestCase):
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
+class LBCPULinearMomentum(LinearMomentumTest, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB in double-precision."""
+    """Test for the CPU implementation of the LB."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
     atol = 1e-10
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class LBLinearMomentumWalberlaSinglePrecision(LBLinearMomentum, ut.TestCase):
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
+class LBGPULinearMomentum(LinearMomentumTest, ut.TestCase):
 
-    """Test for the Walberla implementation of the LB in single-precision."""
+    """Test for the GPU implementation of the LB."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
-    atol = 5e-6
+    lb_class = espressomd.lb.LBFluidGPU
+    atol = 1e-5
 
 
 if __name__ == '__main__':

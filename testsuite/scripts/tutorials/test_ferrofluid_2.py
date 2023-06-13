@@ -21,7 +21,7 @@ import numpy as np
 
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/ferrofluid/ferrofluid_part2.py",
+    "@TUTORIALS_DIR@/ferrofluid/ferrofluid_part2.py",
     equil_steps=200, equil_rounds=10, loops=500, alphas=[0.5])
 
 

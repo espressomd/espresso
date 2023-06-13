@@ -19,7 +19,7 @@ import os
 import ast
 import textwrap
 
-samples_dir = '/home/thilo/code/espresso2/espresso/samples/'
+samples_dir = '@CMAKE_SOURCE_DIR@/samples/'
 
 
 def get_docstring(filenames):
@@ -42,7 +42,7 @@ docstrings = get_docstring(samples)
 
 # write documentation
 sphinx_tpl = '* :file:`{}`\n{}\n'
-with open('/home/thilo/code/espresso2/espresso/doc/sphinx/samples.rst', 'w') as f:
+with open('@CMAKE_CURRENT_BINARY_DIR@/samples.rst', 'w') as f:
     for filename in sorted(docstrings, key=lambda x: x.lower()):
         docstring = (docstrings[filename] or '').replace('ESPResSo', '|es|')
         paragraph = textwrap.indent(docstring, prefix='    ')

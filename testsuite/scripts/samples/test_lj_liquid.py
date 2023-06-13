@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/lj_liquid.py")
+    "@SAMPLES_DIR@/lj_liquid.py")
 
 
 @skipIfMissingFeatures

@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/lb_profile.py")
+    "@SAMPLES_DIR@/lb_profile.py")
 
 
 @skipIfMissingFeatures
@@ -29,7 +29,7 @@ class Sample(ut.TestCase):
 
     def test_fit(self):
         np.testing.assert_allclose(sample.lb_fluid_profile[:, 0, 0, 2],
-                                   sample.expected_profile, atol=7e-2)
+                                   sample.expected_profile, atol=5e-2)
 
 
 if __name__ == "__main__":

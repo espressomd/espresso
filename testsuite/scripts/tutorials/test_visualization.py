@@ -27,7 +27,7 @@ def disable_visualizer_GUI(code):
 
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/visualization/visualization.py",
+    "@TUTORIALS_DIR@/visualization/visualization.py",
     substitutions=disable_visualizer_GUI, int_n_times=5, int_steps=100,
     matplotlib_notebook=False)
 

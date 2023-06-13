@@ -23,7 +23,7 @@ import numpy as np
 np.random.seed(42)
 
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/benchmarks/local_benchmarks/lj.py", cmd_arguments=["--particles_per_core", "800"],
+    "@BENCHMARKS_DIR@/lj.py", cmd_arguments=["--particles_per_core", "800"],
     measurement_steps=400, n_iterations=2, min_skin=0.225, max_skin=0.225)
 
 

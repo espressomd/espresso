@@ -40,7 +40,7 @@ def make_deterministic(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/electrophoresis.py", N_SAMPLES=400, substitutions=make_deterministic)
+    "@SAMPLES_DIR@/electrophoresis.py", N_SAMPLES=400, substitutions=make_deterministic)
 
 
 @skipIfMissingFeatures

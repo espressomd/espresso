@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/minimal-polymer.py", t_steps=10)
+    "@SAMPLES_DIR@/minimal-polymer.py", t_steps=10)
 
 
 @skipIfMissingFeatures

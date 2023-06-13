@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/gibbs_ensemble/run_sim.py",
+    "@SAMPLES_DIR@/gibbs_ensemble/run_sim.py",
     cmd_arguments=["0.7", "-N", "256", "--warmup", "1000", "--steps", "1000", "--seed", "10"])
 
 

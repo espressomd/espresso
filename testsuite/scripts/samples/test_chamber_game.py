@@ -30,7 +30,7 @@ def disable_GUI(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/chamber_game.py",
+    "@SAMPLES_DIR@/chamber_game.py",
     substitutions=disable_GUI)
 
 

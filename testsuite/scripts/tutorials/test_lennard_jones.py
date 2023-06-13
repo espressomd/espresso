@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/lennard_jones/lennard_jones.py", N_SAMPLES=300)
+    "@TUTORIALS_DIR@/lennard_jones/lennard_jones.py", N_SAMPLES=300)
 
 
 @skipIfMissingFeatures

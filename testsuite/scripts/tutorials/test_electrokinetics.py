@@ -20,7 +20,8 @@ import importlib_wrapper as iw
 import numpy as np
 
 tutorial, skipIfMissingFeatures = iw.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/electrokinetics/electrokinetics.py", integration_length=400)
+    "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py",
+    gpu=True, integration_length=600, dt=0.5)
 
 
 @skipIfMissingFeatures
@@ -36,13 +37,13 @@ class Tutorial(ut.TestCase):
         b /= scale
 
     def test_simulation(self):
-        for varname, tol in zip(["density", "velocity"], [2, 5]):
+        for varname in ("density", "velocity", "pressure_xy"):
             sim = np.array(tutorial.__dict__[varname + "_list"])
             ana = np.array(tutorial.eof_analytical.__dict__[varname + "_list"])
             self.normalize_two_datasets(sim, ana)
             accuracy = np.max(np.abs(sim - ana))
-            # expecting at most a few percents deviation
-            self.assertLess(accuracy, tol / 100.)
+            # expecting at most 3% deviation
+            self.assertLess(accuracy, 3.0 / 100)
 
 
 if __name__ == "__main__":

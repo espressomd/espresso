@@ -31,7 +31,7 @@ def disable_GUI(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/visualization_ljliquid.py",
+    "@SAMPLES_DIR@/visualization_ljliquid.py",
     substitutions=disable_GUI, int_n_times=5)
 
 

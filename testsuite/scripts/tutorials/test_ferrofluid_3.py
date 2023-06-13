@@ -25,7 +25,7 @@ reference_chi = 0.86
 
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/ferrofluid/ferrofluid_part3.py",
+    "@TUTORIALS_DIR@/ferrofluid/ferrofluid_part3.py",
     equil_steps=200, equil_rounds=10, loops=250, alphas=[0, 0.5])
 
 

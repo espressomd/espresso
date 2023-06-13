@@ -30,7 +30,7 @@ def disable_visualizer_GUI(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/billiard.py", substitutions=disable_visualizer_GUI)
+    "@SAMPLES_DIR@/billiard.py", substitutions=disable_visualizer_GUI)
 
 
 @skipIfMissingFeatures

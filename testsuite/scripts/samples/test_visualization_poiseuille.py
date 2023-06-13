@@ -30,7 +30,7 @@ def disable_GUI(code):
 
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/visualization_poiseuille.py",
+    "@SAMPLES_DIR@/visualization_poiseuille.py",
     substitutions=disable_GUI, steps=100)
 
 

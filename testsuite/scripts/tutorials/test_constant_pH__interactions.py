@@ -26,7 +26,7 @@ except ImportError:
         "Python module pint not available, skipping test!")
 else:
     tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-        "/home/thilo/code/espresso2/espresso/testsuite/scripts/tutorials/local_tutorials/constant_pH/constant_pH.py", script_suffix="interactions",
+        "@TUTORIALS_DIR@/constant_pH/constant_pH.py", script_suffix="interactions",
         USE_WCA=True, USE_ELECTROSTATICS=True, NUM_PHS=8, NUM_SAMPLES=10)
 
 

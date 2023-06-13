@@ -24,7 +24,6 @@ import unittest_generator as utg
 import numpy as np
 import contextlib
 import pathlib
-import sys
 
 import espressomd
 import espressomd.checkpointing
@@ -36,10 +35,6 @@ import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
-import espressomd.lb
-import espressomd.electrokinetics
-with contextlib.suppress(ImportError):
-    import espressomd.io.vtk
 
 with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
@@ -47,9 +42,11 @@ with contextlib.suppress(ImportError):
 config = utg.TestGenerator()
 is_gpu_available = espressomd.gpu_available()
 modes = config.get_modes()
-has_lb_mode = ('LB.WALBERLA' in modes and espressomd.has_features('WALBERLA')
-               and ('LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available))
+has_lb_mode = 'LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available
 has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
+has_lbb = ('LB.CPU' in modes and espressomd.has_features("LB_BOUNDARIES") or
+           'LB.GPU' in modes and espressomd.has_features("LB_BOUNDARIES_GPU")
+           and espressomd.gpu_available())
 
 
 class CheckpointTest(ut.TestCase):
@@ -58,10 +55,11 @@ class CheckpointTest(ut.TestCase):
         **config.get_checkpoint_params())
     checkpoint.load(0)
     path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
+    n_nodes = system.cell_system.get_state()["n_nodes"]
 
     @classmethod
     def setUpClass(cls):
-        cls.ref_box_l = np.array([12.0, 8.0, 16.0])
+        cls.ref_box_l = np.array([12.0, 14.0, 16.0])
         if 'DP3M' in modes:
             cls.ref_box_l = np.array([16.0, 16.0, 16.0])
         cls.ref_periodicity = np.array([True, True, True])
@@ -83,18 +81,24 @@ class CheckpointTest(ut.TestCase):
         with self.assertRaisesRegex(AssertionError, "system doesn't have an actor of type Wall"):
             self.get_active_actor_of_type(espressomd.shapes.Wall)
 
-    @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing mode.")
     def test_lb_fluid(self):
-        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
+        '''
+        Check serialization of the LB fluid. The checkpoint file only stores
+        population information, therefore calling ``lbf.load_checkpoint()``
+        erases all LBBoundaries information but doesn't remove the objects
+        contained in ``system.lbboundaries``. A callback should re-introduce
+        the LB boundary flag after LB populations are reloaded.
+        '''
+        lbf = self.get_active_actor_of_type(
+            espressomd.lb.HydrodynamicInteraction)
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
         cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
         cpt_path = str(cpt_root / "lb") + "{}.cpt"
 
-        # LB boundaries are loaded at the same time as LB populations
-        np.testing.assert_equal(np.copy(lbf[:, :, :].velocity), 0.)
-        np.testing.assert_equal(
-            np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
+        if has_lbb:
+            # LB boundaries must be correct before LB populations are loaded
+            self.check_lb_boundaries()
 
         # check exception mechanism with corrupted LB checkpoint files
         with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -106,15 +110,12 @@ class CheckpointTest(ut.TestCase):
                 lbf.load_checkpoint(cpt_path.format("-wrong-format"), cpt_mode)
             with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
                 lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
-            with self.assertRaisesRegex(RuntimeError, 'population size mismatch'):
-                lbf.load_checkpoint(
-                    cpt_path.format("-wrong-popsize"), cpt_mode)
         with self.assertRaisesRegex(RuntimeError, 'could not open file'):
             lbf.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
 
         # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        precision = 8 if "LB.WALBERLA" in modes else 5
+        precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
         nx = lbf.shape[0]
         ny = lbf.shape[1]
@@ -129,238 +130,16 @@ class CheckpointTest(ut.TestCase):
                         np.copy(lbf[i, j, k].population),
                         grid_3D[i, j, k] * np.arange(1, 20),
                         decimal=precision)
-                    np.testing.assert_almost_equal(
-                        np.copy(lbf[i, j, k].last_applied_force),
-                        grid_3D[i, j, k] * np.arange(1, 4),
-                        decimal=precision)
         state = lbf.get_params()
-        reference = {
-            "agrid": 2.0,
-            "kinematic_viscosity": 1.3,
-            "density": 1.5,
-            "tau": 0.01}
+        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01,
+                     'gamma_odd': 0.2, 'gamma_even': 0.3}
         for key in reference:
             self.assertIn(key, state)
-            np.testing.assert_allclose(np.copy(state[key]), reference[key],
-                                       atol=1E-7, err_msg=f"{key} differs")
-        self.assertTrue(lbf.is_active)
-        self.assertFalse(lbf.single_precision)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
-        # check boundary objects
-        slip_velocity1 = np.array([1e-4, 1e-4, 0.])
-        slip_velocity2 = np.array([0., 0., 0.])
-        # check boundary flag
-        np.testing.assert_equal(
-            np.copy(lbf[0, :, :].is_boundary.astype(int)), 1)
-        np.testing.assert_equal(
-            np.copy(lbf[-1, :, :].is_boundary.astype(int)), 1)
-        np.testing.assert_equal(
-            np.copy(lbf[1:-1, :, :].is_boundary.astype(int)), 0)
-        # check boundary conditions
-        for node in lbf[0, :, :]:
-            np.testing.assert_allclose(np.copy(node.velocity), slip_velocity1)
-        for node in lbf[-1, :, :]:
-            np.testing.assert_allclose(np.copy(node.velocity), slip_velocity2)
-        for node in lbf[2, :, :]:
-            np.testing.assert_allclose(np.copy(node.velocity), 0.)
-        # remove boundaries
-        lbf.clear_boundaries()
-        np.testing.assert_equal(
-            np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
-
-    @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
-    def test_ek_species(self):
-        cpt_mode = 0 if 'LB.ASCII' in modes else 1
-        cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
-        cpt_path = str(cpt_root / "ek") + "{}.cpt"
-
-        self.assertEqual(len(system.ekcontainer), 1)
-        ek_species = system.ekcontainer[0]
-        self.assertTrue(
-            system.ekcontainer.call_method("is_poisson_solver_set"))
-        self.assertAlmostEqual(system.ekcontainer.tau, system.time_step,
-                               delta=1e-7)
-        self.assertIsInstance(system.ekcontainer.solver,
-                              espressomd.electrokinetics.EKNone)
-
-        # check exception mechanism with corrupted LB checkpoint files
-        with self.assertRaisesRegex(RuntimeError, 'EOF found'):
-            ek_species.load_checkpoint(
-                cpt_path.format("-missing-data"), cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
-            ek_species.load_checkpoint(
-                cpt_path.format("-extra-data"), cpt_mode)
-        if cpt_mode == 0:
-            with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
-                ek_species.load_checkpoint(
-                    cpt_path.format("-wrong-format"), cpt_mode)
-            with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
-                ek_species.load_checkpoint(
-                    cpt_path.format("-wrong-boxdim"), cpt_mode)
-        with self.assertRaisesRegex(RuntimeError, 'could not open file'):
-            ek_species.load_checkpoint(cpt_path.format("-unknown"), cpt_mode)
-
-        ek_species.load_checkpoint(cpt_path.format(""), cpt_mode)
-
-        precision = 8 if "LB.WALBERLA" in modes else 5
-        m = np.pi / 12
-        nx = ek_species.lattice.shape[0]
-        ny = ek_species.lattice.shape[1]
-        nz = ek_species.lattice.shape[2]
-        grid_3D = np.fromfunction(
-            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
-            (nx, ny, nz), dtype=float)
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    np.testing.assert_almost_equal(
-                        np.copy(ek_species[i, j, k].density),
-                        grid_3D[i, j, k], decimal=precision)
-
-        state = ek_species.get_params()
-        reference = {
-            "density": 1.5,
-            "diffusion": 0.2,
-            "kT": 2.0,
-            "valency": 0.1,
-            "ext_efield": [0.1, 0.2, 0.3],
-            "advection": False,
-            "friction_coupling": False,
-            "tau": 0.01}
-        for key in reference:
-            self.assertIn(key, state)
-            np.testing.assert_allclose(np.copy(state[key]), reference[key],
-                                       atol=1E-7, err_msg=f"{key} differs")
-        # self.assertFalse(ek_species.is_active)
-        self.assertFalse(ek_species.single_precision)
-
-        def generator(value, shape):
-            value_grid = np.tile(value, shape)
-            if value_grid.shape[-1] == 1:
-                value_grid = np.squeeze(value_grid, axis=-1)
-            return value_grid
-
-        # check boundary objects
-        dens1 = 1.
-        dens2 = 2.
-        flux1 = 1e-3 * np.array([1., 2., 3.])
-        flux2 = 1e-3 * np.array([4., 5., 6.])
-        boundaries = [("density", dens1, dens2), ("flux", flux1, flux2)]
-        for attr, value1, value2 in boundaries:
-            accessor = np.vectorize(
-                lambda obj: np.copy(getattr(obj, attr)),
-                signature=f"()->({'n' if attr == 'flux' else ''})")
-            slice1 = ek_species[0, :, :]
-            slice2 = ek_species[-1, :, :]
-            slice3 = ek_species[1:-1, :, :]
-            # check boundary flag
-
-            np.testing.assert_equal(np.copy(slice1.is_boundary), True)
-            np.testing.assert_equal(np.copy(slice2.is_boundary), True)
-            np.testing.assert_equal(np.copy(slice3.is_boundary), False)
-            # check boundary conditions
-            field = f"{attr}_boundary"
-            shape = list(ek_species.shape)[-2:] + [1]
-            np.testing.assert_allclose(
-                accessor(np.copy(getattr(slice1, field))),
-                generator(value1, shape))
-            np.testing.assert_allclose(
-                accessor(np.copy(getattr(slice2, field))),
-                generator(value2, shape))
-
-        ek_species.clear_density_boundaries()
-        ek_species.clear_flux_boundaries()
-        np.testing.assert_equal(
-            np.copy(ek_species[:, :, :].is_boundary), False)
-
-    @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
-    def test_lb_vtk(self):
-        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
-        self.assertEqual(len(lbf.vtk_writers), 2)
-        vtk_suffix = config.test_name
-        key_auto = f"vtk_out/auto_lb_{vtk_suffix}"
-        vtk_auto = lbf.vtk_writers[0]
-        self.assertIsInstance(vtk_auto, espressomd.lb.VTKOutput)
-        self.assertEqual(vtk_auto.vtk_uid, key_auto)
-        self.assertEqual(vtk_auto.delta_N, 1)
-        self.assertFalse(vtk_auto.enabled)
-        self.assertEqual(set(vtk_auto.observables),
-                         {"density", "velocity_vector"})
-        self.assertIn(
-            f"write to '{key_auto}' every 1 LB steps (disabled)>", repr(vtk_auto))
-        key_manual = f"vtk_out/manual_lb_{vtk_suffix}"
-        vtk_manual = lbf.vtk_writers[1]
-        self.assertIsInstance(vtk_manual, espressomd.lb.VTKOutput)
-        self.assertEqual(vtk_manual.vtk_uid, key_manual)
-        self.assertEqual(vtk_manual.delta_N, 0)
-        self.assertEqual(set(vtk_manual.observables), {"density"})
-        self.assertIn(f"write to '{key_manual}' on demand>", repr(vtk_manual))
-        # check file numbering when resuming VTK write operations
-        vtk_root = pathlib.Path("vtk_out") / f"manual_lb_{vtk_suffix}"
-        filename = "simulation_step_{}.vtu"
-        self.assertTrue((vtk_root / filename.format(0)).exists())
-        self.assertFalse((vtk_root / filename.format(1)).exists())
-        self.assertFalse((vtk_root / filename.format(2)).exists())
-        # check VTK objects are still synchronized with their LB objects
-        old_density = lbf[0, 0, 0].density
-        new_density = 1.5 * old_density
-        lbf[0, 0, 0].density = new_density
-        vtk_manual.write()
-        lbf[0, 0, 0].density = old_density
-        self.assertTrue((vtk_root / filename.format(0)).exists())
-        self.assertTrue((vtk_root / filename.format(1)).exists())
-        self.assertFalse((vtk_root / filename.format(2)).exists())
-        if "espressomd.io.vtk" in sys.modules:
-            vtk_reader = espressomd.io.vtk.VTKReader()
-            vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
-            lb_density = vtk_data["density"]
-            self.assertAlmostEqual(
-                lb_density[0, 0, 0], new_density, delta=1e-5)
-
-    @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
-    def test_ek_vtk(self):
-        ek_species = system.ekcontainer[0]
-        vtk_suffix = config.test_name
-        key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
-        vtk_auto = ek_species.vtk_writers[0]
-        self.assertIsInstance(vtk_auto, espressomd.electrokinetics.VTKOutput)
-        self.assertEqual(vtk_auto.vtk_uid, key_auto)
-        self.assertEqual(vtk_auto.delta_N, 1)
-        self.assertFalse(vtk_auto.enabled)
-        self.assertEqual(set(vtk_auto.observables), {"density"})
-        self.assertIn(
-            f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(vtk_auto))
-        key_manual = f"vtk_out/manual_ek_{vtk_suffix}"
-        vtk_manual = ek_species.vtk_writers[1]
-        self.assertIsInstance(vtk_manual, espressomd.electrokinetics.VTKOutput)
-        self.assertEqual(vtk_manual.vtk_uid, key_manual)
-        self.assertEqual(vtk_manual.delta_N, 0)
-        self.assertEqual(set(vtk_manual.observables), {"density"})
-        self.assertIn(f"write to '{key_manual}' on demand>", repr(vtk_manual))
-        # check file numbering when resuming VTK write operations
-        vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
-        filename = "simulation_step_{}.vtu"
-        self.assertTrue((vtk_root / filename.format(0)).exists())
-        self.assertFalse((vtk_root / filename.format(1)).exists())
-        self.assertFalse((vtk_root / filename.format(2)).exists())
-        # check VTK objects are still synchronized with their EK objects
-        old_density = ek_species[0, 0, 0].density
-        new_density = 1.5 * old_density
-        ek_species[0, 0, 0].density = new_density
-        vtk_manual.write()
-        ek_species[0, 0, 0].density = old_density
-        self.assertTrue((vtk_root / filename.format(0)).exists())
-        self.assertTrue((vtk_root / filename.format(1)).exists())
-        self.assertFalse((vtk_root / filename.format(2)).exists())
-        if "espressomd.io.vtk" in sys.modules:
-            vtk_reader = espressomd.io.vtk.VTKReader()
-            vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
-            ek_density = vtk_data["density"]
-            self.assertAlmostEqual(
-                ek_density[0, 0, 0], new_density, delta=1e-5)
+        if has_lbb:
+            # LB boundaries must be correct after LB populations are loaded
+            self.check_lb_boundaries(remove_boundaries=True)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
@@ -498,23 +277,21 @@ class CheckpointTest(ut.TestCase):
         p3, p4 = system.part.by_ids([3, 4])
         old_force = np.copy(p3.f)
         system.constraints.remove(system.constraints[0])
-        old_integrator = system.integrator.integrator
-        system.integrator.set_vv()
         system.integrator.run(0, recalc_forces=True)
-        system.integrator.integrator = old_integrator
         np.testing.assert_allclose(
             np.copy(p3.f), -np.copy(p4.f), rtol=1e-4)
         self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
-    @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         thmst = system.thermostat.get_state()[0]
-        self.assertEqual(thmst['type'], 'LB')
-        # rng_counter_fluid = seed, seed is 0 because kT=0
-        self.assertEqual(thmst['rng_counter_fluid'], 0)
-        self.assertEqual(thmst['gamma'], 2.0)
+        if 'LB.GPU' in modes and not espressomd.gpu_available():
+            self.assertEqual(thmst['type'], 'OFF')
+        else:
+            self.assertEqual(thmst['type'], 'LB')
+            # rng_counter_fluid = seed, seed is 0 because kT=0
+            self.assertEqual(thmst['rng_counter_fluid'], 0)
+            self.assertEqual(thmst['gamma'], 2.0)
 
     @ut.skipIf('THERM.LANGEVIN' not in modes,
                'Langevin thermostat not in modes')
@@ -677,18 +454,18 @@ class CheckpointTest(ut.TestCase):
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
-        self.assertEqual(
-            {**ibm_tribend_bond.params, **{'theta0': 0.}},
-            {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
+        if 'DP3M.CPU' not in modes:
+            self.assertEqual(
+                ibm_tribend_bond.params,
+                {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
         self.assertEqual(
             ibm_triel_bond.params,
             {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
         # check new bonds can be added
-        if not has_lb_mode:
-            new_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)
-            system.bonded_inter.add(new_bond)
-            bond_ids = system.bonded_inter.call_method('get_bond_ids')
-            self.assertEqual(len(bond_ids), len(system.bonded_inter))
+        new_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)
+        system.bonded_inter.add(new_harmonic_bond)
+        bond_ids = system.bonded_inter.call_method('get_bond_ids')
+        self.assertEqual(len(bond_ids), len(system.bonded_inter))
 
     def test_bond_breakage_specs(self):
         # check the ObjectHandle was correctly initialized (including MPI)
@@ -721,21 +498,12 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
+        self.assertTrue(system.part.by_id(1).virtual)
         self.assertIsInstance(
             system.virtual_sites,
             espressomd.virtual_sites.VirtualSitesRelative)
         self.assertTrue(system.virtual_sites.have_quaternion)
         self.assertTrue(system.virtual_sites.override_cutoff_check)
-        p_real = system.part.by_id(0)
-        p_virt = system.part.by_id(1)
-        self.assertTrue(p_virt.virtual)
-        self.assertFalse(p_real.virtual)
-        self.assertEqual(p_real.vs_relative[0], -1)
-        self.assertEqual(p_virt.vs_relative[0], p_real.id)
-        self.assertEqual(p_real.vs_relative[1], 0.)
-        self.assertEqual(p_virt.vs_relative[1], np.sqrt(2.))
-        np.testing.assert_allclose(
-            p_real.vs_relative[2], [1., 0., 0., 0.], atol=1e-10)
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
@@ -914,8 +682,37 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(1).exclusions), [2])
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
+    def check_lb_boundaries(self, remove_boundaries=False):
+        # check boundary objects
+        self.assertEqual(len(system.lbboundaries), 2)
+        np.testing.assert_allclose(
+            np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
+        np.testing.assert_allclose(
+            np.copy(system.lbboundaries[1].velocity), [0, 0, 0])
+        self.assertIsInstance(
+            system.lbboundaries[0].shape, espressomd.shapes.Wall)
+        self.assertIsInstance(
+            system.lbboundaries[1].shape, espressomd.shapes.Wall)
+
+        # check boundary flag
+        lbf = self.get_active_actor_of_type(
+            espressomd.lb.HydrodynamicInteraction)
+        np.testing.assert_equal(np.copy(lbf[0, :, :].boundary.astype(int)), 1)
+        np.testing.assert_equal(np.copy(lbf[-1, :, :].boundary.astype(int)), 2)
+        np.testing.assert_equal(
+            np.copy(lbf[1:-1, :, :].boundary.astype(int)), 0)
+
+        # remove boundaries
+        if not remove_boundaries:
+            return
+        system.lbboundaries.clear()
+        self.assertEqual(len(system.lbboundaries), 0)
+        np.testing.assert_equal(np.copy(lbf[:, :, :].boundary.astype(int)), 0)
+
     def test_constraints(self):
-        n_contraints = 8
+        n_contraints = 7
+        if self.n_nodes == 1:
+            n_contraints += 1
         if espressomd.has_features("ELECTROSTATICS"):
             n_contraints += 1
         self.assertEqual(len(system.constraints), n_contraints)
@@ -964,19 +761,20 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
                                    atol=1e-10)
 
-        union = c[7].shape
-        self.assertIsInstance(union, espressomd.shapes.Union)
-        self.assertEqual(c[7].particle_type, 2)
-        self.assertEqual(len(union), 2)
-        wall1, wall2 = union.call_method('get_elements')
-        self.assertIsInstance(wall1, espressomd.shapes.Wall)
-        self.assertIsInstance(wall2, espressomd.shapes.Wall)
-        np.testing.assert_allclose(np.copy(wall1.normal),
-                                   [1., 0., 0.], atol=1e-10)
-        np.testing.assert_allclose(np.copy(wall2.normal),
-                                   [0., 1., 0.], atol=1e-10)
-        np.testing.assert_allclose(wall1.dist, 0.5, atol=1e-10)
-        np.testing.assert_allclose(wall2.dist, 1.5, atol=1e-10)
+        if self.n_nodes == 1:
+            union = c[7].shape
+            self.assertIsInstance(union, espressomd.shapes.Union)
+            self.assertEqual(c[7].particle_type, 2)
+            self.assertEqual(len(union), 2)
+            wall1, wall2 = union.call_method('get_elements')
+            self.assertIsInstance(wall1, espressomd.shapes.Wall)
+            self.assertIsInstance(wall2, espressomd.shapes.Wall)
+            np.testing.assert_allclose(np.copy(wall1.normal),
+                                       [1., 0., 0.], atol=1e-10)
+            np.testing.assert_allclose(np.copy(wall2.normal),
+                                       [0., 1., 0.], atol=1e-10)
+            np.testing.assert_allclose(wall1.dist, 0.5, atol=1e-10)
+            np.testing.assert_allclose(wall2.dist, 1.5, atol=1e-10)
 
         if espressomd.has_features("ELECTROSTATICS"):
             wave = c[n_contraints - 1]
@@ -986,24 +784,6 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(wave.k), [-.1, .2, .3])
             self.assertAlmostEqual(wave.omega, 5., delta=1E-10)
             self.assertAlmostEqual(wave.phi, 1.4, delta=1E-10)
-
-    @utx.skipIfMissingFeatures("WCA")
-    @ut.skipIf(has_lb_mode, "LB not supported")
-    @ut.skipIf("INT.SDM" in modes, "Stokesian integrator not supported")
-    @ut.skipIf("INT.BD" in modes, "Brownian integrator not supported")
-    @ut.skipIf("INT.SD" in modes, "Steepest descent not supported")
-    def test_union(self):
-        # the union shape is an object list, and should be properly
-        # deserialized on all MPI ranks
-        system.non_bonded_inter[2, 6].wca.set_params(epsilon=1., sigma=1.)
-        p1 = system.part.add(pos=[1., 1.6, 0.], type=6)
-        p2 = system.part.add(pos=[system.box_l[0] - 1., 1.6, 0.], type=6)
-        system.integrator.run(0, recalc_forces=True)
-        np.testing.assert_allclose(p1.f, [0., 1e8, 0.], atol=1e-3)
-        np.testing.assert_allclose(p2.f, [0., 1e8, 0.], atol=1e-3)
-        p1.remove()
-        p2.remove()
-        system.non_bonded_inter[2, 6].reset()
 
 
 if __name__ == '__main__':

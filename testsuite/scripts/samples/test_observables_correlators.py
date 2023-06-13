@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/observables_correlators.py")
+    "@SAMPLES_DIR@/observables_correlators.py")
 
 
 @skipIfMissingFeatures

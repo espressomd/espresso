@@ -20,7 +20,7 @@ import importlib_wrapper
 import pathlib
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "/home/thilo/code/espresso2/espresso/testsuite/scripts/samples/local_samples/save_checkpoint.py")
+    "@SAMPLES_DIR@/save_checkpoint.py")
 
 
 @skipIfMissingFeatures
