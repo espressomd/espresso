@@ -245,6 +245,12 @@ class ParticleHandle(ScriptInterfaceHelper):
         .. note::
            This needs the feature ``DIPOLES``.
 
+     dip_fld: (3,) array_like of :obj:`float`
+        Total dipole field value at the position of the particle.
+
+        .. note::
+           This needs the feature ``DIPOLE_FIELD_TRACKING``.
+
     ext_force: (3,) array_like of :obj:`float`
         An additional external force applied to the particle.
 

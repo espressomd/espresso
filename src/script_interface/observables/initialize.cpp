@@ -45,6 +45,7 @@
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
+#include "core/observables/ParticleDipoleFields.hpp"
 #include "core/observables/ParticleDirectors.hpp"
 #include "core/observables/ParticleDistances.hpp"
 #include "core/observables/ParticleForces.hpp"
@@ -114,6 +115,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER(PressureTensor);
   REGISTER_PID_OBS(ParticlePositions);
   REGISTER_PID_OBS(ParticleDirectors);
+  REGISTER_PID_OBS(ParticleDipoleFields);
   REGISTER_PID_OBS(ParticleVelocities);
   REGISTER_PID_OBS(ParticleForces);
   REGISTER_PID_OBS(ParticleBodyVelocities);

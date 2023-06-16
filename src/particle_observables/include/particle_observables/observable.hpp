@@ -54,6 +54,7 @@ using Forces = Map<Force>;
 using Positions = Map<Position>;
 using Velocities = Map<Velocity>;
 using Directors = Map<Director>;
+using DipoleFields = Map<DipoleField>;
 using BodyVelocities = Map<BodyVelocity>;
 using AngularVelocities = Map<AngularVelocity>;
 using BodyAngularVelocities = Map<BodyAngularVelocity>;
