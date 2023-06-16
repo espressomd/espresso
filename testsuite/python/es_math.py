@@ -19,10 +19,16 @@
 
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
+
 import espressomd.math
+import espressomd
 
 
 class TestMath(ut.TestCase):
+    system = espressomd.System(box_l=3 * [10.])
+    system.time_step = 1
+    system.cell_system.skin = 1
 
     def check_orthonormality(self, vec1, vec2):
         self.assertAlmostEqual(np.linalg.norm(vec1), 1.)
@@ -49,6 +55,23 @@ class TestMath(ut.TestCase):
 
         with self.assertRaises(RuntimeError):
             espressomd.math.CylindricalTransformationParameters(center=3 * [4])
+
+    @utx.skipIfMissingFeatures(["ROTATION"])
+    def test_quat_from_angles(self):
+        """
+        Check that quaternions generated from the math function makes
+        particles point in the correct direction.
+        """
+        part = self.system.part.add(pos=3 * [0.])
+        rng = np.random.default_rng(seed=42)
+        for _ in range(1000):
+            theta, phi = np.pi * rng.random(), 2 * np.pi * rng.random()
+            direc_shouldbe = [np.sin(theta) * np.cos(phi),
+                              np.sin(theta) * np.sin(phi),
+                              np.cos(theta)]
+            part.quat = espressomd.math.calc_quaternions_from_angles(
+                theta, phi)
+            np.testing.assert_allclose(np.copy(part.director), direc_shouldbe)
 
 
 if __name__ == "__main__":

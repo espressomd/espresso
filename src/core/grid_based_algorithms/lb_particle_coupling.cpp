@@ -105,17 +105,12 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
                   double time_step) {
   /* transform momentum transfer to lattice units
      (eq. (12) @cite ahlrichs99a) */
-  auto const delta_j = -(time_step / LB::get_lattice_speed()) * force;
+  auto const delta_j = (time_step / LB::get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
 
 Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
   Utils::Vector3d vel_offset{};
-#ifdef ENGINE
-  if (p.swimming().swimming) {
-    vel_offset += p.swimming().v_swim * p.calc_director();
-  }
-#endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   vel_offset += p.mu_E();
@@ -208,25 +203,6 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
   return res;
 }
 
-#ifdef ENGINE
-void add_swimmer_force(Particle const &p, double time_step) {
-  if (p.swimming().swimming) {
-    // calculate source position
-    auto const magnitude = p.swimming().dipole_length;
-    auto const direction = static_cast<double>(p.swimming().push_pull);
-    auto const director = p.calc_director();
-    auto const source_position = p.pos() + direction * magnitude * director;
-    auto const force = p.swimming().f_swim * director;
-
-    // couple positions including shifts by one box length to add forces
-    // to ghost layers
-    for (auto pos : positions_in_halo(source_position, box_geo)) {
-      add_md_force(pos, force, time_step);
-    }
-  }
-}
-#endif
-
 namespace LB {
 
 Utils::Vector3d ParticleCoupling::get_noise_term(Particle const &p) const {
@@ -253,16 +229,27 @@ void ParticleCoupling::kernel(Particle &p) {
     return;
 
   // Calculate coupling force
-  Utils::Vector3d coupling_force = {};
-  for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-    if (in_local_halo(pos)) {
-      auto const vel_offset = lb_particle_coupling_drift_vel_offset(p);
-      auto const drag_force = lb_drag_force(p, pos, vel_offset);
-      auto const random_force = get_noise_term(p);
-      coupling_force = drag_force + random_force;
-      break;
+  Utils::Vector3d force_on_particle = {};
+
+#ifdef ENGINE
+  if (not p.swimming().is_engine_force_on_fluid)
+#endif
+    for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+      if (in_local_halo(pos)) {
+        auto const vel_offset = lb_particle_coupling_drift_vel_offset(p);
+        auto const drag_force = lb_drag_force(p, pos, vel_offset);
+        auto const random_force = get_noise_term(p);
+        force_on_particle = drag_force + random_force;
+        break;
+      }
     }
+
+  auto force_on_fluid = -force_on_particle;
+#ifdef ENGINE
+  if (p.swimming().is_engine_force_on_fluid) {
+    force_on_fluid = p.calc_director() * p.swimming().f_swim;
   }
+#endif
 
   // couple positions including shifts by one box length to add
   // forces to ghost layers
@@ -270,14 +257,10 @@ void ParticleCoupling::kernel(Particle &p) {
     if (in_local_domain(pos)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
-      p.force() += coupling_force;
+      p.force() += force_on_particle;
     }
-    add_md_force(pos, coupling_force, m_time_step);
+    add_md_force(pos, force_on_fluid, m_time_step);
   }
-
-#ifdef ENGINE
-  add_swimmer_force(p, m_time_step);
-#endif
 }
 
 bool CouplingBookkeeping::is_ghost_for_local_particle(Particle const &p) const {

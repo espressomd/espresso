@@ -62,7 +62,7 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
       }
       if (bookkeeping.should_be_coupled(p)) {
         for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-          add_md_force(pos * to_lb_units, -p.force(), time_step);
+          add_md_force(pos * to_lb_units, p.force(), time_step);
         }
       }
     }
