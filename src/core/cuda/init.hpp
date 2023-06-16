@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CUDA_INIT_H
-#define CORE_CUDA_INIT_H
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -110,4 +110,3 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus();
 EspressoGpuDevice cuda_get_device_props(int dev);
 
 #endif // ifdef CUDA
-#endif

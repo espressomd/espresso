@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2014-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,20 +16,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_CUDA_UTILS_HPP
-#define CORE_CUDA_UTILS_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
-#ifdef CUDA
+#include "GpuParticleData.hpp"
+#include "ResourceCleanup.hpp"
 
-#include <stdexcept>
-#include <string>
+#include <utils/Vector.hpp>
 
-class cuda_runtime_error : public std::runtime_error {
+#include <cstddef>
+#include <memory>
+
+namespace System {
+
+class System {
 public:
-  cuda_runtime_error(std::string const &msg) : std::runtime_error(msg) {}
+#ifdef CUDA
+  GpuParticleData gpu;
+#endif
+  ResourceCleanup cleanup_queue;
+
+  Utils::Vector3d box() const;
+  void init() {
+#ifdef CUDA
+    gpu.init();
+#endif
+  }
 };
 
-#endif // CUDA
-#endif
+System &get_system();
+void set_system(std::shared_ptr<System> new_instance);
+void reset_system();
+
+} // namespace System

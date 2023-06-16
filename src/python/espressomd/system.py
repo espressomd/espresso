@@ -45,7 +45,7 @@ from .script_interface import script_interface_register, ScriptInterfaceHelper
 
 
 @script_interface_register
-class _Globals(ScriptInterfaceHelper):
+class _System(ScriptInterfaceHelper):
     """
     Wrapper class required for technical reasons only.
 
@@ -55,23 +55,17 @@ class _Globals(ScriptInterfaceHelper):
     System class, and adding that object as the first element of the ordered
     dict that is used during serialization. When the System class is reloaded,
     the ordered dict is walked through and objects are deserialized in the same
-    order. Since many objects depend on the box length, the `_Globals` has
+    order. Since many objects depend on the box length, the `_System` has
     to be deserialized first. This guarantees the box geometry is already set
     in the core before e.g. particles and bonds are deserialized.
 
     """
-    _so_name = "System::Globals"
+    _so_name = "System::System"
     _so_creation_policy = "GLOBAL"
-
-    def __setattr__(self, attr, value):
-        if attr == "periodicity":
-            utils.check_type_or_throw_except(
-                value, 3, bool, "Attribute 'periodicity' must be a list of 3 bools")
-        if attr == "box_l":
-            utils.check_type_or_throw_except(
-                value, 3, float, "Attribute 'box_l' must be a list of 3 floats")
-        super().__setattr__(attr, value)
-        utils.handle_errors(f"while assigning system parameter '{attr}'")
+    _so_bind_methods = (
+        "setup_type_map",
+        "number_of_particles",
+        "rotate_system")
 
 
 @script_interface_register
@@ -99,6 +93,13 @@ class System(ScriptInterfaceHelper):
     non_bonded_inter: :class:`espressomd.interactions.NonBondedInteractions`
     part: :class:`espressomd.particle_data.ParticleList`
     thermostat: :class:`espressomd.thermostat.Thermostat`
+    box_l: (3,) array_like of :obj:`float`
+        Dimensions of the simulation box.
+    periodicity: (3,) array_like of :obj:`bool`
+        System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+        in this direction, ``True`` for periodicity
+    min_global_cut : :obj:`float`
+        Minimal interaction cutoff.
 
     Methods
     -------
@@ -151,28 +152,24 @@ class System(ScriptInterfaceHelper):
             How much to rotate
 
     """
-    _so_name = "System::System"
+    _so_name = "System::SystemFacade"
     _so_creation_policy = "GLOBAL"
-    _so_bind_methods = (
-        "setup_type_map",
-        "number_of_particles",
-        "rotate_system")
-
-    def __getattr__(self, attr):
-        if attr in self.__dict__.get("_globals_parameters", []):
-            return self._globals.__getattr__(attr)
-        else:
-            return super().__getattr__(attr)
+    _so_bind_methods = _System._so_bind_methods
 
     def __setattr__(self, attr, value):
-        if attr in self.__dict__.get("_globals_parameters", []):
-            self._globals.__setattr__(attr, value)
-        else:
-            super().__setattr__(attr, value)
+        if attr == "periodicity":
+            utils.check_type_or_throw_except(
+                value, 3, bool, "Attribute 'periodicity' must be a list of 3 bools")
+        if attr == "box_l":
+            utils.check_type_or_throw_except(
+                value, 3, float, "Attribute 'box_l' must be a list of 3 floats")
+        super().__setattr__(attr, value)
+        utils.handle_errors(f"while assigning system parameter '{attr}'")
 
     def __init__(self, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
+            self._setup_atexit()
             return
         super().__init__()
 
@@ -187,10 +184,11 @@ class System(ScriptInterfaceHelper):
         if has_features("VIRTUAL_SITES"):
             setable_properties.append("_active_virtual_sites_handle")
 
-        self._globals = _Globals()
-        self._globals_parameters = self._globals._valid_parameters()
+        self.call_method("set_system_handle", obj=_System(**kwargs))
         self.integrator = integrate.IntegratorHandle()
-        self.box_l = kwargs.pop("box_l")
+        for key in ("box_l", "periodicity", "min_global_cut"):
+            if key in kwargs:
+                del kwargs[key]
         for arg in kwargs:
             if arg not in setable_properties:
                 raise ValueError(
@@ -223,6 +221,14 @@ class System(ScriptInterfaceHelper):
 
         # lock class
         self.call_method("lock_system_creation")
+        self._setup_atexit()
+
+    def _setup_atexit(self):
+        import atexit
+
+        def session_shutdown():
+            self.call_method("session_shutdown")
+        atexit.register(session_shutdown)
 
     def __reduce__(self):
         so_callback, so_callback_args = super().__reduce__()
@@ -233,11 +239,10 @@ class System(ScriptInterfaceHelper):
     def _restore_object(cls, so_callback, so_callback_args, state):
         so = so_callback(*so_callback_args)
         so.__setstate__(state)
-        so._globals_parameters = so._globals._valid_parameters()
         return so
 
     def __getstate__(self):
-        checkpointable_properties = ["_globals", "integrator"]
+        checkpointable_properties = ["integrator"]
         if has_features("VIRTUAL_SITES"):
             checkpointable_properties.append("_active_virtual_sites_handle")
         checkpointable_properties += [
@@ -252,58 +257,17 @@ class System(ScriptInterfaceHelper):
             checkpointable_properties += ["ekcontainer", "ekreactions"]
 
         odict = collections.OrderedDict()
+        odict["_system_handle"] = self.call_method("get_system_handle")
         for property_name in checkpointable_properties:
             odict[property_name] = System.__getattribute__(self, property_name)
         return odict
 
     def __setstate__(self, params):
         # note: this class is initialized twice by pickle
+        self.call_method("set_system_handle", obj=params.pop("_system_handle"))
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
         self.call_method("lock_system_creation")
-
-    @property
-    def box_l(self):
-        """
-        Dimensions of the simulation box.
-
-        Type: (3,) array_like of :obj:`float`
-
-        """
-        return self._globals.box_l
-
-    @box_l.setter
-    def box_l(self, value):
-        self._globals.box_l = value
-
-    @property
-    def periodicity(self):
-        """
-        System periodicity in ``[x, y, z]``, ``False`` for no periodicity
-        in this direction, ``True`` for periodicity
-
-        Type: (3,) array_like of :obj:`bool`
-
-        """
-        return self._globals.periodicity
-
-    @periodicity.setter
-    def periodicity(self, value):
-        self._globals.periodicity = value
-
-    @property
-    def min_global_cut(self):
-        """
-        Minimal interaction cutoff.
-
-        Type: :obj:`float`
-
-        """
-        return self._globals.min_global_cut
-
-    @min_global_cut.setter
-    def min_global_cut(self, value):
-        self._globals.min_global_cut = value
 
     @property
     def force_cap(self):

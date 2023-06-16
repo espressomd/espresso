@@ -28,8 +28,8 @@
 
 #include "magnetostatics/barnes_hut_gpu_cuda.cuh"
 
-#include "cuda_init.hpp"
-#include "cuda_utils.cuh"
+#include "cuda/init.hpp"
+#include "cuda/utils.cuh"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>

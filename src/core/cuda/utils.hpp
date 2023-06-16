@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2021-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,27 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_UTILS_SERIALIZATION_IBM_CUDA_PARTICLE_DATA_INPUT_HPP
-#define CORE_UTILS_SERIALIZATION_IBM_CUDA_PARTICLE_DATA_INPUT_HPP
 
-#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
+#pragma once
 
-namespace boost {
-namespace serialization {
-template <class Archive>
-void serialize(Archive &ar, IBM_CUDA_ParticleDataInput &d,
-               const unsigned int /* version */) {
-  ar &d.pos;
-  ar &d.f;
-  ar &d.is_virtual;
-}
+#include "config/config.hpp"
 
-template <class Archive>
-void serialize(Archive &ar, IBM_CUDA_ParticleDataOutput &d,
-               const unsigned int /* version */) {
-  ar &d.v;
-}
-} // namespace serialization
-} // namespace boost
+#ifdef CUDA
 
-#endif
+#include <stdexcept>
+#include <string>
+
+class cuda_runtime_error : public std::runtime_error {
+public:
+  cuda_runtime_error(std::string const &msg) : std::runtime_error(msg) {}
+};
+
+#endif // CUDA

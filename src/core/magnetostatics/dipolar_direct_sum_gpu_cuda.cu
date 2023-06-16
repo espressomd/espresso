@@ -23,7 +23,7 @@
 
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
-#include "cuda_utils.cuh"
+#include "cuda/utils.cuh"
 
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>

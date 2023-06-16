@@ -19,8 +19,8 @@
 
 #include <cuda.h>
 
-#include "cuda_init.hpp"
-#include "cuda_utils.cuh"
+#include "init.hpp"
+#include "utils.cuh"
 
 #include <utils/constants.hpp>
 

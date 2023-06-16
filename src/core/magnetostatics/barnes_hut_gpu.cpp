@@ -24,11 +24,11 @@
 #include "magnetostatics/barnes_hut_gpu.hpp"
 #include "magnetostatics/barnes_hut_gpu_cuda.cuh"
 
-#include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
-#include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda/utils.hpp"
 #include "errorhandling.hpp"
+#include "system/GpuParticleData.hpp"
+#include "system/System.hpp"
 
 DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,
                                          double itolsq)
@@ -42,11 +42,11 @@ DipolarBarnesHutGpu::DipolarBarnesHutGpu(double prefactor, double epssq,
   if (m_epssq <= 0.) {
     throw std::domain_error("Parameter 'epssq' must be > 0");
   }
-  auto &system = EspressoSystemInterface::Instance();
-  system.requestFGpu();
-  system.requestTorqueGpu();
-  system.requestRGpu();
-  system.requestDipGpu();
+  auto &gpu_particle_data = System::get_system().gpu;
+  gpu_particle_data.enable_property(GpuParticleData::prop::force);
+  gpu_particle_data.enable_property(GpuParticleData::prop::torque);
+  gpu_particle_data.enable_property(GpuParticleData::prop::pos);
+  gpu_particle_data.enable_property(GpuParticleData::prop::dip);
   if (this_node == 0) {
     setBHPrecision(static_cast<float>(m_epssq), static_cast<float>(m_itolsq));
   }
@@ -65,12 +65,14 @@ int call_kernel(void (*fp)(Args...), ArgRef &&...args) {
 }
 
 int DipolarBarnesHutGpu::initialize_data_structure() {
-  auto &system = EspressoSystemInterface::Instance();
-  auto const n_part = static_cast<int>(system.npart_gpu());
+  auto &gpu = System::get_system().gpu;
+  auto const n_part = static_cast<int>(gpu.n_particles());
   auto const error_code = call_kernel(allocBHmemCopy, n_part, &m_bh_data);
 
   if (error_code == ES_OK) {
-    fill_bh_data(system.rGpuBegin(), system.dipGpuBegin(), &m_bh_data);
+    auto const positions_device = gpu.get_particle_positions_device();
+    auto const dipoles_device = gpu.get_particle_dipoles_device();
+    fill_bh_data(positions_device, dipoles_device, &m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
     buildTreeBH(m_bh_data.blocks);
@@ -82,22 +84,24 @@ int DipolarBarnesHutGpu::initialize_data_structure() {
 }
 
 void DipolarBarnesHutGpu::add_long_range_forces() {
-  auto &system = EspressoSystemInterface::Instance();
-  system.update();
+  auto &gpu_particle_data = System::get_system().gpu;
+  gpu_particle_data.update();
   if (this_node == 0) {
     if (initialize_data_structure() == ES_OK) {
+      auto forces_device = gpu_particle_data.get_particle_forces_device();
+      auto torques_device = gpu_particle_data.get_particle_torques_device();
       call_kernel(forceBH, &m_bh_data, static_cast<float>(prefactor),
-                  system.fGpuBegin(), system.torqueGpuBegin());
+                  forces_device, torques_device);
     }
   }
 }
 
 void DipolarBarnesHutGpu::long_range_energy() {
-  auto &system = EspressoSystemInterface::Instance();
-  system.update();
+  auto &gpu_particle_data = System::get_system().gpu;
+  gpu_particle_data.update();
   if (this_node == 0) {
     if (initialize_data_structure() == ES_OK) {
-      auto energy = &(reinterpret_cast<CUDA_energy *>(system.eGpu())->dipolar);
+      auto energy = &(gpu_particle_data.get_energy_device()->dipolar);
       call_kernel(energyBH, &m_bh_data, static_cast<float>(prefactor), energy);
     }
   }

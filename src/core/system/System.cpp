@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2014-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,19 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "CudaHostAllocator.hpp"
 
-#include <cuda.h>
+#include "System.hpp"
+#include "grid.hpp"
 
-#include <cstddef>
-#include <stdexcept>
+#include <utils/Vector.hpp>
 
-void cuda_malloc_host(void **p, std::size_t n) {
-  cudaError_t error = cudaMallocHost(p, n);
+#include <memory>
 
-  if (error) {
-    throw std::bad_alloc();
-  }
+namespace System {
+
+static std::shared_ptr<System> instance;
+
+void reset_system() { instance.reset(); }
+
+void set_system(std::shared_ptr<System> new_instance) {
+  instance = new_instance;
 }
 
-void cuda_free_host(void *p) { cudaFreeHost(p); }
+System &get_system() { return *instance; }
+
+Utils::Vector3d System::box() const { return ::box_geo.length(); }
+
+} // namespace System

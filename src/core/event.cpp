@@ -31,9 +31,8 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
-#include "cuda_init.hpp"
-#include "cuda_interface.hpp"
-#include "cuda_utils.hpp"
+#include "cuda/init.hpp"
+#include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
@@ -100,11 +99,6 @@ void on_integration_start(double time_step) {
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
-
-#ifdef CUDA
-  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
-            sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-#endif
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
