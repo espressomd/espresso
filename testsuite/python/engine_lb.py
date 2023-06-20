@@ -19,61 +19,101 @@
 
 import espressomd
 import espressomd.lb
+import espressomd.virtual_sites
+import espressomd.swimmer_helpers
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import tests_common
 
 
-class SwimmerTest():
-    system = espressomd.System(box_l=3 * [6])
-    system.cell_system.skin = 1
+REQUIRED_FEATURES = ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA",
+                     "VIRTUAL_SITES_RELATIVE"]
+
+
+class SwimmerTest:
+    system = espressomd.System(box_l=3 * [8])
+    system.cell_system.skin = 0.4
     system.time_step = 1e-2
-    LB_params = {'agrid': 1,
-                 'density': 1.1,
-                 'kinematic_viscosity': 1.2,
-                 'kT': 0,
-                 'tau': system.time_step}
+    LB_params = {
+        "agrid": 1,
+        "density": 1.1,
+        "kinematic_viscosity": 1.2,
+        "kT": 0,
+        "tau": system.time_step,
+    }
     gamma = 0.3
 
-    def add_all_types_of_swimmers(
-            self,
-            fix=False,
-            rotation=False,
-            put_in_corners=True):
-        """Places all combinations of pusher/puller and f_swim/v_swim
-        in a box, either in the corners or around the center
+    # largest dipole used in the test
+    system.min_global_cut = 2.0001 * LB_params["agrid"]
+
+    def add_all_types_of_swimmers(self, fix=False, rotation=False):
+        """
+        Places pushers and pullers in the corners of a box such that the
+        dipole crosses the periodic boundary.
         """
         system = self.system
-        plus_x = np.sqrt([.5, 0, .5, 0])
-        plus_y = np.sqrt([0, 0, .5, .5])
-        plus_z = np.sqrt([.5, 0, 0, .5])
-        minus_y = np.sqrt([.5, .5, 0, 0])
-
-        pos0 = [2, 0.01, 3] if put_in_corners else [2, 3, 2.5]
-        pos1 = [5.99, 2, 3] if put_in_corners else [3.1, 2.1, 2.2]
-        pos2 = [2, 3, 5.99] if put_in_corners else [2.9, 2.5, 3]
-        pos3 = [1.5, 5.99, 1] if put_in_corners else [2, 2, 2.5]
+        dipole_partcl_type = 10
 
         # particle type is only relevant for engine_lb_hybrid test
-        system.part.add(pos=pos0, quat=minus_y, fix=3 * [fix],
-                        mass=0.9, rinertia=3 * [7], rotation=3 * [rotation],
-                        swimming={"mode": "pusher", "f_swim": 0.10,
-                                  "dipole_length": 0.5}, type=1)
-        system.part.add(pos=pos1, quat=plus_x, fix=3 * [fix],
-                        mass=1.9, rinertia=3 * [8], rotation=3 * [rotation],
-                        swimming={"mode": "pusher", "v_swim": 0.02,
-                                  "dipole_length": 0.6}, type=0)
-        system.part.add(pos=pos2, quat=plus_z, fix=3 * [fix],
-                        mass=2.9, rinertia=3 * [9], rotation=3 * [rotation],
-                        swimming={"mode": "puller", "f_swim": 0.08,
-                                  "dipole_length": 0.7}, type=1)
-        system.part.add(pos=pos3, quat=plus_y, fix=3 * [fix],
-                        mass=3.9, rinertia=3 * [10], rotation=3 * [rotation],
-                        swimming={"mode": "puller", "v_swim": 0.05,
-                                  "dipole_length": 0.8}, type=0)
+        p0 = system.part.add(
+            pos=[2, 0.01, 3],
+            director=[0, -1, 0],
+            fix=3 * [fix],
+            mass=0.1,
+            rinertia=3 * [7],
+            rotation=3 * [rotation],
+            swimming={"f_swim": 0.10},
+            type=1,
+        )
+        p0_dip = espressomd.swimmer_helpers.add_dipole_particle(
+            system, p0, 0.5, dipole_partcl_type)
+
+        p1 = system.part.add(
+            pos=[7.99, 2, 3],
+            director=[1, 0, 0],
+            fix=3 * [fix],
+            mass=0.2,
+            rinertia=3 * [8],
+            rotation=3 * [rotation],
+            swimming={"f_swim": 0.09},
+            type=0,
+        )
+        p1_dip = espressomd.swimmer_helpers.add_dipole_particle(
+            system, p1, 0.6, dipole_partcl_type)
+
+        p2 = system.part.add(
+            pos=[2, 3, 7.99],
+            director=[0, 0, 1],
+            fix=3 * [fix],
+            mass=0.3,
+            rinertia=3 * [9],
+            rotation=3 * [rotation],
+            swimming={"f_swim": 0.08},
+            type=1,
+        )
+        p2_dip = espressomd.swimmer_helpers.add_dipole_particle(
+            system, p2, 0.7, dipole_partcl_type, mode="puller")
+
+        p3 = system.part.add(
+            pos=[1.5, 7.99, 1],
+            director=[0, 1, 0],
+            fix=3 * [fix],
+            mass=0.4,
+            rinertia=3 * [10],
+            rotation=3 * [rotation],
+            swimming={"f_swim": 0.07},
+            type=0,
+        )
+        p3_dip = espressomd.swimmer_helpers.add_dipole_particle(
+            system, p3, 0.8, dipole_partcl_type, mode="puller")
+
+        return [p0, p1, p2, p3], [p0_dip, p1_dip, p2_dip, p3_dip]
 
     def setUp(self):
+        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
+            have_quaternion=True
+        )
         self.set_cellsystem()
         self.lbf = self.lb_class(**self.LB_params, **self.lb_params)
         self.system.actors.add(self.lbf)
@@ -84,14 +124,26 @@ class SwimmerTest():
         self.system.actors.clear()
         self.system.thermostat.turn_off()
 
+    def test_dipole_particle_addition(self):
+        swimmers, dipoles = self.add_all_types_of_swimmers(rotation=False)
+        self.system.integrator.run(0)
+        for sw, dip in zip(swimmers, dipoles):
+            np.testing.assert_allclose(
+                np.copy(dip.director), -np.copy(sw.director), atol=1e-15
+            )
+        with self.assertRaises(ValueError):
+            espressomd.swimmer_helpers.add_dipole_particle(
+                self.system, swimmers[0], 0.5, 1, mode="unknown_mode")
+
     def test_momentum_conservation(self):
-        """friction as well as 'active' forces apply to particles
+        """
+        friction as well as 'active' forces apply to particles
         and to the fluid, so total momentum is conserved
         """
         if self.lbf.get_params().get("single_precision", False):
-            self.skipTest('Momentum is not conserved on single precision')
+            self.skipTest("Momentum is not conserved on single precision")
 
-        self.add_all_types_of_swimmers(rotation=False)
+        swimmers, _ = self.add_all_types_of_swimmers(rotation=False)
 
         # Comments by Christoph Lohrmann from #3514:
         # - why I used `reuse_forces=True` : If I don't use it, `force_calc()`
@@ -108,79 +160,97 @@ class SwimmerTest():
         #   with coupling is called in the main integration loop before
         #   `lb_lbfluid_propagate()`
         # - => in total, the fluid momentum is ahead by a full time step
-        self.system.integrator.run(100, reuse_forces=True)
-        tot_mom = self.system.analysis.linear_momentum(include_particles=True,
-                                                       include_lbfluid=True)
-        # compensate offset between force calculation and LB-update
-        for part in self.system.part:
-            tot_mom += part.f * self.system.time_step
+        self.system.integrator.run(1000, reuse_forces=True)
+        lb_mom = self.system.analysis.linear_momentum(
+            include_particles=False, include_lbfluid=True
+        )
+        part_mom = np.sum([np.copy(s.v) * np.copy(s.mass)
+                          for s in swimmers], axis=0)
 
-        np.testing.assert_allclose(tot_mom, 3 * [0.], atol=self.tol)
+        # compensate for one timestep offset between force calculation and LB -
+        # update
+        for part in swimmers:
+            part_mom += np.copy(part.f) * self.system.time_step
+
+        np.testing.assert_allclose(lb_mom, -part_mom, rtol=self.tol)
 
     def test_particle_forces(self):
-        """run through all swimmers to check expected forces
-        """
-        self.add_all_types_of_swimmers(rotation=False)
-        self.system.integrator.run(10)
-        for swimmer in self.system.part:
-
-            f_swim = swimmer.swimming['f_swim']
-            v_swim = swimmer.swimming['v_swim']
+        """run through all swimmers to check expected forces"""
+        swimmers, _ = self.add_all_types_of_swimmers(rotation=False)
+        self.system.integrator.run(100)
+        for swimmer in swimmers:
+            f_swim = swimmer.swimming["f_swim"]
             director = swimmer.director
 
             # due to dt/2 time-shift between force calculation and LB-update,
             # v_swimmer has to be calculated at the half step
-            v_swimmer = swimmer.v + \
-                0.5 * self.system.time_step * swimmer.f / swimmer.mass
+            v_swimmer = (
+                swimmer.v + 0.5 * self.system.time_step * swimmer.f / swimmer.mass
+            )
             # for friction coupling, the old fluid at the new position is used
-            v_fluid = self.lbf.get_interpolated_velocity(
-                pos=swimmer.pos + self.system.time_step * v_swimmer)
-            force = -self.gamma * (v_swimmer - v_fluid) + \
-                f_swim * director + self.gamma * v_swim * director
+            v_fluid = self.lbf.get_interpolated_velocity(pos=swimmer.pos + self.system.time_step * v_swimmer
+                                                         )
+            force = -self.gamma * (v_swimmer - v_fluid) + f_swim * director
 
             self.system.integrator.run(1, reuse_forces=True)
             np.testing.assert_allclose(
                 np.copy(swimmer.f), force, atol=self.tol)
 
     def test_fluid_force(self):
-        """ forces on particles are already checked (self.test_particle_forces)
+        """
+        forces on particles are already checked (self.test_particle_forces)
         total force on the fluid matches (self.test_momentum_conservation)
         only thing left to check is the location of the fluid force.
         """
         f_swim = 0.11
-        dip_length = 2 * self.LB_params['agrid']
+        dip_length = 2 * self.LB_params["agrid"]
+        modes = ["pusher", "puller"]
 
         sw0_pos = np.array([3.8, 1.1, 1.1])
         sw1_pos = np.array([1.8, 4.1, 4.1])
-        sw0 = self.system.part.add(pos=sw0_pos, quat=np.sqrt([.5, 0, .5, 0]),
-                                   mass=0.9, rotation=3 * [False],
-                                   swimming={"mode": "pusher", "f_swim": f_swim,
-                                             "dipole_length": dip_length})
-        sw1 = self.system.part.add(pos=sw1_pos, quat=np.sqrt([.5, 0, .5, 0]),
-                                   mass=0.7, rotation=3 * [False],
-                                   swimming={"mode": "puller", "f_swim": f_swim,
-                                             "dipole_length": dip_length})
+
+        sw_0 = self.system.part.add(
+            pos=sw0_pos,
+            director=[1, 0, 0],
+            mass=0.9,
+            rotation=3 * [False],
+            swimming={"f_swim": f_swim},
+        )
+        espressomd.swimmer_helpers.add_dipole_particle(
+            self.system, sw_0, dip_length, 10, mode=modes[0])
+        sw_1 = self.system.part.add(
+            pos=sw1_pos,
+            director=[1, 0, 0],
+            mass=0.7,
+            rotation=3 * [False],
+            swimming={"f_swim": f_swim},
+        )
+        espressomd.swimmer_helpers.add_dipole_particle(
+            self.system, sw_1, dip_length, 10, mode=modes[1])
 
         self.system.integrator.run(2)
 
-        for sw in [sw0, sw1]:
-            push_pull = -1 if sw.swimming['mode'] == 'pusher' else 1
+        for sw, mode in zip([sw_0, sw_1], modes):
+            dip_sign = 1 if mode == "puller" else -1
             sw_source_pos = sw.pos + self.system.time_step * \
-                sw.v + push_pull * dip_length * sw.director
+                sw.v + dip_sign * dip_length * sw.director
             # fold into box
-            sw_source_pos -= np.floor(sw_source_pos /
-                                      self.system.box_l) * np.array(self.system.box_l)
+            sw_source_pos -= np.floor(sw_source_pos / self.system.box_l) * np.array(
+                self.system.box_l
+            )
             sw_source_nodes = tests_common.get_lb_nodes_around_pos(
-                sw_source_pos, self.lbf)
+                sw_source_pos, self.lbf
+            )
             sw_source_forces = np.array(
                 [n.last_applied_force for n in sw_source_nodes])
             np.testing.assert_allclose(
                 np.sum(sw_source_forces, axis=0),
-                -f_swim * np.array(sw.director), atol=self.tol)
+                -f_swim * np.array(sw.director),
+                atol=self.tol,
+            )
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -191,8 +261,7 @@ class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -203,8 +272,7 @@ class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_regular_decomposition()
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -215,8 +283,7 @@ class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_n_square()
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -227,8 +294,7 @@ class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
         self.system.cell_system.set_n_square()
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -240,8 +306,7 @@ class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
             n_square_types={0}, cutoff_regular=1)
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -253,8 +318,7 @@ class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
             n_square_types={0}, cutoff_regular=1)
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -266,8 +330,7 @@ class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
             n_square_types={1}, cutoff_regular=1)
 
 
-@utx.skipIfMissingFeatures(
-    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "WALBERLA"])
+@utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid1CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla

@@ -447,11 +447,14 @@ class CheckpointTest(ut.TestCase):
             if espressomd.has_features('ROTATION'):
                 np.testing.assert_allclose(p3.gamma_rot, 2. * gamma)
         if espressomd.has_features('ENGINE'):
-            self.assertEqual(p3.swimming, {"f_swim": 0.03, "mode": "N/A",
-                                           "v_swim": 0., "dipole_length": 0.})
-        if espressomd.has_features('ENGINE') and has_lb_mode:
-            self.assertEqual(p4.swimming, {"v_swim": 0.02, "mode": "puller",
-                                           "f_swim": 0., "dipole_length": 1.})
+            self.assertEqual(
+                p3.swimming,
+                {"f_swim": 0.03, "is_engine_force_on_fluid": False})
+            if espressomd.has_features(
+                    'VIRTUAL_SITES_RELATIVE') and has_lb_mode:
+                self.assertEqual(
+                    p4.swimming,
+                    {"f_swim": 0., "is_engine_force_on_fluid": True})
         if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and has_lb_mode:
             np.testing.assert_allclose(np.copy(p8.mu_E), [-0.1, 0.2, -0.3])
         if espressomd.has_features('VIRTUAL_SITES_RELATIVE'):

@@ -45,30 +45,21 @@ inline bool get_nth_bit(uint8_t const bitfield, unsigned int const bit_idx) {
 }
 } // namespace detail
 
+#ifdef ENGINE
 /** Properties of a self-propelled particle. */
 struct ParticleParametersSwimming {
-  /** Is the particle a swimmer. */
-  bool swimming = false;
   /** Imposed constant force. */
   double f_swim = 0.;
-  /** Constant velocity to relax to. */
-  double v_swim = 0.;
-  /** Flag for the swimming mode in a LB fluid.
-   *  Values:
-   *  - -1: pusher
-   *  - +1: puller
-   *  - 0: no swimming
-   */
-  int push_pull = 0;
-  /** Distance of the source of propulsion from the particle
-   *  center in a LB fluid.
-   */
-  double dipole_length = 0.;
+  /** Is the particle a swimmer. */
+  bool swimming = false;
+  /** Whether f_swim is applied to the particle or to the fluid. */
+  bool is_engine_force_on_fluid = false;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &swimming &f_swim &v_swim &push_pull &dipole_length;
+    ar &f_swim &swimming &is_engine_force_on_fluid;
   }
 };
+#endif
 
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
@@ -603,7 +594,9 @@ private:
 };
 
 BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
+#ifdef ENGINE
 BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
+#endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
@@ -617,7 +610,9 @@ BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
                            object_serializable)
 #endif
 
+#ifdef ENGINE
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
+#endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleMomentum)

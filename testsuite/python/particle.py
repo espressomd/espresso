@@ -371,11 +371,6 @@ class ParticleProperties(ut.TestCase):
             p.type = -1
         with self.assertRaisesRegex(ValueError, err_msg.format("mol_id", "must be an integer >= 0")):
             p.mol_id = -1
-        if espressomd.has_features("ENGINE"):
-            with self.assertRaisesRegex(ValueError, err_msg.format("swimming", "cannot be set with 'v_swim' and 'f_swim' at the same time")):
-                p.swimming = {"v_swim": 0.3, "f_swim": 0.6}
-            with self.assertRaisesRegex(ValueError, err_msg.format("swimming.mode", "has to be either 'pusher', 'puller' or 'N/A'")):
-                p.swimming = {"v_swim": 0.3, "mode": "invalid"}
         if espressomd.has_features("MASS"):
             for mass in [0., -1., -2.]:
                 with self.assertRaisesRegex(ValueError, err_msg.format("mass", "must be a float > 0")):
