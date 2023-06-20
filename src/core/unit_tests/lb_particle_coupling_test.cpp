@@ -102,8 +102,8 @@ static auto make_lb_actor() {
   lb_params = std::make_shared<LBWalberlaParams>(params.agrid, params.tau);
   lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
                                                  ::node_grid, n_ghost_layers);
-  lb_fluid = new_lb_walberla(lb_lattice, params.viscosity, params.density,
-                             single_precision);
+  lb_fluid = new_lb_walberla_cpu(lb_lattice, params.viscosity, params.density,
+                                 single_precision);
   lb_fluid->set_collision_model(params.kT, params.seed);
   lb_fluid->ghost_communication();
 }
@@ -516,7 +516,7 @@ bool test_lb_domain_mismatch_local() {
   ::node_grid = node_grid_reversed;
   auto const lattice = std::make_shared<LatticeWalberla>(
       Utils::Vector3i{12, 12, 12}, node_grid_original, n_ghost_layers);
-  auto const ptr = new_lb_walberla(lattice, 1.0, 1.0, false);
+  auto const ptr = new_lb_walberla_cpu(lattice, 1.0, 1.0, false);
   ptr->set_collision_model(0.0, 0);
   ::node_grid = node_grid_original;
   if (world.rank() == 0) {

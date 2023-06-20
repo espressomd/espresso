@@ -104,6 +104,12 @@ protected:
     if (method == "is_poisson_solver_set") {
       return EK::ek_container.is_poisson_solver_set();
     }
+    if (method == "deallocate_fields") {
+      clear();
+      m_poisson_solver = std::shared_ptr<EKNone>();
+      EK::ek_container.set_poisson_solver(nullptr);
+      return {};
+    }
 
     return Base::do_call_method(method, parameters);
   }

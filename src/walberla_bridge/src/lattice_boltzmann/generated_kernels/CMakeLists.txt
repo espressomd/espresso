@@ -38,3 +38,19 @@ else()
             CollideSweepSinglePrecisionThermalized.cpp
             CollideSweepDoublePrecisionThermalized.cpp)
 endif()
+if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  target_sources(
+    espresso_walberla_cuda
+    PRIVATE CollideSweepDoublePrecisionLeesEdwardsCUDA.cu
+            CollideSweepDoublePrecisionThermalizedCUDA.cu
+            CollideSweepSinglePrecisionLeesEdwardsCUDA.cu
+            CollideSweepSinglePrecisionThermalizedCUDA.cu
+            FieldAccessorsDoublePrecisionCUDA.cu
+            FieldAccessorsSinglePrecisionCUDA.cu
+            StreamSweepDoublePrecisionCUDA.cu
+            StreamSweepSinglePrecisionCUDA.cu
+            InitialPDFsSetterDoublePrecisionCUDA.cu
+            InitialPDFsSetterSinglePrecisionCUDA.cu
+            Dynamic_UBB_double_precisionCUDA.cu
+            Dynamic_UBB_single_precisionCUDA.cu)
+endif()

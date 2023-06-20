@@ -35,11 +35,17 @@
 #endif
 #endif
 
-#ifndef __CUDA_ARCH__
+#if defined(__CUDA_ARCH__) || defined(__clang__) && defined(__CUDA__)
+#if defined(__clang__) && defined(QUALIFIERS)
+#undef QUALIFIERS
+#endif
+#define QUALIFIERS static __forceinline__ __device__
+#else
+#if defined(__clang__) && defined(QUALIFIERS)
+#undef QUALIFIERS
+#endif
 #define QUALIFIERS inline
 #include "myintrin.h"
-#else
-#define QUALIFIERS static __forceinline__ __device__
 #endif
 
 #define PHILOX_W32_0 (0x9E3779B9)

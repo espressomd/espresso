@@ -67,21 +67,31 @@ class LBMassCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBMassWalberlaDoublePrecision(LBMassCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBMassWalberlaDoublePrecisionCPU(LBMassCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
     atol = 1e-10
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBMassWalberlaSinglePrecision(LBMassCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBMassWalberlaSinglePrecisionCPU(LBMassCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 5e-7
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBMassWalberlaDoublePrecisionGPU(LBMassCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+    atol = 1e-10
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBMassWalberlaSinglePrecisionGPU(LBMassCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}
     atol = 5e-7
 

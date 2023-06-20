@@ -87,8 +87,7 @@ def earmark_generated_kernels():
         f"lbmpy_walberla/pystencils_walberla from waLBerla commit {walberla_commit}"
     )
     for filename in os.listdir("."):
-        if not filename.endswith(
-                ".tmpl.h") and filename.endswith((".h", ".cpp", ".cu")):
+        if filename.endswith((".h", ".cpp", ".cu", ".cuh")):
             with open(filename, "r+") as f:
                 content = f.read()
                 if token not in content:
