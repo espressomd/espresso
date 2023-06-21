@@ -969,50 +969,8 @@ Troubleshooting
 
 If you encounter issues when building |es| or running it for the first time,
 please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`__
-on the wiki. If you still didn't find an answer, see :ref:`Community support`.
-
-Many algorithms require parameters that must be provided within valid ranges.
-Range checks are implemented to catch invalid input values and generate
-meaningful error messages, however these checks cannot always catch errors
-arising from an invalid combination of two or more features. If you encounter
-issues with a script, you can activate extra runtime checks by enabling C++
-assertions. This is achieved by updating the CMake project and rebuilding
-|es| with:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
-    make -j$(nproc)
-
-The resulting build will run slightly slower, but will produce an error
-message for common issues, such as divisions by zero, array access out
-of bounds, or square roots of negative numbers.
-
-If this still doesn't help, you can activate debug symbols to help with
-instrumentation:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=Debug
-    make -j$(nproc)
-
-The resulting build will be quite slow but will allow many debugging tools
-to be used. For details, please refer to chapter :ref:`Debugging es`.
-
-If you are dealing with a segmentation fault or undefined behavior, and GDB
-doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),
-you can as a last resort activate sanitizers:
-
-.. code-block:: bash
-
-    cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON -D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=Release
-    make -j$(nproc)
-
-The resulting build will be around 5 times slower that a debug build,
-but it will generate valuable reports when detecting fatal exceptions.
-For more details, please consult the online documentation of
-`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>`__ and
-`ASAN <https://github.com/google/sanitizers/wiki/AddressSanitizer>`__.
+on the wiki. If you still didn't find an answer, try the debugging tools
+documented in :ref:`Debugging`. If this still didn't help, see :ref:`Community support`.
 
 ____
 
