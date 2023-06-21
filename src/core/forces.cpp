@@ -24,8 +24,6 @@
  *  The corresponding header file is forces.hpp.
  */
 
-#include "EspressoSystemInterface.hpp"
-
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -48,6 +46,7 @@
 #include "npt.hpp"
 #include "rotation.hpp"
 #include "short_range_loop.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
 #include "virtual_sites.hpp"
@@ -78,7 +77,7 @@ inline ParticleForce external_force(Particle const &p) {
 #ifdef ENGINE
   // apply a swimming force in the direction of
   // the particle's orientation axis
-  if (p.swimming().swimming) {
+  if (p.swimming().swimming and !p.swimming().is_engine_force_on_fluid) {
     f.f += p.swimming().f_swim * p.calc_director();
   }
 #endif
@@ -146,8 +145,10 @@ void init_forces_ghosts(const ParticleRange &particles) {
 void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  auto &espresso_system = EspressoSystemInterface::Instance();
-  espresso_system.update();
+#ifdef CUDA
+  auto &espresso_system = System::get_system();
+  espresso_system.gpu.update();
+#endif
 
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
@@ -225,12 +226,11 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   immersed_boundaries.volume_conservation(cell_structure);
 
   if (lattice_switch != ActiveLB::NONE) {
-    lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                           ghost_particles, time_step);
+    LB::couple_particles(thermo_virtual, particles, ghost_particles, time_step);
   }
 
 #ifdef CUDA
-  copy_forces_from_GPU(particles, this_node);
+  espresso_system.gpu.copy_forces_to_host(particles, this_node);
 #endif
 
 // VIRTUAL_SITES distribute forces

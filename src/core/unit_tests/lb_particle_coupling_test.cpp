@@ -58,7 +58,6 @@ namespace utf = boost::unit_test;
 
 #include <array>
 #include <cassert>
-#include <cmath>
 #include <cstddef>
 #include <limits>
 #include <memory>
@@ -82,7 +81,7 @@ static struct {
   Utils::Vector3d box_dimensions = Utils::Vector3d::broadcast(8.);
   Utils::Vector3i grid_dimensions = Utils::Vector3i::broadcast(8);
   auto force_md_to_lb(Utils::Vector3d const &md_force) const {
-    return (-this->time_step * this->tau / this->agrid) * md_force;
+    return (this->time_step * this->tau / this->agrid) * md_force;
   }
 } params;
 
@@ -178,15 +177,20 @@ BOOST_AUTO_TEST_CASE(rng_initial_state) {
 
 BOOST_AUTO_TEST_CASE(rng) {
   lb_lbcoupling_set_rng_state(17);
+  lb_particle_coupling.gamma = 0.2;
+
+  LB::ParticleCoupling coupling{true, params.time_step, 1.};
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 17);
   BOOST_CHECK(not lb_lbcoupling_is_seed_required());
-  auto const step1_random1 = lb_particle_coupling_noise(
-      true, 1, lb_particle_coupling.rng_counter_coupling);
-  auto const step1_random2 = lb_particle_coupling_noise(
-      true, 4, lb_particle_coupling.rng_counter_coupling);
-  auto const step1_random2_try2 = lb_particle_coupling_noise(
-      true, 4, lb_particle_coupling.rng_counter_coupling);
+  Particle test_partcl_1{};
+  test_partcl_1.id() = 1;
+  Particle test_partcl_2{};
+  test_partcl_2.id() = 4;
+  auto const step1_random1 = coupling.get_noise_term(test_partcl_1);
+  auto const step1_random2 = coupling.get_noise_term(test_partcl_2);
+  auto const step1_random2_try2 = coupling.get_noise_term(test_partcl_2);
+  BOOST_REQUIRE(step1_random1.norm() > 1e-10);
   BOOST_CHECK(step1_random1 != step1_random2);
   BOOST_CHECK(step1_random2 == step1_random2_try2);
 
@@ -196,15 +200,14 @@ BOOST_AUTO_TEST_CASE(rng) {
 
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 18);
-  auto const step2_random1 = lb_particle_coupling_noise(
-      true, 1, lb_particle_coupling.rng_counter_coupling);
-  auto const step2_random2 = lb_particle_coupling_noise(
-      true, 4, lb_particle_coupling.rng_counter_coupling);
+  auto const step2_random1 = coupling.get_noise_term(test_partcl_1);
+  auto const step2_random2 = coupling.get_noise_term(test_partcl_2);
   BOOST_CHECK(step1_random1 != step2_random1);
   BOOST_CHECK(step1_random1 != step2_random2);
 
-  auto const step3_norandom = lb_particle_coupling_noise(
-      false, 4, lb_particle_coupling.rng_counter_coupling);
+  LB::ParticleCoupling coupling_unthermalized{true, params.time_step, 0.};
+  auto const step3_norandom =
+      coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
 }
 
@@ -220,11 +223,6 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Particle p{};
   BOOST_CHECK_EQUAL(lb_particle_coupling_drift_vel_offset(p).norm(), 0);
   Utils::Vector3d expected{};
-#ifdef ENGINE
-  p.swimming().swimming = true;
-  p.swimming().v_swim = 2.;
-  expected += p.swimming().v_swim * p.calc_director();
-#endif
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
   expected += p.mu_E();
@@ -257,21 +255,15 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   Particle p{};
   p.swimming().swimming = true;
   p.swimming().f_swim = 2.;
-  p.swimming().dipole_length = 3.;
-  p.swimming().push_pull = 1;
+  p.swimming().is_engine_force_on_fluid = true;
   p.pos() = first_lb_node + Utils::Vector3d::broadcast(0.5);
-
-  auto const coupling_pos =
-      p.pos() +
-      Utils::Vector3d{0., 0., p.swimming().dipole_length / params.agrid};
 
   // swimmer coupling
   {
     if (in_local_halo(p.pos())) {
-      add_swimmer_force(p, params.time_step);
-    }
-    if (in_local_halo(coupling_pos)) {
-      auto const interpolated = LB::get_force_to_be_applied(coupling_pos);
+      LB::ParticleCoupling coupling{true, params.time_step};
+      coupling.kernel(p);
+      auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
           params.force_md_to_lb(Utils::Vector3d{0., 0., p.swimming().f_swim});
 
@@ -288,7 +280,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
               0.5 + static_cast<double>(j) * params.agrid,
               0.5 + static_cast<double>(k) * params.agrid,
           };
-          if ((pos - coupling_pos).norm() < 1e-6)
+          if ((pos - p.pos()).norm() < 1e-6)
             continue;
           if (in_local_halo(pos)) {
             auto const interpolated = LB::get_force_to_be_applied(pos);
@@ -301,10 +293,10 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   // remove force of the particle from the fluid
   {
-    if (in_local_halo(coupling_pos)) {
-      add_md_force(coupling_pos, -Utils::Vector3d{0., 0., p.swimming().f_swim},
+    if (in_local_halo(p.pos())) {
+      add_md_force(p.pos(), -Utils::Vector3d{0., 0., p.swimming().f_swim},
                    params.time_step);
-      auto const reset = LB::get_force_to_be_applied(coupling_pos);
+      auto const reset = LB::get_force_to_be_applied(p.pos());
       BOOST_REQUIRE_SMALL(reset.norm(), eps);
     }
   }
@@ -317,32 +309,23 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   auto const first_lb_node =
       lb_walberla()->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
-  auto const noise =
-      (kT > 0.) ? std::sqrt(24. * gamma * kT / params.time_step) : 0.0;
-  auto &rng = lb_particle_coupling.rng_counter_coupling;
+  lb_lbcoupling_set_gamma(gamma);
   Particle p{};
-  Utils::Vector3d expected = noise * Random::noise_uniform<RNGSalt::PARTICLES>(
-                                         rng->value(), 0, p.id());
-#ifdef ENGINE
-  p.swimming().swimming = true;
-  p.swimming().v_swim = 2.;
-  p.swimming().push_pull = 1;
-  expected += gamma * p.swimming().v_swim * p.calc_director();
-#endif
+  LB::ParticleCoupling coupling{false, params.time_step};
+  auto expected = coupling.get_noise_term(p);
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
   expected += gamma * p.mu_E();
 #endif
   p.pos() = first_lb_node + Utils::Vector3d::broadcast(0.5);
-  lb_lbcoupling_set_gamma(gamma);
 
   // coupling
   {
     if (in_local_halo(p.pos())) {
-      couple_particle(p, false, noise, rng, params.time_step);
+      coupling.kernel(p);
       BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
 
-      auto const interpolated = LB::get_force_to_be_applied(p.pos());
+      auto const interpolated = -LB::get_force_to_be_applied(p.pos());
       BOOST_CHECK_SMALL((interpolated - params.force_md_to_lb(expected)).norm(),
                         eps);
     }
@@ -365,10 +348,6 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto const first_lb_node =
       lb_walberla()->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
-  auto const noise = std::sqrt(24. * gamma * kT / params.time_step *
-                               Utils::sqr(params.agrid / params.tau));
-  auto &rng = lb_particle_coupling.rng_counter_coupling;
-
   auto const pid = 0;
   auto const skin = params.skin;
   auto const &box_l = params.box_dimensions;
@@ -381,26 +360,22 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
 #ifdef ENGINE
   set_particle_property(pid, &Particle::swimming,
-                        ParticleParametersSwimming{true, 0., 2., 1, 3.});
+                        ParticleParametersSwimming{2., true, false});
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
   set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
 
-  auto expected =
-      noise * Random::noise_uniform<RNGSalt::PARTICLES>(rng->value(), 0, pid);
+  LB::ParticleCoupling coupling{thermo_virtual, params.time_step};
   auto const p_opt = copy_particle_to_head_node(comm, pid);
-#if defined(ENGINE) or defined(LB_ELECTROHYDRODYNAMICS)
+  auto expected = Utils::Vector3d{};
   if (rank == 0) {
     auto const &p = *p_opt;
-#ifdef ENGINE
-    expected += gamma * p.swimming().v_swim * p.calc_director();
-#endif
+    expected += coupling.get_noise_term(p);
 #ifdef LB_ELECTROHYDRODYNAMICS
     expected += gamma * p.mu_E();
 #endif
   }
-#endif // defined(ENGINE) or defined(LB_ELECTROHYDRODYNAMICS)
   boost::mpi::broadcast(comm, expected, 0);
   auto const p_pos = first_lb_node + Utils::Vector3d::broadcast(0.5);
   set_particle_pos(pid, p_pos);
@@ -462,8 +437,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       lb_lbcoupling_broadcast();
       auto const particles = ::cell_structure.local_particles();
       auto const ghost_particles = ::cell_structure.ghost_particles();
-      lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                             ghost_particles, params.time_step);
+      LB::couple_particles(thermo_virtual, particles, ghost_particles,
+                           params.time_step);
       auto const p_opt = copy_particle_to_head_node(comm, pid);
       if (rank == 0) {
         auto const &p = *p_opt;
@@ -483,12 +458,12 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         if (rank == 0) {
           auto const &p = *p_opt;
           // get original LB force
-          lb_before = LB::get_force_to_be_applied(p.pos());
+          lb_before = -LB::get_force_to_be_applied(p.pos());
         }
       }
       // couple particle to LB
-      lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                             ghost_particles, params.time_step);
+      LB::couple_particles(thermo_virtual, particles, ghost_particles,
+                           params.time_step);
       {
         auto const p_opt = copy_particle_to_head_node(comm, pid);
         if (rank == 0) {
@@ -496,7 +471,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
           // check particle force
           BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
           // check LB force
-          auto const lb_after = LB::get_force_to_be_applied(p.pos());
+          auto const lb_after = -LB::get_force_to_be_applied(p.pos());
           auto const lb_expected = params.force_md_to_lb(expected) + lb_before;
           BOOST_CHECK_SMALL((lb_after - lb_expected).norm(), eps);
         }
@@ -518,6 +493,13 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         ErrorHandling::mpi_gather_runtime_errors_all(world.rank() == 0);
     for (auto const &error_message : error_messages) {
       BOOST_CHECK_EQUAL(error_message.what(), error_message_ref);
+    }
+    lb_particle_coupling.rng_counter_coupling = {};
+    if (kT == 0.) {
+      BOOST_CHECK_EQUAL(coupling.get_noise_term(Particle{}).norm(), 0.);
+    } else {
+      BOOST_CHECK_THROW(coupling.get_noise_term(Particle{}),
+                        std::runtime_error);
     }
   }
 }
@@ -565,8 +547,6 @@ BOOST_AUTO_TEST_CASE(exceptions) {
     // coupling, interpolation, boundaries
     BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
     BOOST_CHECK_THROW(lb_lbcoupling_set_rng_state(0ul), std::runtime_error);
-    BOOST_CHECK_THROW(lb_particle_coupling_noise(true, 0, OptionalCounter{}),
-                      std::runtime_error);
     BOOST_CHECK_THROW(lb_lbinterpolation_get_interpolated_velocity({}),
                       std::runtime_error);
     BOOST_CHECK_THROW(lb_lbinterpolation_add_force_density({}, {}),

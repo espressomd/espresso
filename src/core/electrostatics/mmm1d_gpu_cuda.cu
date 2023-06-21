@@ -30,8 +30,8 @@
 #include "electrostatics/mmm1d_gpu.hpp"
 #include "electrostatics/specfunc.cuh"
 
-#include "EspressoSystemInterface.hpp"
-#include "cuda_utils.cuh"
+#include "cuda/utils.cuh"
+#include "system/System.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
@@ -49,7 +49,8 @@
 #endif
 
 // the code is mostly multi-GPU capable, but ESPResSo is not yet
-constexpr int deviceCount = 1;
+static constexpr int deviceCount = 1;
+static constexpr unsigned int numThreads = 64u;
 
 #undef cudaSetDevice
 #define cudaSetDevice(d)
@@ -72,8 +73,6 @@ __constant__ int device_n_modPsi[1] = {0};
 __constant__ unsigned int device_linModPsi_offsets[2 * modpsi_order];
 __constant__ unsigned int device_linModPsi_lengths[2 * modpsi_order];
 __constant__ float device_linModPsi[modpsi_constant_size];
-
-static EspressoSystemInterface *es_system = nullptr;
 
 __device__ float dev_mod_psi_even(int n, float x) {
   return evaluateAsTaylorSeriesAt(
@@ -132,10 +131,24 @@ void CoulombMMM1DGpu::modpsi_init() {
   }
 }
 
+/** @brief Get number of blocks for a given number of operations. */
+static auto numBlocksOps(std::size_t n_ops) {
+  auto const n_ops_per_thread = n_ops / static_cast<std::size_t>(numThreads);
+  return 1u + static_cast<unsigned int>(n_ops_per_thread);
+}
+
+/** @brief Get number of blocks for a given number of particles. */
+static auto numBlocks(std::size_t n_part) {
+  auto b = numBlocksOps(Utils::sqr(n_part)); // algorithm is N-square
+  if (b > 65535u)
+    b = 65535u;
+  return b;
+}
+
 void CoulombMMM1DGpu::setup() {
-  es_system = &EspressoSystemInterface::Instance();
-  auto const box_z = static_cast<float>(es_system->box()[2]);
-  auto const n_part = es_system->npart_gpu();
+  auto &gpu_particle_data = System::get_system().gpu;
+  auto const box_z = static_cast<float>(System::get_system().box()[2]);
+  auto const n_part = gpu_particle_data.n_particles();
   if (not m_is_tuned and n_part != 0) {
     set_params(box_z, prefactor, maxPWerror, far_switch_radius, bessel_cutoff);
     tune(maxPWerror, far_switch_radius, bessel_cutoff);
@@ -173,17 +186,9 @@ void CoulombMMM1DGpu::setup() {
   }
   if (dev_energyBlocks)
     cudaFree(dev_energyBlocks);
-  cuda_safe_mem(
-      cudaMalloc((void **)&dev_energyBlocks, numBlocks() * sizeof(float)));
+  cuda_safe_mem(cudaMalloc((void **)&dev_energyBlocks,
+                           numBlocks(n_part) * sizeof(float)));
   host_npart = static_cast<unsigned int>(n_part);
-}
-
-unsigned int CoulombMMM1DGpu::numBlocks() const {
-  auto b = 1 + static_cast<unsigned int>(Utils::sqr(es_system->npart_gpu()) /
-                                         static_cast<std::size_t>(numThreads));
-  if (b > 65535)
-    b = 65535;
-  return b;
 }
 
 CoulombMMM1DGpu::~CoulombMMM1DGpu() { cudaFree(dev_forcePairs); }
@@ -331,9 +336,9 @@ void CoulombMMM1DGpu::set_params(double boxz, double prefactor,
   m_is_tuned = false;
 }
 
-__global__ void forcesKernel(const float *__restrict__ r,
-                             const float *__restrict__ q,
-                             float *__restrict__ force, std::size_t N,
+__global__ void forcesKernel(float const *const __restrict__ r,
+                             float const *const __restrict__ q,
+                             float *const __restrict__ force, std::size_t N,
                              int pairs) {
 
   constexpr auto c_2pif = 2.f * Utils::pi<float>();
@@ -419,9 +424,9 @@ __global__ void forcesKernel(const float *__restrict__ r,
   }
 }
 
-__global__ void energiesKernel(const float *__restrict__ r,
-                               const float *__restrict__ q,
-                               float *__restrict__ energy, std::size_t N,
+__global__ void energiesKernel(float const *const __restrict__ r,
+                               float const *const __restrict__ q,
+                               float *const __restrict__ energy, std::size_t N,
                                int pairs) {
 
   constexpr auto c_2pif = 2.f * Utils::pi<float>();
@@ -513,25 +518,26 @@ void CoulombMMM1DGpu::add_long_range_forces() {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
 
+  auto &gpu = System::get_system().gpu;
+  auto const positions_device = gpu.get_particle_positions_device();
+  auto const charges_device = gpu.get_particle_charges_device();
+  auto const forces_device = gpu.get_particle_forces_device();
+  auto const n_part = gpu.n_particles();
   if (pairs) {
     // if we calculate force pairs, we need to reduce them to forces
-    auto const blocksRed =
-        1 + static_cast<unsigned>(es_system->npart_gpu() /
-                                  static_cast<std::size_t>(numThreads));
-    KERNELCALL(forcesKernel, numBlocks(), numThreads, es_system->rGpuBegin(),
-               es_system->qGpuBegin(), dev_forcePairs, es_system->npart_gpu(),
-               pairs)
-    KERNELCALL(vectorReductionKernel, blocksRed, numThreads, dev_forcePairs,
-               es_system->fGpuBegin(), es_system->npart_gpu())
+    auto const numBlocksRed = numBlocksOps(n_part);
+    KERNELCALL(forcesKernel, numBlocks(n_part), numThreads, positions_device,
+               charges_device, dev_forcePairs, n_part, pairs)
+    KERNELCALL(vectorReductionKernel, numBlocksRed, numThreads, dev_forcePairs,
+               forces_device, n_part)
   } else {
-    KERNELCALL(forcesKernel, numBlocks(), numThreads, es_system->rGpuBegin(),
-               es_system->qGpuBegin(), es_system->fGpuBegin(),
-               es_system->npart_gpu(), pairs)
+    KERNELCALL(forcesKernel, numBlocks(n_part), numThreads, positions_device,
+               charges_device, forces_device, n_part, pairs)
   }
 }
 
-__global__ void scaleAndAddKernel(float *dst, float const *src, std::size_t N,
-                                  float factor) {
+__global__ void scaleAndAddKernel(float *const dst, float const *const src,
+                                  std::size_t N, float factor) {
   for (std::size_t tid = threadIdx.x + blockIdx.x * blockDim.x; tid < N;
        tid += blockDim.x * gridDim.x) {
     dst[tid] += src[tid] * factor;
@@ -545,17 +551,21 @@ void CoulombMMM1DGpu::add_long_range_energy() {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
 
+  auto &gpu = System::get_system().gpu;
+  auto const positions_device = gpu.get_particle_positions_device();
+  auto const charges_device = gpu.get_particle_charges_device();
+  auto const energy_device = gpu.get_energy_device();
+  auto const n_part = gpu.n_particles();
   auto const shared = numThreads * static_cast<unsigned>(sizeof(float));
-  KERNELCALL_shared(energiesKernel, numBlocks(), numThreads, shared,
-                    es_system->rGpuBegin(), es_system->qGpuBegin(),
-                    dev_energyBlocks, es_system->npart_gpu(), 0);
+  KERNELCALL_shared(energiesKernel, numBlocks(n_part), numThreads, shared,
+                    positions_device, charges_device, dev_energyBlocks, n_part,
+                    0);
   KERNELCALL_shared(sumKernel, 1, numThreads, shared, dev_energyBlocks,
-                    numBlocks());
+                    numBlocks(n_part));
   // we count every interaction twice, so halve the total energy
   auto constexpr factor = 0.5f;
-  KERNELCALL(scaleAndAddKernel, 1, 1,
-             &(reinterpret_cast<CUDA_energy *>(es_system->eGpu())->coulomb),
-             &dev_energyBlocks[0], 1, factor);
+  KERNELCALL(scaleAndAddKernel, 1, 1, &(energy_device->coulomb),
+             dev_energyBlocks, 1, factor);
 }
 
 float CoulombMMM1DGpu::force_benchmark() {
@@ -563,13 +573,17 @@ float CoulombMMM1DGpu::force_benchmark() {
   float elapsedTime;
   float *dev_f_benchmark;
 
-  cuda_safe_mem(cudaMalloc((void **)&dev_f_benchmark,
-                           3ul * es_system->npart_gpu() * sizeof(float)));
+  auto &gpu = System::get_system().gpu;
+  auto const positions_device = gpu.get_particle_positions_device();
+  auto const charges_device = gpu.get_particle_charges_device();
+  auto const n_part = gpu.n_particles();
+  cuda_safe_mem(
+      cudaMalloc((void **)&dev_f_benchmark, 3ul * n_part * sizeof(float)));
   cuda_safe_mem(cudaEventCreate(&eventStart));
   cuda_safe_mem(cudaEventCreate(&eventStop));
   cuda_safe_mem(cudaEventRecord(eventStart, stream[0]));
-  KERNELCALL(forcesKernel, numBlocks(), numThreads, es_system->rGpuBegin(),
-             es_system->qGpuBegin(), dev_f_benchmark, es_system->npart_gpu(), 0)
+  KERNELCALL(forcesKernel, numBlocks(n_part), numThreads, positions_device,
+             charges_device, dev_f_benchmark, n_part, 0)
   cuda_safe_mem(cudaEventRecord(eventStop, stream[0]));
   cuda_safe_mem(cudaEventSynchronize(eventStop));
   cuda_safe_mem(cudaEventElapsedTime(&elapsedTime, eventStart, eventStop));

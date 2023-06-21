@@ -72,10 +72,6 @@ public:
 private:
   bool m_is_tuned;
 
-  // CUDA parameters
-  unsigned int numThreads = 64u;
-  unsigned int numBlocks() const;
-
   // the box length currently set on the GPU
   // Needed to make sure it hasn't been modified after inter coulomb was used.
   float host_boxz = 0.f;

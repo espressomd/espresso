@@ -30,7 +30,7 @@
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
 
-#include <unordered_set>
+#include <initializer_list>
 
 static bool lb_active_check() {
   if (lattice_switch == ActiveLB::NONE) {
@@ -49,30 +49,21 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   cells_update_ghosts(Cells::DATA_PART_FORCE);
 
   // Set to store ghost particles (ids) that have already been coupled
-  std::unordered_set<int> coupled_ghost_particles;
+  LB::CouplingBookkeeping bookkeeping{};
   // Apply particle forces to the LB fluid at particle positions
   // For physical particles, also set particle velocity = fluid velocity
-  for (auto &p : cell_structure.local_particles()) {
-    if (!p.is_virtual())
-      continue;
-    if (!lb_active_check()) {
-      return;
-    }
-    if (should_be_coupled(p, coupled_ghost_particles)) {
-      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-        add_md_force(pos * to_lb_units, -p.force(), time_step);
+  for (auto const &particle_range :
+       {cell_structure.local_particles(), cell_structure.ghost_particles()}) {
+    for (auto const &p : particle_range) {
+      if (!p.is_virtual())
+        continue;
+      if (!lb_active_check()) {
+        return;
       }
-    }
-  }
-  for (auto const &p : cell_structure.ghost_particles()) {
-    if (!p.is_virtual())
-      continue;
-    if (!lb_active_check()) {
-      return;
-    }
-    if (should_be_coupled(p, coupled_ghost_particles)) {
-      for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-        add_md_force(pos * to_lb_units, -p.force(), time_step);
+      if (bookkeeping.should_be_coupled(p)) {
+        for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+          add_md_force(pos * to_lb_units, p.force(), time_step);
+        }
       }
     }
   }

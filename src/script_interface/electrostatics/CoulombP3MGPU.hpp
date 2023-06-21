@@ -91,7 +91,6 @@ public:
           get_value<int>(params, "timings"), get_value<bool>(params, "verbose"),
           get_value<bool>(params, "check_complex_residuals"));
     });
-    m_actor->request_gpu();
     set_charge_neutrality_tolerance(params);
   }
 };

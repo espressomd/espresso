@@ -19,17 +19,20 @@
 
 #include "System.hpp"
 
-#include "config/config.hpp"
-
 #include "core/cells.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
+#include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
 #include "core/rotate_system.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/Vector.hpp>
 
+#include <cassert>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -38,10 +41,82 @@ namespace System {
 
 static bool system_created = false;
 
+static Utils::Vector3b get_periodicity() {
+  return {::box_geo.periodic(0), ::box_geo.periodic(1), ::box_geo.periodic(2)};
+}
+
+static void set_periodicity(Utils::Vector3b const &value) {
+  for (int i = 0; i < 3; ++i) {
+    ::box_geo.set_periodic(i, value[i]);
+  }
+  on_periodicity_change();
+}
+
 System::System() {
   add_parameters({
+      {"box_l",
+       [this](Variant const &v) {
+         context()->parallel_try_catch([&]() {
+           auto const new_value = get_value<Utils::Vector3d>(v);
+           if (not(new_value > Utils::Vector3d::broadcast(0.))) {
+             throw std::domain_error("Attribute 'box_l' must be > 0");
+           }
+           box_geo.set_length(new_value);
+           on_boxl_change();
+         });
+       },
+       []() { return ::box_geo.length(); }},
+      {"min_global_cut",
+       [this](Variant const &v) {
+         context()->parallel_try_catch([&]() {
+           auto const new_value = get_value<double>(v);
+           if (new_value < 0. and new_value != INACTIVE_CUTOFF) {
+             throw std::domain_error("Attribute 'min_global_cut' must be >= 0");
+           }
+           set_min_global_cut(new_value);
+         });
+       },
+       []() { return ::get_min_global_cut(); }},
+      {"periodicity",
+       [this](Variant const &v) {
+         context()->parallel_try_catch(
+             [&]() { set_periodicity(get_value<Utils::Vector3b>(v)); });
+       },
+       []() { return get_periodicity(); }},
       {"max_oif_objects", ::max_oif_objects},
   });
+}
+
+void System::do_construct(VariantMap const &params) {
+  /* When reloading the system state from a checkpoint file,
+   * the order of global variables instantiation matters.
+   * The @c box_l must be set before any other global variable.
+   * All these globals re-initialize the cell system, and we
+   * cannot use the default-constructed @c box_geo when e.g.
+   * long-range interactions exist in the system, otherwise
+   * runtime errors about the local geometry being smaller
+   * than the interaction range would be raised.
+   */
+  auto const valid_params = get_valid_parameters();
+  std::set<std::string> const skip{{"box_l", "periodicity", "min_global_cut"}};
+  std::set<std::string> const allowed{valid_params.begin(), valid_params.end()};
+
+  m_instance = std::make_shared<::System::System>();
+  ::System::set_system(m_instance);
+  m_instance->init();
+
+  do_set_parameter("box_l", params.at("box_l"));
+  if (params.count("periodicity")) {
+    do_set_parameter("periodicity", params.at("periodicity"));
+  }
+  if (params.count("min_global_cut")) {
+    do_set_parameter("min_global_cut", params.at("min_global_cut"));
+  }
+  for (auto const &[name, value] : params) {
+    if (skip.count(name) == 0 and allowed.count(name) != 0) {
+      do_set_parameter(name, value);
+    }
+  }
 }
 
 /** Rescale all particle positions in direction @p dir by a factor @p scale.
@@ -122,6 +197,16 @@ Variant System::do_call_method(std::string const &name,
     rotate_system(get_value<double>(parameters, "phi"),
                   get_value<double>(parameters, "theta"),
                   get_value<double>(parameters, "alpha"));
+    return {};
+  }
+  if (name == "session_shutdown") {
+    if (m_instance) {
+      if (&::System::get_system() == m_instance.get()) {
+        ::System::reset_system();
+      }
+      assert(m_instance.use_count() == 1l);
+      m_instance.reset();
+    }
     return {};
   }
   return {};

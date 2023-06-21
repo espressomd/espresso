@@ -16,5 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "SystemInterface.hpp"
-#include "config/config.hpp"
+#include "CudaHostAllocator.hpp"
+
+#include <cstddef>
+#include <new>
+
+void cuda_malloc_host(void **p, std::size_t n) {
+  cudaError_t error = cudaMallocHost(p, n);
+
+  if (error) {
+    throw std::bad_alloc();
+  }
+}
+
+void cuda_free_host(void *p) { cudaFreeHost(p); }

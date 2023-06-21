@@ -430,6 +430,9 @@ General features
 
 -  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
 
+-  ``DIPOLE_FIELD_TRACKING`` This enables the CPU implementation of the dipolar direct sum
+   to calculate the total dipole field at particle positions.
+
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
 

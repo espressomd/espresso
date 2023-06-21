@@ -90,6 +90,12 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const local = particle_short_range_energy_contribution(pid);
     return mpi_reduce_sum(context()->get_comm(), local);
   }
+#ifdef DIPOLE_FIELD_TRACKING
+  if (name == "calc_long_range_fields") {
+    calc_long_range_fields();
+    return {};
+  }
+#endif
   if (name == "particle_neighbor_pids") {
     on_observable_calc();
     std::unordered_map<int, std::vector<int>> dict;

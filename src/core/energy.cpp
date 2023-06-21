@@ -22,24 +22,23 @@
  *  Energy calculation.
  */
 
-#include "EspressoSystemInterface.hpp"
 #include "Observable_stat.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
-#include "cuda_interface.hpp"
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-
 #include "short_range_loop.hpp"
+#include "system/System.hpp"
 
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
 
 #include <utils/Span.hpp>
+#include <utils/mpi/iall_gatherv.hpp>
 
 #include <memory>
 
@@ -52,14 +51,11 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   }
 
   auto &obs_energy = *obs_energy_ptr;
-
-#ifdef CUDA
-  clear_energy_on_GPU();
+#if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
+  auto &gpu_particle_data = System::get_system().gpu;
+  gpu_particle_data.clear_energy_on_device();
+  gpu_particle_data.update();
 #endif
-
-  auto &espresso_system = EspressoSystemInterface::Instance();
-  espresso_system.update();
-
   on_observable_calc();
 
   auto const local_parts = cell_structure.local_particles();
@@ -104,8 +100,8 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 
   Constraints::constraints.add_energy(local_parts, get_sim_time(), obs_energy);
 
-#ifdef CUDA
-  auto const energy_host = copy_energy_from_GPU();
+#if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
+  auto const energy_host = gpu_particle_data.copy_energy_to_host();
   if (!obs_energy.coulomb.empty())
     obs_energy.coulomb[1] += static_cast<double>(energy_host.coulomb);
   if (!obs_energy.dipolar.empty())
@@ -154,3 +150,14 @@ double particle_short_range_energy_contribution(int pid) {
   }
   return ret;
 }
+
+#ifdef DIPOLE_FIELD_TRACKING
+void calc_long_range_fields() {
+  auto particles = cell_structure.local_particles();
+  Dipoles::calc_long_range_field(particles);
+}
+
+REGISTER_CALLBACK(calc_long_range_fields)
+
+void mpi_calc_long_range_fields() { mpi_call_all(calc_long_range_fields); }
+#endif

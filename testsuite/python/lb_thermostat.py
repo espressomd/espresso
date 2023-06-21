@@ -109,6 +109,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
             partcl_vel.reshape((-1, 3)), vel_range, n_bins, 0.02, KT,
             mass=self.partcl_mass)
 
+    @utx.skipIfMissingFeatures(["MASS"])
     def test_temperature_with_particles(self):
         n_partcls_per_type = 50
         partcls_global_gamma = self.system.part.add(
@@ -137,6 +138,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
         np.testing.assert_allclose(fluid_kT, KT, rtol=0.03)
 
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_friction(self):
         """apply force and measure if the average velocity matches expectation"""
 

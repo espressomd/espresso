@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CUDA_HOST_ALLOCATOR_HPP
-#define ESPRESSO_CUDA_HOST_ALLOCATOR_HPP
+
+#pragma once
 
 #include <cstddef>
 #include <type_traits>
@@ -62,4 +62,3 @@ template <class T> struct CudaHostAllocator {
 };
 
 template <class T> using pinned_vector = std::vector<T, CudaHostAllocator<T>>;
-#endif

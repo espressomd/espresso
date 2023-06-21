@@ -186,6 +186,25 @@ struct LongRangeEnergy : public boost::static_visitor<double> {
 #endif
 };
 
+#ifdef DIPOLE_FIELD_TRACKING
+struct LongRangeField : public boost::static_visitor<void> {
+  ParticleRange const &m_particles;
+  explicit LongRangeField(ParticleRange const &particles)
+      : m_particles(particles) {}
+
+  void operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
+    actor->dipole_field_at_part(m_particles);
+  }
+
+  template <typename T,
+            std::enable_if_t<!traits::has_dipole_fields<T>::value> * = nullptr>
+  void operator()(std::shared_ptr<T> const &) const {
+    runtimeErrorMsg() << "Dipoles field calculation not implemented by "
+                      << "dipolar method " << Utils::demangle<T>();
+  }
+};
+#endif
+
 void calc_long_range_force(ParticleRange const &particles) {
   if (magnetostatics_actor) {
     boost::apply_visitor(LongRangeForce(particles), *magnetostatics_actor);
@@ -199,6 +218,14 @@ double calc_energy_long_range(ParticleRange const &particles) {
   }
   return 0.;
 }
+
+#ifdef DIPOLE_FIELD_TRACKING
+void calc_long_range_field(ParticleRange const &particles) {
+  if (magnetostatics_actor) {
+    boost::apply_visitor(LongRangeField(particles), *magnetostatics_actor);
+  }
+}
+#endif
 
 namespace detail {
 bool flag_all_reduce(bool flag) {

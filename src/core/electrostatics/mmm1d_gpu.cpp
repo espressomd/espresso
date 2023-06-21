@@ -23,11 +23,12 @@
 
 #include "electrostatics/mmm1d_gpu.hpp"
 
-#include "EspressoSystemInterface.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
+#include "system/GpuParticleData.hpp"
+#include "system/System.hpp"
 
 #include <stdexcept>
 
@@ -51,10 +52,10 @@ CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
     throw std::domain_error("Parameter 'bessel_cutoff' must be > 0");
   }
 
-  auto &system = EspressoSystemInterface::Instance();
-  system.requestFGpu();
-  system.requestRGpu();
-  system.requestQGpu();
+  auto &gpu_particle_data = System::get_system().gpu;
+  gpu_particle_data.enable_property(GpuParticleData::prop::force);
+  gpu_particle_data.enable_property(GpuParticleData::prop::pos);
+  gpu_particle_data.enable_property(GpuParticleData::prop::q);
   if (this_node == 0) {
     modpsi_init();
   }
@@ -74,7 +75,7 @@ void CoulombMMM1DGpu::sanity_checks_cell_structure() const {
 }
 
 void CoulombMMM1DGpu::tune() {
-  EspressoSystemInterface::Instance().init();
+  System::get_system().gpu.update();
   if (this_node == 0) {
     setup();
     tune(maxPWerror, far_switch_radius, bessel_cutoff);

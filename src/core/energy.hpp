@@ -51,3 +51,8 @@ double mpi_observable_compute_energy();
 double particle_short_range_energy_contribution(int pid);
 
 #endif
+#ifdef DIPOLE_FIELD_TRACKING
+/** Calculate dipole fields. */
+void calc_long_range_fields();
+void mpi_calc_long_range_fields();
+#endif
