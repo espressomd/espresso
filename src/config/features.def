@@ -117,3 +117,4 @@ STOKESIAN_DYNAMICS external
 WALBERLA external
 WALBERLA_FFT external
 VALGRIND external
+CALIPER external

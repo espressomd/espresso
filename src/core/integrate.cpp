@@ -57,10 +57,12 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#include <profiler/profiler.hpp>
-
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
+
+#ifdef CALIPER
+#include <caliper/cali.h>
+#endif
 
 #ifdef VALGRIND
 #include <callgrind.h>
@@ -256,7 +258,9 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
 }
 
 int integrate(int n_steps, int reuse_forces) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
 
   // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
@@ -268,7 +272,9 @@ int integrate(int n_steps, int reuse_forces) {
   // Additional preparations for the first integration step
   if (reuse_forces == INTEG_REUSE_FORCES_NEVER or
       (recalc_forces and reuse_forces != INTEG_REUSE_FORCES_ALWAYS)) {
-    ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
+#ifdef CALIPER
+    CALI_MARK_BEGIN("Initial Force Calculation");
+#endif
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
@@ -286,7 +292,9 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
     }
 
-    ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
+#ifdef CALIPER
+    CALI_MARK_END("Initial Force Calculation");
+#endif
   }
 
   lb_lbcoupling_activate();
@@ -307,10 +315,14 @@ int integrate(int n_steps, int reuse_forces) {
   CALLGRIND_START_INSTRUMENTATION;
 #endif
   // Integration loop
-  ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+#ifdef CALIPER
+  CALI_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+#endif
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
-    ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
+#ifdef CALIPER
+    CALI_CXX_MARK_LOOP_ITERATION(integration_loop, step);
+#endif
 
     auto particles = cell_structure.local_particles();
 
@@ -440,7 +452,9 @@ int integrate(int n_steps, int reuse_forces) {
 
   } // for-loop over integration steps
   LeesEdwards::update_box_params();
-  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
+#ifdef CALIPER
+  CALI_CXX_MARK_LOOP_END(integration_loop);
+#endif
 
 #ifdef VALGRIND
   CALLGRIND_STOP_INSTRUMENTATION;

@@ -105,6 +105,7 @@ set_default_value with_coverage_python ${with_coverage}
 set_default_value with_ubsan false
 set_default_value with_asan false
 set_default_value with_static_analysis false
+set_default_value with_caliper false
 set_default_value myconfig "default"
 set_default_value build_procs ${ci_procs}
 set_default_value check_procs ${build_procs}
@@ -157,6 +158,10 @@ fi
 
 if [ "${with_ccache}" = true ]; then
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=ON"
+fi
+
+if [ "${with_caliper}" = true ]; then
+    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CALIPER=ON"
 fi
 
 if [ "${with_hdf5}" = true ]; then

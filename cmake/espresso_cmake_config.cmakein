@@ -19,6 +19,8 @@
 
 #cmakedefine ESPRESSO_BUILD_WITH_VALGRIND
 
+#cmakedefine ESPRESSO_BUILD_WITH_CALIPER
+
 #define PACKAGE_NAME "${PROJECT_NAME}"
 
 /**

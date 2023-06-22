@@ -41,6 +41,7 @@
 #include "observables/initialize.hpp"
 #include "pair_criteria/initialize.hpp"
 #include "particle_data/initialize.hpp"
+#include "profiler/initialize.hpp"
 #include "reaction_methods/initialize.hpp"
 #include "shapes/initialize.hpp"
 #include "system/initialize.hpp"
@@ -68,6 +69,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Observables::initialize(f);
   PairCriteria::initialize(f);
   Particles::initialize(f);
+  Profiler::initialize(f);
   Shapes::initialize(f);
   System::initialize(f);
   VirtualSites::initialize(f);

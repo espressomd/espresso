@@ -770,7 +770,7 @@ The following options control features from external libraries:
 The following options control code instrumentation:
 
 * ``ESPRESSO_BUILD_WITH_VALGRIND``: Build with Valgrind instrumentation
-* ``ESPRESSO_BUILD_WITH_PROFILER``: Build with Caliper profiler annotations
+* ``ESPRESSO_BUILD_WITH_CALIPER``: Build with Caliper instrumentation
 * ``ESPRESSO_BUILD_WITH_MSAN``: Compile C++ code with memory sanitizer
 * ``ESPRESSO_BUILD_WITH_ASAN``: Compile C++ code with address sanitizer
 * ``ESPRESSO_BUILD_WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
@@ -901,6 +901,12 @@ the clone. You can automate this task by adapting the following commands:
   .. code-block:: bash
 
     sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
+
+* ``ESPRESSO_BUILD_WITH_CALIPER``
+
+  .. code-block:: bash
+
+    sed -ri 's|GIT_REPOSITORY +.+/Caliper.git|GIT_REPOSITORY /work/username/caliper|' CMakeLists.txt
 
 
 Compiling, testing and installing

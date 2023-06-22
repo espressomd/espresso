@@ -100,6 +100,7 @@ option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
 option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND "Build with Valgrind instrumentation" OFF)
+option(ESPRESSO_BUILD_WITH_CALIPER "Build with Caliper instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CPPCHECK "Run Cppcheck during compilation" OFF)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(ESPRESSO_BUILD_WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
@@ -127,8 +128,6 @@ option(
 option(ESPRESSO_WARNINGS_ARE_ERRORS
        "Treat warnings as errors during compilation" OFF)
 option(ESPRESSO_BUILD_WITH_CCACHE "Use ccache compiler invocation." OFF)
-option(ESPRESSO_BUILD_WITH_PROFILER "Build with Caliper profiler annotations."
-       OFF)
 option(ESPRESSO_INSIDE_DOCKER "Set this to ON when running inside Docker." OFF)
 mark_as_advanced(ESPRESSO_INSIDE_DOCKER)
 set(ESPRESSO_TEST_TIMEOUT "300"
@@ -652,6 +651,33 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
                                      "-DESPRESSO_BUILD_WITH_AVX_KERNELS")
     endfunction()
     espresso_enable_avx2_support(espresso_avx_flags_callback)
+  endif()
+endif()
+
+if(ESPRESSO_BUILD_WITH_CALIPER)
+  # cmake-format: off
+  include(FetchContent)
+  FetchContent_Declare(
+    caliper
+    GIT_REPOSITORY https://github.com/LLNL/Caliper.git
+    GIT_TAG        v2.9.1
+  )
+  if(NOT DEFINED caliper_SOURCE_DIR OR NOT EXISTS "${caliper_SOURCE_DIR}")
+    FetchContent_Populate(caliper)
+  endif()
+  # cmake-format: on
+  set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
+  set(CALIPER_WITH_MPI on CACHE BOOL "")
+  if(ESPRESSO_BUILD_WITH_CUDA)
+    set(CALIPER_WITH_NVTX on CACHE BOOL "")
+    set(CALIPER_WITH_CUPTI on CACHE BOOL "")
+  endif()
+  set(CALIPER_BUILD_SHARED_LIBS on CACHE BOOL "")
+  add_subdirectory("${caliper_SOURCE_DIR}")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
+                                              "GNU")
+    target_compile_options(caliper-services
+                           PRIVATE -Wno-deprecated-declarations)
   endif()
 endif()
 
