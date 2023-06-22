@@ -21,6 +21,11 @@ add_library(espresso_profiler INTERFACE)
 add_library(espresso::profiler ALIAS espresso_profiler)
 target_include_directories(espresso_profiler INTERFACE "include")
 
+if(ESPRESSO_BUILD_WITH_VALGRIND)
+  target_include_directories(espresso_profiler
+                             INTERFACE "${VALGRIND_INCLUDE_DIRS}")
+endif()
+
 if(ESPRESSO_BUILD_WITH_PROFILER)
   find_package(caliper REQUIRED)
 

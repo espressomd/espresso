@@ -116,4 +116,4 @@ GSL external
 STOKESIAN_DYNAMICS external
 WALBERLA external
 WALBERLA_FFT external
-VALGRIND_MARKERS external
+VALGRIND external

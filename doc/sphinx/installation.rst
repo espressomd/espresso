@@ -769,7 +769,7 @@ The following options control features from external libraries:
 
 The following options control code instrumentation:
 
-* ``ESPRESSO_BUILD_WITH_VALGRIND_MARKERS``: Build with valgrind instrumentation markers
+* ``ESPRESSO_BUILD_WITH_VALGRIND``: Build with Valgrind instrumentation
 * ``ESPRESSO_BUILD_WITH_PROFILER``: Build with Caliper profiler annotations
 * ``ESPRESSO_BUILD_WITH_MSAN``: Compile C++ code with memory sanitizer
 * ``ESPRESSO_BUILD_WITH_ASAN``: Compile C++ code with address sanitizer

@@ -62,6 +62,10 @@
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 
+#ifdef VALGRIND
+#include <callgrind.h>
+#endif
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -69,10 +73,6 @@
 #include <functional>
 #include <stdexcept>
 #include <utility>
-
-#ifdef VALGRIND_MARKERS
-#include <callgrind.h>
-#endif
 
 #ifdef WALBERLA
 #ifdef WALBERLA_STATIC_ASSERT
@@ -303,7 +303,7 @@ int integrate(int n_steps, int reuse_forces) {
   auto caught_sigint = false;
   auto caught_error = false;
 
-#ifdef VALGRIND_MARKERS
+#ifdef VALGRIND
   CALLGRIND_START_INSTRUMENTATION;
 #endif
   // Integration loop
@@ -442,7 +442,7 @@ int integrate(int n_steps, int reuse_forces) {
   LeesEdwards::update_box_params();
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 
-#ifdef VALGRIND_MARKERS
+#ifdef VALGRIND
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
