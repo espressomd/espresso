@@ -576,6 +576,8 @@ no arguments are passed, sensible default values will be used instead.
     +---------------------+-------------------------------------------------+
     | ``--cuda-memcheck`` | ``cuda-memcheck python script.py``              |
     +---------------------+-------------------------------------------------+
+    | ``--kernprof``      | ``kernprof --line-by-line --view script.py``    |
+    +---------------------+-------------------------------------------------+
 
 .. _GDB:
 
