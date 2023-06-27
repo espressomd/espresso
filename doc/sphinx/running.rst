@@ -579,6 +579,16 @@ no arguments are passed, sensible default values will be used instead.
     | ``--kernprof``      | ``kernprof --line-by-line --view script.py``    |
     +---------------------+-------------------------------------------------+
 
+.. _Profiling:
+
+Profiling
+~~~~~~~~~
+
+|es| is designed to leverage highly parallel computing environments and GPU
+accelerators. To facilitate the investigation of communication bottlenecks
+and inefficient algorithms, several profilers are natively supported,
+with annotation markers placed in performance-critical parts of the C++ core.
+
 .. _GDB:
 
 GDB
@@ -708,6 +718,23 @@ inspect the code and the state of all local variables:
     (gdb) ptype time_step
     type = double
 
+.. _CUDA_GDB:
+
+CUDA-GDB
+~~~~~~~~
+
+.. note::
+
+    Requires a CUDA debug build, enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_CUDA=ON -D CMAKE_BUILD_TYPE=Debug``.
+
+The CUDA-GDB debugger is used to observe and control
+the execution of CUDA applications. CUDA-GDB can catch signals, suspend the
+program execution at user-defined break points and expose values in CUDA
+variables. When a signal is caught inside a CUDA kernel, the stack trace
+only shows device function calls. When stepping into a CUDA kernel launch,
+the stack trace shows both host and device function calls.
+
 .. _ASAN:
 
 ASAN
@@ -739,10 +766,304 @@ array accesses out of bounds, signed integer overflows, etc.
 
 For more details, please consult the tool online documentation [6]_.
 
+.. _Caliper:
+
+Caliper
+~~~~~~~
+
+.. note::
+
+    Requires external features ``CALIPER``, enabled with the CMake option
+    ``-D ESPRESSO_BUILD_WITH_CALIPER=ON``.
+
+Caliper [1]_ is a low-overhead annotation library for C++.
+By default, |es| comes with several markers in performance-critical parts
+of the main integration loop.
+
+In the example below, a P3M simulation is profiled to reveal that the
+short-range loop (N-squared summation for Lennard-Jones and Coulomb)
+and long-range forces (FFT summation) contribute equally to the runtime:
+
+.. code-block:: none
+
+    $ CALI_CONFIG_PROFILE=runtime-report ./pypresso ../samples/p3m.py --cpu
+    Path                         Inclusive time Exclusive time    Time %
+    integrate                             14.18           0.01      0.08
+      Integration loop                    13.84           0.43      2.88
+        force_calc                        13.41           0.20      1.35
+          copy_forces_from_GPU             0.01           0.01      0.07
+          short_range_loop                 6.55           6.55     44.02
+          calc_long_range_forces           6.40           6.40     43.00
+          init_forces                      0.24           0.24      1.58
+          copy_particles_to_GPU            0.01           0.01      0.07
+
+For the GPU implementation of the P3M algorithm, the long-range force
+calculation is cheaper, however the transfer of particle data to and from
+the GPU incur additional costs that are not negligible:
+
+.. code-block:: none
+
+    $ CALI_CONFIG_PROFILE=runtime-report ./pypresso ../samples/p3m.py --gpu
+    Path                         Inclusive time Exclusive time    Time %
+    integrate                             14.30           0.03      0.14
+      Integration loop                    13.87           1.76      7.90
+        force_calc                        12.12           0.82      3.68
+          copy_forces_from_GPU             2.09           2.09      9.42
+          short_range_loop                 3.20           3.20     14.38
+          calc_long_range_forces           3.75           3.75     16.87
+          init_forces                      1.25           1.25      5.61
+          copy_particles_to_GPU            1.01           1.01      4.56
+
+For a more fine-grained report on GPU kernels:
+
+.. code-block:: none
+
+    $ CALI_CONFIG=cuda-activity-report ./pypresso ../samples/p3m.py --gpu
+
+To introduce custom markers at the C++ level, add ``CALI`` macros inside
+performance-critical functions to register them:
+
+.. code-block:: c++
+
+    void force_calculation(CellStructure &cell_structure, double time_step) {
+    #ifdef CALIPER
+      CALI_CXX_MARK_FUNCTION;
+    #endif
+      /* ... */
+    }
+
+To introduce custom markers at the Python level,
+use a :class:`~espressomd.profiler.Caliper` object to fence code blocks:
+
+.. code-block:: python
+
+    import espressomd.profiler
+    cali = espressomd.profiler.Caliper()
+    cali.begin_section(label="calc_energies")
+    energies = system.analysis.energy()
+    cali.end_section(label="calc_energies")
+
+.. _Valgrind:
+
+Valgrind
+~~~~~~~~
+
+.. note::
+
+    Requires external features ``VALGRIND`` and debug symbols,
+    enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_VALGRIND=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo``,
+    as well as external dependencies:
+
+    .. code-block:: bash
+
+        sudo apt install valgrind kcachegrind graphviz
+        python3 -m pip install --user gprof2dot
+
+The Valgrind [2]_ framework brings several
+tools to examine a program runtime performance.
+
+.. _Callgrind:
+
+Callgrind
+"""""""""
+
+The Callgrind [3]_ tool generates a graph of function
+calls. This type of instrumentation has a lot of overhead, therefore the time
+spent in functions might not always be reliable, and the program execution
+is slowed down significantly. To remediate the latter, it is common to
+restrict instrumentation to a specific part of the code using markers.
+By default, |es| comes with markers in the integration loop,
+which is the most performance-critical part of the core.
+
+In the following example, the P3M algorithm is profiled to generate a call
+graph that can be converted to a static graph using ``gprof2dot`` and ``dot``:
+
+.. code-block:: bash
+
+    ./pypresso --valgrind="--tool=callgrind --instr-atstart=no" ../samples/p3m.py --cpu
+    callgrind_out=$(ls -t -1 callgrind.out.*[[:digit:]] | head -1)
+    python3 -m gprof2dot --format=callgrind --output=${callgrind_out}.dot ${callgrind_out}
+    dot -Tpdf ${callgrind_out}.dot -o ${callgrind_out}.pdf
+
+The Valgrind output file generally follows the pattern ``callgrind.out.pid``,
+where ``pid`` is the actualy process id. The ``${callgrind_out}`` variable
+is populated with the return value of a subshell commands that finds the most
+recent output file that matches that pattern.
+
+It is also possible to open the output file in KCachegrind [4]_ to browse
+the call graph interactively and visualize the time spent in each function:
+
+.. code-block:: bash
+
+    kcachegrind ${callgrind_out}
+
+.. _perf:
+
+perf
+~~~~
+
+.. note::
+
+    Requires debug symbols, enabled with the CMake option
+    ``-D CMAKE_BUILD_TYPE=DebugOptimized``,
+    as well as external dependencies. On Ubuntu:
+
+    .. code-block:: bash
+
+        sudo apt install linux-tools-generic
+
+    On Debian:
+
+    .. code-block:: bash
+
+        sudo apt install linux-perf
+
+    On Fedora:
+
+    .. code-block:: bash
+
+        sudo apt install perf
+
+The perf [7]_ tool generates a graph of function calls
+with time measurements.
+It requires privileges that can only be set as root.
+
+In the following example, the P3M algorithm is profiled to generate a call
+graph in a file called ``perf.data``, which is then read to generate a report:
+
+.. code-block:: bash
+
+    original_value=$(sysctl -n kernel.perf_event_paranoid)
+    sudo sysctl -w kernel.perf_event_paranoid=3
+    perf record --call-graph dwarf ./pypresso ../samples/p3m.py --cpu
+    sudo sysctl -w kernel.perf_event_paranoid=${original_value}
+    perf report --call-graph
+
+When inside the report, press ``/`` to search for a function name,
+e.g. ``integrate``, then highlight the symbol and press ``+`` to expand
+its call graph. Press ``q`` to exit the program, or close open tabs.
+
+A large amount of data will be written to disk during the recording step,
+typically several hundred megabytes. If the hard drive write latency
+is too high, the following warning will be emitted:
+
+.. code-block:: none
+
+    Warning:
+    Processed 17655 events and lost 7 chunks!
+    Check IO/CPU overload!
+
+Using a tmpfs drive, perf can write the file directly to RAM
+(mounted as a filesystem), which has better latency.
+To get a list of mounted tmpfs drives and their capacity:
+
+.. code-block:: none
+
+    $ mount | grep "tmpfs"
+    tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)
+    $ df -h /dev/shm/
+    Filesystem      Size  Used Avail Use% Mounted on
+    tmpfs            32G  320K   32G   1% /dev/shm
+
+To use a tmpfs drive as storage:
+
+.. code-block:: bash
+
+    perf record --call-graph dwarf -o /dev/shm/perf.data ../samples/p3m.py --cpu
+    perf report --call-graph -i /dev/shm/perf.data
+    rm /dev/shm/perf.data
+
+.. _kernprof:
+
+kernprof
+~~~~~~~~
+
+.. note::
+
+    Requires an external dependency:
+
+    .. code-block:: bash
+
+        python3 -m pip install --user line_profiler
+
+kernprof [8]_ is a low-overhead Python profiler.
+It supports two instrumentation modes: ``line_profile`` and ``cProfile``.
+The ``--builtin`` option injects a ``LineProfiler`` object and a ``profile``
+function in the global namespace of the instrumented script.
+The latter can be used as a decorator (``@profile``),
+as a context manager (``with profile:``), or
+as begin/end markers (``profile.enable()``, ``profile.disable()``)
+to select the regions of code to instrument,
+although the ``line_profile`` mode only supports the decorator behavior.
+The ``line_profile`` mode cannot instrument code from imported modules,
+whereas the ``cProfile`` mode can.
+
+To make the instrumented script executable with and without kernprof
+when using decorators, add the following code at the top of the script:
+
+.. code-block:: python
+
+    if "line_profiler" not in dir():
+        def profile(func):
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+To run kernprof in ``line_profile`` mode:
+
+.. code-block:: bash
+
+    ./pypresso --kernprof="--line-by-line --view" ../samples/p3m.py --cpu
+
+To later view the results again:
+
+.. code-block:: bash
+
+    python3 -m line_profiler p3m.py.lprof
+
+To run kernprof in ``cProfile`` mode:
+
+.. code-block:: bash
+
+    ./pypresso --kernprof="" ../samples/p3m.py --cpu
+
+To interactively read the data:
+
+.. code-block:: none
+
+    python3 -m pstats p3m.py.prof
+    p3m.py.prof% sort time
+    p3m.py.prof% reverse
+    p3m.py.prof% stats
+      ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+           2  1.090    0.545    1.090    0.545   /opt/espressomd/integrate.py:156(run)
+           1  1.817    1.817    1.817    1.817   /opt/espressomd/electrostatics.py:71(_activate)
+          10  2.619    0.262    2.619    0.262   /opt/espressomd/integrate.py:101(run)
+    p3m.py.prof% quit
+
 ____
+
+.. [1]
+   https://software.llnl.gov/Caliper/
+
+.. [2]
+   https://valgrind.org/docs/manual/
+
+.. [3]
+   https://valgrind.org/docs/manual/cl-manual.html
+
+.. [4]
+   https://kcachegrind.github.io/html/Home.html
 
 .. [5]
    https://github.com/google/sanitizers/wiki/AddressSanitizer
 
 .. [6]
    https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+
+.. [7]
+   https://perf.wiki.kernel.org/index.php/Main_Page
+
+.. [8]
+   https://github.com/pyutils/line_profiler
