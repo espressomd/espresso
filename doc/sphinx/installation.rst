@@ -197,7 +197,7 @@ To run the samples and tutorials, start by installing the following packages:
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
-version <= 4.4 and can be executed by any of these tools:
+:cite:`kluyver16a` version <= 4.4 and can be executed by any of these tools:
 
 * `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__

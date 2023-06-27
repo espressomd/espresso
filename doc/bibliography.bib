@@ -193,6 +193,19 @@
   pages = {083615},
 }
 
+@InProceedings{boehme16a,
+  author    = {Boehme, David and Gamblin, Todd and Beckingsale, David and Bremer, Peer-Timo and Gimenez, Alfredo and LeGendre, Matthew and Pearce, Olga and Schulz, Martin},
+  title     = {{C}aliper: Performance Introspection for {HPC} Software Stacks},
+  booktitle = {{SC} '16: Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis},
+  year      = {2016},
+  note      = {LLNL-CONF-699263},
+  publisher = {{IEEE} Press},
+  location  = {Salt Lake City, Utah, USA},
+  month     = nov,
+  isbn      = {978-1-4673-8815-3},
+  pages     = {550--560},
+}
+
 @Article{brady88a,
   author  = {Brady, John F. and Bossis, Georges},
   title   = {{S}tokesian Dynamics},
@@ -625,6 +638,19 @@ doi = {10.1002/cnm.2757},
   issn = {0010-4655},
 }
 
+@InProceedings{kluyver16a,
+  author    = {Kluyver, Thomas and Ragan-Kelley, Benjamin and P{\'e}rez, Fernando and Granger, Brian E and Bussonnier, Matthias and Frederic, Jonathan and Kelley, Kyle and Hamrick, Jessica B and Grout, Jason and Corlay, Sylvain and Ivanov, Paul and Avila, Dami{\'a}n and Abdalla, Safia and Willing, Carol and {Jupyter Development Team}},
+  title     = {{J}upyter {N}otebooks---a publishing format for reproducible computational workflows},
+  booktitle = {Positioning and Power in Academic Publishing: Players, Agents and Agendas},
+  year      = {2016},
+  editor    = {Loizides, Fernando and Schmidt, Birgit},
+  publisher = {IOS Press},
+  location  = {Amsterdam},
+  isbn      = {978-1-61499-649-1},
+  pages     = {87--90},
+  doi       = {10.3233/978-1-61499-649-1-87},
+}
+
 @Article{kolafa92a,
   author = {Kolafa, Jiri and Perram, John W.},
   title = {Cutoff Errors in the {E}wald Summation Formulae for Point Charge Systems},
@@ -759,6 +785,38 @@ doi                        = {10.1140/epjst/e2016-60324-3},
   doi = {10.1103/PhysRevE.59.3733},
 }
 
+@TechReport{misc-cuda-gdb,
+  author      = {{NVIDIA}},
+  title       = {{CU-GDB}},
+  type        = {User manual},
+  number      = {Release 12.1},
+  year        = {2023},
+  month       = apr,
+  institution = {NVIDIA},
+  url         = {https://docs.nvidia.com/cuda/pdf/cuda-gdb.pdf},
+}
+
+@Misc{misc-kernprof,
+  author    = {Kern, Robert and Crall, Jon and Olsen, Brett and {OpenPyUtils community contributors}},
+  title     = {{line_profiler} and {kernprof}},
+  year      = {2008},
+  url       = {https://github.com/pyutils/line_profiler},
+}
+
+@Misc{misc-perf,
+  author    = {Torvalds, Linus},
+  title     = {{perf}: {L}inux profiling with performance counters},
+  year      = {2009},
+  url       = {https://perf.wiki.kernel.org/index.php/Main_Page},
+}
+
+@Misc{misc-ubsan,
+  author    = {{LLVM Developers}},
+  title     = {Undefined Behavior Sanitizer},
+  year      = {2017},
+  url       = {https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html},
+}
+
 @Book{moshier89a,
   title={Methods and Programs for Mathematical Functions},
   author={Moshier, Stephen Lloyd Baluk},
@@ -777,6 +835,33 @@ doi                        = {10.1140/epjst/e2016-60324-3},
   number    = {12},
   pages     = {2193--2222},
   doi       = {10.1351/pac199668122193},
+}
+
+@Article{nethercote03a,
+  author    = {Nethercote, Nicholas and Seward, Julian},
+  title     = {{V}algrind: A Program Supervision Framework},
+  journal   = {Electronic Notes in Theoretical Computer Science},
+  year      = {2003},
+  volume    = {89},
+  number    = {2},
+  month     = oct,
+  pages     = {44--66},
+  issn      = {1571-0661},
+  doi       = {10.1016/S1571-0661(04)81042-9},
+}
+
+@InProceedings{nethercote07a,
+  author    = {Nethercote, Nicholas and Seward, Julian},
+  title     = {{V}algrind: A Framework for Heavyweight Dynamic Binary Instrumentation},
+  booktitle = {Proceedings of the 28th {ACM} {SIGPLAN} Conference on Programming Language Design and Implementation},
+  year      = {2007},
+  publisher = {Association for Computing Machinery},
+  location  = {San Diego, California, USA},
+  isbn      = {978-1-59593-633-2},
+  month     = jun,
+  pages     = {89--100},
+  doi       = {10.1145/1250734.1250746},
+  address   = {New York, New York, USA},
 }
 
 @Article{neumann85b,
@@ -923,6 +1008,18 @@ isbn = {978-1-4419-6350-5},
 publisher = {Springer New York},
 }
 
+@InProceedings{serebryany12a,
+  author    = {Serebryany, Konstantin and Bruening, Derek and Potapenko, Alexander and Vyukov, Dmitry},
+  title     = {{A}ddress{S}anitizer: A Fast Address Sanity Checker},
+  booktitle = {{USENIX} Annual Technical Conference},
+  year      = {2012},
+  publisher = {USENIX Association},
+  location  = {Boston, Massachusetts, USA},
+  month     = jun,
+  url       = {https://www.usenix.org/conference/atc12/addresssanitizer-fast-address-sanity-checker},
+  address   = {Berkeley, California, USA},
+}
+
 @Article{smith81a,
   author = {Smith, E. R.},
   title = {Electrostatic energy in ionic crystals},
@@ -975,6 +1072,15 @@ number = {2},
 pages = {347--350},
 year = {1985},
 doi = {10.1016/0021-9991(85)90151-2},
+}
+
+@Book{stallman11a,
+  author    = {Stallman, Richard and Pesch, Roland and Shebs, Stan},
+  title     = {Debugging with {GDB}: The {GNU} source-level debugger},
+  year      = {2011},
+  edition   = {10th},
+  publisher = {{GNU} Press},
+  isbn      = {978-0-9831592-3-0},
 }
 
 @PhdThesis{strebel99a,
@@ -1128,6 +1234,21 @@ doi = {10.1016/0021-9991(85)90151-2},
   number    = {14},
   pages     = {1789--1816},
   doi       = {10.1140/epjst/e2019-800186-9},
+}
+
+@InProceedings{weidendorfer04a,
+  author    = {Weidendorfer, Josef and Kowarschik, Markus and Trinitis, Carsten},
+  title     = {A Tool Suite for Simulation Based Analysis of Memory Access Behavior},
+  booktitle = {Computational Science - ICCS 2004},
+  year      = {2004},
+  editor    = {Bubak, Marian and van Albada, Geert Dick and Sloot, Peter M. A. and Dongarra, Jack},
+  volume    = {3038},
+  series    = {Lecture Notes in Computer Science},
+  publisher = {Springer Berlin Heidelberg},
+  isbn      = {978-3-540-24688-6},
+  pages     = {440--447},
+  doi       = {10.1007/978-3-540-24688-6_58},
+  address   = {Berlin, Heidelberg},
 }
 
 @Article{widom63a,

@@ -603,7 +603,7 @@ GDB
 
         sudo apt install gdb
 
-The GNU Debugger (GDB) is used to observe and control
+The GNU Debugger (GDB) :cite:`stallman11a` is used to observe and control
 the execution of C++ applications. GDB can catch signals, suspend the
 program execution at user-defined break points, expose the content of
 C++ variables and run C++ functions that have no side effects.
@@ -728,7 +728,7 @@ CUDA-GDB
     Requires a CUDA debug build, enabled with the CMake options
     ``-D ESPRESSO_BUILD_WITH_CUDA=ON -D CMAKE_BUILD_TYPE=Debug``.
 
-The CUDA-GDB debugger is used to observe and control
+The CUDA-GDB debugger :cite:`misc-cuda-gdb` is used to observe and control
 the execution of CUDA applications. CUDA-GDB can catch signals, suspend the
 program execution at user-defined break points and expose values in CUDA
 variables. When a signal is caught inside a CUDA kernel, the stack trace
@@ -745,7 +745,7 @@ ASAN
     Requires specific compiler and linker flags, enabled with the CMake option
     ``-D ESPRESSO_BUILD_WITH_ASAN=ON -D CMAKE_BUILD_TYPE=RelWithAssert``.
 
-The AddressSanitizer (ASAN) is a memory error detection
+The AddressSanitizer (ASAN) :cite:`serebryany12a` is a memory error detection
 tool. It detects memory leaks and bugs caused by dangling references.
 
 For more details, please consult the tool online documentation [5]_.
@@ -760,7 +760,7 @@ UBSAN
     Requires specific compiler and linker flags, enabled with the CMake option
     ``-D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=RelWithAssert``.
 
-The UndefinedBehaviorSanitizer (UBSAN) is a detection tool
+The UndefinedBehaviorSanitizer (UBSAN) :cite:`misc-ubsan` is a detection tool
 for undefined behavior. It detects bugs caused by dangling references,
 array accesses out of bounds, signed integer overflows, etc.
 
@@ -776,7 +776,7 @@ Caliper
     Requires external features ``CALIPER``, enabled with the CMake option
     ``-D ESPRESSO_BUILD_WITH_CALIPER=ON``.
 
-Caliper [1]_ is a low-overhead annotation library for C++.
+Caliper [1]_ :cite:`boehme16a` is a low-overhead annotation library for C++.
 By default, |es| comes with several markers in performance-critical parts
 of the main integration loop.
 
@@ -860,7 +860,7 @@ Valgrind
         sudo apt install valgrind kcachegrind graphviz
         python3 -m pip install --user gprof2dot
 
-The Valgrind [2]_ framework brings several
+The Valgrind [2]_ :cite:`nethercote07a,nethercote03a` framework brings several
 tools to examine a program runtime performance.
 
 .. _Callgrind:
@@ -868,7 +868,7 @@ tools to examine a program runtime performance.
 Callgrind
 """""""""
 
-The Callgrind [3]_ tool generates a graph of function
+The Callgrind [3]_ :cite:`weidendorfer04a` tool generates a graph of function
 calls. This type of instrumentation has a lot of overhead, therefore the time
 spent in functions might not always be reliable, and the program execution
 is slowed down significantly. To remediate the latter, it is common to
@@ -925,7 +925,7 @@ perf
 
         sudo apt install perf
 
-The perf [7]_ tool generates a graph of function calls
+The perf [7]_ :cite:`misc-perf` tool generates a graph of function calls
 with time measurements.
 It requires privileges that can only be set as root.
 
@@ -987,7 +987,7 @@ kernprof
 
         python3 -m pip install --user line_profiler
 
-kernprof [8]_ is a low-overhead Python profiler.
+kernprof [8]_ :cite:`misc-kernprof` is a low-overhead Python profiler.
 It supports two instrumentation modes: ``line_profile`` and ``cProfile``.
 The ``--builtin`` option injects a ``LineProfiler`` object and a ``profile``
 function in the global namespace of the instrumented script.
