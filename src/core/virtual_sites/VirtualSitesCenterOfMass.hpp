@@ -20,8 +20,8 @@
  */
 #pragma once
 
-#ifndef VIRTUAL_SITES_CENTER_OF_MASS_HPP
-#define VIRTUAL_SITES_CENTER_OF_MASS_HPP
+#ifndef VIRTUAL_SITES_CENTER_OF_MASS
+#define VIRTUAL_SITES_CENTER_OF_MASS
 
 /** \file
  *  This file contains routine to handle virtual sites at the center of mass of
@@ -39,15 +39,14 @@
  *  - update virtual sites
  */
 
-#include "script_interface/ObjectHandle.hpp"
 #include "config/config.hpp"
+#include "script_interface/ObjectHandle.hpp"
 #include <map>
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 
 /** @brief Base class for virtual sites implementations */
-class VirtualSitesCenterOfMass : ObjectHandle
-{
+class VirtualSitesCenterOfMass : ObjectHandle {
 public:
   VirtualSitesCenterOfMass() = default;
 
@@ -57,10 +56,10 @@ public:
    * @brief Update positions and velocities of virtual sites.
    */
   virtual void update() const {}
-  
+
   /** @brief Back-transfer forces to non-virtual particles. */
   virtual void back_transfer_forces() const {}
-  
+
   /**  @brief Store (mol_id, virtual_site_particle_id) pairs */
   std::unordered_map<int, int> vitual_site_id_for_mol_id() {}
 

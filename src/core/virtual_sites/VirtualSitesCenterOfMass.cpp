@@ -36,14 +36,14 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
-#include <unordered_map>
 #include <functional>
+#include <unordered_map>
 
 void VirtualSitesCenterOfMass::update() const {
 
   // com_by_mol_id initialization
   for (const auto &[mol_id, vs_id] : vitual_site_id_for_mol_id) {
-		com_by_mol_id.emplace( std::make_pair( mol_id, std::make_shared<ComInfo>() ) );
+    com_by_mol_id.emplace(std::make_pair(mol_id, std::make_shared<ComInfo>()));
   }
 
   auto const particles = cell_structure.local_particles();
@@ -52,15 +52,18 @@ void VirtualSitesCenterOfMass::update() const {
   for (const auto &p : particles) {
     if (com_by_mol_id.find(p.mol_id) != com_by_mol_id.end()) {
       com_by_mol_id[p.mol_id]->total_mass += p.mass();
-      com_by_mol_id[p.mol_id]->weighted_position_sum += p.mass() * p.pos(); // Are these the unforlded positions?
+      com_by_mol_id[p.mol_id]->weighted_position_sum +=
+          p.mass() * p.pos(); // Are these the unforlded positions?
     }
   }
 
   // Reduction operation
   for (auto &kv : com_by_mol_id) {
-    auto const tot_mass = boost::mpi::all_reduce(comm_cart, kv.second->total_mass, std::plus());
+    auto const tot_mass =
+        boost::mpi::all_reduce(comm_cart, kv.second->total_mass, std::plus());
     kv.second->total_mass = tot_mass;
-    auto const weighted_position_sum = boost::mpi::all_reduce(comm_cart, kv.second->weighted_position_sum, std::plus());
+    auto const weighted_position_sum = boost::mpi::all_reduce(
+        comm_cart, kv.second->weighted_position_sum, std::plus());
     kv.second->weighted_position_sum = weighted_position_sum;
   }
 
@@ -68,9 +71,11 @@ void VirtualSitesCenterOfMass::update() const {
   int vs_id;
 
   for (auto &[mol_id, com_info] : com_by_mol_id) {
-    com = com_info->weighted_position_sum / com_info->total_mass; // Is '/' definend in Utils::Vector3d?
+    com = com_info->weighted_position_sum /
+          com_info->total_mass; // Is '/' definend in Utils::Vector3d?
     vs_id = vitual_site_id_for_mol_id[mol_id];
-    auto vs_ptr = cell_structure.get_local_particle(vs_id); // When has the VS been defined? 
+    auto vs_ptr = cell_structure.get_local_particle(
+        vs_id); // When has the VS been defined?
     if (vs_ptr == nullptr) {
       continue;
     } else {
@@ -101,7 +106,8 @@ void VirtualSitesCenterOfMass::back_transfer_forces() const {
     p_mol_id = p.mol_id();
     vs_id = vitual_site_id_for_mol_id[p_mol_id];
     auto vs_ptr = cell_structure.get_local_particle(vs_id);
-    p.force() += (p.mass() / com_by_mol_id[p_mol_id]->total_mass ) * vs_ptr->force();
+    p.force() +=
+        (p.mass() / com_by_mol_id[p_mol_id]->total_mass) * vs_ptr->force();
   }
 }
 
