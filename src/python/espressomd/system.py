@@ -227,6 +227,7 @@ class System(ScriptInterfaceHelper):
         import atexit
 
         def session_shutdown():
+            self.actors.clear()
             self.call_method("session_shutdown")
         atexit.register(session_shutdown)
 

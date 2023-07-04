@@ -29,6 +29,7 @@
 #include "forces_inline.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -80,7 +81,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     double dist = 0.;
     Utils::Vector3d dist_vec;
     m_shape->calculate_dist(folded_pos, dist, dist_vec);
-    auto const coulomb_kernel = Coulomb::pair_force_kernel();
+    auto const &coulomb = System::get_system().coulomb;
+    auto const coulomb_kernel = coulomb.pair_force_kernel();
 
 #ifdef DPD
     Utils::Vector3d dpd_force{};
@@ -137,7 +139,8 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
   auto const &ia_params = get_ia_param(p.type(), part_rep.type());
 
   if (checkIfInteraction(ia_params)) {
-    auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+    auto const &coulomb = System::get_system().coulomb;
+    auto const coulomb_kernel = coulomb.pair_energy_kernel();
     double dist = 0.0;
     Utils::Vector3d vec;
     m_shape->calculate_dist(folded_pos, dist, vec);

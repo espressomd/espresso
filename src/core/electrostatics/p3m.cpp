@@ -243,10 +243,10 @@ void CoulombP3M::init() {
 
   sanity_checks();
 
+  auto const &solver = Coulomb::get_coulomb().solver;
   double elc_layer = 0.;
-  if (auto elc_actor = get_actor_by_type<ElectrostaticLayerCorrection>(
-          electrostatics_actor)) {
-    elc_layer = elc_actor->elc.space_layer;
+  if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {
+    elc_layer = actor->elc.space_layer;
   }
 
   p3m.local_mesh.calc_local_ca_mesh(p3m.params, local_geo, skin, elc_layer);
@@ -566,7 +566,8 @@ public:
 
   void setup_logger(bool verbose) override {
 #ifdef CUDA
-    auto const on_gpu = has_actor_of_type<CoulombP3MGPU>(electrostatics_actor);
+    auto const &solver = Coulomb::get_coulomb().solver;
+    auto const on_gpu = has_actor_of_type<CoulombP3MGPU>(solver);
 #else
     auto const on_gpu = false;
 #endif
@@ -580,9 +581,9 @@ public:
 
   boost::optional<std::string>
   layer_correction_veto_r_cut(double r_cut) const override {
-    if (auto elc_actor = get_actor_by_type<ElectrostaticLayerCorrection>(
-            electrostatics_actor)) {
-      return elc_actor->veto_r_cut(r_cut);
+    auto const &solver = Coulomb::get_coulomb().solver;
+    if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {
+      return actor->veto_r_cut(r_cut);
     }
     return {};
   }
@@ -612,7 +613,8 @@ public:
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, alpha_L);
 #ifdef CUDA
-    if (has_actor_of_type<CoulombP3MGPU>(electrostatics_actor)) {
+    auto const &solver = Coulomb::get_coulomb().solver;
+    if (has_actor_of_type<CoulombP3MGPU>(solver)) {
       ks_err = p3mgpu_k_space_error(m_prefactor, mesh, cao, p3m.sum_qpart,
                                     p3m.sum_q2, alpha_L);
     } else
@@ -659,6 +661,7 @@ public:
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
     auto mesh_density = m_mesh_density_min;
+    auto const &solver = Coulomb::get_coulomb().solver;
     while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       if (m_tune_mesh) {
@@ -680,7 +683,7 @@ public:
       if (trial_time >= 0.) {
         /* the optimum r_cut for this mesh is the upper limit for higher meshes,
            everything else is slower */
-        if (has_actor_of_type<CoulombP3M>(electrostatics_actor)) {
+        if (has_actor_of_type<CoulombP3M>(solver)) {
           m_r_cut_iL_max = trial_params.r_cut_iL;
         }
 

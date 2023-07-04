@@ -33,6 +33,7 @@
 #include <utils/Vector.hpp>
 
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include <functional>
 

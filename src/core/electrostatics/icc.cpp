@@ -93,7 +93,7 @@ static void force_calc_icc(
         }
       });
 
-  Coulomb::calc_long_range_force(particles);
+  Coulomb::get_coulomb().calc_long_range_force(particles);
 }
 
 void ICCStar::iteration(CellStructure &cell_structure,
@@ -107,11 +107,11 @@ void ICCStar::iteration(CellStructure &cell_structure,
     return;
   }
 
-  auto const prefactor =
-      boost::apply_visitor(GetCoulombPrefactor(), *electrostatics_actor);
+  auto const prefactor = boost::apply_visitor(GetCoulombPrefactor(),
+                                              *(Coulomb::get_coulomb().solver));
   auto const pref = 1. / (prefactor * 2. * Utils::pi());
-  auto const kernel = Coulomb::pair_force_kernel();
-  auto const elc_kernel = Coulomb::pair_force_elc_kernel();
+  auto const kernel = Coulomb::get_coulomb().pair_force_kernel();
+  auto const elc_kernel = Coulomb::get_coulomb().pair_force_elc_kernel();
   icc_cfg.citeration = 0;
 
   auto global_max_rel_diff = 0.;
@@ -273,17 +273,17 @@ void ICCStar::sanity_check() const {
 }
 
 void ICCStar::sanity_checks_active_solver() const {
-  if (electrostatics_actor) {
-    boost::apply_visitor(SanityChecksICC(), *electrostatics_actor);
+  if (Coulomb::get_coulomb().solver) {
+    boost::apply_visitor(SanityChecksICC(), *(Coulomb::get_coulomb().solver));
   } else {
     throw std::runtime_error("An electrostatics solver is needed by ICC");
   }
 }
 
 void update_icc_particles() {
-  if (electrostatics_extension) {
+  if (Coulomb::get_coulomb().extension) {
     if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
-            electrostatics_extension.get_ptr())) {
+            Coulomb::get_coulomb().extension.get_ptr())) {
       (**icc).iteration(cell_structure, cell_structure.local_particles(),
                         cell_structure.ghost_particles());
     }

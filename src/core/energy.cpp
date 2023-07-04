@@ -64,7 +64,8 @@ std::shared_ptr<Observable_stat> calculate_energy() {
     obs_energy.kinetic[0] += calc_kinetic_energy(p);
   }
 
-  auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+  auto const &system = System::get_system();
+  auto const coulomb_kernel = system.coulomb.pair_energy_kernel();
   auto const dipoles_kernel = Dipoles::pair_energy_kernel();
 
   short_range_loop(
@@ -90,7 +91,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  obs_energy.coulomb[1] = Coulomb::calc_energy_long_range(local_parts);
+  obs_energy.coulomb[1] = system.coulomb.calc_energy_long_range(local_parts);
 #endif
 
 #ifdef DIPOLES
@@ -133,7 +134,8 @@ double particle_short_range_energy_contribution(int pid) {
   }
 
   if (auto const p = cell_structure.get_local_particle(pid)) {
-    auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+    auto const &coulomb = System::get_system().coulomb;
+    auto const coulomb_kernel = coulomb.pair_energy_kernel();
     auto kernel = [&ret, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
                       Particle const &p, Particle const &p1,
                       Utils::Vector3d const &vec) {

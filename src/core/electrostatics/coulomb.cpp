@@ -32,7 +32,7 @@
 #include "errorhandling.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "partCfg_global.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/checks/charge_neutrality.hpp>
@@ -44,6 +44,8 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/collectives/gather.hpp>
+#include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -55,45 +57,42 @@
 #include <stdexcept>
 #include <type_traits>
 
-boost::optional<ElectrostaticsActor> electrostatics_actor;
-boost::optional<ElectrostaticsExtension> electrostatics_extension;
-
 namespace Coulomb {
 
-void sanity_checks() {
-  if (electrostatics_actor) {
-    boost::apply_visitor([](auto &actor) { actor->sanity_checks(); },
-                         *electrostatics_actor);
+Solver const &get_coulomb() { return System::get_system().coulomb; }
+
+void Solver::sanity_checks() const {
+  if (solver) {
+    boost::apply_visitor([](auto const &actor) { actor->sanity_checks(); },
+                         *solver);
   }
 }
 
-void on_coulomb_change() {
-  visit_active_actor_try_catch([](auto &actor) { actor->init(); },
-                               electrostatics_actor);
+void Solver::on_coulomb_change() {
+  reinit_on_observable_calc = true;
+  visit_active_actor_try_catch([](auto &actor) { actor->init(); }, solver);
 }
 
-void on_boxl_change() {
+void Solver::on_boxl_change() {
   visit_active_actor_try_catch([](auto &actor) { actor->on_boxl_change(); },
-                               electrostatics_actor);
+                               solver);
 }
 
-void on_node_grid_change() {
-  if (electrostatics_actor) {
+void Solver::on_node_grid_change() {
+  if (solver) {
     boost::apply_visitor([](auto &actor) { actor->on_node_grid_change(); },
-                         *electrostatics_actor);
+                         *solver);
   }
 }
 
-void on_periodicity_change() {
+void Solver::on_periodicity_change() {
   visit_active_actor_try_catch(
-      [](auto &actor) { actor->on_periodicity_change(); },
-      electrostatics_actor);
+      [](auto &actor) { actor->on_periodicity_change(); }, solver);
 }
 
-void on_cell_structure_change() {
+void Solver::on_cell_structure_change() {
   visit_active_actor_try_catch(
-      [](auto &actor) { actor->on_cell_structure_change(); },
-      electrostatics_actor);
+      [](auto &actor) { actor->on_cell_structure_change(); }, solver);
 }
 
 struct LongRangePressure : public boost::static_visitor<Utils::Vector9d> {
@@ -127,10 +126,10 @@ private:
   ParticleRange const &m_particles;
 };
 
-Utils::Vector9d calc_pressure_long_range(ParticleRange const &particles) {
-  if (electrostatics_actor) {
-    return boost::apply_visitor(LongRangePressure(particles),
-                                *electrostatics_actor);
+Utils::Vector9d
+Solver::calc_pressure_long_range(ParticleRange const &particles) const {
+  if (solver) {
+    return boost::apply_visitor(LongRangePressure(particles), *solver);
   }
   return {};
 }
@@ -167,9 +166,9 @@ struct ShortRangeCutoff : public boost::static_visitor<double> {
   }
 };
 
-double cutoff() {
-  if (electrostatics_actor) {
-    return boost::apply_visitor(ShortRangeCutoff(), *electrostatics_actor);
+double Solver::cutoff() const {
+  if (solver) {
+    return boost::apply_visitor(ShortRangeCutoff(), *solver);
   }
   return -1.0;
 }
@@ -188,9 +187,12 @@ struct EventOnObservableCalc : public boost::static_visitor<void> {
 #endif // P3M
 };
 
-void on_observable_calc() {
-  if (electrostatics_actor) {
-    boost::apply_visitor(EventOnObservableCalc(), *electrostatics_actor);
+void Solver::on_observable_calc() {
+  if (reinit_on_observable_calc) {
+    if (solver) {
+      boost::apply_visitor(EventOnObservableCalc(), *solver);
+    }
+    reinit_on_observable_calc = false;
   }
 }
 
@@ -279,16 +281,15 @@ private:
   ParticleRange const &m_particles;
 };
 
-void calc_long_range_force(ParticleRange const &particles) {
-  if (electrostatics_actor) {
-    boost::apply_visitor(LongRangeForce(particles), *electrostatics_actor);
+void Solver::calc_long_range_force(ParticleRange const &particles) const {
+  if (solver) {
+    boost::apply_visitor(LongRangeForce(particles), *solver);
   }
 }
 
-double calc_energy_long_range(ParticleRange const &particles) {
-  if (electrostatics_actor) {
-    return boost::apply_visitor(LongRangeEnergy(particles),
-                                *electrostatics_actor);
+double Solver::calc_energy_long_range(ParticleRange const &particles) const {
+  if (solver) {
+    return boost::apply_visitor(LongRangeEnergy(particles), *solver);
   }
   return 0.;
 }

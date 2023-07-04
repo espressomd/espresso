@@ -25,6 +25,8 @@
 
 #include "actor/traits.hpp"
 
+#include "electrostatics/solver.hpp"
+
 #include "electrostatics/debye_hueckel.hpp"
 #include "electrostatics/elc.hpp"
 #include "electrostatics/icc.hpp"
@@ -47,29 +49,6 @@
 #include <memory>
 #include <type_traits>
 
-using ElectrostaticsActor =
-    boost::variant<std::shared_ptr<DebyeHueckel>,
-#ifdef P3M
-                   std::shared_ptr<CoulombP3M>,
-#ifdef CUDA
-                   std::shared_ptr<CoulombP3MGPU>,
-#endif // CUDA
-                   std::shared_ptr<ElectrostaticLayerCorrection>,
-#endif // P3M
-                   std::shared_ptr<CoulombMMM1D>,
-#ifdef MMM1D_GPU
-                   std::shared_ptr<CoulombMMM1DGpu>,
-#endif // MMM1D_GPU
-#ifdef SCAFACOS
-                   std::shared_ptr<CoulombScafacos>,
-#endif // SCAFACOS
-                   std::shared_ptr<ReactionField>>;
-
-using ElectrostaticsExtension = boost::variant<std::shared_ptr<ICCStar>>;
-
-extern boost::optional<ElectrostaticsActor> electrostatics_actor;
-extern boost::optional<ElectrostaticsExtension> electrostatics_extension;
-
 /** Get the electrostatics prefactor. */
 struct GetCoulombPrefactor : public boost::static_visitor<double> {
   template <typename T>
@@ -79,7 +58,6 @@ struct GetCoulombPrefactor : public boost::static_visitor<double> {
 };
 
 namespace Coulomb {
-
 namespace traits {
 
 #ifdef P3M
@@ -113,35 +91,6 @@ template <> struct has_pressure<CoulombScafacos> : std::false_type {};
 template <> struct has_pressure<CoulombMMM1D> : std::false_type {};
 
 } // namespace traits
-
-/** @brief Check if the system is charge-neutral. */
-void check_charge_neutrality(double relative_tolerance);
-
-Utils::Vector9d calc_pressure_long_range(ParticleRange const &particles);
-
-void sanity_checks();
-double cutoff();
-
-void on_observable_calc();
-void on_coulomb_change();
-void on_boxl_change();
-void on_node_grid_change();
-void on_periodicity_change();
-void on_cell_structure_change();
-
-void calc_long_range_force(ParticleRange const &particles);
-double calc_energy_long_range(ParticleRange const &particles);
-
-namespace detail {
-bool flag_all_reduce(bool flag);
-} // namespace detail
-
-} // namespace Coulomb
-#else // ELECTROSTATICS
-#include <cstddef>
-namespace Coulomb {
-constexpr std::size_t pressure_n() { return 0; }
-constexpr std::size_t energy_n() { return 0; }
 } // namespace Coulomb
 #endif // ELECTROSTATICS
 #endif

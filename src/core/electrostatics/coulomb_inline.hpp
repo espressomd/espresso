@@ -23,6 +23,7 @@
 #include "config/config.hpp"
 
 #include "electrostatics/coulomb.hpp"
+#include "electrostatics/solver.hpp"
 
 #include "Particle.hpp"
 
@@ -30,6 +31,9 @@
 #include <utils/demangle.hpp>
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>
+
+#include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include <functional>
 #include <memory>
@@ -39,8 +43,8 @@
 namespace Coulomb {
 
 struct ShortRangeForceKernel
-    : public boost::static_visitor<boost::optional<std::function<
-          Utils::Vector3d(double, Utils::Vector3d const &, double)>>> {
+    : public boost::static_visitor<
+          boost::optional<Solver::ShortRangeForceKernel>> {
 
   using kernel_type = result_type::value_type;
 
@@ -70,8 +74,8 @@ struct ShortRangeForceKernel
 };
 
 struct ShortRangeForceCorrectionsKernel
-    : public boost::static_visitor<boost::optional<
-          std::function<void(Particle &, Particle &, double)>>> {
+    : public boost::static_visitor<
+          boost::optional<Solver::ShortRangeForceCorrectionsKernel>> {
 
   using kernel_type = result_type::value_type;
 
@@ -91,19 +95,9 @@ struct ShortRangeForceCorrectionsKernel
 #endif // P3M
 };
 
-inline ShortRangeForceKernel::result_type pair_force_kernel() {
-#ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangeForceKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
-  }
-#endif // ELECTROSTATICS
-  return {};
-}
-
 struct ShortRangePressureKernel
-    : public boost::static_visitor<boost::optional<std::function<Utils::Matrix<
-          double, 3, 3>(double, Utils::Vector3d const &, double)>>> {
+    : public boost::static_visitor<
+          boost::optional<Solver::ShortRangePressureKernel>> {
 
   using kernel_type = result_type::value_type;
 
@@ -111,16 +105,11 @@ struct ShortRangePressureKernel
   template <typename T,
             std::enable_if_t<traits::has_pressure<T>::value> * = nullptr>
   result_type operator()(std::shared_ptr<T> const &ptr) const {
-    result_type pressure_kernel = {};
-    if (auto const force_kernel_opt = pair_force_kernel()) {
-      pressure_kernel =
-          kernel_type{[force_kernel = *force_kernel_opt](
-                          double q1q2, Utils::Vector3d const &d, double dist) {
-            auto const force = force_kernel(q1q2, d, dist);
-            return Utils::tensor_product(force, d);
-          }};
-    }
-    return pressure_kernel;
+    auto const &actor = *ptr;
+    return kernel_type{
+        [&actor](double q1q2, Utils::Vector3d const &d, double dist) {
+          return Utils::tensor_product(actor.pair_force(q1q2, d, dist), d);
+        }};
   }
 
   template <typename T,
@@ -132,9 +121,8 @@ struct ShortRangePressureKernel
 };
 
 struct ShortRangeEnergyKernel
-    : public boost::static_visitor<boost::optional<
-          std::function<double(Particle const &, Particle const &, double,
-                               Utils::Vector3d const &, double)>>> {
+    : public boost::static_visitor<
+          boost::optional<Solver::ShortRangeEnergyKernel>> {
 
   using kernel_type = result_type::value_type;
 
@@ -177,31 +165,45 @@ struct ShortRangeEnergyKernel
 #endif // ELECTROSTATICS
 };
 
-inline ShortRangeForceCorrectionsKernel::result_type pair_force_elc_kernel() {
+inline boost::optional<Solver::ShortRangeForceKernel>
+Solver::pair_force_kernel() const {
 #ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangeForceCorrectionsKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
+  if (solver) {
+    auto const visitor = Coulomb::ShortRangeForceKernel();
+    return boost::apply_visitor(visitor, *solver);
   }
 #endif // ELECTROSTATICS
   return {};
 }
 
-inline ShortRangePressureKernel::result_type pair_pressure_kernel() {
+inline boost::optional<Solver::ShortRangeForceCorrectionsKernel>
+Solver::pair_force_elc_kernel() const {
 #ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangePressureKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
+  if (solver) {
+    auto const visitor = Coulomb::ShortRangeForceCorrectionsKernel();
+    return boost::apply_visitor(visitor, *solver);
   }
 #endif // ELECTROSTATICS
   return {};
 }
 
-inline ShortRangeEnergyKernel::result_type pair_energy_kernel() {
+inline boost::optional<Solver::ShortRangePressureKernel>
+Solver::pair_pressure_kernel() const {
 #ifdef ELECTROSTATICS
-  if (electrostatics_actor) {
-    auto const visitor = ShortRangeEnergyKernel();
-    return boost::apply_visitor(visitor, *electrostatics_actor);
+  if (solver) {
+    auto const visitor = Coulomb::ShortRangePressureKernel();
+    return boost::apply_visitor(visitor, *solver);
+  }
+#endif // ELECTROSTATICS
+  return {};
+}
+
+inline boost::optional<Solver::ShortRangeEnergyKernel>
+Solver::pair_energy_kernel() const {
+#ifdef ELECTROSTATICS
+  if (solver) {
+    auto const visitor = Coulomb::ShortRangeEnergyKernel();
+    return boost::apply_visitor(visitor, *solver);
   }
 #endif // ELECTROSTATICS
   return {};

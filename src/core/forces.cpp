@@ -145,8 +145,8 @@ void init_forces_ghosts(const ParticleRange &particles) {
 void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-#ifdef CUDA
   auto &espresso_system = System::get_system();
+#ifdef CUDA
   espresso_system.gpu.update();
 #endif
 
@@ -157,9 +157,9 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  if (electrostatics_extension) {
+  if (espresso_system.coulomb.extension) {
     if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
-            electrostatics_extension.get_ptr())) {
+            espresso_system.coulomb.extension.get_ptr())) {
       (**icc).iteration(cell_structure, particles, ghost_particles);
     }
   }
@@ -168,12 +168,12 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
   calc_long_range_forces(particles);
 
-  auto const elc_kernel = Coulomb::pair_force_elc_kernel();
-  auto const coulomb_kernel = Coulomb::pair_force_kernel();
+  auto const elc_kernel = espresso_system.coulomb.pair_force_elc_kernel();
+  auto const coulomb_kernel = espresso_system.coulomb.pair_force_kernel();
   auto const dipoles_kernel = Dipoles::pair_force_kernel();
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff();
+  auto const coulomb_cutoff = espresso_system.coulomb.cutoff();
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
@@ -255,7 +255,7 @@ void calc_long_range_forces(const ParticleRange &particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_force(particles);
+  Coulomb::get_coulomb().calc_long_range_force(particles);
 
 #endif // ELECTROSTATICS
 

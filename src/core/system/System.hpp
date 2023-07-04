@@ -23,6 +23,7 @@
 
 #include "GpuParticleData.hpp"
 #include "ResourceCleanup.hpp"
+#include "electrostatics/solver.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -44,10 +45,12 @@ public:
     gpu.init();
 #endif
   }
+  Coulomb::Solver coulomb;
 };
 
 System &get_system();
 void set_system(std::shared_ptr<System> new_instance);
 void reset_system();
+bool is_system_set();
 
 } // namespace System

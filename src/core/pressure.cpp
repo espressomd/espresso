@@ -37,6 +37,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
 #include "short_range_loop.hpp"
+#include "system/System.hpp"
 #include "virtual_sites.hpp"
 
 #include "config/config.hpp"
@@ -71,8 +72,9 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
     add_kinetic_virials(p, obs_pressure);
   }
 
-  auto const coulomb_force_kernel = Coulomb::pair_force_kernel();
-  auto const coulomb_pressure_kernel = Coulomb::pair_pressure_kernel();
+  auto const &coulomb = System::get_system().coulomb;
+  auto const coulomb_force_kernel = coulomb.pair_force_kernel();
+  auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
   short_range_loop(
       [&obs_pressure,
@@ -104,7 +106,7 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(local_parts);
+  auto const coulomb_pressure = coulomb.calc_pressure_long_range(local_parts);
   boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
 #endif
 #ifdef DIPOLES
