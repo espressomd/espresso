@@ -170,7 +170,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
   auto const elc_kernel = espresso_system.coulomb.pair_force_elc_kernel();
   auto const coulomb_kernel = espresso_system.coulomb.pair_force_kernel();
-  auto const dipoles_kernel = Dipoles::pair_force_kernel();
+  auto const dipoles_kernel = espresso_system.dipoles.pair_force_kernel();
 
 #ifdef ELECTROSTATICS
   auto const coulomb_cutoff = espresso_system.coulomb.cutoff();
@@ -179,7 +179,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipoles::cutoff();
+  auto const dipole_cutoff = espresso_system.dipoles.cutoff();
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
@@ -261,7 +261,7 @@ void calc_long_range_forces(const ParticleRange &particles) {
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipoles::calc_long_range_force(particles);
+  Dipoles::get_dipoles().calc_long_range_force(particles);
 #endif // DIPOLES
 }
 

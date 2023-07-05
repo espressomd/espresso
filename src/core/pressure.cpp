@@ -111,7 +111,7 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  Dipoles::calc_pressure_long_range();
+  Dipoles::get_dipoles().calc_pressure_long_range();
 #endif
 
 #ifdef VIRTUAL_SITES

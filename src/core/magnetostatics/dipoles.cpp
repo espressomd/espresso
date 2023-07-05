@@ -32,6 +32,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -43,67 +44,61 @@
 #include <cstdio>
 #include <stdexcept>
 
-boost::optional<MagnetostaticsActor> magnetostatics_actor;
-
 namespace Dipoles {
 
-void sanity_checks() {
-  if (magnetostatics_actor) {
-    boost::apply_visitor([](auto &actor) { actor->sanity_checks(); },
-                         *magnetostatics_actor);
+Solver const &get_dipoles() { return System::get_system().dipoles; }
+
+void Solver::sanity_checks() const {
+  if (solver) {
+    boost::apply_visitor([](auto &actor) { actor->sanity_checks(); }, *solver);
   }
 }
 
-void on_dipoles_change() {
-  visit_active_actor_try_catch([](auto &actor) { actor->init(); },
-                               magnetostatics_actor);
+void Solver::on_dipoles_change() {
+  reinit_on_observable_calc = true;
+  visit_active_actor_try_catch([](auto &actor) { actor->init(); }, solver);
 }
 
-void on_boxl_change() {
+void Solver::on_boxl_change() {
   visit_active_actor_try_catch([](auto &actor) { actor->on_boxl_change(); },
-                               magnetostatics_actor);
+                               solver);
 }
 
-void on_node_grid_change() {
-  if (magnetostatics_actor) {
+void Solver::on_node_grid_change() {
+  if (solver) {
     boost::apply_visitor([](auto &actor) { actor->on_node_grid_change(); },
-                         *magnetostatics_actor);
+                         *solver);
   }
 }
 
-void on_periodicity_change() {
+void Solver::on_periodicity_change() {
   visit_active_actor_try_catch(
-      [](auto &actor) { actor->on_periodicity_change(); },
-      magnetostatics_actor);
+      [](auto &actor) { actor->on_periodicity_change(); }, solver);
 }
 
-void on_cell_structure_change() {
+void Solver::on_cell_structure_change() {
   visit_active_actor_try_catch(
-      [](auto &actor) { actor->on_cell_structure_change(); },
-      magnetostatics_actor);
+      [](auto &actor) { actor->on_cell_structure_change(); }, solver);
 }
 
-void calc_pressure_long_range() {
-  if (magnetostatics_actor) {
-    runtimeWarningMsg() << "pressure calculated, but pressure not implemented.";
-  }
-}
-
-double cutoff() {
+double Solver::cutoff() const {
 #ifdef DP3M
-  if (auto dp3m = get_actor_by_type<DipolarP3M>(magnetostatics_actor)) {
+  if (auto dp3m = get_actor_by_type<DipolarP3M>(solver)) {
     return dp3m->dp3m.params.r_cut;
   }
 #endif
   return -1.;
 }
 
-void on_observable_calc() {
+void Solver::on_observable_calc() {
+  if (reinit_on_observable_calc) {
 #ifdef DP3M
-  if (auto dp3m = get_actor_by_type<DipolarP3M>(magnetostatics_actor)) {
-    dp3m->count_magnetic_particles();
-  }
+    if (auto dp3m = get_actor_by_type<DipolarP3M>(solver)) {
+      dp3m->count_magnetic_particles();
+    }
 #endif
+    reinit_on_observable_calc = false;
+  }
 }
 
 struct LongRangeForce : public boost::static_visitor<void> {
@@ -205,24 +200,29 @@ struct LongRangeField : public boost::static_visitor<void> {
 };
 #endif
 
-void calc_long_range_force(ParticleRange const &particles) {
-  if (magnetostatics_actor) {
-    boost::apply_visitor(LongRangeForce(particles), *magnetostatics_actor);
+void Solver::calc_pressure_long_range() const {
+  if (solver) {
+    runtimeWarningMsg() << "pressure calculated, but pressure not implemented.";
   }
 }
 
-double calc_energy_long_range(ParticleRange const &particles) {
-  if (magnetostatics_actor) {
-    return boost::apply_visitor(LongRangeEnergy(particles),
-                                *magnetostatics_actor);
+void Solver::calc_long_range_force(ParticleRange const &particles) const {
+  if (solver) {
+    boost::apply_visitor(LongRangeForce(particles), *solver);
+  }
+}
+
+double Solver::calc_energy_long_range(ParticleRange const &particles) const {
+  if (solver) {
+    return boost::apply_visitor(LongRangeEnergy(particles), *solver);
   }
   return 0.;
 }
 
 #ifdef DIPOLE_FIELD_TRACKING
-void calc_long_range_field(ParticleRange const &particles) {
-  if (magnetostatics_actor) {
-    boost::apply_visitor(LongRangeField(particles), *magnetostatics_actor);
+void Solver::calc_long_range_field(ParticleRange const &particles) const {
+  if (solver) {
+    boost::apply_visitor(LongRangeField(particles), *solver);
   }
 }
 #endif

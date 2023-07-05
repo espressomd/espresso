@@ -29,6 +29,7 @@
 #include "actor/visitors.hpp"
 
 #include "event.hpp"
+#include "system/System.hpp"
 
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
@@ -41,22 +42,24 @@ namespace Dipoles {
 
 template <typename T, std::enable_if_t<traits::is_solver<T>::value> * = nullptr>
 void add_actor(std::shared_ptr<T> const &actor) {
-  if (::magnetostatics_actor) {
-    auto const name = get_actor_name(*::magnetostatics_actor);
+  auto &system = System::get_system();
+  if (system.dipoles.solver) {
+    auto const name = get_actor_name(*system.dipoles.solver);
     throw std::runtime_error("A magnetostatics solver is already active (" +
                              name + ")");
   }
-  add_actor(::magnetostatics_actor, actor, ::on_dipoles_change,
+  add_actor(system.dipoles.solver, actor, ::on_dipoles_change,
             detail::flag_all_reduce);
 }
 
 template <typename T, std::enable_if_t<traits::is_solver<T>::value> * = nullptr>
 void remove_actor(std::shared_ptr<T> const &actor) {
-  if (not is_already_stored(actor, ::magnetostatics_actor)) {
+  auto &system = System::get_system();
+  if (not is_already_stored(actor, system.dipoles.solver)) {
     throw std::runtime_error(
         "The given magnetostatics solver is not currently active");
   }
-  remove_actor(::magnetostatics_actor, actor, ::on_dipoles_change);
+  remove_actor(system.dipoles.solver, actor, ::on_dipoles_change);
 }
 
 } // namespace Dipoles

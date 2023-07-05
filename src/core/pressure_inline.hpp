@@ -87,7 +87,7 @@ inline void add_non_bonded_pair_virials(
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
-  if (magnetostatics_actor) {
+  if (Dipoles::get_dipoles().solver) {
     fprintf(stderr, "calculating pressure for magnetostatics which doesn't "
                     "have it implemented\n");
   }

@@ -66,7 +66,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 
   auto const &system = System::get_system();
   auto const coulomb_kernel = system.coulomb.pair_energy_kernel();
-  auto const dipoles_kernel = Dipoles::pair_energy_kernel();
+  auto const dipoles_kernel = system.dipoles.pair_energy_kernel();
 
   short_range_loop(
       [&obs_energy, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
@@ -96,7 +96,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  obs_energy.dipolar[1] = Dipoles::calc_energy_long_range(local_parts);
+  obs_energy.dipolar[1] = system.dipoles.calc_energy_long_range(local_parts);
 #endif
 
   Constraints::constraints.add_energy(local_parts, get_sim_time(), obs_energy);
@@ -156,7 +156,8 @@ double particle_short_range_energy_contribution(int pid) {
 #ifdef DIPOLE_FIELD_TRACKING
 void calc_long_range_fields() {
   auto particles = cell_structure.local_particles();
-  Dipoles::calc_long_range_field(particles);
+  auto const &dipoles = System::get_system().dipoles;
+  dipoles.calc_long_range_field(particles);
 }
 
 REGISTER_CALLBACK(calc_long_range_fields)

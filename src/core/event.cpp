@@ -56,10 +56,6 @@
 
 /** whether the thermostat has to be reinitialized before integration */
 static bool reinit_thermo = true;
-#ifdef DIPOLES
-/** whether magnetostatics actor has to be reinitialized on observable calc */
-static bool reinit_magnetostatics = false;
-#endif
 
 void on_program_start() {
 #ifdef CUDA
@@ -125,7 +121,7 @@ void on_integration_start(double time_step) {
 #endif
 #ifdef DIPOLES
   {
-    auto const &actor = magnetostatics_actor;
+    auto const &actor = System::get_system().dipoles.solver;
     if (!Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
         (actor and !Utils::Mpi::all_compare(comm_cart, (*actor).which())))
       runtimeErrorMsg() << "Nodes disagree about dipolar long-range method";
@@ -147,11 +143,8 @@ void on_observable_calc() {
 #endif
 
 #ifdef DIPOLES
-  if (reinit_magnetostatics) {
-    Dipoles::on_observable_calc();
-    reinit_magnetostatics = false;
-  }
-#endif /* DIPOLES */
+  System::get_system().dipoles.on_observable_calc();
+#endif
 
   clear_particle_node();
 }
@@ -178,7 +171,9 @@ void on_particle_change() {
   }
 #endif
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
+  if (System::is_system_set()) {
+    System::get_system().dipoles.on_particle_change();
+  }
 #endif
   recalc_forces = true;
 
@@ -194,8 +189,7 @@ void on_coulomb_and_dipoles_change() {
   System::get_system().coulomb.on_coulomb_change();
 #endif
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
-  Dipoles::on_dipoles_change();
+  System::get_system().dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
 }
@@ -209,8 +203,7 @@ void on_coulomb_change() {
 
 void on_dipoles_change() {
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
-  Dipoles::on_dipoles_change();
+  System::get_system().dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
 }
@@ -242,7 +235,7 @@ void on_boxl_change(bool skip_method_adaption) {
 #endif
 
 #ifdef DIPOLES
-    Dipoles::on_boxl_change();
+    System::get_system().dipoles.on_boxl_change();
 #endif
 
     LB::init();
@@ -268,7 +261,7 @@ void on_cell_structure_change() {
     System::get_system().coulomb.on_cell_structure_change();
 #endif
 #ifdef DIPOLES
-    Dipoles::on_cell_structure_change();
+    System::get_system().dipoles.on_cell_structure_change();
 #endif
   }
 #endif
@@ -286,7 +279,7 @@ void on_periodicity_change() {
 #endif
 
 #ifdef DIPOLES
-  Dipoles::on_periodicity_change();
+  System::get_system().dipoles.on_periodicity_change();
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
@@ -321,7 +314,7 @@ void on_node_grid_change() {
   System::get_system().coulomb.on_node_grid_change();
 #endif
 #ifdef DIPOLES
-  Dipoles::on_node_grid_change();
+  System::get_system().dipoles.on_node_grid_change();
 #endif
   cells_re_init(cell_structure.decomposition_type());
 }

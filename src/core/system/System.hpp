@@ -24,6 +24,7 @@
 #include "GpuParticleData.hpp"
 #include "ResourceCleanup.hpp"
 #include "electrostatics/solver.hpp"
+#include "magnetostatics/solver.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -46,6 +47,7 @@ public:
 #endif
   }
   Coulomb::Solver coulomb;
+  Dipoles::Solver dipoles;
 };
 
 System &get_system();

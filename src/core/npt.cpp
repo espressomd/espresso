@@ -56,7 +56,7 @@ void NptIsoParameters::coulomb_dipole_sanity_checks() const {
 #endif
 
 #ifdef DIPOLES
-  if (dimension < 3 && !cubic_box && magnetostatics_actor) {
+  if (dimension < 3 and not cubic_box and System::get_system().dipoles.solver) {
     throw std::runtime_error("If magnetostatics is being used you must "
                              "use the cubic box NpT.");
   }

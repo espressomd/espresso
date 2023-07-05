@@ -42,7 +42,7 @@ static double recalc_long_range_cutoff() {
     max_cut_long_range = std::max(max_cut_long_range, system.coulomb.cutoff());
 #endif
 #ifdef DIPOLES
-    max_cut_long_range = std::max(max_cut_long_range, Dipoles::cutoff());
+    max_cut_long_range = std::max(max_cut_long_range, system.dipoles.cutoff());
 #endif
   }
 #endif
@@ -76,7 +76,7 @@ bool long_range_interactions_sanity_checks() {
     system.coulomb.sanity_checks();
 #endif
 #ifdef DIPOLES
-    Dipoles::sanity_checks();
+    system.dipoles.sanity_checks();
 #endif
   } catch (std::runtime_error const &err) {
     runtimeErrorMsg() << err.what();
