@@ -32,18 +32,6 @@
  *  v(t) + 0.5 \Delta t f(t)/m \f] <br> \f[ p(t+\Delta t) = p(t) + \Delta t
  *  v(t+0.5 \Delta t) \f]
  */
-template <typename ParticleIterable>
-inline void velocity_verlet_propagate_vel_pos(const ParticleIterable &particles,
-                                              double time_step) {
-
-  for (auto &p : particles) {
-    velocity_verlet_propagate_vel_pos_par(p, time_step);
-#ifdef ROTATION
-    propagate_omega_quat_particle(p, time_step);
-#endif
-  }
-}
-
 inline void velocity_verlet_propagate_vel_pos_par(Particle &p,
                                                   double time_step) {
   // Don't propagate translational degrees of freedom of vs
@@ -64,17 +52,7 @@ inline void velocity_verlet_propagate_vel_pos_par(Particle &p,
 /** Final integration step of the Velocity Verlet integrator
  *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f]
  */
-template <typename ParticleIterable>
-inline void
-velocity_verlet_propagate_vel_final(const ParticleIterable &particles,
-                                    double time_step) {
-
-  for (auto &p : particles) {
-    velocity_verlet_propagate_vel_final_par(p, time_step);
-  }
-}
-inline void velocity_verlet_propagate_vel_final_par(Particle &p,
-                                                    double time_step) {
+void velocity_verlet_propagate_vel_final_par(Particle &p, double time_step) {
   // Virtual sites are not propagated during integration
   if (p.is_virtual())
     return;
@@ -85,21 +63,6 @@ inline void velocity_verlet_propagate_vel_final_par(Particle &p,
       p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
     }
   }
-}
-
-template <typename ParticleIterable>
-inline void velocity_verlet_step_1(const ParticleIterable &particles,
-                                   double time_step) {
-  velocity_verlet_propagate_vel_pos(particles, time_step);
-  increment_sim_time(time_step);
-}
-template <typename ParticleIterable>
-inline void velocity_verlet_step_2(const ParticleIterable &particles,
-                                   double time_step) {
-  velocity_verlet_propagate_vel_final(particles, time_step);
-#ifdef ROTATION
-  convert_torques_propagate_omega(particles, time_step);
-#endif
 }
 
 #endif

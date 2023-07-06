@@ -53,7 +53,6 @@ template <typename ParticleIterable>
 inline void stokesian_dynamics_step_1(const ParticleIterable &particles,
                                       double time_step) {
   stokesian_dynamics_propagate_vel_pos(particles, time_step);
-  increment_sim_time(time_step);
 }
 
 #endif // STOKESIAN_DYNAMICS

@@ -31,29 +31,30 @@
 #include "thermostats/brownian_inline.hpp"
 
 #include <utils/math/sqr.hpp>
-template <typename ParticleIterable>
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
-                                         const ParticleIterable &particles,
-                                         double time_step, double kT) {
-  for (auto &p : particles) {
-    // Don't propagate translational degrees of freedom of vs
-    if (!p.is_virtual() or thermo_virtual) {
-      p.pos() += bd_drag(brownian.gamma, p, time_step);
-      p.v() = bd_drag_vel(brownian.gamma, p);
-      p.pos() += bd_random_walk(brownian, p, time_step, kT);
-      p.v() += bd_random_walk_vel(brownian, p);
-#ifdef ROTATION
-      if (!p.can_rotate())
-        continue;
-      convert_torque_to_body_frame_apply_fix(p);
-      p.quat() = bd_drag_rot(brownian.gamma_rotation, p, time_step);
-      p.omega() = bd_drag_vel_rot(brownian.gamma_rotation, p);
-      p.quat() = bd_random_walk_rot(brownian, p, time_step, kT);
-      p.omega() += bd_random_walk_vel_rot(brownian, p);
-#endif // ROTATION
-    }
+                                         Particle &p, double time_step,
+                                         double kT) {
+  // Don't propagate translational degrees of freedom of vs
+  if (!p.is_virtual() or thermo_virtual) {
+    p.pos() += bd_drag(brownian.gamma, p, time_step);
+    p.v() = bd_drag_vel(brownian.gamma, p);
+    p.pos() += bd_random_walk(brownian, p, time_step, kT);
+    p.v() += bd_random_walk_vel(brownian, p);
   }
-  increment_sim_time(time_step);
+}
+
+inline void brownian_dynamics_rotator(BrownianThermostat const &brownian,
+                                      Particle &p, double time_step,
+                                      double kT) {
+#ifdef ROTATION
+  if (!p.can_rotate())
+    return;
+  convert_torque_to_body_frame_apply_fix(p);
+  p.quat() = bd_drag_rot(brownian.gamma_rotation, p, time_step);
+  p.omega() = bd_drag_vel_rot(brownian.gamma_rotation, p);
+  p.quat() = bd_random_walk_rot(brownian, p, time_step, kT);
+  p.omega() += bd_random_walk_vel_rot(brownian, p);
+#endif // ROTATION
 }
 
 #endif // INTEGRATORS_BROWNIAN_INLINE_HPP

@@ -202,7 +202,7 @@ void propagate_vel_pos_sd(const ParticleIterable &particles,
   sd_update_locally(particles);
 }
 
-template void propagate_vel_pos_sd(const ParticleRange &particles,
+template void propagate_vel_pos_sd(const ParticleRangeFiltered<129> &particles,
                                    const boost::mpi::communicator &comm,
                                    const double time_step);
 template void propagate_vel_pos_sd(const ParticleRangeDefault &particles,

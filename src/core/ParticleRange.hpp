@@ -29,14 +29,11 @@
 
 #include <cassert>
 
-template <PropagationMode criterion> struct PropagationPredicate {
-  bool operator()(Particle const &p) {
-    return (p.propagation() & criterion);
-    // return true;
-  };
+template <int criterion> struct PropagationPredicate {
+  bool operator()(Particle const &p) { return (p.propagation() & criterion); };
 };
 
-template <PropagationMode criterion>
+template <int criterion>
 class ParticleRangeFiltered
     : public boost::iterator_range<boost::iterators::filter_iterator<
           PropagationPredicate<criterion>, ParticleIterator<Cell **>>> {
@@ -70,8 +67,7 @@ public:
     return assert(m_size >= 0), static_cast<base_type::size_type>(m_size);
   }
 
-  template <PropagationMode criterion>
-  ParticleRangeFiltered<criterion> filter() const {
+  template <int criterion> ParticleRangeFiltered<criterion> filter() const {
     return {boost::make_filter_iterator<PropagationPredicate<criterion>>(
                 begin(), end()),
             boost::make_filter_iterator<PropagationPredicate<criterion>>(
