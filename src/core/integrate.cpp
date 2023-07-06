@@ -81,7 +81,7 @@
 #endif
 
 int integ_switch = INTEG_METHOD_NVT;
-int default_propagation = 0;
+static int default_propagation = 0;
 
 /** Time step for the integration. */
 static double time_step = -1.0;
@@ -207,7 +207,7 @@ static bool integrator_step_1(ParticleRange const &particles) {
 
   int perParticleIntegration =
       PropagationMode::TRANS_LANGEVIN + PropagationMode::ROT_LANGEVIN;
-  std::list<int> SplittableINTEG = {INTEG_METHOD_NVT};
+  std::vector<int> SplittableINTEG = {INTEG_METHOD_NVT};
   bool doesDefaultcontainSplittable =
       std::any_of(SplittableINTEG.begin(), SplittableINTEG.end(),
                   [&](int val) { return integ_switch == val; });
