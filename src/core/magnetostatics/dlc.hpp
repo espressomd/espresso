@@ -33,10 +33,8 @@
 
 #include <ParticleRange.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <memory>
+#include <variant>
 
 struct DipolarLayerCorrection;
 
@@ -78,7 +76,7 @@ struct dlc_data {
  * z-direction. For details see @cite brodka04a.
  */
 struct DipolarLayerCorrection {
-  using BaseSolver = boost::variant<
+  using BaseSolver = std::variant<
 #ifdef DP3M
       std::shared_ptr<DipolarP3M>,
 #endif
@@ -161,7 +159,7 @@ private:
   void sanity_checks_node_grid() const;
 
   template <class Visitor> void visit_base_solver(Visitor &&visitor) const {
-    boost::apply_visitor(visitor, base_solver);
+    std::visit(visitor, base_solver);
   }
 };
 

@@ -32,21 +32,19 @@
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <functional>
 #include <memory>
+#include <optional>
 #include <tuple>
 #include <type_traits>
+#include <variant>
 
 namespace Coulomb {
 
-struct ShortRangeForceKernel
-    : public boost::static_visitor<
-          boost::optional<Solver::ShortRangeForceKernel>> {
+struct ShortRangeForceKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeForceKernel;
+  using result_type = std::optional<kernel_type>;
 
 #ifdef ELECTROSTATICS
   template <typename T>
@@ -61,7 +59,7 @@ struct ShortRangeForceKernel
 #ifdef P3M
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
 #endif // P3M
 
@@ -73,11 +71,10 @@ struct ShortRangeForceKernel
 #endif // ELECTROSTATICS
 };
 
-struct ShortRangeForceCorrectionsKernel
-    : public boost::static_visitor<
-          boost::optional<Solver::ShortRangeForceCorrectionsKernel>> {
+struct ShortRangeForceCorrectionsKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeForceCorrectionsKernel;
+  using result_type = std::optional<kernel_type>;
 
   template <typename T>
   result_type operator()(std::shared_ptr<T> const &) const {
@@ -95,11 +92,10 @@ struct ShortRangeForceCorrectionsKernel
 #endif // P3M
 };
 
-struct ShortRangePressureKernel
-    : public boost::static_visitor<
-          boost::optional<Solver::ShortRangePressureKernel>> {
+struct ShortRangePressureKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangePressureKernel;
+  using result_type = std::optional<kernel_type>;
 
 #ifdef ELECTROSTATICS
   template <typename T,
@@ -120,11 +116,10 @@ struct ShortRangePressureKernel
 #endif // ELECTROSTATICS
 };
 
-struct ShortRangeEnergyKernel
-    : public boost::static_visitor<
-          boost::optional<Solver::ShortRangeEnergyKernel>> {
+struct ShortRangeEnergyKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeEnergyKernel;
+  using result_type = std::optional<kernel_type>;
 
 #ifdef ELECTROSTATICS
   template <typename T>
@@ -139,7 +134,7 @@ struct ShortRangeEnergyKernel
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
-    auto const energy_kernel = boost::apply_visitor(*this, actor.base_solver);
+    auto const energy_kernel = std::visit(*this, actor.base_solver);
     return kernel_type{[&actor, energy_kernel](
                            Particle const &p1, Particle const &p2, double q1q2,
                            Utils::Vector3d const &d, double dist) {
@@ -165,45 +160,45 @@ struct ShortRangeEnergyKernel
 #endif // ELECTROSTATICS
 };
 
-inline boost::optional<Solver::ShortRangeForceKernel>
+inline std::optional<Solver::ShortRangeForceKernel>
 Solver::pair_force_kernel() const {
 #ifdef ELECTROSTATICS
   if (solver) {
     auto const visitor = Coulomb::ShortRangeForceKernel();
-    return boost::apply_visitor(visitor, *solver);
+    return std::visit(visitor, *solver);
   }
 #endif // ELECTROSTATICS
   return {};
 }
 
-inline boost::optional<Solver::ShortRangeForceCorrectionsKernel>
+inline std::optional<Solver::ShortRangeForceCorrectionsKernel>
 Solver::pair_force_elc_kernel() const {
 #ifdef ELECTROSTATICS
   if (solver) {
     auto const visitor = Coulomb::ShortRangeForceCorrectionsKernel();
-    return boost::apply_visitor(visitor, *solver);
+    return std::visit(visitor, *solver);
   }
 #endif // ELECTROSTATICS
   return {};
 }
 
-inline boost::optional<Solver::ShortRangePressureKernel>
+inline std::optional<Solver::ShortRangePressureKernel>
 Solver::pair_pressure_kernel() const {
 #ifdef ELECTROSTATICS
   if (solver) {
     auto const visitor = Coulomb::ShortRangePressureKernel();
-    return boost::apply_visitor(visitor, *solver);
+    return std::visit(visitor, *solver);
   }
 #endif // ELECTROSTATICS
   return {};
 }
 
-inline boost::optional<Solver::ShortRangeEnergyKernel>
+inline std::optional<Solver::ShortRangeEnergyKernel>
 Solver::pair_energy_kernel() const {
 #ifdef ELECTROSTATICS
   if (solver) {
     auto const visitor = Coulomb::ShortRangeEnergyKernel();
-    return boost::apply_visitor(visitor, *solver);
+    return std::visit(visitor, *solver);
   }
 #endif // ELECTROSTATICS
   return {};

@@ -36,12 +36,11 @@
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
-
-#include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/optional.hpp>
+#include <utils/demangle.hpp>
 
 #include <cassert>
 #include <cstdio>
+#include <optional>
 #include <stdexcept>
 
 namespace Dipoles {
@@ -50,7 +49,7 @@ Solver const &get_dipoles() { return System::get_system().dipoles; }
 
 void Solver::sanity_checks() const {
   if (solver) {
-    boost::apply_visitor([](auto &actor) { actor->sanity_checks(); }, *solver);
+    std::visit([](auto &actor) { actor->sanity_checks(); }, *solver);
   }
 }
 
@@ -66,8 +65,7 @@ void Solver::on_boxl_change() {
 
 void Solver::on_node_grid_change() {
   if (solver) {
-    boost::apply_visitor([](auto &actor) { actor->on_node_grid_change(); },
-                         *solver);
+    std::visit([](auto &actor) { actor->on_node_grid_change(); }, *solver);
   }
 }
 
@@ -101,7 +99,7 @@ void Solver::on_observable_calc() {
   }
 }
 
-struct LongRangeForce : public boost::static_visitor<void> {
+struct LongRangeForce {
   ParticleRange const &m_particles;
   explicit LongRangeForce(ParticleRange const &particles)
       : m_particles(particles) {}
@@ -121,7 +119,7 @@ struct LongRangeForce : public boost::static_visitor<void> {
 #endif // DP3M
   void operator()(std::shared_ptr<DipolarLayerCorrection> const &actor) const {
     actor->add_force_corrections(m_particles);
-    boost::apply_visitor(*this, actor->base_solver);
+    std::visit(*this, actor->base_solver);
   }
   void operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
     actor->add_long_range_forces(m_particles);
@@ -143,7 +141,7 @@ struct LongRangeForce : public boost::static_visitor<void> {
 #endif
 };
 
-struct LongRangeEnergy : public boost::static_visitor<double> {
+struct LongRangeEnergy {
   ParticleRange const &m_particles;
   explicit LongRangeEnergy(ParticleRange const &particles)
       : m_particles(particles) {}
@@ -156,7 +154,7 @@ struct LongRangeEnergy : public boost::static_visitor<double> {
 #endif // DP3M
   double
   operator()(std::shared_ptr<DipolarLayerCorrection> const &actor) const {
-    auto energy = boost::apply_visitor(*this, actor->base_solver);
+    auto energy = std::visit(*this, actor->base_solver);
     return energy + actor->energy_correction(m_particles);
   }
   double operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
@@ -182,7 +180,7 @@ struct LongRangeEnergy : public boost::static_visitor<double> {
 };
 
 #ifdef DIPOLE_FIELD_TRACKING
-struct LongRangeField : public boost::static_visitor<void> {
+struct LongRangeField {
   ParticleRange const &m_particles;
   explicit LongRangeField(ParticleRange const &particles)
       : m_particles(particles) {}
@@ -208,13 +206,13 @@ void Solver::calc_pressure_long_range() const {
 
 void Solver::calc_long_range_force(ParticleRange const &particles) const {
   if (solver) {
-    boost::apply_visitor(LongRangeForce(particles), *solver);
+    std::visit(LongRangeForce(particles), *solver);
   }
 }
 
 double Solver::calc_energy_long_range(ParticleRange const &particles) const {
   if (solver) {
-    return boost::apply_visitor(LongRangeEnergy(particles), *solver);
+    return std::visit(LongRangeEnergy(particles), *solver);
   }
   return 0.;
 }
@@ -222,16 +220,10 @@ double Solver::calc_energy_long_range(ParticleRange const &particles) const {
 #ifdef DIPOLE_FIELD_TRACKING
 void Solver::calc_long_range_field(ParticleRange const &particles) const {
   if (solver) {
-    boost::apply_visitor(LongRangeField(particles), *solver);
+    std::visit(LongRangeField(particles), *solver);
   }
 }
 #endif
-
-namespace detail {
-bool flag_all_reduce(bool flag) {
-  return boost::mpi::all_reduce(comm_cart, flag, std::logical_or<>());
-}
-} // namespace detail
 
 } // namespace Dipoles
 #endif // DIPOLES

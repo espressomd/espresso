@@ -33,18 +33,16 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <functional>
+#include <optional>
+#include <variant>
 
 namespace Dipoles {
 
-struct ShortRangeForceKernel
-    : public boost::static_visitor<
-          boost::optional<Solver::ShortRangeForceKernel>> {
+struct ShortRangeForceKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeForceKernel;
+  using result_type = std::optional<kernel_type>;
 
 #ifdef DIPOLES
   template <typename T>
@@ -65,16 +63,15 @@ struct ShortRangeForceKernel
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
 #endif // DIPOLES
 };
 
-struct ShortRangeEnergyKernel
-    : public boost::static_visitor<
-          boost::optional<Solver::ShortRangeEnergyKernel>> {
+struct ShortRangeEnergyKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeEnergyKernel;
+  using result_type = std::optional<kernel_type>;
 
 #ifdef DIPOLES
   template <typename T>
@@ -95,28 +92,28 @@ struct ShortRangeEnergyKernel
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
 #endif // DIPOLES
 };
 
-inline boost::optional<Solver::ShortRangeForceKernel>
+inline std::optional<Solver::ShortRangeForceKernel>
 Solver::pair_force_kernel() const {
 #ifdef DIPOLES
   if (solver) {
     auto const visitor = Dipoles::ShortRangeForceKernel();
-    return boost::apply_visitor(visitor, *solver);
+    return std::visit(visitor, *solver);
   }
 #endif // DIPOLES
   return {};
 }
 
-inline boost::optional<Solver::ShortRangeEnergyKernel>
+inline std::optional<Solver::ShortRangeEnergyKernel>
 Solver::pair_energy_kernel() const {
 #ifdef DIPOLES
   if (solver) {
     auto const visitor = Dipoles::ShortRangeEnergyKernel();
-    return boost::apply_visitor(visitor, *solver);
+    return std::visit(visitor, *solver);
   }
 #endif // DIPOLES
   return {};

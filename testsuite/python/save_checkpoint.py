@@ -152,10 +152,10 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
             maxPWerror=0.1,
             delta_mid_top=0.9,
             delta_mid_bot=0.1)
-        system.actors.add(elc)
+        system.electrostatics.solver = elc
         elc.charge_neutrality_tolerance = 7e-12
     else:
-        system.actors.add(p3m)
+        system.electrostatics.solver = p3m
         p3m.charge_neutrality_tolerance = 5e-12
 
 # accumulators
@@ -328,22 +328,22 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
         accuracy=0.01,
         timings=15,
         tune=False)
-    system.actors.add(dp3m)
+    system.magnetostatics.solver = dp3m
 
 if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes \
         and 'p3m' in espressomd.code_info.scafacos_methods():
-    system.actors.add(espressomd.electrostatics.Scafacos(
+    system.electrostatics.solver = espressomd.electrostatics.Scafacos(
         prefactor=0.5,
         method_name="p3m",
         method_params={
             "p3m_r_cut": 1.0,
             "p3m_grid": 64,
             "p3m_cao": 7,
-            "p3m_alpha": 2.084652}))
+            "p3m_alpha": 2.084652})
 
 if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
         and 'p2nfft' in espressomd.code_info.scafacos_methods():
-    system.actors.add(espressomd.magnetostatics.Scafacos(
+    system.magnetostatics.solver = espressomd.magnetostatics.Scafacos(
         prefactor=1.2,
         method_name='p2nfft',
         method_params={
@@ -355,7 +355,7 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
             "p2nfft_ignore_tolerance": "1",
             "pnfft_diff_ik": "0",
             "p2nfft_r_cut": "11",
-            "p2nfft_alpha": "0.37"}))
+            "p2nfft_alpha": "0.37"})
 
 if lbf_class:
     system.actors.add(lbf)

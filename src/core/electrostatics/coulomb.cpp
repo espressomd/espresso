@@ -41,11 +41,8 @@
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/sum_kahan.hpp>
-#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/collectives/gather.hpp>
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -53,9 +50,13 @@
 #include <cstdio>
 #include <iomanip>
 #include <limits>
+#include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
+#include <variant>
+#include <vector>
 
 namespace Coulomb {
 
@@ -63,8 +64,7 @@ Solver const &get_coulomb() { return System::get_system().coulomb; }
 
 void Solver::sanity_checks() const {
   if (solver) {
-    boost::apply_visitor([](auto const &actor) { actor->sanity_checks(); },
-                         *solver);
+    std::visit([](auto const &actor) { actor->sanity_checks(); }, *solver);
   }
 }
 
@@ -80,8 +80,7 @@ void Solver::on_boxl_change() {
 
 void Solver::on_node_grid_change() {
   if (solver) {
-    boost::apply_visitor([](auto &actor) { actor->on_node_grid_change(); },
-                         *solver);
+    std::visit([](auto &actor) { actor->on_node_grid_change(); }, *solver);
   }
 }
 
@@ -95,7 +94,7 @@ void Solver::on_cell_structure_change() {
       [](auto &actor) { actor->on_cell_structure_change(); }, solver);
 }
 
-struct LongRangePressure : public boost::static_visitor<Utils::Vector9d> {
+struct LongRangePressure {
   explicit LongRangePressure(ParticleRange const &particles)
       : m_particles{particles} {}
 
@@ -129,12 +128,12 @@ private:
 Utils::Vector9d
 Solver::calc_pressure_long_range(ParticleRange const &particles) const {
   if (solver) {
-    return boost::apply_visitor(LongRangePressure(particles), *solver);
+    return std::visit(LongRangePressure(particles), *solver);
   }
   return {};
 }
 
-struct ShortRangeCutoff : public boost::static_visitor<double> {
+struct ShortRangeCutoff {
 #ifdef P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     return actor->p3m.params.r_cut;
@@ -142,7 +141,7 @@ struct ShortRangeCutoff : public boost::static_visitor<double> {
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     return std::max(actor->elc.space_layer,
-                    boost::apply_visitor(*this, actor->base_solver));
+                    std::visit(*this, actor->base_solver));
   }
 #endif // P3M
 #ifdef MMM1D_GPU
@@ -168,12 +167,12 @@ struct ShortRangeCutoff : public boost::static_visitor<double> {
 
 double Solver::cutoff() const {
   if (solver) {
-    return boost::apply_visitor(ShortRangeCutoff(), *solver);
+    return std::visit(ShortRangeCutoff(), *solver);
   }
   return -1.0;
 }
 
-struct EventOnObservableCalc : public boost::static_visitor<void> {
+struct EventOnObservableCalc {
   template <typename T> void operator()(std::shared_ptr<T> const &) const {}
 
 #ifdef P3M
@@ -182,7 +181,7 @@ struct EventOnObservableCalc : public boost::static_visitor<void> {
   }
   void
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
-    boost::apply_visitor(*this, actor->base_solver);
+    std::visit(*this, actor->base_solver);
   }
 #endif // P3M
 };
@@ -190,13 +189,13 @@ struct EventOnObservableCalc : public boost::static_visitor<void> {
 void Solver::on_observable_calc() {
   if (reinit_on_observable_calc) {
     if (solver) {
-      boost::apply_visitor(EventOnObservableCalc(), *solver);
+      std::visit(EventOnObservableCalc(), *solver);
     }
     reinit_on_observable_calc = false;
   }
 }
 
-struct LongRangeForce : public boost::static_visitor<void> {
+struct LongRangeForce {
   explicit LongRangeForce(ParticleRange const &particles)
       : m_particles(particles) {}
 
@@ -247,7 +246,7 @@ private:
   ParticleRange const &m_particles;
 };
 
-struct LongRangeEnergy : public boost::static_visitor<double> {
+struct LongRangeEnergy {
   explicit LongRangeEnergy(ParticleRange const &particles)
       : m_particles(particles) {}
 
@@ -283,13 +282,13 @@ private:
 
 void Solver::calc_long_range_force(ParticleRange const &particles) const {
   if (solver) {
-    boost::apply_visitor(LongRangeForce(particles), *solver);
+    std::visit(LongRangeForce(particles), *solver);
   }
 }
 
 double Solver::calc_energy_long_range(ParticleRange const &particles) const {
   if (solver) {
-    return boost::apply_visitor(LongRangeEnergy(particles), *solver);
+    return std::visit(LongRangeEnergy(particles), *solver);
   }
   return 0.;
 }
@@ -351,12 +350,6 @@ void check_charge_neutrality(double relative_tolerance) {
         serializer.str());
   }
 }
-
-namespace detail {
-bool flag_all_reduce(bool flag) {
-  return boost::mpi::all_reduce(comm_cart, flag, std::logical_or<>());
-}
-} // namespace detail
 
 } // namespace Coulomb
 

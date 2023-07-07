@@ -35,14 +35,6 @@
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/scafacos.hpp"
 
-#include "ParticleRange.hpp"
-
-#include <utils/Vector.hpp>
-
-#include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -50,7 +42,7 @@
 #include <type_traits>
 
 /** Get the magnetostatics prefactor. */
-struct GetDipolesPrefactor : public boost::static_visitor<double> {
+struct GetDipolesPrefactor {
   template <typename T>
   double operator()(std::shared_ptr<T> const &actor) const {
     return actor->prefactor;
@@ -58,7 +50,7 @@ struct GetDipolesPrefactor : public boost::static_visitor<double> {
 };
 
 /** Run actor sanity checks. */
-struct DipolesSanityChecks : public boost::static_visitor<void> {
+struct DipolesSanityChecks {
   template <typename T> void operator()(std::shared_ptr<T> const &actor) const {
     actor->sanity_checks();
   }

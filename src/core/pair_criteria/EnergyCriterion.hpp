@@ -43,7 +43,7 @@ public:
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
 
     auto const energy = calc_non_bonded_pair_energy(
-        p1, p2, ia_params, d, d.norm(), coulomb_kernel.get_ptr());
+        p1, p2, ia_params, d, d.norm(), get_ptr(coulomb_kernel));
 
     return energy >= m_cut_off;
   }

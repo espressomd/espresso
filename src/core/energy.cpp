@@ -69,7 +69,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   auto const dipoles_kernel = system.dipoles.pair_energy_kernel();
 
   short_range_loop(
-      [&obs_energy, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
           Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result =
@@ -80,8 +80,8 @@ std::shared_ptr<Observable_stat> calculate_energy() {
         }
         return true;
       },
-      [&obs_energy, coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
-       dipoles_kernel_ptr = dipoles_kernel.get_ptr()](
+      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       dipoles_kernel_ptr = get_ptr(dipoles_kernel)](
           Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                    coulomb_kernel_ptr, dipoles_kernel_ptr,
@@ -136,7 +136,7 @@ double particle_short_range_energy_contribution(int pid) {
   if (auto const p = cell_structure.get_local_particle(pid)) {
     auto const &coulomb = System::get_system().coulomb;
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
-    auto kernel = [&ret, coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+    auto kernel = [&ret, coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
                       Particle const &p, Particle const &p1,
                       Utils::Vector3d const &vec) {
 #ifdef EXCLUSIONS

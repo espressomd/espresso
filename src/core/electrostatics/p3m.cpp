@@ -62,7 +62,6 @@
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
@@ -71,8 +70,10 @@
 #include <complex>
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 void CoulombP3M::count_charged_particles() {
   auto local_n = 0;
@@ -458,10 +459,10 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
   /* The dipole moment is only needed if we don't have metallic boundaries. */
-  auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
-                              ? boost::make_optional(calc_dipole_moment(
-                                    comm_cart, particles, box_geo))
-                              : boost::none;
+  auto const box_dipole =
+      (p3m.params.epsilon != P3M_EPSILON_METALLIC)
+          ? calc_dipole_moment(comm_cart, particles, box_geo)
+          : Utils::Vector3d::broadcast(0.);
   auto const volume = box_geo.volume();
   auto const pref = 4. * Utils::pi() / volume / (2. * p3m.params.epsilon + 1.);
 
@@ -513,7 +514,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
 
     // add dipole forces
     if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-      auto const dm = prefactor * pref * box_dipole.value();
+      auto const dm = prefactor * pref * box_dipole;
       for (auto &p : particles) {
         p.force() -= p.q() * dm;
       }
@@ -540,7 +541,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                 (2. * volume * Utils::sqr(p3m.params.alpha));
       /* dipole correction */
       if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-        energy += pref * box_dipole.value().norm2();
+        energy += pref * box_dipole.norm2();
       }
     }
     return prefactor * energy;
@@ -579,7 +580,7 @@ public:
     m_logger->log_tuning_start();
   }
 
-  boost::optional<std::string>
+  std::optional<std::string>
   layer_correction_veto_r_cut(double r_cut) const override {
     auto const &solver = Coulomb::get_coulomb().solver;
     if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {

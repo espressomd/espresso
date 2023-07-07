@@ -77,8 +77,7 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
   short_range_loop(
-      [&obs_pressure,
-       coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr()](
+      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel)](
           Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
@@ -95,8 +94,8 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
         }
         return true;
       },
-      [&obs_pressure, coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr(),
-       coulomb_pressure_kernel_ptr = coulomb_pressure_kernel.get_ptr()](
+      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       coulomb_pressure_kernel_ptr = get_ptr(coulomb_pressure_kernel)](
           Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure, coulomb_force_kernel_ptr,

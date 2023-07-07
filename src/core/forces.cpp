@@ -57,6 +57,7 @@
 
 #include <cassert>
 #include <memory>
+#include <variant>
 
 std::shared_ptr<ComFixed> comfixed = std::make_shared<ComFixed>();
 
@@ -158,8 +159,8 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
   if (espresso_system.coulomb.extension) {
-    if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
-            espresso_system.coulomb.extension.get_ptr())) {
+    if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
+            get_ptr(espresso_system.coulomb.extension))) {
       (**icc).iteration(cell_structure, particles, ghost_particles);
     }
   }
@@ -185,14 +186,14 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
 
   short_range_loop(
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
           Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         return add_bonded_force(p1, bond_id, partners, coulomb_kernel_ptr);
       },
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
-       dipoles_kernel_ptr = dipoles_kernel.get_ptr(),
-       elc_kernel_ptr = elc_kernel.get_ptr()](Particle &p1, Particle &p2,
-                                              Distance const &d) {
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       dipoles_kernel_ptr = get_ptr(dipoles_kernel),
+       elc_kernel_ptr = get_ptr(elc_kernel)](Particle &p1, Particle &p2,
+                                             Distance const &d) {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
                                   elc_kernel_ptr);

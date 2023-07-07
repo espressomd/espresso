@@ -37,7 +37,10 @@ class IntegratorNPT(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
+        if espressomd.has_features(["DIPOLES"]):
+            self.system.magnetostatics.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
@@ -120,7 +123,7 @@ class IntegratorNPT(ut.TestCase):
             np.copy(system.part.all().pos),
             positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
-    def run_with_p3m(self, p3m, method):
+    def run_with_p3m(self, container, p3m, method):
         system = self.system
         npt_kwargs = {"ext_pressure": 0.001, "piston": 0.001}
         npt_kwargs_rectangular = {
@@ -141,7 +144,7 @@ class IntegratorNPT(ut.TestCase):
         system.integrator.run(100)
         system.integrator.set_vv()
         # combine NpT with a P3M algorithm
-        system.actors.add(p3m)
+        container.solver = p3m
         system.integrator.run(10)
         system.integrator.set_isotropic_npt(**npt_kwargs)
         system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
@@ -155,9 +158,9 @@ class IntegratorNPT(ut.TestCase):
         self.assertIsInstance(
             system.integrator.integrator,
             espressomd.integrate.VelocityVerlet)
-        system.actors.remove(p3m)
+        container.solver = None
         system.integrator.set_isotropic_npt(**npt_kwargs_rectangular)
-        system.actors.add(p3m)
+        container.solver = p3m
         with self.assertRaisesRegex(Exception, err_msg):
             system.integrator.run(0, recalc_forces=True)
 
@@ -167,7 +170,7 @@ class IntegratorNPT(ut.TestCase):
         dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [36], cao=7, r_cut=1.0,
             alpha=2.995, tune=False)
-        self.run_with_p3m(dp3m, "magnetostatics")
+        self.run_with_p3m(self.system.magnetostatics, dp3m, "magnetostatics")
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_npt_p3m_cpu(self):
@@ -175,7 +178,7 @@ class IntegratorNPT(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
             alpha=5.35, tune=False)
-        self.run_with_p3m(p3m, "electrostatics")
+        self.run_with_p3m(self.system.electrostatics, p3m, "electrostatics")
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
@@ -184,7 +187,7 @@ class IntegratorNPT(ut.TestCase):
         p3m = espressomd.electrostatics.P3MGPU(
             prefactor=1.0, accuracy=1e-2, mesh=3 * [8], cao=3, r_cut=0.36,
             alpha=5.35, tune=False)
-        self.run_with_p3m(p3m, "electrostatics")
+        self.run_with_p3m(self.system.electrostatics, p3m, "electrostatics")
 
 
 if __name__ == "__main__":

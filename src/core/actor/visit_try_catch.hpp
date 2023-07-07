@@ -21,17 +21,16 @@
 
 #include "errorhandling.hpp"
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
+#include <optional>
 #include <stdexcept>
 #include <utility>
+#include <variant>
 
 /** @brief Run a kernel on a variant and queue errors. */
 template <typename Visitor, typename Variant>
 void visit_active_actor_try_catch(Visitor &&visitor, Variant &actor) {
   try {
-    boost::apply_visitor(visitor, actor);
+    std::visit(visitor, actor);
   } catch (std::runtime_error const &err) {
     runtimeErrorMsg() << err.what();
   }
@@ -40,7 +39,7 @@ void visit_active_actor_try_catch(Visitor &&visitor, Variant &actor) {
 /** @brief Run a kernel on a variant and queue errors. */
 template <typename Visitor, typename Variant>
 void visit_active_actor_try_catch(Visitor &&visitor,
-                                  boost::optional<Variant> &actor) {
+                                  std::optional<Variant> &actor) {
   if (actor) {
     visit_active_actor_try_catch(std::forward<Visitor>(visitor), *actor);
   }

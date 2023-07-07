@@ -17,14 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "config/config.hpp"
 
 #ifdef DIPOLES
 
 #include "Actor.hpp"
 
+#include "core/actor/registration.hpp"
+#include "core/event.hpp"
 #include "core/magnetostatics/dipoles.hpp"
-#include "core/magnetostatics/registration.hpp"
+#include "core/system/System.hpp"
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
@@ -35,11 +39,10 @@ template <class SIClass, class CoreClass>
 Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
                                                   VariantMap const &params) {
   if (name == "activate") {
-    context()->parallel_try_catch([&]() { ::Dipoles::add_actor(actor()); });
-    return {};
-  }
-  if (name == "deactivate") {
-    context()->parallel_try_catch([&]() { ::Dipoles::remove_actor(actor()); });
+    context()->parallel_try_catch([&]() {
+      add_actor(context()->get_comm(), System::get_system().dipoles.solver,
+                m_actor, ::on_dipoles_change);
+    });
     return {};
   }
   return {};

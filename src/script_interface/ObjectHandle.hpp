@@ -122,6 +122,7 @@ public:
 
   /**
    * @brief Set single parameter.
+   * Can only be called on the head node.
    */
   void set_parameter(const std::string &name, const Variant &value);
 
@@ -134,10 +135,10 @@ private:
 public:
   /**
    * @brief Call a method on the object.
+   * Can only be called on the head node.
    */
   Variant call_method(const std::string &name, const VariantMap &params);
 
-protected:
   /**
    * @brief Local implementation of @c call_method.
    *

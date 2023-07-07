@@ -74,7 +74,7 @@ class DDSGPUTest(ut.TestCase):
 
             dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
                 prefactor=pf_dawaanr)
-            self.system.actors.add(dds_cpu)
+            self.system.magnetostatics.solver = dds_cpu
             self.system.integrator.run(steps=0, recalc_forces=True)
 
             dawaanr_f = np.copy(self.system.part.all().f)
@@ -82,13 +82,12 @@ class DDSGPUTest(ut.TestCase):
             dawaanr_e = self.system.analysis.energy()["total"]
 
             del dds_cpu
-            for i in range(len(self.system.actors.active_actors)):
-                self.system.actors.remove(self.system.actors.active_actors[i])
+            self.system.magnetostatics.clear()
 
             self.system.integrator.run(steps=0, recalc_forces=True)
             dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
                 prefactor=pf_dds_gpu)
-            self.system.actors.add(dds_gpu)
+            self.system.magnetostatics.solver = dds_gpu
             self.system.integrator.run(steps=0, recalc_forces=True)
 
             ddsgpu_f = np.copy(self.system.part.all().f)
@@ -117,7 +116,7 @@ class DDSGPUTest(ut.TestCase):
             self.system.integrator.run(steps=0, recalc_forces=True)
 
             del dds_gpu
-            self.system.actors.clear()
+            self.system.magnetostatics.clear()
             self.system.part.clear()
 
 

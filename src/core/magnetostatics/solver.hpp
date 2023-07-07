@@ -21,6 +21,7 @@
 
 #include "config/config.hpp"
 
+#include "actor/optional.hpp"
 #include "actor/traits.hpp"
 
 #include "Particle.hpp"
@@ -28,12 +29,11 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <functional>
 #include <memory>
+#include <optional>
 #include <type_traits>
+#include <variant>
 
 #ifdef DIPOLES
 // forward declarations
@@ -53,32 +53,28 @@ struct DipolarScafacos;
 #endif
 
 using MagnetostaticsActor =
-    boost::variant<std::shared_ptr<DipolarDirectSum>,
+    std::variant<std::shared_ptr<DipolarDirectSum>,
 #ifdef DIPOLAR_DIRECT_SUM
-                   std::shared_ptr<DipolarDirectSumGpu>,
+                 std::shared_ptr<DipolarDirectSumGpu>,
 #endif
 #ifdef DIPOLAR_BARNES_HUT
-                   std::shared_ptr<DipolarBarnesHutGpu>,
+                 std::shared_ptr<DipolarBarnesHutGpu>,
 #endif
 #ifdef DP3M
-                   std::shared_ptr<DipolarP3M>,
+                 std::shared_ptr<DipolarP3M>,
 #endif
 #ifdef SCAFACOS_DIPOLES
-                   std::shared_ptr<DipolarScafacos>,
+                 std::shared_ptr<DipolarScafacos>,
 #endif
-                   std::shared_ptr<DipolarLayerCorrection>>;
+                 std::shared_ptr<DipolarLayerCorrection>>;
 #endif // DIPOLES
 
 namespace Dipoles {
 
-namespace detail {
-bool flag_all_reduce(bool flag);
-} // namespace detail
-
 struct Solver {
 #ifdef DIPOLES
   /// @brief Main electrostatics solver.
-  boost::optional<MagnetostaticsActor> solver;
+  std::optional<MagnetostaticsActor> solver;
   /// @brief Whether to reinitialize the solver on observable calculation.
   bool reinit_on_observable_calc = false;
 
@@ -108,8 +104,8 @@ struct Solver {
       std::function<double(Particle const &, Particle const &,
                            Utils::Vector3d const &, double, double)>;
 
-  inline boost::optional<ShortRangeForceKernel> pair_force_kernel() const;
-  inline boost::optional<ShortRangeEnergyKernel> pair_energy_kernel() const;
+  inline std::optional<ShortRangeForceKernel> pair_force_kernel() const;
+  inline std::optional<ShortRangeEnergyKernel> pair_energy_kernel() const;
 };
 
 #ifdef DIPOLES

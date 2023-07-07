@@ -54,6 +54,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <variant>
 #include <vector>
 
 /** Calculate the electrostatic forces between source charges (= real charges)
@@ -77,9 +78,9 @@ static void force_calc_icc(
 
   // calc ICC forces
   cell_structure.non_bonded_loop(
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
-       elc_kernel_ptr = elc_kernel.get_ptr()](Particle &p1, Particle &p2,
-                                              Distance const &d) {
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       elc_kernel_ptr = get_ptr(elc_kernel)](Particle &p1, Particle &p2,
+                                             Distance const &d) {
         auto const q1q2 = p1.q() * p2.q();
         if (q1q2 != 0.) {
           auto force = (*coulomb_kernel_ptr)(q1q2, d.vec21, std::sqrt(d.dist2));
@@ -107,8 +108,8 @@ void ICCStar::iteration(CellStructure &cell_structure,
     return;
   }
 
-  auto const prefactor = boost::apply_visitor(GetCoulombPrefactor(),
-                                              *(Coulomb::get_coulomb().solver));
+  auto const prefactor =
+      std::visit(GetCoulombPrefactor(), *(Coulomb::get_coulomb().solver));
   auto const pref = 1. / (prefactor * 2. * Utils::pi());
   auto const kernel = Coulomb::get_coulomb().pair_force_kernel();
   auto const elc_kernel = Coulomb::get_coulomb().pair_force_elc_kernel();
@@ -237,7 +238,7 @@ void ICCStar::on_activation() const {
   on_particle_charge_change();
 }
 
-struct SanityChecksICC : public boost::static_visitor<void> {
+struct SanityChecksICC {
   template <typename T>
   void operator()(std::shared_ptr<T> const &actor) const {}
 #ifdef P3M
@@ -252,7 +253,7 @@ struct SanityChecksICC : public boost::static_visitor<void> {
     if (actor->elc.dielectric_contrast_on) {
       throw std::runtime_error("ICC conflicts with ELC dielectric contrast");
     }
-    boost::apply_visitor(*this, actor->base_solver);
+    std::visit(*this, actor->base_solver);
   }
 #endif // P3M
   [[noreturn]] void operator()(std::shared_ptr<DebyeHueckel> const &) const {
@@ -274,7 +275,7 @@ void ICCStar::sanity_check() const {
 
 void ICCStar::sanity_checks_active_solver() const {
   if (Coulomb::get_coulomb().solver) {
-    boost::apply_visitor(SanityChecksICC(), *(Coulomb::get_coulomb().solver));
+    std::visit(SanityChecksICC(), *(Coulomb::get_coulomb().solver));
   } else {
     throw std::runtime_error("An electrostatics solver is needed by ICC");
   }
@@ -282,8 +283,8 @@ void ICCStar::sanity_checks_active_solver() const {
 
 void update_icc_particles() {
   if (Coulomb::get_coulomb().extension) {
-    if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
-            Coulomb::get_coulomb().extension.get_ptr())) {
+    if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
+            get_ptr(Coulomb::get_coulomb().extension))) {
       (**icc).iteration(cell_structure, cell_structure.local_particles(),
                         cell_structure.ghost_particles());
     }

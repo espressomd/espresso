@@ -24,9 +24,9 @@
 
 #ifdef ELECTROSTATICS
 
+#include "core/actor/registration.hpp"
 #include "core/electrostatics/icc.hpp"
-
-#include "core/electrostatics/registration.hpp"
+#include "core/event.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -100,12 +100,10 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "activate") {
-      context()->parallel_try_catch([&]() { ::Coulomb::add_actor(actor()); });
-      return {};
-    }
-    if (name == "deactivate") {
-      context()->parallel_try_catch(
-          [&]() { ::Coulomb::remove_actor(actor()); });
+      context()->parallel_try_catch([&]() {
+        add_actor(context()->get_comm(), System::get_system().coulomb.extension,
+                  m_actor, ::on_coulomb_change);
+      });
       return {};
     }
     return {};

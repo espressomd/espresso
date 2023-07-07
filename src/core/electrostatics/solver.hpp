@@ -21,6 +21,7 @@
 
 #include "config/config.hpp"
 
+#include "actor/optional.hpp"
 #include "actor/traits.hpp"
 
 #include "Particle.hpp"
@@ -28,12 +29,11 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <functional>
 #include <memory>
+#include <optional>
 #include <type_traits>
+#include <variant>
 
 #ifdef ELECTROSTATICS
 // forward declarations
@@ -56,38 +56,34 @@ struct CoulombScafacos;
 #endif
 
 using ElectrostaticsActor =
-    boost::variant<std::shared_ptr<DebyeHueckel>,
+    std::variant<std::shared_ptr<DebyeHueckel>,
 #ifdef P3M
-                   std::shared_ptr<CoulombP3M>,
+                 std::shared_ptr<CoulombP3M>,
 #ifdef CUDA
-                   std::shared_ptr<CoulombP3MGPU>,
+                 std::shared_ptr<CoulombP3MGPU>,
 #endif // CUDA
-                   std::shared_ptr<ElectrostaticLayerCorrection>,
+                 std::shared_ptr<ElectrostaticLayerCorrection>,
 #endif // P3M
-                   std::shared_ptr<CoulombMMM1D>,
+                 std::shared_ptr<CoulombMMM1D>,
 #ifdef MMM1D_GPU
-                   std::shared_ptr<CoulombMMM1DGpu>,
+                 std::shared_ptr<CoulombMMM1DGpu>,
 #endif // MMM1D_GPU
 #ifdef SCAFACOS
-                   std::shared_ptr<CoulombScafacos>,
+                 std::shared_ptr<CoulombScafacos>,
 #endif // SCAFACOS
-                   std::shared_ptr<ReactionField>>;
+                 std::shared_ptr<ReactionField>>;
 
-using ElectrostaticsExtension = boost::variant<std::shared_ptr<ICCStar>>;
+using ElectrostaticsExtension = std::variant<std::shared_ptr<ICCStar>>;
 #endif // ELECTROSTATICS
 
 namespace Coulomb {
 
-namespace detail {
-bool flag_all_reduce(bool flag);
-} // namespace detail
-
 struct Solver {
 #ifdef ELECTROSTATICS
   /// @brief Main electrostatics solver.
-  boost::optional<ElectrostaticsActor> solver;
+  std::optional<ElectrostaticsActor> solver;
   /// @brief Extension that modifies the solver behavior.
-  boost::optional<ElectrostaticsExtension> extension;
+  std::optional<ElectrostaticsExtension> extension;
   /// @brief Whether to reinitialize the solver on observable calculation.
   bool reinit_on_observable_calc = false;
 
@@ -119,10 +115,10 @@ struct Solver {
       std::function<double(Particle const &, Particle const &, double,
                            Utils::Vector3d const &, double)>;
 
-  inline boost::optional<ShortRangeForceKernel> pair_force_kernel() const;
-  inline boost::optional<ShortRangePressureKernel> pair_pressure_kernel() const;
-  inline boost::optional<ShortRangeEnergyKernel> pair_energy_kernel() const;
-  inline boost::optional<ShortRangeForceCorrectionsKernel>
+  inline std::optional<ShortRangeForceKernel> pair_force_kernel() const;
+  inline std::optional<ShortRangePressureKernel> pair_pressure_kernel() const;
+  inline std::optional<ShortRangeEnergyKernel> pair_energy_kernel() const;
+  inline std::optional<ShortRangeForceCorrectionsKernel>
   pair_force_elc_kernel() const;
 };
 

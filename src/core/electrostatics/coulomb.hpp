@@ -37,20 +37,13 @@
 #include "electrostatics/reaction_field.hpp"
 #include "electrostatics/scafacos.hpp"
 
-#include "ParticleRange.hpp"
-
-#include <utils/Vector.hpp>
-
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <type_traits>
 
 /** Get the electrostatics prefactor. */
-struct GetCoulombPrefactor : public boost::static_visitor<double> {
+struct GetCoulombPrefactor {
   template <typename T>
   double operator()(std::shared_ptr<T> const &actor) const {
     return actor->prefactor;

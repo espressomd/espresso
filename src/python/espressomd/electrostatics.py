@@ -22,6 +22,18 @@ from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .code_features import has_features
 
 
+@script_interface_register
+class Container(ScriptInterfaceHelper):
+    _so_name = "Coulomb::Container"
+    _so_bind_methods = ("clear",)
+
+    def __init__(self, *args, **kwargs):
+        if not has_features("ELECTROSTATICS"):
+            raise NotImplementedError("Feature ELECTROSTATICS not compiled in")
+
+        super().__init__(*args, **kwargs)
+
+
 class ElectrostaticInteraction(ScriptInterfaceHelper):
     """
     Common interface for electrostatics solvers.

@@ -259,16 +259,19 @@ electrostatics solver. We start by adding the particles: ::
     cation = system.part.add(pos=[4.0, 1.0, 1.0], type=2, q=1.0)
     anion = system.part.add(pos=[6.0, 1.0, 1.0], type=2, q=-1.0)
 
-Long-range interactions and other methods that might be mutually exclusive
-are treated as so-called *actors*. They are used by first creating an instance
-of the desired actor::
+Long-range interaction solvers for electrostatics, magnetostatis, hydrodynamics
+and electrokinetics are treated as self-contained objects that can be attached
+to the system. We start by first creating an instance of the desired solver::
 
     p3m = espressomd.electrostatics.P3M(accuracy=1e-3, prefactor=1.0)
 
-and then adding it to the system: ::
+and then we attach it to the system::
 
     print("Tuning p3m ...")
-    system.actors.add(p3m)
+    system.electrostatics.solver = p3m
+
+Solvers for electrostatics and magnetostatics automatically tune their
+parameters when attached to a system.
 
 .. rubric:: Integration
 
