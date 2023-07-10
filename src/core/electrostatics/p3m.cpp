@@ -48,6 +48,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "system/System.hpp"
 #include "tuning.hpp"
 
 #include <utils/Span.hpp>
@@ -244,7 +245,7 @@ void CoulombP3M::init() {
 
   sanity_checks();
 
-  auto const &solver = Coulomb::get_coulomb().solver;
+  auto const &solver = System::get_system().coulomb.impl->solver;
   double elc_layer = 0.;
   if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {
     elc_layer = actor->elc.space_layer;
@@ -567,7 +568,7 @@ public:
 
   void setup_logger(bool verbose) override {
 #ifdef CUDA
-    auto const &solver = Coulomb::get_coulomb().solver;
+    auto const &solver = System::get_system().coulomb.impl->solver;
     auto const on_gpu = has_actor_of_type<CoulombP3MGPU>(solver);
 #else
     auto const on_gpu = false;
@@ -582,7 +583,7 @@ public:
 
   std::optional<std::string>
   layer_correction_veto_r_cut(double r_cut) const override {
-    auto const &solver = Coulomb::get_coulomb().solver;
+    auto const &solver = System::get_system().coulomb.impl->solver;
     if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {
       return actor->veto_r_cut(r_cut);
     }
@@ -614,7 +615,7 @@ public:
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, alpha_L);
 #ifdef CUDA
-    auto const &solver = Coulomb::get_coulomb().solver;
+    auto const &solver = System::get_system().coulomb.impl->solver;
     if (has_actor_of_type<CoulombP3MGPU>(solver)) {
       ks_err = p3mgpu_k_space_error(m_prefactor, mesh, cao, p3m.sum_qpart,
                                     p3m.sum_q2, alpha_L);
@@ -662,7 +663,7 @@ public:
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
     auto mesh_density = m_mesh_density_min;
-    auto const &solver = Coulomb::get_coulomb().solver;
+    auto const &solver = System::get_system().coulomb.impl->solver;
     while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       if (m_tune_mesh) {

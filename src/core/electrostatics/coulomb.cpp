@@ -19,6 +19,8 @@
 
 #include "config/config.hpp"
 
+#include "electrostatics/solver.hpp"
+
 #ifdef ELECTROSTATICS
 
 #include "electrostatics/coulomb.hpp"
@@ -60,38 +62,50 @@
 
 namespace Coulomb {
 
+Solver::Solver() {
+  impl = std::make_unique<Implementation>();
+  reinit_on_observable_calc = false;
+}
+
 Solver const &get_coulomb() { return System::get_system().coulomb; }
 
 void Solver::sanity_checks() const {
-  if (solver) {
-    std::visit([](auto const &actor) { actor->sanity_checks(); }, *solver);
+  if (impl->solver) {
+    std::visit([](auto const &ptr) { ptr->sanity_checks(); }, *impl->solver);
   }
 }
 
 void Solver::on_coulomb_change() {
   reinit_on_observable_calc = true;
-  visit_active_actor_try_catch([](auto &actor) { actor->init(); }, solver);
+  if (impl->solver) {
+    visit_try_catch([](auto &ptr) { ptr->init(); }, *impl->solver);
+  }
 }
 
 void Solver::on_boxl_change() {
-  visit_active_actor_try_catch([](auto &actor) { actor->on_boxl_change(); },
-                               solver);
+  if (impl->solver) {
+    visit_try_catch([](auto &ptr) { ptr->on_boxl_change(); }, *impl->solver);
+  }
 }
 
 void Solver::on_node_grid_change() {
-  if (solver) {
-    std::visit([](auto &actor) { actor->on_node_grid_change(); }, *solver);
+  if (impl->solver) {
+    std::visit([](auto &ptr) { ptr->on_node_grid_change(); }, *impl->solver);
   }
 }
 
 void Solver::on_periodicity_change() {
-  visit_active_actor_try_catch(
-      [](auto &actor) { actor->on_periodicity_change(); }, solver);
+  if (impl->solver) {
+    visit_try_catch([](auto &ptr) { ptr->on_periodicity_change(); },
+                    *impl->solver);
+  }
 }
 
 void Solver::on_cell_structure_change() {
-  visit_active_actor_try_catch(
-      [](auto &actor) { actor->on_cell_structure_change(); }, solver);
+  if (impl->solver) {
+    visit_try_catch([](auto &ptr) { ptr->on_cell_structure_change(); },
+                    *impl->solver);
+  }
 }
 
 struct LongRangePressure {
@@ -127,8 +141,8 @@ private:
 
 Utils::Vector9d
 Solver::calc_pressure_long_range(ParticleRange const &particles) const {
-  if (solver) {
-    return std::visit(LongRangePressure(particles), *solver);
+  if (impl->solver) {
+    return std::visit(LongRangePressure(particles), *impl->solver);
   }
   return {};
 }
@@ -166,8 +180,8 @@ struct ShortRangeCutoff {
 };
 
 double Solver::cutoff() const {
-  if (solver) {
-    return std::visit(ShortRangeCutoff(), *solver);
+  if (impl->solver) {
+    return std::visit(ShortRangeCutoff(), *impl->solver);
   }
   return -1.0;
 }
@@ -188,8 +202,8 @@ struct EventOnObservableCalc {
 
 void Solver::on_observable_calc() {
   if (reinit_on_observable_calc) {
-    if (solver) {
-      std::visit(EventOnObservableCalc(), *solver);
+    if (impl->solver) {
+      std::visit(EventOnObservableCalc(), *impl->solver);
     }
     reinit_on_observable_calc = false;
   }
@@ -281,14 +295,14 @@ private:
 };
 
 void Solver::calc_long_range_force(ParticleRange const &particles) const {
-  if (solver) {
-    std::visit(LongRangeForce(particles), *solver);
+  if (impl->solver) {
+    std::visit(LongRangeForce(particles), *impl->solver);
   }
 }
 
 double Solver::calc_energy_long_range(ParticleRange const &particles) const {
-  if (solver) {
-    return std::visit(LongRangeEnergy(particles), *solver);
+  if (impl->solver) {
+    return std::visit(LongRangeEnergy(particles), *impl->solver);
   }
   return 0.;
 }
@@ -352,5 +366,4 @@ void check_charge_neutrality(double relative_tolerance) {
 }
 
 } // namespace Coulomb
-
 #endif // ELECTROSTATICS

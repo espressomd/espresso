@@ -18,7 +18,9 @@
  */
 
 #include "System.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "grid.hpp"
+#include "magnetostatics/dipoles.hpp"
 
 #include <utils/Vector.hpp>
 

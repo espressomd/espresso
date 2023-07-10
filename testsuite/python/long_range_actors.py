@@ -103,11 +103,22 @@ class Test(ut.TestCase):
 
         self.system.electrostatics.solver = p3m
         self.system.electrostatics.extension = icc
-        self.system.electrostatics.solver = p3m_new
+        if espressomd.has_features(["NPT"]):
+            with self.assertRaisesRegex(Exception, "ERROR: ICC does not work in the NPT ensemble"):
+                self.system.integrator.set_isotropic_npt(
+                    ext_pressure=2., piston=0.01)
+                self.system.integrator.run(0)
+            self.system.integrator.set_vv()
+        with self.assertRaisesRegex(RuntimeError, "Cannot change solver when an extension is active"):
+            self.system.electrostatics.solver = p3m_new
+        with self.assertRaisesRegex(RuntimeError, "Cannot change solver when an extension is active"):
+            self.system.electrostatics.solver = None
         self.assertIsNotNone(self.system.electrostatics.extension)
-        self.system.electrostatics.solver = None
+        self.system.electrostatics.clear()
+        self.assertIsNone(self.system.electrostatics.solver)
         self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
+        self.assertIsNone(self.system.electrostatics.call_method("unknown"))
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_magnetostatics_registration(self):
@@ -117,6 +128,7 @@ class Test(ut.TestCase):
 
         self.assertIsNone(dp3m.call_method("unknown"))
         self.system.magnetostatics.solver = dp3m
+        self.assertIsNone(self.system.electrostatics.call_method("unknown"))
 
     def check_obs_stats(self, key):
         # check observable statistics have the correct shape

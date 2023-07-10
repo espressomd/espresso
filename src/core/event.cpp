@@ -113,7 +113,7 @@ void on_integration_start(double time_step) {
   }
 #ifdef ELECTROSTATICS
   {
-    auto const &actor = System::get_system().coulomb.solver;
+    auto const &actor = System::get_system().coulomb.impl->solver;
     if (not Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
         (actor and not Utils::Mpi::all_compare(comm_cart, (*actor).index())))
       runtimeErrorMsg() << "Nodes disagree about Coulomb long-range method";
@@ -121,7 +121,7 @@ void on_integration_start(double time_step) {
 #endif
 #ifdef DIPOLES
   {
-    auto const &actor = System::get_system().dipoles.solver;
+    auto const &actor = System::get_system().dipoles.impl->solver;
     if (not Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
         (actor and not Utils::Mpi::all_compare(comm_cart, (*actor).index())))
       runtimeErrorMsg() << "Nodes disagree about dipolar long-range method";

@@ -26,6 +26,7 @@
 #include "pressure.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "Observable_stat.hpp"
@@ -87,7 +88,7 @@ inline void add_non_bonded_pair_virials(
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
-  if (Dipoles::get_dipoles().solver) {
+  if (Dipoles::get_dipoles().impl->solver) {
     fprintf(stderr, "calculating pressure for magnetostatics which doesn't "
                     "have it implemented\n");
   }

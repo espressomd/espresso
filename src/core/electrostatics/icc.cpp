@@ -43,6 +43,7 @@
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
+#include "system/System.hpp"
 
 #include <utils/constants.hpp>
 
@@ -94,7 +95,7 @@ static void force_calc_icc(
         }
       });
 
-  Coulomb::get_coulomb().calc_long_range_force(particles);
+  System::get_system().coulomb.calc_long_range_force(particles);
 }
 
 void ICCStar::iteration(CellStructure &cell_structure,
@@ -108,11 +109,12 @@ void ICCStar::iteration(CellStructure &cell_structure,
     return;
   }
 
-  auto const prefactor =
-      std::visit(GetCoulombPrefactor(), *(Coulomb::get_coulomb().solver));
+  auto const &coulomb = System::get_system().coulomb;
+  auto const prefactor = std::visit(
+      [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
   auto const pref = 1. / (prefactor * 2. * Utils::pi());
-  auto const kernel = Coulomb::get_coulomb().pair_force_kernel();
-  auto const elc_kernel = Coulomb::get_coulomb().pair_force_elc_kernel();
+  auto const kernel = coulomb.pair_force_kernel();
+  auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
 
   auto global_max_rel_diff = 0.;
@@ -274,17 +276,19 @@ void ICCStar::sanity_check() const {
 }
 
 void ICCStar::sanity_checks_active_solver() const {
-  if (Coulomb::get_coulomb().solver) {
-    std::visit(SanityChecksICC(), *(Coulomb::get_coulomb().solver));
+  auto &system = System::get_system();
+  if (system.coulomb.impl->solver) {
+    std::visit(SanityChecksICC(), *system.coulomb.impl->solver);
   } else {
     throw std::runtime_error("An electrostatics solver is needed by ICC");
   }
 }
 
 void update_icc_particles() {
-  if (Coulomb::get_coulomb().extension) {
+  auto &system = System::get_system();
+  if (system.coulomb.impl->extension) {
     if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
-            get_ptr(Coulomb::get_coulomb().extension))) {
+            get_ptr(system.coulomb.impl->extension))) {
       (**icc).iteration(cell_structure, cell_structure.local_particles(),
                         cell_structure.ghost_particles());
     }

@@ -40,17 +40,40 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <type_traits>
-
-/** Get the electrostatics prefactor. */
-struct GetCoulombPrefactor {
-  template <typename T>
-  double operator()(std::shared_ptr<T> const &actor) const {
-    return actor->prefactor;
-  }
-};
+#include <variant>
 
 namespace Coulomb {
+
+using ElectrostaticsActor =
+    std::variant<std::shared_ptr<DebyeHueckel>,
+#ifdef P3M
+                 std::shared_ptr<CoulombP3M>,
+#ifdef CUDA
+                 std::shared_ptr<CoulombP3MGPU>,
+#endif // CUDA
+                 std::shared_ptr<ElectrostaticLayerCorrection>,
+#endif // P3M
+                 std::shared_ptr<CoulombMMM1D>,
+#ifdef MMM1D_GPU
+                 std::shared_ptr<CoulombMMM1DGpu>,
+#endif // MMM1D_GPU
+#ifdef SCAFACOS
+                 std::shared_ptr<CoulombScafacos>,
+#endif // SCAFACOS
+                 std::shared_ptr<ReactionField>>;
+
+using ElectrostaticsExtension = std::variant<std::shared_ptr<ICCStar>>;
+
+struct Solver::Implementation {
+  /// @brief Main electrostatics solver.
+  std::optional<ElectrostaticsActor> solver;
+  /// @brief Extension that modifies the solver behavior.
+  std::optional<ElectrostaticsExtension> extension;
+  Implementation() : solver{}, extension{} {}
+};
+
 namespace traits {
 
 #ifdef P3M

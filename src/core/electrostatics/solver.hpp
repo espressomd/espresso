@@ -33,59 +33,16 @@
 #include <memory>
 #include <optional>
 #include <type_traits>
-#include <variant>
-
-#ifdef ELECTROSTATICS
-// forward declarations
-struct DebyeHueckel;
-struct ReactionField;
-struct ICCStar;
-#ifdef P3M
-struct CoulombP3M;
-#ifdef CUDA
-struct CoulombP3MGPU;
-#endif
-struct ElectrostaticLayerCorrection;
-#endif
-struct CoulombMMM1D;
-#ifdef MMM1D_GPU
-class CoulombMMM1DGpu;
-#endif
-#ifdef SCAFACOS
-struct CoulombScafacos;
-#endif
-
-using ElectrostaticsActor =
-    std::variant<std::shared_ptr<DebyeHueckel>,
-#ifdef P3M
-                 std::shared_ptr<CoulombP3M>,
-#ifdef CUDA
-                 std::shared_ptr<CoulombP3MGPU>,
-#endif // CUDA
-                 std::shared_ptr<ElectrostaticLayerCorrection>,
-#endif // P3M
-                 std::shared_ptr<CoulombMMM1D>,
-#ifdef MMM1D_GPU
-                 std::shared_ptr<CoulombMMM1DGpu>,
-#endif // MMM1D_GPU
-#ifdef SCAFACOS
-                 std::shared_ptr<CoulombScafacos>,
-#endif // SCAFACOS
-                 std::shared_ptr<ReactionField>>;
-
-using ElectrostaticsExtension = std::variant<std::shared_ptr<ICCStar>>;
-#endif // ELECTROSTATICS
 
 namespace Coulomb {
 
 struct Solver {
 #ifdef ELECTROSTATICS
-  /// @brief Main electrostatics solver.
-  std::optional<ElectrostaticsActor> solver;
-  /// @brief Extension that modifies the solver behavior.
-  std::optional<ElectrostaticsExtension> extension;
+  struct Implementation;
+  /// @brief Pointer-to-implementation.
+  std::unique_ptr<Implementation> impl;
   /// @brief Whether to reinitialize the solver on observable calculation.
-  bool reinit_on_observable_calc = false;
+  bool reinit_on_observable_calc;
 
   Utils::Vector9d
   calc_pressure_long_range(ParticleRange const &particles) const;
@@ -103,6 +60,9 @@ struct Solver {
 
   void calc_long_range_force(ParticleRange const &particles) const;
   double calc_energy_long_range(ParticleRange const &particles) const;
+  Solver();
+#else  // ELECTROSTATICS
+  Solver() = default;
 #endif // ELECTROSTATICS
 
   using ShortRangeForceKernel =

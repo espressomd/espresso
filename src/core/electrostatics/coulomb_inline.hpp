@@ -163,9 +163,9 @@ struct ShortRangeEnergyKernel {
 inline std::optional<Solver::ShortRangeForceKernel>
 Solver::pair_force_kernel() const {
 #ifdef ELECTROSTATICS
-  if (solver) {
+  if (impl->solver) {
     auto const visitor = Coulomb::ShortRangeForceKernel();
-    return std::visit(visitor, *solver);
+    return std::visit(visitor, *impl->solver);
   }
 #endif // ELECTROSTATICS
   return {};
@@ -174,9 +174,9 @@ Solver::pair_force_kernel() const {
 inline std::optional<Solver::ShortRangeForceCorrectionsKernel>
 Solver::pair_force_elc_kernel() const {
 #ifdef ELECTROSTATICS
-  if (solver) {
+  if (impl->solver) {
     auto const visitor = Coulomb::ShortRangeForceCorrectionsKernel();
-    return std::visit(visitor, *solver);
+    return std::visit(visitor, *impl->solver);
   }
 #endif // ELECTROSTATICS
   return {};
@@ -185,9 +185,9 @@ Solver::pair_force_elc_kernel() const {
 inline std::optional<Solver::ShortRangePressureKernel>
 Solver::pair_pressure_kernel() const {
 #ifdef ELECTROSTATICS
-  if (solver) {
+  if (impl->solver) {
     auto const visitor = Coulomb::ShortRangePressureKernel();
-    return std::visit(visitor, *solver);
+    return std::visit(visitor, *impl->solver);
   }
 #endif // ELECTROSTATICS
   return {};
@@ -196,9 +196,9 @@ Solver::pair_pressure_kernel() const {
 inline std::optional<Solver::ShortRangeEnergyKernel>
 Solver::pair_energy_kernel() const {
 #ifdef ELECTROSTATICS
-  if (solver) {
+  if (impl->solver) {
     auto const visitor = Coulomb::ShortRangeEnergyKernel();
-    return std::visit(visitor, *solver);
+    return std::visit(visitor, *impl->solver);
   }
 #endif // ELECTROSTATICS
   return {};

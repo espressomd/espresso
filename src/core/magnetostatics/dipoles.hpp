@@ -38,25 +38,35 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <type_traits>
-
-/** Get the magnetostatics prefactor. */
-struct GetDipolesPrefactor {
-  template <typename T>
-  double operator()(std::shared_ptr<T> const &actor) const {
-    return actor->prefactor;
-  }
-};
-
-/** Run actor sanity checks. */
-struct DipolesSanityChecks {
-  template <typename T> void operator()(std::shared_ptr<T> const &actor) const {
-    actor->sanity_checks();
-  }
-};
+#include <variant>
 
 namespace Dipoles {
+
+using MagnetostaticsActor =
+    std::variant<std::shared_ptr<DipolarDirectSum>,
+#ifdef DIPOLAR_DIRECT_SUM
+                 std::shared_ptr<DipolarDirectSumGpu>,
+#endif
+#ifdef DIPOLAR_BARNES_HUT
+                 std::shared_ptr<DipolarBarnesHutGpu>,
+#endif
+#ifdef DP3M
+                 std::shared_ptr<DipolarP3M>,
+#endif
+#ifdef SCAFACOS_DIPOLES
+                 std::shared_ptr<DipolarScafacos>,
+#endif
+                 std::shared_ptr<DipolarLayerCorrection>>;
+
+struct Solver::Implementation {
+  /// @brief Main electrostatics solver.
+  std::optional<MagnetostaticsActor> solver;
+  Implementation() : solver{} {}
+};
+
 namespace traits {
 
 /** @brief Whether an actor is a solver. */

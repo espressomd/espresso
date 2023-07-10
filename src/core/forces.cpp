@@ -158,9 +158,9 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  if (espresso_system.coulomb.extension) {
+  if (espresso_system.coulomb.impl->extension) {
     if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
-            get_ptr(espresso_system.coulomb.extension))) {
+            get_ptr(espresso_system.coulomb.impl->extension))) {
       (**icc).iteration(cell_structure, particles, ghost_particles);
     }
   }

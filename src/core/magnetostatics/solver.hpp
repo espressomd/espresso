@@ -33,50 +33,16 @@
 #include <memory>
 #include <optional>
 #include <type_traits>
-#include <variant>
-
-#ifdef DIPOLES
-// forward declarations
-struct DipolarLayerCorrection;
-struct DipolarDirectSum;
-#ifdef DIPOLAR_DIRECT_SUM
-struct DipolarDirectSumGpu;
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-struct DipolarBarnesHutGpu;
-#endif
-#ifdef DP3M
-struct DipolarP3M;
-#endif
-#ifdef SCAFACOS_DIPOLES
-struct DipolarScafacos;
-#endif
-
-using MagnetostaticsActor =
-    std::variant<std::shared_ptr<DipolarDirectSum>,
-#ifdef DIPOLAR_DIRECT_SUM
-                 std::shared_ptr<DipolarDirectSumGpu>,
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-                 std::shared_ptr<DipolarBarnesHutGpu>,
-#endif
-#ifdef DP3M
-                 std::shared_ptr<DipolarP3M>,
-#endif
-#ifdef SCAFACOS_DIPOLES
-                 std::shared_ptr<DipolarScafacos>,
-#endif
-                 std::shared_ptr<DipolarLayerCorrection>>;
-#endif // DIPOLES
 
 namespace Dipoles {
 
 struct Solver {
 #ifdef DIPOLES
-  /// @brief Main electrostatics solver.
-  std::optional<MagnetostaticsActor> solver;
+  struct Implementation;
+  /// @brief Pointer-to-implementation.
+  std::unique_ptr<Implementation> impl;
   /// @brief Whether to reinitialize the solver on observable calculation.
-  bool reinit_on_observable_calc = false;
+  bool reinit_on_observable_calc;
 
   void sanity_checks() const;
   double cutoff() const;
@@ -95,6 +61,9 @@ struct Solver {
 #ifdef DIPOLE_FIELD_TRACKING
   void calc_long_range_field(ParticleRange const &particles) const;
 #endif
+  Solver();
+#else  // DIPOLES
+  Solver() = default;
 #endif // DIPOLES
 
   using ShortRangeForceKernel =

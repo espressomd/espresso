@@ -101,8 +101,9 @@ public:
                          VariantMap const &params) override {
     if (name == "activate") {
       context()->parallel_try_catch([&]() {
-        add_actor(context()->get_comm(), System::get_system().coulomb.extension,
-                  m_actor, ::on_coulomb_change);
+        add_actor(context()->get_comm(),
+                  System::get_system().coulomb.impl->extension, m_actor,
+                  ::on_coulomb_change);
       });
       return {};
     }

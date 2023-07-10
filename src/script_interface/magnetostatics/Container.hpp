@@ -41,7 +41,7 @@ class Container : public AutoParameters<Container> {
   void reset_solver() {
     auto &dipoles = System::get_system().dipoles;
     m_solver.reset();
-    dipoles.solver = std::nullopt;
+    dipoles.impl->solver = std::nullopt;
     ::on_dipoles_change();
   }
 

@@ -43,15 +43,15 @@ class Container : public AutoParameters<Container> {
     auto &coulomb = System::get_system().coulomb;
     m_solver.reset();
     m_extension.reset();
-    coulomb.extension = std::nullopt;
-    coulomb.solver = std::nullopt;
+    coulomb.impl->extension = std::nullopt;
+    coulomb.impl->solver = std::nullopt;
     ::on_coulomb_change();
   }
 
   void reset_extension() {
     auto &coulomb = System::get_system().coulomb;
     m_extension.reset();
-    coulomb.extension = std::nullopt;
+    coulomb.impl->extension = std::nullopt;
     ::on_coulomb_change();
   }
 
@@ -60,6 +60,13 @@ public:
     add_parameters({
         {"solver",
          [this](Variant const &v) {
+           if (m_extension) {
+             if (context()->is_head_node()) {
+               throw std::runtime_error(
+                   "Cannot change solver when an extension is active");
+             }
+             throw Exception("");
+           }
            if (is_none(v)) {
              reset_solver();
            } else {

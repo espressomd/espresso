@@ -40,8 +40,9 @@ Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
                                                   VariantMap const &params) {
   if (name == "activate") {
     context()->parallel_try_catch([&]() {
-      add_actor(context()->get_comm(), System::get_system().dipoles.solver,
-                m_actor, ::on_dipoles_change);
+      add_actor(context()->get_comm(),
+                System::get_system().dipoles.impl->solver, m_actor,
+                ::on_dipoles_change);
     });
     return {};
   }

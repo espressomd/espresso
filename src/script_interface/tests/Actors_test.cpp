@@ -99,9 +99,9 @@ BOOST_AUTO_TEST_CASE(coulomb_actor) {
   BOOST_CHECK_CLOSE(std::as_const(actor).actor()->prefactor, 2., tol);
   // check visitors
   BOOST_CHECK(has_actor_of_type<::DebyeHueckel>(
-      std::optional<ElectrostaticsActor>(actor.actor())));
+      std::optional<Coulomb::ElectrostaticsActor>(actor.actor())));
   BOOST_CHECK(not has_actor_of_type<decltype(actor)>(
-      std::optional<ElectrostaticsActor>(actor.actor())));
+      std::optional<Coulomb::ElectrostaticsActor>(actor.actor())));
 }
 #endif // ELECTROSTATICS
 

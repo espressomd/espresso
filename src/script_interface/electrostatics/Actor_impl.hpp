@@ -86,18 +86,11 @@ template <class SIClass, class CoreClass>
 Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
                                                   VariantMap const &params) {
   if (name == "activate") {
-    auto &coulomb = System::get_system().coulomb;
-    decltype(coulomb.extension) old_extension = std::nullopt;
-    coulomb.extension.swap(old_extension);
-    try {
-      context()->parallel_try_catch([&]() {
-        add_actor(context()->get_comm(), coulomb.solver, m_actor,
-                  ::on_coulomb_change);
-      });
-    } catch (...) {
-      coulomb.extension.swap(old_extension);
-      throw;
-    }
+    context()->parallel_try_catch([&]() {
+      auto &coulomb = System::get_system().coulomb;
+      add_actor(context()->get_comm(), coulomb.impl->solver, m_actor,
+                ::on_coulomb_change);
+    });
     return {};
   }
   return {};

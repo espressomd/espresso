@@ -36,11 +36,13 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/harmonic.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
 #include "energy.hpp"
 #include "event.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "observables/ParticleVelocities.hpp"
 #include "particle_node.hpp"
@@ -261,7 +263,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              1e-3};
     auto solver =
         std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
-    add_actor(comm, System::get_system().coulomb.solver, solver,
+    add_actor(comm, System::get_system().coulomb.impl->solver, solver,
               ::on_coulomb_change);
 
     // measure energies
