@@ -25,7 +25,6 @@ from .detail.walberla import VTKOutputBase, LatticeWalberla  # pylint: disable=u
 from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList, array_variant
 import espressomd.detail.walberla
 import espressomd.shapes
-import espressomd.code_features
 
 
 @script_interface_register
@@ -34,15 +33,9 @@ class EKFFT(ScriptInterfaceHelper):
     A FFT-based Poisson solver.
 
     """
-
     _so_name = "walberla::EKFFT"
+    _so_features = ("WALBERLA_FFT",)
     _so_creation_policy = "GLOBAL"
-
-    def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA_FFT"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-        super().__init__(*args, **kwargs)
 
 
 @script_interface_register
@@ -53,24 +46,14 @@ class EKNone(ScriptInterfaceHelper):
 
     """
     _so_name = "walberla::EKNone"
+    _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
-
-    def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-        super().__init__(*args, **kwargs)
 
 
 @script_interface_register
 class EKContainer(ScriptObjectList):
     _so_name = "walberla::EKContainer"
-
-    def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-        super().__init__(*args, **kwargs)
+    _so_features = ("WALBERLA",)
 
     def add(self, ekspecies):
         self.call_method("add", object=ekspecies)
@@ -165,6 +148,7 @@ class EKSpecies(ScriptInterfaceHelper,
     """
 
     _so_name = "walberla::EKSpecies"
+    _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "clear_density_boundaries",
@@ -176,9 +160,6 @@ class EKSpecies(ScriptInterfaceHelper,
     )
 
     def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
         if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)

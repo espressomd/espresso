@@ -73,4 +73,7 @@ cdef extern from "script_interface/initialize.hpp" namespace "ScriptInterface":
 cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
     T get_value[T](const Variant T)
 
+cdef extern from "script_interface/code_info/CodeInfo.hpp" namespace "ScriptInterface::CodeInfo":
+    void check_features(const vector[string] & features) except +
+
 cdef void init(MpiCallbacks &)
