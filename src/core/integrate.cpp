@@ -265,7 +265,7 @@ static bool integrator_step_1(ParticleRange const &particles) {
 static void integrator_step_2(ParticleRange const &particles, double kT) {
   int perParticleIntegration =
       PropagationMode::TRANS_LANGEVIN + PropagationMode::ROT_LANGEVIN;
-  std::list<int> SplittableINTEG = {INTEG_METHOD_NVT};
+  std::vector<int> SplittableINTEG = {INTEG_METHOD_NVT};
   bool doesDefaultcontainSplittable =
       std::any_of(SplittableINTEG.begin(), SplittableINTEG.end(),
                   [&](int val) { return integ_switch == val; });
