@@ -143,7 +143,7 @@ print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
 p3m = espressomd.electrostatics.P3M(**p3m_params)
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(

@@ -40,9 +40,8 @@ checkpoint.load()
 
 # print out actors
 
-print("\n### current active actors ###")
-for act in system.actors.active_actors:
-    print(act)
+print("\n### current active electrostatics method ###")
+print(system.electrostatics.solver)
 
 # test user variable
 print("\n### user variable test ###")

@@ -226,6 +226,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
     """
 
     _so_name = "walberla::LBFluid"
+    _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "add_force_at_pos",
@@ -237,9 +238,6 @@ class LBFluidWalberla(HydrodynamicInteraction,
     )
 
     def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
         if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)
@@ -329,13 +327,10 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
     list of parameters.
 
     """
+    _so_features = ("WALBERLA", "CUDA")
 
     # pylint: disable=unused-argument
     def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("CUDA"):
-            raise NotImplementedError("Feature CUDA not compiled in")
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
         raise NotImplementedError("Not implemented yet")
 
 

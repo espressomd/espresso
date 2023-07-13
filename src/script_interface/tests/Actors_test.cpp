@@ -36,10 +36,8 @@
 #include "core/actor/visitors.hpp"
 #include "core/electrostatics/coulomb.hpp"
 #include "core/electrostatics/debye_hueckel.hpp"
-#include "core/electrostatics/registration.hpp"
 #include "core/magnetostatics/dipolar_direct_sum.hpp"
 #include "core/magnetostatics/dipoles.hpp"
-#include "core/magnetostatics/registration.hpp"
 
 #include "core/communication.hpp"
 
@@ -50,6 +48,7 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -100,17 +99,9 @@ BOOST_AUTO_TEST_CASE(coulomb_actor) {
   BOOST_CHECK_CLOSE(std::as_const(actor).actor()->prefactor, 2., tol);
   // check visitors
   BOOST_CHECK(has_actor_of_type<::DebyeHueckel>(
-      boost::optional<ElectrostaticsActor>(actor.actor())));
+      std::optional<Coulomb::ElectrostaticsActor>(actor.actor())));
   BOOST_CHECK(not has_actor_of_type<decltype(actor)>(
-      boost::optional<ElectrostaticsActor>(actor.actor())));
-  BOOST_CHECK(is_already_stored(
-      actor.actor(), boost::optional<ElectrostaticsActor>(actor.actor())));
-  BOOST_CHECK(not is_already_stored(
-      std::shared_ptr<::DebyeHueckel>{},
-      boost::optional<ElectrostaticsActor>(actor.actor())));
-  BOOST_CHECK(not is_already_stored(
-      std::shared_ptr<decltype(actor)>{},
-      boost::optional<ElectrostaticsActor>(actor.actor())));
+      std::optional<Coulomb::ElectrostaticsActor>(actor.actor())));
 }
 #endif // ELECTROSTATICS
 

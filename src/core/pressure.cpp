@@ -37,6 +37,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
 #include "short_range_loop.hpp"
+#include "system/System.hpp"
 #include "virtual_sites.hpp"
 
 #include "config/config.hpp"
@@ -71,12 +72,12 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
     add_kinetic_virials(p, obs_pressure);
   }
 
-  auto const coulomb_force_kernel = Coulomb::pair_force_kernel();
-  auto const coulomb_pressure_kernel = Coulomb::pair_pressure_kernel();
+  auto const &coulomb = System::get_system().coulomb;
+  auto const coulomb_force_kernel = coulomb.pair_force_kernel();
+  auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
   short_range_loop(
-      [&obs_pressure,
-       coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr()](
+      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel)](
           Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
@@ -93,8 +94,8 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
         }
         return true;
       },
-      [&obs_pressure, coulomb_force_kernel_ptr = coulomb_force_kernel.get_ptr(),
-       coulomb_pressure_kernel_ptr = coulomb_pressure_kernel.get_ptr()](
+      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       coulomb_pressure_kernel_ptr = get_ptr(coulomb_pressure_kernel)](
           Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
                                     obs_pressure, coulomb_force_kernel_ptr,
@@ -104,12 +105,12 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  auto const coulomb_pressure = Coulomb::calc_pressure_long_range(local_parts);
+  auto const coulomb_pressure = coulomb.calc_pressure_long_range(local_parts);
   boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  Dipoles::calc_pressure_long_range();
+  Dipoles::get_dipoles().calc_pressure_long_range();
 #endif
 
 #ifdef VIRTUAL_SITES

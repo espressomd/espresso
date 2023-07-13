@@ -20,27 +20,26 @@
 #ifndef ESPRESSO_SRC_CORE_ACTOR_REGISTRATION_HPP
 #define ESPRESSO_SRC_CORE_ACTOR_REGISTRATION_HPP
 
-#include "actor/visitors.hpp"
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
+#include <functional>
 #include <memory>
+#include <optional>
 
-/** @brief Register an actor in a thread-safe manner. */
 template <typename Variant, typename T>
-void add_actor(boost::optional<Variant> &active_actor,
-               std::shared_ptr<T> const &actor, void (&on_actor_change)(),
-               bool (&flag_all_reduce)(bool)) {
-  auto const cleanup_if_any_rank_failed = [&](bool this_failed) {
-    auto const any_failed = flag_all_reduce(this_failed);
-    if (any_failed) {
-      active_actor = boost::none;
+void add_actor(boost::mpi::communicator const &comm,
+               std::optional<Variant> &active_actor,
+               std::shared_ptr<T> const &actor, void (&on_actor_change)()) {
+  std::optional<Variant> other = actor;
+  auto const cleanup_if_any_rank_failed = [&](bool failed) {
+    if (boost::mpi::all_reduce(comm, failed, std::logical_or<>())) {
+      active_actor.swap(other);
       on_actor_change();
     }
   };
   try {
-    active_actor = actor;
+    active_actor.swap(other);
     actor->on_activation();
     on_actor_change();
     cleanup_if_any_rank_failed(false);
@@ -48,13 +47,6 @@ void add_actor(boost::optional<Variant> &active_actor,
     cleanup_if_any_rank_failed(true);
     throw;
   }
-}
-
-template <typename Variant, typename T>
-void remove_actor(boost::optional<Variant> &active_actor,
-                  std::shared_ptr<T> const &actor, void (&on_actor_change)()) {
-  active_actor = boost::none;
-  on_actor_change();
 }
 
 #endif

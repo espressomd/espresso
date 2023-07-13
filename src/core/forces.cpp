@@ -59,6 +59,7 @@
 
 #include <cassert>
 #include <memory>
+#include <variant>
 
 std::shared_ptr<ComFixed> comfixed = std::make_shared<ComFixed>();
 
@@ -152,11 +153,11 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   CALI_CXX_MARK_FUNCTION;
 #endif
 
+  auto &espresso_system = System::get_system();
 #ifdef CUDA
 #ifdef CALIPER
   CALI_MARK_BEGIN("copy_particles_to_GPU");
 #endif
-  auto &espresso_system = System::get_system();
   espresso_system.gpu.update();
 #ifdef CALIPER
   CALI_MARK_END("copy_particles_to_GPU");
@@ -170,9 +171,9 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  if (electrostatics_extension) {
-    if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
-            electrostatics_extension.get_ptr())) {
+  if (espresso_system.coulomb.impl->extension) {
+    if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
+            get_ptr(espresso_system.coulomb.impl->extension))) {
       (**icc).iteration(cell_structure, particles, ghost_particles);
     }
   }
@@ -181,31 +182,31 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
   calc_long_range_forces(particles);
 
-  auto const elc_kernel = Coulomb::pair_force_elc_kernel();
-  auto const coulomb_kernel = Coulomb::pair_force_kernel();
-  auto const dipoles_kernel = Dipoles::pair_force_kernel();
+  auto const elc_kernel = espresso_system.coulomb.pair_force_elc_kernel();
+  auto const coulomb_kernel = espresso_system.coulomb.pair_force_kernel();
+  auto const dipoles_kernel = espresso_system.dipoles.pair_force_kernel();
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff();
+  auto const coulomb_cutoff = espresso_system.coulomb.cutoff();
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipoles::cutoff();
+  auto const dipole_cutoff = espresso_system.dipoles.cutoff();
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
   short_range_loop(
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
           Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         return add_bonded_force(p1, bond_id, partners, coulomb_kernel_ptr);
       },
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
-       dipoles_kernel_ptr = dipoles_kernel.get_ptr(),
-       elc_kernel_ptr = elc_kernel.get_ptr()](Particle &p1, Particle &p2,
-                                              Distance const &d) {
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       dipoles_kernel_ptr = get_ptr(dipoles_kernel),
+       elc_kernel_ptr = get_ptr(elc_kernel)](Particle &p1, Particle &p2,
+                                             Distance const &d) {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
                                   elc_kernel_ptr);
@@ -277,13 +278,13 @@ void calc_long_range_forces(const ParticleRange &particles) {
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_force(particles);
+  Coulomb::get_coulomb().calc_long_range_force(particles);
 
 #endif // ELECTROSTATICS
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipoles::calc_long_range_force(particles);
+  Dipoles::get_dipoles().calc_long_range_force(particles);
 #endif // DIPOLES
 }
 

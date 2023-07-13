@@ -36,41 +36,41 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
 
     if espressomd.has_features("DIPOLES"):
         test_dds_cpu = tests_common.generate_test_for_actor_class(
-            system, espressomd.magnetostatics.DipolarDirectSumCpu,
+            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSumCpu,
             dict(prefactor=3.4))
 
     if espressomd.has_features("DIPOLES"):
         test_dds_replica_cpu = tests_common.generate_test_for_actor_class(
-            system, espressomd.magnetostatics.DipolarDirectSumCpu,
+            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSumCpu,
             dict(prefactor=3.4, n_replicas=3))
 
     if espressomd.has_features(
             "DIPOLAR_DIRECT_SUM") and espressomd.gpu_available():
         test_dds_gpu = tests_common.generate_test_for_actor_class(
-            system, espressomd.magnetostatics.DipolarDirectSumGpu,
+            system.magnetostatics, espressomd.magnetostatics.DipolarDirectSumGpu,
             dict(prefactor=3.4))
 
     if espressomd.has_features(
             "DIPOLAR_BARNES_HUT") and espressomd.gpu_available():
         test_dds_gpu = tests_common.generate_test_for_actor_class(
-            system, espressomd.magnetostatics.DipolarBarnesHutGpu,
+            system.magnetostatics, espressomd.magnetostatics.DipolarBarnesHutGpu,
             dict(prefactor=3.4, epssq=200.0, itolsq=8.0))
 
     if espressomd.has_features("DP3M"):
         test_dp3m_metallic = tests_common.generate_test_for_actor_class(
-            system, espressomd.magnetostatics.DipolarP3M,
+            system.magnetostatics, espressomd.magnetostatics.DipolarP3M,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.4,
                  cao=2, mesh=[8, 8, 8], alpha=12., accuracy=0.01, tune=False))
         test_dp3m_non_metallic = tests_common.generate_test_for_actor_class(
-            system, espressomd.magnetostatics.DipolarP3M,
+            system.magnetostatics, espressomd.magnetostatics.DipolarP3M,
             dict(prefactor=3., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.6,
                  cao=3, mesh=[8, 8, 8], alpha=14., accuracy=0.01, tune=False))
         test_dp3m_dlc = tests_common.generate_test_for_actor_class(
-            system, espressomd.magnetostatics.DLC,
+            system.magnetostatics, espressomd.magnetostatics.DLC,
             dict(gap_size=2., maxPWerror=0.1, far_cut=1.,
                  actor=espressomd.magnetostatics.DipolarP3M(
                      cao=2, tune=False, mesh=8, prefactor=2.,
@@ -80,7 +80,7 @@ class Test(ut.TestCase):
         # check that non-magnetic particles don't influence the DDS kernels
         actor = espressomd.magnetostatics.DipolarDirectSumCpu(
             prefactor=1., n_replicas=2)
-        self.system.actors.add(actor)
+        self.system.magnetostatics.solver = actor
         energy1 = self.system.analysis.energy()["dipolar"]
         self.system.part.add(pos=(0.4, 0.2, 0.2), dip=(0.0, 0.0, 0.0))
         energy2 = self.system.analysis.energy()["dipolar"]
@@ -109,32 +109,32 @@ class Test(ut.TestCase):
         ddsr = DDSR(prefactor=1., n_replicas=1)
         with self.assertRaisesRegex(Exception, r"DLC: requires periodicity \(True, True, True\)"):
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
-            self.system.actors.add(mdlc)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.magnetostatics.solver = mdlc
+        self.assertIsNone(self.system.magnetostatics.solver)
         self.system.periodicity = [True, True, True]
         self.system.box_l = [10., 10. + 2e-3, 10.]
         with self.assertRaisesRegex(Exception, "box size in x direction is different from y direction"):
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
-            self.system.actors.add(mdlc)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.magnetostatics.solver = mdlc
+        self.assertIsNone(self.system.magnetostatics.solver)
         if espressomd.has_features(
                 ["DIPOLAR_DIRECT_SUM", "DIPOLE_FIELD_TRACKING"]) and has_gpu:
             ddsg = DDSG(prefactor=1.)
-            self.system.actors.add(ddsg)
+            self.system.magnetostatics.solver = ddsg
             with self.assertRaisesRegex(Exception, "Dipoles field calculation not implemented by dipolar method DipolarDirectSumGpu"):
                 self.system.part.add(pos=(0.2, 0.2, 0.2), dip=(0.0, 0.0, 1.0))
                 self.system.analysis.dipole_fields()
             self.system.part.clear()
-            self.system.actors.clear()
+            self.system.magnetostatics.clear()
         # check it's safe to resize the box, i.e. there are no currently
         # active sanity check in the core
         self.system.box_l = [10., 10., 10.]
         with self.assertRaisesRegex(Exception, "box size in x direction is different from y direction"):
             ddsr = DDSR(prefactor=1., n_replicas=1)
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
-            self.system.actors.add(mdlc)
+            self.system.magnetostatics.solver = mdlc
             self.system.box_l = [9., 10., 10.]
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
         self.system.box_l = [10., 10., 10.]
 
     @utx.skipIfMissingFeatures(["DP3M"])

@@ -810,8 +810,8 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('DP3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_dp3m(self):
-        actor = self.get_active_actor_of_type(
-            espressomd.magnetostatics.DipolarP3M)
+        actor = system.magnetostatics.solver
+        self.assertIsInstance(actor, espressomd.magnetostatics.DipolarP3M)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.01, 'mesh': 3 * [8],
                      'cao': 1, 'alpha': 12.0, 'r_cut': 2.4, 'tune': False,
@@ -824,8 +824,8 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('P3M')
     @ut.skipIf(not has_p3m_mode, "Skipping test due to missing combination.")
     def test_p3m(self):
-        actor = self.get_active_actor_of_type(
-            espressomd.electrostatics._P3MBase)
+        actor = system.electrostatics.solver
+        self.assertIsInstance(actor, espressomd.electrostatics._P3MBase)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
@@ -840,7 +840,8 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('P3M')
     @ut.skipIf('ELC' not in modes, "Skipping test due to missing combination.")
     def test_elc(self):
-        actor = self.get_active_actor_of_type(espressomd.electrostatics.ELC)
+        actor = system.electrostatics.solver
+        self.assertIsInstance(actor, espressomd.electrostatics.ELC)
         elc_state = actor.get_params()
         p3m_state = elc_state['actor'].get_params()
         p3m_reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
@@ -865,8 +866,8 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingScafacosMethod("p3m")
     @ut.skipIf('SCAFACOS' not in modes, "Missing combination.")
     def test_scafacos_coulomb(self):
-        actor = self.get_active_actor_of_type(
-            espressomd.electrostatics.Scafacos)
+        actor = system.electrostatics.solver
+        self.assertIsInstance(actor, espressomd.electrostatics.Scafacos)
         state = actor.get_params()
         reference = {'prefactor': 0.5, 'method_name': 'p3m',
                      'method_params': {
@@ -881,8 +882,8 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingScafacosMethod("p2nfft")
     @ut.skipIf('SCAFACOS' not in modes, "Missing combination.")
     def test_scafacos_dipoles(self):
-        actor = self.get_active_actor_of_type(
-            espressomd.magnetostatics.Scafacos)
+        actor = system.magnetostatics.solver
+        self.assertIsInstance(actor, espressomd.magnetostatics.Scafacos)
         state = actor.get_params()
         reference = {'prefactor': 1.2, 'method_name': 'p2nfft',
                      'method_params': {

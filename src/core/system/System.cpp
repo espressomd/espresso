@@ -18,7 +18,9 @@
  */
 
 #include "System.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "grid.hpp"
+#include "magnetostatics/dipoles.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -26,7 +28,9 @@
 
 namespace System {
 
-static std::shared_ptr<System> instance;
+static std::shared_ptr<System> instance = std::make_shared<System>();
+
+bool is_system_set() { return instance != nullptr; }
 
 void reset_system() { instance.reset(); }
 
