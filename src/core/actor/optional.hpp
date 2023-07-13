@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,26 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_CODE_INFO_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_CODE_INFO_CODE_INFO_HPP
+#pragma once
 
-#include "script_interface/ScriptInterface.hpp"
+#include <memory>
+#include <optional>
 
-#include <string>
-#include <vector>
-
-namespace ScriptInterface {
-namespace CodeInfo {
-
-class CodeInfo : public ObjectHandle {
-public:
-  Variant do_call_method(std::string const &name,
-                         VariantMap const &parameters) override;
-};
-
-void check_features(std::vector<std::string> const &features);
-
-} // namespace CodeInfo
-} // namespace ScriptInterface
-
-#endif
+template <typename T> const T *get_ptr(std::optional<T> const &opt) {
+  return opt ? std::addressof(*opt) : nullptr;
+}

@@ -33,7 +33,7 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
@@ -113,8 +113,8 @@ class Test(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(
             prefactor=1., mesh=32, cao=7, accuracy=1e-5, r_cut=0.01875,
             alpha=0.005, tune=False, check_neutrality=False)
-        self.system.actors.add(p3m)
-        self.system.actors.add(icc)
+        self.system.electrostatics.solver = p3m
+        self.system.electrostatics.extension = icc
 
         with self.assertRaisesRegex(Exception, "ICC found zero electric field on a charge"):
             self.system.integrator.run(0)
@@ -126,16 +126,16 @@ class Test(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(
             check_complex_residuals=False, **self.valid_p3m_parameters())
 
-        self.system.actors.add(p3m)
-        self.system.actors.add(icc)
+        self.system.electrostatics.solver = p3m
+        self.system.electrostatics.extension = icc
         with self.assertRaisesRegex(Exception, f"Particle with id {p.id} has a charge .+ that is too large for the ICC algorithm"):
             p.q = 1e8
             self.system.integrator.run(0)
 
-        self.system.actors.remove(icc)
+        self.system.electrostatics.extension = None
         self.system.part.clear()
         icc, (_, p) = self.setup_icc_particles_and_solver(max_iterations=1)
-        self.system.actors.add(icc)
+        self.system.electrostatics.extension = icc
         with self.assertRaisesRegex(Exception, "ICC failed to converge in the given number of maximal steps"):
             p.q = 1.
             self.system.integrator.run(0)
@@ -149,19 +149,19 @@ class Test(ut.TestCase):
         icc, _ = self.setup_icc_particles_and_solver()
         p3m = espressomd.electrostatics.P3MGPU(**self.valid_p3m_parameters())
 
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         with self.assertRaisesRegex(RuntimeError, "ICC does not work with P3MGPU"):
-            self.system.actors.add(icc)
-        self.assertEqual(len(self.system.actors), 1)
+            self.system.electrostatics.extension = icc
+        self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
 
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
         elc = espressomd.electrostatics.ELC(
             actor=p3m, gap_size=5., maxPWerror=1e-3)
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
         with self.assertRaisesRegex(RuntimeError, "ICC does not work with P3MGPU"):
-            self.system.actors.add(icc)
-        self.assertEqual(len(self.system.actors), 1)
+            self.system.electrostatics.extension = icc
+        self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
 
     @utx.skipIfMissingFeatures(["P3M"])
@@ -172,18 +172,18 @@ class Test(ut.TestCase):
             actor=p3m, gap_size=5., maxPWerror=1e-3, pot_diff=-3.,
             delta_mid_top=-1., delta_mid_bot=-1., const_pot=True)
 
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
         with self.assertRaisesRegex(RuntimeError, "ICC conflicts with ELC dielectric contrast"):
-            self.system.actors.add(icc)
-        self.assertEqual(len(self.system.actors), 1)
+            self.system.electrostatics.extension = icc
+        self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
         # valid ELC actor should pass sanity checks
         elc = espressomd.electrostatics.ELC(
             actor=p3m, gap_size=5., maxPWerror=1e-3)
-        self.system.actors.add(elc)
-        self.system.actors.add(icc)
+        self.system.electrostatics.solver = elc
+        self.system.electrostatics.extension = icc
         self.system.part.clear()
         self.system.integrator.run(0)
 
@@ -192,10 +192,10 @@ class Test(ut.TestCase):
         solver = espressomd.electrostatics.DH(
             prefactor=2., kappa=0.8, r_cut=1.2)
 
-        self.system.actors.add(solver)
+        self.system.electrostatics.solver = solver
         with self.assertRaisesRegex(RuntimeError, "ICC does not work with DebyeHueckel"):
-            self.system.actors.add(icc)
-        self.assertEqual(len(self.system.actors), 1)
+            self.system.electrostatics.extension = icc
+        self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
 
     def test_exceptions_rf(self):
@@ -203,10 +203,10 @@ class Test(ut.TestCase):
         solver = espressomd.electrostatics.ReactionField(
             prefactor=1., kappa=2., epsilon1=1., epsilon2=2., r_cut=2.)
 
-        self.system.actors.add(solver)
+        self.system.electrostatics.solver = solver
         with self.assertRaisesRegex(RuntimeError, "ICC does not work with ReactionField"):
-            self.system.actors.add(icc)
-        self.assertEqual(len(self.system.actors), 1)
+            self.system.electrostatics.extension = icc
+        self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
 
     @utx.skipIfMissingFeatures(["NPT", "P3M"])
@@ -214,12 +214,12 @@ class Test(ut.TestCase):
         icc, _ = self.setup_icc_particles_and_solver()
         p3m = espressomd.electrostatics.P3M(**self.valid_p3m_parameters())
 
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         self.system.thermostat.set_npt(kT=1., gamma0=2., gammav=0.004, seed=42)
         self.system.integrator.set_isotropic_npt(ext_pressure=2., piston=0.001)
         with self.assertRaisesRegex(RuntimeError, "ICC does not work in the NPT ensemble"):
-            self.system.actors.add(icc)
-        self.assertEqual(len(self.system.actors), 1)
+            self.system.electrostatics.extension = icc
+        self.assertIsNone(self.system.electrostatics.extension)
         self.system.integrator.run(0)
 
 

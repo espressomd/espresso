@@ -37,7 +37,7 @@ the particles via the particle property
 
 All solvers need a prefactor and a set of other required parameters.
 This example shows the general usage of the electrostatic method ``P3M``.
-An instance of the solver is created and added to the actors list, at which
+An instance of the solver is created and attached to the system, at which
 point it will be automatically activated. This activation will internally
 call a tuning function to achieve the requested accuracy::
 
@@ -48,13 +48,17 @@ call a tuning function to achieve the requested accuracy::
     system.time_step = 0.01
     system.part.add(pos=[[0, 0, 0], [1, 1, 1]], q=[-1, 1])
     solver = espressomd.electrostatics.P3M(prefactor=2., accuracy=1e-3)
-    system.actors.add(solver)
+    system.electrostatics.solver = solver
 
 where the prefactor is defined as :math:`C` in Eqn. :eq:`coulomb_prefactor`.
 
-The list of actors can be cleared with
-:meth:`system.actors.clear() <espressomd.actors.Actors.clear>` and
-:meth:`system.actors.remove(actor) <espressomd.actors.Actors.remove>`.
+The solver can be detached with either::
+
+    system.electrostatics.solver = None
+
+or::
+
+    system.electrostatics.clear()
 
 
 .. _Coulomb P3M:
@@ -190,9 +194,12 @@ surface. ICC relies on a Coulomb solver that is already initialized. So far, it
 is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
 actor and can be activated via::
 
+    import espressomd.electrostatics
     import espressomd.electrostatic_extensions
+    p3m = espressomd.electrostatics.P3M(...)
     icc = espressomd.electrostatic_extensions.ICC(...)
-    system.actors.add(icc)
+    system.electrostatics.solver = p3m
+    system.electrostatics.extension = icc
 
 The ICC particles are setup as normal |es| particles. Note that they should
 be fixed in space and need an initial non-zero charge. The following example
@@ -248,7 +255,7 @@ sets up parallel metallic plates and activates ICC::
         sigmas=iccSigmas,
         epsilons=iccEpsilons)
 
-    system.actors.add(icc)
+    system.electrostatics.extension = icc
 
 
 With each iteration, ICC has to solve electrostatics which can severely slow
@@ -290,7 +297,7 @@ Usage notes:
     import espressomd.electrostatics
     p3m = espressomd.electrostatics.P3M(prefactor=1, accuracy=1e-4)
     elc = espressomd.electrostatics.ELC(actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3)
-    system.actors.add(elc)
+    system.electrostatics.solver = elc
 
 Although it is technically feasible to remove ``elc`` from the list of actors
 and then to add the ``p3m`` object, it is not recommended because the P3M
@@ -404,7 +411,7 @@ the library, and can be queried with
 :meth:`espressomd.electrostatics.Scafacos.get_available_methods`.
 
 To use ScaFaCoS, create an instance of :class:`~espressomd.electrostatics.Scafacos`
-and add it to the list of active actors. Three parameters have to be specified:
+and attach it to the system. Three parameters have to be specified:
 ``prefactor`` (as defined in :eq:`coulomb_prefactor`), ``method_name``,
 ``method_params``. The method-specific parameters are described in the
 ScaFaCoS manual. In addition, methods supporting tuning have a parameter
@@ -415,11 +422,11 @@ To use a specific electrostatics solver from ScaFaCoS for your system,
 e.g. ``ewald``, set its cutoff to :math:`1.5` and tune the other parameters
 for an accuracy of :math:`10^{-3}`::
 
-   import espressomd.electrostatics
-   scafacos = espressomd.electrostatics.Scafacos(
-      prefactor=1, method_name="ewald",
-      method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
-   system.actors.add(scafacos)
+    import espressomd.electrostatics
+    scafacos = espressomd.electrostatics.Scafacos(
+       prefactor=1, method_name="ewald",
+       method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
+    system.electrostatics.solver = scafacos
 
 For details of the various methods and their parameters please refer to
 the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a

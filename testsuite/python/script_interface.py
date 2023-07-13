@@ -22,6 +22,8 @@ import unittest as ut
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.interactions
+import espressomd.script_interface
+import espressomd.code_info
 
 
 class SphereWithProperties(espressomd.shapes.Sphere):
@@ -100,8 +102,27 @@ class ScriptInterface(ut.TestCase):
         with self.assertRaisesRegex(AttributeError, "Object 'HarmonicBond' has no attribute 'unknown'"):
             bond.unknown
 
+    def test_feature_exceptions(self):
+        """Check feature verification"""
+        all_features = set(espressomd.code_info.all_features())
+        active_features = set(espressomd.code_info.features())
+        missing_features = sorted(list(all_features - active_features))
+
+        class Unknown(espressomd.script_interface.ScriptInterfaceHelper):
+            _so_features = ("UNKNOWN",)
+
+        class Missing(espressomd.script_interface.ScriptInterfaceHelper):
+            _so_features = missing_features
+
+        with self.assertRaisesRegex(RuntimeError, "Unknown feature 'UNKNOWN'"):
+            Unknown()
+
+        if missing_features:
+            with self.assertRaisesRegex(RuntimeError, f"Missing features {', '.join(missing_features)}"):
+                Missing()
+
     def test_variant_exceptions(self):
-        """Check AutoParameters framework"""
+        """Check variant conversion"""
         constraint = espressomd.constraints.ShapeBasedConstraint()
         # check conversion of unsupported types
         err_msg = "No conversion from type 'module' to 'Variant'"

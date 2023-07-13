@@ -45,13 +45,12 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 
 struct ElectrostaticLayerCorrection;
 
@@ -168,7 +167,7 @@ private:
 
 struct ElectrostaticLayerCorrection
     : public Coulomb::Actor<ElectrostaticLayerCorrection> {
-  using BaseSolver = boost::variant<
+  using BaseSolver = std::variant<
 #ifdef CUDA
       std::shared_ptr<CoulombP3MGPU>,
 #endif // CUDA
@@ -245,7 +244,7 @@ struct ElectrostaticLayerCorrection
    * When ELC is used with dielectric contrasts, the short-range cutoff needs
    * to be smaller than the gap size to allow placement of the image charges.
    */
-  boost::optional<std::string> veto_r_cut(double r_cut) const {
+  std::optional<std::string> veto_r_cut(double r_cut) const {
     if (elc.dielectric_contrast_on and r_cut >= elc.gap_size) {
       return {std::string("conflict with ELC w/ dielectric contrasts")};
     }
@@ -257,7 +256,7 @@ struct ElectrostaticLayerCorrection
                                 Particle const &p2) const {
     double energy = 0.;
     if (elc.dielectric_contrast_on) {
-      energy = boost::apply_visitor(
+      energy = std::visit(
           [this, &p1, &p2, q1q2](auto &p3m_ptr) {
             auto const &pos1 = p1.pos();
             auto const &pos2 = p2.pos();
@@ -284,7 +283,7 @@ struct ElectrostaticLayerCorrection
   void add_pair_force_corrections(Particle &p1, Particle &p2,
                                   double q1q2) const {
     if (elc.dielectric_contrast_on) {
-      boost::apply_visitor(
+      std::visit(
           [this, &p1, &p2, q1q2](auto &p3m_ptr) {
             auto const &pos1 = p1.pos();
             auto const &pos2 = p2.pos();
@@ -337,7 +336,7 @@ private:
   double calc_energy(ParticleRange const &particles) const;
 
   template <class Visitor> void visit_base_solver(Visitor &&visitor) const {
-    boost::apply_visitor(visitor, base_solver);
+    std::visit(visitor, base_solver);
   }
 };
 

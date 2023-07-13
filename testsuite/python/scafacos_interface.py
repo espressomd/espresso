@@ -35,8 +35,11 @@ class ScafacosInterface(ut.TestCase):
     system.periodicity = 3 * [True]
 
     def tearDown(self):
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
+        if espressomd.has_features(["DIPOLES"]):
+            self.system.magnetostatics.clear()
         self.system.part.clear()
-        self.system.actors.clear()
         self.system.integrator.set_vv()
 
     def test_decorator(self):
@@ -58,7 +61,6 @@ class ScafacosInterface(ut.TestCase):
     @utx.skipIfMissingScafacosMethod("p3m")
     @utx.skipIfMissingScafacosMethod("p2nfft")
     def test_magnetostatics_actor_exceptions(self):
-        system = self.system
         with self.assertRaisesRegex(ValueError, "Parameter 'prefactor' must be > 0"):
             espressomd.magnetostatics.Scafacos(
                 prefactor=-0.8, method_name="p2nfft",
@@ -66,14 +68,13 @@ class ScafacosInterface(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Dipole particles not implemented for solver method 'p3m'"):
             actor = espressomd.magnetostatics.Scafacos(
                 prefactor=1., method_name="p3m", method_params={"p3m_cao": 7})
-            system.actors.add(actor)
-        self.assertEqual(len(system.actors), 0)
+            self.system.magnetostatics.solver = actor
+        self.assertIsNone(self.system.magnetostatics.solver)
 
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p3m")
     @utx.skipIfMissingScafacosMethod("ewald")
     def test_electrostatics_actor_exceptions(self):
-        system = self.system
         with self.assertRaisesRegex(ValueError, "Parameter 'prefactor' must be > 0"):
             espressomd.electrostatics.Scafacos(
                 prefactor=-0.8, method_name="p3m", method_params={"p3m_cao": 7})
@@ -89,12 +90,12 @@ class ScafacosInterface(ut.TestCase):
             prefactor=1.,
             method_name="ewald",
             method_params={"tolerance_field": 0.1})
-        self.system.actors.add(scafacos)
+        self.system.electrostatics.solver = scafacos
         self.assertFalse(scafacos.call_method("get_near_field_delegation"))
         scafacos.call_method("set_near_field_delegation", delegate=False)
         with self.assertRaisesRegex(RuntimeError, "Method 'ewald' cannot delegate short-range calculation"):
             scafacos.call_method("set_near_field_delegation", delegate=True)
-        system.actors.clear()
+        self.system.electrostatics.clear()
 
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p3m")
@@ -109,7 +110,7 @@ class ScafacosInterface(ut.TestCase):
                 "p3m_alpha": 2.799269,
                 "p3m_grid": 32,
                 "p3m_cao": 7})
-        system.actors.add(actor)
+        system.electrostatics.solver = actor
         params = actor.get_params()
         self.assertEqual(params["prefactor"], 0.5)
         self.assertEqual(params["method_name"], "p3m")
@@ -133,8 +134,6 @@ class ScafacosInterface(ut.TestCase):
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p3m")
     def test_tuning_r_cut_near_field(self):
-        system = self.system
-
         actor = espressomd.electrostatics.Scafacos(
             prefactor=0.5,
             method_name="p3m",
@@ -143,7 +142,7 @@ class ScafacosInterface(ut.TestCase):
                 "p3m_alpha": 2.8,
                 "p3m_grid": 32,
                 "p3m_cao": 7})
-        system.actors.add(actor)
+        self.system.electrostatics.solver = actor
         tuned_r_cut = actor.method_params['p3m_r_cut']
         self.assertGreaterEqual(tuned_r_cut, 0.1)
         self.assertLessEqual(tuned_r_cut, min(self.system.box_l) / 2.)
@@ -179,8 +178,8 @@ class ScafacosInterface(ut.TestCase):
 
         # attempt to tune r_cut with ScaFaCoS
         with self.assertRaisesRegex(RuntimeError, "r_cut is negative"):
-            system.actors.add(actor)
-        system.actors.clear()
+            self.system.electrostatics.solver = actor
+        self.system.electrostatics.clear()
 
         tuned_r_cut = actor.method_params['ewald_r_cut']
         self.assertAlmostEqual(tuned_r_cut, -1., delta=1e-12)
@@ -188,8 +187,6 @@ class ScafacosInterface(ut.TestCase):
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("ewald")
     def test_tuning_r_cut_ewald(self):
-        system = self.system
-
         actor = espressomd.electrostatics.Scafacos(
             prefactor=0.5,
             method_name="ewald",
@@ -198,7 +195,7 @@ class ScafacosInterface(ut.TestCase):
                 "ewald_maxkmax": 200})
 
         # let ScaFaCoS tune r_cut
-        system.actors.add(actor)
+        self.system.electrostatics.solver = actor
 
         # cutoff is hidden since we don't delegate near-field
         self.assertNotIn("ewald_r_cut", actor.method_params)
@@ -206,8 +203,6 @@ class ScafacosInterface(ut.TestCase):
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("ewald")
     def test_tuning_alpha_ewald(self):
-        system = self.system
-
         actor = espressomd.electrostatics.Scafacos(
             prefactor=0.5,
             method_name="ewald",
@@ -216,7 +211,7 @@ class ScafacosInterface(ut.TestCase):
                 "ewald_maxkmax": 200})
 
         # let ScaFaCoS tune alpha
-        system.actors.add(actor)
+        self.system.electrostatics.solver = actor
 
         tuned_r_cut = actor.method_params['ewald_r_cut']
         self.assertAlmostEqual(tuned_r_cut, 0.2, delta=1e-12)
@@ -248,11 +243,11 @@ class ScafacosInterface(ut.TestCase):
             "p2nfft_r_cut": 11,  # should come back as an integer
             "p2nfft_alpha": "0.37" + 30 * "0" + "1",  # discard extra digits
         }
-        system.actors.add(espressomd.magnetostatics.Scafacos(
+        self.system.magnetostatics.solver = espressomd.magnetostatics.Scafacos(
             prefactor=1.2,
             method_name="p2nfft",
-            method_params=method_params))
-        actor = system.actors[0]
+            method_params=method_params)
+        actor = self.system.magnetostatics.solver
         params = actor.get_params()
         self.assertEqual(params["prefactor"], 1.2)
         self.assertEqual(params["method_name"], "p2nfft")
@@ -282,7 +277,7 @@ class ScafacosInterface(ut.TestCase):
             mesh=32,
             cao=7,
             r_cut=1.0)
-        system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
 
         dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=1.0,
@@ -291,7 +286,7 @@ class ScafacosInterface(ut.TestCase):
             mesh=48,
             r_cut=1.88672,
             epsilon="metallic")
-        system.actors.add(dp3m)
+        self.system.magnetostatics.solver = dp3m
 
         system.integrator.run(0, recalc_forces=True)
         ref_E_coulomb = system.analysis.energy()["coulomb"]
@@ -299,7 +294,8 @@ class ScafacosInterface(ut.TestCase):
         ref_forces = np.copy(system.part.all().f)
         ref_torques = np.copy(system.part.all().torque_lab)
 
-        system.actors.clear()
+        self.system.electrostatics.clear()
+        self.system.magnetostatics.clear()
 
         return (ref_E_coulomb, ref_E_dipoles, ref_forces, ref_torques)
 
@@ -320,7 +316,7 @@ class ScafacosInterface(ut.TestCase):
                 "pnfft_diff_ik": "0",
                 "p2nfft_r_cut": "1.0",
                 "p2nfft_alpha": "2.92"})
-        system.actors.add(scafacos_coulomb)
+        self.system.electrostatics.solver = scafacos_coulomb
 
         scafacos_dipoles = espressomd.magnetostatics.Scafacos(
             prefactor=1.0,
@@ -335,7 +331,7 @@ class ScafacosInterface(ut.TestCase):
                 "pnfft_diff_ik": "0",
                 "p2nfft_r_cut": "11",
                 "p2nfft_alpha": "0.37"})
-        system.actors.add(scafacos_dipoles)
+        self.system.magnetostatics.solver = scafacos_dipoles
 
         system.integrator.run(0, recalc_forces=True)
         ref_E_coulomb = system.analysis.energy()["coulomb"]
@@ -357,7 +353,8 @@ class ScafacosInterface(ut.TestCase):
         np.testing.assert_allclose(new_forces, ref_forces, atol=0, rtol=0.)
         np.testing.assert_allclose(new_torques, ref_torques, atol=0, rtol=0.)
 
-        system.actors.clear()
+        self.system.electrostatics.clear()
+        self.system.magnetostatics.clear()
 
         return (ref_E_coulomb, ref_E_dipoles, ref_forces, ref_torques)
 

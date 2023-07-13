@@ -21,9 +21,11 @@
 
 #include "EspressoSystemStandAlone.hpp"
 #include "communication.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "system/System.hpp"
 #include "virtual_sites.hpp"
 #include "virtual_sites/VirtualSitesOff.hpp"

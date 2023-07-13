@@ -58,7 +58,7 @@ def assert_params_match(ut_obj, inParams, outParams, msg_long=""):
             ut_obj.assertEqual(value_out, value_in, msg=msg)
 
 
-def generate_test_for_actor_class(_system, _class_actor, _params):
+def generate_test_for_actor_class(_container, _class_actor, _params):
     """
     Generate a test case for an actor to verify parameters in the interface
     and the core match.
@@ -66,7 +66,7 @@ def generate_test_for_actor_class(_system, _class_actor, _params):
     """
     params_in = _params
     class_actor = _class_actor
-    system = _system
+    container = _container
 
     def func(self):
         # This code is run at the execution of the generated function.
@@ -75,10 +75,10 @@ def generate_test_for_actor_class(_system, _class_actor, _params):
 
         # set parameters
         actor = class_actor(**params_in)
-        system.actors.add(actor)
+        container.solver = actor
         # read them out again
         params_out = {key: getattr(actor, key) for key in params_in}
-        system.actors.remove(actor)
+        container.solver = None
 
         assert_params_match(self, params_in, params_out,
                             msg_long=f"Parameters set {params_in} vs. {params_out}")

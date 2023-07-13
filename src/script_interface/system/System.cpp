@@ -20,8 +20,10 @@
 #include "System.hpp"
 
 #include "core/cells.hpp"
+#include "core/electrostatics/coulomb.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
+#include "core/magnetostatics/dipoles.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"

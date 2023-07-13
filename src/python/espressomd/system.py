@@ -29,6 +29,8 @@ from . import cuda_init
 from . import collision_detection
 from . import comfixed
 from . import constraints
+from . import electrostatics
+from . import magnetostatics
 from . import galilei
 from . import interactions
 from . import integrate
@@ -207,6 +209,10 @@ class System(ScriptInterfaceHelper):
         self.constraints = constraints.Constraints()
         if has_features("CUDA"):
             self.cuda_init_handle = cuda_init.CudaInitHandle()
+        if has_features("ELECTROSTATICS"):
+            self.electrostatics = electrostatics.Container()
+        if has_features("DIPOLES"):
+            self.magnetostatics = magnetostatics.Container()
         if has_features("WALBERLA"):
             self.ekcontainer = electrokinetics.EKContainer()
             self.ekreactions = electrokinetics.EKReactions()
@@ -227,6 +233,7 @@ class System(ScriptInterfaceHelper):
         import atexit
 
         def session_shutdown():
+            self.actors.clear()
             self.call_method("session_shutdown")
         atexit.register(session_shutdown)
 
@@ -252,6 +259,12 @@ class System(ScriptInterfaceHelper):
         ]
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")
+        if has_features("ELECTROSTATICS"):
+            checkpointable_properties.append("electrostatics")
+        if has_features("DIPOLES"):
+            checkpointable_properties.append("magnetostatics")
+        if has_features("ELECTROSTATICS"):
+            checkpointable_properties.append("electrostatics")
         checkpointable_properties += ["actors", "thermostat"]
         if has_features("WALBERLA"):
             checkpointable_properties += ["ekcontainer", "ekreactions"]
