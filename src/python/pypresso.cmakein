@@ -85,6 +85,10 @@ case "$1" in
         shift
         exec cuda-memcheck "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
+    --kernprof)
+        shift
+        exec "@ESPRESSO_PYTHON_FRONTEND@" $(which kernprof) --line-by-line --view "$@"
+        ;;
     --gdb=*)
         options="${1#*=}"
         shift
@@ -110,6 +114,11 @@ case "$1" in
         options="${1#*=}"
         shift
         exec cuda-memcheck ${options} "@ESPRESSO_PYTHON_FRONTEND@" "$@"
+        ;;
+    --kernprof=*)
+        options="${1#*=}"
+        shift
+        exec "@ESPRESSO_PYTHON_FRONTEND@" $(which kernprof) ${options} "$@"
         ;;
     *)
         exec "@ESPRESSO_PYTHON_FRONTEND@" "$@"

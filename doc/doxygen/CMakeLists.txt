@@ -33,21 +33,22 @@ if(DOXYGEN_FOUND)
   add_custom_command(
     OUTPUT ${DOXYGEN_BIB_OUT}
     COMMAND
-      sed -r
-      "'s_^ *doi *= *([^0-9]+)(10\\.[0-9]+)_url=\\1https://dx.doi.org/\\2_'"
+      sed -r "'s_^ *doi *= *([^0-9]+)(10\\.[0-9]+)_url=\\1https://doi.org/\\2_'"
       ${DOXYGEN_BIB_IN} > ${DOXYGEN_BIB_OUT}
     DEPENDS ${DOXYGEN_BIB_IN})
 
-  set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
-  set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+  set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+  set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+  set(CITELIST ${CMAKE_CURRENT_BINARY_DIR}/html/citelist.html)
 
-  configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+  configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
   add_custom_target(
-    doxygen COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+    doxygen COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+    COMMAND sed -ri "s/ textsuperscript (\\S+) /<sup>\\1<\\/sup> /" ${CITELIST}
+    COMMAND sed -ri "s/ textsubscript (\\S+) /<sub>\\1<\\/sub> /" ${CITELIST}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating API documentation with Doxygen"
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doxy-features ${DOXYGEN_BIB_OUT}
     VERBATIM)
-
 endif(DOXYGEN_FOUND)

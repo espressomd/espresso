@@ -19,13 +19,20 @@
 
 add_library(espresso_profiler INTERFACE)
 add_library(espresso::profiler ALIAS espresso_profiler)
-target_include_directories(espresso_profiler INTERFACE "include")
 
-if(ESPRESSO_BUILD_WITH_PROFILER)
-  find_package(caliper REQUIRED)
+if(ESPRESSO_BUILD_WITH_VALGRIND)
+  target_include_directories(espresso_profiler
+                             INTERFACE "${VALGRIND_INCLUDE_DIRS}")
+endif()
 
-  target_link_libraries(espresso_profiler INTERFACE caliper-mpi)
-  target_compile_definitions(espresso_profiler INTERFACE HAVE_CALIPER)
-  set_target_properties(espresso_profiler
-                        PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+if(ESPRESSO_BUILD_WITH_CALIPER)
+  target_link_libraries(espresso_profiler INTERFACE caliper)
+  # workaround to handle the case where the build directory is outside `_deps`
+  cmake_path(GET CMAKE_BINARY_DIR FILENAME CMAKE_BINARY_DIR_BASENAME)
+  set(caliper_BINARY_DIR_ALTERNATIVE
+      "${CMAKE_BINARY_DIR}/${CMAKE_BINARY_DIR_BASENAME}/_deps/caliper-src")
+  target_include_directories(
+    espresso_profiler
+    INTERFACE "${caliper_SOURCE_DIR}/include" "${caliper_BINARY_DIR}/include"
+              "${caliper_BINARY_DIR_ALTERNATIVE}/include")
 endif()

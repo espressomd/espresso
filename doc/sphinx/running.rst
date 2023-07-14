@@ -242,49 +242,6 @@ To start a workspace from a specific branch, use a link in the following form:
 where ``user_name`` and ``branch_name`` need to be adapted.
 
 
-.. _Debugging es:
-
-Debugging |es|
---------------
-
-Exceptional situations occur in every program.  If |es| crashes with a
-segmentation fault, that means that there was a memory fault in the
-simulation core which requires running the program in a debugger.  The
-``pypresso`` executable file is actually not a program but a script
-which sets the Python path appropriately and starts the Python
-interpreter with your arguments.  Thus it is not possible to directly
-run ``pypresso`` in a debugger.  However, we provide some useful
-command line options for the most common tools.
-
-.. code-block:: bash
-
-     ./pypresso --tool <args>
-
-where ``--tool`` can be any tool from the :ref:`table below <Debugging es with tools>`.
-Only one tool can be used at a time. Some tools benefit from specific build
-options, as outlined in the installation section :ref:`Troubleshooting`.
-|es| can be debugged in MPI environments, as outlined in section
-:ref:`Debugging parallel code`.
-
-.. _Debugging es with tools:
-
-.. table:: Tools for the Python wrapper to |es|.
-
-    +---------------------+----------------------------------------------+
-    | Tool                | Effect                                       |
-    +=====================+==============================================+
-    | ``--gdb``           | ``gdb --args python <args>``                 |
-    +---------------------+----------------------------------------------+
-    | ``--lldb``          | ``lldb -- python <args>``                    |
-    +---------------------+----------------------------------------------+
-    | ``--valgrind``      | ``valgrind --leak-check=full python <args>`` |
-    +---------------------+----------------------------------------------+
-    | ``--cuda-gdb``      | ``cuda-gdb --args python <args>``            |
-    +---------------------+----------------------------------------------+
-    | ``--cuda-memcheck`` | ``cuda-memcheck python <args>``              |
-    +---------------------+----------------------------------------------+
-
-
 .. _Parallel computing:
 
 Parallel computing
@@ -434,41 +391,6 @@ reduction if the function returns a value. The reduction can either:
 For more details on this framework, please refer to the Doxygen documentation
 of the the C++ core file :file:`MpiCallbacks.hpp`.
 
-.. _Debugging parallel code:
-
-Debugging parallel code
-~~~~~~~~~~~~~~~~~~~~~~~
-
-It is possible to debug an MPI-parallel simulation script with GDB.
-Keep in mind that contrary to a textbook example MPI application, where
-all ranks execute the ``main`` function, in |es| the worker nodes are idle
-until the head node on MPI rank 0 delegates work to them. This means that
-on MPI rank > 1, break points will only have an effect in code that can be
-reached from a callback function whose pointer has been registered in the
-:ref:`MPI callbacks framework <The MPI callbacks framework>`.
-
-The following command runs a script with 2 MPI ranks and binds a terminal
-to each rank:
-
-.. code-block:: bash
-
-    mpiexec -np 2 xterm -fa 'Monospace' -fs 12 -e ./pypresso --gdb simulation.py
-
-It can also be done via ssh with X-window forwarding:
-
-.. code-block:: bash
-
-    ssh -X username@hostname
-    mpiexec -n 2 -x DISPLAY="${DISPLAY}" xterm -fa 'Monospace' -fs 12 \
-        -e ./pypresso --gdb simulation.py
-
-The same syntax is used for C++ unit tests:
-
-.. code-block:: bash
-
-    mpiexec -np 2 xterm -fa 'Monospace' -fs 12 \
-        -e gdb src/core/unit_tests/EspressoSystemStandAlone_test
-
 
 .. _GPU acceleration:
 
@@ -542,3 +464,606 @@ by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 Setting a device id outside the valid range or a device
 which does not meet the minimum requirements will raise
 an exception.
+
+
+.. _Instrumentation:
+
+Instrumentation
+---------------
+
+.. _Debugging:
+
+Debugging
+~~~~~~~~~
+
+Exceptional situations occur in every program. If |es| crashes with a
+fatal error, it is necessary to use a debugger to investigate the issue.
+The tool should be chosen depending on the nature of the bug.
+Most fatal errors fall into one of these categories:
+
+* segmentation fault: typically due to uninitialized pointers, dangling
+  pointers and array accesses out of bounds
+* non-finite math: typically due to divisions by zero, square roots of
+  negative numbers or logarithms of negative numbers
+* unhandled exception: always fatal when running with multiple MPI ranks
+
+Many algorithms require parameters to be provided within valid ranges.
+Range checks are implemented to catch invalid input values and generate
+meaningful error messages, however these checks cannot always catch errors
+arising from an invalid combination of two or more features. If you encounter
+issues with a script, you can activate extra runtime checks by enabling C++
+assertions. This is achieved by updating the CMake project and rebuilding
+|es| with:
+
+.. code-block:: bash
+
+    cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
+    make -j$(nproc)
+    ./pypresso script.py
+
+The resulting build will run slightly slower, but will produce an error
+message for common issues, such as divisions by zero, array access out
+of bounds, or square roots of negative numbers.
+
+If this still doesn't help, activate debug symbols to help with instrumentation:
+
+.. code-block:: bash
+
+    cmake . -D CMAKE_BUILD_TYPE=Debug
+    make -j$(nproc)
+    ./pypresso script.py 2>&1 | c++filt
+
+The resulting build will be quite slow but segmentation faults will generate
+a complete backtrace, which can be parsed by ``c++filt`` to demangle symbol
+names. If this is not sufficient to track down the source of the error,
+a debugging tool like GDB can be attached to |es| to catch the segmentation
+fault signal and generate a backtrace. See :ref:`using GDB<GDB>` for more details.
+
+If you are dealing with a segmentation fault or undefined behavior, and GDB
+doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),
+you can as a last resort activate sanitizers:
+
+.. code-block:: bash
+
+    cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON \
+            -D ESPRESSO_BUILD_WITH_UBSAN=ON \
+            -D CMAKE_BUILD_TYPE=RelWithAssert
+    make -j$(nproc)
+    ./pypresso script.py
+
+The resulting build will be around 5 times slower that a debug build,
+but it will generate valuable reports when detecting fatal exceptions.
+
+It is possible to attach an external debugger to ``pypresso``, albeit with
+a custom syntax. The ``pypresso`` executable file is actually not a program
+but a script which sets the Python path appropriately and starts the Python
+interpreter with user-defined arguments. Thus it is not possible to directly
+run ``pypresso`` in a debugger; instead one has to use pre-defined command
+line options:
+
+.. code-block:: bash
+
+     ./pypresso --tool script.py
+
+where ``--tool`` can be any tool from the :ref:`table below <Debugging es with tools>`.
+Only one tool can be used at a time. Some tools benefit from specific build
+options, as outlined in the sections that follow. Most tools accept arguments
+``<args>`` via the following variant:
+
+.. code-block:: bash
+
+     ./pypresso --tool="<args>" script.py
+
+The sequence or arguments is passed as a string, which will be split at
+whitespace characters by the shell interpreter. When the arguments need
+whitespaces or quotation marks, those need to be properly escaped. When
+no arguments are passed, sensible default values will be used instead.
+
+.. _Debugging es with tools:
+
+.. table:: Tools for the Python wrapper to |es|.
+
+    +---------------------+-------------------------------------------------+
+    | Tool                | Effect                                          |
+    +=====================+=================================================+
+    | ``--gdb``           | ``gdb --args python script.py``                 |
+    +---------------------+-------------------------------------------------+
+    | ``--lldb``          | ``lldb -- python script.py``                    |
+    +---------------------+-------------------------------------------------+
+    | ``--valgrind``      | ``valgrind --leak-check=full python script.py`` |
+    +---------------------+-------------------------------------------------+
+    | ``--cuda-gdb``      | ``cuda-gdb --args python script.py``            |
+    +---------------------+-------------------------------------------------+
+    | ``--cuda-memcheck`` | ``cuda-memcheck python script.py``              |
+    +---------------------+-------------------------------------------------+
+    | ``--kernprof``      | ``kernprof --line-by-line --view script.py``    |
+    +---------------------+-------------------------------------------------+
+
+.. _Profiling:
+
+Profiling
+~~~~~~~~~
+
+|es| is designed to leverage highly parallel computing environments and GPU
+accelerators. To facilitate the investigation of communication bottlenecks
+and inefficient algorithms, several profilers are natively supported,
+with annotation markers placed in performance-critical parts of the C++ core.
+
+.. _GDB:
+
+GDB
+~~~
+
+.. note::
+
+    Requires a debug build, enabled with the CMake option
+    ``-D CMAKE_BUILD_TYPE=Debug``, as well as an external dependency:
+
+    .. code-block:: bash
+
+        sudo apt install gdb
+
+The GNU Debugger (GDB) :cite:`stallman11a` is used to observe and control
+the execution of C++ applications. GDB can catch signals, suspend the
+program execution at user-defined break points, expose the content of
+C++ variables and run C++ functions that have no side effects.
+
+Here is a typical GDB session. Runs the failing simulation
+with the pypresso ``--gdb`` flag to attach the process to GDB.
+To catch a runtime error, use e.g. ``catch throw std::runtime_error``.
+To catch a specific function, use ``break`` followed by the function name
+(answer yes to the prompt about pending the breakpoint), or alternatively
+provide the absolute filepath and line number separated by a colon symbol.
+For a segmentation fault, no action is needed since it is automatically
+caught via the SIGSEV signal. Run the simulation with ``run`` and wait
+for GDB to suspend the program execution. At this point, use ``bt`` to
+show the complete backtrace, then use ``frame <n>`` with ``<n>`` the number
+of the innermost frame that is located inside the |es| source directory,
+and finally use ``tui e`` to show the offending line in the source code
+(``tui d`` to hide the source code). Use ``up`` and ``down`` to move in
+the backtrace. The value of local variables can be inspected by GDB.
+For a self-contained example, see the :ref:`GDB example<GDB-example>`.
+
+It is possible to debug an MPI-parallel simulation script with GDB.
+Keep in mind that contrary to a textbook example MPI application, where
+all ranks execute the ``main`` function, in |es| the worker nodes are idle
+until the head node on MPI rank 0 delegates work to them. This means that
+on MPI rank > 1, break points will only have an effect in code that can be
+reached from a callback function whose pointer has been registered in the
+:ref:`MPI callbacks framework <The MPI callbacks framework>`.
+
+The following command runs a script with 2 MPI ranks and binds a terminal
+to each rank:
+
+.. code-block:: bash
+
+    mpiexec -np 2 xterm -fa 'Monospace' -fs 12 -e ./pypresso --gdb simulation.py
+
+It can also be done via ssh with X-window forwarding:
+
+.. code-block:: bash
+
+    ssh -X username@hostname
+    mpiexec -n 2 -x DISPLAY="${DISPLAY}" xterm -fa 'Monospace' -fs 12 \
+        -e ./pypresso --gdb simulation.py
+
+The same syntax is used for C++ unit tests:
+
+.. code-block:: bash
+
+    mpiexec -np 2 xterm -fa 'Monospace' -fs 12 \
+        -e gdb src/core/unit_tests/EspressoSystemStandAlone_test
+
+.. _GDB-example:
+
+**GDB example**
+
+To recreate a typical debugging session, let's purposefully introduce a null
+pointer dereference in the ``int integrate()`` function, like so:
+
+.. code-block:: c++
+
+    int integrate(int n_steps, int reuse_forces) {
+      int test = *std::shared_ptr<int>();
+
+Running any simulation should produce the following trace:
+
+.. code-block:: none
+
+    $ ./pypresso ../samples/lj_liquid.py 2>&1 | c++filt
+    *** Process received signal ***
+    Signal: Segmentation fault (11)
+    Signal code: Address not mapped (1)
+    Failing at address: (nil)
+    [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)
+    [ 1] /home/user/espresso/build/src/core/espresso_core.so(integrate(int, int)+0x49)
+    [ 2] /home/user/espresso/build/src/core/espresso_core.so(integrate_with_signal_handler(int, int, bool)+0xaf)
+
+Running in GDB should automatically catch the SIGSEV signal and allow us to
+inspect the code and the state of all local variables:
+
+.. code-block:: none
+
+    $ ./pypresso --gdb ../samples/lj_liquid.py
+    (gdb) run
+    Thread 1 "python3.10" received signal SIGSEGV, Segmentation fault.
+    in integrate (n_steps=20, reuse_forces=-1)
+    at /home/user/espresso/src/core/integrate.cpp:260
+    260   int test = *std::shared_ptr<int>();
+    (gdb) bt
+    #0  in integrate (n_steps=20, reuse_forces=-1)
+        at /home/user/espresso/src/core/integrate.cpp:260
+    #1  in integrate_with_signal_handler (n_steps=20, reuse_forces=-1,
+          update_accumulators=false)
+        at /home/user/espresso/src/core/integrate.cpp:484
+    #2  in ScriptInterface::Integrators::SteepestDescent::integrate (
+          this=..., params=std::unordered_map with 1 element = {...})
+        at /home/user/espresso/src/script_interface/integrators/SteepestDescent.cpp:44
+    (gdb) frame 0
+    #0  in integrate (n_steps=20, reuse_forces=-1)
+        at /home/user/espresso/src/core/integrate.cpp:260
+    260   int test = *std::shared_ptr<int>();
+    (gdb) tui e
+    ┌─/home/user/espresso/src/core/integrate.cpp───────────────────────────────────┐
+    │      257  }                                                                  │
+    │      258                                                                     │
+    │      259  int integrate(int n_steps, int reuse_forces) {                     │
+    │  >   260    int test = *std::shared_ptr<int>();                              │
+    │      261                                                                     │
+    │      262    // Prepare particle structure and run sanity checks              │
+    │      263    on_integration_start(time_step);                                 │
+    └──────────────────────────────────────────────────────────────────────────────┘
+    (gdb) print n_steps
+    $1 = 20
+    (gdb) ptype time_step
+    type = double
+
+.. _CUDA_GDB:
+
+CUDA-GDB
+~~~~~~~~
+
+.. note::
+
+    Requires a CUDA debug build, enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_CUDA=ON -D CMAKE_BUILD_TYPE=Debug``.
+
+The CUDA-GDB debugger :cite:`misc-cuda-gdb` is used to observe and control
+the execution of CUDA applications. CUDA-GDB can catch signals, suspend the
+program execution at user-defined break points and expose values in CUDA
+variables. When a signal is caught inside a CUDA kernel, the stack trace
+only shows device function calls. When stepping into a CUDA kernel launch,
+the stack trace shows both host and device function calls.
+
+.. _ASAN:
+
+ASAN
+~~~~
+
+.. note::
+
+    Requires specific compiler and linker flags, enabled with the CMake option
+    ``-D ESPRESSO_BUILD_WITH_ASAN=ON -D CMAKE_BUILD_TYPE=RelWithAssert``.
+
+The AddressSanitizer (ASAN) :cite:`serebryany12a` is a memory error detection
+tool. It detects memory leaks and bugs caused by dangling references.
+
+For more details, please consult the tool online documentation [5]_.
+
+.. _UBSAN:
+
+UBSAN
+~~~~~
+
+.. note::
+
+    Requires specific compiler and linker flags, enabled with the CMake option
+    ``-D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=RelWithAssert``.
+
+The UndefinedBehaviorSanitizer (UBSAN) :cite:`misc-ubsan` is a detection tool
+for undefined behavior. It detects bugs caused by dangling references,
+array accesses out of bounds, signed integer overflows, etc.
+
+For more details, please consult the tool online documentation [6]_.
+
+.. _Caliper:
+
+Caliper
+~~~~~~~
+
+.. note::
+
+    Requires external features ``CALIPER``, enabled with the CMake option
+    ``-D ESPRESSO_BUILD_WITH_CALIPER=ON``.
+
+Caliper [1]_ :cite:`boehme16a` is a low-overhead annotation library for C++.
+By default, |es| comes with several markers in performance-critical parts
+of the main integration loop.
+
+In the example below, a P3M simulation is profiled to reveal that the
+short-range loop (N-squared summation for Lennard-Jones and Coulomb)
+and long-range forces (FFT summation) contribute equally to the runtime:
+
+.. code-block:: none
+
+    $ CALI_CONFIG_PROFILE=runtime-report ./pypresso ../samples/p3m.py --cpu
+    Path                         Inclusive time Exclusive time    Time %
+    integrate                             14.18           0.01      0.08
+      Integration loop                    13.84           0.43      2.88
+        force_calc                        13.41           0.20      1.35
+          copy_forces_from_GPU             0.01           0.01      0.07
+          short_range_loop                 6.55           6.55     44.02
+          calc_long_range_forces           6.40           6.40     43.00
+          init_forces                      0.24           0.24      1.58
+          copy_particles_to_GPU            0.01           0.01      0.07
+
+For the GPU implementation of the P3M algorithm, the long-range force
+calculation is cheaper, however the transfer of particle data to and from
+the GPU incur additional costs that are not negligible:
+
+.. code-block:: none
+
+    $ CALI_CONFIG_PROFILE=runtime-report ./pypresso ../samples/p3m.py --gpu
+    Path                         Inclusive time Exclusive time    Time %
+    integrate                             14.30           0.03      0.14
+      Integration loop                    13.87           1.76      7.90
+        force_calc                        12.12           0.82      3.68
+          copy_forces_from_GPU             2.09           2.09      9.42
+          short_range_loop                 3.20           3.20     14.38
+          calc_long_range_forces           3.75           3.75     16.87
+          init_forces                      1.25           1.25      5.61
+          copy_particles_to_GPU            1.01           1.01      4.56
+
+For a more fine-grained report on GPU kernels:
+
+.. code-block:: none
+
+    $ CALI_CONFIG=cuda-activity-report ./pypresso ../samples/p3m.py --gpu
+
+To introduce custom markers at the C++ level, add ``CALI`` macros inside
+performance-critical functions to register them:
+
+.. code-block:: c++
+
+    void force_calculation(CellStructure &cell_structure, double time_step) {
+    #ifdef CALIPER
+      CALI_CXX_MARK_FUNCTION;
+    #endif
+      /* ... */
+    }
+
+To introduce custom markers at the Python level,
+use a :class:`~espressomd.profiler.Caliper` object to fence code blocks:
+
+.. code-block:: python
+
+    import espressomd.profiler
+    cali = espressomd.profiler.Caliper()
+    cali.begin_section(label="calc_energies")
+    energies = system.analysis.energy()
+    cali.end_section(label="calc_energies")
+
+.. _Valgrind:
+
+Valgrind
+~~~~~~~~
+
+.. note::
+
+    Requires external features ``VALGRIND`` and debug symbols,
+    enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_VALGRIND=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo``,
+    as well as external dependencies:
+
+    .. code-block:: bash
+
+        sudo apt install valgrind kcachegrind graphviz
+        python3 -m pip install --user gprof2dot
+
+The Valgrind [2]_ :cite:`nethercote07a,nethercote03a` framework brings several
+tools to examine a program runtime performance.
+
+.. _Callgrind:
+
+Callgrind
+"""""""""
+
+The Callgrind [3]_ :cite:`weidendorfer04a` tool generates a graph of function
+calls. This type of instrumentation has a lot of overhead, therefore the time
+spent in functions might not always be reliable, and the program execution
+is slowed down significantly. To remediate the latter, it is common to
+restrict instrumentation to a specific part of the code using markers.
+By default, |es| comes with markers in the integration loop,
+which is the most performance-critical part of the core.
+
+In the following example, the P3M algorithm is profiled to generate a call
+graph that can be converted to a static graph using ``gprof2dot`` and ``dot``:
+
+.. code-block:: bash
+
+    ./pypresso --valgrind="--tool=callgrind --instr-atstart=no" ../samples/p3m.py --cpu
+    callgrind_out=$(ls -t -1 callgrind.out.*[[:digit:]] | head -1)
+    python3 -m gprof2dot --format=callgrind --output=${callgrind_out}.dot ${callgrind_out}
+    dot -Tpdf ${callgrind_out}.dot -o ${callgrind_out}.pdf
+
+The Valgrind output file generally follows the pattern ``callgrind.out.pid``,
+where ``pid`` is the actualy process id. The ``${callgrind_out}`` variable
+is populated with the return value of a subshell commands that finds the most
+recent output file that matches that pattern.
+
+It is also possible to open the output file in KCachegrind [4]_ to browse
+the call graph interactively and visualize the time spent in each function:
+
+.. code-block:: bash
+
+    kcachegrind ${callgrind_out}
+
+.. _perf:
+
+perf
+~~~~
+
+.. note::
+
+    Requires debug symbols, enabled with the CMake option
+    ``-D CMAKE_BUILD_TYPE=DebugOptimized``,
+    as well as external dependencies. On Ubuntu:
+
+    .. code-block:: bash
+
+        sudo apt install linux-tools-generic
+
+    On Debian:
+
+    .. code-block:: bash
+
+        sudo apt install linux-perf
+
+    On Fedora:
+
+    .. code-block:: bash
+
+        sudo apt install perf
+
+The perf [7]_ :cite:`misc-perf` tool generates a graph of function calls
+with time measurements.
+It requires privileges that can only be set as root.
+
+In the following example, the P3M algorithm is profiled to generate a call
+graph in a file called ``perf.data``, which is then read to generate a report:
+
+.. code-block:: bash
+
+    original_value=$(sysctl -n kernel.perf_event_paranoid)
+    sudo sysctl -w kernel.perf_event_paranoid=3
+    perf record --call-graph dwarf ./pypresso ../samples/p3m.py --cpu
+    sudo sysctl -w kernel.perf_event_paranoid=${original_value}
+    perf report --call-graph
+
+When inside the report, press ``/`` to search for a function name,
+e.g. ``integrate``, then highlight the symbol and press ``+`` to expand
+its call graph. Press ``q`` to exit the program, or close open tabs.
+
+A large amount of data will be written to disk during the recording step,
+typically several hundred megabytes. If the hard drive write latency
+is too high, the following warning will be emitted:
+
+.. code-block:: none
+
+    Warning:
+    Processed 17655 events and lost 7 chunks!
+    Check IO/CPU overload!
+
+Using a tmpfs drive, perf can write the file directly to RAM
+(mounted as a filesystem), which has better latency.
+To get a list of mounted tmpfs drives and their capacity:
+
+.. code-block:: none
+
+    $ mount | grep "tmpfs"
+    tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)
+    $ df -h /dev/shm/
+    Filesystem      Size  Used Avail Use% Mounted on
+    tmpfs            32G  320K   32G   1% /dev/shm
+
+To use a tmpfs drive as storage:
+
+.. code-block:: bash
+
+    perf record --call-graph dwarf -o /dev/shm/perf.data ../samples/p3m.py --cpu
+    perf report --call-graph -i /dev/shm/perf.data
+    rm /dev/shm/perf.data
+
+.. _kernprof:
+
+kernprof
+~~~~~~~~
+
+.. note::
+
+    Requires an external dependency:
+
+    .. code-block:: bash
+
+        python3 -m pip install --user line_profiler
+
+kernprof [8]_ :cite:`misc-kernprof` is a low-overhead Python profiler.
+It supports two instrumentation modes: ``line_profile`` and ``cProfile``.
+The ``--builtin`` option injects a ``LineProfiler`` object and a ``profile``
+function in the global namespace of the instrumented script.
+The latter can be used as a decorator (``@profile``),
+as a context manager (``with profile:``), or
+as begin/end markers (``profile.enable()``, ``profile.disable()``)
+to select the regions of code to instrument,
+although the ``line_profile`` mode only supports the decorator behavior.
+The ``line_profile`` mode cannot instrument code from imported modules,
+whereas the ``cProfile`` mode can.
+
+To make the instrumented script executable with and without kernprof
+when using decorators, add the following code at the top of the script:
+
+.. code-block:: python
+
+    if "line_profiler" not in dir():
+        def profile(func):
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+To run kernprof in ``line_profile`` mode:
+
+.. code-block:: bash
+
+    ./pypresso --kernprof="--line-by-line --view" ../samples/p3m.py --cpu
+
+To later view the results again:
+
+.. code-block:: bash
+
+    python3 -m line_profiler p3m.py.lprof
+
+To run kernprof in ``cProfile`` mode:
+
+.. code-block:: bash
+
+    ./pypresso --kernprof="" ../samples/p3m.py --cpu
+
+To interactively read the data:
+
+.. code-block:: none
+
+    python3 -m pstats p3m.py.prof
+    p3m.py.prof% sort time
+    p3m.py.prof% reverse
+    p3m.py.prof% stats
+      ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+           2  1.090    0.545    1.090    0.545   /opt/espressomd/integrate.py:156(run)
+           1  1.817    1.817    1.817    1.817   /opt/espressomd/electrostatics.py:71(_activate)
+          10  2.619    0.262    2.619    0.262   /opt/espressomd/integrate.py:101(run)
+    p3m.py.prof% quit
+
+____
+
+.. [1]
+   https://software.llnl.gov/Caliper/
+
+.. [2]
+   https://valgrind.org/docs/manual/
+
+.. [3]
+   https://valgrind.org/docs/manual/cl-manual.html
+
+.. [4]
+   https://kcachegrind.github.io/html/Home.html
+
+.. [5]
+   https://github.com/google/sanitizers/wiki/AddressSanitizer
+
+.. [6]
+   https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+
+.. [7]
+   https://perf.wiki.kernel.org/index.php/Main_Page
+
+.. [8]
+   https://github.com/pyutils/line_profiler

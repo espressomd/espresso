@@ -53,7 +53,9 @@
 
 #include <boost/variant.hpp>
 
-#include <profiler/profiler.hpp>
+#ifdef CALIPER
+#include <caliper/cali.h>
+#endif
 
 #include <cassert>
 #include <memory>
@@ -113,7 +115,10 @@ inline ParticleForce init_real_particle_force(Particle const &p,
 static void init_forces(const ParticleRange &particles,
                         const ParticleRange &ghost_particles, double time_step,
                         double kT) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
@@ -144,12 +149,20 @@ void init_forces_ghosts(const ParticleRange &particles) {
 }
 
 void force_calc(CellStructure &cell_structure, double time_step, double kT) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
 
   auto &espresso_system = System::get_system();
 #ifdef CUDA
-  espresso_system.gpu.update();
+#ifdef CALIPER
+  CALI_MARK_BEGIN("copy_particles_to_GPU");
 #endif
+  espresso_system.gpu.update();
+#ifdef CALIPER
+  CALI_MARK_END("copy_particles_to_GPU");
+#endif
+#endif // CUDA
 
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
@@ -231,8 +244,14 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   }
 
 #ifdef CUDA
-  espresso_system.gpu.copy_forces_to_host(particles, this_node);
+#ifdef CALIPER
+  CALI_MARK_BEGIN("copy_forces_from_GPU");
 #endif
+  espresso_system.gpu.copy_forces_to_host(particles, this_node);
+#ifdef CALIPER
+  CALI_MARK_END("copy_forces_from_GPU");
+#endif
+#endif // CUDA
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
@@ -253,7 +272,10 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   Coulomb::get_coulomb().calc_long_range_force(particles);

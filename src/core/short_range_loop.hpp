@@ -19,9 +19,13 @@
 #ifndef CORE_SHORT_RANGE_HPP
 #define CORE_SHORT_RANGE_HPP
 
+#include "config/config.hpp"
+
 #include "cells.hpp"
 
-#include <profiler/profiler.hpp>
+#ifdef CALIPER
+#include <caliper/cali.h>
+#endif
 
 #include <cassert>
 
@@ -40,7 +44,9 @@ template <class BondKernel, class PairKernel,
 void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
                       double pair_cutoff, double bond_cutoff,
                       const VerletCriterion &verlet_criterion = {}) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
