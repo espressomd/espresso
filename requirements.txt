@@ -1,3 +1,5 @@
+# build system
+cython>=0.29.14,<3.0
 # required scientific packages
 numpy>=1.17.4
 h5py>=2.7.1
