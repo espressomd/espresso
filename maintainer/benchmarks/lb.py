@@ -43,6 +43,8 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     "particles (range: [0.01-0.74], default: 0.50)")
 parser.add_argument("--single_precision", action="store_true", required=False,
                     help="Using single-precision floating point accuracy")
+parser.add_argument("--gpu", action=argparse.BooleanOptionalAction,
+                    default=False, required=False, help="Use GPU implementation")
 parser.add_argument("--output", metavar="FILEPATH", action="store",
                     type=str, required=False, default="benchmarks.csv",
                     help="Output file (default: benchmarks.csv)")
@@ -58,6 +60,8 @@ assert "box_l" not in args or args.particles_per_core == 0, \
     "Argument box_l requires particles_per_core=0"
 
 required_features = ["LENNARD_JONES", "WALBERLA"]
+if args.gpu:
+    required_features.append("CUDA")
 espressomd.assert_features(required_features)
 
 # make simulation deterministic
@@ -103,14 +107,12 @@ system.box_l = 3 * (box_l,)
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
-system.thermostat.turn_off()
 
-# Interaction setup
+# Interaction and particle setup
 #############################################################
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
-
 if n_part:
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
     system.part.add(pos=np.random.random((n_part, 3)) * system.box_l)
     benchmarks.minimize(system, n_part / 2.)
     system.integrator.set_vv()
@@ -129,9 +131,13 @@ if n_part:
     system.integrator.run(500)
     system.thermostat.turn_off()
 
-lbf = espressomd.lb.LBFluidWalberla(agrid=agrid, tau=system.time_step,
-                                    density=1., kinematic_viscosity=1.,
-                                    single_precision=args.single_precision)
+# LB fluid setup
+#############################################################
+lb_class = espressomd.lb.LBFluidWalberla
+if args.gpu:
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+lbf = lb_class(agrid=agrid, tau=system.time_step, kinematic_viscosity=1.,
+               density=1., single_precision=args.single_precision)
 system.actors.add(lbf)
 
 
