@@ -588,7 +588,8 @@ public:
     if (!bc)
       return {};
 
-    auto field = bc->block->template getData<VectorField>(m_velocity_field_id);
+    auto field = bc->block->template uncheckedFastGetData<VectorField>(
+        m_velocity_field_id);
     auto const vec = lbm::accessor::Vector::get(field, bc->cell);
     return to_vector3d(vec);
   }
@@ -915,7 +916,8 @@ public:
     if (!bc)
       return {boost::none};
 
-    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto pdf_field =
+        bc->block->template uncheckedFastGetData<PdfField>(m_pdf_field_id);
     auto const density = lbm::accessor::Density::get(pdf_field, bc->cell);
     return {double_c(density)};
   }
