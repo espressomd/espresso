@@ -80,8 +80,9 @@ void add_md_force(LB::Solver &lb, Utils::Vector3d const &pos,
                   Utils::Vector3d const &force, double time_step);
 
 // internal function exposed for unit testing
-std::vector<Utils::Vector3d>
-positions_in_halo(Utils::Vector3d pos, BoxGeometry const &box, double agrid);
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
+                                               BoxGeometry const &box,
+                                               double agrid);
 
 // internal function exposed for unit testing
 void add_swimmer_force(Particle const &p, double time_step);

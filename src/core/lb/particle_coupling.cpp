@@ -157,6 +157,12 @@ static bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
   return pos >= lower_corner and pos < upper_corner;
 }
 
+static bool in_box(Utils::Vector3d const &pos,
+                   Utils::Vector3d const &lower_corner,
+                   Utils::Vector3d const &upper_corner) {
+  return pos >= lower_corner and pos < upper_corner;
+}
+
 static bool in_local_halo(Utils::Vector3d const &pos, double agrid) {
   auto const halo = 0.5 * agrid;
   return in_local_domain(pos, halo);
@@ -170,8 +176,19 @@ bool in_local_halo(Utils::Vector3d const &pos) {
  * @brief Return a vector of positions shifted by +,- box length in each
  * coordinate
  */
-std::vector<Utils::Vector3d>
-positions_in_halo(Utils::Vector3d pos, BoxGeometry const &box, double agrid) {
+std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
+                                               BoxGeometry const &box,
+                                               double agrid) {
+  auto const halo = 0.5 * agrid;
+  auto const halo_vec = Utils::Vector3d::broadcast(halo);
+  auto const fully_inside_lower = local_geo.my_left() + 2. * halo_vec;
+  auto const fully_inside_upper = local_geo.my_right() - 2. * halo_vec;
+  if (in_box(pos, fully_inside_lower, fully_inside_upper)) {
+    return {pos};
+  }
+  auto const halo_lower_corner = local_geo.my_left() - halo_vec;
+  auto const halo_upper_corner = local_geo.my_right() + halo_vec;
+
   std::vector<Utils::Vector3d> res;
   for (int i : {-1, 0, 1}) {
     for (int j : {-1, 0, 1}) {
@@ -189,7 +206,7 @@ positions_in_halo(Utils::Vector3d pos, BoxGeometry const &box, double agrid) {
             pos_shifted[le.shear_direction] -= le.pos_offset;
         }
 
-        if (in_local_halo(pos_shifted, agrid)) {
+        if (in_box(pos_shifted, halo_lower_corner, halo_upper_corner)) {
           res.push_back(pos_shifted);
         }
       }
