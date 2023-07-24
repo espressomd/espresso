@@ -45,13 +45,21 @@ public:
   }
 
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
+    auto const positions_sorted = detail::get_all_particle_positions(
+        comm, local_particles, ids(), traits, false);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
     std::vector<double> res(n_values());
 
     for (std::size_t i = 0, end = n_values(); i < end; i++) {
-      auto const v = box_geo.get_mi_vector(traits.position(particles[i]),
-                                           traits.position(particles[i + 1]));
+      auto const v =
+          box_geo.get_mi_vector(positions_sorted[i], positions_sorted[i + 1]);
       res[i] = v.norm();
     }
     return res;

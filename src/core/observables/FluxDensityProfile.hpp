@@ -23,11 +23,14 @@
 #include "Particle.hpp"
 #include "PidProfileObservable.hpp"
 #include "grid.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
-#include <utils/Span.hpp>
+
+#include <boost/range/combine.hpp>
 
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -40,14 +43,38 @@ public:
   }
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::Histogram<double, 3> histogram(n_bins(), limits());
+    using pos_type = decltype(traits.position(std::declval<Particle>()));
+    using vel_type = decltype(traits.velocity(std::declval<Particle>()));
 
-    for (auto p : particles) {
-      auto const ppos = folded_position(traits.position(p), box_geo);
-      histogram.update(ppos, traits.velocity(p));
+    std::vector<pos_type> local_folded_positions{};
+    std::vector<vel_type> local_velocities{};
+    local_folded_positions.reserve(local_particles.size());
+    local_velocities.reserve(local_particles.size());
+
+    for (auto const &p : local_particles) {
+      local_folded_positions.emplace_back(
+          folded_position(traits.position(p), box_geo));
+      local_velocities.emplace_back(traits.velocity(p));
     }
+
+    auto const world_size = comm.size();
+    std::vector<decltype(local_folded_positions)> global_folded_positions{};
+    std::vector<decltype(local_velocities)> global_velocities{};
+    global_folded_positions.reserve(world_size);
+    global_velocities.reserve(world_size);
+    boost::mpi::gather(comm, local_folded_positions, global_folded_positions,
+                       0);
+    boost::mpi::gather(comm, local_velocities, global_velocities, 0);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
+    Utils::Histogram<double, 3> histogram(n_bins(), limits());
+    accumulate(histogram, global_folded_positions, global_velocities);
     histogram.normalize();
     return histogram.get_histogram();
   }

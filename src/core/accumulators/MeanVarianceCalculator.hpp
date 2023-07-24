@@ -38,7 +38,7 @@ public:
                          int delta_N)
       : AccumulatorBase(delta_N), m_obs(obs), m_acc(obs->n_values()) {}
 
-  void update() override;
+  void update(boost::mpi::communicator const &comm) override;
   std::vector<double> mean();
   std::vector<double> variance();
   std::vector<double> std_error();

@@ -45,6 +45,7 @@ namespace utf = boost::unit_test;
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "observables/ParticleVelocities.hpp"
+#include "observables/PidObservable.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
@@ -59,7 +60,9 @@ namespace utf = boost::unit_test;
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -118,6 +121,46 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     }
   };
 
+  // check observables
+  {
+    auto const pid4 = 10;
+    auto const pids = std::vector<int>{pid2, pid3, pid1, pid4};
+    Observables::ParticleReferenceRange particle_range{};
+    for (int pid : pids) {
+      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+        particle_range.emplace_back(*p);
+      }
+    }
+    Particle p{};
+    p.id() = pid4;
+    p.pos() = {1., 1., 1.};
+    p.image_box() = {1, -1, 0};
+    if (rank == 0) {
+      particle_range.emplace_back(p);
+    }
+    for (auto const use_folded_positions : {true, false}) {
+      auto const vec = Observables::detail::get_all_particle_positions(
+          comm, particle_range, pids, {}, use_folded_positions);
+      if (rank == 0) {
+        BOOST_CHECK_EQUAL(vec.size(), 4ul);
+        for (std::size_t i = 0u; i < pids.size(); ++i) {
+          Utils::Vector3d dist{};
+          if (pids[i] == pid4) {
+            dist = p.pos() - vec[i];
+            if (not use_folded_positions) {
+              dist += p.image_box() * box_l;
+            }
+          } else {
+            dist = start_positions.at(pids[i]) - vec[i];
+          }
+          BOOST_CHECK_LE(dist.norm(), tol);
+        }
+      } else {
+        BOOST_CHECK_EQUAL(vec.size(), 0ul);
+      }
+    }
+  }
+
   // check accumulators
   if (n_nodes == 1) {
     auto const pids = std::vector<int>{pid2};
@@ -133,12 +176,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
 
-      acc.update();
+      acc.update(comm);
       auto const time_series = acc.time_series();
       BOOST_REQUIRE_EQUAL(time_series.size(), i + 1);
 
       auto const acc_value = time_series.back();
-      auto const obs_value = (*obs)();
+      auto const obs_value = (*obs)(comm);
       auto const &p = get_particle_data(pid2);
       BOOST_TEST(obs_value == p.v(), boost::test_tools::per_element());
       BOOST_TEST(acc_value == p.v(), boost::test_tools::per_element());

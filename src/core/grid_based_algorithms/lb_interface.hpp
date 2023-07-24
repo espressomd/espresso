@@ -23,9 +23,16 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/optional.hpp>
+
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
+
+// Forward Declarations
+namespace boost::mpi {
+class communicator;
+} // namespace boost::mpi
 
 /** @brief LB implementation currently active. */
 enum class ActiveLB : int { NONE, WALBERLA_LB };
@@ -102,23 +109,27 @@ double get_lattice_speed();
  *  over all nodes and dividing by the number of nodes.
  *  Returns the lower triangle of the LB pressure tensor.
  */
-Utils::VectorXd<9> const get_pressure_tensor();
+Utils::VectorXd<9> const
+get_pressure_tensor(boost::mpi::communicator const &comm);
 
 Utils::Vector3d calc_fluid_momentum();
 
 /**
- * @brief Calculates the interpolated fluid velocity on the head node process.
+ * @brief Calculates the interpolated fluid velocity on the responsible node
+ * process.
  * @param pos Position at which the velocity is to be calculated.
- * @retval interpolated fluid velocity.
+ * @retval optional interpolated fluid velocity.
  */
-Utils::Vector3d const get_interpolated_velocity(Utils::Vector3d const &pos);
+boost::optional<Utils::Vector3d>
+get_interpolated_velocity(Utils::Vector3d const &pos);
 
 /**
- * @brief Calculates the interpolated fluid density on the head node process.
+ * @brief Calculates the interpolated fluid density on the responsible node
+ * process.
  * @param pos Position at which the density is to be calculated.
- * @retval interpolated fluid density.
+ * @retval optional interpolated fluid density.
  */
-double get_interpolated_density(Utils::Vector3d const &pos);
+boost::optional<double> get_interpolated_density(Utils::Vector3d const &pos);
 
 } // namespace LB
 

@@ -22,7 +22,6 @@
 #include "ParticleHandle.hpp"
 
 #include "script_interface/Variant.hpp"
-#include "script_interface/communication.hpp"
 #include "script_interface/get_value.hpp"
 
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
@@ -36,6 +35,7 @@
 #include "core/virtual_sites.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/format.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -140,7 +140,7 @@ T ParticleHandle::get_particle_property(F const &fun) const {
   } else {
     ret = {fun(*ptr)};
   }
-  return mpi_reduce_optional(comm, ret);
+  return Utils::Mpi::reduce_optional(comm, ret);
 }
 
 template <typename T>

@@ -22,19 +22,26 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/communication.hpp"
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/optional.hpp>
 
-BOOST_AUTO_TEST_CASE(reduce_sum) {
+BOOST_AUTO_TEST_CASE(reduce_optional) {
   boost::mpi::communicator comm;
-  auto const sum = ScriptInterface::mpi_reduce_sum(comm, comm.rank() + 1);
 
-  if (comm.rank() == 0) {
-    auto const n = comm.size();
-    BOOST_CHECK_EQUAL(sum, (n * (n + 1)) / 2);
-  } else {
-    BOOST_CHECK_EQUAL(sum, 0);
+  for (int rank = 0; rank < comm.size(); ++rank) {
+    boost::optional<int> maybe;
+    if (comm.rank() == rank) {
+      maybe = 42;
+    }
+    auto const sum = Utils::Mpi::reduce_optional(comm, maybe);
+
+    if (comm.rank() == 0) {
+      BOOST_CHECK_EQUAL(sum, 42);
+    } else {
+      BOOST_CHECK_EQUAL(sum, 0);
+    }
   }
 }
 

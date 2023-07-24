@@ -27,9 +27,7 @@
 
 #include "dpd.hpp"
 
-#include "MpiCallbacks.hpp"
 #include "cells.hpp"
-#include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -43,6 +41,8 @@
 #include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>
+
+#include <boost/mpi/collectives/reduce.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -151,7 +151,6 @@ static auto dpd_viscous_stress_local() {
 
   return stress;
 }
-REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
 
 /**
  * @brief Viscous stress tensor of the DPD interaction.
@@ -168,12 +167,13 @@ REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
  *
  * @return Stress tensor contribution.
  */
-Utils::Vector9d dpd_stress() {
-  auto const stress = mpi_call(Communication::Result::reduction, std::plus<>(),
-                               dpd_viscous_stress_local);
-  auto const volume = box_geo.volume();
+Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm) {
+  auto const local_stress = dpd_viscous_stress_local();
+  std::remove_const_t<decltype(local_stress)> global_stress;
 
-  return Utils::flatten(stress) / volume;
+  boost::mpi::reduce(comm, local_stress, global_stress, std::plus<>(), 0);
+
+  return Utils::flatten(global_stress) / box_geo.volume();
 }
 
 #endif // DPD
