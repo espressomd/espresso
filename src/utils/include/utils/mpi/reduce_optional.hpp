@@ -16,28 +16,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
+#ifndef UTILS_MPI_REDUCE_OPTIONAL_HPP
+#define UTILS_MPI_REDUCE_OPTIONAL_HPP
 
-#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/optional.hpp>
 
 #include <cassert>
 #include <functional>
 
-namespace ScriptInterface {
+namespace Utils::Mpi {
 
 /**
- * @brief Reduce object by sum on the head node.
+ * @brief Reduce an optional on the head node.
  * Worker nodes get a default-constructed object.
  */
 template <typename T>
-T mpi_reduce_sum(boost::mpi::communicator const &comm, T const &result) {
-  T out{};
-  boost::mpi::reduce(comm, result, out, std::plus<T>{}, 0);
-  return out;
+T reduce_optional(boost::mpi::communicator const &comm,
+                  boost::optional<T> const &result) {
+  assert(1 == boost::mpi::all_reduce(comm, static_cast<int>(!!result),
+                                     std::plus<>()) &&
+         "Incorrect number of return values");
+  if (comm.rank() == 0) {
+    if (result) {
+      return *result;
+    }
+    T value;
+    comm.recv(boost::mpi::any_source, 42, value);
+    return value;
+  }
+  if (result) {
+    comm.send(0, 42, *result);
+  }
+  return {};
 }
 
-} // namespace ScriptInterface
+} // namespace Utils::Mpi
 
 #endif

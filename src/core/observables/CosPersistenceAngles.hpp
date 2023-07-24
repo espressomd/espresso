@@ -23,7 +23,6 @@
 #include "PidObservable.hpp"
 #include "grid.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <cassert>
@@ -49,15 +48,24 @@ public:
   }
 
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
+
+    auto const positions_sorted = detail::get_all_particle_positions(
+        comm, local_particles, ids(), traits, false);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
     auto const no_of_angles = n_values();
     auto const no_of_bonds = no_of_angles + 1;
     std::vector<double> angles(no_of_angles);
     std::vector<Utils::Vector3d> bond_vectors(no_of_bonds);
     auto get_bond_vector = [&](auto index) {
-      return box_geo.get_mi_vector(traits.position(particles[index + 1]),
-                                   traits.position(particles[index]));
+      return box_geo.get_mi_vector(positions_sorted[index + 1],
+                                   positions_sorted[index]);
     };
     for (std::size_t i = 0; i < no_of_bonds; ++i) {
       auto const tmp = get_bond_vector(i);

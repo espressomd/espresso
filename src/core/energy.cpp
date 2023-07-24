@@ -38,7 +38,6 @@
 #include "magnetostatics/dipoles.hpp"
 
 #include <utils/Span.hpp>
-#include <utils/mpi/iall_gatherv.hpp>
 
 #include <memory>
 
@@ -114,18 +113,6 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
-REGISTER_CALLBACK_MAIN_RANK(calculate_energy)
-
-double mpi_calculate_potential_energy() {
-  auto const obs = mpi_call(Communication::Result::main_rank, calculate_energy);
-  return obs->accumulate(-obs->kinetic[0]);
-}
-
-double mpi_observable_compute_energy() {
-  auto const obs = mpi_call(Communication::Result::main_rank, calculate_energy);
-  return obs->accumulate(0);
-}
-
 double particle_short_range_energy_contribution(int pid) {
   double ret = 0.0;
 
@@ -159,8 +146,4 @@ void calc_long_range_fields() {
   auto const &dipoles = System::get_system().dipoles;
   dipoles.calc_long_range_field(particles);
 }
-
-REGISTER_CALLBACK(calc_long_range_fields)
-
-void mpi_calc_long_range_fields() { mpi_call_all(calc_long_range_fields); }
 #endif

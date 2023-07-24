@@ -23,7 +23,6 @@
 #include "PidObservable.hpp"
 #include "grid.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <cassert>
@@ -53,17 +52,23 @@ public:
   }
 
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
+    auto const positions_sorted = detail::get_all_particle_positions(
+        comm, local_particles, ids(), traits, false);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
     std::vector<double> res(n_values());
-    auto v1 = box_geo.get_mi_vector(traits.position(particles[1]),
-                                    traits.position(particles[0]));
-    auto v2 = box_geo.get_mi_vector(traits.position(particles[2]),
-                                    traits.position(particles[1]));
+    auto v1 = box_geo.get_mi_vector(positions_sorted[1], positions_sorted[0]);
+    auto v2 = box_geo.get_mi_vector(positions_sorted[2], positions_sorted[1]);
     auto c1 = Utils::vector_product(v1, v2);
     for (std::size_t i = 0, end = n_values(); i < end; i++) {
-      auto v3 = box_geo.get_mi_vector(traits.position(particles[i + 3]),
-                                      traits.position(particles[i + 2]));
+      auto v3 = box_geo.get_mi_vector(positions_sorted[i + 3],
+                                      positions_sorted[i + 2]);
       auto c2 = vector_product(v2, v3);
       /* the 2-argument arctangent returns an angle in the range [-pi, pi] that
        * allows for an unambiguous determination of the 4th particle position */
