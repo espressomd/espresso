@@ -20,7 +20,12 @@
 #ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_CUDA_CUH
 #define ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_CUDA_CUH
 
-void p3m_gpu_init(int cao, const int mesh[3], double alpha);
-void p3m_gpu_add_farfield_force(double prefactor);
+#include <memory>
+
+struct P3MGpuParams;
+
+void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &p3m_gpu_data_ptr, int cao,
+                  const int mesh[3], double alpha);
+void p3m_gpu_add_farfield_force(P3MGpuParams &data, double prefactor);
 
 #endif

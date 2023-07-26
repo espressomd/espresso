@@ -423,7 +423,7 @@ void GpuParticleData::Storage::realloc_device_memory() {
 }
 
 void GpuParticleData::Storage::free_device_memory() {
-  auto const free_device_pointer = [](float *&ptr) {
+  auto const free_device_pointer = [](auto *&ptr) {
     if (ptr != nullptr) {
       cuda_safe_mem(cudaFree(reinterpret_cast<void *>(ptr)));
       ptr = nullptr;
@@ -441,4 +441,5 @@ void GpuParticleData::Storage::free_device_memory() {
 #ifdef ELECTROSTATICS
   free_device_pointer(particle_q_device);
 #endif
+  free_device_pointer(energy_device);
 }
