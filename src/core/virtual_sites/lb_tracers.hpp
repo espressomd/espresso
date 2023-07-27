@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
-#define VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
+#ifndef VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
+#define VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 
 #include "config/config.hpp"
-#ifdef VIRTUAL_SITES
-#include "VirtualSites.hpp"
 
-/** @brief Do-nothing virtual-sites implementation */
-class VirtualSitesOff : public VirtualSites {};
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
+void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_struct,
+                                            double time_step);
+void lb_tracers_propagate(CellStructure &cell_struct, double time_step);
 #endif
 #endif

@@ -128,6 +128,7 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
 #ifdef VIRTUAL_SITES
     ar &p.virtual_flag();
 #endif
+    ar &p.propagation();
 #ifdef ROTATION
     ar &p.rotation();
 #ifdef ROTATIONAL_INERTIA

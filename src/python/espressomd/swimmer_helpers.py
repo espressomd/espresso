@@ -19,9 +19,8 @@
 
 import numpy as np
 from . import code_features
+from .propagation import Propagation
 from .math import calc_quaternions_from_angles
-if code_features.has_features("VIRTUAL_SITES_RELATIVE"):
-    from .virtual_sites import VirtualSitesRelative
 
 
 def add_dipole_particle(system, particle, dipole_length,
@@ -66,19 +65,14 @@ def add_dipole_particle(system, particle, dipole_length,
         raise ValueError("'dipole_length' must be >= 0.")
 
     code_features.assert_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"])
-    if not isinstance(system.virtual_sites, VirtualSitesRelative):
-        raise RuntimeError(
-            "system.virtual_sites must be espressomd.virtual_sites.VirtualSitesRelative.")
-    if not system.virtual_sites.have_quaternion:
-        raise RuntimeError(
-            "system.virtual_sites must have quaternion option turned on ('have_quaternion = True').")
 
     p = system.part.add(
         pos=particle.pos + dip_sign * dipole_length * particle.director,
-        virtual=True, type=dipole_particle_type, swimming={
+        type=dipole_particle_type, swimming={
             "f_swim": particle.swimming["f_swim"],
             "is_engine_force_on_fluid": True,
         })
     p.vs_auto_relate_to(particle)
+    p.propagation = p.propagation + Propagation.ROT_VS_RELATIVE
     p.vs_quat = calc_quaternions_from_angles(np.pi, 0.)
     return p

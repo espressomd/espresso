@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "VirtualSitesRelative.hpp"
-
+#include "config/config.hpp"
 #ifdef VIRTUAL_SITES_RELATIVE
 
 #include "Particle.hpp"
+#include "PropagationModes.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -78,9 +78,6 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
  * @return Pointer to real particle.
  */
 static Particle *get_reference_particle(Particle const &p) {
-  if (!p.is_virtual()) {
-    return nullptr;
-  }
   auto const &vs_rel = p.vs_relative();
   if (vs_rel.to_particle_id == -1) {
     runtimeErrorMsg() << "Particle with id " << p.id()
@@ -109,32 +106,52 @@ static auto constraint_stress(Particle const &p_ref, Particle const &p_vs) {
   return tensor_product(-p_vs.force(), connection_vector(p_ref, p_vs));
 }
 
-void VirtualSitesRelative::update() const {
-  cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
-                               Cells::DATA_PART_MOMENTUM);
+static bool is_vs_relative_trans(const Particle &p) {
+  return p.propagation() & PropagationMode::TRANS_VS_RELATIVE;
+};
+static bool is_vs_relative_rot(const Particle &p) {
+  return p.propagation() & PropagationMode::ROT_VS_RELATIVE;
+};
 
-  auto const particles = cell_structure.local_particles();
+static bool is_vs_relative(const Particle &p) {
+  return (is_vs_relative_trans(p) or is_vs_relative_rot(p));
+};
+
+void vs_relative_update_particles(CellStructure &cell_struct) {
+  cell_struct.ghosts_update(Cells::DATA_PART_POSITION |
+                            Cells::DATA_PART_MOMENTUM);
+
+  auto const particles = cell_struct.local_particles();
   for (auto &p : particles) {
+    if (!is_vs_relative(p)) {
+      continue;
+    }
+
     auto const *p_ref_ptr = get_reference_particle(p);
     if (!p_ref_ptr)
       continue;
 
     auto const &p_ref = *p_ref_ptr;
-    p.image_box() = p_ref.image_box();
-    p.pos() = p_ref.pos() + connection_vector(p_ref, p);
-    p.v() = velocity(p_ref, p);
 
-    if (box_geo.type() == BoxType::LEES_EDWARDS) {
-      auto push = LeesEdwards::Push(box_geo);
-      push(p, -1); // includes a position fold
-    } else {
-      fold_position(p.pos(), p.image_box(), box_geo);
+    // position update
+    if (is_vs_relative_trans(p)) {
+      p.image_box() = p_ref.image_box();
+      p.pos() = p_ref.pos() + connection_vector(p_ref, p);
+      p.v() = velocity(p_ref, p);
+
+      if (box_geo.type() == BoxType::LEES_EDWARDS) {
+        auto push = LeesEdwards::Push(box_geo);
+        push(p, -1); // includes a position fold
+      } else {
+        fold_position(p.pos(), p.image_box(), box_geo);
+      }
     }
 
-    if (have_quaternions())
+    // Orientation update
+    if (is_vs_relative_rot(p)) {
       p.quat() = p_ref.quat() * p.vs_relative().quat;
+    }
   }
-
   if (cell_structure.check_resort_required(particles, skin)) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
@@ -142,33 +159,43 @@ void VirtualSitesRelative::update() const {
 
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
-void VirtualSitesRelative::back_transfer_forces_and_torques() const {
-  cell_structure.ghosts_reduce_forces();
+void vs_relative_back_transfer_forces_and_torques(CellStructure &cell_struct) {
+  cell_struct.ghosts_reduce_forces();
 
-  init_forces_ghosts(cell_structure.ghost_particles());
+  init_forces_ghosts(cell_struct.ghost_particles());
 
   // Iterate over all the particles in the local cells
-  for (auto &p : cell_structure.local_particles()) {
+  for (auto &p : cell_struct.local_particles()) {
+    if (!is_vs_relative(p))
+      continue;
+
     auto *p_ref_ptr = get_reference_particle(p);
     if (!p_ref_ptr)
       continue;
 
-    // Add forces and torques
     auto &p_ref = *p_ref_ptr;
-    p_ref.force() += p.force();
-    p_ref.torque() +=
-        vector_product(connection_vector(p_ref, p), p.force()) + p.torque();
+    if (is_vs_relative_trans(p)) {
+      p_ref.force() += p.force();
+      p_ref.torque() += vector_product(connection_vector(p_ref, p), p.force());
+    }
+
+    if (is_vs_relative_rot(p)) {
+      p_ref.torque() += p.torque();
+    }
   }
 }
 
 // Rigid body contribution to scalar pressure and pressure tensor
-Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
+Utils::Matrix<double, 3, 3>
+vs_relative_pressure_tensor(const ParticleRange &particles) {
   Utils::Matrix<double, 3, 3> pressure_tensor = {};
 
-  for (auto const &p : cell_structure.local_particles()) {
-    auto const *p_ref_ptr = get_reference_particle(p);
-    if (p_ref_ptr) {
-      pressure_tensor += constraint_stress(*p_ref_ptr, p);
+  for (auto const &p : particles) {
+    if (is_vs_relative_trans(p)) {
+      auto const *p_ref_ptr = get_reference_particle(p);
+      if (p_ref_ptr) {
+        pressure_tensor += constraint_stress(*p_ref_ptr, p);
+      }
     }
   }
 

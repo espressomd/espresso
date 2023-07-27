@@ -31,7 +31,6 @@ import espressomd.magnetostatics
 import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.drude_helpers
-import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
 import espressomd.io.writer
@@ -112,7 +111,6 @@ if lbf_class:
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
-p1.propagation = 4
 p2.propagation = 8 
 
 if espressomd.has_features('ELECTROSTATICS'):
@@ -241,10 +239,6 @@ if 'LB' not in modes:
             pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
-    system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-        have_quaternion=True)
-    system.virtual_sites.have_quaternion = True
-    system.virtual_sites.override_cutoff_check = True
     p2.vs_auto_relate_to(p1)
 
 # non-bonded interactions

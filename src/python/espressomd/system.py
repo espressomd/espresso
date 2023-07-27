@@ -38,7 +38,6 @@ from . import electrokinetics
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
-from . import virtual_sites
 
 from .code_features import has_features, assert_features
 from . import utils
@@ -183,8 +182,6 @@ class System(ScriptInterfaceHelper):
 
         setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                               "time_step", "force_cap", "max_oif_objects"]
-        if has_features("VIRTUAL_SITES"):
-            setable_properties.append("_active_virtual_sites_handle")
 
         self.call_method("set_system_handle", obj=_System(**kwargs))
         self.integrator = integrate.IntegratorHandle()
@@ -221,9 +218,6 @@ class System(ScriptInterfaceHelper):
         self.non_bonded_inter = interactions.NonBondedInteractions()
         self.part = particle_data.ParticleList()
         self.thermostat = thermostat.Thermostat()
-        if has_features("VIRTUAL_SITES"):
-            self._active_virtual_sites_handle = virtual_sites.ActiveVirtualSitesHandle(
-                implementation=virtual_sites.VirtualSitesOff())
 
         # lock class
         self.call_method("lock_system_creation")
@@ -250,8 +244,6 @@ class System(ScriptInterfaceHelper):
 
     def __getstate__(self):
         checkpointable_properties = ["integrator"]
-        if has_features("VIRTUAL_SITES"):
-            checkpointable_properties.append("_active_virtual_sites_handle")
         checkpointable_properties += [
             "non_bonded_inter", "bonded_inter", "cell_system", "lees_edwards",
             "part", "analysis", "auto_update_accumulators",
@@ -346,23 +338,6 @@ class System(ScriptInterfaceHelper):
         return self.cell_system.max_cut_bonded
 
     @property
-    def virtual_sites(self):
-        """
-        Set the virtual site implementation.
-
-        Requires feature ``VIRTUAL_SITES``.
-
-        Type: :obj:`espressomd.virtual_sites.ActiveVirtualSitesHandle`
-
-        """
-        assert_features("VIRTUAL_SITES")
-        return self._active_virtual_sites_handle.implementation
-
-    @virtual_sites.setter
-    def virtual_sites(self, value):
-        assert_features("VIRTUAL_SITES")
-        self._active_virtual_sites_handle.implementation = value
-
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
 

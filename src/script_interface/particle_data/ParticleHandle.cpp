@@ -24,6 +24,7 @@
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
 
+#include "core/PropagationModes.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/cells.hpp"
 #include "core/event.hpp"
@@ -33,7 +34,6 @@
 #include "core/particle_node.hpp"
 #include "core/rotation.hpp"
 #include "core/virtual_sites.hpp"
-
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
 
@@ -612,6 +612,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const &p_relate_to = get_particle_data(other_pid);
     auto const [quat, dist] =
         calculate_vs_relate_to_params(p_current, p_relate_to);
+    set_parameter("propagation", PropagationMode::TRANS_VS_RELATIVE);
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
     set_parameter("virtual", true);

@@ -19,7 +19,6 @@
 
 import espressomd
 import espressomd.lb
-import espressomd.virtual_sites
 import espressomd.swimmer_helpers
 import unittest as ut
 import unittest_decorators as utx
@@ -111,9 +110,6 @@ class SwimmerTest:
         return [p0, p1, p2, p3], [p0_dip, p1_dip, p2_dip, p3_dip]
 
     def setUp(self):
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-            have_quaternion=True
-        )
         self.set_cellsystem()
         self.lbf = self.lb_class(**self.LB_params, **self.lb_params)
         self.system.actors.add(self.lbf)

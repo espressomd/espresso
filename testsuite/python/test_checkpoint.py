@@ -32,12 +32,12 @@ import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.io.writer  # pylint: disable=unused-import
 import espressomd.lees_edwards
-import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
 import espressomd.electrokinetics
+from espressomd.propagation import Propagation
 with contextlib.suppress(ImportError):
     import espressomd.io.vtk
 
@@ -724,15 +724,10 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertIsInstance(
-            system.virtual_sites,
-            espressomd.virtual_sites.VirtualSitesRelative)
-        self.assertTrue(system.virtual_sites.have_quaternion)
-        self.assertTrue(system.virtual_sites.override_cutoff_check)
         p_real = system.part.by_id(0)
         p_virt = system.part.by_id(1)
-        self.assertTrue(p_virt.virtual)
-        self.assertFalse(p_real.virtual)
+        self.assertEqual(p_real.propagation, Propagation.TRANS_SYSTEM_DEFAULT)
+        self.assertEqual(p_virt.propagation, Propagation.TRANS_VS_RELATIVE)
         self.assertEqual(p_real.vs_relative[0], -1)
         self.assertEqual(p_virt.vs_relative[0], p_real.id)
         self.assertEqual(p_real.vs_relative[1], 0.)

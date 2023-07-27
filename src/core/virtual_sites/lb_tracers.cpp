@@ -20,8 +20,7 @@
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
-#include "VirtualSitesInertialessTracers.hpp"
-
+#include "PropagationModes.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -40,12 +39,17 @@ static bool lb_active_check() {
   return true;
 }
 
-void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
+static bool is_lb_tracer(const Particle &p) {
+  return (p.propagation() & PropagationMode::TRANS_LB_TRACER);
+}
+
+void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_struct,
+                                            double time_step) {
   auto const to_lb_units =
       (lattice_switch == ActiveLB::NONE) ? 0. : 1. / LB::get_agrid();
 
   // Distribute summed-up forces from physical particles to ghosts
-  init_forces_ghosts(cell_structure.ghost_particles());
+  init_forces_ghosts(cell_struct.ghost_particles());
   cells_update_ghosts(Cells::DATA_PART_FORCE);
 
   // Set to store ghost particles (ids) that have already been coupled
@@ -53,9 +57,9 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   // Apply particle forces to the LB fluid at particle positions
   // For physical particles, also set particle velocity = fluid velocity
   for (auto const &particle_range :
-       {cell_structure.local_particles(), cell_structure.ghost_particles()}) {
+       {cell_struct.local_particles(), cell_struct.ghost_particles()}) {
     for (auto const &p : particle_range) {
-      if (!p.is_virtual())
+      if (!is_lb_tracer(p))
         continue;
       if (!lb_active_check()) {
         return;
@@ -69,16 +73,16 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   }
 
   // Clear ghost forces to avoid double counting later
-  init_forces_ghosts(cell_structure.ghost_particles());
+  init_forces_ghosts(cell_struct.ghost_particles());
 }
 
-void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
+void lb_tracers_propagate(CellStructure &cell_struct, double time_step) {
   auto const to_md_units =
       (lattice_switch == ActiveLB::NONE) ? 0. : LB::get_lattice_speed();
 
   // Advect particles
-  for (auto &p : cell_structure.local_particles()) {
-    if (!p.is_virtual())
+  for (auto &p : cell_struct.local_particles()) {
+    if (!is_lb_tracer(p))
       continue;
     if (!lb_active_check()) {
       return;
@@ -91,7 +95,7 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
     }
     // Verlet list update check
     if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > skin * skin) {
-      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
+      cell_struct.set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
 }
