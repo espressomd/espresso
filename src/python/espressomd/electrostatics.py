@@ -19,7 +19,13 @@
 
 from . import utils
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .code_features import has_features
+
+
+@script_interface_register
+class Container(ScriptInterfaceHelper):
+    _so_name = "Coulomb::Container"
+    _so_features = ("ELECTROSTATICS",)
+    _so_bind_methods = ("clear",)
 
 
 class ElectrostaticInteraction(ScriptInterfaceHelper):
@@ -33,10 +39,9 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
 
     """
     _so_creation_policy = "GLOBAL"
+    _so_features = ("ELECTROSTATICS",)
 
     def __init__(self, **kwargs):
-        self._check_required_features()
-
         if 'sip' not in kwargs:
             for key in self.required_keys():
                 if key not in kwargs:
@@ -51,10 +56,6 @@ class ElectrostaticInteraction(ScriptInterfaceHelper):
                         f"Parameter '{key}' is not a valid parameter")
         else:
             super().__init__(**kwargs)
-
-    def _check_required_features(self):
-        if not has_features("ELECTROSTATICS"):
-            raise NotImplementedError("Feature ELECTROSTATICS not compiled in")
 
     def validate_params(self, params):
         """Check validity of given parameters.
@@ -231,10 +232,7 @@ class P3M(_P3MBase):
     """
     _so_name = "Coulomb::CoulombP3M"
     _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("P3M"):
-            raise NotImplementedError("Feature P3M not compiled in")
+    _so_features = ("P3M",)
 
 
 @script_interface_register
@@ -284,12 +282,7 @@ class P3MGPU(_P3MBase):
     """
     _so_name = "Coulomb::CoulombP3MGPU"
     _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("P3M"):
-            raise NotImplementedError("Feature P3M not compiled in")
-        if not has_features("CUDA"):
-            raise NotImplementedError("Feature CUDA not compiled in")
+    _so_features = ("P3M", "CUDA")
 
 
 @script_interface_register
@@ -348,10 +341,7 @@ class ELC(ElectrostaticInteraction):
     """
     _so_name = "Coulomb::ElectrostaticLayerCorrection"
     _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("P3M"):
-            raise NotImplementedError("Feature P3M not compiled in")
+    _so_features = ("P3M",)
 
     def validate_params(self, params):
         utils.check_type_or_throw_except(
@@ -435,10 +425,7 @@ class MMM1DGPU(ElectrostaticInteraction):
     """
     _so_name = "Coulomb::CoulombMMM1DGpu"
     _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("MMM1D_GPU"):
-            raise NotImplementedError("Feature MMM1D_GPU not compiled in")
+    _so_features = ("MMM1D_GPU",)
 
     def default_params(self):
         return {"far_switch_radius": -1.,
@@ -493,16 +480,11 @@ class Scafacos(ElectrostaticInteraction):
     """
     _so_name = "Coulomb::CoulombScafacos"
     _so_creation_policy = "GLOBAL"
+    _so_features = ("ELECTROSTATICS", "SCAFACOS")
     _so_bind_methods = ElectrostaticInteraction._so_bind_methods + \
         ("get_available_methods",
          "get_near_field_delegation",
          "set_near_field_delegation")
-
-    def _check_required_features(self):
-        if not has_features("ELECTROSTATICS"):
-            raise NotImplementedError("Feature ELECTROSTATICS not compiled in")
-        if not has_features("SCAFACOS"):
-            raise NotImplementedError("Feature SCAFACOS not compiled in")
 
     def default_params(self):
         return {"check_neutrality": True}

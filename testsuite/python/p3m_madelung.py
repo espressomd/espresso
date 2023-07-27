@@ -40,6 +40,7 @@ class Test(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def get_normalized_obs_per_ion(self, pressure=True):
         energy = self.system.analysis.energy()["coulomb"]
@@ -210,12 +211,11 @@ class Test(ut.TestCase):
                                        rtol=1e-6)
 
         p3m = espressomd.electrostatics.P3M(**p3m_params)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         check()
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
-            self.system.actors.clear()
             p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
-            self.system.actors.add(p3m)
+            self.system.electrostatics.solver = p3m
             check()
 
     @utx.skipIfMissingFeatures(["P3M"])
@@ -244,20 +244,17 @@ class Test(ut.TestCase):
                                        rtol=5e-7)
 
         p3m = espressomd.electrostatics.P3M(**p3m_params)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         check(pressure=True)
-        self.system.actors.remove(p3m)
         elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
         check(pressure=False)
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
-            self.system.actors.clear()
             p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
-            self.system.actors.add(p3m)
+            self.system.electrostatics.solver = p3m
             check(pressure=True)
-            self.system.actors.remove(p3m)
             elc = espressomd.electrostatics.ELC(actor=p3m, **elc_params)
-            self.system.actors.add(elc)
+            self.system.electrostatics.solver = elc
             check(pressure=False)
 
     @utx.skipIfMissingFeatures(["P3M"])
@@ -282,14 +279,13 @@ class Test(ut.TestCase):
                                        rtol=5e-6)
 
         p3m = espressomd.electrostatics.P3M(**p3m_params)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         check()
         if espressomd.has_features("CUDA") and espressomd.gpu_available():
-            self.system.actors.clear()
             p3m_params = dict(prefactor=1., accuracy=3e-7, mesh=42, r_cut=5.5,
                               cao=7, alpha=0.709017, tune=False)
             p3m = espressomd.electrostatics.P3MGPU(**p3m_params)
-            self.system.actors.add(p3m)
+            self.system.electrostatics.solver = p3m
             check()
 
 

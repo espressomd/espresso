@@ -21,7 +21,11 @@
 
 #include "pair_criteria/PairCriterion.hpp"
 
+#include "Particle.hpp"
 #include "energy_inline.hpp"
+#include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 
 namespace PairCriteria {
 /**
@@ -35,10 +39,11 @@ public:
 
     // Interaction parameters for particle types
     auto const &ia_params = get_ia_param(p1.type(), p2.type());
-    auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+    auto const &coulomb = System::get_system().coulomb;
+    auto const coulomb_kernel = coulomb.pair_energy_kernel();
 
     auto const energy = calc_non_bonded_pair_energy(
-        p1, p2, ia_params, d, d.norm(), coulomb_kernel.get_ptr());
+        p1, p2, ia_params, d, d.norm(), get_ptr(coulomb_kernel));
 
     return energy >= m_cut_off;
   }

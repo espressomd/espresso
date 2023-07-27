@@ -53,7 +53,7 @@ class CoulombCloudWall(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def compare(self, method_name, energy=True):
         # Compare forces and energy now in the system to stored ones
@@ -76,15 +76,15 @@ class CoulombCloudWall(ut.TestCase):
 
     @utx.skipIfMissingFeatures("P3M")
     def test_p3m(self):
-        self.system.actors.add(
-            espressomd.electrostatics.P3M(**self.p3m_params, tune=False))
+        p3m = espressomd.electrostatics.P3M(**self.p3m_params, tune=False)
+        self.system.electrostatics.solver = p3m
         self.system.integrator.run(0)
         self.compare("p3m", energy=True)
 
     @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
-        self.system.actors.add(
-            espressomd.electrostatics.P3MGPU(**self.p3m_params, tune=False))
+        p3m = espressomd.electrostatics.P3MGPU(**self.p3m_params, tune=False)
+        self.system.electrostatics.solver = p3m
         self.system.integrator.run(0)
         self.compare("p3m_gpu", energy=False)
 

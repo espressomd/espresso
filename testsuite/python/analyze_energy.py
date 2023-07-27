@@ -54,7 +54,7 @@ class AnalyzeEnergy(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def test_kinetic(self):
         p0, p1 = self.system.part.all()
@@ -181,7 +181,7 @@ class AnalyzeEnergy(ut.TestCase):
             r_cut=8.90625,
             alpha=0.38761105,
             tune=False)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
 
         # did not verify if this is correct, but looks pretty good (close to
         # 1/2)

@@ -197,7 +197,7 @@ To run the samples and tutorials, start by installing the following packages:
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
-version <= 4.4 and can be executed by any of these tools:
+:cite:`kluyver16a` version <= 4.4 and can be executed by any of these tools:
 
 * `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
@@ -769,8 +769,8 @@ The following options control features from external libraries:
 
 The following options control code instrumentation:
 
-* ``ESPRESSO_BUILD_WITH_VALGRIND_MARKERS``: Build with valgrind instrumentation markers
-* ``ESPRESSO_BUILD_WITH_PROFILER``: Build with Caliper profiler annotations
+* ``ESPRESSO_BUILD_WITH_VALGRIND``: Build with Valgrind instrumentation
+* ``ESPRESSO_BUILD_WITH_CALIPER``: Build with Caliper instrumentation
 * ``ESPRESSO_BUILD_WITH_MSAN``: Compile C++ code with memory sanitizer
 * ``ESPRESSO_BUILD_WITH_ASAN``: Compile C++ code with address sanitizer
 * ``ESPRESSO_BUILD_WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
@@ -902,6 +902,12 @@ the clone. You can automate this task by adapting the following commands:
 
     sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
 
+* ``ESPRESSO_BUILD_WITH_CALIPER``
+
+  .. code-block:: bash
+
+    sed -ri 's|GIT_REPOSITORY +.+/Caliper.git|GIT_REPOSITORY /work/username/caliper|' CMakeLists.txt
+
 
 Compiling, testing and installing
 ---------------------------------
@@ -969,50 +975,8 @@ Troubleshooting
 
 If you encounter issues when building |es| or running it for the first time,
 please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`__
-on the wiki. If you still didn't find an answer, see :ref:`Community support`.
-
-Many algorithms require parameters that must be provided within valid ranges.
-Range checks are implemented to catch invalid input values and generate
-meaningful error messages, however these checks cannot always catch errors
-arising from an invalid combination of two or more features. If you encounter
-issues with a script, you can activate extra runtime checks by enabling C++
-assertions. This is achieved by updating the CMake project and rebuilding
-|es| with:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
-    make -j$(nproc)
-
-The resulting build will run slightly slower, but will produce an error
-message for common issues, such as divisions by zero, array access out
-of bounds, or square roots of negative numbers.
-
-If this still doesn't help, you can activate debug symbols to help with
-instrumentation:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=Debug
-    make -j$(nproc)
-
-The resulting build will be quite slow but will allow many debugging tools
-to be used. For details, please refer to chapter :ref:`Debugging es`.
-
-If you are dealing with a segmentation fault or undefined behavior, and GDB
-doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),
-you can as a last resort activate sanitizers:
-
-.. code-block:: bash
-
-    cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON -D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=Release
-    make -j$(nproc)
-
-The resulting build will be around 5 times slower that a debug build,
-but it will generate valuable reports when detecting fatal exceptions.
-For more details, please consult the online documentation of
-`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>`__ and
-`ASAN <https://github.com/google/sanitizers/wiki/AddressSanitizer>`__.
+on the wiki. If you still didn't find an answer, try the debugging tools
+documented in :ref:`Debugging`. If this still didn't help, see :ref:`Community support`.
 
 ____
 

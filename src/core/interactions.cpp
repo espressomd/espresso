@@ -27,6 +27,7 @@
 #include "event.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 
 #include <boost/mpi/collectives/broadcast.hpp>
 
@@ -34,12 +35,16 @@
 
 static double recalc_long_range_cutoff() {
   auto max_cut_long_range = INACTIVE_CUTOFF;
+#if defined(ELECTROSTATICS) or defined(DIPOLES)
+  if (System::is_system_set()) {
+    auto &system = System::get_system();
 #ifdef ELECTROSTATICS
-  max_cut_long_range = std::max(max_cut_long_range, Coulomb::cutoff());
+    max_cut_long_range = std::max(max_cut_long_range, system.coulomb.cutoff());
 #endif
-
 #ifdef DIPOLES
-  max_cut_long_range = std::max(max_cut_long_range, Dipoles::cutoff());
+    max_cut_long_range = std::max(max_cut_long_range, system.dipoles.cutoff());
+#endif
+  }
 #endif
 
   return max_cut_long_range;
@@ -63,12 +68,15 @@ double maximal_cutoff(bool single_node) {
 }
 
 bool long_range_interactions_sanity_checks() {
+#if defined(ELECTROSTATICS) or defined(DIPOLES)
+  auto &system = System::get_system();
+#endif
   try {
 #ifdef ELECTROSTATICS
-    Coulomb::sanity_checks();
+    system.coulomb.sanity_checks();
 #endif
 #ifdef DIPOLES
-    Dipoles::sanity_checks();
+    system.dipoles.sanity_checks();
 #endif
   } catch (std::runtime_error const &err) {
     runtimeErrorMsg() << err.what();

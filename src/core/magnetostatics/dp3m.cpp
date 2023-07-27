@@ -60,11 +60,11 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
-#include <boost/optional.hpp>
 
 #include <algorithm>
 #include <array>
 #include <functional>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -596,7 +596,7 @@ public:
 
   void on_solver_change() const override { on_dipoles_change(); }
 
-  boost::optional<std::string>
+  std::optional<std::string>
   layer_correction_veto_r_cut(double) const override {
     return {};
   }

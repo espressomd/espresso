@@ -117,13 +117,13 @@ class VirialPressureConsistency(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
     def check_p3m_pressure(self, class_p3m):
         p3m = class_p3m(prefactor=2., accuracy=1e-3, mesh=16, cao=6, r_cut=7.5)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         skin = self.system.cell_system.tune_skin(
             min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)
         print(f"Tuned skin: {skin}")

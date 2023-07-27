@@ -73,7 +73,7 @@ thole_pair_energy(Particle const &p1, Particle const &p2,
   auto const thole_q1q2 = ia_params.thole.q1q2;
 
   if (thole_s != 0. and thole_q1q2 != 0. and kernel != nullptr and
-      dist < Coulomb::cutoff() and
+      dist < Coulomb::get_coulomb().cutoff() and
       !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
     auto const sd = thole_s * dist;
     auto const S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);

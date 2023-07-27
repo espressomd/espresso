@@ -21,43 +21,57 @@
 #include "BoxGeometry.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
-#include <utils/Span.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
+#include <boost/mpi/collectives/gather.hpp>
+#include <boost/serialization/vector.hpp>
+
+#include <utility>
 #include <vector>
 
 namespace Observables {
 std::vector<double>
 CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
-    Utils::Span<std::reference_wrapper<const Particle>> particles,
+    boost::mpi::communicator const &comm,
+    ParticleReferenceRange const &local_particles,
     const ParticleObservables::traits<Particle> &traits) const {
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
-  // First collect all positions (since we want to call the LB function to
-  // get the fluid velocities only once).
+  using pos_type = decltype(traits.position(std::declval<Particle>()));
+  using flux_type = Utils::Vector3d;
 
-  for (auto p : particles) {
+  std::vector<pos_type> local_folded_positions{};
+  std::vector<flux_type> local_flux_densities{};
+  local_folded_positions.reserve(local_particles.size());
+  local_flux_densities.reserve(local_particles.size());
+
+  auto const vel_conv = LB::get_lattice_speed();
+
+  for (auto const &p : local_particles) {
     auto const pos = folded_position(traits.position(p), box_geo);
-    auto const v = LB::get_interpolated_velocity(pos) * LB::get_lattice_speed();
-    auto const flux_dens = LB::get_interpolated_density(pos) * v;
-
-    histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
-                         pos - transform_params->center(),
-                         transform_params->axis(),
-                         transform_params->orientation()),
-                     Utils::transform_vector_cartesian_to_cylinder(
-                         flux_dens, transform_params->axis(),
-                         pos - transform_params->center()));
+    auto const pos_shifted = pos - transform_params->center();
+    auto const vel = *(LB::get_interpolated_velocity(pos));
+    auto const dens = *(LB::get_interpolated_density(pos));
+    auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
+        pos_shifted, transform_params->axis(), transform_params->orientation());
+    auto const flux_cyl = Utils::transform_vector_cartesian_to_cylinder(
+        vel * vel_conv * dens, transform_params->axis(), pos_shifted);
+    local_folded_positions.emplace_back(pos_cyl);
+    local_flux_densities.emplace_back(flux_cyl);
   }
 
-  // normalize by number of hits per bin
-  auto hist_tmp = histogram.get_histogram();
-  auto tot_count = histogram.get_tot_count();
-  std::transform(hist_tmp.begin(), hist_tmp.end(), tot_count.begin(),
-                 hist_tmp.begin(), [](auto hi, auto ci) {
-                   return ci > 0 ? hi / static_cast<double>(ci) : 0.;
-                 });
-  return hist_tmp;
+  std::vector<decltype(local_folded_positions)> global_folded_positions{};
+  std::vector<decltype(local_flux_densities)> global_flux_densities{};
+  boost::mpi::gather(comm, local_folded_positions, global_folded_positions, 0);
+  boost::mpi::gather(comm, local_flux_densities, global_flux_densities, 0);
+
+  if (comm.rank() != 0) {
+    return {};
+  }
+
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+  accumulate(histogram, global_folded_positions, global_flux_densities);
+  return normalize_by_bin_size(histogram);
 }
 } // namespace Observables

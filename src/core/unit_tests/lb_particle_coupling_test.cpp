@@ -533,6 +533,7 @@ bool test_lb_domain_mismatch_local() {
 
 BOOST_AUTO_TEST_CASE(exceptions) {
   {
+    boost::mpi::communicator world;
     using std::exception;
     // accessing uninitialized pointers is not allowed
     BOOST_CHECK_THROW(lb_walberla(), std::runtime_error);
@@ -541,7 +542,7 @@ BOOST_AUTO_TEST_CASE(exceptions) {
     BOOST_CHECK_THROW(LB::get_agrid(), exception);
     BOOST_CHECK_THROW(LB::get_tau(), exception);
     BOOST_CHECK_THROW(LB::get_kT(), exception);
-    BOOST_CHECK_THROW(LB::get_pressure_tensor(), exception);
+    BOOST_CHECK_THROW(LB::get_pressure_tensor(world), exception);
     BOOST_CHECK_THROW(LB::get_force_to_be_applied({-10., -10., -10.}),
                       std::runtime_error);
     // coupling, interpolation, boundaries

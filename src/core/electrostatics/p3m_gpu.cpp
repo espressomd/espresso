@@ -41,7 +41,8 @@ void CoulombP3MGPU::add_long_range_forces(ParticleRange const &) {
 }
 
 void CoulombP3MGPU::init() {
-  if (has_actor_of_type<ElectrostaticLayerCorrection>(electrostatics_actor)) {
+  if (has_actor_of_type<ElectrostaticLayerCorrection>(
+          System::get_system().coulomb.impl->solver)) {
     init_cpu_kernels();
   }
   p3m_gpu_init(p3m.params.cao, p3m.params.mesh.data(), p3m.params.alpha);

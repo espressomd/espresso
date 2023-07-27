@@ -25,12 +25,11 @@
 
 #include "LatticeIndices.hpp"
 
-#include <script_interface/communication.hpp>
-
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/optional.hpp>
@@ -69,18 +68,20 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
   }
   if (name == "get_density") {
     auto const result = m_ek_species->get_node_density(m_index);
-    return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+           m_conv_dens;
   }
   if (name == "get_is_boundary") {
     auto const result = m_ek_species->get_node_is_boundary(m_index);
-    return mpi_reduce_optional(context()->get_comm(), result);
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result);
   }
   if (name == "get_node_density_at_boundary") {
     auto const boundary_opt =
         m_ek_species->get_node_is_density_boundary(m_index);
     if (is_boundary_all_reduce(context()->get_comm(), boundary_opt)) {
       auto const result = m_ek_species->get_node_density_at_boundary(m_index);
-      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
+      return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+             m_conv_dens;
     }
     return Variant{None{}};
   }
@@ -97,7 +98,8 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     auto const boundary_opt = m_ek_species->get_node_is_flux_boundary(m_index);
     if (is_boundary_all_reduce(context()->get_comm(), boundary_opt)) {
       auto const result = m_ek_species->get_node_flux_at_boundary(m_index);
-      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_flux;
+      return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+             m_conv_flux;
     }
     return Variant{None{}};
   }

@@ -30,11 +30,14 @@
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 
-#include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi.hpp>
+
+#ifdef CALIPER
+#include <caliper/cali.h>
+#endif
 
 #include <cmath>
 #include <cstdint>
@@ -283,7 +286,9 @@ static void lb_coupling_sanity_checks(Particle const &p) {
 
 void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
                       ParticleRange const &ghost_particles, double time_step) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
     if (lb_particle_coupling.couple_to_md) {
       ParticleCoupling coupling{couple_virtual, time_step};

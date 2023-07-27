@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2019-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
 import importlib_wrapper
@@ -22,9 +24,12 @@ import numpy as np
 # make simulation deterministic
 np.random.seed(42)
 
+gpu = "gpu" in "@TEST_LABELS@".split(";")
+cmd_arguments = ["--particles_per_core", "400", "--gpu" if gpu else "--no-gpu"]
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@BENCHMARKS_DIR@/p3m.py", cmd_arguments=["--particles_per_core", "400"],
-    measurement_steps=100, n_iterations=2, min_skin=0.262, max_skin=0.262,
+    "@BENCHMARKS_DIR@/p3m.py", gpu=gpu, measurement_steps=100, n_iterations=2,
+    cmd_arguments=cmd_arguments, script_suffix="@TEST_SUFFIX@",
+    min_skin=0.262, max_skin=0.262,
     p3m_params={'prefactor': 4, 'accuracy': 1e-4, 'cao': 7, 'r_cut': 3.182,
                 'mesh': [24, 24, 24], 'alpha': 1.02742, 'tune': False})
 

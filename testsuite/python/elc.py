@@ -35,7 +35,7 @@ class ElcTest:
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def test_finite_potential_drop(self):
         system = self.system
@@ -60,7 +60,7 @@ class ElcTest:
             pot_diff=POTENTIAL_DIFFERENCE,
         )
 
-        system.actors.add(elc)
+        system.electrostatics.solver = elc
 
         # Calculated energy
         U_elc = system.analysis.energy()['coulomb']

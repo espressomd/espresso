@@ -36,8 +36,12 @@ class HybridDecomposition(ut.TestCase):
         self.system.time_step = 1e-3
 
     def tearDown(self):
+        self.system.cell_system.set_regular_decomposition()
         self.system.part.clear()
-        self.system.actors.clear()
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
+        if espressomd.has_features(["DIPOLES"]):
+            self.system.magnetostatics.clear()
 
     def check_resort(self):
         n_part = 2352
@@ -254,7 +258,7 @@ class HybridDecomposition(ut.TestCase):
         coulomb_interaction = espressomd.electrostatics.P3M(
             **self.valid_p3m_parameters()
         )
-        self.system.actors.add(coulomb_interaction)
+        self.system.electrostatics.solver = coulomb_interaction
 
         self.run_comparison(self.system.cell_system.set_regular_decomposition)
 
@@ -266,10 +270,10 @@ class HybridDecomposition(ut.TestCase):
 
         self.prepare_hybrid_setup(n_part_small=0, n_part_large=0)
         self.add_particles(dip=True)
-        dipolar_interaction = espressomd.magnetostatics.DipolarP3M(
+        actor = espressomd.magnetostatics.DipolarP3M(
             **self.valid_dp3m_parameters()
         )
-        self.system.actors.add(dipolar_interaction)
+        self.system.magnetostatics.solver = actor
 
         self.run_comparison(self.system.cell_system.set_regular_decomposition)
 
@@ -284,7 +288,7 @@ class HybridDecomposition(ut.TestCase):
         actor = espressomd.electrostatics.P3M(
             **self.valid_p3m_parameters()
         )
-        self.system.actors.add(actor)
+        self.system.electrostatics.solver = actor
 
         with self.assertRaises(Exception):
             self.system.cell_system.set_hybrid_decomposition(
@@ -301,7 +305,7 @@ class HybridDecomposition(ut.TestCase):
         actor = espressomd.magnetostatics.DipolarP3M(
             **self.valid_dp3m_parameters()
         )
-        self.system.actors.add(actor)
+        self.system.magnetostatics.solver = actor
 
         with self.assertRaises(Exception):
             self.system.cell_system.set_hybrid_decomposition(

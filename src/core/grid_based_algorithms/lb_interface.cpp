@@ -28,6 +28,7 @@
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
@@ -126,40 +127,15 @@ double get_kT() {
 
 double get_lattice_speed() { return get_agrid() / get_tau(); }
 
-#ifdef WALBERLA
-namespace Walberla {
-
-static Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
-
-static boost::optional<Utils::Vector3d>
-get_velocity_at_pos(Utils::Vector3d pos) {
-  return lb_walberla()->get_velocity_at_pos(pos);
-}
-
-REGISTER_CALLBACK_ONE_RANK(get_velocity_at_pos)
-
-static boost::optional<double>
-get_interpolated_density_at_pos(Utils::Vector3d pos) {
-  return lb_walberla()->get_interpolated_density_at_pos(pos);
-}
-
-REGISTER_CALLBACK_ONE_RANK(get_interpolated_density_at_pos)
-
-static Utils::VectorXd<9> get_pressure_tensor() {
-  return lb_walberla()->get_pressure_tensor();
-}
-
-REGISTER_CALLBACK_REDUCTION(get_pressure_tensor, std::plus<>())
-
-} // namespace Walberla
-#endif // WALBERLA
-
-Utils::VectorXd<9> const get_pressure_tensor() {
+Utils::VectorXd<9> const
+get_pressure_tensor(boost::mpi::communicator const &comm) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::reduction, std::plus<>(),
-        Walberla::get_pressure_tensor);
+    auto const local_pressure_tensor = lb_walberla()->get_pressure_tensor();
+    std::remove_const_t<decltype(local_pressure_tensor)> pressure_tensor;
+    boost::mpi::reduce(comm, local_pressure_tensor, pressure_tensor,
+                       std::plus<>(), 0);
+    return pressure_tensor;
 #endif
   }
   throw NoLBActive();
@@ -168,30 +144,28 @@ Utils::VectorXd<9> const get_pressure_tensor() {
 Utils::Vector3d calc_fluid_momentum() {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
-    return Walberla::get_momentum();
+    return lb_walberla()->get_momentum();
 #endif
   }
   throw NoLBActive();
 }
 
-Utils::Vector3d const get_interpolated_velocity(Utils::Vector3d const &pos) {
+boost::optional<Utils::Vector3d>
+get_interpolated_velocity(Utils::Vector3d const &pos) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
-    auto const folded_pos = folded_position(pos, box_geo);
-    return mpi_call(::Communication::Result::one_rank,
-                    Walberla::get_velocity_at_pos, folded_pos / get_agrid());
+    auto const folded_pos = folded_position(pos, box_geo) / get_agrid();
+    return lb_walberla()->get_velocity_at_pos(folded_pos);
 #endif
   }
   throw NoLBActive();
 }
 
-double get_interpolated_density(Utils::Vector3d const &pos) {
+boost::optional<double> get_interpolated_density(Utils::Vector3d const &pos) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
-    auto const folded_pos = folded_position(pos, box_geo);
-    return mpi_call(::Communication::Result::one_rank,
-                    Walberla::get_interpolated_density_at_pos,
-                    folded_pos / get_agrid());
+    auto const folded_pos = folded_position(pos, box_geo) / get_agrid();
+    return lb_walberla()->get_interpolated_density_at_pos(folded_pos);
 #endif
   }
   throw NoLBActive();
