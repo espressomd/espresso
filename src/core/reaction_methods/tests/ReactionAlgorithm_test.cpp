@@ -72,7 +72,8 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
   auto const comm = boost::mpi::communicator();
 
   // check acceptance rate
-  auto r_algo = Testing::ReactionAlgorithm(comm, 42, 1., 0., {});
+  auto exclusion = std::make_shared<ExclusionRadius>(comm);
+  auto r_algo = Testing::ReactionAlgorithm(comm, 42, 1., exclusion);
   for (int tried_moves = 1; tried_moves < 5; ++tried_moves) {
     for (int accepted_moves = 0; accepted_moves < 5; ++accepted_moves) {
       r_algo.m_tried_configurational_MC_moves = tried_moves;
@@ -144,7 +145,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
     // update particle positions and velocities
     BOOST_CHECK(!r_algo.particle_inside_exclusion_range_touched);
     r_algo.particle_inside_exclusion_range_touched = false;
-    r_algo.exclusion_range = box_l;
+    r_algo.m_exclusion->exclusion_range = box_l;
     r_algo.displacement_mc_move(0, 2);
     auto const &bookkeeping = r_algo.get_old_system_state();
     BOOST_CHECK(r_algo.particle_inside_exclusion_range_touched);
@@ -191,7 +192,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
     BOOST_CHECK_THROW(displacement_move(-2, 1), std::domain_error);
     // force all MC moves to be rejected by picking particles inside
     // their exclusion radius
-    r_algo.exclusion_range = box_l;
+    r_algo.m_exclusion->exclusion_range = box_l;
     BOOST_REQUIRE(!displacement_move(type_A, 2));
     // check none of the particles moved
     for (auto const pid : {0, 1}) {
@@ -202,7 +203,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
       }
     }
     // force a MC move to be accepted by using a constant Hamiltonian
-    r_algo.exclusion_range = 0.;
+    r_algo.m_exclusion->exclusion_range = 0.;
     BOOST_REQUIRE(displacement_move(type_A, 1));
     std::vector<double> distances(2);
     // check that only one particle moved
@@ -279,16 +280,16 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
 
   {
     // domain error if negative exclusion_range is provided
-    BOOST_CHECK_THROW(Testing::ReactionAlgorithm(comm, 40, 1., -1, {}),
-                      std::domain_error);
+    auto exclusion = std::make_shared<ExclusionRadius>(comm);
+    BOOST_CHECK_THROW(exclusion->set_exclusion_range(-1.), std::domain_error);
 
     // domain error if a negative value is provided in exclusion_radius_per_type
     std::unordered_map<int, double> exclusion_radius_per_type;
-    exclusion_radius_per_type[type_A] = 1;
-    exclusion_radius_per_type[type_B] = -1;
+    exclusion_radius_per_type[type_A] = 1.;
+    exclusion_radius_per_type[type_B] = -1.;
 
     BOOST_CHECK_THROW(
-        Testing::ReactionAlgorithm(comm, 40, 1., 1, exclusion_radius_per_type),
+        exclusion->set_exclusion_radius_per_type(exclusion_radius_per_type),
         std::domain_error);
 
     espresso::system->set_box_l({1., 1., 1.});
@@ -299,9 +300,9 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
     set_particle_type(0, type_A);
     set_particle_type(1, type_B);
     exclusion_radius_per_type[type_A] = 0.1;
-    exclusion_radius_per_type[type_B] = 1;
-    auto r_algo =
-        Testing::ReactionAlgorithm(comm, 40, 1., 0, exclusion_radius_per_type);
+    exclusion_radius_per_type[type_B] = 1.;
+    exclusion->set_exclusion_radius_per_type(exclusion_radius_per_type);
+    auto r_algo = Testing::ReactionAlgorithm(comm, 40, 1., exclusion);
 
     // the new position will always be in the excluded range since the sum of
     // the radii of both particle types is larger than box length. The exclusion
@@ -312,7 +313,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
 
     // the new position will never be in the excluded range because the
     // exclusion_radius of the particle is 0
-    r_algo.exclusion_radius_per_type[type_B] = 0;
+    r_algo.m_exclusion->exclusion_radius_per_type[type_B] = 0.;
     r_algo.particle_inside_exclusion_range_touched = false;
     r_algo.displacement_mc_move(type_B, 1);
     BOOST_REQUIRE(!r_algo.particle_inside_exclusion_range_touched);
@@ -320,8 +321,8 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
 
     // the new position will never accepted since the value in exclusion_range
     // will be used if the particle does not have a defined excluded radius
-    r_algo.exclusion_range = 1;
-    r_algo.exclusion_radius_per_type = {{type_A, 0}};
+    r_algo.m_exclusion->exclusion_range = 1.;
+    r_algo.m_exclusion->exclusion_radius_per_type = {{type_A, 0.}};
     r_algo.displacement_mc_move(type_B, 1);
     BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
     r_algo.clear_old_system_state();

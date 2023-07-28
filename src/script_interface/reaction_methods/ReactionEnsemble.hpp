@@ -44,17 +44,12 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
+    setup_neighbor_search(params);
     context()->parallel_try_catch([&]() {
       m_re = std::make_shared<::ReactionMethods::ReactionEnsemble>(
           context()->get_comm(), get_value<int>(params, "seed"),
-          get_value<double>(params, "kT"),
-          get_value<double>(params, "exclusion_range"),
-          get_value_or<std::unordered_map<int, double>>(
-              params, "exclusion_radius_per_type", {}));
+          get_value<double>(params, "kT"), m_exclusion->get_instance());
     });
-    do_set_parameter("search_algorithm",
-                     Variant{get_value_or<std::string>(
-                         params, "search_algorithm", "order_n")});
   }
 
 private:

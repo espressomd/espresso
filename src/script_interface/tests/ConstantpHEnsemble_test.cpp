@@ -28,6 +28,7 @@
 #include "script_interface/LocalContext.hpp"
 #include "script_interface/Variant.hpp"
 #include "script_interface/reaction_methods/ConstantpHEnsemble.hpp"
+#include "script_interface/reaction_methods/ExclusionRadius.hpp"
 
 #include "core/EspressoSystemStandAlone.hpp"
 #include "core/Particle.hpp"
@@ -78,6 +79,8 @@ BOOST_FIXTURE_TEST_CASE(ConstantpHEnsemble_test, ParticleFactory) {
   Utils::Factory<ScriptInterface::ObjectHandle> factory;
   factory.register_new<Testing::ConstantpHEnsemble>(
       "Testing::ConstantpHEnsemble");
+  factory.register_new<ScriptInterface::ReactionMethods::ExclusionRadius>(
+      "ExclusionRadius");
 
   auto const comm = boost::mpi::communicator();
   auto const make_algo = [&factory,
@@ -91,6 +94,7 @@ BOOST_FIXTURE_TEST_CASE(ConstantpHEnsemble_test, ParticleFactory) {
     params["constant_pH"] = pH;
     params["exclusion_range"] = exclusion_range;
     params["exclusion_radius_per_type"] = make_unordered_map_of_variants(radii);
+    params["exclusion"] = ctx->make_shared_local("ExclusionRadius", params);
     auto &&sp = ctx->make_shared_local("Testing::ConstantpHEnsemble", params);
     return std::dynamic_pointer_cast<Testing::ConstantpHEnsemble>(sp);
   };

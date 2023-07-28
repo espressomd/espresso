@@ -81,6 +81,8 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
   factory.register_new<Testing::ReactionEnsemble>("Testing::ReactionEnsemble");
   factory.register_new<ScriptInterface::ReactionMethods::SingleReaction>(
       "SingleReaction");
+  factory.register_new<ScriptInterface::ReactionMethods::ExclusionRadius>(
+      "ExclusionRadius");
 
   auto const comm = boost::mpi::communicator();
   auto const make_algo = [&factory,
@@ -93,6 +95,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionEnsemble_test, ParticleFactory) {
     params["kT"] = kT;
     params["exclusion_range"] = exclusion_range;
     params["exclusion_radius_per_type"] = make_unordered_map_of_variants(radii);
+    params["exclusion"] = ctx->make_shared_local("ExclusionRadius", params);
     auto &&sp = ctx->make_shared_local("Testing::ReactionEnsemble", params);
     return std::dynamic_pointer_cast<Testing::ReactionEnsemble>(sp);
   };

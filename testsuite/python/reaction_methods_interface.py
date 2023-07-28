@@ -94,6 +94,9 @@ class ReactionMethods(ut.TestCase):
             self.assertAlmostEqual(
                 method.exclusion_radius_per_type[2], 0.2, delta=1e-10)
             exclusion_radius_per_type = {2: 0.2}
+            method.exclusion_range = 0.8
+            self.assertAlmostEqual(method.exclusion_range, 0.8, delta=1e-10)
+            method.exclusion_range = 0.8
         self.assertAlmostEqual(
             method.get_volume(), self.system.volume(), delta=1e-10)
         method.set_volume(volume=1.)
@@ -229,7 +232,7 @@ class ReactionMethods(ut.TestCase):
         }
         widom = espressomd.reaction_methods.WidomInsertion(kT=1., seed=12)
         method = espressomd.reaction_methods.ReactionEnsemble(
-            kT=1.5, exclusion_range=0.8, seed=12, exclusion_radius_per_type={1: 0.1})
+            kT=1.5, exclusion_range=0.1, seed=12, exclusion_radius_per_type={1: 0.1})
         method.add_reaction(**reaction_params)
         widom.add_reaction(**reaction_params)
 
@@ -310,6 +313,10 @@ class ReactionMethods(ut.TestCase):
             widom.calculate_particle_insertion_potential_energy(reaction_id=0)
         with self.assertRaisesRegex(RuntimeError, "No search algorithm for WidomInsertion"):
             widom.search_algorithm = "order_n"
+        with self.assertRaisesRegex(RuntimeError, "No search algorithm for WidomInsertion"):
+            widom.exclusion_range = 1.
+        with self.assertRaisesRegex(RuntimeError, "No search algorithm for WidomInsertion"):
+            widom.exclusion_radius_per_type = {1: 2.}
 
         # check other exceptions
         with self.assertRaisesRegex(ValueError, "Invalid value for 'volume'"):
@@ -346,10 +353,10 @@ class ReactionMethods(ut.TestCase):
             method.set_non_interacting_type(type=-1)
 
         # check invalid exclusion ranges and radii
-        with self.assertRaisesRegex(ValueError, "Invalid value for 'exclusion_range'"):
+        with self.assertRaisesRegex(ValueError, "Invalid value for exclusion range"):
             espressomd.reaction_methods.ReactionEnsemble(
                 kT=1., seed=12, exclusion_range=-1.)
-        with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 1: radius -0.10"):
+        with self.assertRaisesRegex(ValueError, "Invalid exclusion radius for type 1: radius -0.10"):
             espressomd.reaction_methods.ReactionEnsemble(
                 kT=1., seed=12, exclusion_range=1., exclusion_radius_per_type={1: -0.1})
         with self.assertRaisesRegex(ValueError, "Unknown search algorithm 'unknown'"):
@@ -357,7 +364,7 @@ class ReactionMethods(ut.TestCase):
                 kT=1., seed=12, exclusion_range=1., search_algorithm="unknown")
         method = espressomd.reaction_methods.ReactionEnsemble(
             kT=1., exclusion_range=1., seed=12, exclusion_radius_per_type={1: 0.1})
-        with self.assertRaisesRegex(ValueError, "Invalid excluded_radius value for type 2: radius -0.10"):
+        with self.assertRaisesRegex(ValueError, "Invalid exclusion radius for type 2: radius -0.10"):
             method.exclusion_radius_per_type = {2: -0.1}
         self.assertEqual(list(method.exclusion_radius_per_type.keys()), [1])
 

@@ -19,22 +19,16 @@
 #ifndef REACTION_METHODS_WIDOM_INSERTION_HPP
 #define REACTION_METHODS_WIDOM_INSERTION_HPP
 
-#include "ReactionAlgorithm.hpp"
+#include "reaction_methods/ReactionAlgorithm.hpp"
 
-#include <unordered_map>
-#include <utility>
+#include <stdexcept>
 
 namespace ReactionMethods {
 
 /** Widom insertion method */
 class WidomInsertion : public ReactionAlgorithm {
 public:
-  WidomInsertion(
-      boost::mpi::communicator const &comm, int seed, double kT,
-      double exclusion_range,
-      const std::unordered_map<int, double> &exclusion_radius_per_type)
-      : ReactionAlgorithm(comm, seed, kT, exclusion_range,
-                          exclusion_radius_per_type) {}
+  using ReactionAlgorithm::ReactionAlgorithm;
 
   double calculate_particle_insertion_potential_energy(int reaction_id) {
     auto &reaction = *reactions[reaction_id];

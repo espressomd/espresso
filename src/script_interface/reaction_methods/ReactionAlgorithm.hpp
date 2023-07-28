@@ -20,6 +20,7 @@
 #ifndef SCRIPT_INTERFACE_REACTION_METHODS_REACTION_ALGORITHM_HPP
 #define SCRIPT_INTERFACE_REACTION_METHODS_REACTION_ALGORITHM_HPP
 
+#include "ExclusionRadius.hpp"
 #include "SingleReaction.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -41,6 +42,7 @@ class ReactionAlgorithm : public AutoParameters<ReactionAlgorithm> {
 protected:
   /** Keep track of the script interface pointer of each reaction. */
   std::vector<std::shared_ptr<SingleReaction>> m_reactions;
+  std::shared_ptr<ExclusionRadius> m_exclusion;
   /**
    * Check reaction id is within the reaction container bounds.
    * Since each reaction has a corresponding backward reaction,
@@ -56,6 +58,14 @@ protected:
       }
     });
     return index;
+  }
+
+  void setup_neighbor_search(VariantMap const &params) {
+    auto so_ptr = get_value<ObjectRef>(params, "exclusion");
+    m_exclusion = std::dynamic_pointer_cast<ExclusionRadius>(so_ptr);
+    m_exclusion->do_set_parameter("search_algorithm",
+                                  Variant{get_value_or<std::string>(
+                                      params, "search_algorithm", "order_n")});
   }
 
 public:

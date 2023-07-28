@@ -21,6 +21,7 @@
 
 #include "config/config.hpp"
 
+#include "ExclusionRadius.hpp"
 #include "SingleReaction.hpp"
 
 #include "Particle.hpp"
@@ -50,20 +51,14 @@ private:
   boost::mpi::communicator const &m_comm;
 
 public:
-  ReactionAlgorithm(
-      boost::mpi::communicator const &comm, int seed, double kT,
-      double exclusion_range,
-      std::unordered_map<int, double> const &exclusion_radius_per_type)
-      : m_comm{comm}, kT{kT}, exclusion_range{exclusion_range},
+  ReactionAlgorithm(boost::mpi::communicator const &comm, int seed, double kT,
+                    std::shared_ptr<ExclusionRadius> exclusion)
+      : m_comm{comm}, kT{kT}, m_exclusion{std::move(exclusion)},
         m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
     if (kT < 0.) {
       throw std::domain_error("Invalid value for 'kT'");
     }
-    if (exclusion_range < 0.) {
-      throw std::domain_error("Invalid value for 'exclusion_range'");
-    }
-    set_exclusion_radius_per_type(exclusion_radius_per_type);
     update_volume();
   }
 
@@ -78,8 +73,7 @@ public:
    * infinite, therefore these configurations do not contribute
    * to the partition function and ensemble averages.
    */
-  double exclusion_range;
-  std::unordered_map<int, double> exclusion_radius_per_type;
+  std::shared_ptr<ExclusionRadius> m_exclusion;
   double volume;
   int non_interacting_type = 100;
 
@@ -91,7 +85,6 @@ public:
   }
 
   auto get_kT() const { return kT; }
-  auto get_exclusion_range() const { return exclusion_range; }
   auto get_volume() const { return volume; }
   void set_volume(double new_volume) {
     if (new_volume <= 0.) {
@@ -100,23 +93,6 @@ public:
     volume = new_volume;
   }
   void update_volume();
-  void
-  set_exclusion_radius_per_type(std::unordered_map<int, double> const &map) {
-    auto max_exclusion_range = exclusion_range;
-    for (auto const &item : map) {
-      auto const type = item.first;
-      auto const exclusion_radius = item.second;
-      if (exclusion_radius < 0.) {
-        throw std::domain_error("Invalid excluded_radius value for type " +
-                                std::to_string(type) + ": radius " +
-                                std::to_string(exclusion_radius));
-      }
-      max_exclusion_range =
-          std::max(max_exclusion_range, 2. * exclusion_radius);
-    }
-    exclusion_radius_per_type = map;
-    m_max_exclusion_range = max_exclusion_range;
-  }
 
   void remove_constraint() { m_reaction_constraint = ReactionConstraint::NONE; }
   void set_cyl_constraint(double center_x, double center_y, double radius);
@@ -136,7 +112,6 @@ public:
   }
 
   bool particle_inside_exclusion_range_touched = false;
-  bool neighbor_search_order_n = true;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;
@@ -261,7 +236,6 @@ private:
   double m_cyl_y = -10.0;
   double m_slab_start_z = -10.0;
   double m_slab_end_z = -10.0;
-  double m_max_exclusion_range = 0.;
 
   Particle *get_real_particle(int p_id) const;
   Particle *get_local_particle(int p_id) const;

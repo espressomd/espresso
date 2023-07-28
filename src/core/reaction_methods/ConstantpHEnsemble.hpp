@@ -19,9 +19,12 @@
 #ifndef REACTION_METHODS_CONSTANT_PH_ENSEMBLE_HPP
 #define REACTION_METHODS_CONSTANT_PH_ENSEMBLE_HPP
 
+#include "reaction_methods/ExclusionRadius.hpp"
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
 #include <map>
+#include <memory>
+#include <utility>
 
 namespace ReactionMethods {
 
@@ -40,12 +43,10 @@ namespace ReactionMethods {
  */
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
-  ConstantpHEnsemble(
-      boost::mpi::communicator const &comm, int seed, double kT,
-      double exclusion_range, double constant_pH,
-      const std::unordered_map<int, double> &exclusion_radius_per_type)
-      : ReactionAlgorithm(comm, seed, kT, exclusion_range,
-                          exclusion_radius_per_type),
+  ConstantpHEnsemble(boost::mpi::communicator const &comm, int seed, double kT,
+                     std::shared_ptr<ExclusionRadius> exclusion,
+                     double constant_pH)
+      : ReactionAlgorithm(comm, seed, kT, std::move(exclusion)),
         m_constant_pH(constant_pH) {}
   double m_constant_pH;
 };
