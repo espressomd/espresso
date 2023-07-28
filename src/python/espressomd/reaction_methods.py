@@ -117,6 +117,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     the Reaction Ensemble algorithm and the constant pH method.
     Initialize the reaction algorithm by setting the
     standard pressure, temperature, and the exclusion range.
+    The exclusion range mechanism is explained in more detail
+    in :class:`~espressomd.reaction_methods.ExclusionRadius`.
 
     Note: When creating particles the velocities of the new particles are set
     according the Maxwell-Boltzmann distribution. In this step the mass of the
