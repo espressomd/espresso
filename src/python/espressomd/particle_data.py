@@ -561,7 +561,7 @@ class ParticleHandle(ScriptInterfaceHelper):
     def propagation(self, value):
         self.set_parameter("propagation", int(value))
 
-    def vs_auto_relate_to(self, rel_to):
+    def vs_auto_relate_to(self, rel_to, override_cutoff_check=False):
         """
         Setup this particle as virtual site relative to the particle
         in argument ``rel_to``. A particle cannot relate to itself.
@@ -570,6 +570,9 @@ class ParticleHandle(ScriptInterfaceHelper):
         -----------
         rel_to : :obj:`int` or :obj:`ParticleHandle`
             Particle to relate to (either particle id or particle object).
+        override_cutoff_check : :obj:`bool`
+            If True, does not check whether the cell system cutoffs
+            are consistent with the distance between virtual and no-virtual particle.
 
         """
         if isinstance(rel_to, ParticleHandle):
@@ -577,7 +580,10 @@ class ParticleHandle(ScriptInterfaceHelper):
         else:
             check_type_or_throw_except(
                 rel_to, 1, int, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int")
-        self.call_method("vs_relate_to", pid=rel_to)
+        self.call_method(
+            "vs_relate_to",
+            pid=rel_to,
+            override_cutoff_check=override_cutoff_check)
         handle_errors("vs_auto_relate_to")
 
     def add_verified_bond(self, bond):

@@ -592,6 +592,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       return {};
     }
     auto const other_pid = get_value<int>(params, "pid");
+    bool const override_cutoff_check =
+        get_value_or<bool>(params, "override_cutoff_check", false);
     if (m_pid == other_pid) {
       throw std::invalid_argument("A virtual site cannot relate to itself");
     }
@@ -610,8 +612,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
      */
     auto const &p_current = get_particle_data(m_pid);
     auto const &p_relate_to = get_particle_data(other_pid);
-    auto const [quat, dist] =
-        calculate_vs_relate_to_params(p_current, p_relate_to);
+    auto const [quat, dist] = calculate_vs_relate_to_params(
+        p_current, p_relate_to, override_cutoff_check);
     set_parameter("propagation", PropagationMode::TRANS_VS_RELATIVE);
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
