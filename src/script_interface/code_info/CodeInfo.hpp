@@ -23,6 +23,7 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include <string>
+#include <vector>
 
 namespace ScriptInterface {
 namespace CodeInfo {
@@ -32,6 +33,8 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &parameters) override;
 };
+
+void check_features(std::vector<std::string> const &features);
 
 } // namespace CodeInfo
 } // namespace ScriptInterface

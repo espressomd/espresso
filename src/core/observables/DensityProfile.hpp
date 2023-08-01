@@ -25,8 +25,8 @@
 #include "grid.hpp"
 
 #include <utils/Histogram.hpp>
-#include <utils/Span.hpp>
 
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -36,13 +36,37 @@ public:
   using PidProfileObservable::PidProfileObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
+    using pos_type = decltype(traits.position(std::declval<Particle>()));
+
+    std::vector<pos_type> local_folded_positions{};
+    local_folded_positions.reserve(local_particles.size());
+
+    for (auto const &p : local_particles) {
+      local_folded_positions.emplace_back(
+          folded_position(traits.position(p), box_geo));
+    }
+
+    auto const world_size = comm.size();
+    std::vector<decltype(local_folded_positions)> global_folded_positions{};
+    global_folded_positions.reserve(world_size);
+    boost::mpi::gather(comm, local_folded_positions, global_folded_positions,
+                       0);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
     Utils::Histogram<double, 1> histogram(n_bins(), limits());
 
-    for (auto p : particles) {
-      histogram.update(folded_position(traits.position(p), box_geo));
+    for (auto const &vec : global_folded_positions) {
+      for (auto const &p : vec) {
+        histogram.update(p);
+      }
     }
+
     histogram.normalize();
     return histogram.get_histogram();
   }

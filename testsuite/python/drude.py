@@ -159,7 +159,7 @@ class Drude(ut.TestCase):
         p3m = espressomd.electrostatics.P3M(prefactor=coulomb_prefactor,
                                             accuracy=1e-4, mesh=3 * [18], cao=5)
 
-        system.actors.add(p3m)
+        system.electrostatics.solver = p3m
 
         # Drude related Bonds
 

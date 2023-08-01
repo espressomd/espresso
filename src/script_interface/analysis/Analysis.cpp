@@ -109,6 +109,12 @@ Variant Analysis::do_call_method(std::string const &name,
     });
     return make_unordered_map_of_variants(dict);
   }
+#ifdef DPD
+  if (name == "dpd_stress") {
+    auto const result = dpd_stress(context()->get_comm());
+    return result.as_vector();
+  }
+#endif // DPD
   if (not context()->is_head_node()) {
     return {};
   }
@@ -139,12 +145,6 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const result = nbhood(partCfg(), pos, radius);
     return result;
   }
-#ifdef DPD
-  if (name == "dpd_stress") {
-    auto const result = dpd_stress();
-    return result.as_vector();
-  }
-#endif // DPD
   if (name == "calc_re") {
     auto const chain_start = get_value<int>(parameters, "chain_start");
     auto const chain_length = get_value<int>(parameters, "chain_length");

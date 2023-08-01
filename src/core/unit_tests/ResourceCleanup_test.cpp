@@ -27,6 +27,8 @@
 
 #include "communication.hpp"
 #include "cuda/utils.hpp"
+#include "electrostatics/coulomb.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/ResourceCleanup.hpp"
 #include "system/System.hpp"

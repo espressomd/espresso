@@ -52,6 +52,7 @@
 #include <functional>
 #include <numeric>
 #include <stdexcept>
+#include <variant>
 #include <vector>
 
 void DipolarLayerCorrection::check_gap(Particle const &p) const {
@@ -445,7 +446,7 @@ double DipolarLayerCorrection::tune_far_cut() const {
 }
 
 /** @brief Lock an actor and modify its parameters. */
-struct AdaptSolver : public boost::static_visitor<void> {
+struct AdaptSolver {
   explicit AdaptSolver(DipolarLayerCorrection *this_ptr) : m_actor{this_ptr} {}
 
   void operator()(std::shared_ptr<DipolarDirectSum> const &solver) {
@@ -466,7 +467,7 @@ private:
 
 void DipolarLayerCorrection::adapt_solver() {
   auto visitor = AdaptSolver{this};
-  boost::apply_visitor(visitor, base_solver);
+  std::visit(visitor, base_solver);
   epsilon_correction =
       (epsilon == P3M_EPSILON_METALLIC) ? 0. : 1. / (2. * epsilon + 1.);
 }

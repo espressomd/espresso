@@ -1,4 +1,5 @@
-# Copyright (C) 2010-2022 The ESPResSo project
+#
+# Copyright (C) 2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,32 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from . cimport c_profiler
+#
 
-
-def begin_section(name):
-    """
-    Start named section in profiler.
-
-    Parameters
-    ----------
-
-    name : :obj:`str`
-        Name of the section
-    """
-
-    c_profiler.begin_section(name)
-
-
-def end_section(name):
-    """
-    End named section in profiler.
-
-    Parameters
-    ----------
-
-    name : :obj:`str`
-        Name of the section
-    """
-
-    c_profiler.end_section(name)
+target_sources(espresso_script_interface PRIVATE initialize.cpp)

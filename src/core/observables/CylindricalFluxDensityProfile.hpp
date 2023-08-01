@@ -22,11 +22,11 @@
 #include "BoxGeometry.hpp"
 #include "CylindricalPidProfileObservable.hpp"
 #include "grid.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
-#include <array>
 #include <cstddef>
 #include <utility>
 #include <vector>
@@ -37,20 +37,44 @@ public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+    using pos_type = decltype(traits.position(std::declval<Particle>()));
+    using vel_type = decltype(traits.velocity(std::declval<Particle>()));
 
-    // Write data to the histogram
-    for (auto p : particles) {
+    std::vector<pos_type> local_folded_positions{};
+    local_folded_positions.reserve(local_particles.size());
+    std::vector<vel_type> local_velocities{};
+    local_velocities.reserve(local_particles.size());
+
+    for (auto const &p : local_particles) {
       auto const pos = folded_position(traits.position(p), box_geo) -
                        transform_params->center();
-      histogram.update(
+
+      local_folded_positions.emplace_back(
           Utils::transform_coordinate_cartesian_to_cylinder(
-              pos, transform_params->axis(), transform_params->orientation()),
+              pos, transform_params->axis(), transform_params->orientation()));
+      local_velocities.emplace_back(
           Utils::transform_vector_cartesian_to_cylinder(
               traits.velocity(p), transform_params->axis(), pos));
     }
+
+    auto const world_size = comm.size();
+    std::vector<decltype(local_folded_positions)> global_folded_positions{};
+    std::vector<decltype(local_velocities)> global_velocities{};
+    global_folded_positions.reserve(world_size);
+    global_velocities.reserve(world_size);
+    boost::mpi::gather(comm, local_folded_positions, global_folded_positions,
+                       0);
+    boost::mpi::gather(comm, local_velocities, global_velocities, 0);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
+    Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+    accumulate(histogram, global_folded_positions, global_velocities);
     histogram.normalize();
     return histogram.get_histogram();
   }

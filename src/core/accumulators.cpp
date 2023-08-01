@@ -39,12 +39,12 @@ struct AutoUpdateAccumulator {
 std::vector<AutoUpdateAccumulator> auto_update_accumulators;
 } // namespace
 
-void auto_update(int steps) {
+void auto_update(boost::mpi::communicator const &comm, int steps) {
   for (auto &acc : auto_update_accumulators) {
     assert(steps <= acc.frequency);
     acc.counter -= steps;
     if (acc.counter <= 0) {
-      acc.acc->update();
+      acc.acc->update(comm);
       acc.counter = acc.frequency;
     }
 

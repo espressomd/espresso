@@ -57,10 +57,17 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
-#include <profiler/profiler.hpp>
-
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
+
+#ifdef CALIPER
+#include <caliper/cali.h>
+#endif
+
+#ifdef VALGRIND
+#include <callgrind.h>
+#endif
 
 #include <algorithm>
 #include <cassert>
@@ -69,10 +76,6 @@
 #include <functional>
 #include <stdexcept>
 #include <utility>
-
-#ifdef VALGRIND_MARKERS
-#include <callgrind.h>
-#endif
 
 #ifdef WALBERLA
 #ifdef WALBERLA_STATIC_ASSERT
@@ -326,8 +329,9 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
 #endif
 }
 int integrate(int n_steps, int reuse_forces) {
-
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
 
   // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
@@ -341,7 +345,9 @@ int integrate(int n_steps, int reuse_forces) {
   // Additional preparations for the first integration step
   if (reuse_forces == INTEG_REUSE_FORCES_NEVER or
       (recalc_forces and reuse_forces != INTEG_REUSE_FORCES_ALWAYS)) {
-    ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
+#ifdef CALIPER
+    CALI_MARK_BEGIN("Initial Force Calculation");
+#endif
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
@@ -359,7 +365,9 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
     }
 
-    ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
+#ifdef CALIPER
+    CALI_MARK_END("Initial Force Calculation");
+#endif
   }
 
   lb_lbcoupling_activate();
@@ -376,14 +384,18 @@ int integrate(int n_steps, int reuse_forces) {
   auto caught_sigint = false;
   auto caught_error = false;
 
-#ifdef VALGRIND_MARKERS
+#ifdef VALGRIND
   CALLGRIND_START_INSTRUMENTATION;
 #endif
   // Integration loop
-  ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+#ifdef CALIPER
+  CALI_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+#endif
   int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
-    ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
+#ifdef CALIPER
+    CALI_CXX_MARK_LOOP_ITERATION(integration_loop, step);
+#endif
 
     auto particles = cell_structure.local_particles();
 
@@ -513,9 +525,11 @@ int integrate(int n_steps, int reuse_forces) {
 
   } // for-loop over integration steps
   LeesEdwards::update_box_params();
-  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
+#ifdef CALIPER
+  CALI_CXX_MARK_LOOP_END(integration_loop);
+#endif
 
-#ifdef VALGRIND_MARKERS
+#ifdef VALGRIND
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
@@ -575,11 +589,6 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
     ::set_skin(new_skin);
   }
 
-  // re-acquire MpiCallbacks listener on worker nodes
-  if (not is_head_node) {
-    return 0;
-  }
-
   using Accumulators::auto_update;
   using Accumulators::auto_update_next_update;
 
@@ -587,23 +596,26 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
     /* Integrate to either the next accumulator update, or the
      * end, depending on what comes first. */
     auto const steps = std::min((n_steps - i), auto_update_next_update());
-    auto const retval = mpi_call(Communication::Result::main_rank, integrate,
-                                 steps, reuse_forces);
-    if (retval < 0) {
-      return retval; // propagate error code
+
+    auto const local_retval = integrate(steps, reuse_forces);
+
+    // make sure all ranks exit when one rank fails
+    std::remove_const_t<decltype(local_retval)> global_retval;
+    boost::mpi::all_reduce(comm_cart, local_retval, global_retval,
+                           std::plus<int>());
+    if (global_retval < 0) {
+      return global_retval; // propagate error code
     }
 
     reuse_forces = INTEG_REUSE_FORCES_ALWAYS;
 
-    auto_update(steps);
+    auto_update(comm_cart, steps);
 
     i += steps;
   }
 
   return 0;
 }
-
-REGISTER_CALLBACK_MAIN_RANK(integrate)
 
 double interaction_range() {
   /* Consider skin only if there are actually interactions */

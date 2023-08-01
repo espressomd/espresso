@@ -122,8 +122,6 @@ foreach(cython_file ${cython_SRC})
   endif()
 endforeach()
 
-target_link_libraries(espressomd_profiler PRIVATE espresso::profiler)
-
 # Configure Python files
 foreach(auxfile ${cython_AUX})
   get_filename_component(filename ${auxfile} NAME)

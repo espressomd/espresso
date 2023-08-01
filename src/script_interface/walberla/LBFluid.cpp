@@ -40,6 +40,7 @@
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -208,7 +209,8 @@ std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
 Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
   auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
   auto const result = m_instance->get_velocity_at_pos(lb_pos);
-  return mpi_reduce_optional(context()->get_comm(), result) / m_conv_speed;
+  return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+         m_conv_speed;
 }
 
 void LBFluid::load_checkpoint(std::string const &filename, int mode) {

@@ -48,6 +48,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "system/System.hpp"
 #include "tuning.hpp"
 
 #include <utils/Span.hpp>
@@ -62,7 +63,6 @@
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
@@ -71,8 +71,10 @@
 #include <complex>
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 void CoulombP3M::count_charged_particles() {
   auto local_n = 0;
@@ -243,10 +245,10 @@ void CoulombP3M::init() {
 
   sanity_checks();
 
+  auto const &solver = System::get_system().coulomb.impl->solver;
   double elc_layer = 0.;
-  if (auto elc_actor = get_actor_by_type<ElectrostaticLayerCorrection>(
-          electrostatics_actor)) {
-    elc_layer = elc_actor->elc.space_layer;
+  if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {
+    elc_layer = actor->elc.space_layer;
   }
 
   p3m.local_mesh.calc_local_ca_mesh(p3m.params, local_geo, skin, elc_layer);
@@ -458,10 +460,10 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
   /* The dipole moment is only needed if we don't have metallic boundaries. */
-  auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
-                              ? boost::make_optional(calc_dipole_moment(
-                                    comm_cart, particles, box_geo))
-                              : boost::none;
+  auto const box_dipole =
+      (p3m.params.epsilon != P3M_EPSILON_METALLIC)
+          ? calc_dipole_moment(comm_cart, particles, box_geo)
+          : Utils::Vector3d::broadcast(0.);
   auto const volume = box_geo.volume();
   auto const pref = 4. * Utils::pi() / volume / (2. * p3m.params.epsilon + 1.);
 
@@ -513,7 +515,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
 
     // add dipole forces
     if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-      auto const dm = prefactor * pref * box_dipole.value();
+      auto const dm = prefactor * pref * box_dipole;
       for (auto &p : particles) {
         p.force() -= p.q() * dm;
       }
@@ -540,7 +542,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                 (2. * volume * Utils::sqr(p3m.params.alpha));
       /* dipole correction */
       if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-        energy += pref * box_dipole.value().norm2();
+        energy += pref * box_dipole.norm2();
       }
     }
     return prefactor * energy;
@@ -566,7 +568,8 @@ public:
 
   void setup_logger(bool verbose) override {
 #ifdef CUDA
-    auto const on_gpu = has_actor_of_type<CoulombP3MGPU>(electrostatics_actor);
+    auto const &solver = System::get_system().coulomb.impl->solver;
+    auto const on_gpu = has_actor_of_type<CoulombP3MGPU>(solver);
 #else
     auto const on_gpu = false;
 #endif
@@ -578,11 +581,11 @@ public:
     m_logger->log_tuning_start();
   }
 
-  boost::optional<std::string>
+  std::optional<std::string>
   layer_correction_veto_r_cut(double r_cut) const override {
-    if (auto elc_actor = get_actor_by_type<ElectrostaticLayerCorrection>(
-            electrostatics_actor)) {
-      return elc_actor->veto_r_cut(r_cut);
+    auto const &solver = System::get_system().coulomb.impl->solver;
+    if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {
+      return actor->veto_r_cut(r_cut);
     }
     return {};
   }
@@ -612,7 +615,8 @@ public:
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, alpha_L);
 #ifdef CUDA
-    if (has_actor_of_type<CoulombP3MGPU>(electrostatics_actor)) {
+    auto const &solver = System::get_system().coulomb.impl->solver;
+    if (has_actor_of_type<CoulombP3MGPU>(solver)) {
       ks_err = p3mgpu_k_space_error(m_prefactor, mesh, cao, p3m.sum_qpart,
                                     p3m.sum_q2, alpha_L);
     } else
@@ -659,6 +663,7 @@ public:
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
     auto mesh_density = m_mesh_density_min;
+    auto const &solver = System::get_system().coulomb.impl->solver;
     while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       if (m_tune_mesh) {
@@ -680,7 +685,7 @@ public:
       if (trial_time >= 0.) {
         /* the optimum r_cut for this mesh is the upper limit for higher meshes,
            everything else is slower */
-        if (has_actor_of_type<CoulombP3M>(electrostatics_actor)) {
+        if (has_actor_of_type<CoulombP3M>(solver)) {
           m_r_cut_iL_max = trial_params.r_cut_iL;
         }
 

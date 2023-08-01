@@ -49,6 +49,7 @@
 #include <cmath>
 #include <cstddef>
 #include <functional>
+#include <variant>
 #include <vector>
 
 /** \name Product decomposition data organization
@@ -985,7 +986,7 @@ void ElectrostaticLayerCorrection::sanity_checks_dielectric_contrasts() const {
 }
 
 void ElectrostaticLayerCorrection::adapt_solver() {
-  boost::apply_visitor(
+  std::visit(
       [this](auto &solver) {
         set_prefactor(solver->prefactor);
         solver->p3m.params.epsilon = P3M_EPSILON_METALLIC;
@@ -1005,7 +1006,7 @@ void ElectrostaticLayerCorrection::recalc_box_h() {
 
 void ElectrostaticLayerCorrection::recalc_space_layer() {
   if (elc.dielectric_contrast_on) {
-    auto const p3m_r_cut = boost::apply_visitor(
+    auto const p3m_r_cut = std::visit(
         [](auto &solver) { return solver->p3m.params.r_cut; }, base_solver);
     // recalculate the space layer size:
     // 1. set the space_layer to be 1/3 of the gap size, so that box = layer
@@ -1166,7 +1167,7 @@ void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver,
 
 double ElectrostaticLayerCorrection::long_range_energy(
     ParticleRange const &particles) const {
-  auto const energy = boost::apply_visitor(
+  auto const energy = std::visit(
       [this, &particles](auto const &solver_ptr) {
         auto &solver = *solver_ptr;
 
@@ -1202,7 +1203,7 @@ double ElectrostaticLayerCorrection::long_range_energy(
 
 void ElectrostaticLayerCorrection::add_long_range_forces(
     ParticleRange const &particles) const {
-  boost::apply_visitor(
+  std::visit(
       [this, &particles](auto const &solver_ptr) {
         auto &solver = *solver_ptr;
         if (elc.dielectric_contrast_on) {

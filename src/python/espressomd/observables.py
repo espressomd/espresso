@@ -32,7 +32,7 @@ class Observable(ScriptInterfaceHelper):
     """
     _so_name = "Observables::Observable"
     _so_bind_methods = ("shape",)
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
     def calculate(self):
         return np.array(self.call_method("calculate")).reshape(self.shape())

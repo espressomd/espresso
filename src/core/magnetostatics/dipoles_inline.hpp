@@ -22,28 +22,27 @@
 
 #include "config/config.hpp"
 
+#include "magnetostatics/dipoles.hpp"
+#include "magnetostatics/dp3m.hpp"
+#include "magnetostatics/solver.hpp"
+
 #include "Particle.hpp"
 
 #include "actor/traits.hpp"
 #include "actor/visitors.hpp"
 
-#include "magnetostatics/dipoles.hpp"
-#include "magnetostatics/dp3m.hpp"
-
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <functional>
+#include <optional>
+#include <variant>
 
 namespace Dipoles {
 
-struct ShortRangeForceKernel
-    : public boost::static_visitor<boost::optional<std::function<ParticleForce(
-          Particle const &, Particle const &, Utils::Vector3d const &, double,
-          double)>>> {
+struct ShortRangeForceKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeForceKernel;
+  using result_type = std::optional<kernel_type>;
 
 #ifdef DIPOLES
   template <typename T>
@@ -64,17 +63,15 @@ struct ShortRangeForceKernel
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
 #endif // DIPOLES
 };
 
-struct ShortRangeEnergyKernel
-    : public boost::static_visitor<boost::optional<
-          std::function<double(Particle const &, Particle const &,
-                               Utils::Vector3d const &, double, double)>>> {
+struct ShortRangeEnergyKernel {
 
-  using kernel_type = result_type::value_type;
+  using kernel_type = Solver::ShortRangeEnergyKernel;
+  using result_type = std::optional<kernel_type>;
 
 #ifdef DIPOLES
   template <typename T>
@@ -95,26 +92,28 @@ struct ShortRangeEnergyKernel
 
   result_type
   operator()(std::shared_ptr<DipolarLayerCorrection> const &ptr) const {
-    return boost::apply_visitor(*this, ptr->base_solver);
+    return std::visit(*this, ptr->base_solver);
   }
 #endif // DIPOLES
 };
 
-inline ShortRangeForceKernel::result_type pair_force_kernel() {
+inline std::optional<Solver::ShortRangeForceKernel>
+Solver::pair_force_kernel() const {
 #ifdef DIPOLES
-  if (magnetostatics_actor) {
-    auto const visitor = ShortRangeForceKernel();
-    return boost::apply_visitor(visitor, *magnetostatics_actor);
+  if (impl->solver) {
+    auto const visitor = Dipoles::ShortRangeForceKernel();
+    return std::visit(visitor, *impl->solver);
   }
 #endif // DIPOLES
   return {};
 }
 
-inline ShortRangeEnergyKernel::result_type pair_energy_kernel() {
+inline std::optional<Solver::ShortRangeEnergyKernel>
+Solver::pair_energy_kernel() const {
 #ifdef DIPOLES
-  if (magnetostatics_actor) {
-    auto const visitor = ShortRangeEnergyKernel();
-    return boost::apply_visitor(visitor, *magnetostatics_actor);
+  if (impl->solver) {
+    auto const visitor = Dipoles::ShortRangeEnergyKernel();
+    return std::visit(visitor, *impl->solver);
   }
 #endif // DIPOLES
   return {};

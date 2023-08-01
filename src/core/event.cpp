@@ -46,6 +46,7 @@
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -55,14 +56,6 @@
 
 /** whether the thermostat has to be reinitialized before integration */
 static bool reinit_thermo = true;
-#ifdef ELECTROSTATICS
-/** whether electrostatics actor has to be reinitialized on observable calc */
-static bool reinit_electrostatics = false;
-#endif
-#ifdef DIPOLES
-/** whether magnetostatics actor has to be reinitialized on observable calc */
-static bool reinit_magnetostatics = false;
-#endif
 
 void on_program_start() {
 #ifdef CUDA
@@ -120,17 +113,17 @@ void on_integration_start(double time_step) {
   }
 #ifdef ELECTROSTATICS
   {
-    auto const &actor = electrostatics_actor;
-    if (!Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
-        (actor and !Utils::Mpi::all_compare(comm_cart, (*actor).which())))
+    auto const &actor = System::get_system().coulomb.impl->solver;
+    if (not Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
+        (actor and not Utils::Mpi::all_compare(comm_cart, (*actor).index())))
       runtimeErrorMsg() << "Nodes disagree about Coulomb long-range method";
   }
 #endif
 #ifdef DIPOLES
   {
-    auto const &actor = magnetostatics_actor;
-    if (!Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
-        (actor and !Utils::Mpi::all_compare(comm_cart, (*actor).which())))
+    auto const &actor = System::get_system().dipoles.impl->solver;
+    if (not Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
+        (actor and not Utils::Mpi::all_compare(comm_cart, (*actor).index())))
       runtimeErrorMsg() << "Nodes disagree about dipolar long-range method";
   }
 #endif
@@ -144,26 +137,21 @@ void on_observable_calc() {
    * information */
   cells_update_ghosts(global_ghost_flags());
   update_dependent_particles();
+
 #ifdef ELECTROSTATICS
-  if (reinit_electrostatics) {
-    Coulomb::on_observable_calc();
-    reinit_electrostatics = false;
-  }
-#endif /* ELECTROSTATICS */
+  System::get_system().coulomb.on_observable_calc();
+#endif
 
 #ifdef DIPOLES
-  if (reinit_magnetostatics) {
-    Dipoles::on_observable_calc();
-    reinit_magnetostatics = false;
-  }
-#endif /* DIPOLES */
+  System::get_system().dipoles.on_observable_calc();
+#endif
 
   clear_particle_node();
 }
 
 void on_particle_charge_change() {
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
+  System::get_system().coulomb.on_particle_change();
 #endif
 
   /* the particle information is no longer valid */
@@ -178,10 +166,14 @@ void on_particle_change() {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
+  if (System::is_system_set()) {
+    System::get_system().coulomb.on_particle_change();
+  }
 #endif
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
+  if (System::is_system_set()) {
+    System::get_system().dipoles.on_particle_change();
+  }
 #endif
   recalc_forces = true;
 
@@ -194,28 +186,24 @@ void on_particle_change() {
 
 void on_coulomb_and_dipoles_change() {
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
-  Coulomb::on_coulomb_change();
+  System::get_system().coulomb.on_coulomb_change();
 #endif
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
-  Dipoles::on_dipoles_change();
+  System::get_system().dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
 }
 
 void on_coulomb_change() {
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
-  Coulomb::on_coulomb_change();
+  System::get_system().coulomb.on_coulomb_change();
 #endif
   on_short_range_ia_change();
 }
 
 void on_dipoles_change() {
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
-  Dipoles::on_dipoles_change();
+  System::get_system().dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
 }
@@ -243,11 +231,11 @@ void on_boxl_change(bool skip_method_adaption) {
   if (not skip_method_adaption) {
     /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
-    Coulomb::on_boxl_change();
+    System::get_system().coulomb.on_boxl_change();
 #endif
 
 #ifdef DIPOLES
-    Dipoles::on_boxl_change();
+    System::get_system().dipoles.on_boxl_change();
 #endif
 
     LB::init();
@@ -267,12 +255,15 @@ void on_cell_structure_change() {
   /* Now give methods a chance to react to the change in cell structure.
    * Most ES methods need to reinitialize, as they depend on skin,
    * node grid and so on. */
+#if defined(ELECTROSTATICS) or defined(DIPOLES)
+  if (System::is_system_set()) {
 #ifdef ELECTROSTATICS
-  Coulomb::on_cell_structure_change();
+    System::get_system().coulomb.on_cell_structure_change();
 #endif
-
 #ifdef DIPOLES
-  Dipoles::on_cell_structure_change();
+    System::get_system().dipoles.on_cell_structure_change();
+#endif
+  }
 #endif
 }
 
@@ -284,11 +275,11 @@ void on_temperature_change() {
 
 void on_periodicity_change() {
 #ifdef ELECTROSTATICS
-  Coulomb::on_periodicity_change();
+  System::get_system().coulomb.on_periodicity_change();
 #endif
 
 #ifdef DIPOLES
-  Dipoles::on_periodicity_change();
+  System::get_system().dipoles.on_periodicity_change();
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
@@ -320,10 +311,10 @@ void on_forcecap_change() { recalc_forces = true; }
 void on_node_grid_change() {
   grid_changed_n_nodes();
 #ifdef ELECTROSTATICS
-  Coulomb::on_node_grid_change();
+  System::get_system().coulomb.on_node_grid_change();
 #endif
 #ifdef DIPOLES
-  Dipoles::on_node_grid_change();
+  System::get_system().dipoles.on_node_grid_change();
 #endif
   cells_re_init(cell_structure.decomposition_type());
 }

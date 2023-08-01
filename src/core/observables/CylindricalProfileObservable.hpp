@@ -21,19 +21,12 @@
 
 #include "ProfileObservable.hpp"
 
-#include <utils/Vector.hpp>
-#include <utils/math/abs.hpp>
 #include <utils/math/cylindrical_transformation_parameters.hpp>
-#include <utils/math/make_lin_space.hpp>
 
 #include <boost/range/algorithm.hpp>
 
-#include <array>
-#include <cstddef>
-#include <limits>
 #include <memory>
 #include <utility>
-#include <vector>
 
 namespace Observables {
 
