@@ -112,8 +112,8 @@ if lbf_class:
 p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
-p1.propagation = 4
-p2.propagation = 8 
+p1.propagation = 0
+p2.propagation = 1 
 
 if espressomd.has_features('ELECTROSTATICS'):
     p1.q = 1

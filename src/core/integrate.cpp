@@ -82,6 +82,7 @@
 
 int integ_switch = INTEG_METHOD_NVT;
 static int default_propagation = 0;
+int used_propagations;
 
 /** Time step for the integration. */
 static double time_step = -1.0;
@@ -149,6 +150,25 @@ template <class Kernel> void run_kernel() {
 }
 } // namespace LeesEdwards
 
+void get_used_propagations(const ParticleRange &particles) {
+  used_propagations = 0;
+  for (auto &p : particles) {
+    used_propagations |= p.propagation();
+  }
+  if (used_propagations & PropagationMode::TRANS_SYSTEM_DEFAULT) {
+    used_propagations |= default_propagation;
+  }
+}
+void propagation_sanity_checks() {
+  typedef PropagationMode PM;
+  if (used_propagations & PM::TRANS_LANGEVIN_NPT) {
+    if (used_propagations &
+        (PM::TRANS_BROWNIAN + PM::TRANS_LANGEVIN + PM::TRANS_STOKESIAN))
+      runtimeErrorMsg() << " Langevin NPT translation is incompatible with "
+                           "other translation modes";
+  }
+}
+
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
@@ -196,126 +216,115 @@ static void resort_particles_if_needed(ParticleIterable const &particles) {
   }
 }
 
+static bool should_propagate_with(int propagation, PropagationMode mode) {
+  return propagation & mode ||
+         ((default_propagation & mode) &&
+          (propagation & PropagationMode::TRANS_SYSTEM_DEFAULT));
+}
+
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
 
-static bool integrator_step_1(ParticleRange const &particles) {
+static bool integrator_step_1(ParticleRange const &particles, double kT) {
   // steepest decent
   if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return steepest_descent_step(particles);
 
-  int perParticleIntegration =
-      PropagationMode::TRANS_LANGEVIN + PropagationMode::ROT_LANGEVIN;
-  std::vector<int> SplittableINTEG = {INTEG_METHOD_NVT};
-  bool doesDefaultcontainSplittable =
-      std::any_of(SplittableINTEG.begin(), SplittableINTEG.end(),
-                  [&](int val) { return integ_switch == val; });
-  if (doesDefaultcontainSplittable)
-    perParticleIntegration += PropagationMode::TRANS_SYSTEM_DEFAULT;
-  for (auto &p : particles) {
-    if (p.propagation() & perParticleIntegration) {
-      if (p.propagation() & PropagationMode::TRANS_LANGEVIN ||
-          ((default_propagation & PropagationMode::TRANS_LANGEVIN) &&
-           (p.propagation() & PropagationMode::TRANS_SYSTEM_DEFAULT))) {
-        velocity_verlet_propagate_vel_pos_par(p, time_step);
-      }
-#ifdef ROTATION
-      if (p.propagation() & PropagationMode::ROT_LANGEVIN ||
-          ((default_propagation & PropagationMode::ROT_LANGEVIN) &&
-           (p.propagation() & PropagationMode::TRANS_SYSTEM_DEFAULT))) {
+  int per_particle_integration =
+      PropagationMode::TRANS_LANGEVIN + PropagationMode::ROT_LANGEVIN +
+      PropagationMode::TRANS_BROWNIAN + PropagationMode::ROT_BROWNIAN;
+  if (true) { // per_particle_integration & used_propagations
+    bool does_default_contain_splittable =
+        per_particle_integration & default_propagation;
 
-        propagate_omega_quat_particle(p, time_step);
+    if (does_default_contain_splittable)
+      per_particle_integration += PropagationMode::TRANS_SYSTEM_DEFAULT;
+    for (auto &p : particles) {
+      if (p.propagation() & per_particle_integration) {
+        if (should_propagate_with(p.propagation(),
+                                  PropagationMode::TRANS_LANGEVIN))
+          velocity_verlet_propagate_vel_pos_par(p, time_step);
+        if (should_propagate_with(p.propagation(),
+                                  PropagationMode::ROT_LANGEVIN))
+          propagate_omega_quat_particle(p, time_step);
+        if (should_propagate_with(p.propagation(),
+                                  PropagationMode::TRANS_BROWNIAN))
+          brownian_dynamics_propagator(brownian, p, time_step, kT);
+        if (should_propagate_with(p.propagation(),
+                                  PropagationMode::ROT_BROWNIAN))
+          brownian_dynamics_rotator(brownian, p, time_step, kT);
       }
-#endif
     }
   }
 
 #ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
-    velocity_verlet_npt_step_1(
-        particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT +
-                         PropagationMode::TRANS_LANGEVIN_NPT>(),
-        time_step);
-    /* empty list breaks NPT right now
-   else
-   velocity_verlet_npt_step_1(particles.filter<PropagationMode::TRANS_LANGEVIN_NPT>(),time_step);
- */
-
+  if (true) { // PropagationMode::TRANS_LANGEVIN_NPT & used_propagations
+    if (default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)
+      velocity_verlet_npt_step_1(
+          particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT +
+                           PropagationMode::TRANS_LANGEVIN_NPT>(),
+          time_step);
+    /* else
+         velocity_verlet_npt_step_1(
+             particles.filter<PropagationMode::TRANS_LANGEVIN_NPT>(),
+       time_step); */
+  }
 #endif
-// BD nothing during 1st timestep
+
 #ifdef STOKESIAN_DYNAMICS
-  if (integ_switch == INTEG_METHOD_SD)
-    stokesian_dynamics_step_1(
-        particles.filter<PropagationMode::TRANS_STOKESIAN +
-                         PropagationMode::TRANS_SYSTEM_DEFAULT>(),
-        time_step);
-/* else
- * stokesian_dynamics_step_1(particles.filter<PropagationMode::TRANS_STOKESIAN>(),time_step);
- */
+  if (true) { // PropagationMode::TRANS_STOKESIAN & used_propagations
+    if (default_propagation & PropagationMode::TRANS_STOKESIAN) {
+      stokesian_dynamics_step_1(
+          particles.filter<PropagationMode::TRANS_STOKESIAN +
+                           PropagationMode::TRANS_SYSTEM_DEFAULT>(),
+          time_step);
+    } /*else
+      stokesian_dynamics_step_1(
+          particles.filter<PropagationMode::TRANS_STOKESIAN>(), time_step); */
+  }
 #endif // STOKESIAN_DYNAMICS
 
-  if (integ_switch != INTEG_METHOD_BD)
-    increment_sim_time(time_step); // ignore BD for now
+  increment_sim_time(time_step);
   return false;
 }
 
-/** Calls the hook of the propagation kernels after force calculation */
-
 static void integrator_step_2(ParticleRange const &particles, double kT) {
-  int perParticleIntegration =
+  if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
+    return;
+  int per_particle_integration =
       PropagationMode::TRANS_LANGEVIN + PropagationMode::ROT_LANGEVIN;
-  std::vector<int> SplittableINTEG = {INTEG_METHOD_NVT};
-  bool doesDefaultcontainSplittable =
-      std::any_of(SplittableINTEG.begin(), SplittableINTEG.end(),
-                  [&](int val) { return integ_switch == val; });
-  if (doesDefaultcontainSplittable)
-    perParticleIntegration += PropagationMode::TRANS_SYSTEM_DEFAULT;
-  for (auto &p : particles) {
-    if (p.propagation() & perParticleIntegration) {
-      if (p.propagation() & PropagationMode::TRANS_LANGEVIN ||
-          ((default_propagation & PropagationMode::TRANS_LANGEVIN) &&
-           (p.propagation() & PropagationMode::TRANS_SYSTEM_DEFAULT))) {
-        velocity_verlet_propagate_vel_final_par(p, time_step);
+  if (true) { // per_particle_integration & used_propagations
+    bool does_default_contain_splittable =
+        per_particle_integration & default_propagation;
+    if (does_default_contain_splittable)
+      per_particle_integration += PropagationMode::TRANS_SYSTEM_DEFAULT;
+    for (auto &p : particles) {
+      if (p.propagation() & per_particle_integration) {
+        if (should_propagate_with(p.propagation(),
+                                  PropagationMode::TRANS_LANGEVIN))
+          velocity_verlet_propagate_vel_final_par(p, time_step);
+        if (should_propagate_with(p.propagation(),
+                                  PropagationMode::ROT_LANGEVIN))
+          convert_torque_propagate_omega(p, time_step);
       }
-#ifdef ROTATION
-      if (p.propagation() & PropagationMode::ROT_LANGEVIN ||
-          ((default_propagation & PropagationMode::ROT_LANGEVIN) &&
-           (p.propagation() & PropagationMode::TRANS_SYSTEM_DEFAULT))) {
-
-        convert_torque_propagate_omega(p, time_step);
-      }
-#endif
     }
   }
 
 #ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
-    velocity_verlet_npt_step_2(
-        particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT +
-                         PropagationMode::TRANS_LANGEVIN_NPT>(),
-        time_step);
-/*empty list breaks NPT right now
-else
-velocity_verlet_npt_step_1(particles.filter<PropagationMode::TRANS_LANGEVIN_NPT>(),time_step);
-*/
-#endif
-  if (integ_switch == INTEG_METHOD_BD) {
-    for (auto &p : particles) {
-      if (!(p.propagation() & PropagationMode::TRANS_SYSTEM_DEFAULT ||
-            p.propagation() & PropagationMode::TRANS_BROWNIAN))
-        throw std::runtime_error("Cant run BD on only a subset of particles");
-      brownian_dynamics_propagator(brownian, p, time_step, kT);
-      brownian_dynamics_rotator(brownian, p, time_step, kT);
-    }
-    resort_particles_if_needed(particles);
-    increment_sim_time(time_step);
+  if (true) { // PropagationMode::TRANS_LANGEVIN_NPT & used_propagations
+    if (default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)
+      velocity_verlet_npt_step_2(
+          particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT +
+                           PropagationMode::TRANS_LANGEVIN_NPT>(),
+          time_step);
+    /*   else
+         velocity_verlet_npt_step_2(
+             particles.filter<PropagationMode::TRANS_LANGEVIN_NPT>(),
+       time_step); */
   }
-  /* else
-   * brownian_dynamics_propagator(brownian,particles.filter<PropagationMode::TRANS_BROWNIAN>(),
-   * time_step, kT); */
+#endif
 }
-
 int integrate(int n_steps, int reuse_forces) {
 
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
@@ -323,6 +332,8 @@ int integrate(int n_steps, int reuse_forces) {
   // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
 
+  get_used_propagations(cell_structure.local_particles());
+  propagation_sanity_checks();
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
     return INTEG_ERROR_RUNTIME;
@@ -382,7 +393,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
     LeesEdwards::update_box_params();
-    bool early_exit = integrator_step_1(particles);
+    bool early_exit = integrator_step_1(particles, temperature);
     if (early_exit)
       break;
 
@@ -633,7 +644,7 @@ void set_time(double value) {
 void default_propagation_from_integ() {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
-    default_propagation = -1; // should not be used
+    default_propagation = 0; // should not be used
   case INTEG_METHOD_NVT:
     default_propagation = PropagationMode::TRANS_LANGEVIN;
 #ifdef ROTATION
