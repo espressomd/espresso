@@ -563,21 +563,23 @@ no arguments are passed, sensible default values will be used instead.
 
 .. table:: Tools for the Python wrapper to |es|.
 
-    +---------------------+-------------------------------------------------+
-    | Tool                | Effect                                          |
-    +=====================+=================================================+
-    | ``--gdb``           | ``gdb --args python script.py``                 |
-    +---------------------+-------------------------------------------------+
-    | ``--lldb``          | ``lldb -- python script.py``                    |
-    +---------------------+-------------------------------------------------+
-    | ``--valgrind``      | ``valgrind --leak-check=full python script.py`` |
-    +---------------------+-------------------------------------------------+
-    | ``--cuda-gdb``      | ``cuda-gdb --args python script.py``            |
-    +---------------------+-------------------------------------------------+
-    | ``--cuda-memcheck`` | ``cuda-memcheck python script.py``              |
-    +---------------------+-------------------------------------------------+
-    | ``--kernprof``      | ``kernprof --line-by-line --view script.py``    |
-    +---------------------+-------------------------------------------------+
+    +------------------------+-------------------------------------------------------------+
+    | Tool                   | Effect                                                      |
+    +========================+=============================================================+
+    | ``--gdb``              | ``gdb --args python script.py``                             |
+    +------------------------+-------------------------------------------------------------+
+    | ``--lldb``             | ``lldb -- python script.py``                                |
+    +------------------------+-------------------------------------------------------------+
+    | ``--valgrind``         | ``valgrind --leak-check=full python script.py``             |
+    +------------------------+-------------------------------------------------------------+
+    | ``--cuda-gdb``         | ``cuda-gdb --args python script.py``                        |
+    +------------------------+-------------------------------------------------------------+
+    | ``--cuda-memcheck``    | ``cuda-memcheck python script.py``                          |
+    +------------------------+-------------------------------------------------------------+
+    | ``--cuda-sanitizer``   | ``compute-sanitizer --leak-check full python script.py``    |
+    +------------------------+-------------------------------------------------------------+
+    | ``--kernprof``         | ``kernprof --line-by-line --view script.py``                |
+    +------------------------+-------------------------------------------------------------+
 
 .. _Profiling:
 
@@ -898,6 +900,39 @@ the call graph interactively and visualize the time spent in each function:
 
     kcachegrind ${callgrind_out}
 
+.. _Compute Sanitizer:
+
+Compute Sanitizer
+~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    Requires a CUDA build, enabled with the CMake options
+    ``-D ESPRESSO_BUILD_WITH_CUDA=ON``.
+
+The Compute Sanitizer [9]_ :cite:`misc-compute-sanitizer` framework is similar
+to :ref:`Valgrind`, but for NVIDIA GPUs. The exact command line options
+differ with the CUDA version. If the command line examples below don't work,
+please refer to the NVIDIA user guide version that corresponds to the locally
+installed CUDA toolkit.
+
+To detect memory leaks:
+
+.. code-block:: bash
+
+    ./pypresso --cuda-sanitizer="--tool memcheck --leak-check full" script.py
+
+Add option ``--error-exitcode 1`` to return an error code when issues are detected.
+
+To detect access to uninitialized data:
+
+.. code-block:: bash
+
+    ./pypresso --cuda-sanitizer="--tool initcheck" script.py
+
+Checking for uninitialized data is quite expensive
+for the GPU and can slow down other running GPU processes.
+
 .. _perf:
 
 perf
@@ -1067,3 +1102,6 @@ ____
 
 .. [8]
    https://github.com/pyutils/line_profiler
+
+.. [9]
+   https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html

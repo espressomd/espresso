@@ -34,6 +34,10 @@
 
 #include "ParticleRange.hpp"
 
+#include <memory>
+
+struct P3MGpuParams;
+
 struct CoulombP3MGPU : public CoulombP3M {
   using CoulombP3M::CoulombP3M;
 
@@ -56,6 +60,7 @@ private:
    * that are only relevant for ELC force corrections.
    */
   void init_cpu_kernels();
+  std::shared_ptr<P3MGpuParams> m_gpu_data = nullptr;
 };
 
 #endif // CUDA

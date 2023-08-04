@@ -85,6 +85,10 @@ case "$1" in
         shift
         exec cuda-memcheck "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
+    --cuda-sanitizer)
+        shift
+        exec compute-sanitizer --leak-check full "@ESPRESSO_PYTHON_FRONTEND@" "$@"
+        ;;
     --kernprof)
         shift
         exec "@ESPRESSO_PYTHON_FRONTEND@" $(which kernprof) --line-by-line --view "$@"
@@ -114,6 +118,11 @@ case "$1" in
         options="${1#*=}"
         shift
         exec cuda-memcheck ${options} "@ESPRESSO_PYTHON_FRONTEND@" "$@"
+        ;;
+    --cuda-sanitizer=*)
+        options="${1#*=}"
+        shift
+        exec compute-sanitizer ${options} "@ESPRESSO_PYTHON_FRONTEND@" "$@"
         ;;
     --kernprof=*)
         options="${1#*=}"
