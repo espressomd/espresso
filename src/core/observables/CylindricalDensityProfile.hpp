@@ -23,6 +23,7 @@
 
 #include "BoxGeometry.hpp"
 #include "grid.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
@@ -53,9 +54,8 @@ public:
               transform_params->orientation()));
     }
 
-    std::vector<decltype(local_folded_positions)> global_folded_positions{};
-    boost::mpi::gather(comm, local_folded_positions, global_folded_positions,
-                       0);
+    auto const global_folded_positions =
+        detail::gather(comm, local_folded_positions);
 
     if (comm.rank() != 0) {
       return {};

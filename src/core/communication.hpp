@@ -47,6 +47,7 @@
 #include "MpiCallbacks.hpp"
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <memory>
 #include <utility>

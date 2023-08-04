@@ -61,17 +61,15 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
     local_flux_densities.emplace_back(flux_cyl);
   }
 
-  std::vector<decltype(local_folded_positions)> global_folded_positions{};
-  std::vector<decltype(local_flux_densities)> global_flux_densities{};
-  boost::mpi::gather(comm, local_folded_positions, global_folded_positions, 0);
-  boost::mpi::gather(comm, local_flux_densities, global_flux_densities, 0);
+  auto const [global_folded_positions, global_flux_densities] =
+      detail::gather(comm, local_folded_positions, local_flux_densities);
 
   if (comm.rank() != 0) {
     return {};
   }
 
   Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
-  accumulate(histogram, global_folded_positions, global_flux_densities);
-  return normalize_by_bin_size(histogram);
+  detail::accumulate(histogram, global_folded_positions, global_flux_densities);
+  return detail::normalize_by_bin_size(histogram);
 }
 } // namespace Observables

@@ -36,6 +36,7 @@
 #include <utils/mpi/gatherv.hpp>
 
 #include <boost/mpi/collectives/all_gather.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
@@ -155,17 +156,18 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
-static boost::optional<const Particle &> get_particle_data_local(int p_id) {
-  auto p = cell_structure.get_local_particle(p_id);
-
-  if (p and (not p->is_ghost())) {
-    return *p;
+static void mpi_send_particle_data_local(int p_id) {
+  auto const p = cell_structure.get_local_particle(p_id);
+  auto const found = p and not p->is_ghost();
+  assert(1 == boost::mpi::all_reduce(::comm_cart, static_cast<int>(found),
+                                     std::plus<>()) &&
+         "Particle not found");
+  if (found) {
+    ::comm_cart.send(0, 42, *p);
   }
-
-  return {};
 }
 
-REGISTER_CALLBACK_ONE_RANK(get_particle_data_local)
+REGISTER_CALLBACK(mpi_send_particle_data_local)
 
 const Particle &get_particle_data(int p_id) {
   auto const pnode = get_particle_node(p_id);
@@ -183,10 +185,10 @@ const Particle &get_particle_data(int p_id) {
 
   /* Cache miss, fetch the particle,
    * put it into the cache and return a pointer into the cache. */
-  auto const cache_ptr = particle_fetch_cache.put(
-      p_id, Communication::mpiCallbacks().call(Communication::Result::one_rank,
-                                               get_particle_data_local, p_id));
-  return *cache_ptr;
+  Communication::mpiCallbacks().call_all(mpi_send_particle_data_local, p_id);
+  Particle result{};
+  ::comm_cart.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
+  return *(particle_fetch_cache.put(p_id, std::move(result)));
 }
 
 static void mpi_get_particles_local() {

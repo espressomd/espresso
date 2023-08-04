@@ -62,21 +62,15 @@ public:
       local_forces.emplace_back(traits.force(p));
     }
 
-    auto const world_size = comm.size();
-    std::vector<decltype(local_folded_positions)> global_folded_positions{};
-    std::vector<decltype(local_forces)> global_forces{};
-    global_folded_positions.reserve(world_size);
-    global_forces.reserve(world_size);
-    boost::mpi::gather(comm, local_folded_positions, global_folded_positions,
-                       0);
-    boost::mpi::gather(comm, local_forces, global_forces, 0);
+    auto const [global_folded_positions, global_forces] =
+        detail::gather(comm, local_folded_positions, local_forces);
 
     if (comm.rank() != 0) {
       return {};
     }
 
     Utils::Histogram<double, 3> histogram(n_bins(), limits());
-    accumulate(histogram, global_folded_positions, global_forces);
+    detail::accumulate(histogram, global_folded_positions, global_forces);
     histogram.normalize();
     return histogram.get_histogram();
   }

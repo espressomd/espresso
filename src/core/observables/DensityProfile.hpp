@@ -23,6 +23,7 @@
 #include "Particle.hpp"
 #include "PidProfileObservable.hpp"
 #include "grid.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
 
@@ -49,11 +50,8 @@ public:
           folded_position(traits.position(p), box_geo));
     }
 
-    auto const world_size = comm.size();
-    std::vector<decltype(local_folded_positions)> global_folded_positions{};
-    global_folded_positions.reserve(world_size);
-    boost::mpi::gather(comm, local_folded_positions, global_folded_positions,
-                       0);
+    auto const global_folded_positions =
+        detail::gather(comm, local_folded_positions);
 
     if (comm.rank() != 0) {
       return {};

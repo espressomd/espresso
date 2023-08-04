@@ -24,9 +24,6 @@
 #include <utils/Histogram.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/mpi/collectives/gather.hpp>
-#include <boost/serialization/vector.hpp>
-
 #include <stdexcept>
 #include <vector>
 
@@ -48,23 +45,18 @@ LBVelocityProfile::operator()(boost::mpi::communicator const &comm) const {
     }
   }
 
-  auto const world_size = comm.size();
-  std::vector<decltype(sampling_positions)> global_positions{};
-  std::vector<decltype(local_velocities)> global_velocities{};
-  global_positions.reserve(world_size);
-  global_velocities.reserve(world_size);
-  boost::mpi::gather(comm, local_positions, global_positions, 0);
-  boost::mpi::gather(comm, local_velocities, global_velocities, 0);
+  auto const [global_positions, global_velocities] =
+      detail::gather(comm, local_positions, local_velocities);
 
   if (comm.rank() != 0) {
     return {};
   }
 
   Utils::Histogram<double, 3> histogram(n_bins(), limits());
-  accumulate(histogram, global_positions, global_velocities);
+  detail::accumulate(histogram, global_positions, global_velocities);
   try {
-    return normalize_by_bin_size(histogram, allow_empty_bins);
-  } catch (empty_bin_exception const &) {
+    return detail::normalize_by_bin_size(histogram, allow_empty_bins);
+  } catch (detail::empty_bin_exception const &) {
     throw std::runtime_error(
         "Decrease sampling delta(s), some bins have no hit");
   }
