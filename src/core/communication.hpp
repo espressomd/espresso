@@ -98,38 +98,6 @@ void mpi_call_all(void (*fp)(Args...), ArgRef &&...args) {
   Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
 }
 
-/** @brief Call a local function.
- *  @tparam Tag    Any tag type defined in @ref Communication::Result
- *  @tparam R      Return type of the local function
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param tag     Reduction strategy
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class Tag, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&...args) {
-  return Communication::mpiCallbacks().call(tag, fp,
-                                            std::forward<ArgRef>(args)...);
-}
-
-/** @brief Call a local function.
- *  @tparam Tag    Any tag type defined in @ref Communication::Result
- *  @tparam TagArg Types of arguments to @p Tag
- *  @tparam R      Return type of the local function
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param tag     Reduction strategy
- *  @param tag_arg Arguments to the reduction strategy
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&...args) {
-  return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
-                                            fp, std::forward<ArgRef>(args)...);
-}
-
 /** Process requests from head node. Worker nodes main loop. */
 void mpi_loop();
 
