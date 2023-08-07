@@ -27,8 +27,6 @@
 
 #include <utils/Histogram.hpp>
 
-#include <boost/range/combine.hpp>
-
 #include <cstddef>
 #include <utility>
 #include <vector>
@@ -60,21 +58,15 @@ public:
       local_velocities.emplace_back(traits.velocity(p));
     }
 
-    auto const world_size = comm.size();
-    std::vector<decltype(local_folded_positions)> global_folded_positions{};
-    std::vector<decltype(local_velocities)> global_velocities{};
-    global_folded_positions.reserve(world_size);
-    global_velocities.reserve(world_size);
-    boost::mpi::gather(comm, local_folded_positions, global_folded_positions,
-                       0);
-    boost::mpi::gather(comm, local_velocities, global_velocities, 0);
+    auto const [global_folded_positions, global_velocities] =
+        detail::gather(comm, local_folded_positions, local_velocities);
 
     if (comm.rank() != 0) {
       return {};
     }
 
     Utils::Histogram<double, 3> histogram(n_bins(), limits());
-    accumulate(histogram, global_folded_positions, global_velocities);
+    detail::accumulate(histogram, global_folded_positions, global_velocities);
     histogram.normalize();
     return histogram.get_histogram();
   }

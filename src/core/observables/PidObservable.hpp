@@ -31,9 +31,9 @@
 
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
-
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <cassert>
 #include <cstddef>
