@@ -36,6 +36,7 @@ template <class Pos>
 auto gather(boost::mpi::communicator const &comm,
             std::vector<Pos> const &local_pos) {
   std::vector<std::vector<Pos>> global_pos{};
+  global_pos.reserve(comm.size());
   boost::mpi::gather(comm, local_pos, global_pos, 0);
   return global_pos;
 }
@@ -45,9 +46,12 @@ template <class Pos, class Val>
 auto gather(boost::mpi::communicator const &comm,
             std::vector<Pos> const &local_pos,
             std::vector<Val> const &local_val) {
+  auto const world_size = comm.size();
   std::vector<std::vector<Pos>> global_pos{};
+  global_pos.reserve(world_size);
   boost::mpi::gather(comm, local_pos, global_pos, 0);
   std::vector<std::vector<Val>> global_val{};
+  global_val.reserve(world_size);
   boost::mpi::gather(comm, local_val, global_val, 0);
   return std::make_pair(global_pos, global_val);
 }
