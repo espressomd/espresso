@@ -160,3 +160,15 @@ def generate_setters(ctx, lb_method, params):
         fields['velocity'].center_vector,
         fields['pdfs'].center_vector)
     return pdfs_setter
+
+
+def generate_vel_field_update(ctx, lb_method, params):
+    config = generate_config(ctx, params)
+    fields = generate_fields(config, lb_method.stencil)
+
+    vel_updater = lbmpy.macroscopic_value_kernels.macroscopic_values_getter(
+        lb_method,
+        None,  # denisty
+        fields['velocity'].center_vector,
+        fields['pdfs'].center_vector)
+    return vel_updater

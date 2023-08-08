@@ -52,7 +52,7 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
+for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.3.1")]:
     assert pkg_resources.packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
@@ -119,6 +119,14 @@ with code_generation_context.CodeGeneration() as ctx:
             ctx,
             f"InitialPDFsSetter{precision_prefix}{target_suffix}",
             pystencils_espresso.generate_setters(ctx, method, params),
+            **params)
+
+    # generate velocity field update kernel
+    for params, target_suffix in paramlist(parameters, (default_key,)):
+        pystencils_walberla.codegen.generate_sweep(
+            ctx,
+            f"VelFieldUpdate{precision_prefix}{target_suffix}",
+            pystencils_espresso.generate_vel_field_update(ctx, method, params),
             **params)
 
     # generate unthermalized Lees-Edwards collision rule

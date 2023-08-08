@@ -18,7 +18,7 @@
 //! \\author lbmpy
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+// kernel generated with pystencils v1.2, lbmpy v1.3.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #include <cmath>
 
@@ -117,8 +117,8 @@ void FrictionCouplingKernel_single_precision::run(IBlock *block) {
   auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
-  auto &kT = this->kT_;
   auto &D = this->D_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(f->nrOfGhostLayers()));
   float *RESTRICT _data_f = f->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
@@ -152,8 +152,8 @@ void FrictionCouplingKernel_single_precision::runOnCellInterval(const shared_ptr
   auto f = block->getData<field::GhostLayerField<float, 3>>(fID);
   auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
-  auto &kT = this->kT_;
   auto &D = this->D_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(f->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(f->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(f->nrOfGhostLayers()));

@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+// kernel generated with pystencils v1.2, lbmpy v1.3.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #include <cmath>
 
@@ -85,20 +85,20 @@ void ReactionKernelIndexed_4_single_precision::run_impl(IBlock *block, IndexVect
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
-  auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
-  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
   auto rho_2 = block->getData<field::GhostLayerField<float, 1>>(rho_2ID);
+  auto rho_1 = block->getData<field::GhostLayerField<float, 1>>(rho_1ID);
   auto rho_3 = block->getData<field::GhostLayerField<float, 1>>(rho_3ID);
+  auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
 
-  auto &order_1 = order_1_;
-  auto &order_0 = order_0_;
+  auto &order_3 = order_3_;
   auto &stoech_3 = stoech_3_;
   auto &stoech_2 = stoech_2_;
   auto &stoech_0 = stoech_0_;
   auto &order_2 = order_2_;
-  auto &stoech_1 = stoech_1_;
+  auto &order_1 = order_1_;
   auto &rate_coefficient = rate_coefficient_;
-  auto &order_3 = order_3_;
+  auto &order_0 = order_0_;
+  auto &stoech_1 = stoech_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()));

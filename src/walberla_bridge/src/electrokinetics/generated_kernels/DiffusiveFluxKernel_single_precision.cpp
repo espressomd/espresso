@@ -18,7 +18,7 @@
 //! \\author lbmpy
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+// kernel generated with pystencils v1.2, lbmpy v1.3.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #include <cmath>
 
@@ -800,8 +800,8 @@ static FUNC_PREFIX void diffusivefluxkernel_single_precision_diffusivefluxkernel
 } // namespace internal_2fab63cfdbacde4ac630f257442231a8
 
 void DiffusiveFluxKernel_single_precision::run(IBlock *block) {
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
@@ -833,8 +833,8 @@ void DiffusiveFluxKernel_single_precision::runOnCellInterval(const shared_ptr<St
   if (ci.empty())
     return;
 
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));

@@ -17,9 +17,9 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2,
+// kernel generated with pystencils v1.2, lbmpy v1.3.1,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
+// 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #pragma once
 #include "core/DataTypes.h"

@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+// kernel generated with pystencils v1.2, lbmpy v1.3.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #include <cmath>
 
@@ -81,9 +81,9 @@ void ReactionKernelIndexed_1_single_precision::run_impl(IBlock *block, IndexVect
 
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
 
-  auto &rate_coefficient = rate_coefficient_;
-  auto &stoech_0 = stoech_0_;
   auto &order_0 = order_0_;
+  auto &stoech_0 = stoech_0_;
+  auto &rate_coefficient = rate_coefficient_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());

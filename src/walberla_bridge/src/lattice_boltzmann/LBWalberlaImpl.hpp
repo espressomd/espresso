@@ -92,6 +92,8 @@ protected:
       typename detail::KernelTrait<FloatType, Architecture>::StreamSweep;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
+  using VelFieldUpdate =
+      typename detail::KernelTrait<FloatType, Architecture>::VelFieldUpdate;
   using BoundaryModel =
       BoundaryHandling<Vector3<FloatType>,
                        typename detail::BoundaryHandlingTrait<
@@ -243,6 +245,7 @@ protected:
 
   // Stream sweep
   std::shared_ptr<StreamSweep> m_stream;
+  std::shared_ptr<VelFieldUpdate> m_vel_field_update;
 
   // Lees Edwards boundary interpolation
   std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
@@ -383,12 +386,19 @@ public:
     // The following functors are individual in-place collide and stream steps
     m_stream = std::make_shared<StreamSweep>(
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
+    m_vel_field_update = std::make_shared<VelFieldUpdate>(
+        m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
   }
 
 private:
   void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       (*m_stream)(&*b);
+  }
+
+  void integrate_update_vel_field(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_vel_field_update)(&*b);
   }
 
   void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
@@ -457,6 +467,8 @@ private:
     integrate_stream(blocks);
     // LB collide
     integrate_collide(blocks);
+    // Update vel field from pdfs
+    integrate_update_vel_field(blocks);
     // Refresh ghost layers
     ghost_communication();
   }
@@ -475,11 +487,7 @@ protected:
 public:
   void integrate() override {
     reallocate_ubb_field();
-    if (has_lees_edwards_bc()) {
-      integrate_pull_scheme();
-    } else {
-      integrate_push_scheme();
-    }
+    integrate_pull_scheme();
     // Handle VTK writers
     integrate_vtk_writers();
   }

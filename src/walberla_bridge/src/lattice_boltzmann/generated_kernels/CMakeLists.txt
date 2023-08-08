@@ -22,7 +22,8 @@ target_sources(
   PRIVATE StreamSweepSinglePrecision.cpp StreamSweepDoublePrecision.cpp
           InitialPDFsSetterSinglePrecision.cpp
           InitialPDFsSetterDoublePrecision.cpp Dynamic_UBB_single_precision.cpp
-          Dynamic_UBB_double_precision.cpp)
+          Dynamic_UBB_double_precision.cpp VelFieldUpdateSinglePrecision.cpp
+          VelFieldUpdateDoublePrecision.cpp)
 if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
   target_sources(
     espresso_walberla

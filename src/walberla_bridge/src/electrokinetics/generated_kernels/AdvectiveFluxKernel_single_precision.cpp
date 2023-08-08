@@ -18,7 +18,7 @@
 //! \\author lbmpy
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+// kernel generated with pystencils v1.2, lbmpy v1.3.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #include <cmath>
 
@@ -1626,8 +1626,8 @@ static FUNC_PREFIX void advectivefluxkernel_single_precision_advectivefluxkernel
 
 void AdvectiveFluxKernel_single_precision::run(IBlock *block) {
   auto u = block->getData<field::GhostLayerField<float, 3>>(uID);
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -1665,8 +1665,8 @@ void AdvectiveFluxKernel_single_precision::runOnCellInterval(const shared_ptr<St
     return;
 
   auto u = block->getData<field::GhostLayerField<float, 3>>(uID);
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));
