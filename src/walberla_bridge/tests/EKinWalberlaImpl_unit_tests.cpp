@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(stencil_size) {
   auto constexpr stencil_size = std::size_t{9u};
   auto ek = std::make_shared<walberla::EKinWalberlaImpl<stencil_size, float>>(
       params.lattice, params.diffusion, 0., params.valency, params.ext_efield,
-      params.density, params.advection, params.friction_coupling);
+      params.density, params.advection, params.friction_coupling, false, 0u);
   BOOST_CHECK_EQUAL(ek->stencil_size(), stencil_size);
 }
 
@@ -543,7 +543,7 @@ BOOST_DATA_TEST_CASE(vtk_exceptions,
 BOOST_AUTO_TEST_CASE(ek_exceptions) {
   auto ek = std::make_shared<walberla::EKinWalberlaImpl<>>(
       params.lattice, params.diffusion, 0., params.valency, params.ext_efield,
-      params.density, params.advection, params.friction_coupling);
+      params.density, params.advection, params.friction_coupling, false, 0u);
   BOOST_CHECK_THROW(ek->integrate(std::size_t{}, std::size_t{}, std::size_t{}),
                     std::runtime_error);
   // no diffusion leads to early exit

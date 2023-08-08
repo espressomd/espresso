@@ -40,7 +40,7 @@ double_precision: bool = not args.single_precision
 data_type_cpp = "double" if double_precision else "float"
 data_type_np = pystencils_espresso.data_type_np[data_type_cpp]
 precision_suffix = pystencils_espresso.precision_suffix[double_precision]
-precision_rng = pystencils_espresso.precision_rng[double_precision]
+precision_rng = pystencils_espresso.precision_rng_modulo[double_precision]
 
 
 def replace_getData_with_uncheckedFastGetData(filename: str) -> None:
@@ -120,20 +120,21 @@ with code_generation_context.CodeGeneration() as ctx:
     # codegen configuration
     config = pystencils_espresso.generate_config(ctx, params)
 
-    pystencils_walberla.generate_sweep(
-        ctx,
-        f"DiffusiveFluxKernel_{precision_suffix}",
-        ek.flux(include_vof=False, include_fluctuations=False,
-                rng_node=precision_rng),
-        staggered=True,
-        **params)
-    pystencils_walberla.generate_sweep(
-        ctx,
-        f"DiffusiveFluxKernelWithElectrostatic_{precision_suffix}",
-        ek_electrostatic.flux(include_vof=False, include_fluctuations=False,
-                              rng_node=precision_rng),
-        staggered=True,
-        **params)
+    for midfix, fluctuation in (("", False), ("Thermalized", True)):
+        pystencils_walberla.generate_sweep(
+            ctx,
+            f"DiffusiveFluxKernel{midfix}_{precision_suffix}",
+            ek.flux(include_vof=False, include_fluctuations=fluctuation,
+                    rng_node=precision_rng),
+            staggered=True,
+            **params)
+        pystencils_walberla.generate_sweep(
+            ctx,
+            f"DiffusiveFluxKernelWithElectrostatic{midfix}_{precision_suffix}",
+            ek_electrostatic.flux(include_vof=False, include_fluctuations=fluctuation,
+                                  rng_node=precision_rng),
+            staggered=True,
+            **params)
     pystencils_walberla.generate_sweep(
         ctx,
         f"AdvectiveFluxKernel_{precision_suffix}",

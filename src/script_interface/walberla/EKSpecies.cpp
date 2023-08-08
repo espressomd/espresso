@@ -93,14 +93,18 @@ void EKSpecies::do_construct(VariantMap const &args) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
   m_vtk_writers =
       get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
-  auto const single_precision = get_value<bool>(args, "single_precision");
   auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
   auto const diffusion = get_value<double>(args, "diffusion");
   auto const ext_efield = get_value<Utils::Vector3d>(args, "ext_efield");
   auto const density = get_value<double>(args, "density");
   auto const kT = get_value<double>(args, "kT");
   auto const tau = m_tau = get_value<double>(args, "tau");
+  auto const thermalized = get_value<bool>(args, "thermalized");
+  auto const seed = get_value<int>(args, "seed");
   context()->parallel_try_catch([&]() {
+    if (seed < 0) {
+      throw std::domain_error("Parameter 'seed' must be >= 0");
+    }
     if (tau <= 0.) {
       throw std::domain_error("Parameter 'tau' must be > 0");
     }
@@ -123,7 +127,8 @@ void EKSpecies::do_construct(VariantMap const &args) {
         m_lattice->lattice(), ek_diffusion, ek_kT,
         get_value<double>(args, "valency"), ek_ext_efield, ek_density,
         get_value<bool>(args, "advection"),
-        get_value<bool>(args, "friction_coupling"), single_precision);
+        get_value<bool>(args, "friction_coupling"),
+        get_value<bool>(args, "single_precision"), thermalized, seed);
     for (auto &vtk : m_vtk_writers) {
       vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
     }

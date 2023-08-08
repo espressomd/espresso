@@ -87,11 +87,13 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     // setup a minimal EK model without coupling to LB
     auto constexpr n_ghost_layers = 1u;
     auto constexpr single_precision = true;
+    auto constexpr thermalized = false;
     auto ek_lattice = std::make_shared<LatticeWalberla>(
         params.grid_dimensions, ::node_grid, n_ghost_layers);
-    auto ek_species = new_ek_walberla(
-        ek_lattice, params.diffusion, params.kT, params.valency,
-        params.ext_efield, params.density, false, false, single_precision);
+    auto ek_species =
+        new_ek_walberla(ek_lattice, params.diffusion, params.kT, params.valency,
+                        params.ext_efield, params.density, false, false,
+                        single_precision, thermalized, 0u);
     auto ek_solver_none = new_ek_poisson_none(ek_lattice, single_precision);
 
     BOOST_REQUIRE(EK::ek_reactions.empty());
