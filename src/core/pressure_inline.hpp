@@ -64,8 +64,11 @@ inline void add_non_bonded_pair_virials(
 #endif
   {
     auto const &ia_params = get_ia_param(p1.type(), p2.type());
-    auto const force =
-        calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, kernel_forces).f;
+    auto const force = calc_central_radial_force(p1, p2, ia_params, d, dist).f +
+                       calc_central_radial_charge_force(p1, p2, ia_params, d,
+                                                        dist, kernel_forces)
+                           .f +
+                       calc_non_central_force(p1, p2, ia_params, d, dist).f;
     auto const stress = Utils::tensor_product(d, force);
 
     auto const type1 = p1.mol_id();
