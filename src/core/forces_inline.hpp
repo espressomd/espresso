@@ -74,10 +74,11 @@
 
 #include <tuple>
 
-inline ParticleForce calc_non_bonded_pair_force(
-    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
-    Utils::Vector3d const &d, double const dist,
-    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
+inline ParticleForce calc_central_radial_force(Particle const &p1,
+                                               Particle const &p2,
+                                               IA_parameters const &ia_params,
+                                               Utils::Vector3d const &d,
+                                               double const dist) {
 
   ParticleForce pf{};
   double force_factor = 0;
@@ -133,19 +134,39 @@ inline ParticleForce calc_non_bonded_pair_force(
 #ifdef LJCOS2
   force_factor += ljcos2_pair_force_factor(ia_params, dist);
 #endif
-/* Thole damping */
-#ifdef THOLE
-  pf.f += thole_pair_force(p1, p2, ia_params, d, dist, coulomb_kernel);
-#endif
 /* tabulated */
 #ifdef TABULATED
   force_factor += tabulated_pair_force_factor(ia_params, dist);
 #endif
+  pf.f += force_factor * d;
+  return pf;
+}
+
+inline ParticleForce calc_central_radial_charge_force(
+    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
+    Utils::Vector3d const &d, double const dist,
+    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
+
+  ParticleForce pf{};
+/* Thole damping */
+#ifdef THOLE
+  pf.f += thole_pair_force(p1, p2, ia_params, d, dist, coulomb_kernel);
+#endif
+
+  return pf;
+}
+
+inline ParticleForce calc_non_central_force(Particle const &p1,
+                                            Particle const &p2,
+                                            IA_parameters const &ia_params,
+                                            Utils::Vector3d const &d,
+                                            double const dist) {
+
+  ParticleForce pf{};
 /* Gay-Berne */
 #ifdef GAY_BERNE
   pf += gb_pair_force(p1.quat(), p2.quat(), ia_params, d, dist);
 #endif
-  pf.f += force_factor * d;
   return pf;
 }
 
@@ -189,10 +210,15 @@ inline void add_non_bonded_pair_force(
 
   if (dist < ia_params.max_cut) {
 #ifdef EXCLUSIONS
-    if (do_nonbonded(p1, p2))
+    if (do_nonbonded(p1, p2)) {
 #endif
-      pf += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist,
-                                       coulomb_kernel);
+      pf += calc_central_radial_force(p1, p2, ia_params, d, dist);
+      pf += calc_central_radial_charge_force(p1, p2, ia_params, d, dist,
+                                             coulomb_kernel);
+      pf += calc_non_central_force(p1, p2, ia_params, d, dist);
+#ifdef EXCLUSIONS
+    }
+#endif
   }
 
   /***********************************************/
