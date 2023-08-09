@@ -149,6 +149,7 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
     auto const random_index = i_random(number_of_particles_with_type(type));
     return get_random_p_id(type, random_index);
   };
+  auto only_local_changes = true;
   for (int i = 0; i < std::min(n_product_types, n_reactant_types); i++) {
     auto const n_product_coef = reaction.product_coefficients[i];
     auto const n_reactant_coef = reaction.reactant_coefficients[i];
@@ -156,6 +157,11 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
     // particles of reactant_types(i) to product_types(i)
     auto const old_type = reaction.reactant_types[i];
     auto const new_type = reaction.product_types[i];
+#ifdef ELECTROSTATICS
+    if (charges_of_types.at(new_type) != charges_of_types.at(old_type)) {
+      only_local_changes = false;
+    }
+#endif
     for (int j = 0; j < std::min(n_product_coef, n_reactant_coef); j++) {
       auto const p_id = get_random_p_id_of_type(old_type);
       on_particle_type_change(p_id, old_type, new_type);
@@ -167,7 +173,6 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
       }
       bookkeeping.changed.emplace_back(p_id, old_type);
     }
-    on_particle_change();
     // create product_coefficients(i)-reactant_coefficients(i) many product
     // particles iff product_coefficients(i)-reactant_coefficients(i)>0,
     // iff product_coefficients(i)-reactant_coefficients(i)<0, hide this number
@@ -180,7 +185,7 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
         check_exclusion_range(p_id, type);
         bookkeeping.created.emplace_back(p_id);
       }
-      on_particle_change();
+      only_local_changes = false;
     } else if (delta_n < 0) {
       auto const type = reaction.reactant_types[i];
       for (int j = 0; j < -delta_n; j++) {
@@ -189,7 +194,7 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
         check_exclusion_range(p_id, type);
         hide_particle(p_id, type);
       }
-      on_particle_change();
+      only_local_changes = false;
     }
   }
   // create or hide particles of types with noncorresponding replacement types
@@ -204,7 +209,6 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
         check_exclusion_range(p_id, type);
         hide_particle(p_id, type);
       }
-      on_particle_change();
     } else {
       // create additional product_types particles
       auto const type = reaction.product_types[i];
@@ -213,8 +217,13 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
         check_exclusion_range(p_id, type);
         bookkeeping.created.emplace_back(p_id);
       }
-      on_particle_change();
     }
+  }
+  // determine which fine-grained event to trigger
+  if (n_product_types == n_reactant_types and only_local_changes) {
+    on_particle_local_change();
+  } else {
+    on_particle_change();
   }
 }
 

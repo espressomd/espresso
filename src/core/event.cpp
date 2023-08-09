@@ -160,6 +160,12 @@ void on_particle_charge_change() {
   partCfg().invalidate();
 }
 
+void on_particle_local_change() {
+  cells_update_ghosts(global_ghost_flags());
+
+  recalc_forces = true;
+}
+
 void on_particle_change() {
   if (cell_structure.decomposition_type() ==
       CellStructureType::CELL_STRUCTURE_HYBRID) {
