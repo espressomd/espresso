@@ -71,7 +71,8 @@ void on_program_start() {
   init_node_grid();
 
   /* initially go for regular decomposition */
-  cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
+  set_regular_decomposition(false);
+  // cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
 
   /* make sure interaction 0<->0 always exists */
   make_particle_type_exist(0);

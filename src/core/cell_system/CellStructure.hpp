@@ -527,10 +527,12 @@ public:
    * @param range Interaction range.
    * @param box Box Geometry.
    * @param local_geo Geometry of the local box.
+   * @param without_ghost_force_reduction remove the ghost force reduction.
    */
   void set_regular_decomposition(boost::mpi::communicator const &comm,
                                  double range, BoxGeometry const &box,
-                                 LocalBox<double> &local_geo);
+                                 LocalBox<double> &local_geo,
+                                 bool without_ghost_force_reduction);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.

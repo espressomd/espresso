@@ -203,12 +203,24 @@ void set_hybrid_decomposition(std::set<int> n_square_types,
   on_cell_structure_change();
 }
 
+void set_regular_decomposition(bool without_ghost_force_reduction) {
+  cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
+                                           box_geo, local_geo,
+                                           without_ghost_force_reduction);
+  on_cell_structure_change();
+}
+
 void cells_re_init(CellStructureType new_cs) {
   switch (new_cs) {
-  case CellStructureType::CELL_STRUCTURE_REGULAR:
-    cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
-                                             box_geo, local_geo);
+  case CellStructureType::CELL_STRUCTURE_REGULAR: {
+    auto &current_regular_decomposition =
+        dynamic_cast<RegularDecomposition const &>(
+            std::as_const(cell_structure).decomposition());
+    cell_structure.set_regular_decomposition(
+        comm_cart, interaction_range(), box_geo, local_geo,
+        current_regular_decomposition.get_without_ghost_force_reduction());
     break;
+  }
   case CellStructureType::CELL_STRUCTURE_NSQUARE:
     cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
     break;
