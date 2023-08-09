@@ -110,7 +110,7 @@ def generate_config(ctx, params):
     return pystencils_walberla.codegen.config_from_context(ctx, **params)
 
 
-def generate_collision_sweep(
+def generate_streaming_collision_sweep(
         ctx, lb_method, collision_rule, class_name, params):
     config = generate_config(ctx, params)
 
@@ -122,31 +122,13 @@ def generate_collision_sweep(
         collision_rule,
         fields['pdfs'],
         fields['pdfs_tmp'],
-        lbmpy.fieldaccess.CollideOnlyInplaceAccessor())
+        lbmpy.fieldaccess.StreamPullTwoFieldsAccessor())
     collide_ast = ps.create_kernel(
         collide_update_rule, config=config, **params)
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
     pystencils_walberla.codegen.generate_sweep(
         ctx, class_name, collide_ast, **params)
-
-
-def generate_stream_sweep(ctx, lb_method, class_name, params):
-    config = generate_config(ctx, params)
-
-    # Symbols for PDF (twice, due to double buffering)
-    fields = generate_fields(config, lb_method.stencil)
-
-    # Generate stream kernel
-    stream_update_rule = lbmpy.updatekernels.create_stream_pull_with_output_kernel(
-        lb_method, fields['pdfs'], fields['pdfs_tmp'],
-        output={'velocity': fields['velocity']})
-    stream_ast = ps.create_kernel(stream_update_rule, config=config, **params)
-    stream_ast.function_name = 'kernel_stream'
-    stream_ast.assumed_inner_stride_one = True
-    pystencils_walberla.codegen.generate_sweep(
-        ctx, class_name, stream_ast,
-        field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])], **params)
 
 
 def generate_setters(ctx, lb_method, params):

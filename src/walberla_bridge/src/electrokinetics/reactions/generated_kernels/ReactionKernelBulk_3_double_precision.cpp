@@ -71,15 +71,15 @@ static FUNC_PREFIX void reactionkernelbulk_3_double_precision_reactionkernelbulk
 } // namespace internal_d3ec035b42efecb474f5d17499de6537
 
 void ReactionKernelBulk_3_double_precision::run(IBlock *block) {
-  auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
-  auto rho_2 = block->getData<field::GhostLayerField<double, 1>>(rho_2ID);
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
+  auto rho_2 = block->getData<field::GhostLayerField<double, 1>>(rho_2ID);
+  auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
 
-  auto &order_0 = this->order_0_;
-  auto &stoech_1 = this->stoech_1_;
-  auto &stoech_2 = this->stoech_2_;
   auto &rate_coefficient = this->rate_coefficient_;
+  auto &stoech_2 = this->stoech_2_;
   auto &order_2 = this->order_2_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &order_0 = this->order_0_;
   auto &order_1 = this->order_1_;
   auto &stoech_0 = this->stoech_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
@@ -115,15 +115,15 @@ void ReactionKernelBulk_3_double_precision::runOnCellInterval(const shared_ptr<S
   if (ci.empty())
     return;
 
-  auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
-  auto rho_2 = block->getData<field::GhostLayerField<double, 1>>(rho_2ID);
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
+  auto rho_2 = block->getData<field::GhostLayerField<double, 1>>(rho_2ID);
+  auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
 
-  auto &order_0 = this->order_0_;
-  auto &stoech_1 = this->stoech_1_;
-  auto &stoech_2 = this->stoech_2_;
   auto &rate_coefficient = this->rate_coefficient_;
+  auto &stoech_2 = this->stoech_2_;
   auto &order_2 = this->order_2_;
+  auto &stoech_1 = this->stoech_1_;
+  auto &order_0 = this->order_0_;
   auto &order_1 = this->order_1_;
   auto &stoech_0 = this->stoech_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()));

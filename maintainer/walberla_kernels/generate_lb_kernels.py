@@ -105,14 +105,6 @@ with code_generation_context.CodeGeneration() as ctx:
         force_model=lbmpy.forcemodels.Schiller(force_field.center_vector)
     )
 
-    # generate stream kernels
-    for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_stream_sweep(
-            ctx,
-            method,
-            f"StreamSweep{precision_prefix}{target_suffix}",
-            params)
-
     # generate initial densities
     for params, target_suffix in paramlist(parameters, (default_key,)):
         pystencils_walberla.codegen.generate_sweep(
@@ -137,7 +129,7 @@ with code_generation_context.CodeGeneration() as ctx:
                                 zero_centered=False,
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=force_field.center_vector,
-                                kernel_type="collide_only")
+                                kernel_type="default_stream_collide")
     lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
     le_collision_rule_unthermalized = lbmpy.create_lb_update_rule(
         lbm_config=le_config,
@@ -146,11 +138,11 @@ with code_generation_context.CodeGeneration() as ctx:
         config, le_collision_rule_unthermalized,
         fields["pdfs"], stencil, 1)  # shear_dir_normal y
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_collision_sweep(
+        pystencils_espresso.generate_streaming_collision_sweep(
             ctx,
             le_config,
             le_collision_rule_unthermalized,
-            f"CollideSweep{precision_prefix}LeesEdwards{target_suffix}",
+            f"StreamCollideSweep{precision_prefix}LeesEdwards{target_suffix}",
             params
         )
 
@@ -167,11 +159,11 @@ with code_generation_context.CodeGeneration() as ctx:
                       "double_precision": ctx.double_accuracy}
     )
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_collision_sweep(
+        pystencils_espresso.generate_streaming_collision_sweep(
             ctx,
             method,
             collision_rule_thermalized,
-            f"CollideSweep{precision_prefix}Thermalized{target_suffix}",
+            f"StreamCollideSweep{precision_prefix}Thermalized{target_suffix}",
             params
         )
 

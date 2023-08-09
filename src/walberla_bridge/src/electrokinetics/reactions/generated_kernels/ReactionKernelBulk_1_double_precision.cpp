@@ -66,8 +66,8 @@ void ReactionKernelBulk_1_double_precision::run(IBlock *block) {
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
 
   auto &stoech_0 = this->stoech_0_;
-  auto &order_0 = this->order_0_;
   auto &rate_coefficient = this->rate_coefficient_;
+  auto &order_0 = this->order_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(rho_0->xSizeWithGhostLayer(), int64_t(cell_idx_c(rho_0->xSize()) + 0));
@@ -94,8 +94,8 @@ void ReactionKernelBulk_1_double_precision::runOnCellInterval(const shared_ptr<S
   auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
 
   auto &stoech_0 = this->stoech_0_;
-  auto &order_0 = this->order_0_;
   auto &rate_coefficient = this->rate_coefficient_;
+  auto &order_0 = this->order_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()));

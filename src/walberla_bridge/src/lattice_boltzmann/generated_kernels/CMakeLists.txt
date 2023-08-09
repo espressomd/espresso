@@ -19,23 +19,22 @@
 
 target_sources(
   espresso_walberla
-  PRIVATE StreamSweepSinglePrecision.cpp StreamSweepDoublePrecision.cpp
-          InitialPDFsSetterSinglePrecision.cpp
+  PRIVATE InitialPDFsSetterSinglePrecision.cpp
           InitialPDFsSetterDoublePrecision.cpp Dynamic_UBB_single_precision.cpp
           Dynamic_UBB_double_precision.cpp VelFieldUpdateSinglePrecision.cpp
           VelFieldUpdateDoublePrecision.cpp)
 if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
   target_sources(
     espresso_walberla
-    PRIVATE CollideSweepSinglePrecisionLeesEdwardsAVX.cpp
-            CollideSweepDoublePrecisionLeesEdwardsAVX.cpp
-            CollideSweepSinglePrecisionThermalizedAVX.cpp
-            CollideSweepDoublePrecisionThermalizedAVX.cpp)
+    PRIVATE StreamCollideSweepSinglePrecisionLeesEdwardsAVX.cpp
+            StreamCollideSweepDoublePrecisionLeesEdwardsAVX.cpp
+            StreamCollideSweepSinglePrecisionThermalizedAVX.cpp
+            StreamCollideSweepDoublePrecisionThermalizedAVX.cpp)
 else()
   target_sources(
     espresso_walberla
-    PRIVATE CollideSweepSinglePrecisionLeesEdwards.cpp
-            CollideSweepDoublePrecisionLeesEdwards.cpp
-            CollideSweepSinglePrecisionThermalized.cpp
-            CollideSweepDoublePrecisionThermalized.cpp)
+    PRIVATE StreamCollideSweepSinglePrecisionLeesEdwards.cpp
+            StreamCollideSweepDoublePrecisionLeesEdwards.cpp
+            StreamCollideSweepSinglePrecisionThermalized.cpp
+            StreamCollideSweepDoublePrecisionThermalized.cpp)
 endif()
