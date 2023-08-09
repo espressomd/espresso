@@ -21,8 +21,6 @@
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include "BoxGeometry.hpp"
-#include "MpiCallbacks.hpp"
-#include "communication.hpp"
 #include "config/config.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -39,7 +37,6 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <vector>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
@@ -165,7 +162,7 @@ boost::optional<double> get_interpolated_density(Utils::Vector3d const &pos) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
     auto const folded_pos = folded_position(pos, box_geo) / get_agrid();
-    return lb_walberla()->get_interpolated_density_at_pos(folded_pos);
+    return lb_walberla()->get_density_at_pos(folded_pos);
 #endif
   }
   throw NoLBActive();

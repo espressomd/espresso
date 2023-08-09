@@ -31,10 +31,6 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/optional.hpp>
-
-#include <functional>
 #include <memory>
 #include <stdexcept>
 

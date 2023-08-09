@@ -224,7 +224,7 @@ else:
                                            kappa=KAPPA_REDUCED,
                                            r_cut=1. / KAPPA_REDUCED)
 
-system.actors.add(coulomb)
+system.electrostatics.solver = coulomb
 
 # ### Set up the constant pH ensemble using the reaction ensemble module
 exclusion_range = PARTICLE_SIZE_REDUCED

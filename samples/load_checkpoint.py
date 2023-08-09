@@ -38,8 +38,7 @@ espressomd.assert_features(required_features)
 checkpoint = espressomd.checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 checkpoint.load()
 
-# print out actors
-
+# test solver
 print("\n### current active electrostatics method ###")
 print(system.electrostatics.solver)
 

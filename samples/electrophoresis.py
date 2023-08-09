@@ -134,7 +134,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # activate electrostatics
 #############################################################
 p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 
 # apply external force (external electric field)
 #############################################################

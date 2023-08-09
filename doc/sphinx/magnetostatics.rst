@@ -25,7 +25,7 @@ The prefactor :math:`D` is can be set by the user and is given by
 where :math:`\mu_0` and :math:`\mu` are the vacuum permittivity and the
 relative permittivity of the background material, respectively.
 
-Magnetostatic interactions are activated via the actor framework::
+Magnetostatic interactions are activated when attached to the system::
 
     import espressomd
     import espressomd.magnetostatics

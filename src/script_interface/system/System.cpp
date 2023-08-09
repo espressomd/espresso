@@ -20,15 +20,14 @@
 #include "System.hpp"
 
 #include "core/cells.hpp"
-#include "core/electrostatics/coulomb.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
-#include "core/magnetostatics/dipoles.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
 #include "core/rotate_system.hpp"
 #include "core/system/System.hpp"
+#include "core/system/System.impl.hpp"
 
 #include <utils/Vector.hpp>
 

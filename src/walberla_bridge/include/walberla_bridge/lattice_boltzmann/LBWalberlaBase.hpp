@@ -61,9 +61,9 @@ public:
                       bool consider_points_in_halo = false) const = 0;
 
   /** @brief Get interpolated densities at a position. */
-  virtual boost::optional<double> get_interpolated_density_at_pos(
-      Utils::Vector3d const &position,
-      bool consider_points_in_halo = false) const = 0;
+  virtual boost::optional<double>
+  get_density_at_pos(Utils::Vector3d const &position,
+                     bool consider_points_in_halo = false) const = 0;
 
   /**
    * @brief Interpolate a force to the stored forces to be applied on nodes

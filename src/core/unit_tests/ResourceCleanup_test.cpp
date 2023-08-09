@@ -27,11 +27,10 @@
 
 #include "communication.hpp"
 #include "cuda/utils.hpp"
-#include "electrostatics/coulomb.hpp"
-#include "magnetostatics/dipoles.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/ResourceCleanup.hpp"
 #include "system/System.hpp"
+#include "system/System.impl.hpp"
 
 #include <boost/mpi.hpp>
 

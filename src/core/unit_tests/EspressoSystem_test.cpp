@@ -32,11 +32,10 @@
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "electrostatics/coulomb.hpp"
-#include "magnetostatics/dipoles.hpp"
 #include "particle_node.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
+#include "system/System.impl.hpp"
 
 #include "cuda/init.hpp"
 #include "cuda/utils.hpp"

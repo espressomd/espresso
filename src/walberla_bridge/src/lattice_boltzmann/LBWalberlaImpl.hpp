@@ -687,12 +687,12 @@ public:
       return {};
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
       return {};
-    Utils::Vector3d v{0.0, 0.0, 0.0};
+    Utils::Vector3d v{0., 0., 0.};
     interpolate_bspline_at_pos(
-        pos, [this, &v, pos](std::array<int, 3> const node, double weight) {
+        pos, [this, &v, &pos](std::array<int, 3> const node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
-          if (weight != 0) {
+          if (weight != 0.) {
             auto const res = get_node_velocity(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("velocity", pos, node, weight);
@@ -703,19 +703,19 @@ public:
     return {std::move(v)};
   }
 
-  boost::optional<double> get_interpolated_density_at_pos(
-      Utils::Vector3d const &pos,
-      bool consider_points_in_halo = false) const override {
+  boost::optional<double>
+  get_density_at_pos(Utils::Vector3d const &pos,
+                     bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
       return {};
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
       return {};
-    double dens = 0.0;
+    double dens = 0.;
     interpolate_bspline_at_pos(
-        pos, [this, &dens, pos](std::array<int, 3> const node, double weight) {
+        pos, [this, &dens, &pos](std::array<int, 3> const node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
-          if (weight != 0) {
+          if (weight != 0.) {
             auto const res = get_node_density(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("density", pos, node, weight);
@@ -731,8 +731,8 @@ public:
                         Utils::Vector3d const &force) override {
     if (!m_lattice->pos_in_local_halo(pos))
       return false;
-    auto const force_at_node = [this, force](std::array<int, 3> const node,
-                                             double weight) {
+    auto const force_at_node = [this, &force](std::array<int, 3> const node,
+                                              double weight) {
       auto const bc =
           get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
       if (bc) {

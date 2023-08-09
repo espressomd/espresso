@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,41 +19,5 @@
 
 #pragma once
 
-#include "config/config.hpp"
-
-#include "GpuParticleData.hpp"
-#include "ResourceCleanup.hpp"
-
-#include "electrostatics/solver.hpp"
-#include "magnetostatics/solver.hpp"
-
-#include <utils/Vector.hpp>
-
-#include <cstddef>
-#include <memory>
-
-namespace System {
-
-class System {
-public:
-#ifdef CUDA
-  GpuParticleData gpu;
-#endif
-  ResourceCleanup cleanup_queue;
-
-  Utils::Vector3d box() const;
-  void init() {
-#ifdef CUDA
-    gpu.init();
-#endif
-  }
-  Coulomb::Solver coulomb;
-  Dipoles::Solver dipoles;
-};
-
-System &get_system();
-void set_system(std::shared_ptr<System> new_instance);
-void reset_system();
-bool is_system_set();
-
-} // namespace System
+#include "electrostatics/coulomb.hpp"
+#include "magnetostatics/dipoles.hpp"

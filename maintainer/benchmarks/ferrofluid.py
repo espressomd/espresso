@@ -116,7 +116,7 @@ dp3m_params = {'prefactor': 1, 'accuracy': 1e-4}
 print("Equilibration")
 system.integrator.run(min(5 * measurement_steps, 60000))
 dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
-system.actors.add(dp3m)
+system.magnetostatics.solver = dp3m
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
 print("Equilibration")

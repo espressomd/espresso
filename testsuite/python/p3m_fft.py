@@ -54,12 +54,11 @@ class FFT_test(ut.TestCase):
         self.system.time_step = 0.01
 
     def tearDown(self):
-        self.system.actors.clear()
-        self.system.part.clear()
         if espressomd.has_features(["ELECTROSTATICS"]):
             self.system.electrostatics.clear()
         if espressomd.has_features(["DIPOLES"]):
             self.system.magnetostatics.clear()
+        self.system.part.clear()
 
     def minimize(self):
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(

@@ -178,7 +178,7 @@ class Test(ut.TestCase):
     def test_elc_p3m_exceptions(self):
         P3M = espressomd.electrostatics.P3M
         ELC = espressomd.electrostatics.ELC
-        # create valid actors
+        # create valid solvers
         dh = espressomd.electrostatics.DH(prefactor=1.2, kappa=0.8, r_cut=2.0)
         p3m_params = dict(prefactor=1., epsilon=0.1, accuracy=1e-2,
                           mesh=[16, 16, 16], cao=7, r_cut=1.5, alpha=0.9)

@@ -27,8 +27,7 @@ interactions as efficiently as possible, but almost all of them require
 some knowledge to use them properly. Uneducated use can result in
 completely unphysical simulations.
 
-Coulomb interactions have to be added to the list of active actors of the system object to become
-active. This is done by calling the add-method of :attr:`espressomd.system.System.actors`.
+Coulomb interactions have to be attached to the system object to become active.
 Only one electrostatics method can be active at any time.
 
 Note that using the electrostatic interaction also requires assigning charges to
@@ -299,8 +298,8 @@ Usage notes:
     elc = espressomd.electrostatics.ELC(actor=p3m, gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.electrostatics.solver = elc
 
-Although it is technically feasible to remove ``elc`` from the list of actors
-and then to add the ``p3m`` object, it is not recommended because the P3M
+Although it is technically feasible to detach ``elc`` from the system
+and then to attach the ``p3m`` object, it is not recommended because the P3M
 parameters are mutated by *ELC*, e.g. the ``epsilon`` is made metallic.
 It is safer to instantiate a new P3M object instead of recycling one that
 has been adapted by *ELC*.
