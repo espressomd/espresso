@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2021-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,19 +21,21 @@
 
 #include <utils/Vector.hpp>
 
-/** Checkpoint data for a EK node. */
-struct EKWalberlaNodeState {
-  double density;
-  bool is_boundary_density;
-  double density_boundary;
-  bool is_boundary_flux;
-  Utils::Vector3d flux_boundary;
+#include <boost/serialization/access.hpp>
+
+#include <vector>
+
+/** Checkpoint data for a LB node. */
+struct LBWalberlaNodeState {
+  std::vector<double> populations;
+  Utils::Vector3d last_applied_force;
+  Utils::Vector3d slip_velocity;
+  bool is_boundary;
 
 private:
   friend boost::serialization::access;
   template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &density &is_boundary_density &density_boundary &is_boundary_flux
-        &flux_boundary;
+  void serialize(Archive &ar, unsigned int /* version */) {
+    ar &populations &last_applied_force &slip_velocity &is_boundary;
   }
 };

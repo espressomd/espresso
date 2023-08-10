@@ -32,18 +32,18 @@
 #include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/optional.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
 namespace ScriptInterface::walberla {
 
 static bool is_boundary_all_reduce(boost::mpi::communicator const &comm,
-                                   boost::optional<bool> const &is_boundary) {
+                                   std::optional<bool> const &is_boundary) {
   return boost::mpi::all_reduce(comm, is_boundary ? *is_boundary : false,
                                 std::logical_or<>());
 }

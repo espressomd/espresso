@@ -26,15 +26,14 @@
 #include "grid.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/mpi/reduce_optional.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/vector.hpp>
+#include <boost/mpi/collectives/reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -147,7 +146,7 @@ Utils::Vector3d calc_fluid_momentum() {
   throw NoLBActive();
 }
 
-boost::optional<Utils::Vector3d>
+std::optional<Utils::Vector3d>
 get_interpolated_velocity(Utils::Vector3d const &pos) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
@@ -158,7 +157,7 @@ get_interpolated_velocity(Utils::Vector3d const &pos) {
   throw NoLBActive();
 }
 
-boost::optional<double> get_interpolated_density(Utils::Vector3d const &pos) {
+std::optional<double> get_interpolated_density(Utils::Vector3d const &pos) {
   if (lattice_switch == ActiveLB::WALBERLA_LB) {
 #ifdef WALBERLA
     auto const folded_pos = folded_position(pos, box_geo) / get_agrid();

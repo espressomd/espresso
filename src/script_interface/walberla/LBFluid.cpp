@@ -21,6 +21,7 @@
 #ifdef WALBERLA
 
 #include "LBFluid.hpp"
+#include "LBWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
 
 #include "core/BoxGeometry.hpp"
@@ -34,7 +35,6 @@
 #include <script_interface/communication.hpp>
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
@@ -45,13 +45,13 @@
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/optional.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -299,8 +299,8 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
   auto const write_data = [&lb_obj,
                            mode](std::shared_ptr<CheckpointFile> cpfile_ptr,
                                  Context const &context) {
-    auto const get_node_checkpoint = [&](Utils::Vector3i const &ind)
-        -> boost::optional<LBWalberlaNodeState> {
+    auto const get_node_checkpoint =
+        [&](Utils::Vector3i const &ind) -> std::optional<LBWalberlaNodeState> {
       auto const pop = lb_obj.get_node_population(ind);
       auto const laf = lb_obj.get_node_last_applied_force(ind);
       auto const lbb = lb_obj.get_node_is_boundary(ind);
@@ -313,9 +313,9 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
         if (*lbb) {
           cpnode.slip_velocity = *vbb;
         }
-        return cpnode;
+        return {cpnode};
       }
-      return {boost::none};
+      return std::nullopt;
     };
 
     auto failure = false;

@@ -21,8 +21,7 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
+#include <optional>
 #include <stdexcept>
 
 // Forward Declarations
@@ -116,7 +115,7 @@ Utils::Vector3d calc_fluid_momentum();
  * @param pos Position at which the velocity is to be calculated.
  * @retval optional interpolated fluid velocity.
  */
-boost::optional<Utils::Vector3d>
+std::optional<Utils::Vector3d>
 get_interpolated_velocity(Utils::Vector3d const &pos);
 
 /**
@@ -125,7 +124,7 @@ get_interpolated_velocity(Utils::Vector3d const &pos);
  * @param pos Position at which the density is to be calculated.
  * @retval optional interpolated fluid density.
  */
-boost::optional<double> get_interpolated_density(Utils::Vector3d const &pos);
+std::optional<double> get_interpolated_density(Utils::Vector3d const &pos);
 
 } // namespace LB
 

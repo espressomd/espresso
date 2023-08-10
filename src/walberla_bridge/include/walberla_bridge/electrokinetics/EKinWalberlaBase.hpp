@@ -23,9 +23,8 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cstddef>
+#include <optional>
 #include <vector>
 
 /** @brief Interface of a lattice-based electrokinetic model. */
@@ -46,7 +45,7 @@ public:
                                 double density) = 0;
 
   /** @brief Get node density. */
-  [[nodiscard]] virtual boost::optional<double>
+  [[nodiscard]] virtual std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const = 0;
 
@@ -65,17 +64,17 @@ public:
                                       Utils::Vector3d const &flux) = 0;
 
   /** @brief Get node flux boundary conditions. */
-  [[nodiscard]] virtual boost::optional<Utils::Vector3d>
+  [[nodiscard]] virtual std::optional<Utils::Vector3d>
   get_node_flux_at_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts = false) const = 0;
 
   /** @brief Set slice flux boundary conditions. */
   virtual void set_slice_flux_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
-      std::vector<boost::optional<Utils::Vector3d>> const &flux) = 0;
+      std::vector<std::optional<Utils::Vector3d>> const &flux) = 0;
 
   /** @brief Get slice flux boundary conditions. */
-  [[nodiscard]] virtual std::vector<boost::optional<Utils::Vector3d>>
+  [[nodiscard]] virtual std::vector<std::optional<Utils::Vector3d>>
   get_slice_flux_at_boundary(Utils::Vector3i const &lower_corner,
                              Utils::Vector3i const &upper_corner) const = 0;
 
@@ -86,17 +85,17 @@ public:
                                          double density) = 0;
 
   /** @brief Get node density boundary conditions. */
-  [[nodiscard]] virtual boost::optional<double>
+  [[nodiscard]] virtual std::optional<double>
   get_node_density_at_boundary(Utils::Vector3i const &node,
                                bool consider_ghosts = false) const = 0;
 
   /** @brief Set slice density boundary conditions. */
   virtual void set_slice_density_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
-      std::vector<boost::optional<double>> const &density) = 0;
+      std::vector<std::optional<double>> const &density) = 0;
 
   /** @brief Get slice density boundary conditions. */
-  [[nodiscard]] virtual std::vector<boost::optional<double>>
+  [[nodiscard]] virtual std::vector<std::optional<double>>
   get_slice_density_at_boundary(Utils::Vector3i const &lower_corner,
                                 Utils::Vector3i const &upper_corner) const = 0;
 
@@ -104,17 +103,17 @@ public:
   remove_node_from_density_boundary(Utils::Vector3i const &node) = 0;
 
   /** @brief Check if node has flux boundary conditions. */
-  [[nodiscard]] virtual boost::optional<bool>
+  [[nodiscard]] virtual std::optional<bool>
   get_node_is_flux_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts = false) const = 0;
 
   /** @brief Check if node has density boundary conditions. */
-  [[nodiscard]] virtual boost::optional<bool>
+  [[nodiscard]] virtual std::optional<bool>
   get_node_is_density_boundary(Utils::Vector3i const &node,
                                bool consider_ghosts = false) const = 0;
 
   /** @brief Check if node has any boundary conditions. */
-  [[nodiscard]] virtual boost::optional<bool>
+  [[nodiscard]] virtual std::optional<bool>
   get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const = 0;
 

@@ -33,7 +33,6 @@
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>

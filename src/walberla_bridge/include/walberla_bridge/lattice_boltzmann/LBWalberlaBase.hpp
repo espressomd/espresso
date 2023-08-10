@@ -32,10 +32,9 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <vector>
 
 /** @brief Interface of a lattice-based fluid model. */
@@ -56,12 +55,12 @@ public:
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
   /** @brief Get interpolated velocities at a position. */
-  virtual boost::optional<Utils::Vector3d>
+  virtual std::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &position,
                       bool consider_points_in_halo = false) const = 0;
 
   /** @brief Get interpolated densities at a position. */
-  virtual boost::optional<double>
+  virtual std::optional<double>
   get_density_at_pos(Utils::Vector3d const &position,
                      bool consider_points_in_halo = false) const = 0;
 
@@ -73,11 +72,11 @@ public:
                                 Utils::Vector3d const &force) = 0;
 
   /** @brief Get stored force to be applied on node in the next time step. */
-  virtual boost::optional<Utils::Vector3d>
+  virtual std::optional<Utils::Vector3d>
   get_node_force_to_be_applied(Utils::Vector3i const &node) const = 0;
 
   /** @brief Get stored force that was applied on node in the last time step. */
-  virtual boost::optional<Utils::Vector3d>
+  virtual std::optional<Utils::Vector3d>
   get_node_last_applied_force(Utils::Vector3i const &node,
                               bool consider_ghosts = false) const = 0;
 
@@ -99,7 +98,7 @@ public:
                                std::vector<double> const &force) = 0;
 
   /** @brief Get node population. */
-  virtual boost::optional<std::vector<double>>
+  virtual std::optional<std::vector<double>>
   get_node_population(Utils::Vector3i const &node,
                       bool consider_ghosts = false) const = 0;
 
@@ -118,7 +117,7 @@ public:
                                     std::vector<double> const &population) = 0;
 
   /** @brief Get node velocity. */
-  virtual boost::optional<Utils::Vector3d>
+  virtual std::optional<Utils::Vector3d>
   get_node_velocity(Utils::Vector3i const &node,
                     bool consider_ghosts = false) const = 0;
 
@@ -137,7 +136,7 @@ public:
                                   std::vector<double> const &velocity) = 0;
 
   /** @brief Get node density. */
-  virtual boost::optional<double>
+  virtual std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const = 0;
 
@@ -156,7 +155,7 @@ public:
                                  std::vector<double> const &density) = 0;
 
   /** @brief Get node velocity boundary conditions. */
-  virtual boost::optional<Utils::Vector3d>
+  virtual std::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(Utils::Vector3i const &node,
                                 bool consider_ghosts = false) const = 0;
 
@@ -166,24 +165,24 @@ public:
                                 Utils::Vector3d const &velocity) = 0;
 
   /** @brief Get slice velocity boundary conditions. */
-  virtual std::vector<boost::optional<Utils::Vector3d>>
+  virtual std::vector<std::optional<Utils::Vector3d>>
   get_slice_velocity_at_boundary(Utils::Vector3i const &lower_corner,
                                  Utils::Vector3i const &upper_corner) const = 0;
 
   /** @brief Set slice velocity boundary conditions. */
   virtual void set_slice_velocity_at_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
-      std::vector<boost::optional<Utils::Vector3d>> const &velocity) = 0;
+      std::vector<std::optional<Utils::Vector3d>> const &velocity) = 0;
 
   /** @brief Get (stored) force applied on node due to boundary condition. */
-  virtual boost::optional<Utils::Vector3d>
+  virtual std::optional<Utils::Vector3d>
   get_node_boundary_force(Utils::Vector3i const &node) const = 0;
 
   /** @brief Remove a node from the boundaries. */
   virtual bool remove_node_from_boundary(Utils::Vector3i const &node) = 0;
 
   /** @brief Check if node has velocity boundary conditions. */
-  virtual boost::optional<bool>
+  virtual std::optional<bool>
   get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const = 0;
 
@@ -214,7 +213,7 @@ public:
                           unsigned int shear_plane_normal) const = 0;
 
   /** @brief Get node pressure tensor. */
-  virtual boost::optional<Utils::VectorXd<9>>
+  virtual std::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(Utils::Vector3i const &node) const = 0;
 
   /** @brief Get slice pressure tensor. */
@@ -247,7 +246,7 @@ public:
   virtual double get_kT() const noexcept = 0;
 
   /** @brief Set the RNG counter (if thermalized). */
-  [[nodiscard]] virtual boost::optional<uint64_t> get_rng_state() const = 0;
+  [[nodiscard]] virtual std::optional<uint64_t> get_rng_state() const = 0;
 
   /** @brief Set the rng state of thermalized LBs */
   virtual void set_rng_state(uint64_t counter) = 0;

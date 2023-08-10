@@ -32,7 +32,9 @@
 #include <script_interface/ObjectList.hpp>
 #include <script_interface/ScriptInterface.hpp>
 
+#include <cassert>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace ScriptInterface::walberla {
@@ -132,7 +134,7 @@ private:
   }
 
   void set_solver(Variant const &solver_variant) {
-    boost::optional<decltype(m_poisson_solver)> solver;
+    std::optional<decltype(m_poisson_solver)> solver;
     if (is_none(solver_variant)) {
       solver = std::shared_ptr<EKNone>();
     } else {
@@ -146,6 +148,7 @@ private:
         solver = get_value<std::shared_ptr<EKNone>>(solver_variant);
       }
     }
+    assert(solver.has_value());
     m_poisson_solver = *solver;
     auto const visitor = GetPoissonSolverInstance();
     auto const instance = boost::apply_visitor(visitor, m_poisson_solver);

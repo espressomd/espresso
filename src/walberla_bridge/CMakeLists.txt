@@ -51,8 +51,7 @@ endif()
 
 target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
-  PRIVATE Boost::boost espresso::cpp_flags espresso::walberla::cpp_flags
-          ${WALBERLA_LIBS})
+  PRIVATE espresso::cpp_flags espresso::walberla::cpp_flags ${WALBERLA_LIBS})
 target_include_directories(
   espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
   PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)

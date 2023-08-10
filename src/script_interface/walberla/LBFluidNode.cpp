@@ -29,15 +29,15 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace ScriptInterface::walberla {
 
 static bool is_boundary_all_reduce(boost::mpi::communicator const &comm,
-                                   boost::optional<bool> const &is_boundary) {
+                                   std::optional<bool> const &is_boundary) {
   return boost::mpi::all_reduce(comm, is_boundary ? *is_boundary : false,
                                 std::logical_or<>());
 }
@@ -113,7 +113,7 @@ Variant LBFluidNode::do_call_method(std::string const &name,
   }
   if (name == "get_pressure_tensor" or name == "get_pressure_tensor_neq") {
     auto const result = m_lb_fluid->get_node_pressure_tensor(m_index);
-    auto value = boost::optional<std::vector<double>>{};
+    auto value = std::optional<std::vector<double>>{};
     if (result) {
       value = (*result / m_conv_press).as_vector();
     }

@@ -43,6 +43,7 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -120,7 +121,7 @@ protected:
   // TODO: kernel for that
   // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  [[nodiscard]] boost::optional<CellInterval>
+  [[nodiscard]] std::optional<CellInterval>
   get_interval(Utils::Vector3i const &lower_corner,
                Utils::Vector3i const &upper_corner) const {
     auto const &lattice = get_lattice();
@@ -129,7 +130,7 @@ protected:
     auto const lower_bc = get_block_and_cell(lattice, cell_min, true);
     auto const upper_bc = get_block_and_cell(lattice, cell_max, true);
     if (not lower_bc or not upper_bc) {
-      return {};
+      return std::nullopt;
     }
     assert(&(*(lower_bc->block)) == &(*(upper_bc->block)));
     return {CellInterval(lower_bc->cell, upper_bc->cell)};
@@ -378,13 +379,13 @@ public:
     return true;
   }
 
-  [[nodiscard]] boost::optional<double>
+  [[nodiscard]] std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
 
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
     auto const density_field =
         bc->block->template getData<DensityField>(m_density_field_id);
@@ -457,12 +458,12 @@ public:
     return true;
   }
 
-  [[nodiscard]] boost::optional<Utils::Vector3d>
+  [[nodiscard]] std::optional<Utils::Vector3d>
   get_node_flux_at_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary_flux->node_is_boundary(node))
-      return {boost::none};
+      return std::nullopt;
 
     return {m_boundary_flux->get_node_value_at_boundary(node)};
   }
@@ -489,19 +490,19 @@ public:
     return true;
   }
 
-  [[nodiscard]] boost::optional<double>
+  [[nodiscard]] std::optional<double>
   get_node_density_at_boundary(Utils::Vector3i const &node,
                                bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary_density->node_is_boundary(node))
-      return {boost::none};
+      return std::nullopt;
 
     return {double_c(m_boundary_density->get_node_value_at_boundary(node))};
   }
 
   void set_slice_density_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
-      std::vector<boost::optional<double>> const &density) override {
+      std::vector<std::optional<double>> const &density) override {
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -527,11 +528,11 @@ public:
     }
   }
 
-  [[nodiscard]] std::vector<boost::optional<double>>
+  [[nodiscard]] std::vector<std::optional<double>>
   get_slice_density_at_boundary(
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
-    std::vector<boost::optional<double>> out;
+    std::vector<std::optional<double>> out;
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -547,7 +548,7 @@ public:
               out.emplace_back(
                   m_boundary_density->get_node_value_at_boundary(node));
             } else {
-              out.emplace_back(boost::none);
+              out.emplace_back(std::nullopt);
             }
           }
         }
@@ -559,7 +560,7 @@ public:
 
   void set_slice_flux_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
-      std::vector<boost::optional<Utils::Vector3d>> const &flux) override {
+      std::vector<std::optional<Utils::Vector3d>> const &flux) override {
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -585,11 +586,11 @@ public:
     }
   }
 
-  [[nodiscard]] std::vector<boost::optional<Utils::Vector3d>>
+  [[nodiscard]] std::vector<std::optional<Utils::Vector3d>>
   get_slice_flux_at_boundary(
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
-    std::vector<boost::optional<Utils::Vector3d>> out;
+    std::vector<std::optional<Utils::Vector3d>> out;
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -605,7 +606,7 @@ public:
               out.emplace_back(
                   m_boundary_flux->get_node_value_at_boundary(node));
             } else {
-              out.emplace_back(boost::none);
+              out.emplace_back(std::nullopt);
             }
           }
         }
@@ -650,32 +651,32 @@ public:
     return true;
   }
 
-  [[nodiscard]] boost::optional<bool>
+  [[nodiscard]] std::optional<bool>
   get_node_is_flux_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
     return {m_boundary_flux->node_is_boundary(node)};
   }
 
-  [[nodiscard]] boost::optional<bool>
+  [[nodiscard]] std::optional<bool>
   get_node_is_density_boundary(Utils::Vector3i const &node,
                                bool consider_ghosts) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
     return {m_boundary_density->node_is_boundary(node)};
   }
 
-  [[nodiscard]] boost::optional<bool>
+  [[nodiscard]] std::optional<bool>
   get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
     return {m_boundary_density->node_is_boundary(node) or
             m_boundary_flux->node_is_boundary(node)};
