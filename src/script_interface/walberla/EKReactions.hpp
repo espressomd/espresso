@@ -23,9 +23,12 @@
 
 #ifdef WALBERLA
 
-#include "EKReaction.hpp"
+#include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
 
-#include "core/grid_based_algorithms/ek_reactions.hpp"
+#include "core/ek/EKReactions.hpp"
+#include "core/ek/EKWalberla.hpp"
+
+#include "EKReaction.hpp"
 
 #include <script_interface/ObjectList.hpp>
 #include <script_interface/ScriptInterface.hpp>
@@ -35,13 +38,24 @@
 namespace ScriptInterface::walberla {
 
 class EKReactions : public ObjectList<EKReaction> {
+  std::shared_ptr<::EK::EKWalberla::ek_reactions_type> m_ek_reactions;
+
   void add_in_core(std::shared_ptr<EKReaction> const &obj_ptr) override {
-    EK::ek_reactions.add(obj_ptr->get_instance());
+    m_ek_reactions->add(obj_ptr->get_instance());
   }
   void remove_in_core(std::shared_ptr<EKReaction> const &obj_ptr) override {
-    EK::ek_reactions.remove(obj_ptr->get_instance());
+    m_ek_reactions->remove(obj_ptr->get_instance());
   }
+
+protected:
+  void do_construct(VariantMap const &params) override {
+    m_ek_reactions = std::make_shared<::EK::EKWalberla::ek_reactions_type>();
+  }
+
+public:
+  auto &get_handle() { return m_ek_reactions; }
 };
+
 } // namespace ScriptInterface::walberla
 
 #endif // WALBERLA

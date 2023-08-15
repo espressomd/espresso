@@ -51,21 +51,6 @@ class EKNone(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class EKContainer(ScriptObjectList):
-    _so_name = "walberla::EKContainer"
-    _so_features = ("WALBERLA",)
-
-    def add(self, ekspecies):
-        self.call_method("add", object=ekspecies)
-
-    def remove(self, ekspecies):
-        self.call_method("remove", object=ekspecies)
-
-    def clear(self):
-        self.call_method("clear")
-
-
-@script_interface_register
 class EKSpecies(ScriptInterfaceHelper,
                 espressomd.detail.walberla.LatticeModel):
     """
@@ -665,17 +650,33 @@ class EKIndexedReaction(ScriptInterfaceHelper):
 class EKReactions(ScriptObjectList):
     _so_name = "walberla::EKReactions"
     _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("clear",)
 
     def add(self, reaction):
         if not isinstance(reaction, (EKBulkReaction, EKIndexedReaction)):
             raise TypeError("reaction object is not of correct type.")
-
         self.call_method("add", object=reaction)
-
-        return reaction
 
     def remove(self, reaction):
         self.call_method("remove", object=reaction)
 
-    def clear(self):
-        self.call_method("clear")
+
+@script_interface_register
+class EKContainer(ScriptObjectList):
+    _so_name = "walberla::EKContainer"
+    _so_creation_policy = "GLOBAL"
+    _so_features = ("WALBERLA",)
+    _so_bind_methods = ("clear",)
+
+    def __init__(self, *args, **kwargs):
+        if "sip" not in kwargs:
+            kwargs["reactions"] = EKReactions()
+            super().__init__(*args, **kwargs)
+        else:
+            super().__init__(**kwargs)
+
+    def add(self, ekspecies):
+        self.call_method("add", object=ekspecies)
+
+    def remove(self, ekspecies):
+        self.call_method("remove", object=ekspecies)

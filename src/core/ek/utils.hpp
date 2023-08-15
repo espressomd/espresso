@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,23 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LATTICE_INTERPOLATION_HPP
-#define LATTICE_INTERPOLATION_HPP
 
-#include <utils/Vector.hpp>
+#pragma once
 
-/**
- * @brief Calculates the fluid velocity at a given position of the
- * lattice.
- * @note It can lead to undefined behaviour if the
- * position is not within the local lattice.
- */
-const Utils::Vector3d
-lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos);
+#include <stdexcept>
 
-/**
- * @brief Add a force density to the fluid at the given position.
- */
-void lb_lbinterpolation_add_force_density(const Utils::Vector3d &pos,
-                                          const Utils::Vector3d &force_density);
-#endif
+namespace EK {
+
+struct NoEKActive : public std::exception {
+  const char *what() const noexcept override { return "EK not activated"; }
+};
+
+} // namespace EK

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,27 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "config/config.hpp"
 
-#ifdef WALBERLA
+#include "ek/Solver.hpp"
 
-#include "ek_reactions.hpp"
+#include "ek/EKNone.hpp"
+#include "ek/EKWalberla.hpp"
 
-#include <algorithm>
+#include <memory>
+#include <optional>
+#include <variant>
 
 namespace EK {
 
-EKReactions<walberla::EKReactionBase> ek_reactions;
+using DiffusionAdvectionReactionActor = std::variant<
+#ifdef WALBERLA
+    std::shared_ptr<EK::EKWalberla>,
+#endif
+    std::shared_ptr<EK::EKNone>>;
 
-void perform_reactions() {
-  if (ek_reactions.empty()) {
-    return;
-  }
+struct Solver::Implementation {
+  /// @brief Main diffusion-advection-reaction solver.
+  std::optional<DiffusionAdvectionReactionActor> solver;
 
-  std::for_each(ek_reactions.begin(), ek_reactions.end(),
-                [](auto const &reaction) { reaction->perform_reaction(); });
-}
+  Implementation() : solver{} {}
+};
 
 } // namespace EK
-
-#endif // WALBERLA

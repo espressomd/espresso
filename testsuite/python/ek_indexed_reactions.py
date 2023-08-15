@@ -42,9 +42,8 @@ class EKReaction(ut.TestCase):
     system.time_step = TAU
     system.cell_system.skin = 0.4
 
-    def tearDown(self) -> None:
-        self.system.ekcontainer.clear()
-        self.system.ekreactions.clear()
+    def tearDown(self):
+        self.system.ekcontainer = None
 
     def analytic_density_profiles(
             self, width, reaction_rates, diffusion_coefficients, initial_densities, agrid):
@@ -76,9 +75,8 @@ class EKReaction(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.tau = self.TAU
-
-        self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.TAU, solver=eksolver)
 
         species_A = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=self.INITIAL_DENSITIES[0],
@@ -126,8 +124,9 @@ class EKReaction(ut.TestCase):
             lattice=lattice, tau=self.TAU)
         reaction_right[-2, :, :] = True
 
-        self.system.ekreactions.add(reaction_left)
-        self.system.ekreactions.add(reaction_right)
+        self.system.ekcontainer.reactions.add(reaction_left)
+        self.system.ekcontainer.reactions.add(reaction_right)
+        self.assertEqual(len(self.system.ekcontainer.reactions), 2)
 
         wall_left = espressomd.shapes.Wall(
             normal=[1, 0, 0], dist=self.PADDING * self.AGRID)
@@ -161,6 +160,10 @@ class EKReaction(ut.TestCase):
             analytic_density_profile,
             rtol=self.REACTION_RATES[0],
             atol=0)
+
+        self.system.ekcontainer.reactions.remove(reaction_right)
+        self.system.ekcontainer.reactions.remove(reaction_left)
+        self.assertEqual(len(self.system.ekcontainer.reactions), 0)
 
 
 if __name__ == "__main__":

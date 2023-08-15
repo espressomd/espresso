@@ -128,7 +128,7 @@ class Test(ut.TestCase):
 
         self.assertIsNone(dp3m.call_method("unknown"))
         self.system.magnetostatics.solver = dp3m
-        self.assertIsNone(self.system.electrostatics.call_method("unknown"))
+        self.assertIsNone(self.system.magnetostatics.call_method("unknown"))
 
     def check_obs_stats(self, key):
         # check observable statistics have the correct shape

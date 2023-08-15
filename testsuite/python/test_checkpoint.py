@@ -69,24 +69,10 @@ class CheckpointTest(ut.TestCase):
                 'THERM.SDM' in modes or 'INT.SDM' in modes):
             cls.ref_periodicity = np.array([False, False, False])
 
-    def get_active_actor_of_type(self, actor_type):
-        for actor in system.actors.active_actors:
-            if isinstance(actor, actor_type):
-                return actor
-        self.fail(
-            f"system doesn't have an actor of type {actor_type.__name__}")
-
-    def test_get_active_actor_of_type(self):
-        if system.actors.active_actors:
-            actor = system.actors.active_actors[0]
-            self.assertEqual(self.get_active_actor_of_type(type(actor)), actor)
-        with self.assertRaisesRegex(AssertionError, "system doesn't have an actor of type Wall"):
-            self.get_active_actor_of_type(espressomd.shapes.Wall)
-
     @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_fluid(self):
-        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
+        lbf = system.lb
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
         cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
         cpt_path = str(cpt_root / "lb") + "{}.cpt"
@@ -177,8 +163,6 @@ class CheckpointTest(ut.TestCase):
 
         self.assertEqual(len(system.ekcontainer), 1)
         ek_species = system.ekcontainer[0]
-        self.assertTrue(
-            system.ekcontainer.call_method("is_poisson_solver_set"))
         self.assertAlmostEqual(system.ekcontainer.tau, system.time_step,
                                delta=1e-7)
         self.assertIsInstance(system.ekcontainer.solver,
@@ -277,7 +261,7 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_vtk(self):
-        lbf = self.get_active_actor_of_type(espressomd.lb.LBFluidWalberla)
+        lbf = system.lb
         self.assertEqual(len(lbf.vtk_writers), 2)
         vtk_suffix = config.test_name
         key_auto = f"vtk_out/auto_lb_{vtk_suffix}"

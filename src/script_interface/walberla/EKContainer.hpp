@@ -25,9 +25,15 @@
 
 #include "EKFFT.hpp"
 #include "EKNone.hpp"
+#include "EKReactions.hpp"
 #include "EKSpecies.hpp"
 
-#include "core/grid_based_algorithms/ek_container.hpp"
+#include <walberla_bridge/electrokinetics/EKContainer.hpp>
+#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+
+#include "core/ek/EKWalberla.hpp"
+#include "core/ek/Solver.hpp"
+#include "core/system/System.hpp"
 
 #include <script_interface/ObjectList.hpp>
 #include <script_interface/ScriptInterface.hpp>
@@ -36,66 +42,103 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <variant>
 
 namespace ScriptInterface::walberla {
 
 class EKContainer : public ObjectList<EKSpecies> {
   using Base = ObjectList<EKSpecies>;
 
-  boost::variant<
+  std::variant<
 #ifdef WALBERLA_FFT
       std::shared_ptr<EKFFT>,
 #endif
       std::shared_ptr<EKNone>>
-      m_poisson_solver{std::shared_ptr<EKNone>()};
+      m_poisson_solver;
+
+  std::shared_ptr<EKReactions> m_ek_reactions;
+  std::shared_ptr<::EK::EKWalberla> m_ek_instance;
+  std::shared_ptr<::EK::EKWalberla::ek_container_type> m_ek_container;
+  bool m_is_active;
 
   void add_in_core(std::shared_ptr<EKSpecies> const &obj_ptr) override {
     context()->parallel_try_catch(
-        [&obj_ptr]() { EK::ek_container.add(obj_ptr->get_ekinstance()); });
+        [this, &obj_ptr]() { m_ek_container->add(obj_ptr->get_ekinstance()); });
   }
   void remove_in_core(std::shared_ptr<EKSpecies> const &obj_ptr) override {
-    EK::ek_container.remove(obj_ptr->get_ekinstance());
+    m_ek_container->remove(obj_ptr->get_ekinstance());
+  }
+
+  struct GetPoissonSolverAsVariant {
+    template <typename T>
+    auto operator()(std::shared_ptr<T> const &solver) const {
+      return (solver) ? Variant{solver} : Variant{none};
+    }
+  };
+
+  Variant get_solver() const {
+    return std::visit(GetPoissonSolverAsVariant(), m_poisson_solver);
+  }
+
+  struct GetPoissonSolverCoreInstance {
+    template <typename T>
+    std::shared_ptr<::walberla::PoissonSolver>
+    operator()(std::shared_ptr<T> const &solver) const {
+      return solver->get_instance();
+    }
+  };
+
+  auto extract_solver(Variant const &v) {
+    std::optional<decltype(m_poisson_solver)> solver;
+    auto so_ptr = get_value<ObjectRef>(v);
+    if (auto ptr = std::dynamic_pointer_cast<EKNone>(so_ptr)) {
+      solver = std::move(ptr);
+    }
+#ifdef WALBERLA_FFT
+    else if (auto ptr = std::dynamic_pointer_cast<EKFFT>(so_ptr)) {
+      solver = std::move(ptr);
+    }
+#endif
+    assert(solver.has_value());
+    return *solver;
+  }
+
+  void set_solver(Variant const &v) {
+    m_poisson_solver = extract_solver(v);
+    auto handle = std::visit(GetPoissonSolverCoreInstance{}, m_poisson_solver);
+    context()->parallel_try_catch(
+        [this, &handle]() { m_ek_container->set_poisson_solver(handle); });
   }
 
 public:
   EKContainer() : Base::ObjectList() {
     add_parameters({
-        {"tau",
-         [this](Variant const &v) {
-           if (is_none(v)) {
-             if (get_value<int>(do_call_method("size", {})) == 0) {
-               EK::ek_container.set_tau(0.);
-               return;
-             }
-             context()->parallel_try_catch([]() {
-               throw std::domain_error(
-                   "Parameter 'tau' is required when container isn't empty");
-             });
-           }
-           auto const tau = get_value<double>(v);
-           context()->parallel_try_catch([tau]() {
-             if (tau <= 0.) {
-               throw std::domain_error("Parameter 'tau' must be > 0");
-             }
-           });
-           EK::ek_container.set_tau(get_value<double>(v));
-         },
-         []() {
-           auto const tau = EK::ek_container.get_tau();
-           return (tau == 0.) ? Variant{none} : Variant{tau};
-         }},
+        {"tau", AutoParameter::read_only,
+         [this]() { return m_ek_container->get_tau(); }},
         {"solver", [this](Variant const &v) { set_solver(v); },
          [this]() { return get_solver(); }},
+        {"reactions", AutoParameter::read_only,
+         [this]() { return m_ek_reactions; }},
+        {"is_active", AutoParameter::read_only,
+         [this]() { return m_is_active; }},
     });
   }
 
   void do_construct(VariantMap const &params) override {
-    if (params.count("solver")) {
-      set_solver(params.at("solver"));
-    }
-    if (params.count("tau")) {
-      do_set_parameter("tau", params.at("tau"));
-    }
+    m_is_active = false;
+    auto const tau = get_value<double>(params, "tau");
+    context()->parallel_try_catch([tau]() {
+      if (tau <= 0.) {
+        throw std::domain_error("Parameter 'tau' must be > 0");
+      }
+    });
+    m_poisson_solver = extract_solver(
+        (params.count("solver") == 1) ? params.at("solver") : Variant{none});
+    m_ek_container = std::make_shared<::EK::EKWalberla::ek_container_type>(
+        tau, std::visit(GetPoissonSolverCoreInstance{}, m_poisson_solver));
+    m_ek_reactions = get_value<decltype(m_ek_reactions)>(params, "reactions");
+    m_ek_instance = std::make_shared<::EK::EKWalberla>(
+        m_ek_container, m_ek_reactions->get_handle());
     // EK species must be added after tau
     Base::do_construct(params);
   }
@@ -103,57 +146,22 @@ public:
 protected:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
-    if (method == "is_poisson_solver_set") {
-      return EK::ek_container.is_poisson_solver_set();
+    if (method == "activate") {
+      context()->parallel_try_catch([this]() {
+        ::System::get_system().ek.set<::EK::EKWalberla>(m_ek_instance);
+      });
+      m_is_active = true;
+      return {};
+    }
+    if (method == "deactivate") {
+      if (m_is_active) {
+        ::System::get_system().ek.reset();
+        m_is_active = false;
+      }
+      return {};
     }
 
     return Base::do_call_method(method, parameters);
-  }
-
-private:
-  struct GetPoissonSolverVariant : public boost::static_visitor<Variant> {
-    template <typename T>
-    auto operator()(std::shared_ptr<T> const &solver) const {
-      return (solver) ? Variant{solver} : Variant{none};
-    }
-  };
-
-  struct GetPoissonSolverInstance
-      : public boost::static_visitor<
-            std::shared_ptr<::walberla::PoissonSolver>> {
-    template <typename T>
-    auto operator()(std::shared_ptr<T> const &solver) const {
-      return (solver) ? solver->get_instance()
-                      : std::shared_ptr<::walberla::PoissonSolver>();
-    }
-  };
-
-  Variant get_solver() const {
-    auto const visitor = GetPoissonSolverVariant();
-    return boost::apply_visitor(visitor, m_poisson_solver);
-  }
-
-  void set_solver(Variant const &solver_variant) {
-    std::optional<decltype(m_poisson_solver)> solver;
-    if (is_none(solver_variant)) {
-      solver = std::shared_ptr<EKNone>();
-    } else {
-#ifdef WALBERLA_FFT
-      try {
-        solver = get_value<std::shared_ptr<EKFFT>>(solver_variant);
-      } catch (...) {
-      }
-#endif
-      if (not solver) {
-        solver = get_value<std::shared_ptr<EKNone>>(solver_variant);
-      }
-    }
-    assert(solver.has_value());
-    m_poisson_solver = *solver;
-    auto const visitor = GetPoissonSolverInstance();
-    auto const instance = boost::apply_visitor(visitor, m_poisson_solver);
-    context()->parallel_try_catch(
-        [&instance]() { EK::ek_container.set_poisson_solver(instance); });
   }
 };
 

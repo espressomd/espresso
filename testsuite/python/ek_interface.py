@@ -51,35 +51,23 @@ class EKTest:
     system.cell_system.skin = 1.0
 
     def setUp(self):
+        self.system.box_l = 3 * [6.0]
         self.lattice = self.ek_lattice_class(
             n_ghost_layers=1, agrid=self.params["agrid"])
         ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
-        self.system.ekcontainer.solver = ek_solver
-        self.system.ekcontainer.tau = self.system.time_step
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.system.time_step, solver=ek_solver)
 
     def tearDown(self):
-        self.system.actors.clear()
-        self.system.ekcontainer.clear()
+        self.system.lb = None
+        self.system.ekcontainer = None
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.time_step = self.params["tau"]
-        self.system.ekcontainer.solver = None
 
     def make_default_ek_species(self):
         return self.ek_species_class(
             lattice=self.lattice, **self.ek_params, **self.ek_species_params)
-
-    def test_ek_container_poisson_solver(self):
-        ekcontainer = self.system.ekcontainer
-        ekcontainer.solver = None
-        self.assertFalse(ekcontainer.call_method("is_poisson_solver_set"))
-        self.assertIsNone(ekcontainer.solver)
-        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
-        self.assertFalse(ekcontainer.call_method("is_poisson_solver_set"))
-        ekcontainer.solver = ek_solver
-        self.assertTrue(ekcontainer.call_method("is_poisson_solver_set"))
-        self.assertIsInstance(self.system.ekcontainer.solver,
-                              espressomd.electrokinetics.EKNone)
 
     def test_ek_species(self):
         # inactive species
@@ -190,8 +178,6 @@ class EKTest:
         self.assertAlmostEqual(ek_solver.permittivity, 0.05, delta=self.atol)
 
         self.system.ekcontainer.solver = ek_solver
-        self.assertTrue(
-            self.system.ekcontainer.call_method("is_poisson_solver_set"))
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKFFT)
 
@@ -204,8 +190,6 @@ class EKTest:
             self.ek_params["single_precision"])
 
         self.system.ekcontainer.solver = ek_solver
-        self.assertTrue(
-            self.system.ekcontainer.call_method("is_poisson_solver_set"))
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
 
@@ -215,26 +199,38 @@ class EKTest:
         self.system.ekcontainer.add(ek_species)
         incompatible_lattice = self.ek_lattice_class(
             n_ghost_layers=2, agrid=self.params["agrid"])
+        incompatible_ek_solver = espressomd.electrokinetics.EKNone(
+            lattice=incompatible_lattice)
         incompatible_ek_species = self.ek_species_class(
-            lattice=incompatible_lattice, **self.ek_params, **self.ek_species_params)
+            lattice=incompatible_lattice, **self.ek_params,
+            **self.ek_species_params)
         with self.assertRaisesRegex(RuntimeError, "EKSpecies lattice incompatible with existing Poisson solver lattice"):
             self.system.ekcontainer.add(incompatible_ek_species)
-        with self.assertRaisesRegex(RuntimeError, "EKSpecies lattice incompatible with existing EKSpecies lattice"):
-            self.system.ekcontainer.solver = None
-            self.system.ekcontainer.add(incompatible_ek_species)
-        with self.assertRaisesRegex(ValueError, "Parameter 'tau' is required when container isn't empty"):
-            self.system.ekcontainer.tau = None
         with self.assertRaisesRegex(RuntimeError, "Poisson solver lattice incompatible with existing EKSpecies lattice"):
             self.system.ekcontainer.clear()
+            self.system.ekcontainer.solver = incompatible_ek_solver
             self.system.ekcontainer.add(incompatible_ek_species)
             self.system.ekcontainer.solver = ek_solver
-        with self.assertRaisesRegex(ValueError, "Parameter 'tau' must be > 0"):
-            self.system.ekcontainer.tau = 0.
-        self.assertAlmostEqual(
-            self.system.ekcontainer.tau, self.system.time_step, delta=1e-7)
-        self.system.ekcontainer.clear()
-        self.system.ekcontainer.tau = None
-        self.assertIsNone(self.system.ekcontainer.tau)
+
+    def test_parameter_change_exceptions(self):
+        ek_solver = self.system.ekcontainer.solver
+        ek_species = self.make_default_ek_species()
+        self.system.ekcontainer.add(ek_species)
+        self.system.ekcontainer.solver = ek_solver
+        with self.assertRaisesRegex(Exception, "Temperature change not supported by EK"):
+            self.system.thermostat.turn_off()
+        with self.assertRaisesRegex(Exception, "Time step change not supported by EK"):
+            self.system.time_step /= 2.
+        if espressomd.has_features("ELECTROSTATICS"):
+            self.system.electrostatics.solver = espressomd.electrostatics.DH(
+                prefactor=1., kappa=1., r_cut=1.)  # should not fail
+            self.system.electrostatics.clear()
+        with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by EK"):
+            self.system.box_l = [1., 2., 3.]
+        np.testing.assert_allclose(
+            np.copy(self.system.box_l), [1., 2., 3.], atol=1e-7)
+        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by EK"):
+            self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
     def test_ek_reactants(self):
         ek_species = self.make_default_ek_species()
@@ -312,13 +308,6 @@ class EKTest:
         print("\nTesting EK runtime error messages:", file=sys.stderr)
         sys.stderr.flush()
 
-        # check exceptions without EK Poisson solver
-        with self.assertRaisesRegex(Exception, "EK requires a Poisson solver"):
-            self.system.ekcontainer.solver = None
-            self.system.integrator.run(1)
-        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
-        self.system.ekcontainer.solver = ek_solver
-
         # check exceptions without LB force field
         with self.assertRaisesRegex(Exception, "friction coupling enabled but no force field accessible"):
             ek_species.friction_coupling = True
@@ -342,7 +331,7 @@ class EKTest:
             lb = self.lb_fluid_class(
                 lattice=self.lattice, density=0.5, kinematic_viscosity=3.,
                 tau=2. * self.params["tau"], **self.lb_params)
-            self.system.actors.add(lb)
+            self.system.lb = lb
             self.system.integrator.run(1)
 
         print("End of EK runtime error messages", file=sys.stderr)
@@ -382,6 +371,9 @@ class EKTest:
             self.ek_species_class(**make_kwargs(density=-1.))
         with self.assertRaisesRegex(ValueError, "Parameter 'kT' must be >= 0"):
             self.ek_species_class(**make_kwargs(kT=-1.))
+        with self.assertRaisesRegex(ValueError, "Parameter 'tau' must be > 0"):
+            espressomd.electrokinetics.EKContainer(
+                tau=0., solver=self.system.ekcontainer.solver)
 
     def test_bool_operations_on_node(self):
         ekspecies = self.make_default_ek_species()

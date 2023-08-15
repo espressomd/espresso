@@ -40,10 +40,10 @@ class LBTest:
         self.lb_fluid = self.lb_class(
             agrid=1., density=1., kinematic_viscosity=1.,
             tau=self.system.time_step, **self.lb_params)
-        self.system.actors.add(self.lb_fluid)
+        self.system.lb = self.lb_fluid
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def test_slicing(self):
         lb_fluid = self.lb_fluid

@@ -19,7 +19,7 @@
 
 #include "CylindricalLBVelocityProfile.hpp"
 
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
 #include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
@@ -36,10 +36,11 @@ std::vector<double> CylindricalLBVelocityProfile::operator()(
   decltype(sampling_positions) local_positions{};
   std::vector<vel_type> local_velocities{};
 
-  auto const vel_conv = LB::get_lattice_speed();
+  auto const &lb = System::get_system().lb;
+  auto const vel_conv = lb.get_lattice_speed();
 
   for (auto const &pos : sampling_positions) {
-    if (auto const vel = LB::get_interpolated_velocity(pos)) {
+    if (auto const vel = lb.get_interpolated_velocity(pos)) {
       auto const pos_shifted = pos - transform_params->center();
       auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
           pos_shifted, transform_params->axis(),

@@ -20,7 +20,7 @@
 
 #include "BoxGeometry.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
 #include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
@@ -42,12 +42,13 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   local_folded_positions.reserve(local_particles.size());
   local_velocities.reserve(local_particles.size());
 
-  auto const vel_conv = LB::get_lattice_speed();
+  auto const &lb = System::get_system().lb;
+  auto const vel_conv = lb.get_lattice_speed();
 
   for (auto const &p : local_particles) {
     auto const pos = folded_position(traits.position(p), box_geo);
     auto const pos_shifted = pos - transform_params->center();
-    auto const vel = *(LB::get_interpolated_velocity(pos));
+    auto const vel = *lb.get_interpolated_velocity(pos);
     auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
         pos_shifted, transform_params->axis(), transform_params->orientation());
     auto const vel_cyl = Utils::transform_vector_cartesian_to_cylinder(

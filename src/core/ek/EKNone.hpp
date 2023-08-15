@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,23 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_EK_REACTIONS_HPP
-#define ESPRESSO_EK_REACTIONS_HPP
+#pragma once
 
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
-#include "EKReactions.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
+#include "utils.hpp"
 
 namespace EK {
 
-extern EKReactions<walberla::EKReactionBase> ek_reactions;
-
-void perform_reactions();
+struct EKNone {
+  bool is_ready_for_propagation() const { throw NoEKActive{}; }
+  void propagate() { throw NoEKActive{}; }
+  double get_tau() const { throw NoEKActive{}; }
+  void veto_time_step(double) const { throw NoEKActive{}; }
+  void sanity_checks() const { throw NoEKActive{}; }
+  void on_cell_structure_change() const { throw NoEKActive{}; }
+  void on_boxl_change() const { throw NoEKActive{}; }
+  void on_node_grid_change() const { throw NoEKActive{}; }
+  void on_timestep_change() const { throw NoEKActive{}; }
+  void on_temperature_change() const { throw NoEKActive{}; }
+};
 
 } // namespace EK
-
-#endif // WALBERLA
-#endif

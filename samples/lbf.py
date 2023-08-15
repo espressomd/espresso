@@ -66,7 +66,7 @@ if args.gpu:
     lbf = espressomd.lb.LBFluidWalberlaGPU(**lb_params)
 else:
     lbf = espressomd.lb.LBFluidWalberla(**lb_params)
-system.actors.add(lbf)
+system.lb = lbf
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 print(lbf.get_params())
 

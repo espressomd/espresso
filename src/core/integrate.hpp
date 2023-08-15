@@ -27,6 +27,14 @@
  *  Implementation in \ref integrate.cpp.
  */
 
+#include "config/config.hpp"
+
+#ifdef WALBERLA
+#include <string>
+
+#include <utils/Vector.hpp>
+#endif
+
 /** \name Integrator switches */
 /**@{*/
 #define INTEG_METHOD_NPT_ISO 0
@@ -67,6 +75,16 @@ double interaction_range();
  *  and the currently active thermostat(s).
  */
 void integrator_sanity_checks();
+
+#ifdef WALBERLA
+void walberla_tau_sanity_checks(std::string method, double tau,
+                                double time_step);
+void walberla_tau_sanity_checks(std::string method, double tau);
+void walberla_agrid_sanity_checks(std::string method,
+                                  Utils::Vector3d const &lattice_left,
+                                  Utils::Vector3d const &lattice_right,
+                                  double agrid);
+#endif // WALBERLA
 
 /** Integrate equations of motion
  *  @param n_steps       Number of integration steps, can be zero

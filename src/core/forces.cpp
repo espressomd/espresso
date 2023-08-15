@@ -35,11 +35,10 @@
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
+#include "lb/particle_coupling.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -239,7 +238,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation(cell_structure);
 
-  if (lattice_switch != ActiveLB::NONE) {
+  if (System::get_system().lb.is_solver_set()) {
     LB::couple_particles(thermo_virtual, particles, ghost_particles, time_step);
   }
 

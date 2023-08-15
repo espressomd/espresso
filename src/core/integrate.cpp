@@ -44,16 +44,16 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/ek_container.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "interactions.hpp"
+#include "lb/particle_coupling.hpp"
+#include "lb/utils.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -74,7 +74,9 @@
 #include <cmath>
 #include <csignal>
 #include <functional>
+#include <limits>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 #ifdef WALBERLA
@@ -189,6 +191,53 @@ void integrator_sanity_checks() {
   }
 }
 
+#ifdef WALBERLA
+void walberla_tau_sanity_checks(std::string method, double tau,
+                                double time_step) {
+  if (time_step <= 0.) {
+    return;
+  }
+  // use float epsilon since tau may be a float
+  auto const eps = static_cast<double>(std::numeric_limits<float>::epsilon());
+  if ((tau - time_step) / (tau + time_step) < -eps)
+    throw std::invalid_argument(method + " tau (" + std::to_string(tau) +
+                                ") must be >= MD time_step (" +
+                                std::to_string(time_step) + ")");
+  auto const factor = tau / time_step;
+  if (std::fabs(std::round(factor) - factor) / factor > eps)
+    throw std::invalid_argument(method + " tau (" + std::to_string(tau) +
+                                ") must be an integer multiple of the "
+                                "MD time_step (" +
+                                std::to_string(time_step) + "). Factor is " +
+                                std::to_string(factor));
+}
+
+void walberla_tau_sanity_checks(std::string method, double tau) {
+  walberla_tau_sanity_checks(std::move(method), tau, ::time_step);
+}
+
+void walberla_agrid_sanity_checks(std::string method,
+                                  Utils::Vector3d const &lattice_left,
+                                  Utils::Vector3d const &lattice_right,
+                                  double agrid) {
+  // waLBerla and ESPResSo must agree on domain decomposition
+  auto const &my_left = ::local_geo.my_left();
+  auto const &my_right = ::local_geo.my_right();
+  auto const tol = agrid / 1E6;
+  if ((lattice_left - my_left).norm2() > tol or
+      (lattice_right - my_right).norm2() > tol) {
+    runtimeErrorMsg() << "\nMPI rank " << ::this_node << ": "
+                      << "left ESPResSo: [" << my_left << "], "
+                      << "left waLBerla: [" << lattice_left << "]"
+                      << "\nMPI rank " << ::this_node << ": "
+                      << "right ESPResSo: [" << my_right << "], "
+                      << "right waLBerla: [" << lattice_right << "]";
+    throw std::runtime_error(
+        "waLBerla and ESPResSo disagree about domain decomposition.");
+  }
+}
+#endif
+
 static void resort_particles_if_needed(ParticleRange const &particles) {
   auto const offset = LeesEdwards::verlet_list_offset(
       box_geo, cell_structure.get_le_pos_offset_at_last_resort());
@@ -263,6 +312,8 @@ int integrate(int n_steps, int reuse_forces) {
   CALI_CXX_MARK_FUNCTION;
 #endif
 
+  auto &system = System::get_system();
+
   // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
 
@@ -311,6 +362,13 @@ int integrate(int n_steps, int reuse_forces) {
   auto const singleton_mode = comm_cart.size() == 1;
   auto caught_sigint = false;
   auto caught_error = false;
+
+  auto lb_active = false;
+  auto ek_active = false;
+  if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+    lb_active = system.lb.is_solver_set();
+    ek_active = system.ek.is_ready_for_propagation();
+  }
 
 #ifdef VALGRIND
   CALLGRIND_START_INSTRUMENTATION;
@@ -384,17 +442,12 @@ int integrate(int n_steps, int reuse_forces) {
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      auto const lb_active = LB::get_lattice_switch() != ActiveLB::NONE;
-#ifdef WALBERLA
-      auto const ek_active = not EK::ek_container.empty();
-#else
-      auto constexpr ek_active = false;
-#endif
-
       if (lb_active and ek_active) {
+        auto &lb = system.lb;
+        auto &ek = system.ek;
         // assume that they are coupled, which is not necessarily true
-        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
-        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
+        auto const lb_steps_per_md_step = lb.get_steps_per_md_step(time_step);
+        auto const ek_steps_per_md_step = ek.get_steps_per_md_step(time_step);
 
         if (lb_steps_per_md_step != ek_steps_per_md_step) {
           runtimeErrorMsg()
@@ -407,24 +460,26 @@ int integrate(int n_steps, int reuse_forces) {
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
-          LB::propagate();
-          EK::propagate();
+          lb.propagate();
+          ek.propagate();
         }
         lb_lbcoupling_propagate();
       } else if (lb_active) {
-        auto const lb_steps_per_md_step = LB::get_steps_per_md_step(time_step);
+        auto &lb = system.lb;
+        auto const lb_steps_per_md_step = lb.get_steps_per_md_step(time_step);
         fluid_step += 1;
         if (fluid_step >= lb_steps_per_md_step) {
           fluid_step = 0;
-          LB::propagate();
+          lb.propagate();
         }
         lb_lbcoupling_propagate();
       } else if (ek_active) {
-        auto const ek_steps_per_md_step = EK::get_steps_per_md_step(time_step);
+        auto &ek = system.ek;
+        auto const ek_steps_per_md_step = ek.get_steps_per_md_step(time_step);
         ek_step += 1;
         if (ek_step >= ek_steps_per_md_step) {
           ek_step = 0;
-          EK::propagate();
+          ek.propagate();
         }
       }
 
@@ -562,8 +617,12 @@ void increment_sim_time(double amount) { sim_time += amount; }
 void set_time_step(double value) {
   if (value <= 0.)
     throw std::domain_error("time_step must be > 0.");
-  if (LB::get_lattice_switch() != ActiveLB::NONE) {
-    LB::check_tau_time_step_consistency(LB::get_tau(), value);
+  auto &system = System::get_system();
+  if (system.lb.is_solver_set()) {
+    system.lb.veto_time_step(value);
+  }
+  if (system.ek.is_solver_set()) {
+    system.ek.veto_time_step(value);
   }
   ::time_step = value;
   on_timestep_change();

@@ -21,3 +21,6 @@
 
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
+
+#include "ek/Implementation.hpp"
+#include "lb/Implementation.hpp"

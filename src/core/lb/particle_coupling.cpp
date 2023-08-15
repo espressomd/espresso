@@ -16,7 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "LocalBox.hpp"
+
+#include "lb/particle_coupling.hpp"
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -24,16 +26,14 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "random.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
-
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/serialization/optional.hpp>
 
 #ifdef CALIPER
 #include <caliper/cali.h>
@@ -48,6 +48,8 @@
 
 LB::ParticleCouplingConfig lb_particle_coupling;
 
+static auto is_lb_active() { return System::get_system().lb.is_solver_set(); }
+
 void mpi_bcast_lb_particle_coupling_local() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
@@ -61,8 +63,7 @@ void mpi_bcast_lb_particle_coupling() {
 void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
-  if (lattice_switch != ActiveLB::NONE && this_node == 0 &&
-      lb_particle_coupling.gamma > 0.) {
+  if (is_lb_active() and this_node == 0 and lb_particle_coupling.gamma > 0.) {
     runtimeWarningMsg()
         << "Recalculating forces, so the LB coupling forces are not "
            "included in the particle force the first time step. This "
@@ -79,7 +80,7 @@ void lb_lbcoupling_set_gamma(double gamma) {
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
 bool lb_lbcoupling_is_seed_required() {
-  if (lattice_switch == ActiveLB::WALBERLA_LB) {
+  if (is_lb_active()) {
     return not lb_particle_coupling.rng_counter_coupling.is_initialized();
   }
   return false;
@@ -90,35 +91,26 @@ uint64_t lb_coupling_get_rng_state_cpu() {
 }
 
 uint64_t lb_lbcoupling_get_rng_state() {
-  if (lattice_switch == ActiveLB::WALBERLA_LB) {
+  if (is_lb_active()) {
     return lb_coupling_get_rng_state_cpu();
   }
   throw std::runtime_error("No LB active");
 }
 
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
-  if (lattice_switch == ActiveLB::WALBERLA_LB) {
+  if (is_lb_active()) {
     lb_particle_coupling.rng_counter_coupling =
         Utils::Counter<uint64_t>(counter);
   } else
     throw std::runtime_error("No LB active");
 }
 
-void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force,
-                  double time_step) {
+void add_md_force(LB::Solver &lb, Utils::Vector3d const &pos,
+                  Utils::Vector3d const &force, double time_step) {
   /* transform momentum transfer to lattice units
      (eq. (12) @cite ahlrichs99a) */
-  auto const delta_j = (time_step / LB::get_lattice_speed()) * force;
-  lb_lbinterpolation_add_force_density(pos, delta_j);
-}
-
-Utils::Vector3d lb_particle_coupling_drift_vel_offset(const Particle &p) {
-  Utils::Vector3d vel_offset{};
-
-#ifdef LB_ELECTROHYDRODYNAMICS
-  vel_offset += p.mu_E();
-#endif
-  return vel_offset;
+  auto const delta_j = (time_step / lb.get_lattice_speed()) * force;
+  lb.add_force_density(pos, delta_j);
 }
 
 static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p) {
@@ -136,16 +128,13 @@ static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p) {
 #endif // THERMOSTAT_PER_PARTICLE
 }
 
-Utils::Vector3d lb_drag_force(Particle const &p,
+Utils::Vector3d lb_drag_force(LB::Solver const &lb, Particle const &p,
                               Utils::Vector3d const &shifted_pos,
                               Utils::Vector3d const &vel_offset) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
-  auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(shifted_pos) *
-      LB::get_lattice_speed();
-
-  Utils::Vector3d v_drift = interpolated_u + vel_offset;
+  auto const v_fluid = lb.get_coupling_interpolated_velocity(shifted_pos);
+  auto const v_drift = v_fluid + vel_offset;
   auto const gamma = lb_handle_particle_anisotropy(p);
 
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
@@ -160,7 +149,7 @@ Utils::Vector3d lb_drag_force(Particle const &p,
  *
  * @return True iff the point is inside of the box up to halo.
  */
-inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
+static bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
   auto const lower_corner = local_geo.my_left() - halo_vec;
   auto const upper_corner = local_geo.my_right() + halo_vec;
@@ -168,18 +157,21 @@ inline bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
   return pos >= lower_corner and pos < upper_corner;
 }
 
-bool in_local_halo(Utils::Vector3d const &pos) {
-  auto const halo = 0.5 * LB::get_agrid();
-
+static bool in_local_halo(Utils::Vector3d const &pos, double agrid) {
+  auto const halo = 0.5 * agrid;
   return in_local_domain(pos, halo);
+}
+
+bool in_local_halo(Utils::Vector3d const &pos) {
+  return in_local_domain(pos, System::get_system().lb.get_agrid());
 }
 
 /**
  * @brief Return a vector of positions shifted by +,- box length in each
  * coordinate
  */
-std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
-                                               const BoxGeometry &box) {
+std::vector<Utils::Vector3d>
+positions_in_halo(Utils::Vector3d pos, BoxGeometry const &box, double agrid) {
   std::vector<Utils::Vector3d> res;
   for (int i : {-1, 0, 1}) {
     for (int j : {-1, 0, 1}) {
@@ -197,7 +189,7 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
             pos_shifted[le.shear_direction] -= le.pos_offset;
         }
 
-        if (in_local_halo(pos_shifted)) {
+        if (in_local_halo(pos_shifted, agrid)) {
           res.push_back(pos_shifted);
         }
       }
@@ -231,16 +223,18 @@ void ParticleCoupling::kernel(Particle &p) {
   if (p.is_virtual() and not m_couple_virtual)
     return;
 
+  auto const agrid = m_lb.get_agrid();
+
   // Calculate coupling force
   Utils::Vector3d force_on_particle = {};
 
 #ifdef ENGINE
   if (not p.swimming().is_engine_force_on_fluid)
 #endif
-    for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-      if (in_local_halo(pos)) {
-        auto const vel_offset = lb_particle_coupling_drift_vel_offset(p);
-        auto const drag_force = lb_drag_force(p, pos, vel_offset);
+    for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
+      if (in_local_halo(pos, agrid)) {
+        auto const vel_offset = lb_drift_velocity_offset(p);
+        auto const drag_force = lb_drag_force(m_lb, p, pos, vel_offset);
         auto const random_force = get_noise_term(p);
         force_on_particle = drag_force + random_force;
         break;
@@ -256,13 +250,13 @@ void ParticleCoupling::kernel(Particle &p) {
 
   // couple positions including shifts by one box length to add
   // forces to ghost layers
-  for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+  for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
     if (in_local_domain(pos)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
       p.force() += force_on_particle;
     }
-    add_md_force(pos, force_on_fluid, m_time_step);
+    add_md_force(m_lb, pos, force_on_fluid, m_time_step);
   }
 }
 
@@ -289,9 +283,10 @@ void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
-  if (lattice_switch == ActiveLB::WALBERLA_LB) {
-    if (lb_particle_coupling.couple_to_md) {
-      ParticleCoupling coupling{couple_virtual, time_step};
+  if (lb_particle_coupling.couple_to_md) {
+    auto &lb = System::get_system().lb;
+    if (lb.is_solver_set()) {
+      ParticleCoupling coupling{lb, couple_virtual, time_step};
       CouplingBookkeeping bookkeeping{};
       for (auto const &particle_range : {real_particles, ghost_particles}) {
         for (auto &p : particle_range) {
@@ -310,11 +305,8 @@ void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
 } // namespace LB
 
 void lb_lbcoupling_propagate() {
-  if (lattice_switch != ActiveLB::NONE) {
-    if (LB::get_kT() > 0.0) {
-      if (lattice_switch == ActiveLB::WALBERLA_LB) {
-        lb_particle_coupling.rng_counter_coupling->increment();
-      }
-    }
+  auto const &lb = System::get_system().lb;
+  if (lb.is_solver_set() and lb.get_kT() > 0.0) {
+    lb_particle_coupling.rng_counter_coupling->increment();
   }
 }

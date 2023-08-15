@@ -21,7 +21,6 @@ import numpy as np
 import collections
 
 from . import accumulators
-from . import actors
 from . import analyze
 from . import bond_breakage
 from . import cell_system
@@ -34,7 +33,6 @@ from . import magnetostatics
 from . import galilei
 from . import interactions
 from . import integrate
-from . import electrokinetics
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
@@ -77,7 +75,6 @@ class System(ScriptInterfaceHelper):
 
     Attributes
     ----------
-    actors: :class:`espressomd.actors.Actors`
     analysis: :class:`espressomd.analyze.Analysis`
     auto_update_accumulators: :class:`espressomd.accumulators.AutoUpdateAccumulators`
     bond_breakage: :class:`espressomd.bond_breakage.BreakageSpecs`
@@ -86,8 +83,6 @@ class System(ScriptInterfaceHelper):
     collision_detection: :class:`espressomd.collision_detection.CollisionDetection`
     comfixed: :class:`espressomd.comfixed.ComFixed`
     constraints: :class:`espressomd.constraints.Constraints`
-    ekcontainer: :class:`espressomd.electrokinetics.EKContainer`
-    ekreactions: :class:`espressomd.electrokinetics.EKReactions`
     cuda_init_handle: :class:`espressomd.cuda_init.CudaInitHandle`
     galilei: :class:`espressomd.galilei.GalileiTransform`
     integrator: :class:`espressomd.integrate.IntegratorHandle`
@@ -196,7 +191,6 @@ class System(ScriptInterfaceHelper):
                 raise ValueError(
                     f"Property '{arg}' can not be set via argument to System class.")
             System.__setattr__(self, arg, kwargs.get(arg))
-        self.actors = actors.Actors()
         self.analysis = analyze.Analysis()
         self.auto_update_accumulators = accumulators.AutoUpdateAccumulators()
         self.bonded_inter = interactions.BondedInteractions()
@@ -214,8 +208,8 @@ class System(ScriptInterfaceHelper):
         if has_features("DIPOLES"):
             self.magnetostatics = magnetostatics.Container()
         if has_features("WALBERLA"):
-            self.ekcontainer = electrokinetics.EKContainer()
-            self.ekreactions = electrokinetics.EKReactions()
+            self._lb = None
+            self._ekcontainer = None
         self.galilei = galilei.GalileiTransform()
         self.lees_edwards = lees_edwards.LeesEdwards()
         self.non_bonded_inter = interactions.NonBondedInteractions()
@@ -233,7 +227,6 @@ class System(ScriptInterfaceHelper):
         import atexit
 
         def session_shutdown():
-            self.actors.clear()
             self.call_method("session_shutdown")
         atexit.register(session_shutdown)
 
@@ -265,9 +258,9 @@ class System(ScriptInterfaceHelper):
             checkpointable_properties.append("magnetostatics")
         if has_features("ELECTROSTATICS"):
             checkpointable_properties.append("electrostatics")
-        checkpointable_properties += ["actors", "thermostat"]
         if has_features("WALBERLA"):
-            checkpointable_properties += ["ekcontainer", "ekreactions"]
+            checkpointable_properties += ["_lb", "_ekcontainer"]
+        checkpointable_properties += ["thermostat"]
 
         odict = collections.OrderedDict()
         odict["_system_handle"] = self.call_method("get_system_handle")
@@ -280,6 +273,14 @@ class System(ScriptInterfaceHelper):
         self.call_method("set_system_handle", obj=params.pop("_system_handle"))
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
+        # note: several members can only be instantiated once
+        if has_features("WALBERLA"):
+            if self._lb is not None:
+                lb, self._lb = self._lb, None
+                self.lb = lb
+            if self._ekcontainer is not None:
+                ekcontainer, self._ekcontainer = self._ekcontainer, None
+                self.ekcontainer = ekcontainer
         self.call_method("lock_system_creation")
 
     @property
@@ -362,6 +363,48 @@ class System(ScriptInterfaceHelper):
     def virtual_sites(self, value):
         assert_features("VIRTUAL_SITES")
         self._active_virtual_sites_handle.implementation = value
+
+    @property
+    def lb(self):
+        """
+        LB solver.
+
+        """
+        assert_features("WALBERLA")
+        return self._lb
+
+    @lb.setter
+    def lb(self, lb):
+        assert_features("WALBERLA")
+        if lb != self._lb:
+            if self._lb is not None:
+                self._lb.call_method("deactivate")
+                self._lb = None
+            if lb is not None:
+                lb.call_method("activate")
+                self._lb = lb
+
+    @property
+    def ekcontainer(self):
+        """
+        EK system (diffusion-advection-reaction models).
+
+        Type: :class:`espressomd.electrokinetics.EKContainer`
+
+        """
+        assert_features("WALBERLA")
+        return self._ekcontainer
+
+    @ekcontainer.setter
+    def ekcontainer(self, ekcontainer):
+        assert_features("WALBERLA")
+        if ekcontainer != self._ekcontainer:
+            if self._ekcontainer is not None:
+                self._ekcontainer.call_method("deactivate")
+                self._ekcontainer = None
+            if ekcontainer is not None:
+                ekcontainer.call_method("activate")
+                self._ekcontainer = ekcontainer
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.

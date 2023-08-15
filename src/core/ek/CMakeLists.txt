@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,17 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(
-  espresso_core
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_interface.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lb_interpolation.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/lb_particle_coupling.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/ek_container.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/ek_reactions.cpp)
+target_sources(espresso_core PRIVATE Solver.cpp)
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  target_link_libraries(espresso_core PRIVATE espresso::walberla
-                                              ${WALBERLA_LIBS})
-  target_sources(espresso_core
-                 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lb_walberla_instance.cpp)
+  target_sources(espresso_core PRIVATE EKWalberla.cpp)
 endif()

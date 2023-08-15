@@ -33,7 +33,11 @@ endfunction()
 espresso_walberla_unit_test(NAME ResourceManager_test SRC
                             ResourceManager_test.cpp)
 
-espresso_walberla_unit_test(NAME kernels_unit_tests SRC kernels_unit_tests.cpp)
+espresso_walberla_unit_test(NAME lb_kernels_unit_tests SRC
+                            lb_kernels_unit_tests.cpp)
+
+espresso_walberla_unit_test(NAME ek_kernels_unit_tests SRC
+                            ek_kernels_unit_tests.cpp)
 
 espresso_walberla_unit_test(
   NAME LatticeWalberla_unit_tests SRC LatticeWalberla_unit_tests.cpp DEPENDS

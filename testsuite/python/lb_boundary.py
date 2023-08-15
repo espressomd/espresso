@@ -36,10 +36,10 @@ class LBBoundariesBase:
         self.lbf = self.lb_class(
             kinematic_viscosity=1.0, density=1.0, agrid=0.5, tau=1.0,
             **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def check_boundary_flags(self, slip_velocity1, slip_velocity2):
         def vbb2vel(values):

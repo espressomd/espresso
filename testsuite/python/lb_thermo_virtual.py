@@ -39,44 +39,42 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     system.cell_system.skin = 0.1
 
     def tearDown(self):
+        self.system.lb = None
         self.system.part.clear()
 
-        for a in self.system.actors:
-            self.system.actors.remove(a)
-
     def check_virtual(self, fluid_class):
-        s = self.system
+        system = self.system
         lb_fluid = fluid_class(
             agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=1.0)
-        s.actors.add(lb_fluid)
+        system.lb = lb_fluid
 
-        virtual = s.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
-        physical = s.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
+        virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
+        physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
 
-        s.thermostat.set_lb(
+        system.thermostat.set_lb(
             LB_fluid=lb_fluid,
             act_on_virtual=False,
             gamma=1.0)
 
-        s.integrator.run(1)
+        system.integrator.run(1)
 
         np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
 
-        s.thermostat.set_lb(LB_fluid=lb_fluid, act_on_virtual=True)
+        system.thermostat.set_lb(LB_fluid=lb_fluid, act_on_virtual=True)
 
         virtual.v = [1, 0, 0]
         physical.v = [1, 0, 0]
 
-        s.actors.remove(lb_fluid)
+        system.lb = None
         lb_fluid = fluid_class(
             agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=1.0)
-        s.actors.add(lb_fluid)
-        s.thermostat.set_lb(LB_fluid=lb_fluid, gamma=1.0)
+        system.lb = lb_fluid
+        system.thermostat.set_lb(LB_fluid=lb_fluid, gamma=1.0)
         virtual.pos = physical.pos
         virtual.v = [1, 0, 0]
         physical.v = [1, 0, 0]
-        s.integrator.run(1)
+        system.integrator.run(1)
 
         # The forces are not exactly -1 because the fluid is not at
         # rest anymore because of the previous check.

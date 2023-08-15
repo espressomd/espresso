@@ -25,15 +25,22 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
+#include "lb/particle_coupling.hpp"
+#include "system/System.hpp"
 
-#include <initializer_list>
+struct DeferredActiveLBChecks {
+  DeferredActiveLBChecks() {
+    auto const &lb = System::get_system().lb;
+    m_value = lb.is_solver_set();
+  }
+  auto operator()() const { return m_value; }
+  bool m_value;
+};
 
-static bool lb_active_check() {
-  if (lattice_switch == ActiveLB::NONE) {
+static bool lb_active_check(DeferredActiveLBChecks const &check) {
+  if (not check()) {
     runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
     return false;
   }
@@ -41,8 +48,10 @@ static bool lb_active_check() {
 }
 
 void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
-  auto const to_lb_units =
-      (lattice_switch == ActiveLB::NONE) ? 0. : 1. / LB::get_agrid();
+  DeferredActiveLBChecks check_lb_solver_set{};
+  auto &system = System::get_system();
+  auto const agrid = (check_lb_solver_set()) ? system.lb.get_agrid() : 0.;
+  auto const to_lb_units = (check_lb_solver_set()) ? 1. / agrid : 0.;
 
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
@@ -57,12 +66,12 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
     for (auto const &p : particle_range) {
       if (!p.is_virtual())
         continue;
-      if (!lb_active_check()) {
+      if (!lb_active_check(check_lb_solver_set)) {
         return;
       }
       if (bookkeeping.should_be_coupled(p)) {
-        for (auto pos : positions_in_halo(p.pos(), box_geo)) {
-          add_md_force(pos * to_lb_units, p.force(), time_step);
+        for (auto pos : positions_in_halo(p.pos(), ::box_geo, agrid)) {
+          add_md_force(system.lb, pos * to_lb_units, p.force(), time_step);
         }
       }
     }
@@ -73,18 +82,18 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
 }
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
-  auto const to_md_units =
-      (lattice_switch == ActiveLB::NONE) ? 0. : LB::get_lattice_speed();
+  DeferredActiveLBChecks check_lb_solver_set{};
+  auto const &lb = System::get_system().lb;
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {
     if (!p.is_virtual())
       continue;
-    if (!lb_active_check()) {
+    if (!lb_active_check(check_lb_solver_set)) {
       return;
     }
-    p.v() = lb_lbinterpolation_get_interpolated_velocity(p.pos()) * to_md_units;
-    for (unsigned int i = 0; i < 3; i++) {
+    p.v() = lb.get_coupling_interpolated_velocity(p.pos());
+    for (unsigned int i = 0u; i < 3u; i++) {
       if (!p.is_fixed_along(i)) {
         p.pos()[i] += p.v()[i] * time_step;
       }

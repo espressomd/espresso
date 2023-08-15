@@ -58,12 +58,12 @@ class TestLBMomentumConservation:
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.thermostat.turn_off()
         self.system.part.clear()
 
     def test(self):
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
         np.testing.assert_allclose(
             self.lbf.ext_force_density,

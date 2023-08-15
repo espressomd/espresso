@@ -93,9 +93,9 @@ if lbf_class:
         lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
         advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
         single_precision=False, tau=system.time_step)
-    system.ekcontainer.solver = ek_solver
-    system.ekcontainer.tau = ek_species.tau
-    system.ekcontainer.add(ek_species)
+    ekcontainer = espressomd.electrokinetics.EKContainer(
+        solver=ek_solver, tau=ek_species.tau)
+    ekcontainer.add(ek_species)
     ek_species.add_boundary_from_shape(
         shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
         boundary_type=espressomd.electrokinetics.FluxBoundary)
@@ -358,7 +358,8 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
             "p2nfft_alpha": "0.37"})
 
 if lbf_class:
-    system.actors.add(lbf)
+    system.lb = lbf
+    system.ekcontainer = ekcontainer
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
@@ -505,7 +506,7 @@ class TestCheckpoint(ut.TestCase):
             lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), 2)
 
         # deactivate LB actor
-        system.actors.remove(lbf)
+        system.lb = None
 
         # read the valid LB checkpoint file
         lbf_cpt_data = lbf_cpt_path.read_bytes()

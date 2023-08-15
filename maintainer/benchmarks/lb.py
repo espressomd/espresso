@@ -138,7 +138,7 @@ if args.gpu:
     lb_class = espressomd.lb.LBFluidWalberlaGPU
 lbf = lb_class(agrid=agrid, tau=system.time_step, kinematic_viscosity=1.,
                density=1., single_precision=args.single_precision)
-system.actors.add(lbf)
+system.lb = lbf
 
 
 # time integration loop

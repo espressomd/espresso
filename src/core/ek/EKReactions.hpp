@@ -17,12 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_EKREACTIONS_HPP
-#define ESPRESSO_EKREACTIONS_HPP
+#pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <memory>
 #include <vector>
+
+namespace EK {
 
 template <class EKReaction> class EKReactions {
   using container_type = std::vector<std::shared_ptr<EKReaction>>;
@@ -36,18 +38,16 @@ private:
   container_type m_ekreactions;
 
 public:
-  void add(std::shared_ptr<EKReaction> const &c) {
-    assert(std::find(m_ekreactions.begin(), m_ekreactions.end(), c) ==
-           m_ekreactions.end());
-
-    m_ekreactions.emplace_back(c);
+  bool contains(std::shared_ptr<EKReaction> const &ek_reaction) const noexcept {
+    return std::find(begin(), end(), ek_reaction) != end();
   }
-  void remove(std::shared_ptr<EKReaction> const &c) {
-    assert(std::find(m_ekreactions.begin(), m_ekreactions.end(), c) !=
-           m_ekreactions.end());
-    m_ekreactions.erase(
-        std::remove(m_ekreactions.begin(), m_ekreactions.end(), c),
-        m_ekreactions.end());
+  void add(std::shared_ptr<EKReaction> const &ek_reaction) {
+    assert(not contains(ek_reaction));
+    m_ekreactions.emplace_back(ek_reaction);
+  }
+  void remove(std::shared_ptr<EKReaction> const &ek_reaction) {
+    assert(contains(ek_reaction));
+    m_ekreactions.erase(std::remove(begin(), end(), ek_reaction), end());
   }
 
   iterator begin() { return m_ekreactions.begin(); }
@@ -57,4 +57,4 @@ public:
   [[nodiscard]] bool empty() const { return m_ekreactions.empty(); }
 };
 
-#endif
+} // namespace EK

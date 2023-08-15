@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,32 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_EK_CONTAINER_HPP
-#define ESPRESSO_EK_CONTAINER_HPP
+#pragma once
 
 #include "config/config.hpp"
 
+#include "lb/Solver.hpp"
+
+#include "lb/LBNone.hpp"
+#include "lb/LBWalberla.hpp"
+
+#include <memory>
+#include <optional>
+#include <variant>
+
+namespace LB {
+
+using HydrodynamicsActor = std::variant<
 #ifdef WALBERLA
-#include <walberla_bridge/electrokinetics/EKContainer.hpp>
-#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#endif // WALBERLA
+    std::shared_ptr<LBWalberla>,
+#endif
+    std::shared_ptr<LBNone>>;
 
-#include <stdexcept>
+struct Solver::Implementation {
+  /// @brief Main hydrodynamics solver.
+  std::optional<HydrodynamicsActor> solver;
 
-struct NoEKActive : public std::exception {
-  const char *what() const noexcept override { return "EK not activated"; }
+  Implementation() : solver{} {}
 };
 
-namespace EK {
-
-#ifdef WALBERLA
-extern EKContainer<EKinWalberlaBase> ek_container;
-#endif // WALBERLA
-
-double get_tau();
-int get_steps_per_md_step(double md_timestep);
-void propagate();
-
-} // namespace EK
-
-#endif
+} // namespace LB

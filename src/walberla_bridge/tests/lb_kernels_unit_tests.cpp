@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#define BOOST_TEST_MODULE Walberla kernels
+#define BOOST_TEST_MODULE waLBerla LB kernels
 #define BOOST_TEST_DYN_LINK
 
 #include "config/config.hpp"
@@ -38,26 +38,26 @@
 #include <limits>
 
 bool operator!=(
-    const walberla::lbm::Dynamic_UBB_single_precision::IndexInfo &lhs,
-    const walberla::lbm::Dynamic_UBB_single_precision::IndexInfo &rhs) {
+    walberla::lbm::Dynamic_UBB_single_precision::IndexInfo const &lhs,
+    walberla::lbm::Dynamic_UBB_single_precision::IndexInfo const &rhs) {
   return not(lhs == rhs);
 }
 
 bool operator!=(
-    const walberla::lbm::Dynamic_UBB_double_precision::IndexInfo &lhs,
-    const walberla::lbm::Dynamic_UBB_double_precision::IndexInfo &rhs) {
+    walberla::lbm::Dynamic_UBB_double_precision::IndexInfo const &lhs,
+    walberla::lbm::Dynamic_UBB_double_precision::IndexInfo const &rhs) {
   return not(lhs == rhs);
 }
 
 bool operator!=(
-    const walberla::lbm::Dynamic_UBB_single_precision::IndexVectors &lhs,
-    const walberla::lbm::Dynamic_UBB_single_precision::IndexVectors &rhs) {
+    walberla::lbm::Dynamic_UBB_single_precision::IndexVectors const &lhs,
+    walberla::lbm::Dynamic_UBB_single_precision::IndexVectors const &rhs) {
   return not(lhs == rhs);
 }
 
 bool operator!=(
-    const walberla::lbm::Dynamic_UBB_double_precision::IndexVectors &lhs,
-    const walberla::lbm::Dynamic_UBB_double_precision::IndexVectors &rhs) {
+    walberla::lbm::Dynamic_UBB_double_precision::IndexVectors const &lhs,
+    walberla::lbm::Dynamic_UBB_double_precision::IndexVectors const &rhs) {
   return not(lhs == rhs);
 }
 
