@@ -483,8 +483,7 @@ void RegularDecomposition::init_cell_interactions() {
 
           auto cell = &cells.at(
               get_linear_index(local_index(neighbor), ghost_cell_grid));
-          // if (ind2 > ind1 or (without_ghost_force_reduction and
-          // is_ghost_cell(ind) )) {
+
           if (ind2 > ind1) {
             red_neighbors.push_back(cell);
           } else {
