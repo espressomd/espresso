@@ -238,8 +238,9 @@ namespace EquilibriumDistribution
     inline {{dtype}}
     get( stencil::Direction const direction,
          Vector{{D}}< {{dtype}} > const & u = Vector{{D}}< {{dtype}} >( {{dtype}}(0.0) ),
-         {{dtype}} rho = {{dtype}}(1.0) )
+         {{dtype}} rho = {{dtype}}(0.0) )
     {
+        {{dtype}} delta_rho = rho - {{dtype}}(1.0);
         {% if not compressible %}
         rho -= {{dtype}}(1.0);
         {% endif %}
@@ -255,6 +256,7 @@ namespace Equilibrium
          {{dtype}} const rho,
          Cell const & cell )
     {
+        {{dtype}} delta_rho = rho - {{dtype}}(1.0);
         {%if not compressible %}
         rho -= {{dtype}}(1.0);
         {%endif %}
@@ -285,6 +287,7 @@ namespace Density
          {{dtype}} const rho_in,
          Cell const & cell )
     {
+        {{dtype}} const delta_rho_in = rho_in - {{dtype}} (1.0);
         const {{dtype}} & xyz0 = pdf_field->get(cell, uint_t{ 0u });
         {% for i in range(Q) -%}
             const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });

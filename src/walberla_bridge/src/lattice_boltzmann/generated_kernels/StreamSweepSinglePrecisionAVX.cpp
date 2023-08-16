@@ -18,7 +18,7 @@
 //! \\author lbmpy
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
+// kernel generated with pystencils v1.3.1+2.g60e24c4, lbmpy v1.3.1+6.gcd1bc2f.dirty, lbmpy_walberla/pystencils_walberla from waLBerla commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #include <cmath>
 
@@ -166,8 +166,9 @@ static FUNC_PREFIX void streamsweepsingleprecisionavx_streamsweepsingleprecision
           const __m256 vel1Term = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(streamed_1, streamed_11), streamed_15), streamed_7);
           const __m256 momdensity_1 = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(streamed_10, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f)), _mm256_mul_ps(streamed_12, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), _mm256_mul_ps(streamed_16, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), _mm256_mul_ps(streamed_2, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), _mm256_mul_ps(streamed_9, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), streamed_8), vel1Term);
           const __m256 vel2Term = _mm256_add_ps(_mm256_add_ps(streamed_12, streamed_13), streamed_5);
-          const __m256 rho = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(streamed_0, streamed_16), streamed_17), streamed_2), streamed_3), streamed_6), streamed_9), vel0Term), vel1Term), vel2Term);
+          const __m256 delta_rho = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(streamed_0, streamed_16), streamed_17), streamed_2), streamed_3), streamed_6), streamed_9), vel0Term), vel1Term), vel2Term);
           const __m256 momdensity_2 = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(streamed_15, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f)), _mm256_mul_ps(streamed_16, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), _mm256_mul_ps(streamed_17, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), _mm256_mul_ps(streamed_18, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), _mm256_mul_ps(streamed_6, _mm256_set_ps(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f))), streamed_11), streamed_14), vel2Term);
+          const __m256 rho = _mm256_add_ps(_mm256_set_ps(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f), delta_rho);
           const __m256 u_0 = _mm256_add_ps(_mm256_mul_ps(momdensity_0, _mm256_div_ps(_mm256_set_ps(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f), rho)), _mm256_mul_ps(_mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f), _mm256_div_ps(_mm256_set_ps(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f), rho)), _mm256_load_ps(&_data_force_20_30_10[ctr_0])));
           const __m256 u_1 = _mm256_add_ps(_mm256_mul_ps(momdensity_1, _mm256_div_ps(_mm256_set_ps(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f), rho)), _mm256_mul_ps(_mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f), _mm256_div_ps(_mm256_set_ps(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f), rho)), _mm256_load_ps(&_data_force_20_31_10[ctr_0])));
           const __m256 u_2 = _mm256_add_ps(_mm256_mul_ps(momdensity_2, _mm256_div_ps(_mm256_set_ps(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f), rho)), _mm256_mul_ps(_mm256_mul_ps(_mm256_set_ps(0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f), _mm256_div_ps(_mm256_set_ps(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f), rho)), _mm256_load_ps(&_data_force_20_32_10[ctr_0])));
@@ -219,8 +220,9 @@ static FUNC_PREFIX void streamsweepsingleprecisionavx_streamsweepsingleprecision
           const float vel1Term = streamed_1 + streamed_11 + streamed_15 + streamed_7;
           const float momdensity_1 = streamed_10 * -1.0f + streamed_12 * -1.0f + streamed_16 * -1.0f + streamed_2 * -1.0f + streamed_8 + streamed_9 * -1.0f + vel1Term;
           const float vel2Term = streamed_12 + streamed_13 + streamed_5;
-          const float rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 + streamed_3 + streamed_6 + streamed_9 + vel0Term + vel1Term + vel2Term;
+          const float delta_rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 + streamed_3 + streamed_6 + streamed_9 + vel0Term + vel1Term + vel2Term;
           const float momdensity_2 = streamed_11 + streamed_14 + streamed_15 * -1.0f + streamed_16 * -1.0f + streamed_17 * -1.0f + streamed_18 * -1.0f + streamed_6 * -1.0f + vel2Term;
+          const float rho = delta_rho + 1.0f;
           const float u_0 = momdensity_0 * ((1.0f) / (rho)) + 0.5f * ((1.0f) / (rho)) * _data_force_20_30_10[ctr_0];
           const float u_1 = momdensity_1 * ((1.0f) / (rho)) + 0.5f * ((1.0f) / (rho)) * _data_force_20_31_10[ctr_0];
           const float u_2 = momdensity_2 * ((1.0f) / (rho)) + 0.5f * ((1.0f) / (rho)) * _data_force_20_32_10[ctr_0];
@@ -255,8 +257,8 @@ static FUNC_PREFIX void streamsweepsingleprecisionavx_streamsweepsingleprecision
 
 void StreamSweepSinglePrecisionAVX::run(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -323,8 +325,8 @@ void StreamSweepSinglePrecisionAVX::runOnCellInterval(const shared_ptr<Structure
     return;
 
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp

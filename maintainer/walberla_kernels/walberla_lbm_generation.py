@@ -147,6 +147,7 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
     cqc = lb_method.conserved_quantity_computation
     vel_symbols = cqc.velocity_symbols
     rho_sym = sp.Symbol("rho")
+    delta_rho_sym = sp.Symbol("delta_rho")
     pdfs_sym = sp.symbols(f"f_:{lb_method.stencil.Q}")
     vel_arr_symbols = [
         IndexedBase(TypedSymbol("u", dtype=default_dtype), shape=(1,))[i]
@@ -166,7 +167,7 @@ def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):
 
     velocity_getters = make_velocity_getters(cqc, rho_sym, vel_arr_symbols)
     density_velocity_setter_macroscopic_values = equations_to_code(
-        velocity_getters, variables_without_prefix=["rho", "u"], **kwargs)
+        velocity_getters, variables_without_prefix=["rho", "u", "delta_rho"], **kwargs)
     momentum_density_getter = cqc.output_equations_from_pdfs(
         pdfs_sym, {"density": rho_sym, "momentum_density": momentum_density_symbols})
     unshifted_momentum_density_getter = cqc.output_equations_from_pdfs(

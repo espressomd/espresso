@@ -18,12 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.2, lbmpy v1.2,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
+// kernel generated with pystencils v1.3.1+2.g60e24c4, lbmpy
+// v1.3.1+6.gcd1bc2f.dirty, lbmpy_walberla/pystencils_walberla from waLBerla
+// commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
-/**
- * @file
+/*
  * Lattice field accessors.
  * Adapted from the waLBerla source file
  * https://i10git.cs.fau.de/walberla/walberla/-/blob/a16141524c58ab88386e2a0f8fdd7c63c5edd704/python/lbmpy_walberla/templates/LatticeModel.tmpl.h
@@ -292,112 +291,128 @@ inline void set(GhostLayerField<double, uint_t{3u}> *vec_field,
 namespace EquilibriumDistribution {
 inline double get(stencil::Direction const direction,
                   Vector3<double> const &u = Vector3<double>(double(0.0)),
-                  double rho = double(1.0)) {
+                  double rho = double(0.0)) {
+  double delta_rho = rho - double(1.0);
 
   using namespace stencil;
   switch (direction) {
   case C:
-    return rho * -0.33333333333333331 * (u[0] * u[0]) +
+    return delta_rho * 0.33333333333333331 +
+           rho * -0.33333333333333331 * (u[0] * u[0]) +
            rho * -0.33333333333333331 * (u[1] * u[1]) +
-           rho * -0.33333333333333331 * (u[2] * u[2]) +
-           rho * 0.33333333333333331;
+           rho * -0.33333333333333331 * (u[2] * u[2]);
   case N:
-    return rho * -0.16666666666666666 * (u[0] * u[0]) +
+    return delta_rho * 0.055555555555555552 +
+           rho * -0.16666666666666666 * (u[0] * u[0]) +
            rho * -0.16666666666666666 * (u[2] * u[2]) +
-           rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[1] +
+           rho * 0.16666666666666666 * u[1] +
            rho * 0.16666666666666666 * (u[1] * u[1]);
   case S:
-    return rho * -0.16666666666666666 * u[1] +
+    return delta_rho * 0.055555555555555552 +
+           rho * -0.16666666666666666 * u[1] +
            rho * -0.16666666666666666 * (u[0] * u[0]) +
            rho * -0.16666666666666666 * (u[2] * u[2]) +
-           rho * 0.055555555555555552 +
            rho * 0.16666666666666666 * (u[1] * u[1]);
   case W:
-    return rho * -0.16666666666666666 * u[0] +
+    return delta_rho * 0.055555555555555552 +
+           rho * -0.16666666666666666 * u[0] +
            rho * -0.16666666666666666 * (u[1] * u[1]) +
            rho * -0.16666666666666666 * (u[2] * u[2]) +
-           rho * 0.055555555555555552 +
            rho * 0.16666666666666666 * (u[0] * u[0]);
   case E:
-    return rho * -0.16666666666666666 * (u[1] * u[1]) +
+    return delta_rho * 0.055555555555555552 +
+           rho * -0.16666666666666666 * (u[1] * u[1]) +
            rho * -0.16666666666666666 * (u[2] * u[2]) +
-           rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[0] +
+           rho * 0.16666666666666666 * u[0] +
            rho * 0.16666666666666666 * (u[0] * u[0]);
   case T:
-    return rho * -0.16666666666666666 * (u[0] * u[0]) +
-           rho * -0.16666666666666666 * (u[1] * u[1]) +
-           rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[2] +
-           rho * 0.16666666666666666 * (u[2] * u[2]);
-  case B:
-    return rho * -0.16666666666666666 * u[2] +
+    return delta_rho * 0.055555555555555552 +
            rho * -0.16666666666666666 * (u[0] * u[0]) +
            rho * -0.16666666666666666 * (u[1] * u[1]) +
-           rho * 0.055555555555555552 +
+           rho * 0.16666666666666666 * u[2] +
+           rho * 0.16666666666666666 * (u[2] * u[2]);
+  case B:
+    return delta_rho * 0.055555555555555552 +
+           rho * -0.16666666666666666 * u[2] +
+           rho * -0.16666666666666666 * (u[0] * u[0]) +
+           rho * -0.16666666666666666 * (u[1] * u[1]) +
            rho * 0.16666666666666666 * (u[2] * u[2]);
   case NW:
-    return rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[1] +
-           rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[1] +
+           rho * 0.083333333333333329 * u[1] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[1] * u[1]);
   case NE:
-    return rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+    return delta_rho * 0.027777777777777776 +
+           rho * 0.083333333333333329 * u[0] +
            rho * 0.083333333333333329 * u[1] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[1] * u[1]) +
            rho * 0.25 * u[0] * u[1];
   case SW:
-    return rho * -0.083333333333333329 * u[0] +
-           rho * -0.083333333333333329 * u[1] + rho * 0.027777777777777776 +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[0] +
+           rho * -0.083333333333333329 * u[1] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[1] * u[1]) +
            rho * 0.25 * u[0] * u[1];
   case SE:
-    return rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[0] * u[1] +
-           rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[0] * u[1] +
+           rho * 0.083333333333333329 * u[0] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[1] * u[1]);
   case TN:
-    return rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] +
+    return delta_rho * 0.027777777777777776 +
+           rho * 0.083333333333333329 * u[1] +
            rho * 0.083333333333333329 * u[2] +
            rho * 0.083333333333333329 * (u[1] * u[1]) +
            rho * 0.083333333333333329 * (u[2] * u[2]) +
            rho * 0.25 * u[1] * u[2];
   case TS:
-    return rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[1] * u[2] +
-           rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[1] * u[2] +
+           rho * 0.083333333333333329 * u[2] +
            rho * 0.083333333333333329 * (u[1] * u[1]) +
            rho * 0.083333333333333329 * (u[2] * u[2]);
   case TW:
-    return rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[2] +
-           rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[2] +
+           rho * 0.083333333333333329 * u[2] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[2] * u[2]);
   case TE:
-    return rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+    return delta_rho * 0.027777777777777776 +
+           rho * 0.083333333333333329 * u[0] +
            rho * 0.083333333333333329 * u[2] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[2] * u[2]) +
            rho * 0.25 * u[0] * u[2];
   case BN:
-    return rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[1] * u[2] +
-           rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[1] * u[2] +
+           rho * 0.083333333333333329 * u[1] +
            rho * 0.083333333333333329 * (u[1] * u[1]) +
            rho * 0.083333333333333329 * (u[2] * u[2]);
   case BS:
-    return rho * -0.083333333333333329 * u[1] +
-           rho * -0.083333333333333329 * u[2] + rho * 0.027777777777777776 +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[1] +
+           rho * -0.083333333333333329 * u[2] +
            rho * 0.083333333333333329 * (u[1] * u[1]) +
            rho * 0.083333333333333329 * (u[2] * u[2]) +
            rho * 0.25 * u[1] * u[2];
   case BW:
-    return rho * -0.083333333333333329 * u[0] +
-           rho * -0.083333333333333329 * u[2] + rho * 0.027777777777777776 +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[0] +
+           rho * -0.083333333333333329 * u[2] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[2] * u[2]) +
            rho * 0.25 * u[0] * u[2];
   case BE:
-    return rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[0] * u[2] +
-           rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+    return delta_rho * 0.027777777777777776 +
+           rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[0] * u[2] +
+           rho * 0.083333333333333329 * u[0] +
            rho * 0.083333333333333329 * (u[0] * u[0]) +
            rho * 0.083333333333333329 * (u[2] * u[2]);
   default:
@@ -409,97 +424,105 @@ inline double get(stencil::Direction const direction,
 namespace Equilibrium {
 inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
                 Vector3<double> const &u, double const rho, Cell const &cell) {
+  double delta_rho = rho - double(1.0);
 
   double &xyz0 = pdf_field->get(cell, uint_t{0u});
   pdf_field->getF(&xyz0, uint_t{0u}) =
+      delta_rho * 0.33333333333333331 +
       rho * -0.33333333333333331 * (u[0] * u[0]) +
       rho * -0.33333333333333331 * (u[1] * u[1]) +
-      rho * -0.33333333333333331 * (u[2] * u[2]) + rho * 0.33333333333333331;
+      rho * -0.33333333333333331 * (u[2] * u[2]);
   pdf_field->getF(&xyz0, uint_t{1u}) =
+      delta_rho * 0.055555555555555552 +
       rho * -0.16666666666666666 * (u[0] * u[0]) +
-      rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 +
+      rho * -0.16666666666666666 * (u[2] * u[2]) +
       rho * 0.16666666666666666 * u[1] +
       rho * 0.16666666666666666 * (u[1] * u[1]);
   pdf_field->getF(&xyz0, uint_t{2u}) =
-      rho * -0.16666666666666666 * u[1] +
+      delta_rho * 0.055555555555555552 + rho * -0.16666666666666666 * u[1] +
       rho * -0.16666666666666666 * (u[0] * u[0]) +
-      rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 +
+      rho * -0.16666666666666666 * (u[2] * u[2]) +
       rho * 0.16666666666666666 * (u[1] * u[1]);
   pdf_field->getF(&xyz0, uint_t{3u}) =
-      rho * -0.16666666666666666 * u[0] +
+      delta_rho * 0.055555555555555552 + rho * -0.16666666666666666 * u[0] +
       rho * -0.16666666666666666 * (u[1] * u[1]) +
-      rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 +
+      rho * -0.16666666666666666 * (u[2] * u[2]) +
       rho * 0.16666666666666666 * (u[0] * u[0]);
   pdf_field->getF(&xyz0, uint_t{4u}) =
+      delta_rho * 0.055555555555555552 +
       rho * -0.16666666666666666 * (u[1] * u[1]) +
-      rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 +
+      rho * -0.16666666666666666 * (u[2] * u[2]) +
       rho * 0.16666666666666666 * u[0] +
       rho * 0.16666666666666666 * (u[0] * u[0]);
   pdf_field->getF(&xyz0, uint_t{5u}) =
+      delta_rho * 0.055555555555555552 +
       rho * -0.16666666666666666 * (u[0] * u[0]) +
-      rho * -0.16666666666666666 * (u[1] * u[1]) + rho * 0.055555555555555552 +
+      rho * -0.16666666666666666 * (u[1] * u[1]) +
       rho * 0.16666666666666666 * u[2] +
       rho * 0.16666666666666666 * (u[2] * u[2]);
   pdf_field->getF(&xyz0, uint_t{6u}) =
-      rho * -0.16666666666666666 * u[2] +
+      delta_rho * 0.055555555555555552 + rho * -0.16666666666666666 * u[2] +
       rho * -0.16666666666666666 * (u[0] * u[0]) +
-      rho * -0.16666666666666666 * (u[1] * u[1]) + rho * 0.055555555555555552 +
+      rho * -0.16666666666666666 * (u[1] * u[1]) +
       rho * 0.16666666666666666 * (u[2] * u[2]);
   pdf_field->getF(&xyz0, uint_t{7u}) =
-      rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[1] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[0] +
+      rho * -0.25 * u[0] * u[1] + rho * 0.083333333333333329 * u[1] +
       rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[1] * u[1]);
   pdf_field->getF(&xyz0, uint_t{8u}) =
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+      delta_rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
       rho * 0.083333333333333329 * u[1] +
       rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.25 * u[0] * u[1];
   pdf_field->getF(&xyz0, uint_t{9u}) =
-      rho * -0.083333333333333329 * u[0] + rho * -0.083333333333333329 * u[1] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[0] * u[0]) +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[0] +
+      rho * -0.083333333333333329 * u[1] +
+      rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.25 * u[0] * u[1];
   pdf_field->getF(&xyz0, uint_t{10u}) =
-      rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[0] * u[1] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[1] +
+      rho * -0.25 * u[0] * u[1] + rho * 0.083333333333333329 * u[0] +
       rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[1] * u[1]);
   pdf_field->getF(&xyz0, uint_t{11u}) =
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] +
+      delta_rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] +
       rho * 0.083333333333333329 * u[2] +
       rho * 0.083333333333333329 * (u[1] * u[1]) +
       rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[1] * u[2];
   pdf_field->getF(&xyz0, uint_t{12u}) =
-      rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[1] * u[2] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[1] +
+      rho * -0.25 * u[1] * u[2] + rho * 0.083333333333333329 * u[2] +
       rho * 0.083333333333333329 * (u[1] * u[1]) +
       rho * 0.083333333333333329 * (u[2] * u[2]);
   pdf_field->getF(&xyz0, uint_t{13u}) =
-      rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[2] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[0] +
+      rho * -0.25 * u[0] * u[2] + rho * 0.083333333333333329 * u[2] +
       rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[2] * u[2]);
   pdf_field->getF(&xyz0, uint_t{14u}) =
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+      delta_rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
       rho * 0.083333333333333329 * u[2] +
       rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[0] * u[2];
   pdf_field->getF(&xyz0, uint_t{15u}) =
-      rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[1] * u[2] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[2] +
+      rho * -0.25 * u[1] * u[2] + rho * 0.083333333333333329 * u[1] +
       rho * 0.083333333333333329 * (u[1] * u[1]) +
       rho * 0.083333333333333329 * (u[2] * u[2]);
   pdf_field->getF(&xyz0, uint_t{16u}) =
-      rho * -0.083333333333333329 * u[1] + rho * -0.083333333333333329 * u[2] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[1] * u[1]) +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[1] +
+      rho * -0.083333333333333329 * u[2] +
+      rho * 0.083333333333333329 * (u[1] * u[1]) +
       rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[1] * u[2];
   pdf_field->getF(&xyz0, uint_t{17u}) =
-      rho * -0.083333333333333329 * u[0] + rho * -0.083333333333333329 * u[2] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[0] * u[0]) +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[0] +
+      rho * -0.083333333333333329 * u[2] +
+      rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[0] * u[2];
   pdf_field->getF(&xyz0, uint_t{18u}) =
-      rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[0] * u[2] +
-      rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] +
+      delta_rho * 0.027777777777777776 + rho * -0.083333333333333329 * u[2] +
+      rho * -0.25 * u[0] * u[2] + rho * 0.083333333333333329 * u[0] +
       rho * 0.083333333333333329 * (u[0] * u[0]) +
       rho * 0.083333333333333329 * (u[2] * u[2]);
 }
@@ -531,13 +554,15 @@ inline double get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
-  const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                     vel1Term + vel2Term;
+  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                           vel0Term + vel1Term + vel2Term;
+  const double rho = delta_rho + 1;
   return rho;
 }
 
 inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
                 double const rho_in, Cell const &cell) {
+  double const delta_rho_in = rho_in - double(1.0);
   const double &xyz0 = pdf_field->get(cell, uint_t{0u});
   const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
   const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
@@ -563,10 +588,11 @@ inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
   const double vel2Term = f_12 + f_13 + f_5;
+  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                           vel0Term + vel1Term + vel2Term;
   const double momdensity_2 =
       f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-  const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                     vel1Term + vel2Term;
+  const double rho = delta_rho + 1;
 
   // calculate current velocity (before density change)
   const double conversion = double(1) / rho;
@@ -609,8 +635,9 @@ get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
         const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
         const double vel1Term = f_1 + f_11 + f_15 + f_7;
         const double vel2Term = f_12 + f_13 + f_5;
-        const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
+        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                                 vel0Term + vel1Term + vel2Term;
+        const double rho = delta_rho + 1;
         out.emplace_back(rho);
       }
     }
@@ -651,10 +678,11 @@ inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
         const double momdensity_1 =
             -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
         const double vel2Term = f_12 + f_13 + f_5;
+        const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                                 vel0Term + vel1Term + vel2Term;
         const double momdensity_2 =
             f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-        const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
-                           vel0Term + vel1Term + vel2Term;
+        const double rho = delta_rho + 1;
 
         // calculate current velocity (before density change)
         const double conversion = double(1) / rho;
@@ -698,8 +726,9 @@ inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
   const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
   const double vel1Term = f_1 + f_11 + f_15 + f_7;
   const double vel2Term = f_12 + f_13 + f_5;
-  const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                     vel1Term + vel2Term;
+  const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                           vel0Term + vel1Term + vel2Term;
+  const double rho = delta_rho + 1;
 
   const auto x = cell.x();
   const auto y = cell.y();
@@ -747,10 +776,11 @@ reduce(GhostLayerField<double, uint_t{19u}> const *pdf_field,
     const double momdensity_1 =
         -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const double vel2Term = f_12 + f_13 + f_5;
+    const double delta_rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                             vel0Term + vel1Term + vel2Term;
     const double momdensity_2 =
         f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                       vel1Term + vel2Term;
+    const double rho = delta_rho + 1;
     const double md_0 =
         force_field->get(x, y, z, 0) * 0.50000000000000000 + momdensity_0;
     const double md_1 =
@@ -789,18 +819,18 @@ get(GhostLayerField<double, uint_t{19u}> const *pdf_field, Cell const &cell) {
   const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
   const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
   const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-  const double p_0 =
-      f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
+  const double p_0 = f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 +
+                     f_9 + 0.33333333333333333;
   const double p_1 = -f_10 - f_7 + f_8 + f_9;
   const double p_2 = -f_13 + f_14 + f_17 - f_18;
   const double p_3 = -f_10 - f_7 + f_8 + f_9;
-  const double p_4 =
-      f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
+  const double p_4 = f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 +
+                     f_9 + 0.33333333333333333;
   const double p_5 = f_11 - f_12 - f_15 + f_16;
   const double p_6 = -f_13 + f_14 + f_17 - f_18;
   const double p_7 = f_11 - f_12 - f_15 + f_16;
-  const double p_8 =
-      f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
+  const double p_8 = f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 +
+                     f_5 + f_6 + 0.33333333333333333;
 
   Matrix3<double> pressureTensor;
   pressureTensor[0u] = p_0;
