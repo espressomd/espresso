@@ -126,12 +126,14 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
   auto const u_d = walberla::to_vector3<double>(u);
   auto const rho_f = 0.2f;
   auto const rho_d = 0.2;
+  auto const delta_rho_f = rho_f - 1.0f;
+  auto const delta_rho_d = rho_d - 1.0;
   auto const tol_f = 100.f * 5e-7f;
   auto const tol_d = 100. * 5e-9;
 
   {
     auto const direction = Direction::C;
-    auto const ref_d = rho_d * 1. / 3. * (1. - u.norm2());
+    auto const ref_d = delta_rho_d * 1. / 3. - rho_d * 1. / 3. * u.norm2();
     auto const ref_f = static_cast<float>(ref_d);
     auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
     auto const pop_d = EquilibriumDistribution::get(direction, u_d, rho_d);
@@ -139,7 +141,7 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
     BOOST_CHECK_CLOSE(clamp_zero(pop_d), clamp_zero(ref_d), tol_d);
   }
   {
-    auto const ref_d = rho_d * (1. / 18. - 1. / 6. * (x * x - x));
+    auto const ref_d = delta_rho_d * 1. / 18. - rho_d * 1. / 6. * (x * x - x);
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::N, Direction::E, Direction::T}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
@@ -149,7 +151,7 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
     }
   }
   {
-    auto const ref_d = rho_d * (1. / 18. - 1. / 6. * (x + x * x));
+    auto const ref_d = delta_rho_d * 1. / 18. - rho_d * 1. / 6. * (x + x * x);
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::S, Direction::W, Direction::B}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
@@ -159,7 +161,7 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
     }
   }
   {
-    auto const ref_d = rho_d * (1. / 36. - 1. / 12. * x * x);
+    auto const ref_d = delta_rho_d * 1. / 36. - rho_d * 1. / 12. * x * x;
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::NW, Direction::SE, Direction::TS,
                                  Direction::TW, Direction::BN, Direction::BE}) {
@@ -170,7 +172,7 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
     }
   }
   {
-    auto const ref_d = rho_d * (1. / 36. + 5. / 12. * x * x + 2. / 12. * x);
+    auto const ref_d = delta_rho_d * 1. / 36. + rho_d * (5. / 12. * x * x + 2. / 12. * x);
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::NE, Direction::TN, Direction::TE}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);
@@ -180,7 +182,7 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
     }
   }
   {
-    auto const ref_d = rho_d * (1. / 36. + 5. / 12. * x * x - 2. / 12. * x);
+    auto const ref_d = delta_rho_d * 1. / 36. + rho_d * (5. / 12. * x * x - 2. / 12. * x);
     auto const ref_f = static_cast<float>(ref_d);
     for (auto const direction : {Direction::SW, Direction::BS, Direction::BW}) {
       auto const pop_f = EquilibriumDistribution::get(direction, u_f, rho_f);

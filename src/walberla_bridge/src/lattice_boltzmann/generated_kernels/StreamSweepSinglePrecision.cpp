@@ -18,7 +18,7 @@
 //! \\author lbmpy
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
+// kernel generated with pystencils v1.3.1+2.g60e24c4, lbmpy v1.3.1+6.gcd1bc2f.dirty, lbmpy_walberla/pystencils_walberla from waLBerla commit 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #include <cmath>
 
@@ -163,8 +163,9 @@ static FUNC_PREFIX void streamsweepsingleprecision_streamsweepsingleprecision(fl
         const float vel1Term = streamed_1 + streamed_11 + streamed_15 + streamed_7;
         const float momdensity_1 = streamed_10 * -1.0f + streamed_12 * -1.0f + streamed_16 * -1.0f + streamed_2 * -1.0f + streamed_8 + streamed_9 * -1.0f + vel1Term;
         const float vel2Term = streamed_12 + streamed_13 + streamed_5;
-        const float rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 + streamed_3 + streamed_6 + streamed_9 + vel0Term + vel1Term + vel2Term;
+        const float delta_rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 + streamed_3 + streamed_6 + streamed_9 + vel0Term + vel1Term + vel2Term;
         const float momdensity_2 = streamed_11 + streamed_14 + streamed_15 * -1.0f + streamed_16 * -1.0f + streamed_17 * -1.0f + streamed_18 * -1.0f + streamed_6 * -1.0f + vel2Term;
+        const float rho = delta_rho + 1.0f;
         const float u_0 = momdensity_0 * ((1.0f) / (rho)) + 0.5f * ((1.0f) / (rho)) * _data_force_20_30_10[_stride_force_0 * ctr_0];
         const float u_1 = momdensity_1 * ((1.0f) / (rho)) + 0.5f * ((1.0f) / (rho)) * _data_force_20_31_10[_stride_force_0 * ctr_0];
         const float u_2 = momdensity_2 * ((1.0f) / (rho)) + 0.5f * ((1.0f) / (rho)) * _data_force_20_32_10[_stride_force_0 * ctr_0];
@@ -198,8 +199,8 @@ static FUNC_PREFIX void streamsweepsingleprecision_streamsweepsingleprecision(fl
 
 void StreamSweepSinglePrecision::run(IBlock *block) {
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -263,8 +264,8 @@ void StreamSweepSinglePrecision::runOnCellInterval(const shared_ptr<StructuredBl
     return;
 
   auto pdfs = block->getData<field::GhostLayerField<float, 19>>(pdfsID);
-  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<float, 3>>(velocityID);
+  auto force = block->getData<field::GhostLayerField<float, 3>>(forceID);
   field::GhostLayerField<float, 19> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp

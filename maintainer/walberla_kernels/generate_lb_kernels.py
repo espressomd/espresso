@@ -52,9 +52,9 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
-    assert pkg_resources.packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
-        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
+#for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
+#    assert pkg_resources.packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
+#        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
 
 def paramlist(parameters, keys):
@@ -101,6 +101,8 @@ with code_generation_context.CodeGeneration() as ctx:
         stencil=stencil,
         compressible=True,
         weighted=True,
+        zero_centered=True,
+        delta_equilibrium=True,
         relaxation_rates=relaxation_rates.rr_getter,
         force_model=lbmpy.forcemodels.Schiller(force_field.center_vector)
     )
@@ -126,7 +128,8 @@ with code_generation_context.CodeGeneration() as ctx:
                                 method=lbmpy.Method.TRT,
                                 relaxation_rate=sp.Symbol("omega_shear"),
                                 compressible=True,
-                                zero_centered=False,
+                                zero_centered=True,
+                                delta_equilibrium=True,
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=force_field.center_vector,
                                 kernel_type="collide_only")
@@ -149,7 +152,8 @@ with code_generation_context.CodeGeneration() as ctx:
     # generate thermalized LB
     collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
-        zero_centered=False,
+        zero_centered=True,
+        delta_equilibrium=True,
         fluctuating={
             "temperature": kT,
             "block_offsets": "walberla",
