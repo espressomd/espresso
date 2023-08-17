@@ -91,8 +91,11 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
-      pf = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, dist,
-                                      get_ptr(coulomb_kernel));
+      pf = calc_central_radial_force(p, part_rep, ia_params, dist_vec, dist) +
+           calc_central_radial_charge_force(p, part_rep, ia_params, dist_vec,
+                                            dist, get_ptr(coulomb_kernel)) +
+           calc_non_central_force(p, part_rep, ia_params, dist_vec, dist);
+
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
         dpd_force =
@@ -103,8 +106,12 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
-        pf = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, -dist,
-                                        get_ptr(coulomb_kernel));
+        pf =
+            calc_central_radial_force(p, part_rep, ia_params, dist_vec, -dist) +
+            calc_central_radial_charge_force(p, part_rep, ia_params, dist_vec,
+                                             -dist, get_ptr(coulomb_kernel)) +
+            calc_non_central_force(p, part_rep, ia_params, dist_vec, -dist);
+
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
           dpd_force = dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
