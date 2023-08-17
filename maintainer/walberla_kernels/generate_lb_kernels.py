@@ -193,7 +193,7 @@ with code_generation_context.CodeGeneration() as ctx:
         lbmpy_walberla.generate_boundary(
             ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb_dynamic,
             method, additional_data_handler=ubb_data_handler,
-            streaming_pattern="push", target=target)
+            streaming_pattern="pull", target=target)
 
         with open(f"Dynamic_UBB_{precision_suffix}{target_suffix}.h", "r+") as f:
             content = f.read()

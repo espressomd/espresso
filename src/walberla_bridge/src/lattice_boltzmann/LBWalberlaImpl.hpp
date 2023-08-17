@@ -387,6 +387,10 @@ public:
   }
 
 private:
+  void integrate_update_vel_field(std::shared_ptr<Lattice_T> const &blocks) {
+    for (auto b = blocks->begin(); b != blocks->end(); ++b)
+      (*m_vel_field_update)(&*b);
+  };
   void integrate_stream_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
       boost::apply_visitor(run_stream_collide_sweep,

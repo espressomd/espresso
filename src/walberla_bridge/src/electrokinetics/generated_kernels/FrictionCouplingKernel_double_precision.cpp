@@ -114,8 +114,8 @@ static FUNC_PREFIX void frictioncouplingkernel_double_precision_frictioncoupling
 } // namespace internal_828cb3fbc90c26a23ae54639862a1401
 
 void FrictionCouplingKernel_double_precision::run(IBlock *block) {
-  auto f = block->getData<field::GhostLayerField<double, 3>>(fID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
+  auto f = block->getData<field::GhostLayerField<double, 3>>(fID);
 
   auto &D = this->D_;
   auto &kT = this->kT_;
@@ -149,8 +149,8 @@ void FrictionCouplingKernel_double_precision::runOnCellInterval(const shared_ptr
   if (ci.empty())
     return;
 
-  auto f = block->getData<field::GhostLayerField<double, 3>>(fID);
   auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
+  auto f = block->getData<field::GhostLayerField<double, 3>>(fID);
 
   auto &D = this->D_;
   auto &kT = this->kT_;

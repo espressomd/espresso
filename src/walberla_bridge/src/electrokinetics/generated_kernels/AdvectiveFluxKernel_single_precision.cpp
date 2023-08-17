@@ -1625,9 +1625,9 @@ static FUNC_PREFIX void advectivefluxkernel_single_precision_advectivefluxkernel
 } // namespace internal_47df4b171f276b8c3a55fc08d45e245e
 
 void AdvectiveFluxKernel_single_precision::run(IBlock *block) {
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto u = block->getData<field::GhostLayerField<float, 3>>(uID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
   float *RESTRICT const _data_j = j->dataAt(-1, -1, -1, 0);
@@ -1664,9 +1664,9 @@ void AdvectiveFluxKernel_single_precision::runOnCellInterval(const shared_ptr<St
   if (ci.empty())
     return;
 
-  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<float, 1>>(rhoID);
   auto u = block->getData<field::GhostLayerField<float, 3>>(uID);
+  auto j = block->getData<field::GhostLayerField<float, 13>>(jID);
 
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(j->nrOfGhostLayers()));
