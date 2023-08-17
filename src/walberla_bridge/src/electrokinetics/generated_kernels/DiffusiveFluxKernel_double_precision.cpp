@@ -800,8 +800,8 @@ static FUNC_PREFIX void diffusivefluxkernel_double_precision_diffusivefluxkernel
 } // namespace internal_e5e04d1215f19faa51f3c55db6d456a2
 
 void DiffusiveFluxKernel_double_precision::run(IBlock *block) {
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(j->nrOfGhostLayers()));
@@ -833,8 +833,8 @@ void DiffusiveFluxKernel_double_precision::runOnCellInterval(const shared_ptr<St
   if (ci.empty())
     return;
 
-  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
   auto rho = block->getData<field::GhostLayerField<double, 1>>(rhoID);
+  auto j = block->getData<field::GhostLayerField<double, 13>>(jID);
 
   auto &D = this->D_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(j->nrOfGhostLayers()));
