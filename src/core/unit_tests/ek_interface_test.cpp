@@ -138,9 +138,6 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     // tau setters and getters
     espresso::ek_container->set_tau(2.);
     BOOST_CHECK_EQUAL(ek.get_tau(), 2.);
-    BOOST_CHECK_EQUAL(ek.get_steps_per_md_step(1.), 2);
-    BOOST_CHECK_EQUAL(ek.get_steps_per_md_step(2.), 1);
-    BOOST_CHECK_EQUAL(ek.get_steps_per_md_step(5.), 0);
   }
 
   {
@@ -216,7 +213,6 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
     BOOST_CHECK_THROW(ek.on_node_grid_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_timestep_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_temperature_change(), NoEKActive);
-    BOOST_CHECK_THROW(ek.get_steps_per_md_step(1.), std::exception);
     auto const err_msg = std::string(NoEKActive().what());
     auto const ref_msg = std::string("EK not activated");
     BOOST_CHECK_EQUAL(err_msg, ref_msg);

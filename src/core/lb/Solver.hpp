@@ -142,10 +142,6 @@ struct Solver {
   void add_force_density(Utils::Vector3d const &pos,
                          Utils::Vector3d const &force_density);
 
-  auto get_steps_per_md_step(double time_step) const {
-    return static_cast<int>(std::round(get_tau() / time_step));
-  }
-
   void on_boxl_change();
   void on_node_grid_change();
   void on_cell_structure_change();

@@ -73,10 +73,6 @@ struct Solver {
    */
   double get_tau() const;
 
-  auto get_steps_per_md_step(double time_step) const {
-    return static_cast<int>(std::round(get_tau() / time_step));
-  }
-
   /**
    * @brief Perform @c EK parameter checks.
    */

@@ -103,8 +103,8 @@ bool recalc_forces = true;
 /** Average number of integration steps the Verlet list has been re-using. */
 static double verlet_reuse = 0.0;
 
-static int fluid_step = 0;
-static int ek_step = 0;
+static int lb_skipped_md_steps = 0;
+static int ek_skipped_md_steps = 0;
 
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
@@ -237,6 +237,10 @@ void walberla_agrid_sanity_checks(std::string method,
   }
 }
 #endif
+
+static auto calc_md_steps_per_tau(double tau) {
+  return static_cast<int>(std::round(tau / ::time_step));
+}
 
 static void resort_particles_if_needed(ParticleRange const &particles) {
   auto const offset = LeesEdwards::verlet_list_offset(
@@ -446,39 +450,40 @@ int integrate(int n_steps, int reuse_forces) {
         auto &lb = system.lb;
         auto &ek = system.ek;
         // assume that they are coupled, which is not necessarily true
-        auto const lb_steps_per_md_step = lb.get_steps_per_md_step(time_step);
-        auto const ek_steps_per_md_step = ek.get_steps_per_md_step(time_step);
+        auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
+        auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
 
-        if (lb_steps_per_md_step != ek_steps_per_md_step) {
+        if (md_steps_per_lb_step != md_steps_per_ek_step) {
           runtimeErrorMsg()
               << "LB and EK are active but with different time steps.";
         }
 
-        // only use fluid_step in this case
-        assert(fluid_step == ek_step);
+        assert(lb_skipped_md_steps == ek_skipped_md_steps);
 
-        fluid_step += 1;
-        if (fluid_step >= lb_steps_per_md_step) {
-          fluid_step = 0;
+        lb_skipped_md_steps += 1;
+        ek_skipped_md_steps += 1;
+        if (lb_skipped_md_steps >= md_steps_per_lb_step) {
+          lb_skipped_md_steps = 0;
+          ek_skipped_md_steps = 0;
           lb.propagate();
           ek.propagate();
         }
         lb_lbcoupling_propagate();
       } else if (lb_active) {
         auto &lb = system.lb;
-        auto const lb_steps_per_md_step = lb.get_steps_per_md_step(time_step);
-        fluid_step += 1;
-        if (fluid_step >= lb_steps_per_md_step) {
-          fluid_step = 0;
+        auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
+        lb_skipped_md_steps += 1;
+        if (lb_skipped_md_steps >= md_steps_per_lb_step) {
+          lb_skipped_md_steps = 0;
           lb.propagate();
         }
         lb_lbcoupling_propagate();
       } else if (ek_active) {
         auto &ek = system.ek;
-        auto const ek_steps_per_md_step = ek.get_steps_per_md_step(time_step);
-        ek_step += 1;
-        if (ek_step >= ek_steps_per_md_step) {
-          ek_step = 0;
+        auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
+        ek_skipped_md_steps += 1;
+        if (ek_skipped_md_steps >= md_steps_per_ek_step) {
+          ek_skipped_md_steps = 0;
           ek.propagate();
         }
       }

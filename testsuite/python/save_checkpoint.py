@@ -81,7 +81,8 @@ if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
 if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_class(
-        lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5, tau=0.01)
+        lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5,
+        tau=system.time_step)
     wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=1.0)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
                                    dist=-(system.box_l[0] - 1.0))
