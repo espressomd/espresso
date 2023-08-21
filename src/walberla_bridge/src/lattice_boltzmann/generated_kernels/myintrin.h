@@ -1,10 +1,11 @@
-// kernel generated with pystencils v1.0+12.g54b91e2, lbmpy
-// v1.0+9.g19115d4.dirty, lbmpy_walberla/pystencils_walberla from commit
-// e1fe2ad1dcbe8f31ea79d95e8a5a5cc0ee3691f3
+
+// kernel generated with pystencils v1.2, lbmpy v1.3.1,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 065ce5f311850371a97ac4766f47dbb5ca8424ba
 
 #pragma once
 
-#if defined(__SSE2__) || defined(_MSC_VER)
+#if defined(__SSE2__) || (defined(_MSC_VER) && !defined(_M_ARM64))
 QUALIFIERS __m128 _my_cvtepu32_ps(const __m128i v) {
 #ifdef __AVX512VL__
   return _mm_cvtepu32_ps(v);
@@ -31,7 +32,7 @@ QUALIFIERS void _MY_TRANSPOSE4_EPI32(__m128i &R0, __m128i &R1, __m128i &R2,
 }
 #endif
 
-#if defined(__SSE4_1__) || defined(_MSC_VER)
+#if defined(__SSE4_1__) || (defined(_MSC_VER) && !defined(_M_ARM64))
 #if !defined(__AVX512VL__) && defined(__GNUC__) && __GNUC__ >= 5 &&            \
     !defined(__clang__)
 __attribute__((optimize("no-associative-math")))

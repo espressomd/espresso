@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file FrictionCouplingKernel_single_precision.h
+//! \\file VelFieldUpdateSinglePrecision.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,11 +49,11 @@
 namespace walberla {
 namespace pystencils {
 
-class FrictionCouplingKernel_single_precision {
+class VelFieldUpdateSinglePrecision {
 public:
-  FrictionCouplingKernel_single_precision(BlockDataID fID_, BlockDataID jID_,
-                                          float D, float kT)
-      : fID(fID_), jID(jID_), D_(D), kT_(kT){};
+  VelFieldUpdateSinglePrecision(BlockDataID forceID_, BlockDataID pdfsID_,
+                                BlockDataID velocityID_)
+      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_){};
 
   void run(IBlock *block);
 
@@ -64,12 +64,12 @@ public:
   void operator()(IBlock *block) { run(block); }
 
   static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<FrictionCouplingKernel_single_precision> &kernel) {
+  getSweep(const shared_ptr<VelFieldUpdateSinglePrecision> &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *)> getSweepOnCellInterval(
-      const shared_ptr<FrictionCouplingKernel_single_precision> &kernel,
+      const shared_ptr<VelFieldUpdateSinglePrecision> &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
@@ -90,10 +90,9 @@ public:
     };
   }
 
-  BlockDataID fID;
-  BlockDataID jID;
-  float D_;
-  float kT_;
+  BlockDataID forceID;
+  BlockDataID pdfsID;
+  BlockDataID velocityID;
 };
 
 } // namespace pystencils

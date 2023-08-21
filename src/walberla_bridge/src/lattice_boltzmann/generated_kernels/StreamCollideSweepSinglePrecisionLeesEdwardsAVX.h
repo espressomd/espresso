@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file DiffusiveFluxKernel_single_precision.h
+//! \\file StreamCollideSweepSinglePrecisionLeesEdwardsAVX.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,11 +49,15 @@
 namespace walberla {
 namespace pystencils {
 
-class DiffusiveFluxKernel_single_precision {
+class StreamCollideSweepSinglePrecisionLeesEdwardsAVX {
 public:
-  DiffusiveFluxKernel_single_precision(BlockDataID jID_, BlockDataID rhoID_,
-                                       float D)
-      : jID(jID_), rhoID(rhoID_), D_(D){};
+  StreamCollideSweepSinglePrecisionLeesEdwardsAVX(BlockDataID dstID_,
+                                                  BlockDataID forceID_,
+                                                  BlockDataID pdfsID_,
+                                                  float grid_size,
+                                                  float omega_shear, float v_s)
+      : dstID(dstID_), forceID(forceID_), pdfsID(pdfsID_),
+        grid_size_(grid_size), omega_shear_(omega_shear), v_s_(v_s){};
 
   void run(IBlock *block);
 
@@ -64,12 +68,13 @@ public:
   void operator()(IBlock *block) { run(block); }
 
   static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<DiffusiveFluxKernel_single_precision> &kernel) {
+  getSweep(const shared_ptr<StreamCollideSweepSinglePrecisionLeesEdwardsAVX>
+               &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *)> getSweepOnCellInterval(
-      const shared_ptr<DiffusiveFluxKernel_single_precision> &kernel,
+      const shared_ptr<StreamCollideSweepSinglePrecisionLeesEdwardsAVX> &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
@@ -90,9 +95,12 @@ public:
     };
   }
 
-  BlockDataID jID;
-  BlockDataID rhoID;
-  float D_;
+  BlockDataID dstID;
+  BlockDataID forceID;
+  BlockDataID pdfsID;
+  float grid_size_;
+  float omega_shear_;
+  float v_s_;
 };
 
 } // namespace pystencils

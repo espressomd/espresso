@@ -33,7 +33,7 @@ import lbmpy.stencils
 import lbmpy.enums
 
 import lbmpy_walberla
-import lbmpy_espresso
+import lbmpy_walberla.additional_data_handler
 
 import lees_edwards
 import relaxation_rates
@@ -184,17 +184,17 @@ with code_generation_context.CodeGeneration() as ctx:
         )
 
     # boundary conditions
-    ubb_dynamic = lbmpy_espresso.UBB(
-        lambda *args: None, dim=3, data_type=config.data_type.default_factory())
-    ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
-        method.stencil, ubb_dynamic)
-
+    ubb = lbmpy.boundaries.boundaryconditions.UBB(
+        lambda *args: None, dim=3, data_type=config.data_type.default_factory(), adapt_velocity_to_force=True)
+    ubb_data_handler = lbmpy_walberla.additional_data_handler.default_additional_data_handler(
+        ubb, method, fields["pdfs"], target=target) 
     for _, target_suffix in paramlist(parameters, ("GPU", "CPU")):
         lbmpy_walberla.generate_boundary(
-            ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb_dynamic,
+            ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb,
             method, additional_data_handler=ubb_data_handler,
             streaming_pattern="pull", target=target)
 
+        # replace Walberla-specific real_t by float/double.
         with open(f"Dynamic_UBB_{precision_suffix}{target_suffix}.h", "r+") as f:
             content = f.read()
             f.seek(0)

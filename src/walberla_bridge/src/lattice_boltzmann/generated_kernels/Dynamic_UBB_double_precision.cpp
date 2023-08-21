@@ -49,12 +49,9 @@ namespace lbm {
 #endif
 
 namespace internal_451fd042b8d7665063ea81b98853365b {
-static FUNC_PREFIX void dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_pdfs, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int32_t indexVectorSize) {
+static FUNC_PREFIX void dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(double *RESTRICT const _data_force, uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_pdfs, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int32_t indexVectorSize) {
 
   const int32_t f_in_inv_dir_idx[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13};
-  const int32_t f_in_offsets_x[] = {0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, -1};
-  const int32_t f_in_offsets_y[] = {0, -1, 1, 0, 0, 0, 0, -1, -1, 1, 1, -1, 1, 0, 0, -1, 1, 0, 0};
-  const int32_t f_in_offsets_z[] = {0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, -1, -1, -1, -1, 1, 1, 1, 1};
   const int32_t f_in_inv_offsets_x[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1};
   const int32_t f_in_inv_offsets_y[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0};
   const int32_t f_in_inv_offsets_z[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1};
@@ -74,7 +71,7 @@ static FUNC_PREFIX void dynamic_ubb_double_precision_boundary_Dynamic_UBB_double
     const double vel1Term = _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 11 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 15 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 7 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3];
     const double vel2Term = _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 12 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 13 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 5 * _stride_pdfs_3];
     const double rho = vel0Term + vel1Term + vel2Term + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 16 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 17 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 2 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 3 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 6 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 9 * _stride_pdfs_3] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z];
-    _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * (f_in_inv_offsets_x[dir] + neighbour_offset_x[dir]) + _stride_pdfs_1 * y + _stride_pdfs_1 * (f_in_inv_offsets_y[dir] + neighbour_offset_y[dir]) + _stride_pdfs_2 * z + _stride_pdfs_2 * (f_in_inv_offsets_z[dir] + neighbour_offset_z[dir]) + _stride_pdfs_3 * f_in_inv_dir_idx[dir]] = rho * (6.0 * ((double)(neighbour_offset_x[dir])) * *((double *)(&_data_indexVector[40 * ctr_0 + 16])) + 6.0 * ((double)(neighbour_offset_y[dir])) * *((double *)(&_data_indexVector[40 * ctr_0 + 24])) + 6.0 * ((double)(neighbour_offset_z[dir])) * *((double *)(&_data_indexVector[40 * ctr_0 + 32]))) * -1.0 * weights[dir] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * f_in_offsets_x[dir] + _stride_pdfs_1 * y + _stride_pdfs_1 * f_in_offsets_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * f_in_offsets_z[dir] + _stride_pdfs_3 * dir];
+    _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_0 * f_in_inv_offsets_x[dir] + _stride_pdfs_1 * y + _stride_pdfs_1 * f_in_inv_offsets_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * f_in_inv_offsets_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir]] = rho * ((-0.5 * ((1.0) / (rho)) * _data_force[_stride_force_0 * x + _stride_force_1 * y + _stride_force_2 * z + 2 * _stride_force_3] + *((double *)(&_data_indexVector[40 * ctr_0 + 32]))) * 6.0 * ((double)(neighbour_offset_z[dir])) + (-0.5 * ((1.0) / (rho)) * _data_force[_stride_force_0 * x + _stride_force_1 * y + _stride_force_2 * z + _stride_force_3] + *((double *)(&_data_indexVector[40 * ctr_0 + 24]))) * 6.0 * ((double)(neighbour_offset_y[dir])) + (-0.5 * ((1.0) / (rho)) * _data_force[_stride_force_0 * x + _stride_force_1 * y + _stride_force_2 * z] + *((double *)(&_data_indexVector[40 * ctr_0 + 16]))) * 6.0 * ((double)(neighbour_offset_x[dir]))) * -1.0 * weights[dir] + _data_pdfs[_stride_pdfs_0 * x + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir];
   }
 }
 } // namespace internal_451fd042b8d7665063ea81b98853365b
@@ -97,15 +94,22 @@ void Dynamic_UBB_double_precision::run_impl(IBlock *block, IndexVectors::Type ty
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
 
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()));
+  double *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(pdfs->nrOfGhostLayers()));
   double *RESTRICT _data_pdfs = pdfs->dataAt(0, 0, 0, 0);
+  const int64_t _stride_force_0 = int64_t(force->xStride());
+  const int64_t _stride_force_1 = int64_t(force->yStride());
+  const int64_t _stride_force_2 = int64_t(force->zStride());
+  const int64_t _stride_force_3 = int64_t(1 * int64_t(force->fStride()));
   const int64_t _stride_pdfs_0 = int64_t(pdfs->xStride());
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_451fd042b8d7665063ea81b98853365b::dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(_data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
+  internal_451fd042b8d7665063ea81b98853365b::dynamic_ubb_double_precision_boundary_Dynamic_UBB_double_precision(_data_force, _data_indexVector, _data_pdfs, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
 }
 
 void Dynamic_UBB_double_precision::run(IBlock *block) {

@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file DiffusiveFluxKernelWithElectrostatic_double_precision.h
+//! \\file StreamCollideSweepDoublePrecisionThermalized.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,13 +49,18 @@
 namespace walberla {
 namespace pystencils {
 
-class DiffusiveFluxKernelWithElectrostatic_double_precision {
+class StreamCollideSweepDoublePrecisionThermalized {
 public:
-  DiffusiveFluxKernelWithElectrostatic_double_precision(
-      BlockDataID jID_, BlockDataID phiID_, BlockDataID rhoID_, double D,
-      double f_ext_0, double f_ext_1, double f_ext_2, double kT, double z)
-      : jID(jID_), phiID(phiID_), rhoID(rhoID_), D_(D), f_ext_0_(f_ext_0),
-        f_ext_1_(f_ext_1), f_ext_2_(f_ext_2), kT_(kT), z_(z){};
+  StreamCollideSweepDoublePrecisionThermalized(
+      BlockDataID forceID_, BlockDataID pdfsID_, BlockDataID pdfs_tmpID_,
+      uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2,
+      double kT, double omega_bulk, double omega_even, double omega_odd,
+      double omega_shear, uint32_t seed, uint32_t time_step)
+      : forceID(forceID_), pdfsID(pdfsID_), pdfs_tmpID(pdfs_tmpID_),
+        block_offset_0_(block_offset_0), block_offset_1_(block_offset_1),
+        block_offset_2_(block_offset_2), kT_(kT), omega_bulk_(omega_bulk),
+        omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear), seed_(seed), time_step_(time_step){};
 
   void run(IBlock *block);
 
@@ -66,14 +71,12 @@ public:
   void operator()(IBlock *block) { run(block); }
 
   static std::function<void(IBlock *)> getSweep(
-      const shared_ptr<DiffusiveFluxKernelWithElectrostatic_double_precision>
-          &kernel) {
+      const shared_ptr<StreamCollideSweepDoublePrecisionThermalized> &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *)> getSweepOnCellInterval(
-      const shared_ptr<DiffusiveFluxKernelWithElectrostatic_double_precision>
-          &kernel,
+      const shared_ptr<StreamCollideSweepDoublePrecisionThermalized> &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
@@ -94,15 +97,22 @@ public:
     };
   }
 
-  BlockDataID jID;
-  BlockDataID phiID;
-  BlockDataID rhoID;
-  double D_;
-  double f_ext_0_;
-  double f_ext_1_;
-  double f_ext_2_;
+  BlockDataID forceID;
+  BlockDataID pdfsID;
+  BlockDataID pdfs_tmpID;
+  uint32_t block_offset_0_;
+  uint32_t block_offset_1_;
+  uint32_t block_offset_2_;
   double kT_;
-  double z_;
+  double omega_bulk_;
+  double omega_even_;
+  double omega_odd_;
+  double omega_shear_;
+  uint32_t seed_;
+  uint32_t time_step_;
+  std::function<void(IBlock *, uint32_t &, uint32_t &, uint32_t &)>
+      block_offset_generator =
+          [](IBlock *const, uint32_t &, uint32_t &, uint32_t &) {};
 };
 
 } // namespace pystencils

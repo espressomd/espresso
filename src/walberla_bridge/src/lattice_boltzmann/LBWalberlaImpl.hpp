@@ -90,13 +90,14 @@ protected:
       typename detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
   using VelFieldUpdate =
       typename detail::KernelTrait<FloatType, Architecture>::VelFieldUpdate;
-  using BoundaryModel =
+  using BounceBackBoundary =
+      typename detail::BoundaryHandlingTrait<FloatType,
+                                             Architecture>::Dynamic_UBB > ;
+  using BounceBackBoundaryHandling =
       BoundaryHandling<Vector3<FloatType>,
-                       typename detail::BoundaryHandlingTrait<
-                           FloatType, Architecture>::Dynamic_UBB>;
-  using StreamingCollisionModel =
-      boost::variant<StreamingCollisionModelThermalized,
-                     StreamingCollisionModelLeesEdwards>;
+                       BounceBackBoundary> using StreamingCollisionModel =
+          boost::variant<StreamingCollisionModelThermalized,
+                         StreamingCollisionModelLeesEdwards>;
 
 public:
   // Type definitions
@@ -114,7 +115,7 @@ protected:
 public:
   using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
   using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
-  using FlagField = typename BoundaryModel::FlagField;
+  using FlagField = typename BounceBackBoundaryHandling::FlagField;
 
 public:
   template <typename T> FloatType FloatType_c(T t) const {
@@ -165,8 +166,11 @@ private:
 
   void reset_boundary_handling() {
     auto const &blocks = get_lattice().get_blocks();
-    m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
-                                                 m_flag_field_id);
+    autpo bb = std::make_shared<BounceBackBoundary>(
+        blocks, m_last_applied_force_field_id, m_pdf_field_id, m_flag_field_id,
+        BounceBackBoundaryHandling::DynamicValueCallback());
+    m_boundary_handling = std::make_shared<BounceBackBoundaryHandling>(
+        m_pdf_field_id, m_flag_field_id, bb);
   }
 
   FloatType pressure_tensor_correction_factor() const {
@@ -258,7 +262,7 @@ protected:
   std::shared_ptr<StreamingCollisionModel> m_streaming_collision_model;
 
   // boundaries
-  std::shared_ptr<BoundaryModel> m_boundary;
+  std::shared_ptr<BounceBackBoundaryHandling> m_boundary_handling;
 
   // lattice
   std::shared_ptr<LatticeWalberla> m_lattice;
@@ -432,7 +436,7 @@ private:
 
   void integrate_boundaries(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_boundary)(&*b);
+      (*m_boundary_handling)(&*b);
   }
 
   void swap_pdf_buffers(const std::shared_ptr<Lattice_T> &blocks) {
@@ -626,8 +630,9 @@ public:
         for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
-            if (m_boundary->node_is_boundary(node)) {
-              auto const vec = m_boundary->get_node_value_at_boundary(node);
+            if (m_boundary_handling->node_is_boundary(node)) {
+              auto const vec =
+                  m_boundary_handling->get_node_value_at_boundary(node);
               for (uint_t f = 0u; f < 3u; ++f) {
                 out.emplace_back(double_c(vec[f]));
               }
@@ -966,10 +971,10 @@ public:
   get_node_velocity_at_boundary(Utils::Vector3i const &node,
                                 bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
-    if (!bc or !m_boundary->node_is_boundary(node))
+    if (!bc or !m_boundary_handling->node_is_boundary(node))
       return {boost::none};
 
-    return {m_boundary->get_node_value_at_boundary(node)};
+    return {m_boundary_handling->get_node_value_at_boundary(node)};
   }
 
   bool set_node_velocity_at_boundary(Utils::Vector3i const &node,
@@ -978,7 +983,7 @@ public:
     if (!bc)
       return false;
 
-    m_boundary->set_node_value_at_boundary(node, velocity, *bc);
+    m_boundary_handling->set_node_value_at_boundary(node, velocity, *bc);
 
     return true;
   }
@@ -998,8 +1003,9 @@ public:
         for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
-            if (m_boundary->node_is_boundary(node)) {
-              out.emplace_back(m_boundary->get_node_value_at_boundary(node));
+            if (m_boundary_handling->node_is_boundary(node)) {
+              out.emplace_back(
+                  m_boundary_handling->get_node_value_at_boundary(node));
             } else {
               out.emplace_back(boost::none);
             }
@@ -1028,9 +1034,9 @@ public:
             auto const bc = get_block_and_cell(lattice, node, false);
             auto const &opt = *it;
             if (opt) {
-              m_boundary->set_node_value_at_boundary(node, *opt, *bc);
+              m_boundary_handling->set_node_value_at_boundary(node, *opt, *bc);
             } else {
-              m_boundary->remove_node_from_boundary(node, *bc);
+              m_boundary_handling->remove_node_from_boundary(node, *bc);
             }
             ++it;
           }
@@ -1042,18 +1048,19 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
-    if (!bc or !m_boundary->node_is_boundary(node))
+    if (!bc or !m_boundary_handling->node_is_boundary(node))
       return {boost::none};
 
     return get_node_last_applied_force(node, true);
   }
 
-  bool remove_node_from_boundary(Utils::Vector3i const &node) override {
+  bool
+  remove_node_from_boundary_handling(Utils::Vector3i const &node) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
-    m_boundary->remove_node_from_boundary(node, *bc);
+    m_boundary_handling->remove_node_from_boundary(node, *bc);
 
     return true;
   }
@@ -1065,7 +1072,7 @@ public:
     if (!bc)
       return {boost::none};
 
-    return {m_boundary->node_is_boundary(node)};
+    return {m_boundary_handling->node_is_boundary(node)};
   }
 
   std::vector<bool>
@@ -1083,7 +1090,7 @@ public:
         for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{x, y, z};
-            out.emplace_back(m_boundary->node_is_boundary(node));
+            out.emplace_back(m_boundary_handling->node_is_boundary(node));
           }
         }
       }
@@ -1092,7 +1099,9 @@ public:
     return out;
   }
 
-  void reallocate_ubb_field() override { m_boundary->boundary_update(); }
+  void reallocate_ubb_field() override {
+    m_boundary_handling->boundary_update();
+  }
 
   void clear_boundaries() override { reset_boundary_handling(); }
 
@@ -1101,7 +1110,8 @@ public:
                              std::vector<double> const &data_flat) override {
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
-    set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
+    set_boundary_from_grid(*m_boundary_handling, get_lattice(), raster_flat,
+                           data);
   }
 
   // Pressure tensor

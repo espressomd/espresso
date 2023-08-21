@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ContinuityKernel_double_precision.h
+//! \\file StreamCollideSweepSinglePrecisionThermalized.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -49,10 +49,18 @@
 namespace walberla {
 namespace pystencils {
 
-class ContinuityKernel_double_precision {
+class StreamCollideSweepSinglePrecisionThermalized {
 public:
-  ContinuityKernel_double_precision(BlockDataID jID_, BlockDataID rhoID_)
-      : jID(jID_), rhoID(rhoID_){};
+  StreamCollideSweepSinglePrecisionThermalized(
+      BlockDataID forceID_, BlockDataID pdfsID_, BlockDataID pdfs_tmpID_,
+      uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2,
+      float kT, float omega_bulk, float omega_even, float omega_odd,
+      float omega_shear, uint32_t seed, uint32_t time_step)
+      : forceID(forceID_), pdfsID(pdfsID_), pdfs_tmpID(pdfs_tmpID_),
+        block_offset_0_(block_offset_0), block_offset_1_(block_offset_1),
+        block_offset_2_(block_offset_2), kT_(kT), omega_bulk_(omega_bulk),
+        omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear), seed_(seed), time_step_(time_step){};
 
   void run(IBlock *block);
 
@@ -62,13 +70,13 @@ public:
 
   void operator()(IBlock *block) { run(block); }
 
-  static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<ContinuityKernel_double_precision> &kernel) {
+  static std::function<void(IBlock *)> getSweep(
+      const shared_ptr<StreamCollideSweepSinglePrecisionThermalized> &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *)> getSweepOnCellInterval(
-      const shared_ptr<ContinuityKernel_double_precision> &kernel,
+      const shared_ptr<StreamCollideSweepSinglePrecisionThermalized> &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
@@ -89,8 +97,22 @@ public:
     };
   }
 
-  BlockDataID jID;
-  BlockDataID rhoID;
+  BlockDataID forceID;
+  BlockDataID pdfsID;
+  BlockDataID pdfs_tmpID;
+  uint32_t block_offset_0_;
+  uint32_t block_offset_1_;
+  uint32_t block_offset_2_;
+  float kT_;
+  float omega_bulk_;
+  float omega_even_;
+  float omega_odd_;
+  float omega_shear_;
+  uint32_t seed_;
+  uint32_t time_step_;
+  std::function<void(IBlock *, uint32_t &, uint32_t &, uint32_t &)>
+      block_offset_generator =
+          [](IBlock *const, uint32_t &, uint32_t &, uint32_t &) {};
 };
 
 } // namespace pystencils
