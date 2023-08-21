@@ -33,7 +33,7 @@ import lbmpy.stencils
 import lbmpy.enums
 
 import lbmpy_walberla
-import lbmpy_espresso
+import lbmpy_walberla.additional_data_handler
 
 import lees_edwards
 import relaxation_rates
@@ -52,7 +52,7 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
+for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.3.1")]:
     assert pkg_resources.packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
 
@@ -105,20 +105,20 @@ with code_generation_context.CodeGeneration() as ctx:
         force_model=lbmpy.forcemodels.Schiller(force_field.center_vector)
     )
 
-    # generate stream kernels
-    for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_stream_sweep(
-            ctx,
-            method,
-            f"StreamSweep{precision_prefix}{target_suffix}",
-            params)
-
     # generate initial densities
     for params, target_suffix in paramlist(parameters, (default_key,)):
         pystencils_walberla.codegen.generate_sweep(
             ctx,
             f"InitialPDFsSetter{precision_prefix}{target_suffix}",
             pystencils_espresso.generate_setters(ctx, method, params),
+            **params)
+
+    # generate velocity field update kernel
+    for params, target_suffix in paramlist(parameters, (default_key,)):
+        pystencils_walberla.codegen.generate_sweep(
+            ctx,
+            f"VelFieldUpdate{precision_prefix}{target_suffix}",
+            pystencils_espresso.generate_vel_field_update(ctx, method, params),
             **params)
 
     # generate unthermalized Lees-Edwards collision rule
@@ -129,7 +129,7 @@ with code_generation_context.CodeGeneration() as ctx:
                                 zero_centered=False,
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=force_field.center_vector,
-                                kernel_type="collide_only")
+                                kernel_type="default_stream_collide")
     lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
     le_collision_rule_unthermalized = lbmpy.create_lb_update_rule(
         lbm_config=le_config,
@@ -138,11 +138,11 @@ with code_generation_context.CodeGeneration() as ctx:
         config, le_collision_rule_unthermalized,
         fields["pdfs"], stencil, 1)  # shear_dir_normal y
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_collision_sweep(
+        pystencils_espresso.generate_streaming_collision_sweep(
             ctx,
             le_config,
             le_collision_rule_unthermalized,
-            f"CollideSweep{precision_prefix}LeesEdwards{target_suffix}",
+            f"StreamCollideSweep{precision_prefix}LeesEdwards{target_suffix}",
             params
         )
 
@@ -159,11 +159,11 @@ with code_generation_context.CodeGeneration() as ctx:
                       "double_precision": ctx.double_accuracy}
     )
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
-        pystencils_espresso.generate_collision_sweep(
+        pystencils_espresso.generate_streaming_collision_sweep(
             ctx,
             method,
             collision_rule_thermalized,
-            f"CollideSweep{precision_prefix}Thermalized{target_suffix}",
+            f"StreamCollideSweep{precision_prefix}Thermalized{target_suffix}",
             params
         )
 
@@ -184,17 +184,17 @@ with code_generation_context.CodeGeneration() as ctx:
         )
 
     # boundary conditions
-    ubb_dynamic = lbmpy_espresso.UBB(
-        lambda *args: None, dim=3, data_type=config.data_type.default_factory())
-    ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
-        method.stencil, ubb_dynamic)
-
+    ubb = lbmpy.boundaries.boundaryconditions.UBB(
+        lambda *args: None, dim=3, data_type=config.data_type.default_factory(), adapt_velocity_to_force=True)
+    ubb_data_handler = lbmpy_walberla.additional_data_handler.default_additional_data_handler(
+        ubb, method, fields["pdfs"], target=target) 
     for _, target_suffix in paramlist(parameters, ("GPU", "CPU")):
         lbmpy_walberla.generate_boundary(
-            ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb_dynamic,
+            ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb,
             method, additional_data_handler=ubb_data_handler,
-            streaming_pattern="push", target=target)
+            streaming_pattern="pull", target=target)
 
+        # replace Walberla-specific real_t by float/double.
         with open(f"Dynamic_UBB_{precision_suffix}{target_suffix}.h", "r+") as f:
             content = f.read()
             f.seek(0)

@@ -27,19 +27,19 @@
 #include "generated_kernels/FieldAccessorsSinglePrecision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
-#include "generated_kernels/StreamSweepDoublePrecision.h"
-#include "generated_kernels/StreamSweepSinglePrecision.h"
+#include "generated_kernels/VelFieldUpdateDoublePrecision.h"
+#include "generated_kernels/VelFieldUpdateSinglePrecision.h"
 
 #ifdef __AVX2__
-#include "generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.h"
-#include "generated_kernels/CollideSweepSinglePrecisionLeesEdwardsAVX.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.h"
+#include "generated_kernels/StreamCollideSweepDoublePrecisionLeesEdwardsAVX.h"
+#include "generated_kernels/StreamCollideSweepDoublePrecisionThermalizedAVX.h"
+#include "generated_kernels/StreamCollideSweepSinglePrecisionLeesEdwardsAVX.h"
+#include "generated_kernels/StreamCollideSweepSinglePrecisionThermalizedAVX.h"
 #else
-#include "generated_kernels/CollideSweepDoublePrecisionLeesEdwards.h"
-#include "generated_kernels/CollideSweepDoublePrecisionThermalized.h"
-#include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
-#include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
+#include "generated_kernels/StreamCollideSweepDoublePrecisionLeesEdwards.h"
+#include "generated_kernels/StreamCollideSweepDoublePrecisionThermalized.h"
+#include "generated_kernels/StreamCollideSweepSinglePrecisionLeesEdwards.h"
+#include "generated_kernels/StreamCollideSweepSinglePrecisionThermalized.h"
 #endif
 
 namespace walberla {
@@ -49,34 +49,34 @@ using lbmpy::Arch;
 
 template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
 #ifdef __AVX2__
-  using CollisionModelThermalized =
-      pystencils::CollideSweepDoublePrecisionThermalizedAVX;
-  using CollisionModelLeesEdwards =
-      pystencils::CollideSweepDoublePrecisionLeesEdwardsAVX;
+  using StreamingCollisionModelThermalized =
+      pystencils::StreamCollideSweepDoublePrecisionThermalizedAVX;
+  using StreamingCollisionModelLeesEdwards =
+      pystencils::StreamCollideSweepDoublePrecisionLeesEdwardsAVX;
 #else
-  using CollisionModelThermalized =
-      pystencils::CollideSweepDoublePrecisionThermalized;
-  using CollisionModelLeesEdwards =
-      pystencils::CollideSweepDoublePrecisionLeesEdwards;
+  using StreamingCollisionModelThermalized =
+      pystencils::StreamCollideSweepDoublePrecisionThermalized;
+  using StreamingCollisionModelLeesEdwards =
+      pystencils::StreamCollideSweepDoublePrecisionLeesEdwards;
 #endif
-  using StreamSweep = pystencils::StreamSweepDoublePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
+  using VelFieldUpdate = pystencils::VelFieldUpdateDoublePrecision;
 };
 
 template <> struct KernelTrait<float, Arch::CPU> {
 #ifdef __AVX2__
-  using CollisionModelThermalized =
-      pystencils::CollideSweepSinglePrecisionThermalizedAVX;
-  using CollisionModelLeesEdwards =
-      pystencils::CollideSweepSinglePrecisionLeesEdwardsAVX;
+  using StreamingCollisionModelThermalized =
+      pystencils::StreamCollideSweepSinglePrecisionThermalizedAVX;
+  using StreamingCollisionModelLeesEdwards =
+      pystencils::StreamCollideSweepSinglePrecisionLeesEdwardsAVX;
 #else
-  using CollisionModelThermalized =
-      pystencils::CollideSweepSinglePrecisionThermalized;
-  using CollisionModelLeesEdwards =
-      pystencils::CollideSweepSinglePrecisionLeesEdwards;
+  using StreamingCollsionModelThermalized =
+      pystencils::StreamCollideSweepSinglePrecisionThermalized;
+  using StreamingCollisionModelLeesEdwards =
+      pystencils::StreamCollideSweepSinglePrecisionLeesEdwards;
 #endif
-  using StreamSweep = pystencils::StreamSweepSinglePrecision;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
+  using VelFieldUpdate = pystencils::VelFieldUpdateSinglePrecision;
 };
 
 template <typename FT = double, Arch AT = Arch::CPU>

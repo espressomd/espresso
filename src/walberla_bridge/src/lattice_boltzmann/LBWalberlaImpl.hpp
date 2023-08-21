@@ -82,22 +82,21 @@ namespace walberla {
 template <typename FloatType, lbmpy::Arch Architecture>
 class LBWalberlaImpl : public LBWalberlaBase {
 protected:
-  using CollisionModelLeesEdwards =
-      typename detail::KernelTrait<FloatType,
-                                   Architecture>::CollisionModelLeesEdwards;
-  using CollisionModelThermalized =
-      typename detail::KernelTrait<FloatType,
-                                   Architecture>::CollisionModelThermalized;
-  using StreamSweep =
-      typename detail::KernelTrait<FloatType, Architecture>::StreamSweep;
+  using StreamingCollisionModelLeesEdwards = typename detail::KernelTrait<
+      FloatType, Architecture>::StreamingCollisionModelLeesEdwards;
+  using StreamingCollisionModelThermalized = typename detail::KernelTrait<
+      FloatType, Architecture>::StreamingCollisionModelThermalized;
   using InitialPDFsSetter =
       typename detail::KernelTrait<FloatType, Architecture>::InitialPDFsSetter;
+  using VelFieldUpdate =
+      typename detail::KernelTrait<FloatType, Architecture>::VelFieldUpdate;
   using BoundaryModel =
       BoundaryHandling<Vector3<FloatType>,
                        typename detail::BoundaryHandlingTrait<
                            FloatType, Architecture>::Dynamic_UBB>;
-  using CollisionModel =
-      boost::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
+  using StreamingCollisionModel =
+      boost::variant<StreamingCollisionModelThermalized,
+                     StreamingCollisionModelLeesEdwards>;
 
 public:
   // Type definitions
@@ -133,9 +132,11 @@ public:
 private:
   class : public boost::static_visitor<> {
   public:
-    void operator()(CollisionModelThermalized &cm, IBlock *b) { cm(b); }
+    void operator()(StreamingCollisionModelThermalized &cm, IBlock *b) {
+      cm(b);
+    }
 
-    void operator()(CollisionModelLeesEdwards &cm, IBlock *b) {
+    void operator()(StreamingCollisionModelLeesEdwards &cm, IBlock *b) {
       cm.v_s_ = static_cast<decltype(cm.v_s_)>(
           m_lees_edwards_callbacks->get_shear_velocity());
       cm(b);
@@ -148,7 +149,7 @@ private:
   private:
     std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
 
-  } run_collide_sweep;
+  } run_stream_collide_sweep;
 
   FloatType shear_mode_relaxation_rate() const {
     return FloatType{2} / (FloatType{6} * m_viscosity + FloatType{1});
@@ -164,8 +165,8 @@ private:
 
   void reset_boundary_handling() {
     auto const &blocks = get_lattice().get_blocks();
-    m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
-                                                 m_flag_field_id);
+    m_boundary = std::make_shared<BoundaryModel>(
+        blocks, m_last_applied_force_field_id, m_pdf_field_id, m_flag_field_id);
   }
 
   FloatType pressure_tensor_correction_factor() const {
@@ -242,7 +243,7 @@ protected:
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
   // Stream sweep
-  std::shared_ptr<StreamSweep> m_stream;
+  std::shared_ptr<VelFieldUpdate> m_vel_field_update;
 
   // Lees Edwards boundary interpolation
   std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
@@ -254,7 +255,7 @@ protected:
       m_lees_edwards_last_applied_force_interpol_sweep;
 
   // Collision sweep
-  std::shared_ptr<CollisionModel> m_collision_model;
+  std::shared_ptr<StreamingCollisionModel> m_streaming_collision_model;
 
   // boundaries
   std::shared_ptr<BoundaryModel> m_boundary;
@@ -381,28 +382,29 @@ public:
     // Note: For now, combined collide-stream sweeps cannot be used,
     // because the collide-push variant is not supported by lbmpy.
     // The following functors are individual in-place collide and stream steps
-    m_stream = std::make_shared<StreamSweep>(
+    m_vel_field_update = std::make_shared<VelFieldUpdate>(
         m_last_applied_force_field_id, m_pdf_field_id, m_velocity_field_id);
   }
 
 private:
-  void integrate_stream(std::shared_ptr<Lattice_T> const &blocks) {
+  void integrate_update_vel_field(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      (*m_stream)(&*b);
-  }
-
-  void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
+      (*m_vel_field_update)(&*b);
+  };
+  void integrate_stream_collide(std::shared_ptr<Lattice_T> const &blocks) {
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      boost::apply_visitor(run_collide_sweep, *m_collision_model,
+      boost::apply_visitor(run_stream_collide_sweep,
+                           *m_streaming_collision_model,
                            boost::variant<IBlock *>(&*b));
-    if (auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model)) {
+    if (auto *cm = boost::get<StreamingCollisionModelThermalized>(
+            &*m_streaming_collision_model)) {
       cm->time_step_++;
     }
   }
 
   auto has_lees_edwards_bc() const {
-    return boost::get<CollisionModelLeesEdwards>(&*m_collision_model) !=
-           nullptr;
+    return boost::get<StreamingCollisionModelLeesEdwards>(
+               &*m_streaming_collision_model) != nullptr;
   }
 
   void apply_lees_edwards_pdf_interpolation(
@@ -433,19 +435,12 @@ private:
       (*m_boundary)(&*b);
   }
 
-  void integrate_push_scheme() {
-    auto const &blocks = get_lattice().get_blocks();
-    // Reset force fields
-    integrate_reset_force(blocks);
-    // LB collide
-    integrate_collide(blocks);
-    m_pdf_streaming_communication->communicate();
-    // Handle boundaries
-    integrate_boundaries(blocks);
-    // LB stream
-    integrate_stream(blocks);
-    // Refresh ghost layers
-    m_full_communication->communicate();
+  void swap_pdf_buffers(const std::shared_ptr<Lattice_T> &blocks) {
+    for (auto &b : *blocks) {
+      auto pdf_1 = b.getData<PdfField>(m_pdf_field_id);
+      auto pdf_2 = b.getData<PdfField>(m_pdf_tmp_field_id);
+      pdf_1->swapDataPointers(pdf_2);
+    }
   }
 
   void integrate_pull_scheme() {
@@ -454,9 +449,10 @@ private:
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
-    integrate_stream(blocks);
-    // LB collide
-    integrate_collide(blocks);
+    integrate_stream_collide(blocks);
+    swap_pdf_buffers(blocks);
+    // Update vel field from pdfs
+    integrate_update_vel_field(blocks);
     // Refresh ghost layers
     ghost_communication();
   }
@@ -475,11 +471,7 @@ protected:
 public:
   void integrate() override {
     reallocate_ubb_field();
-    if (has_lees_edwards_bc()) {
-      integrate_pull_scheme();
-    } else {
-      integrate_push_scheme();
-    }
+    integrate_pull_scheme();
     // Handle VTK writers
     integrate_vtk_writers();
   }
@@ -498,10 +490,10 @@ public:
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
     m_kT = FloatType_c(kT);
-    auto obj = CollisionModelThermalized(
-        m_last_applied_force_field_id, m_pdf_field_id, uint32_t{0u},
-        uint32_t{0u}, uint32_t{0u}, m_kT, omega, omega, omega_odd, omega, seed,
-        uint32_t{0u});
+    auto obj = StreamingCollisionModelThermalized(
+        m_last_applied_force_field_id, m_pdf_field_id, m_pdf_tmp_field_id,
+        uint32_t{0u}, uint32_t{0u}, uint32_t{0u}, m_kT, omega, omega, omega_odd,
+        omega, seed, uint32_t{0u});
     obj.block_offset_generator =
         [this](IBlock *const block, uint32_t &block_offset_0,
                uint32_t &block_offset_1, uint32_t &block_offset_2) {
@@ -511,7 +503,8 @@ public:
           block_offset_1 = static_cast<uint32_t>(ci.yMin());
           block_offset_2 = static_cast<uint32_t>(ci.zMin());
         };
-    m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+    m_streaming_collision_model =
+        std::make_shared<StreamingCollisionModel>(std::move(obj));
   }
 
   void set_collision_model(
@@ -530,11 +523,14 @@ public:
     auto const blocks = lattice.get_blocks();
     auto const agrid =
         FloatType_c(lattice.get_grid_dimensions()[shear_plane_normal]);
-    auto obj = CollisionModelLeesEdwards(
-        m_last_applied_force_field_id, m_pdf_field_id, agrid, omega, shear_vel);
-    m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+    auto obj = StreamingCollisionModelLeesEdwards(
+        m_last_applied_force_field_id, m_pdf_field_id, m_pdf_tmp_field_id,
+        agrid, omega, shear_vel);
+    m_streaming_collision_model =
+        std::make_shared<StreamingCollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
-    run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
+    run_stream_collide_sweep.register_lees_edwards_callbacks(
+        m_lees_edwards_callbacks);
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,
@@ -1194,7 +1190,8 @@ public:
   }
 
   [[nodiscard]] boost::optional<uint64_t> get_rng_state() const override {
-    auto const *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
+    auto const *cm = boost::get<StreamingCollisionModelThermalized>(
+        &*m_streaming_collision_model);
     if (!cm or m_kT == 0.) {
       return {boost::none};
     }
@@ -1202,7 +1199,8 @@ public:
   }
 
   void set_rng_state(uint64_t counter) override {
-    auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
+    auto *cm = boost::get<StreamingCollisionModelThermalized>(
+        &*m_streaming_collision_model);
     if (!cm or m_kT == 0.) {
       throw std::runtime_error("This LB instance is unthermalized");
     }
