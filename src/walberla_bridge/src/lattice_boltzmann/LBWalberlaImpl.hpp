@@ -165,8 +165,8 @@ private:
 
   void reset_boundary_handling() {
     auto const &blocks = get_lattice().get_blocks();
-    m_boundary = std::make_shared<BoundaryModel>(blocks, m_pdf_field_id,
-                                                 m_flag_field_id);
+    m_boundary = std::make_shared<BoundaryModel>(
+        blocks, m_last_applied_force_field_id, m_pdf_field_id, m_flag_field_id);
   }
 
   FloatType pressure_tensor_correction_factor() const {
