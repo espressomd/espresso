@@ -35,7 +35,6 @@ class IBM(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
         self.system.thermostat.turn_off()
 
     def compute_dihedral_angle(self, pos0, pos1, pos2, pos3):

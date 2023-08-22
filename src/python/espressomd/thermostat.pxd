@@ -115,10 +115,7 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
         void set_sd_kT(double kT) except +
         double get_sd_kT()
 
-cdef extern from "grid_based_algorithms/lb_interface.hpp":
-    double lb_lbfluid_get_kT "LB::get_kT"() except +
-
-cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
+cdef extern from "lb/particle_coupling.hpp":
     void lb_lbcoupling_set_rng_state(stdint.uint64_t) except +
     stdint.uint64_t lb_lbcoupling_get_rng_state() except +
     void lb_lbcoupling_set_gamma(double) except +

@@ -23,12 +23,15 @@
 
 #include "GpuParticleData.hpp"
 #include "ResourceCleanup.hpp"
+
 #include "electrostatics/solver.hpp"
 #include "magnetostatics/solver.hpp"
 
+#include "ek/Solver.hpp"
+#include "lb/Solver.hpp"
+
 #include <utils/Vector.hpp>
 
-#include <cstddef>
 #include <memory>
 
 namespace System {
@@ -48,6 +51,8 @@ public:
   }
   Coulomb::Solver coulomb;
   Dipoles::Solver dipoles;
+  LB::Solver lb;
+  EK::Solver ek;
 };
 
 System &get_system();

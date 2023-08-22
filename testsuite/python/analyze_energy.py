@@ -54,7 +54,8 @@ class AnalyzeEnergy(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.electrostatics.clear()
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
 
     def test_kinetic(self):
         p0, p1 = self.system.part.all()

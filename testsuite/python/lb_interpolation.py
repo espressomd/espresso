@@ -58,10 +58,10 @@ class LBInterpolation:
 
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def set_boundaries(self, velocity):
         """Place boundaries *not* exactly on a LB node."""

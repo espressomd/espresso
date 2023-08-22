@@ -39,16 +39,16 @@ class VirtualSitesTracersCommon:
         self.system.box_l = (self.box_lw, self.box_lw, self.box_height)
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.part.clear()
         self.system.thermostat.turn_off()
 
     def set_lb(self, ext_force_density=(0, 0, 0), dir_walls=2):
-        self.system.actors.clear()
+        self.system.lb = None
         self.lbf = self.LBClass(
             kT=0.0, agrid=1., density=1., kinematic_viscosity=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
             act_on_virtual=False,
@@ -160,7 +160,7 @@ class VirtualSitesTracersCommon:
                 tracer_dist = p.pos[direction] - pos_initial[direction]
                 self.assertAlmostEqual(tracer_dist / ref_dist, 1., delta=0.01)
 
-            system.actors.clear()
+            system.lb = None
 
     def test_zz_exceptions_without_lb(self):
         """Check behaviour without lb. Ignore non-virtual particles, complain on
@@ -170,7 +170,7 @@ class VirtualSitesTracersCommon:
         self.set_lb()
         system = self.system
         system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
-        system.actors.clear()
+        system.lb = None
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0))
         system.integrator.run(1)

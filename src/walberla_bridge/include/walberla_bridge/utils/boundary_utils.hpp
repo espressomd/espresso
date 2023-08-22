@@ -23,8 +23,6 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/multi_array/multi_array_ref.hpp>
-
 #include <cassert>
 #include <cstddef>
 #include <iterator>
@@ -82,32 +80,31 @@ void set_boundary_from_grid(BoundaryModel &boundary,
                             LatticeWalberla const &lattice,
                             std::vector<int> const &raster_flat,
                             std::vector<DataType> const &data_flat) {
-  // reshape grids
+
   auto const grid_size = lattice.get_grid_dimensions();
+  auto const offset = lattice.get_local_grid_range().first;
+  auto const gl = static_cast<int>(lattice.get_ghost_layers());
   assert(raster_flat.size() == Utils::product(grid_size));
-  boost::const_multi_array_ref<DataType, 3> data_grid(data_flat.data(),
-                                                      grid_size);
-  boost::const_multi_array_ref<int, 3> raster(raster_flat.data(), grid_size);
+  auto const n_y = grid_size[1];
+  auto const n_z = grid_size[2];
+  auto const off_i = offset[0];
+  auto const off_j = offset[1];
+  auto const off_k = offset[2];
 
   auto const &blocks = lattice.get_blocks();
   for (auto block = blocks->begin(); block != blocks->end(); ++block) {
     auto const [size_i, size_j, size_k] = boundary.block_dims(*block);
-    auto const offset = lattice.get_local_grid_range().first;
-    auto const off_i = offset[0];
-    auto const off_j = offset[1];
-    auto const off_k = offset[2];
     // Get field data which knows about the indices
     // In the loop, x,y,z are in block-local coordinates
-    auto const n_ghost_layers = lattice.get_ghost_layers();
-    auto const ghosts = static_cast<int>(n_ghost_layers);
-    for (int i = off_i - ghosts; i < size_i + off_i + ghosts; ++i) {
-      for (int j = off_j - ghosts; j < size_j + off_j + ghosts; ++j) {
-        for (int k = off_k - ghosts; k < size_k + off_k + ghosts; ++k) {
+    for (int i = off_i - gl; i < size_i + off_i + gl; ++i) {
+      for (int j = off_j - gl; j < size_j + off_j + gl; ++j) {
+        for (int k = off_k - gl; k < size_k + off_k + gl; ++k) {
           auto const node = Utils::Vector3i{{i, j, k}};
           auto const idx = (node + grid_size) % grid_size;
-          if (raster(idx)) {
+          auto const index = idx[0] * n_y * n_z + idx[1] * n_z + idx[2];
+          if (raster_flat[index]) {
             auto const bc = get_block_and_cell(lattice, node, true);
-            boundary.set_node_value_at_boundary(node, data_grid(idx), *bc);
+            boundary.set_node_value_at_boundary(node, data_flat[index], *bc);
           }
         }
       }

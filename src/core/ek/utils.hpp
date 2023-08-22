@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,23 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_EK_REACTIONS_HPP
-#define ESPRESSO_EK_REACTIONS_HPP
+#pragma once
 
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
-#include "EKReactions.hpp"
-#include "walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp"
+#include <stdexcept>
 
 namespace EK {
 
-extern EKReactions<walberla::EKReactionBase> ek_reactions;
-
-void perform_reactions();
+struct NoEKActive : public std::exception {
+  const char *what() const noexcept override { return "EK not activated"; }
+};
 
 } // namespace EK
-
-#endif // WALBERLA
-#endif

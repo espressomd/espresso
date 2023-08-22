@@ -21,20 +21,21 @@
 #ifdef WALBERLA
 
 #include "LBFluid.hpp"
+#include "LBWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
-#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/integrate.hpp"
+#include "core/lb/LBWalberla.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
 #include "core/lees_edwards/protocols.hpp"
+#include "core/system/System.hpp"
 
 #include <script_interface/communication.hpp>
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
@@ -45,13 +46,13 @@
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/optional.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -68,14 +69,17 @@ std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
 Variant LBFluid::do_call_method(std::string const &name,
                                 VariantMap const &params) {
   if (name == "activate") {
-    context()->parallel_try_catch(
-        [&]() { ::activate_lb_walberla(m_instance, m_lb_params); });
+    context()->parallel_try_catch([this]() {
+      ::System::get_system().lb.set<::LB::LBWalberla>(m_instance, m_lb_params);
+    });
     m_is_active = true;
     return {};
   }
   if (name == "deactivate") {
-    ::deactivate_lb_walberla();
-    m_is_active = false;
+    if (m_is_active) {
+      ::System::get_system().lb.reset();
+      m_is_active = false;
+    }
     return {};
   }
   if (name == "add_force_at_pos") {
@@ -134,7 +138,7 @@ void LBFluid::do_construct(VariantMap const &params) {
   auto const kT = get_value<double>(params, "kT");
   auto const ext_f = get_value<Utils::Vector3d>(params, "ext_force_density");
   auto const single_precision = get_value<bool>(params, "single_precision");
-  m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
+  m_lb_params = std::make_shared<::LB::LBWalberlaParams>(agrid, tau);
   m_is_active = false;
   m_seed = get_value<int>(params, "seed");
   context()->parallel_try_catch([&]() {
@@ -299,8 +303,8 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
   auto const write_data = [&lb_obj,
                            mode](std::shared_ptr<CheckpointFile> cpfile_ptr,
                                  Context const &context) {
-    auto const get_node_checkpoint = [&](Utils::Vector3i const &ind)
-        -> boost::optional<LBWalberlaNodeState> {
+    auto const get_node_checkpoint =
+        [&](Utils::Vector3i const &ind) -> std::optional<LBWalberlaNodeState> {
       auto const pop = lb_obj.get_node_population(ind);
       auto const laf = lb_obj.get_node_last_applied_force(ind);
       auto const lbb = lb_obj.get_node_is_boundary(ind);
@@ -313,9 +317,9 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
         if (*lbb) {
           cpnode.slip_velocity = *vbb;
         }
-        return cpnode;
+        return {cpnode};
       }
-      return {boost::none};
+      return std::nullopt;
     };
 
     auto failure = false;

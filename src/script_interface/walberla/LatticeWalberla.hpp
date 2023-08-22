@@ -40,6 +40,7 @@ namespace ScriptInterface::walberla {
 class LatticeWalberla : public AutoParameters<LatticeWalberla> {
   std::shared_ptr<::LatticeWalberla> m_lattice;
   double m_agrid;
+  Utils::Vector3d m_box_l;
 
 public:
   LatticeWalberla() {
@@ -49,11 +50,13 @@ public:
          [this]() { return static_cast<int>(m_lattice->get_ghost_layers()); }},
         {"shape", AutoParameter::read_only,
          [this]() { return m_lattice->get_grid_dimensions(); }},
+        {"_box_l", AutoParameter::read_only, [this]() { return m_box_l; }},
     });
   }
 
   void do_construct(VariantMap const &args) override {
     m_agrid = get_value<double>(args, "agrid");
+    m_box_l = get_value_or<Utils::Vector3d>(args, "_box_l", ::box_geo.length());
     auto const n_ghost_layers = get_value<int>(args, "n_ghost_layers");
 
     context()->parallel_try_catch([&]() {
@@ -63,9 +66,8 @@ public:
       if (n_ghost_layers < 0) {
         throw std::domain_error("Parameter 'n_ghost_layers' must be >= 0");
       }
-      auto const box_size = ::box_geo.length();
       auto const grid_dim =
-          ::LatticeWalberla::calc_grid_dimensions(box_size, m_agrid);
+          ::LatticeWalberla::calc_grid_dimensions(m_box_l, m_agrid);
       m_lattice = std::make_shared<::LatticeWalberla>(
           grid_dim, node_grid, static_cast<unsigned int>(n_ghost_layers));
     });

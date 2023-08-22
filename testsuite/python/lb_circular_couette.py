@@ -51,7 +51,7 @@ class LBCircularCouetteCommon:
     system.periodicity = [False, False, True]
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def test_taylor_couette_flow(self):
         """
@@ -64,7 +64,7 @@ class LBCircularCouetteCommon:
         lb_fluid = espressomd.lb.LBFluidWalberla(
             agrid=AGRID, density=0.5, kinematic_viscosity=3.2,
             tau=system.time_step)
-        system.actors.add(lb_fluid)
+        self.system.lb = lb_fluid
 
         # set up two cylinders
         cyl_center = AGRID * (GRID_SIZE // 2 + 0.5) * [1, 1, 0]

@@ -20,11 +20,15 @@
 #define OBSERVABLES_LB_FLUID_STRESS_HPP
 
 #include "Observable.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
 
 #include <utils/math/sqr.hpp>
+#include <utils/serialization/array.hpp>
+
+#include <boost/mpi/collectives/reduce.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <vector>
 
 namespace Observables {
@@ -33,9 +37,11 @@ public:
   std::vector<std::size_t> shape() const override { return {3, 3}; }
   std::vector<double>
   operator()(boost::mpi::communicator const &comm) const override {
-    auto const unit_conversion =
-        1. / (LB::get_agrid() * Utils::sqr(LB::get_tau()));
-    auto const tensor = LB::get_pressure_tensor(comm) * unit_conversion;
+    auto const &lb = System::get_system().lb;
+    auto const pressure_conv = 1. / (lb.get_agrid() * Utils::sqr(lb.get_tau()));
+    auto const local_tensor = lb.get_pressure_tensor() * pressure_conv;
+    std::remove_const_t<decltype(local_tensor)> tensor;
+    boost::mpi::reduce(comm, local_tensor, tensor, std::plus<>(), 0);
     return tensor.as_vector();
   }
 };

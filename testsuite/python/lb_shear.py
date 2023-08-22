@@ -88,7 +88,7 @@ class LBShearCommon:
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def check_profile(self, shear_plane_normal, shear_direction):
         """
@@ -99,7 +99,7 @@ class LBShearCommon:
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
         self.setUp()
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.lbf.clear_boundaries()
 
         wall_shape1 = espressomd.shapes.Wall(

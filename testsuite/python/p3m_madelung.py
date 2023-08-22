@@ -39,8 +39,10 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
-        self.system.electrostatics.clear()
+        if espressomd.has_features("DIPOLES"):
+            self.system.magnetostatics.clear()
+        if espressomd.has_features("ELECTROSTATICS"):
+            self.system.electrostatics.clear()
 
     def get_normalized_obs_per_ion(self, pressure=True):
         energy = self.system.analysis.energy()["coulomb"]
@@ -97,11 +99,11 @@ class Test(ut.TestCase):
             np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=2e-9)
 
         dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
-        self.system.actors.add(dp3m)
+        self.system.magnetostatics.solver = dp3m
         check()
-        self.system.actors.remove(dp3m)
+        self.system.magnetostatics.clear()
         mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
-        self.system.actors.add(mdlc)
+        self.system.magnetostatics.solver = mdlc
         check()
 
     @utx.skipIfMissingFeatures(["DP3M"])
@@ -141,11 +143,11 @@ class Test(ut.TestCase):
             np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=4e-6)
 
         dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
-        self.system.actors.add(dp3m)
+        self.system.magnetostatics.solver = dp3m
         check()
-        self.system.actors.remove(dp3m)
+        self.system.magnetostatics.clear()
         mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
-        self.system.actors.add(mdlc)
+        self.system.magnetostatics.solver = mdlc
         check()
 
     @utx.skipIfMissingFeatures(["DP3M"])
@@ -185,7 +187,7 @@ class Test(ut.TestCase):
             np.testing.assert_allclose(energy_per_dip, mc, atol=0., rtol=3e-4)
 
         dp3m = espressomd.magnetostatics.DipolarP3M(**dp3m_params)
-        self.system.actors.add(dp3m)
+        self.system.magnetostatics.solver = dp3m
         check()
 
     @utx.skipIfMissingFeatures(["P3M"])

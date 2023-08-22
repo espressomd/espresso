@@ -21,10 +21,10 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
 #include <cassert>
 #include <functional>
+#include <optional>
 
 namespace Utils::Mpi {
 
@@ -34,7 +34,7 @@ namespace Utils::Mpi {
  */
 template <typename T>
 T reduce_optional(boost::mpi::communicator const &comm,
-                  boost::optional<T> const &result) {
+                  std::optional<T> const &result) {
   assert(1 == boost::mpi::all_reduce(comm, static_cast<int>(!!result),
                                      std::plus<>()) &&
          "Incorrect number of return values");

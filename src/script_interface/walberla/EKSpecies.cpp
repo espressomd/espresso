@@ -21,21 +21,21 @@
 #ifdef WALBERLA
 
 #include "EKSpecies.hpp"
+#include "EKWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/EKWalberlaNodeState.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/optional.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -207,8 +207,8 @@ void EKSpecies::save_checkpoint(std::string const &filename, int mode) {
   auto const write_data = [&ek_obj,
                            mode](std::shared_ptr<CheckpointFile> cpfile_ptr,
                                  Context const &context) {
-    auto const get_node_checkpoint = [&](Utils::Vector3i const &ind)
-        -> boost::optional<EKWalberlaNodeState> {
+    auto const get_node_checkpoint =
+        [&](Utils::Vector3i const &ind) -> std::optional<EKWalberlaNodeState> {
       auto const density = ek_obj.get_node_density(ind);
       auto const is_b_d = ek_obj.get_node_is_density_boundary(ind);
       auto const dens_b = ek_obj.get_node_density_at_boundary(ind);
@@ -229,7 +229,7 @@ void EKSpecies::save_checkpoint(std::string const &filename, int mode) {
         }
         return cpnode;
       }
-      return {boost::none};
+      return std::nullopt;
     };
 
     auto failure = false;

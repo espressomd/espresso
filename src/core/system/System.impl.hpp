@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,21 +19,8 @@
 
 #pragma once
 
-#include <utils/Vector.hpp>
+#include "electrostatics/coulomb.hpp"
+#include "magnetostatics/dipoles.hpp"
 
-#include <vector>
-
-/** Checkpoint data for a LB node. */
-struct LBWalberlaNodeState {
-  std::vector<double> populations;
-  Utils::Vector3d last_applied_force;
-  Utils::Vector3d slip_velocity;
-  bool is_boundary;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &populations &last_applied_force &slip_velocity &is_boundary;
-  }
-};
+#include "ek/Implementation.hpp"
+#include "lb/Implementation.hpp"

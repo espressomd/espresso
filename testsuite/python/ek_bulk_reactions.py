@@ -37,9 +37,8 @@ class EKReaction(ut.TestCase):
     system.time_step = TAU
     system.cell_system.skin = 0.4
 
-    def tearDown(self) -> None:
-        self.system.ekcontainer.clear()
-        self.system.ekreactions.clear()
+    def tearDown(self):
+        self.system.ekcontainer = None
 
     def analytic_density_base(
             self, time: float, coeffs, rate_constant: float, init_density: float) -> float:
@@ -71,8 +70,8 @@ class EKReaction(ut.TestCase):
             n_ghost_layers=1, agrid=self.AGRID)
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
-
-        self.system.ekcontainer.tau = self.TAU
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.TAU, solver=eksolver)
 
         reaction_rate: float = 1e-5
 
@@ -105,12 +104,11 @@ class EKReaction(ut.TestCase):
                 stoech_coeff=product_coeff,
                 order=0.0))
 
-        self.system.ekcontainer.solver = eksolver
-
         reaction = espressomd.electrokinetics.EKBulkReaction(
             reactants=reactants, coefficient=reaction_rate, lattice=lattice, tau=self.TAU)
 
-        self.system.ekreactions.add(reaction)
+        self.system.ekcontainer.reactions.add(reaction)
+        self.assertEqual(len(self.system.ekcontainer.reactions), 1)
 
         self.system.integrator.run(self.TIME)
 
@@ -149,6 +147,9 @@ class EKReaction(ut.TestCase):
             reaction_rate *
             len(stoech_coeffs),
             atol=0)
+
+        self.system.ekcontainer.reactions.remove(reaction)
+        self.assertEqual(len(self.system.ekcontainer.reactions), 0)
 
 
 if __name__ == "__main__":

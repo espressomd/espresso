@@ -47,7 +47,7 @@ class TestLB:
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.part.clear()
         self.system.thermostat.turn_off()
 
@@ -70,7 +70,7 @@ class TestLB:
             agrid=self.params['agrid'],
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0], seed=4)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,

@@ -54,8 +54,11 @@ class LBTest:
     system.cell_system.skin = 1.0
     interpolation = False
 
+    def setUp(self):
+        self.system.box_l = 3 * [6.0]
+
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.part.clear()
         self.system.thermostat.turn_off()
         self.system.time_step = self.params['tau']
@@ -68,17 +71,17 @@ class LBTest:
 
         # activated actor
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
         self.assertTrue(lbf.is_active)
         self.check_properties(lbf)
-        self.system.actors.remove(lbf)
+        self.system.lb = None
 
         # deactivated actor
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=1)
-        self.system.actors.remove(lbf)
+        self.system.lb = None
         self.assertFalse(lbf.is_active)
         self.check_properties(lbf)
 
@@ -206,14 +209,10 @@ class LBTest:
             self.lb_class(**make_kwargs(kT=-1., seed=42))
         with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
             self.lb_class(**make_kwargs(kT=0., seed=-42))
-        with self.assertRaisesRegex(RuntimeError, "Cannot add a second LB instance"):
-            lbf = self.lb_class(**make_kwargs())
-            self.system.actors.add(lbf)
-            lbf.call_method("activate")
 
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         lb_node = lbf[0, 0, 0]
         # check exceptions from LB node
         with self.assertRaisesRegex(RuntimeError, "Property 'boundary_force' is read-only"):
@@ -236,7 +235,7 @@ class LBTest:
 
     def test_slice_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         lb_slice = lbf[:, :, :]
         # check exceptions from LB slice
         with self.assertRaisesRegex(RuntimeError, "Property 'boundary_force' is read-only"):
@@ -268,7 +267,7 @@ class LBTest:
 
     def test_lb_slice_set_get(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         ref_density = 1. + np.arange(np.prod(lbf.shape)).reshape(lbf.shape)
         lbf[:, :, :].density = ref_density
         densities = np.copy(lbf[:, :, :].density)
@@ -325,7 +324,7 @@ class LBTest:
 
         lbf = self.lb_class(kT=1., seed=1, ext_force_density=[0, 0, 0],
                             **self.params, **self.lb_params)
-        system.actors.add(lbf)
+        system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=1)
         system.integrator.run(10)
         pressure_tensor = np.copy(
@@ -345,14 +344,14 @@ class LBTest:
         self.assertIsInstance(
             lbf.pressure_tensor,
             espressomd.utils.array_locked)
-        system.actors.remove(lbf)
+        system.lb = None
         with self.assertRaisesRegex(RuntimeError, 'LB not activated'):
             obs.calculate()
 
     def test_lb_node_set_get(self):
         lbf = self.lb_class(kT=0.0, ext_force_density=[0, 0, 0], **self.params,
                             **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.assertAlmostEqual(
             lbf[0, 0, 0].density, self.params['density'], delta=1e-4)
 
@@ -389,24 +388,27 @@ class LBTest:
 
     def test_parameter_change_without_seed(self):
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=3.0)
-        if espressomd.has_features("ELECTROSTATICS"):
-            actor = espressomd.electrostatics.DH(
-                prefactor=1., kappa=1., r_cut=1.)
         with self.assertRaisesRegex(Exception, "Temperature change not supported by LB"):
             self.system.thermostat.turn_off()
         with self.assertRaisesRegex(Exception, "Time step change not supported by LB"):
             self.system.time_step /= 2.
         if espressomd.has_features("ELECTROSTATICS"):
-            with self.assertRaisesRegex(RuntimeError, "LB does not currently support handling changes of the MD cell geometry"):
-                self.system.actors.add(actor)
-            self.assertEqual(len(self.system.actors), 1)
+            self.system.electrostatics.solver = espressomd.electrostatics.DH(
+                prefactor=1., kappa=1., r_cut=1.)  # should not fail
+            self.system.electrostatics.clear()
+        with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by LB"):
+            self.system.box_l = [1., 2., 3.]
+        np.testing.assert_allclose(
+            np.copy(self.system.box_l), [1., 2., 3.], atol=1e-7)
+        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by LB"):
+            self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         # check ranges and out-of-bounds access
         shape = lbf.shape
         for i in range(3):
@@ -450,14 +452,14 @@ class LBTest:
         system.box_l = [l] * 3 * np.array(system.cell_system.node_grid)
         lbf = self.lb_class(agrid=l / 31, density=1, kinematic_viscosity=1, kT=0,
                             tau=system.time_step, **self.lb_params)
-        system.actors.add(lbf)
+        system.lb = lbf
         system.integrator.run(steps=1)
-        system.actors.clear()
+        system.lb = None
         system.box_l = old_l
 
     def test_bool_operations_on_node(self):
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         # test __eq()__ where a node is equal to itself and not equal to any
         # other node
         assert lbf[0, 0, 0] == lbf[0, 0, 0]
@@ -476,7 +478,7 @@ class LBTest:
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         # Random velocities
@@ -513,7 +515,7 @@ class LBTest:
 
     def test_viscous_coupling_pairs(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         # Random velocities
@@ -572,7 +574,7 @@ class LBTest:
             system.part.all().mass = 0.1 + np.random.random(len(system.part))
 
         lbf = self.lb_class(kT=1.5, seed=4, **self.params, **self.lb_params)
-        system.actors.add(lbf)
+        system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         for _ in range(20):
@@ -586,7 +588,7 @@ class LBTest:
     def test_force_interpolation(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
 
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
         position = np.array([1., 2., 3.])
@@ -612,7 +614,7 @@ class LBTest:
         ext_force_density = [2.3, 1.2, 0.1]
         lbf = self.lb_class(ext_force_density=ext_force_density, **self.params,
                             **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         n_time_steps = 1
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density
@@ -656,40 +658,40 @@ class LBTest:
         lbf = self.lb_class(**params_with_tau(self.system.time_step),
                             **self.lb_params)
         sim_time = 100 * self.params['tau']
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
         probe_pos = np.array(self.system.box_l) / 2.
         v1 = np.copy(lbf.get_interpolated_velocity(pos=probe_pos))
         f1 = np.copy(p.f)
-        self.system.actors.clear()
+        self.system.lb = None
         # get fresh LBfluid and change time steps
         with self.assertRaises(Exception):
-            self.system.actors.add(
+            self.system.lb = \
                 self.lb_class(**params_with_tau(0.5 * self.system.time_step),
-                              **self.lb_params))
-        self.system.actors.clear()
+                              **self.lb_params)
+        self.system.lb = None
         with self.assertRaises(Exception):
-            self.system.actors.add(
+            self.system.lb = \
                 self.lb_class(**params_with_tau(1.1 * self.system.time_step),
-                              **self.lb_params))
-        self.system.actors.clear()
+                              **self.lb_params)
+        self.system.lb = None
 
-        self.system.actors.add(
+        self.system.lb = \
             self.lb_class(**params_with_tau(self.system.time_step),
-                          **self.lb_params))
+                          **self.lb_params)
 
         with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be >= MD time_step \(0\.0200[0-9]+\)"):
             self.system.time_step = 2.0 * lbf.get_params()["tau"]
         with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be an integer multiple of the MD time_step \(0\.0080[0-9]+\)"):
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
 
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.time_step = 0.5 * self.params['tau']
         lbf = self.lb_class(**params_with_tau(self.system.time_step),
                             **self.lb_params)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
         v2 = np.copy(lbf.get_interpolated_velocity(pos=probe_pos))

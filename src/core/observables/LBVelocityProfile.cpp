@@ -18,7 +18,7 @@
  */
 #include "LBVelocityProfile.hpp"
 
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
 #include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
@@ -36,10 +36,11 @@ LBVelocityProfile::operator()(boost::mpi::communicator const &comm) const {
   decltype(sampling_positions) local_positions{};
   std::vector<vel_type> local_velocities{};
 
-  auto const vel_conv = LB::get_lattice_speed();
+  auto const &lb = System::get_system().lb;
+  auto const vel_conv = lb.get_lattice_speed();
 
   for (auto const &pos : sampling_positions) {
-    if (auto const vel = LB::get_interpolated_velocity(pos)) {
+    if (auto const vel = lb.get_interpolated_velocity(pos)) {
       local_positions.emplace_back(pos);
       local_velocities.emplace_back((*vel) * vel_conv);
     }

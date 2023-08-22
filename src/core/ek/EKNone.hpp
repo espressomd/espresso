@@ -19,21 +19,21 @@
 
 #pragma once
 
-#include <utils/Vector.hpp>
+#include "utils.hpp"
 
-/** Checkpoint data for a EK node. */
-struct EKWalberlaNodeState {
-  double density;
-  bool is_boundary_density;
-  double density_boundary;
-  bool is_boundary_flux;
-  Utils::Vector3d flux_boundary;
+namespace EK {
 
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar &density &is_boundary_density &density_boundary &is_boundary_flux
-        &flux_boundary;
-  }
+struct EKNone {
+  bool is_ready_for_propagation() const { throw NoEKActive{}; }
+  void propagate() { throw NoEKActive{}; }
+  double get_tau() const { throw NoEKActive{}; }
+  void veto_time_step(double) const { throw NoEKActive{}; }
+  void sanity_checks() const { throw NoEKActive{}; }
+  void on_cell_structure_change() const { throw NoEKActive{}; }
+  void on_boxl_change() const { throw NoEKActive{}; }
+  void on_node_grid_change() const { throw NoEKActive{}; }
+  void on_timestep_change() const { throw NoEKActive{}; }
+  void on_temperature_change() const { throw NoEKActive{}; }
 };
+
+} // namespace EK

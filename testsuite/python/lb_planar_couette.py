@@ -69,7 +69,7 @@ class LBCouetteFlowCommon:
         self.system.time = 0.
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.lees_edwards = espressomd.lees_edwards.LeesEdwards()
 
     def check_profile(self, u_getter, **kwargs):
@@ -89,7 +89,7 @@ class LBCouetteFlowCommon:
             protocol=protocol, **kwargs)
 
         lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
-        system.actors.add(lbf)
+        self.system.lb = lbf
 
         # warmup
         system.integrator.run(8)

@@ -39,7 +39,7 @@ p3m = espressomd.electrostatics.P3M(prefactor=1., accuracy=1e-3,
 system.integrator.set_steepest_descent(f_max=0., gamma=1e-3,
                                        max_displacement=1. / 100.)
 system.integrator.run(100)
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 system.integrator.run(20)
 
 # production

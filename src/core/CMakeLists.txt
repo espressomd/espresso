@@ -95,6 +95,11 @@ target_link_libraries(
 
 target_include_directories(espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(ESPRESSO_BUILD_WITH_WALBERLA)
+  target_link_libraries(espresso_core PRIVATE espresso::walberla
+                                              ${WALBERLA_LIBS})
+endif()
+
 add_subdirectory(accumulators)
 add_subdirectory(analysis)
 add_subdirectory(bond_breakage)
@@ -102,13 +107,14 @@ add_subdirectory(bonded_interactions)
 add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)
+add_subdirectory(ek)
 add_subdirectory(electrostatics)
 add_subdirectory(error_handling)
 add_subdirectory(galilei)
-add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
 add_subdirectory(integrators)
 add_subdirectory(io)
+add_subdirectory(lb)
 add_subdirectory(magnetostatics)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)

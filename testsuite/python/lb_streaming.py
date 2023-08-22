@@ -96,10 +96,10 @@ class LBStreamingCommon:
 
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def test_population_streaming(self):
         pop_default = np.zeros(19) + 1e-10

@@ -40,11 +40,11 @@ class LBBoundaryVelocityTest(ut.TestCase):
     system.cell_system.skin = 0.1
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def setUp(self):
         self.lb_fluid = espressomd.lb.LBFluidWalberla(**self.lb_params)
-        self.system.actors.add(self.lb_fluid)
+        self.system.lb = self.lb_fluid
 
     def check_wall_slip(self, v_boundary, atol):
         """

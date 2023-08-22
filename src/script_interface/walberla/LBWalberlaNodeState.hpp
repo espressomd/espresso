@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2021-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,27 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#pragma once
 
-#ifdef WALBERLA
+#include <utils/Vector.hpp>
 
-#include "ek_reactions.hpp"
+#include <boost/serialization/access.hpp>
 
-#include <algorithm>
+#include <vector>
 
-namespace EK {
+/** Checkpoint data for a LB node. */
+struct LBWalberlaNodeState {
+  std::vector<double> populations;
+  Utils::Vector3d last_applied_force;
+  Utils::Vector3d slip_velocity;
+  bool is_boundary;
 
-EKReactions<walberla::EKReactionBase> ek_reactions;
-
-void perform_reactions() {
-  if (ek_reactions.empty()) {
-    return;
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, unsigned int /* version */) {
+    ar &populations &last_applied_force &slip_velocity &is_boundary;
   }
-
-  std::for_each(ek_reactions.begin(), ek_reactions.end(),
-                [](auto const &reaction) { reaction->perform_reaction(); });
-}
-
-} // namespace EK
-
-#endif // WALBERLA
+};

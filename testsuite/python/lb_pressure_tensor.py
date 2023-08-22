@@ -44,18 +44,17 @@ class TestLBPressureTensor:
     system.cell_system.skin = 0
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.thermostat.turn_off()
 
     def setUp(self):
         # Setup
-        system = self.system
         self.lbf = self.lb_class(**self.params, **self.lb_params)
-        system.actors.add(self.lbf)
-        system.thermostat.set_lb(LB_fluid=self.lbf, seed=42)
+        self.system.lb = self.lbf
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=42)
 
         # Warmup
-        system.integrator.run(500)
+        self.system.integrator.run(500)
 
         # Sampling
         self.p_global = np.zeros((self.steps, 3, 3))
@@ -71,7 +70,7 @@ class TestLBPressureTensor:
             self.p_node1[i] = node1.pressure_tensor
             self.p_global[i] = self.lbf.pressure_tensor
 
-            system.integrator.run(2)
+            self.system.integrator.run(2)
 
     def assert_allclose_matrix(self, x, y, atol_diag, atol_offdiag):
         """Assert that all elements x_ij, y_ij are close with

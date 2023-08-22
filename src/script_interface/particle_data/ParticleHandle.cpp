@@ -47,6 +47,7 @@
 #include <cmath>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -134,7 +135,7 @@ template <typename T, class F>
 T ParticleHandle::get_particle_property(F const &fun) const {
   auto const &comm = context()->get_comm();
   auto const ptr = const_cast<Particle const *>(get_real_particle(comm, m_pid));
-  boost::optional<T> ret;
+  std::optional<T> ret;
   if (ptr == nullptr) {
     ret = {};
   } else {

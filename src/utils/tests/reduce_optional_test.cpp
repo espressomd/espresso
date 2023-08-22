@@ -25,13 +25,14 @@
 #include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi.hpp>
-#include <boost/optional.hpp>
+
+#include <optional>
 
 BOOST_AUTO_TEST_CASE(reduce_optional) {
   boost::mpi::communicator comm;
 
   for (int rank = 0; rank < comm.size(); ++rank) {
-    boost::optional<int> maybe;
+    std::optional<int> maybe;
     if (comm.rank() == rank) {
       maybe = 42;
     }

@@ -63,7 +63,7 @@ class Test(ut.TestCase):
     pos = data[:, 1:4]
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
         self.system.part.clear()
         self.system.integrator.set_vv()
 
@@ -96,7 +96,7 @@ class Test(ut.TestCase):
 
     def test_dds(self):
         solver = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
-        self.system.actors.add(solver)
+        self.system.magnetostatics.solver = solver
         self.system.integrator.run(steps=0)
         self.system.analysis.dipole_fields()
         slice_data = [(x.id, x.pos, x.dip) for x in self.system.part.all()]

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,32 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_EK_CONTAINER_HPP
-#define ESPRESSO_EK_CONTAINER_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include <utils/Vector.hpp>
 
-#ifdef WALBERLA
-#include <walberla_bridge/electrokinetics/EKContainer.hpp>
-#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#endif // WALBERLA
+#include <boost/serialization/access.hpp>
 
-#include <stdexcept>
+/** Checkpoint data for a EK node. */
+struct EKWalberlaNodeState {
+  double density;
+  bool is_boundary_density;
+  double density_boundary;
+  bool is_boundary_flux;
+  Utils::Vector3d flux_boundary;
 
-struct NoEKActive : public std::exception {
-  const char *what() const noexcept override { return "EK not activated"; }
+private:
+  friend boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar, unsigned int /* version */) {
+    ar &density &is_boundary_density &density_boundary &is_boundary_flux
+        &flux_boundary;
+  }
 };
-
-namespace EK {
-
-#ifdef WALBERLA
-extern EKContainer<EKinWalberlaBase> ek_container;
-#endif // WALBERLA
-
-double get_tau();
-int get_steps_per_md_step(double md_timestep);
-void propagate();
-
-} // namespace EK
-
-#endif
