@@ -64,6 +64,9 @@ LatticeWalberla::LatticeWalberla(Utils::Vector3i const &grid_dimensions,
       uint_c(node_grid[0]), uint_c(node_grid[1]), uint_c(node_grid[2]),
       // periodicity
       true, true, true);
+  for (IBlock &block : *m_blocks) {
+    m_cached_blocks.push_back(&block);
+  }
 }
 
 [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
