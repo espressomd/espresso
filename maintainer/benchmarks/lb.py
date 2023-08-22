@@ -40,7 +40,7 @@ parser.add_argument("--lb_sites_per_particle", metavar="N_LB", action="store",
 parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.03, required=False,
                     help="Fraction of the simulation box volume occupied by "
-                    "particles (range: [0.01-0.74], default: 0.50)")
+                    "particles (range: [0.01-0.74], default: 0.03)")
 parser.add_argument("--single_precision", action="store_true", required=False,
                     help="Using single-precision floating point accuracy")
 parser.add_argument("--gpu", action=argparse.BooleanOptionalAction,
@@ -139,6 +139,8 @@ if args.gpu:
 lbf = lb_class(agrid=agrid, tau=system.time_step, kinematic_viscosity=1.,
                density=1., single_precision=args.single_precision)
 system.lb = lbf
+if n_part:
+    system.thermostat.set_lb(LB_fluid=lbf, gamma=1., seed=42)
 
 
 # time integration loop
