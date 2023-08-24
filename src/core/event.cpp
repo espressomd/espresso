@@ -31,6 +31,7 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
+#include "constraints.hpp"
 #include "cuda/init.hpp"
 #include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
@@ -241,6 +242,8 @@ void on_boxl_change(bool skip_method_adaption) {
     system.dipoles.on_boxl_change();
 #endif
   }
+
+  Constraints::constraints.on_boxl_change();
 }
 
 void on_cell_structure_change() {
