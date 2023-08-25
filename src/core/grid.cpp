@@ -27,6 +27,7 @@
 #include "grid.hpp"
 
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "particle_data.hpp"
 
@@ -38,6 +39,7 @@
 #include <mpi.h>
 
 #include <cmath>
+#include <stdexcept>
 
 BoxGeometry box_geo;
 LocalBox<double> local_geo;
@@ -129,7 +131,11 @@ void rescale_boxl(int dir, double d_new) {
 
 void mpi_set_box_length_local(const Utils::Vector3d &length) {
   box_geo.set_length(length);
-  on_boxl_change();
+  try {
+    on_boxl_change();
+  } catch (std::exception const &err) {
+    runtimeErrorMsg() << err.what();
+  }
 }
 
 REGISTER_CALLBACK(mpi_set_box_length_local)
