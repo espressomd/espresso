@@ -40,6 +40,9 @@ namespace ScriptInterface::walberla {
 class EKReactions : public ObjectList<EKReaction> {
   std::shared_ptr<::EK::EKWalberla::ek_reactions_type> m_ek_reactions;
 
+  bool has_in_core(std::shared_ptr<EKReaction> const &obj_ptr) const override {
+    return m_ek_reactions->contains(obj_ptr->get_instance());
+  }
   void add_in_core(std::shared_ptr<EKReaction> const &obj_ptr) override {
     m_ek_reactions->add(obj_ptr->get_instance());
   }

@@ -39,6 +39,9 @@ public:
   Union() : m_core_shape(std::make_shared<::Shapes::Union>()) {}
 
 private:
+  bool has_in_core(const std::shared_ptr<Shape> &obj_ptr) const override {
+    return m_core_shape->contains(obj_ptr->shape());
+  }
   void add_in_core(const std::shared_ptr<Shape> &obj_ptr) override {
     m_core_shape->add(obj_ptr->shape());
   }

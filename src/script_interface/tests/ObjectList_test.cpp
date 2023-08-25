@@ -43,6 +43,10 @@ struct ObjectListImpl : ObjectList<ObjectHandle> {
   std::vector<ObjectRef> mock_core;
 
 private:
+  bool has_in_core(const ObjectRef &obj_ptr) const override {
+    return std::find(mock_core.begin(), mock_core.end(), obj_ptr) !=
+           mock_core.end();
+  }
   void add_in_core(const ObjectRef &obj_ptr) override {
     mock_core.push_back(obj_ptr);
   }
@@ -82,8 +86,8 @@ BOOST_AUTO_TEST_CASE(removing_elements) {
 BOOST_AUTO_TEST_CASE(clearing_elements) {
   // A cleared list is empty.
   ObjectListImpl list;
-  list.add(ObjectRef{});
-  list.add(ObjectRef{});
+  list.add(std::make_shared<ObjectListImpl>());
+  list.add(std::make_shared<ObjectListImpl>());
   list.clear();
   BOOST_CHECK(list.elements().empty());
   BOOST_CHECK(list.mock_core.empty());
