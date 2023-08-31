@@ -29,6 +29,11 @@
 namespace ScriptInterface {
 namespace Accumulators {
 class AutoUpdateAccumulators : public ObjectList<AccumulatorBase> {
+  bool
+  has_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) const override {
+    return ::Accumulators::auto_update_contains(obj_ptr->accumulator().get());
+  }
+
   void add_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) override {
     ::Accumulators::auto_update_add(obj_ptr->accumulator().get());
   }

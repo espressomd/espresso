@@ -61,6 +61,9 @@ class EKContainer : public ObjectList<EKSpecies> {
   std::shared_ptr<::EK::EKWalberla::ek_container_type> m_ek_container;
   bool m_is_active;
 
+  bool has_in_core(std::shared_ptr<EKSpecies> const &obj_ptr) const override {
+    return m_ek_container->contains(obj_ptr->get_ekinstance());
+  }
   void add_in_core(std::shared_ptr<EKSpecies> const &obj_ptr) override {
     context()->parallel_try_catch(
         [this, &obj_ptr]() { m_ek_container->add(obj_ptr->get_ekinstance()); });
