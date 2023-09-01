@@ -517,8 +517,7 @@ public:
    * @param local_geo Geometry of the local box (holds cell structure type).
    */
   void set_atom_decomposition(boost::mpi::communicator const &comm,
-                              BoxGeometry const &box,
-                              LocalBox<double> &local_geo);
+                              BoxGeometry const &box, LocalBox &local_geo);
 
   /**
    * @brief Set the particle decomposition to @ref RegularDecomposition.
@@ -530,7 +529,7 @@ public:
    */
   void set_regular_decomposition(boost::mpi::communicator const &comm,
                                  double range, BoxGeometry const &box,
-                                 LocalBox<double> &local_geo);
+                                 LocalBox &local_geo);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.
@@ -543,7 +542,7 @@ public:
    */
   void set_hybrid_decomposition(boost::mpi::communicator const &comm,
                                 double cutoff_regular, BoxGeometry const &box,
-                                LocalBox<double> &local_geo,
+                                LocalBox &local_geo,
                                 std::set<int> n_square_types);
 
 private:

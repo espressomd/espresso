@@ -39,7 +39,7 @@
 #include <boost/mpi/communicator.hpp>
 
 extern BoxGeometry box_geo;
-extern LocalBox<double> local_geo;
+extern LocalBox local_geo;
 
 /** The number of nodes in each spatial dimension. */
 extern Utils::Vector3i node_grid;
@@ -58,12 +58,12 @@ void init_node_grid();
 Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
 
 /**
- * @brief Calculate the position of node in topology.
+ * @brief Calculate the index of node in topology.
  *
  * @param comm Cartesian communicator
  * @return Index of node in grid.
  */
-Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm);
+Utils::Vector3i calc_node_index(const boost::mpi::communicator &comm);
 
 void grid_changed_n_nodes();
 
@@ -94,14 +94,14 @@ inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
 /**
  * @brief Composition of the simulation box into equal parts for each node.
  *
- * @param box Geometry of the simulation box
- * @param node_pos Position of node in the node grid
- * @param node_grid Nodes in each direction
+ * @param box         Geometry of the simulation box
+ * @param node_index  Node index in the Cartesian topology
+ * @param node_grid   Dimensions of the Cartesian topology
  * @return Geometry for the node
  */
-LocalBox<double> regular_decomposition(const BoxGeometry &box,
-                                       Utils::Vector3i const &node_pos,
-                                       Utils::Vector3i const &node_grid);
+LocalBox regular_decomposition(BoxGeometry const &box,
+                               Utils::Vector3i const &node_index,
+                               Utils::Vector3i const &node_grid);
 
 void set_node_grid(Utils::Vector3i const &value);
 void set_box_length(Utils::Vector3d const &value);

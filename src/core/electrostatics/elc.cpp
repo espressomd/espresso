@@ -339,17 +339,25 @@ double ElectrostaticLayerCorrection::dipole_energy(
 
 /*****************************************************************/
 
-static auto image_sum_b(double q, double z, double d) {
-  auto const shift = box_geo.length_half()[2];
-  auto const lz = box_geo.length()[2];
-  return q / (1. - d) * (z - 2. * d * lz / (1. - d)) - q * shift / (1. - d);
-}
+struct ImageSum {
+  double delta;
+  double shift;
+  double lz;
+  double dci; // delta complement inverse
 
-static auto image_sum_t(double q, double z, double d) {
-  auto const shift = box_geo.length_half()[2];
-  auto const lz = box_geo.length()[2];
-  return q / (1. - d) * (z + 2. * d * lz / (1. - d)) - q * shift / (1. - d);
-}
+  ImageSum(double delta, double shift, double lz)
+      : delta{delta}, shift{shift}, lz{lz}, dci{1. / (1. - delta)} {}
+
+  /** @brief Image sum from the bottom layer. */
+  double b(double q, double z) const {
+    return q * dci * (z - 2. * delta * lz * dci) - q * dci * shift;
+  }
+
+  /** @brief Image sum from the top layer. */
+  double t(double q, double z) const {
+    return q * dci * (z + 2. * delta * lz * dci) - q * dci * shift;
+  }
+};
 
 double
 ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
@@ -363,7 +371,8 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
 
   /* for non-neutral systems, this shift gives the background contribution
    * (rsp. for this shift, the DM of the background is zero) */
-  double const shift = box_geo.length_half()[2];
+  auto const shift = box_geo.length_half()[2];
+  auto const lz = box_geo.length()[2];
 
   if (elc.dielectric_contrast_on) {
     if (elc.const_pot) {
@@ -386,6 +395,7 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
       // metallic boundaries
       clear_vec(gblcblk, size);
       auto const h = elc.box_h;
+      ImageSum const image_sum{delta, shift, lz};
       for (auto const &p : particles) {
         auto const z = p.pos()[2];
         auto const q = p.q();
@@ -394,26 +404,25 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
         if (elc.dielectric_contrast_on) {
           if (z < elc.space_layer) {
             gblcblk[2] += fac_delta * (elc.delta_mid_bot + 1.) * q;
-            gblcblk[3] += q * (image_sum_b(elc.delta_mid_bot * delta,
-                                           -(2. * h + z), delta) +
-                               image_sum_b(delta, -(2. * h - z), delta));
+            gblcblk[3] +=
+                q * (image_sum.b(elc.delta_mid_bot * delta, -(2. * h + z)) +
+                     image_sum.b(delta, -(2. * h - z)));
           } else {
             gblcblk[2] += fac_delta_mid_bot * (1. + elc.delta_mid_top) * q;
-            gblcblk[3] += q * (image_sum_b(elc.delta_mid_bot, -z, delta) +
-                               image_sum_b(delta, -(2. * h - z), delta));
+            gblcblk[3] += q * (image_sum.b(elc.delta_mid_bot, -z) +
+                               image_sum.b(delta, -(2. * h - z)));
           }
           if (z > (h - elc.space_layer)) {
             // note the minus sign here which is required due to |z_i-z_j|
             gblcblk[2] -= fac_delta * (elc.delta_mid_top + 1.) * q;
             gblcblk[3] -=
-                q * (image_sum_t(elc.delta_mid_top * delta, 4. * h - z, delta) +
-                     image_sum_t(delta, 2. * h + z, delta));
+                q * (image_sum.t(elc.delta_mid_top * delta, 4. * h - z) +
+                     image_sum.t(delta, 2. * h + z));
           } else {
             // note the minus sign here which is required due to |z_i-z_j|
             gblcblk[2] -= fac_delta_mid_top * (1. + elc.delta_mid_bot) * q;
-            gblcblk[3] -=
-                q * (image_sum_t(elc.delta_mid_top, 2. * h - z, delta) +
-                     image_sum_t(delta, 2. * h + z, delta));
+            gblcblk[3] -= q * (image_sum.t(elc.delta_mid_top, 2. * h - z) +
+                               image_sum.t(delta, 2. * h + z));
           }
         }
       }

@@ -38,13 +38,13 @@
 #include <cmath>
 
 BoxGeometry box_geo;
-LocalBox<double> local_geo;
+LocalBox local_geo;
 
 Utils::Vector3i node_grid{};
 
 void init_node_grid() { grid_changed_n_nodes(); }
 
-Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm) {
+Utils::Vector3i calc_node_index(const boost::mpi::communicator &comm) {
   return Utils::Mpi::cart_coords<3>(comm, comm.rank());
 }
 
@@ -53,23 +53,19 @@ calc_node_neighbors(const boost::mpi::communicator &comm) {
   return Utils::Mpi::cart_neighbors<3>(comm);
 }
 
-LocalBox<double> regular_decomposition(const BoxGeometry &box,
-                                       Utils::Vector3i const &node_pos,
-                                       Utils::Vector3i const &node_grid_par) {
-  Utils::Vector3d local_length;
-  Utils::Vector3d my_left;
+LocalBox regular_decomposition(BoxGeometry const &box,
+                               Utils::Vector3i const &node_index,
+                               Utils::Vector3i const &node_grid) {
 
-  for (unsigned int i = 0; i < 3; i++) {
-    local_length[i] = box.length()[i] / node_grid_par[i];
-    my_left[i] = node_pos[i] * local_length[i];
-  }
+  auto const local_length = Utils::hadamard_division(box.length(), node_grid);
+  auto const my_left = Utils::hadamard_product(node_index, local_length);
 
   Utils::Array<int, 6> boundaries;
-  for (unsigned int dir = 0; dir < 3; dir++) {
+  for (unsigned int dir = 0u; dir < 3u; dir++) {
     /* left boundary ? */
-    boundaries[2 * dir] = (node_pos[dir] == 0);
+    boundaries[2u * dir] = (node_index[dir] == 0);
     /* right boundary ? */
-    boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid_par[dir] - 1);
+    boundaries[2u * dir + 1u] = -(node_index[dir] + 1 == node_grid[dir]);
   }
 
   return {my_left, local_length, boundaries,
@@ -77,7 +73,7 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
 }
 
 void grid_changed_box_l(const BoxGeometry &box) {
-  local_geo = regular_decomposition(box, calc_node_pos(comm_cart), node_grid);
+  local_geo = regular_decomposition(box, calc_node_index(comm_cart), node_grid);
 }
 
 void grid_changed_n_nodes() {

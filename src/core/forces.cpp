@@ -152,12 +152,12 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  auto &espresso_system = System::get_system();
+  auto &system = System::get_system();
 #ifdef CUDA
 #ifdef CALIPER
   CALI_MARK_BEGIN("copy_particles_to_GPU");
 #endif
-  espresso_system.gpu.update();
+  system.gpu.update();
 #ifdef CALIPER
   CALI_MARK_END("copy_particles_to_GPU");
 #endif
@@ -170,9 +170,9 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  if (espresso_system.coulomb.impl->extension) {
+  if (system.coulomb.impl->extension) {
     if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
-            get_ptr(espresso_system.coulomb.impl->extension))) {
+            get_ptr(system.coulomb.impl->extension))) {
       (**icc).iteration(cell_structure, particles, ghost_particles);
     }
   }
@@ -181,18 +181,18 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
   calc_long_range_forces(particles);
 
-  auto const elc_kernel = espresso_system.coulomb.pair_force_elc_kernel();
-  auto const coulomb_kernel = espresso_system.coulomb.pair_force_kernel();
-  auto const dipoles_kernel = espresso_system.dipoles.pair_force_kernel();
+  auto const elc_kernel = system.coulomb.pair_force_elc_kernel();
+  auto const coulomb_kernel = system.coulomb.pair_force_kernel();
+  auto const dipoles_kernel = system.dipoles.pair_force_kernel();
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = espresso_system.coulomb.cutoff();
+  auto const coulomb_cutoff = system.coulomb.cutoff();
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = espresso_system.dipoles.cutoff();
+  auto const dipole_cutoff = system.dipoles.cutoff();
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
@@ -246,7 +246,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #ifdef CALIPER
   CALI_MARK_BEGIN("copy_forces_from_GPU");
 #endif
-  espresso_system.gpu.copy_forces_to_host(particles, this_node);
+  system.gpu.copy_forces_to_host(particles, this_node);
 #ifdef CALIPER
   CALI_MARK_END("copy_forces_from_GPU");
 #endif

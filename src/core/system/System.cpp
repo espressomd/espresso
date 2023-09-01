@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config/config.hpp"
+
 #include "System.hpp"
 #include "System.impl.hpp"
 #include "grid.hpp"
@@ -40,5 +42,11 @@ void set_system(std::shared_ptr<System> new_instance) {
 System &get_system() { return *instance; }
 
 Utils::Vector3d System::box() const { return ::box_geo.length(); }
+
+void System::init() {
+#ifdef CUDA
+  gpu.init();
+#endif
+}
 
 } // namespace System

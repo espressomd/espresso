@@ -44,11 +44,8 @@ public:
   ResourceCleanup cleanup_queue;
 
   Utils::Vector3d box() const;
-  void init() {
-#ifdef CUDA
-    gpu.init();
-#endif
-  }
+  void init();
+
   Coulomb::Solver coulomb;
   Dipoles::Solver dipoles;
   LB::Solver lb;
