@@ -23,6 +23,7 @@
 
 #ifdef WALBERLA
 
+#include "core/communication.hpp"
 #include "core/grid.hpp"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
@@ -69,7 +70,8 @@ public:
       auto const grid_dim =
           ::LatticeWalberla::calc_grid_dimensions(m_box_l, m_agrid);
       m_lattice = std::make_shared<::LatticeWalberla>(
-          grid_dim, node_grid, static_cast<unsigned int>(n_ghost_layers));
+          grid_dim, ::communicator.node_grid,
+          static_cast<unsigned int>(n_ghost_layers));
     });
   }
 

@@ -153,6 +153,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
 
   auto &system = System::get_system();
+  auto const n_nodes = ::communicator.size;
 #ifdef CUDA
 #ifdef CALIPER
   CALI_MARK_BEGIN("copy_particles_to_GPU");

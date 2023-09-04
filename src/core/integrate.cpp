@@ -574,7 +574,7 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
-    auto const max_cut = maximal_cutoff(n_nodes);
+    auto const max_cut = maximal_cutoff(::comm_cart.size());
     if (max_cut <= 0.0) {
       if (is_head_node) {
         throw std::runtime_error(
@@ -619,7 +619,7 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
 
 double interaction_range() {
   /* Consider skin only if there are actually interactions */
-  auto const max_cut = maximal_cutoff(n_nodes == 1);
+  auto const max_cut = maximal_cutoff(::communicator.size == 1);
   return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
 }
 

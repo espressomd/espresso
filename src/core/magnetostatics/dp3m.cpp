@@ -127,9 +127,10 @@ void DipolarP3M::init() {
 
   dp3m.sm.resize(comm_cart, dp3m.local_mesh);
 
-  int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
-                              dp3m.params.mesh, dp3m.params.mesh_off,
-                              dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
+  int ca_mesh_size =
+      fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin, dp3m.params.mesh,
+               dp3m.params.mesh_off, dp3m.ks_pnum, dp3m.fft,
+               ::communicator.node_grid, comm_cart);
   dp3m.rs_mesh.resize(ca_mesh_size);
   dp3m.ks_mesh.resize(ca_mesh_size);
 
@@ -897,8 +898,8 @@ void DipolarP3M::sanity_checks_cell_structure() const {
     throw std::runtime_error(
         "DipolarP3M: requires the regular or hybrid decomposition cell system");
   }
-  if (n_nodes > 1 && local_geo.cell_structure_type() ==
-                         CellStructureType::CELL_STRUCTURE_HYBRID) {
+  if (::communicator.size > 1 && local_geo.cell_structure_type() ==
+                                     CellStructureType::CELL_STRUCTURE_HYBRID) {
     throw std::runtime_error(
         "DipolarP3M: does not work with the hybrid decomposition cell system, "
         "if using more than one MPI node");
@@ -906,6 +907,7 @@ void DipolarP3M::sanity_checks_cell_structure() const {
 }
 
 void DipolarP3M::sanity_checks_node_grid() const {
+  auto const &node_grid = ::communicator.node_grid;
   if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
     throw std::runtime_error(
         "DipolarP3M: node grid must be sorted, largest first");

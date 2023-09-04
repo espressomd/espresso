@@ -31,17 +31,21 @@
 #include <walberla_bridge/walberla_init.hpp>
 #endif
 
+#include <utils/Vector.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <mpi.h>
 
 #include <cassert>
 #include <memory>
+#include <tuple>
 #include <utility>
 
 boost::mpi::communicator comm_cart;
+Communicator communicator{};
 
 namespace Communication {
 static auto const &mpi_datatype_cache =
@@ -60,19 +64,12 @@ MpiCallbacks &mpiCallbacks() {
 using Communication::mpiCallbacks;
 
 int this_node = -1;
-int n_nodes = -1;
 
 namespace Communication {
 void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   Communication::mpi_env = std::move(mpi_env);
 
-  MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  node_grid = Utils::Mpi::dims_create<3>(n_nodes);
-
-  comm_cart =
-      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
-
-  this_node = comm_cart.rank();
+  communicator.full_initialization();
 
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
@@ -86,6 +83,29 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   on_program_start();
 }
 } // namespace Communication
+
+Communicator::Communicator()
+    : comm{::comm_cart}, node_grid{}, this_node{::this_node}, size{-1} {}
+
+void Communicator::init_comm_cart() {
+  auto constexpr reorder = false;
+  comm = Utils::Mpi::cart_create(comm, node_grid, reorder);
+  this_node = comm.rank();
+  // check topology validity
+  std::ignore = Utils::Mpi::cart_neighbors<3>(comm);
+}
+
+void Communicator::full_initialization() {
+  assert(this_node == -1);
+  assert(size == -1);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  node_grid = Utils::Mpi::dims_create<3>(size);
+  init_comm_cart();
+}
+
+Utils::Vector3i Communicator::calc_node_index() const {
+  return Utils::Mpi::cart_coords<3>(comm, this_node);
+}
 
 std::shared_ptr<boost::mpi::environment> mpi_init(int argc, char **argv) {
   return std::make_shared<boost::mpi::environment>(argc, argv);

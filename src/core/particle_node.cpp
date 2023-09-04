@@ -323,6 +323,7 @@ static void mpi_who_has_head() {
                      n_parts, 0);
 
   static std::vector<int> pdata;
+  auto const n_nodes = ::comm_cart.size();
   max_seen_pid = -1;
 
   /* then fetch particle locations */

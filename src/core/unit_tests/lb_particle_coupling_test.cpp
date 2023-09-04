@@ -36,6 +36,7 @@ namespace utf = boost::unit_test;
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -101,8 +102,8 @@ static auto make_lb_actor() {
   auto constexpr n_ghost_layers = 1u;
   auto constexpr single_precision = false;
   lb_params = std::make_shared<LB::LBWalberlaParams>(params.agrid, params.tau);
-  lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
-                                                 ::node_grid, n_ghost_layers);
+  lb_lattice = std::make_shared<LatticeWalberla>(
+      params.grid_dimensions, ::communicator.node_grid, n_ghost_layers);
   lb_fluid = new_lb_walberla(lb_lattice, params.viscosity, params.density,
                              single_precision);
   lb_fluid->set_collision_model(params.kT, params.seed);
@@ -534,17 +535,18 @@ BOOST_AUTO_TEST_SUITE_END()
 
 bool test_lb_domain_mismatch_local() {
   boost::mpi::communicator world;
-  auto const node_grid_original = ::node_grid;
+  auto const node_grid_original = ::communicator.node_grid;
   auto const node_grid_reversed =
-      Utils::Vector3i{{::node_grid[2], ::node_grid[1], ::node_grid[0]}};
+      Utils::Vector3i{{::communicator.node_grid[2], ::communicator.node_grid[1],
+                       ::communicator.node_grid[0]}};
   auto const n_ghost_layers = 1u;
   auto const params = std::make_shared<LB::LBWalberlaParams>(0.5, 0.01);
-  ::node_grid = node_grid_reversed;
+  ::communicator.node_grid = node_grid_reversed;
   auto const lattice = std::make_shared<LatticeWalberla>(
       Utils::Vector3i{12, 12, 12}, node_grid_original, n_ghost_layers);
   auto const ptr = new_lb_walberla(lattice, 1.0, 1.0, false);
   ptr->set_collision_model(0.0, 0);
-  ::node_grid = node_grid_original;
+  ::communicator.node_grid = node_grid_original;
   auto lb_instance = std::make_shared<LB::LBWalberla>(ptr, params);
   if (world.rank() == 0) {
     try {

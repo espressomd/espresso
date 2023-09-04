@@ -23,6 +23,7 @@
 
 #include "cell_system/Cell.hpp"
 
+#include "communication.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -397,7 +398,8 @@ void RegularDecomposition::init_cell_interactions() {
 
   auto const halo = Utils::Vector3i{1, 1, 1};
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
-  auto const node_pos = cart_info.coords;
+  auto const &node_pos = cart_info.coords;
+  auto const &node_grid = ::communicator.node_grid;
   auto const global_halo_offset = hadamard_product(node_pos, cell_grid) - halo;
   auto const global_size = hadamard_product(node_grid, cell_grid);
 

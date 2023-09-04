@@ -30,28 +30,12 @@
 #include "event.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/mpi/cart_comm.hpp>
-
-#include <mpi.h>
 
 #include <algorithm>
 #include <cmath>
 
 BoxGeometry box_geo;
 LocalBox local_geo;
-
-Utils::Vector3i node_grid{};
-
-void init_node_grid() { grid_changed_n_nodes(); }
-
-Utils::Vector3i calc_node_index(const boost::mpi::communicator &comm) {
-  return Utils::Mpi::cart_coords<3>(comm, comm.rank());
-}
-
-Utils::Vector<int, 6>
-calc_node_neighbors(const boost::mpi::communicator &comm) {
-  return Utils::Mpi::cart_neighbors<3>(comm);
-}
 
 LocalBox regular_decomposition(BoxGeometry const &box,
                                Utils::Vector3i const &node_index,
@@ -73,22 +57,20 @@ LocalBox regular_decomposition(BoxGeometry const &box,
 }
 
 void grid_changed_box_l(const BoxGeometry &box) {
-  local_geo = regular_decomposition(box, calc_node_index(comm_cart), node_grid);
+  local_geo = regular_decomposition(box, ::communicator.calc_node_index(),
+                                    ::communicator.node_grid);
 }
 
-void grid_changed_n_nodes() {
-  comm_cart =
-      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+void grid_changed_node_grid(bool update_box_geo) {
+  ::communicator.init_comm_cart();
 
-  this_node = comm_cart.rank();
-
-  calc_node_neighbors(comm_cart);
-
-  grid_changed_box_l(box_geo);
+  if (update_box_geo) {
+    grid_changed_box_l(box_geo);
+  }
 }
 
 void set_node_grid(Utils::Vector3i const &value) {
-  ::node_grid = value;
+  ::communicator.node_grid = value;
   on_node_grid_change();
 }
 

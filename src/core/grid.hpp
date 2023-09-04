@@ -18,14 +18,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_GRID_HPP
-#define CORE_GRID_HPP
+
+#pragma once
+
 /** @file
  *  Domain decomposition for parallel computing.
  *
  *  The primary simulation box is divided into orthogonal rectangular
- *  subboxes which are assigned to the different nodes (or processes
- *  or threads if you want). This grid is described in @ref node_grid.
+ *  subboxes which are assigned to the different MPI nodes using a
+ *  Cartesian topolgy.
  *
  *  Implementation in grid.cpp.
  */
@@ -36,36 +37,10 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/mpi/communicator.hpp>
-
 extern BoxGeometry box_geo;
 extern LocalBox local_geo;
 
-/** The number of nodes in each spatial dimension. */
-extern Utils::Vector3i node_grid;
-
-/** Make sure that the node grid is set, eventually
- *  determine one automatically.
- */
-void init_node_grid();
-
-/** @brief Fill neighbor lists of node.
- *
- * Calculates the numbers of the nearest neighbors for a node.
- *
- * @return Ranks of neighbors
- */
-Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
-
-/**
- * @brief Calculate the index of node in topology.
- *
- * @param comm Cartesian communicator
- * @return Index of node in grid.
- */
-Utils::Vector3i calc_node_index(const boost::mpi::communicator &comm);
-
-void grid_changed_n_nodes();
+void grid_changed_node_grid(bool update_box_geo = true);
 
 void grid_changed_box_l(const BoxGeometry &box);
 
@@ -105,5 +80,3 @@ LocalBox regular_decomposition(BoxGeometry const &box,
 
 void set_node_grid(Utils::Vector3i const &value);
 void set_box_length(Utils::Vector3d const &value);
-
-#endif

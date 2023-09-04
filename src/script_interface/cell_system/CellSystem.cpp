@@ -26,6 +26,7 @@
 #include "core/cell_system/HybridDecomposition.hpp"
 #include "core/cell_system/RegularDecomposition.hpp"
 #include "core/cells.hpp"
+#include "core/communication.hpp"
 #include "core/event.hpp"
 #include "core/grid.hpp"
 #include "core/integrate.hpp"
@@ -74,7 +75,7 @@ CellSystem::CellSystem() {
        [this](Variant const &v) {
          context()->parallel_try_catch([&v]() {
            auto const error_msg = std::string("Parameter 'node_grid'");
-           auto const old_node_grid = ::node_grid;
+           auto const old_node_grid = ::communicator.node_grid;
            auto const new_node_grid = get_value<Utils::Vector3i>(v);
            auto const n_nodes_old = Utils::product(old_node_grid);
            auto const n_nodes_new = Utils::product(new_node_grid);
@@ -92,7 +93,7 @@ CellSystem::CellSystem() {
            }
          });
        },
-       []() { return ::node_grid; }},
+       []() { return ::communicator.node_grid; }},
       {"skin",
        [this](Variant const &v) {
          auto const new_skin = get_value<double>(v);

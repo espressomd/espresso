@@ -61,6 +61,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   on_observable_calc();
 
   auto const local_parts = cell_structure.local_particles();
+  auto const n_nodes = ::communicator.size;
 
   for (auto const &p : local_parts) {
     obs_energy.kinetic[0] += calc_kinetic_energy(p);

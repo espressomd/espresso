@@ -65,6 +65,7 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
   auto &cell_structure = *system.cell_structure;
   auto const volume = box_geo.volume();
   auto const local_parts = cell_structure.local_particles();
+  auto const n_nodes = ::communicator.size;
 
   for (auto const &p : local_parts) {
     add_kinetic_virials(p, obs_pressure);

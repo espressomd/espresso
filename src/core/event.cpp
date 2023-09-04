@@ -68,8 +68,6 @@ void on_program_start() {
   }
 #endif
 
-  init_node_grid();
-
   /* make sure interaction 0<->0 always exists */
   make_particle_type_exist(0);
 }
@@ -306,7 +304,7 @@ void on_timestep_change() {
 void on_forcecap_change() { recalc_forces = true; }
 
 void on_node_grid_change() {
-  grid_changed_n_nodes();
+  grid_changed_node_grid();
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
   system.lb.on_node_grid_change();
