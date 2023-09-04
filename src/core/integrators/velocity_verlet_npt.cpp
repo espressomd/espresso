@@ -24,7 +24,7 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
@@ -32,6 +32,7 @@
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "rotation.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/npt_inline.hpp"
 
@@ -137,6 +138,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     }
   }
 
+  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   /* Apply new volume to the box-length, communicate it, and account for

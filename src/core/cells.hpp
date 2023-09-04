@@ -47,8 +47,7 @@
  *   should be treated using N-square.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELLS_HPP
-#define ESPRESSO_SRC_CORE_CELLS_HPP
+#pragma once
 
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -74,9 +73,6 @@ enum {
   CELL_GLOBAL_EXCHANGE = 1
 };
 
-/** Type of cell structure in use. */
-extern CellStructure cell_structure;
-
 /** Initialize cell structure @ref HybridDecomposition
  *  @param n_square_types   Types of particles to place in the N-square cells.
  *  @param cutoff_regular   Cutoff for the regular decomposition.
@@ -85,9 +81,14 @@ void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular);
 
 /** Reinitialize the cell structures.
+ *  @param cell_structure The cell structure to modify
  *  @param new_cs The new topology to use afterwards.
  */
-void cells_re_init(CellStructureType new_cs);
+void cells_re_init(CellStructure &cell_structure, CellStructureType new_cs);
+
+inline void cells_re_init(CellStructure &cell_structure) {
+  cells_re_init(cell_structure, cell_structure.decomposition_type());
+}
 
 /** Update ghost information. If needed,
  *  the particles are also resorted.
@@ -143,16 +144,6 @@ void serialize(Archive &ar, NeighborPIDs &n, unsigned int const /* version */) {
  */
 std::vector<NeighborPIDs> get_neighbor_pids();
 
-/**
- * @brief Find the cell in which a particle is stored.
- *
- * Uses position_to_cell on p.pos(). If this is not on the node's domain,
- * uses position at last Verlet list rebuild (p.p_old()).
- *
- * @return pointer to the cell or nullptr if the particle is not on the node
- */
-Cell *find_current_cell(Particle const &p);
-
 class PairInfo {
 public:
   PairInfo() = default;
@@ -187,5 +178,3 @@ void serialize(Archive &ar, PairInfo &p, unsigned int const /* version */) {
  * non-bonded loop.
  */
 std::vector<PairInfo> non_bonded_loop_trace(int rank);
-
-#endif

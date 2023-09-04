@@ -23,11 +23,12 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "event.hpp"
 #include "grid.hpp"
+#include "system/System.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
@@ -39,6 +40,7 @@ void Galilei::kill_particle_motion(bool omega) const {
 #ifndef ROTATION
   std::ignore = omega;
 #endif // not ROTATION
+  auto &cell_structure = *System::get_system().cell_structure;
   for (auto &p : cell_structure.local_particles()) {
     p.v() = {};
 #ifdef ROTATION
@@ -54,6 +56,7 @@ void Galilei::kill_particle_forces(bool torque) const {
 #ifndef ROTATION
   std::ignore = torque;
 #endif // not ROTATION
+  auto &cell_structure = *System::get_system().cell_structure;
   for (auto &p : cell_structure.local_particles()) {
     p.force() = {};
 #ifdef ROTATION
@@ -66,6 +69,7 @@ void Galilei::kill_particle_forces(bool torque) const {
 }
 
 Utils::Vector3d Galilei::calc_system_cms_position() const {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto total_mass = 0.;
   auto cms_pos = Utils::Vector3d{};
   for (auto const &p : cell_structure.local_particles()) {
@@ -82,6 +86,7 @@ Utils::Vector3d Galilei::calc_system_cms_position() const {
 }
 
 Utils::Vector3d Galilei::calc_system_cms_velocity() const {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto total_mass = 0.;
   auto cms_vel = Utils::Vector3d{};
   for (auto const &p : cell_structure.local_particles()) {
@@ -97,6 +102,7 @@ Utils::Vector3d Galilei::calc_system_cms_velocity() const {
 }
 
 void Galilei::galilei_transform() const {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto const cms_vel = calc_system_cms_velocity();
   for (auto &p : cell_structure.local_particles()) {
     p.v() -= cms_vel;

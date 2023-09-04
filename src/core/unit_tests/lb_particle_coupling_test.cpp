@@ -35,7 +35,7 @@ namespace utf = boost::unit_test;
 
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -346,7 +346,9 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto const rank = comm.rank();
   espresso::set_lb_kT(kT);
   lb_lbcoupling_set_rng_state(17);
-  auto &lb = System::get_system().lb;
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto &lb = system.lb;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
@@ -389,8 +391,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         cells_update_ghosts(global_ghost_flags());
       }
       if (rank == 0) {
-        auto const particles = ::cell_structure.local_particles();
-        auto const ghost_particles = ::cell_structure.ghost_particles();
+        auto const particles = cell_structure.local_particles();
+        auto const ghost_particles = cell_structure.ghost_particles();
         BOOST_REQUIRE_GE(particles.size(), 1);
         BOOST_REQUIRE_GE(ghost_particles.size(), static_cast<int>(with_ghosts));
       }
@@ -438,8 +440,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     {
       lb_lbcoupling_deactivate();
       lb_lbcoupling_broadcast();
-      auto const particles = ::cell_structure.local_particles();
-      auto const ghost_particles = ::cell_structure.ghost_particles();
+      auto const particles = cell_structure.local_particles();
+      auto const ghost_particles = cell_structure.ghost_particles();
       LB::couple_particles(thermo_virtual, particles, ghost_particles,
                            params.time_step);
       auto const p_opt = copy_particle_to_head_node(comm, pid);
@@ -453,8 +455,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     {
       lb_lbcoupling_activate();
       lb_lbcoupling_broadcast();
-      auto const particles = ::cell_structure.local_particles();
-      auto const ghost_particles = ::cell_structure.ghost_particles();
+      auto const particles = cell_structure.local_particles();
+      auto const ghost_particles = cell_structure.ghost_particles();
       Utils::Vector3d lb_before{};
       {
         auto const p_opt = copy_particle_to_head_node(comm, pid);

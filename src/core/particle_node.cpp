@@ -22,12 +22,14 @@
 #include "particle_node.hpp"
 
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "system/System.hpp"
 
 #include <utils/Cache.hpp>
 #include <utils/Span.hpp>
@@ -66,6 +68,10 @@ static std::unordered_map<int, std::unordered_set<int>> particle_type_map;
 /** @brief Mapping particle ids to MPI ranks. */
 static std::unordered_map<int, int> particle_node;
 
+static auto &get_cell_structure() {
+  return *System::get_system().cell_structure;
+}
+
 /**
  * @brief Keep track of the largest particle id.
  * This book-keeping variable is necessary to make particle insertion run
@@ -95,7 +101,7 @@ void init_type_map(int type) {
   make_particle_type_exist(type);
 
   std::vector<int> local_pids;
-  for (auto const &p : ::cell_structure.local_particles()) {
+  for (auto const &p : get_cell_structure().local_particles()) {
     if (p.type() == type) {
       local_pids.emplace_back(p.id());
     }
@@ -131,7 +137,7 @@ void on_particle_type_change(int p_id, int old_type, int new_type) {
         if (it != kv.second.end()) {
           kv.second.erase(it);
 #ifndef NDEBUG
-          if (auto p = ::cell_structure.get_local_particle(p_id)) {
+          if (auto p = get_cell_structure().get_local_particle(p_id)) {
             assert(p->type() == kv.first);
           }
 #endif
@@ -157,7 +163,7 @@ void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
 static void mpi_send_particle_data_local(int p_id) {
-  auto const p = cell_structure.get_local_particle(p_id);
+  auto const p = get_cell_structure().get_local_particle(p_id);
   auto const found = p and not p->is_ghost();
   assert(1 == boost::mpi::all_reduce(::comm_cart, static_cast<int>(found),
                                      std::plus<>()) &&
@@ -173,8 +179,9 @@ const Particle &get_particle_data(int p_id) {
   auto const pnode = get_particle_node(p_id);
 
   if (pnode == this_node) {
-    assert(cell_structure.get_local_particle(p_id));
-    return *cell_structure.get_local_particle(p_id);
+    auto const p = get_cell_structure().get_local_particle(p_id);
+    assert(p != nullptr);
+    return *p;
   }
 
   /* Query the cache */
@@ -196,9 +203,10 @@ static void mpi_get_particles_local() {
   boost::mpi::scatter(comm_cart, ids, 0);
 
   std::vector<Particle> parts(ids.size());
-  std::transform(ids.begin(), ids.end(), parts.begin(), [](int id) {
-    assert(cell_structure.get_local_particle(id));
-    return *cell_structure.get_local_particle(id);
+  std::transform(ids.begin(), ids.end(), parts.begin(), [](int p_id) {
+    auto const p = get_cell_structure().get_local_particle(p_id);
+    assert(p != nullptr);
+    return *p;
   });
 
   Utils::Mpi::gatherv(comm_cart, parts.data(), static_cast<int>(parts.size()),
@@ -243,8 +251,9 @@ static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
   /* Copy local particles */
   std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
                  parts.begin(), [](int p_id) {
-                   assert(cell_structure.get_local_particle(p_id));
-                   return *cell_structure.get_local_particle(p_id);
+                   auto const p = get_cell_structure().get_local_particle(p_id);
+                   assert(p != nullptr);
+                   return *p;
                  });
 
   static std::vector<int> node_sizes(comm_cart.size());
@@ -286,7 +295,7 @@ void prefetch_particle_data(Utils::Span<const int> in_ids) {
 static void mpi_who_has_local() {
   static std::vector<int> sendbuf;
 
-  auto local_particles = cell_structure.local_particles();
+  auto local_particles = get_cell_structure().local_particles();
   auto const n_part = static_cast<int>(local_particles.size());
   boost::mpi::gather(comm_cart, n_part, 0);
 
@@ -307,7 +316,7 @@ static void mpi_who_has_local() {
 REGISTER_CALLBACK(mpi_who_has_local)
 
 static void mpi_who_has_head() {
-  auto local_particles = cell_structure.local_particles();
+  auto local_particles = get_cell_structure().local_particles();
 
   static std::vector<int> n_parts;
   boost::mpi::gather(comm_cart, static_cast<int>(local_particles.size()),
@@ -437,7 +446,8 @@ static bool maybe_insert_particle(int p_id, Utils::Vector3d const &pos) {
   new_part.pos() = folded_pos;
   new_part.image_box() = image_box;
 
-  return ::cell_structure.add_local_particle(std::move(new_part)) != nullptr;
+  return get_cell_structure().add_local_particle(std::move(new_part)) !=
+         nullptr;
 }
 
 /**
@@ -447,20 +457,20 @@ static bool maybe_insert_particle(int p_id, Utils::Vector3d const &pos) {
  * @return Whether the particle was moved from that node.
  */
 static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
-  auto pt = ::cell_structure.get_local_particle(p_id);
-  if (pt == nullptr) {
+  auto p = get_cell_structure().get_local_particle(p_id);
+  if (p == nullptr) {
     return false;
   }
   auto folded_pos = pos;
   auto image_box = Utils::Vector3i{};
   fold_position(folded_pos, image_box, box_geo);
-  pt->pos() = folded_pos;
-  pt->image_box() = image_box;
+  p->pos() = folded_pos;
+  p->image_box() = image_box;
   return true;
 }
 
 void remove_all_particles() {
-  ::cell_structure.remove_all_particles();
+  get_cell_structure().remove_all_particles();
   on_particle_change();
   clear_particle_node();
   clear_particle_type_map();
@@ -468,7 +478,7 @@ void remove_all_particles() {
 
 void remove_particle(int p_id) {
   if (::type_list_enable) {
-    auto p = ::cell_structure.get_local_particle(p_id);
+    auto p = get_cell_structure().get_local_particle(p_id);
     auto p_type = -1;
     if (p != nullptr and not p->is_ghost()) {
       if (this_node == 0) {
@@ -487,7 +497,7 @@ void remove_particle(int p_id) {
   if (this_node == 0) {
     particle_node[p_id] = -1;
   }
-  ::cell_structure.remove_particle(p_id);
+  get_cell_structure().remove_particle(p_id);
   on_particle_change();
   mpi_synchronize_max_seen_pid_local();
   if (this_node == 0) {
@@ -525,7 +535,7 @@ void make_new_particle(int p_id, Utils::Vector3d const &pos) {
 
 void set_particle_pos(int p_id, Utils::Vector3d const &pos) {
   auto const has_moved = maybe_move_particle(p_id, pos);
-  ::cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  get_cell_structure().set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 
   auto success = false;

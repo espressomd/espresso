@@ -22,12 +22,14 @@
 #ifdef VIRTUAL_SITES_RELATIVE
 
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
@@ -87,6 +89,7 @@ static Particle *get_reference_particle(Particle const &p) {
                       << " is a dangling virtual site";
     return nullptr;
   }
+  auto &cell_structure = *System::get_system().cell_structure;
   auto p_ref_ptr = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref_ptr) {
     runtimeErrorMsg() << "No real particle with id " << vs_rel.to_particle_id
@@ -110,6 +113,7 @@ static auto constraint_stress(Particle const &p_ref, Particle const &p_vs) {
 }
 
 void VirtualSitesRelative::update() const {
+  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
@@ -143,6 +147,7 @@ void VirtualSitesRelative::update() const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
+  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.ghosts_reduce_forces();
 
   init_forces_ghosts(cell_structure.ghost_particles());
@@ -163,6 +168,8 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
 // Rigid body contribution to scalar pressure and pressure tensor
 Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
+  auto &cell_structure = *System::get_system().cell_structure;
+
   Utils::Matrix<double, 3, 3> pressure_tensor = {};
 
   for (auto const &p : cell_structure.local_particles()) {

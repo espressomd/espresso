@@ -22,6 +22,7 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/cell_system/HybridDecomposition.hpp"
 #include "core/cell_system/RegularDecomposition.hpp"
 #include "core/cells.hpp"
@@ -30,6 +31,7 @@
 #include "core/integrate.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
+#include "core/system/System.hpp"
 #include "core/tuning.hpp"
 
 #include <utils/Vector.hpp>
@@ -51,19 +53,23 @@
 namespace ScriptInterface {
 namespace CellSystem {
 
+static auto &get_cell_structure() {
+  return *::System::get_system().cell_structure;
+}
+
 static auto const &get_regular_decomposition() {
   return dynamic_cast<RegularDecomposition const &>(
-      std::as_const(::cell_structure).decomposition());
+      std::as_const(get_cell_structure()).decomposition());
 }
 
 static auto const &get_hybrid_decomposition() {
   return dynamic_cast<HybridDecomposition const &>(
-      std::as_const(::cell_structure).decomposition());
+      std::as_const(get_cell_structure()).decomposition());
 }
 
 CellSystem::CellSystem() {
   add_parameters({
-      {"use_verlet_lists", ::cell_structure.use_verlet_list},
+      {"use_verlet_lists", get_cell_structure().use_verlet_list},
       {"node_grid",
        [this](Variant const &v) {
          context()->parallel_try_catch([&v]() {
@@ -101,11 +107,11 @@ CellSystem::CellSystem() {
        []() { return ::skin; }},
       {"decomposition_type", AutoParameter::read_only,
        [this]() {
-         return cs_type_to_name.at(::cell_structure.decomposition_type());
+         return cs_type_to_name.at(get_cell_structure().decomposition_type());
        }},
       {"n_square_types", AutoParameter::read_only,
        []() {
-         if (::cell_structure.decomposition_type() !=
+         if (get_cell_structure().decomposition_type() !=
              CellStructureType::CELL_STRUCTURE_HYBRID) {
            return Variant{none};
          }
@@ -115,7 +121,7 @@ CellSystem::CellSystem() {
        }},
       {"cutoff_regular", AutoParameter::read_only,
        []() {
-         if (::cell_structure.decomposition_type() !=
+         if (get_cell_structure().decomposition_type() !=
              CellStructureType::CELL_STRUCTURE_HYBRID) {
            return Variant{none};
          }
@@ -142,7 +148,7 @@ Variant CellSystem::do_call_method(std::string const &name,
   }
   if (name == "get_state") {
     auto state = get_parameters();
-    auto const cs_type = ::cell_structure.decomposition_type();
+    auto const cs_type = get_cell_structure().decomposition_type();
     if (cs_type == CellStructureType::CELL_STRUCTURE_REGULAR) {
       auto const rd = get_regular_decomposition();
       state["cell_grid"] = Variant{rd.cell_grid};
@@ -231,15 +237,16 @@ Variant CellSystem::do_call_method(std::string const &name,
     return ::skin;
   }
   if (name == "get_max_range") {
-    return ::cell_structure.max_range();
+    return get_cell_structure().max_range();
   }
   return {};
 }
 
 std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
-  ::cell_structure.resort_particles(global_flag, box_geo);
+  auto &cell_structure = get_cell_structure();
+  cell_structure.resort_particles(global_flag, box_geo);
   clear_particle_node();
-  auto const size = static_cast<int>(::cell_structure.local_particles().size());
+  auto const size = static_cast<int>(cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;
   boost::mpi::gather(context()->get_comm(), size, n_part_per_node, 0);
   return n_part_per_node;
@@ -248,7 +255,8 @@ std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
 void CellSystem::initialize(CellStructureType const &cs_type,
                             VariantMap const &params) const {
   auto const verlet = get_value_or<bool>(params, "use_verlet_lists", true);
-  ::cell_structure.use_verlet_list = verlet;
+  auto &cell_structure = get_cell_structure();
+  cell_structure.use_verlet_list = verlet;
   if (cs_type == CellStructureType::CELL_STRUCTURE_HYBRID) {
     auto const cutoff_regular = get_value<double>(params, "cutoff_regular");
     auto const ns_types =
@@ -256,7 +264,7 @@ void CellSystem::initialize(CellStructureType const &cs_type,
     auto n_square_types = std::set<int>{ns_types.begin(), ns_types.end()};
     set_hybrid_decomposition(std::move(n_square_types), cutoff_regular);
   } else {
-    cells_re_init(cs_type);
+    cells_re_init(cell_structure, cs_type);
   }
 }
 

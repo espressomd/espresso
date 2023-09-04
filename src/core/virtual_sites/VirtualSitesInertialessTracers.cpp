@@ -22,6 +22,7 @@
 
 #include "VirtualSitesInertialessTracers.hpp"
 
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -50,6 +51,7 @@ static bool lb_active_check(DeferredActiveLBChecks const &check) {
 void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   DeferredActiveLBChecks check_lb_solver_set{};
   auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   auto const agrid = (check_lb_solver_set()) ? system.lb.get_agrid() : 0.;
   auto const to_lb_units = (check_lb_solver_set()) ? 1. / agrid : 0.;
 
@@ -83,7 +85,9 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
   DeferredActiveLBChecks check_lb_solver_set{};
-  auto const &lb = System::get_system().lb;
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto const &lb = system.lb;
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {

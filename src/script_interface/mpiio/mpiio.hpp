@@ -26,8 +26,9 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
 
-#include "core/cells.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/io/mpiio/mpiio.hpp"
+#include "core/system/System.hpp"
 
 #include <string>
 
@@ -52,11 +53,14 @@ public:
                         ((typ) ? Mpiio::MPIIO_OUT_TYP : Mpiio::MPIIO_OUT_NON) |
                         ((bnd) ? Mpiio::MPIIO_OUT_BND : Mpiio::MPIIO_OUT_NON);
 
-    if (name == "write")
+    if (name == "write") {
+      auto const &system = ::System::get_system();
+      auto &cell_structure = *system.cell_structure;
       Mpiio::mpi_mpiio_common_write(prefix, fields,
                                     cell_structure.local_particles());
-    else if (name == "read")
+    } else if (name == "read") {
       Mpiio::mpi_mpiio_common_read(prefix, fields);
+    }
 
     return {};
   }

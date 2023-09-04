@@ -34,7 +34,7 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/bonded_interaction_utils.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
@@ -123,11 +123,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check observables
   {
+    auto const &cell_structure = *System::get_system().cell_structure;
     auto const pid4 = 10;
     auto const pids = std::vector<int>{pid2, pid3, pid1, pid4};
     Observables::ParticleReferenceRange particle_range{};
     for (int pid : pids) {
-      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+      if (auto const p = cell_structure.get_local_particle(pid)) {
         particle_range.emplace_back(*p);
       }
     }

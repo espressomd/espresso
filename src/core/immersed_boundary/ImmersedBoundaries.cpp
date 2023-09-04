@@ -33,6 +33,7 @@
 #include <utils/constants.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/range/algorithm/find_if.hpp>
 
 #include <functional>
 #include <utility>

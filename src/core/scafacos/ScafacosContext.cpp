@@ -25,9 +25,10 @@
 
 #include "scafacos/ScafacosContext.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -39,6 +40,7 @@
 namespace detail {
 std::tuple<Utils::Vector3d const &, Utils::Vector3i, std::size_t>
 get_system_params() {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto periodicity = Utils::Vector3i{static_cast<int>(box_geo.periodic(0)),
                                      static_cast<int>(box_geo.periodic(1)),
                                      static_cast<int>(box_geo.periodic(2))};

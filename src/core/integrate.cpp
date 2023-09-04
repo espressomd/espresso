@@ -37,6 +37,7 @@
 #include "accumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/rigid_bond.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -129,6 +130,8 @@ static void update_box_params() {
 }
 
 void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   box_geo.set_type(BoxType::LEES_EDWARDS);
   protocol = std::move(new_protocol);
   LeesEdwards::update_box_params();
@@ -137,6 +140,8 @@ void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
 }
 
 void unset_protocol() {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   protocol = nullptr;
   box_geo.set_type(BoxType::CUBOID);
   ::recalc_forces = true;
@@ -145,6 +150,8 @@ void unset_protocol() {
 
 template <class Kernel> void run_kernel() {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
+    auto &system = System::get_system();
+    auto &cell_structure = *system.cell_structure;
     auto const kernel = Kernel{box_geo};
     auto const particles = cell_structure.local_particles();
     std::for_each(particles.begin(), particles.end(),
@@ -243,6 +250,8 @@ static auto calc_md_steps_per_tau(double tau) {
 }
 
 static void resort_particles_if_needed(ParticleRange const &particles) {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   auto const offset = LeesEdwards::verlet_list_offset(
       box_geo, cell_structure.get_le_pos_offset_at_last_resort());
   if (cell_structure.check_resort_required(particles, skin, offset)) {
@@ -317,6 +326,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
   auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
 
   // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
@@ -493,7 +503,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef COLLISION_DETECTION
-      handle_collisions();
+      handle_collisions(cell_structure);
 #endif
       BondBreakage::process_queue();
     }
@@ -550,6 +560,8 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
                                   bool update_accumulators) {
 
   assert(n_steps >= 0);
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
 
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
@@ -572,7 +584,7 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    auto const max_range = *boost::min_element(::cell_structure.max_cutoff());
+    auto const max_range = *boost::min_element(cell_structure.max_cutoff());
     auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
     ::set_skin(new_skin);
   }

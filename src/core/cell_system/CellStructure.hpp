@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
+#pragma once
 
 #include "cell_system/ParticleDecomposition.hpp"
 
@@ -40,8 +39,6 @@
 
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 #include <algorithm>
@@ -52,6 +49,10 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+namespace boost::mpi {
+class communicator;
+}
 
 namespace Cells {
 enum Resort : unsigned {
@@ -743,5 +744,3 @@ private:
     }
   }
 };
-
-#endif

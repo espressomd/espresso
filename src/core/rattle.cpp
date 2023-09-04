@@ -151,7 +151,7 @@ void correct_position_shake(CellStructure &cs) {
     if (!repeat)
       break;
 
-    cell_structure.ghosts_reduce_rattle_correction();
+    cs.ghosts_reduce_rattle_correction();
 
     apply_positional_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
@@ -223,7 +223,7 @@ void correct_velocity_shake(CellStructure &cs) {
     if (!repeat)
       break;
 
-    cell_structure.ghosts_reduce_rattle_correction();
+    cs.ghosts_reduce_rattle_correction();
 
     apply_velocity_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);

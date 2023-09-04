@@ -27,6 +27,7 @@
 
 #include "dpd.hpp"
 
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -34,6 +35,7 @@
 #include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -49,8 +51,6 @@
 #include <cstdint>
 #include <functional>
 
-using Utils::Vector3d;
-
 /** Return a random uniform 3D vector with the Philox thermostat.
  *  Random numbers depend on
  *  1. dpd_rng_counter (initialized by seed) which is increased on integration
@@ -58,7 +58,7 @@ using Utils::Vector3d;
  *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
  *     seed-per-node)
  */
-Vector3d dpd_noise(int pid1, int pid2) {
+Utils::Vector3d dpd_noise(int pid1, int pid2) {
   return Random::noise_uniform<RNGSalt::SALT_DPD>(
       dpd.rng_counter(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
       (pid1 < pid2) ? pid1 : pid2);
@@ -84,8 +84,9 @@ static double weight(int type, double r_cut, double k, double r) {
   return 1. - pow((r / r_cut), k);
 }
 
-Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
-                        double dist, Vector3d const &noise) {
+Utils::Vector3d dpd_pair_force(DPDParameters const &params,
+                               Utils::Vector3d const &v, double dist,
+                               Utils::Vector3d const &noise) {
   if (dist < params.cutoff) {
     auto const omega = weight(params.wf, params.cutoff, params.k, dist);
     auto const omega2 = Utils::sqr(omega);
@@ -112,7 +113,7 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
   auto const noise_vec =
       (ia_params.dpd.radial.pref > 0.0 || ia_params.dpd.trans.pref > 0.0)
           ? dpd_noise(p1.id(), p2.id())
-          : Vector3d{};
+          : Utils::Vector3d{};
 
   auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);
   auto const f_t = dpd_pair_force(ia_params.dpd.trans, v21, dist, noise_vec);
@@ -126,6 +127,7 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
 }
 
 static auto dpd_viscous_stress_local() {
+  auto &cell_structure = *System::get_system().cell_structure;
   on_observable_calc();
 
   Utils::Matrix<double, 3, 3> stress{};

@@ -34,10 +34,13 @@
 
 #include <memory>
 
+struct CellStructure;
+
 namespace System {
 
 class System {
 public:
+  System();
 #ifdef CUDA
   GpuParticleData gpu;
 #endif
@@ -50,6 +53,7 @@ public:
   Dipoles::Solver dipoles;
   LB::Solver lb;
   EK::Solver ek;
+  std::shared_ptr<CellStructure> cell_structure;
 };
 
 System &get_system();

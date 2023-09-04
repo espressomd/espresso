@@ -23,10 +23,11 @@
 
 #include "GpuParticleData.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "cuda/CudaHostAllocator.hpp"
 #include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -49,7 +50,8 @@ void GpuParticleData::enable_particle_transfer() {
 }
 
 void GpuParticleData::copy_particles_to_device() {
-  copy_particles_to_device(::cell_structure.local_particles(), ::this_node);
+  auto &cell_structure = *System::get_system().cell_structure;
+  copy_particles_to_device(cell_structure.local_particles(), ::this_node);
 }
 
 bool GpuParticleData::has_compatible_device() const {

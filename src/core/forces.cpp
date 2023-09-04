@@ -214,7 +214,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
           detect_collision(p1, p2, d.dist2);
 #endif
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
+      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
       VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
                         dipole_cutoff, collision_detection_cutoff()});
 

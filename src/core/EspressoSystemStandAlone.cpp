@@ -20,6 +20,9 @@
 #include "config/config.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
@@ -48,7 +51,10 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
 #ifdef VIRTUAL_SITES
   set_virtual_sites(std::make_shared<VirtualSitesOff>());
 #endif
-  ::System::set_system(std::make_shared<::System::System>());
+  auto system = std::make_shared<::System::System>();
+  ::System::set_system(system);
+  auto &cell_structure = *system->cell_structure;
+  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
 }
 
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {

@@ -20,7 +20,7 @@
 #include "lb/particle_coupling.hpp"
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "errorhandling.hpp"
@@ -278,7 +278,9 @@ void ParticleCoupling::kernel(Particle &p) {
 }
 
 bool CouplingBookkeeping::is_ghost_for_local_particle(Particle const &p) const {
-  return not ::cell_structure.get_local_particle(p.id())->is_ghost();
+  auto const &system = System::get_system();
+  auto const &cell_structure = *system.cell_structure;
+  return not cell_structure.get_local_particle(p.id())->is_ghost();
 }
 
 #if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)

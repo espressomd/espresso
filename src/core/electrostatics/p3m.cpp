@@ -41,8 +41,8 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "actor/visitors.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
@@ -77,6 +77,7 @@
 #include <string>
 
 void CoulombP3M::count_charged_particles() {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto local_n = 0;
   auto local_q2 = 0.0;
   auto local_q = 0.0;

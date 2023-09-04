@@ -21,7 +21,7 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "event.hpp"
@@ -37,7 +37,8 @@
 #include <cmath>
 #include <functional>
 
-void rotate_system(double phi, double theta, double alpha) {
+void rotate_system(CellStructure &cell_structure, double phi, double theta,
+                   double alpha) {
   auto const particles = cell_structure.local_particles();
 
   // Calculate center of mass

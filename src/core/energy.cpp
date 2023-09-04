@@ -23,6 +23,7 @@
  */
 
 #include "Observable_stat.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "energy_inline.hpp"
@@ -49,9 +50,11 @@ std::shared_ptr<Observable_stat> calculate_energy() {
     return obs_energy_ptr;
   }
 
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   auto &obs_energy = *obs_energy_ptr;
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
-  auto &gpu_particle_data = System::get_system().gpu;
+  auto &gpu_particle_data = system.gpu;
   gpu_particle_data.clear_energy_on_device();
   gpu_particle_data.update();
 #endif
@@ -63,7 +66,6 @@ std::shared_ptr<Observable_stat> calculate_energy() {
     obs_energy.kinetic[0] += calc_kinetic_energy(p);
   }
 
-  auto const &system = System::get_system();
   auto const coulomb_kernel = system.coulomb.pair_energy_kernel();
   auto const dipoles_kernel = system.dipoles.pair_energy_kernel();
 
@@ -86,7 +88,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
                                    coulomb_kernel_ptr, dipoles_kernel_ptr,
                                    obs_energy);
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -114,6 +116,8 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 }
 
 double particle_short_range_energy_contribution(int pid) {
+  auto const &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   double ret = 0.0;
 
   if (cell_structure.get_resort_particles()) {
@@ -121,7 +125,7 @@ double particle_short_range_energy_contribution(int pid) {
   }
 
   if (auto const p = cell_structure.get_local_particle(pid)) {
-    auto const &coulomb = System::get_system().coulomb;
+    auto const &coulomb = system.coulomb;
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
     auto kernel = [&ret, coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
                       Particle const &p, Particle const &p1,
@@ -142,8 +146,10 @@ double particle_short_range_energy_contribution(int pid) {
 
 #ifdef DIPOLE_FIELD_TRACKING
 void calc_long_range_fields() {
+  auto const &system = System::get_system();
+  auto const &dipoles = system.dipoles;
+  auto &cell_structure = *system.cell_structure;
   auto particles = cell_structure.local_particles();
-  auto const &dipoles = System::get_system().dipoles;
   dipoles.calc_long_range_field(particles);
 }
 #endif

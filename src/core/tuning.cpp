@@ -21,13 +21,14 @@
 
 #include "tuning.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 
 #include <utils/statistics/RunningAverage.hpp>
 
@@ -128,6 +129,8 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
 
   double a = min_skin;
   double b = max_skin;
+  auto const &system = System::get_system();
+  auto const &cell_structure = *system.cell_structure;
 
   /* The maximal skin is the remainder from the required cutoff to
    * the maximal range that can be supported by the cell system, but

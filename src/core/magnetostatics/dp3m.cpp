@@ -41,14 +41,15 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
+#include "system/System.hpp"
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
@@ -70,10 +71,11 @@
 #include <vector>
 
 void DipolarP3M::count_magnetic_particles() {
+  auto const &system = System::get_system();
   int local_n = 0;
   double local_mu2 = 0.;
 
-  for (auto const &p : cell_structure.local_particles()) {
+  for (auto const &p : system.cell_structure->local_particles()) {
     if (p.dipm() != 0.) {
       local_mu2 += p.calc_dip().norm2();
       local_n++;

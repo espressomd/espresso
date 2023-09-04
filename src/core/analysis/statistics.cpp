@@ -27,7 +27,7 @@
 #include "analysis/statistics.hpp"
 
 #include "Particle.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "partCfg_global.hpp"
@@ -75,6 +75,8 @@ double mindist(PartCfg &partCfg, std::vector<int> const &set1,
 Utils::Vector3d calc_linear_momentum(bool include_particles,
                                      bool include_lbfluid) {
   Utils::Vector3d momentum{};
+  auto const &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   if (include_particles) {
     auto const particles = cell_structure.local_particles();
     momentum =
@@ -83,7 +85,6 @@ Utils::Vector3d calc_linear_momentum(bool include_particles,
                           return m + p.mass() * p.v();
                         });
   }
-  auto const &system = System::get_system();
   if (include_lbfluid and system.lb.is_solver_set()) {
     momentum += system.lb.get_momentum() * system.lb.get_lattice_speed();
   }

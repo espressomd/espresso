@@ -32,11 +32,12 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -962,6 +963,7 @@ double ElectrostaticLayerCorrection::tune_far_cut() const {
 }
 
 static auto calc_total_charge() {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto local_q = 0.;
   for (auto const &p : cell_structure.local_particles()) {
     local_q += p.q();

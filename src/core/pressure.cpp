@@ -27,7 +27,7 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
+//#include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "event.hpp"
@@ -61,6 +61,8 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
   on_observable_calc();
 
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   auto const volume = box_geo.volume();
   auto const local_parts = cell_structure.local_particles();
 
@@ -68,7 +70,7 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
     add_kinetic_virials(p, obs_pressure);
   }
 
-  auto const &coulomb = System::get_system().coulomb;
+  auto const &coulomb = system.coulomb;
   auto const coulomb_force_kernel = coulomb.pair_force_kernel();
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
@@ -97,7 +99,7 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
                                     obs_pressure, coulomb_force_kernel_ptr,
                                     coulomb_pressure_kernel_ptr);
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */

@@ -21,7 +21,8 @@
 #define FETCH_PARTICLES_HPP
 
 #include "PidObservable.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "system/System.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -34,8 +35,9 @@
  *  @return array of particle copies, with positions in the current box.
  */
 inline auto fetch_particles(std::vector<int> const &ids) {
+  auto const &system = System::get_system();
   auto const ids_set = std::set<int>{ids.begin(), ids.end()};
-  auto const local_particles = ::cell_structure.local_particles();
+  auto const local_particles = system.cell_structure->local_particles();
   Observables::ParticleReferenceRange local_particle_refs;
   std::copy_if(local_particles.begin(), local_particles.end(),
                std::back_inserter(local_particle_refs),

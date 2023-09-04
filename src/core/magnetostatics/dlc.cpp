@@ -31,10 +31,11 @@
 #include "p3m/common.hpp"
 
 #include "Particle.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
@@ -67,7 +68,8 @@ void DipolarLayerCorrection::check_gap(Particle const &p) const {
 
 /** Calculate the maximal dipole moment in the system */
 static double calc_mu_max() {
-  auto const local_particles = cell_structure.local_particles();
+  auto const &system = System::get_system();
+  auto const local_particles = system.cell_structure->local_particles();
   auto const mu_max_local = std::accumulate(
       local_particles.begin(), local_particles.end(), 0.,
       [](double mu, Particle const &p) { return std::max(mu, p.dipm()); });
@@ -390,6 +392,7 @@ double DipolarLayerCorrection::energy_correction(
 }
 
 static int count_magnetic_particles() {
+  auto &cell_structure = *System::get_system().cell_structure;
   int local_n = 0;
 
   for (auto const &p : cell_structure.local_particles()) {

@@ -26,11 +26,12 @@
 #include "electrostatics/scafacos.hpp"
 #include "electrostatics/scafacos_impl.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "system/System.hpp"
 #include "tuning.hpp"
 
 #include <utils/Span.hpp>
@@ -51,6 +52,8 @@ make_coulomb_scafacos(std::string const &method,
 }
 
 void CoulombScafacosImpl::update_particle_data() {
+  auto &cell_structure = *System::get_system().cell_structure;
+
   positions.clear();
   charges.clear();
 
@@ -66,6 +69,8 @@ void CoulombScafacosImpl::update_particle_data() {
 void CoulombScafacosImpl::update_particle_forces() const {
   if (positions.empty())
     return;
+
+  auto &cell_structure = *System::get_system().cell_structure;
 
   auto it_fields = fields.begin();
   for (auto &p : cell_structure.local_particles()) {

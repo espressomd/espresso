@@ -21,11 +21,13 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "energy.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -111,7 +113,9 @@ void ReactionAlgorithm::restore_old_system_state() {
     }
   }
   if (not old_state.moved.empty()) {
-    ::cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+    auto const &system = System::get_system();
+    auto &cell_structure = *system.cell_structure;
+    cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   }
   on_particle_change();
   clear_old_system_state();
@@ -334,11 +338,13 @@ void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
 
   if (p1_ptr != nullptr) {
     auto &p1 = *p1_ptr;
+    auto const &system = System::get_system();
+    auto &cell_structure = *system.cell_structure;
 
     /* Check if the inserted particle within the exclusion radius of any other
      * particle */
     for (auto const p2_id : particle_ids) {
-      if (auto const p2_ptr = ::cell_structure.get_local_particle(p2_id)) {
+      if (auto const p2_ptr = cell_structure.get_local_particle(p2_id)) {
         auto const &p2 = *p2_ptr;
         double excluded_distance;
         if (exclusion_radius_per_type.count(p_type) == 0 ||
@@ -609,7 +615,8 @@ double ReactionAlgorithm::calculate_potential_energy() const {
 
 Particle *ReactionAlgorithm::get_real_particle(int p_id) const {
   assert(p_id >= 0);
-  auto ptr = ::cell_structure.get_local_particle(p_id);
+  auto const &system = System::get_system();
+  auto ptr = system.cell_structure->get_local_particle(p_id);
   if (ptr != nullptr and ptr->is_ghost()) {
     ptr = nullptr;
   }
@@ -620,7 +627,8 @@ Particle *ReactionAlgorithm::get_real_particle(int p_id) const {
 
 Particle *ReactionAlgorithm::get_local_particle(int p_id) const {
   assert(p_id >= 0);
-  auto ptr = ::cell_structure.get_local_particle(p_id);
+  auto const &system = System::get_system();
+  auto ptr = system.cell_structure->get_local_particle(p_id);
   assert(boost::mpi::all_reduce(
              m_comm, static_cast<int>(ptr != nullptr and not ptr->is_ghost()),
              std::plus<>()) == 1);

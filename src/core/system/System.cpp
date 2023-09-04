@@ -31,6 +31,10 @@ namespace System {
 
 static std::shared_ptr<System> instance = std::make_shared<System>();
 
+System::System() {
+  cell_structure = std::make_shared<CellStructure>(::box_geo);
+}
+
 bool is_system_set() { return instance != nullptr; }
 
 void reset_system() { instance.reset(); }

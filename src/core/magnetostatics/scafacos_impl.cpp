@@ -26,9 +26,10 @@
 #include "magnetostatics/scafacos.hpp"
 #include "magnetostatics/scafacos_impl.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -45,6 +46,8 @@ make_dipolar_scafacos(std::string const &method,
 }
 
 void DipolarScafacosImpl::update_particle_data() {
+  auto &cell_structure = *System::get_system().cell_structure;
+
   positions.clear();
   dipoles.clear();
 
@@ -63,6 +66,8 @@ void DipolarScafacosImpl::update_particle_data() {
 void DipolarScafacosImpl::update_particle_forces() const {
   if (positions.empty())
     return;
+
+  auto &cell_structure = *System::get_system().cell_structure;
 
   auto it_potentials = potentials.begin();
   auto it_f = std::size_t{0ul};
