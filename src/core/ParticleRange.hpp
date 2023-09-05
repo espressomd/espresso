@@ -50,11 +50,12 @@ public:
     return assert(m_size >= 0), static_cast<base_type::size_type>(m_size);
   }
 
-  template <int criterion> ParticleRangeFiltered<criterion> filter() const {
-    return {boost::make_filter_iterator<PropagationPredicate<criterion>>(
-                begin(), end()),
-            boost::make_filter_iterator<PropagationPredicate<criterion>>(
-                end(), end())};
+  template <typename Predicate>
+  ParticleRangeFiltered<Predicate> filter(Predicate pred) const {
+    return {boost::make_filter_iterator(PropagationPredicate<Predicate>(pred),
+                                        begin(), end()),
+            boost::make_filter_iterator(PropagationPredicate<Predicate>(pred),
+                                        end(), end())};
   }
 
 private:

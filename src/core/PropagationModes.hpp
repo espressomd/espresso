@@ -16,9 +16,9 @@ enum PropagationMode {
   ROT_BROWNIAN = 1 << 10
 };
 
-static bool is_valid_propagation_combination(int propagation) {
+inline bool is_valid_propagation_combination(int propagation) {
   if (propagation == 0)
-    return true; // make sure if true or false
+    return true;
   if (!(propagation & (propagation - 1)))
     return true; // only one trans or rot
   if (propagation == TRANS_LANGEVIN + ROT_LANGEVIN ||

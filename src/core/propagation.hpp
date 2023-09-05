@@ -3,24 +3,27 @@
 
 #include <boost/iterator/filter_iterator.hpp>
 
-template <int criterion> struct PropagationPredicate {
-  bool operator()(Particle const &p) { return (p.propagation() & criterion); };
+template <typename Predicate> struct PropagationPredicate {
+  Predicate predicate;
+
+  PropagationPredicate(Predicate pred) : predicate(pred) {}
+
+  bool operator()(Particle const &p) { return predicate(p.propagation()); };
 };
 
-template <int criterion>
+template <typename Predicate>
 class ParticleRangeFiltered
     : public boost::iterator_range<boost::iterators::filter_iterator<
-          PropagationPredicate<criterion>, ParticleIterator<Cell **>>> {
+          PropagationPredicate<Predicate>, ParticleIterator<Cell **>>> {
   using base_type = boost::iterator_range<boost::iterators::filter_iterator<
-      PropagationPredicate<criterion>, ParticleIterator<Cell **>>>;
+      PropagationPredicate<Predicate>, ParticleIterator<Cell **>>>;
 
 public:
   using base_type::base_type;
   auto size() const { return std::distance(this->begin(), this->end()); };
 };
 
-
-
+/*
 using ParticleRangeDefault =
     ParticleRangeFiltered<PropagationMode::TRANS_SYSTEM_DEFAULT>;
 using ParticleRangeLangevin =
@@ -28,5 +31,5 @@ using ParticleRangeLangevin =
 using ParticleRangeStokesian =
     ParticleRangeFiltered<PropagationMode::TRANS_STOKESIAN>;
 
-
+*/
 #endif

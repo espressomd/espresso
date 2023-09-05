@@ -63,6 +63,8 @@ extern bool recalc_forces;
 
 double interaction_range();
 
+void propagation_sanity_checks();
+
 /** Check integrator parameters and incompatibilities between the integrator
  *  and the currently active thermostat(s).
  */

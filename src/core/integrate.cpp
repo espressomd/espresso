@@ -163,13 +163,20 @@ void get_used_propagations(const ParticleRange &particles) {
   }
 }
 void propagation_sanity_checks() {
+  // only one translation mode:
   typedef PropagationMode PM;
-  if (used_propagations & PM::TRANS_LANGEVIN_NPT) {
-    if (used_propagations &
-        (PM::TRANS_BROWNIAN + PM::TRANS_LANGEVIN + PM::TRANS_STOKESIAN))
-      runtimeErrorMsg() << " Langevin NPT translation is incompatible with "
-                           "other translation modes";
-  }
+  int propagation_counter = 0;
+  if (used_propagations & PM::TRANS_LANGEVIN)
+    propagation_counter++;
+  if (used_propagations & PM::TRANS_LANGEVIN_NPT)
+    propagation_counter++;
+  if (used_propagations & PM::TRANS_BROWNIAN)
+    propagation_counter++;
+  if (used_propagations & PM::TRANS_STOKESIAN)
+    propagation_counter++;
+  if (propagation_counter > 1)
+    runtimeErrorMsg()
+        << " only one translation mode can be active at the same time";
 }
 
 void integrator_sanity_checks() {
@@ -235,14 +242,15 @@ static bool integrator_step_1(ParticleRange const &particles, double kT) {
     return steepest_descent_step(particles);
 
   int per_particle_integration =
-      PropagationMode::TRANS_LANGEVIN + PropagationMode::ROT_LANGEVIN +
-      PropagationMode::TRANS_BROWNIAN + PropagationMode::ROT_BROWNIAN;
-  if (true) { // per_particle_integration & used_propagations
+      PropagationMode::TRANS_LANGEVIN | PropagationMode::ROT_LANGEVIN |
+      PropagationMode::TRANS_BROWNIAN | PropagationMode::ROT_BROWNIAN;
+  if (per_particle_integration &
+      used_propagations) { // per_particle_integration & used_propagations
     bool does_default_contain_splittable =
         per_particle_integration & default_propagation;
 
     if (does_default_contain_splittable)
-      per_particle_integration += PropagationMode::TRANS_SYSTEM_DEFAULT;
+      per_particle_integration |= PropagationMode::TRANS_SYSTEM_DEFAULT;
     for (auto &p : particles) {
       if (p.propagation() & per_particle_integration) {
         if (should_propagate_with(p.propagation(),
@@ -262,29 +270,32 @@ static bool integrator_step_1(ParticleRange const &particles, double kT) {
   }
 
 #ifdef NPT
-  if (true) { // PropagationMode::TRANS_LANGEVIN_NPT & used_propagations
+  if (PropagationMode::TRANS_LANGEVIN_NPT &
+      used_propagations) { // PropagationMode::TRANS_LANGEVIN_NPT &
+                           // used_propagations
     if (default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)
-      velocity_verlet_npt_step_1(
-          particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT +
-                           PropagationMode::TRANS_LANGEVIN_NPT>(),
-          time_step);
+      velocity_verlet_npt_step_1(particles.filter([](int prop) {
+        return (prop & (PropagationMode::TRANS_SYSTEM_DEFAULT +
+                        PropagationMode::TRANS_LANGEVIN_NPT));
+      }),
+                                 time_step);
     /* else
          velocity_verlet_npt_step_1(
-             particles.filter<PropagationMode::TRANS_LANGEVIN_NPT>(),
+             particles.filter<PropagationPredicate<PropagationMode::TRANS_LANGEVIN_NPT>>(),
        time_step); */
   }
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
-  if (true) { // PropagationMode::TRANS_STOKESIAN & used_propagations
+  if (PropagationMode::TRANS_STOKESIAN &
+      used_propagations) { // PropagationMode::TRANS_STOKESIAN &
+                           // used_propagations
     if (default_propagation & PropagationMode::TRANS_STOKESIAN) {
-      stokesian_dynamics_step_1(
-          particles.filter<PropagationMode::TRANS_STOKESIAN +
-                           PropagationMode::TRANS_SYSTEM_DEFAULT>(),
-          time_step);
+      stokesian_dynamics_step_1(particles, time_step, default_propagation);
     } /*else
       stokesian_dynamics_step_1(
-          particles.filter<PropagationMode::TRANS_STOKESIAN>(), time_step); */
+          particles.filter<PropagationPredicate<PropagationMode::TRANS_STOKESIAN>>(),
+      time_step); */
   }
 #endif // STOKESIAN_DYNAMICS
 
@@ -296,12 +307,13 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
   if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return;
   int per_particle_integration =
-      PropagationMode::TRANS_LANGEVIN + PropagationMode::ROT_LANGEVIN;
-  if (true) { // per_particle_integration & used_propagations
+      PropagationMode::TRANS_LANGEVIN | PropagationMode::ROT_LANGEVIN;
+  if (per_particle_integration &
+      used_propagations) { // per_particle_integration & used_propagations
     bool does_default_contain_splittable =
         per_particle_integration & default_propagation;
     if (does_default_contain_splittable)
-      per_particle_integration += PropagationMode::TRANS_SYSTEM_DEFAULT;
+      per_particle_integration |= PropagationMode::TRANS_SYSTEM_DEFAULT;
     for (auto &p : particles) {
       if (p.propagation() & per_particle_integration) {
         if (should_propagate_with(p.propagation(),
@@ -315,15 +327,19 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
   }
 
 #ifdef NPT
-  if (true) { // PropagationMode::TRANS_LANGEVIN_NPT & used_propagations
+  if (PropagationMode::TRANS_LANGEVIN_NPT &
+      used_propagations) { // PropagationMode::TRANS_LANGEVIN_NPT &
+                           // used_propagations
     if (default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)
-      velocity_verlet_npt_step_2(
-          particles.filter<PropagationMode::TRANS_SYSTEM_DEFAULT +
-                           PropagationMode::TRANS_LANGEVIN_NPT>(),
-          time_step);
+      velocity_verlet_npt_step_2(particles.filter([](int prop) {
+        return (prop & (PropagationMode::TRANS_SYSTEM_DEFAULT +
+                        PropagationMode::TRANS_LANGEVIN_NPT));
+      }),
+                                 time_step);
+
     /*   else
          velocity_verlet_npt_step_2(
-             particles.filter<PropagationMode::TRANS_LANGEVIN_NPT>(),
+             particles.filter<PropagationPredicate<PropagationMode::TRANS_LANGEVIN_NPT>>(),
        time_step); */
   }
 #endif
@@ -334,10 +350,11 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
   // Prepare particle structure and run sanity checks of all active algorithms
+  get_used_propagations(cell_structure.local_particles());
+  used_propagations =
+      boost::mpi::all_reduce(comm_cart, used_propagations, std::bit_or<int>());
   on_integration_start(time_step);
 
-  get_used_propagations(cell_structure.local_particles());
-  propagation_sanity_checks();
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
     return INTEG_ERROR_RUNTIME;
@@ -660,21 +677,21 @@ void default_propagation_from_integ() {
   case INTEG_METHOD_NVT:
     default_propagation = PropagationMode::TRANS_LANGEVIN;
 #ifdef ROTATION
-    default_propagation += PropagationMode::ROT_LANGEVIN;
+    default_propagation |= PropagationMode::ROT_LANGEVIN;
 #endif
     break;
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO:
     default_propagation = PropagationMode::TRANS_LANGEVIN_NPT;
 #ifdef ROTATION
-    default_propagation += PropagationMode::ROT_LANGEVIN;
+    default_propagation |= PropagationMode::ROT_LANGEVIN;
 #endif
     break;
 #endif
   case INTEG_METHOD_BD:
     default_propagation = PropagationMode::TRANS_BROWNIAN;
 #ifdef ROTATION
-    default_propagation += PropagationMode::ROT_BROWNIAN;
+    default_propagation |= PropagationMode::ROT_BROWNIAN;
 #endif
     break;
 #ifdef STOKESIAN_DYNAMICS

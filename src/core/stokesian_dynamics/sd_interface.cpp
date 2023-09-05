@@ -140,10 +140,20 @@ void set_sd_kT(double kT) {
 
 double get_sd_kT() { return sd_kT; }
 
-template <typename ParticleIterable>
-void propagate_vel_pos_sd(const ParticleIterable &particles,
+void propagate_vel_pos_sd(const ParticleRange &unfiltered_particles,
                           const boost::mpi::communicator &comm,
-                          const double time_step) {
+                          const double time_step, int default_propagation) {
+
+  auto particles = unfiltered_particles.filter([default_propagation](int prop) {
+    int modes = PropagationMode::TRANS_STOKESIAN;
+
+    if (default_propagation & PropagationMode::TRANS_STOKESIAN) {
+      modes |= PropagationMode::TRANS_SYSTEM_DEFAULT;
+    }
+
+    return (prop & modes);
+  });
+
   static std::vector<SD_particle_data> parts_buffer{};
 
   parts_buffer.clear();
@@ -201,15 +211,5 @@ void propagate_vel_pos_sd(const ParticleIterable &particles,
                              static_cast<int>(particles.size() * 6), comm, 0);
   sd_update_locally(particles);
 }
-
-template void propagate_vel_pos_sd(const ParticleRangeFiltered<129> &particles,
-                                   const boost::mpi::communicator &comm,
-                                   const double time_step);
-template void propagate_vel_pos_sd(const ParticleRangeDefault &particles,
-                                   const boost::mpi::communicator &comm,
-                                   const double time_step);
-template void propagate_vel_pos_sd(const ParticleRangeStokesian &particles,
-                                   const boost::mpi::communicator &comm,
-                                   const double time_step);
 
 #endif // STOKESIAN_DYNAMICS

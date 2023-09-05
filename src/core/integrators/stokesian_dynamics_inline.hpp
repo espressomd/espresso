@@ -28,15 +28,19 @@
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 
-template <typename ParticleIterable>
-inline void
-stokesian_dynamics_propagate_vel_pos(const ParticleIterable &particles,
-                                     double time_step) {
+inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
+                                                 double time_step,
+                                                 int default_propagation) {
 
   // Compute new (translational and rotational) velocities
-  propagate_vel_pos_sd(particles, comm_cart, time_step);
+  propagate_vel_pos_sd(particles, comm_cart, time_step, default_propagation);
+  int modes = PropagationMode::TRANS_STOKESIAN;
+  if (default_propagation & PropagationMode::TRANS_STOKESIAN)
+    modes += PropagationMode::TRANS_SYSTEM_DEFAULT;
 
   for (auto &p : particles) {
+    if (!(p.propagation() & modes))
+      continue;
 
     // Translate particle
     p.pos() += p.v() * time_step;
@@ -49,10 +53,12 @@ stokesian_dynamics_propagate_vel_pos(const ParticleIterable &particles,
     }
   }
 }
-template <typename ParticleIterable>
-inline void stokesian_dynamics_step_1(const ParticleIterable &particles,
-                                      double time_step) {
-  stokesian_dynamics_propagate_vel_pos(particles, time_step);
+
+inline void stokesian_dynamics_step_1(const ParticleRange &particles,
+                                      double time_step,
+                                      int default_propagation) {
+  stokesian_dynamics_propagate_vel_pos(particles, time_step,
+                                       default_propagation);
 }
 
 #endif // STOKESIAN_DYNAMICS

@@ -205,13 +205,17 @@ ParticleHandle::ParticleHandle() {
          set_particle_property(&Particle::force, value);
        },
        [this]() { return get_particle_data(m_pid).force(); }},
+
       {"propagation",
        [this](Variant const &value) {
-         set_particle_property([&value](Particle &p) {
-           p.set_propagation(get_value<int>(value));
-         });
+         if (!is_valid_propagation_combination(get_value<int>(value))) {
+           throw std::domain_error(
+               error_msg("propagation", "propagation combination not valid"));
+         }
+         set_particle_property(&Particle::propagation, value);
        },
        [this]() { return get_particle_data(m_pid).propagation(); }},
+
       {"mass",
 #ifdef MASS
        [this](Variant const &value) {

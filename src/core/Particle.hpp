@@ -430,12 +430,6 @@ public:
 
   auto const &propagation() const { return p.propagation; }
   auto &propagation() { return p.propagation; }
-  auto set_propagation(int propagation) {
-    if (is_valid_propagation_combination(propagation))
-      p.propagation = propagation;
-    else
-      throw std::invalid_argument("propagation combination not valid");
-  }
 
   bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
 

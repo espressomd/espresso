@@ -81,7 +81,7 @@ void on_integration_start(double time_step) {
   /********************************************/
   /* sanity checks                            */
   /********************************************/
-
+  propagation_sanity_checks();
   integrator_sanity_checks();
 #ifdef NPT
   integrator_npt_sanity_checks();
