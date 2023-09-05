@@ -50,7 +50,6 @@ add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
 add_subdirectory(shapes)
 add_subdirectory(system)
-add_subdirectory(virtual_sites)
 add_subdirectory(walberla)
 
 install(TARGETS espresso_script_interface

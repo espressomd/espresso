@@ -20,7 +20,6 @@ import espressomd
 import espressomd.bond_breakage
 import espressomd.interactions
 import espressomd.lees_edwards
-import espressomd.virtual_sites
 
 import unittest as ut
 import unittest_decorators as utx
@@ -70,8 +69,6 @@ class LeesEdwards(ut.TestCase):
         system = self.system
         system.part.clear()
         system.lees_edwards.protocol = None
-        if espressomd.has_features("VIRTUAL_SITES"):
-            system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         if espressomd.has_features("COLLISION_DETECTION"):
             system.collision_detection.set_params(mode="off")
 
@@ -421,7 +418,6 @@ class LeesEdwards(ut.TestCase):
         """
         system = self.system
         system.min_global_cut = 2.5
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         tol = 1e-10
 
         # Construct pair of VS across normal boundary
@@ -479,7 +475,6 @@ class LeesEdwards(ut.TestCase):
         """
 
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
         system.thermostat.set_dpd(kT=0.0, seed=1)
         system.non_bonded_inter[11, 11].dpd.set_params(
@@ -634,7 +629,6 @@ class LeesEdwards(ut.TestCase):
     def test_le_breaking_bonds(self):
         system = self.system
         system.min_global_cut = 1.2
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(

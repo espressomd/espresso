@@ -19,14 +19,11 @@
 import numpy as np
 import itertools
 import unittest as ut
-import unittest_decorators as utx
 
 import espressomd
 import espressomd.interactions
-import espressomd.virtual_sites
 
 
-@utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
 class IBM(ut.TestCase):
     '''Test IBM implementation with a Langevin thermostat.'''
     system = espressomd.System(box_l=3 * [8.])
@@ -57,7 +54,6 @@ class IBM(ut.TestCase):
         # move nodes, should relax back
 
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         system.thermostat.set_langevin(kT=0, gamma=10, seed=1)
 
         # Add four particles
@@ -100,7 +96,6 @@ class IBM(ut.TestCase):
 
     def test_triel(self):
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Add particles: 0-2 are not bonded, 3-5 are bonded
@@ -138,7 +133,6 @@ class IBM(ut.TestCase):
     def test_volcons(self):
         '''Check volume conservation forces on a simple mesh (cube).'''
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
 
         # Place particles on a cube.

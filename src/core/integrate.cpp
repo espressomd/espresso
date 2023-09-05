@@ -55,7 +55,8 @@
 #include "rotation.hpp"
 #include "signalhandling.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
+#include "virtual_sites/lb_tracers.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
@@ -368,7 +369,7 @@ int integrate(int n_steps, int reuse_forces) {
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+    vs_relative_update_particles(cell_structure);
 #endif
 
     // Communication step: distribute ghost positions
@@ -446,7 +447,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+    vs_relative_update_particles(cell_structure);
 #endif
 
     if (cell_structure.get_resort_particles() >= Cells::RESORT_LOCAL)
@@ -460,7 +461,7 @@ int integrate(int n_steps, int reuse_forces) {
     force_calc(cell_structure, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc(time_step);
+    lb_tracers_add_particle_force_to_fluid(cell_structure, time_step);
 #endif
     integrator_step_2(particles, temperature);
     LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>();
@@ -518,7 +519,7 @@ int integrate(int n_steps, int reuse_forces) {
       }
 
 #ifdef VIRTUAL_SITES
-      virtual_sites()->after_lb_propagation(time_step);
+      lb_tracers_propagate(cell_structure, time_step);
 #endif
 
 #ifdef COLLISION_DETECTION
@@ -551,7 +552,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update();
+  vs_relative_update_particles(cell_structure);
 #endif
 
   // Verlet list statistics

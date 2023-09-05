@@ -26,6 +26,7 @@ from .utils import nesting_level, array_locked, is_valid_type, handle_errors
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
+from .propagation import Propagation
 import itertools
 
 
@@ -552,7 +553,15 @@ class ParticleHandle(ScriptInterfaceHelper):
         assert_features("EXCLUSIONS")
         self.call_method("set_exclusions", p_ids=p_ids)
 
-    def vs_auto_relate_to(self, rel_to):
+    @property
+    def propagation(self):
+        return Propagation(self.get_parameter("propagation"))
+
+    @propagation.setter
+    def propagation(self, value):
+        self.set_parameter("propagation", int(value))
+
+    def vs_auto_relate_to(self, rel_to, override_cutoff_check=False):
         """
         Setup this particle as virtual site relative to the particle
         in argument ``rel_to``. A particle cannot relate to itself.
@@ -561,6 +570,9 @@ class ParticleHandle(ScriptInterfaceHelper):
         -----------
         rel_to : :obj:`int` or :obj:`ParticleHandle`
             Particle to relate to (either particle id or particle object).
+        override_cutoff_check : :obj:`bool`
+            If True, does not check whether the cell system cutoffs
+            are consistent with the distance between virtual and no-virtual particle.
 
         """
         if isinstance(rel_to, ParticleHandle):
@@ -568,7 +580,10 @@ class ParticleHandle(ScriptInterfaceHelper):
         else:
             check_type_or_throw_except(
                 rel_to, 1, int, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int")
-        self.call_method("vs_relate_to", pid=rel_to)
+        self.call_method(
+            "vs_relate_to",
+            pid=rel_to,
+            override_cutoff_check=override_cutoff_check)
         handle_errors("vs_auto_relate_to")
 
     def add_verified_bond(self, bond):
@@ -929,6 +944,7 @@ class ParticleSlice(ScriptInterfaceHelper):
         if name != "chunk_size" and name != "id_selection" and name not in particle_attributes:
             raise AttributeError(
                 f"ParticleHandle does not have the attribute {name}.")
+        print("particle set attr", name, value)
         super().__setattr__(name, value)
 
     def to_dict(self):
@@ -1088,6 +1104,8 @@ class ParticleList(ScriptInterfaceHelper):
 
     def _place_new_particle(self, p_dict):
         bonds = []
+        if "propagation" in p_dict: p_dict["propagation"] = int(
+            p_dict["propagation"])
         if "bonds" in p_dict:
             bonds = p_dict.pop("bonds")
             if nesting_level(bonds) == 1:

@@ -40,23 +40,12 @@
 #include <cstdio>
 #include <tuple>
 
-namespace {
-std::shared_ptr<VirtualSites> m_virtual_sites;
-}
-
-const std::shared_ptr<VirtualSites> &virtual_sites() { return m_virtual_sites; }
-
-void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
-  m_virtual_sites = v;
-  recalc_forces = true;
-}
-
 #ifdef VIRTUAL_SITES_RELATIVE
 
 /** Calculate the rotation quaternion and distance between two particles */
 std::tuple<Utils::Quaternion<double>, double>
-calculate_vs_relate_to_params(Particle const &p_vs,
-                              Particle const &p_relate_to) {
+calculate_vs_relate_to_params(Particle const &p_vs, Particle const &p_relate_to,
+                              bool override_cutoff_check) {
   // get the distance between the particles
   auto d = ::box_geo.get_mi_vector(p_vs.pos(), p_relate_to.pos());
 
@@ -64,8 +53,7 @@ calculate_vs_relate_to_params(Particle const &p_vs,
   // than minimum global cutoff. If so, warn user.
   auto const dist = d.norm();
   auto const min_global_cut = get_min_global_cut();
-  if (dist > min_global_cut && n_nodes > 1 &&
-      not virtual_sites()->get_override_cutoff_check()) {
+  if (dist > min_global_cut && n_nodes > 1 && not override_cutoff_check) {
     runtimeErrorMsg()
         << "Warning: The distance between virtual and non-virtual particle ("
         << dist << ") is larger than the minimum global cutoff ("

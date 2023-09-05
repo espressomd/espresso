@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2022 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,20 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
+#define VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 
-#ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
-#define SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
+#include "config/config.hpp"
 
-#include <script_interface/ObjectHandle.hpp>
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
-#include <utils/Factory.hpp>
-
-namespace ScriptInterface {
-namespace VirtualSites {
-
-void initialize(Utils::Factory<ObjectHandle> *om);
-
-} /* namespace VirtualSites */
-} /* namespace ScriptInterface */
-
+void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_struct,
+                                            double time_step);
+void lb_tracers_propagate(CellStructure &cell_struct, double time_step);
+#endif
 #endif

@@ -48,7 +48,7 @@
 #include "particle_node.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <utils/mpi/all_compare.hpp>
 
@@ -350,7 +350,7 @@ unsigned global_ghost_flags() {
 
 void update_dependent_particles() {
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update();
+  vs_relative_update_particles(cell_structure);
   cells_update_ghosts(global_ghost_flags());
 #endif
 

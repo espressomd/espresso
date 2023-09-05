@@ -447,20 +447,21 @@ class ScriptInterfaceHelper(PScriptInterface):
         return list(self.__dict__.keys()) + self._valid_parameters()
 
     def __getattr__(self, attr):
-        if attr in self._valid_parameters():
-            return self.get_parameter(attr)
-
         if attr in self.__dict__:
             return self.__dict__[attr]
+
+        if attr in self._valid_parameters():
+            return self.get_parameter(attr)
 
         raise AttributeError(
             f"Object '{self.__class__.__name__}' has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
-        if attr in self._valid_parameters():
-            self.set_params(**{attr: value})
-        else:
+        if attr in self.__class__.__dict__ or (
+                not attr in self._valid_parameters()):
             super().__setattr__(attr, value)
+        else:
+            self.set_params(**{attr: value})
 
     def __delattr__(self, attr):
         if attr in self._valid_parameters():

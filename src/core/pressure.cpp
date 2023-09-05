@@ -38,7 +38,7 @@
 #include "pressure_inline.hpp"
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
-#include "virtual_sites.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include "config/config.hpp"
 
@@ -111,7 +111,8 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
 #ifdef VIRTUAL_SITES
   if (!obs_pressure.virtual_sites.empty()) {
-    auto const vs_pressure = virtual_sites()->pressure_tensor();
+    auto const vs_pressure =
+        vs_relative_pressure_tensor(cell_structure.local_particles());
     boost::copy(flatten(vs_pressure), obs_pressure.virtual_sites.begin());
   }
 #endif

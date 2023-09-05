@@ -24,16 +24,6 @@
 #ifdef VIRTUAL_SITES
 #include "Particle.hpp"
 
-#include "virtual_sites/VirtualSites.hpp"
-
-#include <memory>
-
-/** @brief Get active virtual sites implementation */
-const std::shared_ptr<VirtualSites> &virtual_sites();
-
-/** @brief Set active virtual sites implementation */
-void set_virtual_sites(std::shared_ptr<VirtualSites> const &v);
-
 #ifdef VIRTUAL_SITES_RELATIVE
 
 #include <utils/quaternion.hpp>
@@ -42,7 +32,8 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v);
 
 std::tuple<Utils::Quaternion<double>, double>
 calculate_vs_relate_to_params(Particle const &p_current,
-                              Particle const &p_relate_to);
+                              Particle const &p_relate_to,
+                              bool override_cutoff_check = false);
 
 /**
  * @brief Setup a virtual site to track a real particle.
@@ -53,6 +44,7 @@ inline void vs_relate_to(Particle &p_vs, Particle const &p_relate_to) {
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
   auto &vs_relative = p_vs.vs_relative();
+  p_vs.propagation() = p_vs.propagation() | PropagationMode::TRANS_VS_RELATIVE;
   vs_relative.to_particle_id = p_relate_to.id();
   std::tie(vs_relative.rel_orientation, vs_relative.distance) =
       calculate_vs_relate_to_params(p_vs, p_relate_to);

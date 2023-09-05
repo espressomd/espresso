@@ -27,8 +27,6 @@
 #include "integrate.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "system/System.hpp"
-#include "virtual_sites.hpp"
-#include "virtual_sites/VirtualSitesOff.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -46,9 +44,6 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
   Communication::init(mpi_env);
 
   // default-construct global state of the system
-#ifdef VIRTUAL_SITES
-  set_virtual_sites(std::make_shared<VirtualSitesOff>());
-#endif
   ::System::set_system(std::make_shared<::System::System>());
 }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010,2011 Rudolf Weeber
  *
  * This file is part of ESPResSo.
  *
@@ -16,22 +17,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
-#define VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
+#ifndef VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
+#define VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
 
 #include "config/config.hpp"
+#ifdef VIRTUAL_SITES_RELATIVE
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#include "cells.hpp"
+#include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
-#include "VirtualSites.hpp"
+void vs_relative_update_particles(CellStructure &cell_struct);
+void vs_relative_back_transfer_forces_and_torques(CellStructure &cell_struct);
+Utils::Matrix<double, 3, 3>
+vs_relative_pressure_tensor(const ParticleRange &particles);
 
-/** @brief Virtual sites which are advected with an lb fluid. Forces on them are
- * instantaneously transferred to the fluid
- */
-class VirtualSitesInertialessTracers : public VirtualSites {
-  void after_force_calc(double time_step) override;
-  void after_lb_propagation(double time_step) override;
-};
+#endif
 
-#endif // VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif

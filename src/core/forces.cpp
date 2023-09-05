@@ -49,7 +49,7 @@
 #include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/langevin_inline.hpp"
-#include "virtual_sites.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <boost/variant.hpp>
 
@@ -255,7 +255,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  virtual_sites()->back_transfer_forces_and_torques();
+  vs_relative_back_transfer_forces_and_torques(cell_structure);
 #endif
 
   // Communication Step: ghost forces
