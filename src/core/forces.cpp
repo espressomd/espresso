@@ -24,6 +24,7 @@
  *  The corresponding header file is forces.hpp.
  */
 
+#include "BoxGeometry.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -153,6 +154,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
 
   auto &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
   auto const n_nodes = ::communicator.size;
 #ifdef CUDA
 #ifdef CALIPER
@@ -199,9 +201,10 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 #endif
 
   short_range_loop(
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
-          Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        return add_bonded_force(p1, bond_id, partners, coulomb_kernel_ptr);
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       &box_geo](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        return add_bonded_force(p1, bond_id, partners, box_geo,
+                                coulomb_kernel_ptr);
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
@@ -219,27 +222,28 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
       VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
                         dipole_cutoff, collision_detection_cutoff()});
 
-  Constraints::constraints.add_forces(particles, get_sim_time());
+  Constraints::constraints.add_forces(box_geo, particles, get_sim_time());
 
   if (max_oif_objects) {
     // There are two global quantities that need to be evaluated:
     // object's surface and object's volume.
     for (int i = 0; i < max_oif_objects; i++) {
       auto const area_volume = boost::mpi::all_reduce(
-          comm_cart, calc_oif_global(i, cell_structure), std::plus<>());
+          comm_cart, calc_oif_global(i, box_geo, cell_structure),
+          std::plus<>());
       auto const oif_part_area = std::abs(area_volume[0]);
       auto const oif_part_vol = std::abs(area_volume[1]);
       if (oif_part_area < 1e-100 and oif_part_vol < 1e-100) {
         break;
       }
-      add_oif_global_forces(area_volume, i, cell_structure);
+      add_oif_global_forces(area_volume, i, box_geo, cell_structure);
     }
   }
 
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation(cell_structure);
 
-  if (System::get_system().lb.is_solver_set()) {
+  if (system.lb.is_solver_set()) {
     LB::couple_particles(thermo_virtual, particles, ghost_particles, time_step);
   }
 

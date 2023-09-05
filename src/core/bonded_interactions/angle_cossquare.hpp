@@ -49,9 +49,10 @@ struct AngleCossquareBond {
   AngleCossquareBond(double bend, double phi0);
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  forces(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-         Utils::Vector3d const &r_right) const;
-  double energy(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+  forces(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
+         Utils::Vector3d const &r_left, Utils::Vector3d const &r_right) const;
+  double energy(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
+                Utils::Vector3d const &r_left,
                 Utils::Vector3d const &r_right) const;
 
 private:
@@ -65,13 +66,15 @@ private:
 };
 
 /** Compute the three-body angle interaction force.
+ *  @param[in]  box_geo   Box geometry.
  *  @param[in]  r_mid     Position of second/middle particle.
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-AngleCossquareBond::forces(Utils::Vector3d const &r_mid,
+AngleCossquareBond::forces(BoxGeometry const &box_geo,
+                           Utils::Vector3d const &r_mid,
                            Utils::Vector3d const &r_left,
                            Utils::Vector3d const &r_right) const {
 
@@ -79,18 +82,22 @@ AngleCossquareBond::forces(Utils::Vector3d const &r_mid,
     return bend * (cos_phi - cos_phi0);
   };
 
-  return angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
+  return angle_generic_force(box_geo, r_mid, r_left, r_right, forceFactor,
+                             false);
 }
 
 /** Computes the three-body angle interaction energy.
+ *  @param[in]  box_geo   Box geometry.
  *  @param[in]  r_mid     Position of second/middle particle.
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  */
-inline double AngleCossquareBond::energy(Utils::Vector3d const &r_mid,
+inline double AngleCossquareBond::energy(BoxGeometry const &box_geo,
+                                         Utils::Vector3d const &r_mid,
                                          Utils::Vector3d const &r_left,
                                          Utils::Vector3d const &r_right) const {
-  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
+  auto const vectors =
+      calc_vectors_and_cosine(box_geo, r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   return 0.5 * bend * Utils::sqr(cos_phi - cos_phi0);
 }

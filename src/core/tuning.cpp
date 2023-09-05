@@ -24,7 +24,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -138,7 +137,7 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
   double const max_permissible_skin =
       std::min(*boost::min_element(cell_structure.max_cutoff()) -
                    maximal_cutoff(::communicator.size),
-               0.5 * *boost::max_element(box_geo.length()));
+               0.5 * *boost::max_element(system.box_geo->length()));
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;

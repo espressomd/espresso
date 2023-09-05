@@ -21,10 +21,10 @@
 
 #ifdef WALBERLA
 
+#include "BoxGeometry.hpp"
 #include "ek/EKReactions.hpp"
 #include "ek/EKWalberla.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "lb/Implementation.hpp"
 #include "lb/LBWalberla.hpp"
@@ -110,8 +110,9 @@ void EKWalberla::veto_time_step(double time_step) const {
 }
 
 void EKWalberla::sanity_checks() const {
+  auto const &box_geo = *System::get_system().box_geo;
   auto const &lattice = ek_container->get_lattice();
-  auto const agrid = ::box_geo.length()[0] / lattice.get_grid_dimensions()[0];
+  auto const agrid = box_geo.length()[0] / lattice.get_grid_dimensions()[0];
   auto [my_left, my_right] = lattice.get_local_domain();
   my_left *= agrid;
   my_right *= agrid;

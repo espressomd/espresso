@@ -36,7 +36,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
@@ -205,13 +204,19 @@ std::vector<NeighborPIDs> get_neighbor_pids() {
 
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular) {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto &local_geo = *system.local_geo;
+  auto &cell_structure = *system.cell_structure;
   cell_structure.set_hybrid_decomposition(comm_cart, cutoff_regular, box_geo,
                                           local_geo, n_square_types);
   on_cell_structure_change();
 }
 
 void cells_re_init(CellStructure &cell_structure, CellStructureType new_cs) {
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto &local_geo = *system.local_geo;
   switch (new_cs) {
   case CellStructureType::CELL_STRUCTURE_REGULAR:
     cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
@@ -249,7 +254,9 @@ void check_resort_particles() {
 }
 
 void cells_update_ghosts(unsigned data_parts) {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto &cell_structure = *system.cell_structure;
 
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts =

@@ -24,7 +24,6 @@
 
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "system/System.hpp"
 

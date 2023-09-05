@@ -30,7 +30,6 @@
 
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ExternalField.hpp"
-#include "core/grid.hpp"
 
 #include <utils/Vector.hpp>
 

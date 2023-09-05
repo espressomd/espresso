@@ -31,6 +31,7 @@
 
 #ifdef BOND_CONSTRAINT
 
+#include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 
 /** Transfer the current particle positions from @ref Particle::pos
@@ -43,17 +44,13 @@ void save_old_position(const ParticleRange &particles,
 /**
  * @brief Propagate velocity and position while using SHAKE algorithm for bond
  * constraint.
- *
- * @param cs cell structure
  */
-void correct_position_shake(CellStructure &cs);
+void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo);
 
 /**
  * @brief Correction of current velocities using RATTLE algorithm.
- *
- * @param cs cell structure
  */
-void correct_velocity_shake(CellStructure &cs);
+void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo);
 
 #endif
 #endif

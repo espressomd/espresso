@@ -28,6 +28,7 @@
 
 #include "forces.hpp"
 
+#include "BoxGeometry.hpp"
 #include "actor/visitors.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -324,6 +325,7 @@ inline boost::optional<Utils::Vector3d> calc_bond_pair_force(
 
 inline bool add_bonded_two_body_force(
     Bonded_IA_Parameters const &iaparams, Particle &p1, Particle &p2,
+    BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
 
@@ -355,35 +357,37 @@ inline bool add_bonded_two_body_force(
 inline boost::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
-                             Particle const &p1, Particle const &p2,
-                             Particle const &p3) {
+                             BoxGeometry const &box_geo, Particle const &p1,
+                             Particle const &p2, Particle const &p3) {
   if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
   }
   if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
   }
   if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
   }
 #ifdef TABULATED
   if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
-    return iap->forces(p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
   }
 #endif
   if (auto const *iap = boost::get<IBMTriel>(&iaparams)) {
-    return iap->calc_forces(p1, p2, p3);
+    return iap->calc_forces(box_geo, p1, p2, p3);
   }
   throw BondUnknownTypeError();
 }
 
 inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
+                                        BoxGeometry const &box_geo,
                                         Particle &p1, Particle &p2,
                                         Particle &p3) {
   if (boost::get<OifGlobalForcesBond>(&iaparams)) {
     return false;
   }
-  auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
+  auto const result =
+      calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
   if (result) {
     auto const &forces = result.get();
 
@@ -399,29 +403,32 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                   Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
-                            Particle const &p1, Particle const &p2,
-                            Particle const &p3, Particle const &p4) {
+                            BoxGeometry const &box_geo, Particle const &p1,
+                            Particle const &p2, Particle const &p3,
+                            Particle const &p4) {
   if (auto const *iap = boost::get<OifLocalForcesBond>(&iaparams)) {
-    return iap->calc_forces(p1, p2, p3, p4);
+    return iap->calc_forces(box_geo, p1, p2, p3, p4);
   }
   if (auto const *iap = boost::get<IBMTribend>(&iaparams)) {
-    return iap->calc_forces(p1, p2, p3, p4);
+    return iap->calc_forces(box_geo, p1, p2, p3, p4);
   }
   if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
-    return iap->forces(p2.pos(), p1.pos(), p3.pos(), p4.pos());
+    return iap->forces(box_geo, p2.pos(), p1.pos(), p3.pos(), p4.pos());
   }
 #ifdef TABULATED
   if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
-    return iap->forces(p2.pos(), p1.pos(), p3.pos(), p4.pos());
+    return iap->forces(box_geo, p2.pos(), p1.pos(), p3.pos(), p4.pos());
   }
 #endif
   throw BondUnknownTypeError();
 }
 
 inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
-                                       Particle &p1, Particle &p2, Particle &p3,
+                                       BoxGeometry const &box_geo, Particle &p1,
+                                       Particle &p2, Particle &p3,
                                        Particle &p4) {
-  auto const result = calc_bonded_four_body_force(iaparams, p1, p2, p3, p4);
+  auto const result =
+      calc_bonded_four_body_force(iaparams, box_geo, p1, p2, p3, p4);
   if (result) {
     auto const &forces = result.get();
 
@@ -438,6 +445,7 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
 
 inline bool
 add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
+                 BoxGeometry const &box_geo,
                  Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
 
   // Consider for bond breakage
@@ -463,13 +471,14 @@ add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
   case 0:
     return false;
   case 1:
-    return add_bonded_two_body_force(iaparams, p1, *partners[0], kernel);
+    return add_bonded_two_body_force(iaparams, p1, *partners[0], box_geo,
+                                     kernel);
   case 2:
-    return add_bonded_three_body_force(iaparams, p1, *partners[0],
+    return add_bonded_three_body_force(iaparams, box_geo, p1, *partners[0],
                                        *partners[1]);
   case 3:
-    return add_bonded_four_body_force(iaparams, p1, *partners[0], *partners[1],
-                                      *partners[2]);
+    return add_bonded_four_body_force(iaparams, box_geo, p1, *partners[0],
+                                      *partners[1], *partners[2]);
   default:
     throw BondInvalidSizeError{number_of_partners(iaparams)};
   }

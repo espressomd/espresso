@@ -24,8 +24,8 @@
  *  Common code for functions calculating angle forces.
  */
 
+#include "BoxGeometry.hpp"
 #include "config/config.hpp"
-#include "grid.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -37,6 +37,7 @@
  *  @f$ \vec{r_{ij}} @f$ (from particle @f$ j @f$ to particle @f$ i @f$)
  *  and @f$ \vec{r_{kj}} @f$, and their normalization constants.
  *
+ *  @param[in]  box_geo          Box geometry.
  *  @param[in]  r_mid            Position of second/middle particle.
  *  @param[in]  r_left           Position of first/left particle.
  *  @param[in]  r_right          Position of third/right particle.
@@ -47,7 +48,8 @@
  *          @f$ \cos(\theta_{ijk}) @f$
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, double, double, double>
-calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
+calc_vectors_and_cosine(BoxGeometry const &box_geo,
+                        Utils::Vector3d const &r_mid,
                         Utils::Vector3d const &r_left,
                         Utils::Vector3d const &r_right,
                         bool sanitize_cosine = false) {
@@ -75,6 +77,7 @@ calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
  *  See the details in @ref bondedIA_angle_force. The @f$ K(\theta_{ijk}) @f$
  *  term is provided as a lambda function in @p forceFactor.
  *
+ *  @param[in]  box_geo          Box geometry.
  *  @param[in]  r_mid            Position of second/middle particle.
  *  @param[in]  r_left           Position of first/left particle.
  *  @param[in]  r_right          Position of third/right particle.
@@ -86,11 +89,12 @@ calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
  */
 template <typename ForceFactor>
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-angle_generic_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+angle_generic_force(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
+                    Utils::Vector3d const &r_left,
                     Utils::Vector3d const &r_right, ForceFactor forceFactor,
                     bool sanitize_cosine) {
   auto const [vec1, vec2, d1i, d2i, cosine] =
-      calc_vectors_and_cosine(r_mid, r_left, r_right, sanitize_cosine);
+      calc_vectors_and_cosine(box_geo, r_mid, r_left, r_right, sanitize_cosine);
   /* force factor */
   auto const fac = forceFactor(cosine);
   /* distribute forces */

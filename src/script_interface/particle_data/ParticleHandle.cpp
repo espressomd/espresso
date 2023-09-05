@@ -24,11 +24,11 @@
 #include "script_interface/Variant.hpp"
 #include "script_interface/get_value.hpp"
 
+#include "core/BoxGeometry.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/event.hpp"
 #include "core/exclusions.hpp"
-#include "core/grid.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
 #include "core/rotation.hpp"
@@ -197,7 +197,7 @@ ParticleHandle::ParticleHandle() {
          auto const p = get_particle_data(m_pid);
          auto const pos = p.pos();
          auto const image_box = p.image_box();
-         return unfolded_position(pos, image_box, ::box_geo.length());
+         return System::get_system().box_geo->unfolded_position(pos, image_box);
        }},
       {"v",
        [this](Variant const &value) {
@@ -394,7 +394,8 @@ ParticleHandle::ParticleHandle() {
 #endif // THERMOSTAT_PER_PARTICLE
       {"pos_folded", AutoParameter::read_only,
        [this]() {
-         return folded_position(get_particle_data(m_pid).pos(), ::box_geo);
+         auto const &box_geo = *System::get_system().box_geo;
+         return box_geo.folded_position(get_particle_data(m_pid).pos());
        }},
 
       {"lees_edwards_offset",
@@ -611,8 +612,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
      */
     auto const &p_current = get_particle_data(m_pid);
     auto const &p_relate_to = get_particle_data(other_pid);
-    auto const [quat, dist] =
-        calculate_vs_relate_to_params(p_current, p_relate_to);
+    auto const [quat, dist] = calculate_vs_relate_to_params(
+        p_current, p_relate_to, *::System::get_system().box_geo);
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
     set_parameter("virtual", true);

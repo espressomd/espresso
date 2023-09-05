@@ -72,6 +72,8 @@ struct Communicator {
   void full_initialization();
   /** @brief Calculate the node index in the Cartesian topology. */
   Utils::Vector3i calc_node_index() const;
+  /** @brief Set new Cartesian topology. */
+  void set_node_grid(Utils::Vector3i const &value);
 };
 
 extern Communicator communicator;

@@ -26,9 +26,9 @@
 #include "magnetostatics/scafacos.hpp"
 #include "magnetostatics/scafacos_impl.hpp"
 
+#include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
 #include "system/System.hpp"
 
 #include <utils/Span.hpp>
@@ -46,13 +46,15 @@ make_dipolar_scafacos(std::string const &method,
 }
 
 void DipolarScafacosImpl::update_particle_data() {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto &cell_structure = *system.cell_structure;
 
   positions.clear();
   dipoles.clear();
 
   for (auto const &p : cell_structure.local_particles()) {
-    auto const pos = folded_position(p.pos(), box_geo);
+    auto const pos = box_geo.folded_position(p.pos());
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);

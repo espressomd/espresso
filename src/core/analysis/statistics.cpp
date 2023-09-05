@@ -26,10 +26,10 @@
 
 #include "analysis/statistics.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "system/System.hpp"
 
@@ -48,6 +48,7 @@ double mindist(PartCfg &partCfg, std::vector<int> const &set1,
                std::vector<int> const &set2) {
   using Utils::contains;
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto mindist_sq = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
@@ -142,6 +143,7 @@ std::vector<int> nbhood(PartCfg &partCfg, Utils::Vector3d const &pos,
                         double dist) {
   std::vector<int> ids;
   auto const dist_sq = dist * dist;
+  auto const &box_geo = *System::get_system().box_geo;
 
   for (auto const &p : partCfg) {
     auto const r_sq = box_geo.get_mi_vector(pos, p.pos()).norm2();
@@ -158,6 +160,7 @@ calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
                        std::vector<int> const &p2_types, double r_min,
                        double r_max, int r_bins, bool log_flag, bool int_flag) {
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto const r_max2 = Utils::sqr(r_max);
   auto const r_min2 = Utils::sqr(r_min);
   auto const start_dist2 = Utils::sqr(r_max + 1.);
@@ -240,6 +243,7 @@ structure_factor(PartCfg &partCfg, std::vector<int> const &p_types, int order) {
   if (order < 1)
     throw std::domain_error("order has to be a strictly positive number");
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto const order_sq = Utils::sqr(static_cast<std::size_t>(order));
   auto const twoPI_L = 2. * Utils::pi() * box_geo.length_inv()[0];
   std::vector<double> ff(2 * order_sq + 1);

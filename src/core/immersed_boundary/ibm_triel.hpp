@@ -20,6 +20,7 @@
 #ifndef IBM_TRIEL_H
 #define IBM_TRIEL_H
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "config/config.hpp"
 
@@ -69,7 +70,8 @@ struct IBMTriel {
    *  @return the forces on @p p1, @p p2, @p p3
    */
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-  calc_forces(Particle const &p1, Particle const &p2, Particle const &p3) const;
+  calc_forces(BoxGeometry const &box_geo, Particle const &p1,
+              Particle const &p2, Particle const &p3) const;
 
 private:
   friend boost::serialization::access;

@@ -21,12 +21,12 @@
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "system/System.hpp"
@@ -113,7 +113,9 @@ static auto constraint_stress(Particle const &p_ref, Particle const &p_vs) {
 }
 
 void VirtualSitesRelative::update() const {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto &cell_structure = *system.cell_structure;
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
@@ -132,7 +134,7 @@ void VirtualSitesRelative::update() const {
       auto push = LeesEdwards::Push(box_geo);
       push(p, -1); // includes a position fold
     } else {
-      fold_position(p.pos(), p.image_box(), box_geo);
+      box_geo.fold_position(p.pos(), p.image_box());
     }
 
     if (have_quaternions())

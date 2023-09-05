@@ -21,6 +21,7 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
+#include "core/BoxGeometry.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/cell_system/HybridDecomposition.hpp"
@@ -28,7 +29,6 @@
 #include "core/cells.hpp"
 #include "core/communication.hpp"
 #include "core/event.hpp"
-#include "core/grid.hpp"
 #include "core/integrate.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
@@ -86,9 +86,9 @@ CellSystem::CellSystem() {
              throw std::invalid_argument(error_msg + reason.str());
            }
            try {
-             set_node_grid(new_node_grid);
+             ::communicator.set_node_grid(new_node_grid);
            } catch (...) {
-             set_node_grid(old_node_grid);
+             ::communicator.set_node_grid(old_node_grid);
              throw;
            }
          });
@@ -245,7 +245,7 @@ Variant CellSystem::do_call_method(std::string const &name,
 
 std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
   auto &cell_structure = get_cell_structure();
-  cell_structure.resort_particles(global_flag, box_geo);
+  cell_structure.resort_particles(global_flag, *::System::get_system().box_geo);
   clear_particle_node();
   auto const size = static_cast<int>(cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;

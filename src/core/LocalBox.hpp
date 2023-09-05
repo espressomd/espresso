@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_LOCALBOX_HPP
-#define ESPRESSO_SRC_CORE_LOCALBOX_HPP
+
+#pragma once
 
 #include "cell_system/CellStructureType.hpp"
 
@@ -65,6 +65,23 @@ public:
   void set_cell_structure_type(CellStructureType cell_structure_type) {
     m_cell_structure_type = cell_structure_type;
   }
-};
 
-#endif
+  static LocalBox make_regular_decomposition(Utils::Vector3d const &box_l,
+                                             Utils::Vector3i const &node_index,
+                                             Utils::Vector3i const &node_grid) {
+
+    auto const local_length = Utils::hadamard_division(box_l, node_grid);
+    auto const my_left = Utils::hadamard_product(node_index, local_length);
+
+    decltype(LocalBox::m_boundaries) boundaries;
+    for (unsigned int dir = 0u; dir < 3u; dir++) {
+      /* left boundary ? */
+      boundaries[2u * dir] = (node_index[dir] == 0);
+      /* right boundary ? */
+      boundaries[2u * dir + 1u] = -(node_index[dir] + 1 == node_grid[dir]);
+    }
+
+    return {my_left, local_length, boundaries,
+            CellStructureType::CELL_STRUCTURE_REGULAR};
+  }
+};

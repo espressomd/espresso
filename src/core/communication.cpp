@@ -25,7 +25,6 @@
 
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 
 #ifdef WALBERLA
 #include <walberla_bridge/walberla_init.hpp>
@@ -101,6 +100,12 @@ void Communicator::full_initialization() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   node_grid = Utils::Mpi::dims_create<3>(size);
   init_comm_cart();
+}
+
+void Communicator::set_node_grid(Utils::Vector3i const &value) {
+  node_grid = value;
+  init_comm_cart();
+  on_node_grid_change();
 }
 
 Utils::Vector3i Communicator::calc_node_index() const {

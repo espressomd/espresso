@@ -26,7 +26,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "cuda/CudaHostAllocator.hpp"
-#include "grid.hpp"
 #include "system/System.hpp"
 
 #include <utils/Span.hpp>
@@ -84,10 +83,10 @@ BOOST_SERIALIZATION_SPLIT_FREE(GpuParticleData::GpuParticle)
 
 static void pack_particles(ParticleRange const &particles,
                            GpuParticleData::GpuParticle *buffer) {
-  auto const &box_l = ::box_geo;
+  auto const &box = *System::get_system().box_geo;
   unsigned long int i = 0u;
   for (auto const &p : particles) {
-    buffer[i].p = static_cast<Utils::Vector3f>(folded_position(p.pos(), box_l));
+    buffer[i].p = static_cast<Utils::Vector3f>(box.folded_position(p.pos()));
 #ifdef DIPOLES
     buffer[i].dip = static_cast<Utils::Vector3f>(p.calc_dip());
 #endif

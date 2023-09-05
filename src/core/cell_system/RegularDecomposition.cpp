@@ -26,7 +26,7 @@
 #include "communication.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -165,16 +165,14 @@ void RegularDecomposition::exchange_neighbors(
   }
 }
 
-namespace {
 /**
  * @brief Fold coordinates to box and reset the old position.
  */
-void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
-  fold_position(p.pos(), p.image_box(), box_geo);
+static void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
+  box_geo.fold_position(p.pos(), p.image_box());
 
   p.pos_at_last_verlet_update() = p.pos();
 }
-} // namespace
 
 void RegularDecomposition::resort(bool global,
                                   std::vector<ParticleChange> &diff) {
@@ -396,6 +394,7 @@ template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
 
 void RegularDecomposition::init_cell_interactions() {
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto const halo = Utils::Vector3i{1, 1, 1};
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
   auto const &node_pos = cart_info.coords;

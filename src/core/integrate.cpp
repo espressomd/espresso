@@ -33,6 +33,7 @@
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
 
+#include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
 #include "accumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
@@ -44,7 +45,6 @@
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "grid.hpp"
 #include "interactions.hpp"
 #include "lb/particle_coupling.hpp"
 #include "lb/utils.hpp"
@@ -121,7 +121,7 @@ std::weak_ptr<ActiveProtocol> get_protocol() { return protocol; }
  * @brief Update the Lees-Edwards parameters of the box geometry
  * for the current simulation time.
  */
-static void update_box_params() {
+static void update_box_params(BoxGeometry &box_geo) {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
     assert(protocol != nullptr);
     box_geo.lees_edwards_update(get_pos_offset(sim_time, *protocol),
@@ -132,9 +132,10 @@ static void update_box_params() {
 void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
+  auto &box_geo = *system.box_geo;
   box_geo.set_type(BoxType::LEES_EDWARDS);
   protocol = std::move(new_protocol);
-  LeesEdwards::update_box_params();
+  LeesEdwards::update_box_params(box_geo);
   ::recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
@@ -142,13 +143,14 @@ void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
 void unset_protocol() {
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
+  auto &box_geo = *system.box_geo;
   protocol = nullptr;
   box_geo.set_type(BoxType::CUBOID);
   ::recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
 
-template <class Kernel> void run_kernel() {
+template <class Kernel> void run_kernel(BoxGeometry const &box_geo) {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
     auto &system = System::get_system();
     auto &cell_structure = *system.cell_structure;
@@ -179,7 +181,7 @@ void integrator_sanity_checks() {
   case INTEG_METHOD_NPT_ISO:
     if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO)
       runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
-    if (box_geo.type() == BoxType::LEES_EDWARDS)
+    if (System::get_system().box_geo->type() == BoxType::LEES_EDWARDS)
       runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
     break;
 #endif
@@ -228,8 +230,9 @@ void walberla_agrid_sanity_checks(std::string method,
                                   Utils::Vector3d const &lattice_right,
                                   double agrid) {
   // waLBerla and ESPResSo must agree on domain decomposition
-  auto const &my_left = ::local_geo.my_left();
-  auto const &my_right = ::local_geo.my_right();
+  auto const &system = System::get_system();
+  auto const &my_left = system.local_geo->my_left();
+  auto const &my_right = system.local_geo->my_right();
   auto const tol = agrid / 1E6;
   if ((lattice_left - my_left).norm2() > tol or
       (lattice_right - my_right).norm2() > tol) {
@@ -253,7 +256,7 @@ static void resort_particles_if_needed(ParticleRange const &particles) {
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
   auto const offset = LeesEdwards::verlet_list_offset(
-      box_geo, cell_structure.get_le_pos_offset_at_last_resort());
+      *system.box_geo, cell_structure.get_le_pos_offset_at_last_resort());
   if (cell_structure.check_resort_required(particles, skin, offset)) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
@@ -327,6 +330,7 @@ int integrate(int n_steps, int reuse_forces) {
 
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
+  auto &box_geo = *system.box_geo;
 
   // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start(time_step);
@@ -404,12 +408,12 @@ int integrate(int n_steps, int reuse_forces) {
       save_old_position(particles, cell_structure.ghost_particles());
 #endif
 
-    LeesEdwards::update_box_params();
+    LeesEdwards::update_box_params(box_geo);
     bool early_exit = integrator_step_1(particles);
     if (early_exit)
       break;
 
-    LeesEdwards::run_kernel<LeesEdwards::Push>();
+    LeesEdwards::run_kernel<LeesEdwards::Push>(box_geo);
 
 #ifdef NPT
     if (integ_switch != INTEG_METHOD_NPT_ISO)
@@ -424,7 +428,7 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     // Correct particle positions that participate in a rigid/constrained bond
     if (n_rigidbonds) {
-      correct_position_shake(cell_structure);
+      correct_position_shake(cell_structure, box_geo);
     }
 #endif
 
@@ -446,11 +450,11 @@ int integrate(int n_steps, int reuse_forces) {
     virtual_sites()->after_force_calc(time_step);
 #endif
     integrator_step_2(particles, temperature);
-    LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>();
+    LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>(box_geo);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
-      correct_velocity_shake(cell_structure);
+      correct_velocity_shake(cell_structure, box_geo);
     }
 #endif
 
@@ -522,7 +526,7 @@ int integrate(int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
-  LeesEdwards::update_box_params();
+  LeesEdwards::update_box_params(box_geo);
 #ifdef CALIPER
   CALI_CXX_MARK_LOOP_END(integration_loop);
 #endif
@@ -654,7 +658,9 @@ void set_skin(double value) {
 void set_time(double value) {
   ::sim_time = value;
   ::recalc_forces = true;
-  LeesEdwards::update_box_params();
+  auto &system = System::get_system();
+  auto &box_geo = *system.box_geo;
+  LeesEdwards::update_box_params(box_geo);
 }
 
 void set_integ_switch(int value) {

@@ -30,6 +30,7 @@
 
 #include "config/config.hpp"
 
+#include "BoxGeometry.hpp"
 #include "TabulatedPotential.hpp"
 #include "angle_common.hpp"
 #include "bonded_interactions/dihedral.hpp"
@@ -92,9 +93,10 @@ struct TabulatedAngleBond : public TabulatedBond {
   TabulatedAngleBond(double min, double max, std::vector<double> const &energy,
                      std::vector<double> const &force);
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  forces(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-         Utils::Vector3d const &r_right) const;
-  double energy(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+  forces(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
+         Utils::Vector3d const &r_left, Utils::Vector3d const &r_right) const;
+  double energy(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
+                Utils::Vector3d const &r_left,
                 Utils::Vector3d const &r_right) const;
 };
 
@@ -109,9 +111,11 @@ struct TabulatedDihedralBond : public TabulatedBond {
                         std::vector<double> const &force);
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>
-  forces(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-         Utils::Vector3d const &r3, Utils::Vector3d const &r4) const;
-  boost::optional<double> energy(Utils::Vector3d const &r1,
+  forces(BoxGeometry const &box_geo, Utils::Vector3d const &r1,
+         Utils::Vector3d const &r2, Utils::Vector3d const &r3,
+         Utils::Vector3d const &r4) const;
+  boost::optional<double> energy(BoxGeometry const &box_geo,
+                                 Utils::Vector3d const &r1,
                                  Utils::Vector3d const &r2,
                                  Utils::Vector3d const &r3,
                                  Utils::Vector3d const &r4) const;
@@ -155,13 +159,15 @@ TabulatedDistanceBond::energy(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the three-body angle interaction force.
+ *  @param[in]  box_geo   Box geometry.
  *  @param[in]  r_mid     Position of second/middle particle.
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-TabulatedAngleBond::forces(Utils::Vector3d const &r_mid,
+TabulatedAngleBond::forces(BoxGeometry const &box_geo,
+                           Utils::Vector3d const &r_mid,
                            Utils::Vector3d const &r_left,
                            Utils::Vector3d const &r_right) const {
 
@@ -177,21 +183,25 @@ TabulatedAngleBond::forces(Utils::Vector3d const &r_mid,
     return -gradient / sin_phi;
   };
 
-  return angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
+  return angle_generic_force(box_geo, r_mid, r_left, r_right, forceFactor,
+                             true);
 }
 
 /** Compute the three-body angle interaction energy.
  *  It is assumed that the potential is tabulated
  *  for all angles between 0 and Pi.
  *
+ *  @param[in]  box_geo   Box geometry.
  *  @param[in]  r_mid     Position of second/middle particle.
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  */
-inline double TabulatedAngleBond::energy(Utils::Vector3d const &r_mid,
+inline double TabulatedAngleBond::energy(BoxGeometry const &box_geo,
+                                         Utils::Vector3d const &r_mid,
                                          Utils::Vector3d const &r_left,
                                          Utils::Vector3d const &r_right) const {
-  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
+  auto const vectors =
+      calc_vectors_and_cosine(box_geo, r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   /* calculate phi */
 #ifdef TABANGLEMINUS
@@ -206,6 +216,7 @@ inline double TabulatedAngleBond::energy(Utils::Vector3d const &r_mid,
  *  The forces have a singularity at @f$ \phi = 0 @f$ and @f$ \phi = \pi @f$
  *  (see @cite swope92a page 592).
  *
+ *  @param[in]  box_geo   Box geometry.
  *  @param[in]  r1        Position of the first particle.
  *  @param[in]  r2        Position of the second particle.
  *  @param[in]  r3        Position of the third particle.
@@ -214,7 +225,8 @@ inline double TabulatedAngleBond::energy(Utils::Vector3d const &r_mid,
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                   Utils::Vector3d, Utils::Vector3d>>
-TabulatedDihedralBond::forces(Utils::Vector3d const &r1,
+TabulatedDihedralBond::forces(BoxGeometry const &box_geo,
+                              Utils::Vector3d const &r1,
                               Utils::Vector3d const &r2,
                               Utils::Vector3d const &r3,
                               Utils::Vector3d const &r4) const {
@@ -226,8 +238,8 @@ TabulatedDihedralBond::forces(Utils::Vector3d const &r1,
 
   /* dihedral angle */
   auto const angle_is_undefined =
-      calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, l_v12Xv23,
-                          v23Xv34, l_v23Xv34, cos_phi, phi);
+      calc_dihedral_angle(box_geo, r1, r2, r3, r4, v12, v23, v34, v12Xv23,
+                          l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
   /* dihedral angle not defined - force zero */
   if (angle_is_undefined) {
     return {};
@@ -255,22 +267,24 @@ TabulatedDihedralBond::forces(Utils::Vector3d const &r1,
 /** Compute the four-body dihedral interaction energy.
  *  The energy doesn't have any singularity if the angle phi is well-defined.
  *
+ *  @param[in]  box_geo   Box geometry.
  *  @param[in]  r1        Position of the first particle.
  *  @param[in]  r2        Position of the second particle.
  *  @param[in]  r3        Position of the third particle.
  *  @param[in]  r4        Position of the fourth particle.
  */
 inline boost::optional<double> TabulatedDihedralBond::energy(
-    Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-    Utils::Vector3d const &r3, Utils::Vector3d const &r4) const {
+    BoxGeometry const &box_geo, Utils::Vector3d const &r1,
+    Utils::Vector3d const &r2, Utils::Vector3d const &r3,
+    Utils::Vector3d const &r4) const {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi;
   auto const angle_is_undefined =
-      calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, l_v12Xv23,
-                          v23Xv34, l_v23Xv34, cos_phi, phi);
+      calc_dihedral_angle(box_geo, r1, r2, r3, r4, v12, v23, v34, v12Xv23,
+                          l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
   /* dihedral angle not defined - energy zero */
   if (angle_is_undefined) {
     return {};

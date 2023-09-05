@@ -21,12 +21,12 @@
 
 #include "particle_node.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "system/System.hpp"
@@ -438,9 +438,10 @@ static int calculate_max_seen_id() {
  * @return Whether the particle was created on that node.
  */
 static bool maybe_insert_particle(int p_id, Utils::Vector3d const &pos) {
+  auto const &box_geo = *System::get_system().box_geo;
   auto folded_pos = pos;
   auto image_box = Utils::Vector3i{};
-  fold_position(folded_pos, image_box, box_geo);
+  box_geo.fold_position(folded_pos, image_box);
 
   Particle new_part;
   new_part.id() = p_id;
@@ -458,13 +459,15 @@ static bool maybe_insert_particle(int p_id, Utils::Vector3d const &pos) {
  * @return Whether the particle was moved from that node.
  */
 static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
-  auto p = get_cell_structure().get_local_particle(p_id);
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto p = system.cell_structure->get_local_particle(p_id);
   if (p == nullptr) {
     return false;
   }
   auto folded_pos = pos;
   auto image_box = Utils::Vector3i{};
-  fold_position(folded_pos, image_box, box_geo);
+  box_geo.fold_position(folded_pos, image_box);
   p->pos() = folded_pos;
   p->image_box() = image_box;
   return true;

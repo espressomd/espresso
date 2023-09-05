@@ -26,7 +26,6 @@
 #include "h5md.hpp"
 
 #include "cell_system/CellStructure.hpp"
-#include "core/grid.hpp"
 #include "core/integrate.hpp"
 #include "core/system/System.hpp"
 
@@ -44,7 +43,7 @@ Variant H5md::do_call_method(const std::string &name,
     m_h5md->write(
         cell_structure.local_particles(), get_sim_time(),
         static_cast<int>(std::round(get_sim_time() / get_time_step())),
-        box_geo);
+        *system.box_geo);
   } else if (name == "flush") {
     m_h5md->flush();
   } else if (name == "close") {

@@ -34,6 +34,8 @@
 
 #include <memory>
 
+class BoxGeometry;
+class LocalBox;
 struct CellStructure;
 
 namespace System {
@@ -53,6 +55,8 @@ public:
   Dipoles::Solver dipoles;
   LB::Solver lb;
   EK::Solver ek;
+  std::shared_ptr<BoxGeometry> box_geo;
+  std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
 };
 

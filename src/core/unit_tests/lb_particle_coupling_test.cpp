@@ -39,7 +39,6 @@ namespace utf = boost::unit_test;
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "lb/LBNone.hpp"
 #include "lb/LBWalberla.hpp"
 #include "lb/particle_coupling.hpp"
@@ -401,6 +400,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
     // check box shifts
     if (rank == 0) {
+      auto const &box_geo = *system.box_geo;
       auto constexpr reference_shifts =
           std::array<Utils::Vector3i, 8>{{{{0, 0, 0}},
                                           {{0, 0, 8}},

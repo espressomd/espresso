@@ -21,9 +21,9 @@
 
 #include "pair_criteria/PairCriterion.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "energy_inline.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "system/System.hpp"
 
@@ -34,6 +34,8 @@ namespace PairCriteria {
 class EnergyCriterion : public PairCriterion {
 public:
   bool decide(Particle const &p1, Particle const &p2) const override {
+    auto const &box_geo = *System::get_system().box_geo;
+
     // Distance between particles
     auto const d = box_geo.get_mi_vector(p1.pos(), p2.pos());
 

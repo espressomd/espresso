@@ -22,6 +22,7 @@
  *  Energy calculation.
  */
 
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -60,6 +61,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 #endif
   on_observable_calc();
 
+  auto const &box_geo = *system.box_geo;
   auto const local_parts = cell_structure.local_particles();
   auto const n_nodes = ::communicator.size;
 
@@ -71,11 +73,11 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   auto const dipoles_kernel = system.dipoles.pair_energy_kernel();
 
   short_range_loop(
-      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
+      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &box_geo](
           Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
-        auto const result =
-            calc_bonded_energy(iaparams, p1, partners, coulomb_kernel_ptr);
+        auto const result = calc_bonded_energy(iaparams, p1, partners, box_geo,
+                                               coulomb_kernel_ptr);
         if (result) {
           obs_energy.bonded_contribution(bond_id)[0] += result.get();
           return false;
@@ -101,7 +103,8 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   obs_energy.dipolar[1] = system.dipoles.calc_energy_long_range(local_parts);
 #endif
 
-  Constraints::constraints.add_energy(local_parts, get_sim_time(), obs_energy);
+  Constraints::constraints.add_energy(box_geo, local_parts, get_sim_time(),
+                                      obs_energy);
 
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
   auto const energy_host = gpu_particle_data.copy_energy_to_host();

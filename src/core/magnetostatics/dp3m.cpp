@@ -39,6 +39,8 @@
 #include "p3m/interpolation.hpp"
 #include "p3m/send_mesh.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -46,7 +48,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
@@ -107,6 +108,7 @@ double DipolarP3M::calc_average_self_energy_k_space() const {
   auto const start = Utils::Vector3i{dp3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto const node_phi = grid_influence_function_self_energy(
       dp3m.params, start, start + size, dp3m.g_energy);
 
@@ -120,6 +122,10 @@ void DipolarP3M::init() {
   assert(dp3m.params.mesh >= Utils::Vector3i::broadcast(1));
   assert(dp3m.params.cao >= 1 and dp3m.params.cao <= 7);
   assert(dp3m.params.alpha > 0.);
+
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &local_geo = *system.local_geo;
 
   dp3m.params.cao3 = Utils::int_pow<3>(dp3m.params.cao);
   dp3m.params.recalc_a_ai_cao_cut(box_geo.length());
@@ -258,6 +264,7 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
   double k_space_energy_dip = 0.;
   double tmp0, tmp1;
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto const dipole_prefac = prefactor / Utils::int_pow<3>(dp3m.params.mesh[0]);
 
   if (dp3m.sum_mu2 > 0) {
@@ -506,6 +513,7 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
 
 double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
                                      ParticleRange const &particles) {
+  auto const &box_geo = *System::get_system().box_geo;
   auto const pref = prefactor * 4. * Utils::pi() / box_geo.volume() /
                     (2. * dp3m.params.epsilon + 1.);
   auto const n_local_part = particles.size();
@@ -573,6 +581,7 @@ double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
 void DipolarP3M::calc_influence_function_force() {
   auto const start = Utils::Vector3i{dp3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
+  auto const &box_geo = *System::get_system().box_geo;
 
   dp3m.g_force = grid_influence_function<3>(dp3m.params, start, start + size,
                                             box_geo.length());
@@ -581,6 +590,7 @@ void DipolarP3M::calc_influence_function_force() {
 void DipolarP3M::calc_influence_function_energy() {
   auto const start = Utils::Vector3i{dp3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
+  auto const &box_geo = *System::get_system().box_geo;
 
   dp3m.g_energy = grid_influence_function<2>(dp3m.params, start, start + size,
                                              box_geo.length());
@@ -605,6 +615,7 @@ public:
   }
 
   void setup_logger(bool verbose) override {
+    auto const &box_geo = *System::get_system().box_geo;
     m_logger = std::make_unique<TuningLogger>(
         verbose and this_node == 0, "DipolarP3M", TuningLogger::Mode::Dipolar);
     m_logger->tuning_goals(dp3m.params.accuracy, m_prefactor,
@@ -618,6 +629,7 @@ public:
                      double r_cut_iL) const override {
 
     double alpha_L, rs_err, ks_err;
+    auto const &box_geo = *System::get_system().box_geo;
 
     /* calc maximal real space error for setting */
     rs_err = dp3m_real_space_error(box_geo.length()[0], r_cut_iL,
@@ -698,6 +710,7 @@ public:
 };
 
 void DipolarP3M::tune() {
+  auto const &box_geo = *System::get_system().box_geo;
   if (dp3m.params.alpha_L == 0. and dp3m.params.alpha != 0.) {
     dp3m.params.alpha_L = dp3m.params.alpha * box_geo.length()[0];
   }
@@ -861,7 +874,10 @@ double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
 }
 
 void DipolarP3M::sanity_checks_boxl() const {
-  for (unsigned int i = 0; i < 3; i++) {
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &local_geo = *system.local_geo;
+  for (unsigned int i = 0u; i < 3u; i++) {
     /* check k-space cutoff */
     if (dp3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;
@@ -884,6 +900,7 @@ void DipolarP3M::sanity_checks_boxl() const {
 }
 
 void DipolarP3M::sanity_checks_periodicity() const {
+  auto const &box_geo = *System::get_system().box_geo;
   if (!box_geo.periodic(0) or !box_geo.periodic(1) or !box_geo.periodic(2)) {
     throw std::runtime_error(
         "DipolarP3M: requires periodicity (True, True, True)");
@@ -891,6 +908,7 @@ void DipolarP3M::sanity_checks_periodicity() const {
 }
 
 void DipolarP3M::sanity_checks_cell_structure() const {
+  auto const &local_geo = *System::get_system().local_geo;
   if (local_geo.cell_structure_type() !=
           CellStructureType::CELL_STRUCTURE_REGULAR &&
       local_geo.cell_structure_type() !=
@@ -915,6 +933,7 @@ void DipolarP3M::sanity_checks_node_grid() const {
 }
 
 void DipolarP3M::scaleby_box_l() {
+  auto const &box_geo = *System::get_system().box_geo;
   dp3m.params.r_cut = dp3m.params.r_cut_iL * box_geo.length()[0];
   dp3m.params.alpha = dp3m.params.alpha_L * box_geo.length_inv()[0];
   dp3m.params.recalc_a_ai_cao_cut(box_geo.length());
@@ -926,6 +945,7 @@ void DipolarP3M::scaleby_box_l() {
 }
 
 void DipolarP3M::calc_energy_correction() {
+  auto const &box_geo = *System::get_system().box_geo;
   auto const Ukp3m = calc_average_self_energy_k_space() * box_geo.volume();
   auto const Ewald_volume = Utils::int_pow<3>(dp3m.params.alpha_L);
   auto const Eself = -2. * Ewald_volume * Utils::sqrt_pi_i() / 3.;

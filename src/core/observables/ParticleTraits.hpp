@@ -22,8 +22,8 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "config/config.hpp"
-#include "grid.hpp"
 #include "rotation.hpp"
+#include "system/System.hpp"
 
 namespace ParticleObservables {
 /**
@@ -34,7 +34,8 @@ namespace ParticleObservables {
 template <> struct traits<Particle> {
   auto id(Particle const &p) const { return p.id(); }
   auto position(Particle const &p) const {
-    return unfolded_position(p.pos(), p.image_box(), box_geo.length());
+    auto const &box_geo = *System::get_system().box_geo;
+    return box_geo.unfolded_position(p.pos(), p.image_box());
   }
   auto position_folded(Particle const &p) const { return p.pos(); }
   auto velocity(Particle const &p) const { return p.v(); }

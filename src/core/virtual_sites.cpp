@@ -25,10 +25,10 @@
 
 #include "virtual_sites.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
@@ -55,10 +55,10 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
 
 /** Calculate the rotation quaternion and distance between two particles */
 std::tuple<Utils::Quaternion<double>, double>
-calculate_vs_relate_to_params(Particle const &p_vs,
-                              Particle const &p_relate_to) {
+calculate_vs_relate_to_params(Particle const &p_vs, Particle const &p_relate_to,
+                              BoxGeometry const &box_geo) {
   // get the distance between the particles
-  auto d = ::box_geo.get_mi_vector(p_vs.pos(), p_relate_to.pos());
+  auto d = box_geo.get_mi_vector(p_vs.pos(), p_relate_to.pos());
 
   // Check if the distance between virtual and non-virtual particles is larger
   // than minimum global cutoff. If so, warn user.

@@ -22,13 +22,13 @@
 #ifdef NPT
 #include "velocity_verlet_npt.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "rotation.hpp"
@@ -91,6 +91,10 @@ void velocity_verlet_npt_finalize_p_inst(double time_step) {
 
 void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
                                        double time_step) {
+
+  auto const &system = System::get_system();
+  auto &box_geo = *system.box_geo;
+  auto &cell_structure = *system.cell_structure;
   Utils::Vector3d scal{};
   double L_new = 0.0;
 
@@ -138,7 +142,6 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
     }
   }
 
-  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   /* Apply new volume to the box-length, communicate it, and account for

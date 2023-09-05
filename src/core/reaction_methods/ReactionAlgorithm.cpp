@@ -21,11 +21,11 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
+#include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "energy.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
@@ -85,6 +85,7 @@ void ReactionAlgorithm::add_reaction(
  */
 void ReactionAlgorithm::restore_old_system_state() {
   auto const &old_state = get_old_system_state();
+  auto const &box_geo = *System::get_system().box_geo;
   // restore the properties of changed and hidden particles
   for (auto const &state : {old_state.changed, old_state.hidden}) {
     for (auto const &[p_id, p_type] : state) {
@@ -107,7 +108,7 @@ void ReactionAlgorithm::restore_old_system_state() {
       p->v() = vel;
       auto folded_pos = pos;
       auto image_box = Utils::Vector3i{};
-      fold_position(folded_pos, image_box, box_geo);
+      box_geo.fold_position(folded_pos, image_box);
       p->pos() = folded_pos;
       p->image_box() = image_box;
     }
@@ -125,7 +126,10 @@ void ReactionAlgorithm::restore_old_system_state() {
  * Automatically sets the volume which is used by the reaction ensemble to the
  * volume of a cuboid box.
  */
-void ReactionAlgorithm::update_volume() { volume = box_geo.volume(); }
+void ReactionAlgorithm::update_volume() {
+  auto const &box_geo = *System::get_system().box_geo;
+  volume = box_geo.volume();
+}
 
 /**
  * Checks whether all particles exist for the provided reaction.
@@ -339,6 +343,7 @@ void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
   if (p1_ptr != nullptr) {
     auto &p1 = *p1_ptr;
     auto const &system = System::get_system();
+    auto const &box_geo = *system.box_geo;
     auto &cell_structure = *system.cell_structure;
 
     /* Check if the inserted particle within the exclusion radius of any other
@@ -357,7 +362,7 @@ void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
                               exclusion_radius_per_type[p2.type()];
         }
 
-        auto const d_min = ::box_geo.get_mi_vector(p2.pos(), p1.pos()).norm();
+        auto const d_min = box_geo.get_mi_vector(p2.pos(), p1.pos()).norm();
 
         if (d_min < excluded_distance) {
           particle_inside_exclusion_range_touched = true;
@@ -410,6 +415,7 @@ void ReactionAlgorithm::delete_particle(int p_id) {
 
 void ReactionAlgorithm::set_cyl_constraint(double center_x, double center_y,
                                            double radius) {
+  auto const &box_geo = *System::get_system().box_geo;
   if (center_x < 0. or center_x > box_geo.length()[0])
     throw std::domain_error("center_x is outside the box");
   if (center_y < 0. or center_y > box_geo.length()[1])
@@ -424,6 +430,7 @@ void ReactionAlgorithm::set_cyl_constraint(double center_x, double center_y,
 
 void ReactionAlgorithm::set_slab_constraint(double slab_start_z,
                                             double slab_end_z) {
+  auto const &box_geo = *System::get_system().box_geo;
   if (slab_start_z < 0. or slab_start_z > box_geo.length()[2])
     throw std::domain_error("slab_start_z is outside the box");
   if (slab_end_z < 0. or slab_end_z > box_geo.length()[2])
@@ -439,6 +446,7 @@ void ReactionAlgorithm::set_slab_constraint(double slab_start_z,
  * Writes a random position inside the central box into the provided array.
  */
 Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
+  auto const &box_geo = *System::get_system().box_geo;
   Utils::Vector3d out_pos{};
 
   if (m_reaction_constraint == ReactionConstraint::CYL_Z) {

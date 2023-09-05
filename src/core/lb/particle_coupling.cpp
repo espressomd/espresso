@@ -19,12 +19,12 @@
 
 #include "lb/particle_coupling.hpp"
 #include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "random.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
@@ -151,6 +151,7 @@ Utils::Vector3d lb_drag_force(LB::Solver const &lb, Particle const &p,
  */
 static bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
+  auto const &local_geo = *System::get_system().local_geo;
   auto const lower_corner = local_geo.my_left() - halo_vec;
   auto const upper_corner = local_geo.my_right() + halo_vec;
 
@@ -179,6 +180,9 @@ bool in_local_halo(Utils::Vector3d const &pos) {
 std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
                                                BoxGeometry const &box,
                                                double agrid) {
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &local_geo = *system.local_geo;
   auto const halo = 0.5 * agrid;
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
   auto const fully_inside_lower = local_geo.my_left() + 2. * halo_vec;
@@ -241,6 +245,7 @@ void ParticleCoupling::kernel(Particle &p) {
     return;
 
   auto const agrid = m_lb.get_agrid();
+  auto const &box_geo = *System::get_system().box_geo;
 
   // Calculate coupling force
   Utils::Vector3d force_on_particle = {};

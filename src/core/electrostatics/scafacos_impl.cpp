@@ -26,10 +26,11 @@
 #include "electrostatics/scafacos.hpp"
 #include "electrostatics/scafacos_impl.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -52,13 +53,15 @@ make_coulomb_scafacos(std::string const &method,
 }
 
 void CoulombScafacosImpl::update_particle_data() {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto &cell_structure = *system.cell_structure;
 
   positions.clear();
   charges.clear();
 
   for (auto const &p : cell_structure.local_particles()) {
-    auto const pos = folded_position(p.pos(), box_geo);
+    auto const pos = box_geo.folded_position(p.pos());
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
@@ -90,6 +93,9 @@ double CoulombScafacosImpl::time_r_cut(double r_cut) {
 
 void CoulombScafacosImpl::tune_r_cut() {
   auto constexpr convergence_threshold = 1e-3;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &local_geo = *system.local_geo;
 
   auto const min_box_l = *boost::min_element(box_geo.length());
   auto const min_local_box_l = *boost::min_element(local_geo.length());

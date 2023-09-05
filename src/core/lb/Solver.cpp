@@ -27,7 +27,6 @@
 #include "lb/LBWalberla.hpp"
 
 #include "BoxGeometry.hpp"
-#include "grid.hpp"
 #include "system/System.hpp"
 
 #ifdef WALBERLA
@@ -153,7 +152,8 @@ Solver::get_interpolated_velocity(Utils::Vector3d const &pos) const {
   return std::visit(
       [&](auto &ptr) {
         auto const agrid = ptr->get_agrid();
-        auto const lb_pos = folded_position(pos, ::box_geo) / agrid;
+        auto const &box_geo = *System::get_system().box_geo;
+        auto const lb_pos = box_geo.folded_position(pos) / agrid;
         return ptr->get_velocity_at_pos(lb_pos, false);
       },
       *impl->solver);
@@ -164,7 +164,8 @@ Solver::get_interpolated_density(Utils::Vector3d const &pos) const {
   return std::visit(
       [&](auto &ptr) {
         auto const agrid = ptr->get_agrid();
-        auto const lb_pos = folded_position(pos, ::box_geo) / agrid;
+        auto const &box_geo = *System::get_system().box_geo;
+        auto const lb_pos = box_geo.folded_position(pos) / agrid;
         return ptr->get_density_at_pos(lb_pos, false);
       },
       *impl->solver);
@@ -213,7 +214,8 @@ void Solver::set<LBWalberla>(std::shared_ptr<LBWalberlaBase> lb_fluid,
   assert(not impl->solver.has_value());
   auto lb_instance = std::make_shared<LBWalberla>(lb_fluid, lb_params);
   lb_instance->sanity_checks();
-  auto const &lebc = ::box_geo.lees_edwards_bc();
+  auto const &box_geo = *System::get_system().box_geo;
+  auto const &lebc = box_geo.lees_edwards_bc();
   lb_fluid->check_lebc(lebc.shear_direction, lebc.shear_plane_normal);
   impl->solver = lb_instance;
 }
