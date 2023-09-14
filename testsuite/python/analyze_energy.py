@@ -49,8 +49,8 @@ class AnalyzeEnergy(ut.TestCase):
         cls.system.bonded_inter[5] = cls.harmonic
 
     def setUp(self):
-        self.system.part.add(pos=[1, 2, 2], type=0)
-        self.system.part.add(pos=[5, 2, 2], type=0)
+        self.system.part.add(pos=[1, 2, 2], type=0, mol_id=6)
+        self.system.part.add(pos=[5, 2, 2], type=0, mol_id=6)
 
     def tearDown(self):
         self.system.part.clear()
@@ -86,12 +86,14 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded_intra"], 1., delta=1e-7)
+        self.assertAlmostEqual(energy["non_bonded_inter"], 0., delta=1e-7)
         # Test the single particle energy function
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
             [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
         # add another pair of particles
-        self.system.part.add(pos=[3, 2, 2], type=1)
-        self.system.part.add(pos=[4, 2, 2], type=1)
+        self.system.part.add(pos=[3, 2, 2], type=1, mol_id=7)
+        self.system.part.add(pos=[4, 2, 2], type=1, mol_id=7)
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 3., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
@@ -101,6 +103,18 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded", 0, 0]
                                + energy["non_bonded", 0, 1]
                                + energy["non_bonded", 1, 1], energy["total"], delta=1e-7)
+        self.assertAlmostEqual(
+            energy["non_bonded_intra", 0, 0], 1., delta=1e-7)
+        self.assertAlmostEqual(
+            energy["non_bonded_intra", 1, 1], 1., delta=1e-7)
+        self.assertAlmostEqual(
+            energy["non_bonded_intra", 0, 1], 0., delta=1e-7)
+        self.assertAlmostEqual(
+            energy["non_bonded_inter", 0, 0], 0., delta=1e-7)
+        self.assertAlmostEqual(
+            energy["non_bonded_inter", 1, 1], 0., delta=1e-7)
+        self.assertAlmostEqual(
+            energy["non_bonded_inter", 0, 1], 1., delta=1e-7)
         # Test the single particle energy function
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
             [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
