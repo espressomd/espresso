@@ -29,6 +29,14 @@ if(POLICY CMP0025)
   # make CXX_COMPILER_ID return "AppleClang" instead of "Clang" for Apple Clang
   cmake_policy(SET CMP0025 NEW)
 endif()
+if(POLICY CMP0146)
+  # make FindCUDA available
+  cmake_policy(SET CMP0146 OLD)
+endif()
+if(POLICY CMP0148)
+  # make FindPythonInterp available
+  cmake_policy(SET CMP0148 OLD)
+endif()
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
