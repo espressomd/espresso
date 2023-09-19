@@ -184,7 +184,7 @@ inline void add_non_bonded_pair_energy(
   if (do_nonbonded(p1, p2))
 #endif
     obs_energy.add_non_bonded_contribution(
-        p1.type(), p2.type(),
+        p1.type(), p2.type(), p1.mol_id(), p2.mol_id(),
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist,
                                     coulomb_kernel));
 

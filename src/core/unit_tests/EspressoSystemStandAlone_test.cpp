@@ -150,6 +150,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
       BOOST_REQUIRE_GE(get_particle_node(pid3), 1);
     }
   }
+  set_particle_mol_id(pid1, type_a);
+  set_particle_mol_id(pid2, type_b);
+  set_particle_mol_id(pid3, type_b);
 
   auto const reset_particle_positions = [&start_positions]() {
     for (auto const &kv : start_positions) {
@@ -214,16 +217,17 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
     lennard_jones_set_params(type_b, type_b, eps, sig, cut, shift, offset, min);
 
     // matrix indices and reference energy value
-    auto const max_type = type_b + 1;
-    auto const n_pairs = Utils::upper_triangular(type_b, type_b, max_type) + 1;
-    auto const lj_pair_ab = Utils::upper_triangular(type_a, type_b, max_type);
-    auto const lj_pair_bb = Utils::upper_triangular(type_b, type_b, max_type);
+    auto const size = std::max(type_a, type_b) + 1;
+    auto const n_pairs = Utils::upper_triangular(type_b, type_b, size) + 1;
+    auto const lj_pair_ab = Utils::upper_triangular(type_a, type_b, size);
+    auto const lj_pair_bb = Utils::upper_triangular(type_b, type_b, size);
     auto const frac6 = Utils::int_pow<6>(sig / r_off);
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
     // measure energies
     auto const obs_energy = calculate_energy();
     for (int i = 0; i < n_pairs; ++i) {
+      // particles were set up with type == mol_id
       auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
       auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;
       BOOST_CHECK_CLOSE(obs_energy->non_bonded_inter[i], ref_inter, 1e-10);
