@@ -24,52 +24,42 @@
  *  Common code for functions calculating angle forces.
  */
 
-#include "BoxGeometry.hpp"
 #include "config/config.hpp"
 
 #include <utils/Vector.hpp>
 
+#include <cmath>
 #include <tuple>
+
+namespace detail {
+inline double sanitize_cosine(double cosine) {
+  if (cosine > TINY_COS_VALUE)
+    cosine = TINY_COS_VALUE;
+  if (cosine < -TINY_COS_VALUE)
+    cosine = -TINY_COS_VALUE;
+  return cosine;
+}
+} // namespace detail
 
 /** Compute the cosine of the angle between three particles.
  *
- *  Also return all intermediate quantities: normalized vectors
- *  @f$ \vec{r_{ij}} @f$ (from particle @f$ j @f$ to particle @f$ i @f$)
- *  and @f$ \vec{r_{kj}} @f$, and their normalization constants.
- *
- *  @param[in]  box_geo          Box geometry.
- *  @param[in]  r_mid            Position of second/middle particle.
- *  @param[in]  r_left           Position of first/left particle.
- *  @param[in]  r_right          Position of third/right particle.
+ *  @param[in]  vec1             Vector from central particle to left particle.
+ *  @param[in]  vec2             Vector from central particle to right particle.
  *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
  *  @return @f$ \vec{r_{ij}} @f$, @f$ \vec{r_{kj}} @f$,
  *          @f$ \left\|\vec{r_{ij}}\right\|^{-1} @f$,
  *          @f$ \left\|\vec{r_{kj}}\right\|^{-1} @f$,
  *          @f$ \cos(\theta_{ijk}) @f$
  */
-inline std::tuple<Utils::Vector3d, Utils::Vector3d, double, double, double>
-calc_vectors_and_cosine(BoxGeometry const &box_geo,
-                        Utils::Vector3d const &r_mid,
-                        Utils::Vector3d const &r_left,
-                        Utils::Vector3d const &r_right,
-                        bool sanitize_cosine = false) {
-  /* normalized vector from p_mid to p_left */
-  auto vec1 = box_geo.get_mi_vector(r_left, r_mid);
-  auto const d1i = 1.0 / vec1.norm();
-  vec1 *= d1i;
-  /* normalized vector from p_mid to p_right */
-  auto vec2 = box_geo.get_mi_vector(r_right, r_mid);
-  auto const d2i = 1.0 / vec2.norm();
-  vec2 *= d2i;
+inline double calc_cosine(Utils::Vector3d const &vec1,
+                          Utils::Vector3d const &vec2,
+                          bool sanitize_cosine = false) {
   /* cosine of the angle between vec1 and vec2 */
-  auto cosine = vec1 * vec2;
+  auto cos_phi = (vec1 * vec2) / std::sqrt(vec1.norm2() * vec2.norm2());
   if (sanitize_cosine) {
-    if (cosine > TINY_COS_VALUE)
-      cosine = TINY_COS_VALUE;
-    if (cosine < -TINY_COS_VALUE)
-      cosine = -TINY_COS_VALUE;
+    cos_phi = detail::sanitize_cosine(cos_phi);
   }
-  return std::make_tuple(vec1, vec2, d1i, d2i, cosine);
+  return cos_phi;
 }
 
 /** Compute a three-body angle interaction force.
@@ -77,10 +67,8 @@ calc_vectors_and_cosine(BoxGeometry const &box_geo,
  *  See the details in @ref bondedIA_angle_force. The @f$ K(\theta_{ijk}) @f$
  *  term is provided as a lambda function in @p forceFactor.
  *
- *  @param[in]  box_geo          Box geometry.
- *  @param[in]  r_mid            Position of second/middle particle.
- *  @param[in]  r_left           Position of first/left particle.
- *  @param[in]  r_right          Position of third/right particle.
+ *  @param[in]  vec1             Vector from central particle to left particle.
+ *  @param[in]  vec2             Vector from central particle to right particle.
  *  @param[in]  forceFactor      Angle force term.
  *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
  *  @tparam     ForceFactor      Function evaluating the angle force term
@@ -89,17 +77,21 @@ calc_vectors_and_cosine(BoxGeometry const &box_geo,
  */
 template <typename ForceFactor>
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-angle_generic_force(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
-                    Utils::Vector3d const &r_left,
-                    Utils::Vector3d const &r_right, ForceFactor forceFactor,
-                    bool sanitize_cosine) {
-  auto const [vec1, vec2, d1i, d2i, cosine] =
-      calc_vectors_and_cosine(box_geo, r_mid, r_left, r_right, sanitize_cosine);
+angle_generic_force(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2,
+                    ForceFactor forceFactor, bool sanitize_cosine) {
+  auto const d1 = vec1.norm();
+  auto const d2 = vec2.norm();
+  auto cos_phi = (vec1 * vec2) / (d1 * d2);
+  if (sanitize_cosine) {
+    cos_phi = detail::sanitize_cosine(cos_phi);
+  }
   /* force factor */
-  auto const fac = forceFactor(cosine);
+  auto const fac = forceFactor(cos_phi);
   /* distribute forces */
-  auto f_left = (fac * d1i) * (vec1 * cosine - vec2);
-  auto f_right = (fac * d2i) * (vec2 * cosine - vec1);
+  auto const v1 = vec1 / d1;
+  auto const v2 = vec2 / d2;
+  auto f_left = (fac / d1) * (v1 * cos_phi - v2);
+  auto f_right = (fac / d2) * (v2 * cos_phi - v1);
   auto f_mid = -(f_left + f_right);
   return std::make_tuple(f_mid, f_left, f_right);
 }

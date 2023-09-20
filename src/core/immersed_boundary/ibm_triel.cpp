@@ -20,7 +20,6 @@
 #include "immersed_boundary/ibm_triel.hpp"
 
 #include "BoxGeometry.hpp"
-#include "Particle.hpp"
 #include "ibm_common.hpp"
 #include "system/System.hpp"
 
@@ -73,17 +72,15 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 } // namespace
 
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-IBMTriel::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
-                      Particle const &p2, Particle const &p3) const {
+IBMTriel::calc_forces(Utils::Vector3d const &vec1,
+                      Utils::Vector3d const &vec2) const {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an ESPResSo function which considers PBC
-  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
   auto const l = vec2.norm();
 
   // lp = length between 1 and 2
-  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
   auto const lp = vec1.norm();
 
   // Check for sanity
@@ -93,7 +90,7 @@ IBMTriel::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
 
   // angles between these vectors; calculated directly via the products
   auto const cosPhi = (vec1 * vec2) / (lp * l);
-  auto const vecpro = vector_product(vec1, vec2);
+  auto const vecpro = Utils::vector_product(vec1, vec2);
   auto const sinPhi = vecpro.norm() / (l * lp);
 
   // Displacement gradient tensor D: eq. (C.9) in @cite kruger12a
@@ -217,7 +214,7 @@ IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
   // cospo / sinpo angle functions between these vectors; calculated directly
   // via the products
   cosPhi0 = (temp_l0 * temp_lp0) / (l0 * lp0);
-  auto const vecpro = vector_product(temp_l0, temp_lp0);
+  auto const vecpro = Utils::vector_product(temp_l0, temp_lp0);
   sinPhi0 = vecpro.norm() / (l0 * lp0);
 
   // Use the values determined above for further constants of the stretch-force

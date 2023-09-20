@@ -51,11 +51,8 @@ struct AngleHarmonicBond {
   }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  forces(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
-         Utils::Vector3d const &r_left, Utils::Vector3d const &r_right) const;
-  double energy(BoxGeometry const &box_geo, Utils::Vector3d const &r_mid,
-                Utils::Vector3d const &r_left,
-                Utils::Vector3d const &r_right) const;
+  forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
+  double energy(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
 
 private:
   friend boost::serialization::access;
@@ -67,17 +64,13 @@ private:
 };
 
 /** Compute the three-body angle interaction force.
- *  @param[in]  box_geo   Box geometry.
- *  @param[in]  r_mid     Position of second/middle particle.
- *  @param[in]  r_left    Position of first/left particle.
- *  @param[in]  r_right   Position of third/right particle.
+ *  @param[in]  vec1  Vector from central particle to left particle.
+ *  @param[in]  vec2  Vector from central particle to right particle.
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-AngleHarmonicBond::forces(BoxGeometry const &box_geo,
-                          Utils::Vector3d const &r_mid,
-                          Utils::Vector3d const &r_left,
-                          Utils::Vector3d const &r_right) const {
+AngleHarmonicBond::forces(Utils::Vector3d const &vec1,
+                          Utils::Vector3d const &vec2) const {
 
   auto forceFactor = [this](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -85,23 +78,16 @@ AngleHarmonicBond::forces(BoxGeometry const &box_geo,
     return -bend * (phi - phi0) / sin_phi;
   };
 
-  return angle_generic_force(box_geo, r_mid, r_left, r_right, forceFactor,
-                             true);
+  return angle_generic_force(vec1, vec2, forceFactor, true);
 }
 
 /** Compute the three-body angle interaction energy.
- *  @param[in]  box_geo   Box geometry.
- *  @param[in]  r_mid     Position of second/middle particle.
- *  @param[in]  r_left    Position of first/left particle.
- *  @param[in]  r_right   Position of third/right particle.
+ *  @param[in]  vec1  Vector from central particle to left particle.
+ *  @param[in]  vec2  Vector from central particle to right particle.
  */
-inline double AngleHarmonicBond::energy(BoxGeometry const &box_geo,
-                                        Utils::Vector3d const &r_mid,
-                                        Utils::Vector3d const &r_left,
-                                        Utils::Vector3d const &r_right) const {
-  auto const vectors =
-      calc_vectors_and_cosine(box_geo, r_mid, r_left, r_right, true);
-  auto const cos_phi = std::get<4>(vectors);
+inline double AngleHarmonicBond::energy(Utils::Vector3d const &vec1,
+                                        Utils::Vector3d const &vec2) const {
+  auto const cos_phi = calc_cosine(vec1, vec2, true);
   auto const phi = acos(cos_phi);
   return 0.5 * bend * Utils::sqr(phi - phi0);
 }

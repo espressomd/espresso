@@ -359,22 +359,24 @@ inline boost::optional<
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
                              BoxGeometry const &box_geo, Particle const &p1,
                              Particle const &p2, Particle const &p3) {
+  auto const vec1 = box_geo.get_mi_vector(p2.pos(), p1.pos());
+  auto const vec2 = box_geo.get_mi_vector(p3.pos(), p1.pos());
   if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
-    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(vec1, vec2);
   }
   if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
-    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(vec1, vec2);
   }
   if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
-    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(vec1, vec2);
   }
 #ifdef TABULATED
   if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
-    return iap->forces(box_geo, p1.pos(), p2.pos(), p3.pos());
+    return iap->forces(vec1, vec2);
   }
 #endif
   if (auto const *iap = boost::get<IBMTriel>(&iaparams)) {
-    return iap->calc_forces(box_geo, p1, p2, p3);
+    return iap->calc_forces(vec1, vec2);
   }
   throw BondUnknownTypeError();
 }
@@ -412,12 +414,16 @@ calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
   if (auto const *iap = boost::get<IBMTribend>(&iaparams)) {
     return iap->calc_forces(box_geo, p1, p2, p3, p4);
   }
+  // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
+  auto const v12 = box_geo.get_mi_vector(p1.pos(), p2.pos());
+  auto const v23 = box_geo.get_mi_vector(p3.pos(), p1.pos());
+  auto const v34 = box_geo.get_mi_vector(p4.pos(), p3.pos());
   if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
-    return iap->forces(box_geo, p2.pos(), p1.pos(), p3.pos(), p4.pos());
+    return iap->forces(v12, v23, v34);
   }
 #ifdef TABULATED
   if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
-    return iap->forces(box_geo, p2.pos(), p1.pos(), p3.pos(), p4.pos());
+    return iap->forces(v12, v23, v34);
   }
 #endif
   throw BondUnknownTypeError();

@@ -27,7 +27,6 @@
  *  the maximal bond length!
  */
 
-#include "BoxGeometry.hpp"
 #include "config/config.hpp"
 
 #include <utils/Vector.hpp>
@@ -56,15 +55,12 @@ struct DihedralBond {
 
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>
-  forces(BoxGeometry const &box_geo, Utils::Vector3d const &r1,
-         Utils::Vector3d const &r2, Utils::Vector3d const &r3,
-         Utils::Vector3d const &r4) const;
+  forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
+         Utils::Vector3d const &v34) const;
 
-  inline boost::optional<double> energy(BoxGeometry const &box_geo,
-                                        Utils::Vector3d const &r1,
-                                        Utils::Vector3d const &r2,
-                                        Utils::Vector3d const &r3,
-                                        Utils::Vector3d const &r4) const;
+  boost::optional<double> energy(Utils::Vector3d const &v12,
+                                 Utils::Vector3d const &v23,
+                                 Utils::Vector3d const &v34) const;
 
 private:
   friend boost::serialization::access;
@@ -86,11 +82,9 @@ private:
  * If the a,b or b,c are parallel the dihedral angle is not defined in which
  * case the function returns true. Calling functions should check for that.
  *
- * @param[in]  box_geo   Box geometry.
- * @param[in]  r1 , r2 , r3 , r4 Positions of the particles forming the dihedral
- * @param[out] a Vector from @p p1 to @p p2
- * @param[out] b Vector from @p p2 to @p p3
- * @param[out] c Vector from @p p3 to @p p4
+ * @param[in]  a Vector from @p p1 to @p p2
+ * @param[in]  b Vector from @p p2 to @p p3
+ * @param[in]  c Vector from @p p3 to @p p4
  * @param[out] aXb Vector product of a and b
  * @param[out] l_aXb |aXB|
  * @param[out] bXc Vector product of b and c
@@ -99,16 +93,11 @@ private:
  * @param[out] phi Dihedral angle in the range [0, pi]
  * @return Whether the angle is undefined.
  */
-inline bool
-calc_dihedral_angle(BoxGeometry const &box_geo, Utils::Vector3d const &r1,
-                    Utils::Vector3d const &r2, Utils::Vector3d const &r3,
-                    Utils::Vector3d const &r4, Utils::Vector3d &a,
-                    Utils::Vector3d &b, Utils::Vector3d &c,
-                    Utils::Vector3d &aXb, double &l_aXb, Utils::Vector3d &bXc,
-                    double &l_bXc, double &cosphi, double &phi) {
-  a = box_geo.get_mi_vector(r2, r1);
-  b = box_geo.get_mi_vector(r3, r2);
-  c = box_geo.get_mi_vector(r4, r3);
+inline bool calc_dihedral_angle(Utils::Vector3d const &a,
+                                Utils::Vector3d const &b,
+                                Utils::Vector3d const &c, Utils::Vector3d &aXb,
+                                double &l_aXb, Utils::Vector3d &bXc,
+                                double &l_bXc, double &cosphi, double &phi) {
 
   /* calculate vector product a X b and b X c */
   aXb = vector_product(a, b);
@@ -144,28 +133,24 @@ calc_dihedral_angle(BoxGeometry const &box_geo, Utils::Vector3d const &r1,
  *  The forces have a singularity at @f$ \phi = 0 @f$ and @f$ \phi = \pi @f$
  *  (see @cite swope92a page 592).
  *
- *  @param[in]  box_geo   Box geometry.
- *  @param[in]  r1        Position of the first particle.
- *  @param[in]  r2        Position of the second particle.
- *  @param[in]  r3        Position of the third particle.
- *  @param[in]  r4        Position of the fourth particle.
+ *  @param[in] v12  Vector from @p p1 to @p p2
+ *  @param[in] v23  Vector from @p p2 to @p p3
+ *  @param[in] v34  Vector from @p p3 to @p p4
  *  @return the forces on @p p2, @p p1, @p p3
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
                                   Utils::Vector3d, Utils::Vector3d>>
-DihedralBond::forces(BoxGeometry const &box_geo, Utils::Vector3d const &r1,
-                     Utils::Vector3d const &r2, Utils::Vector3d const &r3,
-                     Utils::Vector3d const &r4) const {
+DihedralBond::forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
+                     Utils::Vector3d const &v34) const {
   /* vectors for dihedral angle calculation */
-  Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
+  Utils::Vector3d v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi, sin_mphi_over_sin_phi;
 
   /* dihedral angle */
-  auto const angle_is_undefined =
-      calc_dihedral_angle(box_geo, r1, r2, r3, r4, v12, v23, v34, v12Xv23,
-                          l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
+  auto const angle_is_undefined = calc_dihedral_angle(
+      v12, v23, v34, v12Xv23, l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
   /* dihedral angle not defined - force zero */
   if (angle_is_undefined) {
     return {};
@@ -203,25 +188,21 @@ DihedralBond::forces(BoxGeometry const &box_geo, Utils::Vector3d const &r1,
 /** Compute the four-body dihedral interaction energy.
  *  The energy doesn't have any singularity if the angle phi is well-defined.
  *
- *  @param[in]  box_geo   Box geometry.
- *  @param[in]  r1        Position of the first particle.
- *  @param[in]  r2        Position of the second particle.
- *  @param[in]  r3        Position of the third particle.
- *  @param[in]  r4        Position of the fourth particle.
+ *  @param[in] v12  Vector from @p p1 to @p p2
+ *  @param[in] v23  Vector from @p p2 to @p p3
+ *  @param[in] v34  Vector from @p p3 to @p p4
  */
 inline boost::optional<double>
-DihedralBond::energy(BoxGeometry const &box_geo, Utils::Vector3d const &r1,
-                     Utils::Vector3d const &r2, Utils::Vector3d const &r3,
-                     Utils::Vector3d const &r4) const {
+DihedralBond::energy(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
+                     Utils::Vector3d const &v34) const {
   /* vectors for dihedral calculations. */
-  Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
+  Utils::Vector3d v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi;
 
-  auto const angle_is_undefined =
-      calc_dihedral_angle(box_geo, r1, r2, r3, r4, v12, v23, v34, v12Xv23,
-                          l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
+  auto const angle_is_undefined = calc_dihedral_angle(
+      v12, v23, v34, v12Xv23, l_v12Xv23, v23Xv34, l_v23Xv34, cos_phi, phi);
   /* dihedral angle not defined - energy zero */
   if (angle_is_undefined) {
     return {};
