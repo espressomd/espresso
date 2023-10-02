@@ -32,7 +32,7 @@ class Tutorial(ut.TestCase):
             assert np.all(np.isfinite(species[:, :, :].density))
             assert np.all(species[:, :, :].density >= 0)
 
-        assert np.all(np.isfinite(tutorial.lb[:, :, :].velocity))
+        assert np.all(np.isfinite(tutorial.lbf[:, :, :].velocity))
 
 
 if __name__ == "__main__":
