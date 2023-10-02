@@ -596,10 +596,11 @@ class EKReactant(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    ekspecies : :obj:`espressomd.electrokinetics.EKSpecies <espressomd.electrokinetics.EKSpecies>`
+    ekspecies : :obj:`~espressomd.electrokinetics.EKSpecies`
         EK species to react
     stoech_coeff: :obj:`float`
-        Stoechiometric coefficient of this species in the reaction. Products have positive coeffiecients whereas Educts have negative ones.
+        Stoechiometric coefficient of this species in the reaction.
+        Products have positive coefficients whereas educts have negative ones.
     order: :obj:`float`
         Partial-order of this species in the reaction.
 
@@ -620,7 +621,7 @@ class EKBulkReaction(ScriptInterfaceHelper):
         EK time step, must be an integer multiple of the MD time step.
     coefficient : :obj:`float`
         Reaction rate constant of the reaction.
-    reactants: array_like of :obj:`espressomd.electrokinetics.EKReactant <espressomd.electrokinetics.EKReactant>`
+    reactants: array_like of :obj:`~espressomd.electrokinetics.EKReactant`
         Reactants that participate this reaction.
 
     """
@@ -641,7 +642,7 @@ class EKIndexedReaction(ScriptInterfaceHelper):
         EK time step, must be an integer multiple of the MD time step.
     coefficient : :obj:`float`
         Reaction rate constant of the reaction.
-    reactants: array_like of :obj:`espressomd.electrokinetics.EKReactant <espressomd.electrokinetics.EKReactant>`
+    reactants: array_like of :obj:`~espressomd.electrokinetics.EKReactant`
         Reactants that participate this reaction.
 
     """
@@ -726,7 +727,7 @@ class EKReactions(ScriptObjectList):
 
         Parameters
         ----------
-        reaction : :obj:`espressomd.electrokinetics.EKBulkReaction <espressomd.electrokinetics.EKBulkReaction>` or :obj:`espressomd.electrokinetics.EKIndexedReaction <espressomd.electrokinetics.EKIndexedReaction>`
+        reaction : :obj:`~espressomd.electrokinetics.EKBulkReaction` or :obj:`~espressomd.electrokinetics.EKIndexedReaction`
             Reaction to be added.
 
         """
@@ -740,7 +741,7 @@ class EKReactions(ScriptObjectList):
 
         Parameters
         ----------
-        reaction : :obj:`espressomd.electrokinetics.EKBulkReaction <espressomd.electrokinetics.EKBulkReaction>` or :obj:`espressomd.electrokinetics.EKIndexedReaction <espressomd.electrokinetics.EKIndexedReaction>`
+        reaction : :obj:`~espressomd.electrokinetics.EKBulkReaction` or :obj:`~espressomd.electrokinetics.EKIndexedReaction`
             Reaction to be removed.
 
         """
@@ -750,13 +751,13 @@ class EKReactions(ScriptObjectList):
 @script_interface_register
 class EKContainer(ScriptObjectList):
     """
-    Container object holding the :obj:`espressomd.electrokinetics.EKSpecies <espressomd.electrokinetics.EKSpecies>`.
+    Container object holding the :obj:`~espressomd.electrokinetics.EKSpecies`.
 
     Parameters
     ----------
     tau : :obj:`float`
         EK time step, must be an integer multiple of the MD time step.
-    solver : :obj:`espressomd.electrokinetics.EKNone <espressomd.electrokinetics.EKNone>` or :obj:`espressomd.electrokinetics.EKFFT <espressomd.electrokinetics.EKFFT>`
+    solver : :obj:`~espressomd.electrokinetics.EKNone` or :obj:`~espressomd.electrokinetics.EKFFT`
         Solver defining the treatment of the electrostatic Poisson-equation.
 
     Methods
@@ -782,19 +783,18 @@ class EKContainer(ScriptObjectList):
         """
         Returns
         -------
-        :obj:`espressomd.electrokinetics.EKReactions <espressomd.electrokinetics.EKReactions>`
-            Reactions-container of the current reactions.
+        Reactions-container of the current reactions (:obj:`~espressomd.electrokinetics.EKReactions`).
 
         """
         return self._getter("reactions")
 
     def add(self, ekspecies):
         """
-        Add an :obj:`espressomd.electrokinetics.EKSpecies <espressomd.electrokinetics.EKSpecies>` to the container.
+        Add an :obj:`~espressomd.electrokinetics.EKSpecies` to the container.
 
         Parameters
         ----------
-        ekspecies : :obj:`espressomd.electrokinetics.EKSpecies <espressomd.electrokinetics.EKSpecies>`
+        ekspecies : :obj:`~espressomd.electrokinetics.EKSpecies`
             Species to be added.
 
         """
@@ -802,11 +802,11 @@ class EKContainer(ScriptObjectList):
 
     def remove(self, ekspecies):
         """
-        Remove an :obj:`espressomd.electrokinetics.EKSpecies <espressomd.electrokinetics.EKSpecies>` from the container.
+        Remove an :obj:`~espressomd.electrokinetics.EKSpecies` from the container.
 
         Parameters
         ----------
-        ekspecies : :obj:`espressomd.electrokinetics.EKSpecies <espressomd.electrokinetics.EKSpecies>`
+        ekspecies : :obj:`~espressomd.electrokinetics.EKSpecies`
             Species to be removed.
 
         """
