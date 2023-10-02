@@ -1,4 +1,5 @@
-# Copyright (C) 2019-2022 The ESPResSo project
+#
+# Copyright (C) 2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
 import importlib_wrapper
@@ -37,31 +39,33 @@ class Tutorial(ut.TestCase):
         # integrating Poisson equation
         msg = 'The potential difference is not equal to the one from integrating Poisson equation.'
         self.assertAlmostEqual(
-            tutorial.measured_potential_difference / tutorial.POTENTIAL_DIFF, 1, delta=0.25, msg=msg)
+            tutorial.measured_potential_difference / tutorial.POTENTIAL_DIFF,
+            1., delta=0.25, msg=msg)
 
     def test_charge_profile(self):
         # Roughly test the profile, deviations are expected!!
         charge_profile = (
             tutorial.cation_profile_mean +
             tutorial.anion_profile_mean)
-        analytic = (tutorial.gouy_chapman_density(tutorial.zs, tutorial.CONCENTRATION, tutorial.DEBYE_LENGTH, -tutorial.POTENTIAL_DIFF / 2.)
-                    + tutorial.gouy_chapman_density(tutorial.box_l_z - tutorial.LJ_SIGMA - tutorial.zs, tutorial.CONCENTRATION, tutorial.DEBYE_LENGTH, tutorial.POTENTIAL_DIFF / 2.)) / 2.
+        analytic = (
+            tutorial.cation_profile_analytic +
+            tutorial.anion_profile_analytic)
         msg = 'The density profile is not sufficiently equal to PB theory.'
         np.testing.assert_allclose(
-            charge_profile,
-            analytic,
+            charge_profile[1:-1],
+            analytic[1:-1],
             rtol=5e-2,
             atol=5e-2,
             err_msg=msg)
 
     def test_capacitance(self):
-        # For low potentials the capacitance should be in line with Graham/DH
+        # For low potentials the capacitance should be in line with Grahame/DH
         # equilibration performance limiting
-        graham = -tutorial.sigma_vs_phi[:, 0] / (
+        grahame = -tutorial.sigma_vs_phi[:, 0] / (
             constants.elementary_charge / (constants.Boltzmann * tutorial.TEMPERATURE))
-        msg = 'The capacitance at low potentials should be in line with Graham/DH.'
+        msg = 'The capacitance at low potentials should be in line with Grahame/DH.'
         np.testing.assert_allclose(
-            graham, tutorial.sigma_vs_phi[:, 1], atol=.015, err_msg=msg)
+            grahame, tutorial.sigma_vs_phi[:, 1], atol=.015, err_msg=msg)
 
 
 if __name__ == "__main__":

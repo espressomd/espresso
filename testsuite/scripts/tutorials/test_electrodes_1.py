@@ -1,4 +1,5 @@
-# Copyright (C) 2019-2022 The ESPResSo project
+#
+# Copyright (C) 2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,13 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
 import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/electrodes/electrodes_part1.py",
+    "@TUTORIALS_DIR@/electrodes/electrodes_part1.py", N_AXIAL_POINTS=6,
     script_suffix="@TEST_SUFFIX@")
 
 
@@ -28,13 +30,14 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
 
     def test_force(self):
-        # exclude largest distance (small force -> large relative error)
-        msg = 'The force for particle 1 should agree with the analytical expression.'
-        np.testing.assert_allclose(tutorial.elc_forces_axial[:-1, 0],
-                                   tutorial.analytic_force_centered(tutorial.r[:-1], tutorial.box_l_z), rtol=1e-1, err_msg=msg)
-        msg = 'The force for particle 2 should agree with the analytical expression.'
-        np.testing.assert_allclose(-tutorial.elc_forces_axial[:-1, 1],
-                                   tutorial.analytic_force_centered(tutorial.r[:-1], tutorial.box_l_z), rtol=1e-1, err_msg=msg)
+        ref_force = tutorial.analytic_force_centered(
+            tutorial.r, tutorial.box_l_z)
+        msg = "The force for particle 1 doesn't agree with analytical expression"
+        np.testing.assert_allclose(np.log(tutorial.elc_forces_axial[:, 0]),
+                                   np.log(ref_force), rtol=0.05, err_msg=msg)
+        msg = "The force for particle 2 doesn't agree with analytical expression"
+        np.testing.assert_allclose(np.log(-tutorial.elc_forces_axial[:, 1]),
+                                   np.log(ref_force), rtol=0.05, err_msg=msg)
 
 
 if __name__ == "__main__":
