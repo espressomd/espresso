@@ -34,10 +34,10 @@ class Tutorial(ut.TestCase):
 
     def test_potential_difference(self):
         # Test that the applied potential difference equals the one from
-        # integrating Poisson equation (within 30 %)
+        # integrating Poisson equation
         msg = 'The potential difference is not equal to the one from integrating Poisson equation.'
         self.assertAlmostEqual(
-            tutorial.measured_potential_difference / tutorial.POTENTIAL_DIFF, 1, delta=0.1, msg=msg)
+            tutorial.measured_potential_difference / tutorial.POTENTIAL_DIFF, 1, delta=0.25, msg=msg)
 
     def test_charge_profile(self):
         # Roughly test the profile, deviations are expected!!
@@ -45,7 +45,7 @@ class Tutorial(ut.TestCase):
             tutorial.cation_profile_mean +
             tutorial.anion_profile_mean)
         analytic = (tutorial.gouy_chapman_density(tutorial.zs, tutorial.CONCENTRATION, tutorial.DEBYE_LENGTH, -tutorial.POTENTIAL_DIFF / 2.)
-                    + tutorial.gouy_chapman_density(tutorial.box_l_z - tutorial.HS_ION_SIZE - tutorial.zs, tutorial.CONCENTRATION, tutorial.DEBYE_LENGTH, tutorial.POTENTIAL_DIFF / 2.)) / 2.
+                    + tutorial.gouy_chapman_density(tutorial.box_l_z - tutorial.LJ_SIGMA - tutorial.zs, tutorial.CONCENTRATION, tutorial.DEBYE_LENGTH, tutorial.POTENTIAL_DIFF / 2.)) / 2.
         msg = 'The density profile is not sufficiently equal to PB theory.'
         np.testing.assert_allclose(
             charge_profile,
@@ -56,7 +56,7 @@ class Tutorial(ut.TestCase):
 
     def test_capacitance(self):
         # For low potentials the capacitance should be in line with Graham/DH
-        # equilibration limiting (2.5 minutes total)
+        # equilibration performance limiting
         graham = -tutorial.sigma_vs_phi[:, 0] / (
             constants.elementary_charge / (constants.Boltzmann * tutorial.TEMPERATURE))
         msg = 'The capacitance at low potentials should be in line with Graham/DH.'

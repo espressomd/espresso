@@ -28,12 +28,13 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
 
     def test_force(self):
+        # exclude largest distance (small force -> large relative error)
         msg = 'The force for particle 1 should agree with the analytical expression.'
-        np.testing.assert_allclose(tutorial.elc_forces_axial[:, 0],
-                                   tutorial.analytic_force_centered(tutorial.r / tutorial.BJERRUM_LENGTH, tutorial.box_l_z), rtol=1, err_msg=msg)
+        np.testing.assert_allclose(tutorial.elc_forces_axial[:-1, 0],
+                                   tutorial.analytic_force_centered(tutorial.r[:-1], tutorial.box_l_z), rtol=1e-1, err_msg=msg)
         msg = 'The force for particle 2 should agree with the analytical expression.'
-        np.testing.assert_allclose(-tutorial.elc_forces_axial[:, 1],
-                                   tutorial.analytic_force_centered(tutorial.r / tutorial.BJERRUM_LENGTH, tutorial.box_l_z), rtol=1, err_msg=msg)
+        np.testing.assert_allclose(-tutorial.elc_forces_axial[:-1, 1],
+                                   tutorial.analytic_force_centered(tutorial.r[:-1], tutorial.box_l_z), rtol=1e-1, err_msg=msg)
 
 
 if __name__ == "__main__":
