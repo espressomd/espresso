@@ -20,29 +20,19 @@ import importlib_wrapper as iw
 import numpy as np
 
 tutorial, skipIfMissingFeatures = iw.configure_and_import(
-    "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py", integration_length=400)
+    "@TUTORIALS_DIR@/electrokinetics/electrokinetics.py", RUN_TIME=10, TOTAL_FRAMES=10)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def normalize_two_datasets(self, a, b):
-        offset = min(np.min(a), np.min(b))
-        a -= offset
-        b -= offset
-        scale = max(np.max(a), np.max(b))
-        a /= scale
-        b /= scale
+    def test_simulation_fields_finite(self):
+        for species in (*tutorial.educt_species, *tutorial.product_species):
+            assert np.all(np.isfinite(species[:, :, :].density))
+            assert np.all(species[:, :, :].density >= 0)
 
-    def test_simulation(self):
-        for varname, tol in zip(["density", "velocity"], [2, 5]):
-            sim = np.array(tutorial.__dict__[varname + "_list"])
-            ana = np.array(tutorial.eof_analytical.__dict__[varname + "_list"])
-            self.normalize_two_datasets(sim, ana)
-            accuracy = np.max(np.abs(sim - ana))
-            # expecting at most a few percents deviation
-            self.assertLess(accuracy, tol / 100.)
+        assert np.all(np.isfinite(tutorial.lb[:, :, :].velocity))
 
 
 if __name__ == "__main__":
