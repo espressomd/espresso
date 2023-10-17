@@ -66,7 +66,7 @@ Utils::Vector3d dpd_noise(int pid1, int pid2) {
 
 void dpd_init(double kT, double time_step) {
   auto &nonbonded_ias = *System::get_system().nonbonded_ias;
-  auto const max_type = max_seen_particle_type;
+  auto const max_type = nonbonded_ias.get_max_seen_particle_type();
   for (int type_a = 0; type_a <= max_type; type_a++) {
     for (int type_b = type_a; type_b <= max_type; type_b++) {
       auto &ia_params = nonbonded_ias.get_ia_param(type_a, type_b);

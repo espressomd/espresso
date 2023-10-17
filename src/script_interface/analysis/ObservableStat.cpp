@@ -42,7 +42,8 @@ namespace Analysis {
  * @param[in] obs      The observable handle.
  * @param[in] calc_sp  Whether to compute a scalar pressure.
  */
-static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
+static auto get_summary(::System::System const &system,
+                        Observable_stat const &obs, bool const calc_sp) {
   auto const obs_dim = obs.get_chunk_size();
 
   auto const get_obs_contribs = [obs_dim,
@@ -91,7 +92,8 @@ static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
     }
   }
 
-  auto const n_nonbonded = max_seen_particle_type + 1;
+  auto const n_nonbonded =
+      system.nonbonded_ias->get_max_seen_particle_type() + 1;
   for (int i = 0; i < n_nonbonded; ++i) {
     for (int j = i; j < n_nonbonded; ++j) {
       auto const indices = std::to_string(i) + "," + std::to_string(j);
@@ -136,15 +138,15 @@ Variant ObservableStat::do_call_method(std::string const &name,
                                        VariantMap const &parameters) {
   if (name == "calculate_energy") {
     auto const obs = calculate_energy();
-    return get_summary(*obs, false);
+    return get_summary(System::get_system(), *obs, false);
   }
   if (name == "calculate_scalar_pressure") {
     auto const obs = calculate_pressure();
-    return get_summary(*obs, true);
+    return get_summary(System::get_system(), *obs, true);
   }
   if (name == "calculate_pressure_tensor") {
     auto const obs = calculate_pressure();
-    return get_summary(*obs, false);
+    return get_summary(System::get_system(), *obs, false);
   }
   return {};
 }

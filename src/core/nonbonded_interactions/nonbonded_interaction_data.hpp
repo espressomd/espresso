@@ -355,12 +355,11 @@ struct IA_parameters {
 #endif
 };
 
-/** Maximal particle type seen so far. */
-extern int max_seen_particle_type;
-
 class InteractionsNonBonded {
   /** @brief List of pairwise interactions. */
   std::vector<std::shared_ptr<IA_parameters>> m_nonbonded_ia_params{};
+  /** @brief Maximal particle type seen so far. */
+  int max_seen_particle_type = -1;
 
   void realloc_ia_params(int type) {
     assert(type >= 0);
@@ -432,6 +431,8 @@ public:
     m_nonbonded_ia_params[get_ia_param_key(i, j)] = ia;
     on_non_bonded_ia_change();
   }
+
+  auto get_max_seen_particle_type() const { return max_seen_particle_type; }
 
   /** @brief Recalculate cutoff of each interaction struct. */
   void recalc_maximal_cutoffs();

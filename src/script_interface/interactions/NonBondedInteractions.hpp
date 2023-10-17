@@ -61,7 +61,7 @@ private:
   }
 
   void reset() {
-    auto const max_type = ::max_seen_particle_type;
+    auto const max_type = m_nonbonded_ias->get_max_seen_particle_type();
     for (int i = 0; i <= max_type; i++) {
       for (int j = 0; j <= i; j++) {
         auto const key = m_nonbonded_ias->get_ia_param_key(i, j);
@@ -75,7 +75,7 @@ private:
 
   void do_construct(VariantMap const &) override {
     m_nonbonded_ias = System::get_system().nonbonded_ias;
-    auto const max_type = ::max_seen_particle_type;
+    auto const max_type = m_nonbonded_ias->get_max_seen_particle_type();
     for (int i = 0; i <= max_type; i++) {
       for (int j = 0; j <= i; j++) {
         auto const key = m_nonbonded_ias->get_ia_param_key(i, j);
@@ -104,7 +104,7 @@ protected:
   Variant do_call_method(std::string const &method,
                          VariantMap const &params) override {
     if (method == "get_n_types") {
-      return Variant{::max_seen_particle_type + 1};
+      return Variant{m_nonbonded_ias->get_max_seen_particle_type() + 1};
     }
     if (method == "reset") {
       reset();

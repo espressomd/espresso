@@ -50,7 +50,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 
   auto obs_energy_ptr = std::make_shared<Observable_stat>(
       1ul, static_cast<std::size_t>(::bonded_ia_params.get_next_key()),
-      max_seen_particle_type);
+      nonbonded_ias.get_max_seen_particle_type());
 
   if (long_range_interactions_sanity_checks()) {
     return obs_energy_ptr;

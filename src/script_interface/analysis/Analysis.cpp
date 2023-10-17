@@ -71,7 +71,9 @@ static void check_topology(int chain_start, int chain_length, int n_chains) {
 
 /** @brief Check if a particle type exists. */
 static void check_particle_type(int p_type) {
-  if (p_type < 0 or p_type > ::max_seen_particle_type) {
+  auto const &system = System::get_system();
+  if (p_type < 0 or
+      p_type > system.nonbonded_ias->get_max_seen_particle_type()) {
     std::stringstream error_msg;
     error_msg << "Particle type " << p_type << " does not exist";
     throw std::invalid_argument(error_msg.str());

@@ -33,11 +33,6 @@
 #include <utility>
 #include <vector>
 
-/****************************************
- * variables
- *****************************************/
-int max_seen_particle_type = 0;
-
 /** Minimal global interaction cutoff. Particles with a distance
  *  smaller than this are guaranteed to be available on the same node
  *  (through ghosts).
