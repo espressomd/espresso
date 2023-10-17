@@ -473,6 +473,13 @@ This allows the user to quickly set up a system with boundary conditions
 that simultaneously act on the fluid and particles. For a complete
 description of all available shapes, refer to :mod:`espressomd.shapes`.
 
+When using shapes, keep in mind the lattice origin is offset by half a grid
+size from the box origin. For illustration purposes, assuming ``agrid=1``,
+setting a wall constraint with ``dist=1`` and a normal vector pointing along
+the x-axis will set all LB nodes in the left side of the box as boundary
+nodes with thickness 1. The same outcome is obtained with ``dist=1.49``,
+but with ``dist=1.51`` the thickness will be 2.
+
 .. _Prototyping new LB methods:
 
 Prototyping new LB methods

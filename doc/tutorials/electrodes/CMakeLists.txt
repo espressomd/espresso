@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2020-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,7 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_tutorial_target(TARGET tutorial_ek DEPENDS electrokinetics.ipynb
-                          figures/schlitzpore_3d.png)
+configure_tutorial_target(TARGET tutorial_electrodes DEPENDS
+                          electrodes_part1.ipynb electrodes_part2.ipynb)
 
-nb_export(TARGET tutorial_ek SUFFIX "" FILE "electrokinetics.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_electrodes SUFFIX "1" FILE "electrodes_part1.ipynb"
+          HTML_RUN)
+# TODO: fix time step issues (#4798) before adding HTML_RUN back
+nb_export(TARGET tutorial_electrodes SUFFIX "2" FILE "electrodes_part2.ipynb")

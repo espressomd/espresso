@@ -71,10 +71,8 @@ inline void add_non_bonded_pair_virials(
                            .f +
                        calc_non_central_force(p1, p2, ia_params, d, dist).f;
     auto const stress = Utils::tensor_product(d, force);
-
-    auto const type1 = p1.mol_id();
-    auto const type2 = p2.mol_id();
-    obs_pressure.add_non_bonded_contribution(type1, type2, flatten(stress));
+    obs_pressure.add_non_bonded_contribution(p1.type(), p2.type(), p1.mol_id(),
+                                             p2.mol_id(), flatten(stress));
   }
 
 #ifdef ELECTROSTATICS

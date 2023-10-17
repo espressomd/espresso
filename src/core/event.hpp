@@ -66,6 +66,9 @@ void on_particle_change();
 /** called every time the charge of a particle has changed. */
 void on_particle_charge_change();
 
+/** called every time that local properties of a particle have changed. */
+void on_particle_local_change();
+
 /** called every time the Coulomb parameters are changed.
 
 all Coulomb methods have a short range part, aka near field

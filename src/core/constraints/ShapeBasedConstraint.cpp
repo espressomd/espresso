@@ -164,7 +164,9 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
     }
   }
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-  if (part_rep.type() >= 0)
-    obs_energy.add_non_bonded_contribution(p.type(), part_rep.type(), energy);
+  if (part_rep.type() >= 0) {
+    obs_energy.add_non_bonded_contribution(
+        p.type(), part_rep.type(), p.mol_id(), part_rep.mol_id(), energy);
+  }
 }
 } // namespace Constraints

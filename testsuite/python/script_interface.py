@@ -102,6 +102,22 @@ class ScriptInterface(ut.TestCase):
         with self.assertRaisesRegex(AttributeError, "Object 'HarmonicBond' has no attribute 'unknown'"):
             bond.unknown
 
+    def test_objectlist_exceptions(self):
+        """Check ObjectList framework"""
+        wall = espressomd.shapes.Wall(normal=[-1, 0, 0])
+        constraint = espressomd.constraints.ShapeBasedConstraint(shape=wall)
+        constraints = espressomd.constraints.Constraints()
+        self.assertEqual(len(constraints), 0)
+        constraints.add(constraint)
+        self.assertEqual(len(constraints), 1)
+        with self.assertRaisesRegex(RuntimeError, "This object is already present in the list"):
+            constraints.add(constraint)
+        self.assertEqual(len(constraints), 1)
+        constraints.remove(constraint)
+        self.assertEqual(len(constraints), 0)
+        with self.assertRaisesRegex(RuntimeError, "This object is absent from the list"):
+            constraints.remove(constraint)
+
     def test_feature_exceptions(self):
         """Check feature verification"""
         all_features = set(espressomd.code_info.all_features())
