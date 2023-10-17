@@ -84,6 +84,11 @@ extern CellStructure cell_structure;
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular);
 
+/** Initialize cell structure @ref RegularDecomposition
+ *  @param without_ghost_force_reduction   Remove the ghost force reduction
+ */
+void set_regular_decomposition(bool without_ghost_force_reduction);
+
 /** Reinitialize the cell structures.
  *  @param new_cs The new topology to use afterwards.
  */

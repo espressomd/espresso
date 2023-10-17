@@ -125,6 +125,15 @@ CellSystem::CellSystem() {
       {"max_cut_nonbonded", AutoParameter::read_only, maximal_cutoff_nonbonded},
       {"max_cut_bonded", AutoParameter::read_only, maximal_cutoff_bonded},
       {"interaction_range", AutoParameter::read_only, interaction_range},
+      {"without_ghost_force_reduction", AutoParameter::read_only,
+       []() {
+         if (::cell_structure.decomposition_type() !=
+             CellStructureType::CELL_STRUCTURE_REGULAR) {
+           return Variant{none};
+         }
+         auto const rd = get_regular_decomposition();
+         return Variant{rd.get_without_ghost_force_reduction()};
+       }},
   });
 }
 
@@ -255,6 +264,10 @@ void CellSystem::initialize(CellStructureType const &cs_type,
         get_value_or<std::vector<int>>(params, "n_square_types", {});
     auto n_square_types = std::set<int>{ns_types.begin(), ns_types.end()};
     set_hybrid_decomposition(std::move(n_square_types), cutoff_regular);
+  } else if (cs_type == CellStructureType::CELL_STRUCTURE_REGULAR) {
+    auto const without_ghost_force_reduction =
+        get_value_or<bool>(params, "without_ghost_force_reduction", false);
+    set_regular_decomposition(without_ghost_force_reduction);
   } else {
     cells_re_init(cs_type);
   }
