@@ -29,12 +29,14 @@
 #include "electrostatics/mmm-common.hpp"
 #include "electrostatics/mmm-modpsi.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "specfunc.hpp"
+#include "system/System.hpp"
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
@@ -56,6 +58,7 @@
 #endif
 
 static double far_error(int P, double minrad) {
+  auto const &box_geo = *System::get_system().box_geo;
   auto const wavenumber = 2. * Utils::pi() * box_geo.length_inv()[2];
   // this uses an upper bound to all force components and the potential
   auto const rhores = wavenumber * minrad;
@@ -67,6 +70,7 @@ static double far_error(int P, double minrad) {
 static double determine_minrad(double maxPWerror, int P) {
   // bisection to search for where the error is maxPWerror
   auto constexpr min_rad = 0.01;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const rgranularity = min_rad * box_geo.length()[2];
   auto rmin = rgranularity;
   auto rmax = std::min(box_geo.length()[0], box_geo.length()[1]);
@@ -138,12 +142,14 @@ CoulombMMM1D::CoulombMMM1D(double prefactor, double maxPWerror,
 }
 
 void CoulombMMM1D::sanity_checks_periodicity() const {
+  auto const &box_geo = *System::get_system().box_geo;
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("MMM1D requires periodicity (False, False, True)");
   }
 }
 
 void CoulombMMM1D::sanity_checks_cell_structure() const {
+  auto const &local_geo = *System::get_system().local_geo;
   if (local_geo.cell_structure_type() !=
       CellStructureType::CELL_STRUCTURE_NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");
@@ -151,6 +157,8 @@ void CoulombMMM1D::sanity_checks_cell_structure() const {
 }
 
 void CoulombMMM1D::recalc_boxl_parameters() {
+  auto const &box_geo = *System::get_system().box_geo;
+
   if (far_switch_radius_sq >= Utils::sqr(box_geo.length()[2]))
     far_switch_radius_sq = 0.8 * Utils::sqr(box_geo.length()[2]);
 
@@ -165,6 +173,7 @@ void CoulombMMM1D::recalc_boxl_parameters() {
 Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
                                          double dist) const {
   auto constexpr c_2pi = 2. * Utils::pi();
+  auto const &box_geo = *System::get_system().box_geo;
   auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -258,6 +267,7 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
     return 0.;
 
   auto constexpr c_2pi = 2. * Utils::pi();
+  auto const &box_geo = *System::get_system().box_geo;
   auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
   auto const rxy2_d = rxy2 * uz2;
@@ -321,6 +331,7 @@ void CoulombMMM1D::tune() {
   recalc_boxl_parameters();
 
   if (far_switch_radius_sq < 0.) {
+    auto const &box_geo = *System::get_system().box_geo;
     auto const maxrad = box_geo.length()[2];
     auto min_time = std::numeric_limits<double>::infinity();
     auto min_rad = -1.;

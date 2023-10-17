@@ -21,7 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -59,6 +59,7 @@ public:
       return {};
     }
 
+    auto const &box_geo = *System::get_system().box_geo;
     auto const no_of_angles = n_values();
     auto const no_of_bonds = no_of_angles + 1;
     std::vector<double> angles(no_of_angles);

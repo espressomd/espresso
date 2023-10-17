@@ -33,8 +33,8 @@
 #include "constraints.hpp"
 #include "constraints/Constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
-#include "grid.hpp"
 #include "random.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -48,7 +48,8 @@
 #include <stdexcept>
 #include <vector>
 
-template <class RNG> static Utils::Vector3d random_position(RNG &rng) {
+template <class RNG>
+static Utils::Vector3d random_position(BoxGeometry const &box_geo, RNG &rng) {
   Utils::Vector3d v;
   for (int i = 0; i < 3; ++i)
     v[i] = box_geo.length()[i] * rng();
@@ -73,6 +74,7 @@ template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
  *  @return the minimal distance of a particle to coordinates @p pos
  */
 static double distto(PartCfg &partCfg, Utils::Vector3d const &pos) {
+  auto const &box_geo = *System::get_system().box_geo;
   auto mindist_sq = std::numeric_limits<double>::infinity();
 
   for (auto const &p : partCfg) {
@@ -89,6 +91,7 @@ static double distto(PartCfg &partCfg, Utils::Vector3d const &pos) {
  *  @param pos                   the trial position in question
  *  @param positions             buffered positions to respect
  *  @param partCfg               existing particles to respect
+ *  @param box_geo               Box geometry
  *  @param min_distance          threshold for the minimum distance between
  *                               trial position and buffered/existing particles
  *  @param respect_constraints   whether to respect constraints
@@ -97,11 +100,11 @@ static double distto(PartCfg &partCfg, Utils::Vector3d const &pos) {
 static bool
 is_valid_position(Utils::Vector3d const &pos,
                   std::vector<std::vector<Utils::Vector3d>> const &positions,
-                  PartCfg &partCfg, double const min_distance,
-                  int const respect_constraints) {
+                  PartCfg &partCfg, BoxGeometry const &box_geo,
+                  double const min_distance, int const respect_constraints) {
   // check if constraint is violated
   if (respect_constraints) {
-    Utils::Vector3d const folded_pos = folded_position(pos, box_geo);
+    Utils::Vector3d const folded_pos = box_geo.folded_position(pos);
 
     for (auto &c : Constraints::constraints) {
       auto cs =
@@ -144,6 +147,8 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
                        double const min_distance, int const max_tries,
                        int const use_bond_angle, double const bond_angle,
                        int const respect_constraints, int const seed) {
+
+  auto const &box_geo = *System::get_system().box_geo;
   auto rng = [mt = Random::mt19937(static_cast<unsigned>(seed)),
               dist = std::uniform_real_distribution<double>(
                   0.0, 1.0)]() mutable { return dist(mt); };
@@ -153,9 +158,9 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
     p.reserve(beads_per_chain);
   }
 
-  auto is_valid_pos = [&positions, &partCfg, min_distance,
+  auto is_valid_pos = [&positions, &partCfg, min_distance, &box_geo,
                        respect_constraints](Utils::Vector3d const &v) {
-    return is_valid_position(v, positions, partCfg, min_distance,
+    return is_valid_position(v, positions, partCfg, box_geo, min_distance,
                              respect_constraints);
   };
 
@@ -172,7 +177,7 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
   auto draw_monomer_position = [&](int p, int m) {
     if (m == 0) {
       return (p < start_positions.size()) ? start_positions[p]
-                                          : random_position(rng);
+                                          : random_position(box_geo, rng);
     }
 
     if (not use_bond_angle or m < 2) {

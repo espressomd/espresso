@@ -108,7 +108,6 @@ BOOST_AUTO_TEST_CASE(coulomb_actor) {
 #ifdef DIPOLES
 BOOST_AUTO_TEST_CASE(dipoles_actor) {
   auto constexpr tol = 100. * std::numeric_limits<double>::epsilon();
-  n_nodes = 1;
   ScriptInterface::Dipoles::MockDipolarDirectSum actor;
   actor.do_construct({{"prefactor", 2.}, {"n_replicas", 3}});
   // check const and non-const access

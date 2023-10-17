@@ -21,7 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -58,6 +58,7 @@ public:
       return {};
     }
 
+    auto const &box_geo = *System::get_system().box_geo;
     std::vector<double> res(n_values());
     auto v1 = box_geo.get_mi_vector(positions_sorted[1], positions_sorted[0]);
     auto n1 = v1.norm();

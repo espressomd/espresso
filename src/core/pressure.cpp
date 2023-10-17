@@ -23,15 +23,14 @@
  */
 
 #include "pressure.hpp"
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "interactions.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -61,23 +60,27 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
   on_observable_calc();
 
-  auto const volume = box_geo.volume();
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto const volume = system.box_geo->volume();
   auto const local_parts = cell_structure.local_particles();
+  auto const n_nodes = ::communicator.size;
 
   for (auto const &p : local_parts) {
     add_kinetic_virials(p, obs_pressure);
   }
 
-  auto const &coulomb = System::get_system().coulomb;
+  auto const &coulomb = system.coulomb;
   auto const coulomb_force_kernel = coulomb.pair_force_kernel();
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
   short_range_loop(
-      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel)](
-          Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
+      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       box_geo = system.box_geo](Particle const &p1, int bond_id,
+                                 Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
-            iaparams, p1, partners, coulomb_force_kernel_ptr);
+            iaparams, p1, partners, *box_geo, coulomb_force_kernel_ptr);
         if (result) {
           auto const &tensor = result.get();
           /* pressure tensor part */
@@ -97,7 +100,7 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
                                     obs_pressure, coulomb_force_kernel_ptr,
                                     coulomb_pressure_kernel_ptr);
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */

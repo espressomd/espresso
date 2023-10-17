@@ -20,8 +20,8 @@
 #include "immersed_boundary/ibm_tribend.hpp"
 
 #include "BoxGeometry.hpp"
-#include "grid.hpp"
 #include "ibm_common.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -30,8 +30,9 @@
 #include <tuple>
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-IBMTribend::calc_forces(Particle const &p1, Particle const &p2,
-                        Particle const &p3, Particle const &p4) const {
+IBMTribend::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
+                        Particle const &p2, Particle const &p3,
+                        Particle const &p4) const {
 
   // Get vectors making up the two triangles
   auto const dx1 = box_geo.get_mi_vector(p1.pos(), p3.pos());
@@ -93,6 +94,8 @@ IBMTribend::calc_forces(Particle const &p1, Particle const &p2,
 
 IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
                        const int ind4, const double kb, const bool flat) {
+
+  auto const &box_geo = *System::get_system().box_geo;
 
   // Compute theta0
   if (flat) {

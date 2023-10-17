@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_CELL_STRUCTURE_HPP
+#pragma once
 
 #include "cell_system/ParticleDecomposition.hpp"
 
@@ -40,8 +39,6 @@
 
 #include <boost/container/static_vector.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 #include <algorithm>
@@ -52,6 +49,10 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+namespace boost::mpi {
+class communicator;
+}
 
 namespace Cells {
 enum Resort : unsigned {
@@ -517,8 +518,7 @@ public:
    * @param local_geo Geometry of the local box (holds cell structure type).
    */
   void set_atom_decomposition(boost::mpi::communicator const &comm,
-                              BoxGeometry const &box,
-                              LocalBox<double> &local_geo);
+                              BoxGeometry const &box, LocalBox &local_geo);
 
   /**
    * @brief Set the particle decomposition to @ref RegularDecomposition.
@@ -530,7 +530,7 @@ public:
    */
   void set_regular_decomposition(boost::mpi::communicator const &comm,
                                  double range, BoxGeometry const &box,
-                                 LocalBox<double> &local_geo);
+                                 LocalBox &local_geo);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.
@@ -543,7 +543,7 @@ public:
    */
   void set_hybrid_decomposition(boost::mpi::communicator const &comm,
                                 double cutoff_regular, BoxGeometry const &box,
-                                LocalBox<double> &local_geo,
+                                LocalBox &local_geo,
                                 std::set<int> n_square_types);
 
 private:
@@ -744,5 +744,3 @@ private:
     }
   }
 };
-
-#endif

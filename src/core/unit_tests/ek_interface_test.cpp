@@ -25,12 +25,12 @@
 #include "ParticleFactory.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
+#include "communication.hpp"
 #include "config/config.hpp"
 #include "ek/EKReactions.hpp"
 #include "ek/EKWalberla.hpp"
 #include "ek/Implementation.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "system/System.hpp"
 
 #ifdef WALBERLA
@@ -82,8 +82,8 @@ static auto make_ek_actor() {
 #ifdef WALBERLA
   auto constexpr n_ghost_layers = 1u;
   auto constexpr single_precision = true;
-  ek_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
-                                                 ::node_grid, n_ghost_layers);
+  ek_lattice = std::make_shared<LatticeWalberla>(
+      params.grid_dimensions, ::communicator.node_grid, n_ghost_layers);
   ek_container = std::make_shared<EK::EKWalberla::ek_container_type>(
       params.tau, new_ek_poisson_none(ek_lattice, single_precision));
   ek_reactions = std::make_shared<EK::EKWalberla::ek_reactions_type>();

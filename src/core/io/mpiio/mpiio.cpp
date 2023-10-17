@@ -52,8 +52,9 @@
 
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -401,6 +402,7 @@ read_prefs(const std::string &fn, int rank, int size,
 }
 
 void mpi_mpiio_common_read(const std::string &prefix, unsigned fields) {
+  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.remove_all_particles();
 
   int size, rank;

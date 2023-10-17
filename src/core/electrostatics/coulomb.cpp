@@ -28,7 +28,7 @@
 #include "ParticleRange.hpp"
 #include "actor/visit_try_catch.hpp"
 #include "actor/visitors.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
@@ -327,9 +327,9 @@ static auto calc_charge_excess_ratio(std::vector<double> const &charges) {
 
 void check_charge_neutrality(double relative_tolerance) {
   // collect non-zero particle charges from all nodes
-  auto const &local_particles = cell_structure.local_particles();
+  auto &cell_structure = *System::get_system().cell_structure;
   std::vector<double> local_charges;
-  for (auto const &p : local_particles) {
+  for (auto const &p : cell_structure.local_particles()) {
     local_charges.push_back(p.q());
   }
   std::vector<std::vector<double>> node_charges;

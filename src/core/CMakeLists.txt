@@ -33,7 +33,6 @@ add_library(
   forcecap.cpp
   forces.cpp
   ghosts.cpp
-  grid.cpp
   immersed_boundaries.cpp
   interactions.cpp
   event.cpp

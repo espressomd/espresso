@@ -25,6 +25,8 @@
  */
 #include "event.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
@@ -37,7 +39,6 @@
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
@@ -67,11 +68,6 @@ void on_program_start() {
     }
   }
 #endif
-
-  init_node_grid();
-
-  /* initially go for regular decomposition */
-  cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
 
   /* make sure interaction 0<->0 always exists */
   make_particle_type_exist(0);
@@ -103,13 +99,14 @@ void on_integration_start(double time_step) {
   }
 
 #ifdef NPT
-  npt_ensemble_init(box_geo);
+  npt_ensemble_init(*system.box_geo);
 #endif
 
   partCfg().invalidate();
   invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
+  auto &cell_structure = *system.cell_structure;
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
@@ -167,6 +164,9 @@ void on_particle_local_change() {
 }
 
 void on_particle_change() {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+
   if (cell_structure.decomposition_type() ==
       CellStructureType::CELL_STRUCTURE_HYBRID) {
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
@@ -174,14 +174,10 @@ void on_particle_change() {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 #ifdef ELECTROSTATICS
-  if (System::is_system_set()) {
-    System::get_system().coulomb.on_particle_change();
-  }
+  system.coulomb.on_particle_change();
 #endif
 #ifdef DIPOLES
-  if (System::is_system_set()) {
-    System::get_system().dipoles.on_particle_change();
-  }
+  system.dipoles.on_particle_change();
 #endif
   recalc_forces = true;
 
@@ -222,7 +218,8 @@ void on_non_bonded_ia_change() {
 }
 
 void on_short_range_ia_change() {
-  cells_re_init(cell_structure.decomposition_type());
+  auto const &system = System::get_system();
+  cells_re_init(*system.cell_structure);
   recalc_forces = true;
 }
 
@@ -230,15 +227,19 @@ void on_constraint_change() { recalc_forces = true; }
 
 void on_lb_boundary_conditions_change() { recalc_forces = true; }
 
+static void update_local_geo(System::System &system) {
+  *system.local_geo = LocalBox::make_regular_decomposition(
+      system.box_geo->length(), ::communicator.calc_node_index(),
+      ::communicator.node_grid);
+}
+
 void on_boxl_change(bool skip_method_adaption) {
-  grid_changed_box_l(box_geo);
-  /* Electrostatics cutoffs mostly depend on the system size,
-   * therefore recalculate them. */
-  cells_re_init(cell_structure.decomposition_type());
+  auto &system = System::get_system();
+  update_local_geo(system);
+  cells_re_init(*system.cell_structure);
 
   /* Now give methods a chance to react to the change in box length */
   if (not skip_method_adaption) {
-    auto &system = System::get_system();
     system.lb.on_boxl_change();
     system.ek.on_boxl_change();
 #ifdef ELECTROSTATICS
@@ -288,6 +289,7 @@ void on_periodicity_change() {
 
 #ifdef STOKESIAN_DYNAMICS
   if (integ_switch == INTEG_METHOD_SD) {
+    auto const &box_geo = *System::get_system().box_geo;
     if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
       runtimeErrorMsg() << "Stokesian Dynamics requires periodicity "
                         << "(False, False, False)\n";
@@ -297,7 +299,8 @@ void on_periodicity_change() {
 }
 
 void on_skin_change() {
-  cells_re_init(cell_structure.decomposition_type());
+  auto const &system = System::get_system();
+  cells_re_init(*system.cell_structure);
   on_coulomb_and_dipoles_change();
 }
 
@@ -313,8 +316,9 @@ void on_timestep_change() {
 void on_forcecap_change() { recalc_forces = true; }
 
 void on_node_grid_change() {
-  grid_changed_n_nodes();
   auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  update_local_geo(system);
   system.lb.on_node_grid_change();
   system.ek.on_node_grid_change();
 #ifdef ELECTROSTATICS
@@ -323,7 +327,7 @@ void on_node_grid_change() {
 #ifdef DIPOLES
   system.dipoles.on_node_grid_change();
 #endif
-  cells_re_init(cell_structure.decomposition_type());
+  cells_re_init(cell_structure);
 }
 
 /**
@@ -356,6 +360,8 @@ unsigned global_ghost_flags() {
 }
 
 void update_dependent_particles() {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
 #ifdef VIRTUAL_SITES
   virtual_sites()->update();
   cells_update_ghosts(global_ghost_flags());

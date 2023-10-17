@@ -23,10 +23,11 @@
 
 #include "electrostatics/mmm1d_gpu.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 
@@ -38,6 +39,7 @@ CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
       far_switch_radius_sq{-1.}, bessel_cutoff{bessel_cutoff}, m_is_tuned{
                                                                    false} {
   set_prefactor(prefactor);
+  auto const &box_geo = *System::get_system().box_geo;
   if (maxPWerror <= 0.) {
     throw std::domain_error("Parameter 'maxPWerror' must be > 0");
   }
@@ -62,12 +64,14 @@ CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
 }
 
 void CoulombMMM1DGpu::sanity_checks_periodicity() const {
+  auto const &box_geo = *System::get_system().box_geo;
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("MMM1D requires periodicity (False, False, True)");
   }
 }
 
 void CoulombMMM1DGpu::sanity_checks_cell_structure() const {
+  auto const &local_geo = *System::get_system().local_geo;
   if (local_geo.cell_structure_type() !=
       CellStructureType::CELL_STRUCTURE_NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");

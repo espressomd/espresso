@@ -49,6 +49,7 @@
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "bond_error.hpp"
@@ -202,7 +203,7 @@ inline void add_non_bonded_pair_energy(
 
 inline boost::optional<double>
 calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
-                   Utils::Span<Particle *> partners,
+                   Utils::Span<Particle *> partners, BoxGeometry const &box_geo,
                    Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
   auto const n_partners = static_cast<int>(partners.size());
 
@@ -245,17 +246,19 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     throw BondUnknownTypeError();
   } // 1 partner
   if (n_partners == 2) {
+    auto const vec1 = box_geo.get_mi_vector(p2->pos(), p1.pos());
+    auto const vec2 = box_geo.get_mi_vector(p3->pos(), p1.pos());
     if (auto const *iap = boost::get<AngleHarmonicBond>(&iaparams)) {
-      return iap->energy(p1.pos(), p2->pos(), p3->pos());
+      return iap->energy(vec1, vec2);
     }
     if (auto const *iap = boost::get<AngleCosineBond>(&iaparams)) {
-      return iap->energy(p1.pos(), p2->pos(), p3->pos());
+      return iap->energy(vec1, vec2);
     }
     if (auto const *iap = boost::get<AngleCossquareBond>(&iaparams)) {
-      return iap->energy(p1.pos(), p2->pos(), p3->pos());
+      return iap->energy(vec1, vec2);
     }
     if (auto const *iap = boost::get<TabulatedAngleBond>(&iaparams)) {
-      return iap->energy(p1.pos(), p2->pos(), p3->pos());
+      return iap->energy(vec1, vec2);
     }
     if (boost::get<IBMTriel>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +
@@ -266,11 +269,15 @@ calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
     throw BondUnknownTypeError();
   } // 2 partners
   if (n_partners == 3) {
+    // note: particles in a dihedral bond are ordered as p2-p1-p3-p4
+    auto const v12 = box_geo.get_mi_vector(p1.pos(), p2->pos());
+    auto const v23 = box_geo.get_mi_vector(p3->pos(), p1.pos());
+    auto const v34 = box_geo.get_mi_vector(p4->pos(), p3->pos());
     if (auto const *iap = boost::get<DihedralBond>(&iaparams)) {
-      return iap->energy(p2->pos(), p1.pos(), p3->pos(), p4->pos());
+      return iap->energy(v12, v23, v34);
     }
     if (auto const *iap = boost::get<TabulatedDihedralBond>(&iaparams)) {
-      return iap->energy(p2->pos(), p1.pos(), p3->pos(), p4->pos());
+      return iap->energy(v12, v23, v34);
     }
     if (boost::get<IBMTribend>(&iaparams)) {
       runtimeWarningMsg() << "Unsupported bond type " +

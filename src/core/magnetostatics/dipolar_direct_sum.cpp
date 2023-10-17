@@ -25,10 +25,11 @@
 
 #include "magnetostatics/dipolar_direct_sum.hpp"
 
+#include "BoxGeometry.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/cartesian_product.hpp>
 #include <utils/constants.hpp>
@@ -50,7 +51,6 @@
 #include <utility>
 #include <vector>
 
-namespace {
 /**
  * @brief Pair force of two interacting dipoles.
  *
@@ -60,8 +60,8 @@ namespace {
  *
  * @return Resulting force.
  */
-auto pair_force(Utils::Vector3d const &d, Utils::Vector3d const &m1,
-                Utils::Vector3d const &m2) {
+static auto pair_force(Utils::Vector3d const &d, Utils::Vector3d const &m1,
+                       Utils::Vector3d const &m2) {
   auto const pe2 = m1 * d;
   auto const pe3 = m2 * d;
 
@@ -90,8 +90,8 @@ auto pair_force(Utils::Vector3d const &d, Utils::Vector3d const &m1,
  *
  * @return Interaction energy.
  */
-auto pair_potential(Utils::Vector3d const &d, Utils::Vector3d const &m1,
-                    Utils::Vector3d const &m2) {
+static auto pair_potential(Utils::Vector3d const &d, Utils::Vector3d const &m1,
+                           Utils::Vector3d const &m2) {
   auto const r2 = d * d;
   auto const r = sqrt(r2);
   auto const r3 = r2 * r;
@@ -113,7 +113,7 @@ auto pair_potential(Utils::Vector3d const &d, Utils::Vector3d const &m1,
  *
  * @return Utils::Vector3d containing dipole field components.
  */
-auto dipole_field(Utils::Vector3d const &d, Utils::Vector3d const &m1) {
+static auto dipole_field(Utils::Vector3d const &d, Utils::Vector3d const &m1) {
   auto const r2 = d * d;
   auto const r = sqrt(r2);
   auto const r3 = r2 * r;
@@ -185,7 +185,7 @@ struct PosMom {
  *        at all. If false, distances are calculated as Euclidean
  *        distances, and not using minimum image convention.
  * @param ncut Number of replicas in each direction.
- * @param box_l Box dimensions.
+ * @param box_geo Box geometry.
  * @param init Initial value of the sum.
  * @param f Binary operation mapping distance and moment of the
  *          interaction partner to the value to be summed up for this pair.
@@ -195,13 +195,14 @@ struct PosMom {
 template <class InputIterator, class T, class F>
 T image_sum(InputIterator begin, InputIterator end, InputIterator it,
             bool with_replicas, Utils::Vector3i const &ncut,
-            Utils::Vector3d const &box_l, T init, F f) {
+            BoxGeometry const &box_geo, T init, F f) {
 
+  auto const &box_l = box_geo.length();
   for (auto jt = begin; jt != end; ++jt) {
     auto const exclude_primary = (it == jt);
-    auto const primary_distance =
-        (with_replicas) ? (it->pos - jt->pos)
-                        : ::box_geo.get_mi_vector(it->pos, jt->pos);
+    auto const primary_distance = (with_replicas)
+                                      ? (it->pos - jt->pos)
+                                      : box_geo.get_mi_vector(it->pos, jt->pos);
 
     for_each_image(ncut, [&](int nx, int ny, int nz) {
       if (!(exclude_primary && nx == 0 && ny == 0 && nz == 0)) {
@@ -216,7 +217,9 @@ T image_sum(InputIterator begin, InputIterator end, InputIterator it,
   return init;
 }
 
-auto gather_particle_data(ParticleRange const &particles, int n_replicas) {
+static auto gather_particle_data(BoxGeometry const &box_geo,
+                                 ParticleRange const &particles,
+                                 int n_replicas) {
   auto const &comm = ::comm_cart;
   std::vector<Particle *> local_particles;
   std::vector<PosMom> local_posmom;
@@ -230,7 +233,7 @@ auto gather_particle_data(ParticleRange const &particles, int n_replicas) {
     if (p.dipm() != 0.0) {
       local_particles.emplace_back(&p);
       local_posmom.emplace_back(
-          PosMom{folded_position(p.pos(), ::box_geo), p.calc_dip()});
+          PosMom{box_geo.folded_position(p.pos()), p.calc_dip()});
     }
   }
 
@@ -255,13 +258,11 @@ auto gather_particle_data(ParticleRange const &particles, int n_replicas) {
                          std::move(reqs), offset);
 }
 
-auto get_n_cut(int n_replicas) {
-  return n_replicas * Utils::Vector3i{static_cast<int>(::box_geo.periodic(0)),
-                                      static_cast<int>(::box_geo.periodic(1)),
-                                      static_cast<int>(::box_geo.periodic(2))};
+static auto get_n_cut(BoxGeometry const &box_geo, int n_replicas) {
+  return n_replicas * Utils::Vector3i{static_cast<int>(box_geo.periodic(0)),
+                                      static_cast<int>(box_geo.periodic(1)),
+                                      static_cast<int>(box_geo.periodic(2))};
 }
-
-} // namespace
 
 /**
  * @brief Calculate and add the interaction forces/torques to the particles.
@@ -287,12 +288,13 @@ auto get_n_cut(int n_replicas) {
  */
 void DipolarDirectSum::add_long_range_forces(
     ParticleRange const &particles) const {
-  auto const &box_l = ::box_geo.length();
+  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_l = box_geo.length();
   auto [local_particles, all_posmom, reqs, offset] =
-      gather_particle_data(particles, n_replicas);
+      gather_particle_data(box_geo, particles, n_replicas);
 
   /* Number of image boxes considered */
-  auto const ncut = get_n_cut(n_replicas);
+  auto const ncut = get_n_cut(box_geo, n_replicas);
   auto const with_replicas = (ncut.norm2() > 0);
 
   /* Range of particles we calculate the ia for on this node */
@@ -307,7 +309,7 @@ void DipolarDirectSum::add_long_range_forces(
   for (auto it = local_posmom_begin; it != local_posmom_end; ++it, ++p) {
     /* IA with own images */
     auto fi = image_sum(
-        it, std::next(it), it, with_replicas, ncut, box_l, ParticleForce{},
+        it, std::next(it), it, with_replicas, ncut, box_geo, ParticleForce{},
         [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
           return pair_force(rn, it->m, mj);
         });
@@ -315,9 +317,8 @@ void DipolarDirectSum::add_long_range_forces(
     /* IA with other local particles */
     auto q = std::next(p);
     for (auto jt = std::next(it); jt != local_posmom_end; ++jt, ++q) {
-      auto const d = (with_replicas)
-                         ? (it->pos - jt->pos)
-                         : ::box_geo.get_mi_vector(it->pos, jt->pos);
+      auto const d = (with_replicas) ? (it->pos - jt->pos)
+                                     : box_geo.get_mi_vector(it->pos, jt->pos);
 
       ParticleForce fij{};
       ParticleForce fji{};
@@ -352,14 +353,14 @@ void DipolarDirectSum::add_long_range_forces(
     // red particles
     auto fi =
         image_sum(all_posmom.begin(), local_posmom_begin, it, with_replicas,
-                  ncut, box_l, ParticleForce{},
+                  ncut, box_geo, ParticleForce{},
                   [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
                     return pair_force(rn, it->m, mj);
                   });
 
     // black particles
     fi += image_sum(local_posmom_end, all_posmom.end(), it, with_replicas, ncut,
-                    box_l, ParticleForce{},
+                    box_geo, ParticleForce{},
                     [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
                       return pair_force(rn, it->m, mj);
                     });
@@ -376,12 +377,12 @@ void DipolarDirectSum::add_long_range_forces(
  */
 double
 DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
-  auto const &box_l = ::box_geo.length();
+  auto const &box_geo = *System::get_system().box_geo;
   auto [local_particles, all_posmom, reqs, offset] =
-      gather_particle_data(particles, n_replicas);
+      gather_particle_data(box_geo, particles, n_replicas);
 
   /* Number of image boxes considered */
-  auto const ncut = get_n_cut(n_replicas);
+  auto const ncut = get_n_cut(box_geo, n_replicas);
   auto const with_replicas = (ncut.norm2() > 0);
 
   /* Wait for the rest of the data to arrive */
@@ -394,7 +395,7 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
 
   auto u = 0.;
   for (auto it = local_posmom_begin; it != local_posmom_end; ++it) {
-    u = image_sum(it, all_posmom.end(), it, with_replicas, ncut, box_l, u,
+    u = image_sum(it, all_posmom.end(), it, with_replicas, ncut, box_geo, u,
                   [it](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
                     return pair_potential(rn, it->m, mj);
                   });
@@ -415,12 +416,12 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
 #ifdef DIPOLE_FIELD_TRACKING
 void DipolarDirectSum::dipole_field_at_part(
     ParticleRange const &particles) const {
-  auto const &box_l = ::box_geo.length();
+  auto const &box_geo = *System::get_system().box_geo;
   /* collect particle data */
   auto [local_particles, all_posmom, reqs, offset] =
-      gather_particle_data(particles, n_replicas);
+      gather_particle_data(box_geo, particles, n_replicas);
 
-  auto const ncut = get_n_cut(n_replicas);
+  auto const ncut = get_n_cut(box_geo, n_replicas);
   auto const with_replicas = (ncut.norm2() > 0);
 
   boost::mpi::wait_all(reqs.begin(), reqs.end());
@@ -433,7 +434,7 @@ void DipolarDirectSum::dipole_field_at_part(
   auto p = local_particles.begin();
   for (auto pi = local_posmom_begin; pi != local_posmom_end; ++pi, ++p) {
     auto const u = image_sum(
-        all_posmom.begin(), all_posmom.end(), pi, with_replicas, ncut, box_l,
+        all_posmom.begin(), all_posmom.end(), pi, with_replicas, ncut, box_geo,
         u_init, [](Utils::Vector3d const &rn, Utils::Vector3d const &mj) {
           return dipole_field(rn, mj);
         });

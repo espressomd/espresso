@@ -21,7 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <cassert>
 #include <cstddef>
@@ -55,6 +55,7 @@ public:
       return {};
     }
 
+    auto const &box_geo = *System::get_system().box_geo;
     std::vector<double> res(n_values());
 
     for (std::size_t i = 0, end = n_values(); i < end; i++) {

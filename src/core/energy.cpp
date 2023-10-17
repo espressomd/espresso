@@ -22,7 +22,9 @@
  *  Energy calculation.
  */
 
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "energy_inline.hpp"
@@ -49,30 +51,33 @@ std::shared_ptr<Observable_stat> calculate_energy() {
     return obs_energy_ptr;
   }
 
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   auto &obs_energy = *obs_energy_ptr;
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
-  auto &gpu_particle_data = System::get_system().gpu;
+  auto &gpu_particle_data = system.gpu;
   gpu_particle_data.clear_energy_on_device();
   gpu_particle_data.update();
 #endif
   on_observable_calc();
 
+  auto const &box_geo = *system.box_geo;
   auto const local_parts = cell_structure.local_particles();
+  auto const n_nodes = ::communicator.size;
 
   for (auto const &p : local_parts) {
     obs_energy.kinetic[0] += calc_kinetic_energy(p);
   }
 
-  auto const &system = System::get_system();
   auto const coulomb_kernel = system.coulomb.pair_energy_kernel();
   auto const dipoles_kernel = system.dipoles.pair_energy_kernel();
 
   short_range_loop(
-      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
+      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &box_geo](
           Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
-        auto const result =
-            calc_bonded_energy(iaparams, p1, partners, coulomb_kernel_ptr);
+        auto const result = calc_bonded_energy(iaparams, p1, partners, box_geo,
+                                               coulomb_kernel_ptr);
         if (result) {
           obs_energy.bonded_contribution(bond_id)[0] += result.get();
           return false;
@@ -86,7 +91,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
                                    coulomb_kernel_ptr, dipoles_kernel_ptr,
                                    obs_energy);
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -98,7 +103,8 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   obs_energy.dipolar[1] = system.dipoles.calc_energy_long_range(local_parts);
 #endif
 
-  Constraints::constraints.add_energy(local_parts, get_sim_time(), obs_energy);
+  Constraints::constraints.add_energy(box_geo, local_parts, get_sim_time(),
+                                      obs_energy);
 
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
   auto const energy_host = gpu_particle_data.copy_energy_to_host();
@@ -114,6 +120,8 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 }
 
 double particle_short_range_energy_contribution(int pid) {
+  auto const &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   double ret = 0.0;
 
   if (cell_structure.get_resort_particles()) {
@@ -121,7 +129,7 @@ double particle_short_range_energy_contribution(int pid) {
   }
 
   if (auto const p = cell_structure.get_local_particle(pid)) {
-    auto const &coulomb = System::get_system().coulomb;
+    auto const &coulomb = system.coulomb;
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
     auto kernel = [&ret, coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
                       Particle const &p, Particle const &p1,
@@ -142,8 +150,10 @@ double particle_short_range_energy_contribution(int pid) {
 
 #ifdef DIPOLE_FIELD_TRACKING
 void calc_long_range_fields() {
+  auto const &system = System::get_system();
+  auto const &dipoles = system.dipoles;
+  auto &cell_structure = *system.cell_structure;
   auto particles = cell_structure.local_particles();
-  auto const &dipoles = System::get_system().dipoles;
   dipoles.calc_long_range_field(particles);
 }
 #endif

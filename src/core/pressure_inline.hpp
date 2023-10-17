@@ -29,6 +29,7 @@
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "errorhandling.hpp"
@@ -98,7 +99,7 @@ inline void add_non_bonded_pair_virials(
 
 boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_virial_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
-    Particle const &p2,
+    Particle const &p2, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
@@ -114,7 +115,8 @@ boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_virial_pressure_tensor(
 boost::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
-                                       Particle const &p3) {
+                                       Particle const &p3,
+                                       BoxGeometry const &box_geo) {
   if ((boost::get<AngleHarmonicBond>(&iaparams) != nullptr) ||
       (boost::get<AngleCosineBond>(&iaparams) != nullptr) ||
 #ifdef TABULATED
@@ -124,7 +126,8 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
     auto const dx21 = -box_geo.get_mi_vector(p1.pos(), p2.pos());
     auto const dx31 = box_geo.get_mi_vector(p3.pos(), p1.pos());
 
-    auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
+    auto const result =
+        calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
     if (result) {
       Utils::Vector3d force2, force3;
       std::tie(std::ignore, force2, force3) = result.get();
@@ -144,15 +147,15 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 
 inline boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
-    Utils::Span<Particle *> partners,
+    Utils::Span<Particle *> partners, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   switch (number_of_partners(iaparams)) {
   case 1:
     return calc_bonded_virial_pressure_tensor(iaparams, p1, *partners[0],
-                                              kernel);
+                                              box_geo, kernel);
   case 2:
     return calc_bonded_three_body_pressure_tensor(iaparams, p1, *partners[0],
-                                                  *partners[1]);
+                                                  *partners[1], box_geo);
   default:
     runtimeWarningMsg() << "Unsupported bond type " +
                                std::to_string(iaparams.which()) +

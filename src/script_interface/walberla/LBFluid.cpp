@@ -26,7 +26,6 @@
 
 #include "core/BoxGeometry.hpp"
 #include "core/event.hpp"
-#include "core/grid.hpp"
 #include "core/integrate.hpp"
 #include "core/lb/LBWalberla.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
@@ -83,9 +82,10 @@ Variant LBFluid::do_call_method(std::string const &name,
     return {};
   }
   if (name == "add_force_at_pos") {
+    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
     auto const f = get_value<Utils::Vector3d>(params, "force");
-    auto const folded_pos = folded_position(pos, box_geo);
+    auto const folded_pos = box_geo.folded_position(pos);
     m_instance->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
     return {};
   }
@@ -177,7 +177,7 @@ void LBFluid::do_construct(VariantMap const &params) {
         throw std::runtime_error(
             "Lees-Edwards LB doesn't support thermalization");
       }
-      auto const &le_bc = ::box_geo.lees_edwards_bc();
+      auto const &le_bc = ::System::get_system().box_geo->lees_edwards_bc();
       auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
           le_bc.shear_direction, le_bc.shear_plane_normal,
           [this, le_protocol]() {
@@ -211,7 +211,8 @@ std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
 }
 
 Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
-  auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
+  auto const &box_geo = *::System::get_system().box_geo;
+  auto const lb_pos = box_geo.folded_position(pos) * m_conv_dist;
   auto const result = m_instance->get_velocity_at_pos(lb_pos);
   return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
          m_conv_speed;

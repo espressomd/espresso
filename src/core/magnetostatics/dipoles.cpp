@@ -31,7 +31,6 @@
 #include "actor/visitors.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"

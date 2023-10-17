@@ -76,8 +76,8 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
 }
 
 void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
-                                      LocalBox<double> const &local_geo,
-                                      double skin, double space_layer) {
+                                      LocalBox const &local_geo, double skin,
+                                      double space_layer) {
   int i;
   int ind[3];
   // total skin size

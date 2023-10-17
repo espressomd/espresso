@@ -46,6 +46,8 @@
 
 #include "MpiCallbacks.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/environment.hpp>
 
@@ -54,10 +56,27 @@
 
 /** The number of this node. */
 extern int this_node;
-/** The total number of nodes. */
-extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
+
+struct Communicator {
+  boost::mpi::communicator &comm;
+  Utils::Vector3i node_grid;
+  /** @brief The MPI rank. */
+  int &this_node;
+  /** @brief The MPI world size. */
+  int size;
+
+  Communicator();
+  void init_comm_cart();
+  void full_initialization();
+  /** @brief Calculate the node index in the Cartesian topology. */
+  Utils::Vector3i calc_node_index() const;
+  /** @brief Set new Cartesian topology. */
+  void set_node_grid(Utils::Vector3i const &value);
+};
+
+extern Communicator communicator;
 
 namespace Communication {
 /**

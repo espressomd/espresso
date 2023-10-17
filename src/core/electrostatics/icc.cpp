@@ -36,7 +36,6 @@
 #include "ParticleRange.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
@@ -289,6 +288,7 @@ void update_icc_particles() {
   if (system.coulomb.impl->extension) {
     if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
             get_ptr(system.coulomb.impl->extension))) {
+      auto &cell_structure = *system.cell_structure;
       (**icc).iteration(cell_structure, cell_structure.local_particles(),
                         cell_structure.ghost_particles());
     }

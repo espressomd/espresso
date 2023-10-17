@@ -20,7 +20,7 @@
 
 #include "BoxGeometry.hpp"
 #include "fetch_particles.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -61,12 +61,13 @@ RDF::evaluate(boost::mpi::communicator const &comm,
     return {};
   }
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto const bin_width = (max_r - min_r) / static_cast<double>(n_r_bins);
   auto const inv_bin_width = 1.0 / bin_width;
   std::vector<double> res(n_values(), 0.0);
   long int cnt = 0;
-  auto op = [this, inv_bin_width, &cnt, &res](auto const &pos1,
-                                              auto const &pos2) {
+  auto op = [this, inv_bin_width, &cnt, &res, &box_geo](auto const &pos1,
+                                                        auto const &pos2) {
     auto const dist = box_geo.get_mi_vector(pos1, pos2).norm();
     if (dist > min_r && dist < max_r) {
       auto const ind =

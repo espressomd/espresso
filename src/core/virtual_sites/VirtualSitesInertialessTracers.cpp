@@ -22,10 +22,11 @@
 
 #include "VirtualSitesInertialessTracers.hpp"
 
+#include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "lb/particle_coupling.hpp"
 #include "system/System.hpp"
@@ -50,6 +51,8 @@ static bool lb_active_check(DeferredActiveLBChecks const &check) {
 void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   DeferredActiveLBChecks check_lb_solver_set{};
   auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto const &box_geo = *system.box_geo;
   auto const agrid = (check_lb_solver_set()) ? system.lb.get_agrid() : 0.;
   auto const to_lb_units = (check_lb_solver_set()) ? 1. / agrid : 0.;
 
@@ -70,7 +73,7 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
         return;
       }
       if (bookkeeping.should_be_coupled(p)) {
-        for (auto pos : positions_in_halo(p.pos(), ::box_geo, agrid)) {
+        for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
           add_md_force(system.lb, pos * to_lb_units, p.force(), time_step);
         }
       }
@@ -83,7 +86,9 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
 
 void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
   DeferredActiveLBChecks check_lb_solver_set{};
-  auto const &lb = System::get_system().lb;
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto const &lb = system.lb;
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {
