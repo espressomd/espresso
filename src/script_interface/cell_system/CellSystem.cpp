@@ -129,7 +129,8 @@ CellSystem::CellSystem() {
          auto const hd = get_hybrid_decomposition();
          return Variant{hd.get_cutoff_regular()};
        }},
-      {"max_cut_nonbonded", AutoParameter::read_only, maximal_cutoff_nonbonded},
+      {"max_cut_nonbonded", AutoParameter::read_only,
+       []() { return ::System::get_system().nonbonded_ias->maximal_cutoff(); }},
       {"max_cut_bonded", AutoParameter::read_only, maximal_cutoff_bonded},
       {"interaction_range", AutoParameter::read_only, interaction_range},
   });

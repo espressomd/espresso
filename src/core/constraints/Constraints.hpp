@@ -93,6 +93,9 @@ public:
 
   void add_energy(BoxGeometry const &box_geo, ParticleRange const &particles,
                   double time, Observable_stat &obs_energy) const {
+    if (m_constraints.empty())
+      return;
+
     for (auto const &p : particles) {
       auto const pos = box_geo.folded_position(p.pos());
 

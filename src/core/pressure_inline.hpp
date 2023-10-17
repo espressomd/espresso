@@ -51,20 +51,21 @@
  *  @param p2        pointer to particle 2.
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
+ *  @param ia_params              non-bonded interaction kernels.
  *  @param kernel_forces          %Coulomb force kernel.
  *  @param kernel_pressure        %Coulomb pressure kernel.
  *  @param[in,out] obs_pressure   pressure observable.
  */
 inline void add_non_bonded_pair_virials(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
-    double dist, Observable_stat &obs_pressure,
+    double dist, IA_parameters const &ia_params,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel_forces,
-    Coulomb::ShortRangePressureKernel::kernel_type const *kernel_pressure) {
+    Coulomb::ShortRangePressureKernel::kernel_type const *kernel_pressure,
+    Observable_stat &obs_pressure) {
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
   {
-    auto const &ia_params = get_ia_param(p1.type(), p2.type());
     auto const force = calc_central_radial_force(p1, p2, ia_params, d, dist).f +
                        calc_central_radial_charge_force(p1, p2, ia_params, d,
                                                         dist, kernel_forces)

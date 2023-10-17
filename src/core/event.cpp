@@ -68,9 +68,6 @@ void on_program_start() {
     }
   }
 #endif
-
-  /* make sure interaction 0<->0 always exists */
-  make_particle_type_exist(0);
 }
 
 void on_integration_start(double time_step) {
@@ -213,7 +210,7 @@ void on_dipoles_change() {
 }
 
 void on_non_bonded_ia_change() {
-  maximal_cutoff_nonbonded();
+  System::get_system().nonbonded_ias->recalc_maximal_cutoffs();
   on_short_range_ia_change();
 }
 

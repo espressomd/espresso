@@ -33,36 +33,24 @@
 
 #include <algorithm>
 
-static double recalc_long_range_cutoff() {
-  auto max_cut_long_range = INACTIVE_CUTOFF;
-#if defined(ELECTROSTATICS) or defined(DIPOLES)
+double maximal_cutoff() {
+  auto max_cut = get_min_global_cut();
   if (System::is_system_set()) {
-    auto &system = System::get_system();
+    auto const &system = System::get_system();
 #ifdef ELECTROSTATICS
-    max_cut_long_range = std::max(max_cut_long_range, system.coulomb.cutoff());
+    max_cut = std::max(max_cut, system.coulomb.cutoff());
 #endif
 #ifdef DIPOLES
-    max_cut_long_range = std::max(max_cut_long_range, system.dipoles.cutoff());
+    max_cut = std::max(max_cut, system.dipoles.cutoff());
 #endif
+    if (::communicator.size > 1) {
+      // If there is just one node, the bonded cutoff can be omitted
+      // because bond partners are always on the local node.
+      max_cut = std::max(max_cut, maximal_cutoff_bonded());
+    }
+    max_cut = std::max(max_cut, system.nonbonded_ias->maximal_cutoff());
   }
-#endif
 
-  return max_cut_long_range;
-}
-
-double maximal_cutoff(bool single_node) {
-  auto max_cut = get_min_global_cut();
-  auto const max_cut_long_range = recalc_long_range_cutoff();
-  auto const max_cut_bonded = maximal_cutoff_bonded();
-  auto const max_cut_nonbonded = maximal_cutoff_nonbonded();
-
-  max_cut = std::max(max_cut, max_cut_long_range);
-  if (not single_node) {
-    // If there is just one node, the bonded cutoff can be omitted
-    // because bond partners are always on the local node.
-    max_cut = std::max(max_cut, max_cut_bonded);
-  }
-  max_cut = std::max(max_cut, max_cut_nonbonded);
   max_cut = std::max(max_cut, collision_detection_cutoff());
   return max_cut;
 }

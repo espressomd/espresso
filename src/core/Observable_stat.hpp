@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_OBSERVABLE_STAT_HPP
-#define ESPRESSO_OBSERVABLE_STAT_HPP
+
+#pragma once
 
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/numeric.hpp>
@@ -43,7 +43,7 @@ class Observable_stat {
                               int type2) const;
 
 public:
-  explicit Observable_stat(std::size_t chunk_size);
+  Observable_stat(std::size_t chunk_size, std::size_t n_bonded, int max_type);
 
   auto get_chunk_size() const { return m_chunk_size; }
 
@@ -121,5 +121,3 @@ public:
   /** MPI reduction. */
   void mpi_reduce();
 };
-
-#endif // ESPRESSO_OBSERVABLE_STAT_HPP

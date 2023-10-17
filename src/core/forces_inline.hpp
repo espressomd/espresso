@@ -192,17 +192,18 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
  *  @param[in] d           vector between @p p1 and @p p2.
  *  @param[in] dist        distance between @p p1 and @p p2.
  *  @param[in] dist2       distance squared between @p p1 and @p p2.
+ *  @param[in] ia_params       non-bonded interaction kernels.
  *  @param[in] coulomb_kernel  %Coulomb force kernel.
  *  @param[in] dipoles_kernel  Dipolar force kernel.
  *  @param[in] elc_kernel      ELC force correction kernel.
  */
 inline void add_non_bonded_pair_force(
     Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
-    double dist2,
+    double dist2, IA_parameters const &ia_params,
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
-  auto const &ia_params = get_ia_param(p1.type(), p2.type());
+
   ParticleForce pf{};
 
   /***********************************************/

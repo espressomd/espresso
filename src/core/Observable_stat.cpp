@@ -23,9 +23,7 @@
 
 #include "config/config.hpp"
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/index.hpp>
@@ -37,13 +35,9 @@
 #include <functional>
 #include <vector>
 
-static auto max_non_bonded_pairs() {
-  auto const n = static_cast<std::size_t>(max_seen_particle_type);
-  return (n * (n + 1)) / 2;
-}
-
-Observable_stat::Observable_stat(std::size_t chunk_size)
-    : m_chunk_size(chunk_size) {
+Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
+                                 int max_type)
+    : m_data{}, m_chunk_size{chunk_size} {
   // number of chunks for different interaction types
   constexpr std::size_t n_coulomb = 2;
   constexpr std::size_t n_dipolar = 2;
@@ -52,9 +46,9 @@ Observable_stat::Observable_stat(std::size_t chunk_size)
 #else
   constexpr std::size_t n_vs = 0;
 #endif
-  auto const n_bonded =
-      static_cast<std::size_t>(bonded_ia_params.get_next_key());
-  auto const n_non_bonded = max_non_bonded_pairs();
+  auto const n_non_bonded =
+      static_cast<std::size_t>(Utils::lower_triangular(max_type, max_type)) +
+      1ul;
   constexpr std::size_t n_ext_fields = 1; // reduction over all fields
   constexpr std::size_t n_kinetic = 1; // linear+angular kinetic contributions
 
@@ -80,8 +74,8 @@ Observable_stat::Observable_stat(std::size_t chunk_size)
 Utils::Span<double>
 Observable_stat::get_non_bonded_contribution(Utils::Span<double> base_pointer,
                                              int type1, int type2) const {
-  auto const offset = static_cast<std::size_t>(Utils::upper_triangular(
-      std::min(type1, type2), std::max(type1, type2), max_seen_particle_type));
+  auto const offset = static_cast<std::size_t>(
+      Utils::lower_triangular(std::max(type1, type2), std::min(type1, type2)));
   return {base_pointer.begin() + offset * m_chunk_size, m_chunk_size};
 }
 

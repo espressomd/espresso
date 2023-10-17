@@ -37,6 +37,7 @@
 class BoxGeometry;
 class LocalBox;
 struct CellStructure;
+class InteractionsNonBonded;
 
 namespace System {
 
@@ -58,6 +59,7 @@ public:
   std::shared_ptr<BoxGeometry> box_geo;
   std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
+  std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
 };
 
 System &get_system();

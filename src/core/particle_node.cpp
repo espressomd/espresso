@@ -98,7 +98,8 @@ void init_type_map(int type) {
     throw std::runtime_error("Types may not be negative");
   }
   ::type_list_enable = true;
-  make_particle_type_exist(type);
+  auto &nonbonded_ias = *System::get_system().nonbonded_ias;
+  nonbonded_ias.make_particle_type_exist(type);
 
   std::vector<int> local_pids;
   for (auto const &p : get_cell_structure().local_particles()) {

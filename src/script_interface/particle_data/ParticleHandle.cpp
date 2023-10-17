@@ -182,7 +182,7 @@ ParticleHandle::ParticleHandle() {
            throw std::domain_error(
                error_msg("type", "must be an integer >= 0"));
          }
-         make_particle_type_exist(new_type);
+         System::get_system().nonbonded_ias->make_particle_type_exist(new_type);
          on_particle_type_change(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },

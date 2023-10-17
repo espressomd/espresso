@@ -25,7 +25,6 @@
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "cells.hpp"
-#include "communication.hpp"
 #include "constraints.hpp"
 #include "energy_inline.hpp"
 #include "event.hpp"
@@ -44,15 +43,19 @@
 #include <memory>
 
 std::shared_ptr<Observable_stat> calculate_energy() {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto const &box_geo = *system.box_geo;
+  auto const &nonbonded_ias = *system.nonbonded_ias;
 
-  auto obs_energy_ptr = std::make_shared<Observable_stat>(1);
+  auto obs_energy_ptr = std::make_shared<Observable_stat>(
+      1ul, static_cast<std::size_t>(::bonded_ia_params.get_next_key()),
+      max_seen_particle_type);
 
   if (long_range_interactions_sanity_checks()) {
     return obs_energy_ptr;
   }
 
-  auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
   auto &obs_energy = *obs_energy_ptr;
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
   auto &gpu_particle_data = system.gpu;
@@ -61,9 +64,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 #endif
   on_observable_calc();
 
-  auto const &box_geo = *system.box_geo;
   auto const local_parts = cell_structure.local_particles();
-  auto const n_nodes = ::communicator.size;
 
   for (auto const &p : local_parts) {
     obs_energy.kinetic[0] += calc_kinetic_energy(p);
@@ -73,7 +74,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
   auto const dipoles_kernel = system.dipoles.pair_energy_kernel();
 
   short_range_loop(
-      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &box_geo](
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy, &box_geo](
           Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_energy(iaparams, p1, partners, box_geo,
@@ -84,14 +85,17 @@ std::shared_ptr<Observable_stat> calculate_energy() {
         }
         return true;
       },
-      [&obs_energy, coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-       dipoles_kernel_ptr = get_ptr(dipoles_kernel)](
-          Particle const &p1, Particle const &p2, Distance const &d) {
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       dipoles_kernel_ptr = get_ptr(dipoles_kernel), &obs_energy,
+       &nonbonded_ias](Particle const &p1, Particle const &p2,
+                       Distance const &d) {
+        auto const &ia_params =
+            nonbonded_ias.get_ia_param(p1.type(), p2.type());
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
-                                   obs_energy);
+                                   ia_params, coulomb_kernel_ptr,
+                                   dipoles_kernel_ptr, obs_energy);
       },
-      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      cell_structure, maximal_cutoff(), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -121,6 +125,7 @@ std::shared_ptr<Observable_stat> calculate_energy() {
 
 double particle_short_range_energy_contribution(int pid) {
   auto const &system = System::get_system();
+  auto const &nonbonded_ias = *system.nonbonded_ias;
   auto &cell_structure = *system.cell_structure;
   double ret = 0.0;
 
@@ -131,14 +136,14 @@ double particle_short_range_energy_contribution(int pid) {
   if (auto const p = cell_structure.get_local_particle(pid)) {
     auto const &coulomb = system.coulomb;
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
-    auto kernel = [&ret, coulomb_kernel_ptr = get_ptr(coulomb_kernel)](
-                      Particle const &p, Particle const &p1,
-                      Utils::Vector3d const &vec) {
+    auto kernel = [&ret, coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+                   &nonbonded_ias](Particle const &p, Particle const &p1,
+                                   Utils::Vector3d const &vec) {
 #ifdef EXCLUSIONS
       if (not do_nonbonded(p, p1))
         return;
 #endif
-      auto const &ia_params = get_ia_param(p.type(), p1.type());
+      auto const &ia_params = nonbonded_ias.get_ia_param(p.type(), p1.type());
       // Add energy for current particle pair to result
       ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
                                          coulomb_kernel_ptr);

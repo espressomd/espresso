@@ -44,6 +44,7 @@ namespace utf = boost::unit_test;
 #include "integrate.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/lj.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "observables/ParticleVelocities.hpp"
 #include "observables/PidObservable.hpp"
 #include "particle_node.hpp"
@@ -92,6 +93,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
   espresso::system->set_time_step(time_step);
   espresso::system->set_skin(skin);
+  auto const &system = System::get_system();
 
   // particle properties
   auto const pid1 = 9;
@@ -99,6 +101,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   auto const pid3 = 5;
   auto const type_a = 1;
   auto const type_b = 2;
+  auto const max_type = std::max(type_a, type_b);
+  system.nonbonded_ias->make_particle_type_exist(max_type);
 
   // we need at least 2 MPI ranks to test the communication logic, therefore
   // place particles close to the interface between different MPI domains
@@ -147,7 +151,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
           comm, particle_range, pids, {}, use_folded_positions);
       if (rank == 0) {
         BOOST_CHECK_EQUAL(vec.size(), 4ul);
-        for (std::size_t i = 0u; i < pids.size(); ++i) {
+        for (std::size_t i = 0ul; i < pids.size(); ++i) {
           Utils::Vector3d dist{};
           if (pids[i] == pid4) {
             dist = p.pos() - vec[i];
@@ -220,26 +224,22 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto const min = 0.0;
     auto const r_off = dist - offset;
     auto const cut = r_off + 1e-3; // LJ for only 2 pairs: AB BB
-    make_particle_type_exist(std::max(type_a, type_b));
-    auto const key_ab = get_ia_param_key(type_a, type_b);
-    auto const key_bb = get_ia_param_key(type_b, type_b);
     LJ_Parameters lj{eps, sig, cut, offset, min, shift};
-    ::nonbonded_ia_params[key_ab]->lj = lj;
-    ::nonbonded_ia_params[key_bb]->lj = lj;
+    system.nonbonded_ias->get_ia_param(type_a, type_b).lj = lj;
+    system.nonbonded_ias->get_ia_param(type_b, type_b).lj = lj;
     on_non_bonded_ia_change();
 
     // matrix indices and reference energy value
-    auto const size = std::max(type_a, type_b) + 1;
-    auto const n_pairs = Utils::upper_triangular(type_b, type_b, size) + 1;
-    auto const lj_pair_ab = Utils::upper_triangular(type_a, type_b, size);
-    auto const lj_pair_bb = Utils::upper_triangular(type_b, type_b, size);
+    auto const n_pairs = Utils::lower_triangular(max_type, max_type);
+    auto const lj_pair_ab = Utils::lower_triangular(type_b, type_a);
+    auto const lj_pair_bb = Utils::lower_triangular(type_b, type_b);
     auto const frac6 = Utils::int_pow<6>(sig / r_off);
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
     // measure energies
     auto const obs_energy = calculate_energy();
     if (rank == 0) {
-      for (int i = 0; i < n_pairs; ++i) {
+      for (int i = 0; i < n_pairs + 1; ++i) {
         // particles were set up with type == mol_id
         auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
         auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;

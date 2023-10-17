@@ -65,9 +65,11 @@ Utils::Vector3d dpd_noise(int pid1, int pid2) {
 }
 
 void dpd_init(double kT, double time_step) {
-  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
-    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      IA_parameters &ia_params = get_ia_param(type_a, type_b);
+  auto &nonbonded_ias = *System::get_system().nonbonded_ias;
+  auto const max_type = max_seen_particle_type;
+  for (int type_a = 0; type_a <= max_type; type_a++) {
+    for (int type_b = type_a; type_b <= max_type; type_b++) {
+      auto &ia_params = nonbonded_ias.get_ia_param(type_a, type_b);
 
       ia_params.dpd.radial.pref =
           sqrt(24.0 * kT * ia_params.dpd.radial.gamma / time_step);
@@ -131,17 +133,18 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
 static auto dpd_viscous_stress_local() {
   auto const &system = System::get_system();
   auto const &box_geo = *system.box_geo;
+  auto const &nonbonded_ias = *system.nonbonded_ias;
   auto &cell_structure = *system.cell_structure;
   on_observable_calc();
 
   Utils::Matrix<double, 3, 3> stress{};
-  cell_structure.non_bonded_loop([&stress, &box_geo](Particle const &p1,
-                                                     Particle const &p2,
-                                                     Distance const &d) {
+  cell_structure.non_bonded_loop([&stress, &box_geo, &nonbonded_ias](
+                                     Particle const &p1, Particle const &p2,
+                                     Distance const &d) {
     auto const v21 =
         box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
 
-    auto const &ia_params = get_ia_param(p1.type(), p2.type());
+    auto const &ia_params = nonbonded_ias.get_ia_param(p1.type(), p2.type());
     auto const dist = std::sqrt(d.dist2);
 
     auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, {});

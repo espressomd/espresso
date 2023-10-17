@@ -34,6 +34,7 @@ System::System() {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
+  nonbonded_ias = std::make_shared<InteractionsNonBonded>();
 }
 
 bool is_system_set() { return instance != nullptr; }

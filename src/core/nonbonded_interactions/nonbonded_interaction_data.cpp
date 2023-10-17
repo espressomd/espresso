@@ -26,9 +26,9 @@
 #include "electrostatics/coulomb.hpp"
 #include "event.hpp"
 
-#include <utils/index.hpp>
-
 #include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -37,7 +37,6 @@
  * variables
  *****************************************/
 int max_seen_particle_type = 0;
-std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
 
 /** Minimal global interaction cutoff. Particles with a distance
  *  smaller than this are guaranteed to be available on the same node
@@ -49,33 +48,7 @@ static double min_global_cut = INACTIVE_CUTOFF;
  * general low-level functions
  *****************************************/
 
-static void realloc_ia_params(int new_size) {
-  auto const old_size = ::max_seen_particle_type;
-  if (new_size <= old_size)
-    return;
-
-  auto const n_pairs = new_size * (new_size + 1) / 2;
-  auto new_params = std::vector<std::shared_ptr<IA_parameters>>(n_pairs);
-
-  /* if there is an old field, move entries */
-  for (int i = 0; i < old_size; i++) {
-    for (int j = i; j < old_size; j++) {
-      auto const new_key = Utils::upper_triangular(i, j, new_size);
-      auto const old_key = Utils::upper_triangular(i, j, old_size);
-      new_params[new_key] = std::move(nonbonded_ia_params[old_key]);
-    }
-  }
-  for (auto &ia_params : new_params) {
-    if (ia_params == nullptr) {
-      ia_params = std::make_shared<IA_parameters>();
-    }
-  }
-
-  ::max_seen_particle_type = new_size;
-  ::nonbonded_ia_params = std::move(new_params);
-}
-
-static double recalc_maximal_cutoff(const IA_parameters &data) {
+static double recalc_maximal_cutoff(IA_parameters const &data) {
   auto max_cut_current = INACTIVE_CUTOFF;
 
 #ifdef LENNARD_JONES
@@ -152,18 +125,19 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
   return max_cut_current;
 }
 
-double maximal_cutoff_nonbonded() {
-  auto max_cut_nonbonded = INACTIVE_CUTOFF;
-
-  for (auto &data : nonbonded_ia_params) {
+void InteractionsNonBonded::recalc_maximal_cutoffs() {
+  for (auto &data : m_nonbonded_ia_params) {
     data->max_cut = recalc_maximal_cutoff(*data);
-    max_cut_nonbonded = std::max(max_cut_nonbonded, data->max_cut);
   }
-
-  return max_cut_nonbonded;
 }
 
-void make_particle_type_exist(int type) { realloc_ia_params(type + 1); }
+double InteractionsNonBonded::maximal_cutoff() const {
+  auto max_cut_nonbonded = INACTIVE_CUTOFF;
+  for (auto &data : m_nonbonded_ia_params) {
+    max_cut_nonbonded = std::max(max_cut_nonbonded, data->max_cut);
+  }
+  return max_cut_nonbonded;
+}
 
 void set_min_global_cut(double min_global_cut) {
   ::min_global_cut = min_global_cut;

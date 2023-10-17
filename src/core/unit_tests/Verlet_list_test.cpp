@@ -156,6 +156,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   auto const box_l = 8.;
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
   espresso::system->set_node_grid(node_grid);
+  auto const &system = System::get_system();
 
   // particle properties
   auto const pid1 = 9;
@@ -172,10 +173,9 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   auto const min = 0.0;
   auto const r_off = dist - offset;
   auto const cut = r_off + 1e-3;
-  make_particle_type_exist(1);
-  auto const key = get_ia_param_key(0, 1);
   LJ_Parameters lj{eps, sig, cut, offset, min, shift};
-  ::nonbonded_ia_params[key]->lj = lj;
+  system.nonbonded_ias->make_particle_type_exist(1);
+  system.nonbonded_ias->get_ia_param(0, 1).lj = lj;
   on_non_bonded_ia_change();
 
   // set up velocity-Verlet integrator

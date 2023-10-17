@@ -25,6 +25,7 @@
 #include "cell_system/CellStructure.hpp"
 #include "config/config.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
+#include "system/System.hpp"
 
 BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
   auto constexpr skin = 0.4;
@@ -34,16 +35,20 @@ BOOST_AUTO_TEST_CASE(VerletCriterion_test) {
   auto constexpr collision_cut = 1.6;
 
   struct GetMaxCutoff {
+    GetMaxCutoff(System::System const &) {}
     double operator()(int, int) const { return skin + max_cut; }
   };
   struct GetZeroCutoff {
+    GetZeroCutoff(System::System const &) {}
     double operator()(int, int) const { return -skin; }
   };
 
-  VerletCriterion<GetMaxCutoff> criterion(skin, max_cut);
-  VerletCriterion<GetMaxCutoff> criterion_inactive(skin, INACTIVE_CUTOFF);
+  auto const &system = System::get_system();
+  VerletCriterion<GetMaxCutoff> criterion(system, skin, max_cut);
+  VerletCriterion<GetMaxCutoff> criterion_inactive(system, skin,
+                                                   INACTIVE_CUTOFF);
   VerletCriterion<GetZeroCutoff> criterion_long_range(
-      skin, max_cut, coulomb_cut, dipolar_cut, collision_cut);
+      system, skin, max_cut, coulomb_cut, dipolar_cut, collision_cut);
 
   Particle p1, p2;
   p1.id() = 1;

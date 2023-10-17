@@ -28,7 +28,6 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "event.hpp"
 #include "interactions.hpp"
@@ -49,8 +48,14 @@
 #include <memory>
 
 std::shared_ptr<Observable_stat> calculate_pressure() {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto const &box_geo = *system.box_geo;
+  auto const &nonbonded_ias = *system.nonbonded_ias;
 
-  auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
+  auto obs_pressure_ptr = std::make_shared<Observable_stat>(
+      9ul, static_cast<std::size_t>(::bonded_ia_params.get_next_key()),
+      max_seen_particle_type);
 
   if (long_range_interactions_sanity_checks()) {
     return obs_pressure_ptr;
@@ -60,11 +65,8 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
   on_observable_calc();
 
-  auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
-  auto const volume = system.box_geo->volume();
+  auto const volume = box_geo.volume();
   auto const local_parts = cell_structure.local_particles();
-  auto const n_nodes = ::communicator.size;
 
   for (auto const &p : local_parts) {
     add_kinetic_virials(p, obs_pressure);
@@ -75,12 +77,12 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
   short_range_loop(
-      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
-       box_geo = system.box_geo](Particle const &p1, int bond_id,
-                                 Utils::Span<Particle *> partners) {
+      [coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel), &obs_pressure,
+       &box_geo](Particle const &p1, int bond_id,
+                 Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
-            iaparams, p1, partners, *box_geo, coulomb_force_kernel_ptr);
+            iaparams, p1, partners, box_geo, coulomb_force_kernel_ptr);
         if (result) {
           auto const &tensor = result.get();
           /* pressure tensor part */
@@ -93,14 +95,17 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
         }
         return true;
       },
-      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
-       coulomb_pressure_kernel_ptr = get_ptr(coulomb_pressure_kernel)](
-          Particle const &p1, Particle const &p2, Distance const &d) {
-        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
-                                    obs_pressure, coulomb_force_kernel_ptr,
-                                    coulomb_pressure_kernel_ptr);
+      [coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       coulomb_pressure_kernel_ptr = get_ptr(coulomb_pressure_kernel),
+       &obs_pressure, &nonbonded_ias](Particle const &p1, Particle const &p2,
+                                      Distance const &d) {
+        auto const &ia_params =
+            nonbonded_ias.get_ia_param(p1.type(), p2.type());
+        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2), ia_params,
+                                    coulomb_force_kernel_ptr,
+                                    coulomb_pressure_kernel_ptr, obs_pressure);
       },
-      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      cell_structure, maximal_cutoff(), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */

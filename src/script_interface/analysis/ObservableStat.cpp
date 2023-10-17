@@ -26,6 +26,7 @@
 
 #include "core/energy.hpp"
 #include "core/pressure.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/Span.hpp>
 
@@ -90,7 +91,7 @@ static auto get_summary(Observable_stat const &obs, bool const calc_sp) {
     }
   }
 
-  auto const n_nonbonded = ::max_seen_particle_type;
+  auto const n_nonbonded = max_seen_particle_type + 1;
   for (int i = 0; i < n_nonbonded; ++i) {
     for (int j = i; j < n_nonbonded; ++j) {
       auto const indices = std::to_string(i) + "," + std::to_string(j);

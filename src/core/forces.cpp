@@ -155,7 +155,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
   auto &system = System::get_system();
   auto const &box_geo = *system.box_geo;
-  auto const n_nodes = ::communicator.size;
+  auto const &nonbonded_ias = *system.nonbonded_ias;
 #ifdef CUDA
 #ifdef CALIPER
   CALI_MARK_BEGIN("copy_particles_to_GPU");
@@ -208,18 +208,20 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
-       elc_kernel_ptr = get_ptr(elc_kernel)](Particle &p1, Particle &p2,
-                                             Distance const &d) {
+       elc_kernel_ptr = get_ptr(elc_kernel),
+       &nonbonded_ias](Particle &p1, Particle &p2, Distance const &d) {
+        auto const &ia_params =
+            nonbonded_ias.get_ia_param(p1.type(), p2.type());
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                  coulomb_kernel_ptr, dipoles_kernel_ptr,
-                                  elc_kernel_ptr);
+                                  ia_params, coulomb_kernel_ptr,
+                                  dipoles_kernel_ptr, elc_kernel_ptr);
 #ifdef COLLISION_DETECTION
         if (collision_params.mode != CollisionModeType::OFF)
           detect_collision(p1, p2, d.dist2);
 #endif
       },
-      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
-      VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
+      cell_structure, maximal_cutoff(), maximal_cutoff_bonded(),
+      VerletCriterion<>{system, skin, interaction_range(), coulomb_cutoff,
                         dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(box_geo, particles, get_sim_time());
