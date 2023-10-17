@@ -59,6 +59,10 @@ physical systems.
 * **Electrokinetics**  
   Modelling electrokinetics together with hydrodynamic interactions.  
   [Guide](electrokinetics/electrokinetics.ipynb)
+* **Electrodes**  
+  Modelling electrodes and measuring differential capacitance with the ELC method.  
+  [Part 1](electrodes/electrodes_part1.ipynb) |
+  Part 2 (work in progress)
 * **Constant pH method**  
   Modelling an acid dissociation curve using the constant pH method.  
   [Guide](constant_pH/constant_pH.ipynb)
