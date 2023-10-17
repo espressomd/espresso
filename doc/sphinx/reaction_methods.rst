@@ -353,14 +353,67 @@ The Monte Carlo (MC) sampling of the reaction can  be coupled with a configurati
 For non-interacting systems this coupling is not an issue, but for interacting systems the insertion of new particles
 can lead to instabilities in the MD integration ultimately leading to a crash of the simulation.
 
-This integration instabilities can be avoided by defining a distance around the particles which already exist in the system
-where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``.
-This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.
-The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems,
-it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles.
+This integration instabilities can be avoided by defining a distance around
+the particles which already exist in the system where new particles will not
+be inserted, which is defined by the required keyword ``exclusion_range``.
+This prevents big overlaps with the newly inserted particles, which would
+otherwise cause large forces between particles and crash the MD integrator.
+The value of the exclusion range does not affect the limiting result
+and it only affects the convergence and the stability of the integration.
+For interacting systems, it is usually a good practice to choose the exclusion
+range such that it is comparable to the diameter of the particles.
 
-If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by
-defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using
-the Lorentz-Berthelot combination rule, *i.e.* ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``.
-If the exclusion radius of one particle type is not defined, the value of the parameter provided in ``exclusion_range`` is used by default.
-If the value in ``exclusion_radius_per_type`` is equal to 0, then the exclusion range of that particle type with any other particle is 0.
+If particles with significantly different sizes are present, it is desirable
+to define a different exclusion range for each pair of particle types.
+This can be done by defining an exclusion radius per particle type via
+the optional argument ``exclusion_radius_per_type``.
+Then, their exclusion range is calculated using the Lorentz-Berthelot
+combination rule, *i.e.*
+
+.. code-block:: python
+
+    exclusion_range = exclusion_radius_per_type[particle_type_1] + \
+                      exclusion_radius_per_type[particle_type_2]
+
+If the exclusion radius of one particle type is not defined, the value
+of the parameter provided in ``exclusion_range`` is used by default.
+If the value in ``exclusion_radius_per_type`` is equal to 0,
+then the exclusion range of that particle type with any other particle is 0.
+For more detail, see :class:`~espressomd.reaction_methods.ExclusionRadius`.
+
+.. _Writing new Monte Carlo methods:
+
+Writing new Monte Carlo methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most of the logic for reaction methods is implemented at the Python level.
+The C++ core is only used for performance-relevant operations on particles.
+Hence, one can prototype new reaction methods with relative ease.
+For example, the acceptance probability for a Monte Carlo trial move
+is exposed in :meth:`ReactionAlgorithm.calculate_acceptance_probability()
+<espressomd.reaction_methods.ReactionAlgorithm.calculate_acceptance_probability>`.
+Reaction method classes override this function with their custom expression
+for the acceptance probability.
+
+Alternatively, the sample script :file:`samples/monte_carlo.py` provides
+a re-implementation of the core functionality of reaction methods in Python,
+with a focus on the :ref:`constant pH <Constant pH>` and
+:ref:`reaction ensemble <Reaction Ensemble>` methods.
+More specifically, the :class:`~espressomd.reaction_methods.SingleReaction`,
+:class:`~espressomd.reaction_methods.ReactionAlgorithm`,
+:class:`~espressomd.reaction_methods.ReactionEnsemble`, and
+:class:`~espressomd.reaction_methods.ConstantpHEnsemble`
+classes are rewritten in Python.
+
+The goal of this sample is to assist in the rapid prototyping of new Monte Carlo
+methods. In particular, the sampling and move generation schemes are expressed
+in Python, and can be leveraged by users without C++ programming experience.
+The sample is designed to run with the :ref:`kernprof` profiler attached:
+
+.. code-block:: bash
+
+    pypresso --kernprof monte_carlo.py --mode=core
+    pypresso --kernprof monte_carlo.py --mode=python
+
+These Python implementations are roughly four times slower
+than their corresponding core implementations.

@@ -52,6 +52,64 @@ class SingleReaction(ScriptInterfaceHelper):
             product_coefficients=self.reactant_coefficients)
 
 
+@script_interface_register
+class ExclusionRadius(ScriptInterfaceHelper):
+    """
+    Neighbor search algorithm that detects when a particle enters the exclusion
+    zone of another particle. The exclusion radii are particle type-dependent.
+
+    During the neighbor search, the following cases can arise:
+
+    * the central particle per-type exclusion radius is zero: return ``False``
+    * the neighbor particle per-type exclusion radius is zero: return ``False``
+    * the central and neighbor particles per-type exclusion radii are non-zero:
+      return ``True`` if the inter-particle distance is smaller than the sum of
+      their respective exclusion radii, ``False`` otherwise
+    * either the central particle type or the neighbor particle type is not in
+      ``exclusion_radius_per_type``: return ``True`` if the inter-particle
+      distance is smaller than ``exclusion_range``, ``False`` otherwise
+
+    Attributes
+    ----------
+    exclusion_radius_per_type : :obj:`dict`, optional
+         Mapping of particle types to exclusion radii.
+    exclusion_range : :obj:`float`
+        Minimal distance from any particle whose type
+        is not in ``exclusion_radius_per_type``.
+    search_algorithm : :obj:`str`
+        Pair search algorithm. Default is ``"order_n"``, which evaluates the
+        distance between the queried particle and all other particles in the
+        system, and scales with O(N). For MPI-parallel simulations, the
+        ``"parallel"`` method is faster. The ``"parallel"`` method is not
+        recommended for simulations on 1 MPI rank, since it comes with the
+        overhead of a ghost particle update.
+
+    Methods
+    -------
+    check_exclusion_range()
+        Check the neighborhood of a central particle and detect if any neighbor
+        is too close.
+
+        Parameters
+        -----------
+        pid : :obj:`int`
+            Particle id.
+        ptype : :obj:`int`, optional
+            Particle type. If not provided, it will be read from the particle
+            and communicated to all MPI ranks.
+
+        Returns
+        -------
+        :obj:`bool` :
+            Whether the particle is within the exclusion radius
+            of another particle.
+
+    """
+    _so_name = "ReactionMethods::ExclusionRadius"
+    _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("check_exclusion_range",)
+
+
 class ReactionAlgorithm(ScriptInterfaceHelper):
     """
 
@@ -59,6 +117,8 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
     the Reaction Ensemble algorithm and the constant pH method.
     Initialize the reaction algorithm by setting the
     standard pressure, temperature, and the exclusion range.
+    The exclusion range mechanism is explained in more detail
+    in :class:`~espressomd.reaction_methods.ExclusionRadius`.
 
     Note: When creating particles the velocities of the new particles are set
     according the Maxwell-Boltzmann distribution. In this step the mass of the
@@ -280,7 +340,7 @@ class ReactionAlgorithm(ScriptInterfaceHelper):
         if 'exclusion_radius' in kwargs:
             raise KeyError(
                 'the keyword `exclusion_radius` is obsolete. Currently, the equivalent keyword is `exclusion_range`')
-        super().__init__(**kwargs)
+        super().__init__(exclusion=ExclusionRadius(**kwargs), **kwargs)
         if not 'sip' in kwargs:
             utils.check_valid_keys(self.valid_keys(), kwargs.keys())
         self._rebuild_reaction_cache()

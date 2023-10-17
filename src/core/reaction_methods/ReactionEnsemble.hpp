@@ -21,8 +21,6 @@
 
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
-#include <unordered_map>
-
 namespace ReactionMethods {
 
 /** Reaction ensemble method.
@@ -36,12 +34,7 @@ namespace ReactionMethods {
  */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
-  ReactionEnsemble(
-      boost::mpi::communicator const &comm, int seed, double kT,
-      double exclusion_radius,
-      const std::unordered_map<int, double> &exclusion_radius_per_type)
-      : ReactionAlgorithm(comm, seed, kT, exclusion_radius,
-                          exclusion_radius_per_type) {}
+  using ReactionAlgorithm::ReactionAlgorithm;
 };
 
 } // namespace ReactionMethods

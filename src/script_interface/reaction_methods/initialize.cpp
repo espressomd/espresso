@@ -19,6 +19,7 @@
 
 #include "initialize.hpp"
 
+#include "ExclusionRadius.hpp"
 #include "SingleReaction.hpp"
 
 #include "ConstantpHEnsemble.hpp"
@@ -34,6 +35,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<WidomInsertion>("ReactionMethods::WidomInsertion");
   om->register_new<ReactionEnsemble>("ReactionMethods::ReactionEnsemble");
   om->register_new<ConstantpHEnsemble>("ReactionMethods::ConstantpHEnsemble");
+  om->register_new<ExclusionRadius>("ReactionMethods::ExclusionRadius");
 }
 } // namespace ReactionMethods
 } // namespace ScriptInterface

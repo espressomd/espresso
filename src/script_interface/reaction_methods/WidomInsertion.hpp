@@ -45,22 +45,31 @@ public:
   }
 
   WidomInsertion() {
-    add_parameters({{"search_algorithm",
-                     [this](Variant const &) {
-                       if (context()->is_head_node()) {
-                         throw std::runtime_error(
-                             "No search algorithm for WidomInsertion");
-                       }
-                     },
-                     []() { return none; }}});
+    add_parameters(
+        {{"search_algorithm",
+          [this](Variant const &) { throw_on_exclusion_change(); },
+          []() { return none; }},
+         {"exclusion_range",
+          [this](Variant const &) { throw_on_exclusion_change(); },
+          [this]() { return m_exclusion->get_parameter("exclusion_range"); }},
+         {"exclusion_radius_per_type",
+          [this](Variant const &) { throw_on_exclusion_change(); },
+          [this]() {
+            return m_exclusion->get_parameter("exclusion_radius_per_type");
+          }}});
   }
 
   void do_construct(VariantMap const &params) override {
+    setup_neighbor_search(params);
     context()->parallel_try_catch([&]() {
+      auto exclusion = m_exclusion->get_instance();
+      if (exclusion->exclusion_range != 0. or
+          not exclusion->exclusion_radius_per_type.empty()) {
+        throw std::runtime_error("No search algorithm for WidomInsertion");
+      }
       m_re = std::make_shared<::ReactionMethods::WidomInsertion>(
           context()->get_comm(), get_value<int>(params, "seed"),
-          get_value<double>(params, "kT"), 0.,
-          std::unordered_map<int, double>{});
+          get_value<double>(params, "kT"), m_exclusion->get_instance());
     });
   }
 
@@ -80,6 +89,11 @@ public:
 
 private:
   std::shared_ptr<::ReactionMethods::WidomInsertion> m_re;
+  void throw_on_exclusion_change() const {
+    if (context()->is_head_node()) {
+      throw std::runtime_error("No search algorithm for WidomInsertion");
+    }
+  }
 };
 
 } /* namespace ReactionMethods */
