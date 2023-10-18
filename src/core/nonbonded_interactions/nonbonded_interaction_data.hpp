@@ -440,7 +440,3 @@ public:
   /** @brief Get maximal cutoff. */
   double maximal_cutoff() const;
 };
-
-void set_min_global_cut(double min_global_cut);
-
-double get_min_global_cut();

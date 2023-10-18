@@ -22,6 +22,8 @@
 #include "System.hpp"
 #include "System.impl.hpp"
 
+#include "event.hpp"
+
 #include <utils/Vector.hpp>
 
 #include <memory>
@@ -35,6 +37,7 @@ System::System() {
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
+  min_global_cut = INACTIVE_CUTOFF;
 }
 
 bool is_system_set() { return instance != nullptr; }
@@ -53,6 +56,11 @@ void System::init() {
 #ifdef CUDA
   gpu.init();
 #endif
+}
+
+void System::set_min_global_cut(double new_value) {
+  min_global_cut = new_value;
+  on_skin_change();
 }
 
 } // namespace System

@@ -348,6 +348,7 @@ static void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
 #ifdef VIRTUAL_SITES_RELATIVE
 static void place_vs_and_relate_to_particle(CellStructure &cell_structure,
                                             BoxGeometry const &box_geo,
+                                            double const min_global_cut,
                                             int const current_vs_pid,
                                             Utils::Vector3d const &pos,
                                             int const relate_to) {
@@ -355,7 +356,8 @@ static void place_vs_and_relate_to_particle(CellStructure &cell_structure,
   new_part.id() = current_vs_pid;
   new_part.pos() = pos;
   auto p_vs = cell_structure.add_particle(std::move(new_part));
-  vs_relate_to(*p_vs, get_part(cell_structure, relate_to), box_geo);
+  vs_relate_to(*p_vs, get_part(cell_structure, relate_to), box_geo,
+               min_global_cut);
   p_vs->set_virtual(true);
   p_vs->type() = collision_params.vs_particle_type;
 }
@@ -481,7 +483,9 @@ static void three_particle_binding_domain_decomposition(
 
 // Handle the collisions stored in the queue
 void handle_collisions(CellStructure &cell_structure) {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const min_global_cut = system.get_min_global_cut();
   // Note that the glue to surface mode adds bonds between the centers
   // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
@@ -567,7 +571,8 @@ void handle_collisions(CellStructure &cell_structure) {
           auto handle_particle = [&](Particle *p, Utils::Vector3d const &pos) {
             if (not p->is_ghost()) {
               place_vs_and_relate_to_particle(cell_structure, box_geo,
-                                              current_vs_pid, pos, p->id());
+                                              min_global_cut, current_vs_pid,
+                                              pos, p->id());
               // Particle storage locations may have changed due to
               // added particle
               p1 = cell_structure.get_local_particle(c.pp1);
@@ -627,7 +632,7 @@ void handle_collisions(CellStructure &cell_structure) {
           // Vs placement happens on the node that has p1
           if (!attach_vs_to.is_ghost()) {
             place_vs_and_relate_to_particle(cell_structure, box_geo,
-                                            current_vs_pid, pos,
+                                            min_global_cut, current_vs_pid, pos,
                                             attach_vs_to.id());
             // Particle storage locations may have changed due to
             // added particle

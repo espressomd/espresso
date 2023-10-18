@@ -52,6 +52,12 @@ public:
   Utils::Vector3d box() const;
   void init();
 
+  /** @brief Get @ref min_global_cut. */
+  double get_min_global_cut() const { return min_global_cut; }
+
+  /** @brief Set @ref min_global_cut. */
+  void set_min_global_cut(double new_value);
+
   Coulomb::Solver coulomb;
   Dipoles::Solver dipoles;
   LB::Solver lb;
@@ -60,6 +66,14 @@ public:
   std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
+
+protected:
+  /**
+   * @brief Minimal global interaction cutoff.
+   * Particles with a distance smaller than this are guaranteed
+   * to be available on the same node (through ghosts).
+   */
+  double min_global_cut;
 };
 
 System &get_system();

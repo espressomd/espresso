@@ -34,9 +34,10 @@
 #include <algorithm>
 
 double maximal_cutoff() {
-  auto max_cut = get_min_global_cut();
+  auto max_cut = INACTIVE_CUTOFF;
   if (System::is_system_set()) {
     auto const &system = System::get_system();
+    max_cut = std::max(max_cut, system.get_min_global_cut());
 #ifdef ELECTROSTATICS
     max_cut = std::max(max_cut, system.coulomb.cutoff());
 #endif

@@ -601,6 +601,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       throw std::domain_error("Invalid particle id: " +
                               std::to_string(other_pid));
     }
+    auto const &system = ::System::get_system();
     /* note: this code can be rewritten as parallel code, but only with a call
      * to `cells_update_ghosts(DATA_PART_POSITION | DATA_PART_PROPERTIES)`, as
      * there is no guarantee the virtual site has visibility of the relative
@@ -613,7 +614,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const &p_current = get_particle_data(m_pid);
     auto const &p_relate_to = get_particle_data(other_pid);
     auto const [quat, dist] = calculate_vs_relate_to_params(
-        p_current, p_relate_to, *::System::get_system().box_geo);
+        p_current, p_relate_to, *system.box_geo, system.get_min_global_cut());
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
     set_parameter("virtual", true);

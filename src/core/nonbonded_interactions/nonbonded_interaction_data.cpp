@@ -33,16 +33,6 @@
 #include <utility>
 #include <vector>
 
-/** Minimal global interaction cutoff. Particles with a distance
- *  smaller than this are guaranteed to be available on the same node
- *  (through ghosts).
- */
-static double min_global_cut = INACTIVE_CUTOFF;
-
-/*****************************************
- * general low-level functions
- *****************************************/
-
 static double recalc_maximal_cutoff(IA_parameters const &data) {
   auto max_cut_current = INACTIVE_CUTOFF;
 
@@ -133,10 +123,3 @@ double InteractionsNonBonded::maximal_cutoff() const {
   }
   return max_cut_nonbonded;
 }
-
-void set_min_global_cut(double min_global_cut) {
-  ::min_global_cut = min_global_cut;
-  on_skin_change();
-}
-
-double get_min_global_cut() { return ::min_global_cut; }

@@ -78,10 +78,10 @@ System::System() {
            if (new_value < 0. and new_value != INACTIVE_CUTOFF) {
              throw std::domain_error("Attribute 'min_global_cut' must be >= 0");
            }
-           set_min_global_cut(new_value);
+           m_instance->set_min_global_cut(new_value);
          });
        },
-       []() { return ::get_min_global_cut(); }},
+       [this]() { return m_instance->get_min_global_cut(); }},
       {"periodicity",
        [this](Variant const &v) {
          context()->parallel_try_catch(
