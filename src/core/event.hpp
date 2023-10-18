@@ -123,10 +123,6 @@ void on_thermostat_param_change();
  */
 void on_timestep_change();
 
-/** @brief Called when the force cap changed.
- */
-void on_forcecap_change();
-
 /** @brief Called when the node_grid changed.
  */
 void on_node_grid_change();

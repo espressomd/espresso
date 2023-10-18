@@ -25,6 +25,8 @@
  */
 
 #include "BoxGeometry.hpp"
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -33,7 +35,6 @@
 #include "constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "electrostatics/p3m_gpu.hpp"
-#include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
 #include "immersed_boundaries.hpp"
@@ -51,6 +52,8 @@
 #include "thermostats/langevin_inline.hpp"
 #include "virtual_sites.hpp"
 
+#include <utils/math/sqr.hpp>
+
 #include <boost/variant.hpp>
 
 #ifdef CALIPER
@@ -58,6 +61,7 @@
 #endif
 
 #include <cassert>
+#include <cmath>
 #include <memory>
 #include <variant>
 
@@ -148,14 +152,27 @@ void init_forces_ghosts(const ParticleRange &particles) {
   }
 }
 
-void force_calc(CellStructure &cell_structure, double time_step, double kT) {
+void force_capping(ParticleRange const &particles, double force_cap) {
+  if (force_cap > 0.) {
+    auto const force_cap_sq = Utils::sqr(force_cap);
+    for (auto &p : particles) {
+      auto const force_sq = p.force().norm2();
+      if (force_sq > force_cap_sq) {
+        p.force() *= force_cap / std::sqrt(force_sq);
+      }
+    }
+  }
+}
+
+void force_calc(System::System &system, double time_step, double kT) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
   auto const &box_geo = *system.box_geo;
   auto const &nonbonded_ias = *system.nonbonded_ias;
+  auto const force_cap = system.get_force_cap();
 #ifdef CUDA
 #ifdef CALIPER
   CALI_MARK_BEGIN("copy_particles_to_GPU");
@@ -271,7 +288,7 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   comfixed->apply(comm_cart, particles);
 
   // Needs to be the last one to be effective
-  forcecap_cap(particles);
+  force_capping(particles, force_cap);
 
   // mark that forces are now up-to-date
   recalc_forces = false;

@@ -27,8 +27,8 @@
 #include "VelocityVerlet.hpp"
 #include "VelocityVerletIsoNPT.hpp"
 
-#include "core/forcecap.hpp"
 #include "core/integrate.hpp"
+#include "core/system/System.hpp"
 
 #include <memory>
 #include <string>
@@ -77,8 +77,10 @@ IntegratorHandle::IntegratorHandle() {
       {"time", [](Variant const &v) { set_time(get_value<double>(v)); },
        []() { return get_sim_time(); }},
       {"force_cap",
-       [](Variant const &v) { set_force_cap(get_value<double>(v)); },
-       []() { return get_force_cap(); }},
+       [](Variant const &v) {
+         System::get_system().set_force_cap(get_value<double>(v));
+       },
+       []() { return System::get_system().get_force_cap(); }},
   });
 }
 

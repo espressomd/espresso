@@ -310,8 +310,6 @@ void on_timestep_change() {
   on_thermostat_param_change();
 }
 
-void on_forcecap_change() { recalc_forces = true; }
-
 void on_node_grid_change() {
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;

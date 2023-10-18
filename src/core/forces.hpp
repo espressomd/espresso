@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_FORCES_HPP
-#define CORE_FORCES_HPP
+
+#pragma once
+
 /** \file
  *  Force calculation.
  *
@@ -31,8 +32,8 @@
  */
 
 #include "ParticleRange.hpp"
-#include "cell_system/CellStructure.hpp"
 #include "galilei/ComFixed.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -57,7 +58,7 @@ void init_forces_ghosts(const ParticleRange &particles);
  *  <li> Calculate long range interaction forces
  *  </ol>
  */
-void force_calc(CellStructure &cell_structure, double time_step, double kT);
+void force_calc(System::System &system, double time_step, double kT);
 
 /** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(const ParticleRange &particles);
@@ -66,6 +67,4 @@ void calc_long_range_forces(const ParticleRange &particles);
 /** Update the NpT virial */
 void npt_add_virial_force_contribution(const Utils::Vector3d &force,
                                        const Utils::Vector3d &d);
-#endif
-
 #endif

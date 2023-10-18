@@ -52,6 +52,12 @@ public:
   Utils::Vector3d box() const;
   void init();
 
+  /** @brief Get @ref force_cap. */
+  auto get_force_cap() { return force_cap; }
+
+  /** @brief Set @ref force_cap. */
+  void set_force_cap(double value);
+
   /** @brief Get @ref min_global_cut. */
   double get_min_global_cut() const { return min_global_cut; }
 
@@ -68,6 +74,8 @@ public:
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
 
 protected:
+  /** @brief Molecular dynamics integrator force capping. */
+  double force_cap;
   /**
    * @brief Minimal global interaction cutoff.
    * Particles with a distance smaller than this are guaranteed

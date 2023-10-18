@@ -23,6 +23,7 @@
 #include "System.impl.hpp"
 
 #include "event.hpp"
+#include "integrate.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -37,6 +38,7 @@ System::System() {
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
+  force_cap = 0.;
   min_global_cut = INACTIVE_CUTOFF;
 }
 
@@ -56,6 +58,11 @@ void System::init() {
 #ifdef CUDA
   gpu.init();
 #endif
+}
+
+void System::set_force_cap(double value) {
+  force_cap = value;
+  ::recalc_forces = true;
 }
 
 void System::set_min_global_cut(double new_value) {

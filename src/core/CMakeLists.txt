@@ -30,7 +30,6 @@ add_library(
   dpd.cpp
   energy.cpp
   errorhandling.cpp
-  forcecap.cpp
   forces.cpp
   ghosts.cpp
   immersed_boundaries.cpp

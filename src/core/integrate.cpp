@@ -354,7 +354,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    force_calc(cell_structure, time_step, temperature);
+    force_calc(system, time_step, temperature);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -444,7 +444,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_particles();
 
-    force_calc(cell_structure, time_step, temperature);
+    force_calc(system, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc(time_step);
