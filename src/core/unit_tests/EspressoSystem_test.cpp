@@ -65,9 +65,8 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   auto system = std::make_shared<::System::System>();
   System::set_system(system);
   system->init();
+  system->set_cell_structure_topology(CellStructureType::REGULAR);
   auto &gpu = system->gpu;
-  auto &cell_structure = *system->cell_structure;
-  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
 
   // check uninitialized device pointers
   BOOST_CHECK_EQUAL(gpu.get_energy_device(), nullptr);

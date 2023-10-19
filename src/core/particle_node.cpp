@@ -26,7 +26,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "event.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "system/System.hpp"
@@ -476,7 +475,7 @@ static bool maybe_move_particle(int p_id, Utils::Vector3d const &pos) {
 
 void remove_all_particles() {
   get_cell_structure().remove_all_particles();
-  on_particle_change();
+  System::get_system().on_particle_change();
   clear_particle_node();
   clear_particle_type_map();
 }
@@ -503,7 +502,7 @@ void remove_particle(int p_id) {
     particle_node[p_id] = -1;
   }
   get_cell_structure().remove_particle(p_id);
-  on_particle_change();
+  System::get_system().on_particle_change();
   mpi_synchronize_max_seen_pid_local();
   if (this_node == 0) {
     particle_node.erase(p_id);
@@ -525,7 +524,7 @@ void make_new_particle(int p_id, Utils::Vector3d const &pos) {
     build_particle_node_parallel();
   }
   auto const has_created = maybe_insert_particle(p_id, pos);
-  on_particle_change();
+  System::get_system().on_particle_change();
 
   auto node = -1;
   auto const node_local = (has_created) ? ::comm_cart.rank() : 0;
@@ -541,7 +540,7 @@ void make_new_particle(int p_id, Utils::Vector3d const &pos) {
 void set_particle_pos(int p_id, Utils::Vector3d const &pos) {
   auto const has_moved = maybe_move_particle(p_id, pos);
   get_cell_structure().set_resort_particles(Cells::RESORT_GLOBAL);
-  on_particle_change();
+  System::get_system().on_particle_change();
 
   auto success = false;
   boost::mpi::reduce(::comm_cart, has_moved, success, std::plus<bool>{}, 0);

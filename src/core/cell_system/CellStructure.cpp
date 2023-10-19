@@ -257,7 +257,7 @@ void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
                                            BoxGeometry const &box,
                                            LocalBox &local_geo) {
   set_particle_decomposition(std::make_unique<AtomDecomposition>(comm, box));
-  m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
+  m_type = CellStructureType::NSQUARE;
   local_geo.set_cell_structure_type(m_type);
 }
 
@@ -266,15 +266,15 @@ void CellStructure::set_regular_decomposition(
     LocalBox &local_geo) {
   set_particle_decomposition(
       std::make_unique<RegularDecomposition>(comm, range, box, local_geo));
-  m_type = CellStructureType::CELL_STRUCTURE_REGULAR;
+  m_type = CellStructureType::REGULAR;
   local_geo.set_cell_structure_type(m_type);
 }
 
 void CellStructure::set_hybrid_decomposition(
-    boost::mpi::communicator const &comm, double cutoff_regular,
+    boost::mpi::communicator const &comm, double cutoff_regular, double skin,
     BoxGeometry const &box, LocalBox &local_geo, std::set<int> n_square_types) {
   set_particle_decomposition(std::make_unique<HybridDecomposition>(
-      comm, cutoff_regular, box, local_geo, n_square_types));
-  m_type = CellStructureType::CELL_STRUCTURE_HYBRID;
+      comm, cutoff_regular, skin, box, local_geo, n_square_types));
+  m_type = CellStructureType::HYBRID;
   local_geo.set_cell_structure_type(m_type);
 }

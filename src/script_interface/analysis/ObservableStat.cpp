@@ -24,8 +24,7 @@
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include "core/energy.hpp"
-#include "core/pressure.hpp"
+#include "core/Observable_stat.hpp"
 #include "core/system/System.hpp"
 
 #include <utils/Span.hpp>
@@ -136,17 +135,18 @@ static auto get_summary(::System::System const &system,
 
 Variant ObservableStat::do_call_method(std::string const &name,
                                        VariantMap const &parameters) {
+  auto &system = System::get_system();
   if (name == "calculate_energy") {
-    auto const obs = calculate_energy();
-    return get_summary(System::get_system(), *obs, false);
+    auto const obs = system.calculate_energy();
+    return get_summary(system, *obs, false);
   }
   if (name == "calculate_scalar_pressure") {
-    auto const obs = calculate_pressure();
-    return get_summary(System::get_system(), *obs, true);
+    auto const obs = system.calculate_pressure();
+    return get_summary(system, *obs, true);
   }
   if (name == "calculate_pressure_tensor") {
-    auto const obs = calculate_pressure();
-    return get_summary(System::get_system(), *obs, false);
+    auto const obs = system.calculate_pressure();
+    return get_summary(system, *obs, false);
   }
   return {};
 }

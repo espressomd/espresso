@@ -24,10 +24,6 @@
 /** \file
  *  Force calculation.
  *
- *  \todo Preprocessor switches for all forces (Default: everything is
- *        turned on).
- *  \todo Implement more flexible thermostat, e.g. which thermostat to use.
- *
  *  Implementation in forces.cpp.
  */
 

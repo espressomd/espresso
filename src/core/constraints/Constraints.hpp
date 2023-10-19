@@ -29,8 +29,6 @@
 #include <stdexcept>
 #include <vector>
 
-void on_constraint_change();
-
 namespace Constraints {
 template <class ParticleRange, class Constraint> class Constraints {
   using container_type = std::vector<std::shared_ptr<Constraint>>;
@@ -54,18 +52,20 @@ public:
     return std::find(begin(), end(), constraint) != end();
   }
   void add(std::shared_ptr<Constraint> const &constraint) {
-    auto const &box_geo = *System::get_system().box_geo;
+    auto &system = System::get_system();
+    auto const &box_geo = *system.box_geo;
     if (not constraint->fits_in_box(box_geo.length())) {
       throw std::runtime_error("Constraint not compatible with box size.");
     }
     assert(not contains(constraint));
     m_constraints.emplace_back(constraint);
-    on_constraint_change();
+    system.on_constraint_change();
   }
   void remove(std::shared_ptr<Constraint> const &constraint) {
+    auto &system = System::get_system();
     assert(contains(constraint));
     m_constraints.erase(std::remove(begin(), end(), constraint), end());
-    on_constraint_change();
+    system.on_constraint_change();
   }
 
   iterator begin() { return m_constraints.begin(); }

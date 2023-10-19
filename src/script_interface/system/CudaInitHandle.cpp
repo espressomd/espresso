@@ -48,21 +48,6 @@ CudaInitHandle::CudaInitHandle() {
   });
 }
 
-#ifdef CUDA
-/**
- * @brief Silently ignore CUDA exceptions.
- * This is useful when querying the properties of CUDA devices that may
- * not have a suitable CUDA version, or when there is no compatible CUDA
- * device available.
- */
-template <typename F> static void skip_cuda_errors(F &&fun) {
-  try {
-    fun();
-  } catch (cuda_runtime_error const &) {
-  }
-}
-#endif // CUDA
-
 Variant CudaInitHandle::do_call_method(std::string const &name,
                                        VariantMap const &parameters) {
   if (name == "list_devices") {
@@ -71,9 +56,9 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
     if (context()->is_head_node()) {
       // only GPUs on the head node can be used
       auto n_gpus = 0;
-      skip_cuda_errors([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
+      invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
       for (int i = 0; i < n_gpus; ++i) {
-        skip_cuda_errors([&devices, i]() {
+        invoke_skip_cuda_exceptions([&devices, i]() {
           char gpu_name_buffer[4 + 64];
           cuda_get_gpu_name(i, gpu_name_buffer);
           devices[i] = std::string{gpu_name_buffer};
@@ -110,7 +95,7 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
 #ifdef CUDA
     if (context()->is_head_node()) {
       // only GPUs on the head node can be used
-      skip_cuda_errors([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
+      invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
     }
 #endif // CUDA
     return n_gpus;

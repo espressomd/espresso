@@ -39,7 +39,6 @@
 #include "galilei/ComFixed.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
-#include "interactions.hpp"
 #include "lb/particle_coupling.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
@@ -170,6 +169,8 @@ void force_calc(System::System &system, double time_step, double kT) {
   auto &cell_structure = *system.cell_structure;
   auto const &box_geo = *system.box_geo;
   auto const &nonbonded_ias = *system.nonbonded_ias;
+  auto const verlet_skin = system.get_verlet_skin();
+  auto const interaction_range = system.get_interaction_range();
   auto const force_cap = system.get_force_cap();
 #ifdef CUDA
 #ifdef CALIPER
@@ -235,8 +236,8 @@ void force_calc(System::System &system, double time_step, double kT) {
           detect_collision(p1, p2, d.dist2);
 #endif
       },
-      cell_structure, maximal_cutoff(), maximal_cutoff_bonded(),
-      VerletCriterion<>{system, skin, interaction_range(), coulomb_cutoff,
+      cell_structure, system.maximal_cutoff(), maximal_cutoff_bonded(),
+      VerletCriterion<>{system, verlet_skin, interaction_range, coulomb_cutoff,
                         dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(box_geo, particles, get_sim_time());

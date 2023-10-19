@@ -28,7 +28,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "rotation.hpp"
@@ -92,7 +91,7 @@ void velocity_verlet_npt_finalize_p_inst(double time_step) {
 void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
                                        double time_step) {
 
-  auto const &system = System::get_system();
+  auto &system = System::get_system();
   auto &box_geo = *system.box_geo;
   auto &cell_structure = *system.cell_structure;
   Utils::Vector3d scal{};
@@ -162,7 +161,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles,
 
   box_geo.set_length(new_box);
   // fast box length update
-  on_boxl_change(true);
+  system.on_boxl_change(true);
 }
 
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,

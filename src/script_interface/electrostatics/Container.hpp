@@ -23,7 +23,6 @@
 
 #ifdef ELECTROSTATICS
 
-#include "core/event.hpp"
 #include "core/system/System.hpp"
 
 #include <script_interface/ScriptInterface.hpp>
@@ -40,19 +39,21 @@ class Container : public AutoParameters<Container> {
   ObjectRef m_extension;
 
   void reset_solver() {
-    auto &coulomb = System::get_system().coulomb;
+    auto &system = System::get_system();
+    auto &coulomb = system.coulomb;
     m_solver.reset();
     m_extension.reset();
     coulomb.impl->extension = std::nullopt;
     coulomb.impl->solver = std::nullopt;
-    ::on_coulomb_change();
+    system.on_coulomb_change();
   }
 
   void reset_extension() {
-    auto &coulomb = System::get_system().coulomb;
+    auto &system = System::get_system();
+    auto &coulomb = system.coulomb;
     m_extension.reset();
     coulomb.impl->extension = std::nullopt;
-    ::on_coulomb_change();
+    system.on_coulomb_change();
   }
 
 public:

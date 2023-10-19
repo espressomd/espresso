@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_SHORT_RANGE_HPP
-#define CORE_SHORT_RANGE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -59,4 +59,3 @@ void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
     cell_structure.non_bonded_loop(pair_kernel, verlet_criterion);
   }
 }
-#endif

@@ -16,10 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SYSTEM_STAND_ALONE_HPP
-#define ESPRESSO_SYSTEM_STAND_ALONE_HPP
+
+#pragma once
 
 #include <utils/Vector.hpp>
+
+#include <memory>
+
+namespace System {
+class System;
+}
 
 /** Manager for a stand-alone ESPResSo system.
  *  The system is default-initialized, MPI-ready and has no script interface.
@@ -34,6 +40,5 @@ public:
 
 private:
   bool head_node;
+  std::shared_ptr<System::System> m_instance;
 };
-
-#endif

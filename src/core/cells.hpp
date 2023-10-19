@@ -80,16 +80,6 @@ enum {
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular);
 
-/** Reinitialize the cell structures.
- *  @param cell_structure The cell structure to modify
- *  @param new_cs The new topology to use afterwards.
- */
-void cells_re_init(CellStructure &cell_structure, CellStructureType new_cs);
-
-inline void cells_re_init(CellStructure &cell_structure) {
-  cells_re_init(cell_structure, cell_structure.decomposition_type());
-}
-
 /** Update ghost information. If needed,
  *  the particles are also resorted.
  */

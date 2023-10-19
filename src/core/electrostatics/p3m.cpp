@@ -47,7 +47,6 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -250,6 +249,7 @@ void CoulombP3M::init() {
   auto const &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
+  auto const skin = system.get_verlet_skin();
 
   p3m.params.cao3 = Utils::int_pow<3>(p3m.params.cao);
   p3m.params.recalc_a_ai_cao_cut(box_geo.length());
@@ -574,7 +574,9 @@ public:
 
   P3MParameters &get_params() override { return p3m.params; }
 
-  void on_solver_change() const override { on_coulomb_change(); }
+  void on_solver_change() const override {
+    System::get_system().on_coulomb_change();
+  }
 
   void setup_logger(bool verbose) override {
     auto const &system = System::get_system();
@@ -745,7 +747,7 @@ void CoulombP3M::tune() {
       // run tuning algorithm
       parameters.tune();
       m_is_tuned = true;
-      on_coulomb_change();
+      System::get_system().on_coulomb_change();
     } catch (...) {
       p3m.params.tuning = false;
       throw;
@@ -787,7 +789,7 @@ void CoulombP3M::sanity_checks_boxl() const {
 
 void CoulombP3M::sanity_checks_periodicity() const {
   auto const &box_geo = *System::get_system().box_geo;
-  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
+  if (!box_geo.periodic(0) or !box_geo.periodic(1) or !box_geo.periodic(2)) {
     throw std::runtime_error(
         "CoulombP3M: requires periodicity (True, True, True)");
   }
@@ -795,15 +797,13 @@ void CoulombP3M::sanity_checks_periodicity() const {
 
 void CoulombP3M::sanity_checks_cell_structure() const {
   auto const &local_geo = *System::get_system().local_geo;
-  if (local_geo.cell_structure_type() !=
-          CellStructureType::CELL_STRUCTURE_REGULAR &&
-      local_geo.cell_structure_type() !=
-          CellStructureType::CELL_STRUCTURE_HYBRID) {
+  if (local_geo.cell_structure_type() != CellStructureType::REGULAR and
+      local_geo.cell_structure_type() != CellStructureType::HYBRID) {
     throw std::runtime_error(
         "CoulombP3M: requires the regular or hybrid decomposition cell system");
   }
-  if (::communicator.size > 1 && local_geo.cell_structure_type() ==
-                                     CellStructureType::CELL_STRUCTURE_HYBRID) {
+  if (::communicator.size > 1 and
+      local_geo.cell_structure_type() == CellStructureType::HYBRID) {
     throw std::runtime_error(
         "CoulombP3M: does not work with the hybrid decomposition cell system, "
         "if using more than one MPI node");

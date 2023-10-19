@@ -35,7 +35,6 @@
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
@@ -106,8 +105,7 @@ static void search_distance_sanity_check_max_range(double const distance) {
 static void search_distance_sanity_check_cell_structure(double const distance) {
   auto const &system = System::get_system();
   auto const &cell_structure = *system.cell_structure;
-  if (cell_structure.decomposition_type() ==
-      CellStructureType::CELL_STRUCTURE_HYBRID) {
+  if (cell_structure.decomposition_type() == CellStructureType::HYBRID) {
     throw std::runtime_error("Cannot search for neighbors in the hybrid "
                              "decomposition cell system");
   }
@@ -204,46 +202,20 @@ std::vector<NeighborPIDs> get_neighbor_pids() {
 
 void set_hybrid_decomposition(std::set<int> n_square_types,
                               double cutoff_regular) {
-  auto const &system = System::get_system();
+  auto &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto &local_geo = *system.local_geo;
   auto &cell_structure = *system.cell_structure;
-  cell_structure.set_hybrid_decomposition(comm_cart, cutoff_regular, box_geo,
-                                          local_geo, n_square_types);
-  on_cell_structure_change();
-}
-
-void cells_re_init(CellStructure &cell_structure, CellStructureType new_cs) {
-  auto const &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
-  auto &local_geo = *system.local_geo;
-  switch (new_cs) {
-  case CellStructureType::CELL_STRUCTURE_REGULAR:
-    cell_structure.set_regular_decomposition(comm_cart, interaction_range(),
-                                             box_geo, local_geo);
-    break;
-  case CellStructureType::CELL_STRUCTURE_NSQUARE:
-    cell_structure.set_atom_decomposition(comm_cart, box_geo, local_geo);
-    break;
-  case CellStructureType::CELL_STRUCTURE_HYBRID: {
-    /* Get current HybridDecomposition to extract n_square_types */
-    auto &current_hybrid_decomposition =
-        dynamic_cast<HybridDecomposition const &>(
-            std::as_const(cell_structure).decomposition());
-    cell_structure.set_hybrid_decomposition(
-        comm_cart, current_hybrid_decomposition.get_cutoff_regular(), box_geo,
-        local_geo, current_hybrid_decomposition.get_n_square_types());
-    break;
-  }
-  default:
-    throw std::runtime_error("Unknown cell system type");
-  }
-
-  on_cell_structure_change();
+  auto const skin = system.get_verlet_skin();
+  cell_structure.set_hybrid_decomposition(comm_cart, cutoff_regular, skin,
+                                          box_geo, local_geo, n_square_types);
+  system.on_cell_structure_change();
 }
 
 void check_resort_particles() {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto const skin = system.get_verlet_skin();
 
   auto const level = (cell_structure.check_resort_required(
                          cell_structure.local_particles(), skin))

@@ -32,9 +32,8 @@ add_library(
   errorhandling.cpp
   forces.cpp
   ghosts.cpp
+  global_ghost_flags.cpp
   immersed_boundaries.cpp
-  interactions.cpp
-  event.cpp
   integrate.cpp
   npt.cpp
   partCfg_global.cpp
@@ -42,7 +41,6 @@ add_library(
   polymer.cpp
   pressure.cpp
   rattle.cpp
-  rotate_system.cpp
   rotation.cpp
   Observable_stat.cpp
   thermostat.cpp

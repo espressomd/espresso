@@ -23,8 +23,8 @@
 
 #include "communication.hpp"
 
+#include "cuda/init.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 
 #ifdef WALBERLA
 #include <walberla_bridge/walberla_init.hpp>
@@ -79,7 +79,9 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   walberla::mpi_init();
 #endif
 
-  on_program_start();
+#ifdef CUDA
+  cuda_on_program_start();
+#endif
 }
 } // namespace Communication
 
@@ -105,7 +107,6 @@ void Communicator::full_initialization() {
 void Communicator::set_node_grid(Utils::Vector3i const &value) {
   node_grid = value;
   init_comm_cart();
-  on_node_grid_change();
 }
 
 Utils::Vector3i Communicator::calc_node_index() const {

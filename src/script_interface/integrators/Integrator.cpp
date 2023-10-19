@@ -20,6 +20,7 @@
 #include "Integrator.hpp"
 
 #include "core/integrate.hpp"
+#include "core/system/System.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 
@@ -48,7 +49,8 @@ Variant Integrator::integrate(VariantMap const &params) {
   auto const reuse_forces = reuse_forces_flag
                                 ? INTEG_REUSE_FORCES_ALWAYS
                                 : INTEG_REUSE_FORCES_CONDITIONALLY;
-  return ::integrate_with_signal_handler(steps, reuse_forces,
+  auto &system = System::get_system();
+  return ::integrate_with_signal_handler(system, steps, reuse_forces,
                                          update_accumulators);
 }
 

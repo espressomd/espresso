@@ -39,7 +39,6 @@ namespace bdata = boost::unit_test::data;
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -156,7 +155,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   auto const box_l = 8.;
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
   espresso::system->set_node_grid(node_grid);
-  auto const &system = System::get_system();
+  auto &system = System::get_system();
 
   // particle properties
   auto const pid1 = 9;
@@ -176,7 +175,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   LJ_Parameters lj{eps, sig, cut, offset, min, shift};
   system.nonbonded_ias->make_particle_type_exist(1);
   system.nonbonded_ias->get_ia_param(0, 1).lj = lj;
-  on_non_bonded_ia_change();
+  system.on_non_bonded_ia_change();
 
   // set up velocity-Verlet integrator
   auto const time_step = 0.01;
@@ -206,7 +205,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
 
     // integrate until both particles are closer than cutoff
     {
-      integrate(11, INTEG_REUSE_FORCES_CONDITIONALLY);
+      integrate(system, 11, INTEG_REUSE_FORCES_CONDITIONALLY);
       auto const p1_opt = copy_particle_to_head_node(comm, pid1);
       auto const p2_opt = copy_particle_to_head_node(comm, pid2);
       if (rank == 0) {
@@ -218,7 +217,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
 
     // check forces and Verlet update
     {
-      integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
+      integrate(system, 1, INTEG_REUSE_FORCES_CONDITIONALLY);
       auto const p1_opt = copy_particle_to_head_node(comm, pid1);
 #ifdef EXTERNAL_FORCES
       auto const p2_opt = copy_particle_to_head_node(comm, pid2);
@@ -255,7 +254,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
       }
     }
     {
-      integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
+      integrate(system, 0, INTEG_REUSE_FORCES_CONDITIONALLY);
       auto const p3_opt = copy_particle_to_head_node(comm, pid3);
       if (rank == 0) {
         auto const &p3 = *p3_opt;

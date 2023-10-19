@@ -38,7 +38,7 @@ namespace utf = boost::unit_test;
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
+#include "global_ghost_flags.hpp"
 #include "lb/LBNone.hpp"
 #include "lb/LBWalberla.hpp"
 #include "lb/particle_coupling.hpp"

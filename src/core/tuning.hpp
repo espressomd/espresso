@@ -19,8 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_TUNING_HPP
-#define ESPRESSO_SRC_CORE_TUNING_HPP
+#pragma once
+
+#include "system/System.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -40,12 +41,4 @@ public:
  * @param int_steps   Number of integration steps.
  * @return Average time per integration loop in milliseconds.
  */
-double benchmark_integration_step(int int_steps);
-
-/** Set the optimal @ref skin between @p min_skin and @p max_skin
- *  by bisection to tolerance @p tol.
- */
-void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
-               bool adjust_max_skin);
-
-#endif
+double benchmark_integration_step(System::System &system, int int_steps);

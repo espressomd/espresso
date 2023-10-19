@@ -140,7 +140,7 @@ private:
   /** Implementation of the primary particle decomposition */
   std::unique_ptr<ParticleDecomposition> m_decomposition;
   /** Active type in m_decomposition */
-  CellStructureType m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
+  CellStructureType m_type = CellStructureType::NSQUARE;
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
@@ -537,13 +537,14 @@ public:
    *
    * @param comm Communicator to use.
    * @param cutoff_regular Interaction cutoff_regular.
+   * @param skin Verlet list skin.
    * @param box Box geometry.
    * @param local_geo Geometry of the local box.
    * @param n_square_types Particle types to put into n_square decomposition.
    */
   void set_hybrid_decomposition(boost::mpi::communicator const &comm,
-                                double cutoff_regular, BoxGeometry const &box,
-                                LocalBox &local_geo,
+                                double cutoff_regular, double skin,
+                                BoxGeometry const &box, LocalBox &local_geo,
                                 std::set<int> n_square_types);
 
 private:
@@ -555,8 +556,9 @@ private:
    */
   template <class Kernel> void link_cell(Kernel kernel) {
     auto const maybe_box = decomposition().minimum_image_distance();
-    auto const first = boost::make_indirect_iterator(local_cells().begin());
-    auto const last = boost::make_indirect_iterator(local_cells().end());
+    auto const local_cells_span = local_cells();
+    auto const first = boost::make_indirect_iterator(local_cells_span.begin());
+    auto const last = boost::make_indirect_iterator(local_cells_span.end());
 
     if (maybe_box) {
       Algorithm::link_cell(

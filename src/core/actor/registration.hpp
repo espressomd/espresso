@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ACTOR_REGISTRATION_HPP
-#define ESPRESSO_SRC_CORE_ACTOR_REGISTRATION_HPP
+#pragma once
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -27,10 +26,10 @@
 #include <memory>
 #include <optional>
 
-template <typename Variant, typename T>
+template <typename Variant, typename T, class F>
 void add_actor(boost::mpi::communicator const &comm,
                std::optional<Variant> &active_actor,
-               std::shared_ptr<T> const &actor, void (&on_actor_change)()) {
+               std::shared_ptr<T> const &actor, F &&on_actor_change) {
   std::optional<Variant> other = actor;
   auto const cleanup_if_any_rank_failed = [&](bool failed) {
     if (boost::mpi::all_reduce(comm, failed, std::logical_or<>())) {
@@ -48,5 +47,3 @@ void add_actor(boost::mpi::communicator const &comm,
     throw;
   }
 }
-
-#endif

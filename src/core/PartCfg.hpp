@@ -32,8 +32,8 @@
  * This implementation fetches all particles to the head node on first access,
  * which invalidates all existing particle pointers. Updates of the particle
  * data are triggered automatically on access. The data in the cache
- * is invalidated automatically by @ref on_particle_change, and then
- * updated on the next access.
+ * is invalidated automatically by @ref System::System::on_particle_change,
+ * and then updated on the next access.
  */
 class PartCfg {
   /** The particle data */

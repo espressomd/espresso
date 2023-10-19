@@ -22,10 +22,9 @@
 #include "reaction_methods/ReactionAlgorithm.hpp"
 
 #include "BoxGeometry.hpp"
+#include "Observable_stat.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "energy.hpp"
-#include "event.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
@@ -84,8 +83,9 @@ void ReactionAlgorithm::add_reaction(
  * after each deletion).
  */
 void ReactionAlgorithm::restore_old_system_state() {
+  auto &system = System::get_system();
   auto const &old_state = get_old_system_state();
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *system.box_geo;
   // restore the properties of changed and hidden particles
   for (auto const &state : {old_state.changed, old_state.hidden}) {
     for (auto const &[p_id, p_type] : state) {
@@ -118,7 +118,7 @@ void ReactionAlgorithm::restore_old_system_state() {
     auto &cell_structure = *system.cell_structure;
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   }
-  on_particle_change();
+  system.on_particle_change();
   clear_old_system_state();
 }
 
@@ -229,9 +229,9 @@ void ReactionAlgorithm::make_reaction_attempt(SingleReaction const &reaction,
   }
   // determine which fine-grained event to trigger
   if (n_product_types == n_reactant_types and only_local_changes) {
-    on_particle_local_change();
+    System::get_system().on_particle_local_change();
   } else {
-    on_particle_change();
+    System::get_system().on_particle_change();
   }
 }
 
@@ -340,7 +340,8 @@ void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
                   all_ids.end());
     particle_ids = all_ids;
   } else {
-    on_observable_calc();
+    auto &system = System::get_system();
+    system.on_observable_calc();
     auto const local_ids =
         get_short_range_neighbors(p_id, m_max_exclusion_range);
     assert(p1_ptr == nullptr or !!local_ids);
@@ -624,7 +625,8 @@ void ReactionAlgorithm::setup_bookkeeping_of_empty_pids() {
 }
 
 double ReactionAlgorithm::calculate_potential_energy() const {
-  auto const obs = calculate_energy();
+  auto &system = System::get_system();
+  auto const obs = system.calculate_energy();
   auto pot = obs->accumulate(-obs->kinetic[0]);
   boost::mpi::broadcast(m_comm, pot, 0);
   return pot;

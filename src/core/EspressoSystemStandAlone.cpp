@@ -25,8 +25,6 @@
 #include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "event.hpp"
-#include "integrate.hpp"
 #include "system/System.hpp"
 #include "system/System.impl.hpp"
 #include "virtual_sites.hpp"
@@ -51,26 +49,26 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
 #ifdef VIRTUAL_SITES
   set_virtual_sites(std::make_shared<VirtualSitesOff>());
 #endif
-  auto system = std::make_shared<::System::System>();
-  ::System::set_system(system);
-  auto &cell_structure = *system->cell_structure;
-  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
+  m_instance = std::make_shared<::System::System>();
+  ::System::set_system(m_instance);
+  m_instance->set_cell_structure_topology(CellStructureType::REGULAR);
 }
 
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {
-  System::get_system().box_geo->set_length(box_l);
-  on_boxl_change();
+  m_instance->box_geo->set_length(box_l);
+  m_instance->on_boxl_change();
 }
 
 void EspressoSystemStandAlone::set_node_grid(
     Utils::Vector3i const &node_grid) const {
   ::communicator.set_node_grid(node_grid);
+  m_instance->on_node_grid_change();
 }
 
 void EspressoSystemStandAlone::set_time_step(double time_step) const {
-  ::set_time_step(time_step);
+  m_instance->set_time_step(time_step);
 }
 
 void EspressoSystemStandAlone::set_skin(double new_skin) const {
-  ::set_skin(new_skin);
+  m_instance->set_verlet_skin(new_skin);
 }

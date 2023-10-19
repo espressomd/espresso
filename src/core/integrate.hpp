@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef INTEGRATE_H
-#define INTEGRATE_H
+
+#pragma once
 
 /** \file
  *  Molecular dynamics integrator.
@@ -28,6 +28,8 @@
  */
 
 #include "config/config.hpp"
+
+#include "system/System.hpp"
 
 #ifdef WALBERLA
 #include <string>
@@ -63,13 +65,8 @@
 /** Switch determining which integrator to use. */
 extern int integ_switch;
 
-/** Verlet list skin. */
-extern double skin;
-
 /** If true, the forces will be recalculated before the next integration. */
 extern bool recalc_forces;
-
-double interaction_range();
 
 /** Check integrator parameters and incompatibilities between the integrator
  *  and the currently active thermostat(s).
@@ -87,6 +84,7 @@ void walberla_agrid_sanity_checks(std::string method,
 #endif // WALBERLA
 
 /** Integrate equations of motion
+ *  @param system        system to propagate
  *  @param n_steps       Number of integration steps, can be zero
  *  @param reuse_forces  Decide when to re-calculate forces
  *
@@ -117,13 +115,10 @@ void walberla_agrid_sanity_checks(std::string method,
  *
  *  @return number of steps that have been integrated, or a negative error code
  */
-int integrate(int n_steps, int reuse_forces);
+int integrate(System::System &system, int n_steps, int reuse_forces);
 
-int integrate_with_signal_handler(int n_steps, int reuse_forces,
-                                  bool update_accumulators);
-
-/** Get @c verlet_reuse */
-double get_verlet_reuse();
+int integrate_with_signal_handler(System::System &system, int n_steps,
+                                  int reuse_forces, bool update_accumulators);
 
 /** Get time step */
 double get_time_step();
@@ -134,15 +129,7 @@ double get_sim_time();
 /** Increase simulation time (only on head node) */
 void increment_sim_time(double amount);
 
-/** Set new @ref time_step. */
-void set_time_step(double value);
-
-/** @brief Set new skin. */
-void set_skin(double value);
-
 /** @brief Set the simulation time. */
 void set_time(double value);
 
 void set_integ_switch(int value);
-
-#endif

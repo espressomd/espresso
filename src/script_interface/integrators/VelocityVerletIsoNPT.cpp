@@ -25,9 +25,9 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include "core/event.hpp"
 #include "core/integrate.hpp"
 #include "core/npt.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -66,7 +66,7 @@ void VelocityVerletIsoNPT::do_construct(VariantMap const &params) {
 void VelocityVerletIsoNPT::activate() const {
   ::nptiso = get_instance();
   set_integ_switch(INTEG_METHOD_NPT_ISO);
-  on_thermostat_param_change();
+  System::get_system().on_thermostat_param_change();
 }
 
 } // namespace Integrators

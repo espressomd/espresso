@@ -81,7 +81,6 @@ public:
       boundaries[2u * dir + 1u] = -(node_index[dir] + 1 == node_grid[dir]);
     }
 
-    return {my_left, local_length, boundaries,
-            CellStructureType::CELL_STRUCTURE_REGULAR};
+    return {my_left, local_length, boundaries, CellStructureType::REGULAR};
   }
 };

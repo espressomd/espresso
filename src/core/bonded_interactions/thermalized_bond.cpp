@@ -24,7 +24,7 @@
  */
 
 #include "thermalized_bond.hpp"
-#include "event.hpp"
+#include "system/System.hpp"
 
 int n_thermalized_bonds = 0;
 
@@ -43,5 +43,5 @@ ThermalizedBond::ThermalizedBond(double temp_com, double gamma_com,
   pref2_dist = -1.;
 
   n_thermalized_bonds++;
-  on_thermostat_param_change();
+  System::get_system().on_thermostat_param_change();
 }

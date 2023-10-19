@@ -40,7 +40,6 @@
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "system/System.hpp"
 
@@ -108,7 +107,8 @@ void ICCStar::iteration(CellStructure &cell_structure,
     return;
   }
 
-  auto const &coulomb = System::get_system().coulomb;
+  auto &system = System::get_system();
+  auto const &coulomb = system.coulomb;
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
   auto const pref = 1. / (prefactor * 2. * Utils::pi());
@@ -207,7 +207,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
         << "ICC failed to converge in the given number of maximal steps.";
   }
 
-  on_particle_charge_change();
+  system.on_particle_charge_change();
 }
 
 void icc_data::sanity_checks() const {
@@ -236,7 +236,8 @@ ICCStar::ICCStar(icc_data data) {
 
 void ICCStar::on_activation() const {
   sanity_check();
-  on_particle_charge_change();
+  auto &system = System::get_system();
+  system.on_particle_charge_change();
 }
 
 struct SanityChecksICC {

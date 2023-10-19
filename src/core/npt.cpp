@@ -24,7 +24,6 @@
 #include "config/config.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "system/System.hpp"

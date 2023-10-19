@@ -34,7 +34,6 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "specfunc.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -150,8 +149,7 @@ void CoulombMMM1D::sanity_checks_periodicity() const {
 
 void CoulombMMM1D::sanity_checks_cell_structure() const {
   auto const &local_geo = *System::get_system().local_geo;
-  if (local_geo.cell_structure_type() !=
-      CellStructureType::CELL_STRUCTURE_NSQUARE) {
+  if (local_geo.cell_structure_type() != CellStructureType::NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");
   }
 }
@@ -329,9 +327,10 @@ void CoulombMMM1D::tune() {
     return;
   }
   recalc_boxl_parameters();
+  auto &system = System::get_system();
 
   if (far_switch_radius_sq < 0.) {
-    auto const &box_geo = *System::get_system().box_geo;
+    auto const &box_geo = *system.box_geo;
     auto const maxrad = box_geo.length()[2];
     auto min_time = std::numeric_limits<double>::infinity();
     auto min_rad = -1.;
@@ -341,10 +340,10 @@ void CoulombMMM1D::tune() {
       if (switch_radius > bessel_radii.back()) {
         // this switching radius is large enough for our Bessel series
         far_switch_radius_sq = Utils::sqr(switch_radius);
-        on_coulomb_change();
+        system.on_coulomb_change();
 
         /* perform force calculation test */
-        auto const int_time = benchmark_integration_step(tune_timings);
+        auto const int_time = benchmark_integration_step(system, tune_timings);
 
         if (tune_verbose) {
           std::printf("r= %f t= %f ms\n", switch_radius, int_time);
@@ -368,7 +367,7 @@ void CoulombMMM1D::tune() {
   }
 
   m_is_tuned = true;
-  on_coulomb_change();
+  system.on_coulomb_change();
 }
 
 #endif // ELECTROSTATICS

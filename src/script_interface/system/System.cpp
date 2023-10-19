@@ -19,21 +19,31 @@
 
 #include "System.hpp"
 
+#include "config/config.hpp"
 #include "core/BoxGeometry.hpp"
+#include "core/Particle.hpp"
+#include "core/ParticleRange.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/cell_system/CellStructureType.hpp"
 #include "core/cells.hpp"
-#include "core/event.hpp"
+#include "core/communication.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
-#include "core/rotate_system.hpp"
+#include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/vec_rotate.hpp>
 
+#include <boost/mpi/collectives.hpp>
+
+#include <algorithm>
+#include <array>
 #include <cassert>
+#include <cmath>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -43,19 +53,6 @@ namespace ScriptInterface {
 namespace System {
 
 static bool system_created = false;
-
-static Utils::Vector3b get_periodicity() {
-  auto const &box_geo = *::System::get_system().box_geo;
-  return {box_geo.periodic(0), box_geo.periodic(1), box_geo.periodic(2)};
-}
-
-static void set_periodicity(Utils::Vector3b const &value) {
-  auto &box_geo = *::System::get_system().box_geo;
-  for (int i = 0; i < 3; ++i) {
-    box_geo.set_periodic(i, value[i]);
-  }
-  on_periodicity_change();
-}
 
 System::System() {
   add_parameters({
@@ -67,7 +64,7 @@ System::System() {
              throw std::domain_error("Attribute 'box_l' must be > 0");
            }
            m_instance->box_geo->set_length(new_value);
-           on_boxl_change();
+           m_instance->on_boxl_change();
          });
        },
        []() { return ::System::get_system().box_geo->length(); }},
@@ -84,10 +81,18 @@ System::System() {
        [this]() { return m_instance->get_min_global_cut(); }},
       {"periodicity",
        [this](Variant const &v) {
+         auto const periodicity = get_value<Utils::Vector3b>(v);
+         for (unsigned int i = 0u; i < 3u; ++i) {
+           m_instance->box_geo->set_periodic(i, periodicity[i]);
+         }
          context()->parallel_try_catch(
-             [&]() { set_periodicity(get_value<Utils::Vector3b>(v)); });
+             [&]() { m_instance->on_periodicity_change(); });
        },
-       []() { return get_periodicity(); }},
+       [this]() {
+         return Utils::Vector3b{m_instance->box_geo->periodic(0),
+                                m_instance->box_geo->periodic(1),
+                                m_instance->box_geo->periodic(2)};
+       }},
       {"max_oif_objects", ::max_oif_objects},
   });
 }
@@ -111,10 +116,9 @@ void System::do_construct(VariantMap const &params) {
   m_instance->init();
 
   // domain decomposition can only be set after box_l is set
-  auto &cell_structure = *m_instance->cell_structure;
-  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_NSQUARE);
+  m_instance->set_cell_structure_topology(CellStructureType::NSQUARE);
   do_set_parameter("box_l", params.at("box_l"));
-  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
+  m_instance->set_cell_structure_topology(CellStructureType::REGULAR);
 
   if (params.count("periodicity")) {
     do_set_parameter("periodicity", params.at("periodicity"));
@@ -127,6 +131,44 @@ void System::do_construct(VariantMap const &params) {
       do_set_parameter(name, value);
     }
   }
+}
+
+static void rotate_system(CellStructure &cell_structure, double phi,
+                          double theta, double alpha) {
+  auto const particles = cell_structure.local_particles();
+
+  // Calculate center of mass
+  Utils::Vector3d local_com{};
+  double local_mass = 0.0;
+
+  for (auto const &p : particles) {
+    if (not p.is_virtual()) {
+      local_com += p.mass() * p.pos();
+      local_mass += p.mass();
+    }
+  }
+
+  auto const total_mass =
+      boost::mpi::all_reduce(comm_cart, local_mass, std::plus<>());
+  auto const com =
+      boost::mpi::all_reduce(comm_cart, local_com, std::plus<>()) / total_mass;
+
+  // Rotation axis in Cartesian coordinates
+  Utils::Vector3d axis;
+  axis[0] = std::sin(theta) * std::cos(phi);
+  axis[1] = std::sin(theta) * std::sin(phi);
+  axis[2] = std::cos(theta);
+
+  // Rotate particle coordinates
+  for (auto &p : particles) {
+    // Move the center of mass of the system to the origin
+    p.pos() = com + Utils::vec_rotate(axis, alpha, p.pos() - com);
+#ifdef ROTATION
+    local_rotate_particle(p, axis, alpha);
+#endif
+  }
+
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 }
 
 /** Rescale all particle positions in direction @p dir by a factor @p scale.
@@ -143,7 +185,6 @@ static void rescale_particles(CellStructure &cell_structure, int dir,
       p.pos() *= scale;
     }
   }
-  on_particle_change();
 }
 
 Variant System::do_call_method(std::string const &name,
@@ -176,11 +217,13 @@ Variant System::do_call_method(std::string const &name,
     // when shrinking, rescale the particles first
     if (scale <= 1.) {
       rescale_particles(*m_instance->cell_structure, coord, scale);
+      m_instance->on_particle_change();
     }
     m_instance->box_geo->set_length(new_value);
-    on_boxl_change();
+    m_instance->on_boxl_change();
     if (scale > 1.) {
       rescale_particles(*m_instance->cell_structure, coord, scale);
+      m_instance->on_particle_change();
     }
     return {};
   }
@@ -214,6 +257,8 @@ Variant System::do_call_method(std::string const &name,
                   get_value<double>(parameters, "phi"),
                   get_value<double>(parameters, "theta"),
                   get_value<double>(parameters, "alpha"));
+    m_instance->on_particle_change();
+    m_instance->update_dependent_particles();
     return {};
   }
   if (name == "session_shutdown") {

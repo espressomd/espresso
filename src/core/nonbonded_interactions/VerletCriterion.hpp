@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_NB_IA_VERLETCRITERION_HPP
-#define CORE_NB_IA_VERLETCRITERION_HPP
+
+#pragma once
 
 #include "Particle.hpp"
 #include "config/config.hpp"
@@ -96,4 +96,3 @@ public:
            (dist2 <= Utils::sqr(ia_cut + m_skin));
   }
 };
-#endif

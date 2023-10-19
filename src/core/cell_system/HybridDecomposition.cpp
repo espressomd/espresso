@@ -26,7 +26,7 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
-#include "event.hpp"
+#include "global_ghost_flags.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>
@@ -41,7 +41,7 @@
 #include <utility>
 
 HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
-                                         double cutoff_regular,
+                                         double cutoff_regular, double skin,
                                          BoxGeometry const &box_geo,
                                          LocalBox const &local_box,
                                          std::set<int> n_square_types)

@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_FORCES_INLINE_HPP
-#define CORE_FORCES_INLINE_HPP
+
+#pragma once
+
 /** \file
  *  Force calculation.
  */
@@ -490,5 +491,3 @@ add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
     throw BondInvalidSizeError{number_of_partners(iaparams)};
   }
 }
-
-#endif // CORE_FORCES_INLINE_HPP

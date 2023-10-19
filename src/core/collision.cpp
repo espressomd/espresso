@@ -28,7 +28,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "system/System.hpp"
 #include "virtual_sites.hpp"
@@ -230,7 +229,7 @@ void Collision_parameters::initialize() {
         collision_params.part_type_after_glueing);
   }
 
-  on_short_range_ia_change();
+  system.on_short_range_ia_change();
 }
 
 void prepare_local_collision_queue() { local_collision_queue.clear(); }
@@ -485,7 +484,6 @@ static void three_particle_binding_domain_decomposition(
 void handle_collisions(CellStructure &cell_structure) {
   auto const &system = System::get_system();
   auto const &box_geo = *system.box_geo;
-  auto const min_global_cut = system.get_min_global_cut();
   // Note that the glue to surface mode adds bonds between the centers
   // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
@@ -507,6 +505,7 @@ void handle_collisions(CellStructure &cell_structure) {
 
 // Virtual sites based collision schemes
 #ifdef VIRTUAL_SITES_RELATIVE
+  auto const min_global_cut = system.get_min_global_cut();
   if ((collision_params.mode == CollisionModeType::BIND_VS) ||
       (collision_params.mode == CollisionModeType::GLUE_TO_SURF)) {
     // Gather the global collision queue, because only one node has a collision

@@ -23,7 +23,6 @@
 
 #ifdef DIPOLES
 
-#include "core/event.hpp"
 #include "core/system/System.hpp"
 
 #include <script_interface/ScriptInterface.hpp>
@@ -39,10 +38,10 @@ class Container : public AutoParameters<Container> {
   ObjectRef m_solver;
 
   void reset_solver() {
-    auto &dipoles = System::get_system().dipoles;
+    auto &system = System::get_system();
     m_solver.reset();
-    dipoles.impl->solver = std::nullopt;
-    ::on_dipoles_change();
+    system.dipoles.impl->solver = std::nullopt;
+    system.on_dipoles_change();
   }
 
 public:

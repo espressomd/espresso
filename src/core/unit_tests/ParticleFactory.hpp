@@ -21,7 +21,6 @@
 
 #include "BondList.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "event.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
@@ -53,17 +52,19 @@ struct ParticleFactory {
 
   void insert_particle_bond(int p_id, int bond_id,
                             std::vector<int> const &partner_ids) const {
-    auto p = System::get_system().cell_structure->get_local_particle(p_id);
+    auto &system = System::get_system();
+    auto p = system.cell_structure->get_local_particle(p_id);
     if (p != nullptr and not p->is_ghost()) {
       p->bonds().insert(BondView(bond_id, partner_ids));
     }
-    on_particle_change();
+    system.on_particle_change();
   }
 
   template <typename T>
   void set_particle_property(int p_id, T &(Particle::*setter)(),
                              T const &value) const {
-    auto p = System::get_system().cell_structure->get_local_particle(p_id);
+    auto &system = System::get_system();
+    auto p = system.cell_structure->get_local_particle(p_id);
     if (p != nullptr) {
       (p->*setter)() = value;
     }

@@ -25,7 +25,6 @@
 #include "WalberlaCheckpoint.hpp"
 
 #include "core/BoxGeometry.hpp"
-#include "core/event.hpp"
 #include "core/integrate.hpp"
 #include "core/lb/LBWalberla.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
@@ -111,7 +110,7 @@ Variant LBFluid::do_call_method(std::string const &name,
   if (name == "clear_boundaries") {
     m_instance->clear_boundaries();
     m_instance->ghost_communication();
-    on_lb_boundary_conditions_change();
+    ::System::get_system().on_lb_boundary_conditions_change();
     return {};
   }
   if (name == "add_boundary_from_shape") {

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_HPP
-#define VIRTUAL_SITES_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -51,8 +51,7 @@ std::tuple<Utils::Quaternion<double>, double> calculate_vs_relate_to_params(
  * @param[in]     box_geo      Box geometry.
  * @param[in,out] p_vs         Virtual site.
  * @param[in]     p_relate_to  Real particle to follow.
- * @param[in]     min_global_cut  @copybrief
- * InteractionsNonBonded::min_global_cut.
+ * @param[in]     min_global_cut  Minimal global cutoff.
  */
 inline void vs_relate_to(Particle &p_vs, Particle const &p_relate_to,
                          BoxGeometry const &box_geo, double min_global_cut) {
@@ -66,4 +65,3 @@ inline void vs_relate_to(Particle &p_vs, Particle const &p_relate_to,
 
 #endif // VIRTUAL_SITES_RELATIVE
 #endif // VIRTUAL_SITES
-#endif

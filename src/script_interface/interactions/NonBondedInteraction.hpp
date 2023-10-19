@@ -29,7 +29,6 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
 
-#include "core/event.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/system/System.hpp"
 
@@ -104,7 +103,7 @@ public:
       });
       if (m_types[0] != -1) {
         copy_si_to_core();
-        on_non_bonded_ia_change();
+        System::get_system().on_non_bonded_ia_change();
       }
       return {};
     }
@@ -112,7 +111,7 @@ public:
       m_ia_si = std::make_shared<CoreInteraction>();
       if (m_types[0] != -1) {
         copy_si_to_core();
-        on_non_bonded_ia_change();
+        System::get_system().on_non_bonded_ia_change();
       }
       return {};
     }
@@ -797,7 +796,7 @@ class NonBondedInteractionHandle
         auto const types = Variant{std::vector<int>{{m_types[0], m_types[1]}}};
         member->do_call_method("bind_types", VariantMap{{"_types", types}});
         member->copy_si_to_core();
-        on_non_bonded_ia_change();
+        System::get_system().on_non_bonded_ia_change();
       }
     };
     return AutoParameter{key, setter, [&member]() { return member; }};

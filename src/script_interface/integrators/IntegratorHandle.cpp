@@ -70,8 +70,9 @@ IntegratorHandle::IntegratorHandle() {
        }},
       {"time_step",
        [this](Variant const &v) {
-         context()->parallel_try_catch(
-             [&]() { set_time_step(get_value<double>(v)); });
+         context()->parallel_try_catch([&]() {
+           System::get_system().set_time_step(get_value<double>(v));
+         });
        },
        []() { return get_time_step(); }},
       {"time", [](Variant const &v) { set_time(get_value<double>(v)); },

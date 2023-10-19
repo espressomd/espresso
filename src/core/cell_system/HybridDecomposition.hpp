@@ -77,8 +77,8 @@ class HybridDecomposition : public ParticleDecomposition {
 
 public:
   HybridDecomposition(boost::mpi::communicator comm, double cutoff_regular,
-                      BoxGeometry const &box_geo, LocalBox const &local_box,
-                      std::set<int> n_square_types);
+                      double skin, BoxGeometry const &box_geo,
+                      LocalBox const &local_box, std::set<int> n_square_types);
 
   Utils::Vector3i get_cell_grid() const {
     return m_regular_decomposition.cell_grid;

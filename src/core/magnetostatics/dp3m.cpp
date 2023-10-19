@@ -47,7 +47,6 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
@@ -126,6 +125,7 @@ void DipolarP3M::init() {
   auto const &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
+  auto const skin = system.get_verlet_skin();
 
   dp3m.params.cao3 = Utils::int_pow<3>(dp3m.params.cao);
   dp3m.params.recalc_a_ai_cao_cut(box_geo.length());
@@ -607,7 +607,9 @@ public:
 
   P3MParameters &get_params() override { return dp3m.params; }
 
-  void on_solver_change() const override { on_dipoles_change(); }
+  void on_solver_change() const override {
+    System::get_system().on_dipoles_change();
+  }
 
   std::optional<std::string>
   layer_correction_veto_r_cut(double) const override {
@@ -733,7 +735,7 @@ void DipolarP3M::tune() {
       // run tuning algorithm
       parameters.tune();
       m_is_tuned = true;
-      on_dipoles_change();
+      System::get_system().on_dipoles_change();
     } catch (...) {
       dp3m.params.tuning = false;
       throw;
@@ -909,15 +911,13 @@ void DipolarP3M::sanity_checks_periodicity() const {
 
 void DipolarP3M::sanity_checks_cell_structure() const {
   auto const &local_geo = *System::get_system().local_geo;
-  if (local_geo.cell_structure_type() !=
-          CellStructureType::CELL_STRUCTURE_REGULAR &&
-      local_geo.cell_structure_type() !=
-          CellStructureType::CELL_STRUCTURE_HYBRID) {
+  if (local_geo.cell_structure_type() != CellStructureType::REGULAR and
+      local_geo.cell_structure_type() != CellStructureType::HYBRID) {
     throw std::runtime_error(
         "DipolarP3M: requires the regular or hybrid decomposition cell system");
   }
-  if (::communicator.size > 1 && local_geo.cell_structure_type() ==
-                                     CellStructureType::CELL_STRUCTURE_HYBRID) {
+  if (::communicator.size > 1 and
+      local_geo.cell_structure_type() == CellStructureType::HYBRID) {
     throw std::runtime_error(
         "DipolarP3M: does not work with the hybrid decomposition cell system, "
         "if using more than one MPI node");
@@ -926,7 +926,7 @@ void DipolarP3M::sanity_checks_cell_structure() const {
 
 void DipolarP3M::sanity_checks_node_grid() const {
   auto const &node_grid = ::communicator.node_grid;
-  if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+  if (node_grid[0] < node_grid[1] or node_grid[1] < node_grid[2]) {
     throw std::runtime_error(
         "DipolarP3M: node grid must be sorted, largest first");
   }

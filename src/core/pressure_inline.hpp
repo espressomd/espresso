@@ -18,12 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_PRESSURE_INLINE_HPP
-#define CORE_PRESSURE_INLINE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
-
-#include "pressure.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "magnetostatics/dipoles.hpp"
@@ -179,5 +177,3 @@ inline void add_kinetic_virials(Particle const &p1,
     for (int l = 0; l < 3; l++)
       obs_pressure.kinetic[k * 3 + l] += p1.v()[k] * p1.v()[l] * p1.mass();
 }
-
-#endif // CORE_PRESSURE_INLINE_HPP

@@ -27,7 +27,6 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "integrate.hpp"
 #include "lb/particle_coupling.hpp"
 #include "system/System.hpp"
 
@@ -89,6 +88,8 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
   auto const &lb = system.lb;
+  auto const skin = system.get_verlet_skin();
+  auto const skin_sq = skin * skin;
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {
@@ -104,7 +105,7 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
       }
     }
     // Verlet list update check
-    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > skin * skin) {
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > skin_sq) {
       cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
   }

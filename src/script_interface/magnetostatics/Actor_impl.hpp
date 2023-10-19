@@ -26,7 +26,6 @@
 #include "Actor.hpp"
 
 #include "core/actor/registration.hpp"
-#include "core/event.hpp"
 #include "core/magnetostatics/dipoles.hpp"
 #include "core/system/System.hpp"
 
@@ -40,9 +39,9 @@ Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
                                                   VariantMap const &params) {
   if (name == "activate") {
     context()->parallel_try_catch([&]() {
-      add_actor(context()->get_comm(),
-                System::get_system().dipoles.impl->solver, m_actor,
-                ::on_dipoles_change);
+      auto &system = System::get_system();
+      add_actor(context()->get_comm(), system.dipoles.impl->solver, m_actor,
+                [&system]() { system.on_dipoles_change(); });
     });
     return {};
   }

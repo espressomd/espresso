@@ -273,7 +273,7 @@ Utils::Vector3d RegularDecomposition::max_cutoff() const {
     return std::min(0.5 * m_box.length()[i], m_local_box.length()[i]);
   };
 
-  return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
+  return {dir_max_range(0u), dir_max_range(1u), dir_max_range(2u)};
 }
 
 Utils::Vector3d RegularDecomposition::max_range() const { return cell_size; }

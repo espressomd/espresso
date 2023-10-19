@@ -24,8 +24,6 @@
 #include "core/analysis/statistics_chain.hpp"
 #include "core/cells.hpp"
 #include "core/dpd.hpp"
-#include "core/energy.hpp"
-#include "core/event.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/partCfg_global.hpp"
 #include "core/particle_node.hpp"
@@ -89,18 +87,20 @@ Variant Analysis::do_call_method(std::string const &name,
     return mpi_reduce_sum(context()->get_comm(), local).as_vector();
   }
   if (name == "particle_energy") {
+    auto &system = System::get_system();
     auto const pid = get_value<int>(parameters, "pid");
-    auto const local = particle_short_range_energy_contribution(pid);
+    auto const local = system.particle_short_range_energy_contribution(pid);
     return mpi_reduce_sum(context()->get_comm(), local);
   }
 #ifdef DIPOLE_FIELD_TRACKING
   if (name == "calc_long_range_fields") {
-    calc_long_range_fields();
+    auto const &system = System::get_system();
+    system.calculate_long_range_fields();
     return {};
   }
 #endif
   if (name == "particle_neighbor_pids") {
-    on_observable_calc();
+    ::System::get_system().on_observable_calc();
     std::unordered_map<int, std::vector<int>> dict;
     context()->parallel_try_catch([&]() {
       auto neighbor_pids = get_neighbor_pids();

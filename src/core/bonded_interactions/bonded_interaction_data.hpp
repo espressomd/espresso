@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_INTERACTION_DATA_HPP
-#define CORE_BN_IA_BONDED_INTERACTION_DATA_HPP
+
+#pragma once
+
 /** @file
  *  Data structures for bonded interactions.
  *  For more information on how to add new interactions, see @ref bondedIA_new.
@@ -120,13 +121,19 @@ public:
   void insert(key_type const &key, mapped_type const &ptr) {
     next_key = std::max(next_key, key + 1);
     m_params[key] = ptr;
+    on_ia_change();
   }
   key_type insert(mapped_type const &ptr) {
     auto const key = next_key++;
     m_params[key] = ptr;
+    on_ia_change();
     return key;
   }
-  auto erase(key_type const &key) { return m_params.erase(key); }
+  auto erase(key_type const &key) {
+    auto &&obj = m_params.erase(key);
+    on_ia_change();
+    return obj;
+  }
   mapped_type at(key_type const &key) const { return m_params.at(key); }
   auto count(key_type const &key) const { return m_params.count(key); }
   bool contains(key_type const &key) const { return m_params.count(key); }
@@ -140,10 +147,8 @@ public:
 private:
   container_type m_params = {};
   key_type next_key = static_cast<key_type>(0);
+  void on_ia_change();
 };
-
-/** Notify the cell system about changes to the maximal interaction range. */
-void mpi_update_cell_system_ia_range_local();
 
 /** Field containing the parameters of the bonded ia types */
 extern BondedInteractionsMap bonded_ia_params;
@@ -166,5 +171,3 @@ double maximal_cutoff_bonded();
 inline int number_of_partners(Bonded_IA_Parameters const &iaparams) {
   return boost::apply_visitor(BondNumPartners(), iaparams);
 }
-
-#endif

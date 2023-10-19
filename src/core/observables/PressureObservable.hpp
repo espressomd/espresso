@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_PRESSURE_HPP
-#define OBSERVABLES_PRESSURE_HPP
+
+#pragma once
 
 #include "Observable.hpp"
-#include "pressure.hpp"
+#include "Observable_stat.hpp"
+#include "system/System.hpp"
 
 #include <cstddef>
 #include <vector>
@@ -32,7 +33,7 @@ public:
   std::vector<std::size_t> shape() const override { return {1}; }
   std::vector<double>
   operator()(boost::mpi::communicator const &comm) const override {
-    auto const obs = calculate_pressure();
+    auto const obs = System::get_system().calculate_pressure();
 
     return {(obs->accumulate(0., 0u) + obs->accumulate(0., 4u) +
              obs->accumulate(0., 8u)) /
@@ -41,5 +42,3 @@ public:
 };
 
 } // Namespace Observables
-
-#endif

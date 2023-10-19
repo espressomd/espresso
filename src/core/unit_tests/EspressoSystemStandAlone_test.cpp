@@ -28,6 +28,7 @@ namespace utf = boost::unit_test;
 #include "particle_management.hpp"
 
 #include "EspressoSystemStandAlone.hpp"
+#include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "accumulators/TimeSeries.hpp"
 #include "actor/registration.hpp"
@@ -36,10 +37,9 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/harmonic.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
+#include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
-#include "energy.hpp"
-#include "event.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
 #include "magnetostatics/dipoles.hpp"
@@ -130,12 +130,11 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check observables
   {
-    auto const &cell_structure = *system.cell_structure;
     auto const pid4 = 10;
     auto const pids = std::vector<int>{pid2, pid3, pid1, pid4};
     Observables::ParticleReferenceRange particle_range{};
     for (int pid : pids) {
-      if (auto const p = cell_structure.get_local_particle(pid)) {
+      if (auto const p = system.cell_structure->get_local_particle(pid)) {
         particle_range.emplace_back(*p);
       }
     }
@@ -201,7 +200,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     remove_translational_motion(system);
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
-      auto const obs_energy = calculate_energy();
+      auto const obs_energy = system.calculate_energy();
       auto const p_opt = copy_particle_to_head_node(comm, pid2);
       if (rank == 0) {
         auto const &p = *p_opt;
@@ -227,7 +226,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     LJ_Parameters lj{eps, sig, cut, offset, min, shift};
     system.nonbonded_ias->get_ia_param(type_a, type_b).lj = lj;
     system.nonbonded_ias->get_ia_param(type_b, type_b).lj = lj;
-    on_non_bonded_ia_change();
+    system.on_non_bonded_ia_change();
 
     // matrix indices and reference energy value
     auto const n_pairs = Utils::lower_triangular(max_type, max_type);
@@ -237,7 +236,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
     // measure energies
-    auto const obs_energy = calculate_energy();
+    auto const obs_energy = system.calculate_energy();
     if (rank == 0) {
       for (int i = 0; i < n_pairs + 1; ++i) {
         // particles were set up with type == mol_id
@@ -278,7 +277,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     insert_particle_bond(pid2, fene_bond_id, {pid3});
 
     // measure energies
-    auto const obs_energy = calculate_energy();
+    auto const obs_energy = system.calculate_energy();
     if (rank == 0) {
       auto const none_energy = 0.0;
       auto const harm_energy =
@@ -311,7 +310,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              1e-3};
     auto solver =
         std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
-    add_actor(comm, system.coulomb.impl->solver, solver, ::on_coulomb_change);
+    add_actor(comm, system.coulomb.impl->solver, solver,
+              [&system]() { system.on_coulomb_change(); });
 
     // measure energies
     auto const step = 0.02;
@@ -323,7 +323,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       set_particle_pos(pid2, pos2);
       auto const r = (pos2 - pos1).norm();
       // check P3M energy
-      auto const obs_energy = calculate_energy();
+      auto const obs_energy = system.calculate_energy();
       if (rank == 0) {
         // at very short distances, the real-space contribution to
         // the energy is much larger than the k-space contribution
@@ -345,7 +345,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     reset_particle_positions();
 
     // recalculate forces without propagating the system
-    integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
+    integrate(system, 0, INTEG_REUSE_FORCES_CONDITIONALLY);
 
     // particles are arranged in a right triangle
     auto const p1_opt = copy_particle_to_head_node(comm, pid1);
@@ -388,7 +388,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
           expected[pid] = p.pos();
         }
       }
-      integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
+      integrate(system, 1, INTEG_REUSE_FORCES_CONDITIONALLY);
       for (auto pid : pids) {
         auto const p_opt = copy_particle_to_head_node(comm, pid);
         if (rank == 0) {
@@ -408,6 +408,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     } else {
       get_particle_node_parallel(12345);
     }
+#ifdef CUDA
+    BOOST_CHECK_THROW(
+        invoke_skip_cuda_exceptions([]() { throw std::runtime_error(""); }),
+        std::runtime_error);
+    invoke_skip_cuda_exceptions([]() { throw cuda_runtime_error(""); }); // safe
+#endif
   }
 }
 

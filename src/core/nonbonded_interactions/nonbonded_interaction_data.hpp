@@ -43,8 +43,6 @@
  */
 constexpr double INACTIVE_CUTOFF = -1.;
 
-void on_non_bonded_ia_change();
-
 /** Lennard-Jones with shift */
 struct LJ_Parameters {
   double eps = 0.0;
@@ -439,4 +437,6 @@ public:
 
   /** @brief Get maximal cutoff. */
   double maximal_cutoff() const;
+
+  void on_non_bonded_ia_change();
 };

@@ -30,8 +30,6 @@
 #include "LocalBox.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "event.hpp"
-#include "integrate.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
 
@@ -88,7 +86,8 @@ void CoulombScafacosImpl::update_particle_forces() const {
 
 double CoulombScafacosImpl::time_r_cut(double r_cut) {
   set_r_cut_and_tune(r_cut);
-  return benchmark_integration_step(10);
+  auto &system = System::get_system();
+  return benchmark_integration_step(system, 10);
 }
 
 void CoulombScafacosImpl::tune_r_cut() {
@@ -96,6 +95,7 @@ void CoulombScafacosImpl::tune_r_cut() {
   auto const &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
+  auto const skin = system.get_verlet_skin();
 
   auto const min_box_l = *boost::min_element(box_geo.length());
   auto const min_local_box_l = *boost::min_element(local_geo.length());
@@ -144,7 +144,7 @@ void CoulombScafacosImpl::tune_impl() {
     // ESPResSo is not affected by a short-range cutoff -> tune in parallel
     ScafacosContext::tune(charges, positions);
   }
-  on_coulomb_change();
+  System::get_system().on_coulomb_change();
 }
 
 #endif // SCAFACOS

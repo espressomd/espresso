@@ -119,6 +119,7 @@ void VirtualSitesRelative::update() const {
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
+  auto const skin = system.get_verlet_skin();
   auto const particles = cell_structure.local_particles();
   for (auto &p : particles) {
     auto const *p_ref_ptr = get_reference_particle(p);

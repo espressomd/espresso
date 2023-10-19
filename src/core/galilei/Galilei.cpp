@@ -27,7 +27,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
-#include "event.hpp"
 #include "system/System.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -48,7 +47,7 @@ void Galilei::kill_particle_motion(System::System &system, bool omega) const {
     }
 #endif // ROTATION
   }
-  on_particle_change();
+  system.on_particle_change();
 }
 
 void Galilei::kill_particle_forces(System::System &system, bool torque) const {
@@ -63,7 +62,7 @@ void Galilei::kill_particle_forces(System::System &system, bool torque) const {
     }
 #endif // ROTATION
   }
-  on_particle_change();
+  system.on_particle_change();
 }
 
 Utils::Vector3d
@@ -104,5 +103,5 @@ void Galilei::galilei_transform(System::System &system) const {
   for (auto &p : system.cell_structure->local_particles()) {
     p.v() -= cms_vel;
   }
-  on_particle_change();
+  system.on_particle_change();
 }

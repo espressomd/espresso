@@ -25,10 +25,9 @@
 
 #include "config/config.hpp"
 
+#include "core/Observable_stat.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/communication.hpp"
-#include "core/energy.hpp"
-#include "core/event.hpp"
 #include "core/particle_node.hpp"
 #include "core/reaction_methods/ReactionAlgorithm.hpp"
 #include "core/reaction_methods/utils.hpp"

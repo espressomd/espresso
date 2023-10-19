@@ -30,9 +30,7 @@
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
-#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "system/System.hpp"
@@ -131,11 +129,11 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
 }
 
 static auto dpd_viscous_stress_local() {
-  auto const &system = System::get_system();
+  auto &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto const &nonbonded_ias = *system.nonbonded_ias;
   auto &cell_structure = *system.cell_structure;
-  on_observable_calc();
+  system.on_observable_calc();
 
   Utils::Matrix<double, 3, 3> stress{};
   cell_structure.non_bonded_loop([&stress, &box_geo, &nonbonded_ias](

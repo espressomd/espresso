@@ -26,7 +26,6 @@
 
 #include "core/actor/registration.hpp"
 #include "core/electrostatics/icc.hpp"
-#include "core/event.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -101,9 +100,9 @@ public:
                          VariantMap const &params) override {
     if (name == "activate") {
       context()->parallel_try_catch([&]() {
-        add_actor(context()->get_comm(),
-                  System::get_system().coulomb.impl->extension, m_actor,
-                  ::on_coulomb_change);
+        auto &system = System::get_system();
+        add_actor(context()->get_comm(), system.coulomb.impl->extension,
+                  m_actor, [&system]() { system.on_coulomb_change(); });
       });
       return {};
     }

@@ -21,7 +21,6 @@
 
 #include "NonBondedInteraction.hpp"
 
-#include "core/event.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/system/System.hpp"
 
@@ -70,7 +69,7 @@ private:
         m_nonbonded_ia_params[key] = make_interaction(i, j);
       }
     }
-    on_non_bonded_ia_change();
+    System::get_system().on_non_bonded_ia_change();
   }
 
   void do_construct(VariantMap const &) override {

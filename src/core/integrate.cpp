@@ -43,9 +43,8 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "forces.hpp"
-#include "interactions.hpp"
+#include "global_ghost_flags.hpp"
 #include "lb/particle_coupling.hpp"
 #include "lb/utils.hpp"
 #include "lees_edwards/lees_edwards.hpp"
@@ -88,21 +87,10 @@
 
 int integ_switch = INTEG_METHOD_NVT;
 
-/** Time step for the integration. */
-static double time_step = -1.0;
-
 /** Actual simulation time. */
 static double sim_time = 0.0;
 
-double skin = 0.0;
-
-/** True iff the user has changed the skin setting. */
-static bool skin_set = false;
-
 bool recalc_forces = true;
-
-/** Average number of integration steps the Verlet list has been re-using. */
-static double verlet_reuse = 0.0;
 
 static int lb_skipped_md_steps = 0;
 static int ek_skipped_md_steps = 0;
@@ -163,7 +151,7 @@ template <class Kernel> void run_kernel(BoxGeometry const &box_geo) {
 } // namespace LeesEdwards
 
 void integrator_sanity_checks() {
-  if (time_step < 0.0) {
+  if (get_time_step() < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
   switch (integ_switch) {
@@ -222,7 +210,7 @@ void walberla_tau_sanity_checks(std::string method, double tau,
 }
 
 void walberla_tau_sanity_checks(std::string method, double tau) {
-  walberla_tau_sanity_checks(std::move(method), tau, ::time_step);
+  walberla_tau_sanity_checks(std::move(method), tau, get_time_step());
 }
 
 void walberla_agrid_sanity_checks(std::string method,
@@ -249,15 +237,16 @@ void walberla_agrid_sanity_checks(std::string method,
 #endif
 
 static auto calc_md_steps_per_tau(double tau) {
-  return static_cast<int>(std::round(tau / ::time_step));
+  return static_cast<int>(std::round(tau / get_time_step()));
 }
 
 static void resort_particles_if_needed(ParticleRange const &particles) {
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
+  auto const verlet_skin = system.get_verlet_skin();
   auto const offset = LeesEdwards::verlet_list_offset(
       *system.box_geo, cell_structure.get_le_pos_offset_at_last_resort());
-  if (cell_structure.check_resort_required(particles, skin, offset)) {
+  if (cell_structure.check_resort_required(particles, verlet_skin, offset)) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
@@ -265,7 +254,8 @@ static void resort_particles_if_needed(ParticleRange const &particles) {
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-static bool integrator_step_1(ParticleRange const &particles) {
+static bool integrator_step_1(ParticleRange const &particles,
+                              double time_step) {
   bool early_exit = false;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
@@ -295,7 +285,8 @@ static bool integrator_step_1(ParticleRange const &particles) {
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
-static void integrator_step_2(ParticleRange const &particles, double kT) {
+static void integrator_step_2(ParticleRange const &particles, double kT,
+                              double time_step) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -323,17 +314,17 @@ static void integrator_step_2(ParticleRange const &particles, double kT) {
   }
 }
 
-int integrate(int n_steps, int reuse_forces) {
+int integrate(System::System &system, int n_steps, int reuse_forces) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
   auto &box_geo = *system.box_geo;
+  auto const time_step = system.get_time_step();
 
   // Prepare particle structure and run sanity checks of all active algorithms
-  on_integration_start(time_step);
+  system.on_integration_start();
 
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
@@ -409,7 +400,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
     LeesEdwards::update_box_params(box_geo);
-    bool early_exit = integrator_step_1(particles);
+    bool early_exit = integrator_step_1(particles, time_step);
     if (early_exit)
       break;
 
@@ -449,7 +440,7 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc(time_step);
 #endif
-    integrator_step_2(particles, temperature);
+    integrator_step_2(particles, temperature, time_step);
     LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>(box_geo);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
@@ -540,10 +531,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
   // Verlet list statistics
-  if (n_verlet_updates > 0)
-    verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
-  else
-    verlet_reuse = 0;
+  system.update_verlet_stats(n_steps, n_verlet_updates);
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -560,37 +548,33 @@ int integrate(int n_steps, int reuse_forces) {
   return integrated_steps;
 }
 
-int integrate_with_signal_handler(int n_steps, int reuse_forces,
-                                  bool update_accumulators) {
-
+int integrate_with_signal_handler(System::System &system, int n_steps,
+                                  int reuse_forces, bool update_accumulators) {
   assert(n_steps >= 0);
-  auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
 
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
-  if (not update_accumulators or n_steps == 0) {
-    return integrate(n_steps, reuse_forces);
-  }
-
-  auto const is_head_node = comm_cart.rank() == 0;
-
   /* if skin wasn't set, do an educated guess now */
-  if (!skin_set) {
-    auto const max_cut = maximal_cutoff();
+  if (not system.is_verlet_skin_set()) {
+    auto const max_cut = system.maximal_cutoff();
     if (max_cut <= 0.0) {
-      if (is_head_node) {
+      if (comm_cart.rank() == 0) {
         throw std::runtime_error(
             "cannot automatically determine skin, please set it manually");
       }
       return INTEG_ERROR_RUNTIME;
     }
+    auto &cell_structure = *system.cell_structure;
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
     auto const max_range = *boost::min_element(cell_structure.max_cutoff());
     auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
-    ::set_skin(new_skin);
+    system.set_verlet_skin(new_skin);
+  }
+
+  if (not update_accumulators or n_steps == 0) {
+    return integrate(system, n_steps, reuse_forces);
   }
 
   using Accumulators::auto_update;
@@ -601,7 +585,7 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
      * end, depending on what comes first. */
     auto const steps = std::min((n_steps - i), auto_update_next_update());
 
-    auto const local_retval = integrate(steps, reuse_forces);
+    auto const local_retval = integrate(system, steps, reuse_forces);
 
     // make sure all ranks exit when one rank fails
     std::remove_const_t<decltype(local_retval)> global_retval;
@@ -621,39 +605,11 @@ int integrate_with_signal_handler(int n_steps, int reuse_forces,
   return 0;
 }
 
-double interaction_range() {
-  /* Consider skin only if there are actually interactions */
-  auto const max_cut = maximal_cutoff();
-  return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
-}
-
-double get_verlet_reuse() { return verlet_reuse; }
-
-double get_time_step() { return time_step; }
+double get_time_step() { return System::get_system().get_time_step(); }
 
 double get_sim_time() { return sim_time; }
 
 void increment_sim_time(double amount) { sim_time += amount; }
-
-void set_time_step(double value) {
-  if (value <= 0.)
-    throw std::domain_error("time_step must be > 0.");
-  auto &system = System::get_system();
-  if (system.lb.is_solver_set()) {
-    system.lb.veto_time_step(value);
-  }
-  if (system.ek.is_solver_set()) {
-    system.ek.veto_time_step(value);
-  }
-  ::time_step = value;
-  on_timestep_change();
-}
-
-void set_skin(double value) {
-  ::skin = value;
-  ::skin_set = true;
-  on_skin_change();
-}
 
 void set_time(double value) {
   ::sim_time = value;

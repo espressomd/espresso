@@ -23,7 +23,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
-#include "cell_system/CellStructureType.hpp"
+#include "core/cell_system/CellStructureType.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -33,15 +33,15 @@ namespace CellSystem {
 
 class CellSystem : public AutoParameters<CellSystem> {
   std::unordered_map<CellStructureType, std::string> const cs_type_to_name = {
-      {CellStructureType::CELL_STRUCTURE_REGULAR, "regular_decomposition"},
-      {CellStructureType::CELL_STRUCTURE_NSQUARE, "n_square"},
-      {CellStructureType::CELL_STRUCTURE_HYBRID, "hybrid_decomposition"},
+      {CellStructureType::REGULAR, "regular_decomposition"},
+      {CellStructureType::NSQUARE, "n_square"},
+      {CellStructureType::HYBRID, "hybrid_decomposition"},
   };
 
   std::unordered_map<std::string, CellStructureType> const cs_name_to_type = {
-      {"regular_decomposition", CellStructureType::CELL_STRUCTURE_REGULAR},
-      {"n_square", CellStructureType::CELL_STRUCTURE_NSQUARE},
-      {"hybrid_decomposition", CellStructureType::CELL_STRUCTURE_HYBRID},
+      {"regular_decomposition", CellStructureType::REGULAR},
+      {"n_square", CellStructureType::NSQUARE},
+      {"hybrid_decomposition", CellStructureType::HYBRID},
   };
 
 public:

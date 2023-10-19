@@ -18,15 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ENERGY_INLINE_HPP
-#define CORE_ENERGY_INLINE_HPP
+
+#pragma once
+
 /** \file
  *  Energy calculation.
  */
 
 #include "config/config.hpp"
-
-#include "energy.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "electrostatics/coulomb_inline.hpp"
@@ -320,5 +319,3 @@ inline double rotational_kinetic_energy(Particle const &p) {
 inline double calc_kinetic_energy(Particle const &p) {
   return translational_kinetic_energy(p) + rotational_kinetic_energy(p);
 }
-
-#endif // CORE_ENERGY_INLINE_HPP

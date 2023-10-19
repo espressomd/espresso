@@ -27,7 +27,6 @@
 #include "core/BoxGeometry.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/cell_system/CellStructure.hpp"
-#include "core/event.hpp"
 #include "core/exclusions.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
@@ -161,7 +160,7 @@ void ParticleHandle::set_particle_property(F const &fun) const {
   if (ptr != nullptr) {
     fun(*ptr);
   }
-  on_particle_change();
+  System::get_system().on_particle_change();
 }
 
 template <typename T>
@@ -632,13 +631,13 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     context()->parallel_try_catch(
         [&]() { particle_exclusion_sanity_checks(m_pid, other_pid); });
     local_add_exclusion(m_pid, other_pid);
-    on_particle_change();
+    System::get_system().on_particle_change();
   } else if (name == "del_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
     context()->parallel_try_catch(
         [&]() { particle_exclusion_sanity_checks(m_pid, other_pid); });
     local_remove_exclusion(m_pid, other_pid);
-    on_particle_change();
+    System::get_system().on_particle_change();
   } else if (name == "set_exclusions") {
     std::vector<int> exclusion_list;
     try {

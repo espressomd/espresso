@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(constructors) {
     Utils::Vector<double, 3> const lower_corner = {1., 2., 3.};
     Utils::Vector<double, 3> const local_box_length = {4., 5., 6.};
     Utils::Array<int, 6> const boundaries = {{{-1, 0, 1, 1, 0, -1}}};
-    CellStructureType const type = CellStructureType::CELL_STRUCTURE_REGULAR;
+    CellStructureType const type = CellStructureType::REGULAR;
 
     auto const box = LocalBox(lower_corner, local_box_length, boundaries, type);
 

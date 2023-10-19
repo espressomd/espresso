@@ -23,7 +23,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "system/System.hpp"
 
 #include <utils/mpi/gather_buffer.hpp>
@@ -221,28 +220,30 @@ static void remove_pair_bonds_to(Particle &p, int other_pid) {
 
 // Handler for the different delete events
 class execute : public boost::static_visitor<> {
+  System::System &system;
   CellStructure &cell_structure;
 
 public:
-  execute() : cell_structure{*System::get_system().cell_structure} {}
+  execute()
+      : system{System::get_system()}, cell_structure{*system.cell_structure} {}
 
   void operator()(DeleteBond const &d) const {
     if (auto p = cell_structure.get_local_particle(d.particle_id)) {
       remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id, 1}));
     }
-    on_particle_change();
+    system.on_particle_change();
   }
   void operator()(DeleteAngleBond const &d) const {
     if (auto p = cell_structure.get_local_particle(d.particle_id)) {
       remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id[0], 2}));
     }
-    on_particle_change();
+    system.on_particle_change();
   }
   void operator()(DeleteAllBonds const &d) const {
     if (auto p = cell_structure.get_local_particle(d.particle_id_1)) {
       remove_pair_bonds_to(*p, d.particle_id_2);
     }
-    on_particle_change();
+    system.on_particle_change();
   }
 };
 

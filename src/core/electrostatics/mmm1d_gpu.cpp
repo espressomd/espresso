@@ -27,7 +27,6 @@
 #include "LocalBox.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
-#include "event.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 
@@ -72,8 +71,7 @@ void CoulombMMM1DGpu::sanity_checks_periodicity() const {
 
 void CoulombMMM1DGpu::sanity_checks_cell_structure() const {
   auto const &local_geo = *System::get_system().local_geo;
-  if (local_geo.cell_structure_type() !=
-      CellStructureType::CELL_STRUCTURE_NSQUARE) {
+  if (local_geo.cell_structure_type() != CellStructureType::NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");
   }
 }
