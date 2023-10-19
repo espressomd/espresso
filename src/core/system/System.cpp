@@ -39,6 +39,7 @@ System::System() {
   cell_structure = std::make_shared<CellStructure>(*box_geo);
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
+  galilei = std::make_shared<Galilei>();
   force_cap = 0.;
   min_global_cut = INACTIVE_CUTOFF;
 }

@@ -39,6 +39,7 @@ class LocalBox;
 struct CellStructure;
 class InteractionsNonBonded;
 class ComFixed;
+class Galilei;
 
 namespace System {
 
@@ -74,6 +75,7 @@ public:
   std::shared_ptr<CellStructure> cell_structure;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
   std::shared_ptr<ComFixed> comfixed;
+  std::shared_ptr<Galilei> galilei;
 
 protected:
   /** @brief Molecular dynamics integrator force capping. */

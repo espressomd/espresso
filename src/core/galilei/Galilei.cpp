@@ -36,12 +36,11 @@
 
 #include <tuple>
 
-void Galilei::kill_particle_motion(bool omega) const {
+void Galilei::kill_particle_motion(System::System &system, bool omega) const {
 #ifndef ROTATION
   std::ignore = omega;
-#endif // not ROTATION
-  auto &cell_structure = *System::get_system().cell_structure;
-  for (auto &p : cell_structure.local_particles()) {
+#endif
+  for (auto &p : system.cell_structure->local_particles()) {
     p.v() = {};
 #ifdef ROTATION
     if (omega) {
@@ -52,12 +51,11 @@ void Galilei::kill_particle_motion(bool omega) const {
   on_particle_change();
 }
 
-void Galilei::kill_particle_forces(bool torque) const {
+void Galilei::kill_particle_forces(System::System &system, bool torque) const {
 #ifndef ROTATION
   std::ignore = torque;
-#endif // not ROTATION
-  auto &cell_structure = *System::get_system().cell_structure;
-  for (auto &p : cell_structure.local_particles()) {
+#endif
+  for (auto &p : system.cell_structure->local_particles()) {
     p.force() = {};
 #ifdef ROTATION
     if (torque) {
@@ -68,13 +66,12 @@ void Galilei::kill_particle_forces(bool torque) const {
   on_particle_change();
 }
 
-Utils::Vector3d Galilei::calc_system_cms_position() const {
-  auto const &system = System::get_system();
+Utils::Vector3d
+Galilei::calc_system_cms_position(System::System const &system) const {
   auto const &box_geo = *system.box_geo;
-  auto &cell_structure = *system.cell_structure;
   auto total_mass = 0.;
   auto cms_pos = Utils::Vector3d{};
-  for (auto const &p : cell_structure.local_particles()) {
+  for (auto const &p : system.cell_structure->local_particles()) {
     if (not p.is_virtual()) {
       total_mass += p.mass();
       cms_pos += p.mass() * box_geo.unfolded_position(p.pos(), p.image_box());
@@ -86,11 +83,11 @@ Utils::Vector3d Galilei::calc_system_cms_position() const {
   return cms_pos;
 }
 
-Utils::Vector3d Galilei::calc_system_cms_velocity() const {
-  auto &cell_structure = *System::get_system().cell_structure;
+Utils::Vector3d
+Galilei::calc_system_cms_velocity(System::System const &system) const {
   auto total_mass = 0.;
   auto cms_vel = Utils::Vector3d{};
-  for (auto const &p : cell_structure.local_particles()) {
+  for (auto const &p : system.cell_structure->local_particles()) {
     if (not p.is_virtual()) {
       total_mass += p.mass();
       cms_vel += p.mass() * p.v();
@@ -102,10 +99,9 @@ Utils::Vector3d Galilei::calc_system_cms_velocity() const {
   return cms_vel;
 }
 
-void Galilei::galilei_transform() const {
-  auto &cell_structure = *System::get_system().cell_structure;
-  auto const cms_vel = calc_system_cms_velocity();
-  for (auto &p : cell_structure.local_particles()) {
+void Galilei::galilei_transform(System::System &system) const {
+  auto const cms_vel = calc_system_cms_velocity(system);
+  for (auto &p : system.cell_structure->local_particles()) {
     p.v() -= cms_vel;
   }
   on_particle_change();

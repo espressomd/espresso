@@ -76,8 +76,8 @@ namespace espresso {
 static std::unique_ptr<EspressoSystemStandAlone> system;
 } // namespace espresso
 
-static void remove_translational_motion() {
-  Galilei{}.kill_particle_motion(false);
+static void remove_translational_motion(System::System &system) {
+  Galilei{}.kill_particle_motion(system, false);
 }
 
 BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
@@ -93,7 +93,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
   espresso::system->set_time_step(time_step);
   espresso::system->set_skin(skin);
-  auto const &system = System::get_system();
+  auto &system = System::get_system();
 
   // particle properties
   auto const pid1 = 9;
@@ -130,7 +130,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check observables
   {
-    auto const &cell_structure = *System::get_system().cell_structure;
+    auto const &cell_structure = *system.cell_structure;
     auto const pid4 = 10;
     auto const pids = std::vector<int>{pid2, pid3, pid1, pid4};
     Observables::ParticleReferenceRange particle_range{};
@@ -180,7 +180,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_REQUIRE_EQUAL_COLLECTIONS(obs_shape.begin(), obs_shape.end(),
                                     ref_shape.begin(), ref_shape.end());
 
-    remove_translational_motion();
+    remove_translational_motion(system);
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
 
@@ -198,7 +198,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check kinetic energy
   {
-    remove_translational_motion();
+    remove_translational_motion(system);
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
       auto const obs_energy = calculate_energy();
@@ -311,8 +311,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              1e-3};
     auto solver =
         std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
-    add_actor(comm, System::get_system().coulomb.impl->solver, solver,
-              ::on_coulomb_change);
+    add_actor(comm, system.coulomb.impl->solver, solver, ::on_coulomb_change);
 
     // measure energies
     auto const step = 0.02;
@@ -342,7 +341,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     set_integ_switch(INTEG_METHOD_NVT);
 
     // reset system
-    remove_translational_motion();
+    remove_translational_motion(system);
     reset_particle_positions();
 
     // recalculate forces without propagating the system
