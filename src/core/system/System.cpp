@@ -38,6 +38,7 @@ System::System() {
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
+  comfixed = std::make_shared<ComFixed>();
   force_cap = 0.;
   min_global_cut = INACTIVE_CUTOFF;
 }

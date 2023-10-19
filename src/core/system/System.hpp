@@ -38,6 +38,7 @@ class BoxGeometry;
 class LocalBox;
 struct CellStructure;
 class InteractionsNonBonded;
+class ComFixed;
 
 namespace System {
 
@@ -72,6 +73,7 @@ public:
   std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
+  std::shared_ptr<ComFixed> comfixed;
 
 protected:
   /** @brief Molecular dynamics integrator force capping. */

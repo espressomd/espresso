@@ -19,14 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_GALILEI_COMFIXED_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_GALILEI_COMFIXED_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include "core/forces.hpp"
 #include "core/galilei/ComFixed.hpp"
+#include "core/system/System.hpp"
 
 #include <memory>
 #include <vector>
@@ -38,7 +38,7 @@ class ComFixed : public AutoParameters<ComFixed> {
   std::shared_ptr<::ComFixed> m_comfixed;
 
   void do_construct(VariantMap const &params) override {
-    ::comfixed = m_comfixed = std::make_shared<::ComFixed>();
+    ::System::get_system().comfixed = m_comfixed = std::make_shared<::ComFixed>();
     for (auto const &p : params) {
       do_set_parameter(p.first, p.second);
     }
@@ -57,4 +57,3 @@ public:
 
 } // namespace Galilei
 } // namespace ScriptInterface
-#endif

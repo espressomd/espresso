@@ -65,8 +65,6 @@
 #include <memory>
 #include <variant>
 
-std::shared_ptr<ComFixed> comfixed = std::make_shared<ComFixed>();
-
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
 
@@ -285,7 +283,7 @@ void force_calc(System::System &system, double time_step, double kT) {
   cell_structure.ghosts_reduce_forces();
 
   // should be pretty late, since it needs to zero out the total force
-  comfixed->apply(comm_cart, particles);
+  system.comfixed->apply(particles);
 
   // Needs to be the last one to be effective
   force_capping(particles, force_cap);

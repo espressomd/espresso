@@ -26,6 +26,7 @@
 #include "lb/Implementation.hpp"
 
 #include "cell_system/CellStructure.hpp"
+#include "galilei/ComFixed.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "BoxGeometry.hpp"
