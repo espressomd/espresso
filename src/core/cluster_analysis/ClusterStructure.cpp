@@ -22,7 +22,6 @@
 #include "Cluster.hpp"
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
-#include "partCfg_global.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
@@ -55,7 +54,8 @@ void ClusterStructure::run_for_all_pairs() {
   sanity_checks();
 
   // Iterate over pairs
-  Utils::for_each_pair(partCfg().begin(), partCfg().end(),
+  PartCfg partCfg{*System::get_system().box_geo};
+  Utils::for_each_pair(partCfg.begin(), partCfg.end(),
                        [this](const Particle &p1, const Particle &p2) {
                          this->add_pair(p1, p2);
                        });
@@ -65,7 +65,8 @@ void ClusterStructure::run_for_all_pairs() {
 void ClusterStructure::run_for_bonded_particles() {
   clear();
   sanity_checks();
-  for (const auto &p : partCfg()) {
+  PartCfg partCfg{*System::get_system().box_geo};
+  for (const auto &p : partCfg) {
     for (auto const bond : p.bonds()) {
       if (bond.partner_ids().size() == 1) {
         add_pair(p, get_particle_data(bond.partner_ids()[0]));

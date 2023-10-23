@@ -38,6 +38,7 @@ public:
  * Call @ref integrate() several times and measure the elapsed time
  * without propagating the system. It therefore doesn't include e.g.
  * Verlet list updates.
+ * @param system The system to tune.
  * @param int_steps   Number of integration steps.
  * @return Average time per integration loop in milliseconds.
  */

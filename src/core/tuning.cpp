@@ -101,6 +101,7 @@ double benchmark_integration_step(System::System &system, int int_steps) {
  * This times the integration and
  * propagates the system.
  *
+ * @param system The system to tune.
  * @param int_steps Number of steps to integrate.
  * @return Time per integration in ms.
  */

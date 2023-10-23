@@ -27,7 +27,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "partCfg_global.hpp"
 #include "system/System.hpp"
 
 #include <utils/Cache.hpp>

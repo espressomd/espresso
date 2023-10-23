@@ -211,6 +211,11 @@ class AnalyzeChain(ut.TestCase):
             with self.assertRaisesRegex(ValueError, "needs at least 1 chain"):
                 method(chain_start=0, number_of_chains=-1, chain_length=1)
         self.assertIsNone(analysis.call_method("unknown"))
+        if espressomd.has_features("VIRTUAL_SITES"):
+            with self.assertRaisesRegex(RuntimeError, "Center of mass is not well-defined"):
+                self.system.part.by_id(0).virtual = True
+                analysis.calc_rg(chain_start=0, number_of_chains=num_poly,
+                                 chain_length=num_mono)
 
 
 if __name__ == "__main__":

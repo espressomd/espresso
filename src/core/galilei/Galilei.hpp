@@ -28,11 +28,13 @@
 class Galilei {
 public:
   /** Stop particle motion by setting the velocity of each particle to zero.
+   *  @param system the system to modify
    *  @param omega  if true, also set particle angular velocities to zero
    */
   void kill_particle_motion(System::System &system, bool omega) const;
 
   /** Set all the forces acting on the particles to zero.
+   *  @param system  the system to modify
    *  @param torque  if true, also set particle torques to zero
    */
   void kill_particle_forces(System::System &system, bool torque) const;

@@ -29,11 +29,6 @@
 #include <cstddef>
 
 void PartCfg::update() {
-  if (m_valid)
-    return;
-
-  auto const &box_geo = *System::get_system().box_geo;
-
   m_parts.clear();
 
   auto const ids = get_particle_ids();
@@ -51,12 +46,10 @@ void PartCfg::update() {
       m_parts.push_back(get_particle_data(id));
 
       auto &p = m_parts.back();
-      p.pos() += box_geo.image_shift(p.image_box());
+      p.pos() += m_box_geo.image_shift(p.image_box());
       p.image_box() = {};
     }
 
     offset += this_size;
   }
-
-  m_valid = true;
 }

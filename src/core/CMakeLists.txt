@@ -36,7 +36,6 @@ add_library(
   immersed_boundaries.cpp
   integrate.cpp
   npt.cpp
-  partCfg_global.cpp
   particle_node.cpp
   polymer.cpp
   pressure.cpp

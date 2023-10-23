@@ -38,6 +38,7 @@ namespace Analysis {
 
 /**
  * @brief Generate an observable summary.
+ * @param[in] system   The system to analyze.
  * @param[in] obs      The observable handle.
  * @param[in] calc_sp  Whether to compute a scalar pressure.
  */

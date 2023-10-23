@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_PART_CFG_HPP
-#define CORE_PART_CFG_HPP
 
+#pragma once
+
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 
-#include <cstddef>
 #include <vector>
 
 /**
@@ -29,72 +29,32 @@
  *
  * This class implements cached access to all particles in a
  * particle range on the head node.
- * This implementation fetches all particles to the head node on first access,
- * which invalidates all existing particle pointers. Updates of the particle
- * data are triggered automatically on access. The data in the cache
- * is invalidated automatically by @ref System::System::on_particle_change,
- * and then updated on the next access.
+ * This implementation fetches all particles to the head node on creation.
  */
 class PartCfg {
   /** The particle data */
   std::vector<Particle> m_parts;
-  /** State */
-  bool m_valid;
+  BoxGeometry const &m_box_geo;
 
 public:
   using value_type = Particle;
-  PartCfg() : m_valid(false) {}
-
-  /**
-   * @brief Iterator pointing to the particle with the lowest
-   * id.
-   *
-   * Returns a random access iterator that traverses the
-   * particles
-   * in order of ascending id. If the cache is not up-to-date,
-   * an update is triggered. This iterator stays valid as long
-   * as the cache is valid. Since the cache could be invalidated
-   * and updated elsewhere, iterators into the cache should not
-   * be stored.
-   */
-  auto begin() {
-    if (!m_valid)
-      update();
-
-    return m_parts.begin();
+  explicit PartCfg(BoxGeometry const &box_geo) : m_parts{}, m_box_geo{box_geo} {
+    update();
   }
 
-  /**
-   * @brief Iterator pointing past the particle with the highest
-   * id.
-   *
-   * If the cache is not up-to-date,
-   * an update is triggered.
-   */
-  auto end() {
-    if (!m_valid)
-      update();
+  /** @brief Iterator pointing to the particle with the lowest id. */
+  auto begin() { return m_parts.begin(); }
 
-    return m_parts.end();
-  }
+  /** @brief Iterator pointing past the particle with the highest id. */
+  auto end() { return m_parts.end(); }
 
-  /**
-   * @brief Returns true if the cache is up-to-date.
-   *
-   * If false, particle access will trigger an update.
-   */
-  bool valid() const { return m_valid; }
+  /** @brief Number of particles in the config. */
+  auto size() { return m_parts.size(); }
 
-  /**
-   * @brief Invalidate the cache and free memory.
-   */
-  void invalidate() {
-    /* Release memory */
-    m_parts = std::vector<Particle>();
-    /* Adjust state */
-    m_valid = false;
-  }
+  /** @brief Is the config empty? */
+  auto empty() { return m_parts.empty(); }
 
+private:
   /**
    * @brief Update particle information.
    *
@@ -102,28 +62,5 @@ public:
    * sort their particle by id, and send them
    * to the head node.
    */
-private:
   void update();
-
-public:
-  /** Number of particles in the config.
-   */
-  std::size_t size() {
-    if (!m_valid)
-      update();
-
-    return m_parts.size();
-  }
-
-  /**
-   * @brief size() == 0 ?
-   */
-  bool empty() {
-    if (!m_valid)
-      update();
-
-    return m_parts.empty();
-  }
 };
-
-#endif

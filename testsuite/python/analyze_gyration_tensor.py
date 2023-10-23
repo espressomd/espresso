@@ -73,7 +73,7 @@ class AnalyzeGyration(ut.TestCase):
             np.abs(res['eva2'][1]), [1., 0., 0.], atol=1e-6)
         np.testing.assert_allclose(rg**2, res['Rg^2'], atol=1e-6)
 
-    def test_mom_intertia(self):
+    def test_mom_inertia(self):
         sqr_dist = np.sum(
             (self.system.analysis.center_of_mass(p_type=0) - self.system.part.select(type=0).pos)**2, axis=0)
         mom_I = self.system.analysis.moment_of_inertia_matrix(p_type=0)

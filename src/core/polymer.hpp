@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef POLYMER_H
-#define POLYMER_H
+
+#pragma once
+
 /** \file
  *
  *  This file contains everything needed to create a start-up
@@ -29,14 +30,14 @@
  *  Implementation in polymer.cpp.
  */
 
-#include "PartCfg.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
 #include <vector>
 
 /** Determines valid polymer positions and returns them.
- *  @param  partCfg           particle collection
+ *  @param  system            particle system
  *  @param  n_polymers        how many polymers to create
  *  @param  beads_per_chain   monomers per chain
  *  @param  bond_length       length of the bonds between two monomers
@@ -50,10 +51,8 @@
  *  @param  seed              seed for RNG
  */
 std::vector<std::vector<Utils::Vector3d>>
-draw_polymer_positions(PartCfg &partCfg, int n_polymers, int beads_per_chain,
-                       double bond_length,
+draw_polymer_positions(System::System const &system, int n_polymers,
+                       int beads_per_chain, double bond_length,
                        std::vector<Utils::Vector3d> const &start_positions,
                        double min_distance, int max_tries, int use_bond_angle,
                        double bond_angle, int respect_constraints, int seed);
-
-#endif

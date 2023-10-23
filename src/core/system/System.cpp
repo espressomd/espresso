@@ -38,7 +38,6 @@
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "partCfg_global.hpp"
 #include "particle_node.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
@@ -281,9 +280,6 @@ void System::on_particle_change() {
   ::recalc_forces = true;
 
   /* the particle information is no longer valid */
-  partCfg().invalidate();
-
-  /* the particle information is no longer valid */
   invalidate_fetch_cache();
 }
 
@@ -291,8 +287,6 @@ void System::on_particle_charge_change() {
 #ifdef ELECTROSTATICS
   coulomb.on_particle_change();
 #endif
-  /* the particle information is no longer valid */
-  partCfg().invalidate();
 }
 
 void System::update_dependent_particles() {
@@ -396,7 +390,6 @@ void System::on_integration_start() {
   npt_ensemble_init(*box_geo);
 #endif
 
-  partCfg().invalidate();
   invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS

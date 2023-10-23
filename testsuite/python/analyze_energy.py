@@ -181,6 +181,11 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 1. + 1., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
             [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+        # check effect of particle resort
+        p0_energy_old = self.system.analysis.particle_energy(p0)
+        p0.pos = p0.pos  # trigger particle resort
+        p0_energy_new = self.system.analysis.particle_energy(p0)
+        self.assertAlmostEqual(p0_energy_new, p0_energy_old, delta=1e-7)
 
     def check_electrostatics(self, p3m_class):
         p0, p1 = self.system.part.all()
