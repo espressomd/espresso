@@ -17,17 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ANALYSIS_OBSERVABLE_STAT_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ANALYSIS_OBSERVABLE_STAT_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <string>
 
 namespace ScriptInterface {
 namespace Analysis {
 
-class ObservableStat : public ObjectHandle {
+class ObservableStat : public System::Leaf {
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &parameters) override;
@@ -35,5 +35,3 @@ public:
 
 } // namespace Analysis
 } // namespace ScriptInterface
-
-#endif

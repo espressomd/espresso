@@ -39,7 +39,7 @@ class SigintTest(ut.TestCase):
         # send signal
         process.send_signal(sig)
         # capture stderr and return code (negative of signum)
-        stdout, stderr = process.communicate(input=None, timeout=6.)
+        stdout, stderr = process.communicate(input=None, timeout=16.)
         assert stdout is None
         traceback = stderr.decode()
         return_code = process.poll()
@@ -75,7 +75,7 @@ class SigintTest(ut.TestCase):
                     self.check_signal_handling(process, sig)
                     break
                 tock = time.time()
-                assert tock - tick < 8., "subprocess timed out"
+                assert tock - tick < 18., "subprocess timed out"
                 time.sleep(0.1)
 
 

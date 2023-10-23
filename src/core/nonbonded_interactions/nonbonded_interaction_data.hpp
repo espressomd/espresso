@@ -427,7 +427,6 @@ public:
 
   void set_ia_param(int i, int j, std::shared_ptr<IA_parameters> const &ia) {
     m_nonbonded_ia_params[get_ia_param_key(i, j)] = ia;
-    on_non_bonded_ia_change();
   }
 
   auto get_max_seen_particle_type() const { return max_seen_particle_type; }
@@ -437,6 +436,4 @@ public:
 
   /** @brief Get maximal cutoff. */
   double maximal_cutoff() const;
-
-  void on_non_bonded_ia_change();
 };

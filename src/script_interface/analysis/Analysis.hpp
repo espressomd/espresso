@@ -17,17 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ANALYSIS_ANALYSIS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ANALYSIS_ANALYSIS_HPP
+#pragma once
+
+#include "ObservableStat.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <string>
 
 namespace ScriptInterface {
 namespace Analysis {
 
-class Analysis : public ObjectHandle {
+class Analysis : public System::Leaf {
+  std::shared_ptr<ObservableStat> m_obs_stat;
+
+  /** @brief Check if a particle type exists. */
+  void check_particle_type(int p_type) const;
+
+  void do_construct(VariantMap const &params) override {
+    m_obs_stat = std::make_shared<ObservableStat>();
+  }
+
+  void on_bind_system(::System::System &) override {
+    m_obs_stat->bind_system(m_system.lock());
+  }
+
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &parameters) override;
@@ -35,5 +50,3 @@ public:
 
 } // namespace Analysis
 } // namespace ScriptInterface
-
-#endif

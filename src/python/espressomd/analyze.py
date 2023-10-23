@@ -18,7 +18,6 @@
 #
 import numpy as np
 
-from . import utils
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
 
@@ -78,64 +77,6 @@ def autocorrelation(time_series):
     else:
         raise ValueError(f"Only 1-dimensional and 2-dimensional time series "
                          f"are supported, got shape {time_series.shape}")
-
-
-@script_interface_register
-class _ObservableStat(ScriptInterfaceHelper):
-    _so_name = "ScriptInterface::Analysis::ObservableStat"
-    _so_creation_policy = "GLOBAL"
-
-    def _generate_summary(self, obj, dim, calc_sp):
-        """
-        Compute derived quantities and reshape pressure tensors as 3x3 matrices.
-        """
-
-        def zero():
-            if dim == 1 or calc_sp:
-                return 0.
-            return np.zeros(9, dtype=float)
-
-        def reduction(obj, key):
-            total = zero()
-            for k in obj.keys():
-                if isinstance(k, tuple) and k[0] == key:
-                    total += obj[k]
-            obj[key] = total
-
-        out = {}
-        out["bonded"] = zero()
-        out["non_bonded_intra"] = zero()
-        out["non_bonded_inter"] = zero()
-        for k, v in obj.items():
-            if "," not in k:
-                out[k] = v
-            else:
-                k = k.split(",")
-                k = (k[0], *map(int, k[1:]))
-                out[k] = v
-                if k[0] == "bonded":
-                    out["bonded"] += v
-                elif k[0].startswith("non_bonded_"):
-                    if k[0] == "non_bonded_intra":
-                        out["non_bonded_intra"] += v
-                    else:
-                        out["non_bonded_inter"] += v
-                    k = ("non_bonded", *k[1:])
-                    if k not in out:
-                        out[k] = zero()
-                    out[k] += v
-
-        out["non_bonded"] = out["non_bonded_intra"] + out["non_bonded_inter"]
-        if has_features("ELECTROSTATICS"):
-            reduction(out, "coulomb")
-        if has_features("DIPOLES"):
-            reduction(out, "dipolar")
-        if has_features("VIRTUAL_SITES"):
-            reduction(out, "virtual_sites")
-
-        if dim == 1 or calc_sp:
-            return out
-        return {k: np.reshape(v, (3, 3)) for k, v in out.items()}
 
 
 @script_interface_register
@@ -381,7 +322,7 @@ class Analysis(ScriptInterfaceHelper):
             and [1] contains the values of the rdf.
 
     """
-    _so_name = "ScriptInterface::Analysis::Analysis"
+    _so_name = "Analysis::Analysis"
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "linear_momentum",
@@ -459,10 +400,8 @@ class Analysis(ScriptInterfaceHelper):
             * ``"external_fields"``: external fields contribution
 
         """
-        obs_stat = _ObservableStat()
-        observable = obs_stat.call_method("calculate_scalar_pressure")
-        utils.handle_errors("calculate_pressure() failed")
-        return obs_stat._generate_summary(observable, 9, True)
+        observable = self.call_method("calculate_scalar_pressure")
+        return self._generate_summary(observable, 9, True)
 
     def pressure_tensor(self):
         """
@@ -502,10 +441,8 @@ class Analysis(ScriptInterfaceHelper):
             * ``"external_fields"``: external fields contribution
 
         """
-        obs_stat = _ObservableStat()
-        observable = obs_stat.call_method("calculate_pressure_tensor")
-        utils.handle_errors("calculate_pressure() failed")
-        return obs_stat._generate_summary(observable, 9, False)
+        observable = self.call_method("calculate_pressure_tensor")
+        return self._generate_summary(observable, 9, False)
 
     def energy(self):
         """
@@ -551,10 +488,8 @@ class Analysis(ScriptInterfaceHelper):
         >>> print(energy["external_fields"])
 
         """
-        obs_stat = _ObservableStat()
-        observable = obs_stat.call_method("calculate_energy")
-        utils.handle_errors("calculate_energy() failed")
-        return obs_stat._generate_summary(observable, 1, False)
+        observable = self.call_method("calculate_energy")
+        return self._generate_summary(observable, 1, False)
 
     def particle_energy(self, particle):
         """
@@ -645,3 +580,55 @@ class Analysis(ScriptInterfaceHelper):
         """
         vec = self.call_method("moment_of_inertia_matrix", p_type=p_type)
         return np.reshape(vec, (3, 3))
+
+    def _generate_summary(self, obj, dim, calc_sp):
+        """
+        Compute derived quantities and reshape pressure tensors as 3x3 matrices.
+        """
+
+        def zero():
+            if dim == 1 or calc_sp:
+                return 0.
+            return np.zeros(9, dtype=float)
+
+        def reduction(obj, key):
+            total = zero()
+            for k in obj.keys():
+                if isinstance(k, tuple) and k[0] == key:
+                    total += obj[k]
+            obj[key] = total
+
+        out = {}
+        out["bonded"] = zero()
+        out["non_bonded_intra"] = zero()
+        out["non_bonded_inter"] = zero()
+        for k, v in obj.items():
+            if "," not in k:
+                out[k] = v
+            else:
+                k = k.split(",")
+                k = (k[0], *map(int, k[1:]))
+                out[k] = v
+                if k[0] == "bonded":
+                    out["bonded"] += v
+                elif k[0].startswith("non_bonded_"):
+                    if k[0] == "non_bonded_intra":
+                        out["non_bonded_intra"] += v
+                    else:
+                        out["non_bonded_inter"] += v
+                    k = ("non_bonded", *k[1:])
+                    if k not in out:
+                        out[k] = zero()
+                    out[k] += v
+
+        out["non_bonded"] = out["non_bonded_intra"] + out["non_bonded_inter"]
+        if has_features("ELECTROSTATICS"):
+            reduction(out, "coulomb")
+        if has_features("DIPOLES"):
+            reduction(out, "dipolar")
+        if has_features("VIRTUAL_SITES"):
+            reduction(out, "virtual_sites")
+
+        if dim == 1 or calc_sp:
+            return out
+        return {k: np.reshape(v, (3, 3)) for k, v in out.items()}

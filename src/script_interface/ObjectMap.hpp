@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBJECT_MAP_HPP
-#define SCRIPT_INTERFACE_OBJECT_MAP_HPP
+#pragma once
 
 #include "script_interface/ObjectContainer.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -194,4 +193,3 @@ protected:
   }
 };
 } // Namespace ScriptInterface
-#endif

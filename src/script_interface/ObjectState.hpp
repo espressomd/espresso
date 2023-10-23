@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
+
+#pragma once
 
 #include "packed_variant.hpp"
 
@@ -48,5 +48,3 @@ struct ObjectState {
   }
 };
 } // namespace ScriptInterface
-
-#endif

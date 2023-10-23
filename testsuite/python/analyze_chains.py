@@ -21,6 +21,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
+import espressomd.analyze
 import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.polymer
@@ -216,6 +217,8 @@ class AnalyzeChain(ut.TestCase):
                 self.system.part.by_id(0).virtual = True
                 analysis.calc_rg(chain_start=0, number_of_chains=num_poly,
                                  chain_length=num_mono)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'analysis' is read-only"):
+            self.system.analysis = espressomd.analyze.Analysis()
 
 
 if __name__ == "__main__":

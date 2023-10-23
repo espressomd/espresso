@@ -23,10 +23,9 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/Leaf.hpp"
 
-#include "core/forces.hpp"
 #include "core/galilei/ComFixed.hpp"
-#include "core/system/System.hpp"
 
 #include <memory>
 #include <vector>
@@ -34,14 +33,18 @@
 namespace ScriptInterface {
 namespace Galilei {
 
-class ComFixed : public AutoParameters<ComFixed> {
+class ComFixed : public AutoParameters<ComFixed, System::Leaf> {
   std::shared_ptr<::ComFixed> m_comfixed;
 
   void do_construct(VariantMap const &params) override {
-    ::System::get_system().comfixed = m_comfixed = std::make_shared<::ComFixed>();
+    m_comfixed = std::make_shared<::ComFixed>();
     for (auto const &p : params) {
       do_set_parameter(p.first, p.second);
     }
+  }
+
+  void on_bind_system(::System::System &system) override {
+    system.comfixed = m_comfixed;
   }
 
 public:

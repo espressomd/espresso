@@ -140,13 +140,12 @@ double mindist(System::System const &system, std::vector<int> const &set1,
   return std::sqrt(mindist_sq);
 }
 
-Utils::Vector3d calc_linear_momentum(bool include_particles,
+Utils::Vector3d calc_linear_momentum(System::System const &system,
+                                     bool include_particles,
                                      bool include_lbfluid) {
   Utils::Vector3d momentum{};
-  auto const &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
   if (include_particles) {
-    auto const particles = cell_structure.local_particles();
+    auto const particles = system.cell_structure->local_particles();
     momentum =
         std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
                         [](Utils::Vector3d const &m, Particle const &p) {

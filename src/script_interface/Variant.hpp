@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_VARIANT_HPP
-#define SCRIPT_INTERFACE_VARIANT_HPP
+
+#pragma once
 
 #include "None.hpp"
 
@@ -127,5 +127,3 @@ template <class T> bool is_type(Variant const &v) {
 
 inline bool is_none(Variant const &v) { return is_type<None>(v); }
 } // namespace ScriptInterface
-
-#endif

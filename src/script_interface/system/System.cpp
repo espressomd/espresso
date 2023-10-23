@@ -20,6 +20,7 @@
 #include "System.hpp"
 
 #include "config/config.hpp"
+
 #include "core/BoxGeometry.hpp"
 #include "core/Particle.hpp"
 #include "core/ParticleRange.hpp"
@@ -34,6 +35,11 @@
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
 
+#include "script_interface/analysis/Analysis.hpp"
+#include "script_interface/galilei/ComFixed.hpp"
+#include "script_interface/galilei/Galilei.hpp"
+#include "script_interface/integrators/IntegratorHandle.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/math/vec_rotate.hpp>
 
@@ -47,6 +53,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace ScriptInterface {
@@ -54,7 +61,29 @@ namespace System {
 
 static bool system_created = false;
 
-System::System() {
+struct System::Leaves {
+  Leaves() = default;
+  std::shared_ptr<Analysis::Analysis> analysis;
+  std::shared_ptr<Galilei::ComFixed> comfixed;
+  std::shared_ptr<Galilei::Galilei> galilei;
+};
+
+System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
+  auto const add_parameter =
+      [this, ptr = m_leaves.get()](std::string key, auto(Leaves::*member)) {
+        add_parameters({AutoParameter(
+            key.c_str(),
+            [this, ptr, member, key](Variant const &val) {
+              auto &dst = ptr->*member;
+              if (dst != nullptr) {
+                throw WriteError(key);
+              }
+              dst = get_value<std::remove_reference_t<decltype(dst)>>(val);
+              dst->bind_system(m_instance);
+            },
+            [ptr, member]() { return ptr->*member; })});
+      };
+
   add_parameters({
       {"box_l",
        [this](Variant const &v) {
@@ -68,17 +97,6 @@ System::System() {
          });
        },
        []() { return ::System::get_system().box_geo->length(); }},
-      {"min_global_cut",
-       [this](Variant const &v) {
-         context()->parallel_try_catch([&]() {
-           auto const new_value = get_value<double>(v);
-           if (new_value < 0. and new_value != INACTIVE_CUTOFF) {
-             throw std::domain_error("Attribute 'min_global_cut' must be >= 0");
-           }
-           m_instance->set_min_global_cut(new_value);
-         });
-       },
-       [this]() { return m_instance->get_min_global_cut(); }},
       {"periodicity",
        [this](Variant const &v) {
          auto const periodicity = get_value<Utils::Vector3b>(v);
@@ -93,8 +111,22 @@ System::System() {
                                 m_instance->box_geo->periodic(1),
                                 m_instance->box_geo->periodic(2)};
        }},
+      {"min_global_cut",
+       [this](Variant const &v) {
+         context()->parallel_try_catch([&]() {
+           auto const new_value = get_value<double>(v);
+           if (new_value < 0. and new_value != INACTIVE_CUTOFF) {
+             throw std::domain_error("Attribute 'min_global_cut' must be >= 0");
+           }
+           m_instance->set_min_global_cut(new_value);
+         });
+       },
+       [this]() { return m_instance->get_min_global_cut(); }},
       {"max_oif_objects", ::max_oif_objects},
   });
+  add_parameter("analysis", &Leaves::analysis);
+  add_parameter("comfixed", &Leaves::comfixed);
+  add_parameter("galilei", &Leaves::galilei);
 }
 
 void System::do_construct(VariantMap const &params) {
@@ -107,10 +139,6 @@ void System::do_construct(VariantMap const &params) {
    * runtime errors about the local geometry being smaller
    * than the interaction range would be raised.
    */
-  auto const valid_params = get_valid_parameters();
-  std::set<std::string> const skip{{"box_l", "periodicity", "min_global_cut"}};
-  std::set<std::string> const allowed{valid_params.begin(), valid_params.end()};
-
   m_instance = std::make_shared<::System::System>();
   ::System::set_system(m_instance);
   m_instance->init();
@@ -120,15 +148,9 @@ void System::do_construct(VariantMap const &params) {
   do_set_parameter("box_l", params.at("box_l"));
   m_instance->set_cell_structure_topology(CellStructureType::REGULAR);
 
-  if (params.count("periodicity")) {
-    do_set_parameter("periodicity", params.at("periodicity"));
-  }
-  if (params.count("min_global_cut")) {
-    do_set_parameter("min_global_cut", params.at("min_global_cut"));
-  }
-  for (auto const &[name, value] : params) {
-    if (skip.count(name) == 0 and allowed.count(name) != 0) {
-      do_set_parameter(name, value);
+  for (auto const &key : get_parameter_insertion_order()) {
+    if (key != "box_l" and params.count(key) != 0ul) {
+      do_set_parameter(key, params.at(key));
     }
   }
 }
@@ -197,14 +219,14 @@ Variant System::do_call_method(std::string const &name,
     return {};
   }
   if (name == "rescale_boxl") {
-    auto &box_geo = *::System::get_system().box_geo;
+    auto &box_geo = *m_instance->box_geo;
     auto const coord = get_value<int>(parameters, "coord");
     auto const length = get_value<double>(parameters, "length");
     auto const scale = (coord == 3) ? length * box_geo.length_inv()[0]
                                     : length * box_geo.length_inv()[coord];
     context()->parallel_try_catch([&]() {
       if (length <= 0.) {
-        throw std::domain_error("Parameter 'd_new' be > 0");
+        throw std::domain_error("Parameter 'd_new' must be > 0");
       }
     });
     auto new_value = Utils::Vector3d{};
@@ -239,18 +261,16 @@ Variant System::do_call_method(std::string const &name,
     return ::number_of_particles_with_type(type);
   }
   if (name == "velocity_difference") {
-    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");
     auto const pos2 = get_value<Utils::Vector3d>(parameters, "pos2");
     auto const v1 = get_value<Utils::Vector3d>(parameters, "v1");
     auto const v2 = get_value<Utils::Vector3d>(parameters, "v2");
-    return box_geo.velocity_difference(pos2, pos1, v2, v1);
+    return m_instance->box_geo->velocity_difference(pos2, pos1, v2, v1);
   }
   if (name == "distance_vec") {
-    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");
     auto const pos2 = get_value<Utils::Vector3d>(parameters, "pos2");
-    return box_geo.get_mi_vector(pos2, pos1);
+    return m_instance->box_geo->get_mi_vector(pos2, pos1);
   }
   if (name == "rotate_system") {
     rotate_system(*m_instance->cell_structure,

@@ -21,20 +21,24 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include "core/galilei/Galilei.hpp"
-#include "core/system/System.hpp"
 
 #include <memory>
 
 namespace ScriptInterface {
 namespace Galilei {
 
-class Galilei : public AutoParameters<Galilei> {
+class Galilei : public AutoParameters<Galilei, System::Leaf> {
   std::shared_ptr<::Galilei> m_galilei;
 
   void do_construct(VariantMap const &params) override {
     m_galilei = std::make_shared<::Galilei>();
+  }
+
+  void on_bind_system(::System::System &system) override {
+    system.galilei = m_galilei;
   }
 
 public:
@@ -42,20 +46,20 @@ public:
                          VariantMap const &params) override {
     if (name == "kill_particle_motion") {
       auto const rotation = get_value_or<bool>(params, "rotation", false);
-      m_galilei->kill_particle_motion(::System::get_system(), rotation);
+      m_galilei->kill_particle_motion(get_system(), rotation);
     }
     if (name == "kill_particle_forces") {
       auto const torque = get_value_or<bool>(params, "torque", false);
-      m_galilei->kill_particle_forces(::System::get_system(), torque);
+      m_galilei->kill_particle_forces(get_system(), torque);
     }
     if (name == "galilei_transform") {
-      m_galilei->galilei_transform(::System::get_system());
+      m_galilei->galilei_transform(get_system());
     }
     if (name == "system_CMS") {
-      return m_galilei->calc_system_cms_position(::System::get_system()).as_vector();
+      return m_galilei->calc_system_cms_position(get_system()).as_vector();
     }
     if (name == "system_CMS_velocity") {
-      return m_galilei->calc_system_cms_velocity(::System::get_system()).as_vector();
+      return m_galilei->calc_system_cms_velocity(get_system()).as_vector();
     }
     return {};
   }

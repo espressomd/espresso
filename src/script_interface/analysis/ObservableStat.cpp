@@ -25,7 +25,6 @@
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "core/Observable_stat.hpp"
-#include "core/system/System.hpp"
 
 #include <utils/Span.hpp>
 
@@ -136,7 +135,7 @@ static auto get_summary(::System::System const &system,
 
 Variant ObservableStat::do_call_method(std::string const &name,
                                        VariantMap const &parameters) {
-  auto &system = System::get_system();
+  auto &system = get_system();
   if (name == "calculate_energy") {
     auto const obs = system.calculate_energy();
     return get_summary(system, *obs, false);

@@ -166,6 +166,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         BOOST_CHECK_EQUAL(vec.size(), 0ul);
       }
     }
+    BOOST_TEST(system.box() == system.box_geo->length(),
+               boost::test_tools::per_element());
   }
 
   // check accumulators

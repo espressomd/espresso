@@ -18,6 +18,7 @@
  */
 
 #include "Analysis.hpp"
+#include "ObservableStat.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/analysis/statistics.hpp"
@@ -27,7 +28,6 @@
 #include "core/communication.hpp"
 #include "core/dpd.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "core/system/System.hpp"
 
 #include "script_interface/communication.hpp"
 
@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -101,11 +102,9 @@ static void check_topology(CellStructure const &cell_structure, int chain_start,
   }
 }
 
-/** @brief Check if a particle type exists. */
-static void check_particle_type(int p_type) {
-  auto const &system = System::get_system();
-  if (p_type < 0 or
-      p_type > system.nonbonded_ias->get_max_seen_particle_type()) {
+void Analysis::check_particle_type(int p_type) const {
+  auto const &nonbonded_ias = get_system().nonbonded_ias;
+  if (p_type < 0 or p_type > nonbonded_ias->get_max_seen_particle_type()) {
     std::stringstream error_msg;
     error_msg << "Particle type " << p_type << " does not exist";
     throw std::invalid_argument(error_msg.str());
@@ -116,25 +115,24 @@ Variant Analysis::do_call_method(std::string const &name,
                                  VariantMap const &parameters) {
   if (name == "linear_momentum") {
     auto const local = calc_linear_momentum(
-        get_value_or<bool>(parameters, "include_particles", true),
+        get_system(), get_value_or<bool>(parameters, "include_particles", true),
         get_value_or<bool>(parameters, "include_lbfluid", true));
     return mpi_reduce_sum(context()->get_comm(), local).as_vector();
   }
   if (name == "particle_energy") {
-    auto &system = System::get_system();
+    auto &system = get_system();
     auto const pid = get_value<int>(parameters, "pid");
     auto const local = system.particle_short_range_energy_contribution(pid);
     return mpi_reduce_sum(context()->get_comm(), local);
   }
 #ifdef DIPOLE_FIELD_TRACKING
   if (name == "calc_long_range_fields") {
-    auto const &system = System::get_system();
-    system.calculate_long_range_fields();
+    get_system().calculate_long_range_fields();
     return {};
   }
 #endif
   if (name == "particle_neighbor_pids") {
-    ::System::get_system().on_observable_calc();
+    get_system().on_observable_calc();
     std::unordered_map<int, std::vector<int>> dict;
     context()->parallel_try_catch([&]() {
       auto neighbor_pids = get_neighbor_pids();
@@ -161,28 +159,28 @@ Variant Analysis::do_call_method(std::string const &name,
     for (auto const p_type : p_types2) {
       context()->parallel_try_catch([&]() { check_particle_type(p_type); });
     }
-    return mindist(::System::get_system(), p_types1, p_types2);
+    return mindist(get_system(), p_types1, p_types2);
   }
   if (name == "center_of_mass") {
     auto const p_type = get_value<int>(parameters, "p_type");
     context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    auto const local = center_of_mass(::System::get_system(), p_type);
+    auto const local = center_of_mass(get_system(), p_type);
     return mpi_reduce_sum(context()->get_comm(), local).as_vector();
   }
   if (name == "angular_momentum") {
     auto const p_type = get_value<int>(parameters, "p_type");
     context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    auto const local = angular_momentum(::System::get_system(), p_type);
+    auto const local = angular_momentum(get_system(), p_type);
     return mpi_reduce_sum(context()->get_comm(), local).as_vector();
   }
   if (name == "nbhood") {
     auto const pos = get_value<Utils::Vector3d>(parameters, "pos");
     auto const radius = get_value<double>(parameters, "r_catch");
-    auto const result = nbhood(System::get_system(), pos, radius);
+    auto const result = nbhood(get_system(), pos, radius);
     return result;
   }
   if (name == "calc_re") {
-    auto const &system = System::get_system();
+    auto const &system = get_system();
     auto const chain_start = get_value<int>(parameters, "chain_start");
     auto const chain_length = get_value<int>(parameters, "chain_length");
     auto const n_chains = get_value<int>(parameters, "number_of_chains");
@@ -191,7 +189,7 @@ Variant Analysis::do_call_method(std::string const &name,
     return std::vector<double>(result.begin(), result.end());
   }
   if (name == "calc_rg") {
-    auto const &system = System::get_system();
+    auto const &system = get_system();
     auto const chain_start = get_value<int>(parameters, "chain_start");
     auto const chain_length = get_value<int>(parameters, "chain_length");
     auto const n_chains = get_value<int>(parameters, "number_of_chains");
@@ -204,7 +202,7 @@ Variant Analysis::do_call_method(std::string const &name,
     return output;
   }
   if (name == "calc_rh") {
-    auto const &system = System::get_system();
+    auto const &system = get_system();
     auto const chain_start = get_value<int>(parameters, "chain_start");
     auto const chain_length = get_value<int>(parameters, "chain_length");
     auto const n_chains = get_value<int>(parameters, "number_of_chains");
@@ -217,13 +215,13 @@ Variant Analysis::do_call_method(std::string const &name,
     for (auto const p_type : p_types) {
       context()->parallel_try_catch([&]() { check_particle_type(p_type); });
     }
-    auto const mat = gyration_tensor(System::get_system(), p_types);
+    auto const mat = gyration_tensor(get_system(), p_types);
     return std::vector<double>(mat.begin(), mat.end());
   }
   if (name == "moment_of_inertia_matrix") {
     auto const p_type = get_value<int>(parameters, "p_type");
     context()->parallel_try_catch([&]() { check_particle_type(p_type); });
-    auto const local = moment_of_inertia_matrix(::System::get_system(), p_type);
+    auto const local = moment_of_inertia_matrix(get_system(), p_type);
     return mpi_reduce_sum(context()->get_comm(), local).as_vector();
   }
   if (name == "structure_factor") {
@@ -236,12 +234,11 @@ Variant Analysis::do_call_method(std::string const &name,
     for (auto const p_type : p_types) {
       context()->parallel_try_catch([&]() { check_particle_type(p_type); });
     }
-    auto const result =
-        structure_factor(::System::get_system(), p_types, order);
+    auto const result = structure_factor(get_system(), p_types, order);
     return make_vector_of_variants(result);
   }
   if (name == "distribution") {
-    auto const &box_l = System::get_system().box_geo->length();
+    auto const &box_l = get_system().box_geo->length();
     auto const r_max_limit =
         0.5 * std::min(std::min(box_l[0], box_l[1]), box_l[2]);
     auto const r_min = get_value_or<double>(parameters, "r_min", 0.);
@@ -277,8 +274,17 @@ Variant Analysis::do_call_method(std::string const &name,
       context()->parallel_try_catch([&]() { check_particle_type(p_type); });
     }
     return make_vector_of_variants(
-        calc_part_distribution(::System::get_system(), p_types1, p_types2,
-                               r_min, r_max, r_bins, log_flag, int_flag));
+        calc_part_distribution(get_system(), p_types1, p_types2, r_min, r_max,
+                               r_bins, log_flag, int_flag));
+  }
+  if (name == "calculate_energy") {
+    return m_obs_stat->do_call_method("calculate_energy", {});
+  }
+  if (name == "calculate_scalar_pressure") {
+    return m_obs_stat->do_call_method("calculate_scalar_pressure", {});
+  }
+  if (name == "calculate_pressure_tensor") {
+    return m_obs_stat->do_call_method("calculate_pressure_tensor", {});
   }
   return {};
 }

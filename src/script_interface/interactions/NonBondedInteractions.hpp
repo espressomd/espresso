@@ -117,6 +117,7 @@ protected:
           params.at("object"));
       m_nonbonded_ias->set_ia_param(type_min, type_max, obj_ptr->get_ia());
       m_nonbonded_ia_params[key] = obj_ptr;
+      System::get_system().on_non_bonded_ia_change();
       return {};
     }
     if (method == "check_key") {
