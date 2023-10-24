@@ -321,6 +321,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 
   auto &cell_structure = *system.cell_structure;
   auto &box_geo = *system.box_geo;
+  auto &bond_breakage = *system.bond_breakage;
   auto const time_step = system.get_time_step();
 
   // Prepare particle structure and run sanity checks of all active algorithms
@@ -500,7 +501,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 #ifdef COLLISION_DETECTION
       handle_collisions(cell_structure);
 #endif
-      BondBreakage::process_queue();
+      bond_breakage.process_queue(system);
     }
 
     integrated_steps++;

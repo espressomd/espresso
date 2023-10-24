@@ -57,6 +57,8 @@ public:
 private:
   container_type m_bonds;
 
+  void before_do_construct() override {}
+
   key_type insert_in_core(mapped_type const &obj_ptr) override {
     auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
     m_bonds[key] = std::move(obj_ptr);

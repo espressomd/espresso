@@ -74,6 +74,7 @@
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
+#include <optional>
 #include <tuple>
 
 inline ParticleForce calc_central_radial_force(Particle const &p1,
@@ -453,21 +454,22 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
 
 inline bool
 add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
+                 BondBreakage::BondBreakage &bond_breakage,
                  BoxGeometry const &box_geo,
                  Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
 
   // Consider for bond breakage
   if (partners.size() == 1) { // pair bonds
     auto d = box_geo.get_mi_vector(p1.pos(), partners[0]->pos()).norm();
-    if (BondBreakage::check_and_handle_breakage(
-            p1.id(), {{partners[0]->id(), boost::none}}, bond_id, d)) {
+    if (bond_breakage.check_and_handle_breakage(
+            p1.id(), {{partners[0]->id(), std::nullopt}}, bond_id, d)) {
       return false;
     }
   }
   if (partners.size() == 2) { // angle bond
     auto d =
         box_geo.get_mi_vector(partners[0]->pos(), partners[1]->pos()).norm();
-    if (BondBreakage::check_and_handle_breakage(
+    if (bond_breakage.check_and_handle_breakage(
             p1.id(), {{partners[0]->id(), partners[1]->id()}}, bond_id, d)) {
       return false;
     }

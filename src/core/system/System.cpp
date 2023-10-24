@@ -58,6 +58,7 @@ System::System() {
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
+  bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
   reinit_thermo = true;
   time_step = -1.;
   force_cap = 0.;

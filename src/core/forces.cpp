@@ -167,6 +167,7 @@ void force_calc(System::System &system, double time_step, double kT) {
 #endif
 
   auto &cell_structure = *system.cell_structure;
+  auto &bond_breakage = *system.bond_breakage;
   auto const &box_geo = *system.box_geo;
   auto const &nonbonded_ias = *system.nonbonded_ias;
   auto const verlet_skin = system.get_verlet_skin();
@@ -185,7 +186,7 @@ void force_calc(System::System &system, double time_step, double kT) {
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
 #endif
-  BondBreakage::clear_queue();
+  bond_breakage.clear_queue();
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
@@ -217,9 +218,9 @@ void force_calc(System::System &system, double time_step, double kT) {
 #endif
 
   short_range_loop(
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &bond_breakage,
        &box_geo](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        return add_bonded_force(p1, bond_id, partners, box_geo,
+        return add_bonded_force(p1, bond_id, partners, bond_breakage, box_geo,
                                 coulomb_kernel_ptr);
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),

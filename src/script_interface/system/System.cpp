@@ -36,6 +36,7 @@
 #include "core/system/System.impl.hpp"
 
 #include "script_interface/analysis/Analysis.hpp"
+#include "script_interface/bond_breakage/BreakageSpecs.hpp"
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
@@ -66,6 +67,7 @@ struct System::Leaves {
   std::shared_ptr<Analysis::Analysis> analysis;
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
+  std::shared_ptr<BondBreakage::BreakageSpecs> bond_breakage;
 };
 
 System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
@@ -127,6 +129,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   add_parameter("analysis", &Leaves::analysis);
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);
+  add_parameter("bond_breakage", &Leaves::bond_breakage);
 }
 
 void System::do_construct(VariantMap const &params) {

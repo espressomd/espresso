@@ -43,6 +43,9 @@ class InteractionsNonBonded;
 class ComFixed;
 class Galilei;
 class Observable_stat;
+namespace BondBreakage {
+class BondBreakage;
+}
 
 namespace System {
 
@@ -195,6 +198,7 @@ public:
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
   std::shared_ptr<ComFixed> comfixed;
   std::shared_ptr<Galilei> galilei;
+  std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
 
 protected:
   /** @brief Whether the thermostat has to be reinitialized before integration.
