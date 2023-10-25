@@ -147,6 +147,10 @@ private:
   bool m_rebuild_verlet_list = true;
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
   double m_le_pos_offset_at_last_resort = 0.;
+  /** @brief Verlet list skin. */
+  double m_verlet_skin = 0.;
+  bool m_verlet_skin_set = false;
+  double m_verlet_reuse = 0.;
 
 public:
   CellStructure(BoxGeometry const &box);
@@ -428,6 +432,30 @@ public:
    * @brief Resort particles.
    */
   void resort_particles(bool global_flag, BoxGeometry const &box);
+
+  /** @brief Whether the Verlet skin is set. */
+  auto is_verlet_skin_set() const { return m_verlet_skin_set; }
+
+  /** @brief Get the Verlet skin. */
+  auto get_verlet_skin() const { return m_verlet_skin; }
+
+  /** @brief Set the Verlet skin. */
+  void set_verlet_skin(double value) {
+    assert(value >= 0.);
+    m_verlet_skin = value;
+    m_verlet_skin_set = true;
+  }
+
+  void update_verlet_stats(int n_steps, int n_verlet_updates) {
+    if (n_verlet_updates > 0) {
+      m_verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
+    } else {
+      m_verlet_reuse = 0.;
+    }
+  }
+
+  /** @brief Average number of integration steps the Verlet list was re-used */
+  auto get_verlet_reuse() const { return m_verlet_reuse; }
 
 private:
   /**

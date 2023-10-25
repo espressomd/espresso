@@ -59,7 +59,6 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
-#include <boost/range/algorithm/min_element.hpp>
 
 #ifdef CALIPER
 #include <caliper/cali.h>
@@ -344,7 +343,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(global_ghost_flags());
+    cells_update_ghosts(cell_structure, box_geo, global_ghost_flags());
 
     force_calc(system, time_step, temperature);
 
@@ -432,7 +431,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
       n_verlet_updates++;
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(global_ghost_flags());
+    cells_update_ghosts(cell_structure, box_geo, global_ghost_flags());
 
     particles = cell_structure.local_particles();
 
@@ -532,7 +531,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 #endif
 
   // Verlet list statistics
-  system.update_verlet_stats(n_steps, n_verlet_updates);
+  cell_structure.update_verlet_stats(n_steps, n_verlet_updates);
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -557,21 +556,15 @@ int integrate_with_signal_handler(System::System &system, int n_steps,
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
   /* if skin wasn't set, do an educated guess now */
-  if (not system.is_verlet_skin_set()) {
-    auto const max_cut = system.maximal_cutoff();
-    if (max_cut <= 0.0) {
+  if (not system.cell_structure->is_verlet_skin_set()) {
+    try {
+      system.set_verlet_skin_heuristic();
+    } catch (...) {
       if (comm_cart.rank() == 0) {
-        throw std::runtime_error(
-            "cannot automatically determine skin, please set it manually");
+        throw;
       }
       return INTEG_ERROR_RUNTIME;
     }
-    auto &cell_structure = *system.cell_structure;
-    /* maximal skin that can be used without resorting is the maximal
-     * range of the cell system minus what is needed for interactions. */
-    auto const max_range = *boost::min_element(cell_structure.max_cutoff());
-    auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
-    system.set_verlet_skin(new_skin);
   }
 
   if (not update_accumulators or n_steps == 0) {

@@ -349,6 +349,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
   auto &lb = system.lb;
+  auto const &box_geo = *system.box_geo;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
@@ -388,7 +389,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   for (bool with_ghosts : {false, true}) {
     {
       if (with_ghosts) {
-        cells_update_ghosts(global_ghost_flags());
+        cells_update_ghosts(cell_structure, box_geo, global_ghost_flags());
       }
       if (rank == 0) {
         auto const particles = cell_structure.local_particles();
@@ -400,7 +401,6 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
     // check box shifts
     if (rank == 0) {
-      auto const &box_geo = *system.box_geo;
       auto constexpr reference_shifts =
           std::array<Utils::Vector3i, 8>{{{{0, 0, 0}},
                                           {{0, 0, 8}},

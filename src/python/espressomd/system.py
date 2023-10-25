@@ -246,7 +246,7 @@ class System(ScriptInterfaceHelper):
         if has_features("VIRTUAL_SITES"):
             checkpointable_properties.append("_active_virtual_sites_handle")
         checkpointable_properties += [
-            "non_bonded_inter", "bonded_inter", "cell_system", "lees_edwards",
+            "non_bonded_inter", "bonded_inter", "lees_edwards",
             "part", "auto_update_accumulators",
             "constraints",
         ]

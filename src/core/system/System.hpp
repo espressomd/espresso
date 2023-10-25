@@ -78,23 +78,17 @@ public:
   /** @brief Set @ref min_global_cut. */
   void set_min_global_cut(double value);
 
-  /** @brief Get @ref verlet_skin. */
-  auto get_verlet_skin() const { return verlet_skin; }
+  /** @brief Get the Verlet skin. */
+  double get_verlet_skin() const;
 
-  /** @brief Get @ref verlet_skin. */
-  auto is_verlet_skin_set() const { return verlet_skin_set; }
-
-  /** @brief Set @ref verlet_skin. */
+  /** @brief Set the Verlet skin. */
   void set_verlet_skin(double value);
 
-  /** @brief Get @ref verlet_reuse. */
-  auto get_verlet_reuse() const { return verlet_reuse; }
-
-  /** @brief Update @ref verlet_reuse. */
-  void update_verlet_stats(int n_steps, int n_verlet_updates);
+  /** @brief Set the Verlet skin using a heuristic. */
+  void set_verlet_skin_heuristic();
 
   /**
-   * @brief Tune @ref verlet_skin.
+   * @brief Tune the Verlet skin.
    * Choose the optimal Verlet list skin between @p min_skin and @p max_skin
    * by bisection to tolerance @p tol.
    */
@@ -214,12 +208,6 @@ protected:
    * to be available on the same node (through ghosts).
    */
   double min_global_cut;
-  /** @brief Verlet list skin. */
-  double verlet_skin;
-  /** @brief Average number of integration steps the Verlet list was re-used. */
-  double verlet_reuse;
-  /** @brief Whether the Verlet list skin was set. */
-  bool verlet_skin_set;
 
   void update_local_geo();
 };

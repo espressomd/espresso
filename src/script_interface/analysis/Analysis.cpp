@@ -132,10 +132,11 @@ Variant Analysis::do_call_method(std::string const &name,
   }
 #endif
   if (name == "particle_neighbor_pids") {
-    get_system().on_observable_calc();
+    auto &system = get_system();
+    system.on_observable_calc();
     std::unordered_map<int, std::vector<int>> dict;
     context()->parallel_try_catch([&]() {
-      auto neighbor_pids = get_neighbor_pids();
+      auto neighbor_pids = get_neighbor_pids(system);
       Utils::Mpi::gather_buffer(neighbor_pids, context()->get_comm());
       std::for_each(neighbor_pids.begin(), neighbor_pids.end(),
                     [&dict](NeighborPIDs const &neighbor_pid) {

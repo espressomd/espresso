@@ -45,6 +45,8 @@
 #include <utils/Vector.hpp>
 #include <utils/mpi/all_compare.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
+
 #include <memory>
 
 namespace System {
@@ -63,9 +65,6 @@ System::System() {
   time_step = -1.;
   force_cap = 0.;
   min_global_cut = INACTIVE_CUTOFF;
-  verlet_skin = 0.;
-  verlet_reuse = 0.;
-  verlet_skin_set = false;
 }
 
 bool is_system_set() { return instance != nullptr; }
@@ -109,18 +108,13 @@ void System::set_min_global_cut(double value) {
   on_verlet_skin_change();
 }
 
-void System::set_verlet_skin(double value) {
-  verlet_skin = value;
-  verlet_skin_set = true;
-  on_verlet_skin_change();
+double System::get_verlet_skin() const {
+  return cell_structure->get_verlet_skin();
 }
 
-void System::update_verlet_stats(int n_steps, int n_verlet_updates) {
-  if (n_verlet_updates > 0) {
-    verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
-  } else {
-    verlet_reuse = 0.;
-  }
+void System::set_verlet_skin(double value) {
+  cell_structure->set_verlet_skin(value);
+  on_verlet_skin_change();
 }
 
 void System::set_cell_structure_topology(CellStructureType topology) {
@@ -135,8 +129,9 @@ void System::set_cell_structure_topology(CellStructureType topology) {
     auto &old_hybrid_decomposition = dynamic_cast<HybridDecomposition const &>(
         std::as_const(*cell_structure).decomposition());
     cell_structure->set_hybrid_decomposition(
-        ::comm_cart, old_hybrid_decomposition.get_cutoff_regular(), verlet_skin,
-        *box_geo, *local_geo, old_hybrid_decomposition.get_n_square_types());
+        ::comm_cart, old_hybrid_decomposition.get_cutoff_regular(),
+        get_verlet_skin(), *box_geo, *local_geo,
+        old_hybrid_decomposition.get_n_square_types());
   }
 
   on_cell_structure_change();
@@ -262,7 +257,7 @@ void System::on_constraint_change() { ::recalc_forces = true; }
 void System::on_lb_boundary_conditions_change() { ::recalc_forces = true; }
 
 void System::on_particle_local_change() {
-  cells_update_ghosts(global_ghost_flags());
+  cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
   ::recalc_forces = true;
 }
 
@@ -293,7 +288,7 @@ void System::on_particle_charge_change() {
 void System::update_dependent_particles() {
 #ifdef VIRTUAL_SITES
   virtual_sites()->update();
-  cells_update_ghosts(global_ghost_flags());
+  cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
 #endif
 
 #ifdef ELECTROSTATICS
@@ -309,7 +304,7 @@ void System::update_dependent_particles() {
 void System::on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
-  cells_update_ghosts(global_ghost_flags());
+  cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
   update_dependent_particles();
 
 #ifdef ELECTROSTATICS
@@ -367,7 +362,22 @@ bool System::long_range_interactions_sanity_checks() const {
 double System::get_interaction_range() const {
   auto const max_cut = maximal_cutoff();
   /* Consider skin only if there are actually interactions */
-  return (max_cut > 0.) ? max_cut + verlet_skin : INACTIVE_CUTOFF;
+  return (max_cut > 0.) ? max_cut + get_verlet_skin() : INACTIVE_CUTOFF;
+}
+
+void System::set_verlet_skin_heuristic() {
+  // if skin isn't set, do an educated guess now
+  assert(not cell_structure->is_verlet_skin_set());
+  auto const max_cut = maximal_cutoff();
+  if (max_cut <= 0.) {
+    throw std::runtime_error(
+        "cannot automatically determine skin, please set it manually");
+  }
+  /* maximal skin that can be used without resorting is the maximal
+   * range of the cell system minus what is needed for interactions. */
+  auto const max_range = *boost::min_element(cell_structure->max_cutoff());
+  auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
+  set_verlet_skin(new_skin);
 }
 
 void System::on_integration_start() {
@@ -394,7 +404,7 @@ void System::on_integration_start() {
   invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
-  if (!Utils::Mpi::all_compare(comm_cart, cell_structure->use_verlet_list)) {
+  if (!Utils::Mpi::all_compare(::comm_cart, cell_structure->use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
 #ifdef ELECTROSTATICS

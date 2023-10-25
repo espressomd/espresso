@@ -117,7 +117,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 
 double System::particle_short_range_energy_contribution(int pid) {
   if (cell_structure->get_resort_particles()) {
-    cells_update_ghosts(global_ghost_flags());
+    cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
   }
 
   auto ret = 0.0;

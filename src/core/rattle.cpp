@@ -140,7 +140,8 @@ static void apply_positional_correction(const ParticleRange &particles) {
 }
 
 void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo) {
-  cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
+  unsigned const flag = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
+  cells_update_ghosts(cs, box_geo, flag);
 
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
@@ -167,7 +168,7 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo) {
                       << " iterations";
   }
 
-  check_resort_particles();
+  check_resort_particles(cs);
 }
 
 /**

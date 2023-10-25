@@ -53,27 +53,16 @@
 namespace ScriptInterface {
 namespace CellSystem {
 
-static auto &get_cell_structure() {
-  return *::System::get_system().cell_structure;
-}
-
-static auto const &get_regular_decomposition() {
-  return dynamic_cast<RegularDecomposition const &>(
-      std::as_const(get_cell_structure()).decomposition());
-}
-
-static auto const &get_hybrid_decomposition() {
-  return dynamic_cast<HybridDecomposition const &>(
-      std::as_const(get_cell_structure()).decomposition());
-}
-
 CellSystem::CellSystem() {
   add_parameters({
-      {"use_verlet_lists", get_cell_structure().use_verlet_list},
+      {"use_verlet_lists",
+       [this](Variant const &v) {
+         get_cell_structure().use_verlet_list = get_value<bool>(v);
+       },
+       [this]() { return get_cell_structure().use_verlet_list; }},
       {"node_grid",
        [this](Variant const &v) {
-         context()->parallel_try_catch([&v]() {
-           auto &system = ::System::get_system();
+         context()->parallel_try_catch([this, &v]() {
            auto const error_msg = std::string("Parameter 'node_grid'");
            auto const old_node_grid = ::communicator.node_grid;
            auto const new_node_grid = get_value<Utils::Vector3i>(v);
@@ -87,10 +76,10 @@ CellSystem::CellSystem() {
            }
            try {
              ::communicator.set_node_grid(new_node_grid);
-             system.on_node_grid_change();
+             get_system().on_node_grid_change();
            } catch (...) {
              ::communicator.set_node_grid(old_node_grid);
-             system.on_node_grid_change();
+             get_system().on_node_grid_change();
              throw;
            }
          });
@@ -105,15 +94,15 @@ CellSystem::CellSystem() {
            }
            throw Exception("");
          }
-         ::System::get_system().set_verlet_skin(new_skin);
+         get_system().set_verlet_skin(new_skin);
        },
-       []() { return ::System::get_system().get_verlet_skin(); }},
+       [this]() { return get_system().get_verlet_skin(); }},
       {"decomposition_type", AutoParameter::read_only,
        [this]() {
          return cs_type_to_name.at(get_cell_structure().decomposition_type());
        }},
       {"n_square_types", AutoParameter::read_only,
-       []() {
+       [this]() {
          if (get_cell_structure().decomposition_type() !=
              CellStructureType::HYBRID) {
            return Variant{none};
@@ -123,7 +112,7 @@ CellSystem::CellSystem() {
          return Variant{std::vector<int>(ns_types.begin(), ns_types.end())};
        }},
       {"cutoff_regular", AutoParameter::read_only,
-       []() {
+       [this]() {
          if (get_cell_structure().decomposition_type() !=
              CellStructureType::HYBRID) {
            return Variant{none};
@@ -132,10 +121,10 @@ CellSystem::CellSystem() {
          return Variant{hd.get_cutoff_regular()};
        }},
       {"max_cut_nonbonded", AutoParameter::read_only,
-       []() { return ::System::get_system().nonbonded_ias->maximal_cutoff(); }},
+       [this]() { return get_system().nonbonded_ias->maximal_cutoff(); }},
       {"max_cut_bonded", AutoParameter::read_only, maximal_cutoff_bonded},
       {"interaction_range", AutoParameter::read_only,
-       []() { return ::System::get_system().get_interaction_range(); }},
+       [this]() { return get_system().get_interaction_range(); }},
   });
 }
 
@@ -168,14 +157,15 @@ Variant CellSystem::do_call_method(std::string const &name,
               {"regular", hd.count_particles_in_regular()},
               {"n_square", hd.count_particles_in_n_square()}}};
     }
-    state["verlet_reuse"] = ::System::get_system().get_verlet_reuse();
+    state["verlet_reuse"] = m_cell_structure->get_verlet_reuse();
     state["n_nodes"] = context()->get_comm().size();
     return state;
   }
   if (name == "get_pairs") {
-    ::System::get_system().on_observable_calc();
     std::vector<Variant> out;
     context()->parallel_try_catch([this, &params, &out]() {
+      auto &system = get_system();
+      system.on_observable_calc();
       std::vector<std::pair<int, int>> pair_list;
       auto const distance = get_value<double>(params, "distance");
       if (boost::get<std::string>(&params.at("types")) != nullptr) {
@@ -183,10 +173,10 @@ Variant CellSystem::do_call_method(std::string const &name,
         if (key != "all") {
           throw std::invalid_argument("Unknown argument types='" + key + "'");
         }
-        pair_list = get_pairs(distance);
+        pair_list = get_pairs(system, distance);
       } else {
         auto const types = get_value<std::vector<int>>(params, "types");
-        pair_list = get_pairs_of_types(distance, types);
+        pair_list = get_pairs_of_types(system, distance, types);
       }
       Utils::Mpi::gather_buffer(pair_list, context()->get_comm());
       std::transform(pair_list.begin(), pair_list.end(),
@@ -198,12 +188,13 @@ Variant CellSystem::do_call_method(std::string const &name,
     return out;
   }
   if (name == "get_neighbors") {
-    ::System::get_system().on_observable_calc();
     std::vector<std::vector<int>> neighbors_global;
     context()->parallel_try_catch([this, &neighbors_global, &params]() {
+      auto &system = get_system();
+      system.on_observable_calc();
       auto const dist = get_value<double>(params, "distance");
       auto const pid = get_value<int>(params, "pid");
-      auto const ret = get_short_range_neighbors(pid, dist);
+      auto const ret = get_short_range_neighbors(system, pid, dist);
       std::vector<int> neighbors_local;
       if (ret) {
         neighbors_local = *ret;
@@ -221,9 +212,11 @@ Variant CellSystem::do_call_method(std::string const &name,
     return neighbors;
   }
   if (name == "non_bonded_loop_trace") {
-    ::System::get_system().on_observable_calc();
+    auto &system = get_system();
+    system.on_observable_calc();
     std::vector<Variant> out;
-    auto pair_list = non_bonded_loop_trace(context()->get_comm().rank());
+    auto pair_list =
+        non_bonded_loop_trace(system, context()->get_comm().rank());
     Utils::Mpi::gather_buffer(pair_list, context()->get_comm());
     std::transform(pair_list.begin(), pair_list.end(), std::back_inserter(out),
                    [](PairInfo const &pair) {
@@ -234,13 +227,13 @@ Variant CellSystem::do_call_method(std::string const &name,
     return out;
   }
   if (name == "tune_skin") {
-    auto &system = ::System::get_system();
+    auto &system = get_system();
     system.tune_verlet_skin(
         get_value<double>(params, "min_skin"),
         get_value<double>(params, "max_skin"), get_value<double>(params, "tol"),
         get_value<int>(params, "int_steps"),
         get_value_or<bool>(params, "adjust_max_skin", false));
-    return system.get_verlet_skin();
+    return m_cell_structure->get_verlet_skin();
   }
   if (name == "get_max_range") {
     return get_cell_structure().max_range();
@@ -250,7 +243,7 @@ Variant CellSystem::do_call_method(std::string const &name,
 
 std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
   auto &cell_structure = get_cell_structure();
-  cell_structure.resort_particles(global_flag, *::System::get_system().box_geo);
+  cell_structure.resort_particles(global_flag, *get_system().box_geo);
   clear_particle_node();
   auto const size = static_cast<int>(cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;
@@ -259,16 +252,20 @@ std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
 }
 
 void CellSystem::initialize(CellStructureType const &cs_type,
-                            VariantMap const &params) const {
+                            VariantMap const &params) {
   auto const verlet = get_value_or<bool>(params, "use_verlet_lists", true);
-  auto &system = ::System::get_system();
-  system.cell_structure->use_verlet_list = verlet;
+  auto &system = get_system();
+  m_cell_structure->use_verlet_list = verlet;
   if (cs_type == CellStructureType::HYBRID) {
     auto const cutoff_regular = get_value<double>(params, "cutoff_regular");
     auto const ns_types =
         get_value_or<std::vector<int>>(params, "n_square_types", {});
     auto n_square_types = std::set<int>{ns_types.begin(), ns_types.end()};
-    set_hybrid_decomposition(std::move(n_square_types), cutoff_regular);
+    m_cell_structure->set_hybrid_decomposition(
+        context()->get_comm(), cutoff_regular,
+        m_cell_structure->get_verlet_skin(), *system.box_geo, *system.local_geo,
+        n_square_types);
+    system.on_cell_structure_change();
   } else {
     system.set_cell_structure_topology(cs_type);
   }

@@ -62,8 +62,8 @@
  * Pairs are sorted so that first.id < second.id
  */
 template <class Filter>
-std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
-                                                    Filter filter) {
+static auto get_pairs_filtered(System::System const &system,
+                               double const distance, Filter filter) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = Utils::sqr(distance);
   auto const pair_kernel = [cutoff2, &filter, &ret](Particle const &p1,
@@ -73,8 +73,7 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
       ret.emplace_back(p1.id(), p2.id());
   };
 
-  auto &cell_structure = *System::get_system().cell_structure;
-  cell_structure.non_bonded_loop(pair_kernel);
+  system.cell_structure->non_bonded_loop(pair_kernel);
 
   /* Sort pairs */
   for (auto &pair : ret) {
@@ -86,39 +85,42 @@ std::vector<std::pair<int, int>> get_pairs_filtered(double const distance,
 }
 
 namespace detail {
-static auto get_max_neighbor_search_range() {
-  auto const &system = System::get_system();
+static auto get_max_neighbor_search_range(System::System const &system) {
   auto const &cell_structure = *system.cell_structure;
   return *boost::min_element(cell_structure.max_range());
 }
-static void search_distance_sanity_check_max_range(double const distance) {
+static void search_distance_sanity_check_max_range(System::System const &system,
+                                                   double const distance) {
   /* get_pairs_filtered() finds pairs via the non_bonded_loop. The maximum
    * finding range is therefore limited by the decomposition that is used.
    */
-  auto const max_range = get_max_neighbor_search_range();
+  auto const max_range = get_max_neighbor_search_range(system);
   if (distance > max_range) {
     throw std::domain_error("pair search distance " + std::to_string(distance) +
                             " bigger than the decomposition range " +
                             std::to_string(max_range));
   }
 }
-static void search_distance_sanity_check_cell_structure(double const distance) {
-  auto const &system = System::get_system();
+static void
+search_distance_sanity_check_cell_structure(System::System const &system,
+                                            double const distance) {
   auto const &cell_structure = *system.cell_structure;
   if (cell_structure.decomposition_type() == CellStructureType::HYBRID) {
     throw std::runtime_error("Cannot search for neighbors in the hybrid "
                              "decomposition cell system");
   }
 }
-static void search_neighbors_sanity_checks(double const distance) {
-  search_distance_sanity_check_max_range(distance);
-  search_distance_sanity_check_cell_structure(distance);
+static void search_neighbors_sanity_checks(System::System const &system,
+                                           double const distance) {
+  search_distance_sanity_check_max_range(system, distance);
+  search_distance_sanity_check_cell_structure(system, distance);
 }
 } // namespace detail
 
 boost::optional<std::vector<int>>
-get_short_range_neighbors(int const pid, double const distance) {
-  detail::search_neighbors_sanity_checks(distance);
+get_short_range_neighbors(System::System const &system, int const pid,
+                          double const distance) {
+  detail::search_neighbors_sanity_checks(system, distance);
   std::vector<int> ret;
   auto const cutoff2 = Utils::sqr(distance);
   auto const kernel = [cutoff2, &ret](Particle const &, Particle const &p2,
@@ -127,7 +129,7 @@ get_short_range_neighbors(int const pid, double const distance) {
       ret.emplace_back(p2.id());
     }
   };
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto &cell_structure = *system.cell_structure;
   auto const p = cell_structure.get_local_particle(pid);
   if (p and not p->is_ghost()) {
     cell_structure.run_on_particle_short_range_neighbors(*p, kernel);
@@ -139,10 +141,11 @@ get_short_range_neighbors(int const pid, double const distance) {
 /**
  * @brief Get pointers to all interacting neighbors of a central particle.
  */
-static auto get_interacting_neighbors(Particle const &p) {
-  auto &cell_structure = *System::get_system().cell_structure;
+static auto get_interacting_neighbors(System::System const &system,
+                                      Particle const &p) {
+  auto &cell_structure = *system.cell_structure;
   auto const distance = *boost::min_element(cell_structure.max_range());
-  detail::search_neighbors_sanity_checks(distance);
+  detail::search_neighbors_sanity_checks(system, distance);
   std::vector<Particle const *> ret;
   auto const cutoff2 = Utils::sqr(distance);
   auto const kernel = [cutoff2, &ret](Particle const &, Particle const &p2,
@@ -155,34 +158,37 @@ static auto get_interacting_neighbors(Particle const &p) {
   return ret;
 }
 
-std::vector<std::pair<int, int>> get_pairs(double const distance) {
-  detail::search_neighbors_sanity_checks(distance);
-  return get_pairs_filtered(distance, [](Particle const &) { return true; });
+std::vector<std::pair<int, int>> get_pairs(System::System const &system,
+                                           double const distance) {
+  detail::search_neighbors_sanity_checks(system, distance);
+  return get_pairs_filtered(system, distance,
+                            [](Particle const &) { return true; });
 }
 
 std::vector<std::pair<int, int>>
-get_pairs_of_types(double const distance, std::vector<int> const &types) {
-  detail::search_neighbors_sanity_checks(distance);
-  return get_pairs_filtered(distance, [types](Particle const &p) {
+get_pairs_of_types(System::System const &system, double const distance,
+                   std::vector<int> const &types) {
+  detail::search_neighbors_sanity_checks(system, distance);
+  return get_pairs_filtered(system, distance, [types](Particle const &p) {
     return std::any_of(types.begin(), types.end(),
                        // NOLINTNEXTLINE(bugprone-exception-escape)
                        [p](int const type) { return p.type() == type; });
   });
 }
 
-std::vector<PairInfo> non_bonded_loop_trace(int const rank) {
+std::vector<PairInfo> non_bonded_loop_trace(System::System const &system,
+                                            int const rank) {
   std::vector<PairInfo> pairs;
   auto const pair_kernel = [&pairs, rank](Particle const &p1,
                                           Particle const &p2,
                                           Distance const &d) {
     pairs.emplace_back(p1.id(), p2.id(), p1.pos(), p2.pos(), d.vec21, rank);
   };
-  auto &cell_structure = *System::get_system().cell_structure;
-  cell_structure.non_bonded_loop(pair_kernel);
+  system.cell_structure->non_bonded_loop(pair_kernel);
   return pairs;
 }
 
-std::vector<NeighborPIDs> get_neighbor_pids() {
+std::vector<NeighborPIDs> get_neighbor_pids(System::System const &system) {
   std::vector<NeighborPIDs> ret;
   auto kernel = [&ret](Particle const &p,
                        std::vector<Particle const *> const &neighbors) {
@@ -193,29 +199,15 @@ std::vector<NeighborPIDs> get_neighbor_pids() {
     }
     ret.emplace_back(p.id(), neighbor_pids);
   };
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto &cell_structure = *system.cell_structure;
   for (auto const &p : cell_structure.local_particles()) {
-    kernel(p, get_interacting_neighbors(p));
+    kernel(p, get_interacting_neighbors(system, p));
   }
   return ret;
 }
 
-void set_hybrid_decomposition(std::set<int> n_square_types,
-                              double cutoff_regular) {
-  auto &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
-  auto &local_geo = *system.local_geo;
-  auto &cell_structure = *system.cell_structure;
-  auto const skin = system.get_verlet_skin();
-  cell_structure.set_hybrid_decomposition(comm_cart, cutoff_regular, skin,
-                                          box_geo, local_geo, n_square_types);
-  system.on_cell_structure_change();
-}
-
-void check_resort_particles() {
-  auto const &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
-  auto const skin = system.get_verlet_skin();
+void check_resort_particles(CellStructure &cell_structure) {
+  auto const skin = cell_structure.get_verlet_skin();
 
   auto const level = (cell_structure.check_resort_required(
                          cell_structure.local_particles(), skin))
@@ -225,11 +217,8 @@ void check_resort_particles() {
   cell_structure.set_resort_particles(level);
 }
 
-void cells_update_ghosts(unsigned data_parts) {
-  auto const &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
-  auto &cell_structure = *system.cell_structure;
-
+void cells_update_ghosts(CellStructure &cell_structure,
+                         BoxGeometry const &box_geo, unsigned int data_parts) {
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts =
       Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;

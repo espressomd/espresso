@@ -57,7 +57,7 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
 
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
-  cells_update_ghosts(Cells::DATA_PART_FORCE);
+  cells_update_ghosts(cell_structure, box_geo, Cells::DATA_PART_FORCE);
 
   // Set to store ghost particles (ids) that have already been coupled
   LB::CouplingBookkeeping bookkeeping{};

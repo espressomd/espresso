@@ -37,6 +37,7 @@
 
 #include "script_interface/analysis/Analysis.hpp"
 #include "script_interface/bond_breakage/BreakageSpecs.hpp"
+#include "script_interface/cell_system/CellSystem.hpp"
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
@@ -64,6 +65,7 @@ static bool system_created = false;
 
 struct System::Leaves {
   Leaves() = default;
+  std::shared_ptr<CellSystem::CellSystem> cell_system;
   std::shared_ptr<Analysis::Analysis> analysis;
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
@@ -126,6 +128,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
        [this]() { return m_instance->get_min_global_cut(); }},
       {"max_oif_objects", ::max_oif_objects},
   });
+  add_parameter("cell_system", &Leaves::cell_system);
   add_parameter("analysis", &Leaves::analysis);
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);
