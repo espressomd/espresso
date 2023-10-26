@@ -29,8 +29,6 @@
 
 #include "config/config.hpp"
 
-#include "system/System.hpp"
-
 #ifdef WALBERLA
 #include <string>
 
@@ -82,43 +80,6 @@ void walberla_agrid_sanity_checks(std::string method,
                                   Utils::Vector3d const &lattice_right,
                                   double agrid);
 #endif // WALBERLA
-
-/** Integrate equations of motion
- *  @param system        system to propagate
- *  @param n_steps       Number of integration steps, can be zero
- *  @param reuse_forces  Decide when to re-calculate forces
- *
- *  @details This function calls two hooks for propagation kernels such as
- *  velocity verlet, velocity verlet + npt box changes, and steepest_descent.
- *  One hook is called before and one after the force calculation.
- *  It is up to the propagation kernels to increment the simulation time.
- *
- *  This function propagates the system according to the choice of integrator
- *  stored in @ref integ_switch. The general structure is:
- *  - if reuse_forces is zero, recalculate the forces based on the current
- *    state of the system
- *  - Loop over the number of simulation steps:
- *    -# initialization (e.g., RATTLE)
- *    -# First hook for propagation kernels
- *    -# Update dependent particles and properties (RATTLE, virtual sites)
- *    -# Calculate forces for the current state of the system. This includes
- *       forces added by the Langevin thermostat and the
- *       Lattice-Boltzmann-particle coupling
- *    -# Second hook for propagation kernels
- *    -# Update dependent properties (Virtual sites, RATTLE)
- *    -# Run single step algorithms (Lattice-Boltzmann propagation, collision
- *       detection, NpT update)
- *  - Final update of dependent properties and statistics/counters
- *
- *  High-level documentation of the integration and thermostatting schemes
- *  can be found in doc/sphinx/system_setup.rst and /doc/sphinx/running.rst
- *
- *  @return number of steps that have been integrated, or a negative error code
- */
-int integrate(System::System &system, int n_steps, int reuse_forces);
-
-int integrate_with_signal_handler(System::System &system, int n_steps,
-                                  int reuse_forces, bool update_accumulators);
 
 /** Get time step */
 double get_time_step();

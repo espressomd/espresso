@@ -38,9 +38,27 @@ namespace Integrators {
 
 IntegratorHandle::IntegratorHandle() {
   add_parameters({
+      {"time_step",
+       [this](Variant const &v) {
+         context()->parallel_try_catch(
+             [&]() { get_system().set_time_step(get_value<double>(v)); });
+       },
+       [this]() { return get_system().get_time_step(); }},
+      {"time", [](Variant const &v) { set_time(get_value<double>(v)); },
+       []() { return get_sim_time(); }},
+      {"force_cap",
+       [this](Variant const &v) {
+         get_system().set_force_cap(get_value<double>(v));
+       },
+       [this]() { return get_system().get_force_cap(); }},
       {"integrator",
        [this](Variant const &v) {
+         auto const old_instance = m_instance;
          m_instance = get_value<std::shared_ptr<Integrator>>(v);
+         if (old_instance) {
+           old_instance->deactivate();
+         }
+         m_instance->bind_system(m_system.lock());
          m_instance->activate();
        },
        [this]() {
@@ -68,40 +86,22 @@ IntegratorHandle::IntegratorHandle() {
          }
          }
        }},
-      {"time_step",
-       [this](Variant const &v) {
-         context()->parallel_try_catch([&]() {
-           System::get_system().set_time_step(get_value<double>(v));
-         });
-       },
-       []() { return get_time_step(); }},
-      {"time", [](Variant const &v) { set_time(get_value<double>(v)); },
-       []() { return get_sim_time(); }},
-      {"force_cap",
-       [](Variant const &v) {
-         System::get_system().set_force_cap(get_value<double>(v));
-       },
-       []() { return System::get_system().get_force_cap(); }},
   });
 }
 
-static bool checkpoint_filter(typename VariantMap::value_type const &kv) {
-  /* When loading from a checkpoint file, defer the integrator object to last,
-   * and skip the time_step if it is -1 to avoid triggering sanity checks.
-   */
-  return kv.first == "integrator" or
-         (kv.first == "time_step" and ::integ_switch == INTEG_METHOD_NVT and
-          get_time_step() == -1. and is_type<double>(kv.second) and
-          get_value<double>(kv.second) == -1.);
-}
-
-void IntegratorHandle::do_construct(VariantMap const &params) {
-  for (auto const &kv : params) {
-    if (not checkpoint_filter(kv)) {
-      do_set_parameter(kv.first, kv.second);
+void IntegratorHandle::on_bind_system(::System::System &system) {
+  auto const &params = *m_params;
+  for (auto const &key : get_parameter_insertion_order()) {
+    if (params.count(key) != 0ul) {
+      if (not(key == "time_step" and ::integ_switch == INTEG_METHOD_NVT and
+              system.get_time_step() == -1. and
+              is_type<double>(params.at(key)) and
+              get_value<double>(is_type<double>(params.at(key))) == -1.)) {
+        do_set_parameter(key, params.at(key));
+      }
     }
   }
-  do_set_parameter("integrator", params.at("integrator"));
+  m_params.reset();
 }
 
 } // namespace Integrators

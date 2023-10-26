@@ -66,7 +66,7 @@ static void check_statistics(Utils::Statistics::RunningAverage<double> &acc) {
 }
 
 static void run_full_force_calc(System::System &system, int reuse_forces) {
-  auto const error_code = integrate(system, 0, reuse_forces);
+  auto const error_code = system.integrate(0, reuse_forces);
   if (error_code == INTEG_ERROR_RUNTIME) {
     throw TuningFailed{};
   }
@@ -107,15 +107,14 @@ double benchmark_integration_step(System::System &system, int int_steps) {
  */
 static double time_calc(System::System &system, int int_steps) {
   auto const error_code_init =
-      integrate(system, 0, INTEG_REUSE_FORCES_CONDITIONALLY);
+      system.integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
   if (error_code_init == INTEG_ERROR_RUNTIME) {
     return -1;
   }
 
   /* perform force calculation test */
   auto const tick = MPI_Wtime();
-  auto const error_code =
-      integrate(system, int_steps, INTEG_REUSE_FORCES_NEVER);
+  auto const error_code = system.integrate(int_steps, INTEG_REUSE_FORCES_NEVER);
   auto const tock = MPI_Wtime();
   if (error_code == INTEG_ERROR_RUNTIME) {
     return -1;

@@ -58,7 +58,6 @@
 #include "virtual_sites.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/mpi/collectives/reduce.hpp>
 
 #ifdef CALIPER
 #include <caliper/cali.h>
@@ -313,18 +312,17 @@ static void integrator_step_2(ParticleRange const &particles, double kT,
   }
 }
 
-int integrate(System::System &system, int n_steps, int reuse_forces) {
+namespace System {
+
+int System::integrate(int n_steps, int reuse_forces) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  auto &cell_structure = *system.cell_structure;
-  auto &box_geo = *system.box_geo;
-  auto &bond_breakage = *system.bond_breakage;
-  auto const time_step = system.get_time_step();
+  auto const time_step = get_time_step();
 
   // Prepare particle structure and run sanity checks of all active algorithms
-  system.on_integration_start();
+  on_integration_start();
 
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
   if (check_runtime_errors(comm_cart))
@@ -343,13 +341,13 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(cell_structure, box_geo, global_ghost_flags());
+    cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
 
-    force_calc(system, time_step, temperature);
+    force_calc(*this, time_step, temperature);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
-      convert_initial_torques(cell_structure.local_particles());
+      convert_initial_torques(cell_structure->local_particles());
 #endif
     }
 
@@ -375,8 +373,8 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
   auto lb_active = false;
   auto ek_active = false;
   if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-    lb_active = system.lb.is_solver_set();
-    ek_active = system.ek.is_ready_for_propagation();
+    lb_active = lb.is_solver_set();
+    ek_active = ek.is_ready_for_propagation();
   }
 
 #ifdef VALGRIND
@@ -392,19 +390,19 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
     CALI_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 #endif
 
-    auto particles = cell_structure.local_particles();
+    auto particles = cell_structure->local_particles();
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_position(particles, cell_structure.ghost_particles());
+      save_old_position(particles, cell_structure->ghost_particles());
 #endif
 
-    LeesEdwards::update_box_params(box_geo);
+    LeesEdwards::update_box_params(*box_geo);
     bool early_exit = integrator_step_1(particles, time_step);
     if (early_exit)
       break;
 
-    LeesEdwards::run_kernel<LeesEdwards::Push>(box_geo);
+    LeesEdwards::run_kernel<LeesEdwards::Push>(*box_geo);
 
 #ifdef NPT
     if (integ_switch != INTEG_METHOD_NPT_ISO)
@@ -419,7 +417,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     // Correct particle positions that participate in a rigid/constrained bond
     if (n_rigidbonds) {
-      correct_position_shake(cell_structure, box_geo);
+      correct_position_shake(*cell_structure, *box_geo);
     }
 #endif
 
@@ -427,33 +425,31 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
     virtual_sites()->update();
 #endif
 
-    if (cell_structure.get_resort_particles() >= Cells::RESORT_LOCAL)
+    if (cell_structure->get_resort_particles() >= Cells::RESORT_LOCAL)
       n_verlet_updates++;
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(cell_structure, box_geo, global_ghost_flags());
+    cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
 
-    particles = cell_structure.local_particles();
+    particles = cell_structure->local_particles();
 
-    force_calc(system, time_step, temperature);
+    force_calc(*this, time_step, temperature);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc(time_step);
 #endif
     integrator_step_2(particles, temperature, time_step);
-    LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>(box_geo);
+    LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>(*box_geo);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
-      correct_velocity_shake(cell_structure, box_geo);
+      correct_velocity_shake(*cell_structure, *box_geo);
     }
 #endif
 
     // propagate one-step functionalities
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       if (lb_active and ek_active) {
-        auto &lb = system.lb;
-        auto &ek = system.ek;
         // assume that they are coupled, which is not necessarily true
         auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
         auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
@@ -475,7 +471,6 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
         }
         lb_lbcoupling_propagate();
       } else if (lb_active) {
-        auto &lb = system.lb;
         auto const md_steps_per_lb_step = calc_md_steps_per_tau(lb.get_tau());
         lb_skipped_md_steps += 1;
         if (lb_skipped_md_steps >= md_steps_per_lb_step) {
@@ -484,7 +479,6 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
         }
         lb_lbcoupling_propagate();
       } else if (ek_active) {
-        auto &ek = system.ek;
         auto const md_steps_per_ek_step = calc_md_steps_per_tau(ek.get_tau());
         ek_skipped_md_steps += 1;
         if (ek_skipped_md_steps >= md_steps_per_ek_step) {
@@ -498,9 +492,9 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 #endif
 
 #ifdef COLLISION_DETECTION
-      handle_collisions(cell_structure);
+      handle_collisions(*cell_structure);
 #endif
-      bond_breakage.process_queue(system);
+      bond_breakage->process_queue(*this);
     }
 
     integrated_steps++;
@@ -517,7 +511,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
-  LeesEdwards::update_box_params(box_geo);
+  LeesEdwards::update_box_params(*box_geo);
 #ifdef CALIPER
   CALI_CXX_MARK_LOOP_END(integration_loop);
 #endif
@@ -531,7 +525,7 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
 #endif
 
   // Verlet list statistics
-  cell_structure.update_verlet_stats(n_steps, n_verlet_updates);
+  cell_structure->update_verlet_stats(n_steps, n_verlet_updates);
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -548,17 +542,17 @@ int integrate(System::System &system, int n_steps, int reuse_forces) {
   return integrated_steps;
 }
 
-int integrate_with_signal_handler(System::System &system, int n_steps,
-                                  int reuse_forces, bool update_accumulators) {
+int System::integrate_with_signal_handler(int n_steps, int reuse_forces,
+                                          bool update_accumulators) {
   assert(n_steps >= 0);
 
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
   /* if skin wasn't set, do an educated guess now */
-  if (not system.cell_structure->is_verlet_skin_set()) {
+  if (not cell_structure->is_verlet_skin_set()) {
     try {
-      system.set_verlet_skin_heuristic();
+      set_verlet_skin_heuristic();
     } catch (...) {
       if (comm_cart.rank() == 0) {
         throw;
@@ -568,7 +562,7 @@ int integrate_with_signal_handler(System::System &system, int n_steps,
   }
 
   if (not update_accumulators or n_steps == 0) {
-    return integrate(system, n_steps, reuse_forces);
+    return integrate(n_steps, reuse_forces);
   }
 
   using Accumulators::auto_update;
@@ -579,7 +573,7 @@ int integrate_with_signal_handler(System::System &system, int n_steps,
      * end, depending on what comes first. */
     auto const steps = std::min((n_steps - i), auto_update_next_update());
 
-    auto const local_retval = integrate(system, steps, reuse_forces);
+    auto const local_retval = integrate(steps, reuse_forces);
 
     // make sure all ranks exit when one rank fails
     std::remove_const_t<decltype(local_retval)> global_retval;
@@ -598,6 +592,8 @@ int integrate_with_signal_handler(System::System &system, int n_steps,
 
   return 0;
 }
+
+} // namespace System
 
 double get_time_step() { return System::get_system().get_time_step(); }
 

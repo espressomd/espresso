@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_STOKESIAN_DYNAMICS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_STOKESIAN_DYNAMICS_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -44,7 +43,7 @@ public:
   StokesianDynamics();
 
   void do_construct(VariantMap const &params) override;
-  void activate() const override;
+  void activate() override;
 
   ::StokesianDynamicsParameters const &get_instance() const {
     return *m_instance;
@@ -55,4 +54,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // STOKESIAN_DYNAMICS
-#endif

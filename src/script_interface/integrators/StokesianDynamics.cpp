@@ -89,7 +89,7 @@ void StokesianDynamics::do_construct(VariantMap const &params) {
   });
 }
 
-void StokesianDynamics::activate() const {
+void StokesianDynamics::activate() {
   context()->parallel_try_catch([&]() {
     register_integrator(get_instance());
     set_integ_switch(INTEG_METHOD_SD);

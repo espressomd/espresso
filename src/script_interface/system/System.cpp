@@ -66,6 +66,7 @@ static bool system_created = false;
 struct System::Leaves {
   Leaves() = default;
   std::shared_ptr<CellSystem::CellSystem> cell_system;
+  std::shared_ptr<Integrators::IntegratorHandle> integrator;
   std::shared_ptr<Analysis::Analysis> analysis;
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
@@ -129,6 +130,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
       {"max_oif_objects", ::max_oif_objects},
   });
   add_parameter("cell_system", &Leaves::cell_system);
+  add_parameter("integrator", &Leaves::integrator);
   add_parameter("analysis", &Leaves::analysis);
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);

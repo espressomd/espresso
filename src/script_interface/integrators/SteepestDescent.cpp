@@ -23,7 +23,6 @@
 
 #include "core/integrate.hpp"
 #include "core/integrators/steepest_descent.hpp"
-#include "core/system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -42,9 +41,8 @@ Variant SteepestDescent::integrate(VariantMap const &params) {
       throw std::domain_error("Parameter 'steps' must be positive");
     }
   });
-  auto &system = System::get_system();
-  return ::integrate_with_signal_handler(system, steps, reuse_forces,
-                                         update_accumulators);
+  return get_system().integrate_with_signal_handler(steps, reuse_forces,
+                                                    update_accumulators);
 }
 
 SteepestDescent::SteepestDescent() {
@@ -69,7 +67,7 @@ void SteepestDescent::do_construct(VariantMap const &params) {
   });
 }
 
-void SteepestDescent::activate() const {
+void SteepestDescent::activate() {
   register_integrator(get_instance());
   set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
 }

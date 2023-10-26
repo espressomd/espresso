@@ -35,8 +35,8 @@ public:
 
 /**
  * @brief Benchmark the integration loop.
- * Call @ref integrate() several times and measure the elapsed time
- * without propagating the system. It therefore doesn't include e.g.
+ * Call @ref System::System::integrate() several times and measure the elapsed
+ * time without propagating the system. It therefore doesn't include e.g.
  * Verlet list updates.
  * @param system The system to tune.
  * @param int_steps   Number of integration steps.
