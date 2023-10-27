@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_MMM1D_GPU_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_MMM1D_GPU_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -68,4 +67,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // MMM1D_GPU
-#endif

@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ICC_STAR_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ICC_STAR_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -32,6 +31,7 @@
 #include "script_interface/Context.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -40,7 +40,7 @@
 namespace ScriptInterface {
 namespace Coulomb {
 
-class ICCStar : public AutoParameters<ICCStar> {
+class ICCStar : public AutoParameters<ICCStar, System::Leaf> {
   using CoreActorClass = ::ICCStar;
   std::shared_ptr<CoreActorClass> m_actor;
 
@@ -100,9 +100,10 @@ public:
                          VariantMap const &params) override {
     if (name == "activate") {
       context()->parallel_try_catch([&]() {
-        auto &system = System::get_system();
-        add_actor(context()->get_comm(), system.coulomb.impl->extension,
-                  m_actor, [&system]() { system.on_coulomb_change(); });
+        auto &system = get_system();
+        add_actor(context()->get_comm(), m_system.lock(),
+                  system.coulomb.impl->extension, m_actor,
+                  [&system]() { system.on_coulomb_change(); });
       });
       return {};
     }
@@ -117,4 +118,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // ELECTROSTATICS
-#endif

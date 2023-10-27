@@ -252,12 +252,6 @@ class System(ScriptInterfaceHelper):
         ]
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")
-        if has_features("ELECTROSTATICS"):
-            checkpointable_properties.append("electrostatics")
-        if has_features("DIPOLES"):
-            checkpointable_properties.append("magnetostatics")
-        if has_features("ELECTROSTATICS"):
-            checkpointable_properties.append("electrostatics")
         if has_features("WALBERLA"):
             checkpointable_properties += ["_lb", "_ekcontainer"]
         checkpointable_properties += ["thermostat"]

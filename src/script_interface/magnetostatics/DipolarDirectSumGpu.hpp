@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_GPU_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_GPU_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -53,4 +52,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // DIPOLAR_DIRECT_SUM
-#endif

@@ -32,8 +32,7 @@
  *
  */
 
-#ifndef ESPRESSO_SRC_CORE_P3M_COMMON_HPP
-#define ESPRESSO_SRC_CORE_P3M_COMMON_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -257,5 +256,3 @@ std::array<std::vector<int>, 3> inline calc_meshift(
   return ret;
 }
 } // namespace detail
-
-#endif

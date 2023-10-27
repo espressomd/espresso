@@ -27,6 +27,7 @@
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameter.hpp>
+#include <script_interface/system/Leaf.hpp>
 
 #include <memory>
 #include <optional>
@@ -34,14 +35,25 @@
 
 namespace ScriptInterface::Dipoles {
 
-class Container : public AutoParameters<Container> {
+class Container : public AutoParameters<Container, System::Leaf> {
   ObjectRef m_solver;
+  std::unique_ptr<VariantMap> m_params;
 
   void reset_solver() {
-    auto &system = System::get_system();
+    auto &system = get_system();
     m_solver.reset();
     system.dipoles.impl->solver = std::nullopt;
     system.on_dipoles_change();
+  }
+
+  void on_bind_system(::System::System &system) override {
+    auto const &params = *m_params;
+    for (auto const &key : get_parameter_insertion_order()) {
+      if (params.count(key)) {
+        do_set_parameter(key.c_str(), params.at(key));
+      }
+    }
+    m_params.reset();
   }
 
 public:
@@ -53,6 +65,9 @@ public:
              reset_solver();
            } else {
              auto actor = get_value<ObjectRef>(v);
+             auto leaf = std::dynamic_pointer_cast<System::Leaf>(actor);
+             assert(leaf);
+             leaf->bind_system(m_system.lock());
              actor->do_call_method("activate", {});
              m_solver = actor;
            }
@@ -62,9 +77,7 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    if (params.count("solver")) {
-      do_set_parameter("solver", params.at("solver"));
-    }
+    m_params = std::make_unique<VariantMap>(params);
   }
 
 protected:

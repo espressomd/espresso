@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_SCAFACOS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_SCAFACOS_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -63,7 +62,7 @@ public:
       ScafacosContextBase::sanity_check_method(method_name);
       auto const method_params = Scafacos::serialize_parameters(param_list);
       m_actor = make_dipolar_scafacos(method_name, method_params);
-      actor()->prefactor = prefactor;
+      actor()->set_prefactor(prefactor);
     });
   }
 
@@ -80,4 +79,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // SCAFACOS_DIPOLES
-#endif

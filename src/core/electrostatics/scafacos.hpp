@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_SCAFACOS_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_SCAFACOS_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -93,4 +92,3 @@ std::shared_ptr<CoulombScafacos>
 make_coulomb_scafacos(std::string const &method, std::string const &parameters);
 
 #endif // SCAFACOS
-#endif

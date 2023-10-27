@@ -28,8 +28,7 @@
  * cell system since neither the near nor far formula can be decomposed.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM1D_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM1D_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -123,4 +122,3 @@ private:
 };
 
 #endif // ELECTROSTATICS
-#endif

@@ -57,7 +57,6 @@ public:
 #endif
   ResourceCleanup cleanup_queue;
 
-  Utils::Vector3d box() const;
   void init();
 
   /** @brief Get @ref time_step. */
@@ -86,6 +85,9 @@ public:
 
   /** @brief Set the Verlet skin using a heuristic. */
   void set_verlet_skin_heuristic();
+
+  /** @brief Change the box dimensions. */
+  void set_box_l(Utils::Vector3d const &box_l);
 
   /**
    * @brief Tune the Verlet skin.
@@ -247,6 +249,9 @@ protected:
   double min_global_cut;
 
   void update_local_geo();
+#ifdef ELECTROSTATICS
+  void update_icc_particles();
+#endif // ELECTROSTATICS
 };
 
 System &get_system();

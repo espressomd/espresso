@@ -35,49 +35,51 @@
 CoulombMMM1DGpu::CoulombMMM1DGpu(double prefactor, double maxPWerror,
                                  double far_switch_radius, int bessel_cutoff)
     : maxPWerror{maxPWerror}, far_switch_radius{far_switch_radius},
-      far_switch_radius_sq{-1.}, bessel_cutoff{bessel_cutoff}, m_is_tuned{
-                                                                   false} {
+      far_switch_radius_sq{-1.}, bessel_cutoff{bessel_cutoff} {
   set_prefactor(prefactor);
-  auto const &box_geo = *System::get_system().box_geo;
   if (maxPWerror <= 0.) {
     throw std::domain_error("Parameter 'maxPWerror' must be > 0");
   }
   if (far_switch_radius <= 0. and far_switch_radius != -1.) {
     throw std::domain_error("Parameter 'far_switch_radius' must be > 0");
   }
-  if (far_switch_radius > 0. and far_switch_radius > box_geo.length()[2]) {
-    throw std::domain_error(
-        "Parameter 'far_switch_radius' must not be larger than box length");
-  }
   if (bessel_cutoff < 0 and bessel_cutoff != -1) {
     throw std::domain_error("Parameter 'bessel_cutoff' must be > 0");
   }
-
-  auto &gpu_particle_data = System::get_system().gpu;
-  gpu_particle_data.enable_property(GpuParticleData::prop::force);
-  gpu_particle_data.enable_property(GpuParticleData::prop::pos);
-  gpu_particle_data.enable_property(GpuParticleData::prop::q);
   if (this_node == 0) {
     modpsi_init();
   }
 }
 
+void CoulombMMM1DGpu::setup_dependent_properties() {
+  auto &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  if (far_switch_radius > 0. and far_switch_radius > box_geo.length()[2]) {
+    throw std::domain_error(
+        "Parameter 'far_switch_radius' must not be larger than box length");
+  }
+  auto &gpu_particle_data = system.gpu;
+  gpu_particle_data.enable_property(GpuParticleData::prop::force);
+  gpu_particle_data.enable_property(GpuParticleData::prop::pos);
+  gpu_particle_data.enable_property(GpuParticleData::prop::q);
+}
+
 void CoulombMMM1DGpu::sanity_checks_periodicity() const {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("MMM1D requires periodicity (False, False, True)");
   }
 }
 
 void CoulombMMM1DGpu::sanity_checks_cell_structure() const {
-  auto const &local_geo = *System::get_system().local_geo;
+  auto const &local_geo = *get_system().local_geo;
   if (local_geo.cell_structure_type() != CellStructureType::NSQUARE) {
     throw std::runtime_error("MMM1D requires the N-square cellsystem");
   }
 }
 
 void CoulombMMM1DGpu::tune() {
-  System::get_system().gpu.update();
+  get_system().gpu.update();
   if (this_node == 0) {
     setup();
     tune(maxPWerror, far_switch_radius, bessel_cutoff);
@@ -85,4 +87,4 @@ void CoulombMMM1DGpu::tune() {
   m_is_tuned = true;
 }
 
-#endif
+#endif // MMM1D_GPU

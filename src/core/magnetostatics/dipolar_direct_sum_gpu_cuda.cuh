@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_GPU_CUH
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_GPU_CUH
+#pragma once
 
 #include "config/config.hpp"
 
@@ -32,4 +31,3 @@ void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
                                            float box_l[3], int periodic[3]);
 
 #endif // DIPOLAR_DIRECT_SUM
-#endif

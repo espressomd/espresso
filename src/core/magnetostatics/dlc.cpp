@@ -67,8 +67,7 @@ void DipolarLayerCorrection::check_gap(Particle const &p) const {
 }
 
 /** Calculate the maximal dipole moment in the system */
-static double calc_mu_max() {
-  auto const &system = System::get_system();
+static double calc_mu_max(System::System const &system) {
   auto const local_particles = system.cell_structure->local_particles();
   auto const mu_max_local = std::accumulate(
       local_particles.begin(), local_particles.end(), 0.,
@@ -112,8 +111,8 @@ static Utils::Vector3d calc_slab_dipole(ParticleRange const &particles) {
 static void dipolar_force_corrections(int kcut,
                                       std::vector<Utils::Vector3d> &fs,
                                       std::vector<Utils::Vector3d> &ts,
-                                      ParticleRange const &particles) {
-  auto const &box_geo = *System::get_system().box_geo;
+                                      ParticleRange const &particles,
+                                      BoxGeometry const &box_geo) {
   auto const facux = 2. * Utils::pi() * box_geo.length_inv()[0];
   auto const facuy = 2. * Utils::pi() * box_geo.length_inv()[1];
 
@@ -246,8 +245,8 @@ static void dipolar_force_corrections(int kcut,
  * %Algorithm implemented accordingly to @cite brodka04a.
  */
 static double dipolar_energy_correction(int kcut,
-                                        ParticleRange const &particles) {
-  auto const &box_geo = *System::get_system().box_geo;
+                                        ParticleRange const &particles,
+                                        BoxGeometry const &box_geo) {
   auto const facux = 2. * Utils::pi() * box_geo.length_inv()[0];
   auto const facuy = 2. * Utils::pi() * box_geo.length_inv()[1];
 
@@ -305,7 +304,7 @@ static double dipolar_energy_correction(int kcut,
 void DipolarLayerCorrection::add_force_corrections(
     ParticleRange const &particles) const {
   assert(dlc.far_cut > 0.);
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const volume = box_geo.volume();
   auto const correc = 4. * Utils::pi() / volume;
 
@@ -318,7 +317,7 @@ void DipolarLayerCorrection::add_force_corrections(
 
   // First the DLC correction
   auto const kcut = static_cast<int>(std::round(dlc.far_cut));
-  dipolar_force_corrections(kcut, dip_DLC_f, dip_DLC_t, particles);
+  dipolar_force_corrections(kcut, dip_DLC_f, dip_DLC_t, particles, box_geo);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical
@@ -357,7 +356,7 @@ void DipolarLayerCorrection::add_force_corrections(
 double DipolarLayerCorrection::energy_correction(
     ParticleRange const &particles) const {
   assert(dlc.far_cut > 0.);
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const volume = box_geo.volume();
   auto const pref = prefactor * 2. * Utils::pi() / volume;
 
@@ -372,7 +371,8 @@ double DipolarLayerCorrection::energy_correction(
 
   // First the DLC correction
   auto const k_cut = static_cast<int>(std::round(dlc.far_cut));
-  auto dip_DLC_energy = prefactor * dipolar_energy_correction(k_cut, particles);
+  auto dip_DLC_energy =
+      prefactor * dipolar_energy_correction(k_cut, particles, box_geo);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical
@@ -395,11 +395,10 @@ double DipolarLayerCorrection::energy_correction(
   return 0.;
 }
 
-static int count_magnetic_particles() {
-  auto &cell_structure = *System::get_system().cell_structure;
+static int count_magnetic_particles(System::System const &system) {
   int local_n = 0;
 
-  for (auto const &p : cell_structure.local_particles()) {
+  for (auto const &p : system.cell_structure->local_particles()) {
     if (p.dipm() != 0.) {
       local_n++;
     }
@@ -415,10 +414,11 @@ static int count_magnetic_particles() {
  *  which there is no particles): <tt>Lz = h + gap_size</tt>
  */
 double DipolarLayerCorrection::tune_far_cut() const {
+  auto const &system = get_system();
   /* we take the maximum dipole in the system, to be sure that the errors
    * in the other case will be equal or less than for this one */
-  auto const mu_max_sq = Utils::sqr(calc_mu_max());
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const mu_max_sq = Utils::sqr(calc_mu_max(system));
+  auto const &box_geo = *system.box_geo;
   auto const lx = box_geo.length()[0];
   auto const ly = box_geo.length()[1];
   auto const lz = box_geo.length()[2];
@@ -431,7 +431,7 @@ double DipolarLayerCorrection::tune_far_cut() const {
 
   auto constexpr limitkc = 200;
   auto const piarea = Utils::pi() / (lx * ly);
-  auto const nmp = static_cast<double>(count_magnetic_particles());
+  auto const nmp = static_cast<double>(count_magnetic_particles(system));
   auto const h = dlc.box_h;
   auto far_cut = -1.;
   for (int kc = 1; kc < limitkc; kc++) {
@@ -481,16 +481,15 @@ void DipolarLayerCorrection::adapt_solver() {
 }
 
 void DipolarLayerCorrection::sanity_checks_node_grid() const {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("DLC: requires periodicity (True, True, True)");
   }
 }
 
 dlc_data::dlc_data(double maxPWerror, double gap_size, double far_cut)
-    : maxPWerror{maxPWerror}, gap_size{gap_size},
-      box_h{System::get_system().box_geo->length()[2] - gap_size},
-      far_cut{far_cut}, far_calculated{far_cut == -1.} {
+    : maxPWerror{maxPWerror}, gap_size{gap_size}, box_h{-1.}, far_cut{far_cut},
+      far_calculated{far_cut == -1.} {
   if (far_cut <= 0. and not far_calculated) {
     throw std::domain_error("Parameter 'far_cut' must be > 0");
   }
@@ -503,7 +502,7 @@ dlc_data::dlc_data(double maxPWerror, double gap_size, double far_cut)
 }
 
 void DipolarLayerCorrection::recalc_box_h() {
-  auto const lz = System::get_system().box_geo->length()[2];
+  auto const lz = get_system().box_geo->length()[2];
   auto const new_box_h = lz - dlc.gap_size;
   if (new_box_h < 0.) {
     throw std::runtime_error("DLC gap size (" + std::to_string(dlc.gap_size) +

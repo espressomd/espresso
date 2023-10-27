@@ -19,28 +19,16 @@
 
 #pragma once
 
-#include "script_interface/ObjectHandle.hpp"
-
-#include "core/system/System.hpp"
-
 #include <cassert>
 #include <memory>
 
-namespace ScriptInterface {
 namespace System {
 
-class Leaf : public ObjectHandle {
-  virtual void on_bind_system(::System::System &) {}
-  virtual void on_detach_system(::System::System &) {}
+class System;
 
+template <typename Class> class Leaf {
 protected:
-  std::weak_ptr<::System::System> m_system;
-
-  auto const &get_system() const {
-    auto const ptr = m_system.lock();
-    assert(ptr);
-    return *ptr;
-  }
+  std::weak_ptr<System> m_system;
 
   auto &get_system() {
     auto const ptr = m_system.lock();
@@ -48,20 +36,25 @@ protected:
     return *ptr;
   }
 
-public:
-  void bind_system(std::shared_ptr<::System::System> const &system) {
-    assert(m_system.expired() or m_system.lock() == system);
-    m_system = system;
-    on_bind_system(*system);
+  auto &get_system() const {
+    auto const ptr = m_system.lock();
+    assert(ptr);
+    return *ptr;
   }
 
-  void detach_system() {
-    auto const ptr = m_system.lock();
-    assert(ptr != nullptr);
-    on_detach_system(*ptr);
+public:
+  void bind_system(std::shared_ptr<System> const &system) {
+    assert(system);
+    assert(m_system.expired() or m_system.lock() == system);
+    m_system = system;
+  }
+
+  void detach_system(std::shared_ptr<System> const &system) {
+    assert(system);
+    assert(not m_system.expired());
+    assert(system == m_system.lock());
     m_system.reset();
   }
 };
 
 } // namespace System
-} // namespace ScriptInterface

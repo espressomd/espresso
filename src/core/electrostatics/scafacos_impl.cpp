@@ -51,7 +51,7 @@ make_coulomb_scafacos(std::string const &method,
 }
 
 void CoulombScafacosImpl::update_particle_data() {
-  auto const &system = System::get_system();
+  auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto &cell_structure = *system.cell_structure;
 
@@ -71,7 +71,7 @@ void CoulombScafacosImpl::update_particle_forces() const {
   if (positions.empty())
     return;
 
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto &cell_structure = *get_system().cell_structure;
 
   auto it_fields = fields.begin();
   for (auto &p : cell_structure.local_particles()) {
@@ -86,13 +86,13 @@ void CoulombScafacosImpl::update_particle_forces() const {
 
 double CoulombScafacosImpl::time_r_cut(double r_cut) {
   set_r_cut_and_tune(r_cut);
-  auto &system = System::get_system();
+  auto &system = get_system();
   return benchmark_integration_step(system, 10);
 }
 
 void CoulombScafacosImpl::tune_r_cut() {
   auto constexpr convergence_threshold = 1e-3;
-  auto const &system = System::get_system();
+  auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
   auto const skin = system.get_verlet_skin();
@@ -144,7 +144,7 @@ void CoulombScafacosImpl::tune_impl() {
     // ESPResSo is not affected by a short-range cutoff -> tune in parallel
     ScafacosContext::tune(charges, positions);
   }
-  System::get_system().on_coulomb_change();
+  get_system().on_coulomb_change();
 }
 
 #endif // SCAFACOS

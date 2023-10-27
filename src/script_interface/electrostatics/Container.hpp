@@ -27,6 +27,7 @@
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameter.hpp>
+#include <script_interface/system/Leaf.hpp>
 
 #include <memory>
 #include <optional>
@@ -34,12 +35,13 @@
 
 namespace ScriptInterface::Coulomb {
 
-class Container : public AutoParameters<Container> {
+class Container : public AutoParameters<Container, System::Leaf> {
   ObjectRef m_solver;
   ObjectRef m_extension;
+  std::unique_ptr<VariantMap> m_params;
 
   void reset_solver() {
-    auto &system = System::get_system();
+    auto &system = get_system();
     auto &coulomb = system.coulomb;
     m_solver.reset();
     m_extension.reset();
@@ -49,11 +51,21 @@ class Container : public AutoParameters<Container> {
   }
 
   void reset_extension() {
-    auto &system = System::get_system();
+    auto &system = get_system();
     auto &coulomb = system.coulomb;
     m_extension.reset();
     coulomb.impl->extension = std::nullopt;
     system.on_coulomb_change();
+  }
+
+  void on_bind_system(::System::System &system) override {
+    auto const &params = *m_params;
+    for (auto const &key : get_parameter_insertion_order()) {
+      if (params.count(key)) {
+        do_set_parameter(key.c_str(), params.at(key));
+      }
+    }
+    m_params.reset();
   }
 
 public:
@@ -72,6 +84,9 @@ public:
              reset_solver();
            } else {
              auto actor = get_value<ObjectRef>(v);
+             auto leaf = std::dynamic_pointer_cast<System::Leaf>(actor);
+             assert(leaf);
+             leaf->bind_system(m_system.lock());
              actor->do_call_method("activate", {});
              m_solver = actor;
            }
@@ -83,6 +98,9 @@ public:
              reset_extension();
            } else {
              auto actor = get_value<ObjectRef>(v);
+             auto leaf = std::dynamic_pointer_cast<System::Leaf>(actor);
+             assert(leaf);
+             leaf->bind_system(m_system.lock());
              actor->do_call_method("activate", {});
              m_extension = actor;
            }
@@ -94,12 +112,7 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    if (params.count("solver")) {
-      do_set_parameter("solver", params.at("solver"));
-    }
-    if (params.count("extension")) {
-      do_set_parameter("extension", params.at("extension"));
-    }
+    m_params = std::make_unique<VariantMap>(params);
   }
 
 protected:

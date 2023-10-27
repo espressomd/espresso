@@ -23,7 +23,6 @@
 #include "EspressoSystemStandAlone.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "system/System.hpp"
 #include "system/System.impl.hpp"
@@ -55,8 +54,7 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
 }
 
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {
-  m_instance->box_geo->set_length(box_l);
-  m_instance->on_boxl_change();
+  m_instance->set_box_l(box_l);
 }
 
 void EspressoSystemStandAlone::set_node_grid(

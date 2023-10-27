@@ -110,6 +110,18 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
                 espressomd.electrostatics.MMM1D(**invalid_params)
 
+        # swapping two solvers should safely rollback to last valid solver
+        self.assertEqual(abs(self.system.analysis.energy()["coulomb"]), 0.)
+        mmm1d = espressomd.electrostatics.MMM1D(**valid_params)
+        self.system.electrostatics.solver = mmm1d
+        ref_energy = self.system.analysis.energy()["coulomb"]
+        with self.assertRaisesRegex(RuntimeError, "CoulombP3M: requires periodicity"):
+            p3m = espressomd.electrostatics.P3M(prefactor=1., accuracy=1e-2)
+            self.system.electrostatics.solver = p3m
+        self.assertEqual(self.system.electrostatics.solver, mmm1d)
+        self.assertAlmostEqual(
+            self.system.analysis.energy()["coulomb"], ref_energy, delta=1e-7)
+
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["CUDA", "MMM1D_GPU"])
     def test_mmm1d_gpu(self):

@@ -86,7 +86,4 @@ struct Solver {
 Solver const &get_coulomb();
 #endif
 
-/** @brief Check if the system is charge-neutral. */
-void check_charge_neutrality(double relative_tolerance);
-
 } // namespace Coulomb

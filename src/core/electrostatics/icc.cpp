@@ -92,8 +92,6 @@ static void force_calc_icc(
 #endif // P3M
         }
       });
-
-  System::get_system().coulomb.calc_long_range_force(particles);
 }
 
 void ICCStar::iteration(CellStructure &cell_structure,
@@ -107,7 +105,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
     return;
   }
 
-  auto &system = System::get_system();
+  auto &system = get_system();
   auto const &coulomb = system.coulomb;
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
@@ -124,6 +122,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
     // calculate electrostatic forces (SR+LR) excluding self-interactions
     force_calc_icc(cell_structure, particles, ghost_particles, kernel,
                    elc_kernel);
+    system.coulomb.calc_long_range_force(particles);
     cell_structure.ghosts_reduce_forces();
 
     auto max_rel_diff = 0.;
@@ -236,7 +235,7 @@ ICCStar::ICCStar(icc_data data) {
 
 void ICCStar::on_activation() const {
   sanity_check();
-  auto &system = System::get_system();
+  auto &system = get_system();
   system.on_particle_charge_change();
 }
 
@@ -276,7 +275,7 @@ void ICCStar::sanity_check() const {
 }
 
 void ICCStar::sanity_checks_active_solver() const {
-  auto &system = System::get_system();
+  auto &system = get_system();
   if (system.coulomb.impl->solver) {
     std::visit(SanityChecksICC(), *system.coulomb.impl->solver);
   } else {
@@ -284,14 +283,12 @@ void ICCStar::sanity_checks_active_solver() const {
   }
 }
 
-void update_icc_particles() {
-  auto &system = System::get_system();
-  if (system.coulomb.impl->extension) {
+void System::System::update_icc_particles() {
+  if (coulomb.impl->extension) {
     if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
-            get_ptr(system.coulomb.impl->extension))) {
-      auto &cell_structure = *system.cell_structure;
-      (**icc).iteration(cell_structure, cell_structure.local_particles(),
-                        cell_structure.ghost_particles());
+            get_ptr(coulomb.impl->extension))) {
+      (**icc).iteration(*cell_structure, cell_structure->local_particles(),
+                        cell_structure->ghost_particles());
     }
   }
 }

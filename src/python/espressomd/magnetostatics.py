@@ -70,14 +70,6 @@ class MagnetostaticInteraction(ScriptInterfaceHelper):
     def required_keys(self):
         raise NotImplementedError("Derived classes must implement this method")
 
-    def _activate(self):
-        self.call_method("activate")
-        utils.handle_errors("Dipolar actor activation failed")
-
-    def _deactivate(self):
-        self.call_method("deactivate")
-        utils.handle_errors("Dipolar actor deactivation failed")
-
     def get_magnetostatics_prefactor(self):
         """
         Get the magnetostatics prefactor

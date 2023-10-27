@@ -38,9 +38,11 @@
 #include "script_interface/analysis/Analysis.hpp"
 #include "script_interface/bond_breakage/BreakageSpecs.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/electrostatics/Container.hpp"
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
+#include "script_interface/magnetostatics/Container.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/vec_rotate.hpp>
@@ -71,6 +73,12 @@ struct System::Leaves {
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
   std::shared_ptr<BondBreakage::BreakageSpecs> bond_breakage;
+#ifdef ELECTROSTATICS
+  std::shared_ptr<Coulomb::Container> electrostatics;
+#endif
+#ifdef DIPOLES
+  std::shared_ptr<Dipoles::Container> magnetostatics;
+#endif
 };
 
 System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
@@ -135,6 +143,12 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);
   add_parameter("bond_breakage", &Leaves::bond_breakage);
+#ifdef ELECTROSTATICS
+  add_parameter("electrostatics", &Leaves::electrostatics);
+#endif
+#ifdef DIPOLES
+  add_parameter("magnetostatics", &Leaves::magnetostatics);
+#endif
 }
 
 void System::do_construct(VariantMap const &params) {

@@ -77,8 +77,6 @@ void set_system(std::shared_ptr<System> new_instance) {
 
 System &get_system() { return *instance; }
 
-Utils::Vector3d System::box() const { return box_geo->length(); }
-
 void System::init() {
 #ifdef CUDA
   gpu.init();
@@ -378,6 +376,11 @@ void System::set_verlet_skin_heuristic() {
   auto const max_range = *boost::min_element(cell_structure->max_cutoff());
   auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
   set_verlet_skin(new_skin);
+}
+
+void System::set_box_l(Utils::Vector3d const &box_l) {
+  box_geo->set_length(box_l);
+  on_boxl_change();
 }
 
 void System::on_integration_start() {

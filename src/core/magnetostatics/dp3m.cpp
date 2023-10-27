@@ -71,11 +71,10 @@
 #include <vector>
 
 void DipolarP3M::count_magnetic_particles() {
-  auto const &system = System::get_system();
   int local_n = 0;
   double local_mu2 = 0.;
 
-  for (auto const &p : system.cell_structure->local_particles()) {
+  for (auto const &p : get_system().cell_structure->local_particles()) {
     if (p.dipm() != 0.) {
       local_mu2 += p.calc_dip().norm2();
       local_n++;
@@ -92,9 +91,6 @@ static double dp3m_k_space_error(double box_size, int mesh, int cao,
 static double dp3m_real_space_error(double box_size, double r_cut_iL,
                                     int n_c_part, double sum_q2,
                                     double alpha_L);
-static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
-                                    double mesh_i, int cao, double alpha_L_i,
-                                    double *alias1, double *alias2);
 
 /** Compute the value of alpha through a bisection method.
  *  Based on eq. (33) @cite wang01a.
@@ -107,7 +103,7 @@ double DipolarP3M::calc_average_self_energy_k_space() const {
   auto const start = Utils::Vector3i{dp3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
 
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const node_phi = grid_influence_function_self_energy(
       dp3m.params, start, start + size, dp3m.g_energy);
 
@@ -122,7 +118,7 @@ void DipolarP3M::init() {
   assert(dp3m.params.cao >= 1 and dp3m.params.cao <= 7);
   assert(dp3m.params.alpha > 0.);
 
-  auto const &system = System::get_system();
+  auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
   auto const skin = system.get_verlet_skin();
@@ -154,15 +150,13 @@ void DipolarP3M::init() {
 
 DipolarP3M::DipolarP3M(P3MParameters &&parameters, double prefactor,
                        int tune_timings, bool tune_verbose)
-    : dp3m{std::move(parameters)}, prefactor{prefactor},
-      tune_timings{tune_timings}, tune_verbose{tune_verbose} {
+    : dp3m{std::move(parameters)}, tune_timings{tune_timings},
+      tune_verbose{tune_verbose} {
 
+  set_prefactor(prefactor);
   m_is_tuned = !dp3m.params.tuning;
   dp3m.params.tuning = false;
 
-  if (prefactor <= 0.) {
-    throw std::domain_error("Parameter 'prefactor' must be > 0");
-  }
   if (tune_timings <= 0) {
     throw std::domain_error("Parameter 'timings' must be > 0");
   }
@@ -264,7 +258,7 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
   double k_space_energy_dip = 0.;
   double tmp0, tmp1;
 
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const dipole_prefac = prefactor / Utils::int_pow<3>(dp3m.params.mesh[0]);
 
   if (dp3m.sum_mu2 > 0) {
@@ -513,7 +507,7 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
 
 double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
                                      ParticleRange const &particles) {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const pref = prefactor * 4. * Utils::pi() / box_geo.volume() /
                     (2. * dp3m.params.epsilon + 1.);
   auto const n_local_part = particles.size();
@@ -581,19 +575,17 @@ double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
 void DipolarP3M::calc_influence_function_force() {
   auto const start = Utils::Vector3i{dp3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
-  auto const &box_geo = *System::get_system().box_geo;
 
   dp3m.g_force = grid_influence_function<3>(dp3m.params, start, start + size,
-                                            box_geo.length());
+                                            get_system().box_geo->length());
 }
 
 void DipolarP3M::calc_influence_function_energy() {
   auto const start = Utils::Vector3i{dp3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{dp3m.fft.plan[3].new_mesh};
-  auto const &box_geo = *System::get_system().box_geo;
 
   dp3m.g_energy = grid_influence_function<2>(dp3m.params, start, start + size,
-                                             box_geo.length());
+                                             get_system().box_geo->length());
 }
 
 class DipolarTuningAlgorithm : public TuningAlgorithm {
@@ -601,15 +593,13 @@ class DipolarTuningAlgorithm : public TuningAlgorithm {
   int m_mesh_max = -1, m_mesh_min = -1;
 
 public:
-  DipolarTuningAlgorithm(dp3m_data_struct &input_dp3m, double prefactor,
-                         int timings)
-      : TuningAlgorithm{prefactor, timings}, dp3m{input_dp3m} {}
+  DipolarTuningAlgorithm(System::System &system, dp3m_data_struct &input_dp3m,
+                         double prefactor, int timings)
+      : TuningAlgorithm(system, prefactor, timings), dp3m{input_dp3m} {}
 
   P3MParameters &get_params() override { return dp3m.params; }
 
-  void on_solver_change() const override {
-    System::get_system().on_dipoles_change();
-  }
+  void on_solver_change() const override { m_system.on_dipoles_change(); }
 
   std::optional<std::string>
   layer_correction_veto_r_cut(double) const override {
@@ -617,7 +607,7 @@ public:
   }
 
   void setup_logger(bool verbose) override {
-    auto const &box_geo = *System::get_system().box_geo;
+    auto const &box_geo = *m_system.box_geo;
     m_logger = std::make_unique<TuningLogger>(
         verbose and this_node == 0, "DipolarP3M", TuningLogger::Mode::Dipolar);
     m_logger->tuning_goals(dp3m.params.accuracy, m_prefactor,
@@ -631,7 +621,7 @@ public:
                      double r_cut_iL) const override {
 
     double alpha_L, rs_err, ks_err;
-    auto const &box_geo = *System::get_system().box_geo;
+    auto const &box_geo = *m_system.box_geo;
 
     /* calc maximal real space error for setting */
     rs_err = dp3m_real_space_error(box_geo.length()[0], r_cut_iL,
@@ -712,7 +702,8 @@ public:
 };
 
 void DipolarP3M::tune() {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto &system = get_system();
+  auto const &box_geo = *system.box_geo;
   if (dp3m.params.alpha_L == 0. and dp3m.params.alpha != 0.) {
     dp3m.params.alpha_L = dp3m.params.alpha * box_geo.length()[0];
   }
@@ -726,7 +717,7 @@ void DipolarP3M::tune() {
           "DipolarP3M: no dipolar particles in the system");
     }
     try {
-      DipolarTuningAlgorithm parameters(dp3m, prefactor, tune_timings);
+      DipolarTuningAlgorithm parameters(system, dp3m, prefactor, tune_timings);
       parameters.setup_logger(tune_verbose);
       // parameter ranges
       parameters.determine_mesh_limits();
@@ -735,13 +726,45 @@ void DipolarP3M::tune() {
       // run tuning algorithm
       parameters.tune();
       m_is_tuned = true;
-      System::get_system().on_dipoles_change();
+      system.on_dipoles_change();
     } catch (...) {
       dp3m.params.tuning = false;
       throw;
     }
   }
   init();
+}
+
+/** Tuning dipolar-P3M */
+static auto dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
+                                    double mesh_i, int cao, double alpha_L_i) {
+  using Utils::sinc;
+
+  auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
+
+  auto alias1 = 0.;
+  auto alias2 = 0.;
+  for (int mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+    auto const nmx = nx + mx * mesh;
+    auto const fnmx = mesh_i * nmx;
+    for (int my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+      auto const nmy = ny + my * mesh;
+      auto const fnmy = mesh_i * nmy;
+      for (int mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+        auto const nmz = nz + mz * mesh;
+        auto const fnmz = mesh_i * nmz;
+
+        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
+        auto const ex = std::exp(-factor1 * nm2);
+
+        auto const U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2. * cao);
+
+        alias1 += Utils::sqr(ex) * nm2;
+        alias2 += U2 * ex * pow((nx * nmx + ny * nmy + nz * nmz), 3.) / nm2;
+      }
+    }
+  }
+  return std::make_pair(alias1, alias2);
 }
 
 /** Calculate the k-space error of dipolar-P3M */
@@ -759,11 +782,11 @@ static double dp3m_k_space_error(double box_size, int mesh, int cao,
           auto const cs = p3m_analytic_cotangent_sum(nx, mesh_i, cao) *
                           p3m_analytic_cotangent_sum(ny, mesh_i, cao) *
                           p3m_analytic_cotangent_sum(nz, mesh_i, cao);
-          double alias1, alias2;
-          dp3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
-                                  &alias1, &alias2);
-          double d = alias1 - Utils::sqr(alias2 / cs) /
-                                  Utils::int_pow<3>(static_cast<double>(n2));
+          auto const [alias1, alias2] =
+              dp3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i);
+          auto const d =
+              alias1 - Utils::sqr(alias2 / cs) /
+                           Utils::int_pow<3>(static_cast<double>(n2));
           /* at high precision, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
           if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
@@ -774,45 +797,15 @@ static double dp3m_k_space_error(double box_size, int mesh, int cao,
          Utils::int_pow<4>(box_size);
 }
 
-/** Tuning dipolar-P3M */
-void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
-                             int cao, double alpha_L_i, double *alias1,
-                             double *alias2) {
-  using Utils::sinc;
-
-  auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
-
-  *alias1 = *alias2 = 0.;
-  for (int mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    auto const nmx = nx + mx * mesh;
-    auto const fnmx = mesh_i * nmx;
-    for (int my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      auto const nmy = ny + my * mesh;
-      auto const fnmy = mesh_i * nmy;
-      for (int mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        auto const nmz = nz + mz * mesh;
-        auto const fnmz = mesh_i * nmz;
-
-        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        auto const ex = std::exp(-factor1 * nm2);
-
-        auto const U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2. * cao);
-
-        *alias1 += Utils::sqr(ex) * nm2;
-        *alias2 += U2 * ex * pow((nx * nmx + ny * nmy + nz * nmz), 3.) / nm2;
-      }
-    }
-  }
-}
-
 /** Calculate the value of the errors for the REAL part of the force in terms
  *  of the splitting parameter alpha of Ewald. Based on eq. (33) @cite wang01a.
  *
  *  Please note that in this more refined approach we don't use
  *  eq. (37), but eq. (33) which maintains all the powers in alpha.
  */
-double dp3m_real_space_error(double box_size, double r_cut_iL, int n_c_part,
-                             double sum_q2, double alpha_L) {
+static double dp3m_real_space_error(double box_size, double r_cut_iL,
+                                    int n_c_part, double sum_q2,
+                                    double alpha_L) {
   double d_error_f, d_cc, d_dc, d_con;
 
   auto const d_rcut = r_cut_iL * box_size;
@@ -876,7 +869,7 @@ double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
 }
 
 void DipolarP3M::sanity_checks_boxl() const {
-  auto const &system = System::get_system();
+  auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
   for (unsigned int i = 0u; i < 3u; i++) {
@@ -902,7 +895,7 @@ void DipolarP3M::sanity_checks_boxl() const {
 }
 
 void DipolarP3M::sanity_checks_periodicity() const {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   if (!box_geo.periodic(0) or !box_geo.periodic(1) or !box_geo.periodic(2)) {
     throw std::runtime_error(
         "DipolarP3M: requires periodicity (True, True, True)");
@@ -910,7 +903,7 @@ void DipolarP3M::sanity_checks_periodicity() const {
 }
 
 void DipolarP3M::sanity_checks_cell_structure() const {
-  auto const &local_geo = *System::get_system().local_geo;
+  auto const &local_geo = *get_system().local_geo;
   if (local_geo.cell_structure_type() != CellStructureType::REGULAR and
       local_geo.cell_structure_type() != CellStructureType::HYBRID) {
     throw std::runtime_error(
@@ -933,7 +926,7 @@ void DipolarP3M::sanity_checks_node_grid() const {
 }
 
 void DipolarP3M::scaleby_box_l() {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   dp3m.params.r_cut = dp3m.params.r_cut_iL * box_geo.length()[0];
   dp3m.params.alpha = dp3m.params.alpha_L * box_geo.length_inv()[0];
   dp3m.params.recalc_a_ai_cao_cut(box_geo.length());
@@ -945,7 +938,7 @@ void DipolarP3M::scaleby_box_l() {
 }
 
 void DipolarP3M::calc_energy_correction() {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const Ukp3m = calc_average_self_energy_k_space() * box_geo.volume();
   auto const Ewald_volume = Utils::int_pow<3>(dp3m.params.alpha_L);
   auto const Eself = -2. * Ewald_volume * Utils::sqrt_pi_i() / 3.;

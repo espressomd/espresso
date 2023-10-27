@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_COULOMB_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_COULOMB_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -109,4 +109,3 @@ template <> struct has_pressure<CoulombMMM1D> : std::false_type {};
 } // namespace traits
 } // namespace Coulomb
 #endif // ELECTROSTATICS
-#endif

@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <system/System.hpp>
+
 #include <utils/Vector.hpp>
 
 #include <memory>
@@ -37,6 +39,7 @@ public:
   void set_node_grid(Utils::Vector3i const &node_grid) const;
   void set_time_step(double time_step) const;
   void set_skin(double new_skin) const;
+  auto get_handle() { return m_instance; }
 
 private:
   bool head_node;

@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -83,4 +82,3 @@ template <> struct has_dipole_fields<DipolarDirectSum> : std::true_type {};
 } // namespace Dipoles
 
 #endif // DIPOLES
-#endif

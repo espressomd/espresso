@@ -73,7 +73,7 @@ namespace utf = boost::unit_test;
 
 namespace espresso {
 // ESPResSo system instance
-static std::unique_ptr<EspressoSystemStandAlone> system;
+static std::shared_ptr<System::System> system;
 } // namespace espresso
 
 static void remove_translational_motion(System::System &system) {
@@ -90,10 +90,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   auto const box_center = box_l / 2.;
   auto const time_step = 0.001;
   auto const skin = 0.4;
-  espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
-  espresso::system->set_time_step(time_step);
-  espresso::system->set_skin(skin);
   auto &system = System::get_system();
+  system.set_box_l(Utils::Vector3d::broadcast(box_l));
+  system.set_time_step(time_step);
+  system.set_verlet_skin(skin);
 
   // particle properties
   auto const pid1 = 9;
@@ -166,8 +166,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         BOOST_CHECK_EQUAL(vec.size(), 0ul);
       }
     }
-    BOOST_TEST(system.box() == system.box_geo->length(),
-               boost::test_tools::per_element());
   }
 
   // check accumulators
@@ -312,7 +310,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              1e-3};
     auto solver =
         std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
-    add_actor(comm, system.coulomb.impl->solver, solver,
+    add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
 
     // measure energies
@@ -420,7 +418,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 }
 
 int main(int argc, char **argv) {
-  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  espresso::system = EspressoSystemStandAlone(argc, argv).get_handle();
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2022-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,23 +21,29 @@
 
 #include "config/config.hpp"
 
-#ifdef DIPOLAR_DIRECT_SUM
+#ifdef DIPOLES
 
-#include "magnetostatics/actor.hpp"
+#include "system/Leaf.hpp"
 
-struct DipolarDirectSumGpu : public Dipoles::Actor<DipolarDirectSumGpu> {
-  DipolarDirectSumGpu(double prefactor);
+#include <stdexcept>
 
-  void on_activation() const;
-  void on_boxl_change() const {}
-  void on_node_grid_change() const {}
-  void on_periodicity_change() const {}
-  void on_cell_structure_change() const {}
-  void init() const {}
-  void sanity_checks() const {}
+namespace Dipoles {
 
-  void add_long_range_forces() const;
-  void long_range_energy() const;
+template <typename Class> class Actor : public System::Leaf<Actor<Class>> {
+public:
+  /**
+   * @brief Magnetostatics prefactor.
+   */
+  double prefactor = 0.;
+
+  void set_prefactor(double new_prefactor) {
+    if (new_prefactor <= 0.) {
+      throw std::domain_error("Parameter 'prefactor' must be > 0");
+    }
+    prefactor = new_prefactor;
+  }
 };
 
-#endif // DIPOLAR_DIRECT_SUM
+} // namespace Dipoles
+
+#endif // DIPOLES

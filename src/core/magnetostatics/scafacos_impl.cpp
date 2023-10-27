@@ -46,7 +46,7 @@ make_dipolar_scafacos(std::string const &method,
 }
 
 void DipolarScafacosImpl::update_particle_data() {
-  auto const &system = System::get_system();
+  auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto &cell_structure = *system.cell_structure;
 
@@ -69,7 +69,7 @@ void DipolarScafacosImpl::update_particle_forces() const {
   if (positions.empty())
     return;
 
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto &cell_structure = *get_system().cell_structure;
 
   auto it_potentials = potentials.begin();
   auto it_f = std::size_t{0ul};

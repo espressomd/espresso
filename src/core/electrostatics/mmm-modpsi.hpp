@@ -25,8 +25,7 @@
  *  CPU and GPU implementations.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM_MODPSI_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM_MODPSI_HPP
+#pragma once
 
 #include <vector>
 
@@ -37,5 +36,3 @@ extern std::vector<std::vector<double>> modPsi;
  *  <tt>2*new_n</tt>
  */
 void create_mod_psi_up_to(int new_n);
-
-#endif

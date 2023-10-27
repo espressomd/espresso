@@ -28,8 +28,7 @@
  *  method, for example @ref p3m.hpp "P3M", with metallic boundary conditions.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_ELC_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_ELC_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -174,6 +173,7 @@ struct ElectrostaticLayerCorrection
       std::shared_ptr<CoulombP3M>>;
 
   elc_data elc;
+  BoxGeometry *m_box_geo;
 
   /** Electrostatics solver that is adapted. */
   BaseSolver base_solver;
@@ -181,6 +181,8 @@ struct ElectrostaticLayerCorrection
   ElectrostaticLayerCorrection(elc_data &&parameters, BaseSolver &&solver);
 
   void on_activation() {
+    visit_base_solver(
+        [this](auto &solver) { solver->bind_system(m_system.lock()); });
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
@@ -253,22 +255,22 @@ struct ElectrostaticLayerCorrection
 
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(Particle const &p1, Particle const &p2,
-                                double q1q2, BoxGeometry const &box_geo) const {
+                                double q1q2) const {
     double energy = 0.;
     if (elc.dielectric_contrast_on) {
       energy = std::visit(
-          [this, &p1, &p2, q1q2, &box_geo](auto &p3m_ptr) {
+          [this, &p1, &p2, q1q2](auto &p3m_ptr) {
             auto const &pos1 = p1.pos();
             auto const &pos2 = p2.pos();
             auto const &p3m = *p3m_ptr;
             auto energy = 0.;
             elc.dielectric_layers_contribution(
-                p3m, box_geo, pos1, pos2, q1q2,
+                p3m, *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   energy += p3m.pair_energy(q_eff, d.norm());
                 });
             elc.dielectric_layers_contribution(
-                p3m, box_geo, pos2, pos1, q1q2,
+                p3m, *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   energy += p3m.pair_energy(q_eff, d.norm());
                 });
@@ -280,21 +282,21 @@ struct ElectrostaticLayerCorrection
   }
 
   /** @brief Add short-range pair force corrections. */
-  void add_pair_force_corrections(Particle &p1, Particle &p2, double q1q2,
-                                  BoxGeometry const &box_geo) const {
+  void add_pair_force_corrections(Particle &p1, Particle &p2,
+                                  double q1q2) const {
     if (elc.dielectric_contrast_on) {
       std::visit(
-          [this, &p1, &p2, q1q2, &box_geo](auto &p3m_ptr) {
+          [this, &p1, &p2, q1q2](auto &p3m_ptr) {
             auto const &pos1 = p1.pos();
             auto const &pos2 = p2.pos();
             auto const &p3m = *p3m_ptr;
             elc.dielectric_layers_contribution(
-                p3m, box_geo, pos1, pos2, q1q2,
+                p3m, *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p1.force() += p3m.pair_force(q_eff, d, d.norm());
                 });
             elc.dielectric_layers_contribution(
-                p3m, box_geo, pos2, pos1, q1q2,
+                p3m, *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p2.force() += p3m.pair_force(q_eff, d, d.norm());
                 });
@@ -341,5 +343,3 @@ private:
 };
 
 #endif // P3M
-
-#endif

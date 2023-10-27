@@ -27,7 +27,6 @@
 
 #include "core/actor/registration.hpp"
 #include "core/electrostatics/coulomb.hpp"
-#include "core/system/System.hpp"
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
@@ -85,9 +84,10 @@ template <class SIClass, class CoreClass>
 Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
                                                   VariantMap const &params) {
   if (name == "activate") {
-    context()->parallel_try_catch([&]() {
-      auto &system = System::get_system();
-      add_actor(context()->get_comm(), system.coulomb.impl->solver, m_actor,
+    context()->parallel_try_catch([this]() {
+      auto &system = get_system();
+      add_actor(context()->get_comm(), m_system.lock(),
+                system.coulomb.impl->solver, m_actor,
                 [&system]() { system.on_coulomb_change(); });
     });
     return {};

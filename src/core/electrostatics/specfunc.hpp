@@ -34,8 +34,7 @@
  *  mmm-common.hpp).
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_HPP
+#pragma once
 
 #include <utils/Span.hpp>
 
@@ -119,5 +118,3 @@ inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
   }
   return x * d - dd + 0.5 * c[0];
 }
-
-#endif

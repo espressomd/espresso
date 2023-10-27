@@ -25,8 +25,7 @@
  * for a particle pair @cite neumann85b, @cite tironi95a.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_REACTION_FIELD_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_REACTION_FIELD_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -120,5 +119,3 @@ struct ReactionField : public Coulomb::Actor<ReactionField> {
 };
 
 #endif // ELECTROSTATICS
-
-#endif
