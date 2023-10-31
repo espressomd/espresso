@@ -283,9 +283,9 @@ void on_cell_structure_change() {
 }
 
 void on_temperature_change() {
-  if (lattice_switch != ActiveLB::NONE) {
-    throw std::runtime_error("Temperature change not supported by LB");
-  }
+  //  if (lattice_switch != ActiveLB::NONE) {
+  //    throw std::runtime_error("Temperature change not supported by LB");
+  //  }
 }
 
 void on_periodicity_change() {

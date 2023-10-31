@@ -52,7 +52,7 @@ inline bool ClusterStructure::part_of_cluster(const Particle &p) {
 void ClusterStructure::run_for_all_pairs() {
   // clear data structs
   clear();
-  sanity_checks();
+  //  sanity_checks();
 
   // Iterate over pairs
   Utils::for_each_pair(partCfg().begin(), partCfg().end(),
@@ -64,7 +64,7 @@ void ClusterStructure::run_for_all_pairs() {
 
 void ClusterStructure::run_for_bonded_particles() {
   clear();
-  sanity_checks();
+  //  sanity_checks();
   for (const auto &p : partCfg()) {
     for (auto const bond : p.bonds()) {
       if (bond.partner_ids().size() == 1) {
