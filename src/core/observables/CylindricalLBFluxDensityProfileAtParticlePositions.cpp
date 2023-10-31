@@ -19,7 +19,6 @@
 #include "CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 
 #include "BoxGeometry.hpp"
-#include "grid.hpp"
 #include "system/System.hpp"
 #include "utils_histogram.hpp"
 
@@ -46,11 +45,13 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
   local_folded_positions.reserve(local_particles.size());
   local_flux_densities.reserve(local_particles.size());
 
-  auto const &lb = System::get_system().lb;
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &lb = system.lb;
   auto const vel_conv = lb.get_lattice_speed();
 
   for (auto const &p : local_particles) {
-    auto const pos = folded_position(traits.position(p), box_geo);
+    auto const pos = box_geo.folded_position(traits.position(p));
     auto const pos_shifted = pos - transform_params->center();
     auto const vel = *lb.get_interpolated_velocity(pos);
     auto const dens = *lb.get_interpolated_density(pos);

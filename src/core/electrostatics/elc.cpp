@@ -30,13 +30,14 @@
 #include "electrostatics/p3m.hpp"
 #include "electrostatics/p3m_gpu.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -124,7 +125,8 @@ static std::vector<SCCache> calc_sc_cache(ParticleRange const &particles,
 }
 
 static std::pair<std::size_t, std::size_t>
-prepare_sc_cache(ParticleRange const &particles, double far_cut) {
+prepare_sc_cache(ParticleRange const &particles, BoxGeometry const &box_geo,
+                 double far_cut) {
   assert(far_cut >= 0.);
   auto const n_freq_x =
       static_cast<std::size_t>(std::ceil(far_cut * box_geo.length()[0]) + 1.);
@@ -200,6 +202,7 @@ void ElectrostaticLayerCorrection::check_gap(Particle const &p) const {
 void ElectrostaticLayerCorrection::add_dipole_force(
     ParticleRange const &particles) const {
   constexpr std::size_t size = 3;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const pref = prefactor * 4. * Utils::pi() / box_geo.volume();
 
   /* for non-neutral systems, this shift gives the background contribution
@@ -265,6 +268,7 @@ void ElectrostaticLayerCorrection::add_dipole_force(
 double ElectrostaticLayerCorrection::dipole_energy(
     ParticleRange const &particles) const {
   constexpr std::size_t size = 7;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const pref = prefactor * 2. * Utils::pi() / box_geo.volume();
   auto const lz = box_geo.length()[2];
   /* for nonneutral systems, this shift gives the background contribution
@@ -339,21 +343,30 @@ double ElectrostaticLayerCorrection::dipole_energy(
 
 /*****************************************************************/
 
-static auto image_sum_b(double q, double z, double d) {
-  auto const shift = box_geo.length_half()[2];
-  auto const lz = box_geo.length()[2];
-  return q / (1. - d) * (z - 2. * d * lz / (1. - d)) - q * shift / (1. - d);
-}
+struct ImageSum {
+  double delta;
+  double shift;
+  double lz;
+  double dci; // delta complement inverse
 
-static auto image_sum_t(double q, double z, double d) {
-  auto const shift = box_geo.length_half()[2];
-  auto const lz = box_geo.length()[2];
-  return q / (1. - d) * (z + 2. * d * lz / (1. - d)) - q * shift / (1. - d);
-}
+  ImageSum(double delta, double shift, double lz)
+      : delta{delta}, shift{shift}, lz{lz}, dci{1. / (1. - delta)} {}
+
+  /** @brief Image sum from the bottom layer. */
+  double b(double q, double z) const {
+    return q * dci * (z - 2. * delta * lz * dci) - q * dci * shift;
+  }
+
+  /** @brief Image sum from the top layer. */
+  double t(double q, double z) const {
+    return q * dci * (z + 2. * delta * lz * dci) - q * dci * shift;
+  }
+};
 
 double
 ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
   constexpr std::size_t size = 4;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref = prefactor * 2. * Utils::pi() * xy_area_inv;
   auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
@@ -363,7 +376,8 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
 
   /* for non-neutral systems, this shift gives the background contribution
    * (rsp. for this shift, the DM of the background is zero) */
-  double const shift = box_geo.length_half()[2];
+  auto const shift = box_geo.length_half()[2];
+  auto const lz = box_geo.length()[2];
 
   if (elc.dielectric_contrast_on) {
     if (elc.const_pot) {
@@ -386,6 +400,7 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
       // metallic boundaries
       clear_vec(gblcblk, size);
       auto const h = elc.box_h;
+      ImageSum const image_sum{delta, shift, lz};
       for (auto const &p : particles) {
         auto const z = p.pos()[2];
         auto const q = p.q();
@@ -394,26 +409,25 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
         if (elc.dielectric_contrast_on) {
           if (z < elc.space_layer) {
             gblcblk[2] += fac_delta * (elc.delta_mid_bot + 1.) * q;
-            gblcblk[3] += q * (image_sum_b(elc.delta_mid_bot * delta,
-                                           -(2. * h + z), delta) +
-                               image_sum_b(delta, -(2. * h - z), delta));
+            gblcblk[3] +=
+                q * (image_sum.b(elc.delta_mid_bot * delta, -(2. * h + z)) +
+                     image_sum.b(delta, -(2. * h - z)));
           } else {
             gblcblk[2] += fac_delta_mid_bot * (1. + elc.delta_mid_top) * q;
-            gblcblk[3] += q * (image_sum_b(elc.delta_mid_bot, -z, delta) +
-                               image_sum_b(delta, -(2. * h - z), delta));
+            gblcblk[3] += q * (image_sum.b(elc.delta_mid_bot, -z) +
+                               image_sum.b(delta, -(2. * h - z)));
           }
           if (z > (h - elc.space_layer)) {
             // note the minus sign here which is required due to |z_i-z_j|
             gblcblk[2] -= fac_delta * (elc.delta_mid_top + 1.) * q;
             gblcblk[3] -=
-                q * (image_sum_t(elc.delta_mid_top * delta, 4. * h - z, delta) +
-                     image_sum_t(delta, 2. * h + z, delta));
+                q * (image_sum.t(elc.delta_mid_top * delta, 4. * h - z) +
+                     image_sum.t(delta, 2. * h + z));
           } else {
             // note the minus sign here which is required due to |z_i-z_j|
             gblcblk[2] -= fac_delta_mid_top * (1. + elc.delta_mid_bot) * q;
-            gblcblk[3] -=
-                q * (image_sum_t(elc.delta_mid_top, 2. * h - z, delta) +
-                     image_sum_t(delta, 2. * h + z, delta));
+            gblcblk[3] -= q * (image_sum.t(elc.delta_mid_top, 2. * h - z) +
+                               image_sum.t(delta, 2. * h + z));
           }
         }
       }
@@ -428,6 +442,7 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
 void ElectrostaticLayerCorrection::add_z_force(
     ParticleRange const &particles) const {
   constexpr std::size_t size = 1;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref = prefactor * 2. * Utils::pi() * xy_area_inv;
   auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
@@ -488,6 +503,7 @@ void setup_PoQ(elc_data const &elc, double prefactor, std::size_t index,
                double omega, ParticleRange const &particles) {
   assert(index >= 1);
   constexpr std::size_t size = 4;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref_di = prefactor * 4. * Utils::pi() * xy_area_inv;
   auto const pref = -pref_di / expm1(omega * box_geo.length()[2]);
@@ -629,6 +645,7 @@ static void setup_PQ(elc_data const &elc, double prefactor, std::size_t index_p,
   assert(index_p >= 1);
   assert(index_q >= 1);
   constexpr std::size_t size = 8;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref_di = prefactor * 8 * Utils::pi() * xy_area_inv;
   auto const pref = -pref_di / expm1(omega * box_geo.length()[2]);
@@ -753,7 +770,8 @@ static void setup_PQ(elc_data const &elc, double prefactor, std::size_t index_p,
 }
 
 static void add_PQ_force(std::size_t index_p, std::size_t index_q, double omega,
-                         const ParticleRange &particles) {
+                         ParticleRange const &particles,
+                         BoxGeometry const &box_geo) {
   auto constexpr c_2pi = 2. * Utils::pi();
   auto const pref_x =
       c_2pi * box_geo.length_inv()[0] * static_cast<double>(index_p) / omega;
@@ -813,7 +831,8 @@ static double PQ_energy(double omega, std::size_t n_part) {
 void ElectrostaticLayerCorrection::add_force(
     ParticleRange const &particles) const {
   auto constexpr c_2pi = 2. * Utils::pi();
-  auto const n_freqs = prepare_sc_cache(particles, elc.far_cut);
+  auto const &box_geo = *System::get_system().box_geo;
+  auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
   auto const n_scxcache = std::get<0>(n_freqs);
   auto const n_scycache = std::get<1>(n_freqs);
   partblk.resize(particles.size() * 8);
@@ -859,7 +878,7 @@ void ElectrostaticLayerCorrection::add_force(
                Utils::sqr(box_geo.length_inv()[1] * static_cast<double>(q)));
       setup_PQ(elc, prefactor, p, q, omega, particles);
       distribute(8);
-      add_PQ_force(p, q, omega, particles);
+      add_PQ_force(p, q, omega, particles, box_geo);
     }
   }
 }
@@ -867,8 +886,9 @@ void ElectrostaticLayerCorrection::add_force(
 double ElectrostaticLayerCorrection::calc_energy(
     ParticleRange const &particles) const {
   auto constexpr c_2pi = 2. * Utils::pi();
+  auto const &box_geo = *System::get_system().box_geo;
   auto energy = dipole_energy(particles) + z_energy(particles);
-  auto const n_freqs = prepare_sc_cache(particles, elc.far_cut);
+  auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
   auto const n_scxcache = std::get<0>(n_freqs);
   auto const n_scycache = std::get<1>(n_freqs);
 
@@ -923,6 +943,7 @@ double ElectrostaticLayerCorrection::calc_energy(
 double ElectrostaticLayerCorrection::tune_far_cut() const {
   // Largest reasonable cutoff for far formula
   auto constexpr maximal_far_cut = 50.;
+  auto const &box_geo = *System::get_system().box_geo;
   auto const box_l_x_inv = box_geo.length_inv()[0];
   auto const box_l_y_inv = box_geo.length_inv()[1];
   auto const min_inv_boxl = std::min(box_l_x_inv, box_l_y_inv);
@@ -953,6 +974,7 @@ double ElectrostaticLayerCorrection::tune_far_cut() const {
 }
 
 static auto calc_total_charge() {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto local_q = 0.;
   for (auto const &p : cell_structure.local_particles()) {
     local_q += p.q();
@@ -961,6 +983,7 @@ static auto calc_total_charge() {
 }
 
 void ElectrostaticLayerCorrection::sanity_checks_periodicity() const {
+  auto const &box_geo = *System::get_system().box_geo;
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("ELC: requires periodicity (True, True, True)");
   }
@@ -995,6 +1018,7 @@ void ElectrostaticLayerCorrection::adapt_solver() {
 }
 
 void ElectrostaticLayerCorrection::recalc_box_h() {
+  auto const &box_geo = *System::get_system().box_geo;
   auto const new_box_h = box_geo.length()[2] - elc.gap_size;
   if (new_box_h < 0.) {
     throw std::runtime_error("ELC gap size (" + std::to_string(elc.gap_size) +
@@ -1032,9 +1056,9 @@ elc_data::elc_data(double maxPWerror, double gap_size, double far_cut,
                    bool neutralize, double delta_top, double delta_bot,
                    bool with_const_pot, double potential_diff)
     : maxPWerror{maxPWerror}, gap_size{gap_size},
-      box_h{box_geo.length()[2] - gap_size}, far_cut{far_cut}, far_cut2{-1.},
-      far_calculated{far_cut == -1.}, dielectric_contrast_on{delta_top != 0. or
-                                                             delta_bot != 0.},
+      box_h{System::get_system().box_geo->length()[2] - gap_size},
+      far_cut{far_cut}, far_cut2{-1.}, far_calculated{far_cut == -1.},
+      dielectric_contrast_on{delta_top != 0. or delta_bot != 0.},
       const_pot{with_const_pot and dielectric_contrast_on},
       neutralize{neutralize and !dielectric_contrast_on},
       delta_mid_top{std::clamp(delta_top, -1., +1.)}, delta_mid_bot{std::clamp(
@@ -1081,11 +1105,6 @@ ElectrostaticLayerCorrection::ElectrostaticLayerCorrection(
     elc_data &&parameters, BaseSolver &&solver)
     : elc{parameters}, base_solver{solver} {
   adapt_solver();
-}
-
-Utils::Vector3d elc_data::get_mi_vector(Utils::Vector3d const &a,
-                                        Utils::Vector3d const &b) const {
-  return box_geo.get_mi_vector(a, b);
 }
 
 static void p3m_assign_image_charge(elc_data const &elc, CoulombP3M &p3m,
@@ -1170,6 +1189,7 @@ double ElectrostaticLayerCorrection::long_range_energy(
   auto const energy = std::visit(
       [this, &particles](auto const &solver_ptr) {
         auto &solver = *solver_ptr;
+        auto const &box_geo = *System::get_system().box_geo;
 
         // assign the original charges (they may not have been assigned yet)
         solver.charge_assign(particles);
@@ -1180,7 +1200,8 @@ double ElectrostaticLayerCorrection::long_range_energy(
 
         auto energy = 0.;
         energy += 0.5 * solver.long_range_energy(particles);
-        energy += 0.5 * elc.dielectric_layers_self_energy(solver, particles);
+        energy +=
+            0.5 * elc.dielectric_layers_self_energy(solver, box_geo, particles);
 
         // assign both original and image charges
         charge_assign<ChargeProtocol::BOTH>(elc, solver, particles);
@@ -1207,9 +1228,10 @@ void ElectrostaticLayerCorrection::add_long_range_forces(
       [this, &particles](auto const &solver_ptr) {
         auto &solver = *solver_ptr;
         if (elc.dielectric_contrast_on) {
+          auto const &box_geo = *System::get_system().box_geo;
           modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, particles);
           charge_assign<ChargeProtocol::BOTH>(elc, solver, particles);
-          elc.dielectric_layers_self_forces(solver, particles);
+          elc.dielectric_layers_self_forces(solver, box_geo, particles);
         } else {
           solver.charge_assign(particles);
         }

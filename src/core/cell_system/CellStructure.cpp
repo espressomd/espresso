@@ -27,7 +27,6 @@
 #include "cell_system/RegularDecomposition.hpp"
 
 #include "cell_system/CellStructureType.hpp"
-#include "grid.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 
 #include <utils/contains.hpp>
@@ -256,7 +255,7 @@ void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
 
 void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
                                            BoxGeometry const &box,
-                                           LocalBox<double> &local_geo) {
+                                           LocalBox &local_geo) {
   set_particle_decomposition(std::make_unique<AtomDecomposition>(comm, box));
   m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
   local_geo.set_cell_structure_type(m_type);
@@ -264,7 +263,7 @@ void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
 
 void CellStructure::set_regular_decomposition(
     boost::mpi::communicator const &comm, double range, BoxGeometry const &box,
-    LocalBox<double> &local_geo) {
+    LocalBox &local_geo) {
   set_particle_decomposition(
       std::make_unique<RegularDecomposition>(comm, range, box, local_geo));
   m_type = CellStructureType::CELL_STRUCTURE_REGULAR;
@@ -273,8 +272,7 @@ void CellStructure::set_regular_decomposition(
 
 void CellStructure::set_hybrid_decomposition(
     boost::mpi::communicator const &comm, double cutoff_regular,
-    BoxGeometry const &box, LocalBox<double> &local_geo,
-    std::set<int> n_square_types) {
+    BoxGeometry const &box, LocalBox &local_geo, std::set<int> n_square_types) {
   set_particle_decomposition(std::make_unique<HybridDecomposition>(
       comm, cutoff_regular, box, local_geo, n_square_types));
   m_type = CellStructureType::CELL_STRUCTURE_HYBRID;

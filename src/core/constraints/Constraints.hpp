@@ -19,8 +19,9 @@
 #ifndef CORE_CONSTRAINTS_CONSTRAINTS_HPP
 #define CORE_CONSTRAINTS_CONSTRAINTS_HPP
 
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -53,6 +54,7 @@ public:
     return std::find(begin(), end(), constraint) != end();
   }
   void add(std::shared_ptr<Constraint> const &constraint) {
+    auto const &box_geo = *System::get_system().box_geo;
     if (not constraint->fits_in_box(box_geo.length())) {
       throw std::runtime_error("Constraint not compatible with box size.");
     }
@@ -71,27 +73,28 @@ public:
   const_iterator begin() const { return m_constraints.begin(); }
   const_iterator end() const { return m_constraints.end(); }
 
-  void add_forces(ParticleRange &particles, double t) const {
+  void add_forces(BoxGeometry const &box_geo, ParticleRange &particles,
+                  double time) const {
     if (m_constraints.empty())
       return;
 
     reset_forces();
 
     for (auto &p : particles) {
-      auto const pos = folded_position(p.pos(), box_geo);
+      auto const pos = box_geo.folded_position(p.pos());
       ParticleForce force{};
       for (auto const &constraint : *this) {
-        force += constraint->force(p, pos, t);
+        force += constraint->force(p, pos, time);
       }
 
       p.force_and_torque() += force;
     }
   }
 
-  void add_energy(const ParticleRange &particles, double time,
-                  Observable_stat &obs_energy) const {
-    for (auto &p : particles) {
-      auto const pos = folded_position(p.pos(), box_geo);
+  void add_energy(BoxGeometry const &box_geo, ParticleRange const &particles,
+                  double time, Observable_stat &obs_energy) const {
+    for (auto const &p : particles) {
+      auto const pos = box_geo.folded_position(p.pos());
 
       for (auto const &constraint : *this) {
         constraint->add_energy(p, pos, time, obs_energy);

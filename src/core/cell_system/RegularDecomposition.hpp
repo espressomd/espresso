@@ -79,7 +79,7 @@ struct RegularDecomposition : public ParticleDecomposition {
 
   boost::mpi::communicator m_comm;
   BoxGeometry const &m_box;
-  LocalBox<double> m_local_box;
+  LocalBox m_local_box;
   std::vector<Cell> cells;
   std::vector<Cell *> m_local_cells;
   std::vector<Cell *> m_ghost_cells;
@@ -88,8 +88,7 @@ struct RegularDecomposition : public ParticleDecomposition {
 
 public:
   RegularDecomposition(boost::mpi::communicator comm, double range,
-                       BoxGeometry const &box_geo,
-                       LocalBox<double> const &local_geo);
+                       BoxGeometry const &box_geo, LocalBox const &local_geo);
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;

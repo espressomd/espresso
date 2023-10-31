@@ -34,7 +34,7 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/bonded_interaction_utils.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
@@ -114,6 +114,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_REQUIRE_GE(get_particle_node_parallel(pid2), rank ? -1 : 1);
     BOOST_REQUIRE_GE(get_particle_node_parallel(pid3), rank ? -1 : 1);
   }
+  set_particle_property(pid1, &Particle::mol_id, type_a);
+  set_particle_property(pid2, &Particle::mol_id, type_b);
+  set_particle_property(pid3, &Particle::mol_id, type_b);
 
   auto const reset_particle_positions = [&start_positions]() {
     for (auto const &kv : start_positions) {
@@ -123,11 +126,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 
   // check observables
   {
+    auto const &cell_structure = *System::get_system().cell_structure;
     auto const pid4 = 10;
     auto const pids = std::vector<int>{pid2, pid3, pid1, pid4};
     Observables::ParticleReferenceRange particle_range{};
     for (int pid : pids) {
-      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+      if (auto const p = cell_structure.get_local_particle(pid)) {
         particle_range.emplace_back(*p);
       }
     }
@@ -225,10 +229,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     on_non_bonded_ia_change();
 
     // matrix indices and reference energy value
-    auto const max_type = type_b + 1;
-    auto const n_pairs = Utils::upper_triangular(type_b, type_b, max_type) + 1;
-    auto const lj_pair_ab = Utils::upper_triangular(type_a, type_b, max_type);
-    auto const lj_pair_bb = Utils::upper_triangular(type_b, type_b, max_type);
+    auto const size = std::max(type_a, type_b) + 1;
+    auto const n_pairs = Utils::upper_triangular(type_b, type_b, size) + 1;
+    auto const lj_pair_ab = Utils::upper_triangular(type_a, type_b, size);
+    auto const lj_pair_bb = Utils::upper_triangular(type_b, type_b, size);
     auto const frac6 = Utils::int_pow<6>(sig / r_off);
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
@@ -236,6 +240,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto const obs_energy = calculate_energy();
     if (rank == 0) {
       for (int i = 0; i < n_pairs; ++i) {
+        // particles were set up with type == mol_id
         auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
         auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;
         BOOST_CHECK_CLOSE(obs_energy->non_bonded_inter[i], ref_inter, 1e-10);

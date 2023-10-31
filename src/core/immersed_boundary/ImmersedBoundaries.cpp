@@ -23,8 +23,8 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
 #include "ibm_volcons.hpp"
+#include "system/System.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
@@ -33,6 +33,7 @@
 #include <utils/constants.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/range/algorithm/find_if.hpp>
 
 #include <functional>
 #include <utility>
@@ -98,12 +99,14 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
   if (!BoundariesFound)
     return;
 
+  auto const &box_geo = *System::get_system().box_geo;
+
   // Partial volumes for each soft particle, to be summed up
   std::vector<double> tempVol(VolumesCurrent.size());
 
   // Loop over all particles on local node
-  cs.bond_loop([&tempVol](Particle &p1, int bond_id,
-                          Utils::Span<Particle *> partners) {
+  cs.bond_loop([&tempVol, &box_geo](Particle &p1, int bond_id,
+                                    Utils::Span<Particle *> partners) {
     auto const vol_cons_params = vol_cons_parameters(p1);
 
     if (vol_cons_params &&
@@ -116,8 +119,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
       // Unfold position of first node.
       // This is to get a continuous trajectory with no jumps when box
       // boundaries are crossed.
-      auto const x1 =
-          unfolded_position(p1.pos(), p1.image_box(), box_geo.length());
+      auto const x1 = box_geo.unfolded_position(p1.pos(), p1.image_box());
       auto const x2 = x1 + box_geo.get_mi_vector(p2.pos(), x1);
       auto const x3 = x1 + box_geo.get_mi_vector(p3.pos(), x1);
 
@@ -155,8 +157,10 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
   if (!BoundariesFound)
     return;
 
-  cs.bond_loop([this](Particle &p1, int bond_id,
-                      Utils::Span<Particle *> partners) {
+  auto const &box_geo = *System::get_system().box_geo;
+
+  cs.bond_loop([this, &box_geo](Particle &p1, int bond_id,
+                                Utils::Span<Particle *> partners) {
     if (boost::get<IBMTriel>(bonded_ia_params.at(bond_id).get()) != nullptr) {
       // Check if particle has an IBM Triel bonded interaction and an
       // IBM VolCons bonded interaction. Basically this loops over all
@@ -177,8 +181,7 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
       // Unfold position of first node.
       // This is to get a continuous trajectory with no jumps when box
       // boundaries are crossed.
-      auto const x1 =
-          unfolded_position(p1.pos(), p1.image_box(), box_geo.length());
+      auto const x1 = box_geo.unfolded_position(p1.pos(), p1.image_box());
 
       // Unfolding seems to work only for the first particle of a triel
       // so get the others from relative vectors considering PBC

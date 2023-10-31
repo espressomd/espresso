@@ -27,7 +27,6 @@
 #include "energy_inline.hpp"
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
@@ -51,17 +50,18 @@ double ShapeBasedConstraint::total_normal_force() const {
 }
 
 double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
+  auto const &box_geo = *System::get_system().box_geo;
   double global_mindist = std::numeric_limits<double>::infinity();
 
   auto const local_mindist = std::accumulate(
       particles.begin(), particles.end(),
       std::numeric_limits<double>::infinity(),
-      [this](double min, Particle const &p) {
+      [this, &box_geo](double min, Particle const &p) {
         auto const &ia_params = get_ia_param(p.type(), part_rep.type());
         if (checkIfInteraction(ia_params)) {
           double dist;
           Utils::Vector3d vec;
-          m_shape->calculate_dist(folded_position(p.pos(), box_geo), dist, vec);
+          m_shape->calculate_dist(box_geo.folded_position(p.pos()), dist, vec);
           return std::min(min, dist);
         }
         return min;
@@ -164,7 +164,9 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
     }
   }
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-  if (part_rep.type() >= 0)
-    obs_energy.add_non_bonded_contribution(p.type(), part_rep.type(), energy);
+  if (part_rep.type() >= 0) {
+    obs_energy.add_non_bonded_contribution(
+        p.type(), part_rep.type(), p.mol_id(), part_rep.mol_id(), energy);
+  }
 }
 } // namespace Constraints

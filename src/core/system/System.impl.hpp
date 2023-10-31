@@ -24,3 +24,8 @@
 
 #include "ek/Implementation.hpp"
 #include "lb/Implementation.hpp"
+
+#include "cell_system/CellStructure.hpp"
+
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"

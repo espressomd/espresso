@@ -34,25 +34,30 @@
 
 #include <memory>
 
+class BoxGeometry;
+class LocalBox;
+struct CellStructure;
+
 namespace System {
 
 class System {
 public:
+  System();
 #ifdef CUDA
   GpuParticleData gpu;
 #endif
   ResourceCleanup cleanup_queue;
 
   Utils::Vector3d box() const;
-  void init() {
-#ifdef CUDA
-    gpu.init();
-#endif
-  }
+  void init();
+
   Coulomb::Solver coulomb;
   Dipoles::Solver dipoles;
   LB::Solver lb;
   EK::Solver ek;
+  std::shared_ptr<BoxGeometry> box_geo;
+  std::shared_ptr<LocalBox> local_geo;
+  std::shared_ptr<CellStructure> cell_structure;
 };
 
 System &get_system();

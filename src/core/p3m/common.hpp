@@ -215,7 +215,7 @@ struct P3MLocalMesh {
    * for the charge assignment process.
    */
   void calc_local_ca_mesh(P3MParameters const &params,
-                          LocalBox<double> const &local_geo, double skin,
+                          LocalBox const &local_geo, double skin,
                           double space_layer);
 };
 

@@ -61,6 +61,8 @@ tutorial_test(FILE test_ferrofluid_1.py)
 tutorial_test(FILE test_ferrofluid_2.py)
 tutorial_test(FILE test_ferrofluid_3.py)
 tutorial_test(FILE test_constant_pH__ideal.py)
+tutorial_test(FILE test_electrodes_1.py)
+# tutorial_test(FILE test_electrodes_2.py) # TODO: unstable, see issue #4798
 tutorial_test(FILE test_constant_pH__interactions.py)
 tutorial_test(FILE test_widom_insertion.py)
 

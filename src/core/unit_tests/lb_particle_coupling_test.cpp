@@ -35,10 +35,10 @@ namespace utf = boost::unit_test;
 
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "grid.hpp"
 #include "lb/LBNone.hpp"
 #include "lb/LBWalberla.hpp"
 #include "lb/particle_coupling.hpp"
@@ -101,8 +101,8 @@ static auto make_lb_actor() {
   auto constexpr n_ghost_layers = 1u;
   auto constexpr single_precision = false;
   lb_params = std::make_shared<LB::LBWalberlaParams>(params.agrid, params.tau);
-  lb_lattice = std::make_shared<LatticeWalberla>(params.grid_dimensions,
-                                                 ::node_grid, n_ghost_layers);
+  lb_lattice = std::make_shared<LatticeWalberla>(
+      params.grid_dimensions, ::communicator.node_grid, n_ghost_layers);
   lb_fluid = new_lb_walberla(lb_lattice, params.viscosity, params.density,
                              single_precision);
   lb_fluid->set_collision_model(params.kT, params.seed);
@@ -346,7 +346,9 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto const rank = comm.rank();
   espresso::set_lb_kT(kT);
   lb_lbcoupling_set_rng_state(17);
-  auto &lb = System::get_system().lb;
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto &lb = system.lb;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
@@ -389,8 +391,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         cells_update_ghosts(global_ghost_flags());
       }
       if (rank == 0) {
-        auto const particles = ::cell_structure.local_particles();
-        auto const ghost_particles = ::cell_structure.ghost_particles();
+        auto const particles = cell_structure.local_particles();
+        auto const ghost_particles = cell_structure.ghost_particles();
         BOOST_REQUIRE_GE(particles.size(), 1);
         BOOST_REQUIRE_GE(ghost_particles.size(), static_cast<int>(with_ghosts));
       }
@@ -398,6 +400,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
     // check box shifts
     if (rank == 0) {
+      auto const &box_geo = *system.box_geo;
       auto constexpr reference_shifts =
           std::array<Utils::Vector3i, 8>{{{{0, 0, 0}},
                                           {{0, 0, 8}},
@@ -438,8 +441,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     {
       lb_lbcoupling_deactivate();
       lb_lbcoupling_broadcast();
-      auto const particles = ::cell_structure.local_particles();
-      auto const ghost_particles = ::cell_structure.ghost_particles();
+      auto const particles = cell_structure.local_particles();
+      auto const ghost_particles = cell_structure.ghost_particles();
       LB::couple_particles(thermo_virtual, particles, ghost_particles,
                            params.time_step);
       auto const p_opt = copy_particle_to_head_node(comm, pid);
@@ -453,8 +456,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     {
       lb_lbcoupling_activate();
       lb_lbcoupling_broadcast();
-      auto const particles = ::cell_structure.local_particles();
-      auto const ghost_particles = ::cell_structure.ghost_particles();
+      auto const particles = cell_structure.local_particles();
+      auto const ghost_particles = cell_structure.ghost_particles();
       Utils::Vector3d lb_before{};
       {
         auto const p_opt = copy_particle_to_head_node(comm, pid);
@@ -532,17 +535,18 @@ BOOST_AUTO_TEST_SUITE_END()
 
 bool test_lb_domain_mismatch_local() {
   boost::mpi::communicator world;
-  auto const node_grid_original = ::node_grid;
+  auto const node_grid_original = ::communicator.node_grid;
   auto const node_grid_reversed =
-      Utils::Vector3i{{::node_grid[2], ::node_grid[1], ::node_grid[0]}};
+      Utils::Vector3i{{::communicator.node_grid[2], ::communicator.node_grid[1],
+                       ::communicator.node_grid[0]}};
   auto const n_ghost_layers = 1u;
   auto const params = std::make_shared<LB::LBWalberlaParams>(0.5, 0.01);
-  ::node_grid = node_grid_reversed;
+  ::communicator.node_grid = node_grid_reversed;
   auto const lattice = std::make_shared<LatticeWalberla>(
       Utils::Vector3i{12, 12, 12}, node_grid_original, n_ghost_layers);
   auto const ptr = new_lb_walberla(lattice, 1.0, 1.0, false);
   ptr->set_collision_model(0.0, 0);
-  ::node_grid = node_grid_original;
+  ::communicator.node_grid = node_grid_original;
   auto lb_instance = std::make_shared<LB::LBWalberla>(ptr, params);
   if (world.rank() == 0) {
     try {

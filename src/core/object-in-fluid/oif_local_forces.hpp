@@ -29,7 +29,6 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "grid.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/triangle_functions.hpp>
@@ -79,8 +78,8 @@ struct OifLocalForcesBond {
   }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  calc_forces(Particle const &p2, Particle const &p1, Particle const &p3,
-              Particle const &p4) const;
+  calc_forces(BoxGeometry const &box_geo, Particle const &p2,
+              Particle const &p1, Particle const &p3, Particle const &p4) const;
 
 private:
   friend boost::serialization::access;
@@ -100,6 +99,7 @@ private:
 
 /** Compute the OIF local forces.
  *  See @cite dupin07a, @cite jancigova16a.
+ *  @param box_geo      Box geometry.
  *  @param p2           %Particle of triangle 1.
  *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
@@ -107,12 +107,12 @@ private:
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                   Utils::Vector3d>
-OifLocalForcesBond::calc_forces(Particle const &p2, Particle const &p1,
-                                Particle const &p3, Particle const &p4) const {
+OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
+                                Particle const &p1, Particle const &p3,
+                                Particle const &p4) const {
 
   // first-fold-then-the-same approach
-  auto const fp2 =
-      unfolded_position(p2.pos(), p2.image_box(), box_geo.length());
+  auto const fp2 = box_geo.unfolded_position(p2.pos(), p2.image_box());
   auto const fp1 = fp2 + box_geo.get_mi_vector(p1.pos(), fp2);
   auto const fp3 = fp2 + box_geo.get_mi_vector(p3.pos(), fp2);
   auto const fp4 = fp2 + box_geo.get_mi_vector(p4.pos(), fp2);

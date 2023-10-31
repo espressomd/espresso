@@ -30,6 +30,8 @@
 #include "ParticleFactory.hpp"
 
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "particle_node.hpp"
@@ -64,6 +66,8 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   System::set_system(system);
   system->init();
   auto &gpu = system->gpu;
+  auto &cell_structure = *system->cell_structure;
+  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
 
   // check uninitialized device pointers
   BOOST_CHECK_EQUAL(gpu.get_energy_device(), nullptr);
@@ -144,6 +148,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   gpu.update();
   BOOST_CHECK_EQUAL(gpu.n_particles(), 0);
 
+  clear_particles();
   System::reset_system();
 }
 

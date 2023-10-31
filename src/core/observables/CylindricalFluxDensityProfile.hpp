@@ -21,7 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "CylindricalPidProfileObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 #include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
@@ -42,6 +42,7 @@ public:
            const ParticleObservables::traits<Particle> &traits) const override {
     using pos_type = decltype(traits.position(std::declval<Particle>()));
     using vel_type = decltype(traits.velocity(std::declval<Particle>()));
+    auto const &box_geo = *System::get_system().box_geo;
 
     std::vector<pos_type> local_folded_positions{};
     local_folded_positions.reserve(local_particles.size());
@@ -49,7 +50,7 @@ public:
     local_velocities.reserve(local_particles.size());
 
     for (auto const &p : local_particles) {
-      auto const pos = folded_position(traits.position(p), box_geo) -
+      auto const pos = box_geo.folded_position(traits.position(p)) -
                        transform_params->center();
 
       local_folded_positions.emplace_back(

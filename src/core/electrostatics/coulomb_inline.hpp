@@ -26,6 +26,7 @@
 #include "electrostatics/solver.hpp"
 
 #include "Particle.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/demangle.hpp>
@@ -85,9 +86,11 @@ struct ShortRangeForceCorrectionsKernel {
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
-    return kernel_type{[&actor](Particle &p1, Particle &p2, double q1q2) {
-      actor.add_pair_force_corrections(p1, p2, q1q2);
-    }};
+    auto const &box_geo = *System::get_system().box_geo;
+    return kernel_type{
+        [&actor, &box_geo](Particle &p1, Particle &p2, double q1q2) {
+          actor.add_pair_force_corrections(p1, p2, q1q2, box_geo);
+        }};
   }
 #endif // P3M
 };
@@ -134,15 +137,16 @@ struct ShortRangeEnergyKernel {
   result_type
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &ptr) const {
     auto const &actor = *ptr;
+    auto const &box_geo = *System::get_system().box_geo;
     auto const energy_kernel = std::visit(*this, actor.base_solver);
-    return kernel_type{[&actor, energy_kernel](
+    return kernel_type{[&actor, &box_geo, energy_kernel](
                            Particle const &p1, Particle const &p2, double q1q2,
                            Utils::Vector3d const &d, double dist) {
       auto energy = 0.;
       if (energy_kernel) {
         energy = (*energy_kernel)(p1, p2, q1q2, d, dist);
       }
-      return energy + actor.pair_energy_correction(q1q2, p1, p2);
+      return energy + actor.pair_energy_correction(p1, p2, q1q2, box_geo);
     }};
   }
 #endif // P3M

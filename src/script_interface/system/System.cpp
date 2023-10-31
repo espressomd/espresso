@@ -19,9 +19,11 @@
 
 #include "System.hpp"
 
+#include "core/BoxGeometry.hpp"
+#include "core/cell_system/CellStructure.hpp"
+#include "core/cell_system/CellStructureType.hpp"
 #include "core/cells.hpp"
 #include "core/event.hpp"
-#include "core/grid.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
@@ -43,12 +45,14 @@ namespace System {
 static bool system_created = false;
 
 static Utils::Vector3b get_periodicity() {
-  return {::box_geo.periodic(0), ::box_geo.periodic(1), ::box_geo.periodic(2)};
+  auto const &box_geo = *::System::get_system().box_geo;
+  return {box_geo.periodic(0), box_geo.periodic(1), box_geo.periodic(2)};
 }
 
 static void set_periodicity(Utils::Vector3b const &value) {
+  auto &box_geo = *::System::get_system().box_geo;
   for (int i = 0; i < 3; ++i) {
-    ::box_geo.set_periodic(i, value[i]);
+    box_geo.set_periodic(i, value[i]);
   }
   on_periodicity_change();
 }
@@ -62,11 +66,11 @@ System::System() {
            if (not(new_value > Utils::Vector3d::broadcast(0.))) {
              throw std::domain_error("Attribute 'box_l' must be > 0");
            }
-           box_geo.set_length(new_value);
+           m_instance->box_geo->set_length(new_value);
            on_boxl_change();
          });
        },
-       []() { return ::box_geo.length(); }},
+       []() { return ::System::get_system().box_geo->length(); }},
       {"min_global_cut",
        [this](Variant const &v) {
          context()->parallel_try_catch([&]() {
@@ -106,7 +110,12 @@ void System::do_construct(VariantMap const &params) {
   ::System::set_system(m_instance);
   m_instance->init();
 
+  // domain decomposition can only be set after box_l is set
+  auto &cell_structure = *m_instance->cell_structure;
+  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_NSQUARE);
   do_set_parameter("box_l", params.at("box_l"));
+  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
+
   if (params.count("periodicity")) {
     do_set_parameter("periodicity", params.at("periodicity"));
   }
@@ -121,11 +130,13 @@ void System::do_construct(VariantMap const &params) {
 }
 
 /** Rescale all particle positions in direction @p dir by a factor @p scale.
+ *  @param cell_structure cell structure
  *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
  *  @param scale factor by which to rescale (>1: stretch, <1: contract)
  */
-static void rescale_particles(int dir, double scale) {
-  for (auto &p : ::cell_structure.local_particles()) {
+static void rescale_particles(CellStructure &cell_structure, int dir,
+                              double scale) {
+  for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
       p.pos()[dir] *= scale;
     else {
@@ -145,10 +156,11 @@ Variant System::do_call_method(std::string const &name,
     return {};
   }
   if (name == "rescale_boxl") {
+    auto &box_geo = *::System::get_system().box_geo;
     auto const coord = get_value<int>(parameters, "coord");
     auto const length = get_value<double>(parameters, "length");
-    auto const scale = (coord == 3) ? length * ::box_geo.length_inv()[0]
-                                    : length * ::box_geo.length_inv()[coord];
+    auto const scale = (coord == 3) ? length * box_geo.length_inv()[0]
+                                    : length * box_geo.length_inv()[coord];
     context()->parallel_try_catch([&]() {
       if (length <= 0.) {
         throw std::domain_error("Parameter 'd_new' be > 0");
@@ -158,16 +170,17 @@ Variant System::do_call_method(std::string const &name,
     if (coord == 3) {
       new_value = Utils::Vector3d::broadcast(length);
     } else {
-      new_value = ::box_geo.length();
+      new_value = box_geo.length();
       new_value[coord] = length;
     }
     // when shrinking, rescale the particles first
     if (scale <= 1.) {
-      rescale_particles(coord, scale);
+      rescale_particles(*m_instance->cell_structure, coord, scale);
     }
-    set_box_length(new_value);
+    m_instance->box_geo->set_length(new_value);
+    on_boxl_change();
     if (scale > 1.) {
-      rescale_particles(coord, scale);
+      rescale_particles(*m_instance->cell_structure, coord, scale);
     }
     return {};
   }
@@ -183,19 +196,22 @@ Variant System::do_call_method(std::string const &name,
     return ::number_of_particles_with_type(type);
   }
   if (name == "velocity_difference") {
+    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");
     auto const pos2 = get_value<Utils::Vector3d>(parameters, "pos2");
     auto const v1 = get_value<Utils::Vector3d>(parameters, "v1");
     auto const v2 = get_value<Utils::Vector3d>(parameters, "v2");
-    return ::box_geo.velocity_difference(pos2, pos1, v2, v1);
+    return box_geo.velocity_difference(pos2, pos1, v2, v1);
   }
   if (name == "distance_vec") {
+    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");
     auto const pos2 = get_value<Utils::Vector3d>(parameters, "pos2");
-    return ::box_geo.get_mi_vector(pos2, pos1);
+    return box_geo.get_mi_vector(pos2, pos1);
   }
   if (name == "rotate_system") {
-    rotate_system(get_value<double>(parameters, "phi"),
+    rotate_system(*m_instance->cell_structure,
+                  get_value<double>(parameters, "phi"),
                   get_value<double>(parameters, "theta"),
                   get_value<double>(parameters, "alpha"));
     return {};

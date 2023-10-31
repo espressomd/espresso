@@ -24,13 +24,14 @@
 #include "magnetostatics/dipolar_direct_sum_gpu.hpp"
 #include "magnetostatics/dipolar_direct_sum_gpu_cuda.cuh"
 
+#include "BoxGeometry.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 
-static void get_simulation_box(float *box, int *per) {
-  for (int i = 0; i < 3; i++) {
+static void get_simulation_box(BoxGeometry const &box_geo, float *box,
+                               int *per) {
+  for (unsigned int i = 0u; i < 3u; i++) {
     box[i] = static_cast<float>(box_geo.length()[i]);
     per[i] = box_geo.periodic(i);
   }
@@ -46,14 +47,15 @@ DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor)
 }
 
 void DipolarDirectSumGpu::add_long_range_forces() const {
-  auto &gpu = System::get_system().gpu;
+  auto &system = System::get_system();
+  auto &gpu = system.gpu;
   gpu.update();
   if (this_node != 0) {
     return;
   }
   float box[3];
   int periodicity[3];
-  get_simulation_box(box, periodicity);
+  get_simulation_box(*system.box_geo, box, periodicity);
   auto const npart = static_cast<unsigned>(gpu.n_particles());
   auto const forces_device = gpu.get_particle_forces_device();
   auto const torques_device = gpu.get_particle_torques_device();
@@ -65,14 +67,15 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
 }
 
 void DipolarDirectSumGpu::long_range_energy() const {
-  auto &gpu = System::get_system().gpu;
+  auto &system = System::get_system();
+  auto &gpu = system.gpu;
   gpu.update();
   if (this_node != 0) {
     return;
   }
   float box[3];
   int periodicity[3];
-  get_simulation_box(box, periodicity);
+  get_simulation_box(*system.box_geo, box, periodicity);
   auto const npart = static_cast<unsigned>(gpu.n_particles());
   auto const energy_device = &(gpu.get_energy_device()->dipolar);
   auto const positions_device = gpu.get_particle_positions_device();
