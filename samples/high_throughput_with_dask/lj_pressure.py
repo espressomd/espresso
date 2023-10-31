@@ -1,6 +1,5 @@
-
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,17 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Obtain the average pressure of a Lennard-Jones liquid.
+For use with ``dask_espresso``.
+Adapted from :file:`samples/lj_liquid.py`.
+"""
+
 import espressomd
 import numpy as np
 
 import dask_espresso as de
 
 
+# Note: Avoid print() in this script, as the standard output is used
+# for data transfer to Dask. Use the logging module for status messages.
 import logging
-# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+# Get parameters from Dask via the standard input stream
 params = de.get_data_from_stdin()
 
 logger.info("Parameters:", params)
@@ -105,7 +112,9 @@ for i in range(n_steps):
     system.integrator.run(10)
     pressures[i] = system.analysis.pressure()["total"]
 
+# Put the simulation results into a dictionary
 result = {"pressure": np.mean(pressures),
           "pressure_std_dev": np.std(pressures)}
 
+# Output the results for Dask via the standard output stream
 print(de.encode_transport_data(result))

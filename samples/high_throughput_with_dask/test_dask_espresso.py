@@ -17,13 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""
-This is part of the unit tests. It reads encoded simulation data from stdin,
-decodes it, adds ``processed=True`` and outputs the encoded result to stdout.
-"""
+"""Unit tests for the ``dask_espresso`` python module."""
 
 import dask_espresso as de
-data = de.get_data_from_stdin()
-data.update(processed=True)
+import numpy as np
+import sys
 
-print(de.encode_transport_data(data))
+
+def test_encode_decode():
+    data = {"a": 1, "b": np.random.random((3, 3))}
+    encoded = de.encode_transport_data(data)
+    decoded = de.decode_transport_data(encoded)
+    for k, v in decoded.items():
+        assert np.all(data[k]) == np.all(v)
+    assert list(data.keys()) == list(decoded.keys())
+
+
+def test_espresso_runner():
+    data = {"hello": "world"}
+    result = de.dask_espresso_task(sys.executable, "echo.py", **data).compute()
+    assert result == {"hello": "world", "processed": True}
