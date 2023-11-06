@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_tutorial_target(TARGET tutorial_grand_canonical_monte_carlo DEPENDS
-                          grand_canonical_monte_carlo.ipynb
-                          figures/schematic.svg)
+configure_tutorial_target(
+  TARGET tutorial_grand_canonical_monte_carlo DEPENDS
+  grand_canonical_monte_carlo.ipynb figures/schematic.svg)
 
 nb_export(TARGET tutorial_grand_canonical_monte_carlo SUFFIX "" FILE
-          "grand_canonical_monte_carlo.ipynb" HTML_RUN)
+          "grand_canonical_monte_carlo.ipynb" HTML_RUN VAR_SUBST
+          "\"p3m_params={'mesh':10,'cao':6,'r_cut':8.22}\"")

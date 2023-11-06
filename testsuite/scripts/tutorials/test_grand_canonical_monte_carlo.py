@@ -19,24 +19,25 @@
 
 import unittest as ut
 import importlib_wrapper
-import pint
 import numpy as np
 
-ureg = pint.UnitRegistry()
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/grand_canonical_monte_carlo/grand_canonical_monte_carlo.py",
-    salt_concentration_magnitudes_si=[0.003, 0.01], number_of_loops_for_each_concentration=[250, 100],
-    excess_chemical_potential_data=[-0.123732052028611, -0.218687259792629],
-    excess_chemical_potential_data_error=[0.00152160176511698, 0.00220162667953136])
+    p3m_params={"mesh": 10, "cao": 6, "r_cut": 8.22})
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
 
     def test(self):
+        ratios = tutorial.c_monomer.magnitude / \
+            (2. * tutorial.salt_concentration_si.magnitude)
+        ref_xi = tutorial.analytical_solution(ratios)
         sim_xi_minus = tutorial.partition_coefficients_negatives_array
-        self.assertLess(np.abs(sim_xi_minus[0] - 0.05), 0.02)
-        self.assertLess(np.abs(sim_xi_minus[1] - 0.15), 0.1)
+        sim_xi_plus = tutorial.universal_partion_coefficient_positive
+        np.testing.assert_allclose(
+            sim_xi_minus, sim_xi_plus, rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(sim_xi_minus / ref_xi, 2., rtol=0., atol=2.)
 
 
 if __name__ == "__main__":
