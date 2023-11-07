@@ -29,6 +29,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
 
 #include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
@@ -205,6 +206,12 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d pos,
 
 namespace LB {
 
+#ifdef LB_VECTORS_FORCE_COUPLING
+void ParticleCoupling::commit() {
+  lb_walberla()->add_forces_at_pos(m_positions, m_forces);
+}
+#endif
+
 Utils::Vector3d ParticleCoupling::get_noise_term(Particle const &p) const {
   if (not m_thermalized) {
     return Utils::Vector3d{};
@@ -259,7 +266,14 @@ void ParticleCoupling::kernel(Particle &p) {
        * is responsible to adding its force */
       p.force() += force_on_particle;
     }
+#ifdef LB_VECTORS_FORCE_COUPLING
+    auto const pos_conv = 1. / LB::get_agrid();
+    auto const for_conv = (m_time_step / LB::get_lattice_speed());
+    m_positions.emplace_back(pos * pos_conv);
+    m_forces.emplace_back(force_on_fluid * for_conv);
+#else
     add_md_force(pos, force_on_fluid, m_time_step);
+#endif
   }
 }
 
@@ -298,6 +312,9 @@ void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
           }
         }
       }
+#ifdef LB_VECTORS_FORCE_COUPLING
+  coupling.commit();
+#endif
     }
   }
 }

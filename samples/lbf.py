@@ -69,20 +69,20 @@ else:
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 print(lbf.get_params())
+system.integrator.run(steps=100)
+#f_list = np.zeros((10, 3))
+#for i in range(10):
+#    f_list[i] = particle.f
+#    system.integrator.run(steps=10)
+#    print(i)
 
-f_list = np.zeros((10, 3))
-for i in range(10):
-    f_list[i] = particle.f
-    system.integrator.run(steps=10)
-    print(i)
+#fig1 = plt.figure()
+#ax = fig1.add_subplot(111)
+#ax.plot(f_list[:, 0], label=r"$F_x$")
+#ax.plot(f_list[:, 1], label=r"$F_y$")
+#ax.plot(f_list[:, 2], label=r"$F_z$")
+#ax.legend()
+#ax.set_xlabel("t")
+#ax.set_ylabel("F")
 
-fig1 = plt.figure()
-ax = fig1.add_subplot(111)
-ax.plot(f_list[:, 0], label=r"$F_x$")
-ax.plot(f_list[:, 1], label=r"$F_y$")
-ax.plot(f_list[:, 2], label=r"$F_z$")
-ax.legend()
-ax.set_xlabel("t")
-ax.set_ylabel("F")
-
-plt.show()
+#plt.show()

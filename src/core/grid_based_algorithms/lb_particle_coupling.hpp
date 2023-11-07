@@ -135,11 +135,19 @@ namespace LB {
 void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
                       ParticleRange const &ghost_particles, double time_step);
 
+//#define LB_VECTORS_FORCE_COUPLING
 class ParticleCoupling {
   bool m_couple_virtual;
   bool m_thermalized;
   double m_time_step;
   double m_noise_pref_wo_gamma;
+
+#ifdef LB_VECTORS_FORCE_COUPLING
+  std::vector<Utils::Vector3d> m_forces;
+  std::vector<Utils::Vector3d> m_positions;
+public:
+  void commit();
+#endif
 
 public:
   ParticleCoupling(bool couple_virtual, double time_step, double kT)

@@ -150,23 +150,25 @@ system.integrator.set_vv()
 # activate thermostat
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-# Just to see what else we may get from the C++ core
-import pprint
-pprint.pprint(system.cell_system.get_state(), width=1)
-
+system.integrator.run(1000)
+exit(0)
 
 #############################################################
 #      Integration                                          #
 #############################################################
 print(f"\nStart integration: run {int_n_times} times {int_steps} steps")
-
+import espressomd.profiler
+import espressomd.analyze
+cali = espressomd.analyze.Caliper()
 for i in range(int_n_times):
     print(f"run {i} at time={system.time:.2f}")
 
     system.integrator.run(int_steps)
-
+    cali.begin_section(label="calc_energies")
     energies = system.analysis.energy()
+    cali.end_section(label="calc_energies")
     print(energies['total'])
+    markers_set = True
 
 
 # terminate program

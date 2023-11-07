@@ -139,16 +139,7 @@ pprint.pprint(system.__getstate__())
 #############################################################
 print(f"\nStart integration: run {int_n_times} times {int_steps} steps")
 
-for i in range(int_n_times):
-    print(f"run {i} at time={system.time:.2f}")
-
-    system.integrator.run(steps=int_steps)
-
-    energies = system.analysis.energy()
-    print(energies['total'])
-    linear_momentum = system.analysis.linear_momentum()
-    print(linear_momentum)
-
+system.integrator.run(steps=100)
 
 # terminate program
 print("\nFinished.")

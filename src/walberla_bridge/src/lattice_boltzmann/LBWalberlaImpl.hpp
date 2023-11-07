@@ -75,6 +75,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <memory>
@@ -151,7 +152,7 @@ public:
   }
 
   [[nodiscard]] virtual bool is_double_precision() const noexcept override {
-    return std::is_same<FloatType, double>::value;
+    return std::is_same_v<FloatType, double>;
   }
 
 private:
@@ -744,6 +745,85 @@ public:
     return {std::move(v)};
   }
 
+  std::vector<Utils::Vector3d>
+  get_velocities_at_pos(std::vector<Utils::Vector3d> const &positions) const override {
+  std::vector<Utils::Vector3d> velocities{};
+  std::unordered_map<std::size_t, std::unordered_map<std::size_t, Cell>> queue;
+  std::unordered_map<std::size_t, std::vector<std::tuple<std::size_t, double, std::size_t>>> apply;
+  std::unordered_map<std::size_t, VectorField*> fields;
+    auto const cell_offset = static_cast<int>(get_lattice().get_ghost_layers());
+  for (auto const &pos : positions) {
+    if (!m_lattice->pos_in_local_halo(pos)) {
+      throw std::runtime_error(
+          "Interpolated velocity could not be obtained from Walberla");
+    }
+    std::size_t v_index = velocities.size();
+    auto v = Utils::Vector3d::broadcast(0.);
+    interpolate_bspline_at_pos(
+        pos, [this, &v, pos, &queue, &apply, &fields, v_index](std::array<int, 3> const node_arr, double weight) {
+          // Nodes with zero weight might not be accessible, because they can be
+          // outside ghost layers
+          if (weight != 0) {
+            auto constexpr with_ghosts = true;
+            auto const node = Utils::Vector3i(node_arr);
+            auto const bc = get_block_and_cell(get_lattice(), node, with_ghosts);
+            if (!bc)
+              throw interpolation_illegal_access("velocity", pos, node_arr, weight);
+
+            if (m_boundary->node_is_boundary(node)) {
+              v += weight * m_boundary->get_node_value_at_boundary(node);
+              return;
+            }
+
+            auto vel_field = bc->block->template uncheckedFastGetData<VectorField>(m_velocity_field_id);
+            auto const key = reinterpret_cast<std::size_t>(static_cast<void*>(vel_field));
+            if (queue.count(key) == 0) {
+              queue[key] = {};
+              fields[key] = vel_field;
+            }
+            auto const &cell = bc->cell;
+            auto const cell_hash = std::hash<Cell>{}(cell);
+            if (queue[key].count(cell_hash) == 0) {
+              queue[key][cell_hash] = cell;
+            }
+            apply[key].emplace_back(cell_hash, weight, v_index);
+          }
+        });
+      velocities.emplace_back(v);
+    }
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+    if constexpr (std::is_same_v<FloatType, float>) {
+        for (auto const &kv : queue) {
+          auto vel_field = fields[kv.first];
+          std::vector<cell_idx_t> cells_flat{};
+          std::vector<std::size_t> cells_hash_flat{};
+          for (auto const &it : kv.second) {
+            auto const &cell = it.second;
+            for (auto const j : {0u, 1u, 2u}) {
+              cells_flat.emplace_back(cell[j] + cell_offset);
+            }
+            cells_hash_flat.emplace_back(it.first);
+          }
+          auto const vels = lbm::accessor::Vector::get_at(vel_field, cells_flat);
+          assert(cells_hash_flat.size() * 3ul == vels.size());
+          std::unordered_map<std::size_t, Utils::Vector3d> cell2vel{};
+          for (std::size_t i = 0; i < cells_hash_flat.size(); ++i) {
+            cell2vel[cells_hash_flat[i]] = Utils::Vector3d{
+                static_cast<double>(vels[i * 3ul + 0ul]),
+                static_cast<double>(vels[i * 3ul + 1ul]),
+                static_cast<double>(vels[i * 3ul + 2ul])
+            };
+          }
+          for (auto const [cell_hash, weight, v_index] : apply[kv.first]) {
+            velocities[v_index] += weight * cell2vel.at(cell_hash);
+          }
+        }
+    }}
+#endif
+    return velocities;
+  }
+
   boost::optional<double> get_interpolated_density_at_pos(
       Utils::Vector3d const &pos,
       bool consider_points_in_halo = false) const override {
@@ -786,6 +866,61 @@ public:
     };
     interpolate_bspline_at_pos(pos, force_at_node);
     return true;
+  }
+
+  void add_forces_at_pos(std::vector<Utils::Vector3d> const &positions,
+                         std::vector<Utils::Vector3d> const &forces) override {
+    assert(positions.size() == forces.size());
+    std::unordered_map<std::size_t, std::unordered_map<std::size_t, std::pair<Cell, Utils::Vector3d>>> queue;
+    std::unordered_map<std::size_t, VectorField*> fields;
+    auto const cell_offset = static_cast<int>(get_lattice().get_ghost_layers());
+    for (std::size_t i = 0; i < positions.size(); ++i) {
+      auto const &pos = positions[i];
+      auto const &force = forces[i];
+    auto const force_at_node = [this, &force, &queue, &fields](std::array<int, 3> const node,
+                                             double weight) {
+      auto const bc =
+          get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
+      if (bc) {
+        auto force_field =
+            bc->block->template uncheckedFastGetData<VectorField>(
+                m_force_to_be_applied_id);
+        auto const key = reinterpret_cast<std::size_t>(static_cast<void*>(force_field));
+        if (queue.count(key) == 0) {
+          queue[key] = {};
+          fields[key] = force_field;
+        }
+        auto const &cell = bc->cell;
+        auto const cell_hash = std::hash<Cell>{}(cell);
+        auto const cell_force = weight * force;
+        if (queue[key].count(cell_hash) == 0) {
+          queue[key][cell_hash] = {cell, cell_force};
+        } else {
+          queue[key][cell_hash].second += cell_force;
+        }
+      }
+    };
+    interpolate_bspline_at_pos(pos, force_at_node);
+    }
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+    if constexpr (std::is_same_v<FloatType, float>) {
+        for (auto const &kv : queue) {
+          auto force_field = fields[kv.first];
+          std::vector<cell_idx_t> cells_flat{};
+          std::vector<FloatType> forces_flat{};
+          for (auto const &it : kv.second) {
+            auto const &[cell, force] = it.second;
+            for (auto const j : {0u, 1u, 2u}) {
+              cells_flat.emplace_back(cell[j] + cell_offset);
+              forces_flat.emplace_back(static_cast<FloatType>(force[j]));
+            }
+          }
+          //std::cout << kv.first << " " << (cells_flat.size() / 3ul) << "\n";
+          lbm::accessor::Vector::add_at(force_field, forces_flat, cells_flat);
+        }
+    }}
+#endif
   }
 
   boost::optional<Utils::Vector3d>

@@ -293,6 +293,121 @@ void add(
   kernel();
 }
 
+//__global__ void kernel_add_at(
+//    cuda::FieldAccessor<float> vec,
+//    const float *RESTRICT const v,
+//    const int *RESTRICT const c,
+//    uint size) {
+//  auto const ptr = vec.get();
+//  auto cell_threadIdx = threadIdx;
+//  auto cell_blockIdx = blockIdx;
+//  //if (vec.isValidPosition()) {
+//    for (uint offset = 0u; offset < size; offset += 3u) {
+//  auto const xSize = blockDim.x;
+//  auto const ySize = gridDim.x;
+//  auto const zSize = gridDim.y;
+//      printf("%u/%u %i %i %i\n", offset,size, xSize, ySize, zSize);
+//      auto const x = c[offset + 0u];
+//      auto const y = c[offset + 1u];
+//      auto const z = c[offset + 2u];
+//      printf("%i %i %i %u/%u\n", x,y,z,offset,size);
+//      cell_threadIdx.x = x;
+//      cell_blockIdx.x = y;
+//      cell_blockIdx.y = z;
+//      vec.get() = ptr;
+//      vec.set(cell_blockIdx, cell_threadIdx);
+//      vec.get(0) += v[offset + 0u];
+//      vec.get(1) += v[offset + 1u];
+//      vec.get(2) += v[offset + 2u];
+//    }
+//  //}
+//}
+
+
+__global__ void kernel_add_at(
+    cuda::FieldAccessor<float> vec,
+    const float *RESTRICT const v,
+    const int *RESTRICT const c,
+    uint size) {
+  vec.set(blockIdx, threadIdx);
+  if (vec.isValidPosition()) {
+    auto const x = threadIdx.x;
+    auto const y = blockIdx.x;
+    auto const z = blockIdx.y;
+    for (uint offset = 0u; offset < size; offset += 3u) {
+      auto const x_ = c[offset + 0u];
+      auto const y_ = c[offset + 1u];
+      auto const z_ = c[offset + 2u];
+      if (x == x_ and y == y_ and z == z_) {
+        vec.get(0) += v[offset + 0u];
+        vec.get(1) += v[offset + 1u];
+        vec.get(2) += v[offset + 2u];
+      }
+    }
+  }
+}
+
+__global__ void kernel_get_at(
+    cuda::FieldAccessor<float> vec,
+    float *RESTRICT const v,
+    const int *RESTRICT const c,
+    uint size) {
+  vec.set(blockIdx, threadIdx);
+  if (vec.isValidPosition()) {
+    auto const x = threadIdx.x;
+    auto const y = blockIdx.x;
+    auto const z = blockIdx.y;
+    for (uint offset = 0u; offset < size; offset += 3u) {
+      auto const x_ = c[offset + 0u];
+      auto const y_ = c[offset + 1u];
+      auto const z_ = c[offset + 2u];
+      if (x == x_ and y == y_ and z == z_) {
+        v[offset + 0u] = vec.get(0);
+        v[offset + 1u] = vec.get(1);
+        v[offset + 2u] = vec.get(2);
+      }
+    }
+  }
+}
+
+void add_at(
+    cuda::GPUField<float> *vec_field,
+    std::vector<float> const &vecs,
+    std::vector<cell_idx_t> const &cells) {
+//  auto cell = Cell{0, 0, 0};
+//  CellInterval ci(cell, cell);
+  CellInterval ci = vec_field->xyzSizeWithGhostLayer();
+  thrust::device_vector<float> dev_data(vecs.begin(), vecs.end());
+  thrust::device_vector<cell_idx_t> dev_cell(cells.begin(), cells.end());
+  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+  auto const dev_cell_ptr = thrust::raw_pointer_cast(dev_cell.data());
+  auto kernel = cuda::make_kernel(kernel_add_at);
+  kernel.addFieldIndexingParam(cuda::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addParam(const_cast<const float *>(dev_data_ptr));
+  kernel.addParam(const_cast<const int *>(dev_cell_ptr));
+  kernel.addParam(static_cast<unsigned int>(cells.size()));
+  kernel();
+}
+
+std::vector<float> get_at(
+    cuda::GPUField<float> *vec_field,
+    std::vector<cell_idx_t> const &cells) {
+  CellInterval ci = vec_field->xyzSizeWithGhostLayer();
+  thrust::device_vector<float> dev_data(cells.size());
+  thrust::device_vector<cell_idx_t> dev_cell(cells.begin(), cells.end());
+  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+  auto const dev_cell_ptr = thrust::raw_pointer_cast(dev_cell.data());
+  auto kernel = cuda::make_kernel(kernel_get_at);
+  kernel.addFieldIndexingParam(cuda::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addParam(dev_data_ptr);
+  kernel.addParam(const_cast<const int *>(dev_cell_ptr));
+  kernel.addParam(static_cast<unsigned int>(cells.size()));
+  kernel();
+  std::vector<float> out(cells.size());
+  thrust::copy(dev_data.begin(), dev_data.end(), out.data());
+  return out;
+}
+
 void broadcast(
     cuda::GPUField<float> *vec_field,
     Vector3<float> const &vec) {

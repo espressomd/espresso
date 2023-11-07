@@ -78,6 +78,13 @@ void set(cuda::GPUField<float> *field, Vector3<float> const &vec,
          Cell const &cell);
 void add(cuda::GPUField<float> *field, Vector3<float> const &vec,
          Cell const &cell);
+void add_at(
+    cuda::GPUField<float> *vec_field,
+    std::vector<float> const &vecs,
+    std::vector<cell_idx_t> const &cells);
+std::vector<float> get_at(
+    cuda::GPUField<float> *vec_field,
+    std::vector<cell_idx_t> const &cells);
 void broadcast(cuda::GPUField<float> *field, Vector3<float> const &vec);
 void add_to_all(cuda::GPUField<float> *field, Vector3<float> const &vec);
 std::vector<float> get(cuda::GPUField<float> const *vec_field,

@@ -103,7 +103,7 @@ fi
 #    * incorrect syntax, e.g. "obj:float:"
 #    * incorrect numpydoc syntax, e.g. ":rtype:`float`"
 # They are difficult to predict, so we leave them to the user's discretion
-grep -qrP --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+grep -qrP --include='*.html' --exclude-dir=_modules '(:py)?:(?!digit:)[a-z]+:' doc/sphinx/html/
 if [ "${?}" = "0" ]; then
     echo "Possibly errors:"
     grep -rP --color --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
