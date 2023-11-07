@@ -69,7 +69,9 @@ physical systems.
 * **Widom particle insertion method**  
   Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.  
   [Guide](widom_insertion/widom_insertion.ipynb)
-
+* **Grand-Canonical Monte Carlo**
+  Simulating a polyelectrolyte solution coupled to a reservoir of salt.
+  [Guide](grand_canonical_monte_carlo/grand_canonical_monte_carlo.ipynb)
 
 [comment]: # (End of tutorials landing page)
 

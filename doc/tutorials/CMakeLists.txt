@@ -115,6 +115,7 @@ add_subdirectory(ferrofluid)
 add_subdirectory(constant_pH)
 add_subdirectory(widom_insertion)
 add_subdirectory(electrodes)
+add_subdirectory(grand_canonical_monte_carlo)
 
 configure_file(Readme.md ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(convert.py ${CMAKE_CURRENT_BINARY_DIR})
