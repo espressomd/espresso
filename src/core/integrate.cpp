@@ -238,8 +238,8 @@ static auto calc_md_steps_per_tau(double tau) {
   return static_cast<int>(std::round(tau / get_time_step()));
 }
 
-static void resort_particles_if_needed(ParticleRange const &particles) {
-  auto &system = System::get_system();
+static void resort_particles_if_needed(System::System &system,
+                                       ParticleRange const &particles) {
   auto &cell_structure = *system.cell_structure;
   auto const verlet_skin = system.get_verlet_skin();
   auto const offset = LeesEdwards::verlet_list_offset(
@@ -247,6 +247,11 @@ static void resort_particles_if_needed(ParticleRange const &particles) {
   if (cell_structure.check_resort_required(particles, verlet_skin, offset)) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
+}
+
+static void resort_particles_if_needed(ParticleRange const &particles) {
+  auto &system = System::get_system();
+  resort_particles_if_needed(system, particles);
 }
 
 /** @brief Calls the hook for propagation kernels before the force calculation
@@ -408,7 +413,7 @@ int System::integrate(int n_steps, int reuse_forces) {
     if (integ_switch != INTEG_METHOD_NPT_ISO)
 #endif
     {
-      resort_particles_if_needed(particles);
+      resort_particles_if_needed(*this, particles);
     }
 
     // Propagate philox RNG counters

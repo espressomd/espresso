@@ -169,6 +169,14 @@ struct P3MParameters {
     a = Utils::hadamard_division(Utils::Vector3d::broadcast(1.), ai);
     cao_cut = (static_cast<double>(cao) / 2.) * a;
   }
+
+  /**
+   * @brief Convert spatial position to grid position.
+   * To get the grid index, round the result to the nearest integer.
+   */
+  auto calc_grid_pos(Utils::Vector3d const &pos) const {
+    return Utils::hadamard_product(pos, ai) - mesh_off;
+  }
 };
 
 /** Structure for local mesh parameters. */

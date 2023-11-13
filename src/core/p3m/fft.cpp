@@ -195,13 +195,13 @@ int calc_local_mesh(const int *n_pos, const int *n_grid, const int *mesh,
   int last[3], size = 1;
 
   for (int i = 0; i < 3; i++) {
-    auto const ratio = mesh[i] / static_cast<double>(n_grid[i]);
-    start[i] = static_cast<int>(ceil(ratio * n_pos[i] - mesh_off[i]));
-    last[i] = static_cast<int>(floor(ratio * (n_pos[i] + 1) - mesh_off[i]));
+    auto const ai = mesh[i] / static_cast<double>(n_grid[i]);
+    start[i] = static_cast<int>(ceil(ai * n_pos[i] - mesh_off[i]));
+    last[i] = static_cast<int>(floor(ai * (n_pos[i] + 1) - mesh_off[i]));
     /* correct round off errors */
-    if (ratio * (n_pos[i] + 1) - mesh_off[i] - last[i] < 1.0e-15)
+    if (ai * (n_pos[i] + 1) - mesh_off[i] - last[i] < 1.0e-15)
       last[i]--;
-    if (1.0 + ratio * n_pos[i] - mesh_off[i] - start[i] < 1.0e-15)
+    if (1.0 + ai * n_pos[i] - mesh_off[i] - start[i] < 1.0e-15)
       start[i]--;
     loc_mesh[i] = last[i] - start[i] + 1;
     size *= loc_mesh[i];
