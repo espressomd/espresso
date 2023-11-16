@@ -26,6 +26,11 @@ namespace System {
 
 class System;
 
+/**
+ * @brief Abstract class that represents a component of the system.
+ *
+ * See @ref SystemClassDesign for more details.
+ */
 template <typename Class> class Leaf {
 protected:
   std::weak_ptr<System> m_system;

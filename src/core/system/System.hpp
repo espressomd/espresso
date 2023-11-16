@@ -49,6 +49,12 @@ class BondBreakage;
 
 namespace System {
 
+/**
+ * @brief Main system class.
+ *
+ * Most components follow the composite pattern and the opaque pointer pattern.
+ * See @ref SystemClassDesign for more details.
+ */
 class System {
 public:
   System();

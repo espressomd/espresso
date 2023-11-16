@@ -29,8 +29,22 @@
 namespace ScriptInterface {
 namespace System {
 
+/**
+ * @brief Script interface wrapper for a component of the system class.
+ *
+ * This class manages a core leaf object. A leaf can exist without a system,
+ * in which case the managed object cannot be fully initialized
+ * and has nothing to act upon.
+ * Binding a leaf to a system triggers an initialization of the managed object.
+ * Detaching a leaf may trigger a memory deallocation of the managed object
+ * resources, without deallocating the managed object itself.
+ * This behavior can be leveraged to implement move semantics.
+ * See @ref SystemClassDesign for more details.
+ */
 class Leaf : public ObjectHandle {
+  /** @brief Callback triggered upon binding a leaf to a system. */
   virtual void on_bind_system(::System::System &) {}
+  /** @brief Callback triggered upon detaching a leaf from a system. */
   virtual void on_detach_system(::System::System &) {}
 
 protected:

@@ -65,6 +65,7 @@ namespace System {
 
 static bool system_created = false;
 
+/** @brief Container for leaves of the system class. */
 struct System::Leaves {
   Leaves() = default;
   std::shared_ptr<CellSystem::CellSystem> cell_system;
