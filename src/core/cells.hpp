@@ -98,9 +98,6 @@ std::vector<std::pair<int, int>>
 get_pairs_of_types(System::System const &system, double distance,
                    std::vector<int> const &types);
 
-/** Check if a particle resorting is required. */
-void check_resort_particles(CellStructure &cell_structure);
-
 /**
  * @brief Get ids of particles that are within a certain distance
  * of another particle.

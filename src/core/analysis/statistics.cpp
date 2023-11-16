@@ -160,7 +160,7 @@ Utils::Vector3d calc_linear_momentum(System::System const &system,
 
 Utils::Vector3d center_of_mass(System::System const &system, int p_type) {
   auto const &box_geo = *system.box_geo;
-  auto &cell_structure = *system.cell_structure;
+  auto const &cell_structure = *system.cell_structure;
   Utils::Vector3d local_com{};
   double local_mass = 0.;
 
@@ -179,7 +179,7 @@ Utils::Vector3d center_of_mass(System::System const &system, int p_type) {
 
 Utils::Vector3d angular_momentum(System::System const &system, int p_type) {
   auto const &box_geo = *system.box_geo;
-  auto &cell_structure = *system.cell_structure;
+  auto const &cell_structure = *system.cell_structure;
   Utils::Vector3d am{};
 
   for (auto const &p : cell_structure.local_particles()) {
@@ -226,7 +226,7 @@ Utils::Vector9d gyration_tensor(System::System const &system,
 Utils::Vector9d moment_of_inertia_matrix(System::System const &system,
                                          int p_type) {
   auto const &box_geo = *system.box_geo;
-  auto &cell_structure = *system.cell_structure;
+  auto const &cell_structure = *system.cell_structure;
   Utils::Vector9d mat{};
   auto com = center_of_mass(system, p_type);
   boost::mpi::broadcast(::comm_cart, com, 0);

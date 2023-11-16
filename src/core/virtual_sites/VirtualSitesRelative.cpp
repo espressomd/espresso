@@ -119,7 +119,6 @@ void VirtualSitesRelative::update() const {
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
-  auto const skin = system.get_verlet_skin();
   auto const particles = cell_structure.local_particles();
   for (auto &p : particles) {
     auto const *p_ref_ptr = get_reference_particle(p);
@@ -142,7 +141,7 @@ void VirtualSitesRelative::update() const {
       p.quat() = p_ref.quat() * p.vs_relative().quat;
   }
 
-  if (cell_structure.check_resort_required(particles, skin)) {
+  if (cell_structure.check_resort_required()) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
@@ -171,7 +170,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
 // Rigid body contribution to scalar pressure and pressure tensor
 Utils::Matrix<double, 3, 3> VirtualSitesRelative::pressure_tensor() const {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &cell_structure = *System::get_system().cell_structure;
 
   Utils::Matrix<double, 3, 3> pressure_tensor = {};
 

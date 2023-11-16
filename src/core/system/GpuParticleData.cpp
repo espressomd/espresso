@@ -49,7 +49,7 @@ void GpuParticleData::enable_particle_transfer() {
 }
 
 void GpuParticleData::copy_particles_to_device() {
-  auto &cell_structure = *System::get_system().cell_structure;
+  auto const &cell_structure = *System::get_system().cell_structure;
   copy_particles_to_device(cell_structure.local_particles(), ::this_node);
 }
 

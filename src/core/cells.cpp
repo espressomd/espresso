@@ -206,17 +206,6 @@ std::vector<NeighborPIDs> get_neighbor_pids(System::System const &system) {
   return ret;
 }
 
-void check_resort_particles(CellStructure &cell_structure) {
-  auto const skin = cell_structure.get_verlet_skin();
-
-  auto const level = (cell_structure.check_resort_required(
-                         cell_structure.local_particles(), skin))
-                         ? Cells::RESORT_LOCAL
-                         : Cells::RESORT_NONE;
-
-  cell_structure.set_resort_particles(level);
-}
-
 void cells_update_ghosts(CellStructure &cell_structure,
                          BoxGeometry const &box_geo, unsigned int data_parts) {
   /* data parts that are only updated on resort */

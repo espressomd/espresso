@@ -972,7 +972,7 @@ double ElectrostaticLayerCorrection::tune_far_cut() const {
   return tuned_far_cut - min_inv_boxl;
 }
 
-static auto calc_total_charge(CellStructure &cell_structure) {
+static auto calc_total_charge(CellStructure const &cell_structure) {
   auto local_q = 0.;
   for (auto const &p : cell_structure.local_particles()) {
     local_q += p.q();
@@ -989,7 +989,7 @@ void ElectrostaticLayerCorrection::sanity_checks_periodicity() const {
 
 void ElectrostaticLayerCorrection::sanity_checks_dielectric_contrasts() const {
   if (elc.dielectric_contrast_on) {
-    auto &cell_structure = *get_system().cell_structure;
+    auto const &cell_structure = *get_system().cell_structure;
     auto const precision_threshold = std::sqrt(ROUND_ERROR_PREC);
     auto const total_charge = std::abs(calc_total_charge(cell_structure));
     if (total_charge >= precision_threshold) {

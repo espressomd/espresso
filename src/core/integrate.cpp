@@ -238,20 +238,13 @@ static auto calc_md_steps_per_tau(double tau) {
   return static_cast<int>(std::round(tau / get_time_step()));
 }
 
-static void resort_particles_if_needed(System::System &system,
-                                       ParticleRange const &particles) {
+static void resort_particles_if_needed(System::System &system) {
   auto &cell_structure = *system.cell_structure;
-  auto const verlet_skin = system.get_verlet_skin();
   auto const offset = LeesEdwards::verlet_list_offset(
       *system.box_geo, cell_structure.get_le_pos_offset_at_last_resort());
-  if (cell_structure.check_resort_required(particles, verlet_skin, offset)) {
+  if (cell_structure.check_resort_required(offset)) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
-}
-
-static void resort_particles_if_needed(ParticleRange const &particles) {
-  auto &system = System::get_system();
-  resort_particles_if_needed(system, particles);
 }
 
 /** @brief Calls the hook for propagation kernels before the force calculation
@@ -305,7 +298,6 @@ static void integrator_step_2(ParticleRange const &particles, double kT,
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
     brownian_dynamics_propagator(brownian, particles, time_step, kT);
-    resort_particles_if_needed(particles);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -413,7 +405,7 @@ int System::integrate(int n_steps, int reuse_forces) {
     if (integ_switch != INTEG_METHOD_NPT_ISO)
 #endif
     {
-      resort_particles_if_needed(*this, particles);
+      resort_particles_if_needed(*this);
     }
 
     // Propagate philox RNG counters
@@ -444,6 +436,9 @@ int System::integrate(int n_steps, int reuse_forces) {
     virtual_sites()->after_force_calc(time_step);
 #endif
     integrator_step_2(particles, temperature, time_step);
+    if (integ_switch == INTEG_METHOD_BD) {
+      resort_particles_if_needed(*this);
+    }
     LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>(*box_geo);
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates

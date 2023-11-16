@@ -46,7 +46,7 @@
 CellStructure::CellStructure(BoxGeometry const &box)
     : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
 
-void CellStructure::check_particle_index() {
+void CellStructure::check_particle_index() const {
   auto const max_id = get_max_local_particle_id();
 
   for (auto const &p : local_particles()) {
@@ -79,8 +79,8 @@ void CellStructure::check_particle_index() {
   }
 }
 
-void CellStructure::check_particle_sorting() {
-  for (auto cell : local_cells()) {
+void CellStructure::check_particle_sorting() const {
+  for (auto cell : decomposition().local_cells()) {
     for (auto const &p : cell->particles()) {
       if (particle_to_cell(p) != cell) {
         throw std::runtime_error("misplaced particle with id " +
@@ -88,10 +88,6 @@ void CellStructure::check_particle_sorting() {
       }
     }
   }
-}
-
-Cell *CellStructure::particle_to_cell(const Particle &p) {
-  return decomposition().particle_to_cell(p);
 }
 
 void CellStructure::remove_particle(int id) {
@@ -136,7 +132,7 @@ Particle *CellStructure::add_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   /* There is always at least one cell, so if the particle
    * does not belong to a cell on this node we can put it there. */
-  auto cell = sort_cell ? sort_cell : local_cells()[0];
+  auto cell = sort_cell ? sort_cell : decomposition().local_cells()[0];
 
   /* If the particle isn't local a global resort may be
    * needed, otherwise a local resort if sufficient. */
@@ -197,26 +193,6 @@ void CellStructure::ghosts_reduce_rattle_correction() {
                      GHOSTTRANS_RATTLE);
 }
 #endif
-
-Utils::Span<Cell *> CellStructure::local_cells() {
-  return decomposition().local_cells();
-}
-
-ParticleRange CellStructure::local_particles() {
-  return Cells::particles(decomposition().local_cells());
-}
-
-ParticleRange CellStructure::ghost_particles() {
-  return Cells::particles(decomposition().ghost_cells());
-}
-
-Utils::Vector3d CellStructure::max_cutoff() const {
-  return decomposition().max_cutoff();
-}
-
-Utils::Vector3d CellStructure::max_range() const {
-  return decomposition().max_range();
-}
 
 namespace {
 /**

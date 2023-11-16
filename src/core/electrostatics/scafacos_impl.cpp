@@ -53,7 +53,7 @@ make_coulomb_scafacos(std::string const &method,
 void CoulombScafacosImpl::update_particle_data() {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-  auto &cell_structure = *system.cell_structure;
+  auto const &cell_structure = *system.cell_structure;
 
   positions.clear();
   charges.clear();
@@ -71,7 +71,7 @@ void CoulombScafacosImpl::update_particle_forces() const {
   if (positions.empty())
     return;
 
-  auto &cell_structure = *get_system().cell_structure;
+  auto const &cell_structure = *get_system().cell_structure;
 
   auto it_fields = fields.begin();
   for (auto &p : cell_structure.local_particles()) {

@@ -91,7 +91,7 @@ public:
    *
    * @return List of local cells.
    */
-  virtual Utils::Span<Cell *> local_cells() = 0;
+  virtual Utils::Span<Cell *const> local_cells() const = 0;
 
   /**
    * @brief Get pointer to local cells.
@@ -102,7 +102,7 @@ public:
    *
    * @return List of ghost cells.
    */
-  virtual Utils::Span<Cell *> ghost_cells() = 0;
+  virtual Utils::Span<Cell *const> ghost_cells() const = 0;
 
   /**
    * @brief Determine which cell a particle id belongs to.
@@ -111,6 +111,7 @@ public:
    * @return Pointer to cell or nullptr if not local.
    */
   virtual Cell *particle_to_cell(Particle const &p) = 0;
+  virtual Cell const *particle_to_cell(Particle const &p) const = 0;
 
   /**
    * @brief Maximum supported cutoff.

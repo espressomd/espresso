@@ -87,7 +87,7 @@ enum DataPart : unsigned {
 unsigned map_data_parts(unsigned data_parts);
 
 namespace Cells {
-inline ParticleRange particles(Utils::Span<Cell *> cells) {
+inline ParticleRange particles(Utils::Span<Cell *const> cells) {
   /* Find first non-empty cell */
   auto first_non_empty =
       std::find_if(cells.begin(), cells.end(),
@@ -264,13 +264,18 @@ public:
   CellStructureType decomposition_type() const { return m_type; }
 
   /** Maximal cutoff supported by current cell system. */
-  Utils::Vector3d max_cutoff() const;
+  Utils::Vector3d max_cutoff() const { return decomposition().max_cutoff(); }
 
   /** Maximal pair range supported by current cell system. */
-  Utils::Vector3d max_range() const;
+  Utils::Vector3d max_range() const { return decomposition().max_range(); }
 
-  ParticleRange local_particles();
-  ParticleRange ghost_particles();
+  ParticleRange local_particles() const {
+    return Cells::particles(decomposition().local_cells());
+  }
+
+  ParticleRange ghost_particles() const {
+    return Cells::particles(decomposition().ghost_cells());
+  }
 
 private:
   /** Cell system dependent function to find the right cell for a
@@ -279,9 +284,12 @@ private:
    *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
-  Cell *particle_to_cell(const Particle &p);
-
-  Utils::Span<Cell *> local_cells();
+  Cell *particle_to_cell(const Particle &p) {
+    return decomposition().particle_to_cell(p);
+  }
+  Cell const *particle_to_cell(const Particle &p) const {
+    return decomposition().particle_to_cell(p);
+  }
 
 public:
   /**
@@ -379,17 +387,15 @@ public:
   /**
    * @brief Check whether a particle has moved further than half the skin
    * since the last Verlet list update, thus requiring a resort.
-   * @param particles           Particles to check
-   * @param skin                Skin
    * @param additional_offset   Offset which is added to the distance the
    *                            particle has travelled when comparing to half
-   *                            the skin (e.g., for Lees-Edwards BC).
+   *                            the Verlet skin (e.g., for Lees-Edwards BC).
    * @return Whether a resort is needed.
    */
   bool
-  check_resort_required(ParticleRange const &particles, double skin,
-                        Utils::Vector3d const &additional_offset = {}) const {
-    auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
+  check_resort_required(Utils::Vector3d const &additional_offset = {}) const {
+    auto const particles = local_particles();
+    auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
     return std::any_of(
         particles.begin(), particles.end(), [lim](const auto &p) {
           return ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim);
@@ -584,7 +590,7 @@ private:
    */
   template <class Kernel> void link_cell(Kernel kernel) {
     auto const maybe_box = decomposition().minimum_image_distance();
-    auto const local_cells_span = local_cells();
+    auto const local_cells_span = decomposition().local_cells();
     auto const first = boost::make_indirect_iterator(local_cells_span.begin());
     auto const last = boost::make_indirect_iterator(local_cells_span.end());
 
@@ -689,7 +695,7 @@ private:
    * in the particles index, and that there are no excess (non-existing)
    * particles in the index.
    */
-  void check_particle_index();
+  void check_particle_index() const;
 
   /**
    * @brief Check that particles are in the correct cell.
@@ -699,7 +705,7 @@ private:
    * actually in, e.g. that the particles are sorted according
    * to particles_to_cell.
    */
-  void check_particle_sorting();
+  void check_particle_sorting() const;
 
 public:
   /**

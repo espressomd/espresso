@@ -76,16 +76,16 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *> local_cells() override {
+  Utils::Span<Cell *const> local_cells() const override {
     return Utils::make_span(m_local_cells);
   }
-  Utils::Span<Cell *> ghost_cells() override {
+  Utils::Span<Cell *const> ghost_cells() const override {
     return Utils::make_span(m_ghost_cells);
   }
 
   /* Getter needed for HybridDecomposition */
-  std::vector<Cell *> get_local_cells() const { return m_local_cells; }
-  std::vector<Cell *> get_ghost_cells() const { return m_ghost_cells; }
+  auto const &get_local_cells() const { return m_local_cells; }
+  auto const &get_ghost_cells() const { return m_ghost_cells; }
 
   /**
    * @brief Determine which cell a particle id belongs to.
@@ -96,6 +96,9 @@ public:
    * @return Pointer to cell or nullptr if not local.
    */
   Cell *particle_to_cell(Particle const &p) override {
+    return id_to_cell(p.id());
+  }
+  Cell const *particle_to_cell(Particle const &p) const override {
     return id_to_cell(p.id());
   }
 
@@ -117,14 +120,20 @@ private:
    * @return Cell for id.
    */
   Cell *id_to_cell(int id) {
-    return (id_to_rank(id) == m_comm.rank()) ? std::addressof(local())
-                                             : nullptr;
+    return has_id(id) ? std::addressof(local()) : nullptr;
+  }
+
+  Cell const *id_to_cell(int id) const {
+    return has_id(id) ? std::addressof(local()) : nullptr;
   }
 
   /**
    * @brief Get the local cell.
    */
   Cell &local() { return cells.at(static_cast<unsigned int>(m_comm.rank())); }
+  Cell const &local() const {
+    return cells.at(static_cast<unsigned int>(m_comm.rank()));
+  }
 
   void configure_neighbors();
   GhostCommunicator prepare_comm();
@@ -143,6 +152,11 @@ private:
    * @brief Determine which rank owns a particle id.
    */
   int id_to_rank(int id) const { return id % m_comm.size(); }
+
+  /**
+   * @brief Determine if this rank owns a particle id.
+   */
+  bool has_id(int id) const { return id_to_rank(id) == m_comm.rank(); }
 };
 
 #endif

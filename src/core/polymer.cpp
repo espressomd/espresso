@@ -86,8 +86,9 @@ template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
 static bool
 is_valid_position(Utils::Vector3d const &pos,
                   std::vector<std::vector<Utils::Vector3d>> const &positions,
-                  CellStructure &cell_structure, BoxGeometry const &box_geo,
-                  double const min_distance, int const respect_constraints) {
+                  CellStructure const &cell_structure,
+                  BoxGeometry const &box_geo, double const min_distance,
+                  int const respect_constraints) {
 
   struct reduce_min {
     auto operator()(double const a, double const b) const {

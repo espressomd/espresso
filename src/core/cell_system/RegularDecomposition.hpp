@@ -97,18 +97,22 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *> local_cells() override {
+  Utils::Span<Cell *const> local_cells() const override {
     return Utils::make_span(m_local_cells);
   }
-  Utils::Span<Cell *> ghost_cells() override {
+  Utils::Span<Cell *const> ghost_cells() const override {
     return Utils::make_span(m_ghost_cells);
   }
 
   /* Getter needed for HybridDecomposition */
-  std::vector<Cell *> get_local_cells() const { return m_local_cells; }
-  std::vector<Cell *> get_ghost_cells() const { return m_ghost_cells; }
+  auto const &get_local_cells() const { return m_local_cells; }
+  auto const &get_ghost_cells() const { return m_ghost_cells; }
 
   Cell *particle_to_cell(Particle const &p) override {
+    return position_to_cell(p.pos());
+  }
+
+  Cell const *particle_to_cell(Particle const &p) const override {
     return position_to_cell(p.pos());
   }
 
@@ -143,7 +147,20 @@ private:
 
   int calc_processor_min_num_cells() const;
 
-  Cell *position_to_cell(const Utils::Vector3d &pos);
+  int position_to_cell_index(Utils::Vector3d const &pos) const;
+
+  /**
+   * @brief Get pointer to the cell which corresponds to the position if the
+   * position is in the node's spatial domain, otherwise a nullptr.
+   */
+  Cell *position_to_cell(Utils::Vector3d const &pos) {
+    auto const index = position_to_cell_index(pos);
+    return (index < 0) ? nullptr : &(cells.at(index));
+  }
+  Cell const *position_to_cell(Utils::Vector3d const &pos) const {
+    auto const index = position_to_cell_index(pos);
+    return (index < 0) ? nullptr : &(cells.at(index));
+  }
 
   /**
    * @brief Move particles into the cell system if it belongs to this node.

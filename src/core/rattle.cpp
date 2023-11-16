@@ -168,7 +168,9 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo) {
                       << " iterations";
   }
 
-  check_resort_particles(cs);
+  auto const resort_level =
+      cs.check_resort_required() ? Cells::RESORT_LOCAL : Cells::RESORT_NONE;
+  cs.set_resort_particles(resort_level);
 }
 
 /**

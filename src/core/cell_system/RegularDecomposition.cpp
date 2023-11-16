@@ -48,10 +48,8 @@
 #include <utility>
 #include <vector>
 
-/** Returns pointer to the cell which corresponds to the position if the
- *  position is in the node's spatial domain otherwise a nullptr.
- */
-Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
+int RegularDecomposition::position_to_cell_index(
+    Utils::Vector3d const &pos) const {
   Utils::Vector3i cpos;
 
   for (unsigned int i = 0u; i < 3u; i++) {
@@ -68,18 +66,17 @@ Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
           m_local_box.boundary()[2u * i])
         cpos[i] = 1;
       else
-        return nullptr;
+        return -1;
     } else if (cpos[i] > cell_grid[i]) {
       if ((!m_box.periodic(i) or (pos[i] < m_box.length()[i])) and
           m_local_box.boundary()[2u * i + 1u])
         cpos[i] = cell_grid[i];
       else
-        return nullptr;
+        return -1;
     }
   }
 
-  auto const ind = get_linear_index(cpos, ghost_cell_grid);
-  return &(cells.at(ind));
+  return get_linear_index(cpos, ghost_cell_grid);
 }
 
 void RegularDecomposition::move_if_local(
