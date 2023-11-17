@@ -28,7 +28,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cell_system/HybridDecomposition.hpp"
-#include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
@@ -41,19 +40,24 @@
 #include "particle_node.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
+#include "virtual_sites/VirtualSitesOff.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/all_compare.hpp>
-
-#include <boost/range/algorithm/min_element.hpp>
 
 #include <memory>
 
 namespace System {
 
-static std::shared_ptr<System> instance = std::make_shared<System>();
+static std::shared_ptr<System> instance = System::create();
 
-System::System() {
+std::shared_ptr<System> System::create() {
+  auto handle = std::make_shared<System>(Private());
+  handle->initialize();
+  return handle;
+}
+
+System::System(Private) {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
@@ -67,6 +71,17 @@ System::System() {
   min_global_cut = INACTIVE_CUTOFF;
 }
 
+void System::initialize() {
+  auto handle = shared_from_this();
+  cell_structure->bind_system(handle);
+#ifdef CUDA
+  gpu.bind_system(handle);
+  gpu.initialize();
+#endif
+  lb.bind_system(handle);
+  ek.bind_system(handle);
+}
+
 bool is_system_set() { return instance != nullptr; }
 
 void reset_system() { instance.reset(); }
@@ -76,12 +91,6 @@ void set_system(std::shared_ptr<System> new_instance) {
 }
 
 System &get_system() { return *instance; }
-
-void System::init() {
-#ifdef CUDA
-  gpu.init();
-#endif
-}
 
 void System::set_time_step(double value) {
   if (value <= 0.)
@@ -106,33 +115,20 @@ void System::set_min_global_cut(double value) {
   on_verlet_skin_change();
 }
 
-double System::get_verlet_skin() const {
-  return cell_structure->get_verlet_skin();
-}
-
-void System::set_verlet_skin(double value) {
-  cell_structure->set_verlet_skin(value);
-  on_verlet_skin_change();
-}
-
 void System::set_cell_structure_topology(CellStructureType topology) {
   if (topology == CellStructureType::REGULAR) {
-    cell_structure->set_regular_decomposition(
-        ::comm_cart, get_interaction_range(), *box_geo, *local_geo);
+    cell_structure->set_regular_decomposition(get_interaction_range());
   } else if (topology == CellStructureType::NSQUARE) {
-    cell_structure->set_atom_decomposition(::comm_cart, *box_geo, *local_geo);
+    cell_structure->set_atom_decomposition();
   } else {
     assert(topology == CellStructureType::HYBRID);
     /* Get current HybridDecomposition to extract n_square_types */
     auto &old_hybrid_decomposition = dynamic_cast<HybridDecomposition const &>(
         std::as_const(*cell_structure).decomposition());
     cell_structure->set_hybrid_decomposition(
-        ::comm_cart, old_hybrid_decomposition.get_cutoff_regular(),
-        get_verlet_skin(), *box_geo, *local_geo,
+        old_hybrid_decomposition.get_cutoff_regular(),
         old_hybrid_decomposition.get_n_square_types());
   }
-
-  on_cell_structure_change();
 }
 
 void System::rebuild_cell_structure() {
@@ -255,7 +251,7 @@ void System::on_constraint_change() { ::recalc_forces = true; }
 void System::on_lb_boundary_conditions_change() { ::recalc_forces = true; }
 
 void System::on_particle_local_change() {
-  cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
+  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
   ::recalc_forces = true;
 }
 
@@ -286,7 +282,7 @@ void System::on_particle_charge_change() {
 void System::update_dependent_particles() {
 #ifdef VIRTUAL_SITES
   virtual_sites()->update();
-  cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
+  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
 #endif
 
 #ifdef ELECTROSTATICS
@@ -302,7 +298,7 @@ void System::update_dependent_particles() {
 void System::on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
-  cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
+  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
   update_dependent_particles();
 
 #ifdef ELECTROSTATICS
@@ -359,23 +355,9 @@ bool System::long_range_interactions_sanity_checks() const {
 
 double System::get_interaction_range() const {
   auto const max_cut = maximal_cutoff();
+  auto const verlet_skin = cell_structure->get_verlet_skin();
   /* Consider skin only if there are actually interactions */
-  return (max_cut > 0.) ? max_cut + get_verlet_skin() : INACTIVE_CUTOFF;
-}
-
-void System::set_verlet_skin_heuristic() {
-  // if skin isn't set, do an educated guess now
-  assert(not cell_structure->is_verlet_skin_set());
-  auto const max_cut = maximal_cutoff();
-  if (max_cut <= 0.) {
-    throw std::runtime_error(
-        "cannot automatically determine skin, please set it manually");
-  }
-  /* maximal skin that can be used without resorting is the maximal
-   * range of the cell system minus what is needed for interactions. */
-  auto const max_range = *boost::min_element(cell_structure->max_cutoff());
-  auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
-  set_verlet_skin(new_skin);
+  return (max_cut > 0.) ? max_cut + verlet_skin : INACTIVE_CUTOFF;
 }
 
 void System::set_box_l(Utils::Vector3d const &box_l) {
@@ -432,3 +414,15 @@ void System::on_integration_start() {
 }
 
 } // namespace System
+
+void mpi_init_stand_alone(int argc, char **argv) {
+  auto mpi_env = mpi_init(argc, argv);
+
+  // initialize the MpiCallbacks framework
+  Communication::init(mpi_env);
+
+  // default-construct global state of the system
+#ifdef VIRTUAL_SITES
+  set_virtual_sites(std::make_shared<VirtualSitesOff>());
+#endif
+}

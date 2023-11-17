@@ -24,7 +24,6 @@
 
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
 #include "lb/particle_coupling.hpp"
@@ -57,7 +56,7 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
 
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
-  cells_update_ghosts(cell_structure, box_geo, Cells::DATA_PART_FORCE);
+  cell_structure.update_ghosts_and_resort_particle(Cells::DATA_PART_FORCE);
 
   // Set to store ghost particles (ids) that have already been coupled
   LB::CouplingBookkeeping bookkeeping{};
@@ -88,8 +87,8 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
   auto &system = System::get_system();
   auto &cell_structure = *system.cell_structure;
   auto const &lb = system.lb;
-  auto const skin = system.get_verlet_skin();
-  auto const skin_sq = skin * skin;
+  auto const verlet_skin = cell_structure.get_verlet_skin();
+  auto const verlet_skin_sq = verlet_skin * verlet_skin;
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {
@@ -105,7 +104,7 @@ void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
       }
     }
     // Verlet list update check
-    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > skin_sq) {
+    if ((p.pos() - p.pos_at_last_verlet_update()).norm2() > verlet_skin_sq) {
       cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
   }

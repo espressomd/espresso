@@ -41,18 +41,6 @@ void init_forces(const ParticleRange &particles, double time_step);
 /** Set forces of all ghosts to zero */
 void init_forces_ghosts(const ParticleRange &particles);
 
-/** Calculate forces.
- *
- *  A short list, what the function is doing:
- *  <ol>
- *  <li> Initialize forces
- *  <li> Calculate bonded interaction forces
- *  <li> Calculate non-bonded short range interaction forces
- *  <li> Calculate long range interaction forces
- *  </ol>
- */
-void force_calc(System::System &system, double time_step, double kT);
-
 /** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(const ParticleRange &particles);
 

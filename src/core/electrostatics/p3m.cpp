@@ -247,7 +247,7 @@ void CoulombP3M::init() {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
-  auto const skin = system.get_verlet_skin();
+  auto const skin = system.cell_structure->get_verlet_skin();
 
   p3m.params.cao3 = Utils::int_pow<3>(p3m.params.cao);
   p3m.params.recalc_a_ai_cao_cut(box_geo.length());

@@ -56,6 +56,7 @@ class CellSystem : public AutoParameters<CellSystem, System::Leaf> {
 
   void on_bind_system(::System::System &system) override {
     m_cell_structure = system.cell_structure;
+    m_cell_structure->bind_system(m_system.lock());
     auto const &params = *m_params;
     if (not params.empty()) {
       auto const cs_name = get_value<std::string>(params, "decomposition_type");

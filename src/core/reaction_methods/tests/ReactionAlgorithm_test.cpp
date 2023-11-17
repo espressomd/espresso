@@ -28,8 +28,8 @@
 #include "reaction_methods/ReactionAlgorithm.hpp"
 #include "reaction_methods/SingleReaction.hpp"
 
-#include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "particle_node.hpp"
@@ -49,7 +49,7 @@
 
 namespace espresso {
 // ESPResSo system instance
-static std::unique_ptr<EspressoSystemStandAlone> system;
+static std::shared_ptr<System::System> system;
 } // namespace espresso
 
 namespace Testing {
@@ -70,7 +70,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
   using ReactionMethods::SingleReaction;
   auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   auto const comm = boost::mpi::communicator();
-  auto const &cell_structure = *System::get_system().cell_structure;
+  auto const &cell_structure = *espresso::system->cell_structure;
 
   // check acceptance rate
   auto r_algo = Testing::ReactionAlgorithm(comm, 42, 1., 0., {});
@@ -330,6 +330,9 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
 }
 
 int main(int argc, char **argv) {
-  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  mpi_init_stand_alone(argc, argv);
+  espresso::system = System::System::create();
+  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+  ::System::set_system(espresso::system);
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

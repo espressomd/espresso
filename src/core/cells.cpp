@@ -42,7 +42,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/set.hpp>
 
@@ -204,40 +203,4 @@ std::vector<NeighborPIDs> get_neighbor_pids(System::System const &system) {
     kernel(p, get_interacting_neighbors(system, p));
   }
   return ret;
-}
-
-void cells_update_ghosts(CellStructure &cell_structure,
-                         BoxGeometry const &box_geo, unsigned int data_parts) {
-  /* data parts that are only updated on resort */
-  auto constexpr resort_only_parts =
-      Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
-
-  auto const global_resort =
-      boost::mpi::all_reduce(comm_cart, cell_structure.get_resort_particles(),
-                             std::bit_or<unsigned>());
-
-  if (global_resort != Cells::RESORT_NONE) {
-    int global = (global_resort & Cells::RESORT_GLOBAL)
-                     ? CELL_GLOBAL_EXCHANGE
-                     : CELL_NEIGHBOR_EXCHANGE;
-
-    /* Resort cell system */
-    cell_structure.resort_particles(global, box_geo);
-    cell_structure.ghosts_count();
-    cell_structure.ghosts_update(data_parts);
-
-    /* Add the ghost particles to the index if we don't already
-     * have them. */
-    for (auto &p : cell_structure.ghost_particles()) {
-      if (cell_structure.get_local_particle(p.id()) == nullptr) {
-        cell_structure.update_particle_index(p.id(), &p);
-      }
-    }
-
-    /* Particles are now sorted */
-    cell_structure.clear_resort_particles();
-  } else {
-    /* Communication step: ghost information */
-    cell_structure.ghosts_update(data_parts & ~resort_only_parts);
-  }
 }

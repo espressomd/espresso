@@ -121,11 +121,11 @@ void DipolarP3M::init() {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
-  auto const skin = system.get_verlet_skin();
+  auto const verlet_skin = system.cell_structure->get_verlet_skin();
 
   dp3m.params.cao3 = Utils::int_pow<3>(dp3m.params.cao);
   dp3m.params.recalc_a_ai_cao_cut(box_geo.length());
-  dp3m.local_mesh.calc_local_ca_mesh(dp3m.params, local_geo, skin, 0.);
+  dp3m.local_mesh.calc_local_ca_mesh(dp3m.params, local_geo, verlet_skin, 0.);
 
   dp3m.sm.resize(comm_cart, dp3m.local_mesh);
 

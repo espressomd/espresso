@@ -55,24 +55,29 @@ namespace System {
  * Most components follow the composite pattern and the opaque pointer pattern.
  * See @ref SystemClassDesign for more details.
  */
-class System {
+class System : public std::enable_shared_from_this<System> {
+private:
+  struct Private {};
+  void initialize();
+
 public:
-  System();
+  System(Private);
+
+  static std::shared_ptr<System> create();
+
 #ifdef CUDA
   GpuParticleData gpu;
 #endif
   ResourceCleanup cleanup_queue;
 
-  void init();
-
   /** @brief Get @ref time_step. */
-  auto get_time_step() { return time_step; }
+  auto get_time_step() const { return time_step; }
 
   /** @brief Set @ref time_step. */
   void set_time_step(double value);
 
   /** @brief Get @ref force_cap. */
-  auto get_force_cap() { return force_cap; }
+  auto get_force_cap() const { return force_cap; }
 
   /** @brief Set @ref force_cap. */
   void set_force_cap(double value);
@@ -82,15 +87,6 @@ public:
 
   /** @brief Set @ref min_global_cut. */
   void set_min_global_cut(double value);
-
-  /** @brief Get the Verlet skin. */
-  double get_verlet_skin() const;
-
-  /** @brief Set the Verlet skin. */
-  void set_verlet_skin(double value);
-
-  /** @brief Set the Verlet skin using a heuristic. */
-  void set_verlet_skin_heuristic();
 
   /** @brief Change the box dimensions. */
   void set_box_l(Utils::Vector3d const &box_l);
@@ -112,6 +108,7 @@ public:
   /** @brief Calculate the maximal cutoff of all interactions. */
   double maximal_cutoff() const;
 
+  /** @brief Get the interaction range. */
   double get_interaction_range() const;
 
   /** Check electrostatic and magnetostatic methods are properly initialized.
@@ -124,6 +121,9 @@ public:
 
   /** @brief Calculate the pressure from a virial expansion. */
   std::shared_ptr<Observable_stat> calculate_pressure();
+
+  /** @brief Calculate all forces. */
+  void calculate_forces(double kT);
 
 #ifdef DIPOLE_FIELD_TRACKING
   /** @brief Calculate dipole fields. */
@@ -258,6 +258,13 @@ protected:
 #ifdef ELECTROSTATICS
   void update_icc_particles();
 #endif // ELECTROSTATICS
+
+private:
+  /**
+   * @brief Check integrator parameters and incompatibilities between
+   * the integrator and the currently active thermostat(s).
+   */
+  void integrator_sanity_checks() const;
 };
 
 System &get_system();
@@ -266,3 +273,10 @@ void reset_system();
 bool is_system_set();
 
 } // namespace System
+
+/**
+ * @brief Initialize MPI global state to run ESPResSo in stand-alone mode.
+ * Use this function in simulations written in C++, such as unit tests.
+ * The script interface has its own MPI initialization mechanism.
+ */
+void mpi_init_stand_alone(int argc, char **argv);

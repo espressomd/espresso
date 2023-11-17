@@ -34,6 +34,7 @@
 #include "cell_system/CellStructureType.hpp"
 #include "config/config.hpp"
 #include "ghosts.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/math/sqr.hpp>
 
@@ -49,10 +50,6 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
-
-namespace boost::mpi {
-class communicator;
-}
 
 namespace Cells {
 enum Resort : unsigned {
@@ -133,7 +130,7 @@ struct EuclidianDistance {
  *  system which are not common between different cell systems have to
  *  be stored in separate structures.
  */
-struct CellStructure {
+struct CellStructure : public System::Leaf<CellStructure> {
 private:
   /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
@@ -414,13 +411,23 @@ public:
   /**
    * @brief Update ghost particles.
    *
-   * This function updates the ghost particles with data
-   * from the real particles.
+   * Update ghost particles with data from the real particles.
    *
    * @param data_parts Particle parts to update, combination of @ref
    * Cells::DataPart
    */
   void ghosts_update(unsigned data_parts);
+
+  /**
+   * @brief Update ghost particles, with particle resort if needed.
+   *
+   * Update ghost particles with data from the real particles.
+   * Resort particles if a resort is due.
+   *
+   * @param data_parts Particle parts to update, combination of @ref
+   * Cells::DataPart
+   */
+  void update_ghosts_and_resort_particle(unsigned data_parts);
 
   /**
    * @brief Add forces from ghost particles to real particles.
@@ -437,7 +444,7 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(bool global_flag, BoxGeometry const &box);
+  void resort_particles(bool global_flag);
 
   /** @brief Whether the Verlet skin is set. */
   auto is_verlet_skin_set() const { return m_verlet_skin_set; }
@@ -446,11 +453,10 @@ public:
   auto get_verlet_skin() const { return m_verlet_skin; }
 
   /** @brief Set the Verlet skin. */
-  void set_verlet_skin(double value) {
-    assert(value >= 0.);
-    m_verlet_skin = value;
-    m_verlet_skin_set = true;
-  }
+  void set_verlet_skin(double value);
+
+  /** @brief Set the Verlet skin using a heuristic. */
+  void set_verlet_skin_heuristic();
 
   void update_verlet_stats(int n_steps, int n_verlet_updates) {
     if (n_verlet_updates > 0) {
@@ -546,39 +552,23 @@ private:
 public:
   /**
    * @brief Set the particle decomposition to @ref AtomDecomposition.
-   *
-   * @param comm Communicator to use.
-   * @param box Box Geometry.
-   * @param local_geo Geometry of the local box (holds cell structure type).
    */
-  void set_atom_decomposition(boost::mpi::communicator const &comm,
-                              BoxGeometry const &box, LocalBox &local_geo);
+  void set_atom_decomposition();
 
   /**
    * @brief Set the particle decomposition to @ref RegularDecomposition.
    *
-   * @param comm Cartesian communicator to use.
    * @param range Interaction range.
-   * @param box Box Geometry.
-   * @param local_geo Geometry of the local box.
    */
-  void set_regular_decomposition(boost::mpi::communicator const &comm,
-                                 double range, BoxGeometry const &box,
-                                 LocalBox &local_geo);
+  void set_regular_decomposition(double range);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.
    *
-   * @param comm Communicator to use.
    * @param cutoff_regular Interaction cutoff_regular.
-   * @param skin Verlet list skin.
-   * @param box Box geometry.
-   * @param local_geo Geometry of the local box.
    * @param n_square_types Particle types to put into n_square decomposition.
    */
-  void set_hybrid_decomposition(boost::mpi::communicator const &comm,
-                                double cutoff_regular, double skin,
-                                BoxGeometry const &box, LocalBox &local_geo,
+  void set_hybrid_decomposition(double cutoff_regular,
                                 std::set<int> n_square_types);
 
 private:
@@ -687,7 +677,6 @@ public:
     }
   }
 
-private:
   /**
    * @brief Check that particle index is commensurate with particles.
    *

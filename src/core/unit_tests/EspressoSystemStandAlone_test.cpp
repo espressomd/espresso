@@ -27,7 +27,6 @@ namespace utf = boost::unit_test;
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
 
-#include "EspressoSystemStandAlone.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "accumulators/TimeSeries.hpp"
@@ -36,6 +35,7 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
@@ -56,6 +56,7 @@ namespace utf = boost::unit_test;
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
 
@@ -63,6 +64,7 @@ namespace utf = boost::unit_test;
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <memory>
@@ -90,10 +92,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   auto const box_center = box_l / 2.;
   auto const time_step = 0.001;
   auto const skin = 0.4;
-  auto &system = System::get_system();
+  auto &system = *espresso::system;
   system.set_box_l(Utils::Vector3d::broadcast(box_l));
   system.set_time_step(time_step);
-  system.set_verlet_skin(skin);
+  system.cell_structure->set_verlet_skin(skin);
 
   // particle properties
   auto const pid1 = 9;
@@ -201,7 +203,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
       auto const obs_energy = system.calculate_energy();
-      auto const p_opt = copy_particle_to_head_node(comm, pid2);
+      auto const p_opt = copy_particle_to_head_node(comm, system, pid2);
       if (rank == 0) {
         auto const &p = *p_opt;
         auto const kinetic_energy = 0.5 * p.mass() * p.v().norm2();
@@ -348,9 +350,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     system.integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
 
     // particles are arranged in a right triangle
-    auto const p1_opt = copy_particle_to_head_node(comm, pid1);
-    auto const p2_opt = copy_particle_to_head_node(comm, pid2);
-    auto const p3_opt = copy_particle_to_head_node(comm, pid3);
+    auto const p1_opt = copy_particle_to_head_node(comm, system, pid1);
+    auto const p2_opt = copy_particle_to_head_node(comm, system, pid2);
+    auto const p3_opt = copy_particle_to_head_node(comm, system, pid3);
     if (rank == 0) {
       auto const &p1 = *p1_opt;
       auto const &p2 = *p2_opt;
@@ -380,7 +382,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     for (int i = 0; i < 10; ++i) {
       std::unordered_map<int, Utils::Vector3d> expected;
       for (auto pid : pids) {
-        auto p_opt = copy_particle_to_head_node(comm, pid);
+        auto p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {
           auto &p = *p_opt;
           p.v() += 0.5 * time_step * p.force() / p.mass();
@@ -390,7 +392,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       }
       system.integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
       for (auto pid : pids) {
-        auto const p_opt = copy_particle_to_head_node(comm, pid);
+        auto const p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {
           auto &p = *p_opt;
           BOOST_CHECK_LE((p.pos() - expected[pid]).norm(), tol);
@@ -398,6 +400,55 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         }
       }
     }
+  }
+
+  // check particle resort
+  {
+    auto constexpr global_resort = true;
+    auto const resort_is_needed = comm.size() > 1;
+    auto &cs = *system.cell_structure;
+    auto error_thrown_local = false;
+    try {
+      cs.check_particle_index();
+    } catch (std::runtime_error const &) {
+      error_thrown_local = true;
+    }
+    auto const error_thrown = boost::mpi::all_reduce(comm, error_thrown_local,
+                                                     std::logical_or<bool>());
+    BOOST_CHECK_EQUAL(error_thrown, resort_is_needed);
+    // no exception is thrown after resort
+    cs.resort_particles(global_resort);
+    cs.check_particle_index();
+  }
+
+  // check exceptions from sanity checks
+  {
+    auto const &cs = *system.cell_structure;
+    auto ptr = system.cell_structure->get_local_particle(pid2);
+    if (ptr and not ptr->is_ghost()) {
+      auto &p = *ptr;
+      auto const pos = p.pos();
+      p.pos() = Utils::Vector3d::broadcast(0.99 * box_l);
+      BOOST_CHECK_THROW(cs.check_particle_sorting(), std::runtime_error);
+      p.pos() = pos;
+      p.id() = cs.get_max_local_particle_id() + 1;
+      BOOST_CHECK_THROW(cs.check_particle_index(), std::runtime_error);
+      p.id() = -1;
+      BOOST_CHECK_THROW(cs.check_particle_index(), std::runtime_error);
+      p.id() = pid1;
+      BOOST_CHECK_THROW(cs.check_particle_index(), std::runtime_error);
+      p.id() = pid2;
+      cs.check_particle_sorting();
+      cs.check_particle_index();
+    }
+  }
+
+  // check bond exceptions
+  {
+    BOOST_CHECK_THROW(throw BondResolutionError(), std::exception);
+    BOOST_CHECK_THROW(throw BondUnknownTypeError(), std::exception);
+    BOOST_CHECK_THROW(throw BondInvalidSizeError(2), std::exception);
+    BOOST_CHECK_EQUAL(BondInvalidSizeError(2).size, 2);
   }
 
   // check exceptions
@@ -418,7 +469,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 }
 
 int main(int argc, char **argv) {
-  espresso::system = EspressoSystemStandAlone(argc, argv).get_handle();
+  mpi_init_stand_alone(argc, argv);
+  espresso::system = System::System::create();
+  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+  ::System::set_system(espresso::system);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

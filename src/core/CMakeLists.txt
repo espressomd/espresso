@@ -49,7 +49,6 @@ add_library(
   system/GpuParticleData.cpp
   system/System.cpp
   PartCfg.cpp
-  EspressoSystemStandAlone.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY

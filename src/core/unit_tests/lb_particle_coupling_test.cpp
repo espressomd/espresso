@@ -33,9 +33,9 @@ namespace utf = boost::unit_test;
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
 
-#include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "global_ghost_flags.hpp"
@@ -91,7 +91,7 @@ std::vector<double> const kTs{0., 1E-4};
 
 namespace espresso {
 // ESPResSo system instance
-static std::unique_ptr<EspressoSystemStandAlone> system;
+static std::shared_ptr<System::System> system;
 // ESPResSo actors
 static std::shared_ptr<LB::LBWalberlaParams> lb_params;
 static std::shared_ptr<LatticeWalberla> lb_lattice;
@@ -110,10 +110,10 @@ static auto make_lb_actor() {
 }
 
 static void add_lb_actor() {
-  System::get_system().lb.set<::LB::LBWalberla>(lb_fluid, lb_params);
+  espresso::system->lb.set<::LB::LBWalberla>(lb_fluid, lb_params);
 }
 
-static void remove_lb_actor() { System::get_system().lb.reset(); }
+static void remove_lb_actor() { espresso::system->lb.reset(); }
 
 static void set_lb_kT(double kT) {
   lb_fluid->set_collision_model(kT, params.seed);
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(rng_initial_state) {
 BOOST_AUTO_TEST_CASE(rng) {
   lb_lbcoupling_set_rng_state(17);
   lb_particle_coupling.gamma = 0.2;
-  auto &lb = System::get_system().lb;
+  auto &lb = espresso::system->lb;
 
   LB::ParticleCoupling coupling{lb, true, params.time_step, 1.};
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(rng) {
 
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Particle p{};
-  auto &lb = System::get_system().lb;
+  auto &lb = espresso::system->lb;
   LB::ParticleCoupling coupling{lb, false, params.time_step};
   BOOST_CHECK_EQUAL(coupling.lb_drift_velocity_offset(p).norm(), 0);
   Utils::Vector3d expected{};
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
 
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
-  auto &lb = System::get_system().lb;
+  auto &lb = espresso::system->lb;
   Particle p{};
   p.v() = {-2.5, 1.5, 2.};
   p.pos() = espresso::lb_fluid->get_lattice().get_local_domain().first;
@@ -249,7 +249,7 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 #ifdef ENGINE
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
-  auto &lb = System::get_system().lb;
+  auto &lb = espresso::system->lb;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   Particle p{};
@@ -306,7 +306,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
   lb_lbcoupling_set_rng_state(17);
-  auto &lb = System::get_system().lb;
+  auto &lb = espresso::system->lb;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
@@ -346,7 +346,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   auto const rank = comm.rank();
   espresso::set_lb_kT(kT);
   lb_lbcoupling_set_rng_state(17);
-  auto &system = System::get_system();
+  auto &system = *espresso::system;
   auto &cell_structure = *system.cell_structure;
   auto &lb = system.lb;
   auto const &box_geo = *system.box_geo;
@@ -372,7 +372,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 #endif
 
   LB::ParticleCoupling coupling{lb, thermo_virtual, params.time_step};
-  auto const p_opt = copy_particle_to_head_node(comm, pid);
+  auto const p_opt = copy_particle_to_head_node(comm, system, pid);
   auto expected = Utils::Vector3d{};
   if (rank == 0) {
     auto const &p = *p_opt;
@@ -389,7 +389,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   for (bool with_ghosts : {false, true}) {
     {
       if (with_ghosts) {
-        cells_update_ghosts(cell_structure, box_geo, global_ghost_flags());
+        cell_structure.update_ghosts_and_resort_particle(global_ghost_flags());
       }
       if (rank == 0) {
         auto const particles = cell_structure.local_particles();
@@ -445,7 +445,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const ghost_particles = cell_structure.ghost_particles();
       LB::couple_particles(thermo_virtual, particles, ghost_particles,
                            params.time_step);
-      auto const p_opt = copy_particle_to_head_node(comm, pid);
+      auto const p_opt = copy_particle_to_head_node(comm, system, pid);
       if (rank == 0) {
         auto const &p = *p_opt;
         BOOST_CHECK_EQUAL(p.force().norm(), 0.);
@@ -460,7 +460,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const ghost_particles = cell_structure.ghost_particles();
       Utils::Vector3d lb_before{};
       {
-        auto const p_opt = copy_particle_to_head_node(comm, pid);
+        auto const p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {
           auto const &p = *p_opt;
           // get original LB force
@@ -471,7 +471,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       LB::couple_particles(thermo_virtual, particles, ghost_particles,
                            params.time_step);
       {
-        auto const p_opt = copy_particle_to_head_node(comm, pid);
+        auto const p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {
           auto const &p = *p_opt;
           // check particle force
@@ -512,7 +512,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
 BOOST_AUTO_TEST_CASE(runtime_exceptions) {
   boost::mpi::communicator world;
-  auto &lb = System::get_system().lb;
+  auto &lb = espresso::system->lb;
   // LB prevents changing most of the system state
   {
     BOOST_CHECK_THROW(lb.on_boxl_change(), std::runtime_error);
@@ -550,7 +550,7 @@ bool test_lb_domain_mismatch_local() {
   auto lb_instance = std::make_shared<LB::LBWalberla>(ptr, params);
   if (world.rank() == 0) {
     try {
-      lb_instance->sanity_checks();
+      lb_instance->sanity_checks(*espresso::system);
     } catch (std::runtime_error const &err) {
       auto const what_ref = std::string("waLBerla and ESPResSo disagree "
                                         "about domain decomposition.");
@@ -562,7 +562,7 @@ bool test_lb_domain_mismatch_local() {
 
 BOOST_AUTO_TEST_CASE(lb_exceptions) {
   boost::mpi::communicator world;
-  auto &lb = System::get_system().lb;
+  auto &lb = espresso::system->lb;
   // LB exceptions mechanism
   {
     using std::exception;
@@ -628,10 +628,13 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
 }
 
 int main(int argc, char **argv) {
-  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  mpi_init_stand_alone(argc, argv);
+  espresso::system = System::System::create();
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
-  espresso::system->set_skin(params.skin);
+  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+  espresso::system->cell_structure->set_verlet_skin(params.skin);
+  ::System::set_system(espresso::system);
 
   boost::mpi::communicator world;
   assert(world.size() <= 2);

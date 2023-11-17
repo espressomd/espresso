@@ -54,7 +54,7 @@ protected:
   using System::Leaf::m_system;
   std::shared_ptr<CoreActorClass> m_actor;
 
-  void on_bind_system(::System::System &system) override {
+  void on_bind_system(::System::System &) override {
     m_actor->bind_system(m_system.lock());
   }
 

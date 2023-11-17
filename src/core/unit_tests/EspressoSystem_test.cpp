@@ -62,9 +62,8 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
                         *boost::unit_test::precondition(has_gpu)) {
   auto const rank = boost::mpi::communicator().rank();
 
-  auto system = std::make_shared<::System::System>();
+  auto system = ::System::System::create();
   System::set_system(system);
-  system->init();
   system->set_cell_structure_topology(CellStructureType::REGULAR);
   auto &gpu = system->gpu;
 
@@ -152,10 +151,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
 }
 
 int main(int argc, char **argv) {
-  auto mpi_env = mpi_init(argc, argv);
-
-  // initialize the MpiCallbacks framework
-  Communication::init(mpi_env);
+  mpi_init_stand_alone(argc, argv);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

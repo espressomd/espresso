@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_HYBRID_DECOMPOSITION_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_HYBRID_DECOMPOSITION_HPP
+#pragma once
 
 #include "cell_system/AtomDecomposition.hpp"
 #include "cell_system/ParticleDecomposition.hpp"
@@ -144,5 +143,3 @@ public:
 private:
   std::size_t count_particles(std::vector<Cell *> const &local_cells) const;
 };
-
-#endif

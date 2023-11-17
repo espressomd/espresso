@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_PARTICLE_DECOMPOSITION_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_PARTICLE_DECOMPOSITION_HPP
+
+#pragma once
 
 #include "cell_system/Cell.hpp"
 
@@ -134,5 +134,3 @@ public:
 
   virtual ~ParticleDecomposition() = default;
 };
-
-#endif

@@ -162,14 +162,16 @@ void System::do_construct(VariantMap const &params) {
    * runtime errors about the local geometry being smaller
    * than the interaction range would be raised.
    */
-  m_instance = std::make_shared<::System::System>();
+  m_instance = ::System::System::create();
   ::System::set_system(m_instance);
-  m_instance->init();
 
   // domain decomposition can only be set after box_l is set
   m_instance->set_cell_structure_topology(CellStructureType::NSQUARE);
   do_set_parameter("box_l", params.at("box_l"));
   m_instance->set_cell_structure_topology(CellStructureType::REGULAR);
+
+  m_instance->lb.bind_system(m_instance);
+  m_instance->ek.bind_system(m_instance);
 
   for (auto const &key : get_parameter_insertion_order()) {
     if (key != "box_l" and params.count(key) != 0ul) {

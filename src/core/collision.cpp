@@ -25,7 +25,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -655,8 +654,8 @@ void handle_collisions(CellStructure &cell_structure) {
     // If any node had a collision, all nodes need to resort
     if (!gathered_queue.empty()) {
       cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-      cells_update_ghosts(cell_structure, box_geo,
-                          Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS);
+      cell_structure.update_ghosts_and_resort_particle(
+          Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS);
     }
   }    // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE

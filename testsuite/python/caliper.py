@@ -30,7 +30,7 @@ calc_energies
   short_range_loop
 integrate
   Integration loop
-    force_calc
+    calculate_forces
       copy_forces_from_GPU
       short_range_loop
       calc_long_range_forces

@@ -60,7 +60,8 @@
  *  and wall charges. For each electrostatic method, the proper functions
  *  for short- and long-range parts are called. Long-range parts are calculated
  *  directly, short-range parts need helper functions according to the particle
- *  data organisation. This is a modified version of \ref force_calc.
+ *  data organisation. This is a modified version of
+ *  @ref System::System::calculate_forces.
  */
 static void force_calc_icc(
     CellStructure &cell_structure, ParticleRange const &particles,

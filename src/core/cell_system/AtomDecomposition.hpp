@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_ATOM_DECOMPOSITION_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_ATOM_DECOMPOSITION_HPP
+#pragma once
 
 #include "cell_system/ParticleDecomposition.hpp"
 
@@ -158,5 +157,3 @@ private:
    */
   bool has_id(int id) const { return id_to_rank(id) == m_comm.rank(); }
 };
-
-#endif

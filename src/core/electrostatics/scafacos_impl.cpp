@@ -95,7 +95,7 @@ void CoulombScafacosImpl::tune_r_cut() {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
-  auto const skin = system.get_verlet_skin();
+  auto const verlet_skin = system.cell_structure->get_verlet_skin();
 
   auto const min_box_l = *boost::min_element(box_geo.length());
   auto const min_local_box_l = *boost::min_element(local_geo.length());
@@ -104,7 +104,7 @@ void CoulombScafacosImpl::tune_r_cut() {
    * (e.g. p2nfft, p3m, ewald) if the mesh size is not fixed (ScaFaCoS
    * either hangs or allocates too much memory) */
   auto r_min = 1.0;
-  auto r_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
+  auto r_max = std::min(min_local_box_l, min_box_l / 2.0) - verlet_skin;
   assert(r_max >= r_min);
   auto t_min = 0.0;
   auto t_max = std::numeric_limits<double>::max();

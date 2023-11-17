@@ -22,6 +22,7 @@
 #ifdef WALBERLA
 
 #include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "ek/EKReactions.hpp"
 #include "ek/EKWalberla.hpp"
 #include "errorhandling.hpp"
@@ -109,16 +110,20 @@ void EKWalberla::veto_time_step(double time_step) const {
   walberla_tau_sanity_checks("EK", ek_container->get_tau(), time_step);
 }
 
-void EKWalberla::sanity_checks() const {
-  auto const &box_geo = *System::get_system().box_geo;
+void EKWalberla::sanity_checks(System::System const &system) const {
+  auto const &box_geo = *system.box_geo;
   auto const &lattice = ek_container->get_lattice();
   auto const agrid = box_geo.length()[0] / lattice.get_grid_dimensions()[0];
-  auto [my_left, my_right] = lattice.get_local_domain();
-  my_left *= agrid;
-  my_right *= agrid;
-  walberla_agrid_sanity_checks("EK", my_left, my_right, agrid);
+  auto [ek_left, ek_right] = lattice.get_local_domain();
+  ek_left *= agrid;
+  ek_right *= agrid;
+  auto const &md_left = system.local_geo->my_left();
+  auto const &md_right = system.local_geo->my_right();
+  walberla_agrid_sanity_checks("EK", md_left, md_right, ek_left, ek_right,
+                               agrid);
   // EK time step and MD time step must agree
-  walberla_tau_sanity_checks("EK", ek_container->get_tau());
+  walberla_tau_sanity_checks("EK", ek_container->get_tau(),
+                             system.get_time_step());
 }
 
 } // namespace EK

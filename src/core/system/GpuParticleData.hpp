@@ -25,6 +25,7 @@
 
 #include "ParticleRange.hpp"
 #include "cuda/CudaHostAllocator.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -47,7 +48,7 @@
  * memory is allocated and populated at every time step, even when the GPU
  * method that originally requested the data is disabled.
  */
-class GpuParticleData {
+class GpuParticleData : public System::Leaf<GpuParticleData> {
 public:
   /** @brief Particle properties that need to be communicated to the GPU. */
   struct prop {
@@ -110,7 +111,7 @@ public:
       copy_particles_to_device();
     }
   }
-  void init();
+  void initialize();
   void enable_property(std::size_t property);
   void clear_energy_on_device();
   void copy_forces_to_host(ParticleRange const &particles, int this_node);

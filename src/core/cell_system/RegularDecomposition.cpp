@@ -391,7 +391,6 @@ template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
 
 void RegularDecomposition::init_cell_interactions() {
 
-  auto const &box_geo = *System::get_system().box_geo;
   auto const halo = Utils::Vector3i{1, 1, 1};
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
   auto const &node_pos = cart_info.coords;
@@ -450,7 +449,7 @@ void RegularDecomposition::init_cell_interactions() {
         /* In non-periodic directions, the halo needs not
          * be considered. */
         for (int i = 0; i < 3; i++) {
-          if (not box_geo.periodic(i)) {
+          if (not m_box.periodic(i)) {
             lower_index[i] = std::max(0, lower_index[i]);
             upper_index[i] = std::min(global_size[i] - 1, upper_index[i]);
           }

@@ -35,8 +35,8 @@ namespace bdata = boost::unit_test::data;
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
 
-#include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "integrate.hpp"
@@ -58,7 +58,7 @@ namespace bdata = boost::unit_test::data;
 
 namespace espresso {
 // ESPResSo system instance
-static std::unique_ptr<EspressoSystemStandAlone> system;
+static std::shared_ptr<System::System> system;
 } // namespace espresso
 
 namespace Testing {
@@ -153,9 +153,10 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   auto const rank = comm.rank();
 
   auto const box_l = 8.;
-  espresso::system->set_box_l(Utils::Vector3d::broadcast(box_l));
-  espresso::system->set_node_grid(node_grid);
-  auto &system = System::get_system();
+  auto &system = *espresso::system;
+  system.set_box_l(Utils::Vector3d::broadcast(box_l));
+  ::communicator.set_node_grid(node_grid);
+  system.on_node_grid_change();
 
   // particle properties
   auto const pid1 = 9;
@@ -180,8 +181,8 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   // set up velocity-Verlet integrator
   auto const time_step = 0.01;
   auto const skin = 0.1;
-  espresso::system->set_time_step(time_step);
-  espresso::system->set_skin(skin);
+  system.set_time_step(time_step);
+  system.cell_structure->set_verlet_skin(skin);
   integration_helper.get().set_integrator();
 
   // If the Verlet list is not updated, two particles initially placed in
@@ -206,8 +207,8 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
     // integrate until both particles are closer than cutoff
     {
       system.integrate(11, INTEG_REUSE_FORCES_CONDITIONALLY);
-      auto const p1_opt = copy_particle_to_head_node(comm, pid1);
-      auto const p2_opt = copy_particle_to_head_node(comm, pid2);
+      auto const p1_opt = copy_particle_to_head_node(comm, system, pid1);
+      auto const p2_opt = copy_particle_to_head_node(comm, system, pid2);
       if (rank == 0) {
         auto const &p1 = *p1_opt;
         auto const &p2 = *p2_opt;
@@ -218,9 +219,9 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
     // check forces and Verlet update
     {
       system.integrate(1, INTEG_REUSE_FORCES_CONDITIONALLY);
-      auto const p1_opt = copy_particle_to_head_node(comm, pid1);
+      auto const p1_opt = copy_particle_to_head_node(comm, system, pid1);
 #ifdef EXTERNAL_FORCES
-      auto const p2_opt = copy_particle_to_head_node(comm, pid2);
+      auto const p2_opt = copy_particle_to_head_node(comm, system, pid2);
 #endif // EXTERNAL_FORCES
       if (rank == 0) {
         auto const &p1 = *p1_opt;
@@ -244,8 +245,8 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
   {
     ::set_particle_pos(pid3, {4. + 0.10, 1., 1.0});
     {
-      auto const p2_opt = copy_particle_to_head_node(comm, pid2);
-      auto const p3_opt = copy_particle_to_head_node(comm, pid3);
+      auto const p2_opt = copy_particle_to_head_node(comm, system, pid2);
+      auto const p3_opt = copy_particle_to_head_node(comm, system, pid3);
       if (rank == 0) {
         auto const &p2 = *p2_opt;
         auto const &p3 = *p3_opt;
@@ -255,7 +256,7 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
     }
     {
       system.integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
-      auto const p3_opt = copy_particle_to_head_node(comm, pid3);
+      auto const p3_opt = copy_particle_to_head_node(comm, system, pid3);
       if (rank == 0) {
         auto const &p3 = *p3_opt;
         BOOST_CHECK_LT(get_dist_from_last_verlet_update(p3), skin / 2.);
@@ -265,7 +266,10 @@ BOOST_DATA_TEST_CASE_F(ParticleFactory, verlet_list_update,
 }
 
 int main(int argc, char **argv) {
-  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  mpi_init_stand_alone(argc, argv);
+  espresso::system = System::System::create();
+  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+  ::System::set_system(espresso::system);
   // the test case only works for 4 MPI ranks
   boost::mpi::communicator world;
   int error_code = 0;

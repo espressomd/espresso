@@ -66,16 +66,12 @@ extern int integ_switch;
 /** If true, the forces will be recalculated before the next integration. */
 extern bool recalc_forces;
 
-/** Check integrator parameters and incompatibilities between the integrator
- *  and the currently active thermostat(s).
- */
-void integrator_sanity_checks();
-
 #ifdef WALBERLA
 void walberla_tau_sanity_checks(std::string method, double tau,
                                 double time_step);
-void walberla_tau_sanity_checks(std::string method, double tau);
 void walberla_agrid_sanity_checks(std::string method,
+                                  Utils::Vector3d const &geo_left,
+                                  Utils::Vector3d const &geo_right,
                                   Utils::Vector3d const &lattice_left,
                                   Utils::Vector3d const &lattice_right,
                                   double agrid);

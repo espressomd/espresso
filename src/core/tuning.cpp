@@ -142,10 +142,10 @@ void System::tune_verlet_skin(double min_skin, double max_skin, double tol,
     b = max_permissible_skin;
 
   while (fabs(a - b) > tol) {
-    set_verlet_skin(a);
+    cell_structure->set_verlet_skin(a);
     auto const time_a = time_calc(*this, int_steps);
 
-    set_verlet_skin(b);
+    cell_structure->set_verlet_skin(b);
     auto const time_b = time_calc(*this, int_steps);
 
     if (time_a > time_b) {
@@ -154,6 +154,6 @@ void System::tune_verlet_skin(double min_skin, double max_skin, double tol,
       b = 0.5 * (a + b);
     }
   }
-  set_verlet_skin(0.5 * (a + b));
+  cell_structure->set_verlet_skin(0.5 * (a + b));
 }
 } // namespace System

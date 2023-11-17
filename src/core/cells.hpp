@@ -64,23 +64,6 @@
 #include <utility>
 #include <vector>
 
-/** Flags for particle exchange and resorting: whether to do a global
- *  exchange or assume that particles did not move much (faster, used
- *  during integration, where moving far is a catastrophe anyways).
- */
-enum {
-  /** Do neighbor exchange. */
-  CELL_NEIGHBOR_EXCHANGE = 0,
-  /** Do global exchange. */
-  CELL_GLOBAL_EXCHANGE = 1
-};
-
-/** Update ghost information. If needed,
- *  the particles are also resorted.
- */
-void cells_update_ghosts(CellStructure &cell_structure,
-                         BoxGeometry const &box_geo, unsigned int data_parts);
-
 /**
  * @brief Get pairs closer than @p distance from the cells.
  *

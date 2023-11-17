@@ -96,7 +96,8 @@ inline void add_non_bonded_pair_virials(
 #endif // DIPOLES
 }
 
-boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_virial_pressure_tensor(
+inline boost::optional<Utils::Matrix<double, 3, 3>>
+calc_bonded_virial_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Particle const &p2, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
@@ -111,7 +112,7 @@ boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_virial_pressure_tensor(
   return {};
 }
 
-boost::optional<Utils::Matrix<double, 3, 3>>
+inline boost::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
                                        Particle const &p3,

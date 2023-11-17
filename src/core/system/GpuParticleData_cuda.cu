@@ -114,9 +114,9 @@ public:
   float *particle_q_device = nullptr;
 #endif
 
-  static auto make_shared() {
+  static auto make_shared(ResourceCleanup &cleanup_queue) {
     auto obj = std::make_shared<GpuParticleData::Storage>();
-    System::get_system().cleanup_queue.push<DeviceMemory>(obj);
+    cleanup_queue.push<DeviceMemory>(obj);
     return obj;
   }
 
@@ -149,8 +149,8 @@ public:
 #endif
 };
 
-void GpuParticleData::init() {
-  m_data = GpuParticleData::Storage::make_shared();
+void GpuParticleData::initialize() {
+  m_data = GpuParticleData::Storage::make_shared(get_system().cleanup_queue);
 }
 
 GpuParticleData::~GpuParticleData() {}

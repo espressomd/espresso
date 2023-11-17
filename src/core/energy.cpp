@@ -21,7 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "constraints.hpp"
 #include "energy_inline.hpp"
 #include "forces.hpp"
@@ -117,7 +117,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 
 double System::particle_short_range_energy_contribution(int pid) {
   if (cell_structure->get_resort_particles()) {
-    cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
+    cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
   }
 
   auto ret = 0.0;

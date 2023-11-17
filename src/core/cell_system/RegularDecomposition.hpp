@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_REGULAR_DECOMPOSITION_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_REGULAR_DECOMPOSITION_HPP
+#pragma once
 
 #include "cell_system/ParticleDecomposition.hpp"
 
@@ -238,5 +237,3 @@ private:
    */
   static constexpr int max_num_cells = 32768;
 };
-
-#endif

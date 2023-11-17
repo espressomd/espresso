@@ -94,9 +94,9 @@ CellSystem::CellSystem() {
            }
            throw Exception("");
          }
-         get_system().set_verlet_skin(new_skin);
+         get_cell_structure().set_verlet_skin(new_skin);
        },
-       [this]() { return get_system().get_verlet_skin(); }},
+       [this]() { return get_cell_structure().get_verlet_skin(); }},
       {"decomposition_type", AutoParameter::read_only,
        [this]() {
          return cs_type_to_name.at(get_cell_structure().decomposition_type());
@@ -157,7 +157,7 @@ Variant CellSystem::do_call_method(std::string const &name,
               {"regular", hd.count_particles_in_regular()},
               {"n_square", hd.count_particles_in_n_square()}}};
     }
-    state["verlet_reuse"] = m_cell_structure->get_verlet_reuse();
+    state["verlet_reuse"] = get_cell_structure().get_verlet_reuse();
     state["n_nodes"] = context()->get_comm().size();
     return state;
   }
@@ -233,7 +233,7 @@ Variant CellSystem::do_call_method(std::string const &name,
         get_value<double>(params, "max_skin"), get_value<double>(params, "tol"),
         get_value<int>(params, "int_steps"),
         get_value_or<bool>(params, "adjust_max_skin", false));
-    return m_cell_structure->get_verlet_skin();
+    return get_cell_structure().get_verlet_skin();
   }
   if (name == "get_max_range") {
     return get_cell_structure().max_range();
@@ -243,7 +243,7 @@ Variant CellSystem::do_call_method(std::string const &name,
 
 std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
   auto &cell_structure = get_cell_structure();
-  cell_structure.resort_particles(global_flag, *get_system().box_geo);
+  cell_structure.resort_particles(global_flag);
   clear_particle_node();
   auto const size = static_cast<int>(cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;
@@ -261,11 +261,7 @@ void CellSystem::initialize(CellStructureType const &cs_type,
     auto const ns_types =
         get_value_or<std::vector<int>>(params, "n_square_types", {});
     auto n_square_types = std::set<int>{ns_types.begin(), ns_types.end()};
-    m_cell_structure->set_hybrid_decomposition(
-        context()->get_comm(), cutoff_regular,
-        m_cell_structure->get_verlet_skin(), *system.box_geo, *system.local_geo,
-        n_square_types);
-    system.on_cell_structure_change();
+    m_cell_structure->set_hybrid_decomposition(cutoff_regular, n_square_types);
   } else {
     system.set_cell_structure_topology(cs_type);
   }

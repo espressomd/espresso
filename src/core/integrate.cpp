@@ -148,8 +148,8 @@ template <class Kernel> void run_kernel(BoxGeometry const &box_geo) {
 }
 } // namespace LeesEdwards
 
-void integrator_sanity_checks() {
-  if (get_time_step() < 0.0) {
+void System::System::integrator_sanity_checks() const {
+  if (time_step <= 0.) {
     runtimeErrorMsg() << "time_step not set";
   }
   switch (integ_switch) {
@@ -167,7 +167,7 @@ void integrator_sanity_checks() {
   case INTEG_METHOD_NPT_ISO:
     if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO)
       runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
-    if (System::get_system().box_geo->type() == BoxType::LEES_EDWARDS)
+    if (box_geo->type() == BoxType::LEES_EDWARDS)
       runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
     break;
 #endif
@@ -207,36 +207,27 @@ void walberla_tau_sanity_checks(std::string method, double tau,
                                 std::to_string(factor));
 }
 
-void walberla_tau_sanity_checks(std::string method, double tau) {
-  walberla_tau_sanity_checks(std::move(method), tau, get_time_step());
-}
-
 void walberla_agrid_sanity_checks(std::string method,
+                                  Utils::Vector3d const &geo_left,
+                                  Utils::Vector3d const &geo_right,
                                   Utils::Vector3d const &lattice_left,
                                   Utils::Vector3d const &lattice_right,
                                   double agrid) {
   // waLBerla and ESPResSo must agree on domain decomposition
-  auto const &system = System::get_system();
-  auto const &my_left = system.local_geo->my_left();
-  auto const &my_right = system.local_geo->my_right();
   auto const tol = agrid / 1E6;
-  if ((lattice_left - my_left).norm2() > tol or
-      (lattice_right - my_right).norm2() > tol) {
+  if ((lattice_left - geo_left).norm2() > tol or
+      (lattice_right - geo_right).norm2() > tol) {
     runtimeErrorMsg() << "\nMPI rank " << ::this_node << ": "
-                      << "left ESPResSo: [" << my_left << "], "
+                      << "left ESPResSo: [" << geo_left << "], "
                       << "left waLBerla: [" << lattice_left << "]"
                       << "\nMPI rank " << ::this_node << ": "
-                      << "right ESPResSo: [" << my_right << "], "
+                      << "right ESPResSo: [" << geo_right << "], "
                       << "right waLBerla: [" << lattice_right << "]";
     throw std::runtime_error(
         "waLBerla and ESPResSo disagree about domain decomposition.");
   }
 }
 #endif
-
-static auto calc_md_steps_per_tau(double tau) {
-  return static_cast<int>(std::round(tau / get_time_step()));
-}
 
 static void resort_particles_if_needed(System::System &system) {
   auto &cell_structure = *system.cell_structure;
@@ -316,8 +307,6 @@ int System::integrate(int n_steps, int reuse_forces) {
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  auto const time_step = get_time_step();
-
   // Prepare particle structure and run sanity checks of all active algorithms
   on_integration_start();
 
@@ -338,9 +327,9 @@ int System::integrate(int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
+    cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
 
-    force_calc(*this, time_step, temperature);
+    calculate_forces(::temperature);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -373,6 +362,9 @@ int System::integrate(int n_steps, int reuse_forces) {
     lb_active = lb.is_solver_set();
     ek_active = ek.is_ready_for_propagation();
   }
+  auto const calc_md_steps_per_tau = [this](double tau) {
+    return static_cast<int>(std::round(tau / time_step));
+  };
 
 #ifdef VALGRIND
   CALLGRIND_START_INSTRUMENTATION;
@@ -426,11 +418,11 @@ int System::integrate(int n_steps, int reuse_forces) {
       n_verlet_updates++;
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts(*cell_structure, *box_geo, global_ghost_flags());
+    cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
 
     particles = cell_structure->local_particles();
 
-    force_calc(*this, time_step, temperature);
+    calculate_forces(::temperature);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc(time_step);
@@ -552,7 +544,7 @@ int System::integrate_with_signal_handler(int n_steps, int reuse_forces,
   /* if skin wasn't set, do an educated guess now */
   if (not cell_structure->is_verlet_skin_set()) {
     try {
-      set_verlet_skin_heuristic();
+      cell_structure->set_verlet_skin_heuristic();
     } catch (...) {
       if (comm_cart.rank() == 0) {
         throw;
