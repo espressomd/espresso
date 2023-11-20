@@ -41,6 +41,7 @@
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
+#include "ParticlePropertyIterator.hpp"
 #include "ParticleRange.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -63,6 +64,7 @@
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/range/combine.hpp>
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
@@ -352,8 +354,9 @@ void CoulombP3M::assign_charge(double q, Utils::Vector3d const &real_pos) {
 }
 
 template <int cao> struct AssignForces {
+  template <typename combined_ranges>
   void operator()(p3m_data_struct &p3m, double force_prefac,
-                  ParticleRange const &particles) const {
+                  combined_ranges const &p_q_force_range) const {
     using Utils::make_const_span;
     using Utils::Span;
     using Utils::Vector;
@@ -363,9 +366,11 @@ template <int cao> struct AssignForces {
     /* charged particle counter */
     auto p_index = std::size_t{0ul};
 
-    for (auto &p : particles) {
-      if (p.q() != 0.0) {
-        auto const pref = p.q() * force_prefac;
+    for (auto zipped : p_q_force_range) {
+      auto p_q = boost::get<0>(zipped);
+      auto &p_force = boost::get<1>(zipped);
+      if (p_q != 0.0) {
+        auto const pref = p_q * force_prefac;
         auto const w = p3m.inter_weights.load<cao>(p_index);
 
         Utils::Vector3d force{};
@@ -374,22 +379,23 @@ template <int cao> struct AssignForces {
                                        p3m.E_mesh[2][ind]};
         });
 
-        p.force() -= pref * force;
+        p_force -= pref * force;
         ++p_index;
       }
     }
   }
 };
 
+template <typename combined_ranges>
 static auto calc_dipole_moment(boost::mpi::communicator const &comm,
-                               ParticleRange const &particles,
-                               BoxGeometry const &box_geo) {
-  auto const local_dip = boost::accumulate(
-      particles, Utils::Vector3d{},
-      [&box_geo](Utils::Vector3d const &dip, auto const &p) {
-        return dip + p.q() * box_geo.unfolded_position(p.pos(), p.image_box());
-      });
-
+                               combined_ranges const &p_q_unfolded_pos_range) {
+  auto const local_dip =
+      boost::accumulate(p_q_unfolded_pos_range, Utils::Vector3d{},
+                        [](Utils::Vector3d const &dip, auto const &q_pos) {
+                          auto const p_q = boost::get<0>(q_pos);
+                          auto const &p_unfolded_pos = boost::get<1>(q_pos);
+                          return dip + p_q * p_unfolded_pos;
+                        });
   return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
 }
 
@@ -465,13 +471,19 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
   p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
   fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
 
+  auto p_q_range = ParticlePropertyRange::charge_range(particles);
+  auto p_force_range = ParticlePropertyRange::force_range(particles);
+  auto p_unfolded_pos_range =
+      ParticlePropertyRange::unfolded_pos_range(particles, box_geo);
+
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
   /* The dipole moment is only needed if we don't have metallic boundaries. */
   auto const box_dipole =
       (p3m.params.epsilon != P3M_EPSILON_METALLIC)
-          ? calc_dipole_moment(comm_cart, particles, box_geo)
-          : Utils::Vector3d::broadcast(0.);
+          ? std::make_optional(calc_dipole_moment(
+                comm_cart, boost::combine(p_q_range, p_unfolded_pos_range)))
+          : std::nullopt;
   auto const volume = box_geo.volume();
   auto const pref = 4. * Utils::pi() / volume / (2. * p3m.params.epsilon + 1.);
 
@@ -518,14 +530,17 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                        p3m.local_mesh.dim);
 
     auto const force_prefac = prefactor / volume;
-    Utils::integral_parameter<int, AssignForces, 1, 7>(p3m.params.cao, p3m,
-                                                       force_prefac, particles);
+    Utils::integral_parameter<int, AssignForces, 1, 7>(
+        p3m.params.cao, p3m, force_prefac,
+        boost::combine(p_q_range, p_force_range));
 
     // add dipole forces
-    if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-      auto const dm = prefactor * pref * box_dipole;
-      for (auto &p : particles) {
-        p.force() -= p.q() * dm;
+    if (box_dipole) {
+      auto const dm = prefactor * pref * box_dipole.value();
+      for (auto zipped : boost::combine(p_q_range, p_force_range)) {
+        auto p_q = boost::get<0>(zipped);
+        auto &p_force = boost::get<1>(zipped);
+        p_force -= p_q * dm;
       }
     }
   }
@@ -549,8 +564,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
       energy -= p3m.square_sum_q * Utils::pi() /
                 (2. * volume * Utils::sqr(p3m.params.alpha));
       /* dipole correction */
-      if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-        energy += pref * box_dipole.norm2();
+      if (box_dipole) {
+        energy += pref * box_dipole.value().norm2();
       }
     }
     return prefactor * energy;

@@ -65,6 +65,7 @@ tutorial_test(FILE test_electrodes_1.py)
 # tutorial_test(FILE test_electrodes_2.py) # TODO: unstable, see issue #4798
 tutorial_test(FILE test_constant_pH__interactions.py)
 tutorial_test(FILE test_widom_insertion.py)
+tutorial_test(FILE test_grand_canonical_monte_carlo.py)
 
 add_custom_target(
   check_tutorials
