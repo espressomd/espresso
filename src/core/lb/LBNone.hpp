@@ -21,6 +21,10 @@
 
 #include "utils.hpp"
 
+namespace System {
+class System;
+}
+
 namespace LB {
 
 struct LBNone {
@@ -43,7 +47,7 @@ struct LBNone {
   }
   Utils::Vector3d get_momentum() const { throw NoLBActive{}; }
   void veto_time_step(double) const { throw NoLBActive{}; }
-  void sanity_checks() const { throw NoLBActive{}; }
+  void sanity_checks(System::System const &) const { throw NoLBActive{}; }
   void lebc_sanity_checks(unsigned int, unsigned int) const {
     throw NoLBActive{};
   }

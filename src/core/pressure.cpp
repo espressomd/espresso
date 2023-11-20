@@ -18,28 +18,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *  Implementation of pressure.hpp.
- */
 
-#include "pressure.hpp"
+#include "config/config.hpp"
+
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
-#include "event.hpp"
-#include "interactions.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "pressure_inline.hpp"
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
 #include "virtual_sites.hpp"
-
-#include "config/config.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -48,9 +41,12 @@
 
 #include <memory>
 
-std::shared_ptr<Observable_stat> calculate_pressure() {
+namespace System {
+std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
-  auto obs_pressure_ptr = std::make_shared<Observable_stat>(9);
+  auto obs_pressure_ptr = std::make_shared<Observable_stat>(
+      9ul, static_cast<std::size_t>(::bonded_ia_params.get_next_key()),
+      nonbonded_ias->get_max_seen_particle_type());
 
   if (long_range_interactions_sanity_checks()) {
     return obs_pressure_ptr;
@@ -60,24 +56,20 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
 
   on_observable_calc();
 
-  auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
-  auto const volume = system.box_geo->volume();
-  auto const local_parts = cell_structure.local_particles();
-  auto const n_nodes = ::communicator.size;
+  auto const volume = box_geo->volume();
+  auto const local_parts = cell_structure->local_particles();
 
   for (auto const &p : local_parts) {
     add_kinetic_virials(p, obs_pressure);
   }
 
-  auto const &coulomb = system.coulomb;
   auto const coulomb_force_kernel = coulomb.pair_force_kernel();
   auto const coulomb_pressure_kernel = coulomb.pair_pressure_kernel();
 
   short_range_loop(
-      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
-       box_geo = system.box_geo](Particle const &p1, int bond_id,
-                                 Utils::Span<Particle *> partners) {
+      [this, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       &obs_pressure](Particle const &p1, int bond_id,
+                      Utils::Span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
             iaparams, p1, partners, *box_geo, coulomb_force_kernel_ptr);
@@ -93,14 +85,17 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
         }
         return true;
       },
-      [&obs_pressure, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
-       coulomb_pressure_kernel_ptr = get_ptr(coulomb_pressure_kernel)](
-          Particle const &p1, Particle const &p2, Distance const &d) {
-        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2),
-                                    obs_pressure, coulomb_force_kernel_ptr,
-                                    coulomb_pressure_kernel_ptr);
+      [coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
+       coulomb_pressure_kernel_ptr = get_ptr(coulomb_pressure_kernel), this,
+       &obs_pressure](Particle const &p1, Particle const &p2,
+                      Distance const &d) {
+        auto const &ia_params =
+            nonbonded_ias->get_ia_param(p1.type(), p2.type());
+        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2), ia_params,
+                                    coulomb_force_kernel_ptr,
+                                    coulomb_pressure_kernel_ptr, obs_pressure);
       },
-      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded());
+      *cell_structure, maximal_cutoff(), maximal_cutoff_bonded());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -124,3 +119,4 @@ std::shared_ptr<Observable_stat> calculate_pressure() {
   obs_pressure.mpi_reduce();
   return obs_pressure_ptr;
 }
+} // namespace System

@@ -48,10 +48,8 @@
 #include <utility>
 #include <vector>
 
-/** Returns pointer to the cell which corresponds to the position if the
- *  position is in the node's spatial domain otherwise a nullptr.
- */
-Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
+int RegularDecomposition::position_to_cell_index(
+    Utils::Vector3d const &pos) const {
   Utils::Vector3i cpos;
 
   for (unsigned int i = 0u; i < 3u; i++) {
@@ -68,18 +66,17 @@ Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
           m_local_box.boundary()[2u * i])
         cpos[i] = 1;
       else
-        return nullptr;
+        return -1;
     } else if (cpos[i] > cell_grid[i]) {
       if ((!m_box.periodic(i) or (pos[i] < m_box.length()[i])) and
           m_local_box.boundary()[2u * i + 1u])
         cpos[i] = cell_grid[i];
       else
-        return nullptr;
+        return -1;
     }
   }
 
-  auto const ind = get_linear_index(cpos, ghost_cell_grid);
-  return &(cells.at(ind));
+  return get_linear_index(cpos, ghost_cell_grid);
 }
 
 void RegularDecomposition::move_if_local(
@@ -273,7 +270,7 @@ Utils::Vector3d RegularDecomposition::max_cutoff() const {
     return std::min(0.5 * m_box.length()[i], m_local_box.length()[i]);
   };
 
-  return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
+  return {dir_max_range(0u), dir_max_range(1u), dir_max_range(2u)};
 }
 
 Utils::Vector3d RegularDecomposition::max_range() const { return cell_size; }
@@ -394,7 +391,6 @@ template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
 
 void RegularDecomposition::init_cell_interactions() {
 
-  auto const &box_geo = *System::get_system().box_geo;
   auto const halo = Utils::Vector3i{1, 1, 1};
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
   auto const &node_pos = cart_info.coords;
@@ -453,7 +449,7 @@ void RegularDecomposition::init_cell_interactions() {
         /* In non-periodic directions, the halo needs not
          * be considered. */
         for (int i = 0; i < 3; i++) {
-          if (not box_geo.periodic(i)) {
+          if (not m_box.periodic(i)) {
             lower_index[i] = std::max(0, lower_index[i]);
             upper_index[i] = std::min(global_size[i] - 1, upper_index[i]);
           }

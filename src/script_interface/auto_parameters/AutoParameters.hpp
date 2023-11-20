@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
-#define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
+
+#pragma once
 
 #include "script_interface/Exception.hpp"
 #include "script_interface/ObjectHandle.hpp"
@@ -114,10 +114,19 @@ protected:
     for (auto const &p : params) {
       if (m_parameters.count(p.name)) {
         m_parameters.erase(p.name);
+        for (auto it = m_key_order.begin(); it != m_key_order.end(); ++it) {
+          if (*it == p.name) {
+            m_key_order.erase(it);
+            break;
+          }
+        }
       }
+      m_key_order.emplace_back(p.name);
       m_parameters.emplace(p.name, std::move(p));
     }
   }
+
+  auto const &get_parameter_insertion_order() const { return m_key_order; }
 
 public:
   /* ObjectHandle implementation */
@@ -150,9 +159,20 @@ public:
     }
   }
 
+  std::vector<std::pair<std::string, Variant>>
+  serialize_parameters() const final {
+    std::vector<std::pair<std::string, Variant>> parameter_pack{};
+    auto const params = this->get_parameters();
+    for (auto const &key : m_key_order) {
+      parameter_pack.emplace_back(key, params.at(key));
+    }
+    return parameter_pack;
+  }
+
 private:
+  /** @brief Data structure for the stored parameters. */
   std::unordered_map<std::string, AutoParameter> m_parameters;
+  /** @brief Keep track of the insertion order of parameters. */
+  std::vector<std::string> m_key_order;
 };
 } // namespace ScriptInterface
-
-#endif

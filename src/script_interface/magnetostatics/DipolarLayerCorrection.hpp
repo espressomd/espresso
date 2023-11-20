@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_DIPOLAR_LAYER_CORRECTION_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_DIPOLAR_LAYER_CORRECTION_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -49,6 +49,12 @@ class DipolarLayerCorrection
 #endif
       std::shared_ptr<DipolarDSR>>;
   BaseSolver m_solver;
+
+  void on_bind_system(::System::System &system) override {
+    boost::apply_visitor(
+        [this](auto &solver) { solver->bind_system(m_system.lock()); },
+        m_solver);
+  }
 
 public:
   DipolarLayerCorrection() {
@@ -100,4 +106,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // DIPOLES
-#endif

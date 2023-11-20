@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ACTOR_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ACTOR_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -28,6 +27,7 @@
 #include "script_interface/Variant.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -44,14 +44,21 @@ namespace Coulomb {
  * included in this header file for separation of concerns reasons.
  */
 template <class SIClass, class CoreClass>
-class Actor : public AutoParameters<Actor<SIClass, CoreClass>> {
+class Actor : public AutoParameters<Actor<SIClass, CoreClass>, System::Leaf> {
 protected:
   using SIActorClass = SIClass;
   using CoreActorClass = CoreClass;
-  using AutoParameters<Actor<SIClass, CoreClass>>::context;
-  using AutoParameters<Actor<SIClass, CoreClass>>::add_parameters;
-  using AutoParameters<Actor<SIClass, CoreClass>>::do_set_parameter;
+  using ObjectClass = Actor<SIClass, CoreClass>;
+  using AutoParameters<ObjectClass, System::Leaf>::context;
+  using AutoParameters<ObjectClass, System::Leaf>::add_parameters;
+  using AutoParameters<ObjectClass, System::Leaf>::do_set_parameter;
+  using System::Leaf::get_system;
+  using System::Leaf::m_system;
   std::shared_ptr<CoreActorClass> m_actor;
+
+  void on_bind_system(::System::System &) override {
+    m_actor->bind_system(m_system.lock());
+  }
 
 public:
   Actor();
@@ -77,4 +84,3 @@ protected:
 } // namespace ScriptInterface
 
 #endif // ELECTROSTATICS
-#endif

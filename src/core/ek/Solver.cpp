@@ -73,7 +73,8 @@ void Solver::propagate() {
 
 void Solver::sanity_checks() const {
   if (impl->solver) {
-    std::visit([](auto &ptr) { ptr->sanity_checks(); }, *impl->solver);
+    auto const &system = get_system();
+    std::visit([&](auto &ptr) { ptr->sanity_checks(system); }, *impl->solver);
   }
 }
 
@@ -131,7 +132,8 @@ template <>
 void Solver::set<EKWalberla>(std::shared_ptr<EKWalberla> ek_instance) {
   assert(impl);
   assert(not impl->solver.has_value());
-  ek_instance->sanity_checks();
+  auto const &system = get_system();
+  ek_instance->sanity_checks(system);
   impl->solver = ek_instance;
 }
 #endif // WALBERLA

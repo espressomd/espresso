@@ -59,8 +59,7 @@ class DDSGPUTest(ut.TestCase):
             self.system.integrator.set_steepest_descent(
                 f_max=0.0, gamma=0.1, max_displacement=0.1)
             self.system.integrator.run(500)
-            g = espressomd.galilei.GalileiTransform()
-            g.kill_particle_motion(rotation=True)
+            self.system.galilei.kill_particle_motion(rotation=True)
             self.system.integrator.set_vv()
 
             self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()

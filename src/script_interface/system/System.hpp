@@ -30,8 +30,15 @@
 namespace ScriptInterface {
 namespace System {
 
+/**
+ * @brief Script interface wrapper for the system class.
+ *
+ * See @ref SystemClassDesign for more details.
+ */
 class System : public AutoParameters<System> {
+  struct Leaves;
   std::shared_ptr<::System::System> m_instance;
+  std::shared_ptr<Leaves> m_leaves;
 
 public:
   System();

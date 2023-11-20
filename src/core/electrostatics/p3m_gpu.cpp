@@ -34,25 +34,41 @@
 
 #include "communication.hpp"
 
+#include <cassert>
+#include <limits>
+
+static auto get_n_part_safe(GpuParticleData const &gpu) {
+  auto const n_part = gpu.n_particles();
+#ifndef NDEBUG
+  auto constexpr n_part_max = std::numeric_limits<unsigned int>::max();
+  assert(n_part < static_cast<std::size_t>(n_part_max));
+#endif
+  return static_cast<unsigned int>(n_part);
+}
+
 void CoulombP3MGPU::add_long_range_forces(ParticleRange const &) {
   if (this_node == 0) {
-    p3m_gpu_add_farfield_force(*m_gpu_data, prefactor);
+    auto &gpu = get_system().gpu;
+    p3m_gpu_add_farfield_force(*m_gpu_data, gpu, prefactor,
+                               get_n_part_safe(gpu));
   }
 }
 
 void CoulombP3MGPU::init() {
+  auto &system = get_system();
   if (has_actor_of_type<ElectrostaticLayerCorrection>(
-          System::get_system().coulomb.impl->solver)) {
+          system.coulomb.impl->solver)) {
     init_cpu_kernels();
   }
   p3m_gpu_init(m_gpu_data, p3m.params.cao, p3m.params.mesh.data(),
-               p3m.params.alpha);
+               p3m.params.alpha, system.box_geo->length(),
+               get_n_part_safe(system.gpu));
 }
 
 void CoulombP3MGPU::init_cpu_kernels() { CoulombP3M::init(); }
 
 void CoulombP3MGPU::request_gpu() const {
-  auto &gpu_particle_data = System::get_system().gpu;
+  auto &gpu_particle_data = get_system().gpu;
   gpu_particle_data.enable_property(GpuParticleData::prop::force);
   gpu_particle_data.enable_property(GpuParticleData::prop::q);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);

@@ -31,6 +31,9 @@
 #include <utility>
 
 class LBWalberlaBase;
+namespace System {
+class System;
+}
 
 namespace LB {
 
@@ -65,7 +68,7 @@ struct LBWalberla {
                         Utils::Vector3d const &force);
   void propagate();
   void veto_time_step(double time_step) const;
-  void sanity_checks() const;
+  void sanity_checks(System::System const &system) const;
   void lebc_sanity_checks(unsigned int shear_direction,
                           unsigned int shear_plane_normal) const;
 

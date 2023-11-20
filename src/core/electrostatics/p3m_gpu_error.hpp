@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_ERROR_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_ERROR_HPP
+#pragma once
 
 /** @file
  *  P3M electrostatics on GPU.
@@ -33,4 +32,3 @@ double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
                              int npart, double sum_q2, double alpha_L,
                              const double *box);
 #endif // CUDA
-#endif

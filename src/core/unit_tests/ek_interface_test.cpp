@@ -24,7 +24,7 @@
 
 #include "ParticleFactory.hpp"
 
-#include "EspressoSystemStandAlone.hpp"
+#include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "ek/EKReactions.hpp"
@@ -69,7 +69,7 @@ static struct {
 
 namespace espresso {
 // ESPResSo system instance
-static std::unique_ptr<EspressoSystemStandAlone> system;
+static std::shared_ptr<System::System> system;
 // ESPResSo actors
 #ifdef WALBERLA
 static std::shared_ptr<EK::EKWalberla::ek_container_type> ek_container;
@@ -93,11 +93,11 @@ static auto make_ek_actor() {
 
 static void add_ek_actor() {
 #ifdef WALBERLA
-  System::get_system().ek.set<::EK::EKWalberla>(ek_instance);
+  espresso::system->ek.set<::EK::EKWalberla>(ek_instance);
 #endif
 }
 
-static void remove_ek_actor() { System::get_system().ek.reset(); }
+static void remove_ek_actor() { espresso::system->ek.reset(); }
 } // namespace espresso
 
 #ifdef WALBERLA
@@ -132,7 +132,7 @@ static auto get_n_runtime_errors() { return check_runtime_errors_local(); }
 
 #ifdef WALBERLA
 BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
-  auto &ek = System::get_system().ek;
+  auto &ek = espresso::system->ek;
 
   {
     // tau setters and getters
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
 #endif // WALBERLA
 
 BOOST_AUTO_TEST_CASE(ek_interface_none) {
-  auto &ek = System::get_system().ek;
+  auto &ek = espresso::system->ek;
 
   {
     using EK::NoEKActive;
@@ -223,10 +223,13 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
 BOOST_AUTO_TEST_SUITE_END()
 
 int main(int argc, char **argv) {
-  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  mpi_init_stand_alone(argc, argv);
+  espresso::system = System::System::create();
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
-  espresso::system->set_skin(params.skin);
+  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+  espresso::system->cell_structure->set_verlet_skin(params.skin);
+  ::System::set_system(espresso::system);
 
   boost::mpi::communicator world;
   assert(world.size() <= 2);

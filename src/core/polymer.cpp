@@ -30,6 +30,8 @@
 #include "polymer.hpp"
 
 #include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/Constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
@@ -40,10 +42,12 @@
 #include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/optional.hpp>
 
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -67,30 +71,12 @@ template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
   return v;
 }
 
-/** Calculate minimal distance to point.
- *  Note: Particle handles may be invalidated!
- *  @param partCfg particle selection
- *  @param pos  point from which to check for close neighbors
- *  @return the minimal distance of a particle to coordinates @p pos
- */
-static double distto(PartCfg &partCfg, Utils::Vector3d const &pos) {
-  auto const &box_geo = *System::get_system().box_geo;
-  auto mindist_sq = std::numeric_limits<double>::infinity();
-
-  for (auto const &p : partCfg) {
-    auto const d = box_geo.get_mi_vector(pos, p.pos());
-    mindist_sq = std::min(mindist_sq, d.norm2());
-  }
-
-  return std::sqrt(mindist_sq);
-}
-
 /** Determines whether a given position @p pos is valid, i.e., it doesn't
  *  collide with existing or buffered particles, nor with existing constraints
  *  (if @c respect_constraints).
  *  @param pos                   the trial position in question
  *  @param positions             buffered positions to respect
- *  @param partCfg               existing particles to respect
+ *  @param cell_structure        existing particles to respect
  *  @param box_geo               Box geometry
  *  @param min_distance          threshold for the minimum distance between
  *                               trial position and buffered/existing particles
@@ -100,8 +86,16 @@ static double distto(PartCfg &partCfg, Utils::Vector3d const &pos) {
 static bool
 is_valid_position(Utils::Vector3d const &pos,
                   std::vector<std::vector<Utils::Vector3d>> const &positions,
-                  PartCfg &partCfg, BoxGeometry const &box_geo,
-                  double const min_distance, int const respect_constraints) {
+                  CellStructure const &cell_structure,
+                  BoxGeometry const &box_geo, double const min_distance,
+                  int const respect_constraints) {
+
+  struct reduce_min {
+    auto operator()(double const a, double const b) const {
+      return std::min(a, b);
+    }
+  };
+
   // check if constraint is violated
   if (respect_constraints) {
     Utils::Vector3d const folded_pos = box_geo.folded_position(pos);
@@ -124,7 +118,14 @@ is_valid_position(Utils::Vector3d const &pos,
 
   if (min_distance > 0.) {
     // check for collision with existing particles
-    if (distto(partCfg, pos) < min_distance) {
+    auto local_mindist_sq = std::numeric_limits<double>::infinity();
+    for (auto const &p : cell_structure.local_particles()) {
+      auto const d = box_geo.get_mi_vector(pos, p.pos());
+      local_mindist_sq = std::min(local_mindist_sq, d.norm2());
+    }
+    auto const global_mindist_sq =
+        boost::mpi::all_reduce(::comm_cart, local_mindist_sq, reduce_min{});
+    if (std::sqrt(global_mindist_sq) < min_distance) {
       return false;
     }
 
@@ -141,14 +142,14 @@ is_valid_position(Utils::Vector3d const &pos,
 }
 
 std::vector<std::vector<Utils::Vector3d>>
-draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
+draw_polymer_positions(System::System const &system, int const n_polymers,
                        int const beads_per_chain, double const bond_length,
                        std::vector<Utils::Vector3d> const &start_positions,
                        double const min_distance, int const max_tries,
                        int const use_bond_angle, double const bond_angle,
                        int const respect_constraints, int const seed) {
 
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *system.box_geo;
   auto rng = [mt = Random::mt19937(static_cast<unsigned>(seed)),
               dist = std::uniform_real_distribution<double>(
                   0.0, 1.0)]() mutable { return dist(mt); };
@@ -158,10 +159,9 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
     p.reserve(beads_per_chain);
   }
 
-  auto is_valid_pos = [&positions, &partCfg, min_distance, &box_geo,
-                       respect_constraints](Utils::Vector3d const &v) {
-    return is_valid_position(v, positions, partCfg, box_geo, min_distance,
-                             respect_constraints);
+  auto is_valid_pos = [&](Utils::Vector3d const &pos) {
+    return is_valid_position(pos, positions, *system.cell_structure, box_geo,
+                             min_distance, respect_constraints);
   };
 
   for (std::size_t p = 0; p < start_positions.size(); p++) {

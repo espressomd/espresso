@@ -32,8 +32,7 @@
  *
  */
 
-#ifndef ESPRESSO_SRC_CORE_P3M_COMMON_HPP
-#define ESPRESSO_SRC_CORE_P3M_COMMON_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -170,6 +169,14 @@ struct P3MParameters {
     a = Utils::hadamard_division(Utils::Vector3d::broadcast(1.), ai);
     cao_cut = (static_cast<double>(cao) / 2.) * a;
   }
+
+  /**
+   * @brief Convert spatial position to grid position.
+   * To get the grid index, round the result to the nearest integer.
+   */
+  auto calc_grid_pos(Utils::Vector3d const &pos) const {
+    return Utils::hadamard_product(pos, ai) - mesh_off;
+  }
 };
 
 /** Structure for local mesh parameters. */
@@ -257,5 +264,3 @@ std::array<std::vector<int>, 3> inline calc_meshift(
   return ret;
 }
 } // namespace detail
-
-#endif

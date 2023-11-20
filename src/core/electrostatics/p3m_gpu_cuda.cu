@@ -90,7 +90,7 @@ struct P3MGpuData {
   /** Ewald parameter */
   REAL_TYPE alpha;
   /** Number of particles */
-  int n_part;
+  unsigned int n_part;
   /** Box size */
   REAL_TYPE box[3];
   /** Mesh dimensions */
@@ -190,20 +190,21 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
   REAL_TYPE Dnx, Dny, Dnz;
   REAL_TYPE Zaehler[3] = {0.0, 0.0, 0.0}, Nenner = 0.0;
   REAL_TYPE zwi;
-  int ind = 0;
+  auto index = 0;
   REAL_TYPE Leni[3];
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < 3; ++i) {
     Leni[i] = 1.0f / p.box[i];
+  }
 
   if ((NX >= p.mesh[0]) || (NY >= p.mesh[1]) || (NZ >= (p.mesh[2] / 2 + 1)))
     return;
 
-  ind = NX * p.mesh[1] * (p.mesh[2] / 2 + 1) + NY * (p.mesh[2] / 2 + 1) + NZ;
+  index = NX * p.mesh[1] * (p.mesh[2] / 2 + 1) + NY * (p.mesh[2] / 2 + 1) + NZ;
 
   if (((NX == 0) && (NY == 0) && (NZ == 0)) ||
       ((NX % (p.mesh[0] / 2) == 0) && (NY % (p.mesh[1] / 2) == 0) &&
        (NZ % (p.mesh[2] / 2) == 0))) {
-    p.G_hat[ind] = 0;
+    p.G_hat[index] = 0;
   } else {
     Aliasing_sums_ik<cao>(p, NX, NY, NZ, Zaehler, &Nenner);
 
@@ -215,7 +216,7 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
           Dnz * Zaehler[2] * Leni[2];
     zwi /= ((sqr(Dnx * Leni[0]) + sqr(Dny * Leni[1]) + sqr(Dnz * Leni[2])) *
             sqr(Nenner));
-    p.G_hat[ind] = 2 * zwi / Utils::pi<REAL_TYPE>();
+    p.G_hat[index] = 2 * zwi / Utils::pi<REAL_TYPE>();
   }
 }
 
@@ -233,19 +234,23 @@ __device__ double atomicAdd(double *address, double val) {
 #endif
 
 namespace {
-__device__ inline int linear_index_r(P3MGpuData const &p, int i, int j, int k) {
-  return p.mesh[1] * p.mesh_z_padded * i + p.mesh_z_padded * j + k;
+__device__ inline auto linear_index_r(P3MGpuData const &p, int i, int j,
+                                      int k) {
+  return static_cast<unsigned int>(p.mesh[1] * p.mesh_z_padded * i +
+                                   p.mesh_z_padded * j + k);
 }
 
-__device__ inline int linear_index_k(P3MGpuData const &p, int i, int j, int k) {
-  return p.mesh[1] * (p.mesh[2] / 2 + 1) * i + (p.mesh[2] / 2 + 1) * j + k;
+__device__ inline auto linear_index_k(P3MGpuData const &p, int i, int j,
+                                      int k) {
+  return static_cast<unsigned int>(p.mesh[1] * (p.mesh[2] / 2 + 1) * i +
+                                   (p.mesh[2] / 2 + 1) * j + k);
 }
 } // namespace
 
 __global__ void apply_diff_op(const P3MGpuData p) {
-  const int linear_index = linear_index_k(p, static_cast<int>(blockIdx.x),
-                                          static_cast<int>(blockIdx.y),
-                                          static_cast<int>(threadIdx.x));
+  auto const linear_index = linear_index_k(p, static_cast<int>(blockIdx.x),
+                                           static_cast<int>(blockIdx.y),
+                                           static_cast<int>(threadIdx.x));
 
   auto const bidx = static_cast<int>(blockIdx.x);
   auto const bidy = static_cast<int>(blockIdx.y);
@@ -283,9 +288,9 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
 }
 
 __global__ void apply_influence_function(const P3MGpuData p) {
-  const int linear_index = linear_index_k(p, static_cast<int>(blockIdx.x),
-                                          static_cast<int>(blockIdx.y),
-                                          static_cast<int>(threadIdx.x));
+  auto const linear_index = linear_index_k(p, static_cast<int>(blockIdx.x),
+                                           static_cast<int>(blockIdx.y),
+                                           static_cast<int>(threadIdx.x));
 
   p.charge_mesh[linear_index].x *= p.G_hat[linear_index];
   p.charge_mesh[linear_index].y *= p.G_hat[linear_index];
@@ -295,13 +300,13 @@ template <int cao, bool shared>
 __global__ void assign_charge_kernel(P3MGpuData const params,
                                      float const *const __restrict__ part_pos,
                                      float const *const __restrict__ part_q,
-                                     int const parts_per_block) {
-  auto const part_in_block = static_cast<int>(threadIdx.x) / cao;
-  auto const cao_id_x = static_cast<int>(threadIdx.x) - part_in_block * cao;
+                                     unsigned int const parts_per_block) {
+  auto const part_in_block = threadIdx.x / static_cast<unsigned int>(cao);
+  auto const cao_id_x =
+      threadIdx.x - part_in_block * static_cast<unsigned int>(cao);
   /* id of the particle */
   auto const id =
-      parts_per_block * static_cast<int>(blockIdx.x * gridDim.y + blockIdx.y) +
-      part_in_block;
+      parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
   if (id >= params.n_part)
     return;
   /* position relative to the closest gird point */
@@ -323,98 +328,91 @@ __global__ void assign_charge_kernel(P3MGpuData const params,
   m_pos[1] -= static_cast<REAL_TYPE>(nmp_y);
   m_pos[2] -= static_cast<REAL_TYPE>(nmp_z);
 
-  nmp_x = wrap_index(nmp_x + cao_id_x, params.mesh[0]);
+  nmp_x = wrap_index(nmp_x + static_cast<int>(cao_id_x), params.mesh[0]);
   nmp_y = wrap_index(nmp_y + static_cast<int>(threadIdx.y), params.mesh[1]);
   nmp_z = wrap_index(nmp_z + static_cast<int>(threadIdx.z), params.mesh[2]);
 
-  auto const ind = linear_index_r(params, nmp_x, nmp_y, nmp_z);
+  auto const index = linear_index_r(params, nmp_x, nmp_y, nmp_z);
 
   extern __shared__ float weights[];
 
   if (shared) {
-    auto const offset = static_cast<unsigned>(cao * part_in_block);
-    if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
-      weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + threadIdx.y] =
-          Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
+    auto const offset = static_cast<unsigned int>(cao) * part_in_block;
+    if ((threadIdx.y < 3u) && (threadIdx.z == 0u)) {
+      weights[3u * offset + 3u * cao_id_x + threadIdx.y] =
+          Utils::bspline<cao>(static_cast<int>(cao_id_x), m_pos[threadIdx.y]);
     }
 
     __syncthreads();
 
-    auto const c =
-        weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + 0] *
-        weights[3 * offset + 3 * threadIdx.y + 1] *
-        weights[3 * offset + 3 * threadIdx.z + 2] * part_q[id];
-    atomicAdd(&(charge_mesh[ind]), c);
+    auto const c = weights[3u * offset + 3u * cao_id_x] *
+                   weights[3u * offset + 3u * threadIdx.y + 1u] *
+                   weights[3u * offset + 3u * threadIdx.z + 2u] * part_q[id];
+    atomicAdd(&(charge_mesh[index]), c);
 
   } else {
     auto const c =
-        Utils::bspline<cao>(cao_id_x, m_pos[0]) * part_q[id] *
+        Utils::bspline<cao>(static_cast<int>(cao_id_x), m_pos[0]) * part_q[id] *
         Utils::bspline<cao>(static_cast<int>(threadIdx.y), m_pos[1]) *
         Utils::bspline<cao>(static_cast<int>(threadIdx.z), m_pos[2]);
-    atomicAdd(&(charge_mesh[ind]), c);
+    atomicAdd(&(charge_mesh[index]), c);
   }
 }
 
 void assign_charges(P3MGpuData const &params,
                     float const *const __restrict__ part_pos,
                     float const *const __restrict__ part_q) {
-  auto const cao = params.cao;
+  auto const cao = static_cast<unsigned int>(params.cao);
   auto const cao3 = int_pow<3>(cao);
-  int parts_per_block = 1, n_blocks = 1;
+  unsigned int parts_per_block = 1u, n_blocks = 1u;
 
-  while ((parts_per_block + 1) * cao3 <= 1024) {
+  while ((parts_per_block + 1u) * cao3 <= 1024u) {
     parts_per_block++;
   }
-  if ((params.n_part % parts_per_block) == 0)
-    n_blocks = std::max<int>(1, params.n_part / parts_per_block);
+  if ((params.n_part % parts_per_block) == 0u)
+    n_blocks = std::max<unsigned>(1u, params.n_part / parts_per_block);
   else
-    n_blocks = params.n_part / parts_per_block + 1;
+    n_blocks = params.n_part / parts_per_block + 1u;
 
-  dim3 block(static_cast<unsigned>(parts_per_block * cao),
-             static_cast<unsigned>(cao), static_cast<unsigned>(cao));
-  dim3 grid(static_cast<unsigned>(n_blocks), 1u, 1u);
-  while (grid.x > 65536) {
+  dim3 block(parts_per_block * cao, cao, cao);
+  dim3 grid(n_blocks, 1u, 1u);
+  while (grid.x > 65536u) {
     grid.y++;
-    if ((static_cast<unsigned>(n_blocks) % grid.y) == 0)
-      grid.x = std::max<unsigned>(1u, static_cast<unsigned>(n_blocks) / grid.y);
+    if ((n_blocks % grid.y) == 0u)
+      grid.x = std::max<unsigned>(1u, n_blocks / grid.y);
     else
-      grid.x = static_cast<unsigned>(n_blocks) / grid.y + 1;
+      grid.x = n_blocks / grid.y + 1u;
   }
 
   auto const data_length =
       3 * static_cast<std::size_t>(parts_per_block * cao) * sizeof(REAL_TYPE);
   switch (cao) {
   case 1:
-    (assign_charge_kernel<1, false>)<<<dim3(grid), dim3(block), 0, nullptr>>>(
+    (assign_charge_kernel<1, false>)<<<grid, block, 0, nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 2:
-    (assign_charge_kernel<2, false>)<<<dim3(grid), dim3(block), 0, nullptr>>>(
+    (assign_charge_kernel<2, false>)<<<grid, block, 0, nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 3:
-    (assign_charge_kernel<
-        3, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_charge_kernel<3, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 4:
-    (assign_charge_kernel<
-        4, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_charge_kernel<4, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 5:
-    (assign_charge_kernel<
-        5, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_charge_kernel<5, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 6:
-    (assign_charge_kernel<
-        6, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_charge_kernel<6, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 7:
-    (assign_charge_kernel<
-        7, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_charge_kernel<7, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   default:
@@ -428,13 +426,14 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
                                      float const *const __restrict__ part_pos,
                                      float const *const __restrict__ part_q,
                                      float *const __restrict__ part_f,
-                                     REAL_TYPE prefactor, int parts_per_block) {
-  auto const part_in_block = static_cast<int>(threadIdx.x) / cao;
-  auto const cao_id_x = static_cast<int>(threadIdx.x) - part_in_block * cao;
+                                     REAL_TYPE prefactor,
+                                     unsigned int const parts_per_block) {
+  auto const part_in_block = threadIdx.x / static_cast<unsigned int>(cao);
+  auto const cao_id_x =
+      threadIdx.x - part_in_block * static_cast<unsigned int>(cao);
   /* id of the particle */
   auto const id =
-      parts_per_block * static_cast<int>(blockIdx.x * gridDim.y + blockIdx.y) +
-      part_in_block;
+      parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
   if (id >= params.n_part)
     return;
   /* position relative to the closest grid point */
@@ -454,7 +453,7 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
   m_pos[1] -= static_cast<REAL_TYPE>(nmp_y);
   m_pos[2] -= static_cast<REAL_TYPE>(nmp_z);
 
-  nmp_x = wrap_index(nmp_x + cao_id_x, params.mesh[0]);
+  nmp_x = wrap_index(nmp_x + static_cast<int>(cao_id_x), params.mesh[0]);
   nmp_y = wrap_index(nmp_y + static_cast<int>(threadIdx.y), params.mesh[1]);
   nmp_z = wrap_index(nmp_z + static_cast<int>(threadIdx.z), params.mesh[2]);
 
@@ -464,20 +463,20 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
 
   REAL_TYPE c;
   if (shared) {
-    auto const offset = static_cast<unsigned>(cao * part_in_block);
-    if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
-      weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + threadIdx.y] =
-          Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
+    auto const offset = static_cast<unsigned int>(cao) * part_in_block;
+    if ((threadIdx.y < 3u) && (threadIdx.z == 0u)) {
+      weights[3u * offset + 3u * cao_id_x + threadIdx.y] =
+          Utils::bspline<cao>(static_cast<int>(cao_id_x), m_pos[threadIdx.y]);
     }
 
     __syncthreads();
 
-    c = -prefactor *
-        weights[3 * offset + 3 * static_cast<unsigned>(cao_id_x) + 0] *
-        weights[3 * offset + 3 * threadIdx.y + 1] *
-        weights[3 * offset + 3 * threadIdx.z + 2] * part_q[id];
+    c = -prefactor * weights[3u * offset + 3u * cao_id_x] *
+        weights[3u * offset + 3u * threadIdx.y + 1u] *
+        weights[3u * offset + 3u * threadIdx.z + 2u] * part_q[id];
   } else {
-    c = -prefactor * part_q[id] * Utils::bspline<cao>(cao_id_x, m_pos[0]) *
+    c = -prefactor * part_q[id] *
+        Utils::bspline<cao>(static_cast<int>(cao_id_x), m_pos[0]) *
         Utils::bspline<cao>(static_cast<int>(threadIdx.y), m_pos[1]) *
         Utils::bspline<cao>(static_cast<int>(threadIdx.z), m_pos[2]);
   }
@@ -486,9 +485,9 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
   const REAL_TYPE *force_mesh_y = (REAL_TYPE *)params.force_mesh_y;
   const REAL_TYPE *force_mesh_z = (REAL_TYPE *)params.force_mesh_z;
 
-  atomicAdd(&(part_f[3 * id + 0]), c * force_mesh_x[index]);
-  atomicAdd(&(part_f[3 * id + 1]), c * force_mesh_y[index]);
-  atomicAdd(&(part_f[3 * id + 2]), c * force_mesh_z[index]);
+  atomicAdd(&(part_f[3u * id + 0u]), c * force_mesh_x[index]);
+  atomicAdd(&(part_f[3u * id + 1u]), c * force_mesh_y[index]);
+  atomicAdd(&(part_f[3u * id + 2u]), c * force_mesh_z[index]);
 }
 
 void assign_forces(P3MGpuData const &params,
@@ -498,64 +497,62 @@ void assign_forces(P3MGpuData const &params,
                    REAL_TYPE const prefactor) {
   auto const cao = params.cao;
   auto const cao3 = int_pow<3>(cao);
-  int parts_per_block = 1, n_blocks = 1;
+  unsigned int parts_per_block = 1u, n_blocks = 1u;
 
-  while ((parts_per_block + 1) * cao3 <= 1024) {
+  while ((parts_per_block + 1u) * static_cast<unsigned int>(cao3) <= 1024u) {
     parts_per_block++;
   }
 
-  if ((params.n_part % parts_per_block) == 0)
-    n_blocks = std::max<int>(1, params.n_part / parts_per_block);
+  if ((params.n_part % parts_per_block) == 0u)
+    n_blocks = std::max<unsigned>(1u, params.n_part / parts_per_block);
   else
-    n_blocks = params.n_part / parts_per_block + 1;
+    n_blocks = params.n_part / parts_per_block + 1u;
 
-  dim3 block(static_cast<unsigned>(parts_per_block * cao),
-             static_cast<unsigned>(cao), static_cast<unsigned>(cao));
-  dim3 grid(static_cast<unsigned>(n_blocks), 1u, 1u);
-  while (grid.x > 65536) {
+  dim3 block(parts_per_block * static_cast<unsigned int>(cao),
+             static_cast<unsigned int>(cao), static_cast<unsigned int>(cao));
+  dim3 grid(n_blocks, 1u, 1u);
+  while (grid.x > 65536u) {
     grid.y++;
-    if ((static_cast<unsigned>(n_blocks) % grid.y) == 0)
-      grid.x = std::max<unsigned>(1u, static_cast<unsigned>(n_blocks) / grid.y);
+    if (n_blocks % grid.y == 0u)
+      grid.x = std::max<unsigned>(1u, n_blocks / grid.y);
     else
-      grid.x = static_cast<unsigned>(n_blocks) / grid.y + 1;
+      grid.x = n_blocks / grid.y + 1u;
   }
 
   /* Switch for assignment templates, the shared version only is faster for cao
    * > 2 */
   auto const data_length =
-      3 * static_cast<std::size_t>(parts_per_block * cao) * sizeof(float);
+      3u *
+      static_cast<std::size_t>(parts_per_block *
+                               static_cast<unsigned int>(cao)) *
+      sizeof(float);
   switch (cao) {
   case 1:
-    (assign_forces_kernel<1, false>)<<<dim3(grid), dim3(block), 0, nullptr>>>(
+    (assign_forces_kernel<1, false>)<<<grid, block, 0, nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 2:
-    (assign_forces_kernel<2, false>)<<<dim3(grid), dim3(block), 0, nullptr>>>(
+    (assign_forces_kernel<2, false>)<<<grid, block, 0, nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 3:
-    (assign_forces_kernel<
-        3, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_forces_kernel<3, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 4:
-    (assign_forces_kernel<
-        4, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_forces_kernel<4, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 5:
-    (assign_forces_kernel<
-        5, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_forces_kernel<5, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 6:
-    (assign_forces_kernel<
-        6, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_forces_kernel<6, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 7:
-    (assign_forces_kernel<
-        7, true>)<<<dim3(grid), dim3(block), data_length, nullptr>>>(
+    (assign_forces_kernel<7, true>)<<<grid, block, data_length, nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   default:
@@ -571,7 +568,8 @@ void assign_forces(P3MGpuData const &params,
  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
  */
 void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
-                  const int mesh[3], double alpha) {
+                  const int mesh[3], double alpha, Utils::Vector3d const &box_l,
+                  unsigned n_part) {
   if (mesh[0] == -1 && mesh[1] == -1 && mesh[2] == -1)
     throw std::runtime_error("P3M: invalid mesh size");
 
@@ -580,9 +578,8 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
   }
 
   auto &p3m_gpu_data = data->p3m_gpu_data;
-  auto &gpu_particle_data = System::get_system().gpu;
   bool do_reinit = false, mesh_changed = false;
-  p3m_gpu_data.n_part = static_cast<int>(gpu_particle_data.n_particles());
+  p3m_gpu_data.n_part = n_part;
 
   if (not data->is_initialized or p3m_gpu_data.alpha != alpha) {
     p3m_gpu_data.alpha = static_cast<REAL_TYPE>(alpha);
@@ -602,8 +599,6 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
     mesh_changed = true;
     do_reinit = true;
   }
-
-  auto const box_l = System::get_system().box();
 
   if (not data->is_initialized or (p3m_gpu_data.box[0] != box_l[0]) or
       (p3m_gpu_data.box[1] != box_l[1]) or (p3m_gpu_data.box[2] != box_l[2])) {
@@ -693,17 +688,17 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
 /**
  *  \brief The long-range part of the P3M algorithm.
  */
-void p3m_gpu_add_farfield_force(P3MGpuParams &data, double prefactor) {
-  auto &gpu = System::get_system().gpu;
+void p3m_gpu_add_farfield_force(P3MGpuParams &data, GpuParticleData &gpu,
+                                double prefactor, unsigned n_part) {
   auto &p3m_gpu_data = data.p3m_gpu_data;
-  p3m_gpu_data.n_part = static_cast<int>(gpu.n_particles());
+  p3m_gpu_data.n_part = n_part;
 
-  if (p3m_gpu_data.n_part == 0)
+  if (p3m_gpu_data.n_part == 0u)
     return;
 
-  auto const forces_device = gpu.get_particle_forces_device();
   auto const positions_device = gpu.get_particle_positions_device();
   auto const charges_device = gpu.get_particle_charges_device();
+  auto const forces_device = gpu.get_particle_forces_device();
 
   dim3 gridConv(static_cast<unsigned>(p3m_gpu_data.mesh[0]),
                 static_cast<unsigned>(p3m_gpu_data.mesh[1]), 1u);

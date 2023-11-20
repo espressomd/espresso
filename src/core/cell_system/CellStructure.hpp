@@ -34,6 +34,7 @@
 #include "cell_system/CellStructureType.hpp"
 #include "config/config.hpp"
 #include "ghosts.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/math/sqr.hpp>
 
@@ -49,10 +50,6 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
-
-namespace boost::mpi {
-class communicator;
-}
 
 namespace Cells {
 enum Resort : unsigned {
@@ -87,7 +84,7 @@ enum DataPart : unsigned {
 unsigned map_data_parts(unsigned data_parts);
 
 namespace Cells {
-inline ParticleRange particles(Utils::Span<Cell *> cells) {
+inline ParticleRange particles(Utils::Span<Cell *const> cells) {
   /* Find first non-empty cell */
   auto first_non_empty =
       std::find_if(cells.begin(), cells.end(),
@@ -133,20 +130,24 @@ struct EuclidianDistance {
  *  system which are not common between different cell systems have to
  *  be stored in separate structures.
  */
-struct CellStructure {
+struct CellStructure : public System::Leaf<CellStructure> {
 private:
   /** The local id-to-particle index */
   std::vector<Particle *> m_particle_index;
   /** Implementation of the primary particle decomposition */
   std::unique_ptr<ParticleDecomposition> m_decomposition;
   /** Active type in m_decomposition */
-  CellStructureType m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
+  CellStructureType m_type = CellStructureType::NSQUARE;
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
   unsigned m_resort_particles = Cells::RESORT_NONE;
   bool m_rebuild_verlet_list = true;
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
   double m_le_pos_offset_at_last_resort = 0.;
+  /** @brief Verlet list skin. */
+  double m_verlet_skin = 0.;
+  bool m_verlet_skin_set = false;
+  double m_verlet_reuse = 0.;
 
 public:
   CellStructure(BoxGeometry const &box);
@@ -260,13 +261,18 @@ public:
   CellStructureType decomposition_type() const { return m_type; }
 
   /** Maximal cutoff supported by current cell system. */
-  Utils::Vector3d max_cutoff() const;
+  Utils::Vector3d max_cutoff() const { return decomposition().max_cutoff(); }
 
   /** Maximal pair range supported by current cell system. */
-  Utils::Vector3d max_range() const;
+  Utils::Vector3d max_range() const { return decomposition().max_range(); }
 
-  ParticleRange local_particles();
-  ParticleRange ghost_particles();
+  ParticleRange local_particles() const {
+    return Cells::particles(decomposition().local_cells());
+  }
+
+  ParticleRange ghost_particles() const {
+    return Cells::particles(decomposition().ghost_cells());
+  }
 
 private:
   /** Cell system dependent function to find the right cell for a
@@ -275,9 +281,12 @@ private:
    *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
-  Cell *particle_to_cell(const Particle &p);
-
-  Utils::Span<Cell *> local_cells();
+  Cell *particle_to_cell(const Particle &p) {
+    return decomposition().particle_to_cell(p);
+  }
+  Cell const *particle_to_cell(const Particle &p) const {
+    return decomposition().particle_to_cell(p);
+  }
 
 public:
   /**
@@ -375,17 +384,15 @@ public:
   /**
    * @brief Check whether a particle has moved further than half the skin
    * since the last Verlet list update, thus requiring a resort.
-   * @param particles           Particles to check
-   * @param skin                Skin
    * @param additional_offset   Offset which is added to the distance the
    *                            particle has travelled when comparing to half
-   *                            the skin (e.g., for Lees-Edwards BC).
+   *                            the Verlet skin (e.g., for Lees-Edwards BC).
    * @return Whether a resort is needed.
    */
   bool
-  check_resort_required(ParticleRange const &particles, double skin,
-                        Utils::Vector3d const &additional_offset = {}) const {
-    auto const lim = Utils::sqr(skin / 2.) - additional_offset.norm2();
+  check_resort_required(Utils::Vector3d const &additional_offset = {}) const {
+    auto const particles = local_particles();
+    auto const lim = Utils::sqr(m_verlet_skin / 2.) - additional_offset.norm2();
     return std::any_of(
         particles.begin(), particles.end(), [lim](const auto &p) {
           return ((p.pos() - p.pos_at_last_verlet_update()).norm2() > lim);
@@ -404,13 +411,23 @@ public:
   /**
    * @brief Update ghost particles.
    *
-   * This function updates the ghost particles with data
-   * from the real particles.
+   * Update ghost particles with data from the real particles.
    *
    * @param data_parts Particle parts to update, combination of @ref
    * Cells::DataPart
    */
   void ghosts_update(unsigned data_parts);
+
+  /**
+   * @brief Update ghost particles, with particle resort if needed.
+   *
+   * Update ghost particles with data from the real particles.
+   * Resort particles if a resort is due.
+   *
+   * @param data_parts Particle parts to update, combination of @ref
+   * Cells::DataPart
+   */
+  void update_ghosts_and_resort_particle(unsigned data_parts);
 
   /**
    * @brief Add forces from ghost particles to real particles.
@@ -427,7 +444,30 @@ public:
   /**
    * @brief Resort particles.
    */
-  void resort_particles(bool global_flag, BoxGeometry const &box);
+  void resort_particles(bool global_flag);
+
+  /** @brief Whether the Verlet skin is set. */
+  auto is_verlet_skin_set() const { return m_verlet_skin_set; }
+
+  /** @brief Get the Verlet skin. */
+  auto get_verlet_skin() const { return m_verlet_skin; }
+
+  /** @brief Set the Verlet skin. */
+  void set_verlet_skin(double value);
+
+  /** @brief Set the Verlet skin using a heuristic. */
+  void set_verlet_skin_heuristic();
+
+  void update_verlet_stats(int n_steps, int n_verlet_updates) {
+    if (n_verlet_updates > 0) {
+      m_verlet_reuse = n_steps / static_cast<double>(n_verlet_updates);
+    } else {
+      m_verlet_reuse = 0.;
+    }
+  }
+
+  /** @brief Average number of integration steps the Verlet list was re-used */
+  auto get_verlet_reuse() const { return m_verlet_reuse; }
 
 private:
   /**
@@ -512,38 +552,23 @@ private:
 public:
   /**
    * @brief Set the particle decomposition to @ref AtomDecomposition.
-   *
-   * @param comm Communicator to use.
-   * @param box Box Geometry.
-   * @param local_geo Geometry of the local box (holds cell structure type).
    */
-  void set_atom_decomposition(boost::mpi::communicator const &comm,
-                              BoxGeometry const &box, LocalBox &local_geo);
+  void set_atom_decomposition();
 
   /**
    * @brief Set the particle decomposition to @ref RegularDecomposition.
    *
-   * @param comm Cartesian communicator to use.
    * @param range Interaction range.
-   * @param box Box Geometry.
-   * @param local_geo Geometry of the local box.
    */
-  void set_regular_decomposition(boost::mpi::communicator const &comm,
-                                 double range, BoxGeometry const &box,
-                                 LocalBox &local_geo);
+  void set_regular_decomposition(double range);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.
    *
-   * @param comm Communicator to use.
    * @param cutoff_regular Interaction cutoff_regular.
-   * @param box Box geometry.
-   * @param local_geo Geometry of the local box.
    * @param n_square_types Particle types to put into n_square decomposition.
    */
-  void set_hybrid_decomposition(boost::mpi::communicator const &comm,
-                                double cutoff_regular, BoxGeometry const &box,
-                                LocalBox &local_geo,
+  void set_hybrid_decomposition(double cutoff_regular,
                                 std::set<int> n_square_types);
 
 private:
@@ -555,8 +580,9 @@ private:
    */
   template <class Kernel> void link_cell(Kernel kernel) {
     auto const maybe_box = decomposition().minimum_image_distance();
-    auto const first = boost::make_indirect_iterator(local_cells().begin());
-    auto const last = boost::make_indirect_iterator(local_cells().end());
+    auto const local_cells_span = decomposition().local_cells();
+    auto const first = boost::make_indirect_iterator(local_cells_span.begin());
+    auto const last = boost::make_indirect_iterator(local_cells_span.end());
 
     if (maybe_box) {
       Algorithm::link_cell(
@@ -651,7 +677,6 @@ public:
     }
   }
 
-private:
   /**
    * @brief Check that particle index is commensurate with particles.
    *
@@ -659,7 +684,7 @@ private:
    * in the particles index, and that there are no excess (non-existing)
    * particles in the index.
    */
-  void check_particle_index();
+  void check_particle_index() const;
 
   /**
    * @brief Check that particles are in the correct cell.
@@ -669,7 +694,7 @@ private:
    * actually in, e.g. that the particles are sorted according
    * to particles_to_cell.
    */
-  void check_particle_sorting();
+  void check_particle_sorting() const;
 
 public:
   /**

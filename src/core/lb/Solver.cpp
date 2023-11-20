@@ -71,7 +71,8 @@ void Solver::propagate() {
 
 void Solver::sanity_checks() const {
   if (impl->solver) {
-    std::visit([](auto &ptr) { ptr->sanity_checks(); }, *impl->solver);
+    auto const &system = get_system();
+    std::visit([&](auto &ptr) { ptr->sanity_checks(system); }, *impl->solver);
   }
 }
 
@@ -212,10 +213,10 @@ void Solver::set<LBWalberla>(std::shared_ptr<LBWalberlaBase> lb_fluid,
                              std::shared_ptr<LBWalberlaParams> lb_params) {
   assert(impl);
   assert(not impl->solver.has_value());
+  auto const &system = get_system();
   auto lb_instance = std::make_shared<LBWalberla>(lb_fluid, lb_params);
-  lb_instance->sanity_checks();
-  auto const &box_geo = *System::get_system().box_geo;
-  auto const &lebc = box_geo.lees_edwards_bc();
+  lb_instance->sanity_checks(system);
+  auto const &lebc = system.box_geo->lees_edwards_bc();
   lb_fluid->check_lebc(lebc.shear_direction, lebc.shear_plane_normal);
   impl->solver = lb_instance;
 }

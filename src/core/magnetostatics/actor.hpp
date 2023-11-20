@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2022-2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -18,18 +16,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
- *  This file contains the asynchronous MPI communication for interactions.
- */
-#ifndef CORE_INTERACTIONS_HPP
-#define CORE_INTERACTIONS_HPP
 
-/** Calculate the maximal cutoff of all interactions. */
-double maximal_cutoff(bool single_node);
+#pragma once
 
-/** Check electrostatic and magnetostatic methods are properly initialized.
- *  @return true if sanity checks failed.
- */
-bool long_range_interactions_sanity_checks();
+#include "config/config.hpp"
 
-#endif
+#ifdef DIPOLES
+
+#include "system/Leaf.hpp"
+
+#include <stdexcept>
+
+namespace Dipoles {
+
+template <typename Class> class Actor : public System::Leaf<Actor<Class>> {
+public:
+  /**
+   * @brief Magnetostatics prefactor.
+   */
+  double prefactor = 0.;
+
+  void set_prefactor(double new_prefactor) {
+    if (new_prefactor <= 0.) {
+      throw std::domain_error("Parameter 'prefactor' must be > 0");
+    }
+    prefactor = new_prefactor;
+  }
+};
+
+} // namespace Dipoles
+
+#endif // DIPOLES

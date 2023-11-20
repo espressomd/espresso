@@ -97,16 +97,15 @@ class AnalyzeMassRelated(ut.TestCase):
             self.system.analysis.center_of_mass(p_type=0))
 
     def test_galilei_transform(self):
-        g = espressomd.galilei.GalileiTransform()
         no_virtual = self.system.part.select(virtual=False)
 
         # Center of mass
         np.testing.assert_allclose(
-            np.copy(g.system_CMS()),
+            np.copy(self.system.galilei.system_CMS()),
             np.average(no_virtual.pos, weights=no_virtual.mass, axis=0))
         # Center of mass velocity
         np.testing.assert_allclose(
-            np.copy(g.system_CMS_velocity()),
+            np.copy(self.system.galilei.system_CMS_velocity()),
             np.average(no_virtual.v, weights=no_virtual.mass, axis=0))
 
     def test_angularmomentum(self):

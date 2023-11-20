@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -94,4 +93,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // DP3M
-#endif

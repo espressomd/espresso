@@ -36,6 +36,9 @@ template <class Base> class EKReactions;
 namespace walberla {
 class EKReactionBase;
 }
+namespace System {
+class System;
+}
 
 namespace EK {
 
@@ -52,7 +55,7 @@ struct EKWalberla {
 
   double get_tau() const;
   void veto_time_step(double time_step) const;
-  void sanity_checks() const;
+  void sanity_checks(System::System const &system) const;
   bool is_ready_for_propagation() const noexcept;
   void propagate();
   void perform_reactions();

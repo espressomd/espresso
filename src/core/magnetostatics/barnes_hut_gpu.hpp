@@ -17,23 +17,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_BARNES_HUT_GPU_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_BARNES_HUT_GPU_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef DIPOLAR_BARNES_HUT
 
+#include "magnetostatics/actor.hpp"
 #include "magnetostatics/barnes_hut_gpu_cuda.cuh"
 
-struct DipolarBarnesHutGpu {
-  double prefactor;
+struct DipolarBarnesHutGpu : public Dipoles::Actor<DipolarBarnesHutGpu> {
   double m_epssq;
   double m_itolsq;
   DipolarBarnesHutGpu(double prefactor, double epssq, double itolsq);
   ~DipolarBarnesHutGpu() { deallocBH(&m_bh_data); }
 
-  void on_activation() const {}
+  void on_activation() const;
   void on_boxl_change() const {}
   void on_node_grid_change() const {}
   void on_periodicity_change() const {}
@@ -53,5 +52,3 @@ private:
 };
 
 #endif // DIPOLAR_BARNES_HUT
-
-#endif

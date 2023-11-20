@@ -48,7 +48,6 @@
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -78,14 +77,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 void CoulombP3M::count_charged_particles() {
-  auto &cell_structure = *System::get_system().cell_structure;
   auto local_n = 0;
   auto local_q2 = 0.0;
   auto local_q = 0.0;
 
-  for (auto const &p : cell_structure.local_particles()) {
+  for (auto const &p : get_system().cell_structure->local_particles()) {
     if (p.q() != 0.0) {
       local_n++;
       local_q2 += Utils::sqr(p.q());
@@ -110,37 +109,35 @@ void CoulombP3M::count_charged_particles() {
  *  @cite deserno98a @cite deserno98b.
  */
 void CoulombP3M::calc_influence_function_force() {
-  auto const &box_geo = *System::get_system().box_geo;
   auto const start = Utils::Vector3i{p3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{p3m.fft.plan[3].new_mesh};
 
   p3m.g_force = grid_influence_function<1>(p3m.params, start, start + size,
-                                           box_geo.length());
+                                           get_system().box_geo->length());
 }
 
 /** Calculate the influence function optimized for the energy and the
  *  self energy correction.
  */
 void CoulombP3M::calc_influence_function_energy() {
-  auto const &box_geo = *System::get_system().box_geo;
   auto const start = Utils::Vector3i{p3m.fft.plan[3].start};
   auto const size = Utils::Vector3i{p3m.fft.plan[3].new_mesh};
 
   p3m.g_energy = grid_influence_function<0>(p3m.params, start, start + size,
-                                            box_geo.length());
+                                            get_system().box_geo->length());
 }
 
 /** Aliasing sum used by @ref p3m_k_space_error. */
-static void p3m_tune_aliasing_sums(int nx, int ny, int nz,
+static auto p3m_tune_aliasing_sums(int nx, int ny, int nz,
                                    Utils::Vector3i const &mesh,
                                    Utils::Vector3d const &mesh_i, int cao,
-                                   double alpha_L_i, double *alias1,
-                                   double *alias2) {
+                                   double alpha_L_i) {
   using Utils::sinc;
 
   auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
 
-  *alias1 = *alias2 = 0.0;
+  auto alias1 = 0.;
+  auto alias2 = 0.;
   for (int mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     auto const nmx = nx + mx * mesh[0];
     auto const fnmx = mesh_i[0] * nmx;
@@ -157,11 +154,12 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz,
 
         auto const U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2.0 * cao);
 
-        *alias1 += ex2 / nm2;
-        *alias2 += U2 * ex * (nx * nmx + ny * nmy + nz * nmz) / nm2;
+        alias1 += ex2 / nm2;
+        alias2 += U2 * ex * (nx * nmx + ny * nmy + nz * nmz) / nm2;
       }
     }
   }
+  return std::make_pair(alias1, alias2);
 }
 
 /** Calculate the real space contribution to the rms error in the force (as
@@ -171,14 +169,15 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz,
  *  \param n_c_part   number of charged particles in the system.
  *  \param sum_q2     sum of square of charges in the system
  *  \param alpha_L    rescaled Ewald splitting parameter.
+ *  \param box_l      box dimensions.
  *  \return real space error
  */
 static double p3m_real_space_error(double pref, double r_cut_iL, int n_c_part,
-                                   double sum_q2, double alpha_L) {
-  auto const &box_geo = *System::get_system().box_geo;
+                                   double sum_q2, double alpha_L,
+                                   Utils::Vector3d const &box_l) {
+  auto const volume = Utils::product(box_l);
   return (2. * pref * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
-         sqrt(static_cast<double>(n_c_part) * r_cut_iL * box_geo.length()[0] *
-              box_geo.volume());
+         sqrt(static_cast<double>(n_c_part) * r_cut_iL * box_l[0] * volume);
 }
 
 /** Calculate the analytic expression of the error estimate for the
@@ -191,12 +190,12 @@ static double p3m_real_space_error(double pref, double r_cut_iL, int n_c_part,
  *  \param n_c_part number of charged particles in the system.
  *  \param sum_q2   sum of square of charges in the system
  *  \param alpha_L  rescaled Ewald splitting parameter.
+ *  \param box_l    box dimensions.
  *  \return reciprocal (k) space error
  */
 static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
                                 int cao, int n_c_part, double sum_q2,
-                                double alpha_L) {
-  auto const &box_geo = *System::get_system().box_geo;
+                                double alpha_L, Utils::Vector3d const &box_l) {
   auto const mesh_i =
       Utils::hadamard_division(Utils::Vector3d::broadcast(1.), mesh);
   auto const alpha_L_i = 1. / alpha_L;
@@ -212,10 +211,8 @@ static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
           auto const n2 = Utils::sqr(nx) + Utils::sqr(ny) + Utils::sqr(nz);
           auto const cs =
               p3m_analytic_cotangent_sum(nz, mesh_i[2], cao) * ctan_y;
-          double alias1, alias2;
-          p3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i,
-                                 &alias1, &alias2);
-
+          auto const [alias1, alias2] =
+              p3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i);
           auto const d = alias1 - Utils::sqr(alias2 / cs) / n2;
           /* at high precision, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
@@ -226,18 +223,18 @@ static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
     }
   }
   return 2. * pref * sum_q2 * sqrt(he_q / static_cast<double>(n_c_part)) /
-         (box_geo.length()[1] * box_geo.length()[2]);
+         (box_l[1] * box_l[2]);
 }
 
 #ifdef CUDA
 static double p3mgpu_k_space_error(double prefactor,
                                    Utils::Vector3i const &mesh, int cao,
-                                   int npart, double sum_q2, double alpha_L) {
-  auto const &box_geo = *System::get_system().box_geo;
+                                   int npart, double sum_q2, double alpha_L,
+                                   Utils::Vector3d const &box_l) {
   auto ks_err = 0.;
   if (this_node == 0) {
     ks_err = p3m_k_space_error_gpu(prefactor, mesh.data(), cao, npart, sum_q2,
-                                   alpha_L, box_geo.length().data());
+                                   alpha_L, box_l.data());
   }
   boost::mpi::broadcast(comm_cart, ks_err, 0);
   return ks_err;
@@ -249,9 +246,10 @@ void CoulombP3M::init() {
   assert(p3m.params.cao >= 1 and p3m.params.cao <= 7);
   assert(p3m.params.alpha > 0.);
 
-  auto const &system = System::get_system();
+  auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
+  auto const skin = system.cell_structure->get_verlet_skin();
 
   p3m.params.cao3 = Utils::int_pow<3>(p3m.params.cao);
   p3m.params.recalc_a_ai_cao_cut(box_geo.length());
@@ -409,7 +407,7 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
 Utils::Vector9d CoulombP3M::p3m_calc_kspace_pressure_tensor() {
   using namespace detail::FFT_indexing;
 
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
 
   Utils::Vector9d node_k_space_pressure_tensor{};
 
@@ -466,7 +464,7 @@ Utils::Vector9d CoulombP3M::p3m_calc_kspace_pressure_tensor() {
 
 double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                                      ParticleRange const &particles) {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh)
    * and perform forward 3D FFT (Charge Assignment Mesh). */
@@ -582,20 +580,20 @@ class CoulombTuningAlgorithm : public TuningAlgorithm {
   // indicates if mesh should be tuned
   bool m_tune_mesh = false;
 
-public:
-  CoulombTuningAlgorithm(p3m_data_struct &input_p3m, double prefactor,
-                         int timings)
-      : TuningAlgorithm{prefactor, timings}, p3m{input_p3m} {}
-
+protected:
   P3MParameters &get_params() override { return p3m.params; }
 
-  void on_solver_change() const override { on_coulomb_change(); }
+public:
+  CoulombTuningAlgorithm(System::System &system, p3m_data_struct &input_p3m,
+                         double prefactor, int timings)
+      : TuningAlgorithm(system, prefactor, timings), p3m{input_p3m} {}
+
+  void on_solver_change() const override { m_system.on_coulomb_change(); }
 
   void setup_logger(bool verbose) override {
-    auto const &system = System::get_system();
-    auto const &box_geo = *system.box_geo;
+    auto const &box_geo = *m_system.box_geo;
 #ifdef CUDA
-    auto const &solver = system.coulomb.impl->solver;
+    auto const &solver = m_system.coulomb.impl->solver;
     auto const on_gpu = has_actor_of_type<CoulombP3MGPU>(solver);
 #else
     auto const on_gpu = false;
@@ -610,7 +608,7 @@ public:
 
   std::optional<std::string>
   layer_correction_veto_r_cut(double r_cut) const override {
-    auto const &solver = System::get_system().coulomb.impl->solver;
+    auto const &solver = m_system.coulomb.impl->solver;
     if (auto actor = get_actor_by_type<ElectrostaticLayerCorrection>(solver)) {
       return actor->veto_r_cut(r_cut);
     }
@@ -621,11 +619,12 @@ public:
   calculate_accuracy(Utils::Vector3i const &mesh, int cao,
                      double r_cut_iL) const override {
 
+    auto const &box_geo = *m_system.box_geo;
     double alpha_L, rs_err, ks_err;
 
     /* calc maximal real space error for setting */
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
-                                  p3m.sum_q2, 0.);
+                                  p3m.sum_q2, 0., box_geo.length());
 
     if (Utils::sqrt_2() * rs_err > p3m.params.accuracy) {
       /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
@@ -640,22 +639,22 @@ public:
 
     /* calculate real-space and k-space error for this alpha_L */
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
-                                  p3m.sum_q2, alpha_L);
+                                  p3m.sum_q2, alpha_L, box_geo.length());
 #ifdef CUDA
-    auto const &solver = System::get_system().coulomb.impl->solver;
+    auto const &solver = m_system.coulomb.impl->solver;
     if (has_actor_of_type<CoulombP3MGPU>(solver)) {
       ks_err = p3mgpu_k_space_error(m_prefactor, mesh, cao, p3m.sum_qpart,
-                                    p3m.sum_q2, alpha_L);
+                                    p3m.sum_q2, alpha_L, box_geo.length());
     } else
 #endif
       ks_err = p3m_k_space_error(m_prefactor, mesh, cao, p3m.sum_qpart,
-                                 p3m.sum_q2, alpha_L);
+                                 p3m.sum_q2, alpha_L, box_geo.length());
 
     return {Utils::Vector2d{rs_err, ks_err}.norm(), rs_err, ks_err, alpha_L};
   }
 
   void determine_mesh_limits() override {
-    auto const &box_geo = *System::get_system().box_geo;
+    auto const &box_geo = *m_system.box_geo;
     auto const mesh_density =
         static_cast<double>(p3m.params.mesh[0]) * box_geo.length_inv()[0];
 
@@ -688,9 +687,8 @@ public:
   }
 
   TuningAlgorithm::Parameters get_time() override {
-    auto const &system = System::get_system();
-    auto const &box_geo = *system.box_geo;
-    auto const &solver = system.coulomb.impl->solver;
+    auto const &box_geo = *m_system.box_geo;
+    auto const &solver = m_system.coulomb.impl->solver;
     auto tuned_params = TuningAlgorithm::Parameters{};
     auto time_best = time_sentinel;
     auto mesh_density = m_mesh_density_min;
@@ -737,7 +735,8 @@ public:
 };
 
 void CoulombP3M::tune() {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto &system = get_system();
+  auto const &box_geo = *system.box_geo;
   if (p3m.params.alpha_L == 0. and p3m.params.alpha != 0.) {
     p3m.params.alpha_L = p3m.params.alpha * box_geo.length()[0];
   }
@@ -751,7 +750,7 @@ void CoulombP3M::tune() {
           "CoulombP3M: no charged particles in the system");
     }
     try {
-      CoulombTuningAlgorithm parameters(p3m, prefactor, tune_timings);
+      CoulombTuningAlgorithm parameters(system, p3m, prefactor, tune_timings);
       parameters.setup_logger(tune_verbose);
       // parameter ranges
       parameters.determine_mesh_limits();
@@ -760,7 +759,7 @@ void CoulombP3M::tune() {
       // run tuning algorithm
       parameters.tune();
       m_is_tuned = true;
-      on_coulomb_change();
+      system.on_coulomb_change();
     } catch (...) {
       p3m.params.tuning = false;
       throw;
@@ -770,7 +769,7 @@ void CoulombP3M::tune() {
 }
 
 void CoulombP3M::sanity_checks_boxl() const {
-  auto const &system = System::get_system();
+  auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
   for (unsigned int i = 0u; i < 3u; i++) {
@@ -801,24 +800,22 @@ void CoulombP3M::sanity_checks_boxl() const {
 }
 
 void CoulombP3M::sanity_checks_periodicity() const {
-  auto const &box_geo = *System::get_system().box_geo;
-  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
+  auto const &box_geo = *get_system().box_geo;
+  if (!box_geo.periodic(0) or !box_geo.periodic(1) or !box_geo.periodic(2)) {
     throw std::runtime_error(
         "CoulombP3M: requires periodicity (True, True, True)");
   }
 }
 
 void CoulombP3M::sanity_checks_cell_structure() const {
-  auto const &local_geo = *System::get_system().local_geo;
-  if (local_geo.cell_structure_type() !=
-          CellStructureType::CELL_STRUCTURE_REGULAR &&
-      local_geo.cell_structure_type() !=
-          CellStructureType::CELL_STRUCTURE_HYBRID) {
+  auto const &local_geo = *get_system().local_geo;
+  if (local_geo.cell_structure_type() != CellStructureType::REGULAR and
+      local_geo.cell_structure_type() != CellStructureType::HYBRID) {
     throw std::runtime_error(
         "CoulombP3M: requires the regular or hybrid decomposition cell system");
   }
-  if (::communicator.size > 1 && local_geo.cell_structure_type() ==
-                                     CellStructureType::CELL_STRUCTURE_HYBRID) {
+  if (::communicator.size > 1 and
+      local_geo.cell_structure_type() == CellStructureType::HYBRID) {
     throw std::runtime_error(
         "CoulombP3M: does not work with the hybrid decomposition cell system, "
         "if using more than one MPI node");
@@ -834,7 +831,7 @@ void CoulombP3M::sanity_checks_node_grid() const {
 }
 
 void CoulombP3M::scaleby_box_l() {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   p3m.params.r_cut = p3m.params.r_cut_iL * box_geo.length()[0];
   p3m.params.alpha = p3m.params.alpha_L * box_geo.length_inv()[0];
   p3m.params.recalc_a_ai_cao_cut(box_geo.length());

@@ -47,6 +47,7 @@ class FFT_test(ut.TestCase):
     system = espressomd.System(box_l=[10., 10., 10.])
     original_node_grid = tuple(system.cell_system.node_grid)
     n_nodes = system.cell_system.get_state()["n_nodes"]
+    system.cell_system.skin = 0.
 
     def setUp(self):
         self.system.box_l = [10., 10., 10.]

@@ -27,7 +27,6 @@
 #include "core/BoxGeometry.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/cell_system/CellStructure.hpp"
-#include "core/event.hpp"
 #include "core/exclusions.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
@@ -161,7 +160,7 @@ void ParticleHandle::set_particle_property(F const &fun) const {
   if (ptr != nullptr) {
     fun(*ptr);
   }
-  on_particle_change();
+  System::get_system().on_particle_change();
 }
 
 template <typename T>
@@ -182,7 +181,7 @@ ParticleHandle::ParticleHandle() {
            throw std::domain_error(
                error_msg("type", "must be an integer >= 0"));
          }
-         make_particle_type_exist(new_type);
+         System::get_system().nonbonded_ias->make_particle_type_exist(new_type);
          on_particle_type_change(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },
@@ -601,6 +600,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       throw std::domain_error("Invalid particle id: " +
                               std::to_string(other_pid));
     }
+    auto const &system = ::System::get_system();
     /* note: this code can be rewritten as parallel code, but only with a call
      * to `cells_update_ghosts(DATA_PART_POSITION | DATA_PART_PROPERTIES)`, as
      * there is no guarantee the virtual site has visibility of the relative
@@ -613,7 +613,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const &p_current = get_particle_data(m_pid);
     auto const &p_relate_to = get_particle_data(other_pid);
     auto const [quat, dist] = calculate_vs_relate_to_params(
-        p_current, p_relate_to, *::System::get_system().box_geo);
+        p_current, p_relate_to, *system.box_geo, system.get_min_global_cut());
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
     set_parameter("virtual", true);
@@ -631,13 +631,13 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     context()->parallel_try_catch(
         [&]() { particle_exclusion_sanity_checks(m_pid, other_pid); });
     local_add_exclusion(m_pid, other_pid);
-    on_particle_change();
+    System::get_system().on_particle_change();
   } else if (name == "del_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
     context()->parallel_try_catch(
         [&]() { particle_exclusion_sanity_checks(m_pid, other_pid); });
     local_remove_exclusion(m_pid, other_pid);
-    on_particle_change();
+    System::get_system().on_particle_change();
   } else if (name == "set_exclusions") {
     std::vector<int> exclusion_list;
     try {

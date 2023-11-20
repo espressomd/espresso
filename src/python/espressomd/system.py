@@ -242,22 +242,16 @@ class System(ScriptInterfaceHelper):
         return so
 
     def __getstate__(self):
-        checkpointable_properties = ["integrator"]
+        checkpointable_properties = []
         if has_features("VIRTUAL_SITES"):
             checkpointable_properties.append("_active_virtual_sites_handle")
         checkpointable_properties += [
-            "non_bonded_inter", "bonded_inter", "cell_system", "lees_edwards",
-            "part", "analysis", "auto_update_accumulators",
-            "comfixed", "constraints", "galilei", "bond_breakage"
+            "non_bonded_inter", "bonded_inter", "lees_edwards",
+            "part", "auto_update_accumulators",
+            "constraints",
         ]
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")
-        if has_features("ELECTROSTATICS"):
-            checkpointable_properties.append("electrostatics")
-        if has_features("DIPOLES"):
-            checkpointable_properties.append("magnetostatics")
-        if has_features("ELECTROSTATICS"):
-            checkpointable_properties.append("electrostatics")
         if has_features("WALBERLA"):
             checkpointable_properties += ["_lb", "_ekcontainer"]
         checkpointable_properties += ["thermostat"]

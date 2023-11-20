@@ -29,7 +29,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/rigid_bond.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
@@ -140,7 +139,8 @@ static void apply_positional_correction(const ParticleRange &particles) {
 }
 
 void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo) {
-  cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
+  unsigned const flag = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
+  cs.update_ghosts_and_resort_particle(flag);
 
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
@@ -167,7 +167,9 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo) {
                       << " iterations";
   }
 
-  check_resort_particles();
+  auto const resort_level =
+      cs.check_resort_required() ? Cells::RESORT_LOCAL : Cells::RESORT_NONE;
+  cs.set_resort_particles(resort_level);
 }
 
 /**

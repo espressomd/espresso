@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DLC_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DLC_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -28,6 +27,7 @@
 
 #include "actor/traits.hpp"
 
+#include "magnetostatics/actor.hpp"
 #include "magnetostatics/dipolar_direct_sum.hpp"
 #include "magnetostatics/dp3m.hpp"
 
@@ -75,7 +75,7 @@ struct dlc_data {
  * @brief Adapt a magnetostatics solver to remove contributions from the
  * z-direction. For details see @cite brodka04a.
  */
-struct DipolarLayerCorrection {
+struct DipolarLayerCorrection : public Dipoles::Actor<DipolarLayerCorrection> {
   using BaseSolver = std::variant<
 #ifdef DP3M
       std::shared_ptr<DipolarP3M>,
@@ -96,6 +96,8 @@ struct DipolarLayerCorrection {
   DipolarLayerCorrection(dlc_data &&parameters, BaseSolver &&solver);
 
   void on_activation() {
+    visit_base_solver(
+        [this](auto &solver) { solver->bind_system(m_system.lock()); });
     sanity_checks_node_grid();
     /* None of the DLC parameters depend on the DP3M parameters,
      * but the DP3M parameters depend on the DLC parameters during tuning,
@@ -164,5 +166,3 @@ private:
 };
 
 #endif // DIPOLES
-
-#endif

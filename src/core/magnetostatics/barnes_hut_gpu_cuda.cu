@@ -1181,7 +1181,7 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   bh_data->nbodies = nbodies;
 
   auto const devID = cuda_get_device();
-  EspressoGpuDevice const dev = cuda_get_device_props(devID);
+  auto const dev = cuda_get_device_props(devID);
 
   bh_data->blocks = dev.n_cores;
   // Each node corresponds to a split of the cubic box in 3D space to equal

@@ -19,24 +19,45 @@
 
 #include "System.hpp"
 
+#include "config/config.hpp"
+
 #include "core/BoxGeometry.hpp"
+#include "core/Particle.hpp"
+#include "core/ParticleRange.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/cell_system/CellStructureType.hpp"
 #include "core/cells.hpp"
-#include "core/event.hpp"
+#include "core/communication.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
-#include "core/rotate_system.hpp"
+#include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
 
-#include <utils/Vector.hpp>
+#include "script_interface/analysis/Analysis.hpp"
+#include "script_interface/bond_breakage/BreakageSpecs.hpp"
+#include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/electrostatics/Container.hpp"
+#include "script_interface/galilei/ComFixed.hpp"
+#include "script_interface/galilei/Galilei.hpp"
+#include "script_interface/integrators/IntegratorHandle.hpp"
+#include "script_interface/magnetostatics/Container.hpp"
 
+#include <utils/Vector.hpp>
+#include <utils/math/vec_rotate.hpp>
+
+#include <boost/mpi/collectives.hpp>
+
+#include <algorithm>
+#include <array>
 #include <cassert>
+#include <cmath>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace ScriptInterface {
@@ -44,20 +65,39 @@ namespace System {
 
 static bool system_created = false;
 
-static Utils::Vector3b get_periodicity() {
-  auto const &box_geo = *::System::get_system().box_geo;
-  return {box_geo.periodic(0), box_geo.periodic(1), box_geo.periodic(2)};
-}
+/** @brief Container for leaves of the system class. */
+struct System::Leaves {
+  Leaves() = default;
+  std::shared_ptr<CellSystem::CellSystem> cell_system;
+  std::shared_ptr<Integrators::IntegratorHandle> integrator;
+  std::shared_ptr<Analysis::Analysis> analysis;
+  std::shared_ptr<Galilei::ComFixed> comfixed;
+  std::shared_ptr<Galilei::Galilei> galilei;
+  std::shared_ptr<BondBreakage::BreakageSpecs> bond_breakage;
+#ifdef ELECTROSTATICS
+  std::shared_ptr<Coulomb::Container> electrostatics;
+#endif
+#ifdef DIPOLES
+  std::shared_ptr<Dipoles::Container> magnetostatics;
+#endif
+};
 
-static void set_periodicity(Utils::Vector3b const &value) {
-  auto &box_geo = *::System::get_system().box_geo;
-  for (int i = 0; i < 3; ++i) {
-    box_geo.set_periodic(i, value[i]);
-  }
-  on_periodicity_change();
-}
+System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
+  auto const add_parameter =
+      [this, ptr = m_leaves.get()](std::string key, auto(Leaves::*member)) {
+        add_parameters({AutoParameter(
+            key.c_str(),
+            [this, ptr, member, key](Variant const &val) {
+              auto &dst = ptr->*member;
+              if (dst != nullptr) {
+                throw WriteError(key);
+              }
+              dst = get_value<std::remove_reference_t<decltype(dst)>>(val);
+              dst->bind_system(m_instance);
+            },
+            [ptr, member]() { return ptr->*member; })});
+      };
 
-System::System() {
   add_parameters({
       {"box_l",
        [this](Variant const &v) {
@@ -67,10 +107,24 @@ System::System() {
              throw std::domain_error("Attribute 'box_l' must be > 0");
            }
            m_instance->box_geo->set_length(new_value);
-           on_boxl_change();
+           m_instance->on_boxl_change();
          });
        },
        []() { return ::System::get_system().box_geo->length(); }},
+      {"periodicity",
+       [this](Variant const &v) {
+         auto const periodicity = get_value<Utils::Vector3b>(v);
+         for (unsigned int i = 0u; i < 3u; ++i) {
+           m_instance->box_geo->set_periodic(i, periodicity[i]);
+         }
+         context()->parallel_try_catch(
+             [&]() { m_instance->on_periodicity_change(); });
+       },
+       [this]() {
+         return Utils::Vector3b{m_instance->box_geo->periodic(0),
+                                m_instance->box_geo->periodic(1),
+                                m_instance->box_geo->periodic(2)};
+       }},
       {"min_global_cut",
        [this](Variant const &v) {
          context()->parallel_try_catch([&]() {
@@ -78,18 +132,24 @@ System::System() {
            if (new_value < 0. and new_value != INACTIVE_CUTOFF) {
              throw std::domain_error("Attribute 'min_global_cut' must be >= 0");
            }
-           set_min_global_cut(new_value);
+           m_instance->set_min_global_cut(new_value);
          });
        },
-       []() { return ::get_min_global_cut(); }},
-      {"periodicity",
-       [this](Variant const &v) {
-         context()->parallel_try_catch(
-             [&]() { set_periodicity(get_value<Utils::Vector3b>(v)); });
-       },
-       []() { return get_periodicity(); }},
+       [this]() { return m_instance->get_min_global_cut(); }},
       {"max_oif_objects", ::max_oif_objects},
   });
+  add_parameter("cell_system", &Leaves::cell_system);
+  add_parameter("integrator", &Leaves::integrator);
+  add_parameter("analysis", &Leaves::analysis);
+  add_parameter("comfixed", &Leaves::comfixed);
+  add_parameter("galilei", &Leaves::galilei);
+  add_parameter("bond_breakage", &Leaves::bond_breakage);
+#ifdef ELECTROSTATICS
+  add_parameter("electrostatics", &Leaves::electrostatics);
+#endif
+#ifdef DIPOLES
+  add_parameter("magnetostatics", &Leaves::magnetostatics);
+#endif
 }
 
 void System::do_construct(VariantMap const &params) {
@@ -102,31 +162,60 @@ void System::do_construct(VariantMap const &params) {
    * runtime errors about the local geometry being smaller
    * than the interaction range would be raised.
    */
-  auto const valid_params = get_valid_parameters();
-  std::set<std::string> const skip{{"box_l", "periodicity", "min_global_cut"}};
-  std::set<std::string> const allowed{valid_params.begin(), valid_params.end()};
-
-  m_instance = std::make_shared<::System::System>();
+  m_instance = ::System::System::create();
   ::System::set_system(m_instance);
-  m_instance->init();
 
   // domain decomposition can only be set after box_l is set
-  auto &cell_structure = *m_instance->cell_structure;
-  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_NSQUARE);
+  m_instance->set_cell_structure_topology(CellStructureType::NSQUARE);
   do_set_parameter("box_l", params.at("box_l"));
-  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
+  m_instance->set_cell_structure_topology(CellStructureType::REGULAR);
 
-  if (params.count("periodicity")) {
-    do_set_parameter("periodicity", params.at("periodicity"));
-  }
-  if (params.count("min_global_cut")) {
-    do_set_parameter("min_global_cut", params.at("min_global_cut"));
-  }
-  for (auto const &[name, value] : params) {
-    if (skip.count(name) == 0 and allowed.count(name) != 0) {
-      do_set_parameter(name, value);
+  m_instance->lb.bind_system(m_instance);
+  m_instance->ek.bind_system(m_instance);
+
+  for (auto const &key : get_parameter_insertion_order()) {
+    if (key != "box_l" and params.count(key) != 0ul) {
+      do_set_parameter(key, params.at(key));
     }
   }
+}
+
+static void rotate_system(CellStructure &cell_structure, double phi,
+                          double theta, double alpha) {
+  auto const particles = cell_structure.local_particles();
+
+  // Calculate center of mass
+  Utils::Vector3d local_com{};
+  double local_mass = 0.0;
+
+  for (auto const &p : particles) {
+    if (not p.is_virtual()) {
+      local_com += p.mass() * p.pos();
+      local_mass += p.mass();
+    }
+  }
+
+  auto const total_mass =
+      boost::mpi::all_reduce(comm_cart, local_mass, std::plus<>());
+  auto const com =
+      boost::mpi::all_reduce(comm_cart, local_com, std::plus<>()) / total_mass;
+
+  // Rotation axis in Cartesian coordinates
+  Utils::Vector3d axis;
+  axis[0] = std::sin(theta) * std::cos(phi);
+  axis[1] = std::sin(theta) * std::sin(phi);
+  axis[2] = std::cos(theta);
+
+  // Rotate particle coordinates
+  for (auto &p : particles) {
+    // Move the center of mass of the system to the origin
+    p.pos() = com + Utils::vec_rotate(axis, alpha, p.pos() - com);
+#ifdef ROTATION
+    local_rotate_particle(p, axis, alpha);
+#endif
+  }
+
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 }
 
 /** Rescale all particle positions in direction @p dir by a factor @p scale.
@@ -143,7 +232,6 @@ static void rescale_particles(CellStructure &cell_structure, int dir,
       p.pos() *= scale;
     }
   }
-  on_particle_change();
 }
 
 Variant System::do_call_method(std::string const &name,
@@ -156,14 +244,14 @@ Variant System::do_call_method(std::string const &name,
     return {};
   }
   if (name == "rescale_boxl") {
-    auto &box_geo = *::System::get_system().box_geo;
+    auto &box_geo = *m_instance->box_geo;
     auto const coord = get_value<int>(parameters, "coord");
     auto const length = get_value<double>(parameters, "length");
     auto const scale = (coord == 3) ? length * box_geo.length_inv()[0]
                                     : length * box_geo.length_inv()[coord];
     context()->parallel_try_catch([&]() {
       if (length <= 0.) {
-        throw std::domain_error("Parameter 'd_new' be > 0");
+        throw std::domain_error("Parameter 'd_new' must be > 0");
       }
     });
     auto new_value = Utils::Vector3d{};
@@ -176,11 +264,13 @@ Variant System::do_call_method(std::string const &name,
     // when shrinking, rescale the particles first
     if (scale <= 1.) {
       rescale_particles(*m_instance->cell_structure, coord, scale);
+      m_instance->on_particle_change();
     }
     m_instance->box_geo->set_length(new_value);
-    on_boxl_change();
+    m_instance->on_boxl_change();
     if (scale > 1.) {
       rescale_particles(*m_instance->cell_structure, coord, scale);
+      m_instance->on_particle_change();
     }
     return {};
   }
@@ -196,24 +286,24 @@ Variant System::do_call_method(std::string const &name,
     return ::number_of_particles_with_type(type);
   }
   if (name == "velocity_difference") {
-    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");
     auto const pos2 = get_value<Utils::Vector3d>(parameters, "pos2");
     auto const v1 = get_value<Utils::Vector3d>(parameters, "v1");
     auto const v2 = get_value<Utils::Vector3d>(parameters, "v2");
-    return box_geo.velocity_difference(pos2, pos1, v2, v1);
+    return m_instance->box_geo->velocity_difference(pos2, pos1, v2, v1);
   }
   if (name == "distance_vec") {
-    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos1 = get_value<Utils::Vector3d>(parameters, "pos1");
     auto const pos2 = get_value<Utils::Vector3d>(parameters, "pos2");
-    return box_geo.get_mi_vector(pos2, pos1);
+    return m_instance->box_geo->get_mi_vector(pos2, pos1);
   }
   if (name == "rotate_system") {
     rotate_system(*m_instance->cell_structure,
                   get_value<double>(parameters, "phi"),
                   get_value<double>(parameters, "theta"),
                   get_value<double>(parameters, "alpha"));
+    m_instance->on_particle_change();
+    m_instance->update_dependent_particles();
     return {};
   }
   if (name == "session_shutdown") {

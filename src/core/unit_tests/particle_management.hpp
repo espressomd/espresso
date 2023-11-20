@@ -28,9 +28,9 @@
 #include <boost/optional.hpp>
 
 inline auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
-                                       int p_id) {
+                                       System::System &system, int p_id) {
   boost::optional<Particle> result{};
-  auto p = System::get_system().cell_structure->get_local_particle(p_id);
+  auto p = system.cell_structure->get_local_particle(p_id);
   if (p and not p->is_ghost()) {
     if (comm.rank() == 0) {
       result = *p;

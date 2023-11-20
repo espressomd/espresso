@@ -53,7 +53,9 @@
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -62,45 +64,13 @@
 #include <utility>
 #include <vector>
 
-/** Flags for particle exchange and resorting: whether to do a global
- *  exchange or assume that particles did not move much (faster, used
- *  during integration, where moving far is a catastrophe anyways).
- */
-enum {
-  /** Do neighbor exchange. */
-  CELL_NEIGHBOR_EXCHANGE = 0,
-  /** Do global exchange. */
-  CELL_GLOBAL_EXCHANGE = 1
-};
-
-/** Initialize cell structure @ref HybridDecomposition
- *  @param n_square_types   Types of particles to place in the N-square cells.
- *  @param cutoff_regular   Cutoff for the regular decomposition.
- */
-void set_hybrid_decomposition(std::set<int> n_square_types,
-                              double cutoff_regular);
-
-/** Reinitialize the cell structures.
- *  @param cell_structure The cell structure to modify
- *  @param new_cs The new topology to use afterwards.
- */
-void cells_re_init(CellStructure &cell_structure, CellStructureType new_cs);
-
-inline void cells_re_init(CellStructure &cell_structure) {
-  cells_re_init(cell_structure, cell_structure.decomposition_type());
-}
-
-/** Update ghost information. If needed,
- *  the particles are also resorted.
- */
-void cells_update_ghosts(unsigned data_parts);
-
 /**
  * @brief Get pairs closer than @p distance from the cells.
  *
  * Pairs are sorted so that first.id < second.id
  */
-std::vector<std::pair<int, int>> get_pairs(double distance);
+std::vector<std::pair<int, int>> get_pairs(System::System const &system,
+                                           double distance);
 
 /**
  * @brief Get pairs closer than @p distance if both their types are in @p types
@@ -108,17 +78,16 @@ std::vector<std::pair<int, int>> get_pairs(double distance);
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>>
-get_pairs_of_types(double distance, std::vector<int> const &types);
-
-/** Check if a particle resorting is required. */
-void check_resort_particles();
+get_pairs_of_types(System::System const &system, double distance,
+                   std::vector<int> const &types);
 
 /**
  * @brief Get ids of particles that are within a certain distance
  * of another particle.
  */
-boost::optional<std::vector<int>> get_short_range_neighbors(int pid,
-                                                            double distance);
+boost::optional<std::vector<int>>
+get_short_range_neighbors(System::System const &system, int pid,
+                          double distance);
 
 struct NeighborPIDs {
   NeighborPIDs() = default;
@@ -142,7 +111,7 @@ void serialize(Archive &ar, NeighborPIDs &n, unsigned int const /* version */) {
 /**
  * @brief Returns pairs of particle ids and neighbor particle id lists.
  */
-std::vector<NeighborPIDs> get_neighbor_pids();
+std::vector<NeighborPIDs> get_neighbor_pids(System::System const &system);
 
 class PairInfo {
 public:
@@ -177,4 +146,5 @@ void serialize(Archive &ar, PairInfo &p, unsigned int const /* version */) {
  * @brief Returns pairs of particle ids, positions and distance as seen by the
  * non-bonded loop.
  */
-std::vector<PairInfo> non_bonded_loop_trace(int rank);
+std::vector<PairInfo> non_bonded_loop_trace(System::System const &system,
+                                            int rank);

@@ -38,12 +38,9 @@
 struct CompareDevices {
   bool operator()(const EspressoGpuDevice &a,
                   const EspressoGpuDevice &b) const {
-    const int name_comp = strncmp(a.proc_name, b.proc_name, 63);
+    auto const name_comp = strncmp(a.proc_name, b.proc_name, 63);
     /* if both devices are from the same node, order by id */
-    if (name_comp == 0)
-      return a.id < b.id;
-
-    return name_comp < 0;
+    return (name_comp == 0) ? a.id < b.id : name_comp < 0;
   }
 };
 
@@ -58,30 +55,24 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   /* Global unique device list (only relevant on the head node) */
   std::vector<EspressoGpuDevice> devices_global;
 
-  int n_devices;
-  try {
-    n_devices = cuda_get_n_gpus();
-  } catch (cuda_runtime_error const &) {
-    n_devices = 0;
-  }
+  int n_devices = 0;
+  invoke_skip_cuda_exceptions(
+      [&n_devices]() { n_devices = cuda_get_n_gpus(); });
 
   int proc_name_len;
   char proc_name[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(proc_name, &proc_name_len);
-  if (std::strlen(proc_name) > 63)
-    proc_name[63] = '\0';
+  proc_name[63] = '\0';
 
-  for (int i = 0; i < n_devices; ++i) {
-    try {
-      EspressoGpuDevice device = cuda_get_device_props(i);
+  invoke_skip_cuda_exceptions([&devices_local, n_devices, &proc_name]() {
+    for (int i = 0; i < n_devices; ++i) {
+      auto device = cuda_get_device_props(i);
       std::strncpy(device.proc_name, proc_name, 64);
       device.proc_name[63] = '\0';
       device.node = this_node;
-      devices_local.push_back(device);
-    } catch (cuda_runtime_error const &) {
-      // pass
+      devices_local.emplace_back(device);
     }
-  }
+  });
 
   auto const n_gpus = static_cast<int>(devices_local.size());
   auto const n_nodes = ::communicator.size;
@@ -119,6 +110,12 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
     }
   }
   return devices_global;
+}
+
+void cuda_on_program_start() {
+  if (::communicator.this_node == 0) {
+    invoke_skip_cuda_exceptions(cuda_init);
+  }
 }
 
 #endif // CUDA

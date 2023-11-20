@@ -124,7 +124,7 @@ namespace Communication {
 /**
  * @brief Init globals for communication.
  *
- * and calls @ref on_program_start. Keeps a copy of
+ * and calls @ref cuda_on_program_start. Keeps a copy of
  * the pointer to the mpi environment to keep it alive
  * while the program is loaded.
  *

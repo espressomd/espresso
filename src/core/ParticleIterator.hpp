@@ -105,7 +105,7 @@ private:
     return (m_cell == (rhs.m_cell)) && (m_part == rhs.m_part);
   }
 
-  Particle &dereference() const { return *m_part; }
+  auto &dereference() const { return *m_part; }
 };
 
 #endif

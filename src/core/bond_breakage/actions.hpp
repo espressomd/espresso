@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_BOND_BREAKAGE_ACTIONS_HPP
-#define CORE_BOND_BREAKAGE_ACTIONS_HPP
+#pragma once
 
 #include <boost/functional/hash.hpp>
 #include <boost/variant.hpp>
@@ -106,4 +105,3 @@ template <> struct hash<BondBreakage::DeleteAllBonds> {
   }
 };
 } // namespace boost
-#endif

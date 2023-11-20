@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ALGORITHM_LINK_CELL_HPP
-#define ALGORITHM_LINK_CELL_HPP
+
+#pragma once
 
 #include <iterator>
 
@@ -31,18 +31,18 @@ namespace Algorithm {
 template <typename CellIterator, typename PairKernel>
 void link_cell(CellIterator first, CellIterator last,
                PairKernel &&pair_kernel) {
-  for (; first != last; ++first) {
-    for (auto it = first->particles().begin(); it != first->particles().end();
-         ++it) {
+  for (auto cell = first; cell != last; ++cell) {
+    auto &local_particles = cell->particles();
+    for (auto it = local_particles.begin(); it != local_particles.end(); ++it) {
       auto &p1 = *it;
 
       /* Pairs in this cell */
-      for (auto jt = std::next(it); jt != first->particles().end(); ++jt) {
+      for (auto jt = std::next(it); jt != local_particles.end(); ++jt) {
         pair_kernel(p1, *jt);
       }
 
       /* Pairs with neighbors */
-      for (auto &neighbor : first->neighbors().red()) {
+      for (auto &neighbor : cell->neighbors().red()) {
         for (auto &p2 : neighbor->particles()) {
           pair_kernel(p1, p2);
         }
@@ -50,6 +50,5 @@ void link_cell(CellIterator first, CellIterator last,
     }
   }
 }
-} // namespace Algorithm
 
-#endif
+} // namespace Algorithm

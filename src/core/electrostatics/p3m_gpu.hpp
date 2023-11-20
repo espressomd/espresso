@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_HPP
+#pragma once
 
 /**
  * @file
@@ -65,5 +64,3 @@ private:
 
 #endif // CUDA
 #endif // P3M
-
-#endif

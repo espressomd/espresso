@@ -19,21 +19,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_SCAFACOS_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_SCAFACOS_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef SCAFACOS_DIPOLES
+
+#include "magnetostatics/actor.hpp"
 
 #include "scafacos/ScafacosContextBase.hpp"
 
 #include <memory>
 #include <string>
 
-struct DipolarScafacos : virtual public ScafacosContextBase {
+struct DipolarScafacos : virtual public ScafacosContextBase,
+                         public Dipoles::Actor<DipolarScafacos> {
   ~DipolarScafacos() override = default;
-  double prefactor = 0.;
 
   void on_activation() { update_system_params(); }
   /** @brief Recalculate all box-length-dependent parameters. */
@@ -50,4 +51,3 @@ std::shared_ptr<DipolarScafacos>
 make_dipolar_scafacos(std::string const &method, std::string const &parameters);
 
 #endif // SCAFACOS_DIPOLES
-#endif

@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_P3M_TUNING_ALGORITHM_HPP
-#define ESPRESSO_SRC_CORE_P3M_TUNING_ALGORITHM_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -37,6 +36,10 @@
 #include <optional>
 #include <string>
 #include <tuple>
+
+namespace System {
+class System;
+}
 
 /**
  * @brief Tuning algorithm for P3M.
@@ -59,6 +62,10 @@
  * than the currently known optimum.
  */
 class TuningAlgorithm {
+protected:
+  System::System &m_system;
+
+private:
   int m_timings;
   std::size_t m_n_trials;
 
@@ -84,8 +91,10 @@ protected:
   static auto constexpr time_sentinel = std::numeric_limits<double>::max();
 
 public:
-  TuningAlgorithm(double prefactor, int timings)
-      : m_timings{timings}, m_n_trials{0ul}, m_prefactor{prefactor} {}
+  TuningAlgorithm(System::System &system, double prefactor, int timings)
+      : m_system{system}, m_timings{timings}, m_n_trials{0ul}, m_prefactor{
+                                                                   prefactor} {}
+
   virtual ~TuningAlgorithm() = default;
 
   struct Parameters {
@@ -178,5 +187,3 @@ protected:
 };
 
 #endif // P3M or DP3M
-
-#endif

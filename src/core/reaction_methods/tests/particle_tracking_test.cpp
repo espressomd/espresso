@@ -70,8 +70,8 @@ int main(int argc, char **argv) {
   auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
   Communication::init(mpi_env);
 
-  auto &cell_structure = *System::get_system().cell_structure;
-  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
+  auto &system = System::get_system();
+  system.set_cell_structure_topology(CellStructureType::REGULAR);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

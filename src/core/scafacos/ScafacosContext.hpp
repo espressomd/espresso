@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_HPP
-#define ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_HPP
+#pragma once
 
 /**
  * @file
@@ -66,4 +65,3 @@ struct ScafacosContext : virtual public ScafacosContextBase,
 };
 
 #endif // SCAFACOS or SCAFACOS_DIPOLES
-#endif

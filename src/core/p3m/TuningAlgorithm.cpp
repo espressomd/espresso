@@ -30,8 +30,8 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "integrate.hpp"
 #include "system/System.hpp"
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -57,15 +57,15 @@ static auto constexpr P3M_TUNE_ACCURACY_TOO_LARGE = 3.;
 static auto constexpr P3M_RCUT_PREC = 1e-3;
 
 void TuningAlgorithm::determine_r_cut_limits() {
-  auto const &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
-  auto const &local_geo = *system.local_geo;
+  auto const &box_geo = *m_system.box_geo;
+  auto const &local_geo = *m_system.local_geo;
+  auto const verlet_skin = m_system.cell_structure->get_verlet_skin();
   auto const r_cut_iL = get_params().r_cut_iL;
   if (r_cut_iL == 0.) {
     auto const min_box_l = *boost::min_element(box_geo.length());
     auto const min_local_box_l = *boost::min_element(local_geo.length());
     m_r_cut_iL_min = 0.;
-    m_r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.) - skin;
+    m_r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.) - verlet_skin;
     m_r_cut_iL_min *= box_geo.length_inv()[0];
     m_r_cut_iL_max *= box_geo.length_inv()[0];
   } else {
@@ -89,7 +89,7 @@ void TuningAlgorithm::determine_cao_limits(int initial_cao) {
 
 void TuningAlgorithm::commit(Utils::Vector3i const &mesh, int cao,
                              double r_cut_iL, double alpha_L) {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *m_system.box_geo;
   auto &p3m_params = get_params();
   p3m_params.r_cut = r_cut_iL * box_geo.length()[0];
   p3m_params.r_cut_iL = r_cut_iL;
@@ -119,9 +119,9 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
                                     double &tuned_r_cut_iL,
                                     double &tuned_alpha_L,
                                     double &tuned_accuracy) {
-  auto const &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
-  auto const &local_geo = *system.local_geo;
+  auto const &box_geo = *m_system.box_geo;
+  auto const &local_geo = *m_system.local_geo;
+  auto const verlet_skin = m_system.cell_structure->get_verlet_skin();
   auto const target_accuracy = get_params().accuracy;
   double rs_err, ks_err;
   double r_cut_iL_min = m_r_cut_iL_min;
@@ -133,7 +133,7 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
   auto const k_cut = *boost::min_element(k_cut_per_dir);
   auto const min_box_l = *boost::min_element(box_geo.length());
   auto const min_local_box_l = *boost::min_element(local_geo.length());
-  auto const k_cut_max = std::min(min_box_l, min_local_box_l) - skin;
+  auto const k_cut_max = std::min(min_box_l, min_local_box_l) - verlet_skin;
 
   if (cao >= *boost::min_element(mesh) or k_cut >= k_cut_max) {
     m_logger->log_cao_too_large(mesh[0], cao);
@@ -184,7 +184,7 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
 
   commit(mesh, cao, r_cut_iL, tuned_alpha_L);
   on_solver_change();
-  auto const int_time = benchmark_integration_step(m_timings);
+  auto const int_time = benchmark_integration_step(m_system, m_timings);
 
   std::tie(tuned_accuracy, rs_err, ks_err, tuned_alpha_L) =
       calculate_accuracy(mesh, cao, r_cut_iL);

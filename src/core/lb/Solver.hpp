@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "system/Leaf.hpp"
+
 #include "utils.hpp"
 
 #include <utils/Vector.hpp>
@@ -30,7 +32,7 @@
 
 namespace LB {
 
-struct Solver {
+struct Solver : public System::Leaf<Solver> {
   struct Implementation;
 
   Solver();

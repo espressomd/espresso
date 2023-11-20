@@ -288,7 +288,7 @@ static auto get_n_cut(BoxGeometry const &box_geo, int n_replicas) {
  */
 void DipolarDirectSum::add_long_range_forces(
     ParticleRange const &particles) const {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto const &box_l = box_geo.length();
   auto [local_particles, all_posmom, reqs, offset] =
       gather_particle_data(box_geo, particles, n_replicas);
@@ -377,7 +377,7 @@ void DipolarDirectSum::add_long_range_forces(
  */
 double
 DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   auto [local_particles, all_posmom, reqs, offset] =
       gather_particle_data(box_geo, particles, n_replicas);
 
@@ -416,7 +416,7 @@ DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
 #ifdef DIPOLE_FIELD_TRACKING
 void DipolarDirectSum::dipole_field_at_part(
     ParticleRange const &particles) const {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const &box_geo = *get_system().box_geo;
   /* collect particle data */
   auto [local_particles, all_posmom, reqs, offset] =
       gather_particle_data(box_geo, particles, n_replicas);
@@ -443,11 +443,9 @@ void DipolarDirectSum::dipole_field_at_part(
 }
 #endif
 
-DipolarDirectSum::DipolarDirectSum(double prefactor, int n_replicas)
-    : prefactor{prefactor}, n_replicas{n_replicas} {
-  if (prefactor <= 0.) {
-    throw std::domain_error("Parameter 'prefactor' must be > 0");
-  }
+DipolarDirectSum::DipolarDirectSum(double prefactor, int n_replicas) {
+  set_prefactor(prefactor);
+  this->n_replicas = n_replicas;
   if (n_replicas < 0) {
     throw std::domain_error("Parameter 'n_replicas' must be >= 0");
   }

@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "system/Leaf.hpp"
+
 #include "utils.hpp"
 
 #include <cassert>
@@ -28,7 +30,7 @@
 
 namespace EK {
 
-struct Solver {
+struct Solver : public System::Leaf<Solver> {
   struct Implementation;
 
   Solver();

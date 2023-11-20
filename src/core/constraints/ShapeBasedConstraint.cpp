@@ -41,6 +41,11 @@
 #include <numeric>
 
 namespace Constraints {
+/** Check if a non-bonded interaction is defined */
+static bool is_active(IA_parameters const &data) {
+  return data.max_cut != INACTIVE_CUTOFF;
+}
+
 Utils::Vector3d ShapeBasedConstraint::total_force() const {
   return all_reduce(comm_cart, m_local_force, std::plus<>());
 }
@@ -49,16 +54,16 @@ double ShapeBasedConstraint::total_normal_force() const {
   return all_reduce(comm_cart, m_outer_normal_force, std::plus<double>());
 }
 
-double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
-  auto const &box_geo = *System::get_system().box_geo;
-  double global_mindist = std::numeric_limits<double>::infinity();
+double ShapeBasedConstraint::min_dist(BoxGeometry const &box_geo,
+                                      ParticleRange const &particles) const {
+  auto global_mindist = std::numeric_limits<double>::infinity();
 
   auto const local_mindist = std::accumulate(
       particles.begin(), particles.end(),
       std::numeric_limits<double>::infinity(),
       [this, &box_geo](double min, Particle const &p) {
-        auto const &ia_params = get_ia_param(p.type(), part_rep.type());
-        if (checkIfInteraction(ia_params)) {
+        auto const &ia_params = get_ia_param(p.type());
+        if (is_active(ia_params)) {
           double dist;
           Utils::Vector3d vec;
           m_shape->calculate_dist(box_geo.folded_position(p.pos()), dist, vec);
@@ -75,14 +80,13 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           Utils::Vector3d const &folded_pos,
                                           double) {
   ParticleForce pf{};
-  auto const &ia_params = get_ia_param(p.type(), part_rep.type());
+  auto const &ia_params = get_ia_param(p.type());
 
-  if (checkIfInteraction(ia_params)) {
+  if (is_active(ia_params)) {
     double dist = 0.;
     Utils::Vector3d dist_vec;
     m_shape->calculate_dist(folded_pos, dist, dist_vec);
-    auto const &coulomb = System::get_system().coulomb;
-    auto const coulomb_kernel = coulomb.pair_force_kernel();
+    auto const coulomb_kernel = m_system.coulomb.pair_force_kernel();
 
 #ifdef DPD
     Utils::Vector3d dpd_force{};
@@ -142,12 +146,10 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                                       const Utils::Vector3d &folded_pos, double,
                                       Observable_stat &obs_energy) const {
   double energy = 0.0;
+  auto const &ia_params = get_ia_param(p.type());
 
-  auto const &ia_params = get_ia_param(p.type(), part_rep.type());
-
-  if (checkIfInteraction(ia_params)) {
-    auto const &coulomb = System::get_system().coulomb;
-    auto const coulomb_kernel = coulomb.pair_energy_kernel();
+  if (is_active(ia_params)) {
+    auto const coulomb_kernel = m_system.coulomb.pair_energy_kernel();
     double dist = 0.0;
     Utils::Vector3d vec;
     m_shape->calculate_dist(folded_pos, dist, vec);

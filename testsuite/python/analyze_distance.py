@@ -98,9 +98,9 @@ class AnalyzeDistance(ut.TestCase):
         for i in range(1, 10, 2):
             self.system.part.all().pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
-            np.testing.assert_allclose(
-                self.system.analysis.nbhood(pos=[i, i, i], r_catch=i * 2),
-                self.nbhood(pos=[i, i, i], r_catch=i * 2))
+            nbhood = self.system.analysis.nbhood(pos=[i, i, i], r_catch=i * 2)
+            nbhood_ref = self.nbhood(pos=[i, i, i], r_catch=i * 2)
+            np.testing.assert_allclose(sorted(nbhood), sorted(nbhood_ref))
 
     def test_particle_neighbors(self):
         max_range = min(self.system.cell_system.call_method("get_max_range"))

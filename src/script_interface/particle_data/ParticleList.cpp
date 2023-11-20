@@ -24,7 +24,6 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include "core/cell_system/CellStructure.hpp"
-#include "core/event.hpp"
 #include "core/exclusions.hpp"
 #include "core/particle_node.hpp"
 #include "core/system/System.hpp"
@@ -132,7 +131,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   std::unordered_map<int, std::vector<std::pair<int, int>>> partners;
   std::vector<int> bonded_pairs;
 
-  auto const &system = ::System::get_system();
+  auto &system = ::System::get_system();
   auto &cell_structure = *system.cell_structure;
 
   // determine initial connectivity
@@ -208,7 +207,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
       }
     }
   }
-  on_particle_change();
+  system.on_particle_change();
 }
 #endif // EXCLUSIONS
 

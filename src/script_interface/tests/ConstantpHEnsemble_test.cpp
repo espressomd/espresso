@@ -25,12 +25,13 @@
 
 #include "core/reaction_methods/ConstantpHEnsemble.hpp"
 #include "core/reaction_methods/SingleReaction.hpp"
+
 #include "script_interface/LocalContext.hpp"
 #include "script_interface/Variant.hpp"
 #include "script_interface/reaction_methods/ConstantpHEnsemble.hpp"
 
-#include "core/EspressoSystemStandAlone.hpp"
 #include "core/Particle.hpp"
+#include "core/cell_system/CellStructureType.hpp"
 #include "core/particle_node.hpp"
 #include "core/unit_tests/ParticleFactory.hpp"
 
@@ -45,7 +46,7 @@ using ::ReactionMethods::SingleReaction;
 
 namespace espresso {
 // ESPResSo system instance
-static std::unique_ptr<EspressoSystemStandAlone> system;
+static std::shared_ptr<System::System> system;
 } // namespace espresso
 
 namespace ScriptInterface::Testing {
@@ -130,6 +131,9 @@ BOOST_FIXTURE_TEST_CASE(ConstantpHEnsemble_test, ParticleFactory) {
 }
 
 int main(int argc, char **argv) {
-  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  mpi_init_stand_alone(argc, argv);
+  espresso::system = System::System::create();
+  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+  ::System::set_system(espresso::system);
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

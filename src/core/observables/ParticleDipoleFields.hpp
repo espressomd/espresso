@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_PARTICLEDIPOLEFIELDS_HPP
-#define OBSERVABLES_PARTICLEDIPOLEFIELDS_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
 #include "PidObservable.hpp"
-#include "energy.hpp"
+#include "system/System.hpp"
 
 #include <vector>
 
@@ -42,7 +42,7 @@ public:
            ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
 #ifdef DIPOLE_FIELD_TRACKING
-    calc_long_range_fields();
+    System::get_system().calculate_long_range_fields();
 #endif
     return ParticleObservable<ParticleObservables::DipoleFields>::evaluate(
         comm, local_particles, traits);
@@ -50,4 +50,3 @@ public:
 };
 
 } // namespace Observables
-#endif

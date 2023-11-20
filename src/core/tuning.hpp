@@ -19,8 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_TUNING_HPP
-#define ESPRESSO_SRC_CORE_TUNING_HPP
+#pragma once
+
+#include "system/System.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -34,18 +35,11 @@ public:
 
 /**
  * @brief Benchmark the integration loop.
- * Call @ref integrate() several times and measure the elapsed time
- * without propagating the system. It therefore doesn't include e.g.
+ * Call @ref System::System::integrate() several times and measure the elapsed
+ * time without propagating the system. It therefore doesn't include e.g.
  * Verlet list updates.
+ * @param system The system to tune.
  * @param int_steps   Number of integration steps.
  * @return Average time per integration loop in milliseconds.
  */
-double benchmark_integration_step(int int_steps);
-
-/** Set the optimal @ref skin between @p min_skin and @p max_skin
- *  by bisection to tolerance @p tol.
- */
-void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
-               bool adjust_max_skin);
-
-#endif
+double benchmark_integration_step(System::System &system, int int_steps);

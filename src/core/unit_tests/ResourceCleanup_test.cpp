@@ -55,12 +55,16 @@ public:
 };
 
 BOOST_AUTO_TEST_CASE(checks) {
-  auto system = std::make_shared<::System::System>();
+  auto system = ::System::System::create();
   System::set_system(system);
 
+#ifdef CUDA
+  BOOST_REQUIRE_EQUAL(system->cleanup_queue.size(), 1);
+  BOOST_REQUIRE_EQUAL(system->cleanup_queue.empty(), false);
+#else
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.size(), 0);
   BOOST_REQUIRE_EQUAL(system->cleanup_queue.empty(), true);
-  system->init();
+#endif
 
 #ifdef CUDA
   if (system->gpu.has_compatible_device()) {

@@ -22,6 +22,8 @@
 
 #include "LBWalberla.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
@@ -73,14 +75,18 @@ void LBWalberla::veto_time_step(double time_step) const {
   walberla_tau_sanity_checks("LB", lb_params->get_tau(), time_step);
 }
 
-void LBWalberla::sanity_checks() const {
+void LBWalberla::sanity_checks(System::System const &system) const {
   auto const agrid = lb_params->get_agrid();
-  auto [my_left, my_right] = lb_fluid->get_lattice().get_local_domain();
-  my_left *= agrid;
-  my_right *= agrid;
-  walberla_agrid_sanity_checks("LB", my_left, my_right, agrid);
+  auto [lb_left, lb_right] = lb_fluid->get_lattice().get_local_domain();
+  lb_left *= agrid;
+  lb_right *= agrid;
+  auto const &md_left = system.local_geo->my_left();
+  auto const &md_right = system.local_geo->my_right();
+  walberla_agrid_sanity_checks("LB", md_left, md_right, lb_left, lb_right,
+                               agrid);
   // LB time step and MD time step must agree
-  walberla_tau_sanity_checks("LB", lb_params->get_tau());
+  walberla_tau_sanity_checks("LB", lb_params->get_tau(),
+                             system.get_time_step());
 }
 
 } // namespace LB

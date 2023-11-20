@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ACTOR_REGISTRATION_HPP
-#define ESPRESSO_SRC_CORE_ACTOR_REGISTRATION_HPP
+#pragma once
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -26,21 +25,41 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <variant>
 
-template <typename Variant, typename T>
+namespace System {
+class System;
+}
+
+template <typename Variant, typename T, class F>
 void add_actor(boost::mpi::communicator const &comm,
+               std::shared_ptr<System::System> const &system,
                std::optional<Variant> &active_actor,
-               std::shared_ptr<T> const &actor, void (&on_actor_change)()) {
+               std::shared_ptr<T> const &actor, F &&on_actor_change) {
   std::optional<Variant> other = actor;
+  auto const activate = [&system](auto &leaf) {
+    leaf->bind_system(system);
+    leaf->on_activation();
+  };
+  auto const deactivate = [&system](auto &leaf) {
+    leaf->detach_system(system);
+  };
   auto const cleanup_if_any_rank_failed = [&](bool failed) {
     if (boost::mpi::all_reduce(comm, failed, std::logical_or<>())) {
+      deactivate(actor);
       active_actor.swap(other);
+      if (active_actor) {
+        std::visit([&](auto &leaf) { activate(leaf); }, *active_actor);
+      }
       on_actor_change();
     }
   };
   try {
     active_actor.swap(other);
-    actor->on_activation();
+    if (other) {
+      std::visit([&](auto &leaf) { deactivate(leaf); }, *other);
+    }
+    activate(actor);
     on_actor_change();
     cleanup_if_any_rank_failed(false);
   } catch (...) {
@@ -48,5 +67,3 @@ void add_actor(boost::mpi::communicator const &comm,
     throw;
   }
 }
-
-#endif

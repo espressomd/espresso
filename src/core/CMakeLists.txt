@@ -30,20 +30,16 @@ add_library(
   dpd.cpp
   energy.cpp
   errorhandling.cpp
-  forcecap.cpp
   forces.cpp
   ghosts.cpp
+  global_ghost_flags.cpp
   immersed_boundaries.cpp
-  interactions.cpp
-  event.cpp
   integrate.cpp
   npt.cpp
-  partCfg_global.cpp
   particle_node.cpp
   polymer.cpp
   pressure.cpp
   rattle.cpp
-  rotate_system.cpp
   rotation.cpp
   Observable_stat.cpp
   thermostat.cpp
@@ -53,7 +49,6 @@ add_library(
   system/GpuParticleData.cpp
   system/System.cpp
   PartCfg.cpp
-  EspressoSystemStandAlone.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY

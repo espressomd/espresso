@@ -31,4 +31,20 @@ public:
   cuda_runtime_error(std::string const &msg) : std::runtime_error(msg) {}
 };
 
+/**
+ * @brief Invoke a function and silently ignore any thrown
+ * @ref cuda_runtime_error error.
+ * This is useful when querying the properties of CUDA devices that may
+ * not have a suitable CUDA version, or when there is no compatible CUDA
+ * device available.
+ */
+template <class F, class... Args>
+void invoke_skip_cuda_exceptions(F &&f, Args &&...args) {
+  try {
+    return f(args...);
+  } catch (cuda_runtime_error const &) {
+    // pass
+  }
+}
+
 #endif // CUDA

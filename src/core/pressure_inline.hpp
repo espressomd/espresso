@@ -18,12 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_PRESSURE_INLINE_HPP
-#define CORE_PRESSURE_INLINE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
-
-#include "pressure.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "magnetostatics/dipoles.hpp"
@@ -51,20 +49,21 @@
  *  @param p2        pointer to particle 2.
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
+ *  @param ia_params              non-bonded interaction kernels.
  *  @param kernel_forces          %Coulomb force kernel.
  *  @param kernel_pressure        %Coulomb pressure kernel.
  *  @param[in,out] obs_pressure   pressure observable.
  */
 inline void add_non_bonded_pair_virials(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
-    double dist, Observable_stat &obs_pressure,
+    double dist, IA_parameters const &ia_params,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel_forces,
-    Coulomb::ShortRangePressureKernel::kernel_type const *kernel_pressure) {
+    Coulomb::ShortRangePressureKernel::kernel_type const *kernel_pressure,
+    Observable_stat &obs_pressure) {
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
   {
-    auto const &ia_params = get_ia_param(p1.type(), p2.type());
     auto const force = calc_central_radial_force(p1, p2, ia_params, d, dist).f +
                        calc_central_radial_charge_force(p1, p2, ia_params, d,
                                                         dist, kernel_forces)
@@ -97,7 +96,8 @@ inline void add_non_bonded_pair_virials(
 #endif // DIPOLES
 }
 
-boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_virial_pressure_tensor(
+inline boost::optional<Utils::Matrix<double, 3, 3>>
+calc_bonded_virial_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Particle const &p2, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
@@ -112,7 +112,7 @@ boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_virial_pressure_tensor(
   return {};
 }
 
-boost::optional<Utils::Matrix<double, 3, 3>>
+inline boost::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
                                        Particle const &p3,
@@ -178,5 +178,3 @@ inline void add_kinetic_virials(Particle const &p1,
     for (int l = 0; l < 3; l++)
       obs_pressure.kinetic[k * 3 + l] += p1.v()[k] * p1.v()[l] * p1.mass();
 }
-
-#endif // CORE_PRESSURE_INLINE_HPP

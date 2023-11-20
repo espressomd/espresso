@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
+#pragma once
 
 #include "Constraint.hpp"
 #include "core/cell_system/CellStructure.hpp"
@@ -39,7 +38,8 @@ namespace Constraints {
 class ShapeBasedConstraint : public Constraint {
 public:
   ShapeBasedConstraint()
-      : m_constraint(std::make_shared<::Constraints::ShapeBasedConstraint>()),
+      : m_constraint(std::make_shared<::Constraints::ShapeBasedConstraint>(
+            ::System::get_system())),
         m_shape(nullptr) {
     add_parameters({{"only_positive", m_constraint->only_positive()},
                     {"penetrable", m_constraint->penetrable()},
@@ -66,9 +66,8 @@ public:
     }
     if (name == "min_dist") {
       auto const &system = ::System::get_system();
-      auto &cell_structure = *system.cell_structure;
       return shape_based_constraint()->min_dist(
-          cell_structure.local_particles());
+          *system.box_geo, system.cell_structure->local_particles());
     }
     if (name == "total_normal_force") {
       return shape_based_constraint()->total_normal_force();
@@ -98,5 +97,3 @@ private:
 
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
-
-#endif

@@ -23,6 +23,8 @@
 
 #ifdef CUDA
 
+#include "utils.hpp"
+
 #include <cstddef>
 #include <vector>
 
@@ -109,4 +111,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus();
  */
 EspressoGpuDevice cuda_get_device_props(int dev);
 
-#endif // ifdef CUDA
+/** @brief Called on program start. */
+void cuda_on_program_start();
+
+#endif // CUDA

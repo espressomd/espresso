@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLES_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -120,5 +119,3 @@ Solver::pair_energy_kernel() const {
 }
 
 } // namespace Dipoles
-
-#endif

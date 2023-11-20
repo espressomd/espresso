@@ -325,11 +325,11 @@ static auto calc_charge_excess_ratio(std::vector<double> const &charges) {
   return std::abs(sum_kahan(q_sum)) / q_min;
 }
 
-void check_charge_neutrality(double relative_tolerance) {
+void check_charge_neutrality(System::System const &system,
+                             double relative_tolerance) {
   // collect non-zero particle charges from all nodes
-  auto &cell_structure = *System::get_system().cell_structure;
   std::vector<double> local_charges;
-  for (auto const &p : cell_structure.local_particles()) {
+  for (auto const &p : system.cell_structure->local_particles()) {
     local_charges.push_back(p.q());
   }
   std::vector<std::vector<double>> node_charges;

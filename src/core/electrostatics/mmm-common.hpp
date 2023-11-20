@@ -28,8 +28,7 @@
  *  directly from @cite abramowitz65a. For details, see @cite arnold02a.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM_COMMON_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_MMM_COMMON_HPP
+#pragma once
 
 #include "mmm-modpsi.hpp"
 
@@ -46,5 +45,3 @@ inline double mod_psi_even(int n, double x) {
 inline double mod_psi_odd(int n, double x) {
   return x * evaluateAsTaylorSeriesAt(modPsi[2 * n + 1], x * x);
 }
-
-#endif

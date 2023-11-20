@@ -18,15 +18,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ENERGY_INLINE_HPP
-#define CORE_ENERGY_INLINE_HPP
+
+#pragma once
+
 /** \file
  *  Energy calculation.
  */
 
 #include "config/config.hpp"
-
-#include "energy.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "electrostatics/coulomb_inline.hpp"
@@ -168,17 +167,17 @@ inline double calc_non_bonded_pair_energy(
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
+ *  @param[in] ia_params        non-bonded interaction kernels.
  *  @param[in] coulomb_kernel   %Coulomb energy kernel.
  *  @param[in] dipoles_kernel   Dipolar energy kernel.
  *  @param[in,out] obs_energy   energy observable.
  */
 inline void add_non_bonded_pair_energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
-    double const dist, double const dist2,
+    double const dist, double const dist2, IA_parameters const &ia_params,
     Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
     Observable_stat &obs_energy) {
-  auto const &ia_params = get_ia_param(p1.type(), p2.type());
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
@@ -320,5 +319,3 @@ inline double rotational_kinetic_energy(Particle const &p) {
 inline double calc_kinetic_energy(Particle const &p) {
   return translational_kinetic_energy(p) + rotational_kinetic_energy(p);
 }
-
-#endif // CORE_ENERGY_INLINE_HPP
