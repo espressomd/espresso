@@ -118,10 +118,12 @@ void Collision_parameters::initialize() {
 
 void CollisionOff::initialize() {
   //TODO: Check global initializer for the global method
+  //Nothing else happens
 }
 
 void CollisionBindCenters::initialize() {
   //TODO: Check global initializer for the global method
+  //Something else happens, but what? 
 }
 
 void CollisionBindVS::initialize() {

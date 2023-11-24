@@ -26,22 +26,20 @@
 #include "BondList.hpp"
 #include "Particle.hpp"
 
-struct CollisionOff{ //TODO: What kind of parameters does this have?   
-  //TODO: Pointer to global one
-  
-  /** @brief Validates parameters and creates particle types if needed. */
-  void initialize();
+struct CollisionOff: public Collision_parameters{ 
+  CollisionOff() : Collision_parameters() {}
+
+  //TODO: Check function for specifics
 }
 
-struct CollisionBindCenters{
-  //TODO: Pointer to global one
+struct CollisionBindCenters: public Collision_parameters{
+  CollisionBindCenters() : Collision_parameters() {}
 
-  /** @brief Validates parameters and creates particle types if needed. */
-  void initialize();
+  //TODO: Check function for specifics
 }
 
-struct CollisionBindVS{
-  //TODO: Pointer to global one
+struct CollisionBindVS: public Collision_parameters{
+  CollisionBindVS() : Collision_parameters(), vs_particle_type(-1), vs_placement(-1.) {}
 
   /// particle type for virtual sites created on collision
   int vs_particle_type;
@@ -53,14 +51,13 @@ struct CollisionBindVS{
    */
   double vs_placement;
 
-  /** @brief Validates parameters and creates particle types if needed. */
-  void initialize();
+  //TODO: Check function for specifics
 }
 
-struct CollisionGlueToSurf{
-
-  //TODO: Pointer to global one
-
+struct CollisionGlueToSurf: public Collision_parameters{
+  CollisionGlueToSurf() : Collision_parameters(), dist_glued_part_to_vs(0.), //TODO: Check if this actually should use 0.?
+        part_type_to_be_glued(-1), part_type_to_attach_vs_to(-1),
+        part_type_after_glueing(-1)  {}
   /// The distance from the particle which is to be
   /// glued to the new virtual site
   double dist_glued_part_to_vs;
@@ -71,8 +68,15 @@ struct CollisionGlueToSurf{
   /// Particle type to which the newly glued particle is converted
   int part_type_after_glueing;
 
-  /** @brief Validates parameters and creates particle types if needed. */
-  void initialize();
+  //TODO: Check function for specifics
+
+  /** @brief Check additional criteria for the glue_to_surface collision mode */
+  inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
+    return (((p1.type() == collision_params.part_type_to_be_glued) &&
+            (p2.type() == collision_params.part_type_to_attach_vs_to)) ||
+            ((p2.type() == collision_params.part_type_to_be_glued) &&
+            (p1.type() == collision_params.part_type_to_attach_vs_to)));
+  }
 }
 
 class Collision_parameters {
@@ -81,8 +85,6 @@ public:
       : mode(CollisionModeType::OFF), distance(0.), distance2(0.),
         bond_centers(-1), bond_vs(-1) {}
 
-  /// collision protocol
-  CollisionModeType mode; //TODO: Remove (?)
   /// distance at which particles are bound
   double distance;
   // Square of distance at which particle are bound
@@ -111,14 +113,6 @@ void handle_collisions(CellStructure &cell_structure);
  *  queue
  */
 void queue_collision(int part1, int part2);
-
-/** @brief Check additional criteria for the glue_to_surface collision mode */
-inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
-  return (((p1.type() == collision_params.part_type_to_be_glued) &&
-           (p2.type() == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2.type() == collision_params.part_type_to_be_glued) &&
-           (p1.type() == collision_params.part_type_to_attach_vs_to)));
-}
 
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(Particle const &p1, Particle const &p2,
