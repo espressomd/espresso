@@ -170,7 +170,6 @@ void Collision_parameters::initialize() {
                              "sites needs to be a pair-particle bond");
   }
 
-  }
 
   // Create particle types
 
