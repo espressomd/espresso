@@ -49,6 +49,10 @@ public:
     });
   }
 
+  std::shared_ptr<::VirtualSites> virtual_sites() override {
+    return m_virtual_sites;
+      } 
+
 private:
   std::shared_ptr<::VirtualSitesCenterOfMass> m_virtual_sites;
 };

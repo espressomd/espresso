@@ -53,9 +53,8 @@
 /** @brief Base class for virtual sites implementations */
 class VirtualSitesCenterOfMass : public VirtualSites {
 public:
-  VirtualSitesCenterOfMass(const std::unordered_map<int, int> & mid_for_vs) : vitual_site_id_for_mol_id(mid_for_vs) {
-    std::cout << "Default constructor called." << std::endl;
-  }
+  VirtualSitesCenterOfMass(const std::unordered_map<int, int> & mid_for_vs) : 
+    vitual_site_id_for_mol_id(mid_for_vs) {}
   /**
    * @brief Update positions and velocities of virtual sites.
    */
