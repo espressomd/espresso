@@ -26,22 +26,54 @@
 #include "BondList.hpp"
 #include "Particle.hpp"
 
-/** @brief Protocols for collision handling. */
-enum class CollisionModeType : int {
-  /** @brief Deactivate collision detection. */
-  OFF = 0,
-  /** @brief Create bond between centers of colliding particles. */
-  BIND_CENTERS = 1,
-  /**
-   * @brief Create a bond between the centers of the colliding particles,
-   * plus two virtual sites at the point of collision and bind them
-   * together. This prevents the particles from sliding against each
-   * other. Requires VIRTUAL_SITES_RELATIVE.
+struct CollisionOff{ //TODO: What kind of parameters does this have?   
+  //TODO: Pointer to global one
+  
+  /** @brief Validates parameters and creates particle types if needed. */
+  void initialize();
+}
+
+struct CollisionBindCenters{
+  //TODO: Pointer to global one
+
+  /** @brief Validates parameters and creates particle types if needed. */
+  void initialize();
+}
+
+struct CollisionBindVS{
+  //TODO: Pointer to global one
+
+  /// particle type for virtual sites created on collision
+  int vs_particle_type;
+
+  /** Placement of virtual sites
+   *  0=on same particle as related to,
+   *  1=on collision partner,
+   *  0.5=in the middle between
    */
-  BIND_VS = 2,
-  /** @brief Glue a particle to a specific spot on another particle. */
-  GLUE_TO_SURF = 3,
-};
+  double vs_placement;
+
+  /** @brief Validates parameters and creates particle types if needed. */
+  void initialize();
+}
+
+struct CollisionGlueToSurf{
+
+  //TODO: Pointer to global one
+
+  /// The distance from the particle which is to be
+  /// glued to the new virtual site
+  double dist_glued_part_to_vs;
+  /// The particle type being glued
+  int part_type_to_be_glued;
+  /// The particle type to which the virtual site is attached
+  int part_type_to_attach_vs_to;
+  /// Particle type to which the newly glued particle is converted
+  int part_type_after_glueing;
+
+  /** @brief Validates parameters and creates particle types if needed. */
+  void initialize();
+}
 
 class Collision_parameters {
 public:
@@ -50,7 +82,7 @@ public:
         bond_centers(-1), bond_vs(-1) {}
 
   /// collision protocol
-  CollisionModeType mode;
+  CollisionModeType mode; //TODO: Remove (?)
   /// distance at which particles are bound
   double distance;
   // Square of distance at which particle are bound
@@ -60,32 +92,13 @@ public:
   int bond_centers;
   /// bond type used between virtual sites
   int bond_vs;
-  /// particle type for virtual sites created on collision
-  int vs_particle_type;
-
-  /// For mode "glue to surface": The distance from the particle which is to be
-  /// glued to the new virtual site
-  double dist_glued_part_to_vs;
-  /// For mode "glue to surface": The particle type being glued
-  int part_type_to_be_glued;
-  /// For mode "glue to surface": The particle type to which the virtual site is
-  /// attached
-  int part_type_to_attach_vs_to;
-  /// Particle type to which the newly glued particle is converted
-  int part_type_after_glueing;
-  /** Placement of virtual sites for MODE_VS.
-   *  0=on same particle as related to,
-   *  1=on collision partner,
-   *  0.5=in the middle between
-   */
-  double vs_placement;
 
   /** @brief Validates parameters and creates particle types if needed. */
   void initialize();
 };
 
 /// Parameters for collision detection
-extern Collision_parameters collision_params;
+extern std::variant<CollisionOff,CollisionBindCenters,CollisionBindVS,CollisionGlueToSurf> collision_params;
 
 #ifdef COLLISION_DETECTION
 

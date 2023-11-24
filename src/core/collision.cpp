@@ -70,7 +70,7 @@ void serialize(Archive &ar, CollisionPair &c, const unsigned int) {
 static std::vector<CollisionPair> local_collision_queue;
 
 /// Parameters for collision detection
-Collision_parameters collision_params;
+std::variant<CollisionOff,CollisionBindCenters,CollisionBindVS,CollisionGlueToSurf> collision_params;
 
 namespace {
 Particle &get_part(CellStructure &cell_structure, int id) {
@@ -115,6 +115,22 @@ void Collision_parameters::initialize() {
     // Cache square of cutoff
     collision_params.distance2 = Utils::sqr(collision_params.distance);
   }
+
+void CollisionOff::initialize() {
+  //TODO: Check global initializer for the global method
+}
+
+void CollisionBindCenters::initialize() {
+  //TODO: Check global initializer for the global method
+}
+
+void CollisionBindVS::initialize() {
+  //TODO: Check global initializer for the global method
+}
+
+void CollisionGlueToSurf::initialize() {
+  //TODO: Check global initializer for the global method
+}
 
 #ifndef VIRTUAL_SITES_RELATIVE
   // The collision modes involving virtual sites also require the creation of a
