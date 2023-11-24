@@ -169,7 +169,7 @@ void Collision_parameters::initialize() {
     throw std::runtime_error("The bond type to be used for binding virtual "
                              "sites needs to be a pair or three-particle bond");
   }
-
+//hey
   if (collision_params.mode == CollisionModeType::BIND_THREE_PARTICLES) {
     if (collision_params.bond_three_particles +
             collision_params.three_particle_angle_resolution >
