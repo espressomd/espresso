@@ -41,15 +41,13 @@ enum class CollisionModeType : int {
   BIND_VS = 2,
   /** @brief Glue a particle to a specific spot on another particle. */
   GLUE_TO_SURF = 3,
-  /** @brief Three particle binding mode. */
-  BIND_THREE_PARTICLES = 4
 };
 
 class Collision_parameters {
 public:
   Collision_parameters()
       : mode(CollisionModeType::OFF), distance(0.), distance2(0.),
-        bond_centers(-1), bond_vs(-1), bond_three_particles(-1) {}
+        bond_centers(-1), bond_vs(-1) {}
 
   /// collision protocol
   CollisionModeType mode;
@@ -75,13 +73,6 @@ public:
   int part_type_to_attach_vs_to;
   /// Particle type to which the newly glued particle is converted
   int part_type_after_glueing;
-  /// First bond type (for zero degrees) used for the three-particle bond
-  /// (angle potential)
-  int bond_three_particles;
-  /// Number of angle bonds to use (angular resolution)
-  /// different angle bonds with different equilibrium angles
-  /// Are expected to have ids immediately following to bond_three_particles
-  int three_particle_angle_resolution;
   /** Placement of virtual sites for MODE_VS.
    *  0=on same particle as related to,
    *  1=on collision partner,
