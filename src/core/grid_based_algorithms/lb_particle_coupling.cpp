@@ -25,6 +25,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "random.hpp"
+#include "integrate.hpp" 
 
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
@@ -283,17 +284,27 @@ void couple_particle(Particle &p, bool couple_virtual, double noise_amplitude,
       break;
     }
   }
+//  std::cout << p.id() << " " <<coupling_force<<std::endl;
 
   // couple positions including shifts by one box length to add
   // forces to ghost layers
-  for (auto shift : positions_in_halo(p.pos(), box_geo)) {
+  bool force_was_added = false;
+  for (auto shift : positions_in_halo(folded_position(p.pos(), box_geo), box_geo)) {
     auto const pos = shift.first;
-    if (in_local_domain(pos)) {
+    add_md_force(pos, coupling_force, time_step);
+    if (in_local_domain(shift.first)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
       p.force() += coupling_force;
+      force_was_added = true;
+//      std::cout << ">md "  <<shift.first <<std::endl;
     }
-    add_md_force(pos, coupling_force, time_step);
+    else {
+//      std::cout << "skipping" <<shift.first<<std::endl;
+    }
+  }
+  if (not force_was_added) {
+    throw std::runtime_error("lb coupling failed");
   }
 
 #ifdef ENGINE
@@ -320,7 +331,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
               : 0.0;
 
       std::unordered_set<int> coupled_ghost_particles;
-
+//      std::cout << get_sim_time() << std::endl;
       /* Couple particles ranges */
       for (auto &p : particles) {
         if (should_be_coupled(p, coupled_ghost_particles)) {
