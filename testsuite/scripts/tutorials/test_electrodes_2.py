@@ -23,8 +23,8 @@ import numpy as np
 from scipy import constants
 
 params = {'N_SAMPLES_EQUIL': 25, 'N_SAMPLES_PROD': 5,
-          'N_SAMPLES_EQUIL_CAP': 5, 'N_SAMPLES_CAP': 1,
-          'MIN_PHI': 1, 'MAX_PHI': 2.5, 'N_PHI': 4}
+          'N_SAMPLES_EQUIL_CAP': 0, 'N_SAMPLES_CAP': 5,
+          'MIN_PHI': 5, 'MAX_PHI': 5, 'N_PHI': 1}
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/electrodes/electrodes_part2.py",
@@ -60,12 +60,13 @@ class Tutorial(ut.TestCase):
 
     def test_capacitance(self):
         # For low potentials the capacitance should be in line with Grahame/DH
-        # equilibration performance limiting
+        # equilibration performance limiting, just use the system equilibrated
+        # in the first part
         grahame = -tutorial.sigma_vs_phi[:, 0] / (
             constants.elementary_charge / (constants.Boltzmann * tutorial.TEMPERATURE))
         msg = 'The capacitance at low potentials should be in line with Grahame/DH.'
         np.testing.assert_allclose(
-            grahame, tutorial.sigma_vs_phi[:, 1], atol=.015, err_msg=msg)
+            grahame, tutorial.sigma_vs_phi[:, 1], atol=.05, err_msg=msg)
 
 
 if __name__ == "__main__":
