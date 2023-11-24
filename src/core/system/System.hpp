@@ -106,6 +106,7 @@ public:
   void rebuild_cell_structure();
 
   /** @brief Calculate the maximal cutoff of all interactions. */
+  double maximal_cutoff(std::vector<int> &types) const;
   double maximal_cutoff() const;
 
   /** @brief Get the interaction range. */

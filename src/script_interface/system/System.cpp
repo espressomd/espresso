@@ -297,6 +297,12 @@ Variant System::do_call_method(std::string const &name,
     auto const pos2 = get_value<Utils::Vector3d>(parameters, "pos2");
     return m_instance->box_geo->get_mi_vector(pos2, pos1);
   }
+
+  if (name == "cutoff_by_types") {
+    auto types = get_value<std::vector<int>>(parameters, "types");
+    return m_instance->maximal_cutoff(types);
+  }
+
   if (name == "rotate_system") {
     rotate_system(*m_instance->cell_structure,
                   get_value<double>(parameters, "phi"),

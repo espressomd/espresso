@@ -35,6 +35,7 @@ class RegularDecomposition(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.non_bonded_inter.reset()
 
     def check_resort(self):
         n_part = 2351
@@ -103,7 +104,7 @@ class RegularDecomposition(ut.TestCase):
         self.system.cell_system.skin = 0.4
         self.system.min_global_cut = 12.0 / 4.25
         self.system.part.add(pos=[25, 25, 0])
-        self.assertEqual(1, len(self.system.part))
+        self.assertEqual(1, len(self.system.part))        
 
 
 if __name__ == "__main__":
