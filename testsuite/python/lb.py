@@ -565,6 +565,17 @@ class LBTest:
                 [n.last_applied_force for n in all_coupling_nodes])
             np.testing.assert_allclose(
                 np.sum(applied_forces, axis=0), [0, 0, 0])
+    
+    def test_viscous_coupling_rounding(self):
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
+        p=self.system.part.add(pos=[-1E-30]*3,v=[-1,0,0])
+        self.system.integrator.run(1)
+        for i in range(20):
+            self.system.integrator.run(1)
+            self.assertTrue(np.all(p.f != 0.0))
+
 
     def test_thermalization_force_balance(self):
         system = self.system

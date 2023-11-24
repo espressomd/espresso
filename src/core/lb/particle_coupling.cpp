@@ -249,11 +249,13 @@ void ParticleCoupling::kernel(Particle &p) {
 
   // Calculate coupling force
   Utils::Vector3d force_on_particle = {};
+  auto folded_pos = box_geo.folded_position(p.pos());
+
 
 #ifdef ENGINE
   if (not p.swimming().is_engine_force_on_fluid)
 #endif
-    for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
+    for (auto pos : positions_in_halo(folded_pos, box_geo, agrid)) {
       if (in_local_halo(pos, agrid)) {
         auto const vel_offset = lb_drift_velocity_offset(p);
         auto const drag_force = lb_drag_force(m_lb, p, pos, vel_offset);
@@ -272,7 +274,7 @@ void ParticleCoupling::kernel(Particle &p) {
 
   // couple positions including shifts by one box length to add
   // forces to ghost layers
-  for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
+  for (auto pos : positions_in_halo(folded_pos, box_geo, agrid)) {
     if (in_local_domain(pos)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
