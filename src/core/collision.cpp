@@ -70,7 +70,7 @@ void serialize(Archive &ar, CollisionPair &c, const unsigned int) {
 static std::vector<CollisionPair> local_collision_queue;
 
 /// Parameters for collision detection
-std::variant<CollisionOff,CollisionBindCenters,CollisionBindVS,CollisionGlueToSurf> collision_params;
+Collision_parameters collision_params;
 
 namespace {
 Particle &get_part(CellStructure &cell_structure, int id) {

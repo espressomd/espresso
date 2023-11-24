@@ -100,7 +100,7 @@ public:
 };
 
 /// Parameters for collision detection
-extern std::variant<CollisionOff,CollisionBindCenters,CollisionBindVS,CollisionGlueToSurf> collision_params;
+extern Collision_parameters collision_params;
 
 #ifdef COLLISION_DETECTION
 
