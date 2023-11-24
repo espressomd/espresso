@@ -167,26 +167,7 @@ void Collision_parameters::initialize() {
       (get_bond_num_partners(collision_params.bond_vs) != 1 and
        get_bond_num_partners(collision_params.bond_vs) != 2)) {
     throw std::runtime_error("The bond type to be used for binding virtual "
-                             "sites needs to be a pair or three-particle bond");
-  }
-
-  if (collision_params.mode == CollisionModeType::BIND_THREE_PARTICLES) {
-    if (collision_params.bond_three_particles +
-            collision_params.three_particle_angle_resolution >
-        bonded_ia_params.size()) {
-      throw std::runtime_error(
-          "Insufficient bonds defined for three particle binding");
-    }
-
-    for (int i = collision_params.bond_three_particles;
-         i < collision_params.bond_three_particles +
-                 collision_params.three_particle_angle_resolution;
-         i++) {
-      if (get_bond_num_partners(i) != 2) {
-        throw std::runtime_error(
-            "The bonds for three particle binding need to be angle bonds.");
-      }
-    }
+                             "sites needs to be a pair bond");
   }
 
   // Create particle types
@@ -275,74 +256,6 @@ static void bind_at_point_of_collision_calc_vs_pos(Particle const &p1,
   pos2 = p1.pos() - vec21 * (1. - collision_params.vs_placement);
 }
 
-// Considers three particles for three_particle_binding and performs
-// the binding if the criteria are met
-static void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
-                                          Particle const &p2,
-                                          BoxGeometry const &box_geo) {
-  // If p1 and p2 are not closer or equal to the cutoff distance, skip
-  // p1:
-  if (box_geo.get_mi_vector(p.pos(), p1.pos()).norm() >
-      collision_params.distance)
-    return;
-  // p2:
-  if (box_geo.get_mi_vector(p.pos(), p2.pos()).norm() >
-      collision_params.distance)
-    return;
-
-  // Check, if there already is a three-particle bond centered on p
-  // with p1 and p2 as partners. If so, skip this triplet.
-  // Note that the bond partners can appear in any order.
-
-  /* Check if a bond is a bond placed by the collision detection */
-  auto is_collision_bond = [](BondView const &bond) {
-    return (bond.bond_id() >= collision_params.bond_three_particles) and
-           (bond.bond_id() <=
-            collision_params.bond_three_particles +
-                collision_params.three_particle_angle_resolution);
-  };
-  /* Check if the bond is between the particles we are currently considering */
-  auto has_same_partners = [id1 = p1.id(),
-                            id2 = p2.id()](BondView const &bond) {
-    auto const partner_ids = bond.partner_ids();
-
-    return ((partner_ids[0] == id1) and (partner_ids[1] == id2)) or
-           ((partner_ids[0] == id2) and (partner_ids[1] == id1));
-  };
-
-  auto const &bonds = p.bonds();
-  if (std::any_of(bonds.begin(), bonds.end(), [=](auto const &bond) {
-        return is_collision_bond(bond) and has_same_partners(bond);
-      })) {
-    return;
-  }
-
-  // If we are still here, we need to create angular bond
-  // First, find the angle between the particle p, p1 and p2
-
-  /* vector from p to p1 */
-  auto const vec1 = box_geo.get_mi_vector(p.pos(), p1.pos()).normalize();
-  /* vector from p to p2 */
-  auto const vec2 = box_geo.get_mi_vector(p.pos(), p2.pos()).normalize();
-
-  auto const cosine = std::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
-
-  // Bond angle
-  auto const phi = acos(cosine);
-
-  // We find the bond id by dividing the range from 0 to pi in
-  // three_particle_angle_resolution steps and by adding the id
-  // of the bond for zero degrees.
-  auto const bond_id = static_cast<int>(
-      floor(0.5 + phi / std::numbers::pi *
-                      (collision_params.three_particle_angle_resolution - 1)) +
-      collision_params.bond_three_particles);
-
-  // Create the bond
-  const std::array<int, 2> bondT = {{p1.id(), p2.id()}};
-  p.bonds().insert({bond_id, bondT});
-}
-
 #ifdef VIRTUAL_SITES_RELATIVE
 static void place_vs_and_relate_to_particle(CellStructure &cell_structure,
                                             BoxGeometry const &box_geo,
@@ -414,74 +327,8 @@ std::vector<CollisionPair> gather_global_collision_queue() {
   return res;
 }
 
-static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
-                                             Particle &p2,
-                                             BoxGeometry const &box_geo) {
-  auto handle_cell = [&p1, &p2, &box_geo](Cell *c) {
-    for (auto &p : c->particles()) {
-      // Skip collided particles themselves
-      if ((p.id() == p1.id()) or (p.id() == p2.id())) {
-        continue;
-      }
-
-      // We need all cyclical permutations, here (bond is placed on 1st
-      // particle, order of bond partners does not matter, so we don't need
-      // non-cyclic permutations).
-      // @ref coldet_do_three_particle_bond checks the bonding criterion and if
-      // the involved particles are not already bonded before it binds them.
-      if (!p.is_ghost()) {
-        coldet_do_three_particle_bond(p, p1, p2, box_geo);
-      }
-
-      if (!p1.is_ghost()) {
-        coldet_do_three_particle_bond(p1, p, p2, box_geo);
-      }
-
-      if (!p2.is_ghost()) {
-        coldet_do_three_particle_bond(p2, p, p1, box_geo);
-      }
-    }
-  };
-
-  /* Search the base cell ... */
-  handle_cell(basecell);
-
-  /* ... and all the neighbors. */
-  for (auto &n : basecell->neighbors().all()) {
-    handle_cell(n);
-  }
-}
-
-// Goes through the collision queue and for each pair in it
-// looks for a third particle by using the domain decomposition
-// cell system. If found, it performs three particle binding
-static void three_particle_binding_domain_decomposition(
-    CellStructure &cell_structure, BoxGeometry const &box_geo,
-    std::vector<CollisionPair> const &gathered_queue) {
-
-  for (auto &c : gathered_queue) {
-    // If we have both particles, at least as ghosts, Get the corresponding cell
-    // indices
-    if (cell_structure.get_local_particle(c.pp1) and
-        cell_structure.get_local_particle(c.pp2)) {
-      Particle &p1 = *cell_structure.get_local_particle(c.pp1);
-      Particle &p2 = *cell_structure.get_local_particle(c.pp2);
-      auto cell1 = cell_structure.find_current_cell(p1);
-      auto cell2 = cell_structure.find_current_cell(p2);
-
-      if (cell1)
-        three_particle_binding_do_search(cell1, p1, p2, box_geo);
-      if (cell2 and cell1 != cell2)
-        three_particle_binding_do_search(cell2, p1, p2, box_geo);
-
-    } // If local particles exist
-  } // Loop over total collisions
-}
-
 // Handle the collisions stored in the queue
 void handle_collisions(CellStructure &cell_structure) {
-  auto &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
   // Note that the glue to surface mode adds bonds between the centers
   // but does so later in the process. This is needed to guarantee that
   // a particle can only be glued once, even if queued twice in a single
@@ -503,6 +350,8 @@ void handle_collisions(CellStructure &cell_structure) {
 
 // Virtual sites based collision schemes
 #ifdef VIRTUAL_SITES_RELATIVE
+  auto &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
   auto const min_global_cut = system.get_min_global_cut();
   if ((collision_params.mode == CollisionModeType::BIND_VS) ||
       (collision_params.mode == CollisionModeType::GLUE_TO_SURF)) {
@@ -659,13 +508,6 @@ void handle_collisions(CellStructure &cell_structure) {
     system.update_used_propagations();
   } // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE
-
-  // three-particle-binding part
-  if (collision_params.mode == CollisionModeType::BIND_THREE_PARTICLES) {
-    auto gathered_queue = gather_global_collision_queue();
-    three_particle_binding_domain_decomposition(cell_structure, box_geo,
-                                                gathered_queue);
-  } // if TPB
 
   local_collision_queue.clear();
 }

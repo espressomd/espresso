@@ -47,7 +47,6 @@ class CollisionDetection : public AutoParameters<CollisionDetection> {
       {CollisionModeType::BIND_CENTERS, "bind_centers"},
       {CollisionModeType::BIND_VS, "bind_at_point_of_collision"},
       {CollisionModeType::GLUE_TO_SURF, "glue_to_surface"},
-      {CollisionModeType::BIND_THREE_PARTICLES, "bind_three_particles"},
   };
   std::unordered_map<std::string, CollisionModeType> cd_name_to_mode;
   std::unordered_map<CollisionModeType,
@@ -62,9 +61,6 @@ class CollisionDetection : public AutoParameters<CollisionDetection> {
         "part_type_to_be_glued", "part_type_to_attach_vs_to",
         "part_type_after_glueing", "distance",
         "distance_glued_particle_to_vs"}},
-      {CollisionModeType::BIND_THREE_PARTICLES,
-       {"mode", "bond_centers", "distance", "bond_three_particles",
-        "three_particle_binding_angle_resolution"}},
   };
 
 public:
@@ -83,9 +79,6 @@ public:
 
          {"bond_centers", collision_params.bond_centers},
          {"bond_vs", collision_params.bond_vs},
-         {"bond_three_particles", collision_params.bond_three_particles},
-         {"three_particle_binding_angle_resolution",
-          collision_params.three_particle_angle_resolution},
 
          {"distance", collision_params.distance},
          {"distance_glued_particle_to_vs",

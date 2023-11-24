@@ -46,11 +46,6 @@ class CollisionDetection(ut.TestCase):
             "bond_vs": bond_harmonic, "bond_centers": bond_harmonic,
             "part_type_vs": 1, "distance": 0.1, "vs_placement": 0.1
         },
-        "bind_three_particles": {
-            "bond_centers": bond_harmonic, "bond_three_particles": 0,
-            "three_particle_binding_angle_resolution": bond_angle_resolution,
-            "distance": 0.1
-        },
         "glue_to_surface": {
             "distance": 0.1, "distance_glued_particle_to_vs": 0.02,
             "bond_centers": bond_harmonic, "bond_vs": bond_harmonic,
@@ -136,7 +131,7 @@ class CollisionDetection(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Bond in parameter 'bond_vs' was not added to the system"):
             bond = espressomd.interactions.HarmonicBond(k=1., r_0=0.1)
             self.set_coldet("bind_at_point_of_collision", bond_vs=bond)
-        with self.assertRaisesRegex(RuntimeError, "bond type to be used for binding virtual sites needs to be a pair or three-particle bond"):
+        with self.assertRaisesRegex(RuntimeError, "bond type to be used for binding virtual sites needs to be a pair bond"):
             self.set_coldet(
                 "bind_at_point_of_collision", bond_vs=self.bond_dihe)
         with self.assertRaisesRegex(ValueError, "type for virtual sites needs to be >=0"):
@@ -150,20 +145,6 @@ class CollisionDetection(ut.TestCase):
         if not espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
             with self.assertRaisesRegex(RuntimeError, "require the VIRTUAL_SITES_RELATIVE feature"):
                 self.set_coldet("bind_at_point_of_collision")
-
-    def test_bind_three_particles(self):
-        self.set_coldet("bind_three_particles", distance=0.5)
-        with self.assertRaisesRegex(RuntimeError, "Insufficient bonds defined for three particle binding"):
-            self.set_coldet(
-                "bind_three_particles",
-                three_particle_binding_angle_resolution=self.bond_angle_resolution +
-                1000)
-        with self.assertRaisesRegex(RuntimeError, "The bonds for three particle binding need to be angle bonds"):
-            self.set_coldet(
-                "bind_three_particles",
-                three_particle_binding_angle_resolution=self.bond_angle_resolution + 1)
-        # check if original parameters have been preserved
-        self.check_stored_parameters("bind_three_particles", distance=0.5)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface(self):
