@@ -63,3 +63,18 @@ if has_features("VIRTUAL_SITES_RELATIVE"):
 
         """
         _so_name = "VirtualSites::VirtualSitesRelative"
+
+
+if has_features("VIRTUAL_SITES_CENTER_OF_MASS"):
+    @script_interface_register
+    class VirtualSitesCenterOfMass(ScriptInterfaceHelper):
+
+        """Virtual site implementation for applying forces for center of mass of 
+        group of particles.
+
+        """
+        _so_name = "VirtualSites::VirtualSitesCenterOfMass"
+        _so_creation_policy = "GLOBAL"
+        _so_bind_methods = (
+            "back_transfer_forces",
+        )

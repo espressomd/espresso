@@ -24,6 +24,7 @@
 #include "VirtualSitesInertialessTracers.hpp"
 #include "VirtualSitesOff.hpp"
 #include "VirtualSitesRelative.hpp"
+#include "VirtualSitesCenterOfMass.hpp"
 
 namespace ScriptInterface {
 namespace VirtualSites {
@@ -37,6 +38,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
   om->register_new<VirtualSitesRelative>("VirtualSites::VirtualSitesRelative");
+#endif
+#ifdef VIRTUAL_SITES_CENTER_OF_MASS
+  om->register_new<VirtualSitesCenterOfMass>("VirtualSites::VirtualSitesCenterOfMass");
 #endif
   om->register_new<ActiveVirtualSitesHandle>(
       "VirtualSites::ActiveVirtualSitesHandle");

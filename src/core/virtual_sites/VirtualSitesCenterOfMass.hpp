@@ -20,8 +20,8 @@
  */
 #pragma once
 
-#ifndef VIRTUAL_SITES_CENTER_OF_MASS
-#define VIRTUAL_SITES_CENTER_OF_MASS
+#ifndef VIRTUAL_SITES_VIRTUAL_SITES_CENTER_OF_MASS_HPP
+#define VIRTUAL_SITES_VIRTUAL_SITES_CENTER_OF_MASS_HPP
 
 /** \file
  *  This file contains routine to handle virtual sites at the center of mass of
@@ -40,28 +40,35 @@
  */
 
 #include "config/config.hpp"
-#include "script_interface/ObjectHandle.hpp"
+
+//#ifndef VIRTUAL_SITES_CENTER_OF_MASS
+
+#include "VirtualSites.hpp"
 #include <map>
+#include <memory>
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 
 /** @brief Base class for virtual sites implementations */
-class VirtualSitesCenterOfMass : ObjectHandle {
+class VirtualSitesCenterOfMass : public VirtualSites {
 public:
   VirtualSitesCenterOfMass() = default;
-
-  virtual ~VirtualSitesCenterOfMass() = default;
-
   /**
    * @brief Update positions and velocities of virtual sites.
    */
-  virtual void update() const {}
+  void update();
 
   /** @brief Back-transfer forces to non-virtual particles. */
-  virtual void back_transfer_forces() const {}
+  void back_transfer_forces();
 
   /**  @brief Store (mol_id, virtual_site_particle_id) pairs */
-  std::unordered_map<int, int> vitual_site_id_for_mol_id() {}
+  std::unordered_map<int, int> vitual_site_id_for_mol_id = {};
+
+  auto const &get_mid_for_vs() const { return vitual_site_id_for_mol_id; }
+  
+  void set_mid_for_vs( std::unordered_map<int, int> const &vitual_site_id_for_mol_id_ ) {
+    vitual_site_id_for_mol_id = vitual_site_id_for_mol_id_;
+  }
 
 private:
   struct ComInfo {
@@ -71,9 +78,8 @@ private:
 
   /**  @brief Store (mol_id, com_info) pairs */
   std::unordered_map<int, std::shared_ptr<ComInfo>> com_by_mol_id;
-
-  bool m_have_quaternion = false;
-  bool m_override_cutoff_check = false;
 };
+
+//#endif  // VIRTUAL_SITES_CENTER_OF_MASS
 
 #endif

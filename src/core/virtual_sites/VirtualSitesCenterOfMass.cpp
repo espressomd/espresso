@@ -28,6 +28,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
+#include "communication.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
@@ -39,7 +40,7 @@
 #include <functional>
 #include <unordered_map>
 
-void VirtualSitesCenterOfMass::update() const {
+void VirtualSitesCenterOfMass::update() {
 
   // com_by_mol_id initialization
   for (const auto &[mol_id, vs_id] : vitual_site_id_for_mol_id) {
@@ -50,9 +51,9 @@ void VirtualSitesCenterOfMass::update() const {
 
   // Update com_by_mol_id
   for (const auto &p : particles) {
-    if (com_by_mol_id.find(p.mol_id) != com_by_mol_id.end()) {
-      com_by_mol_id[p.mol_id]->total_mass += p.mass();
-      com_by_mol_id[p.mol_id]->weighted_position_sum +=
+    if (com_by_mol_id.find(p.mol_id()) != com_by_mol_id.end()) {
+      com_by_mol_id[p.mol_id()]->total_mass += p.mass();
+      com_by_mol_id[p.mol_id()]->weighted_position_sum +=
           p.mass() * p.pos(); // Are these the unforlded positions?
     }
   }
@@ -95,19 +96,19 @@ void VirtualSitesCenterOfMass::update() const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 
-void VirtualSitesCenterOfMass::back_transfer_forces() const {
+void VirtualSitesCenterOfMass::back_transfer_forces() {
 
   // cell_structure.ghosts_reduce_forces();
   // init_forces_ghosts(cell_structure.ghost_particles());
 
-  int p_mol_id;
-  int vs_id;
+  //int p_mol_id;
+  //int vs_id;
   for (auto &p : cell_structure.local_particles()) {
-    p_mol_id = p.mol_id();
-    vs_id = vitual_site_id_for_mol_id[p_mol_id];
-    auto vs_ptr = cell_structure.get_local_particle(vs_id);
+    //p_mol_id = p.mol_id();
+    //vs_id = vitual_site_id_for_mol_id[p.mol_id()];
+    auto vs_ptr = cell_structure.get_local_particle(vitual_site_id_for_mol_id[p.mol_id()]);
     p.force() +=
-        (p.mass() / com_by_mol_id[p_mol_id]->total_mass) * vs_ptr->force();
+        (p.mass() / com_by_mol_id[p.mol_id()]->total_mass) * vs_ptr->force();
   }
 }
 
