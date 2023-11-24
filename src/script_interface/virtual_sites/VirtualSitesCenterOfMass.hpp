@@ -31,24 +31,23 @@
 #include "core/virtual_sites/VirtualSitesCenterOfMass.hpp"
 
 #include <memory>
+#include <map>
 
 namespace ScriptInterface {
 namespace VirtualSites {
 
 class VirtualSitesCenterOfMass : public VirtualSites {
 public:
-  VirtualSitesCenterOfMass() : m_virtual_sites(std::make_shared<::VirtualSitesCenterOfMass>()) {
-    // add_parameters({
-    //   {"mid_for_vs", AutoParameter::read_only,
-    //       [this]() { return Variant( m_virtual_sites->get_mid_for_vs()); }}
-    // });
-  }
 
-  /** Vs implementation we are wrapping */
-  std::shared_ptr<::VirtualSites> virtual_sites() override {
-    return m_virtual_sites;
-  } // TO DO: MAKE THAT THIS CONSTRUCTOR TAKES AN UNDORDERED_MAP TO
-    // INSTANTIATE THE VIRTUAL_SITES_CENTER_OF_MASS
+  void do_construct(VariantMap const &args) override {
+    auto mid_for_vs = get_value<std::unordered_map<int, int>>(args, "mid_for_vs");
+    m_virtual_sites = std::make_shared<::VirtualSitesCenterOfMass>(mid_for_vs);
+
+    add_parameters({
+        {"mid_for_vs", AutoParameter::read_only,
+         [this]() { return make_unordered_map_of_variants(m_virtual_sites->get_mid_for_vs()); }}
+    });
+  }
 
 private:
   std::shared_ptr<::VirtualSitesCenterOfMass> m_virtual_sites;
