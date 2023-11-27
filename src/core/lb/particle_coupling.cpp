@@ -251,7 +251,6 @@ void ParticleCoupling::kernel(Particle &p) {
   Utils::Vector3d force_on_particle = {};
   auto folded_pos = box_geo.folded_position(p.pos());
 
-
 #ifdef ENGINE
   if (not p.swimming().is_engine_force_on_fluid)
 #endif
