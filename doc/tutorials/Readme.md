@@ -59,13 +59,19 @@ physical systems.
 * **Electrokinetics**  
   Modelling electrokinetics together with hydrodynamic interactions.  
   [Guide](electrokinetics/electrokinetics.ipynb)
+* **Electrodes**  
+  Modelling electrodes and measuring differential capacitance with the ELC method.  
+  [Part 1](electrodes/electrodes_part1.ipynb) |
+  Part 2 (work in progress)
 * **Constant pH method**  
   Modelling an acid dissociation curve using the constant pH method.  
   [Guide](constant_pH/constant_pH.ipynb)
 * **Widom particle insertion method**  
   Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.  
   [Guide](widom_insertion/widom_insertion.ipynb)
-
+* **Grand-Canonical Monte Carlo**
+  Simulating a polyelectrolyte solution coupled to a reservoir of salt.
+  [Guide](grand_canonical_monte_carlo/grand_canonical_monte_carlo.ipynb)
 
 [comment]: # (End of tutorials landing page)
 

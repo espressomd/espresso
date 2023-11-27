@@ -41,13 +41,13 @@ The following minimal example illustrates how to use the LBM in |es|::
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidWalberla(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
-    system.actors.add(lb)
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
+    system.lb = lbf
     system.integrator.run(100)
 
 To use the GPU-accelerated variant, replace line 6 in the example above by::
 
-    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
+    lbf = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
 
 .. note:: Feature ``CUDA`` required for the GPU-accelerated variant
 
@@ -72,7 +72,7 @@ The detailed interface definition is available at :class:`~espressomd.lb.LBFluid
 The LB scheme and the MD scheme are not synchronized: In one LB time
 step typically several MD steps are performed. This allows to speed up
 the simulations and is adjusted with the parameter ``tau``, the LB time step.
-The parameters ``density`` and ``viscosity`` set up the density and (kinematic) viscosity of the
+The parameters ``density`` and ``kinematic_viscosity`` set up the density and kinematic viscosity of the
 LB fluid in (usual) MD units. Internally the LB implementation works
 with a different set of units: all lengths are expressed in ``agrid``, all times
 in ``tau`` and so on.
@@ -97,7 +97,12 @@ array_like of :obj:`float`, representing a homogeneous external body force densi
 units to be applied to the fluid.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``viscosity``, ``density``.
+set up: ``agrid``, ``tau``, ``kinematic_viscosity``, ``density``.
+
+To detach the LBM solver, use this syntax::
+
+    system.lb = None
+
 
 Performance considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -107,7 +112,15 @@ use single-precision floating point values. These are approximately 10%
 faster than double-precision, at the cost of a small loss in precision.
 
 To enable vectorization, run ``cmake . -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON``.
-An AVX2-capable microprocessor is required.
+The SIMD kernels have better performance over the regular kernels, because
+they carry out the mathematical operations in batches of 4 values at a time
+(in double-precision mode) or 8 values at a time (in single-precision mode)
+along the x-axis. An AVX2-capable microprocessor is required; to check if
+your hardware supports it, run the following command:
+
+.. code-block:: bash
+
+    lscpu | grep avx2
 
 .. _Checkpointing LB:
 
@@ -211,11 +224,12 @@ Reading and setting properties of single lattice nodes
 Appending three indices to the ``lb`` object returns an object that represents
 the selected LB grid node and allows one to access all of its properties::
 
-    lb[x, y, z].density              # fluid density (one scalar for LB and CUDA)
-    lb[x, y, z].velocity             # fluid velocity (a numpy array of three floats)
-    lb[x, y, z].pressure_tensor      # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
-    lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (fluid: boundary=0, boundary: boundary != 1)
-    lb[x, y, z].population           # 19 LB populations (a numpy array of 19 floats, check order from the source code)
+    lb[x, y, z].density              # fluid density (scalar)
+    lb[x, y, z].velocity             # fluid velocity (3-vector)
+    lb[x, y, z].pressure_tensor      # fluid pressure tensor (symmetric 3x3 matrix)
+    lb[x, y, z].pressure_tensor_neq  # fluid pressure tensor non-equilibrium part (symmetric 3x3 matrix)
+    lb[x, y, z].is_boundary          # flag indicating whether the node is fluid or boundary (boolean)
+    lb[x, y, z].population           # LB populations (19-vector, check order from the stencil definition)
 
 All of these properties can be read and used in further calculations.
 Only the property ``population`` can be modified. The indices ``x, y, z``
@@ -242,6 +256,13 @@ these nodes with densities ranging from 1.1 to 1.4. You can set either
 a value that matches the length of the slice (which sets each node
 individually), or a single value that will be copied to every node
 (e.g. a scalar for density, or an array of length 3 for the velocity).
+
+The LB pressure tensor from property ``pressure_tensor`` is calculated as
+:math:`\Pi = \rho c_s^2 \mathbb{1} + \rho \mathbf{u} \otimes \mathbf{u}`
+with :math:`\rho` the fluid density at a particular node, :math:`\mathbf{u}`
+the fluid velocity at a particular node, :math:`c_s` the speed of sound and
+:math:`\mathbb{1}` the identity matrix. The non-equilibrium part from property
+``pressure_tensor_neq`` is defined as :math:`\Pi^{\text{neq}} = \rho \mathbf{u} \otimes \mathbf{u}`.
 
 .. _LB VTK output:
 
@@ -305,7 +326,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
 
     lbf = espressomd.lb.LBFluidWalberla(
         agrid=1., tau=0.1, density=1., kinematic_viscosity=1.)
-    system.actors.add(lbf)
+    system.lb = lbf
     system.integrator.run(10)
 
     vtk_reader = espressomd.io.vtk.VTKReader()
@@ -362,8 +383,8 @@ of the LBM in analogy to the example for the CPU given in section
     system = espressomd.System(box_l=[10, 20, 30])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
-    system.actors.add(lb)
+    lbf = espressomd.lb.LBFluidWalberlaGPU(agrid=1.0, density=1.0, kinematic_viscosity=1.0, tau=0.01)
+    system.lb = lbf
     system.integrator.run(100)
 
 .. _Electrohydrodynamics:
@@ -413,7 +434,7 @@ One can set (or update) the slip velocity of individual nodes::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
-    system.actors.add(lbf)
+    system.lb = lbf
     # make one node a boundary node with a slip velocity
     lbf[0, 0, 0].boundary = espressomd.lb.VelocityBounceBack([0, 0, 1])
     # update node for no-slip boundary conditions
@@ -434,7 +455,7 @@ Adding a shape-based boundary is straightforward::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lbf = espressomd.lb.LBFluidWalberla(agrid=0.5, density=1.0, kinematic_viscosity=1.0, tau=0.01)
-    system.actors.add(lbf)
+    system.lb = lbf
     # set up shear flow between two sliding walls
     wall1 = espressomd.shapes.Wall(normal=[+1., 0., 0.], dist=2.5)
     lbf.add_boundary_from_shape(shape=wall1, velocity=[0., +0.05, 0.])
@@ -451,6 +472,13 @@ their geometry as :mod:`~espressomd.constraints` do for particles.
 This allows the user to quickly set up a system with boundary conditions
 that simultaneously act on the fluid and particles. For a complete
 description of all available shapes, refer to :mod:`espressomd.shapes`.
+
+When using shapes, keep in mind the lattice origin is offset by half a grid
+size from the box origin. For illustration purposes, assuming ``agrid=1``,
+setting a wall constraint with ``dist=1`` and a normal vector pointing along
+the x-axis will set all LB nodes in the left side of the box as boundary
+nodes with thickness 1. The same outcome is obtained with ``dist=1.49``,
+but with ``dist=1.51`` the thickness will be 2.
 
 .. _Prototyping new LB methods:
 

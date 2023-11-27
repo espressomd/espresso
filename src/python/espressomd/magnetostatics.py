@@ -19,7 +19,13 @@
 
 from . import utils
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .code_features import has_features
+
+
+@script_interface_register
+class Container(ScriptInterfaceHelper):
+    _so_name = "Dipoles::Container"
+    _so_features = ("DIPOLES",)
+    _so_bind_methods = ("clear",)
 
 
 class MagnetostaticInteraction(ScriptInterfaceHelper):
@@ -33,10 +39,9 @@ class MagnetostaticInteraction(ScriptInterfaceHelper):
 
     """
     _so_creation_policy = "GLOBAL"
+    _so_features = ("DIPOLES",)
 
     def __init__(self, **kwargs):
-        self._check_required_features()
-
         if 'sip' not in kwargs:
             for key in self.required_keys():
                 if key not in kwargs:
@@ -53,10 +58,6 @@ class MagnetostaticInteraction(ScriptInterfaceHelper):
         else:
             super().__init__(**kwargs)
 
-    def _check_required_features(self):
-        if not has_features("DIPOLES"):
-            raise NotImplementedError("Feature DIPOLES not compiled in")
-
     def validate_params(self, params):
         """Check validity of given parameters.
         """
@@ -68,14 +69,6 @@ class MagnetostaticInteraction(ScriptInterfaceHelper):
 
     def required_keys(self):
         raise NotImplementedError("Derived classes must implement this method")
-
-    def _activate(self):
-        self.call_method("activate")
-        utils.handle_errors("Dipolar actor activation failed")
-
-    def _deactivate(self):
-        self.call_method("deactivate")
-        utils.handle_errors("Dipolar actor deactivation failed")
 
     def get_magnetostatics_prefactor(self):
         """
@@ -116,10 +109,7 @@ class DipolarP3M(MagnetostaticInteraction):
 
     """
     _so_name = "Dipoles::DipolarP3M"
-
-    def _check_required_features(self):
-        if not has_features("DP3M"):
-            raise NotImplementedError("Feature DP3M not compiled in")
+    _so_features = ("DP3M",)
 
     def validate_params(self, params):
         """Check validity of parameters.
@@ -222,15 +212,9 @@ class Scafacos(MagnetostaticInteraction):
     """
     _so_name = "Dipoles::DipolarScafacos"
     _so_creation_policy = "GLOBAL"
+    _so_features = ("DIPOLES", "SCAFACOS_DIPOLES")
     _so_bind_methods = MagnetostaticInteraction._so_bind_methods + \
         ("get_available_methods", )
-
-    def _check_required_features(self):
-        if not has_features("DIPOLES"):
-            raise NotImplementedError("Feature DIPOLES not compiled in")
-        if not has_features("SCAFACOS_DIPOLES"):
-            raise NotImplementedError(
-                "Feature SCAFACOS_DIPOLES not compiled in")
 
     def default_params(self):
         return {}
@@ -262,11 +246,7 @@ class DipolarDirectSumGpu(MagnetostaticInteraction):
     """
     _so_name = "Dipoles::DipolarDirectSumGpu"
     _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("DIPOLAR_DIRECT_SUM"):
-            raise NotImplementedError(
-                "Features CUDA and DIPOLES not compiled in")
+    _so_features = ("DIPOLAR_DIRECT_SUM", "CUDA")
 
     def default_params(self):
         return {}
@@ -298,11 +278,7 @@ class DipolarBarnesHutGpu(MagnetostaticInteraction):
     """
     _so_name = "Dipoles::DipolarBarnesHutGpu"
     _so_creation_policy = "GLOBAL"
-
-    def _check_required_features(self):
-        if not has_features("DIPOLAR_BARNES_HUT"):
-            raise NotImplementedError(
-                "Features CUDA and DIPOLES not compiled in")
+    _so_features = ("DIPOLAR_BARNES_HUT", "CUDA")
 
     def default_params(self):
         return {"epssq": 100.0, "itolsq": 4.0}
@@ -325,6 +301,8 @@ class DLC(MagnetostaticInteraction):
 
     Parameters
     ----------
+    actor : object derived of :obj:`MagnetostaticInteraction`, required
+        Base solver.
     gap_size : :obj:`float`
         The gap size gives the height :math:`h` of the empty region between
         the system box and the neighboring artificial images. |es| checks

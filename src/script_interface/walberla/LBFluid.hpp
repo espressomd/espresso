@@ -27,13 +27,12 @@
 #include "LatticeWalberla.hpp"
 #include "VTKHandle.hpp"
 
-#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
+#include "core/lb/LBWalberla.hpp"
 
 #include <script_interface/ScriptInterface.hpp>
 
 #include <walberla_bridge/LatticeModel.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/math/int_pow.hpp>
@@ -49,7 +48,7 @@ class LBVTKHandle;
 
 class LBFluid : public LatticeModel<::LBWalberlaBase, LBVTKHandle> {
   using Base = LatticeModel<::LBWalberlaBase, LBVTKHandle>;
-  std::shared_ptr<::LBWalberlaParams> m_lb_params;
+  std::shared_ptr<::LB::LBWalberlaParams> m_lb_params;
   bool m_is_active;
   int m_seed;
   double m_conv_dist;

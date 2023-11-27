@@ -16,11 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_PRESSURETENSOR_HPP
-#define OBSERVABLES_PRESSURETENSOR_HPP
+
+#pragma once
 
 #include "Observable.hpp"
-#include "pressure.hpp"
+#include "Observable_stat.hpp"
+#include "system/System.hpp"
+
 #include <cstddef>
 #include <vector>
 
@@ -29,11 +31,17 @@ namespace Observables {
 class PressureTensor : public Observable {
 public:
   std::vector<std::size_t> shape() const override { return {3, 3}; }
-  std::vector<double> operator()() const override {
-    return mpi_observable_compute_pressure_tensor().as_vector();
+  std::vector<double>
+  operator()(boost::mpi::communicator const &comm) const override {
+    auto const obs = System::get_system().calculate_pressure();
+
+    std::vector<double> result;
+    result.reserve(9);
+    for (std::size_t i = 0u; i < 9u; ++i) {
+      result.emplace_back(obs->accumulate(0., i));
+    }
+    return result;
   }
 };
 
 } // Namespace Observables
-
-#endif

@@ -40,10 +40,10 @@ class LBTest:
         self.lb_fluid = self.lb_class(
             agrid=1., density=1., kinematic_viscosity=1.,
             tau=self.system.time_step, **self.lb_params)
-        self.system.actors.add(self.lb_fluid)
+        self.system.lb = self.lb_fluid
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def test_slicing(self):
         lb_fluid = self.lb_fluid
@@ -94,6 +94,16 @@ class LBTest:
 
         with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor' is read-only"):
             lb_fluid[3, 6, 2:5].pressure_tensor = np.zeros(
+                should_pressure_shape)
+
+        # pressure tensor non-equilibrium on test slice [3, 6, 2:5]
+        output_pressure_shape = lb_fluid[3, 6, 2:5].pressure_tensor_neq.shape
+        should_pressure_shape = (3, 3, 3)
+        np.testing.assert_array_equal(
+            output_pressure_shape, should_pressure_shape)
+
+        with self.assertRaisesRegex(RuntimeError, "Property 'pressure_tensor_neq' is read-only"):
+            lb_fluid[3, 6, 2:5].pressure_tensor_neq = np.zeros(
                 should_pressure_shape)
 
         # boundary velocity on test slice [1:, 1:, 1:]

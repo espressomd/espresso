@@ -79,6 +79,6 @@ p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 elc = espressomd.electrostatics.ELC(
     actor=p3m, maxPWerror=1.0, gap_size=elc_gap, const_pot=True,
     pot_diff=potential_diff, delta_mid_top=-1., delta_mid_bot=-1.)
-system.actors.add(elc)
+system.electrostatics.solver = elc
 
 visualizer.run(1)

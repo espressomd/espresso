@@ -27,8 +27,7 @@
  * implemented by @ref ScafacosContext.
  */
 
-#ifndef ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_BASE_HPP
-#define ESPRESSO_SRC_CORE_SCAFACOS_SCAFACOS_CONTEXT_BASE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -67,4 +66,3 @@ struct ScafacosContextBase {
 };
 
 #endif // SCAFACOS or SCAFACOS_DIPOLAR
-#endif

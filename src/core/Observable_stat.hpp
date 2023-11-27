@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_OBSERVABLE_STAT_HPP
-#define ESPRESSO_OBSERVABLE_STAT_HPP
+
+#pragma once
 
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/numeric.hpp>
@@ -38,11 +38,12 @@ class Observable_stat {
   std::size_t m_chunk_size;
 
   /** Get contribution from a non-bonded interaction */
-  Utils::Span<double> non_bonded_contribution(Utils::Span<double> base_pointer,
-                                              int type1, int type2) const;
+  Utils::Span<double>
+  get_non_bonded_contribution(Utils::Span<double> base_pointer, int type1,
+                              int type2) const;
 
 public:
-  explicit Observable_stat(std::size_t chunk_size);
+  Observable_stat(std::size_t chunk_size, std::size_t n_bonded, int max_type);
 
   auto get_chunk_size() const { return m_chunk_size; }
 
@@ -91,33 +92,32 @@ public:
     return {bonded.data() + offset, m_chunk_size};
   }
 
-  void add_non_bonded_contribution(int type1, int type2,
+  void add_non_bonded_contribution(int type1, int type2, int molid1, int molid2,
                                    Utils::Span<const double> data) {
     assert(data.size() == m_chunk_size);
-    auto const source = (type1 == type2) ? non_bonded_intra : non_bonded_inter;
-    auto const dest = non_bonded_contribution(source, type1, type2);
+    auto const span = (molid1 == molid2) ? non_bonded_intra : non_bonded_inter;
+    auto const dest = get_non_bonded_contribution(span, type1, type2);
 
     boost::transform(dest, data, dest.begin(), std::plus<>{});
   }
 
-  void add_non_bonded_contribution(int type1, int type2, double data) {
-    add_non_bonded_contribution(type1, type2, {&data, 1});
+  void add_non_bonded_contribution(int type1, int type2, int molid1, int molid2,
+                                   double data) {
+    add_non_bonded_contribution(type1, type2, molid1, molid2, {&data, 1});
   }
 
   /** Get contribution from a non-bonded intramolecular interaction */
   Utils::Span<double> non_bonded_intra_contribution(int type1,
                                                     int type2) const {
-    return non_bonded_contribution(non_bonded_intra, type1, type2);
+    return get_non_bonded_contribution(non_bonded_intra, type1, type2);
   }
 
   /** Get contribution from a non-bonded intermolecular interaction */
   Utils::Span<double> non_bonded_inter_contribution(int type1,
                                                     int type2) const {
-    return non_bonded_contribution(non_bonded_inter, type1, type2);
+    return get_non_bonded_contribution(non_bonded_inter, type1, type2);
   }
 
   /** MPI reduction. */
   void mpi_reduce();
 };
-
-#endif // ESPRESSO_OBSERVABLE_STAT_HPP

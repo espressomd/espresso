@@ -77,7 +77,6 @@ void clear_particle_node();
 
 /**
  * @brief Create a new particle and attach it to a cell.
- * Also call @ref on_particle_change.
  * @param p_id  The identity of the particle to create.
  * @param pos   The particle position.
  */
@@ -85,7 +84,6 @@ void make_new_particle(int p_id, Utils::Vector3d const &pos);
 
 /**
  * @brief Move particle to a new position.
- * Also call @ref on_particle_change.
  * @param p_id  The identity of the particle to move.
  * @param pos   The new particle position.
  */

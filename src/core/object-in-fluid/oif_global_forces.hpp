@@ -23,6 +23,7 @@
  *  for a particle triple (triangle from mesh). See @cite dupin07a.
  */
 
+#include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "oif_global_forces_params.hpp"
 
@@ -35,11 +36,12 @@
  *  - MPI synchronization with all reduce
  *  - !!! loop over particles from regular_decomposition !!!
  */
-Utils::Vector2d calc_oif_global(int molType, CellStructure &cs);
+Utils::Vector2d calc_oif_global(int molType, BoxGeometry const &box_geo,
+                                CellStructure &cs);
 
 /** Distribute the OIF global forces to all particles in the mesh. */
 void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
-                           CellStructure &cs);
+                           BoxGeometry const &box_geo, CellStructure &cs);
 
 extern int max_oif_objects;
 

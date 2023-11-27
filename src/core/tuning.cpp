@@ -21,13 +21,12 @@
 
 #include "tuning.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
-#include "interactions.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 
 #include <utils/statistics/RunningAverage.hpp>
 
@@ -66,23 +65,23 @@ static void check_statistics(Utils::Statistics::RunningAverage<double> &acc) {
   }
 }
 
-static void run_full_force_calc(int reuse_forces) {
-  auto const error_code = integrate(0, reuse_forces);
+static void run_full_force_calc(System::System &system, int reuse_forces) {
+  auto const error_code = system.integrate(0, reuse_forces);
   if (error_code == INTEG_ERROR_RUNTIME) {
     throw TuningFailed{};
   }
 }
 
-double benchmark_integration_step(int int_steps) {
+double benchmark_integration_step(System::System &system, int int_steps) {
   Utils::Statistics::RunningAverage<double> running_average;
 
   // check if the system can be integrated with the current parameters
-  run_full_force_calc(INTEG_REUSE_FORCES_CONDITIONALLY);
+  run_full_force_calc(system, INTEG_REUSE_FORCES_CONDITIONALLY);
 
   // measure force calculation time
   for (int i = 0; i < int_steps; i++) {
     auto const tick = MPI_Wtime();
-    run_full_force_calc(INTEG_REUSE_FORCES_NEVER);
+    run_full_force_calc(system, INTEG_REUSE_FORCES_NEVER);
     auto const tock = MPI_Wtime();
     running_average.add_sample((tock - tick));
   }
@@ -102,18 +101,20 @@ double benchmark_integration_step(int int_steps) {
  * This times the integration and
  * propagates the system.
  *
+ * @param system The system to tune.
  * @param int_steps Number of steps to integrate.
  * @return Time per integration in ms.
  */
-static double time_calc(int int_steps) {
-  auto const error_code_init = integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
+static double time_calc(System::System &system, int int_steps) {
+  auto const error_code_init =
+      system.integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
   if (error_code_init == INTEG_ERROR_RUNTIME) {
     return -1;
   }
 
   /* perform force calculation test */
   auto const tick = MPI_Wtime();
-  auto const error_code = integrate(int_steps, INTEG_REUSE_FORCES_NEVER);
+  auto const error_code = system.integrate(int_steps, INTEG_REUSE_FORCES_NEVER);
   auto const tock = MPI_Wtime();
   if (error_code == INTEG_ERROR_RUNTIME) {
     return -1;
@@ -123,8 +124,9 @@ static double time_calc(int int_steps) {
   return 1000. * (tock - tick) / int_steps;
 }
 
-void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
-               bool adjust_max_skin) {
+namespace System {
+void System::tune_verlet_skin(double min_skin, double max_skin, double tol,
+                              int int_steps, bool adjust_max_skin) {
 
   double a = min_skin;
   double b = max_skin;
@@ -132,20 +134,19 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
   /* The maximal skin is the remainder from the required cutoff to
    * the maximal range that can be supported by the cell system, but
    * never larger than half the box size. */
-  double const max_permissible_skin =
-      std::min(*boost::min_element(cell_structure.max_cutoff()) -
-                   maximal_cutoff(n_nodes),
-               0.5 * *boost::max_element(box_geo.length()));
+  auto const max_permissible_skin = std::min(
+      *boost::min_element(cell_structure->max_cutoff()) - maximal_cutoff(),
+      0.5 * *boost::max_element(box_geo->length()));
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;
 
   while (fabs(a - b) > tol) {
-    ::set_skin(a);
-    auto const time_a = time_calc(int_steps);
+    cell_structure->set_verlet_skin(a);
+    auto const time_a = time_calc(*this, int_steps);
 
-    ::set_skin(b);
-    auto const time_b = time_calc(int_steps);
+    cell_structure->set_verlet_skin(b);
+    auto const time_b = time_calc(*this, int_steps);
 
     if (time_a > time_b) {
       a = 0.5 * (a + b);
@@ -153,6 +154,6 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
       b = 0.5 * (a + b);
     }
   }
-  auto const new_skin = 0.5 * (a + b);
-  ::set_skin(new_skin);
+  cell_structure->set_verlet_skin(0.5 * (a + b));
 }
+} // namespace System

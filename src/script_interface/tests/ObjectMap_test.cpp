@@ -43,6 +43,7 @@ struct ObjectMapImpl : ObjectMap<ObjectHandle> {
   std::unordered_map<KeyType, ObjectRef> mock_core;
 
 private:
+  void before_do_construct() override {}
   void insert_in_core(KeyType const &key, ObjectRef const &obj_ptr) override {
     next_key = std::max(next_key, key + 1);
     mock_core[key] = obj_ptr;

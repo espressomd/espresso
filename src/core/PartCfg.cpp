@@ -19,8 +19,9 @@
 
 #include "PartCfg.hpp"
 
-#include "grid.hpp"
+#include "BoxGeometry.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/Span.hpp>
 
@@ -28,9 +29,6 @@
 #include <cstddef>
 
 void PartCfg::update() {
-  if (m_valid)
-    return;
-
   m_parts.clear();
 
   auto const ids = get_particle_ids();
@@ -48,12 +46,10 @@ void PartCfg::update() {
       m_parts.push_back(get_particle_data(id));
 
       auto &p = m_parts.back();
-      p.pos() += image_shift(p.image_box(), box_geo.length());
+      p.pos() += m_box_geo.image_shift(p.image_box());
       p.image_box() = {};
     }
 
     offset += this_size;
   }
-
-  m_valid = true;
 }

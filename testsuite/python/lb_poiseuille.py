@@ -68,10 +68,10 @@ class LBPoiseuilleCommon:
 
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def prepare(self):
         """

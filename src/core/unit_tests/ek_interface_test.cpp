@@ -17,16 +17,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE LB particle coupling test
+#define BOOST_TEST_MODULE EK interface test
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_NO_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include "EspressoSystemStandAlone.hpp"
+#include "ParticleFactory.hpp"
+
+#include "cell_system/CellStructureType.hpp"
+#include "communication.hpp"
 #include "config/config.hpp"
+#include "ek/EKReactions.hpp"
+#include "ek/EKWalberla.hpp"
+#include "ek/Implementation.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/ek_container.hpp"
-#include "grid_based_algorithms/ek_reactions.hpp"
+#include "system/System.hpp"
+
+#ifdef WALBERLA
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/electrokinetics/EKContainer.hpp>
+#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactant.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
+#endif
 
 #include <utils/Vector.hpp>
 
@@ -54,89 +69,167 @@ static struct {
 
 namespace espresso {
 // ESPResSo system instance
-static std::unique_ptr<EspressoSystemStandAlone> system;
+static std::shared_ptr<System::System> system;
+// ESPResSo actors
+#ifdef WALBERLA
+static std::shared_ptr<EK::EKWalberla::ek_container_type> ek_container;
+static std::shared_ptr<EK::EKWalberla::ek_reactions_type> ek_reactions;
+static std::shared_ptr<EK::EKWalberla> ek_instance;
+static std::shared_ptr<LatticeWalberla> ek_lattice;
+#endif
+
+static auto make_ek_actor() {
+#ifdef WALBERLA
+  auto constexpr n_ghost_layers = 1u;
+  auto constexpr single_precision = true;
+  ek_lattice = std::make_shared<LatticeWalberla>(
+      params.grid_dimensions, ::communicator.node_grid, n_ghost_layers);
+  ek_container = std::make_shared<EK::EKWalberla::ek_container_type>(
+      params.tau, new_ek_poisson_none(ek_lattice, single_precision));
+  ek_reactions = std::make_shared<EK::EKWalberla::ek_reactions_type>();
+  ek_instance = std::make_shared<EK::EKWalberla>(ek_container, ek_reactions);
+#endif
+}
+
+static void add_ek_actor() {
+#ifdef WALBERLA
+  espresso::system->ek.set<::EK::EKWalberla>(ek_instance);
+#endif
+}
+
+static void remove_ek_actor() { espresso::system->ek.reset(); }
 } // namespace espresso
+
+#ifdef WALBERLA
+namespace walberla {
+class EKReactionImpl : public EKReactionBase {
+public:
+  using EKReactionBase::EKReactionBase;
+  using EKReactionBase::get_coefficient;
+  using EKReactionBase::get_lattice;
+  using EKReactionBase::get_reactants;
+
+  void perform_reaction() override {}
+  ~EKReactionImpl() override = default;
+};
+} // namespace walberla
+#endif // WALBERLA
+
+/** Fixture to manage the lifetime of the EK actor. */
+struct CleanupActorEK : public ParticleFactory {
+  CleanupActorEK() : ParticleFactory() {
+    espresso::make_ek_actor();
+    espresso::add_ek_actor();
+  }
+
+  // NOLINTNEXTLINE(bugprone-exception-escape)
+  ~CleanupActorEK() { espresso::remove_ek_actor(); }
+};
+
+BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorEK)
 
 static auto get_n_runtime_errors() { return check_runtime_errors_local(); }
 
 #ifdef WALBERLA
-
-#include "grid.hpp"
-
-#include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/electrokinetics/EKContainer.hpp>
-#include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#include <walberla_bridge/electrokinetics/ek_poisson_none_init.hpp>
-#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
-
 BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
+  auto &ek = espresso::system->ek;
+
   {
     // tau setters and getters
-    BOOST_CHECK_EQUAL(EK::ek_container.get_tau(), 0.);
-    BOOST_CHECK_EQUAL(EK::get_tau(), 0.);
-    BOOST_CHECK_EQUAL(EK::get_steps_per_md_step(1.), 0);
-    EK::ek_container.set_tau(2.);
-    BOOST_CHECK_EQUAL(EK::ek_container.get_tau(), 2.);
-    BOOST_CHECK_EQUAL(EK::get_tau(), 2.);
-    BOOST_CHECK_EQUAL(EK::get_steps_per_md_step(1.), 2);
-    BOOST_CHECK_EQUAL(EK::get_steps_per_md_step(2.), 1);
-    BOOST_CHECK_EQUAL(EK::get_steps_per_md_step(5.), 0);
+    espresso::ek_container->set_tau(2.);
+    BOOST_CHECK_EQUAL(ek.get_tau(), 2.);
   }
 
   {
     // setup a minimal EK model without coupling to LB
-    auto constexpr n_ghost_layers = 1u;
+    using walberla::EKReactant;
     auto constexpr single_precision = true;
-    auto ek_lattice = std::make_shared<LatticeWalberla>(
-        params.grid_dimensions, ::node_grid, n_ghost_layers);
+    auto constexpr stoich = 1.;
+    auto constexpr order = 2.;
     auto ek_species = new_ek_walberla(
-        ek_lattice, params.diffusion, params.kT, params.valency,
+        espresso::ek_lattice, params.diffusion, params.kT, params.valency,
         params.ext_efield, params.density, false, false, single_precision);
-    auto ek_solver_none = new_ek_poisson_none(ek_lattice, single_precision);
+    auto ek_reactant = std::make_shared<EKReactant>(ek_species, stoich, order);
+    auto ek_reaction = std::make_shared<walberla::EKReactionImpl>(
+        espresso::ek_lattice,
+        std::vector<std::shared_ptr<EKReactant>>{
+            {ek_reactant, ek_reactant, ek_reactant}},
+        1.);
+    ek_reaction->perform_reaction();
 
-    BOOST_REQUIRE(EK::ek_reactions.empty());
-    BOOST_REQUIRE(EK::ek_container.empty());
-    BOOST_REQUIRE(not EK::ek_container.is_poisson_solver_set());
-    EK::propagate(); // no-op
+    BOOST_REQUIRE(espresso::ek_reactions->empty());
+    BOOST_REQUIRE(espresso::ek_container->empty());
+    ek.propagate(); // no-op
     BOOST_REQUIRE_EQUAL(get_n_runtime_errors(), 0);
-    EK::ek_container.set_poisson_solver(ek_solver_none);
-    BOOST_REQUIRE(EK::ek_container.is_poisson_solver_set());
-    BOOST_REQUIRE(EK::ek_container.empty());
-    EK::ek_container.set_tau(0.);
-    BOOST_CHECK_THROW(EK::ek_container.add(ek_species), std::runtime_error);
-    EK::ek_container.set_tau(2.);
-    EK::ek_container.add(ek_species);
-    BOOST_REQUIRE(not EK::ek_container.empty());
-    EK::propagate(); // no-op
+    BOOST_REQUIRE(espresso::ek_container->empty());
+    BOOST_REQUIRE(not espresso::ek_container->contains(ek_species));
+    BOOST_REQUIRE(not espresso::ek_reactions->contains(ek_reaction));
+    espresso::ek_container->set_tau(2.);
+    espresso::ek_container->add(ek_species);
+    BOOST_REQUIRE(not espresso::ek_container->empty());
+    BOOST_REQUIRE(espresso::ek_container->contains(ek_species));
+    ek.propagate(); // no-op
     BOOST_REQUIRE_EQUAL(get_n_runtime_errors(), 0);
-    EK::ek_container.remove(ek_species);
-    BOOST_REQUIRE(EK::ek_container.empty());
-    EK::propagate(); // no-op
+    espresso::ek_reactions->add(ek_reaction);
+    BOOST_REQUIRE(espresso::ek_reactions->contains(ek_reaction));
+    BOOST_REQUIRE(not espresso::ek_reactions->empty());
+    espresso::ek_reactions->remove(ek_reaction);
+    BOOST_REQUIRE(not espresso::ek_reactions->contains(ek_reaction));
+    BOOST_REQUIRE(espresso::ek_reactions->empty());
+    espresso::ek_container->remove(ek_species);
+    BOOST_REQUIRE(espresso::ek_container->empty());
+    BOOST_REQUIRE(not espresso::ek_container->contains(ek_species));
+    ek.propagate(); // no-op
     BOOST_REQUIRE_EQUAL(get_n_runtime_errors(), 0);
   }
-}
 
-#else // WALBERLA
-
-BOOST_AUTO_TEST_CASE(ek_interface) {
   {
-    EK::propagate(); // no-op
-    BOOST_CHECK_THROW(EK::get_tau(), NoEKActive);
-    BOOST_CHECK_THROW(EK::get_tau(), std::exception);
-    BOOST_CHECK_THROW(EK::get_steps_per_md_step(1.), std::exception);
+    // EK prevents changing most of the system state
+    BOOST_CHECK_THROW(ek.on_boxl_change(), std::runtime_error);
+    BOOST_CHECK_THROW(ek.on_timestep_change(), std::runtime_error);
+    BOOST_CHECK_THROW(ek.on_temperature_change(), std::runtime_error);
+    BOOST_CHECK_THROW(ek.on_node_grid_change(), std::runtime_error);
+  }
+}
+#endif // WALBERLA
+
+BOOST_AUTO_TEST_CASE(ek_interface_none) {
+  auto &ek = espresso::system->ek;
+
+  {
+    using EK::NoEKActive;
+    ek.reset();
+    BOOST_CHECK_THROW(ek.get_tau(), NoEKActive);
+    BOOST_CHECK_THROW(ek.propagate(), NoEKActive);
+    auto ek_impl = std::make_shared<EK::EKNone>();
+    ek.set<EK::EKNone>(ek_impl);
+    BOOST_CHECK_THROW(ek.is_ready_for_propagation(), NoEKActive);
+    BOOST_CHECK_THROW(ek.propagate(), NoEKActive);
+    BOOST_CHECK_THROW(ek.get_tau(), NoEKActive);
+    BOOST_CHECK_THROW(ek.sanity_checks(), NoEKActive);
+    BOOST_CHECK_THROW(ek.veto_time_step(0.), NoEKActive);
+    BOOST_CHECK_THROW(ek.on_cell_structure_change(), NoEKActive);
+    BOOST_CHECK_THROW(ek.on_boxl_change(), NoEKActive);
+    BOOST_CHECK_THROW(ek.on_node_grid_change(), NoEKActive);
+    BOOST_CHECK_THROW(ek.on_timestep_change(), NoEKActive);
+    BOOST_CHECK_THROW(ek.on_temperature_change(), NoEKActive);
     auto const err_msg = std::string(NoEKActive().what());
     auto const ref_msg = std::string("EK not activated");
     BOOST_CHECK_EQUAL(err_msg, ref_msg);
+    ek.reset();
   }
 }
 
-#endif // WALBERLA
+BOOST_AUTO_TEST_SUITE_END()
 
 int main(int argc, char **argv) {
-  espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
+  mpi_init_stand_alone(argc, argv);
+  espresso::system = System::System::create();
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
-  espresso::system->set_skin(params.skin);
+  espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
+  espresso::system->cell_structure->set_verlet_skin(params.skin);
+  ::System::set_system(espresso::system);
 
   boost::mpi::communicator world;
   assert(world.size() <= 2);

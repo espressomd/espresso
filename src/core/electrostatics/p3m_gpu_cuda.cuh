@@ -17,10 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_CUDA_CUH
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_CUDA_CUH
+#pragma once
 
-void p3m_gpu_init(int cao, const int mesh[3], double alpha);
-void p3m_gpu_add_farfield_force(double prefactor);
+#include "system/GpuParticleData.hpp"
 
-#endif
+#include <utils/Vector.hpp>
+
+#include <memory>
+
+struct P3MGpuParams;
+
+void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &p3m_gpu_data_ptr, int cao,
+                  const int mesh[3], double alpha, Utils::Vector3d const &box_l,
+                  unsigned n_part);
+void p3m_gpu_add_farfield_force(P3MGpuParams &data, GpuParticleData &gpu,
+                                double prefactor, unsigned n_part);

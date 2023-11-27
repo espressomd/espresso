@@ -52,20 +52,20 @@ Variant ObjectHandle::call_method(const std::string &name,
 std::string ObjectHandle::serialize() const {
   ObjectState state;
 
-  auto const params = this->get_parameters();
+  auto const params = serialize_parameters();
   state.params.resize(params.size());
 
-  PackVisitor v;
+  PackVisitor visit;
 
   /* Pack parameters and keep track of ObjectRef parameters */
   boost::transform(params, state.params.begin(),
-                   [&v](auto const &kv) -> PackedMap::value_type {
-                     return {kv.first, boost::apply_visitor(v, kv.second)};
+                   [&visit](auto const &kv) -> PackedMap::value_type {
+                     return {kv.first, boost::apply_visitor(visit, kv.second)};
                    });
 
   /* Packed Object parameters */
-  state.objects.resize(v.objects().size());
-  boost::transform(v.objects(), state.objects.begin(), [](auto const &kv) {
+  state.objects.resize(visit.objects().size());
+  boost::transform(visit.objects(), state.objects.begin(), [](auto const &kv) {
     return std::make_pair(kv.first, kv.second->serialize());
   });
 

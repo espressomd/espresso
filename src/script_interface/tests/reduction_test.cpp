@@ -25,7 +25,6 @@
 #include "script_interface/communication.hpp"
 
 #include <boost/mpi.hpp>
-#include <boost/optional.hpp>
 
 BOOST_AUTO_TEST_CASE(reduce_sum) {
   boost::mpi::communicator comm;
@@ -36,24 +35,6 @@ BOOST_AUTO_TEST_CASE(reduce_sum) {
     BOOST_CHECK_EQUAL(sum, (n * (n + 1)) / 2);
   } else {
     BOOST_CHECK_EQUAL(sum, 0);
-  }
-}
-
-BOOST_AUTO_TEST_CASE(reduce_optional) {
-  boost::mpi::communicator comm;
-
-  for (int rank = 0; rank < comm.size(); ++rank) {
-    boost::optional<int> maybe;
-    if (comm.rank() == rank) {
-      maybe = 42;
-    }
-    auto const sum = ScriptInterface::mpi_reduce_optional(comm, maybe);
-
-    if (comm.rank() == 0) {
-      BOOST_CHECK_EQUAL(sum, 42);
-    } else {
-      BOOST_CHECK_EQUAL(sum, 0);
-    }
   }
 }
 

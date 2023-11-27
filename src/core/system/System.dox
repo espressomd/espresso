@@ -1,0 +1,80 @@
+/*
+ * Copyright (C) 2023 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @page SystemClassDesign %System class design
+ *
+ * @tableofcontents
+ *
+ * @section SystemClassDesign_design_patterns Design patterns
+ *
+ * Most features of the @ref System::System class follow a simplified version
+ * of the [composite pattern](https://en.wikipedia.org/wiki/Composite_pattern)
+ * which only uses leaves. A leaf contains a weak reference to the parent,
+ * so as to allow coupling between siblings. For example, a long-range solver
+ * leaf can access the box geometry leaf to determine the box length, or the
+ * cell structure leaf to verify the system is charge-neutral. While it is not
+ * mandatory for a feature class to derive from the @ref System::Leaf class,
+ * doing so helps maintain a coherent interface between features.
+ *
+ * A leaf can be grafted to a @ref System::System instance (the "parent"),
+ * upon which an action is triggered, typically to initialize derived
+ * quantities in the leaf object using the properties of the parent.
+ * A leaf can later be detached from the parent, upon which a different
+ * action is triggered, usually to deallocate derived quantities.
+ * This is achieved at the script interface level by overriding methods
+ * @ref ScriptInterface::System::Leaf::on_bind_system and
+ * @ref ScriptInterface::System::Leaf::on_detach_system.
+ * These callbacks are defined at the script interface level,
+ * because side-effects are usually easier to implement there.
+ *
+ * To maintain separation of concerns, @ref System::System leaves are
+ * stored as [opaque pointers](https://en.wikipedia.org/wiki/Opaque_pointer).
+ * To access the functionality of a leaf member, it is mandatory to include
+ * the corresponding header file.
+ *
+ * @section SystemClassDesign_new_components Adding new components
+ *
+ * To add a new feature, the following steps are required:
+ * - core:
+ *    - Store the feature source code in a subfolder. e.g. `src/core/feature`.
+ *    - Forward-declare the class at the top of @ref src/core/system/System.hpp.
+ *    - Include the relevant header in @ref src/core/system/System.impl.hpp.
+ *    - Adapt the @ref System::System::System constructor accordingly.
+ * - script interface:
+ *    - Define the %ScriptInterface class of the new feature, which serves as
+ *      the connection between the C++ core instance and the Python instance.
+ *    - If relevant, override
+ *      @ref ScriptInterface::System::Leaf::on_bind_system and
+ *      @ref ScriptInterface::System::Leaf::on_detach_system.
+ *    - Adapt the @ref ScriptInterface::System::System::System constructor.
+ *    - Adapt the @ref ScriptInterface::System::System::Leaves container.
+ * - Python interface:
+ *    - create a new Python file, e.g. `src/python/espressomd/feature.py`.
+ *    - Adapt `System.__init__()` in `src/python/espressomd.py`
+ *
+ * Please bear in mind that a stateful object cannot do a full initialization
+ * inside @ref ScriptInterface::ObjectHandle::do_construct
+ * if the managed object constructor depends on properties of the system,
+ * since at this stage the leaf hasn't been attached to a system yet. Instead,
+ * it has to store a copy of the parameters in a `std::unique_ptr` via
+ * @ref ScriptInterface::ObjectHandle::do_construct and delegate the actual
+ * construction to @ref ScriptInterface::System::Leaf::on_bind_system.
+ * One can use @ref ScriptInterface::CellSystem::CellSystem as a guide.
+ */

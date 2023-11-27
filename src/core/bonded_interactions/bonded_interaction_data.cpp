@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bonded_interaction_data.hpp"
-#include "event.hpp"
+#include "system/System.hpp"
 
 #include <boost/range/numeric.hpp>
 #include <boost/variant.hpp>
@@ -29,8 +29,6 @@
 #include <vector>
 
 BondedInteractionsMap bonded_ia_params;
-
-void mpi_update_cell_system_ia_range_local() { on_short_range_ia_change(); }
 
 /** Visitor to get the bond cutoff from the bond parameter variant */
 class BondCutoff : public boost::static_visitor<double> {
@@ -58,4 +56,10 @@ double maximal_cutoff_bonded() {
   /* dihedrals: the central particle is indirectly connected to the fourth
    * particle via the third particle, so we have to double the cutoff */
   return (any_dihedrals) ? 2 * max_cut_bonded : max_cut_bonded;
+}
+
+void BondedInteractionsMap::on_ia_change() {
+  if (System::is_system_set()) {
+    System::get_system().on_short_range_ia_change();
+  }
 }

@@ -21,7 +21,6 @@
 
 #include "CylindricalProfileObservable.hpp"
 
-#include <utility>
 #include <utils/Vector.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 #include <utils/math/vec_rotate.hpp>

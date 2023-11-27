@@ -68,7 +68,7 @@ style_doxygen:
     - mkdir build
     - cd build
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON
+    - cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON -D ESPRESSO_BUILD_WITH_GSL=ON -D ESPRESSO_BUILD_WITH_HDF5=ON -D ESPRESSO_BUILD_WITH_SCAFACOS=ON -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON -D ESPRESSO_BUILD_WITH_CALIPER=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - espresso
@@ -111,6 +111,7 @@ maxset:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
+     with_caliper: 'true'
      check_skip_long: 'true'
      cmake_params: '-D ESPRESSO_TEST_NP=8'
   script:
@@ -241,6 +242,7 @@ cuda11-maxset:
      with_walberla: 'true'
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
+     with_caliper: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -251,6 +253,7 @@ cuda11-maxset:
     - espresso
     - cuda
     - numa
+    - avx2
 
 tutorials-samples-maxset:
   <<: *global_job_definition
@@ -279,6 +282,7 @@ tutorials-samples-maxset:
     - espresso
     - cuda
     - numa
+    - avx2
 
 tutorials-samples-default:
   <<: *global_job_definition
@@ -305,6 +309,7 @@ tutorials-samples-default:
     - espresso
     - cuda
     - numa
+    - avx2
   only:
     - schedules
 
@@ -360,6 +365,7 @@ tutorials-samples-no-gpu:
   tags:
     - espresso
     - no-cuda
+    - avx2
   only:
     - schedules
 

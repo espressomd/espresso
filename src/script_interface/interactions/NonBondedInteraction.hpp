@@ -29,8 +29,8 @@
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/get_value.hpp"
 
-#include "core/event.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "core/system/System.hpp"
 
 #include <algorithm>
 #include <array>
@@ -38,7 +38,6 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
-#include <set>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -57,8 +56,10 @@ public:
   using CoreInteraction = CoreIA;
 
 protected:
-  using AutoParameters<InteractionPotentialInterface<CoreIA>>::context;
-  using AutoParameters<InteractionPotentialInterface<CoreIA>>::valid_parameters;
+  using BaseClass = AutoParameters<InteractionPotentialInterface<CoreIA>>;
+  using BaseClass::context;
+  using BaseClass::get_valid_parameters;
+
   /** @brief Managed object. */
   std::shared_ptr<CoreInteraction> m_ia_si;
   /** @brief Pointer to the corresponding member in a handle. */
@@ -77,24 +78,15 @@ protected:
   }
 
 private:
-  std::set<std::string> get_valid_parameters() const {
-    auto const vec = valid_parameters();
-    auto valid_keys = std::set<std::string>();
-    std::transform(vec.begin(), vec.end(),
-                   std::inserter(valid_keys, valid_keys.begin()),
-                   [](auto const &key) { return std::string{key}; });
-    return valid_keys;
-  }
-
   void check_valid_parameters(VariantMap const &params) const {
-    auto const valid_keys = get_valid_parameters();
-    for (auto const &key : valid_keys) {
+    auto const keys = get_valid_parameters();
+    for (auto const &key : keys) {
       if (params.count(std::string(key)) == 0) {
         throw std::runtime_error("Parameter '" + key + "' is missing");
       }
     }
     for (auto const &kv : params) {
-      if (valid_keys.count(kv.first) == 0) {
+      if (std::find(keys.begin(), keys.end(), kv.first) == keys.end()) {
         throw std::runtime_error("Parameter '" + kv.first +
                                  "' is not recognized");
       }
@@ -111,7 +103,7 @@ public:
       });
       if (m_types[0] != -1) {
         copy_si_to_core();
-        on_non_bonded_ia_change();
+        System::get_system().on_non_bonded_ia_change();
       }
       return {};
     }
@@ -119,7 +111,7 @@ public:
       m_ia_si = std::make_shared<CoreInteraction>();
       if (m_types[0] != -1) {
         copy_si_to_core();
-        on_non_bonded_ia_change();
+        System::get_system().on_non_bonded_ia_change();
       }
       return {};
     }
@@ -168,16 +160,14 @@ public:
 
   void copy_si_to_core() {
     assert(m_ia_si != nullptr);
-    auto const key = get_ia_param_key(m_types[0], m_types[1]);
-    assert(key < ::nonbonded_ia_params.size());
-    ::nonbonded_ia_params[key].get()->*get_ptr_offset() = *m_ia_si;
+    auto &core_ias = *System::get_system().nonbonded_ias;
+    core_ias.get_ia_param(m_types[0], m_types[1]).*get_ptr_offset() = *m_ia_si;
   }
 
   void copy_core_to_si() {
     assert(m_ia_si != nullptr);
-    auto const key = get_ia_param_key(m_types[0], m_types[1]);
-    assert(key < ::nonbonded_ia_params.size());
-    *m_ia_si = ::nonbonded_ia_params[key].get()->*get_ptr_offset();
+    auto const &core_ias = *System::get_system().nonbonded_ias;
+    *m_ia_si = core_ias.get_ia_param(m_types[0], m_types[1]).*get_ptr_offset();
   }
 };
 
@@ -806,7 +796,7 @@ class NonBondedInteractionHandle
         auto const types = Variant{std::vector<int>{{m_types[0], m_types[1]}}};
         member->do_call_method("bind_types", VariantMap{{"_types", types}});
         member->copy_si_to_core();
-        on_non_bonded_ia_change();
+        System::get_system().on_non_bonded_ia_change();
       }
     };
     return AutoParameter{key, setter, [&member]() { return member; }};
@@ -896,13 +886,14 @@ public:
 
   void do_construct(VariantMap const &params) override {
     assert(params.count("_types") != 0);
+    auto &nonbonded_ias = *System::get_system().nonbonded_ias;
     auto const types = get_value<std::vector<int>>(params.at("_types"));
     m_types[0] = std::min(types[0], types[1]);
     m_types[1] = std::max(types[0], types[1]);
-    make_particle_type_exist(m_types[1]);
+    nonbonded_ias.make_particle_type_exist(m_types[1]);
     // create interface objects
-    auto const key = get_ia_param_key(m_types[0], m_types[1]);
-    m_interaction = ::nonbonded_ia_params[key];
+    m_interaction =
+        nonbonded_ias.get_ia_param_ref_counted(m_types[0], m_types[1]);
 #ifdef WCA
     set_member(m_wca, "wca", "Interactions::InteractionWCA", params);
 #endif

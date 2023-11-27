@@ -30,44 +30,38 @@ add_library(
   dpd.cpp
   energy.cpp
   errorhandling.cpp
-  EspressoSystemInterface.cpp
-  forcecap.cpp
   forces.cpp
   ghosts.cpp
-  grid.cpp
+  global_ghost_flags.cpp
   immersed_boundaries.cpp
-  interactions.cpp
-  event.cpp
   integrate.cpp
   npt.cpp
-  partCfg_global.cpp
   particle_node.cpp
   polymer.cpp
   pressure.cpp
   rattle.cpp
-  rotate_system.cpp
   rotation.cpp
   Observable_stat.cpp
-  SystemInterface.cpp
   thermostat.cpp
   tuning.cpp
   virtual_sites.cpp
   exclusions.cpp
+  system/GpuParticleData.cpp
+  system/System.cpp
   PartCfg.cpp
-  EspressoSystemStandAlone.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
                                                "${ESPRESSO_CXX_CLANG_TIDY}")
 
 if(ESPRESSO_BUILD_WITH_CUDA)
-  target_sources(espresso_core PRIVATE cuda_init.cpp cuda_interface.cpp)
+  target_sources(espresso_core PRIVATE cuda/init.cpp)
   espresso_add_gpu_library(
-    espresso_cuda SHARED cuda_common_cuda.cu cuda_init_cuda.cu
-    CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
+    espresso_cuda SHARED cuda/common_cuda.cu cuda/init_cuda.cu
+    cuda/CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
     magnetostatics/dipolar_direct_sum_gpu_cuda.cu
     electrostatics/mmm1d_gpu_cuda.cu electrostatics/p3m_gpu_cuda.cu
-    electrostatics/p3m_gpu_error_cuda.cu EspressoSystemInterface_cuda.cu)
+    electrostatics/p3m_gpu_error_cuda.cu system/GpuParticleData_cuda.cu)
   add_library(espresso::cuda ALIAS espresso_cuda)
   target_link_libraries(
     espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
@@ -95,6 +89,11 @@ target_link_libraries(
 
 target_include_directories(espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(ESPRESSO_BUILD_WITH_WALBERLA)
+  target_link_libraries(espresso_core PRIVATE espresso::walberla
+                                              ${WALBERLA_LIBS})
+endif()
+
 add_subdirectory(accumulators)
 add_subdirectory(analysis)
 add_subdirectory(bond_breakage)
@@ -102,13 +101,14 @@ add_subdirectory(bonded_interactions)
 add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)
 add_subdirectory(constraints)
+add_subdirectory(ek)
 add_subdirectory(electrostatics)
 add_subdirectory(error_handling)
 add_subdirectory(galilei)
-add_subdirectory(grid_based_algorithms)
 add_subdirectory(immersed_boundary)
 add_subdirectory(integrators)
 add_subdirectory(io)
+add_subdirectory(lb)
 add_subdirectory(magnetostatics)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)

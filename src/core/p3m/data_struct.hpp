@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_P3M_DATA_STRUCT_HPP
-#define CORE_P3M_DATA_STRUCT_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -56,5 +56,4 @@ struct p3m_data_struct_base {
   }
 };
 
-#endif
 #endif

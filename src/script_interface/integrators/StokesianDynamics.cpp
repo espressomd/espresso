@@ -25,7 +25,6 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include "core/grid.hpp"
 #include "core/integrate.hpp"
 #include "core/stokesian_dynamics/sd_interface.hpp"
 
@@ -90,7 +89,7 @@ void StokesianDynamics::do_construct(VariantMap const &params) {
   });
 }
 
-void StokesianDynamics::activate() const {
+void StokesianDynamics::activate() {
   context()->parallel_try_catch([&]() {
     register_integrator(get_instance());
     set_integ_switch(INTEG_METHOD_SD);

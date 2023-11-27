@@ -226,6 +226,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
     """
 
     _so_name = "walberla::LBFluid"
+    _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "add_force_at_pos",
@@ -237,9 +238,6 @@ class LBFluidWalberla(HydrodynamicInteraction,
     )
 
     def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
         if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)
@@ -329,13 +327,10 @@ class LBFluidWalberlaGPU(HydrodynamicInteraction):
     list of parameters.
 
     """
+    _so_features = ("WALBERLA", "CUDA")
 
     # pylint: disable=unused-argument
     def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("CUDA"):
-            raise NotImplementedError("Feature CUDA not compiled in")
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
         raise NotImplementedError("Not implemented yet")
 
 
@@ -395,6 +390,15 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
     @pressure_tensor.setter
     def pressure_tensor(self, value):
         raise RuntimeError("Property 'pressure_tensor' is read-only.")
+
+    @property
+    def pressure_tensor_neq(self):
+        tensor = self.call_method("get_pressure_tensor_neq")
+        return utils.array_locked(tensor)
+
+    @pressure_tensor_neq.setter
+    def pressure_tensor_neq(self, value):
+        raise RuntimeError("Property 'pressure_tensor_neq' is read-only.")
 
     @property
     def is_boundary(self):
@@ -555,6 +559,14 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
     @pressure_tensor.setter
     def pressure_tensor(self, value):
         raise RuntimeError("Property 'pressure_tensor' is read-only.")
+
+    @property
+    def pressure_tensor_neq(self):
+        return self._getter("pressure_tensor_neq")
+
+    @pressure_tensor_neq.setter
+    def pressure_tensor_neq(self, value):
+        raise RuntimeError("Property 'pressure_tensor_neq' is read-only.")
 
     @property
     def is_boundary(self):

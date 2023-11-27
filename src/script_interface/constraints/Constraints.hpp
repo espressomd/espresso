@@ -32,6 +32,9 @@
 namespace ScriptInterface {
 namespace Constraints {
 class Constraints : public ObjectList<Constraint> {
+  bool has_in_core(std::shared_ptr<Constraint> const &obj_ptr) const override {
+    return ::Constraints::constraints.contains(obj_ptr->constraint());
+  }
   void add_in_core(std::shared_ptr<Constraint> const &obj_ptr) override {
     ::Constraints::constraints.add(obj_ptr->constraint());
   }

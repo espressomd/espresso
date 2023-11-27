@@ -24,6 +24,9 @@
  *  Implementation in \ref thermostat.cpp.
  */
 
+#include "Particle.hpp"
+#include "rotation.hpp"
+
 #include "config/config.hpp"
 
 #include <utils/Counter.hpp>
@@ -55,16 +58,24 @@ using GammaType = double;
 } // namespace Thermostat
 
 namespace {
-/** @name Integrators parameters sentinels.
- *  These functions return the sentinel value for the Langevin/Brownian
- *  parameters, indicating that they have not been set yet.
+/**
+ * @brief Value for unset friction coefficient.
+ * Sentinel value for the Langevin/Brownian parameters,
+ * indicating that they have not been set yet.
  */
-/**@{*/
-constexpr double sentinel(double) { return -1.0; }
-constexpr Utils::Vector3d sentinel(Utils::Vector3d) {
-  return {-1.0, -1.0, -1.0};
-}
-/**@}*/
+#ifdef PARTICLE_ANISOTROPY
+constexpr Thermostat::GammaType gamma_sentinel{{-1.0, -1.0, -1.0}};
+#else
+constexpr Thermostat::GammaType gamma_sentinel{-1.0};
+#endif
+/**
+ * @brief Value for a null friction coefficient.
+ */
+#ifdef PARTICLE_ANISOTROPY
+constexpr Thermostat::GammaType gamma_null{{0.0, 0.0, 0.0}};
+#else
+constexpr Thermostat::GammaType gamma_null{0.0};
+#endif
 } // namespace
 
 /************************************************
@@ -84,6 +95,30 @@ extern double temperature;
 
 /** True if the thermostat should act on virtual particles. */
 extern bool thermo_virtual;
+
+#ifdef THERMOSTAT_PER_PARTICLE
+inline auto const &
+handle_particle_gamma(Thermostat::GammaType const &particle_gamma,
+                      Thermostat::GammaType const &default_gamma) {
+  return particle_gamma >= gamma_null ? particle_gamma : default_gamma;
+}
+#endif
+
+inline auto
+handle_particle_anisotropy(Particle const &p,
+                           Thermostat::GammaType const &gamma_body) {
+#ifdef PARTICLE_ANISOTROPY
+  auto const aniso_flag =
+      (gamma_body[0] != gamma_body[1]) || (gamma_body[1] != gamma_body[2]);
+  const Utils::Matrix<double, 3, 3> gamma_matrix =
+      boost::qvm::diag_mat(gamma_body);
+  auto const gamma_space =
+      aniso_flag ? convert_body_to_space(p, gamma_matrix) : gamma_matrix;
+  return gamma_space;
+#else
+  return gamma_body;
+#endif
+}
 
 /************************************************
  * parameter structs
@@ -142,9 +177,9 @@ public:
   /** @name Parameters */
   /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
-  GammaType gamma = sentinel(GammaType{});
+  GammaType gamma = gamma_sentinel;
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
-  GammaType gamma_rotation = sentinel(GammaType{});
+  GammaType gamma_rotation = gamma_sentinel;
   /**@}*/
   /** @name Prefactors */
   /**@{*/
@@ -219,9 +254,9 @@ public:
   /** @name Parameters */
   /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
-  GammaType gamma = sentinel(GammaType{});
+  GammaType gamma = gamma_sentinel;
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
-  GammaType gamma_rotation = sentinel(GammaType{});
+  GammaType gamma_rotation = gamma_sentinel;
   /**@}*/
   /** @name Prefactors */
   /**@{*/
@@ -230,13 +265,13 @@ public:
    *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
    *  the translational diffusion coefficient.
    */
-  GammaType sigma_pos = sentinel(GammaType{});
+  GammaType sigma_pos = gamma_sentinel;
   /** Rotational noise standard deviation.
    *  Stores @f$ \sqrt{2D_{\text{rot}}} @f$ with
    *  @f$ D_{\text{rot}} = k_B T/\gamma_{\text{rot}} @f$
    *  the rotational diffusion coefficient.
    */
-  GammaType sigma_pos_rotation = sentinel(GammaType{});
+  GammaType sigma_pos_rotation = gamma_sentinel;
   /** Translational velocity noise standard deviation.
    *  Stores @f$ \sqrt{k_B T} @f$.
    */

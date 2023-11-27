@@ -21,36 +21,36 @@
 #ifdef WALBERLA
 
 #include "LBFluid.hpp"
+#include "LBWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
 
 #include "core/BoxGeometry.hpp"
-#include "core/event.hpp"
-#include "core/grid.hpp"
-#include "core/grid_based_algorithms/lb_walberla_instance.hpp"
 #include "core/integrate.hpp"
+#include "core/lb/LBWalberla.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
 #include "core/lees_edwards/protocols.hpp"
+#include "core/system/System.hpp"
 
 #include <script_interface/communication.hpp>
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/lattice_boltzmann/LBWalberlaNodeState.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
 #include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/optional.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -67,20 +67,24 @@ std::unordered_map<std::string, int> const LBVTKHandle::obs_map = {
 Variant LBFluid::do_call_method(std::string const &name,
                                 VariantMap const &params) {
   if (name == "activate") {
-    context()->parallel_try_catch(
-        [&]() { ::activate_lb_walberla(m_instance, m_lb_params); });
+    context()->parallel_try_catch([this]() {
+      ::System::get_system().lb.set<::LB::LBWalberla>(m_instance, m_lb_params);
+    });
     m_is_active = true;
     return {};
   }
   if (name == "deactivate") {
-    ::deactivate_lb_walberla();
-    m_is_active = false;
+    if (m_is_active) {
+      ::System::get_system().lb.reset();
+      m_is_active = false;
+    }
     return {};
   }
   if (name == "add_force_at_pos") {
+    auto const &box_geo = *::System::get_system().box_geo;
     auto const pos = get_value<Utils::Vector3d>(params, "pos");
     auto const f = get_value<Utils::Vector3d>(params, "force");
-    auto const folded_pos = folded_position(pos, box_geo);
+    auto const folded_pos = box_geo.folded_position(pos);
     m_instance->add_force_at_pos(folded_pos * m_conv_dist, f * m_conv_force);
     return {};
   }
@@ -106,7 +110,7 @@ Variant LBFluid::do_call_method(std::string const &name,
   if (name == "clear_boundaries") {
     m_instance->clear_boundaries();
     m_instance->ghost_communication();
-    on_lb_boundary_conditions_change();
+    ::System::get_system().on_lb_boundary_conditions_change();
     return {};
   }
   if (name == "add_boundary_from_shape") {
@@ -133,7 +137,7 @@ void LBFluid::do_construct(VariantMap const &params) {
   auto const kT = get_value<double>(params, "kT");
   auto const ext_f = get_value<Utils::Vector3d>(params, "ext_force_density");
   auto const single_precision = get_value<bool>(params, "single_precision");
-  m_lb_params = std::make_shared<::LBWalberlaParams>(agrid, tau);
+  m_lb_params = std::make_shared<::LB::LBWalberlaParams>(agrid, tau);
   m_is_active = false;
   m_seed = get_value<int>(params, "seed");
   context()->parallel_try_catch([&]() {
@@ -172,7 +176,7 @@ void LBFluid::do_construct(VariantMap const &params) {
         throw std::runtime_error(
             "Lees-Edwards LB doesn't support thermalization");
       }
-      auto const &le_bc = ::box_geo.lees_edwards_bc();
+      auto const &le_bc = ::System::get_system().box_geo->lees_edwards_bc();
       auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
           le_bc.shear_direction, le_bc.shear_plane_normal,
           [this, le_protocol]() {
@@ -206,9 +210,11 @@ std::vector<Variant> LBFluid::get_average_pressure_tensor() const {
 }
 
 Variant LBFluid::get_interpolated_velocity(Utils::Vector3d const &pos) const {
-  auto const lb_pos = folded_position(pos, box_geo) * m_conv_dist;
+  auto const &box_geo = *::System::get_system().box_geo;
+  auto const lb_pos = box_geo.folded_position(pos) * m_conv_dist;
   auto const result = m_instance->get_velocity_at_pos(lb_pos);
-  return mpi_reduce_optional(context()->get_comm(), result) / m_conv_speed;
+  return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+         m_conv_speed;
 }
 
 void LBFluid::load_checkpoint(std::string const &filename, int mode) {
@@ -297,8 +303,8 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
   auto const write_data = [&lb_obj,
                            mode](std::shared_ptr<CheckpointFile> cpfile_ptr,
                                  Context const &context) {
-    auto const get_node_checkpoint = [&](Utils::Vector3i const &ind)
-        -> boost::optional<LBWalberlaNodeState> {
+    auto const get_node_checkpoint =
+        [&](Utils::Vector3i const &ind) -> std::optional<LBWalberlaNodeState> {
       auto const pop = lb_obj.get_node_population(ind);
       auto const laf = lb_obj.get_node_last_applied_force(ind);
       auto const lbb = lb_obj.get_node_is_boundary(ind);
@@ -311,9 +317,9 @@ void LBFluid::save_checkpoint(std::string const &filename, int mode) {
         if (*lbb) {
           cpnode.slip_velocity = *vbb;
         }
-        return cpnode;
+        return {cpnode};
       }
-      return {boost::none};
+      return std::nullopt;
     };
 
     auto failure = false;

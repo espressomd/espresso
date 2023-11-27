@@ -71,10 +71,10 @@ class ObservableProfileLBCommon:
 
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def set_fluid_velocities(self):
         """Set an x dependent fluid velocity."""
@@ -105,7 +105,7 @@ class ObservableProfileLBCommon:
                          LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
 
     def test_error_if_no_LB(self):
-        self.system.actors.clear()
+        self.system.lb = None
         obs = espressomd.observables.LBVelocityProfile(
             **LB_VELOCITY_PROFILE_PARAMS)
         with self.assertRaises(RuntimeError):

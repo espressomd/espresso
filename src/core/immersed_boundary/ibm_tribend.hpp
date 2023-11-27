@@ -22,6 +22,7 @@
 
 #include "config/config.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 
 #include <utils/Vector.hpp>
@@ -52,8 +53,8 @@ struct IBMTribend {
    *  @return forces on @p p1, @p p2, @p p3, @p p4
    */
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  calc_forces(Particle const &p1, Particle const &p2, Particle const &p3,
-              Particle const &p4) const;
+  calc_forces(BoxGeometry const &box_geo, Particle const &p1,
+              Particle const &p2, Particle const &p3, Particle const &p4) const;
 
 private:
   friend boost::serialization::access;

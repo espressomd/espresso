@@ -41,8 +41,10 @@ add_custom_target(
           ${CMAKE_SOURCE_DIR}/maintainer/benchmarks ${BENCHMARKS_DIR})
 
 benchmark_test(FILE test_lj.py)
-benchmark_test(FILE test_lb.py)
-benchmark_test(FILE test_p3m.py)
+benchmark_test(FILE test_lb.py SUFFIX cpu)
+# benchmark_test(FILE test_lb.py SUFFIX gpu LABELS "gpu") # TODO WALBERLA
+benchmark_test(FILE test_p3m.py SUFFIX cpu)
+benchmark_test(FILE test_p3m.py SUFFIX gpu LABELS "gpu")
 benchmark_test(FILE test_ferrofluid.py)
 benchmark_test(FILE test_mc_acid_base_reservoir.py)
 

@@ -39,6 +39,14 @@ template <class T> using decay_t = typename decay<T>::type;
 template <class Particle>
 using default_traits = traits<detail::decay_t<Particle>>;
 
+struct Identity {
+  template <class Particle, class Traits = default_traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.id(p);
+  }
+};
+
 struct Force {
   template <class Particle, class Traits = default_traits<Particle>>
   decltype(auto) operator()(Particle const &p,
@@ -116,6 +124,14 @@ struct DipoleMoment {
   decltype(auto) operator()(Particle const &p,
                             Traits particle_traits = {}) const {
     return particle_traits.dipole_moment(p);
+  }
+};
+
+struct DipoleField {
+  template <class Particle, class Traits = default_traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.dipole_field(p);
   }
 };
 } // namespace ParticleObservables

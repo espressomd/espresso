@@ -19,8 +19,9 @@
 
 #include "ibm_common.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -31,6 +32,7 @@
 #include <stdexcept>
 
 Utils::Vector3d get_ibm_particle_position(int pid) {
+  auto &cell_structure = *System::get_system().cell_structure;
   auto *p = cell_structure.get_local_particle(pid);
   boost::optional<Particle> opt_part{boost::none};
 

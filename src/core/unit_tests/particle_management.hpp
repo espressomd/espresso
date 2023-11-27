@@ -17,19 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_UNIT_TESTS_PARTICLE_MANAGEMENT_HPP
-#define ESPRESSO_SRC_CORE_UNIT_TESTS_PARTICLE_MANAGEMENT_HPP
+#pragma once
 
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
+#include "system/System.hpp"
 
 #include <boost/mpi/communicator.hpp>
 #include <boost/optional.hpp>
 
 inline auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
-                                       int p_id) {
+                                       System::System &system, int p_id) {
   boost::optional<Particle> result{};
-  auto p = ::cell_structure.get_local_particle(p_id);
+  auto p = system.cell_structure->get_local_particle(p_id);
   if (p and not p->is_ghost()) {
     if (comm.rank() == 0) {
       result = *p;
@@ -44,5 +45,3 @@ inline auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
   }
   return result;
 }
-
-#endif // ESPRESSO_SRC_CORE_UNIT_TESTS_PARTICLE_MANAGEMENT_HPP

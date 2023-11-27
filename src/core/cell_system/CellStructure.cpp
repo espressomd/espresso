@@ -26,16 +26,22 @@
 #include "cell_system/ParticleDecomposition.hpp"
 #include "cell_system/RegularDecomposition.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
+#include "Particle.hpp"
 #include "cell_system/CellStructureType.hpp"
-#include "grid.hpp"
+#include "communication.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "system/System.hpp"
 
 #include <utils/contains.hpp>
 
-#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/range/algorithm/min_element.hpp>
 #include <boost/variant.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -47,7 +53,7 @@
 CellStructure::CellStructure(BoxGeometry const &box)
     : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
 
-void CellStructure::check_particle_index() {
+void CellStructure::check_particle_index() const {
   auto const max_id = get_max_local_particle_id();
 
   for (auto const &p : local_particles()) {
@@ -80,8 +86,8 @@ void CellStructure::check_particle_index() {
   }
 }
 
-void CellStructure::check_particle_sorting() {
-  for (auto cell : local_cells()) {
+void CellStructure::check_particle_sorting() const {
+  for (auto cell : decomposition().local_cells()) {
     for (auto const &p : cell->particles()) {
       if (particle_to_cell(p) != cell) {
         throw std::runtime_error("misplaced particle with id " +
@@ -89,10 +95,6 @@ void CellStructure::check_particle_sorting() {
       }
     }
   }
-}
-
-Cell *CellStructure::particle_to_cell(const Particle &p) {
-  return decomposition().particle_to_cell(p);
 }
 
 void CellStructure::remove_particle(int id) {
@@ -137,7 +139,7 @@ Particle *CellStructure::add_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   /* There is always at least one cell, so if the particle
    * does not belong to a cell on this node we can put it there. */
-  auto cell = sort_cell ? sort_cell : local_cells()[0];
+  auto cell = sort_cell ? sort_cell : decomposition().local_cells()[0];
 
   /* If the particle isn't local a global resort may be
    * needed, otherwise a local resort if sufficient. */
@@ -199,26 +201,6 @@ void CellStructure::ghosts_reduce_rattle_correction() {
 }
 #endif
 
-Utils::Span<Cell *> CellStructure::local_cells() {
-  return decomposition().local_cells();
-}
-
-ParticleRange CellStructure::local_particles() {
-  return Cells::particles(decomposition().local_cells());
-}
-
-ParticleRange CellStructure::ghost_particles() {
-  return Cells::particles(decomposition().ghost_cells());
-}
-
-Utils::Vector3d CellStructure::max_cutoff() const {
-  return decomposition().max_cutoff();
-}
-
-Utils::Vector3d CellStructure::max_range() const {
-  return decomposition().max_range();
-}
-
 namespace {
 /**
  * @brief Apply a @ref ParticleChange to a particle index.
@@ -233,7 +215,7 @@ struct UpdateParticleIndexVisitor {
 };
 } // namespace
 
-void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
+void CellStructure::resort_particles(bool global_flag) {
   invalidate_ghosts();
 
   static std::vector<ParticleChange> diff;
@@ -245,8 +227,9 @@ void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
     boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
   }
 
+  auto const &lebc = get_system().box_geo->lees_edwards_bc();
   m_rebuild_verlet_list = true;
-  m_le_pos_offset_at_last_resort = box.lees_edwards_bc().pos_offset;
+  m_le_pos_offset_at_last_resort = lebc.pos_offset;
 
 #ifdef ADDITIONAL_CHECKS
   check_particle_index();
@@ -254,29 +237,90 @@ void CellStructure::resort_particles(bool global_flag, BoxGeometry const &box) {
 #endif
 }
 
-void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,
-                                           BoxGeometry const &box,
-                                           LocalBox<double> &local_geo) {
-  set_particle_decomposition(std::make_unique<AtomDecomposition>(comm, box));
-  m_type = CellStructureType::CELL_STRUCTURE_NSQUARE;
-  local_geo.set_cell_structure_type(m_type);
-}
-
-void CellStructure::set_regular_decomposition(
-    boost::mpi::communicator const &comm, double range, BoxGeometry const &box,
-    LocalBox<double> &local_geo) {
+void CellStructure::set_atom_decomposition() {
+  auto &system = get_system();
+  auto &local_geo = *system.local_geo;
+  auto const &box_geo = *system.box_geo;
   set_particle_decomposition(
-      std::make_unique<RegularDecomposition>(comm, range, box, local_geo));
-  m_type = CellStructureType::CELL_STRUCTURE_REGULAR;
+      std::make_unique<AtomDecomposition>(::comm_cart, box_geo));
+  m_type = CellStructureType::NSQUARE;
   local_geo.set_cell_structure_type(m_type);
+  system.on_cell_structure_change();
 }
 
-void CellStructure::set_hybrid_decomposition(
-    boost::mpi::communicator const &comm, double cutoff_regular,
-    BoxGeometry const &box, LocalBox<double> &local_geo,
-    std::set<int> n_square_types) {
-  set_particle_decomposition(std::make_unique<HybridDecomposition>(
-      comm, cutoff_regular, box, local_geo, n_square_types));
-  m_type = CellStructureType::CELL_STRUCTURE_HYBRID;
+void CellStructure::set_regular_decomposition(double range) {
+  auto &system = get_system();
+  auto &local_geo = *system.local_geo;
+  auto const &box_geo = *system.box_geo;
+  set_particle_decomposition(std::make_unique<RegularDecomposition>(
+      ::comm_cart, range, box_geo, local_geo));
+  m_type = CellStructureType::REGULAR;
   local_geo.set_cell_structure_type(m_type);
+  system.on_cell_structure_change();
+}
+
+void CellStructure::set_hybrid_decomposition(double cutoff_regular,
+                                             std::set<int> n_square_types) {
+  auto &system = get_system();
+  auto &local_geo = *system.local_geo;
+  auto const &box_geo = *system.box_geo;
+  set_particle_decomposition(std::make_unique<HybridDecomposition>(
+      ::comm_cart, cutoff_regular, m_verlet_skin, box_geo, local_geo,
+      n_square_types));
+  m_type = CellStructureType::HYBRID;
+  local_geo.set_cell_structure_type(m_type);
+  system.on_cell_structure_change();
+}
+
+void CellStructure::set_verlet_skin(double value) {
+  assert(value >= 0.);
+  m_verlet_skin = value;
+  m_verlet_skin_set = true;
+  get_system().on_verlet_skin_change();
+}
+
+void CellStructure::set_verlet_skin_heuristic() {
+  assert(not is_verlet_skin_set());
+  auto const max_cut = get_system().maximal_cutoff();
+  if (max_cut <= 0.) {
+    throw std::runtime_error(
+        "cannot automatically determine skin, please set it manually");
+  }
+  /* maximal skin that can be used without resorting is the maximal
+   * range of the cell system minus what is needed for interactions. */
+  auto const max_range = *boost::min_element(max_cutoff());
+  auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
+  set_verlet_skin(new_skin);
+}
+
+void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
+  /* data parts that are only updated on resort */
+  auto constexpr resort_only_parts =
+      Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
+
+  auto const global_resort = boost::mpi::all_reduce(
+      ::comm_cart, m_resort_particles, std::bit_or<unsigned>());
+
+  if (global_resort != Cells::RESORT_NONE) {
+    auto const do_global_resort = (global_resort & Cells::RESORT_GLOBAL) != 0;
+
+    /* Resort cell system */
+    resort_particles(do_global_resort);
+    ghosts_count();
+    ghosts_update(data_parts);
+
+    /* Add the ghost particles to the index if we don't already
+     * have them. */
+    for (auto &p : ghost_particles()) {
+      if (get_local_particle(p.id()) == nullptr) {
+        update_particle_index(p.id(), &p);
+      }
+    }
+
+    /* Particles are now sorted */
+    clear_resort_particles();
+  } else {
+    /* Communication step: ghost information */
+    ghosts_update(data_parts & ~resort_only_parts);
+  }
 }

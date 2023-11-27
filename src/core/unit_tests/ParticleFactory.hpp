@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
-#define REACTION_ENSEMBLE_TESTS_PARTICLE_FACTORY_HPP
+
+#pragma once
 
 #include "BondList.hpp"
-#include "cells.hpp"
-#include "event.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -32,11 +32,7 @@
 struct ParticleFactory {
   ParticleFactory() = default;
 
-  ~ParticleFactory() {
-    for (auto pid : particle_cache) {
-      remove_particle(pid);
-    }
-  }
+  ~ParticleFactory() { clear_particles(); }
 
   void create_particle(Utils::Vector3d const &pos, int p_id, int type) {
     ::make_new_particle(p_id, pos);
@@ -56,23 +52,31 @@ struct ParticleFactory {
 
   void insert_particle_bond(int p_id, int bond_id,
                             std::vector<int> const &partner_ids) const {
-    auto p = ::cell_structure.get_local_particle(p_id);
+    auto &system = System::get_system();
+    auto p = system.cell_structure->get_local_particle(p_id);
     if (p != nullptr and not p->is_ghost()) {
       p->bonds().insert(BondView(bond_id, partner_ids));
     }
-    on_particle_change();
+    system.on_particle_change();
   }
 
   template <typename T>
   void set_particle_property(int p_id, T &(Particle::*setter)(),
                              T const &value) const {
-    if (auto p = ::cell_structure.get_local_particle(p_id)) {
+    auto &system = System::get_system();
+    auto p = system.cell_structure->get_local_particle(p_id);
+    if (p != nullptr) {
       (p->*setter)() = value;
     }
+  }
+
+  void clear_particles() {
+    for (auto pid : particle_cache) {
+      remove_particle(pid);
+    }
+    particle_cache.clear();
   }
 
 private:
   std::vector<int> particle_cache;
 };
-
-#endif

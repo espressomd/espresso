@@ -45,8 +45,7 @@
  *  the original GSL header above) and are duplicated from \ref specfunc.cpp.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_CUH
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_SPECFUNC_CUH
+#pragma once
 
 #include "config/config.hpp"
 
@@ -189,4 +188,3 @@ __device__ float dev_K1(float x) {
   }
   return exp(-x) * c * rsqrt(x);
 }
-#endif

@@ -26,7 +26,7 @@
 namespace ScriptInterface {
 namespace Integrators {
 
-void VelocityVerlet::activate() const { set_integ_switch(INTEG_METHOD_NVT); }
+void VelocityVerlet::activate() { set_integ_switch(INTEG_METHOD_NVT); }
 
 } // namespace Integrators
 } // namespace ScriptInterface

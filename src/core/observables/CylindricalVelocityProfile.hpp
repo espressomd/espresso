@@ -21,15 +21,13 @@
 
 #include "BoxGeometry.hpp"
 #include "CylindricalPidProfileObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
-#include <utils/Span.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
-#include <array>
 #include <cstddef>
-#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -38,29 +36,41 @@ public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
 
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+    using pos_type = Utils::Vector3d;
+    using vel_type = Utils::Vector3d;
+    auto const &box_geo = *System::get_system().box_geo;
 
-    for (auto p : particles) {
-      auto const pos = folded_position(traits.position(p), box_geo) -
+    std::vector<pos_type> local_folded_positions{};
+    std::vector<vel_type> local_velocities{};
+    local_folded_positions.reserve(local_particles.size());
+    local_velocities.reserve(local_particles.size());
+
+    for (auto const &p : local_particles) {
+      auto const pos = box_geo.folded_position(traits.position(p)) -
                        transform_params->center();
-      histogram.update(
+      local_folded_positions.emplace_back(
           Utils::transform_coordinate_cartesian_to_cylinder(
-              pos, transform_params->axis(), transform_params->orientation()),
+              pos, transform_params->axis(), transform_params->orientation()));
+      local_velocities.emplace_back(
           Utils::transform_vector_cartesian_to_cylinder(
               traits.velocity(p), transform_params->axis(), pos));
     }
 
-    auto hist_tmp = histogram.get_histogram();
-    auto tot_count = histogram.get_tot_count();
-    for (std::size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-      if (tot_count[ind] > 0) {
-        hist_tmp[ind] /= static_cast<double>(tot_count[ind]);
-      }
+    auto const [global_folded_positions, global_velocities] =
+        detail::gather(comm, local_folded_positions, local_velocities);
+
+    if (comm.rank() != 0) {
+      return {};
     }
-    return hist_tmp;
+
+    Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+    detail::accumulate(histogram, global_folded_positions, global_velocities);
+    return detail::normalize_by_bin_size(histogram);
   }
+
   std::vector<std::size_t> shape() const override {
     auto const b = n_bins();
     return {b[0], b[1], b[2], 3};

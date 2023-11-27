@@ -27,8 +27,8 @@
 #include "energy_inline.hpp"
 #include "errorhandling.hpp"
 #include "forces_inline.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -41,6 +41,11 @@
 #include <numeric>
 
 namespace Constraints {
+/** Check if a non-bonded interaction is defined */
+static bool is_active(IA_parameters const &data) {
+  return data.max_cut != INACTIVE_CUTOFF;
+}
+
 Utils::Vector3d ShapeBasedConstraint::total_force() const {
   return all_reduce(comm_cart, m_local_force, std::plus<>());
 }
@@ -49,18 +54,19 @@ double ShapeBasedConstraint::total_normal_force() const {
   return all_reduce(comm_cart, m_outer_normal_force, std::plus<double>());
 }
 
-double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
-  double global_mindist = std::numeric_limits<double>::infinity();
+double ShapeBasedConstraint::min_dist(BoxGeometry const &box_geo,
+                                      ParticleRange const &particles) const {
+  auto global_mindist = std::numeric_limits<double>::infinity();
 
   auto const local_mindist = std::accumulate(
       particles.begin(), particles.end(),
       std::numeric_limits<double>::infinity(),
-      [this](double min, Particle const &p) {
-        auto const &ia_params = get_ia_param(p.type(), part_rep.type());
-        if (checkIfInteraction(ia_params)) {
+      [this, &box_geo](double min, Particle const &p) {
+        auto const &ia_params = get_ia_param(p.type());
+        if (is_active(ia_params)) {
           double dist;
           Utils::Vector3d vec;
-          m_shape->calculate_dist(folded_position(p.pos(), box_geo), dist, vec);
+          m_shape->calculate_dist(box_geo.folded_position(p.pos()), dist, vec);
           return std::min(min, dist);
         }
         return min;
@@ -74,13 +80,13 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           Utils::Vector3d const &folded_pos,
                                           double) {
   ParticleForce pf{};
-  auto const &ia_params = get_ia_param(p.type(), part_rep.type());
+  auto const &ia_params = get_ia_param(p.type());
 
-  if (checkIfInteraction(ia_params)) {
+  if (is_active(ia_params)) {
     double dist = 0.;
     Utils::Vector3d dist_vec;
     m_shape->calculate_dist(folded_pos, dist, dist_vec);
-    auto const coulomb_kernel = Coulomb::pair_force_kernel();
+    auto const coulomb_kernel = m_system.coulomb.pair_force_kernel();
 
 #ifdef DPD
     Utils::Vector3d dpd_force{};
@@ -89,8 +95,11 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
-      pf = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, dist,
-                                      coulomb_kernel.get_ptr());
+      pf = calc_central_radial_force(p, part_rep, ia_params, dist_vec, dist) +
+           calc_central_radial_charge_force(p, part_rep, ia_params, dist_vec,
+                                            dist, get_ptr(coulomb_kernel)) +
+           calc_non_central_force(p, part_rep, ia_params, dist_vec, dist);
+
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
         dpd_force =
@@ -101,8 +110,12 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
-        pf = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec, -dist,
-                                        coulomb_kernel.get_ptr());
+        pf =
+            calc_central_radial_force(p, part_rep, ia_params, dist_vec, -dist) +
+            calc_central_radial_charge_force(p, part_rep, ia_params, dist_vec,
+                                             -dist, get_ptr(coulomb_kernel)) +
+            calc_non_central_force(p, part_rep, ia_params, dist_vec, -dist);
+
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
           dpd_force = dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
@@ -133,28 +146,29 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                                       const Utils::Vector3d &folded_pos, double,
                                       Observable_stat &obs_energy) const {
   double energy = 0.0;
+  auto const &ia_params = get_ia_param(p.type());
 
-  auto const &ia_params = get_ia_param(p.type(), part_rep.type());
-
-  if (checkIfInteraction(ia_params)) {
-    auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+  if (is_active(ia_params)) {
+    auto const coulomb_kernel = m_system.coulomb.pair_energy_kernel();
     double dist = 0.0;
     Utils::Vector3d vec;
     m_shape->calculate_dist(folded_pos, dist, vec);
     if (dist > 0) {
       energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist,
-                                           coulomb_kernel.get_ptr());
+                                           get_ptr(coulomb_kernel));
     } else if ((dist <= 0) && m_penetrable) {
       if (!m_only_positive && (dist < 0)) {
         energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, -dist,
-                                             coulomb_kernel.get_ptr());
+                                             get_ptr(coulomb_kernel));
       }
     } else {
       runtimeErrorMsg() << "Constraint violated by particle " << p.id();
     }
   }
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-  if (part_rep.type() >= 0)
-    obs_energy.add_non_bonded_contribution(p.type(), part_rep.type(), energy);
+  if (part_rep.type() >= 0) {
+    obs_energy.add_non_bonded_contribution(
+        p.type(), part_rep.type(), p.mol_id(), part_rep.mol_id(), energy);
+  }
 }
 } // namespace Constraints

@@ -32,17 +32,19 @@ parser.add_argument("--particles_per_core", metavar="N", action="store",
                     type=int, default=125, required=False,
                     help="Number of particles per core")
 parser.add_argument("--box_l", action="store",
-                    type=int, default=32, required=False,
-                    help="Number of particles per core")
+                    type=int, default=argparse.SUPPRESS, required=False,
+                    help="Box length (cubic box)")
 parser.add_argument("--lb_sites_per_particle", metavar="N_LB", action="store",
                     type=float, default=28, required=False,
                     help="Number of LB sites per particle")
 parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.03, required=False,
                     help="Fraction of the simulation box volume occupied by "
-                    "particles (range: [0.01-0.74], default: 0.50)")
+                    "particles (range: [0.01-0.74], default: 0.03)")
 parser.add_argument("--single_precision", action="store_true", required=False,
                     help="Using single-precision floating point accuracy")
+parser.add_argument("--gpu", action=argparse.BooleanOptionalAction,
+                    default=False, required=False, help="Use GPU implementation")
 parser.add_argument("--output", metavar="FILEPATH", action="store",
                     type=str, required=False, default="benchmarks.csv",
                     help="Output file (default: benchmarks.csv)")
@@ -54,9 +56,16 @@ n_iterations = 30
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
+assert "box_l" not in args or args.particles_per_core == 0, \
+    "Argument box_l requires particles_per_core=0"
 
 required_features = ["LENNARD_JONES", "WALBERLA"]
+if args.gpu:
+    required_features.append("CUDA")
 espressomd.assert_features(required_features)
+
+# make simulation deterministic
+np.random.seed(42)
 
 # System
 #############################################################
@@ -71,12 +80,24 @@ lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 
 # System parameters
 #############################################################
+n_proc = system.cell_system.get_state()["n_nodes"]
+n_part = n_proc * args.particles_per_core
+if n_part == 0:
+    box_l = args.box_l
+    agrid = 1.
+    measurement_steps = 80
+else:
+    # volume of N spheres with radius r: N * (4/3*pi*r^3)
+    box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
+             / args.volume_fraction)**(1. / 3.)
+    lb_grid = (n_part * args.lb_sites_per_particle)**(1. / 3.)
+    lb_grid = int(2. * round(lb_grid / 2.))
+    agrid = box_l / lb_grid
+    measurement_steps = max(50, int(120**3 / lb_grid**3))
+    measurement_steps = 40
 
-n_proc = system.cell_system.get_state()['n_nodes']
-box_l = args.box_l
-lb_grid = box_l
-agrid = 1.
-measurement_steps = 80
+print(f"LB shape: [{lb_grid}, {lb_grid}, {lb_grid}]")
+print(f"LB agrid: {agrid:.3f}")
 
 # System
 #############################################################
@@ -86,15 +107,40 @@ system.box_l = 3 * (box_l,)
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
-system.thermostat.turn_off()
 
-print(f"LB shape: [{lb_grid}, {lb_grid}, {lb_grid}]")
-print(f"LB agrid: {agrid:.3f}")
+# Interaction and particle setup
+#############################################################
+if n_part:
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+    system.part.add(pos=np.random.random((n_part, 3)) * system.box_l)
+    benchmarks.minimize(system, n_part / 2.)
+    system.integrator.set_vv()
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-lbf = espressomd.lb.LBFluidWalberla(agrid=agrid, tau=system.time_step,
-                                    density=1., kinematic_viscosity=1.,
-                                    single_precision=args.single_precision)
-system.actors.add(lbf)
+    # tuning and equilibration
+    min_skin = 0.2
+    max_skin = 1.0
+    print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
+        min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
+    print("Equilibration")
+    system.integrator.run(500)
+    print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
+        min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100)))
+    print("Equilibration")
+    system.integrator.run(500)
+    system.thermostat.turn_off()
+
+# LB fluid setup
+#############################################################
+lb_class = espressomd.lb.LBFluidWalberla
+if args.gpu:
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+lbf = lb_class(agrid=agrid, tau=system.time_step, kinematic_viscosity=1.,
+               density=1., single_precision=args.single_precision)
+system.lb = lbf
+if n_part:
+    system.thermostat.set_lb(LB_fluid=lbf, gamma=1., seed=42)
 
 
 # time integration loop

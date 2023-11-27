@@ -18,20 +18,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_NB_IA_VERLETCRITERION_HPP
-#define CORE_NB_IA_VERLETCRITERION_HPP
+
+#pragma once
 
 #include "Particle.hpp"
 #include "config/config.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
 
 struct GetNonbondedCutoff {
+  GetNonbondedCutoff(System::System const &system) : m_system{system} {}
   auto operator()(int type_i, int type_j) const {
-    return get_ia_param(type_i, type_j).max_cut;
+    return m_system.nonbonded_ias->get_ia_param(type_i, type_j).max_cut;
   }
+
+private:
+  System::System const &m_system;
 };
 
 /** Returns true if the particles are to be considered for short range
@@ -51,13 +56,14 @@ template <typename CutoffGetter = GetNonbondedCutoff> class VerletCriterion {
   CutoffGetter get_nonbonded_cutoff;
 
 public:
-  VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,
-                  double dipolar_cut = 0.,
+  VerletCriterion(System::System const &system, double skin, double max_cut,
+                  double coulomb_cut = 0., double dipolar_cut = 0.,
                   double collision_detection_cutoff = 0.)
       : m_skin(skin), m_eff_max_cut2(eff_cutoff_sqr(max_cut)),
         m_eff_coulomb_cut2(eff_cutoff_sqr(coulomb_cut)),
         m_eff_dipolar_cut2(eff_cutoff_sqr(dipolar_cut)),
-        m_collision_cut2(eff_cutoff_sqr(collision_detection_cutoff)) {}
+        m_collision_cut2(eff_cutoff_sqr(collision_detection_cutoff)),
+        get_nonbonded_cutoff(system) {}
 
   template <typename Distance>
   bool operator()(const Particle &p1, const Particle &p2,
@@ -90,4 +96,3 @@ public:
            (dist2 <= Utils::sqr(ia_cut + m_skin));
   }
 };
-#endif

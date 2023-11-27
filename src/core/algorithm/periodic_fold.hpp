@@ -33,10 +33,10 @@ namespace Algorithm {
  * @return x folded into [0, l) and number of folds.
  */
 template <typename T, typename I>
-std::pair<T, I> periodic_fold(T x, I i, T const &l) {
+std::pair<T, I> periodic_fold(T x, I i, T const l) {
   using limits = std::numeric_limits<I>;
 
-  while ((x < 0) && (i > limits::min())) {
+  while ((x < T{0}) && (i > limits::min())) {
     x += l;
     --i;
   }
@@ -56,7 +56,7 @@ std::pair<T, I> periodic_fold(T x, I i, T const &l) {
  * @param l Length of primary interval
  * @return x folded into [0, l).
  */
-template <typename T> T periodic_fold(T x, T const &l) {
+template <typename T> T periodic_fold(T x, T const l) {
 #ifndef __FAST_MATH__
   /* Can't fold if either x or l is nan or inf. */
   if (std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == 0)) {

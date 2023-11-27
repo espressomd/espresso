@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_INITIALIZE_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_INITIALIZE_HPP
+#pragma once
 
 #include <script_interface/ObjectHandle.hpp>
 
@@ -31,5 +30,3 @@ void initialize(Utils::Factory<ObjectHandle> *om);
 
 } // namespace Integrators
 } // namespace ScriptInterface
-
-#endif

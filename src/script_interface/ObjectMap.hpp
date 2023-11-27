@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBJECT_MAP_HPP
-#define SCRIPT_INTERFACE_OBJECT_MAP_HPP
+#pragma once
 
 #include "script_interface/ObjectContainer.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -54,6 +53,7 @@ private:
   virtual void insert_in_core(KeyType const &key,
                               std::shared_ptr<ManagedType> const &obj_ptr) = 0;
   virtual void erase_in_core(KeyType const &key) = 0;
+  virtual void before_do_construct() = 0;
 
 public:
   ObjectMap() {
@@ -64,6 +64,7 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
+    before_do_construct();
     m_elements = get_value_or<decltype(m_elements)>(params, "_objects", {});
     for (auto const &[key, element] : m_elements) {
       insert_in_core(key, element);
@@ -194,4 +195,3 @@ protected:
   }
 };
 } // Namespace ScriptInterface
-#endif

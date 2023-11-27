@@ -51,7 +51,7 @@ struct integral_parameter_impl<T, F, N, N> {
 
 /**
  * @brief Generate a call table for an integral non-type template parameter.
- * Can be used to dynamically create a switch statement for continguous values.
+ * Can be used to dynamically create a switch statement for contiguous values.
  */
 template <typename T, template <T> class F, T min, T max, class... Args>
 decltype(auto) integral_parameter(T i, Args &&...args) {

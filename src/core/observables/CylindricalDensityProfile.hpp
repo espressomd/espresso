@@ -22,7 +22,8 @@
 #include "CylindricalPidProfileObservable.hpp"
 
 #include "BoxGeometry.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
@@ -35,15 +36,38 @@ class CylindricalDensityProfile : public CylindricalPidProfileObservable {
 public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
+    using pos_type = Utils::Vector3d;
+    auto const &box_geo = *System::get_system().box_geo;
+
+    std::vector<pos_type> local_folded_positions{};
+    local_folded_positions.reserve(local_particles.size());
+
+    for (auto const &p : local_particles) {
+      auto const pos = box_geo.folded_position(traits.position(p));
+      auto const pos_shifted = pos - transform_params->center();
+
+      local_folded_positions.emplace_back(
+          Utils::transform_coordinate_cartesian_to_cylinder(
+              pos_shifted, transform_params->axis(),
+              transform_params->orientation()));
+    }
+
+    auto const global_folded_positions =
+        detail::gather(comm, local_folded_positions);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
     Utils::CylindricalHistogram<double, 1> histogram(n_bins(), limits());
 
-    for (auto const &p : particles) {
-      histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
-          folded_position(traits.position(p), box_geo) -
-              transform_params->center(),
-          transform_params->axis(), transform_params->orientation()));
+    for (auto const &vec : global_folded_positions) {
+      for (auto const &p : vec) {
+        histogram.update(p);
+      }
     }
 
     histogram.normalize();

@@ -108,7 +108,8 @@ class ArrayPropertyTest(ArrayCommon):
         self.system.box_l = [12.0, 12.0, 12.0]
 
     def tearDown(self):
-        self.system.actors.clear()
+        if espressomd.has_features("WALBERLA"):
+            self.system.lb = None
 
     def assert_copy_is_writable(self, array):
         cpy = np.copy(array)
@@ -191,7 +192,7 @@ class ArrayPropertyTest(ArrayCommon):
     def test_lb(self):
         lbf = espressomd.lb.LBFluidWalberla(
             agrid=0.5, density=1., kinematic_viscosity=1., tau=0.01)
-        self.system.actors.add(lbf)
+        self.system.lb = lbf
 
         self.assert_operator_usage_raises(lbf[0, 0, 0].velocity)
         self.assert_operator_usage_raises(lbf[0, 0, 0].pressure_tensor)

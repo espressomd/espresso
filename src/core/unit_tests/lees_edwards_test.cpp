@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(test_push) {
       old_pos - prefactor * shear_direction(box) * le.pos_offset;
   auto expected_vel = old_vel - shear_direction(box) * le.shear_velocity;
   auto expected_offset = old_offset + prefactor * le.pos_offset;
-  fold_position(expected_pos, p.image_box(), box);
+  box.fold_position(expected_pos, p.image_box());
   BOOST_CHECK_SMALL((p.pos() - expected_pos).norm(), eps);
   BOOST_CHECK_SMALL((p.v() - expected_vel).norm(), eps);
   BOOST_CHECK_CLOSE(p.lees_edwards_offset(), expected_offset, tol);
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(test_push) {
   p.pos()[le.shear_plane_normal] = -1;
   Push{box}(p, prefactor);
   expected_pos = {old_pos[0], -1., old_pos[2]};
-  fold_position(expected_pos, p.image_box(), box);
+  box.fold_position(expected_pos, p.image_box());
   expected_vel = old_vel;
   expected_offset = old_offset;
   BOOST_CHECK_SMALL((p.pos() - expected_pos).norm(), eps);

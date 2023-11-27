@@ -21,7 +21,11 @@
 
 #include "pair_criteria/PairCriterion.hpp"
 
+#include "BoxGeometry.hpp"
+#include "Particle.hpp"
 #include "energy_inline.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/System.hpp"
 
 namespace PairCriteria {
 /**
@@ -29,16 +33,18 @@ namespace PairCriteria {
  */
 class EnergyCriterion : public PairCriterion {
 public:
+  EnergyCriterion(System::System const &system) : m_system{system} {}
   bool decide(Particle const &p1, Particle const &p2) const override {
     // Distance between particles
-    auto const d = box_geo.get_mi_vector(p1.pos(), p2.pos());
+    auto const d = m_system.box_geo->get_mi_vector(p1.pos(), p2.pos());
 
     // Interaction parameters for particle types
-    auto const &ia_params = get_ia_param(p1.type(), p2.type());
-    auto const coulomb_kernel = Coulomb::pair_energy_kernel();
+    auto const &ia_params =
+        m_system.nonbonded_ias->get_ia_param(p1.type(), p2.type());
+    auto const coulomb_kernel = m_system.coulomb.pair_energy_kernel();
 
     auto const energy = calc_non_bonded_pair_energy(
-        p1, p2, ia_params, d, d.norm(), coulomb_kernel.get_ptr());
+        p1, p2, ia_params, d, d.norm(), get_ptr(coulomb_kernel));
 
     return energy >= m_cut_off;
   }
@@ -47,6 +53,7 @@ public:
 
 private:
   double m_cut_off;
+  System::System const &m_system;
 };
 } // namespace PairCriteria
 

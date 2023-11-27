@@ -81,7 +81,8 @@ if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
 if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_class(
-        lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5, tau=0.01)
+        lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5,
+        tau=system.time_step)
     wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=1.0)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
                                    dist=-(system.box_l[0] - 1.0))
@@ -93,9 +94,9 @@ if lbf_class:
         lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
         advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
         single_precision=False, tau=system.time_step)
-    system.ekcontainer.solver = ek_solver
-    system.ekcontainer.tau = ek_species.tau
-    system.ekcontainer.add(ek_species)
+    ekcontainer = espressomd.electrokinetics.EKContainer(
+        solver=ek_solver, tau=ek_species.tau)
+    ekcontainer.add(ek_species)
     ek_species.add_boundary_from_shape(
         shape=wall1, value=1e-3 * np.array([1., 2., 3.]),
         boundary_type=espressomd.electrokinetics.FluxBoundary)
@@ -152,10 +153,10 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
             maxPWerror=0.1,
             delta_mid_top=0.9,
             delta_mid_bot=0.1)
-        system.actors.add(elc)
+        system.electrostatics.solver = elc
         elc.charge_neutrality_tolerance = 7e-12
     else:
-        system.actors.add(p3m)
+        system.electrostatics.solver = p3m
         p3m.charge_neutrality_tolerance = 5e-12
 
 # accumulators
@@ -328,22 +329,22 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
         accuracy=0.01,
         timings=15,
         tune=False)
-    system.actors.add(dp3m)
+    system.magnetostatics.solver = dp3m
 
 if espressomd.has_features('SCAFACOS') and 'SCAFACOS' in modes \
         and 'p3m' in espressomd.code_info.scafacos_methods():
-    system.actors.add(espressomd.electrostatics.Scafacos(
+    system.electrostatics.solver = espressomd.electrostatics.Scafacos(
         prefactor=0.5,
         method_name="p3m",
         method_params={
             "p3m_r_cut": 1.0,
             "p3m_grid": 64,
             "p3m_cao": 7,
-            "p3m_alpha": 2.084652}))
+            "p3m_alpha": 2.084652})
 
 if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
         and 'p2nfft' in espressomd.code_info.scafacos_methods():
-    system.actors.add(espressomd.magnetostatics.Scafacos(
+    system.magnetostatics.solver = espressomd.magnetostatics.Scafacos(
         prefactor=1.2,
         method_name='p2nfft',
         method_params={
@@ -355,10 +356,11 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
             "p2nfft_ignore_tolerance": "1",
             "pnfft_diff_ik": "0",
             "p2nfft_r_cut": "11",
-            "p2nfft_alpha": "0.37"}))
+            "p2nfft_alpha": "0.37"})
 
 if lbf_class:
-    system.actors.add(lbf)
+    system.lb = lbf
+    system.ekcontainer = ekcontainer
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
@@ -437,10 +439,10 @@ if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
     p4.gamma = gamma
     if espressomd.has_features('ROTATION'):
         p3.gamma_rot = 2. * gamma
-if espressomd.has_features('ENGINE'):
+if espressomd.has_features(["ENGINE"]):
     p3.swimming = {"f_swim": 0.03}
-if espressomd.has_features('ENGINE') and lbf_class:
-    p4.swimming = {"v_swim": 0.02, "mode": "puller", "dipole_length": 1.}
+if espressomd.has_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"]) and lbf_class:
+    p4.swimming = {"v_swim": 0.02, "is_engine_force_on_fluid": True}
 if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
 
@@ -505,7 +507,7 @@ class TestCheckpoint(ut.TestCase):
             lbf.save_checkpoint(str(lbf_cpt_root / "lb_err.cpt"), 2)
 
         # deactivate LB actor
-        system.actors.remove(lbf)
+        system.lb = None
 
         # read the valid LB checkpoint file
         lbf_cpt_data = lbf_cpt_path.read_bytes()

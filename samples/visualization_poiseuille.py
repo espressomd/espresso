@@ -55,7 +55,7 @@ visualizer = espressomd.visualization.openGLLive(
 
 lbf = espressomd.lb.LBFluidWalberla(kT=0, agrid=1.0, density=1.0, kinematic_viscosity=1.0,
                                     tau=0.1, ext_force_density=[0, 0.003, 0])
-system.actors.add(lbf)
+system.lb = lbf
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # Setup boundaries

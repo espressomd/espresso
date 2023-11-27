@@ -24,9 +24,10 @@
 
 #include "stokesian_dynamics/sd_cpu.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -77,7 +78,8 @@ static double sd_kT = 0.0;
 static std::vector<double> v_sd{};
 
 void register_integrator(StokesianDynamicsParameters const &obj) {
-  if (::box_geo.periodic(0) or ::box_geo.periodic(1) or ::box_geo.periodic(2)) {
+  auto const &box_geo = *System::get_system().box_geo;
+  if (box_geo.periodic(0) or box_geo.periodic(1) or box_geo.periodic(2)) {
     throw std::runtime_error(
         "Stokesian Dynamics requires periodicity (False, False, False)");
   }

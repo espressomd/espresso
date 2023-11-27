@@ -127,23 +127,18 @@ private:
       Cell source2 = cell;
       int target_idx = cell[dir];
       auto ghost_fold = [dim](FloatType x) {
-        //         std::cout << "ghost fold " << x<< " ";
         while (x > dim) {
           x -= dim;
         };
         while (x < -1) {
           x += dim;
         };
-        //         std::cout <<x<<std::endl;
         return x;
       };
       source1[dir] =
           cell_idx_c(std::floor(ghost_fold(target_idx + folded_offset)));
       source2[dir] =
           cell_idx_c(std::floor(ghost_fold(target_idx + folded_offset + 1)));
-      //      std::cout << offset<<"->"<<folded_offset<<" - " << target_idx<<",
-      //      " <<source1[dir]<<", " <<source2[dir]<<" | " <<weight1<<", "
-      //      <<weight2<<std::endl;
 
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
         tmp_field->get(cell, q) =

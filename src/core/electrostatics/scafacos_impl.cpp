@@ -26,11 +26,11 @@
 #include "electrostatics/scafacos.hpp"
 #include "electrostatics/scafacos_impl.hpp"
 
-#include "cells.hpp"
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "event.hpp"
-#include "grid.hpp"
-#include "integrate.hpp"
+#include "system/System.hpp"
 #include "tuning.hpp"
 
 #include <utils/Span.hpp>
@@ -51,11 +51,15 @@ make_coulomb_scafacos(std::string const &method,
 }
 
 void CoulombScafacosImpl::update_particle_data() {
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &cell_structure = *system.cell_structure;
+
   positions.clear();
   charges.clear();
 
   for (auto const &p : cell_structure.local_particles()) {
-    auto const pos = folded_position(p.pos(), box_geo);
+    auto const pos = box_geo.folded_position(p.pos());
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
@@ -66,6 +70,8 @@ void CoulombScafacosImpl::update_particle_data() {
 void CoulombScafacosImpl::update_particle_forces() const {
   if (positions.empty())
     return;
+
+  auto const &cell_structure = *get_system().cell_structure;
 
   auto it_fields = fields.begin();
   for (auto &p : cell_structure.local_particles()) {
@@ -80,11 +86,16 @@ void CoulombScafacosImpl::update_particle_forces() const {
 
 double CoulombScafacosImpl::time_r_cut(double r_cut) {
   set_r_cut_and_tune(r_cut);
-  return benchmark_integration_step(10);
+  auto &system = get_system();
+  return benchmark_integration_step(system, 10);
 }
 
 void CoulombScafacosImpl::tune_r_cut() {
   auto constexpr convergence_threshold = 1e-3;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &local_geo = *system.local_geo;
+  auto const verlet_skin = system.cell_structure->get_verlet_skin();
 
   auto const min_box_l = *boost::min_element(box_geo.length());
   auto const min_local_box_l = *boost::min_element(local_geo.length());
@@ -93,7 +104,7 @@ void CoulombScafacosImpl::tune_r_cut() {
    * (e.g. p2nfft, p3m, ewald) if the mesh size is not fixed (ScaFaCoS
    * either hangs or allocates too much memory) */
   auto r_min = 1.0;
-  auto r_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
+  auto r_max = std::min(min_local_box_l, min_box_l / 2.0) - verlet_skin;
   assert(r_max >= r_min);
   auto t_min = 0.0;
   auto t_max = std::numeric_limits<double>::max();
@@ -133,7 +144,7 @@ void CoulombScafacosImpl::tune_impl() {
     // ESPResSo is not affected by a short-range cutoff -> tune in parallel
     ScafacosContext::tune(charges, positions);
   }
-  on_coulomb_change();
+  get_system().on_coulomb_change();
 }
 
 #endif // SCAFACOS

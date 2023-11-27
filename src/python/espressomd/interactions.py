@@ -19,7 +19,6 @@
 
 import abc
 import enum
-from . import utils
 from . import code_features
 from .script_interface import ScriptObjectMap, ScriptInterfaceHelper, script_interface_register
 
@@ -728,18 +727,11 @@ class NonBondedInteractions(ScriptInterfaceHelper):
     def keys(self):
         return [tuple(x) for x in self.call_method("keys")]
 
-    def _assert_key_type(self, key):
-        if not isinstance(key, tuple) or len(key) != 2 or \
-                not utils.is_valid_type(key[0], int) or not utils.is_valid_type(key[1], int):
-            raise TypeError(
-                "NonBondedInteractions[] expects two particle types as indices.")
-
     def __getitem__(self, key):
-        self._assert_key_type(key)
+        self.call_method("check_key", key=key)
         return NonBondedInteractionHandle(_types=key)
 
     def __setitem__(self, key, value):
-        self._assert_key_type(key)
         self.call_method("insert", key=key, object=value)
 
     def __getstate__(self):

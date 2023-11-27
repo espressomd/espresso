@@ -19,16 +19,15 @@
 #ifndef CORE_CONSTRAINTS_CONSTRAINTS_HPP
 #define CORE_CONSTRAINTS_CONSTRAINTS_HPP
 
+#include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <memory>
 #include <stdexcept>
 #include <vector>
-
-void on_constraint_change();
 
 namespace Constraints {
 template <class ParticleRange, class Constraint> class Constraints {
@@ -49,23 +48,24 @@ private:
   container_type m_constraints;
 
 public:
+  bool contains(std::shared_ptr<Constraint> const &constraint) const noexcept {
+    return std::find(begin(), end(), constraint) != end();
+  }
   void add(std::shared_ptr<Constraint> const &constraint) {
+    auto &system = System::get_system();
+    auto const &box_geo = *system.box_geo;
     if (not constraint->fits_in_box(box_geo.length())) {
       throw std::runtime_error("Constraint not compatible with box size.");
     }
-    assert(std::find(m_constraints.begin(), m_constraints.end(), constraint) ==
-           m_constraints.end());
-
+    assert(not contains(constraint));
     m_constraints.emplace_back(constraint);
-    on_constraint_change();
+    system.on_constraint_change();
   }
   void remove(std::shared_ptr<Constraint> const &constraint) {
-    assert(std::find(m_constraints.begin(), m_constraints.end(), constraint) !=
-           m_constraints.end());
-    m_constraints.erase(
-        std::remove(m_constraints.begin(), m_constraints.end(), constraint),
-        m_constraints.end());
-    on_constraint_change();
+    auto &system = System::get_system();
+    assert(contains(constraint));
+    m_constraints.erase(std::remove(begin(), end(), constraint), end());
+    system.on_constraint_change();
   }
 
   iterator begin() { return m_constraints.begin(); }
@@ -73,27 +73,31 @@ public:
   const_iterator begin() const { return m_constraints.begin(); }
   const_iterator end() const { return m_constraints.end(); }
 
-  void add_forces(ParticleRange &particles, double t) const {
+  void add_forces(BoxGeometry const &box_geo, ParticleRange &particles,
+                  double time) const {
     if (m_constraints.empty())
       return;
 
     reset_forces();
 
     for (auto &p : particles) {
-      auto const pos = folded_position(p.pos(), box_geo);
+      auto const pos = box_geo.folded_position(p.pos());
       ParticleForce force{};
       for (auto const &constraint : *this) {
-        force += constraint->force(p, pos, t);
+        force += constraint->force(p, pos, time);
       }
 
       p.force_and_torque() += force;
     }
   }
 
-  void add_energy(const ParticleRange &particles, double time,
-                  Observable_stat &obs_energy) const {
-    for (auto &p : particles) {
-      auto const pos = folded_position(p.pos(), box_geo);
+  void add_energy(BoxGeometry const &box_geo, ParticleRange const &particles,
+                  double time, Observable_stat &obs_energy) const {
+    if (m_constraints.empty())
+      return;
+
+    for (auto const &p : particles) {
+      auto const pos = box_geo.folded_position(p.pos());
 
       for (auto const &constraint : *this) {
         constraint->add_energy(p, pos, time, obs_energy);
@@ -102,7 +106,7 @@ public:
   }
 
   void on_boxl_change() const {
-    if (not this->empty()) {
+    if (not m_constraints.empty()) {
       throw std::runtime_error("The box size can not be changed because there "
                                "are active constraints.");
     }

@@ -323,10 +323,10 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
   }
 }
 
-static void write_box(BoxGeometry const &geometry, h5xx::dataset &dataset) {
+static void write_box(BoxGeometry const &box_geo, h5xx::dataset &dataset) {
   auto const extents = static_cast<h5xx::dataspace>(dataset).extents();
   extend_dataset(dataset, Vector2hs{1, 0});
-  h5xx::write_dataset(dataset, geometry.length(),
+  h5xx::write_dataset(dataset, box_geo.length(),
                       h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 3}));
 }
 
@@ -354,11 +354,11 @@ static void write_le_normal(LeesEdwardsBC const &lebc, h5xx::dataset &dataset) {
 }
 
 void File::write(const ParticleRange &particles, double time, int step,
-                 BoxGeometry const &geometry) {
+                 BoxGeometry const &box_geo) {
   if (m_fields & H5MD_OUT_BOX_L) {
-    write_box(geometry, datasets["particles/atoms/box/edges/value"]);
+    write_box(box_geo, datasets["particles/atoms/box/edges/value"]);
   }
-  auto const &lebc = geometry.lees_edwards_bc();
+  auto const &lebc = box_geo.lees_edwards_bc();
   if (m_fields & H5MD_OUT_LE_OFF) {
     write_le_off(lebc, datasets["particles/atoms/lees_edwards/offset/value"]);
   }
@@ -412,7 +412,7 @@ void File::write(const ParticleRange &particles, double time, int step,
     write_td_particle_property<3>(
         prefix, n_part_global, particles,
         datasets["particles/atoms/position/value"],
-        [&](auto const &p) { return folded_position(p.pos(), geometry); });
+        [&](auto const &p) { return box_geo.folded_position(p.pos()); });
   }
   if (m_fields & H5MD_OUT_IMG) {
     write_td_particle_property<3>(prefix, n_part_global, particles,

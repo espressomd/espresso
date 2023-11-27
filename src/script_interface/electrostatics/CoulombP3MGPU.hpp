@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_COULOMB_P3M_GPU_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_COULOMB_P3M_GPU_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -91,7 +90,6 @@ public:
           get_value<int>(params, "timings"), get_value<bool>(params, "verbose"),
           get_value<bool>(params, "check_complex_residuals"));
     });
-    m_actor->request_gpu();
     set_charge_neutrality_tolerance(params);
   }
 };
@@ -101,4 +99,3 @@ public:
 
 #endif // CUDA
 #endif // P3M
-#endif

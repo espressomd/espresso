@@ -19,9 +19,11 @@
 #ifndef OBSERVABLES_PARTICLE_TRAITS
 #define OBSERVABLES_PARTICLE_TRAITS
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "config/config.hpp"
 #include "rotation.hpp"
+#include "system/System.hpp"
 
 namespace ParticleObservables {
 /**
@@ -30,7 +32,12 @@ namespace ParticleObservables {
  * of observables independent of the particle type.
  */
 template <> struct traits<Particle> {
-  auto position(Particle const &p) const { return p.pos(); }
+  auto id(Particle const &p) const { return p.id(); }
+  auto position(Particle const &p) const {
+    auto const &box_geo = *System::get_system().box_geo;
+    return box_geo.unfolded_position(p.pos(), p.image_box());
+  }
+  auto position_folded(Particle const &p) const { return p.pos(); }
   auto velocity(Particle const &p) const { return p.v(); }
   auto force(Particle const &p) const { return p.force(); }
   auto mass(Particle const &p) const {
@@ -45,6 +52,13 @@ template <> struct traits<Particle> {
   auto dipole_moment(Particle const &p) const {
 #ifdef DIPOLES
     return p.calc_dip();
+#else
+    return Utils::Vector3d{};
+#endif
+  }
+  auto dipole_field(Particle const &p) const {
+#ifdef DIPOLE_FIELD_TRACKING
+    return p.dip_fld();
 #else
     return Utils::Vector3d{};
 #endif

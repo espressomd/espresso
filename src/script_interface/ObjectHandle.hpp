@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
-#define SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
+#pragma once
+
 #include "Variant.hpp"
 
 #include <utils/Span.hpp>
@@ -27,6 +27,8 @@
 
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ScriptInterface {
 class Context;
@@ -106,6 +108,11 @@ public:
     return {};
   }
 
+  auto get_valid_parameters() const {
+    auto const names = valid_parameters();
+    return std::vector<std::string>(names.begin(), names.end());
+  }
+
   /**
    * @brief Get single parameter.
    *
@@ -116,6 +123,7 @@ public:
 
   /**
    * @brief Set single parameter.
+   * Can only be called on the head node.
    */
   void set_parameter(const std::string &name, const Variant &value);
 
@@ -128,10 +136,10 @@ private:
 public:
   /**
    * @brief Call a method on the object.
+   * Can only be called on the head node.
    */
   Variant call_method(const std::string &name, const VariantMap &params);
 
-protected:
   /**
    * @brief Local implementation of @c call_method.
    *
@@ -149,9 +157,18 @@ public:
    */
   static ObjectRef deserialize(const std::string &state, Context &ctx);
 
+  /**
+   * @brief Serialize parameters.
+   * Can be overriden to e.g. serialize parameters in a specific order.
+   */
+  virtual std::vector<std::pair<std::string, Variant>>
+  serialize_parameters() const {
+    auto const params = this->get_parameters();
+    return {params.begin(), params.end()};
+  }
+
 private:
   virtual std::string get_internal_state() const { return {}; }
   virtual void set_internal_state(std::string const &state) {}
 };
 } /* namespace ScriptInterface */
-#endif

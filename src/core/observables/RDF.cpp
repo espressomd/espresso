@@ -20,49 +20,55 @@
 
 #include "BoxGeometry.hpp"
 #include "fetch_particles.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/for_each_pair.hpp>
 #include <utils/math/int_pow.hpp>
 
 #include <boost/range/algorithm/transform.hpp>
+#include <boost/range/combine.hpp>
 
 #include <cmath>
-#include <functional>
-#include <memory>
 #include <vector>
 
 namespace Observables {
-std::vector<double> RDF::operator()() const {
-  std::vector<Particle> particles1 = fetch_particles(ids1());
-  std::vector<const Particle *> particles_ptrs1(particles1.size());
-  boost::transform(particles1, particles_ptrs1.begin(),
-                   [](auto const &p) { return std::addressof(p); });
+std::vector<double>
+RDF::operator()(boost::mpi::communicator const &comm) const {
+  auto const &local_particles_1 = fetch_particles(ids1());
 
   if (ids2().empty()) {
-    return this->evaluate(particles_ptrs1, {});
+    return this->evaluate(comm, local_particles_1, {}, {});
   }
 
-  std::vector<Particle> particles2 = fetch_particles(ids2());
-  std::vector<const Particle *> particles_ptrs2(particles2.size());
-  boost::transform(particles2, particles_ptrs2.begin(),
-                   [](auto const &p) { return std::addressof(p); });
-  return this->evaluate(particles_ptrs1, particles_ptrs2);
+  auto const &local_particles_2 = fetch_particles(ids2());
+
+  return this->evaluate(comm, local_particles_1, local_particles_2, {});
 }
 
 std::vector<double>
-RDF::evaluate(Utils::Span<const Particle *const> particles1,
-              Utils::Span<const Particle *const> particles2) const {
+RDF::evaluate(boost::mpi::communicator const &comm,
+              ParticleReferenceRange const &local_particles_1,
+              ParticleReferenceRange const &local_particles_2,
+              const ParticleObservables::traits<Particle> &traits) const {
+  auto const positions_1 = detail::get_all_particle_positions(
+      comm, local_particles_1, ids1(), traits, false);
+  auto const positions_2 = detail::get_all_particle_positions(
+      comm, local_particles_2, ids2(), traits, false);
+
+  if (comm.rank() != 0) {
+    return {};
+  }
+
+  auto const &box_geo = *System::get_system().box_geo;
   auto const bin_width = (max_r - min_r) / static_cast<double>(n_r_bins);
   auto const inv_bin_width = 1.0 / bin_width;
   std::vector<double> res(n_values(), 0.0);
   long int cnt = 0;
-  auto op = [this, inv_bin_width, &cnt, &res](const Particle *const p1,
-                                              const Particle *const p2) {
-    auto const dist = box_geo.get_mi_vector(p1->pos(), p2->pos()).norm();
+  auto op = [this, inv_bin_width, &cnt, &res, &box_geo](auto const &pos1,
+                                                        auto const &pos2) {
+    auto const dist = box_geo.get_mi_vector(pos1, pos2).norm();
     if (dist > min_r && dist < max_r) {
       auto const ind =
           static_cast<int>(std::floor((dist - min_r) * inv_bin_width));
@@ -70,11 +76,27 @@ RDF::evaluate(Utils::Span<const Particle *const> particles1,
     }
     cnt++;
   };
-  if (particles2.empty()) {
-    Utils::for_each_pair(particles1, op);
+
+  if (local_particles_2.empty()) {
+    Utils::for_each_pair(positions_1, op);
   } else {
-    auto cmp = std::not_equal_to<const Particle *const>();
-    Utils::for_each_cartesian_pair_if(particles1, particles2, op, cmp);
+    auto const combine_1 = boost::combine(ids1(), positions_1);
+    auto const combine_2 = boost::combine(ids2(), positions_2);
+
+    auto op2 = [&op](auto const &it1, auto const &it2) {
+      auto const &[id1, pos1] = it1;
+      auto const &[id2, pos2] = it2;
+
+      op(pos1, pos2);
+    };
+
+    auto cmp = [](auto const &it1, auto const &it2) {
+      auto const &[id1, pos1] = it1;
+      auto const &[id2, pos2] = it2;
+
+      return id1 != id2;
+    };
+    Utils::for_each_cartesian_pair_if(combine_1, combine_2, op2, cmp);
   }
   if (cnt == 0)
     return res;

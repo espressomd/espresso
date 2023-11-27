@@ -22,12 +22,13 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "PidProfileObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
-#include <utils/Span.hpp>
 
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -40,14 +41,33 @@ public:
   }
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
-    Utils::Histogram<double, 3> histogram(n_bins(), limits());
+    using pos_type = decltype(traits.position(std::declval<Particle>()));
+    using vel_type = decltype(traits.velocity(std::declval<Particle>()));
+    auto const &box_geo = *System::get_system().box_geo;
 
-    for (auto p : particles) {
-      auto const ppos = folded_position(traits.position(p), box_geo);
-      histogram.update(ppos, traits.velocity(p));
+    std::vector<pos_type> local_folded_positions{};
+    std::vector<vel_type> local_velocities{};
+    local_folded_positions.reserve(local_particles.size());
+    local_velocities.reserve(local_particles.size());
+
+    for (auto const &p : local_particles) {
+      local_folded_positions.emplace_back(
+          box_geo.folded_position(traits.position(p)));
+      local_velocities.emplace_back(traits.velocity(p));
     }
+
+    auto const [global_folded_positions, global_velocities] =
+        detail::gather(comm, local_folded_positions, local_velocities);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
+    Utils::Histogram<double, 3> histogram(n_bins(), limits());
+    detail::accumulate(histogram, global_folded_positions, global_velocities);
     histogram.normalize();
     return histogram.get_histogram();
   }

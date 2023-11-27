@@ -16,20 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "bond_breakage/bond_breakage.hpp"
 #include "bond_breakage/actions.hpp"
 
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
+#include "system/System.hpp"
 
 #include <utils/mpi/gather_buffer.hpp>
+#include <utils/serialization/optional.hpp>
 
 #include <boost/mpi.hpp>
-#include <boost/optional.hpp>
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/optional.hpp>
 #include <boost/variant.hpp>
 
 #include <cassert>
@@ -40,75 +40,21 @@
 
 namespace BondBreakage {
 
-// Bond breakage specifications
-static std::unordered_map<int, std::shared_ptr<BreakageSpec>> breakage_specs;
-
-void insert_spec(int key, std::shared_ptr<BreakageSpec> obj) {
-  breakage_specs[key] = std::move(obj);
-}
-
-void erase_spec(int key) { breakage_specs.erase(key); }
-
 // Variant holding any of the actions
 using Action = boost::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 
 // Set of actions
 using ActionSet = std::unordered_set<Action>;
 
-// Broken bond record
-struct QueueEntry {
-  int particle_id;
-  BondPartners bond_partners = {};
-  int bond_type;
-
-  // Serialization for synchronization across mpi ranks
-  friend class boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &particle_id;
-    ar &bond_partners;
-    ar &bond_type;
-  }
-};
-
-/** @brief Queue to record bonds broken during a time step */
-using Queue = std::vector<QueueEntry>;
-static Queue queue;
-
-/** @brief Retrieve breakage specification for the bond type */
-boost::optional<BreakageSpec> get_breakage_spec(int bond_type) {
-  if (breakage_specs.find(bond_type) != breakage_specs.end()) {
-    return {*(breakage_specs.at(bond_type))};
-  }
-  return {};
-}
-
 /** Add a particle+bond combination to the breakage queue */
-void queue_breakage(int particle_id, const BondPartners &bond_partners,
-                    int bond_type) {
-  queue.emplace_back(QueueEntry{particle_id, bond_partners, bond_type});
+void BondBreakage::queue_breakage(int particle_id,
+                                  BondPartners const &bond_partners,
+                                  int bond_type) {
+  m_queue.emplace_back(QueueEntry{particle_id, bond_partners, bond_type});
 }
-
-bool check_and_handle_breakage(int particle_id,
-                               const BondPartners &bond_partners, int bond_type,
-                               double distance) {
-  // Retrieve specification for this bond type
-  auto const spec = get_breakage_spec(bond_type);
-  if (!spec)
-    return false; // No breakage rule for this bond type
-
-  // Is the bond length longer than the breakage length?
-  if (distance >= (*spec).breakage_length) {
-    queue_breakage(particle_id, bond_partners, bond_type);
-    return true;
-  }
-  return false;
-}
-
-void clear_queue() { queue.clear(); }
 
 /** @brief Gathers combined queue from all mpi ranks */
-Queue gather_global_queue(Queue const &local_queue) {
+static auto gather_global_queue(Queue const &local_queue) {
   Queue res = local_queue;
   if (comm_cart.size() > 1) {
     Utils::Mpi::gather_buffer(res, comm_cart);
@@ -118,17 +64,15 @@ Queue gather_global_queue(Queue const &local_queue) {
 }
 
 /** @brief Constructs the actions to take for a breakage queue entry */
-ActionSet actions_for_breakage(QueueEntry const &e) {
+static ActionSet actions_for_breakage(CellStructure const &cell_structure,
+                                      QueueEntry const &e,
+                                      BreakageSpec const &spec) {
   auto is_angle_bond = [](auto const &bond_partners) {
     return bond_partners[1];
   }; // optional for second partner engaged
 
-  // Retrieve relevant breakage spec
-  auto const spec = get_breakage_spec(e.bond_type);
-  assert(spec);
-
   // Handle different action types
-  if ((*spec).action_type == ActionType::DELETE_BOND) {
+  if (spec.action_type == ActionType::DELETE_BOND) {
     if (is_angle_bond(e.bond_partners)) {
       return {DeleteAngleBond{e.particle_id,
                               {{*(e.bond_partners[0]), *(e.bond_partners[1])}},
@@ -138,7 +82,7 @@ ActionSet actions_for_breakage(QueueEntry const &e) {
   }
 #ifdef VIRTUAL_SITES_RELATIVE
   // revert bind at point of collision for pair bonds
-  if ((*spec).action_type == ActionType::REVERT_BIND_AT_POINT_OF_COLLISION and
+  if (spec.action_type == ActionType::REVERT_BIND_AT_POINT_OF_COLLISION and
       not is_angle_bond(e.bond_partners)) {
     // We need to find the base particles for the two virtual sites
     // between which the bond broke.
@@ -217,42 +161,47 @@ static void remove_pair_bonds_to(Particle &p, int other_pid) {
 
 // Handler for the different delete events
 class execute : public boost::static_visitor<> {
+  CellStructure &cell_structure;
+
 public:
+  explicit execute(CellStructure &cell_structure)
+      : cell_structure{cell_structure} {}
+
   void operator()(DeleteBond const &d) const {
-    if (auto p = ::cell_structure.get_local_particle(d.particle_id)) {
+    if (auto p = cell_structure.get_local_particle(d.particle_id)) {
       remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id, 1}));
     }
-    on_particle_change();
   }
   void operator()(DeleteAngleBond const &d) const {
-    if (auto p = ::cell_structure.get_local_particle(d.particle_id)) {
+    if (auto p = cell_structure.get_local_particle(d.particle_id)) {
       remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id[0], 2}));
     }
-    on_particle_change();
   }
   void operator()(DeleteAllBonds const &d) const {
-    if (auto p = ::cell_structure.get_local_particle(d.particle_id_1)) {
+    if (auto p = cell_structure.get_local_particle(d.particle_id_1)) {
       remove_pair_bonds_to(*p, d.particle_id_2);
     }
-    on_particle_change();
   }
 };
 
-void process_queue() {
-  if (breakage_specs.empty())
-    return;
-
-  auto global_queue = gather_global_queue(queue);
+void BondBreakage::process_queue_impl(System::System &system) {
+  auto global_queue = gather_global_queue(m_queue);
+  auto &cell_structure = *system.cell_structure;
 
   // Construct delete actions from breakage queue
   ActionSet actions = {};
   for (auto const &e : global_queue) {
-    actions.merge(actions_for_breakage(e));
+    // Retrieve relevant breakage spec
+    assert(breakage_specs.count(e.bond_type) != 0);
+    auto const &spec = breakage_specs.at(e.bond_type);
+    actions.merge(actions_for_breakage(cell_structure, e, *spec));
   }
 
   // Execute actions
   for (auto const &a : actions) {
-    boost::apply_visitor(execute(), a);
+    boost::apply_visitor(execute(cell_structure), a);
+    system.on_particle_change();
   }
 }
+
 } // namespace BondBreakage

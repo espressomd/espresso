@@ -481,19 +481,39 @@ class openGLLive():
         or constraint information, in the visualizer window.
 
         """
+
+        def filter_active_nb_ia(nb):
+            for attr in ('cutoff', 'r_cut', 'eps', 'epsilon', 'scaling_coeff'):
+                if hasattr(nb, attr) and getattr(nb, attr) <= 0.:
+                    return False
+            return True
+
         # collect system information
         self.system_info = {
-            'Actors': [], 'Non-bonded interactions': [],
+            'Actors': [], 'Non-bonded interactions': [], 'Constraints': [],
             'Bonded interactions': [b for b in self.system.bonded_inter],
-            'Constraints': [], 'Thermostat': self.system.thermostat.get_state()
+            'Thermostats': self.system.thermostat.get_state(),
         }
 
         if len(self.system_info['Bonded interactions']) == 0:
             self.system_info['Bonded interactions'].append('None')
 
-        # collect all actors
-        for a in self.system.actors:
-            self.system_info['Actors'].append(str(a))
+        # collect all solvers
+        if espressomd.has_features('ELECTROSTATICS'):
+            if self.system.electrostatics.solver:
+                self.system_info['Actors'].append(
+                    self.system.electrostatics.solver.__class__.__name__)
+        if espressomd.has_features('DIPOLES'):
+            if self.system.magnetostatics.solver:
+                self.system_info['Actors'].append(
+                    self.system.magnetostatics.solver.__class__.__name__)
+        if espressomd.has_features('WALBERLA'):
+            if self.system.ekcontainer:
+                self.system_info['Actors'].append(
+                    self.system.ekcontainer.__class__.__name__)
+            if self.system.lb:
+                self.system_info['Actors'].append(
+                    self.system.lb.__class__.__name__)
         if len(self.system_info['Actors']) == 0:
             self.system_info['Actors'].append('None')
 
@@ -513,9 +533,9 @@ class openGLLive():
                 for check_nb in all_non_bonded_inters:
                     nb = getattr(
                         self.system.non_bonded_inter[t1, t2], check_nb)
-                    if nb is not None and nb.is_active():
+                    if nb is not None and filter_active_nb_ia(nb):
                         self.system_info['Non-bonded interactions'].append(
-                            [t1, t2, nb.type_name(), nb.get_params()])
+                            [t1, t2, nb.__class__.__name__, nb.get_params()])
         if len(self.system_info['Non-bonded interactions']) == 0:
             self.system_info['Non-bonded interactions'].append('None')
 
@@ -1593,14 +1613,12 @@ class openGLLive():
 
         self.depth = 0
 
-        # LOOK FOR LB ACTOR
-        lb_types = [espressomd.lb.LBFluidWalberla]
-        for actor in self.system.actors:
-            if isinstance(actor, tuple(lb_types)):
-                self.lb_params = actor.get_params()
-                self.lb = actor
+        # LOOK FOR HYDRODYNAMICS SOLVER
+        if espressomd.has_features('WALBERLA'):
+            if self.system.lb:
+                self.lb = self.system.lb
+                self.lb_params = self.lb.get_params()
                 self.lb_is_cpu = True
-                break
 
         if self.specs['LB_draw_velocity_plane']:
             if self.specs['LB_plane_axis'] == 0:

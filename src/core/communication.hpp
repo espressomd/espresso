@@ -46,17 +46,37 @@
 
 #include "MpiCallbacks.hpp"
 
+#include <utils/Vector.hpp>
+
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <memory>
 #include <utility>
 
 /** The number of this node. */
 extern int this_node;
-/** The total number of nodes. */
-extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
+
+struct Communicator {
+  boost::mpi::communicator &comm;
+  Utils::Vector3i node_grid;
+  /** @brief The MPI rank. */
+  int &this_node;
+  /** @brief The MPI world size. */
+  int size;
+
+  Communicator();
+  void init_comm_cart();
+  void full_initialization();
+  /** @brief Calculate the node index in the Cartesian topology. */
+  Utils::Vector3i calc_node_index() const;
+  /** @brief Set new Cartesian topology. */
+  void set_node_grid(Utils::Vector3i const &value);
+};
+
+extern Communicator communicator;
 
 namespace Communication {
 /**
@@ -97,38 +117,6 @@ void mpi_call_all(void (*fp)(Args...), ArgRef &&...args) {
   Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
 }
 
-/** @brief Call a local function.
- *  @tparam Tag    Any tag type defined in @ref Communication::Result
- *  @tparam R      Return type of the local function
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param tag     Reduction strategy
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class Tag, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&...args) {
-  return Communication::mpiCallbacks().call(tag, fp,
-                                            std::forward<ArgRef>(args)...);
-}
-
-/** @brief Call a local function.
- *  @tparam Tag    Any tag type defined in @ref Communication::Result
- *  @tparam TagArg Types of arguments to @p Tag
- *  @tparam R      Return type of the local function
- *  @tparam Args   Local function argument types
- *  @tparam ArgRef Local function argument types
- *  @param tag     Reduction strategy
- *  @param tag_arg Arguments to the reduction strategy
- *  @param fp      Local function
- *  @param args    Local function arguments
- */
-template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
-auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&...args) {
-  return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
-                                            fp, std::forward<ArgRef>(args)...);
-}
-
 /** Process requests from head node. Worker nodes main loop. */
 void mpi_loop();
 
@@ -136,7 +124,7 @@ namespace Communication {
 /**
  * @brief Init globals for communication.
  *
- * and calls @ref on_program_start. Keeps a copy of
+ * and calls @ref cuda_on_program_start. Keeps a copy of
  * the pointer to the mpi environment to keep it alive
  * while the program is loaded.
  *

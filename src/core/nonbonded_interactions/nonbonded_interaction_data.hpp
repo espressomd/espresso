@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_NB_IA_INTERACTION_DATA_HPP
-#define CORE_NB_IA_INTERACTION_DATA_HPP
+
+#pragma once
+
 /** \file
  *  Various procedures concerning interactions between particles.
  */
@@ -33,6 +34,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -274,11 +276,7 @@ struct DPD_Parameters {
   double max_cutoff() const { return std::max(radial.cutoff, trans.cutoff); }
 };
 
-/** Data structure containing the interaction parameters for non-bonded
- *  interactions.
- *  Access via <tt>get_ia_param(i, j)</tt> with
- *  <tt>i</tt>, <tt>j</tt> \< \ref max_seen_particle_type
- */
+/** @brief Parameters for non-bonded interactions. */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
    *  contributions from the short-ranged interactions, plus any
@@ -355,50 +353,87 @@ struct IA_parameters {
 #endif
 };
 
-extern std::vector<std::shared_ptr<IA_parameters>> nonbonded_ia_params;
+class InteractionsNonBonded {
+  /** @brief List of pairwise interactions. */
+  std::vector<std::shared_ptr<IA_parameters>> m_nonbonded_ia_params{};
+  /** @brief Maximal particle type seen so far. */
+  int max_seen_particle_type = -1;
 
-/** Maximal particle type seen so far. */
-extern int max_seen_particle_type;
+  void realloc_ia_params(int type) {
+    assert(type >= 0);
+    auto const old_size = m_nonbonded_ia_params.size();
+    m_nonbonded_ia_params.resize(Utils::lower_triangular(type, type) + 1);
+    auto const new_size = m_nonbonded_ia_params.size();
+    if (new_size > old_size) {
+      for (auto &data : m_nonbonded_ia_params) {
+        if (data == nullptr) {
+          data = std::make_shared<IA_parameters>();
+        }
+      }
+    }
+  }
 
-/** Maximal interaction cutoff (real space/short range non-bonded
- *  interactions).
- */
-double maximal_cutoff_nonbonded();
+public:
+  InteractionsNonBonded() {
+    /* make sure interaction 0<->0 always exists */
+    make_particle_type_exist(0);
+  }
 
-inline auto get_ia_param_key(int i, int j) {
-  assert(i >= 0 && i < ::max_seen_particle_type);
-  assert(j >= 0 && j < ::max_seen_particle_type);
-  return static_cast<unsigned int>(Utils::upper_triangular(
-      std::min(i, j), std::max(i, j), ::max_seen_particle_type));
-}
+  /**
+   * @brief Make sure the interaction parameter list is large enough to cover
+   * interactions for this particle type.
+   * New interactions are initialized with values such that no physical
+   * interaction occurs.
+   */
+  void make_particle_type_exist(int type) {
+    assert(type >= 0);
+    if (type > max_seen_particle_type) {
+      realloc_ia_params(type);
+      max_seen_particle_type = type;
+    }
+  }
 
-/**
- * @brief Get interaction parameters between particle types i and j
- *
- * This is symmetric, e.g. it holds that get_ia_param(i, j) and
- * get_ia_param(j, i) point to the same data.
- *
- * @param i First type, has to be smaller than @ref max_seen_particle_type.
- * @param j Second type, has to be smaller than @ref max_seen_particle_type.
- *
- * @return Reference to interaction parameters for the type pair.
- */
-inline IA_parameters &get_ia_param(int i, int j) {
-  return *::nonbonded_ia_params[get_ia_param_key(i, j)];
-}
+  auto get_ia_param_key(int i, int j) const {
+    assert(i >= 0 and i <= max_seen_particle_type);
+    assert(j >= 0 and j <= max_seen_particle_type);
+    auto const key = static_cast<std::size_t>(
+        Utils::lower_triangular(std::max(i, j), std::min(i, j)));
+    assert(key < m_nonbonded_ia_params.size());
+    return key;
+  }
 
-/** Make sure that ia_params is large enough to cover interactions
- *  for this particle type. The interactions are initialized with values
- *  such that no physical interaction occurs.
- */
-void make_particle_type_exist(int type);
+  /**
+   * @brief Get interaction parameters between particle types i and j
+   *
+   * This is symmetric, e.g. it holds that `get_ia_param(i, j)` and
+   * `get_ia_param(j, i)` point to the same data.
+   *
+   * @param i First type, must exist
+   * @param j Second type, must exist
+   *
+   * @return Reference to interaction parameters for the type pair.
+   */
+  auto &get_ia_param(int i, int j) {
+    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
+  }
 
-/** Check if a non-bonded interaction is defined */
-inline bool checkIfInteraction(IA_parameters const &data) {
-  return data.max_cut != INACTIVE_CUTOFF;
-}
+  auto const &get_ia_param(int i, int j) const {
+    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
+  }
 
-void set_min_global_cut(double min_global_cut);
+  auto get_ia_param_ref_counted(int i, int j) const {
+    return m_nonbonded_ia_params[get_ia_param_key(i, j)];
+  }
 
-double get_min_global_cut();
-#endif
+  void set_ia_param(int i, int j, std::shared_ptr<IA_parameters> const &ia) {
+    m_nonbonded_ia_params[get_ia_param_key(i, j)] = ia;
+  }
+
+  auto get_max_seen_particle_type() const { return max_seen_particle_type; }
+
+  /** @brief Recalculate cutoff of each interaction struct. */
+  void recalc_maximal_cutoffs();
+
+  /** @brief Get maximal cutoff. */
+  double maximal_cutoff() const;
+};

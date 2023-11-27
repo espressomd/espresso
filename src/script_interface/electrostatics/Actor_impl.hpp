@@ -17,14 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include "config/config.hpp"
 
 #ifdef ELECTROSTATICS
 
 #include "Actor.hpp"
 
+#include "core/actor/registration.hpp"
 #include "core/electrostatics/coulomb.hpp"
-#include "core/electrostatics/registration.hpp"
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
@@ -34,26 +36,26 @@ namespace Coulomb {
 template <class SIClass, class CoreClass> Actor<SIClass, CoreClass>::Actor() {
   add_parameters({
       {"prefactor", AutoParameter::read_only,
-       [this]() { return actor()->prefactor; }},
+       [this]() { return m_actor->prefactor; }},
       {"check_neutrality",
        [this](Variant const &value) {
          auto const flag = get_value<bool>(value);
-         auto &tolerance = actor()->charge_neutrality_tolerance;
+         auto &tolerance = m_actor->charge_neutrality_tolerance;
          if (flag) {
            if (tolerance == -1.) {
-             tolerance = actor()->charge_neutrality_tolerance_default;
+             tolerance = m_actor->charge_neutrality_tolerance_default;
            }
          } else {
            tolerance = -1.;
          }
        },
        [this]() {
-         auto const tolerance = actor()->charge_neutrality_tolerance;
+         auto const tolerance = m_actor->charge_neutrality_tolerance;
          return Variant{tolerance != -1.};
        }},
       {"charge_neutrality_tolerance",
        [this](Variant const &value) {
-         auto &tolerance = actor()->charge_neutrality_tolerance;
+         auto &tolerance = m_actor->charge_neutrality_tolerance;
          if (is_none(value)) {
            tolerance = -1.;
          } else {
@@ -69,7 +71,7 @@ template <class SIClass, class CoreClass> Actor<SIClass, CoreClass>::Actor() {
          }
        },
        [this]() {
-         auto const tolerance = actor()->charge_neutrality_tolerance;
+         auto const tolerance = m_actor->charge_neutrality_tolerance;
          if (tolerance == -1.) {
            return make_variant(none);
          }
@@ -82,11 +84,12 @@ template <class SIClass, class CoreClass>
 Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
                                                   VariantMap const &params) {
   if (name == "activate") {
-    context()->parallel_try_catch([&]() { ::Coulomb::add_actor(actor()); });
-    return {};
-  }
-  if (name == "deactivate") {
-    context()->parallel_try_catch([&]() { ::Coulomb::remove_actor(actor()); });
+    context()->parallel_try_catch([this]() {
+      auto &system = get_system();
+      add_actor(context()->get_comm(), m_system.lock(),
+                system.coulomb.impl->solver, m_actor,
+                [&system]() { system.on_coulomb_change(); });
+    });
     return {};
   }
   return {};

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_INDEX_HPP
-#define UTILS_INDEX_HPP
+
+#pragma once
 
 #include <cassert>
 #include <cstddef>
@@ -59,26 +59,21 @@ get_linear_index(const Vector3i &ind, const Vector3i &adim,
 }
 
 /**
- * @brief Linear index into an upper triangular matrix.
+ * @brief Linear index into a lower triangular matrix.
  *
  * This is row-major.
  *
- * @tparam T Integral
+ * @tparam T Integral type
  * @param i row index
  * @param j column index
- * @param n matrix size
  * @return linear index
  */
-template <class T> T upper_triangular(T i, T j, T n) {
-  /* n is a valid size */
-  assert(n >= 0);
+template <class T> T lower_triangular(T i, T j) {
   /* i is a valid row index */
-  assert((i >= 0) && (i < n));
-  /* j is in the upper triangle */
-  assert((j >= i) && (j < n));
-  return (n * (n - 1)) / 2 - ((n - i) * (n - i - 1)) / 2 + j;
+  assert(i >= 0);
+  /* j is in the lower triangle */
+  assert(j >= 0 and j <= i);
+  return (i * (i + 1)) / 2 + j;
 }
 
 } // namespace Utils
-
-#endif

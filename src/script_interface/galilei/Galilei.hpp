@@ -17,11 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_GALILEI_GALILEI_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_GALILEI_GALILEI_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include "core/galilei/Galilei.hpp"
 
@@ -30,11 +30,15 @@
 namespace ScriptInterface {
 namespace Galilei {
 
-class Galilei : public AutoParameters<Galilei> {
+class Galilei : public AutoParameters<Galilei, System::Leaf> {
   std::shared_ptr<::Galilei> m_galilei;
 
   void do_construct(VariantMap const &params) override {
     m_galilei = std::make_shared<::Galilei>();
+  }
+
+  void on_bind_system(::System::System &system) override {
+    system.galilei = m_galilei;
   }
 
 public:
@@ -42,20 +46,20 @@ public:
                          VariantMap const &params) override {
     if (name == "kill_particle_motion") {
       auto const rotation = get_value_or<bool>(params, "rotation", false);
-      m_galilei->kill_particle_motion(rotation);
+      m_galilei->kill_particle_motion(get_system(), rotation);
     }
     if (name == "kill_particle_forces") {
       auto const torque = get_value_or<bool>(params, "torque", false);
-      m_galilei->kill_particle_forces(torque);
+      m_galilei->kill_particle_forces(get_system(), torque);
     }
     if (name == "galilei_transform") {
-      m_galilei->galilei_transform();
+      m_galilei->galilei_transform(get_system());
     }
     if (name == "system_CMS") {
-      return m_galilei->calc_system_cms_position().as_vector();
+      return m_galilei->calc_system_cms_position(get_system()).as_vector();
     }
     if (name == "system_CMS_velocity") {
-      return m_galilei->calc_system_cms_velocity().as_vector();
+      return m_galilei->calc_system_cms_velocity(get_system()).as_vector();
     }
     return {};
   }
@@ -63,5 +67,3 @@ public:
 
 } // namespace Galilei
 } // namespace ScriptInterface
-
-#endif

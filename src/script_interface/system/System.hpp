@@ -17,25 +17,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_SYSTEM_SYSTEM_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_SYSTEM_SYSTEM_HPP
+#pragma once
+
+#include "core/system/System.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
+#include <memory>
 #include <string>
 
 namespace ScriptInterface {
 namespace System {
 
+/**
+ * @brief Script interface wrapper for the system class.
+ *
+ * See @ref SystemClassDesign for more details.
+ */
 class System : public AutoParameters<System> {
+  struct Leaves;
+  std::shared_ptr<::System::System> m_instance;
+  std::shared_ptr<Leaves> m_leaves;
+
 public:
   System();
+
+  void do_construct(VariantMap const &params) override;
   Variant do_call_method(std::string const &name,
                          VariantMap const &parameters) override;
 };
 
 } // namespace System
 } // namespace ScriptInterface
-
-#endif

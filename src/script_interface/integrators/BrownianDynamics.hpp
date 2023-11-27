@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_BROWNIAN_DYNAMICS_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_INTEGRATORS_BROWNIAN_DYNAMICS_HPP
+#pragma once
 
 #include "Integrator.hpp"
 
@@ -29,10 +28,8 @@ namespace ScriptInterface {
 namespace Integrators {
 
 class BrownianDynamics : public AutoParameters<BrownianDynamics, Integrator> {
-  void activate() const override;
+  void activate() override;
 };
 
 } // namespace Integrators
 } // namespace ScriptInterface
-
-#endif

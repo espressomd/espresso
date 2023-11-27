@@ -63,8 +63,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
             system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
-            g = espressomd.galilei.GalileiTransform()
-            g.kill_particle_motion(rotation=True)
+            self.system.galilei.kill_particle_motion(rotation=True)
             system.integrator.set_vv()
 
             system.non_bonded_inter[0, 0].lennard_jones.deactivate()
@@ -79,7 +78,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
 
             dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
                 prefactor=pf_dds_gpu)
-            system.actors.add(dds_gpu)
+            system.magnetostatics.solver = dds_gpu
             # check MD cell reset has no impact
             system.box_l = system.box_l
             system.periodicity = system.periodicity
@@ -91,12 +90,12 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             dawaanr_e = system.analysis.energy()["total"]
 
             del dds_gpu
-            system.actors.clear()
+            system.magnetostatics.clear()
 
             system.integrator.run(steps=0, recalc_forces=True)
             bh_gpu = espressomd.magnetostatics.DipolarBarnesHutGpu(
                 prefactor=pf_bh_gpu, epssq=200.0, itolsq=8.0)
-            system.actors.add(bh_gpu)
+            system.magnetostatics.solver = bh_gpu
             # check MD cell reset has no impact
             system.box_l = system.box_l
             system.periodicity = system.periodicity
@@ -134,7 +133,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             system.integrator.run(steps=0, recalc_forces=True)
 
             del bh_gpu
-            system.actors.clear()
+            system.magnetostatics.clear()
             system.part.clear()
 
 

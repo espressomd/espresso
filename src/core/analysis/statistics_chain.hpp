@@ -18,12 +18,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_ANALYSIS_STATISTICS_CHAIN_HPP
-#define ESPRESSO_SRC_CORE_ANALYSIS_STATISTICS_CHAIN_HPP
+
+#pragma once
+
 /** \file
  *
  *  This file contains the code for statistics on chains.
  */
+
+#include "system/System.hpp"
 
 #include <array>
 
@@ -33,11 +36,13 @@
  * Calculates the average end-to-end-distance of a range
  * of monodisperse polymers with continuous ids.
  *
+ * @param system The system to analyze.
  * @param chain_start The id of the first monomer of the first chain.
  * @param n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length);
+std::array<double, 4> calc_re(System::System const &system, int chain_start,
+                              int chain_length, int n_chains);
 
 /**
  * @brief Calculate the radius of gyration.
@@ -45,11 +50,13 @@ std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length);
  * Calculates the average radius of gyration of a range
  * of monodisperse polymers with continuous ids.
  *
+ * @param system The system to analyze.
  * @param chain_start The id of the first monomer of the first chain.
  * @param n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length);
+std::array<double, 4> calc_rg(System::System const &system, int chain_start,
+                              int chain_length, int n_chains);
 
 /**
  * @brief Calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory).
@@ -57,10 +64,10 @@ std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length);
  * Calculates the average hydrodynamic radius of a range
  * of monodisperse polymers with continuous ids.
  *
+ * @param system The system to analyze.
  * @param chain_start The id of the first monomer of the first chain.
  * @param n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 2> calc_rh(int chain_start, int n_chains, int chain_length);
-
-#endif
+std::array<double, 2> calc_rh(System::System const &system, int chain_start,
+                              int chain_length, int n_chains);

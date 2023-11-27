@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTIONS_HPP
-#define SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTIONS_HPP
+#pragma once
 
 #include "BondedInteraction.hpp"
 
@@ -55,10 +54,14 @@ public:
     });
   }
 
+private:
+  container_type m_bonds;
+
+  void before_do_construct() override {}
+
   key_type insert_in_core(mapped_type const &obj_ptr) override {
     auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
     m_bonds[key] = std::move(obj_ptr);
-    mpi_update_cell_system_ia_range_local();
     return key;
   }
 
@@ -66,13 +69,11 @@ public:
                       mapped_type const &obj_ptr) override {
     ::bonded_ia_params.insert(key, obj_ptr->bonded_ia());
     m_bonds[key] = std::move(obj_ptr);
-    mpi_update_cell_system_ia_range_local();
   }
 
   void erase_in_core(key_type const &key) override {
     ::bonded_ia_params.erase(key);
     m_bonds.erase(key);
-    mpi_update_cell_system_ia_range_local();
   }
 
 protected:
@@ -115,11 +116,6 @@ protected:
 
     return ObjectMap<BondedInteraction>::do_call_method(name, params);
   }
-
-private:
-  container_type m_bonds;
 };
 } // namespace Interactions
 } // namespace ScriptInterface
-
-#endif

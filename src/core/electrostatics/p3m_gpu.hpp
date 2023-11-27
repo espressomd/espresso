@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_P3M_GPU_HPP
+#pragma once
 
 /**
  * @file
@@ -34,11 +33,16 @@
 
 #include "ParticleRange.hpp"
 
+#include <memory>
+
+struct P3MGpuParams;
+
 struct CoulombP3MGPU : public CoulombP3M {
   using CoulombP3M::CoulombP3M;
 
   void init();
   void on_activation() {
+    request_gpu();
     CoulombP3M::on_activation();
     if (is_tuned()) {
       init_cpu_kernels();
@@ -55,9 +59,8 @@ private:
    * that are only relevant for ELC force corrections.
    */
   void init_cpu_kernels();
+  std::shared_ptr<P3MGpuParams> m_gpu_data = nullptr;
 };
 
 #endif // CUDA
 #endif // P3M
-
-#endif

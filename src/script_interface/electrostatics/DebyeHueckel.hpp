@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_DH_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_DH_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -63,4 +62,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // ELECTROSTATICS
-#endif

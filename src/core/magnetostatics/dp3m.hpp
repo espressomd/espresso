@@ -29,12 +29,13 @@
  *  Further reading: @cite cerda08d
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_P3M_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef DP3M
+
+#include "magnetostatics/actor.hpp"
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
@@ -91,12 +92,11 @@ struct dp3m_data_struct : public p3m_data_struct_base {
 };
 
 /** @brief Dipolar P3M solver. */
-struct DipolarP3M {
+struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
   /** Dipolar P3M parameters. */
   dp3m_data_struct dp3m;
 
   /** Magnetostatics prefactor. */
-  double prefactor;
   int tune_timings;
   bool tune_verbose;
 
@@ -301,4 +301,3 @@ private:
 };
 
 #endif // DP3M
-#endif

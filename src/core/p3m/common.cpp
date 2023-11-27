@@ -76,8 +76,8 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
 }
 
 void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
-                                      LocalBox<double> const &local_geo,
-                                      double skin, double space_layer) {
+                                      LocalBox const &local_geo, double skin,
+                                      double space_layer) {
   int i;
   int ind[3];
   // total skin size
@@ -92,23 +92,24 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
   auto const outer_ur_pos = inner_ur_pos + full_skin;
   // outer left down corner
   auto const outer_ld_pos = inner_ld_pos - full_skin;
-  // convert spatial positions to grid indices
-  auto const calc_grid_pos = [&params](Utils::Vector3d const &pos, int i) {
-    return pos[i] * params.ai[i] - params.mesh_off[i];
-  };
+  // convert spatial positions to grid positions
+  auto const inner_ld_grid_pos = params.calc_grid_pos(inner_ld_pos);
+  auto const inner_ur_grid_pos = params.calc_grid_pos(inner_ur_pos);
+  auto const outer_ld_grid_pos = params.calc_grid_pos(outer_ld_pos);
+  auto const outer_ur_grid_pos = params.calc_grid_pos(outer_ur_pos);
 
   /* inner left down grid point (global index) */
   for (i = 0; i < 3; i++)
-    in_ld[i] = static_cast<int>(std::ceil(calc_grid_pos(inner_ld_pos, i)));
+    in_ld[i] = static_cast<int>(std::ceil(inner_ld_grid_pos[i]));
   /* inner up right grid point (global index) */
   for (i = 0; i < 3; i++)
-    in_ur[i] = static_cast<int>(std::floor(calc_grid_pos(inner_ur_pos, i)));
+    in_ur[i] = static_cast<int>(std::floor(inner_ur_grid_pos[i]));
 
   /* correct roundoff errors at boundary */
   for (i = 0; i < 3; i++) {
-    if (calc_grid_pos(inner_ur_pos, i) - in_ur[i] < ROUND_ERROR_PREC)
+    if (inner_ur_grid_pos[i] - in_ur[i] < ROUND_ERROR_PREC)
       in_ur[i]--;
-    if (calc_grid_pos(inner_ld_pos, i) - in_ld[i] + 1. < ROUND_ERROR_PREC)
+    if (inner_ld_grid_pos[i] - in_ld[i] + 1. < ROUND_ERROR_PREC)
       in_ld[i]--;
   }
   /* inner grid dimensions */
@@ -116,16 +117,16 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
     inner[i] = in_ur[i] - in_ld[i] + 1;
   /* index of left down grid point in global mesh */
   for (i = 0; i < 3; i++)
-    ld_ind[i] = static_cast<int>(std::ceil(calc_grid_pos(outer_ld_pos, i)));
+    ld_ind[i] = static_cast<int>(std::ceil(outer_ld_grid_pos[i]));
   /* left down margin */
   for (i = 0; i < 3; i++)
     margin[i * 2] = in_ld[i] - ld_ind[i];
   /* up right grid point */
   for (i = 0; i < 3; i++)
-    ind[i] = static_cast<int>(std::floor(calc_grid_pos(outer_ur_pos, i)));
+    ind[i] = static_cast<int>(std::floor(outer_ur_grid_pos[i]));
   /* correct roundoff errors at up right boundary */
   for (i = 0; i < 3; i++)
-    if (calc_grid_pos(outer_ur_pos, i) - ind[i] == 0.)
+    if (outer_ur_grid_pos[i] - ind[i] == 0.)
       ind[i]--;
   /* up right margin */
   for (i = 0; i < 3; i++)

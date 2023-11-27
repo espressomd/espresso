@@ -16,29 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import numpy as np
-cimport numpy as np
 
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
-cdef extern from "utils/Span.hpp" namespace "Utils":
-    cppclass Span[T]:
-        Span()
-        Span(T *, size_t)
-
-        T & operator[](size_t)
-
-        T * begin()
-        T * end()
-
-        T * data()
-        size_t size()
-
-    Span[const T] make_const_span[T](T *, size_t)
-
-cpdef check_array_type_or_throw_except(x, n, t, msg)
 cpdef check_type_or_throw_except(x, n, t, msg)
 
 cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
@@ -65,6 +47,10 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         double & operator[](int i)
         double * data()
 
+    cppclass Vector3d:
+        double & operator[](int i)
+        double * data()
+
     cppclass Vector4d:
         double & operator[](int i)
         double * data()
@@ -77,35 +63,5 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         int & operator[](int i)
         int * data()
 
-    cppclass Vector3d:
-        Vector3d()
-        Vector3d(const Vector3d & )
-
-        double & operator[](int i)
-        double * data()
-        Vector3d operator * (double i)
-        Vector3d operator / (double i)
-
-    cppclass Vector6d:
-        double & operator[](int i)
-        double * data()
-        Vector6d operator * (double i)
-        Vector6d operator / (double i)
-
-    cppclass Vector9d:
-        double & operator[](int i)
-        double * data()
-        Vector9d operator * (double i)
-        Vector9d operator / (double i)
-
-    cppclass Vector19d:
-        double & operator[](int i)
-        double * data()
-
 cdef make_array_locked(Vector3d)
 cdef Vector3d make_Vector3d(a)
-cdef Vector3i make_Vector3i(a)
-
-cdef extern from "utils/Factory.hpp" namespace "Utils":
-    cdef cppclass Factory[T]:
-        pass

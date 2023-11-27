@@ -26,7 +26,7 @@
 namespace ScriptInterface {
 namespace Integrators {
 
-void BrownianDynamics::activate() const { set_integ_switch(INTEG_METHOD_BD); }
+void BrownianDynamics::activate() { set_integ_switch(INTEG_METHOD_BD); }
 
 } // namespace Integrators
 } // namespace ScriptInterface

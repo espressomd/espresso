@@ -23,22 +23,21 @@
 
 #include "LBFluidNode.hpp"
 
-#include <script_interface/communication.hpp>
-
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace ScriptInterface::walberla {
 
 static bool is_boundary_all_reduce(boost::mpi::communicator const &comm,
-                                   boost::optional<bool> const &is_boundary) {
+                                   std::optional<bool> const &is_boundary) {
   return boost::mpi::all_reduce(comm, is_boundary ? *is_boundary : false,
                                 std::logical_or<>());
 }
@@ -61,14 +60,15 @@ Variant LBFluidNode::do_call_method(std::string const &name,
     auto const boundary_opt = m_lb_fluid->get_node_is_boundary(m_index);
     if (is_boundary_all_reduce(context()->get_comm(), boundary_opt)) {
       auto const result = m_lb_fluid->get_node_velocity_at_boundary(m_index);
-      return mpi_reduce_optional(context()->get_comm(), result) /
+      return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
              m_conv_velocity;
     }
     return Variant{None{}};
   }
   if (name == "get_density") {
     auto const result = m_lb_fluid->get_node_density(m_index);
-    return mpi_reduce_optional(context()->get_comm(), result) / m_conv_dens;
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+           m_conv_dens;
   }
   if (name == "set_density") {
     auto const dens = get_value<double>(params, "value");
@@ -78,7 +78,7 @@ Variant LBFluidNode::do_call_method(std::string const &name,
   }
   if (name == "get_population") {
     auto const result = m_lb_fluid->get_node_population(m_index);
-    return mpi_reduce_optional(context()->get_comm(), result);
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result);
   }
   if (name == "set_population") {
     auto const pop = get_value<std::vector<double>>(params, "value");
@@ -88,7 +88,8 @@ Variant LBFluidNode::do_call_method(std::string const &name,
   }
   if (name == "get_velocity") {
     auto const result = m_lb_fluid->get_node_velocity(m_index);
-    return mpi_reduce_optional(context()->get_comm(), result) / m_conv_velocity;
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+           m_conv_velocity;
   }
   if (name == "set_velocity") {
     auto const u =
@@ -99,24 +100,33 @@ Variant LBFluidNode::do_call_method(std::string const &name,
   }
   if (name == "get_is_boundary") {
     auto const result = m_lb_fluid->get_node_is_boundary(m_index);
-    return mpi_reduce_optional(context()->get_comm(), result);
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result);
   }
   if (name == "get_boundary_force") {
     auto const boundary_opt = m_lb_fluid->get_node_is_boundary(m_index);
     if (is_boundary_all_reduce(context()->get_comm(), boundary_opt)) {
       auto result = m_lb_fluid->get_node_boundary_force(m_index);
-      return mpi_reduce_optional(context()->get_comm(), result) / m_conv_force;
+      return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+             m_conv_force;
     }
     return Variant{None{}};
   }
-  if (name == "get_pressure_tensor") {
+  if (name == "get_pressure_tensor" or name == "get_pressure_tensor_neq") {
     auto const result = m_lb_fluid->get_node_pressure_tensor(m_index);
-    auto value = boost::optional<std::vector<double>>{};
+    auto value = std::optional<std::vector<double>>{};
     if (result) {
       value = (*result / m_conv_press).as_vector();
     }
-    auto const vec = mpi_reduce_optional(context()->get_comm(), value);
+    auto vec = Utils::Mpi::reduce_optional(context()->get_comm(), value);
     if (context()->is_head_node()) {
+      if (name == "get_pressure_tensor_neq") {
+        auto constexpr c_sound_sq = 1. / 3.;
+        auto const density = m_lb_fluid->get_density();
+        auto const diagonal_term = density * c_sound_sq / m_conv_press;
+        vec[0] -= diagonal_term;
+        vec[4] -= diagonal_term;
+        vec[8] -= diagonal_term;
+      }
       auto tensor = Utils::Matrix<double, 3, 3>{};
       std::copy(vec.begin(), vec.end(), tensor.m_data.begin());
       return std::vector<Variant>{tensor.row<0>().as_vector(),
@@ -127,7 +137,8 @@ Variant LBFluidNode::do_call_method(std::string const &name,
   }
   if (name == "get_last_applied_force") {
     auto const result = m_lb_fluid->get_node_last_applied_force(m_index);
-    return mpi_reduce_optional(context()->get_comm(), result) / m_conv_force;
+    return Utils::Mpi::reduce_optional(context()->get_comm(), result) /
+           m_conv_force;
   }
   if (name == "set_last_applied_force") {
     auto const f = get_value<Utils::Vector3d>(params, "value");

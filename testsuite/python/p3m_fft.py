@@ -47,6 +47,7 @@ class FFT_test(ut.TestCase):
     system = espressomd.System(box_l=[10., 10., 10.])
     original_node_grid = tuple(system.cell_system.node_grid)
     n_nodes = system.cell_system.get_state()["n_nodes"]
+    system.cell_system.skin = 0.
 
     def setUp(self):
         self.system.box_l = [10., 10., 10.]
@@ -54,7 +55,10 @@ class FFT_test(ut.TestCase):
         self.system.time_step = 0.01
 
     def tearDown(self):
-        self.system.actors.clear()
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
+        if espressomd.has_features(["DIPOLES"]):
+            self.system.magnetostatics.clear()
         self.system.part.clear()
 
     def minimize(self):
@@ -93,10 +97,10 @@ class FFT_test(ut.TestCase):
             self.system.cell_system.node_grid = node_grid
             solver = espressomd.electrostatics.P3M(
                 prefactor=2, accuracy=1e-6, tune=False, **p3m_params)
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
             ref_energy = -75.871906
             p3m_energy = self.system.analysis.energy()['coulomb']
-            self.system.actors.clear()
+            self.system.electrostatics.clear()
             np.testing.assert_allclose(p3m_energy, ref_energy, rtol=1e-4)
 
     @utx.skipIfMissingFeatures("P3M")
@@ -109,7 +113,7 @@ class FFT_test(ut.TestCase):
         self.system.cell_system.node_grid = unsorted_node_grid
         solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(Exception, 'node grid must be sorted, largest first'):
-            self.system.actors.add(solver)
+            self.system.electrostatics.solver = solver
 
     @utx.skipIfMissingFeatures("DP3M")
     @ut.skipIf(n_nodes < 2 or n_nodes >= 8, "only runs for 2 <= n_nodes <= 7")
@@ -122,7 +126,7 @@ class FFT_test(ut.TestCase):
         solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2, accuracy=1e-2)
         with self.assertRaisesRegex(Exception, 'node grid must be sorted, largest first'):
-            self.system.actors.add(solver)
+            self.system.magnetostatics.solver = solver
 
 
 if __name__ == "__main__":

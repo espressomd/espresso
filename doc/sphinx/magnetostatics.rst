@@ -25,7 +25,7 @@ The prefactor :math:`D` is can be set by the user and is given by
 where :math:`\mu_0` and :math:`\mu` are the vacuum permittivity and the
 relative permittivity of the background material, respectively.
 
-Magnetostatic interactions are activated via the actor framework::
+Magnetostatic interactions are activated when attached to the system::
 
     import espressomd
     import espressomd.magnetostatics
@@ -36,11 +36,15 @@ Magnetostatic interactions are activated via the actor framework::
                     rotation=2 * [(True, True, True)])
 
     actor = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
-    system.actors.add(actor)
+    system.magnetostatics.solver = actor
 
-The list of actors can be cleared with
-:meth:`system.actors.clear() <espressomd.actors.Actors.clear>` and
-:meth:`system.actors.remove(actor) <espressomd.actors.Actors.remove>`.
+The solver can be detached with either::
+
+    system.magnetostatics.solver = None
+
+or::
+
+    system.magnetostatics.clear()
 
 
 .. _Dipolar P3M:
@@ -66,7 +70,7 @@ the omitted parameters are tuned::
 
     import espressomd.magnetostatics as magnetostatics
     p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
-    system.actors.add(p3m)
+    system.magnetostatics.solver = p3m
 
 It is important to note that the error estimates given in :cite:`cerda08d`
 used in the tuning contain assumptions about the system. In particular, a
@@ -109,7 +113,7 @@ The method is used as follows::
     import espressomd.magnetostatics
     dp3m = espressomd.magnetostatics.DipolarP3M(prefactor=1, accuracy=1E-4)
     mdlc = espressomd.magnetostatics.DLC(actor=dp3m, maxPWerror=1E-5, gap_size=2.)
-    system.actors.add(mdlc)
+    system.magnetostatics.solver = mdlc
 
 
 .. _Dipolar direct sum:
@@ -144,19 +148,24 @@ Two methods are available:
 
 To use the methods, create an instance of either
 :class:`~espressomd.magnetostatics.DipolarDirectSumCpu` or
-:class:`~espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the
-system's list of active actors. The only required parameter is the prefactor
+:class:`~espressomd.magnetostatics.DipolarDirectSumGpu` and
+attach it to the system. The only required parameter is the prefactor
 :eq:`dipolar_prefactor`::
 
     import espressomd.magnetostatics
     dds = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1)
-    system.actors.add(dds)
+    system.magnetostatics.solver = dds
 
 The CPU implementation has an optional argument ``n_replicas`` which
 adds periodic copies to the system along periodic directions. In that
 case, the minimum image convention is no longer used.
+Additionally, enabling the ``DIPOLE_FIELDS_TRACKING`` feature enables the CPU
+implementation to calculate the total dipole field at the position of each
+magnetic particle in the primary simulation box. These values are stored in
+the particle handle's ``dip_fld`` property and can be accessed directly or
+via an observable.
 
-Both implementations support MPI-parallelization.
+Both the CPU and GPU implementations support MPI-parallelization.
 
 
 .. _Barnes-Hut octree sum on GPU:
@@ -177,11 +186,11 @@ Barnes-Hut method application to the dipole-dipole interactions, please
 refer to :cite:`polyakov13a`.
 
 To use the method, create an instance of :class:`~espressomd.magnetostatics.DipolarBarnesHutGpu`
-and add it to the system's list of active actors::
+and attach it to the system::
 
     import espressomd.magnetostatics
     bh = espressomd.magnetostatics.DipolarBarnesHutGpu(prefactor=1., epssq=200.0, itolsq=8.0)
-    system.actors.add(bh)
+    system.magnetostatics.solver = bh
 
 
 .. _ScaFaCoS magnetostatics:
@@ -199,11 +208,28 @@ the ScaFaCoS code. The specific methods available can be queried with
 :meth:`espressomd.electrostatics.Scafacos.get_available_methods`.
 
 To use ScaFaCoS, create an instance of :class:`~espressomd.magnetostatics.Scafacos`
-and add it to the list of active actors. Three parameters have to be specified:
+and attach it to the system. Three parameters have to be specified:
 ``prefactor``, ``method_name``, ``method_params``. The method-specific
 parameters are described in the ScaFaCoS manual. In addition, methods
 supporting tuning have a parameter ``tolerance_field`` which sets the desired
 root mean square accuracy for the magnetic field.
+
+Here is an example with the P2NFFT method for 2D-periodic systems::
+
+    import espressomd.magnetostatics
+    scafacos = espressomd.magnetostatics.Scafacos(
+        prefactor=1., method_name="p2nfft",
+        method_params={
+            "p2nfft_verbose_tuning": 0,
+            "pnfft_N": "80,80,160",
+            "pnfft_window_name": "bspline",
+            "pnfft_m": "4",
+            "p2nfft_ignore_tolerance": "1",
+            "pnfft_diff_ik": "0",
+            "p2nfft_r_cut": "6",
+            "p2nfft_alpha": "0.8",
+            "p2nfft_epsB": "0.05"})
+    system.magnetostatics.solver = scafacos
 
 For details of the various methods and their parameters please refer to
 the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a

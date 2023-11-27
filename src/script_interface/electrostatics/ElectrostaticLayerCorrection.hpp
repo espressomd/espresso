@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ELC_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_ELECTROSTATICS_ELC_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -50,6 +49,12 @@ class ElectrostaticLayerCorrection
 #endif // CUDA
       std::shared_ptr<CoulombP3M>>;
   BaseSolver m_solver;
+
+  void on_bind_system(::System::System &system) override {
+    boost::apply_visitor(
+        [this](auto &solver) { solver->bind_system(m_system.lock()); },
+        m_solver);
+  }
 
 public:
   ElectrostaticLayerCorrection() {
@@ -117,4 +122,3 @@ public:
 } // namespace ScriptInterface
 
 #endif // P3M
-#endif

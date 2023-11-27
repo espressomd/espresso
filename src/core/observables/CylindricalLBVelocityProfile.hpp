@@ -28,7 +28,8 @@ namespace Observables {
 class CylindricalLBVelocityProfile : public CylindricalLBProfileObservable {
 public:
   using CylindricalLBProfileObservable::CylindricalLBProfileObservable;
-  std::vector<double> operator()() const override;
+  std::vector<double>
+  operator()(boost::mpi::communicator const &comm) const override;
   std::vector<std::size_t> shape() const override {
     auto const b = n_bins();
     return {b[0], b[1], b[2], 3};

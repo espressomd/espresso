@@ -45,6 +45,7 @@ add_subdirectory(mpiio)
 add_subdirectory(observables)
 add_subdirectory(pair_criteria)
 add_subdirectory(particle_data)
+add_subdirectory(profiler)
 add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
 add_subdirectory(shapes)
@@ -57,6 +58,7 @@ install(TARGETS espresso_script_interface
 
 target_link_libraries(
   espresso_script_interface PRIVATE espresso::config espresso::core
+                                    espresso::profiler
   PUBLIC espresso::utils MPI::MPI_CXX Boost::mpi espresso::shapes
   PRIVATE espresso::cpp_flags)
 

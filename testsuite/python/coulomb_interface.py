@@ -40,34 +40,34 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     if espressomd.has_features(["ELECTROSTATICS"]):
         test_dh = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.DH,
+            system.electrostatics, espressomd.electrostatics.DH,
             dict(prefactor=2., kappa=3., r_cut=1.5,
                  check_neutrality=True, charge_neutrality_tolerance=7e-12))
 
     if espressomd.has_features(["ELECTROSTATICS"]):
         test_rf = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.ReactionField,
+            system.electrostatics, espressomd.electrostatics.ReactionField,
             dict(prefactor=2., kappa=3., epsilon1=4., epsilon2=5., r_cut=1.5,
                  check_neutrality=True, charge_neutrality_tolerance=7e-12))
 
     if espressomd.has_features(["P3M"]):
         test_p3m_cpu_metallic = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.P3M,
+            system.electrostatics, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 10, 8], alpha=12., accuracy=0.01, tune=False,
                  check_neutrality=True, charge_neutrality_tolerance=7e-12,
                  check_complex_residuals=False))
         test_p3m_cpu_non_metallic = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.P3M,
+            system.electrostatics, espressomd.electrostatics.P3M,
             dict(prefactor=2., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 8, 8], alpha=12., accuracy=0.01, tune=False,
                  check_neutrality=True, charge_neutrality_tolerance=7e-12))
         test_p3m_cpu_elc = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.ELC,
+            system.electrostatics, espressomd.electrostatics.ELC,
             dict(gap_size=2., maxPWerror=1e-3, const_pot=True, pot_diff=-3.,
                  delta_mid_top=0.5, delta_mid_bot=0.5, check_neutrality=False,
                  actor=espressomd.electrostatics.P3M(
@@ -76,18 +76,18 @@ class Test(ut.TestCase):
 
     if espressomd.has_features(["P3M", "CUDA"]) and espressomd.gpu_available():
         test_p3m_gpu_metallic = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.P3MGPU,
+            system.electrostatics, espressomd.electrostatics.P3MGPU,
             dict(prefactor=2., epsilon=0., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 10, 8], alpha=12., accuracy=0.01, tune=False,
                  check_neutrality=True, charge_neutrality_tolerance=7e-12,
                  check_complex_residuals=False))
         test_p3m_gpu_non_metallic = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.P3MGPU,
+            system.electrostatics, espressomd.electrostatics.P3MGPU,
             dict(prefactor=2., epsilon=3., mesh_off=[0.6, 0.7, 0.8], r_cut=1.5,
                  cao=2, mesh=[8, 8, 8], alpha=12., accuracy=0.01, tune=False,
                  check_neutrality=True, charge_neutrality_tolerance=7e-12))
         test_p3m_gpu_elc = tests_common.generate_test_for_actor_class(
-            system, espressomd.electrostatics.ELC,
+            system.electrostatics, espressomd.electrostatics.ELC,
             dict(gap_size=2., maxPWerror=1e-3, const_pot=True, pot_diff=-3.,
                  delta_mid_top=0.5, delta_mid_bot=0.5, check_neutrality=False,
                  actor=espressomd.electrostatics.P3MGPU(
@@ -102,13 +102,25 @@ class Test(ut.TestCase):
             check_neutrality=True, charge_neutrality_tolerance=7e-12,
             timings=5, verbose=False)
         tests_common.generate_test_for_actor_class(
-            self.system, espressomd.electrostatics.MMM1D, valid_params)(self)
+            self.system.electrostatics, espressomd.electrostatics.MMM1D, valid_params)(self)
 
         for key in ["prefactor", "maxPWerror", "far_switch_radius", "timings"]:
             invalid_params = valid_params.copy()
             invalid_params[key] = -2
             with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
                 espressomd.electrostatics.MMM1D(**invalid_params)
+
+        # swapping two solvers should safely rollback to last valid solver
+        self.assertEqual(abs(self.system.analysis.energy()["coulomb"]), 0.)
+        mmm1d = espressomd.electrostatics.MMM1D(**valid_params)
+        self.system.electrostatics.solver = mmm1d
+        ref_energy = self.system.analysis.energy()["coulomb"]
+        with self.assertRaisesRegex(RuntimeError, "CoulombP3M: requires periodicity"):
+            p3m = espressomd.electrostatics.P3M(prefactor=1., accuracy=1e-2)
+            self.system.electrostatics.solver = p3m
+        self.assertEqual(self.system.electrostatics.solver, mmm1d)
+        self.assertAlmostEqual(
+            self.system.analysis.energy()["coulomb"], ref_energy, delta=1e-7)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["CUDA", "MMM1D_GPU"])
@@ -120,7 +132,7 @@ class Test(ut.TestCase):
             check_neutrality=True, charge_neutrality_tolerance=7e-12,
             bessel_cutoff=1)
         tests_common.generate_test_for_actor_class(
-            self.system, espressomd.electrostatics.MMM1DGPU, valid_params)(self)
+            self.system.electrostatics, espressomd.electrostatics.MMM1DGPU, valid_params)(self)
 
         for key in ["prefactor", "maxPWerror",
                     "far_switch_radius", "bessel_cutoff"]:
@@ -135,8 +147,8 @@ class Test(ut.TestCase):
         self.system.cell_system.set_n_square()
         actor = espressomd.electrostatics.MMM1D(prefactor=1.0, maxPWerror=1e-3)
         with self.assertRaisesRegex(RuntimeError, "The system is not charge neutral"):
-            self.system.actors.add(actor)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.electrostatics.solver = actor
+        self.assertIsNone(self.system.electrostatics.solver)
         self.assertFalse(actor.is_tuned)
         self.assertTrue(actor.check_neutrality)
         self.assertAlmostEqual(actor.charge_neutrality_tolerance, 2e-12)
@@ -158,8 +170,8 @@ class Test(ut.TestCase):
         actor = espressomd.electrostatics.MMM1D(
             prefactor=1., maxPWerror=1e-3, far_switch_radius=0.1)
         with self.assertRaisesRegex(RuntimeError, "MMM1D could not find a reasonable Bessel cutoff"):
-            self.system.actors.add(actor)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.electrostatics.solver = actor
+        self.assertIsNone(self.system.electrostatics.solver)
         self.assertFalse(actor.is_tuned)
 
     @utx.skipIfMissingGPU()
@@ -170,15 +182,15 @@ class Test(ut.TestCase):
         actor = espressomd.electrostatics.MMM1DGPU(
             prefactor=1., maxPWerror=1e-3, far_switch_radius=0.1)
         with self.assertRaisesRegex(RuntimeError, "No reasonable Bessel cutoff could be determined"):
-            self.system.actors.add(actor)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.electrostatics.solver = actor
+        self.assertIsNone(self.system.electrostatics.solver)
         self.assertFalse(actor.is_tuned)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc_p3m_exceptions(self):
         P3M = espressomd.electrostatics.P3M
         ELC = espressomd.electrostatics.ELC
-        # create valid actors
+        # create valid solvers
         dh = espressomd.electrostatics.DH(prefactor=1.2, kappa=0.8, r_cut=2.0)
         p3m_params = dict(prefactor=1., epsilon=0.1, accuracy=1e-2,
                           mesh=[16, 16, 16], cao=7, r_cut=1.5, alpha=0.9)
@@ -223,7 +235,7 @@ class Test(ut.TestCase):
         # run sanity checks
         elc = espressomd.electrostatics.ELC(
             gap_size=4., maxPWerror=1., actor=p3m)
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
         periodicity_err_msg = r"requires periodicity \(True, True, True\)"
         with self.assertRaisesRegex(Exception, periodicity_err_msg):
             self.system.periodicity = [False, False, False]
@@ -244,7 +256,7 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(Exception, "while assigning system parameter 'box_l': ERROR: ELC gap size .+ larger than box length in z-direction"):
             self.system.box_l = [10., 10., 2.5]
         self.system.box_l = [10., 10., 10.]
-        self.system.actors.clear()
+        self.system.electrostatics.solver = None
         with self.assertRaisesRegex(RuntimeError, "P3M real-space cutoff too large for ELC w/ dielectric contrast"):
             self.system.box_l = [10., 10., 5.]
             elc = espressomd.electrostatics.ELC(
@@ -257,15 +269,15 @@ class Test(ut.TestCase):
                 pot_diff=-3,
                 check_neutrality=False,
             )
-            self.system.actors.add(elc)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.electrostatics.solver = elc
+        self.assertIsNone(self.system.electrostatics.solver)
         self.system.box_l = [10., 10., 10.]
         self.system.periodicity = [True, True, False]
         with self.assertRaisesRegex(RuntimeError, periodicity_err_msg):
             elc = espressomd.electrostatics.ELC(
                 gap_size=2., maxPWerror=1., actor=p3m)
-            self.system.actors.add(elc)
-        self.assertEqual(len(self.system.actors), 0)
+            self.system.electrostatics.solver = elc
+        self.assertIsNone(self.system.electrostatics.solver)
         self.system.periodicity = [True, True, True]
 
 

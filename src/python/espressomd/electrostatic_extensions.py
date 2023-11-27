@@ -54,15 +54,6 @@ class ElectrostaticExtensions(ScriptInterfaceHelper):
     def required_keys(self):
         raise NotImplementedError("Derived classes must implement this method")
 
-    def _activate(self):
-        self.call_method("check_charge_neutrality")
-        self.call_method("activate")
-        utils.handle_errors("Coulomb extension activation failed")
-
-    def _deactivate(self):
-        self.call_method("deactivate")
-        utils.handle_errors("Coulomb extension deactivation failed")
-
 
 @script_interface_register
 class ICC(ElectrostaticExtensions):

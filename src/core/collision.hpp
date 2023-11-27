@@ -16,10 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_COLLISION_HPP
-#define CORE_COLLISION_HPP
+
+#pragma once
 
 #include "config/config.hpp"
+
+#include "cell_system/CellStructure.hpp"
 
 #include "BondList.hpp"
 #include "Particle.hpp"
@@ -99,7 +101,7 @@ extern Collision_parameters collision_params;
 void prepare_local_collision_queue();
 
 /// Handle the collisions recorded in the queue
-void handle_collisions();
+void handle_collisions(CellStructure &cell_structure);
 
 /** @brief Add the collision between the given particle ids to the collision
  *  queue
@@ -156,5 +158,3 @@ inline double collision_detection_cutoff() {
 #endif
   return -1.;
 }
-
-#endif

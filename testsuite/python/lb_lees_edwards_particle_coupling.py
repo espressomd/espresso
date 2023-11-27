@@ -29,7 +29,7 @@ system = espressomd.System(box_l=[10, 10, 10])
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBLeesEdwardsParticleCoupling(ut.TestCase):
     def test_viscous_coupling_with_offset(self):
-        system.actors.clear()
+        system.lb = None
         system.time_step = 1
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
@@ -42,7 +42,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
 
         lbf = espressomd.lb.LBFluidWalberla(
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
-        system.actors.add(lbf)
+        system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
 
         idx = int(offset % system.box_l[0])  # lb x index incl offset 
@@ -135,7 +135,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         # this is only the case, if the periodic imagesin the 
         # halo regoin calculate the drag force including the LE
         # shear velocity.
-        system.actors.clear()
+        system.lb = None
         system.time_step = 0.1
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
@@ -147,7 +147,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
 
         lbf = espressomd.lb.LBFluidWalberla(
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
-        system.actors.add(lbf)
+        system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
         system.integrator.run(200) 
         p = system.part.add(

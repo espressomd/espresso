@@ -63,8 +63,7 @@ class BHGPUTest(ut.TestCase):
             system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
             system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
-            g = espressomd.galilei.GalileiTransform()
-            g.kill_particle_motion(rotation=True)
+            self.system.galilei.kill_particle_motion(rotation=True)
             system.integrator.set_vv()
 
             system.non_bonded_inter[0, 0].lennard_jones.deactivate()
@@ -79,7 +78,7 @@ class BHGPUTest(ut.TestCase):
 
             dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
                 prefactor=pf_dawaanr)
-            system.actors.add(dds_cpu)
+            system.magnetostatics.solver = dds_cpu
             system.integrator.run(steps=0, recalc_forces=True)
 
             dawaanr_f = np.copy(system.part.all().f)
@@ -87,12 +86,12 @@ class BHGPUTest(ut.TestCase):
             dawaanr_e = system.analysis.energy()["total"]
 
             del dds_cpu
-            system.actors.clear()
+            system.magnetostatics.clear()
 
             system.integrator.run(steps=0, recalc_forces=True)
             bh_gpu = espressomd.magnetostatics.DipolarBarnesHutGpu(
                 prefactor=pf_bh_gpu, epssq=200.0, itolsq=8.0)
-            system.actors.add(bh_gpu)
+            system.magnetostatics.solver = bh_gpu
             system.integrator.run(steps=0, recalc_forces=True)
 
             bhgpu_f = np.copy(system.part.all().f)
@@ -126,7 +125,7 @@ class BHGPUTest(ut.TestCase):
             system.integrator.run(steps=0, recalc_forces=True)
 
             del bh_gpu
-            system.actors.clear()
+            system.magnetostatics.clear()
             system.part.clear()
 
 

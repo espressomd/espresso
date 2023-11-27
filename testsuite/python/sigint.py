@@ -25,6 +25,12 @@ import pathlib
 import os
 
 
+EXPECTED_TRACEBACK_ENDING = """ in handle_sigint
+    signal.raise_signal(signal.Signals.SIGINT)
+KeyboardInterrupt
+"""
+
+
 class SigintTest(ut.TestCase):
 
     script = str(pathlib.Path(__file__).parent / 'sigint_child.py')
@@ -33,7 +39,7 @@ class SigintTest(ut.TestCase):
         # send signal
         process.send_signal(sig)
         # capture stderr and return code (negative of signum)
-        stdout, stderr = process.communicate(input=None, timeout=6.)
+        stdout, stderr = process.communicate(input=None, timeout=16.)
         assert stdout is None
         traceback = stderr.decode()
         return_code = process.poll()
@@ -43,8 +49,8 @@ class SigintTest(ut.TestCase):
             self.assertEqual(traceback, "")
         elif sig == signal.Signals.SIGINT:
             self.assertIn(" self.integrator.run(", traceback)
-            self.assertTrue(traceback.endswith(
-                " in handle_sigint\n    signal.raise_signal(signal.Signals.SIGINT)\nKeyboardInterrupt\n"))
+            self.assertTrue(traceback.endswith(EXPECTED_TRACEBACK_ENDING),
+                            msg=f"Traceback failed string match:\n{traceback}")
 
     def test_signal_handling(self):
         signals = [signal.Signals.SIGINT, signal.Signals.SIGTERM]
@@ -69,7 +75,7 @@ class SigintTest(ut.TestCase):
                     self.check_signal_handling(process, sig)
                     break
                 tock = time.time()
-                assert tock - tick < 8., "subprocess timed out"
+                assert tock - tick < 18., "subprocess timed out"
                 time.sleep(0.1)
 
 

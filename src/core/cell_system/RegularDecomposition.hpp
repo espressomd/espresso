@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_CELL_SYSTEM_REGULAR_DECOMPOSITION_HPP
-#define ESPRESSO_SRC_CORE_CELL_SYSTEM_REGULAR_DECOMPOSITION_HPP
+#pragma once
 
 #include "cell_system/ParticleDecomposition.hpp"
 
@@ -79,7 +78,7 @@ struct RegularDecomposition : public ParticleDecomposition {
 
   boost::mpi::communicator m_comm;
   BoxGeometry const &m_box;
-  LocalBox<double> m_local_box;
+  LocalBox m_local_box;
   std::vector<Cell> cells;
   std::vector<Cell *> m_local_cells;
   std::vector<Cell *> m_ghost_cells;
@@ -88,8 +87,7 @@ struct RegularDecomposition : public ParticleDecomposition {
 
 public:
   RegularDecomposition(boost::mpi::communicator comm, double range,
-                       BoxGeometry const &box_geo,
-                       LocalBox<double> const &local_geo);
+                       BoxGeometry const &box_geo, LocalBox const &local_geo);
 
   GhostCommunicator const &exchange_ghosts_comm() const override {
     return m_exchange_ghosts_comm;
@@ -98,18 +96,22 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *> local_cells() override {
+  Utils::Span<Cell *const> local_cells() const override {
     return Utils::make_span(m_local_cells);
   }
-  Utils::Span<Cell *> ghost_cells() override {
+  Utils::Span<Cell *const> ghost_cells() const override {
     return Utils::make_span(m_ghost_cells);
   }
 
   /* Getter needed for HybridDecomposition */
-  std::vector<Cell *> get_local_cells() const { return m_local_cells; }
-  std::vector<Cell *> get_ghost_cells() const { return m_ghost_cells; }
+  auto const &get_local_cells() const { return m_local_cells; }
+  auto const &get_ghost_cells() const { return m_ghost_cells; }
 
   Cell *particle_to_cell(Particle const &p) override {
+    return position_to_cell(p.pos());
+  }
+
+  Cell const *particle_to_cell(Particle const &p) const override {
     return position_to_cell(p.pos());
   }
 
@@ -144,7 +146,20 @@ private:
 
   int calc_processor_min_num_cells() const;
 
-  Cell *position_to_cell(const Utils::Vector3d &pos);
+  int position_to_cell_index(Utils::Vector3d const &pos) const;
+
+  /**
+   * @brief Get pointer to the cell which corresponds to the position if the
+   * position is in the node's spatial domain, otherwise a nullptr.
+   */
+  Cell *position_to_cell(Utils::Vector3d const &pos) {
+    auto const index = position_to_cell_index(pos);
+    return (index < 0) ? nullptr : &(cells.at(index));
+  }
+  Cell const *position_to_cell(Utils::Vector3d const &pos) const {
+    auto const index = position_to_cell_index(pos);
+    return (index < 0) ? nullptr : &(cells.at(index));
+  }
 
   /**
    * @brief Move particles into the cell system if it belongs to this node.
@@ -222,5 +237,3 @@ private:
    */
   static constexpr int max_num_cells = 32768;
 };
-
-#endif

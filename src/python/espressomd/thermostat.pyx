@@ -19,10 +19,9 @@
 import functools
 include "myconfig.pxi"
 from . cimport utils
-from .lb import HydrodynamicInteraction
 
 
-def AssertThermostatType(*allowedthermostats):
+def AssertThermostatType(*allowed_thermostats):
     """Assert that only a certain group of thermostats is active at a time.
 
     Decorator class to ensure that only specific combinations of thermostats
@@ -42,7 +41,7 @@ def AssertThermostatType(*allowedthermostats):
 
     Parameters
     ----------
-    allowedthermostats : :obj:`str`
+    allowed_thermostats : :obj:`str`
         Allowed list of thermostats which are known to be compatible
         with one another.
 
@@ -50,7 +49,7 @@ def AssertThermostatType(*allowedthermostats):
     def decoratorfunction(function):
         @functools.wraps(function, assigned=('__name__', '__doc__'))
         def wrapper(*args, **kwargs):
-            if (not (thermo_switch in allowedthermostats) and
+            if (not (thermo_switch in allowed_thermostats) and
                     (thermo_switch != THERMO_OFF)):
                 raise Exception(
                     "This combination of thermostats is not allowed!")
@@ -109,11 +108,19 @@ cdef class Thermostat:
                                   seed=thmst["seed"])
                 langevin_set_rng_counter(thmst["counter"])
             if thmst["type"] == "LB":
+                # The LB fluid object is a deep copy of the original, we must
+                # attach it to be able to set up the particle coupling global
+                # variable, and then detach it to allow the original LB
+                # fluid object to be attached by the System class.
+                # This workaround will be removed when the thermostat class
+                # gets rewritten as a ScriptInterface class (#4266, #4594)
+                thmst["LB_fluid"].call_method("activate")
                 self.set_lb(
                     LB_fluid=thmst["LB_fluid"],
                     act_on_virtual=thmst["act_on_virtual"],
                     gamma=thmst["gamma"],
                     seed=thmst["rng_counter_fluid"])
+                thmst["LB_fluid"].call_method("deactivate")
             if thmst["type"] == "NPT_ISO":
                 if NPT:
                     self.set_npt(kT=thmst["kT"], gamma0=thmst["gamma0"],
@@ -257,7 +264,7 @@ cdef class Thermostat:
         lb_lbcoupling_set_gamma(0.0)
         mpi_bcast_lb_particle_coupling()
 
-#    @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
+    @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
     def set_langevin(self, kT, gamma, gamma_rotation=None,
                      act_on_virtual=False, seed=None):
         """
@@ -537,12 +544,13 @@ cdef class Thermostat:
             Frictional coupling constant for the MD particle coupling.
 
         """
+        from .lb import HydrodynamicInteraction
         if not isinstance(LB_fluid, HydrodynamicInteraction):
             raise ValueError(
                 "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
         self._LB_fluid = LB_fluid
-        if lb_lbfluid_get_kT() > 0.:
+        if LB_fluid.kT > 0.:
             if seed is None and lb_lbcoupling_is_seed_required():
                 raise ValueError(
                     "seed has to be given as keyword arg")

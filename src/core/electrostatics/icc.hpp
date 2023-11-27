@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_ELECTROSTATICS_ICC_HPP
-#define ESPRESSO_SRC_CORE_ELECTROSTATICS_ICC_HPP
+#pragma once
 
 /**
  * @file
@@ -52,6 +51,7 @@
 
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -87,7 +87,7 @@ struct icc_data {
   void sanity_checks() const;
 };
 
-struct ICCStar {
+struct ICCStar : public System::Leaf<ICCStar> {
   /** ICC parameters */
   icc_data icc_cfg;
 
@@ -105,7 +105,4 @@ struct ICCStar {
   void sanity_check() const;
 };
 
-void update_icc_particles();
-
 #endif // ELECTROSTATICS
-#endif

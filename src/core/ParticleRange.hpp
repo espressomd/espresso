@@ -27,7 +27,7 @@
 
 #include <cassert>
 
-using CellParticleIterator = ParticleIterator<Cell **>;
+using CellParticleIterator = ParticleIterator<Cell *const *>;
 
 /**
  * @brief A range of particles.

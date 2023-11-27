@@ -29,9 +29,9 @@
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <boost/mpi.hpp>
@@ -157,12 +157,12 @@ void mpi_set_brownian_gamma_rot_local(GammaType const &gamma) {
 
 void mpi_set_langevin_gamma_local(GammaType const &gamma) {
   langevin.gamma = gamma;
-  on_thermostat_param_change();
+  System::get_system().on_thermostat_param_change();
 }
 
 void mpi_set_langevin_gamma_rot_local(GammaType const &gamma) {
   langevin.gamma_rotation = gamma;
-  on_thermostat_param_change();
+  System::get_system().on_thermostat_param_change();
 }
 
 REGISTER_CALLBACK(mpi_set_brownian_gamma_local)
@@ -198,11 +198,11 @@ void mpi_set_thermo_virtual(bool thermo_virtual) {
 void mpi_set_temperature_local(double temperature) {
   ::temperature = temperature;
   try {
-    on_temperature_change();
+    System::get_system().on_temperature_change();
   } catch (std::exception const &err) {
     runtimeErrorMsg() << err.what();
   }
-  on_thermostat_param_change();
+  System::get_system().on_thermostat_param_change();
 }
 
 REGISTER_CALLBACK(mpi_set_temperature_local)
@@ -225,7 +225,7 @@ void mpi_set_thermo_switch(int thermo_switch) {
 void mpi_set_nptiso_gammas_local(double gamma0, double gammav) {
   npt_iso.gamma0 = gamma0;
   npt_iso.gammav = gammav;
-  on_thermostat_param_change();
+  System::get_system().on_thermostat_param_change();
 }
 
 REGISTER_CALLBACK(mpi_set_nptiso_gammas_local)

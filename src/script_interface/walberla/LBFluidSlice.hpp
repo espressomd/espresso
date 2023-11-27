@@ -38,6 +38,7 @@
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -45,7 +46,7 @@
 
 namespace ScriptInterface::walberla {
 
-using VelocityBounceBackType = boost::optional<Utils::Vector3d>;
+using VelocityBounceBackType = std::optional<Utils::Vector3d>;
 
 struct LBFieldSerializer {
   template <typename T> static Variant serialize(std::vector<T> const &values) {
@@ -74,7 +75,7 @@ struct LBFieldSerializer {
       auto const vector_variants = get_value<std::vector<Variant>>(variant);
       for (auto const &value : vector_variants) {
         if (is_none(value)) {
-          values.emplace_back(boost::none);
+          values.emplace_back(std::nullopt);
         } else {
           values.emplace_back(get_value<Utils::Vector3d>(value));
         }
@@ -129,6 +130,7 @@ public:
     m_shape_val["is_boundary"] = {1};
     m_shape_val["last_applied_force"] = {3};
     m_shape_val["pressure_tensor"] = {3, 3};
+    m_shape_val["pressure_tensor_neq"] = {3, 3};
   }
 
   Variant do_call_method(std::string const &name,

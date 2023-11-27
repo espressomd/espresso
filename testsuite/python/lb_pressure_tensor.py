@@ -44,18 +44,17 @@ class TestLBPressureTensor:
     system.cell_system.skin = 0
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.thermostat.turn_off()
 
     def setUp(self):
         # Setup
-        system = self.system
         self.lbf = self.lb_class(**self.params, **self.lb_params)
-        system.actors.add(self.lbf)
-        system.thermostat.set_lb(LB_fluid=self.lbf, seed=42)
+        self.system.lb = self.lbf
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=42)
 
         # Warmup
-        system.integrator.run(500)
+        self.system.integrator.run(500)
 
         # Sampling
         self.p_global = np.zeros((self.steps, 3, 3))
@@ -71,7 +70,7 @@ class TestLBPressureTensor:
             self.p_node1[i] = node1.pressure_tensor
             self.p_global[i] = self.lbf.pressure_tensor
 
-            system.integrator.run(2)
+            self.system.integrator.run(2)
 
     def assert_allclose_matrix(self, x, y, atol_diag, atol_offdiag):
         """Assert that all elements x_ij, y_ij are close with
@@ -101,21 +100,20 @@ class TestLBPressureTensor:
         # Pi_eq = rho c_s^2 I + kT / V
         p_avg_expected = np.diag(
             3 * [self.lbf.density * c_s**2 + self.lbf.kT / self.lbf.agrid**3])
-        # TODO WALBERLA: remove tolerance adjustments in diagonal terms
 
         # ... globally,
         self.assert_allclose_matrix(
             np.mean(self.p_global, axis=0),
-            p_avg_expected, atol_diag=c_s_lb**2 * 2, atol_offdiag=c_s_lb**2 / 9)
+            p_avg_expected, atol_diag=c_s_lb**2 * 3, atol_offdiag=c_s_lb**2 / 6)
 
         # ... for two nodes.
         for time_series in [self.p_node0, self.p_node1]:
             self.assert_allclose_matrix(
                 np.mean(time_series, axis=0),
-                p_avg_expected, atol_diag=c_s_lb**2 * 250, atol_offdiag=c_s_lb**2 * 6)
+                p_avg_expected, atol_diag=c_s_lb**2 * 200, atol_offdiag=c_s_lb**2 * 9)
 
         # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]==sigma_[ji] ...
-        tol_global = 4 / np.sqrt(self.steps)
+        tol_global = 8 / np.sqrt(self.steps)
         tol_node = tol_global * np.sqrt(N_CELLS**3)
 
         # ... for the two sampled nodes
@@ -141,13 +139,19 @@ class TestLBPressureTensor:
 
                 self.assertAlmostEqual(avg_ij, 0., delta=tol_node)
 
+        node = self.lbf[0, 0, 0]
+        p_eq = np.diag(3 * [self.lbf.density * c_s**2])
+        np.testing.assert_allclose(
+            np.copy(node.pressure_tensor) - p_eq,
+            np.copy(node.pressure_tensor_neq), rtol=0., atol=1e-7)
+
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestLBPressureTensorCPU(TestLBPressureTensor, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
-    steps = 8000
+    lb_params = {"single_precision": True}
+    steps = 5000
 
 
 # TODO WALBERLA

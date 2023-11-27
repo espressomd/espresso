@@ -38,9 +38,9 @@ public:
   using const_iterator = typename container_type::const_iterator;
 
 private:
-  container_type m_ekcontainer;
-  double m_tau{};
+  double m_tau;
   std::shared_ptr<walberla::PoissonSolver> m_poisson_solver;
+  container_type m_ekcontainer;
 
   bool lattice_equal(LatticeWalberla const &lhs,
                      LatticeWalberla const &rhs) const {
@@ -48,32 +48,19 @@ private:
            (lhs.get_grid_dimensions() == rhs.get_grid_dimensions());
   }
 
-  void sanity_checks(std::shared_ptr<EKSpecies> const &new_ek_epecies) const {
-    if (m_tau == 0.) {
-      throw std::runtime_error("EKContainer parameter 'tau' needs to be set");
-    }
-    if (is_poisson_solver_set()) {
-      if (not lattice_equal(new_ek_epecies->get_lattice(),
-                            m_poisson_solver->get_lattice())) {
-        throw std::runtime_error("EKSpecies lattice incompatible with existing "
-                                 "Poisson solver lattice");
-      }
-    }
-    if (not m_ekcontainer.empty()) {
-      auto const &old_ek_species = m_ekcontainer.front();
-      if (not lattice_equal(new_ek_epecies->get_lattice(),
-                            old_ek_species->get_lattice())) {
-        throw std::runtime_error(
-            "EKSpecies lattice incompatible with existing EKSpecies lattice");
-      }
+  void sanity_checks(std::shared_ptr<EKSpecies> const &new_ek_species) const {
+    if (not lattice_equal(new_ek_species->get_lattice(),
+                          m_poisson_solver->get_lattice())) {
+      throw std::runtime_error("EKSpecies lattice incompatible with existing "
+                               "Poisson solver lattice");
     }
   }
 
   void sanity_checks(
-      std::shared_ptr<walberla::PoissonSolver> const &new_solver) const {
+      std::shared_ptr<walberla::PoissonSolver> const &new_ek_solver) const {
     if (not m_ekcontainer.empty()) {
       auto const &old_ek_species = m_ekcontainer.front();
-      if (not lattice_equal(new_solver->get_lattice(),
+      if (not lattice_equal(new_ek_solver->get_lattice(),
                             old_ek_species->get_lattice())) {
         throw std::runtime_error("Poisson solver lattice incompatible with "
                                  "existing EKSpecies lattice");
@@ -82,17 +69,22 @@ private:
   }
 
 public:
-  void add(std::shared_ptr<EKSpecies> const &ek_species) {
-    assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species) ==
-           m_ekcontainer.end());
+  EKContainer(double tau, std::shared_ptr<walberla::PoissonSolver> solver)
+      : m_tau{tau}, m_poisson_solver{std::move(solver)}, m_ekcontainer{} {}
 
+  bool contains(std::shared_ptr<EKSpecies> const &ek_species) const noexcept {
+    return std::find(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species) !=
+           m_ekcontainer.end();
+  }
+
+  void add(std::shared_ptr<EKSpecies> const &ek_species) {
+    assert(not contains(ek_species));
     sanity_checks(ek_species);
     m_ekcontainer.emplace_back(ek_species);
   }
 
   void remove(std::shared_ptr<EKSpecies> const &ek_species) {
-    assert(std::find(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species) !=
-           m_ekcontainer.end());
+    assert(contains(ek_species));
     m_ekcontainer.erase(
         std::remove(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species),
         m_ekcontainer.end());
@@ -106,14 +98,9 @@ public:
 
   void
   set_poisson_solver(std::shared_ptr<walberla::PoissonSolver> const &solver) {
-    if (solver != nullptr) {
-      sanity_checks(solver);
-    }
+    assert(solver != nullptr);
+    sanity_checks(solver);
     m_poisson_solver = solver;
-  }
-
-  [[nodiscard]] bool is_poisson_solver_set() const noexcept {
-    return m_poisson_solver != nullptr;
   }
 
   [[nodiscard]] double get_tau() const noexcept { return m_tau; }
@@ -131,5 +118,9 @@ public:
 
   [[nodiscard]] std::size_t get_potential_field_id() const {
     return m_poisson_solver->get_potential_field_id();
+  }
+
+  LatticeWalberla const &get_lattice() const noexcept {
+    return m_poisson_solver->get_lattice();
   }
 };

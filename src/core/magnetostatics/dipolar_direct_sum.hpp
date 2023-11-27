@@ -19,12 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_HPP
-#define ESPRESSO_SRC_CORE_MAGNETOSTATICS_DIPOLAR_DIRECT_SUM_HPP
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef DIPOLES
+
+#include "magnetostatics/actor.hpp"
 
 #include "ParticleRange.hpp"
 
@@ -34,8 +35,7 @@
  * Assumes minimum image convention for those axis in which the
  * system is periodic.
  */
-struct DipolarDirectSum {
-  double prefactor;
+struct DipolarDirectSum : public Dipoles::Actor<DipolarDirectSum> {
   int n_replicas;
   DipolarDirectSum(double prefactor, int n_replicas);
 
@@ -49,7 +49,9 @@ struct DipolarDirectSum {
 
   double long_range_energy(ParticleRange const &particles) const;
   void add_long_range_forces(ParticleRange const &particles) const;
+#ifdef DIPOLE_FIELD_TRACKING
+  void dipole_field_at_part(ParticleRange const &particles) const;
+#endif
 };
 
 #endif // DIPOLES
-#endif

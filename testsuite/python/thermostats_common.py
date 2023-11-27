@@ -23,31 +23,33 @@ import espressomd.accumulators
 import espressomd.observables
 
 
-def single_component_maxwell(x1, x2, kT):
+def single_component_maxwell(x1, x2, kT, mass=1.):
     """Integrate the probability density from x1 to x2 using the trapezoidal rule"""
     x = np.linspace(x1, x2, 1000)
-    return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
+    maxwell_distr = np.exp(- mass * x**2 / (2. * kT)) * \
+        np.sqrt(mass / (2. * np.pi * kT))
+    return np.trapz(maxwell_distr, x=x)
 
 
 class ThermostatsCommon:
 
     """Tests the velocity distribution created by a thermostat."""
 
-    def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
+    def check_velocity_distribution(
+            self, vel, minmax, n_bins, error_tol, kT, mass=1.):
         """Check the recorded particle distributions in velocity against a
            histogram with n_bins bins. Drop velocities outside minmax. Check
            individual histogram bins up to an accuracy of error_tol against
            the analytical result for kT."""
         for i in range(3):
-            hist = np.histogram(
+            hist, bin_edges = np.histogram(
                 vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
-            data = hist[0] / float(vel.shape[0])
-            bins = hist[1]
+            hist = hist / len(vel)
             expected = []
             for j in range(n_bins):
                 expected.append(single_component_maxwell(
-                    bins[j], bins[j + 1], kT))
-            np.testing.assert_allclose(data[:n_bins], expected, atol=error_tol)
+                    bin_edges[j], bin_edges[j + 1], kT, mass=mass))
+            np.testing.assert_allclose(hist, expected, atol=error_tol)
 
     def test_00_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""

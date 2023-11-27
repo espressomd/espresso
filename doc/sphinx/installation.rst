@@ -8,10 +8,10 @@ This chapter will describe how to get, compile and run the software.
 |es| releases are available as source code packages from the homepage [1]_.
 This is where new users should get the code. The code within release packages
 is tested and known to run on a number of platforms.
-Alternatively, people that want to use the newest features of |es| or that
-want to start contributing to the software can instead obtain the
+Alternatively, people who want to use the newest features of |es| or
+start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from |es|'s project page at Github  [3]_. This code might be not as well
+from |es|'s project page at GitHub  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -93,7 +93,7 @@ To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
-      libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
+      libboost-all-dev openmpi-common fftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
       python3-scipy python3-opengl libgsl-dev freeglut3
 
 Optionally the ccmake utility can be installed for easier configuration:
@@ -197,7 +197,7 @@ To run the samples and tutorials, start by installing the following packages:
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
-version <= 4.4 and can be executed by any of these tools:
+:cite:`kluyver16a` version <= 4.4 and can be executed by any of these tools:
 
 * `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
@@ -221,7 +221,7 @@ To use Jupyter Notebook, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user nbformat notebook 'jupyter_contrib_nbextensions==0.5.1'
+    pip3 install --user 'nbformat==5.1.3' 'nbconvert==6.4.5' 'notebook==6.4.8' 'jupyter_contrib_nbextensions==0.5.1'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
@@ -429,6 +429,9 @@ General features
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 
 -  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
+
+-  ``DIPOLE_FIELD_TRACKING`` This enables the CPU implementation of the dipolar direct sum
+   to calculate the total dipole field at particle positions.
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
@@ -766,8 +769,8 @@ The following options control features from external libraries:
 
 The following options control code instrumentation:
 
-* ``ESPRESSO_BUILD_WITH_VALGRIND_MARKERS``: Build with valgrind instrumentation markers
-* ``ESPRESSO_BUILD_WITH_PROFILER``: Build with Caliper profiler annotations
+* ``ESPRESSO_BUILD_WITH_VALGRIND``: Build with Valgrind instrumentation
+* ``ESPRESSO_BUILD_WITH_CALIPER``: Build with Caliper instrumentation
 * ``ESPRESSO_BUILD_WITH_MSAN``: Compile C++ code with memory sanitizer
 * ``ESPRESSO_BUILD_WITH_ASAN``: Compile C++ code with address sanitizer
 * ``ESPRESSO_BUILD_WITH_UBSAN``: Compile C++ code with undefined behavior sanitizer
@@ -899,6 +902,12 @@ the clone. You can automate this task by adapting the following commands:
 
     sed -ri 's|GIT_REPOSITORY +.+stokesian-dynamics.git|GIT_REPOSITORY /work/username/stokesian_dynamics|' CMakeLists.txt
 
+* ``ESPRESSO_BUILD_WITH_CALIPER``
+
+  .. code-block:: bash
+
+    sed -ri 's|GIT_REPOSITORY +.+/Caliper.git|GIT_REPOSITORY /work/username/caliper|' CMakeLists.txt
+
 
 Compiling, testing and installing
 ---------------------------------
@@ -966,50 +975,8 @@ Troubleshooting
 
 If you encounter issues when building |es| or running it for the first time,
 please have a look at the `Installation FAQ <https://github.com/espressomd/espresso/wiki/Installation-FAQ>`__
-on the wiki. If you still didn't find an answer, see :ref:`Community support`.
-
-Many algorithms require parameters that must be provided within valid ranges.
-Range checks are implemented to catch invalid input values and generate
-meaningful error messages, however these checks cannot always catch errors
-arising from an invalid combination of two or more features. If you encounter
-issues with a script, you can activate extra runtime checks by enabling C++
-assertions. This is achieved by updating the CMake project and rebuilding
-|es| with:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=RelWithAssert
-    make -j$(nproc)
-
-The resulting build will run slightly slower, but will produce an error
-message for common issues, such as divisions by zero, array access out
-of bounds, or square roots of negative numbers.
-
-If this still doesn't help, you can activate debug symbols to help with
-instrumentation:
-
-.. code-block:: bash
-
-    cmake . -D CMAKE_BUILD_TYPE=Debug
-    make -j$(nproc)
-
-The resulting build will be quite slow but will allow many debugging tools
-to be used. For details, please refer to chapter :ref:`Debugging es`.
-
-If you are dealing with a segmentation fault or undefined behavior, and GDB
-doesn't help or is too cumbersome to use (e.g. in MPI-parallel simulations),
-you can as a last resort activate sanitizers:
-
-.. code-block:: bash
-
-    cmake . -D ESPRESSO_BUILD_WITH_ASAN=ON -D ESPRESSO_BUILD_WITH_UBSAN=ON -D CMAKE_BUILD_TYPE=Release
-    make -j$(nproc)
-
-The resulting build will be around 5 times slower that a debug build,
-but it will generate valuable reports when detecting fatal exceptions.
-For more details, please consult the online documentation of
-`UBSAN <https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html>`__ and
-`ASAN <https://github.com/google/sanitizers/wiki/AddressSanitizer>`__.
+on the wiki. If you still didn't find an answer, try the debugging tools
+documented in :ref:`Debugging`. If this still didn't help, see :ref:`Community support`.
 
 ____
 

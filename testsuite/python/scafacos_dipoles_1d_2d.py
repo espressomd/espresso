@@ -40,7 +40,7 @@ class Scafacos1d2d(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
         self.system.periodicity = [True, True, True]
 
     def test_scafacos(self):
@@ -114,7 +114,7 @@ class Scafacos1d2d(ut.TestCase):
                             "p2nfft_epsB": "0.125"})
                     system.box_l = np.array([1., 1., 1.]) * box_l
 
-                system.actors.add(scafacos)
+                system.magnetostatics.solver = scafacos
                 system.integrator.run(0)
 
                 fcs_f = np.copy(system.part.all().f)
@@ -135,7 +135,7 @@ class Scafacos1d2d(ut.TestCase):
                                            err_msg="Forces don't match")
 
                 system.part.clear()
-                system.actors.clear()
+                system.magnetostatics.solver = None
 
 
 if __name__ == "__main__":

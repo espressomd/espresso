@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBJECT_LIST_HPP
-#define SCRIPT_INTERFACE_OBJECT_LIST_HPP
+#pragma once
 
 #include "script_interface/ObjectContainer.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -52,6 +51,8 @@ private:
 
   virtual void add_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
   virtual void remove_in_core(const std::shared_ptr<ManagedType> &obj_ptr) = 0;
+  virtual bool
+  has_in_core(const std::shared_ptr<ManagedType> &obj_ptr) const = 0;
 
 public:
   ObjectList() {
@@ -74,6 +75,12 @@ public:
    * @param element The element to add.
    */
   void add(std::shared_ptr<ManagedType> const &element) {
+    if (has_in_core(element)) {
+      if (Base::context()->is_head_node()) {
+        throw std::runtime_error("This object is already present in the list");
+      }
+      throw Exception("");
+    }
     add_in_core(element);
     m_elements.push_back(element);
   }
@@ -84,6 +91,12 @@ public:
    * @param element The element to remove.
    */
   void remove(std::shared_ptr<ManagedType> const &element) {
+    if (not has_in_core(element)) {
+      if (Base::context()->is_head_node()) {
+        throw std::runtime_error("This object is absent from the list");
+      }
+      throw Exception("");
+    }
     remove_in_core(element);
     m_elements.erase(std::remove(m_elements.begin(), m_elements.end(), element),
                      m_elements.end());
@@ -146,4 +159,3 @@ protected:
   }
 };
 } // Namespace ScriptInterface
-#endif

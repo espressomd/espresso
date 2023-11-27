@@ -27,6 +27,7 @@
 #include "script_interface/pair_criteria/PairCriterion.hpp"
 
 #include "core/pair_criteria/EnergyCriterion.hpp"
+#include "core/system/System.hpp"
 
 #include <memory>
 #include <string>
@@ -36,7 +37,9 @@ namespace PairCriteria {
 
 class EnergyCriterion : public PairCriterion {
 public:
-  EnergyCriterion() : m_c(std::make_shared<::PairCriteria::EnergyCriterion>()) {
+  EnergyCriterion()
+      : m_c(std::make_shared<::PairCriteria::EnergyCriterion>(
+            ::System::get_system())) {
     add_parameters(
         {{"cut_off",
           [this](Variant const &v) { m_c->set_cut_off(get_value<double>(v)); },

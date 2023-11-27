@@ -25,13 +25,13 @@
 
 #include "config/config.hpp"
 
-#include "core/cells.hpp"
+#include "core/Observable_stat.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/communication.hpp"
-#include "core/energy.hpp"
-#include "core/event.hpp"
 #include "core/particle_node.hpp"
 #include "core/reaction_methods/ReactionAlgorithm.hpp"
 #include "core/reaction_methods/utils.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/contains.hpp>
 
@@ -104,7 +104,9 @@ ReactionAlgorithm::ReactionAlgorithm() {
 
 static auto get_real_particle(boost::mpi::communicator const &comm, int p_id) {
   assert(p_id >= 0);
-  auto ptr = ::cell_structure.get_local_particle(p_id);
+  auto const &system = ::System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  auto ptr = cell_structure.get_local_particle(p_id);
   if (ptr != nullptr and ptr->is_ghost()) {
     ptr = nullptr;
   }

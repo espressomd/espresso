@@ -1,0 +1,35 @@
+/*
+ * Copyright (C) 2023 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "electrostatics/coulomb.hpp"
+#include "magnetostatics/dipoles.hpp"
+
+#include "ek/Implementation.hpp"
+#include "lb/Implementation.hpp"
+
+#include "bond_breakage/bond_breakage.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "galilei/ComFixed.hpp"
+#include "galilei/Galilei.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
