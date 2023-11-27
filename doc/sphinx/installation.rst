@@ -175,7 +175,7 @@ To generate the Sphinx documentation, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user -c requirements.txt \
+    python3 -m pip install --user -c requirements.txt \
         sphinx sphinxcontrib-bibtex sphinx-toggleprompt
 
 To generate the Doxygen documentation, install the following packages:
@@ -221,7 +221,8 @@ To use Jupyter Notebook, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user 'nbformat==5.1.3' 'nbconvert==6.4.5' 'notebook==6.4.8' 'jupyter_contrib_nbextensions==0.5.1'
+    python3 -m pip install --user -c requirements.txt \
+        nbformat nbconvert notebook jupyter_contrib_nbextensions==0.5.1
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
@@ -230,7 +231,8 @@ Alternatively, to use JupyterLab, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user nbformat notebook jupyterlab
+    python3 -m pip install --user -c requirements.txt \
+        nbformat nbconvert notebook jupyterlab
 
 Alternatively, to use VS Code Jupyter, install the following extensions:
 
@@ -316,7 +318,7 @@ Run the following commands:
       doxygen gsl numpy scipy ipython jupyter freeglut
     brew install hdf5-mpi
     brew link --force cython
-    pip install -c requirements.txt PyOpenGL matplotlib
+    python -m pip install -c requirements.txt PyOpenGL matplotlib
 
 .. _Quick installation:
 

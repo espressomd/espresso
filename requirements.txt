@@ -17,6 +17,7 @@ pystencils==1.2
 lbmpy==1.2
 sympy==1.9
 islpy==2022.2.1
+jinja2>=3.0.3
 # CI-related
 requests>=2.25.1
 lxml>=4.8.0
@@ -28,6 +29,8 @@ sphinxcontrib-bibtex>=2.6.1
 numpydoc>=1.5.0
 pybtex>=0.23
 # jupyter dependencies
+notebook==6.4.8
+nbformat==5.1.3
 nbconvert==6.5.1
 jupyter_contrib_nbextensions==0.5.1
 tqdm>=4.57.0

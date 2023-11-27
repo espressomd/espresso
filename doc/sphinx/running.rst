@@ -6,8 +6,19 @@ Running a simulation
 |es| is implemented as a Python module. This means that you need to write a
 python script for any task you want to perform with |es|. In this chapter,
 the basic structure of the interface will be explained. For a practical
-introduction, see the tutorials, which are also part of the
-distribution.
+introduction, see the tutorials, which are also part of the distribution.
+
+Most users should consider building and then installing |es| locally.
+In this way, |es| behaves like any regular Python package and will
+be recognized by the Python interpreter and Jupyter notebooks.
+
+Most developers prefer the ``pypresso`` resp. ``ipypresso`` wrapper scripts,
+which export the build folder into the ``$PYTHONPATH`` environment variable
+and then call ``python`` resp. ``jupyter``. They also introduce extra command
+line options to help developers run simulations inside a debugger.
+Command line examples in this chapter use the wrapper scripts instead of the
+Python and Jupyter programs, although they are perfectly interchangeable
+when not using a debugger.
 
 .. _Running es:
 
