@@ -218,7 +218,7 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
         }
 
         if (in_box(pos_shifted, halo_lower_corner, halo_upper_corner)) {
-          res.push_back(pos_shifted);
+          res.emplace_back(pos_shifted);
         }
       }
     }
