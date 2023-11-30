@@ -82,33 +82,11 @@ in the build folder, do:
 
     make tutorials
 
-The tutorials contain solutions hidden with the ``exercise2`` NB extension.
-Since this extension is only available for Jupyter Notebook, JupyterLab
-users need to convert the tutorials:
-
-.. code-block:: bash
-
-    for f in doc/tutorials/*/*.ipynb; do
-      ./pypresso doc/tutorials/convert.py exercise2 --to-jupyterlab ${f}
-    done
-
-Likewise, VS Code Jupyter users need to convert the tutorials:
-
-.. code-block:: bash
-
-    for f in doc/tutorials/*/*.ipynb; do
-      ./pypresso doc/tutorials/convert.py exercise2 --to-vscode-jupyter ${f}
-    done
+The tutorials contain solutions hidden inside disclosure boxes.
+Click on "Show solution" to reveal them.
 
 To interact with notebooks, move to the directory containing the tutorials
 and call the ``ipypresso`` script to start a local Jupyter session.
-
-For Jupyter Notebook and IPython users:
-
-.. code-block:: bash
-
-    cd doc/tutorials
-    ../../ipypresso notebook
 
 For JupyterLab users:
 
@@ -116,6 +94,13 @@ For JupyterLab users:
 
     cd doc/tutorials
     ../../ipypresso lab
+
+For Jupyter Classic users:
+
+.. code-block:: bash
+
+    cd doc/tutorials
+    ../../ipypresso nbclassic
 
 For VS Code Jupyter users, no action is needed if ``pypresso`` was set as
 the interpreter path (see details in :ref:`Running inside an IDE`).
@@ -140,29 +125,15 @@ will exit the Python interpreter and Jupyter will notify you that the current
 Python kernel stopped. If a cell takes too long to execute, you may interrupt
 it with the stop button.
 
-Solutions cells are created using the ``exercise2`` plugin from nbextensions.
-To prevent solution code cells from running when clicking on "Run All", these
-code cells need to be converted to Markdown cells and fenced with `````python``
-and ```````.
+Solutions cells are marked up with the code comment ``# SOLUTION CELL``
+(must be on the first line). In the build folder, these solution cells
+will be automatically converted to Markdown cells.
 
 To close the Jupyter session, go to the terminal where it was started and use
 the keyboard shortcut Ctrl+C twice.
 
-When starting a Jupyter session, you may see the following warning in the
-terminal:
-
-.. code-block:: none
-
-    [TerminalIPythonApp] WARNING | Subcommand `ipython notebook` is deprecated and will be removed in future versions.
-    [TerminalIPythonApp] WARNING | You likely want to use `jupyter notebook` in the future
-
-This only means |es| was compiled with IPython instead of Jupyter. If Jupyter
-is installed on your system, the notebook will automatically close IPython and
-start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
-``-D IPYTHON_EXECUTABLE=$(which jupyter)``.
-
-You can find the official Jupyter documentation at
-https://jupyter.readthedocs.io/en/latest/running.html
+You can find the official JupyterLab documentation at
+https://jupyterlab.readthedocs.io/en/latest/user/interface.html
 
 .. _Running inside an IDE:
 
