@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 The ESPResSo project
+# Copyright (C) 2019-2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -29,11 +29,13 @@ import argparse
 import nbformat
 import re
 import os
-import ast
 import sys
 import uuid
 sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
 import importlib_wrapper as iw
+
+
+SOLUTION_CELL_TOKEN = "# SOLUTION CELL"
 
 
 def get_code_cells(nb):
@@ -79,6 +81,22 @@ def remove_empty_cells(nb):
             nb['cells'].pop(i)
 
 
+def parse_solution_cell(cell):
+    if cell["cell_type"] == "code":
+        source = cell["source"].strip()
+        if source.startswith(f"{SOLUTION_CELL_TOKEN}\n"):
+            return source.split("\n", 1)[1].strip()
+    return None
+
+
+def convert_exercise2_to_code(nb):
+    for i in range(len(nb["cells"]) - 1, 0, -1):
+        cell = nb["cells"][i]
+        solution = parse_solution_cell(cell)
+        if solution is not None:
+            cell["source"] = solution
+
+
 def disable_plot_interactivity(nb):
     """
     Replace all occurrences of the magic command ``%matplotlib notebook``
@@ -91,127 +109,29 @@ def disable_plot_interactivity(nb):
                                     cell['source'], flags=re.M)
 
 
-def split_matplotlib_cells(nb):
-    """
-    If a cell imports matplotlib, split the cell to keep the
-    import statement separate from the code that uses matplotlib.
-    This prevents a known bug in the Jupyter backend which causes
-    the plot object to be represented as a string instead of a canvas
-    when created in the cell where matplotlib is imported for the
-    first time (https://github.com/jupyter/notebook/issues/3523).
-    """
-    for i in range(len(nb['cells']) - 1, -1, -1):
-        cell = nb['cells'][i]
-        if cell['cell_type'] == 'code' and 'matplotlib' in cell['source']:
-            code = iw.protect_ipython_magics(cell['source'])
-            # split cells after matplotlib imports
-            mapping = iw.delimit_statements(code)
-            tree = ast.parse(code)
-            visitor = iw.GetMatplotlibPyplot()
-            visitor.visit(tree)
-            if visitor.matplotlib_first:
-                code = iw.deprotect_ipython_magics(code)
-                lines = code.split('\n')
-                lineno_end = mapping[visitor.matplotlib_first]
-                split_code = '\n'.join(lines[lineno_end:]).lstrip('\n')
-                if split_code:
-                    new_cell = nbformat.v4.new_code_cell(source=split_code)
-                    if 'id' not in cell and 'id' in new_cell:
-                        del new_cell['id']
-                    nb['cells'].insert(i + 1, new_cell)
-                lines = lines[:lineno_end]
-                nb['cells'][i]['source'] = '\n'.join(lines).rstrip('\n')
-
-
-def convert_exercise2_to_code(nb):
-    """
-    Walk through the notebook cells and convert exercise2 Markdown cells
-    containing fenced python code to exercise2 code cells.
-    """
-    for i, cell in enumerate(nb['cells']):
-        if 'solution2' in cell['metadata']:
-            cell['metadata']['solution2'] = 'shown'
-        # convert solution markdown cells into code cells
-        if cell['cell_type'] == 'markdown' and 'solution2' in cell['metadata'] \
-                and 'solution2_first' not in cell['metadata']:
-            lines = cell['source'].strip().split('\n')
-            if lines[0].strip() == '```python' and lines[-1].strip() == '```':
-                source = '\n'.join(lines[1:-1]).strip()
-                nb['cells'][i] = nbformat.v4.new_code_cell(source=source)
-                nb['cells'][i]['metadata'] = cell['metadata']
-                nb['cells'][i]['metadata']['solution2'] = 'shown'
-                if 'id' in nb['cells'][i]:
-                    del nb['cells'][i]['id']
-
-
 def convert_exercise2_to_markdown(nb):
     """
-    Walk through the notebook cells and convert exercise2 Python cells
-    to exercise2 Markdown cells using a fenced code block.
+    Walk through the notebook cells and convert solutions cells to Markdown
+    format and append an empty code cell.
     """
-    for i, cell in enumerate(nb['cells']):
-        if 'solution2' in cell['metadata']:
-            cell['metadata']['solution2'] = 'hidden'
-        # convert solution code cells into markdown cells
-        if cell['cell_type'] == 'code' and 'solution2' in cell['metadata']:
-            content = '```python\n' + cell['source'] + '\n```'
-            nb['cells'][i] = nbformat.v4.new_markdown_cell(source=content)
-            nb['cells'][i]['metadata'] = cell['metadata']
-            nb['cells'][i]['metadata']['solution2'] = 'hidden'
-            if 'id' in nb['cells'][i]:
-                del nb['cells'][i]['id']
-
-
-def convert_exercise2_to_jupyterlab(nb):
-    """
-    Walk through the notebook cells and convert exercise2 Markdown cells
-    containing fenced python code to a JupyterLab-compatible format.
-    As of 2022, there is no equivalent of exercise2 for JupyterLab
-    ([chart](https://jupyterlab-contrib.github.io/migrate_from_classical.html)),
-    but a similar effect can be obtained with basic HTML.
-
-    This also converts a notebook to Notebook Format 4.5. ESPResSo notebooks
-    cannot be saved in 4.5 format since both Jupyter Notebook and JupyterLab
-    overwrite the cell ids with random strings after each save, which is a
-    problem for version control. The notebooks need to be converted to the
-    4.5 format to silence JSON parser errors in JupyterLab.
-    """
-    jupyterlab_tpl = """\
-<details {0} style="margin: 0.8em 4em;">\
+    solution_tpl = """\
+<details style="margin: 0.8em 4em;">\
 <summary style="cursor: pointer; margin-left: -3em;">Show solution</summary>
 <div style="margin-bottom: 2em;"></div>
 
-{1}
+```python
+{0}
+```
 <div style="margin-top: 2em;"></div>
 </details>\
 """
-    for i, cell in enumerate(nb['cells']):
+    for i, cell in reversed(list(enumerate(nb["cells"]))):
         # convert solution markdown cells into code cells
-        if cell['cell_type'] == 'markdown' and 'solution2' in cell['metadata'] \
-                and 'solution2_first' not in cell['metadata']:
-            lines = cell['source'].strip().split('\n')
-            shown = 'open=""' if cell['metadata']['solution2'] == 'shown' else ''
-            if lines[0].strip() == '```python' and lines[-1].strip() == '```':
-                source = jupyterlab_tpl.format(shown, '\n'.join(lines).strip())
-                nb['cells'][i] = nbformat.v4.new_markdown_cell(source=source)
-        # convert cell to notebook format 4.5
-        if 'id' not in cell:
-            cell = uuid.uuid4().hex[:8]
-
-    # change to notebook format 4.5
-    current_version = (nb['nbformat'], nb['nbformat_minor'])
-    assert current_version >= (4, 0)
-    if current_version < (4, 5):
-        nb['nbformat_minor'] = 5
-
-
-def convert_exercise2_to_vscode_jupyter(nb):
-    """
-    Walk through the notebook cells and convert exercise2 Markdown cells
-    containing fenced python code to a VS Code Jupyter-compatible format.
-    As of 2022, there is no equivalent of exercise2 for VS Code Jupyter.
-    """
-    convert_exercise2_to_jupyterlab(nb)
+        solution = parse_solution_cell(cell)
+        if solution is not None:
+            source = solution_tpl.format(solution)
+            nb["cells"][i] = nbformat.v4.new_markdown_cell(source=source)
+            nb["cells"].insert(i + 1, nbformat.v4.new_code_cell(source=""))
 
 
 def apply_autopep8(nb):
@@ -287,19 +207,13 @@ def handle_ci_case(args):
         for filepath in args.scripts:
             add_cell_from_script(nb, filepath)
 
-    # convert solution cells to code cells
-    if args.exercise2:
-        convert_exercise2_to_code(nb)
-
-    # remove empty cells (e.g. those below exercise2 cells)
-    if args.remove_empty_cells:
+    # cleanup solution cells and remove empty cells
+    if args.prepare_for_html:
         remove_empty_cells(nb)
+        convert_exercise2_to_code(nb)
 
     # disable plot interactivity
     disable_plot_interactivity(nb)
-
-    # guard against a jupyter bug involving matplotlib
-    split_matplotlib_cells(nb)
 
     if args.substitutions or args.execute:
         # substitute global variables
@@ -326,16 +240,10 @@ def handle_exercise2_case(args):
 
     if args.to_md:
         convert_exercise2_to_markdown(nb)
-    elif args.to_jupyterlab:
-        convert_exercise2_to_jupyterlab(nb)
-    elif args.to_vscode_jupyter:
-        convert_exercise2_to_vscode_jupyter(nb)
     elif args.to_py:
         convert_exercise2_to_code(nb)
     elif args.pep8:
-        convert_exercise2_to_code(nb)
         apply_autopep8(nb)
-        convert_exercise2_to_markdown(nb)
     elif args.remove_empty_cells:
         remove_empty_cells(nb)
 
@@ -358,25 +266,19 @@ parser_ci.add_argument('--substitutions', nargs='*',
                        help='variables to substitute')
 parser_ci.add_argument('--scripts', nargs='*',
                        help='scripts to insert in new cells')
-parser_ci.add_argument('--exercise2', action='store_true',
-                       help='convert exercise2 solutions into code cells')
-parser_ci.add_argument('--remove-empty-cells', action='store_true',
-                       help='remove empty cells')
+parser_ci.add_argument('--prepare-for-html', action='store_true',
+                       help='remove empty cells and CI/CD comment lines')
 parser_ci.add_argument('--execute', action='store_true',
                        help='run the notebook')
 parser_ci.set_defaults(callback=handle_ci_case)
 # exercise2 module
 parser_exercise2 = subparsers.add_parser(
-    'exercise2', help='module for exercise2 conversion (Markdown <-> Python)')
+    'cells', help='module to post-process cells')
 parser_exercise2.add_argument('input', type=str, help='path to the Jupyter '
                               'notebook (in-place conversion)')
 group_exercise2 = parser_exercise2.add_mutually_exclusive_group(required=True)
 group_exercise2.add_argument('--to-md', action='store_true',
                              help='convert solution cells to Markdown')
-group_exercise2.add_argument('--to-jupyterlab', action='store_true',
-                             help='convert solution cells to JupyterLab')
-group_exercise2.add_argument('--to-vscode-jupyter', action='store_true',
-                             help='convert solution cells to VS Code Jupyter')
 group_exercise2.add_argument('--to-py', action='store_true',
                              help='convert solution cells to Python')
 group_exercise2.add_argument('--pep8', action='store_true',
