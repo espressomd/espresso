@@ -492,6 +492,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     /* sqrt(-1)*k differentiation */
     int j[3];
     int ind = 0;
+    /* compute electric field */
+    // Eq. (3.49) @cite deserno00b
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
@@ -535,6 +537,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
         boost::combine(p_q_range, p_force_range));
 
     // add dipole forces
+    // Eq. (3.19) @cite deserno00b
     if (box_dipole) {
       auto const dm = prefactor * pref * box_dipole.value();
       for (auto zipped : boost::combine(p_q_range, p_force_range)) {
@@ -550,6 +553,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     auto node_energy = 0.;
     for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
       // Use the energy optimized influence function for energy!
+      // Eq. (3.40) @cite deserno00b
       node_energy += p3m.g_energy[i] * (Utils::sqr(p3m.rs_mesh[2 * i]) +
                                         Utils::sqr(p3m.rs_mesh[2 * i + 1]));
     }
@@ -559,11 +563,14 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     boost::mpi::reduce(comm_cart, node_energy, energy, std::plus<>(), 0);
     if (this_node == 0) {
       /* self energy correction */
+      // Eq. (3.8) @cite deserno00b
       energy -= p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i();
       /* net charge correction */
+      // Eq. (3.11) @cite deserno00b
       energy -= p3m.square_sum_q * Utils::pi() /
                 (2. * volume * Utils::sqr(p3m.params.alpha));
       /* dipole correction */
+      // Eq. (3.9) @cite deserno00b
       if (box_dipole) {
         energy += pref * box_dipole.value().norm2();
       }
