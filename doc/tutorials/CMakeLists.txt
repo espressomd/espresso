@@ -62,8 +62,8 @@ function(NB_EXPORT)
         "${NB_FILE};${NB_EXPORT_ADD_SCRIPTS};${CMAKE_BINARY_DIR}/doc/tutorials/convert.py;${CMAKE_BINARY_DIR}/testsuite/scripts/importlib_wrapper.py"
       COMMAND
         ${CMAKE_BINARY_DIR}/pypresso
-        ${CMAKE_BINARY_DIR}/doc/tutorials/convert.py ci --execute --exercise2
-        --remove-empty-cells --input ${NB_FILE} --output ${NB_FILE_RUN}
+        ${CMAKE_BINARY_DIR}/doc/tutorials/convert.py ci --execute
+        --prepare-for-html --input ${NB_FILE} --output ${NB_FILE_RUN}
         --substitutions ${NB_EXPORT_VAR_SUBST} --scripts
         ${NB_EXPORT_ADD_SCRIPTS})
   else()
@@ -71,22 +71,14 @@ function(NB_EXPORT)
   endif()
 
   add_custom_command(
-    OUTPUT ${HTML_FILE}
-    DEPENDS ${NB_FILE_RUN};${NB_EXPORT_ADD_SCRIPTS}
-    COMMAND
-      ${CMAKE_BINARY_DIR}/pypresso ${CMAKE_BINARY_DIR}/doc/tutorials/convert.py
-      ci --exercise2 --input ${NB_FILE_RUN} --output ${NB_FILE_RUN}~
+    OUTPUT ${HTML_FILE} DEPENDS ${NB_FILE_RUN};${NB_EXPORT_ADD_SCRIPTS}
     COMMAND ${IPYTHON_EXECUTABLE} nbconvert --to "html" --output ${HTML_FILE}
-            ${NB_FILE_RUN}~)
+            ${NB_FILE_RUN})
 
   add_custom_command(
-    OUTPUT ${PY_FILE}
-    DEPENDS ${NB_FILE}
-    COMMAND
-      ${CMAKE_BINARY_DIR}/pypresso ${CMAKE_BINARY_DIR}/doc/tutorials/convert.py
-      ci --exercise2 --input ${NB_FILE} --output ${NB_FILE}~
+    OUTPUT ${PY_FILE} DEPENDS ${NB_FILE}
     COMMAND ${IPYTHON_EXECUTABLE} nbconvert --to "python" --output ${PY_FILE}
-            ${NB_FILE}~)
+            ${NB_FILE})
 
   add_custom_target("${NB_EXPORT_TARGET}_html" DEPENDS ${HTML_FILE}
                                                        ${DEPENDENCY_OF_TARGET})
