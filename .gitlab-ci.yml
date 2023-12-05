@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu-22.04:fbdf2f2f9d76b761c0aa1308f17fb17e38501850
+image: ghcr.io/espressomd/docker/ubuntu-22.04:339903979196fd7e72127f2cb5bfb27759d129f9
 
 stages:
   - prepare
@@ -144,7 +144,7 @@ no_rotation:
 fedora:36:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:fbdf2f2f9d76b761c0aa1308f17fb17e38501850
+  image: ghcr.io/espressomd/docker/fedora:339903979196fd7e72127f2cb5bfb27759d129f9
   variables:
      with_cuda: 'false'
      with_gsl: 'false'
@@ -390,6 +390,7 @@ installation:
     - bash maintainer/CI/build_cmake.sh
     - cd build
     - make install
+    - cmake . -D ESPRESSO_BUILD_TESTS=ON
     # get path of installed files
     - CI_INSTALL_DIR="/tmp/espresso-unit-tests"
     - CI_INSTALL_PYTHON_PATH=$(dirname $(find "${CI_INSTALL_DIR}/lib" -name espressomd))
@@ -398,9 +399,9 @@ installation:
     - cp -r "src/python/object_in_fluid" "${CI_INSTALL_PYTHON_PATH}/object_in_fluid"
     # run all tests with the installed files
     - sed -i "s|$(pwd)/pypresso|${CI_INSTALL_DIR}/bin/pypresso|" testsuite/{python,scripts/samples,scripts/tutorials}/CTestTestfile.cmake
-    - make -j ${CI_CORES} check_python_skip_long
-    - make -j ${CI_CORES} check_samples
-    - make -j 2 check_tutorials
+    - make check_python_skip_long
+    - make check_samples
+    - make check_tutorials
   tags:
     - espresso
     - cuda

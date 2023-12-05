@@ -150,7 +150,7 @@ fi
 
 cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D CMAKE_CXX_STANDARD=${with_cxx_standard} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
 cmake_params="${cmake_params} -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -D ESPRESSO_INSIDE_DOCKER=ON"
-cmake_params="${cmake_params} -D ESPRESSO_CTEST_ARGS=-j${check_procs} -D ESPRESSO_TEST_TIMEOUT=${test_timeout}"
+cmake_params="${cmake_params} -D ESPRESSO_CTEST_ARGS:STRING=-j${check_procs} -D ESPRESSO_TEST_TIMEOUT=${test_timeout}"
 
 if [ "${make_check_benchmarks}" = true ]; then
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=ON"

@@ -175,7 +175,7 @@ To generate the Sphinx documentation, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user -c requirements.txt \
+    python3 -m pip install --user -c requirements.txt \
         sphinx sphinxcontrib-bibtex sphinx-toggleprompt
 
 To generate the Doxygen documentation, install the following packages:
@@ -197,40 +197,36 @@ To run the samples and tutorials, start by installing the following packages:
 
 The tutorials are written in the
 `Notebook Format <https://nbformat.readthedocs.io/en/latest/>`__
-:cite:`kluyver16a` version <= 4.4 and can be executed by any of these tools:
+:cite:`kluyver16a` version 4.5 and can be executed by any of these tools:
 
-* `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
 * `JupyterLab <https://jupyterlab.readthedocs.io/en/stable/>`__
-* `IPython <https://ipython.org/>`__ (not recommended)
 * `VS Code Jupyter <https://github.com/microsoft/vscode-jupyter>`__
+* `Jupyter Notebook <https://jupyter-notebook.readthedocs.io/en/stable/notebook.html>`__
+* `IPython <https://ipython.org/>`__ (not recommended)
 
 To check whether one of them is installed, run these commands:
 
 .. code-block:: bash
 
-    jupyter notebook --version
     jupyter lab --version
+    jupyter notebook --version
     ipython --version
     code --version
 
 If you don't have any of these tools installed and aren't sure which one
-to use, we recommend installing the historic Jupyter Notebook, since the
-|es| tutorials have been designed with the ``exercise2`` plugin in mind.
-
-To use Jupyter Notebook, install the following packages:
+to use, we recommend installing JupyterLab:
 
 .. code-block:: bash
 
-    pip3 install --user 'nbformat==5.1.3' 'nbconvert==6.4.5' 'notebook==6.4.8' 'jupyter_contrib_nbextensions==0.5.1'
-    jupyter contrib nbextension install --user
-    jupyter nbextension enable rubberband/main
-    jupyter nbextension enable exercise2/main
+    python3 -m pip install --user -c requirements.txt \
+        nbformat nbconvert jupyterlab
 
-Alternatively, to use JupyterLab, install the following packages:
+If you prefer the look and feel of Jupyter Classic, install the following:
 
 .. code-block:: bash
 
-    pip3 install --user nbformat notebook jupyterlab
+    python3 -m pip install --user -c requirements.txt \
+        nbformat nbconvert jupyterlab nbclassic
 
 Alternatively, to use VS Code Jupyter, install the following extensions:
 
@@ -316,7 +312,7 @@ Run the following commands:
       doxygen gsl numpy scipy ipython jupyter freeglut
     brew install hdf5-mpi
     brew link --force cython
-    pip install -c requirements.txt PyOpenGL matplotlib
+    python -m pip install -c requirements.txt PyOpenGL matplotlib
 
 .. _Quick installation:
 

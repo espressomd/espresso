@@ -1,4 +1,5 @@
-# Copyright (C) 2019-2022 The ESPResSo project
+#
+# Copyright (C) 2019-2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
 import sys
@@ -58,12 +60,8 @@ import statement. IPython magic commands `%matplotlib` must be set to inline.
     cell_py_src = '''
 import numpy as np
 %matplotlib notebook
-import matplotlib as mpl  # split here
-import matplotlib.pyplot as plt  # don't split
-try:
-    from espressomd.visualization import openglLive
-except ImportError:
-    mpl.use('Agg')  # running in CI without graphical output
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 plt.ion()
 global_var = 5
 plt.plot([1, 2], [3, global_var])
@@ -132,58 +130,43 @@ plt.show()
         lines = (self.cell_py_src
                  .replace('%matplotlib notebook', '%matplotlib inline')
                  .replace('global_var = 5', 'global_var = 20')
-                 ).split('\n')
-        self.assertEqual(nb_output['cells'][1]['source'], '\n'.join(lines[:3]))
-        self.assertEqual(nb_output['cells'][2]['source'], '\n'.join(lines[3:]))
+                 )
+        self.assertEqual(nb_output['cells'][1]['source'], lines)
         # the cell should have produced a plot
-        graphical_plots = True
-        try:
-            from espressomd.visualization import openglLive  # pylint: disable=unused-import
-        except ImportError:
-            graphical_plots = False  # running in CI without graphical output
-        if graphical_plots:
-            outputs = nb_output['cells'][2]['outputs']
-            self.assertTrue(outputs, 'cell has no output')
-            self.assertIn('image/png', outputs[0]['data'])
-            self.assertGreater(len(outputs[0]['data']['image/png']), 6000)
+        outputs = nb_output['cells'][1]['outputs']
+        self.assertTrue(outputs, 'cell has no output')
+        self.assertIn('image/png', outputs[0]['data'])
+        self.assertGreater(len(outputs[0]['data']['image/png']), 6000)
         # check the external script was correctly inserted
-        self.assertEqual(nb_output['cells'][3]['cell_type'], 'markdown')
-        self.assertEqual(nb_output['cells'][3]['source'],
+        self.assertEqual(nb_output['cells'][2]['cell_type'], 'markdown')
+        self.assertEqual(nb_output['cells'][2]['source'],
                          'Solution from test_convert_script.py')
-        self.assertEqual(nb_output['cells'][4]['cell_type'], 'code')
-        self.assertEqual(nb_output['cells'][4]['source'], 'global_var = 20')
+        self.assertEqual(nb_output['cells'][3]['cell_type'], 'code')
+        self.assertEqual(nb_output['cells'][3]['source'], 'global_var = 20')
 
-    def test_exercise2_plugin(self):
+    def test_cells_prepare_for_html(self):
         root = pathlib.Path("@CMAKE_CURRENT_BINARY_DIR@")
-        f_input = root / "test_convert_exercise2.ipynb"
-        f_output = root / "test_convert_exercise2.run.ipynb"
+        f_input = root / "test_convert_cells_html.ipynb"
+        f_output = root / "test_convert_cells_html.run.ipynb"
         # setup
         f_output.unlink(missing_ok=True)
         with open(f_input, 'w', encoding='utf-8') as f:
             nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
             # question with 2 answers and an empty cell
             cell_md = nbformat.v4.new_markdown_cell(source='Question 1')
-            cell_md['metadata']['solution2_first'] = True
-            cell_md['metadata']['solution2'] = 'shown'
             nb['cells'].append(cell_md)
-            code = '```python\n1\n```'
-            cell_md = nbformat.v4.new_markdown_cell(source=code)
-            cell_md['metadata']['solution2'] = 'shown'
-            cell_md['metadata']['key'] = 'value'
+            code = '# SOLUTION CELL\n1'
+            cell_md = nbformat.v4.new_code_cell(source=code)
             nb['cells'].append(cell_md)
             cell_md = nbformat.v4.new_markdown_cell(source='1b')
-            cell_md['metadata']['solution2'] = 'shown'
             nb['cells'].append(cell_md)
             cell_code = nbformat.v4.new_code_cell(source='')
             nb['cells'].append(cell_code)
             # question with 1 answer and a non-empty cell
             cell_md = nbformat.v4.new_markdown_cell(source='Question 2')
-            cell_md['metadata']['solution2_first'] = True
-            cell_md['metadata']['solution2'] = 'hidden'
             nb['cells'].append(cell_md)
-            code = '```python\n2\nimport matplotlib.pyplot\nglobal_var = 5\n```'
-            cell_md = nbformat.v4.new_markdown_cell(source=code)
-            cell_md['metadata']['solution2'] = 'hidden'
+            code = '# SOLUTION CELL\n2\nimport matplotlib.pyplot\nglobal_var = 5'
+            cell_md = nbformat.v4.new_code_cell(source=code)
             nb['cells'].append(cell_md)
             cell_code = nbformat.v4.new_code_cell(source='3')
             nb['cells'].append(cell_code)
@@ -193,7 +176,7 @@ plt.show()
                '--input', str(f_input),
                '--output', str(f_output),
                '--substitutions', 'global_var=20',
-               '--exercise2', '--remove-empty-cells']
+               '--prepare-for-html']
         self.run_command(cmd, f_output)
         # read processed notebook
         with open(f_output, encoding='utf-8') as f:
@@ -206,7 +189,6 @@ plt.show()
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '1')
-        self.assertEqual(cell['metadata']['key'], 'value')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'markdown')
         self.assertEqual(cell['source'], '1b')
@@ -215,34 +197,29 @@ plt.show()
         self.assertEqual(cell['source'], 'Question 2')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
-        self.assertEqual(cell['source'], '2\nimport matplotlib.pyplot')
-        cell = next(cells)
-        self.assertEqual(cell['cell_type'], 'code')
-        self.assertEqual(cell['source'], 'global_var = 20')
+        self.assertEqual(
+            cell['source'],
+            '2\nimport matplotlib.pyplot\nglobal_var = 20')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '3')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
-    def test_exercise2_conversion(self):
+    def test_cells_conversion(self):
         root = pathlib.Path("@CMAKE_CURRENT_BINARY_DIR@")
-        f_input = root / "test_convert_exercise2_conversion.ipynb"
+        f_input = root / "test_convert_cells_conversion.ipynb"
         # setup
+        nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
+        # question and code answer
+        cell_md = nbformat.v4.new_markdown_cell(source='Question 1')
+        nb['cells'].append(cell_md)
+        cell_md = nbformat.v4.new_code_cell(source='# SOLUTION CELL\n1')
+        nb['cells'].append(cell_md)
+
         with open(f_input, 'w', encoding='utf-8') as f:
-            nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
-            # question and code answer
-            cell_md = nbformat.v4.new_markdown_cell(source='Question 1')
-            cell_md['metadata']['solution2_first'] = True
-            cell_md['metadata']['solution2'] = 'hidden'
-            nb['cells'].append(cell_md)
-            code = '```python\n1\n```'
-            cell_md = nbformat.v4.new_markdown_cell(source=code)
-            cell_md['metadata']['solution2'] = 'hidden'
-            cell_md['metadata']['key'] = 'value'
-            nb['cells'].append(cell_md)
             nbformat.write(nb, f)
         # run command and check for errors
-        cmd = ['exercise2', '--to-py', str(f_input)]
+        cmd = ['cells', '--to-py', str(f_input)]
         self.run_command(cmd, f_input)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
@@ -255,11 +232,12 @@ plt.show()
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '1')
-        self.assertEqual(cell['metadata']['solution2'], 'shown')
-        self.assertEqual(cell['metadata']['key'], 'value')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
+
+        with open(f_input, 'w', encoding='utf-8') as f:
+            nbformat.write(nb, f)
         # run command and check for errors
-        cmd = ['exercise2', '--to-md', str(f_input)]
+        cmd = ['cells', '--to-md', str(f_input)]
         self.run_command(cmd, f_input)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
@@ -271,30 +249,28 @@ plt.show()
         self.assertEqual(cell['source'], 'Question 1')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'markdown')
-        self.assertEqual(cell['source'], '```python\n1\n```')
-        self.assertEqual(cell['metadata']['solution2'], 'hidden')
-        self.assertEqual(cell['metadata']['key'], 'value')
+        self.assertIn('```python\n1\n```', cell['source'])
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'code')
+        self.assertEqual(cell['source'], '')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
     @skipIfMissingModules
-    def test_exercise2_autopep8(self):
+    def test_cells_autopep8(self):
         root = pathlib.Path("@CMAKE_CURRENT_BINARY_DIR@")
-        f_input = root / "test_convert_exercise2_autopep8.ipynb"
+        f_input = root / "test_convert_cells_autopep8.ipynb"
         # setup
         with open(f_input, 'w', encoding='utf-8') as f:
             nb = nbformat.v4.new_notebook(metadata=self.nb_metadata)
             # question and code answer
             cell_md = nbformat.v4.new_markdown_cell(source='Question 1')
-            cell_md['metadata']['solution2_first'] = True
-            cell_md['metadata']['solution2'] = 'hidden'
             nb['cells'].append(cell_md)
-            code = '```python\n\nif 1: #comment\n  print( [5+1,4])\n\n```'
-            cell_md = nbformat.v4.new_markdown_cell(source=code)
-            cell_md['metadata']['solution2'] = 'hidden'
+            code = '# SOLUTION CELL\n\nif 1: #comment\n  print( [5+1,4])\n\n'
+            cell_md = nbformat.v4.new_code_cell(source=code)
             nb['cells'].append(cell_md)
             nbformat.write(nb, f)
         # run command and check for errors
-        cmd = ['exercise2', '--pep8', str(f_input)]
+        cmd = ['cells', '--pep8', str(f_input)]
         self.run_command(cmd)
         # read processed notebook
         with open(f_input, encoding='utf-8') as f:
@@ -305,11 +281,10 @@ plt.show()
         self.assertEqual(cell['cell_type'], 'markdown')
         self.assertEqual(cell['source'], 'Question 1')
         cell = next(cells)
-        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(
             cell['source'],
-            '```python\nif 1:  # comment\n    print([5 + 1, 4])\n```')
-        self.assertEqual(cell['metadata']['solution2'], 'hidden')
+            '# SOLUTION CELL\n\nif 1:  # comment\n    print([5 + 1, 4])')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
 
