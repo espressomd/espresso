@@ -40,7 +40,10 @@ public:
     add_parameters(
         {{"bond_type",
           [this](Variant const &v) { m_c->set_bond_type(get_value<int>(v)); },
-          [this]() { return m_c->get_bond_type(); }}});
+          [this]() { return m_c->get_bond_type(); }},
+          {"cut_off",
+          [this](Variant const &v2) { m_c->set_cut_off(get_value<int>(v2)); },
+          [this]() { return m_c->get_cut_off(); }} });
   }
 
   std::shared_ptr<::PairCriteria::PairCriterion>
