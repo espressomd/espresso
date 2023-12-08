@@ -224,9 +224,9 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
   return res;
 }
 
-//* Determine Lees-Edwards velocity offset for positions shifted
-/*  by +- box_length in one or more coordinates,
-/*  i.e., those obtained form positoins_in_halo()
+/* Determine Lees-Edwards velocity offset for positions shifted
+/  by +- box_length in one or more coordinates,
+/  i.e., those obtained form positoins_in_halo()
 */
 Utils::Vector3d
 lees_edwards_vel_shift(const Utils::Vector3d &pos_shifted_by_box_l,
