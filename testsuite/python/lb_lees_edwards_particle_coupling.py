@@ -61,10 +61,9 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
                      lbf[mid_x - 1, 0, mid_z],
                      lbf[mid_x, 0, mid_z]]
         # across the Lees Edwads boundary conditoin
-        # if offset ^1<.5, it couples to the left neighbor
+        # if offset <.5, it couples to the left neighbor
         # otherwise to the right
-        if (offset % 1) >= .5: extra = 1
-        else: extra = 0
+        extra = round(offset % 1)
         shifted_left = [lbf[(mid_x - 1 + idx + extra) % lbf.shape[0], upper_y, mid_z - 1],
                         lbf[(mid_x - 1 + idx + extra) % lbf.shape[0], upper_y, mid_z]]
         shifted_right = [lbf[(mid_x + idx + extra) % lbf.shape[0], upper_y, mid_z - 1],
@@ -109,10 +108,9 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
                 np.copy(n.last_applied_force), -np.copy(p.f) * 1 / 2 * 1 / 2 * weight_r)
 
         # Check the LB velocity interpolation
-        # at a positoin, where the ghost layer of the
-        # lees edwards shear plane contributes
+        # at a position, where the ghost layer of the
+        # Lees Edwards shear plane contributes
         lbf[:, :, :].velocity = np.zeros(3)
-        lbf[:, :, :].velocity = [0, 0, 0]
 
         lower_nodes = unshifted
         upper_nodes = shifted_left + shifted_right
@@ -131,8 +129,8 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
 
     def test_viscous_coupling_with_shear_vel(self):
         # Places a co-moving particle close to the LE boundary
-        # in shear flow. chesk that it remains force free
-        # this is only the case, if the periodic imagesin the 
+        # in shear flow. checks that it remains force free
+        # this is only the case, if the periodic images in the 
         # halo regoin calculate the drag force including the LE
         # shear velocity.
         system.lb = None

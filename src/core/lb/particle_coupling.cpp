@@ -188,14 +188,14 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
   auto const fully_inside_lower = local_geo.my_left() + 2. * halo_vec;
 
   // If the particle is at least one agrid away from the node boundary
-  // any ghosts shifte dby +- box_length cannot be in the lb volume
+  // any ghosts shifted by +- box_length cannot be in the lb volume
   // accessible by this node (-agrid/2 to box_length +agrid/2)
   auto const fully_inside_upper = local_geo.my_right() - 2. * halo_vec;
   if (in_box(pos, fully_inside_lower, fully_inside_upper)) {
     return {pos};
   }
 
-  // For remaingin particles, positoins shifted by +- box_length
+  // For remaingin particles, positions shifted by +- box_length
   // can potentially be in the locally accessible LB volume
   auto const halo_lower_corner = local_geo.my_left() - halo_vec;
   auto const halo_upper_corner = local_geo.my_right() + halo_vec;
@@ -207,14 +207,12 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
         Utils::Vector3d shift{{double(i), double(j), double(k)}};
         Utils::Vector3d pos_shifted =
             pos + Utils::hadamard_product(box.length(), shift);
-        // Apply additional shift from Lees-Edwards boundary conditions
+        // Apply additional shift from Lees-Edwards boundary conditions, when
+        // shifting across a periodic boundary
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
-          auto le = box_geo.lees_edwards_bc();
-          auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
-          if (normal_shift > std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] += le.pos_offset;
-          if (normal_shift < -std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] -= le.pos_offset;
+          auto &le = box_geo.lees_edwards_bc();
+          pos_shifted[le.shear_direction] +=
+              shift[le.shear_plane_normal] * le.pos_offset;
         }
 
         if (in_box(pos_shifted, halo_lower_corner, halo_upper_corner)) {
@@ -230,13 +228,16 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
 /*  by +- box_length in one or more coordinates,
 /*  i.e., those obtained form positoins_in_halo()
 */
-Utils::Vector3d lees_edwards_vel_shift(const Utils::Vector3d &shifted_pos,
-                                       const Utils::Vector3d &orig_pos,
-                                       const BoxGeometry &box_geo) {
+Utils::Vector3d
+lees_edwards_vel_shift(const Utils::Vector3d &pos_shifted_by_box_l,
+                       const Utils::Vector3d &orig_pos,
+                       const BoxGeometry &box_geo) {
   Utils::Vector3d vel_shift{{0., 0., 0.}};
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
     auto le = box_geo.lees_edwards_bc();
-    auto normal_shift = (shifted_pos - orig_pos)[le.shear_plane_normal];
+    auto normal_shift =
+        (pos_shifted_by_box_l - orig_pos)[le.shear_plane_normal];
+    // normal_shift is +,- box_l or 0 up to floating point errors
     if (normal_shift > std::numeric_limits<double>::epsilon()) {
       vel_shift[le.shear_direction] -= le.shear_velocity;
     }
