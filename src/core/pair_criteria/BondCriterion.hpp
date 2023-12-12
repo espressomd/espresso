@@ -22,6 +22,8 @@
 #include "pair_criteria/PairCriterion.hpp"
 
 #include "BondList.hpp"
+#include "BoxGeometry.hpp"
+#include "system/System.hpp"
 
 namespace PairCriteria {
 /** @brief True if a bond of given type exists between two particles. */
@@ -30,7 +32,7 @@ public:
   bool decide(Particle const &p1, Particle const &p2) const override {
 
   auto const &box_geo = *System::get_system().box_geo;
-  d = box_geo.get_mi_vector(p1.pos(), p2.pos()).norm();
+  auto const d = box_geo.get_mi_vector(p1.pos(), p2.pos()).norm();
 
     return ( pair_bond_exists_on(p1.bonds(), p2.id(), m_bond_type) ||
              pair_bond_exists_on(p2.bonds(), p1.id(), m_bond_type) ) &&
@@ -39,7 +41,7 @@ public:
   int get_bond_type() { return m_bond_type; }
   void set_bond_type(int t) { m_bond_type = t; }
 
-  int get_cut_off() { return m_cut_off; }
+  double get_cut_off() { return m_cut_off; }
   void set_cut_off(double c) { m_cut_off = c; }
 
 private:

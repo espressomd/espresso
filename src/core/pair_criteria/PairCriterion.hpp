@@ -42,7 +42,6 @@ public:
     return res;
   }
   
-  virtual double cutoff(Particle const &p1, Particle const &p2) const = 0;
   virtual ~PairCriterion() = default;
 };
 } // namespace PairCriteria
