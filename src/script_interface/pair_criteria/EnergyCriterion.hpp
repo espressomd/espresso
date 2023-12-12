@@ -44,9 +44,11 @@ public:
         {{"d_cut_off",
           [this](Variant const &v) { m_c->set_cut_off(get_value<double>(v)); },
           [this]() { return m_c->get_cut_off(); }},
-          {"e_cut_off",
-          [this](Variant const &v2){m_c->set_e_cut_off(get_value<double>(v2)); },
-          [this](){return m_c->get_e_cut_off(); }} });
+         {"e_cut_off",
+          [this](Variant const &v2) {
+            m_c->set_e_cut_off(get_value<double>(v2));
+          },
+          [this]() { return m_c->get_e_cut_off(); }}});
   }
 
   std::shared_ptr<::PairCriteria::PairCriterion>

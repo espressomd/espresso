@@ -31,12 +31,12 @@ class BondCriterion : public PairCriterion {
 public:
   bool decide(Particle const &p1, Particle const &p2) const override {
 
-  auto const &box_geo = *System::get_system().box_geo;
-  auto const d = box_geo.get_mi_vector(p1.pos(), p2.pos()).norm();
+    auto const &box_geo = *System::get_system().box_geo;
+    auto const d = box_geo.get_mi_vector(p1.pos(), p2.pos()).norm();
 
-    return ( pair_bond_exists_on(p1.bonds(), p2.id(), m_bond_type) ||
-             pair_bond_exists_on(p2.bonds(), p1.id(), m_bond_type) ) &&
-             d <= m_cut_off ;
+    return (pair_bond_exists_on(p1.bonds(), p2.id(), m_bond_type) ||
+            pair_bond_exists_on(p2.bonds(), p1.id(), m_bond_type)) &&
+           d <= m_cut_off;
   }
   int get_bond_type() { return m_bond_type; }
   void set_bond_type(int t) { m_bond_type = t; }
@@ -46,7 +46,7 @@ public:
 
 private:
   int m_bond_type;
-  double m_cut_off ;
+  double m_cut_off;
 };
 } // namespace PairCriteria
 
