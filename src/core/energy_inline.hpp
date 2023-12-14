@@ -300,7 +300,7 @@ inline double translational_kinetic_energy(Particle const &p) {
  */
 inline double rotational_kinetic_energy(Particle const &p) {
 #ifdef ROTATION
-  return p.can_rotate()
+  return (p.can_rotate() and not p.is_virtual())
              ? 0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia())
              : 0.0;
 #else
