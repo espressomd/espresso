@@ -178,7 +178,7 @@ class ParticleHandle(ScriptInterfaceHelper):
     rinertia: (3,) array_like of :obj:`float`
         The particle rotational inertia.
 
-        Sets the diagonal elements of this particles rotational inertia
+        Sets the diagonal elements of this particle's rotational inertia
         tensor. These correspond with the inertial moments along the
         coordinate axes in the particle's co-rotating coordinate system.
         When the particle's quaternions are set to ``[1, 0, 0, 0,]``, the
