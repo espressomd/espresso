@@ -202,6 +202,7 @@ public:
   }
 
   /** Calculate real-space contribution of Coulomb pair energy. */
+  // Eq. (3.6) @cite deserno00b
   double pair_energy(double q1q2, double dist) const {
     if ((q1q2 == 0.) || dist >= p3m.params.r_cut || dist <= 0.) {
       return {};
