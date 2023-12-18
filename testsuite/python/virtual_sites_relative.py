@@ -22,6 +22,8 @@ import espressomd
 import espressomd.virtual_sites
 import numpy as np
 import tests_common
+import time
+import sys
 
 
 @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "LENNARD_JONES"])
@@ -31,6 +33,7 @@ class VirtualSites(ut.TestCase):
     np.random.seed(42)
 
     def setUp(self):
+        print(f"setUp({time.ctime()})", end=" ", file=sys.stderr, flush=True)
         self.system.box_l = [10.0, 10.0, 10.0]
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
@@ -41,6 +44,8 @@ class VirtualSites(ut.TestCase):
         self.system.integrator.set_vv()
         self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
+        print(f"tearDown({time.ctime()})", end=" ", file=sys.stderr,
+              flush=True)
 
     def multiply_quaternions(self, a, b):
         return np.array(
