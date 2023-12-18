@@ -18,7 +18,6 @@
 #
 import unittest as ut
 import unittest_decorators as utx
-import tests_common
 import numpy as np
 import espressomd
 import espressomd.integrate
@@ -123,6 +122,14 @@ class IntegratorNPT(ut.TestCase):
             np.copy(system.part.all().pos),
             positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
+        if espressomd.has_features("ROTATION"):
+            # propagator doesn't handle angular velocities
+            system.part.all().rotation = [3 * [False], [True, False, False]]
+            system.thermostat.set_npt(kT=1., gamma0=2., gammav=0.04, seed=42)
+            system.integrator.set_isotropic_npt(**npt_params)
+            with self.assertRaisesRegex(Exception, "The isotropic NpT integrator doesn't propagate angular velocities"):
+                system.integrator.run(1)
+
     def run_with_p3m(self, container, p3m, method):
         system = self.system
         npt_kwargs = {"ext_pressure": 0.001, "piston": 0.001}
@@ -135,8 +142,6 @@ class IntegratorNPT(ut.TestCase):
             pos=np.random.uniform(0, system.box_l[0], (11, 3)))
         if espressomd.has_features("P3M"):
             partcl.q = np.sign(np.arange(-5, 6))
-        if espressomd.has_features("DP3M"):
-            partcl.dip = tests_common.random_dipoles(11)
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=1, cutoff=2**(1 / 6), shift=0.25)
         system.integrator.set_steepest_descent(
@@ -150,8 +155,8 @@ class IntegratorNPT(ut.TestCase):
         system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
         system.integrator.run(10)
         # check runtime warnings
-        self.system.thermostat.turn_off()
-        self.system.integrator.set_vv()
+        system.thermostat.turn_off()
+        system.integrator.set_vv()
         err_msg = f"If {method} is being used you must use the cubic box NpT"
         with self.assertRaisesRegex(RuntimeError, err_msg):
             system.integrator.set_isotropic_npt(**npt_kwargs_rectangular)
@@ -163,14 +168,6 @@ class IntegratorNPT(ut.TestCase):
         container.solver = p3m
         with self.assertRaisesRegex(Exception, err_msg):
             system.integrator.run(0, recalc_forces=True)
-
-    @utx.skipIfMissingFeatures(["DP3M"])
-    def test_npt_dp3m_cpu(self):
-        import espressomd.magnetostatics
-        dp3m = espressomd.magnetostatics.DipolarP3M(
-            prefactor=1.0, accuracy=1e-2, mesh=3 * [36], cao=7, r_cut=1.0,
-            alpha=2.995, tune=False)
-        self.run_with_p3m(self.system.magnetostatics, dp3m, "magnetostatics")
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_npt_p3m_cpu(self):

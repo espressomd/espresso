@@ -30,7 +30,6 @@
 #include "errorhandling.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
-#include "rotation.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 #include "thermostats/npt_inline.hpp"
@@ -170,7 +169,10 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles,
 
   for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(p, time_step);
+    if (p.can_rotate()) {
+      runtimeErrorMsg() << "The isotropic NpT integrator doesn't propagate "
+                           "angular velocities";
+    }
 #endif
 
     // Don't propagate translational degrees of freedom of vs
@@ -201,9 +203,6 @@ void velocity_verlet_npt_step_1(const ParticleRange &particles,
 void velocity_verlet_npt_step_2(const ParticleRange &particles,
                                 double time_step) {
   velocity_verlet_npt_propagate_vel_final(particles, time_step);
-#ifdef ROTATION
-  convert_torques_propagate_omega(particles, time_step);
-#endif
   velocity_verlet_npt_finalize_p_inst(time_step);
 }
 #endif // NPT
