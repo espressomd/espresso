@@ -32,10 +32,11 @@
 #include "pressure_inline.hpp"
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
-#include "virtual_sites.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
+#include <utils/flatten.hpp>
 
 #include <boost/range/algorithm/copy.hpp>
 
@@ -107,10 +108,11 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   Dipoles::get_dipoles().calc_pressure_long_range();
 #endif
 
-#ifdef VIRTUAL_SITES
+#ifdef VIRTUAL_SITES_RELATIVE
   if (!obs_pressure.virtual_sites.empty()) {
-    auto const vs_pressure = virtual_sites()->pressure_tensor();
-    boost::copy(flatten(vs_pressure), obs_pressure.virtual_sites.begin());
+    auto const vs_pressure = vs_relative_pressure_tensor(*cell_structure);
+    boost::copy(Utils::flatten(vs_pressure),
+                obs_pressure.virtual_sites.begin());
   }
 #endif
 

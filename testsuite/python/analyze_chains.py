@@ -212,9 +212,10 @@ class AnalyzeChain(ut.TestCase):
             with self.assertRaisesRegex(ValueError, "needs at least 1 chain"):
                 method(chain_start=0, number_of_chains=-1, chain_length=1)
         self.assertIsNone(analysis.call_method("unknown"))
-        if espressomd.has_features("VIRTUAL_SITES"):
+        if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
             with self.assertRaisesRegex(RuntimeError, "Center of mass is not well-defined"):
-                self.system.part.by_id(0).virtual = True
+                p = self.system.part.by_id(0)
+                p.vs_relative = (1, 0.01, (1., 0., 0., 0.))
                 analysis.calc_rg(chain_start=0, number_of_chains=num_poly,
                                  chain_length=num_mono)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'analysis' is read-only"):

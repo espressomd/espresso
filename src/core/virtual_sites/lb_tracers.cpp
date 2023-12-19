@@ -20,9 +20,8 @@
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
-#include "VirtualSitesInertialessTracers.hpp"
-
 #include "BoxGeometry.hpp"
+#include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -46,10 +45,10 @@ static bool lb_active_check(DeferredActiveLBChecks const &check) {
   return true;
 }
 
-void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
+void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
+                                            double time_step) {
   DeferredActiveLBChecks check_lb_solver_set{};
   auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
   auto const &box_geo = *system.box_geo;
   auto const agrid = (check_lb_solver_set()) ? system.lb.get_agrid() : 0.;
   auto const to_lb_units = (check_lb_solver_set()) ? 1. / agrid : 0.;
@@ -58,14 +57,14 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   init_forces_ghosts(cell_structure.ghost_particles());
   cell_structure.update_ghosts_and_resort_particle(Cells::DATA_PART_FORCE);
 
-  // Set to store ghost particles (ids) that have already been coupled
+  // Keep track of ghost particles (ids) that have already been coupled
   LB::CouplingBookkeeping bookkeeping{};
-  // Apply particle forces to the LB fluid at particle positions
-  // For physical particles, also set particle velocity = fluid velocity
+  // Apply particle forces to the LB fluid at particle positions.
+  // For physical particles, also set particle velocity = fluid velocity.
   for (auto const &particle_range :
        {cell_structure.local_particles(), cell_structure.ghost_particles()}) {
     for (auto const &p : particle_range) {
-      if (!p.is_virtual())
+      if (!LB::is_tracer(p))
         continue;
       if (!lb_active_check(check_lb_solver_set)) {
         return;
@@ -82,17 +81,16 @@ void VirtualSitesInertialessTracers::after_force_calc(double time_step) {
   init_forces_ghosts(cell_structure.ghost_particles());
 }
 
-void VirtualSitesInertialessTracers::after_lb_propagation(double time_step) {
+void lb_tracers_propagate(CellStructure &cell_structure, double time_step) {
   DeferredActiveLBChecks check_lb_solver_set{};
   auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
   auto const &lb = system.lb;
   auto const verlet_skin = cell_structure.get_verlet_skin();
   auto const verlet_skin_sq = verlet_skin * verlet_skin;
 
   // Advect particles
   for (auto &p : cell_structure.local_particles()) {
-    if (!p.is_virtual())
+    if (!LB::is_tracer(p))
       continue;
     if (!lb_active_check(check_lb_solver_set)) {
       return;

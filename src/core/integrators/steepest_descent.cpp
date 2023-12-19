@@ -55,19 +55,16 @@ bool steepest_descent_step(const ParticleRange &particles) {
     for (unsigned int j = 0; j < 3; j++) {
       // Skip, if coordinate is fixed
       if (!p.is_fixed_along(j)) {
-        // Skip positional increments of virtual particles
-        if (!p.is_virtual()) {
-          // Square of force on particle
-          f += Utils::sqr(p.force()[j]);
+        // Square of force on particle
+        f += Utils::sqr(p.force()[j]);
 
-          // Positional increment, crop to maximum allowed by user
-          auto const dp =
-              std::clamp(params.gamma * p.force()[j], -params.max_displacement,
-                         params.max_displacement);
+        // Positional increment, crop to maximum allowed by user
+        auto const dp =
+            std::clamp(params.gamma * p.force()[j], -params.max_displacement,
+                       params.max_displacement);
 
-          // Move particle
-          p.pos()[j] += dp;
-        }
+        // Move particle
+        p.pos()[j] += dp;
       }
     }
 #ifdef ROTATION

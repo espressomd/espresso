@@ -356,7 +356,6 @@ static void place_vs_and_relate_to_particle(CellStructure &cell_structure,
   auto p_vs = cell_structure.add_particle(std::move(new_part));
   vs_relate_to(*p_vs, get_part(cell_structure, relate_to), box_geo,
                min_global_cut);
-  p_vs->set_virtual(true);
   p_vs->type() = collision_params.vs_particle_type;
 }
 
@@ -481,7 +480,7 @@ static void three_particle_binding_domain_decomposition(
 
 // Handle the collisions stored in the queue
 void handle_collisions(CellStructure &cell_structure) {
-  auto const &system = System::get_system();
+  auto &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   // Note that the glue to surface mode adds bonds between the centers
   // but does so later in the process. This is needed to guarantee that
@@ -657,6 +656,7 @@ void handle_collisions(CellStructure &cell_structure) {
       cell_structure.update_ghosts_and_resort_particle(
           Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS);
     }
+    system.update_used_propagations();
   }    // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE
 

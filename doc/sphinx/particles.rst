@@ -251,26 +251,8 @@ according to their respective particle type. Before the next integration
 step, the forces accumulated on a virtual site are distributed back to
 those particles, from which the virtual site was derived.
 
-
-There are different schemes for virtual sites, described in the
-following sections. To switch the active scheme, the system
-:attr:`~espressomd.system.System.virtual_sites` property can be used::
-
-    import espressomd
-    import espressomd.virtual_sites
-
-    system = espressomd.System(box_l=[1, 1, 1])
-    system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(have_quaternion=False)
-    # or
-    system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
-
-By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected.
-This means that virtual particles are not touched during integration.
-The ``have_quaternion`` parameter determines whether the quaternion of
-the virtual particle is updated (useful in combination with the
-:attr:`~espressomd.particle_data.ParticleHandle.vs_quat` property of the
-virtual particle which defines the orientation of the virtual particle
-in the body fixed frame of the related real particle).
+There are different schemes for virtual sites, described in the following sections.
+The scheme acting on a virtual site is dependent on its propagation mode.
 
 .. _Rigid arrangements of particles:
 
@@ -298,19 +280,17 @@ the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
 To use this implementation of virtual sites, activate the feature
-``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of
-:class:`~espressomd.virtual_sites.VirtualSitesRelative` has to be set as the
-active virtual sites scheme (see above). To set up a virtual site:
+``VIRTUAL_SITES_RELATIVE``. Furthermore, particles have to be set up with the
+propagation modes :attr:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE`
+and :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE`.
 
 #. Place the particle to which the virtual site should be related.
    It needs to be in the center of mass of the rigid arrangement of
    particles you create::
 
        import espressomd
-       import espressomd.virtual_sites
 
        system = espressomd.System(box_l=[10., 10., 10.])
-       system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
        p1 = system.part.add(pos=[1., 2., 3.])
 
 #. Place a particle at the desired relative position, make it virtual
@@ -320,8 +300,8 @@ active virtual sites scheme (see above). To set up a virtual site:
        p2 = system.part.add(pos=p1.pos + rel_offset)
        p2.vs_auto_relate_to(p1)
 
-   This will set the :attr:`~espressomd.particle_data.ParticleHandle.virtual`
-   attribute on particle ``p2`` to ``True``.
+   The :meth:`~espressomd.particle_data.ParticleHandle.is_virtual`
+   method on particle ``p2`` will now return ``True``.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -371,21 +351,15 @@ Please note:
 Inertialess lattice-Boltzmann tracers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
-
-When this implementation is selected, the virtual sites follow the motion of a
-lattice-Boltzmann fluid (both, CPU and GPU). This is achieved by integrating
+Using the propagation mode :attr:`~espressomd.propagation.Propagation.TRANS_LB_TRACER`,
+the virtual sites follow the motion of a LB fluid. This is achieved by integrating
 their position using the fluid velocity at the virtual sites' position.
 Forces acting on the virtual sites are directly transferred as force density
 onto the lattice-Boltzmann fluid, making the coupling free of inertia.
+Please note that the velocity attribute of the virtual particles
+does not carry valid information for this virtual sites scheme.
 The feature stems from the implementation of the
 :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
-
-For correct results, the LB thermostat has to be deactivated for virtual sites::
-
-   system.thermostat.set_lb(kT=0, act_on_virtual=False)
-
-Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
 
 .. _Interacting with groups of particles:
 
@@ -667,24 +641,22 @@ the total system is net force-free at all times. The resulting flow-field can th
 monopolar contributions in the far field and the slowest-decaying flow-field mode is a dipole.
 In |es|, the propulsion mechanism can be mimicked by applying a force to the fluid that is equal in
 magnitude but opposite in sign to the forward force on the swimming particle.
-For this, particles can be marked as force appliers as shown in the following example:
+For this, particles can be marked as force appliers as shown in the following example::
 
-::
+    dipole = system.part.add(pos=[1, 0, 0],
+                             swimming={"f_swim": swimmer.swimming["f_swim"],
+                                       "is_engine_force_on_fluid": True})
+    dipole.vs_auto_relate_to(swimmer)
+    dipole.vs_quat = calc_quaternions_from_angles(np.pi, 0.)
 
-    dipole_partcl = system.part.add(pos=[1, 0, 0],
-                                    virtual = True,
-                                    swimming={'f_swim': swimmer.swimming['f_swim'],
-                                              'is_engine_force_on_fluid': True})
-
-This makes the particle not experience any friction or stochastic forces, but apply ``f_swim``
-along its internal orientation (``director``).
-To make the force applier follow the swimmer and also update its orientation accordingly,
-the :class:`espressomd.virtual_sites.VirtualSitesRelative` mechanism is used.
+This makes the dipole particle not experience any friction or stochastic forces,
+but apply ``f_swim`` along its internal orientation (``director``)
+and follow the swimmer while updating its orientation accordingly.
 |es| provides a helper function :func:`~espressomd.swimmer_helpers.add_dipole_particle` to set
 up the virtual particle with the correct distance, relative position and orientation::
 
     import espressomd.swimmer_helpers.add_dipole_particle as add_dip
-    dipole_partcl = add_dip(system, swimmer, 2., 0, mode="pusher")
+    dipole = add_dip(system, swimmer, 2., 0, mode="pusher")
 
 It creates pushers with the propulsion behind the swimmer and pullers with the
 propulsion in front of the swimmer.

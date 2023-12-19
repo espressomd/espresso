@@ -34,7 +34,6 @@ import espressomd.accumulators
 import espressomd.electrostatics
 import espressomd.interactions
 import espressomd.drude_helpers
-import espressomd.virtual_sites
 import espressomd.visualization
 
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
@@ -80,7 +79,6 @@ box_l = box_volume**(1. / 3.)
 print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
 if args.visu:
     d_scale = 0.988 * 0.5

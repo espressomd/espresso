@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2022 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,19 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
-#define SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
+#pragma once
 
-#include <script_interface/ObjectHandle.hpp>
+#include "config/config.hpp"
 
-#include <utils/Factory.hpp>
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
-namespace ScriptInterface {
-namespace VirtualSites {
+#include "BoxGeometry.hpp"
 
-void initialize(Utils::Factory<ObjectHandle> *om);
+void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
+                                            double time_step);
+void lb_tracers_propagate(CellStructure &cell_structure, double time_step);
 
-} /* namespace VirtualSites */
-} /* namespace ScriptInterface */
-
-#endif
+#endif // VIRTUAL_SITES_INERTIALESS_TRACERS

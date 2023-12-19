@@ -68,7 +68,6 @@ Several modes are available for different types of binding.
   the point of contact or you can use :class:`espressomd.interactions.Virtual` which acts as a marker, only.
   The method is setup as follows::
 
-      system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
       system.collision_detection.set_params(
           mode="bind_at_point_of_collision",
           distance=0.1,
@@ -116,7 +115,6 @@ Several modes are available for different types of binding.
 
   The method is used as follows::
 
-      system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
       system.collision_detection.set_params(
             mode="glue_to_surface",
             distance=0.1,

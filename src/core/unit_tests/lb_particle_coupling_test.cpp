@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(rng) {
   lb_particle_coupling.gamma = 0.2;
   auto &lb = espresso::system->lb;
 
-  LB::ParticleCoupling coupling{lb, true, params.time_step, 1.};
+  LB::ParticleCoupling coupling{lb, params.time_step, 1.};
   BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
   BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 17);
   BOOST_CHECK(not lb_lbcoupling_is_seed_required());
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK(step1_random1 != step2_random1);
   BOOST_CHECK(step1_random1 != step2_random2);
 
-  LB::ParticleCoupling coupling_unthermalized{lb, true, params.time_step, 0.};
+  LB::ParticleCoupling coupling_unthermalized{lb, params.time_step, 0.};
   auto const step3_norandom =
       coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(rng) {
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Particle p{};
   auto &lb = espresso::system->lb;
-  LB::ParticleCoupling coupling{lb, false, params.time_step};
+  LB::ParticleCoupling coupling{lb, params.time_step};
   BOOST_CHECK_EQUAL(coupling.lb_drift_velocity_offset(p).norm(), 0);
   Utils::Vector3d expected{};
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -261,7 +261,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   // swimmer coupling
   {
     if (in_local_halo(p.pos())) {
-      LB::ParticleCoupling coupling{lb, true, params.time_step};
+      LB::ParticleCoupling coupling{lb, params.time_step};
       coupling.kernel(p);
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
@@ -312,7 +312,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   auto const gamma = 0.2;
   lb_lbcoupling_set_gamma(gamma);
   Particle p{};
-  LB::ParticleCoupling coupling{lb, false, params.time_step};
+  LB::ParticleCoupling coupling{lb, params.time_step};
   auto expected = coupling.get_noise_term(p);
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
@@ -371,7 +371,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
 
-  LB::ParticleCoupling coupling{lb, thermo_virtual, params.time_step};
+  LB::ParticleCoupling coupling{lb, params.time_step};
   auto const p_opt = copy_particle_to_head_node(comm, system, pid);
   auto expected = Utils::Vector3d{};
   if (rank == 0) {
@@ -443,8 +443,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       lb_lbcoupling_broadcast();
       auto const particles = cell_structure.local_particles();
       auto const ghost_particles = cell_structure.ghost_particles();
-      LB::couple_particles(thermo_virtual, particles, ghost_particles,
-                           params.time_step);
+      LB::couple_particles(particles, ghost_particles, params.time_step);
       auto const p_opt = copy_particle_to_head_node(comm, system, pid);
       if (rank == 0) {
         auto const &p = *p_opt;
@@ -468,8 +467,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         }
       }
       // couple particle to LB
-      LB::couple_particles(thermo_virtual, particles, ghost_particles,
-                           params.time_step);
+      LB::couple_particles(particles, ghost_particles, params.time_step);
       {
         auto const p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {

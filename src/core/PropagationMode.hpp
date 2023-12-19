@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,27 +19,25 @@
 
 #pragma once
 
-#include "config/config.hpp"
-
-#ifdef STOKESIAN_DYNAMICS
-
-#include "rotation.hpp"
-#include "stokesian_dynamics/sd_interface.hpp"
-
-inline void stokesian_dynamics_step_1(ParticleRangeStokesian const &particles,
-                                      double time_step) {
-  propagate_vel_pos_sd(particles, time_step);
-
-  for (auto &p : particles) {
-    // translate
-    p.pos() += p.v() * time_step;
-    // rotate
-    auto const norm = p.omega().norm();
-    if (norm != 0.) {
-      auto const omega_unit = (1. / norm) * p.omega();
-      local_rotate_particle(p, omega_unit, norm * time_step);
-    }
-  }
-}
-
-#endif // STOKESIAN_DYNAMICS
+namespace PropagationMode {
+/**
+ * @brief Flags to create bitmasks for propagation modes.
+ */
+enum PropagationMode : int {
+  NONE = 0,
+  SYSTEM_DEFAULT = 1 << 0,
+  TRANS_NEWTON = 1 << 1,
+  TRANS_LANGEVIN = 1 << 2,
+  TRANS_LANGEVIN_NPT = 1 << 3,
+  TRANS_VS_RELATIVE = 1 << 4,
+  TRANS_LB_MOMENTUM_EXCHANGE = 1 << 5,
+  TRANS_LB_TRACER = 1 << 6,
+  TRANS_BROWNIAN = 1 << 7,
+  TRANS_STOKESIAN = 1 << 8,
+  ROT_EULER = 1 << 10,
+  ROT_LANGEVIN = 1 << 11,
+  ROT_VS_RELATIVE = 1 << 12,
+  ROT_BROWNIAN = 1 << 13,
+  ROT_STOKESIAN = 1 << 14,
+};
+} // namespace PropagationMode

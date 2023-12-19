@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2023 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -35,6 +35,7 @@
 
 #include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "accumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/rigid_bond.hpp"
@@ -55,7 +56,9 @@
 #include "signalhandling.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
+#include "thermostats/langevin_inline.hpp"
+#include "virtual_sites/lb_tracers.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
@@ -84,6 +87,8 @@
 #endif
 
 int integ_switch = INTEG_METHOD_NVT;
+static int default_propagation = PropagationMode::NONE;
+static int used_propagations = PropagationMode::NONE;
 
 /** Actual simulation time. */
 static double sim_time = 0.0;
@@ -148,42 +153,119 @@ template <class Kernel> void run_kernel(BoxGeometry const &box_geo) {
 }
 } // namespace LeesEdwards
 
+static void update_default_propagation() {
+  switch (integ_switch) {
+  case INTEG_METHOD_STEEPEST_DESCENT:
+    default_propagation = PropagationMode::NONE;
+    break;
+  case INTEG_METHOD_NVT: {
+    // NOLINTNEXTLINE(bugprone-branch-clone)
+    if (thermo_switch & THERMO_LB & THERMO_LANGEVIN) {
+      default_propagation = PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE;
+#ifdef ROTATION
+      default_propagation |= PropagationMode::ROT_LANGEVIN;
+#endif
+    } else if (thermo_switch & THERMO_LB) {
+      default_propagation = PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE;
+#ifdef ROTATION
+      default_propagation |= PropagationMode::ROT_EULER;
+#endif
+    } else if (thermo_switch & THERMO_LANGEVIN) {
+      default_propagation = PropagationMode::TRANS_LANGEVIN;
+#ifdef ROTATION
+      default_propagation |= PropagationMode::ROT_LANGEVIN;
+#endif
+    } else {
+      default_propagation = PropagationMode::TRANS_NEWTON;
+#ifdef ROTATION
+      default_propagation |= PropagationMode::ROT_EULER;
+#endif
+    }
+    break;
+  }
+#ifdef NPT
+  case INTEG_METHOD_NPT_ISO:
+    default_propagation = PropagationMode::TRANS_LANGEVIN_NPT;
+    break;
+#endif
+  case INTEG_METHOD_BD:
+    default_propagation = PropagationMode::TRANS_BROWNIAN;
+#ifdef ROTATION
+    default_propagation |= PropagationMode::ROT_BROWNIAN;
+#endif
+    break;
+#ifdef STOKESIAN_DYNAMICS
+  case INTEG_METHOD_SD:
+    default_propagation = PropagationMode::TRANS_STOKESIAN;
+    break;
+#endif // STOKESIAN_DYNAMICS
+  default:
+    throw std::runtime_error("Unknown value for integ_switch");
+  }
+}
+
+void System::System::update_used_propagations() {
+  ::used_propagations = PropagationMode::NONE;
+  for (auto &p : cell_structure->local_particles()) {
+    ::used_propagations |= p.propagation();
+  }
+  if (::used_propagations & PropagationMode::SYSTEM_DEFAULT) {
+    ::used_propagations |= default_propagation;
+  }
+  ::used_propagations = boost::mpi::all_reduce(::comm_cart, ::used_propagations,
+                                               std::bit_or<int>());
+}
+
 void System::System::integrator_sanity_checks() const {
   if (time_step <= 0.) {
     runtimeErrorMsg() << "time_step not set";
   }
-  switch (integ_switch) {
-  case INTEG_METHOD_STEEPEST_DESCENT:
-    if (thermo_switch != THERMO_OFF)
+  if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+    if (thermo_switch != THERMO_OFF) {
       runtimeErrorMsg()
           << "The steepest descent integrator is incompatible with thermostats";
-    break;
-  case INTEG_METHOD_NVT:
-    if (thermo_switch & (THERMO_NPT_ISO | THERMO_BROWNIAN | THERMO_SD))
+    }
+  }
+  if (integ_switch == INTEG_METHOD_NVT) {
+    if (thermo_switch & (THERMO_NPT_ISO | THERMO_BROWNIAN | THERMO_SD)) {
       runtimeErrorMsg() << "The VV integrator is incompatible with the "
                            "currently active combination of thermostats";
-    break;
-#ifdef NPT
-  case INTEG_METHOD_NPT_ISO:
-    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO)
-      runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
-    if (box_geo->type() == BoxType::LEES_EDWARDS)
-      runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
-    break;
-#endif
-  case INTEG_METHOD_BD:
-    if (thermo_switch != THERMO_BROWNIAN)
-      runtimeErrorMsg() << "The BD integrator requires the BD thermostat";
-    break;
-#ifdef STOKESIAN_DYNAMICS
-  case INTEG_METHOD_SD:
-    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_SD)
-      runtimeErrorMsg() << "The SD integrator requires the SD thermostat";
-    break;
-#endif
-  default:
-    runtimeErrorMsg() << "Unknown value for integ_switch";
+    }
   }
+#ifdef NPT
+  if (::used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) {
+    if (thermo_switch != THERMO_OFF and thermo_switch != THERMO_NPT_ISO) {
+      runtimeErrorMsg() << "The NpT integrator requires the NpT thermostat";
+    }
+    if (box_geo->type() == BoxType::LEES_EDWARDS) {
+      runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
+    }
+  }
+#endif
+  if (::used_propagations & PropagationMode::TRANS_BROWNIAN) {
+    if (thermo_switch != THERMO_BROWNIAN) {
+      runtimeErrorMsg() << "The BD integrator requires the BD thermostat";
+    }
+  }
+  if (::used_propagations & PropagationMode::TRANS_STOKESIAN) {
+#ifdef STOKESIAN_DYNAMICS
+    if (thermo_switch != THERMO_OFF && thermo_switch != THERMO_SD) {
+      runtimeErrorMsg() << "The SD integrator requires the SD thermostat";
+    }
+#endif
+  }
+#ifdef ROTATION
+  for (auto const &p : cell_structure->local_particles()) {
+    using namespace PropagationMode;
+    if (p.can_rotate() and not p.is_virtual() and
+        (p.propagation() & (SYSTEM_DEFAULT | ROT_EULER | ROT_LANGEVIN |
+                            ROT_BROWNIAN | ROT_STOKESIAN)) == 0) {
+      runtimeErrorMsg()
+          << "Rotating particles must have a rotation propagation mode enabled";
+      break;
+    }
+  }
+#endif
 }
 
 #ifdef WALBERLA
@@ -238,66 +320,120 @@ static void resort_particles_if_needed(System::System &system) {
   }
 }
 
+static bool should_propagate_with(Particle const &p, int mode) {
+  return p.propagation() & mode or
+         ((default_propagation & mode) and
+          (p.propagation() & PropagationMode::SYSTEM_DEFAULT));
+}
+
+void System::System::thermostats_force_init(double kT) {
+  for (auto &p : cell_structure->local_particles()) {
+    if (should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
+      p.force() += friction_thermo_langevin(langevin, p, time_step, kT);
+#ifdef ROTATION
+    if (should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
+      p.torque() += convert_vector_body_to_space(
+          p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
+#endif
+  }
+}
+
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-static bool integrator_step_1(ParticleRange const &particles,
+static bool integrator_step_1(ParticleRange const &particles, double kT,
                               double time_step) {
-  bool early_exit = false;
-  switch (integ_switch) {
-  case INTEG_METHOD_STEEPEST_DESCENT:
-    early_exit = steepest_descent_step(particles);
-    break;
-  case INTEG_METHOD_NVT:
-    velocity_verlet_step_1(particles, time_step);
-    break;
-#ifdef NPT
-  case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_1(particles, time_step);
-    break;
+  using namespace PropagationMode;
+  // steepest decent
+  if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
+    return steepest_descent_step(particles);
+
+  for (auto &p : particles) {
+#ifdef VIRTUAL_SITES
+    // virtual sites are updated later in the integration loop
+    if (p.is_virtual())
+      continue;
 #endif
-  case INTEG_METHOD_BD:
-    // the Ermak-McCammon's Brownian Dynamics requires a single step
-    // so, just skip here
-    break;
-#ifdef STOKESIAN_DYNAMICS
-  case INTEG_METHOD_SD:
-    stokesian_dynamics_step_1(particles, time_step);
-    break;
-#endif // STOKESIAN_DYNAMICS
-  default:
-    throw std::runtime_error("Unknown value for integ_switch");
+    if (should_propagate_with(p, TRANS_LB_MOMENTUM_EXCHANGE))
+      velocity_verlet_propagator_1(p, time_step);
+    if (should_propagate_with(p, TRANS_NEWTON))
+      velocity_verlet_propagator_1(p, time_step);
+#ifdef ROTATION
+    if (should_propagate_with(p, ROT_EULER))
+      velocity_verlet_rotator_1(p, time_step);
+#endif
+    if (should_propagate_with(p, TRANS_LANGEVIN))
+      velocity_verlet_propagator_1(p, time_step);
+#ifdef ROTATION
+    if (should_propagate_with(p, ROT_LANGEVIN))
+      velocity_verlet_rotator_1(p, time_step);
+#endif
+    if (should_propagate_with(p, TRANS_BROWNIAN))
+      brownian_dynamics_propagator(brownian, p, time_step, kT);
+#ifdef ROTATION
+    if (should_propagate_with(p, ROT_BROWNIAN))
+      brownian_dynamics_rotator(brownian, p, time_step, kT);
+#endif
   }
-  return early_exit;
+
+#ifdef NPT
+  if (::used_propagations & TRANS_LANGEVIN_NPT) {
+    if (default_propagation & TRANS_LANGEVIN_NPT)
+      velocity_verlet_npt_step_1(
+          particles.filter(PropagationPredicateNPT(default_propagation)),
+          time_step);
+  }
+#endif
+
+#ifdef STOKESIAN_DYNAMICS
+  if (::used_propagations & TRANS_STOKESIAN) {
+    if (default_propagation & TRANS_STOKESIAN) {
+      stokesian_dynamics_step_1(
+          particles.filter(PropagationPredicateStokesian(default_propagation)),
+          time_step);
+    }
+  }
+#endif // STOKESIAN_DYNAMICS
+
+  sim_time += time_step;
+  return false;
 }
 
-/** Calls the hook of the propagation kernels after force calculation */
 static void integrator_step_2(ParticleRange const &particles, double kT,
                               double time_step) {
-  switch (integ_switch) {
-  case INTEG_METHOD_STEEPEST_DESCENT:
-    // Nothing
-    break;
-  case INTEG_METHOD_NVT:
-    velocity_verlet_step_2(particles, time_step);
-    break;
-#ifdef NPT
-  case INTEG_METHOD_NPT_ISO:
-    velocity_verlet_npt_step_2(particles, time_step);
-    break;
+  using namespace PropagationMode;
+  if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
+    return;
+  for (auto &p : particles) {
+#ifdef VIRTUAL_SITES
+    // virtual sites are updated later in the integration loop
+    if (p.is_virtual())
+      continue;
 #endif
-  case INTEG_METHOD_BD:
-    // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles, time_step, kT);
-    break;
-#ifdef STOKESIAN_DYNAMICS
-  case INTEG_METHOD_SD:
-    // Nothing
-    break;
-#endif // STOKESIAN_DYNAMICS
-  default:
-    throw std::runtime_error("Unknown value for INTEG_SWITCH");
+    if (should_propagate_with(p, TRANS_LB_MOMENTUM_EXCHANGE))
+      velocity_verlet_propagator_2(p, time_step);
+    if (should_propagate_with(p, TRANS_NEWTON))
+      velocity_verlet_propagator_2(p, time_step);
+#ifdef ROTATION
+    if (should_propagate_with(p, ROT_EULER))
+      velocity_verlet_rotator_2(p, time_step);
+#endif
+    if (should_propagate_with(p, TRANS_LANGEVIN))
+      velocity_verlet_propagator_2(p, time_step);
+#ifdef ROTATION
+    if (should_propagate_with(p, ROT_LANGEVIN))
+      velocity_verlet_rotator_2(p, time_step);
+#endif
   }
+
+#ifdef NPT
+  if (::used_propagations & TRANS_LANGEVIN_NPT) {
+    if (default_propagation & TRANS_LANGEVIN_NPT)
+      velocity_verlet_npt_step_2(
+          particles.filter(PropagationPredicateNPT(default_propagation)),
+          time_step);
+  }
+#endif
 }
 
 namespace System {
@@ -306,8 +442,16 @@ int System::integrate(int n_steps, int reuse_forces) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
+#ifdef VIRTUAL_SITES_RELATIVE
+  auto const has_vs_rel = []() {
+    return ::used_propagations & (PropagationMode::ROT_VS_RELATIVE |
+                                  PropagationMode::TRANS_VS_RELATIVE);
+  };
+#endif
 
   // Prepare particle structure and run sanity checks of all active algorithms
+  update_default_propagation();
+  update_used_propagations();
   on_integration_start();
 
   // If any method vetoes (e.g. P3M not initialized), immediately bail out
@@ -322,8 +466,10 @@ int System::integrate(int n_steps, int reuse_forces) {
 #endif
     lb_lbcoupling_deactivate();
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+#ifdef VIRTUAL_SITES_RELATIVE
+    if (has_vs_rel()) {
+      vs_relative_update_particles(*cell_structure, *box_geo);
+    }
 #endif
 
     // Communication step: distribute ghost positions
@@ -387,7 +533,7 @@ int System::integrate(int n_steps, int reuse_forces) {
 #endif
 
     LeesEdwards::update_box_params(*box_geo);
-    bool early_exit = integrator_step_1(particles, time_step);
+    bool early_exit = integrator_step_1(particles, temperature, time_step);
     if (early_exit)
       break;
 
@@ -410,9 +556,17 @@ int System::integrate(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-#endif
+#ifdef VIRTUAL_SITES_RELATIVE
+    if (has_vs_rel()) {
+#ifdef NPT
+      if (integ_switch == INTEG_METHOD_NPT_ISO) {
+        cell_structure->update_ghosts_and_resort_particle(
+            Cells::DATA_PART_PROPERTIES);
+      }
+#endif // NPT
+      vs_relative_update_particles(*cell_structure, *box_geo);
+    }
+#endif // VIRTUAL_SITES_RELATIVE
 
     if (cell_structure->get_resort_particles() >= Cells::RESORT_LOCAL)
       n_verlet_updates++;
@@ -424,8 +578,10 @@ int System::integrate(int n_steps, int reuse_forces) {
 
     calculate_forces(::temperature);
 
-#ifdef VIRTUAL_SITES
-    virtual_sites()->after_force_calc(time_step);
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+    if (::used_propagations & PropagationMode::TRANS_LB_TRACER) {
+      lb_tracers_add_particle_force_to_fluid(*cell_structure, time_step);
+    }
 #endif
     integrator_step_2(particles, temperature, time_step);
     if (integ_switch == INTEG_METHOD_BD) {
@@ -479,8 +635,10 @@ int System::integrate(int n_steps, int reuse_forces) {
         }
       }
 
-#ifdef VIRTUAL_SITES
-      virtual_sites()->after_lb_propagation(time_step);
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+      if (::used_propagations & PropagationMode::TRANS_LB_TRACER) {
+        lb_tracers_propagate(*cell_structure, time_step);
+      }
 #endif
 
 #ifdef COLLISION_DETECTION
@@ -512,8 +670,10 @@ int System::integrate(int n_steps, int reuse_forces) {
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
-#ifdef VIRTUAL_SITES
-  virtual_sites()->update();
+#ifdef VIRTUAL_SITES_RELATIVE
+  if (has_vs_rel()) {
+    vs_relative_update_particles(*cell_structure, *box_geo);
+  }
 #endif
 
   // Verlet list statistics
@@ -590,8 +750,6 @@ int System::integrate_with_signal_handler(int n_steps, int reuse_forces,
 double get_time_step() { return System::get_system().get_time_step(); }
 
 double get_sim_time() { return sim_time; }
-
-void increment_sim_time(double amount) { sim_time += amount; }
 
 void set_time(double value) {
   ::sim_time = value;

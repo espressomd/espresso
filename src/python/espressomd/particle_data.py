@@ -26,6 +26,7 @@ from .utils import nesting_level, array_locked, is_valid_type, handle_errors
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
+from .propagation import Propagation
 import itertools
 
 
@@ -368,12 +369,15 @@ class ParticleHandle(ScriptInterfaceHelper):
         delete_bond : Delete an unverified bond held by the particle.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
+    is_virtual()
+        Whether the particle is a virtual site.
+
     """
 
     _so_name = "Particles::ParticleHandle"
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
-        "delete_all_bonds",
+        "delete_all_bonds", "is_virtual",
     )
 
     # here we must redefine the script interface setters
@@ -383,6 +387,8 @@ class ParticleHandle(ScriptInterfaceHelper):
             self.set_parameter(name, value)
 
     def set_parameter(self, name, value):
+        if name == "propagation":
+            value = int(value)
         return self.call_method("set_param_parallel", name=name, value=value)
 
     def remove(self):
@@ -419,6 +425,7 @@ class ParticleHandle(ScriptInterfaceHelper):
                 del pdict[k]
         if has_features("EXCLUSIONS"):
             pdict["exclusions"] = self.exclusions
+        pdict["propagation"] = self.propagation
         pdict["bonds"] = self.bonds
         return pdict
 
@@ -552,7 +559,16 @@ class ParticleHandle(ScriptInterfaceHelper):
         assert_features("EXCLUSIONS")
         self.call_method("set_exclusions", p_ids=p_ids)
 
-    def vs_auto_relate_to(self, rel_to):
+    @property
+    def propagation(self):
+        return Propagation(self.get_parameter("propagation"))
+
+    @propagation.setter
+    def propagation(self, value):
+        self.set_parameter("propagation", int(value))
+
+    def vs_auto_relate_to(self, rel_to, override_cutoff_check=False,
+                          couple_to_lb=False, couple_to_langevin=False):
         """
         Setup this particle as virtual site relative to the particle
         in argument ``rel_to``. A particle cannot relate to itself.
@@ -561,6 +577,16 @@ class ParticleHandle(ScriptInterfaceHelper):
         -----------
         rel_to : :obj:`int` or :obj:`ParticleHandle`
             Particle to relate to (either particle id or particle object).
+        override_cutoff_check : :obj:`bool`
+            If True, does not check whether the cell system cutoffs
+            are consistent with the distance between virtual and
+            non-virtual particles.
+        couple_to_lb : :obj:`bool`
+            If True, the virtual site is coupled to LB friction and noise.
+        couple_to_langevin : :obj:`bool`
+            If True, the virtual site is coupled to Langevin friction
+            and noise. If ``couple_to_lb`` is also True, propagate LB's
+            equations of motion and Langevin's equations of rotation.
 
         """
         if isinstance(rel_to, ParticleHandle):
@@ -568,8 +594,19 @@ class ParticleHandle(ScriptInterfaceHelper):
         else:
             check_type_or_throw_except(
                 rel_to, 1, int, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int")
-        self.call_method("vs_relate_to", pid=rel_to)
+        self.call_method(
+            "vs_relate_to",
+            pid=rel_to,
+            override_cutoff_check=override_cutoff_check)
         handle_errors("vs_auto_relate_to")
+        if self.propagation != Propagation.NONE:
+            if couple_to_lb:
+                self.propagation |= Propagation.TRANS_LB_MOMENTUM_EXCHANGE
+            if couple_to_langevin:
+                if not couple_to_lb:
+                    self.propagation |= Propagation.ROT_LANGEVIN | Propagation.TRANS_LANGEVIN
+                else:
+                    self.propagation |= Propagation.ROT_LANGEVIN
 
     def add_verified_bond(self, bond):
         """
@@ -1088,6 +1125,8 @@ class ParticleList(ScriptInterfaceHelper):
 
     def _place_new_particle(self, p_dict):
         bonds = []
+        if "propagation" in p_dict:
+            p_dict["propagation"] = int(p_dict["propagation"])
         if "bonds" in p_dict:
             bonds = p_dict.pop("bonds")
             if nesting_level(bonds) == 1:

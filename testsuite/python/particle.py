@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
 import espressomd.particle_data
+import espressomd.propagation
 import numpy as np
 import collections
 import itertools
@@ -99,6 +100,20 @@ class ParticleProperties(ut.TestCase):
     test_f = generateTestForVectorProperty("f", np.array([0.2, 0.3, 0.7]))
     test_type = generateTestForScalarProperty("type", int(3))
     test_mol_id = generateTestForScalarProperty("mol_id", int(3))
+    test_propagation = generateTestForScalarProperty(
+        "propagation", int(espressomd.propagation.Propagation.TRANS_LANGEVIN))
+
+    def test_invalid_propagation(self):
+        Propagation = espressomd.propagation.Propagation
+        with self.assertRaisesRegex(ValueError, "propagation combination not accepted"):
+            self.partcl.propagation = (
+                Propagation.TRANS_LANGEVIN | Propagation.TRANS_LANGEVIN_NPT | Propagation.TRANS_LB_MOMENTUM_EXCHANGE)
+
+    def test_propagation_enum(self):
+        Propagation = espressomd.propagation.Propagation
+        flags_core = self.system.call_method("get_propagation_modes_enum")
+        flags_si = {e.name: e.value for e in Propagation}
+        self.assertEqual(flags_si, flags_core)
 
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))
@@ -179,15 +194,14 @@ class ParticleProperties(ut.TestCase):
             "dip", np.array([0.5, -0.5, 3]))
         test_dipm = generateTestForScalarProperty("dipm", -9.7)
 
-    if espressomd.has_features(["VIRTUAL_SITES"]):
-        test_virtual = generateTestForScalarProperty("virtual", True)
-
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_vs_relative(self):
         self.system.part.add(id=0, pos=(0, 0, 0))
         p1 = self.system.part.add(id=1, pos=(0, 0, 0))
+        self.assertFalse(p1.is_virtual())
         p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
         p1.vs_quat = [1, 2, 3, 4]
+        self.assertTrue(p1.is_virtual())
         np.testing.assert_array_equal(p1.vs_quat, [1, 2, 3, 4])
         res = p1.vs_relative
         self.assertEqual(res[0], 0, f"vs_relative: {res}")
@@ -388,7 +402,6 @@ class ParticleProperties(ut.TestCase):
 
         check("MASS", "mass", [1.1, 0., -1.], 1.)
         check("ELECTROSTATICS", "q", [1., -1.], 0.)
-        check("VIRTUAL_SITES", "virtual", [True], False)
 
     def test_parallel_property_setters(self):
         system = self.system

@@ -16,15 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
-#define VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
 
-#include "config/config.hpp"
-#ifdef VIRTUAL_SITES
-#include "VirtualSites.hpp"
+#pragma once
 
-/** @brief Do-nothing virtual-sites implementation */
-class VirtualSitesOff : public VirtualSites {};
+#include "ParticleIterator.hpp"
+#include "cell_system/Cell.hpp"
 
-#endif
-#endif
+using CellParticleIterator = ParticleIterator<Cell *const *>;

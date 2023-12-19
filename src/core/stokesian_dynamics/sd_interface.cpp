@@ -26,7 +26,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
+#include "communication.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
@@ -87,7 +87,8 @@ void register_integrator(StokesianDynamicsParameters const &obj) {
 }
 
 /** Update translational and rotational velocities of all particles. */
-void sd_update_locally(ParticleRange const &parts) {
+template <typename ParticleIterable>
+void sd_update_locally(ParticleIterable const &parts) {
   std::size_t i = 0;
 
   // Even though on the head node, the v_sd vector is larger than
@@ -96,11 +97,6 @@ void sd_update_locally(ParticleRange const &parts) {
   // (which holds the velocities of ALL particles).
 
   for (auto &p : parts) {
-    // skip virtual particles
-    if (p.is_virtual()) {
-      continue;
-    }
-
     // Copy velocities
     p.v()[0] = v_sd[6 * i + 0];
     p.v()[1] = v_sd[6 * i + 1];
@@ -110,7 +106,7 @@ void sd_update_locally(ParticleRange const &parts) {
     p.omega()[1] = v_sd[6 * i + 4];
     p.omega()[2] = v_sd[6 * i + 5];
 
-    i++;
+    ++i;
   }
 }
 
@@ -141,19 +137,19 @@ void set_sd_kT(double kT) {
 
 double get_sd_kT() { return sd_kT; }
 
-void propagate_vel_pos_sd(const ParticleRange &particles,
-                          const boost::mpi::communicator &comm,
-                          const double time_step) {
+void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
+                          double const time_step) {
+
   static std::vector<SD_particle_data> parts_buffer{};
 
   parts_buffer.clear();
   boost::transform(particles, std::back_inserter(parts_buffer),
                    [](auto const &p) { return SD_particle_data(p); });
-  Utils::Mpi::gather_buffer(parts_buffer, comm, 0);
+  Utils::Mpi::gather_buffer(parts_buffer, ::comm_cart, 0);
 
   /* Buffer that holds local particle data, and all particles on the head
    * node used for sending particle data to head node. */
-  if (comm.rank() == 0) {
+  if (::comm_cart.rank() == 0) {
     std::size_t n_part = parts_buffer.size();
 
     static std::vector<double> x_host{};
@@ -182,9 +178,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
       f_host[6 * i + 4] = p.ext_force.torque[1];
       f_host[6 * i + 5] = p.ext_force.torque[2];
 
-      double radius = params.radii[p.type];
-
-      a_host[i] = radius;
+      a_host[i] = params.radii.at(p.type);
 
       ++i;
     }
@@ -197,8 +191,8 @@ void propagate_vel_pos_sd(const ParticleRange &particles,
     v_sd.resize(particles.size() * 6);
   } // if (this_node == 0) {...} else
 
-  Utils::Mpi::scatter_buffer(v_sd.data(),
-                             static_cast<int>(particles.size() * 6), comm, 0);
+  Utils::Mpi::scatter_buffer(
+      v_sd.data(), static_cast<int>(particles.size() * 6), ::comm_cart, 0);
   sd_update_locally(particles);
 }
 

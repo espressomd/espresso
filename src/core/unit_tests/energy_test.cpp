@@ -22,6 +22,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "energy_inline.hpp"
 
 #include <utils/Vector.hpp>
@@ -47,7 +48,7 @@ BOOST_AUTO_TEST_CASE(translational_kinetic_energy_) {
 #ifdef MASS
     p.mass() = 2.;
 #endif
-    p.set_virtual(true);
+    p.propagation() = PropagationMode::TRANS_VS_RELATIVE;
     p.v() = {3., 4., 5.};
 
     auto const expected = 0.;
@@ -78,7 +79,7 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
 #ifdef ROTATIONAL_INERTIA
     p.rinertia() = {1., 2., 3.};
 #endif
-    p.set_virtual(true);
+    p.propagation() = PropagationMode::ROT_VS_RELATIVE;
     p.omega() = {3., 4., 5.};
     p.set_can_rotate_all_axes();
 

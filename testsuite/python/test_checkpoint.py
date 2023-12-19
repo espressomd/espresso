@@ -32,12 +32,12 @@ import espressomd.electrostatics
 import espressomd.magnetostatics
 import espressomd.io.writer  # pylint: disable=unused-import
 import espressomd.lees_edwards
-import espressomd.virtual_sites
 import espressomd.integrate
 import espressomd.shapes
 import espressomd.constraints
 import espressomd.lb
 import espressomd.electrokinetics
+import espressomd.propagation
 with contextlib.suppress(ImportError):
     import espressomd.io.vtk
 
@@ -376,6 +376,8 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(p2.pos), np.array([1.0, 1.0, 2.0]))
         np.testing.assert_allclose(np.copy(p1.f), particle_force0)
         np.testing.assert_allclose(np.copy(p2.f), particle_force1)
+        self.assertEqual(p1.propagation, particle_propagation0)
+        self.assertEqual(p2.propagation, particle_propagation1)
         self.assertEqual(p1.type, 0)
         self.assertEqual(p2.type, 0)
         self.assertEqual(p3.type, 1)
@@ -509,7 +511,6 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
         self.assertEqual(thmst['counter'], 0)
-        self.assertFalse(thmst['act_on_virtual'])
         np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
         if espressomd.has_features('ROTATION'):
             np.testing.assert_array_equal(thmst['gamma_rotation'], 3 * [2.0])
@@ -522,7 +523,6 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
         self.assertEqual(thmst['counter'], 0)
-        self.assertFalse(thmst['act_on_virtual'])
         np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
         if espressomd.has_features('ROTATION'):
             np.testing.assert_array_equal(thmst['gamma_rotation'], 3 * [2.0])
@@ -706,15 +706,12 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertIsInstance(
-            system.virtual_sites,
-            espressomd.virtual_sites.VirtualSitesRelative)
-        self.assertTrue(system.virtual_sites.have_quaternion)
-        self.assertTrue(system.virtual_sites.override_cutoff_check)
+        Propagation = espressomd.propagation.Propagation
         p_real = system.part.by_id(0)
         p_virt = system.part.by_id(1)
-        self.assertTrue(p_virt.virtual)
-        self.assertFalse(p_real.virtual)
+        self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)
+        self.assertEqual(p_virt.propagation, Propagation.TRANS_VS_RELATIVE |
+                         Propagation.ROT_VS_RELATIVE)
         self.assertEqual(p_real.vs_relative[0], -1)
         self.assertEqual(p_virt.vs_relative[0], p_real.id)
         self.assertEqual(p_real.vs_relative[1], 0.)

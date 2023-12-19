@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.propagation
 import tests_common
 import numpy as np
 
@@ -140,12 +141,13 @@ class NPTThermostat(ut.TestCase):
             np.testing.assert_allclose(box_l_rel, box_l_rel_ref, atol=1e-10)
             self.assertGreater(np.max(box_l_rel), 2)
 
-    @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
         system = self.system
 
-        virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
-        physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
+        Propagation = espressomd.propagation.Propagation
+        virtual = system.part.add(pos=[0, 0, 0], v=[1, 0, 0],
+                                  propagation=Propagation.NONE)
+        physical = system.part.add(pos=[0, 0, 0], v=[1, 0, 0])
 
         system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.04, seed=42)
         system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01)

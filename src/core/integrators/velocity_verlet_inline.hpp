@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef INTEGRATORS_VELOCITY_VERLET_HPP
-#define INTEGRATORS_VELOCITY_VERLET_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -32,26 +32,15 @@
  *  v(t) + 0.5 \Delta t f(t)/m \f] <br> \f[ p(t+\Delta t) = p(t) + \Delta t
  *  v(t+0.5 \Delta t) \f]
  */
-inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
-                                              double time_step) {
+inline void velocity_verlet_propagator_1(Particle &p, double time_step) {
+  for (unsigned int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
+      p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
 
-  for (auto &p : particles) {
-#ifdef ROTATION
-    propagate_omega_quat_particle(p, time_step);
-#endif
-
-    // Don't propagate translational degrees of freedom of vs
-    if (p.is_virtual())
-      continue;
-    for (unsigned int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
-        p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
-
-        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-         * v(t+0.5*dt) */
-        p.pos()[j] += time_step * p.v()[j];
-      }
+      /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
+       * v(t+0.5*dt) */
+      p.pos()[j] += time_step * p.v()[j];
     }
   }
 }
@@ -59,35 +48,23 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles,
 /** Final integration step of the Velocity Verlet integrator
  *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f]
  */
-inline void velocity_verlet_propagate_vel_final(const ParticleRange &particles,
-                                                double time_step) {
-
-  for (auto &p : particles) {
-    // Virtual sites are not propagated during integration
-    if (p.is_virtual())
-      continue;
-
-    for (unsigned int j = 0; j < 3; j++) {
-      if (!p.is_fixed_along(j)) {
-        /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-        p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
-      }
+inline void velocity_verlet_propagator_2(Particle &p, double time_step) {
+  for (unsigned int j = 0; j < 3; j++) {
+    if (!p.is_fixed_along(j)) {
+      /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+      p.v()[j] += 0.5 * time_step * p.force()[j] / p.mass();
     }
   }
 }
 
-inline void velocity_verlet_step_1(const ParticleRange &particles,
-                                   double time_step) {
-  velocity_verlet_propagate_vel_pos(particles, time_step);
-  increment_sim_time(time_step);
-}
-
-inline void velocity_verlet_step_2(const ParticleRange &particles,
-                                   double time_step) {
-  velocity_verlet_propagate_vel_final(particles, time_step);
 #ifdef ROTATION
-  convert_torques_propagate_omega(particles, time_step);
-#endif
+inline void velocity_verlet_rotator_1(Particle &p, double time_step) {
+  if (p.can_rotate())
+    propagate_omega_quat_particle(p, time_step);
 }
 
-#endif
+inline void velocity_verlet_rotator_2(Particle &p, double time_step) {
+  if (p.can_rotate())
+    convert_torque_propagate_omega(p, time_step);
+}
+#endif // ROTATION

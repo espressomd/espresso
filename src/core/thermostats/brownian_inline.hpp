@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THERMOSTATS_BROWNIAN_INLINE_HPP
-#define THERMOSTATS_BROWNIAN_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -150,10 +149,6 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
  */
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
                                       Particle const &p, double dt, double kT) {
-  // skip the translation thermalizing for virtual sites unless enabled
-  if (p.is_virtual() and !thermo_virtual)
-    return {};
-
   Thermostat::GammaType sigma_pos = brownian.sigma_pos;
 #ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
@@ -219,10 +214,6 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
  */
 inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
                                           Particle const &p) {
-  // skip the translation thermalizing for virtual sites unless enabled
-  if (p.is_virtual() and !thermo_virtual)
-    return {};
-
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   Utils::Vector3d velocity = {};
@@ -384,5 +375,3 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
   return mask(p.rotation(), domega);
 }
 #endif // ROTATION
-
-#endif // THERMOSTATS_BROWNIAN_INLINE_HPP

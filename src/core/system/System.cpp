@@ -39,8 +39,7 @@
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
-#include "virtual_sites/VirtualSitesOff.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/all_compare.hpp>
@@ -281,7 +280,9 @@ void System::on_particle_charge_change() {
 
 void System::update_dependent_particles() {
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update();
+#ifdef VIRTUAL_SITES_RELATIVE
+  vs_relative_update_particles(*cell_structure, *box_geo);
+#endif
   cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
 #endif
 
@@ -420,9 +421,4 @@ void mpi_init_stand_alone(int argc, char **argv) {
 
   // initialize the MpiCallbacks framework
   Communication::init(mpi_env);
-
-  // default-construct global state of the system
-#ifdef VIRTUAL_SITES
-  set_virtual_sites(std::make_shared<VirtualSitesOff>());
-#endif
 }

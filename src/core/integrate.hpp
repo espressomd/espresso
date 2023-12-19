@@ -83,9 +83,6 @@ double get_time_step();
 /** Get simulation time */
 double get_sim_time();
 
-/** Increase simulation time (only on head node) */
-void increment_sim_time(double amount);
-
 /** @brief Set the simulation time. */
 void set_time(double value);
 

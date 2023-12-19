@@ -20,7 +20,6 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
-import espressomd.virtual_sites
 import numpy as np
 
 
@@ -62,8 +61,6 @@ class CollisionDetection(ut.TestCase):
 
     def tearDown(self):
         self.system.collision_detection.set_params(mode="off")
-        if espressomd.has_features("VIRTUAL_SITES"):
-            self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
 
     def test_00_interface_and_defaults(self):
         # Is it off by default
@@ -132,7 +129,6 @@ class CollisionDetection(ut.TestCase):
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_bind_at_point_of_collision(self):
         self.set_coldet("bind_at_point_of_collision", distance=0.5)
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         with self.assertRaisesRegex(ValueError, "Parameter 'vs_placement' must be between 0 and 1"):
             self.set_coldet("bind_at_point_of_collision", vs_placement=-0.01)
         with self.assertRaisesRegex(ValueError, "Parameter 'vs_placement' must be between 0 and 1"):

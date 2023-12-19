@@ -178,6 +178,8 @@ public:
   int integrate_with_signal_handler(int n_steps, int reuse_forces,
                                     bool update_accumulators);
 
+  void thermostats_force_init(double kT);
+
   /** \name Hook procedures
    *  These procedures are called if several significant changes to
    *  the system happen which may make a reinitialization of subsystems
@@ -216,16 +218,22 @@ public:
   void on_particle_change();
   /** @brief Called every time a particle charge changes. */
   void on_particle_charge_change();
-  /** @brief Update particles with properties depending on other particles,
-   *  namely virtual sites and ICC charges.
-   */
-  void update_dependent_particles();
   /** called before calculating observables, i.e. energy, pressure or
    *  the integrator (forces). Initialize any methods here which are not
    *  initialized immediately (P3M etc.).
    */
   void on_observable_calc();
   /**@}*/
+
+  /**
+   * @brief Update particles with properties depending on other particles,
+   * namely virtual sites and ICC charges.
+   */
+  void update_dependent_particles();
+  /**
+   * @brief Update the global propagation bitmask.
+   */
+  void update_used_propagations();
 
   Coulomb::Solver coulomb;
   Dipoles::Solver dipoles;

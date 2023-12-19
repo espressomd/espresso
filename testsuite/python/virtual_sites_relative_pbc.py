@@ -20,7 +20,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-import espressomd.virtual_sites
+import espressomd.propagation
 import espressomd.lees_edwards
 import numpy as np
 
@@ -42,15 +42,12 @@ class Test(ut.TestCase):
     system.min_global_cut = 1.5 * vs_dist
     system.cell_system.skin = 0.1
 
-    def setUp(self):
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
-
     def tearDown(self):
         self.system.part.clear()
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         self.system.lees_edwards.protocol = None
 
     def check_pbc(self):
+        Propagation = espressomd.propagation.Propagation
         system = self.system
         vs_dist = self.vs_dist
         box_l = system.box_l[0]
@@ -102,7 +99,8 @@ class Test(ut.TestCase):
                            (eps * 2.0 + vs_dist * 1.0), 1. - le_dir * le_offset, 1.]
             pos_away = pos_near - [le_dir * vs_dist, 0., 0.]
             real_kwargs = {"v": le_dir * v * director, "director": director}
-            virt_kwargs = {"virtual": True}
+            virt_kwargs = {
+                "propagation": Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE}
             # case 1: virtual site goes through boundary before real particle
             # case 2: virtual site goes through boundary after real particle
             # In the second time step, the virtual site and real particle are
@@ -182,10 +180,12 @@ class Test(ut.TestCase):
 
     def test_image_box_update(self):
         system = self.system
+        Propagation = espressomd.propagation.Propagation
         # virtual site image box is overriden by the real particle image box
         real_part = system.part.add(pos=[0., 0., +self.vs_dist / 2.])
         virt_part = system.part.add(
-            pos=[0., 0., -self.vs_dist / 2. + 4. * system.box_l[2]], virtual=True)
+            pos=[0., 0., -self.vs_dist / 2. + 4. * system.box_l[2]],
+            propagation=Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE)
         virt_part.vs_auto_relate_to(real_part)
         np.testing.assert_array_equal(np.copy(real_part.image_box), [0, 0, 0])
         np.testing.assert_array_equal(np.copy(virt_part.image_box), [0, 0, 3])

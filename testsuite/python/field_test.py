@@ -24,6 +24,7 @@ import itertools
 
 import espressomd
 import espressomd.constraints
+import espressomd.propagation
 
 
 class FieldTest(ut.TestCase):
@@ -53,10 +54,8 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(gravity)
 
-        if espressomd.has_features("MASS"):
-            p = self.system.part.add(pos=[0, 0, 0], mass=3.1)
-        else:
-            p = self.system.part.add(pos=[0, 0, 0])
+        mass = 3.1 if espressomd.has_features("MASS") else 1.
+        p = self.system.part.add(pos=[0, 0, 0], mass=mass)
 
         self.system.integrator.run(0)
 
@@ -64,8 +63,8 @@ class FieldTest(ut.TestCase):
         self.assertAlmostEqual(self.system.analysis.energy()['total'], 0.)
 
         # Virtual sites don't feel gravity
-        if espressomd.has_features("VIRTUAL_SITES"):
-            p.virtual = True
+        if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
+            p.propagation = espressomd.propagation.Propagation.TRANS_LB_TRACER
             self.system.integrator.run(0)
             np.testing.assert_allclose(np.copy(p.f), 0)
 
