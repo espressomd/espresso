@@ -43,6 +43,7 @@
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
+#include "script_interface/lees_edwards/LeesEdwards.hpp"
 #include "script_interface/magnetostatics/Container.hpp"
 
 #include <utils/Vector.hpp>
@@ -75,6 +76,7 @@ struct System::Leaves {
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
   std::shared_ptr<BondBreakage::BreakageSpecs> bond_breakage;
+  std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
 #ifdef ELECTROSTATICS
   std::shared_ptr<Coulomb::Container> electrostatics;
 #endif
@@ -145,6 +147,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);
   add_parameter("bond_breakage", &Leaves::bond_breakage);
+  add_parameter("lees_edwards", &Leaves::lees_edwards);
 #ifdef ELECTROSTATICS
   add_parameter("electrostatics", &Leaves::electrostatics);
 #endif

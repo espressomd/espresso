@@ -92,54 +92,40 @@ volatile std::sig_atomic_t ctrl_C = 0;
 } // namespace
 
 namespace LeesEdwards {
-/** @brief Currently active Lees-Edwards protocol. */
-static std::shared_ptr<ActiveProtocol> protocol = nullptr;
-
-std::weak_ptr<ActiveProtocol> get_protocol() { return protocol; }
 
 /**
  * @brief Update the Lees-Edwards parameters of the box geometry
  * for the current simulation time.
  */
-static void update_box_params(BoxGeometry &box_geo, double sim_time) {
+void LeesEdwards::update_box_params(BoxGeometry &box_geo, double sim_time) {
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
-    assert(protocol != nullptr);
-    box_geo.lees_edwards_update(get_pos_offset(sim_time, *protocol),
-                                get_shear_velocity(sim_time, *protocol));
+    assert(m_protocol != nullptr);
+    box_geo.lees_edwards_update(get_pos_offset(sim_time, *m_protocol),
+                                get_shear_velocity(sim_time, *m_protocol));
   }
 }
 
-void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol) {
-  auto &system = System::get_system();
+void LeesEdwards::set_protocol(std::shared_ptr<ActiveProtocol> protocol) {
+  auto &system = get_system();
   auto &cell_structure = *system.cell_structure;
   auto &box_geo = *system.box_geo;
   box_geo.set_type(BoxType::LEES_EDWARDS);
-  protocol = std::move(new_protocol);
-  LeesEdwards::update_box_params(box_geo, system.get_sim_time());
+  m_protocol = std::move(protocol);
+  update_box_params(box_geo, system.get_sim_time());
   system.propagation->recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
 
-void unset_protocol() {
-  auto &system = System::get_system();
+void LeesEdwards::unset_protocol() {
+  auto &system = get_system();
   auto &cell_structure = *system.cell_structure;
   auto &box_geo = *system.box_geo;
-  protocol = nullptr;
+  m_protocol = nullptr;
   box_geo.set_type(BoxType::CUBOID);
   system.propagation->recalc_forces = true;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 }
 
-template <class Kernel> void run_kernel(BoxGeometry const &box_geo) {
-  if (box_geo.type() == BoxType::LEES_EDWARDS) {
-    auto &system = System::get_system();
-    auto &cell_structure = *system.cell_structure;
-    auto const kernel = Kernel{box_geo};
-    auto const particles = cell_structure.local_particles();
-    std::for_each(particles.begin(), particles.end(),
-                  [&kernel](auto &p) { kernel(p); });
-  }
-}
 } // namespace LeesEdwards
 
 void Propagation::update_default_propagation() {
@@ -515,14 +501,19 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       save_old_position(particles, cell_structure->ghost_particles());
 #endif
 
-    LeesEdwards::update_box_params(*box_geo, sim_time);
+    lees_edwards->update_box_params(*box_geo, sim_time);
     bool early_exit =
         integrator_step_1(particles, propagation, ::temperature, time_step);
     if (early_exit)
       break;
 
     sim_time += time_step;
-    LeesEdwards::run_kernel<LeesEdwards::Push>(*box_geo);
+    if (box_geo->type() == BoxType::LEES_EDWARDS) {
+      auto const kernel = LeesEdwards::Push{*box_geo};
+      for (auto &p : particles) {
+        kernel(p);
+      }
+    }
 
 #ifdef NPT
     if (propagation.integ_switch != INTEG_METHOD_NPT_ISO)
@@ -572,7 +563,12 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     if (propagation.integ_switch == INTEG_METHOD_BD) {
       resort_particles_if_needed(*this);
     }
-    LeesEdwards::run_kernel<LeesEdwards::UpdateOffset>(*box_geo);
+    if (box_geo->type() == BoxType::LEES_EDWARDS) {
+      auto const kernel = LeesEdwards::UpdateOffset{*box_geo};
+      for (auto &p : particles) {
+        kernel(p);
+      }
+    }
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
     if (n_rigidbonds) {
@@ -647,7 +643,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
-  LeesEdwards::update_box_params(*box_geo, sim_time);
+  lees_edwards->update_box_params(*box_geo, sim_time);
 #ifdef CALIPER
   CALI_CXX_MARK_LOOP_END(integration_loop);
 #endif
@@ -734,5 +730,5 @@ int System::System::integrate_with_signal_handler(int n_steps, int reuse_forces,
 void System::System::set_sim_time(double value) {
   sim_time = value;
   propagation->recalc_forces = true;
-  LeesEdwards::update_box_params(*box_geo, sim_time);
+  lees_edwards->update_box_params(*box_geo, sim_time);
 }

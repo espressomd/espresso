@@ -16,18 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_LEES_EDWARDS_LEES_EDWARDS_HPP
-#define SCRIPT_INTERFACE_LEES_EDWARDS_LEES_EDWARDS_HPP
+
+#pragma once
 
 #include "Protocol.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/lees_edwards/LeesEdwardsBC.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
-#include "core/system/System.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -35,32 +35,32 @@
 namespace ScriptInterface {
 namespace LeesEdwards {
 
-class LeesEdwards : public AutoParameters<LeesEdwards> {
+class LeesEdwards : public AutoParameters<LeesEdwards, System::Leaf> {
+  std::shared_ptr<::LeesEdwards::LeesEdwards> m_lees_edwards;
   std::shared_ptr<Protocol> m_protocol;
-  LeesEdwardsBC const &m_lebc;
+  std::unique_ptr<VariantMap> m_params;
 
 public:
-  LeesEdwards()
-      : m_protocol{nullptr},
-        m_lebc{System::get_system().box_geo->lees_edwards_bc()} {
+  LeesEdwards() {
     add_parameters(
         {{"protocol",
           [this](Variant const &value) {
             if (is_none(value)) {
-              auto const &system = System::get_system();
+              auto const &system = get_system();
               context()->parallel_try_catch([&system]() {
                 auto constexpr invalid_dir = LeesEdwardsBC::invalid_dir;
                 system.lb.lebc_sanity_checks(invalid_dir, invalid_dir);
               });
               m_protocol = nullptr;
               system.box_geo->set_lees_edwards_bc(LeesEdwardsBC{});
-              ::LeesEdwards::unset_protocol();
+              m_lees_edwards->unset_protocol();
               return;
             }
             context()->parallel_try_catch([this]() {
               auto constexpr invalid_dir = LeesEdwardsBC::invalid_dir;
-              if (m_lebc.shear_direction == invalid_dir or
-                  m_lebc.shear_plane_normal == invalid_dir) {
+              auto const &lebc = get_lebc();
+              if (lebc.shear_direction == invalid_dir or
+                  lebc.shear_plane_normal == invalid_dir) {
                 throw std::runtime_error(
                     "Parameters 'shear_plane_normal' and 'shear_direction' "
                     "must be initialized together with 'protocol' on first "
@@ -68,7 +68,7 @@ public:
               }
             });
             m_protocol = get_value<std::shared_ptr<Protocol>>(value);
-            ::LeesEdwards::set_protocol(m_protocol->protocol());
+            m_lees_edwards->set_protocol(m_protocol->protocol());
           },
           [this]() {
             if (m_protocol)
@@ -76,13 +76,13 @@ public:
             return make_variant(none);
           }},
          {"shear_velocity", AutoParameter::read_only,
-          [this]() { return m_lebc.shear_velocity; }},
+          [this]() { return get_lebc().shear_velocity; }},
          {"pos_offset", AutoParameter::read_only,
-          [this]() { return m_lebc.pos_offset; }},
+          [this]() { return get_lebc().pos_offset; }},
          {"shear_direction", AutoParameter::read_only,
-          [this]() { return get_shear_name(m_lebc.shear_direction); }},
+          [this]() { return get_shear_name(get_lebc().shear_direction); }},
          {"shear_plane_normal", AutoParameter::read_only,
-          [this]() { return get_shear_name(m_lebc.shear_plane_normal); }}});
+          [this]() { return get_shear_name(get_lebc().shear_plane_normal); }}});
   }
 
   Variant do_call_method(std::string const &name,
@@ -103,21 +103,19 @@ public:
           throw std::invalid_argument("Parameters 'shear_direction' and "
                                       "'shear_plane_normal' must differ");
         }
-        auto const &system = System::get_system();
+        auto const &system = get_system();
         system.lb.lebc_sanity_checks(shear_direction, shear_plane_normal);
         // update box geometry and cell structure
         system.box_geo->set_lees_edwards_bc(
             LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});
-        ::LeesEdwards::set_protocol(m_protocol->protocol());
+        m_lees_edwards->set_protocol(m_protocol->protocol());
       });
     }
     return {};
   }
 
   void do_construct(VariantMap const &params) override {
-    if (not params.empty()) {
-      do_call_method("set_boundary_conditions", params);
-    }
+    m_params = std::make_unique<VariantMap>(params);
   }
 
 private:
@@ -147,9 +145,20 @@ private:
     }
     return {none};
   }
+
+  LeesEdwardsBC const &get_lebc() const {
+    return get_system().box_geo->lees_edwards_bc();
+  }
+
+  void on_bind_system(::System::System &system) override {
+    m_lees_edwards = system.lees_edwards;
+    auto const &params = *m_params;
+    if (not params.empty()) {
+      do_call_method("set_boundary_conditions", params);
+    }
+    m_params.reset();
+  }
 };
 
 } // namespace LeesEdwards
 } // namespace ScriptInterface
-
-#endif

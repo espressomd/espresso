@@ -65,6 +65,7 @@ System::System(Private) {
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
   bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
+  lees_edwards = std::make_shared<LeesEdwards::LeesEdwards>();
   reinit_thermo = true;
   time_step = -1.;
   sim_time = 0.;
@@ -75,6 +76,7 @@ System::System(Private) {
 void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
+  lees_edwards->bind_system(handle);
 #ifdef CUDA
   gpu.bind_system(handle);
   gpu.initialize();

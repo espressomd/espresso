@@ -237,7 +237,7 @@ class System(ScriptInterfaceHelper):
 
     def __getstate__(self):
         checkpointable_properties = [
-            "non_bonded_inter", "bonded_inter", "lees_edwards",
+            "non_bonded_inter", "bonded_inter",
             "part", "auto_update_accumulators",
             "constraints",
         ]
