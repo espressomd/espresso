@@ -16,14 +16,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef INTEGRATORS_VELOCITY_VERLET_NPT_HPP
-#define INTEGRATORS_VELOCITY_VERLET_NPT_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef NPT
 
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
+#include "PropagationPredicate.hpp"
+
+struct PropagationPredicateNPT {
+  int modes;
+  PropagationPredicateNPT(int default_propagation) {
+    modes = PropagationMode::TRANS_LANGEVIN_NPT;
+    if (default_propagation & PropagationMode::TRANS_LANGEVIN_NPT) {
+      modes |= PropagationMode::SYSTEM_DEFAULT;
+    }
+  }
+
+  bool operator()(int prop) const { return (prop & modes); }
+};
+
+using ParticleRangeNPT = ParticleRangeFiltered<PropagationPredicateNPT>;
 
 /** Special propagator for NpT isotropic.
  *  Propagate the velocities and positions. Integration steps before force
@@ -34,7 +50,7 @@
  *  Propagate pressure, box_length (2 times) and positions, rescale
  *  positions and velocities and check Verlet list criterion (only NpT).
  */
-void velocity_verlet_npt_step_1(const ParticleRange &particles,
+void velocity_verlet_npt_step_1(ParticleRangeNPT const &particles,
                                 double time_step);
 
 /** Final integration step of the Velocity Verlet+NpT integrator.
@@ -42,8 +58,7 @@ void velocity_verlet_npt_step_1(const ParticleRange &particles,
  *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t)
  *      + 0.5 \Delta t \cdot F(t+\Delta t)/m \f]
  */
-void velocity_verlet_npt_step_2(const ParticleRange &particles,
+void velocity_verlet_npt_step_2(ParticleRangeNPT const &particles,
                                 double time_step);
 
 #endif // NPT
-#endif

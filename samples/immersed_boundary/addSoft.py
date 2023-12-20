@@ -31,7 +31,7 @@ def AddSoft(system, comX, comY, comZ, k1, k2):
             X = float(line[0]) + comX
             Y = float(line[1]) + comY
             Z = float(line[2]) + comZ
-            system.part.add(id=i, pos=[X, Y, Z], virtual=True)
+            system.part.add(id=i, pos=[X, Y, Z])
 
     # triangles
     import espressomd.interactions

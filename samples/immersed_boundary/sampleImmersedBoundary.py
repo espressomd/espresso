@@ -26,7 +26,6 @@ import writeVTK
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.virtual_sites
 
 required_features = ["VIRTUAL_SITES_INERTIALESS_TRACERS", "WALBERLA"]
 espressomd.assert_features(required_features)
@@ -48,7 +47,6 @@ boxZ = 20
 system = espressomd.System(box_l=(20, 20, boxZ))
 system.time_step = 1 / 6.
 system.cell_system.skin = 0.1
-system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 print(f"Parallelization: {system.cell_system.node_grid}")
 
 force = 0.001
@@ -79,7 +77,7 @@ lbf = espressomd.lb.LBFluidWalberla(
     agrid=1, density=1, kinematic_viscosity=1, tau=system.time_step,
     ext_force_density=[force, 0, 0])
 system.lb = lbf
-system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0, act_on_virtual=False)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 
 # Setup boundaries
 wall_shapes = [None] * 2

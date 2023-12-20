@@ -16,36 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_LEES_EDWARDS_OSCILLATORY_SHEAR_HPP
-#define SCRIPT_INTERFACE_LEES_EDWARDS_OSCILLATORY_SHEAR_HPP
+
+#pragma once
 
 #include "core/lees_edwards/lees_edwards.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
-#include <boost/variant.hpp>
-
 #include <memory>
+#include <variant>
 
 namespace ScriptInterface {
 namespace LeesEdwards {
 
 class OscillatoryShear : public Protocol {
+  using CoreClass = ::LeesEdwards::OscillatoryShear;
+
 public:
   OscillatoryShear()
-      : m_protocol{std::make_shared<::LeesEdwards::ActiveProtocol>(
-            ::LeesEdwards::OscillatoryShear())} {
-    add_parameters(
-        {{"initial_pos_offset",
-          boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol)
-              .m_initial_pos_offset},
-         {"amplitude",
-          boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_amplitude},
-         {"omega",
-          boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_omega},
-         {"time_0",
-          boost::get<::LeesEdwards::OscillatoryShear>(*m_protocol).m_time_0}});
+      : m_protocol{
+            std::make_shared<::LeesEdwards::ActiveProtocol>(CoreClass())} {
+    add_parameters({{"initial_pos_offset",
+                     std::get<CoreClass>(*m_protocol).m_initial_pos_offset},
+                    {"amplitude", std::get<CoreClass>(*m_protocol).m_amplitude},
+                    {"omega", std::get<CoreClass>(*m_protocol).m_omega},
+                    {"time_0", std::get<CoreClass>(*m_protocol).m_time_0}});
   }
   std::shared_ptr<::LeesEdwards::ActiveProtocol> protocol() override {
     return m_protocol;
@@ -57,5 +53,3 @@ private:
 
 } // namespace LeesEdwards
 } // namespace ScriptInterface
-
-#endif

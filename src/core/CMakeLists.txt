@@ -39,6 +39,7 @@ add_library(
   particle_node.cpp
   polymer.cpp
   pressure.cpp
+  propagation.cpp
   rattle.cpp
   rotation.cpp
   Observable_stat.cpp

@@ -34,13 +34,14 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "system/System.hpp"
 
 #include <utils/constants.hpp>
@@ -269,7 +270,7 @@ struct SanityChecksICC {
 void ICCStar::sanity_check() const {
   sanity_checks_active_solver();
 #ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+  if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
     throw std::runtime_error("ICC does not work in the NPT ensemble");
   }
 #endif

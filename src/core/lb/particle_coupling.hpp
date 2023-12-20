@@ -22,6 +22,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "lb/Solver.hpp"
 
 #include <utils/Counter.hpp>
@@ -129,21 +130,18 @@ extern LB::ParticleCouplingConfig lb_particle_coupling;
 namespace LB {
 
 /** @brief Calculate particle-lattice interactions. */
-void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
+void couple_particles(ParticleRange const &real_particles,
                       ParticleRange const &ghost_particles, double time_step);
 
 class ParticleCoupling {
   LB::Solver &m_lb;
-  bool m_couple_virtual;
   bool m_thermalized;
   double m_time_step;
   double m_noise_pref_wo_gamma;
 
 public:
-  ParticleCoupling(LB::Solver &lb, bool couple_virtual, double time_step,
-                   double kT)
-      : m_lb{lb}, m_couple_virtual{couple_virtual}, m_thermalized{kT != 0.},
-        m_time_step{time_step} {
+  ParticleCoupling(LB::Solver &lb, double time_step, double kT)
+      : m_lb{lb}, m_thermalized{kT != 0.}, m_time_step{time_step} {
     assert(kT >= 0.);
     /* Eq. (16) @cite ahlrichs99a, without the gamma term.
      * The factor 12 comes from the fact that we use random numbers
@@ -154,8 +152,8 @@ public:
     m_noise_pref_wo_gamma = std::sqrt(variance_inv * 2. * kT / time_step);
   }
 
-  ParticleCoupling(LB::Solver &lb, bool couple_virtual, double time_step)
-      : ParticleCoupling(lb, couple_virtual, time_step,
+  ParticleCoupling(LB::Solver &lb, double time_step)
+      : ParticleCoupling(lb, time_step,
                          lb.get_kT() * Utils::sqr(lb.get_lattice_speed())) {}
 
   Utils::Vector3d get_noise_term(Particle const &p) const;
@@ -188,6 +186,19 @@ class CouplingBookkeeping {
 public:
   /** @brief Determine if a given particle should be coupled. */
   bool should_be_coupled(Particle const &p) {
+    auto const propagation = p.propagation();
+    if ((propagation & PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE) == 0 and
+        (propagation & PropagationMode::SYSTEM_DEFAULT) == 0 and
+        (propagation & PropagationMode::TRANS_LB_TRACER) == 0) {
+      return false;
+    }
+#ifdef VIRTUAL_SITES_RELATIVE
+    if ((propagation & PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE) == 0 and
+        propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                       PropagationMode::ROT_VS_RELATIVE)) {
+      return false;
+    }
+#endif
     // real particles: always couple
     if (not p.is_ghost()) {
       return true;
@@ -201,5 +212,9 @@ public:
     return true;
   }
 };
+
+inline bool is_tracer(Particle const &p) {
+  return (p.propagation() & PropagationMode::TRANS_LB_TRACER) != 0;
+}
 
 } // namespace LB

@@ -31,8 +31,6 @@
 #include "actor/visitors.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
-#include "npt.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
@@ -40,7 +38,6 @@
 #include <utils/demangle.hpp>
 
 #include <cassert>
-#include <cstdio>
 #include <optional>
 #include <stdexcept>
 
@@ -123,15 +120,7 @@ struct LongRangeForce {
 
 #ifdef DP3M
   void operator()(std::shared_ptr<DipolarP3M> const &actor) const {
-    actor->dipole_assign(m_particles);
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      auto const energy = actor->kernel(true, true, m_particles);
-      npt_add_virial_contribution(energy);
-      fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
-    } else
-#endif // NPT
-      actor->kernel(true, false, m_particles);
+    actor->add_long_range_forces(m_particles);
   }
 #endif // DP3M
   void operator()(std::shared_ptr<DipolarLayerCorrection> const &actor) const {
@@ -165,8 +154,7 @@ struct LongRangeEnergy {
 
 #ifdef DP3M
   double operator()(std::shared_ptr<DipolarP3M> const &actor) const {
-    actor->dipole_assign(m_particles);
-    return actor->kernel(false, true, m_particles);
+    return actor->long_range_energy(m_particles);
   }
 #endif // DP3M
   double

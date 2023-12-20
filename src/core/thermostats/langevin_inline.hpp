@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THERMOSTATS_LANGEVIN_INLINE_HPP
-#define THERMOSTATS_LANGEVIN_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -44,11 +43,6 @@
 inline Utils::Vector3d
 friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
                          double time_step, double kT) {
-  // Early exit for virtual particles without thermostat
-  if (p.is_virtual() and !thermo_virtual) {
-    return {};
-  }
-
   // Determine prefactors for the friction and the noise term
 #ifdef THERMOSTAT_PER_PARTICLE
   auto const gamma = handle_particle_gamma(p.gamma(), langevin.gamma);
@@ -61,7 +55,6 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
 
   auto const friction_op = handle_particle_anisotropy(p, pref_friction);
   auto const noise_op = handle_particle_anisotropy(p, pref_noise);
-
   return friction_op * p.v() +
          noise_op * Random::noise_uniform<RNGSalt::LANGEVIN>(
                         langevin.rng_counter(), langevin.rng_seed(), p.id());
@@ -97,6 +90,4 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
   return -hadamard_product(pref_friction, p.omega()) +
          hadamard_product(pref_noise, noise);
 }
-
 #endif // ROTATION
-#endif

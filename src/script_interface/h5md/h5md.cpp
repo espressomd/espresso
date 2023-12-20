@@ -26,7 +26,6 @@
 #include "h5md.hpp"
 
 #include "cell_system/CellStructure.hpp"
-#include "core/integrate.hpp"
 #include "core/system/System.hpp"
 
 #include <cmath>
@@ -38,12 +37,12 @@ namespace Writer {
 Variant H5md::do_call_method(const std::string &name,
                              const VariantMap &parameters) {
   if (name == "write") {
-    auto const &system = System::get_system();
-    auto &cell_structure = *system.cell_structure;
-    m_h5md->write(
-        cell_structure.local_particles(), get_sim_time(),
-        static_cast<int>(std::round(get_sim_time() / get_time_step())),
-        *system.box_geo);
+    auto const &system = ::System::get_system();
+    auto const particles = system.cell_structure->local_particles();
+    auto const sim_time = system.get_sim_time();
+    auto const time_step = system.get_time_step();
+    auto const n_steps = static_cast<int>(std::round(sim_time / time_step));
+    m_h5md->write(particles, sim_time, n_steps, *system.box_geo);
   } else if (name == "flush") {
     m_h5md->flush();
   } else if (name == "close") {

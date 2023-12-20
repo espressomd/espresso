@@ -16,34 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_LEES_EDWARDS_LINEAR_SHEAR_HPP
-#define SCRIPT_INTERFACE_LEES_EDWARDS_LINEAR_SHEAR_HPP
+
+#pragma once
 
 #include "core/lees_edwards/lees_edwards.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
-#include <boost/variant.hpp>
-
 #include <memory>
+#include <variant>
 
 namespace ScriptInterface {
 namespace LeesEdwards {
 
 class LinearShear : public Protocol {
+  using CoreClass = ::LeesEdwards::LinearShear;
+
 public:
   LinearShear()
-      : m_protocol{std::make_shared<::LeesEdwards::ActiveProtocol>(
-            ::LeesEdwards::LinearShear())} {
+      : m_protocol{
+            std::make_shared<::LeesEdwards::ActiveProtocol>(CoreClass())} {
     add_parameters(
         {{"initial_pos_offset",
-          boost::get<::LeesEdwards::LinearShear>(*m_protocol)
-              .m_initial_pos_offset},
-         {"shear_velocity",
-          boost::get<::LeesEdwards::LinearShear>(*m_protocol).m_shear_velocity},
-         {"time_0",
-          boost::get<::LeesEdwards::LinearShear>(*m_protocol).m_time_0}});
+          std::get<CoreClass>(*m_protocol).m_initial_pos_offset},
+         {"shear_velocity", std::get<CoreClass>(*m_protocol).m_shear_velocity},
+         {"time_0", std::get<CoreClass>(*m_protocol).m_time_0}});
   }
   std::shared_ptr<::LeesEdwards::ActiveProtocol> protocol() override {
     return m_protocol;
@@ -55,5 +53,3 @@ private:
 
 } // namespace LeesEdwards
 } // namespace ScriptInterface
-
-#endif

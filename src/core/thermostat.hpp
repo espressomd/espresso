@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_THERMOSTAT_HPP
-#define CORE_THERMOSTAT_HPP
+
+#pragma once
+
 /** \file
  *  Implementation in \ref thermostat.cpp.
  */
@@ -92,9 +93,6 @@ extern int thermo_switch;
 
 /** Temperature of the thermostat. */
 extern double temperature;
-
-/** True if the thermostat should act on virtual particles. */
-extern bool thermo_virtual;
 
 #ifdef THERMOSTAT_PER_PARTICLE
 inline auto const &
@@ -409,8 +407,6 @@ void mpi_set_brownian_gamma_rot(Thermostat::GammaType const &gamma);
 void mpi_set_langevin_gamma(Thermostat::GammaType const &gamma);
 void mpi_set_langevin_gamma_rot(Thermostat::GammaType const &gamma);
 
-void mpi_set_thermo_virtual(bool thermo_virtual);
-
 void mpi_set_temperature(double temperature);
 void mpi_set_temperature_local(double temperature);
 
@@ -420,6 +416,4 @@ void mpi_set_thermo_switch_local(int thermo_switch);
 #ifdef NPT
 void mpi_set_nptiso_gammas(double gamma0, double gammav);
 void mpi_set_nptiso_gammas_local(double gamma0, double gammav);
-#endif
-
 #endif

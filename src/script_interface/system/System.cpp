@@ -31,6 +31,7 @@
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
+#include "core/propagation.hpp"
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
@@ -42,6 +43,7 @@
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
+#include "script_interface/lees_edwards/LeesEdwards.hpp"
 #include "script_interface/magnetostatics/Container.hpp"
 
 #include <utils/Vector.hpp>
@@ -74,6 +76,7 @@ struct System::Leaves {
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
   std::shared_ptr<BondBreakage::BreakageSpecs> bond_breakage;
+  std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
 #ifdef ELECTROSTATICS
   std::shared_ptr<Coulomb::Container> electrostatics;
 #endif
@@ -110,7 +113,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
            m_instance->on_boxl_change();
          });
        },
-       []() { return ::System::get_system().box_geo->length(); }},
+       [this]() { return m_instance->box_geo->length(); }},
       {"periodicity",
        [this](Variant const &v) {
          auto const periodicity = get_value<Utils::Vector3b>(v);
@@ -144,6 +147,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);
   add_parameter("bond_breakage", &Leaves::bond_breakage);
+  add_parameter("lees_edwards", &Leaves::lees_edwards);
 #ifdef ELECTROSTATICS
   add_parameter("electrostatics", &Leaves::electrostatics);
 #endif
@@ -216,6 +220,8 @@ static void rotate_system(CellStructure &cell_structure, double phi,
   }
 
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.update_ghosts_and_resort_particle(Cells::DATA_PART_POSITION |
+                                                   Cells::DATA_PART_PROPERTIES);
 }
 
 /** Rescale all particle positions in direction @p dir by a factor @p scale.
@@ -305,6 +311,9 @@ Variant System::do_call_method(std::string const &name,
     m_instance->on_particle_change();
     m_instance->update_dependent_particles();
     return {};
+  }
+  if (name == "get_propagation_modes_enum") {
+    return make_unordered_map_of_variants(propagation_flags_map());
   }
   if (name == "session_shutdown") {
     if (m_instance) {

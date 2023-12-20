@@ -20,6 +20,7 @@ import espressomd
 import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.shapes
+import espressomd.propagation
 import unittest as ut
 import unittest_decorators as utx
 
@@ -66,6 +67,13 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex(Exception, 'Constraint violated by particle 0'):
                 self.system.analysis.energy()
             wca.set_params(epsilon=0., sigma=0.)
+        if espressomd.has_features(["ROTATION"]):
+            with self.assertRaisesRegex(Exception, "Rotating particles must have a rotation propagation mode enabled"):
+                Propagation = espressomd.propagation.Propagation
+                p = self.system.part.by_id(0)
+                p.propagation = Propagation.TRANS_LANGEVIN
+                p.rotation = [False, False, True]
+                self.system.integrator.run(0, recalc_forces=True)
 
     def test_vv_integrator(self):
         self.system.cell_system.skin = 0.4

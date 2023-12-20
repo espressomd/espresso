@@ -39,12 +39,16 @@
 class BoxGeometry;
 class LocalBox;
 struct CellStructure;
+class Propagation;
 class InteractionsNonBonded;
 class ComFixed;
 class Galilei;
 class Observable_stat;
 namespace BondBreakage {
 class BondBreakage;
+}
+namespace LeesEdwards {
+class LeesEdwards;
 }
 
 namespace System {
@@ -75,6 +79,12 @@ public:
 
   /** @brief Set @ref time_step. */
   void set_time_step(double value);
+
+  /** @brief Get @ref sim_time. */
+  auto get_sim_time() const { return sim_time; }
+
+  /** @brief Set @ref sim_time. */
+  void set_sim_time(double value);
 
   /** @brief Get @ref force_cap. */
   auto get_force_cap() const { return force_cap; }
@@ -151,7 +161,7 @@ public:
    *  It is up to the propagation kernels to increment the simulation time.
    *
    *  This function propagates the system according to the choice of integrator
-   *  stored in @ref integ_switch. The general structure is:
+   *  stored in @ref Propagation::integ_switch. The general structure is:
    *  - if reuse_forces is zero, recalculate the forces based on the current
    *    state of the system
    *  - Loop over the number of simulation steps:
@@ -177,6 +187,8 @@ public:
 
   int integrate_with_signal_handler(int n_steps, int reuse_forces,
                                     bool update_accumulators);
+
+  void thermostats_force_init(double kT);
 
   /** \name Hook procedures
    *  These procedures are called if several significant changes to
@@ -216,16 +228,22 @@ public:
   void on_particle_change();
   /** @brief Called every time a particle charge changes. */
   void on_particle_charge_change();
-  /** @brief Update particles with properties depending on other particles,
-   *  namely virtual sites and ICC charges.
-   */
-  void update_dependent_particles();
   /** called before calculating observables, i.e. energy, pressure or
    *  the integrator (forces). Initialize any methods here which are not
    *  initialized immediately (P3M etc.).
    */
   void on_observable_calc();
   /**@}*/
+
+  /**
+   * @brief Update particles with properties depending on other particles,
+   * namely virtual sites and ICC charges.
+   */
+  void update_dependent_particles();
+  /**
+   * @brief Update the global propagation bitmask.
+   */
+  void update_used_propagations();
 
   Coulomb::Solver coulomb;
   Dipoles::Solver dipoles;
@@ -234,10 +252,12 @@ public:
   std::shared_ptr<BoxGeometry> box_geo;
   std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
+  std::shared_ptr<Propagation> propagation;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
   std::shared_ptr<ComFixed> comfixed;
   std::shared_ptr<Galilei> galilei;
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
+  std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
 
 protected:
   /** @brief Whether the thermostat has to be reinitialized before integration.
@@ -245,6 +265,8 @@ protected:
   bool reinit_thermo;
   /** @brief Molecular dynamics integrator time step. */
   double time_step;
+  /** @brief Molecular dynamics integrator simulation time. */
+  double sim_time;
   /** @brief Molecular dynamics integrator force capping. */
   double force_cap;
   /**

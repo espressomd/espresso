@@ -31,7 +31,6 @@ import espressomd.magnetostatics
 import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.drude_helpers
-import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
 import espressomd.io.writer
@@ -239,10 +238,6 @@ if 'LB' not in modes:
             pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
-    system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-        have_quaternion=True)
-    system.virtual_sites.have_quaternion = True
-    system.virtual_sites.override_cutoff_check = True
     p2.vs_auto_relate_to(p1)
 
 # non-bonded interactions
@@ -317,6 +312,11 @@ checkpoint.register("particle_force1")
 if espressomd.has_features("COLLISION_DETECTION"):
     system.collision_detection.set_params(
         mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
+
+particle_propagation0 = p1.propagation
+particle_propagation1 = p2.propagation
+checkpoint.register("particle_propagation0")
+checkpoint.register("particle_propagation1")
 
 if espressomd.has_features('DP3M') and 'DP3M' in modes:
     dp3m = espressomd.magnetostatics.DipolarP3M(

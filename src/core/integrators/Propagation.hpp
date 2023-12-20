@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2023 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,35 +19,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
-#define SCRIPT_INTERFACE_VIRTUAL_SITES_VIRTUAL_SITES_OFF_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include "PropagationMode.hpp"
 
-#ifdef VIRTUAL_SITES
-
-#include "VirtualSites.hpp"
-
-#include "core/virtual_sites/VirtualSitesOff.hpp"
-
-#include <memory>
-
-namespace ScriptInterface {
-namespace VirtualSites {
-
-class VirtualSitesOff : public VirtualSites {
+class Propagation {
 public:
-  VirtualSitesOff() : m_virtual_sites(std::make_shared<::VirtualSitesOff>()) {}
-  /** Vs implementation we are wrapping */
-  std::shared_ptr<::VirtualSites> virtual_sites() override {
-    return m_virtual_sites;
+  int integ_switch = INTEG_METHOD_NVT;
+  int used_propagations = PropagationMode::NONE;
+  int default_propagation = PropagationMode::NONE;
+  int lb_skipped_md_steps = 0;
+  int ek_skipped_md_steps = 0;
+  /** If true, forces will be recalculated before the next integration. */
+  bool recalc_forces = true;
+
+  void update_default_propagation();
+
+  template <typename Particle>
+  bool should_propagate_with(Particle const &p, int mode) const {
+    return (p.propagation() & mode) or
+           ((default_propagation & mode) and
+            (p.propagation() & PropagationMode::SYSTEM_DEFAULT));
   }
 
-private:
-  std::shared_ptr<::VirtualSitesOff> m_virtual_sites;
+  void set_integ_switch(int value) {
+    integ_switch = value;
+    recalc_forces = true;
+  }
 };
-
-} /* namespace VirtualSites */
-} /* namespace ScriptInterface */
-#endif // VIRTUAL_SITES
-#endif

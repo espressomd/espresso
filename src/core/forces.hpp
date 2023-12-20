@@ -28,24 +28,20 @@
  */
 
 #include "ParticleRange.hpp"
-#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
-#include <memory>
-
-/** initialize real particle forces with thermostat forces and
-    ghost particle forces with zero. */
-void init_forces(const ParticleRange &particles, double time_step);
+/** Assign external forces/torques to real particles and zero to ghosts. */
+void init_forces(ParticleRange const &particles, double time_step);
 
 /** Set forces of all ghosts to zero */
-void init_forces_ghosts(const ParticleRange &particles);
+void init_forces_ghosts(ParticleRange const &particles);
 
 /** Calculate long range forces (P3M, ...). */
-void calc_long_range_forces(const ParticleRange &particles);
+void calc_long_range_forces(ParticleRange const &particles);
 
 #ifdef NPT
 /** Update the NpT virial */
-void npt_add_virial_force_contribution(const Utils::Vector3d &force,
-                                       const Utils::Vector3d &d);
+void npt_add_virial_force_contribution(Utils::Vector3d const &force,
+                                       Utils::Vector3d const &d);
 #endif

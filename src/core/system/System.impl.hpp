@@ -29,6 +29,8 @@
 #include "cell_system/CellStructure.hpp"
 #include "galilei/ComFixed.hpp"
 #include "galilei/Galilei.hpp"
+#include "integrators/Propagation.hpp"
+#include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "BoxGeometry.hpp"

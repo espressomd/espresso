@@ -39,7 +39,7 @@ class ComFixed(ut.TestCase):
         system.time_step = dt
         system.cell_system.skin = skin
 
-        system.thermostat.set_langevin(kT=1., gamma=0.001, seed=41)
+        system.thermostat.set_langevin(kT=1., gamma=0.01, seed=41)
 
         for i in range(100):
             r = [0.5, 1., 1.] * system.box_l * np.random.random(3)
@@ -65,7 +65,7 @@ class ComFixed(ut.TestCase):
             for j in range(3):
                 self.assertAlmostEqual(com_0[j], com_i[j], places=10)
 
-            system.integrator.run(10)
+            system.integrator.run(100)
 
 
 if __name__ == "__main__":

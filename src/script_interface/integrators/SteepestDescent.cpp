@@ -21,7 +21,9 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
+#include "core/PropagationMode.hpp"
 #include "core/integrate.hpp"
+#include "core/integrators/Propagation.hpp"
 #include "core/integrators/steepest_descent.hpp"
 
 #include <utils/Vector.hpp>
@@ -69,7 +71,7 @@ void SteepestDescent::do_construct(VariantMap const &params) {
 
 void SteepestDescent::activate() {
   register_integrator(get_instance());
-  set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
+  get_system().propagation->set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
 }
 
 } // namespace Integrators

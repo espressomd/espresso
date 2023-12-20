@@ -29,6 +29,7 @@ namespace utf = boost::unit_test;
 
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "accumulators/TimeSeries.hpp"
 #include "actor/registration.hpp"
 #include "bonded_interactions/bonded_interaction_utils.hpp"
@@ -42,6 +43,7 @@ namespace utf = boost::unit_test;
 #include "electrostatics/p3m.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -340,7 +342,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   // check integration
   {
     // set up velocity-Verlet integrator
-    set_integ_switch(INTEG_METHOD_NVT);
+    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NVT);
 
     // reset system
     remove_translational_motion(system);

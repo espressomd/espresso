@@ -19,41 +19,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef INTEGRATORS_BROWNIAN_INLINE_HPP
-#define INTEGRATORS_BROWNIAN_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
-#include "ParticleRange.hpp"
-#include "integrate.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 #include "thermostats/brownian_inline.hpp"
 
-#include <utils/math/sqr.hpp>
-
 inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
-                                         const ParticleRange &particles,
-                                         double time_step, double kT) {
-  for (auto &p : particles) {
-    // Don't propagate translational degrees of freedom of vs
-    if (!p.is_virtual() or thermo_virtual) {
-      p.pos() += bd_drag(brownian.gamma, p, time_step);
-      p.v() = bd_drag_vel(brownian.gamma, p);
-      p.pos() += bd_random_walk(brownian, p, time_step, kT);
-      p.v() += bd_random_walk_vel(brownian, p);
-#ifdef ROTATION
-      if (!p.can_rotate())
-        continue;
-      convert_torque_to_body_frame_apply_fix(p);
-      p.quat() = bd_drag_rot(brownian.gamma_rotation, p, time_step);
-      p.omega() = bd_drag_vel_rot(brownian.gamma_rotation, p);
-      p.quat() = bd_random_walk_rot(brownian, p, time_step, kT);
-      p.omega() += bd_random_walk_vel_rot(brownian, p);
-#endif // ROTATION
-    }
-  }
-  increment_sim_time(time_step);
+                                         Particle &p, double time_step,
+                                         double kT) {
+  p.pos() += bd_drag(brownian.gamma, p, time_step);
+  p.v() = bd_drag_vel(brownian.gamma, p);
+  p.pos() += bd_random_walk(brownian, p, time_step, kT);
+  p.v() += bd_random_walk_vel(brownian, p);
 }
 
-#endif // INTEGRATORS_BROWNIAN_INLINE_HPP
+#ifdef ROTATION
+inline void brownian_dynamics_rotator(BrownianThermostat const &brownian,
+                                      Particle &p, double time_step,
+                                      double kT) {
+  if (!p.can_rotate())
+    return;
+  convert_torque_to_body_frame_apply_fix(p);
+  p.quat() = bd_drag_rot(brownian.gamma_rotation, p, time_step);
+  p.omega() = bd_drag_vel_rot(brownian.gamma_rotation, p);
+  p.quat() = bd_random_walk_rot(brownian, p, time_step, kT);
+  p.omega() += bd_random_walk_vel_rot(brownian, p);
+}
+#endif // ROTATION

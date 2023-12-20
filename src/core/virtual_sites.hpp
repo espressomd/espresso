@@ -21,30 +21,22 @@
 
 #include "config/config.hpp"
 
-#ifdef VIRTUAL_SITES
-#include "Particle.hpp"
-
-#include "virtual_sites/VirtualSites.hpp"
-
-#include <memory>
-
-/** @brief Get active virtual sites implementation */
-const std::shared_ptr<VirtualSites> &virtual_sites();
-
-/** @brief Set active virtual sites implementation */
-void set_virtual_sites(std::shared_ptr<VirtualSites> const &v);
-
 #ifdef VIRTUAL_SITES_RELATIVE
 
 #include "BoxGeometry.hpp"
+#include "Particle.hpp"
+#include "PropagationMode.hpp"
 
 #include <utils/quaternion.hpp>
 
 #include <tuple>
 
-std::tuple<Utils::Quaternion<double>, double> calculate_vs_relate_to_params(
-    Particle const &p_current, Particle const &p_relate_to,
-    BoxGeometry const &box_geo, double min_global_cut);
+/** Calculate the rotation quaternion and distance between two particles */
+std::tuple<Utils::Quaternion<double>, double>
+calculate_vs_relate_to_params(Particle const &p_current,
+                              Particle const &p_relate_to,
+                              BoxGeometry const &box_geo, double min_global_cut,
+                              bool override_cutoff_check = false);
 
 /**
  * @brief Setup a virtual site to track a real particle.
@@ -61,7 +53,8 @@ inline void vs_relate_to(Particle &p_vs, Particle const &p_relate_to,
   vs_relative.to_particle_id = p_relate_to.id();
   std::tie(vs_relative.rel_orientation, vs_relative.distance) =
       calculate_vs_relate_to_params(p_vs, p_relate_to, box_geo, min_global_cut);
+  p_vs.propagation() =
+      PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE;
 }
 
 #endif // VIRTUAL_SITES_RELATIVE
-#endif // VIRTUAL_SITES

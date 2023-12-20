@@ -70,7 +70,7 @@ class LBCouetteFlowCommon:
 
     def tearDown(self):
         self.system.lb = None
-        self.system.lees_edwards = espressomd.lees_edwards.LeesEdwards()
+        self.system.lees_edwards.protocol = None
 
     def check_profile(self, u_getter, **kwargs):
         system = self.system

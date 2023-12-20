@@ -15,23 +15,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.observables
+import espressomd.propagation
 
 
-def calc_com_x(system, x, id_list):
+def calc_com_x(system, attr, id_list):
     """Mass-weighted average, skipping virtual sites"""
     partcls = system.part.by_ids(id_list)
     masses = partcls.mass
 
     # Filter out virtual particles by using mass=0 for them
-    virtual = partcls.virtual
+    virtual = [p.is_virtual() for p in partcls]
     masses[np.nonzero(virtual)] = 0.
 
-    return np.average(getattr(partcls, x), weights=masses, axis=0)
+    return np.average(getattr(partcls, attr), weights=masses, axis=0)
 
 
 class Observables(ut.TestCase):
@@ -66,9 +68,9 @@ class Observables(ut.TestCase):
     if espressomd.has_features("ELECTROSTATICS"):
         partcls.q = np.random.random(N_PART)
 
-    if espressomd.has_features("VIRTUAL_SITES"):
+    if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
         p = system.part.by_id(partcls.id[8])
-        p.virtual = True
+        p.propagation = espressomd.propagation.Propagation.TRANS_LB_TRACER
 
     def generate_test_for_pid_observable(
             _obs_class, _pprop_name, _agg_type=None):
@@ -96,7 +98,7 @@ class Observables(ut.TestCase):
             # Get data from particles
             if pprop_name == "f":
                 for p_id in id_list:
-                    if self.system.part.by_id(p_id).virtual:
+                    if self.system.part.by_id(p_id).is_virtual():
                         id_list.remove(p_id)
 
             part_data = getattr(self.system.part.by_ids(id_list), pprop_name)
@@ -229,12 +231,11 @@ class Observables(ut.TestCase):
         id_list = sorted(
             np.random.choice(
                 self.partcls.id,
-                size=int(
-                    self.N_PART * .9),
+                size=int(self.N_PART * .9),
                 replace=False))
 
         particles = self.system.part.select(
-            lambda p: p.id in id_list and not p.virtual)
+            lambda p: p.id in id_list and not p.is_virtual())
 
         np.testing.assert_allclose(
             np.sum(particles.f, axis=0),
