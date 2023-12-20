@@ -29,20 +29,13 @@
 
 #include "config/config.hpp"
 
+#include "PropagationMode.hpp"
+
 #ifdef WALBERLA
 #include <string>
 
 #include <utils/Vector.hpp>
 #endif
-
-/** \name Integrator switches */
-/**@{*/
-#define INTEG_METHOD_NPT_ISO 0
-#define INTEG_METHOD_NVT 1
-#define INTEG_METHOD_STEEPEST_DESCENT 2
-#define INTEG_METHOD_BD 3
-#define INTEG_METHOD_SD 7
-/**@}*/
 
 /** \name Integrator error codes */
 /**@{*/
@@ -54,17 +47,11 @@
 /**@{*/
 /// recalculate forces unconditionally (mostly used for timing)
 #define INTEG_REUSE_FORCES_NEVER -1
-/// recalculate forces if @ref recalc_forces is set
+/// recalculate forces only if @ref Propagation::recalc_forces is set
 #define INTEG_REUSE_FORCES_CONDITIONALLY 0
 /// do not recalculate forces (mostly when reading checkpoints with forces)
 #define INTEG_REUSE_FORCES_ALWAYS 1
 /**@}*/
-
-/** Switch determining which integrator to use. */
-extern int integ_switch;
-
-/** If true, the forces will be recalculated before the next integration. */
-extern bool recalc_forces;
 
 #ifdef WALBERLA
 void walberla_tau_sanity_checks(std::string method, double tau,
@@ -76,14 +63,3 @@ void walberla_agrid_sanity_checks(std::string method,
                                   Utils::Vector3d const &lattice_right,
                                   double agrid);
 #endif // WALBERLA
-
-/** Get time step */
-double get_time_step();
-
-/** Get simulation time */
-double get_sim_time();
-
-/** @brief Set the simulation time. */
-void set_time(double value);
-
-void set_integ_switch(int value);

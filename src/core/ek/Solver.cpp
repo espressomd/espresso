@@ -26,7 +26,6 @@
 #include "ek/EKNone.hpp"
 #include "ek/EKWalberla.hpp"
 
-#include "integrate.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>

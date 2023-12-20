@@ -24,7 +24,6 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "integrate.hpp"
 #include "rotation.hpp"
 
 /** Propagate the velocities and positions. Integration steps before force

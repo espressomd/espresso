@@ -32,8 +32,6 @@
 #include "communication.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
-#include "npt.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
@@ -114,8 +112,7 @@ struct LongRangePressure {
 
 #ifdef P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
-    actor->charge_assign(m_particles);
-    return actor->p3m_calc_kspace_pressure_tensor();
+    return actor->long_range_pressure(m_particles);
   }
 #endif // P3M
 
@@ -215,24 +212,10 @@ struct LongRangeForce {
 
 #ifdef P3M
   void operator()(std::shared_ptr<CoulombP3M> const &actor) const {
-    actor->charge_assign(m_particles);
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      auto const energy = actor->long_range_kernel(true, true, m_particles);
-      npt_add_virial_contribution(energy);
-    } else
-#endif // NPT
-      actor->add_long_range_forces(m_particles);
+    actor->add_long_range_forces(m_particles);
   }
 #ifdef CUDA
   void operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      actor->charge_assign(m_particles);
-      auto const energy = actor->long_range_energy(m_particles);
-      npt_add_virial_contribution(energy);
-    }
-#endif // NPT
     actor->add_long_range_forces(m_particles);
   }
 #endif // CUDA
@@ -266,7 +249,6 @@ struct LongRangeEnergy {
 
 #ifdef P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
-    actor->charge_assign(m_particles);
     return actor->long_range_energy(m_particles);
   }
   auto

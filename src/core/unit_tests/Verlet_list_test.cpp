@@ -36,14 +36,17 @@ namespace bdata = boost::unit_test::data;
 #include "particle_management.hpp"
 
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -85,7 +88,8 @@ struct : public IntegratorHelper {
   void set_integrator() const override {
     mpi_set_thermo_switch_local(THERMO_OFF);
     register_integrator(SteepestDescentParameters(0., 0.01, 100.));
-    set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
+    espresso::system->propagation->set_integ_switch(
+        INTEG_METHOD_STEEPEST_DESCENT);
   }
   void set_particle_properties(int pid) const override {
     set_particle_property(pid, &Particle::ext_force,
@@ -98,7 +102,7 @@ struct : public IntegratorHelper {
 struct : public IntegratorHelper {
   void set_integrator() const override {
     mpi_set_thermo_switch_local(THERMO_OFF);
-    set_integ_switch(INTEG_METHOD_NVT);
+    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NVT);
   }
   void set_particle_properties(int pid) const override {
     set_particle_v(pid, {20., 0., 0.});
@@ -110,7 +114,7 @@ struct : public IntegratorHelper {
 struct : public IntegratorHelper {
   void set_integrator() const override {
     ::nptiso = NptIsoParameters(1., 1e9, {true, true, true}, true);
-    set_integ_switch(INTEG_METHOD_NPT_ISO);
+    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
     mpi_set_temperature_local(1.);
     mpi_npt_iso_set_rng_seed(0);
     mpi_set_thermo_switch_local(thermo_switch | THERMO_NPT_ISO);

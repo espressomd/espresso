@@ -39,6 +39,7 @@
 class BoxGeometry;
 class LocalBox;
 struct CellStructure;
+class Propagation;
 class InteractionsNonBonded;
 class ComFixed;
 class Galilei;
@@ -75,6 +76,12 @@ public:
 
   /** @brief Set @ref time_step. */
   void set_time_step(double value);
+
+  /** @brief Get @ref sim_time. */
+  auto get_sim_time() const { return sim_time; }
+
+  /** @brief Set @ref sim_time. */
+  void set_sim_time(double value);
 
   /** @brief Get @ref force_cap. */
   auto get_force_cap() const { return force_cap; }
@@ -151,7 +158,7 @@ public:
    *  It is up to the propagation kernels to increment the simulation time.
    *
    *  This function propagates the system according to the choice of integrator
-   *  stored in @ref integ_switch. The general structure is:
+   *  stored in @ref Propagation::integ_switch. The general structure is:
    *  - if reuse_forces is zero, recalculate the forces based on the current
    *    state of the system
    *  - Loop over the number of simulation steps:
@@ -242,6 +249,7 @@ public:
   std::shared_ptr<BoxGeometry> box_geo;
   std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
+  std::shared_ptr<Propagation> propagation;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
   std::shared_ptr<ComFixed> comfixed;
   std::shared_ptr<Galilei> galilei;
@@ -253,6 +261,8 @@ protected:
   bool reinit_thermo;
   /** @brief Molecular dynamics integrator time step. */
   double time_step;
+  /** @brief Molecular dynamics integrator simulation time. */
+  double sim_time;
   /** @brief Molecular dynamics integrator force capping. */
   double force_cap;
   /**

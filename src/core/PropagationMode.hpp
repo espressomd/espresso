@@ -41,3 +41,12 @@ enum PropagationMode : int {
   ROT_STOKESIAN = 1 << 14,
 };
 } // namespace PropagationMode
+
+/** \name Integrator switches */
+enum IntegratorSwitch : int {
+  INTEG_METHOD_NPT_ISO = 0,
+  INTEG_METHOD_NVT = 1,
+  INTEG_METHOD_STEEPEST_DESCENT = 2,
+  INTEG_METHOD_BD = 3,
+  INTEG_METHOD_SD = 7,
+};

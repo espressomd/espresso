@@ -24,6 +24,7 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
+#include "PropagationMode.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
@@ -35,7 +36,6 @@
 #include "errorhandling.hpp"
 #include "global_ghost_flags.hpp"
 #include "immersed_boundaries.hpp"
-#include "integrate.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "thermostat.hpp"
@@ -60,12 +60,14 @@ System::System(Private) {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
+  propagation = std::make_shared<Propagation>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
   bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
   reinit_thermo = true;
   time_step = -1.;
+  sim_time = 0.;
   force_cap = 0.;
   min_global_cut = INACTIVE_CUTOFF;
 }
@@ -106,7 +108,7 @@ void System::set_time_step(double value) {
 
 void System::set_force_cap(double value) {
   force_cap = value;
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 }
 
 void System::set_min_global_cut(double value) {
@@ -175,7 +177,7 @@ void System::on_periodicity_change() {
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
-  if (::integ_switch == INTEG_METHOD_SD) {
+  if (propagation->integ_switch == INTEG_METHOD_SD) {
     if (box_geo->periodic(0u) or box_geo->periodic(1u) or box_geo->periodic(2u))
       runtimeErrorMsg() << "Stokesian Dynamics requires periodicity "
                         << "(False, False, False)\n";
@@ -222,13 +224,13 @@ void System::on_timestep_change() {
 
 void System::on_short_range_ia_change() {
   rebuild_cell_structure();
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 }
 
 void System::on_non_bonded_ia_change() {
   nonbonded_ias->recalc_maximal_cutoffs();
   rebuild_cell_structure();
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 }
 
 void System::on_coulomb_change() {
@@ -245,13 +247,15 @@ void System::on_dipoles_change() {
   on_short_range_ia_change();
 }
 
-void System::on_constraint_change() { ::recalc_forces = true; }
+void System::on_constraint_change() { propagation->recalc_forces = true; }
 
-void System::on_lb_boundary_conditions_change() { ::recalc_forces = true; }
+void System::on_lb_boundary_conditions_change() {
+  propagation->recalc_forces = true;
+}
 
 void System::on_particle_local_change() {
   cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 }
 
 void System::on_particle_change() {
@@ -266,7 +270,7 @@ void System::on_particle_change() {
 #ifdef DIPOLES
   dipoles.on_particle_change();
 #endif
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 
   /* the particle information is no longer valid */
   invalidate_fetch_cache();
@@ -380,11 +384,13 @@ void System::on_integration_start() {
   if (reinit_thermo) {
     thermo_init(time_step);
     reinit_thermo = false;
-    ::recalc_forces = true;
+    propagation->recalc_forces = true;
   }
 
 #ifdef NPT
-  npt_ensemble_init(*box_geo);
+  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    npt_ensemble_init(box_geo->length(), propagation->recalc_forces);
+  }
 #endif
 
   invalidate_fetch_cache();

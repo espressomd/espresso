@@ -38,7 +38,7 @@
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
 #include "immersed_boundaries.hpp"
-#include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "lb/particle_coupling.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
@@ -228,7 +228,10 @@ void System::System::calculate_forces(double kT) {
 #endif // CUDA
 
 #ifdef VIRTUAL_SITES_RELATIVE
-  vs_relative_back_transfer_forces_and_torques(*cell_structure);
+  if (propagation->used_propagations &
+      (PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE)) {
+    vs_relative_back_transfer_forces_and_torques(*cell_structure);
+  }
 #endif
 
   // Communication step: ghost forces
@@ -241,7 +244,7 @@ void System::System::calculate_forces(double kT) {
   force_capping(particles, force_cap);
 
   // mark that forces are now up-to-date
-  recalc_forces = false;
+  propagation->recalc_forces = false;
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {

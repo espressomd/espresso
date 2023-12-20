@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2023 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,21 +19,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "thermalized_bond_utils.hpp"
-#include "thermalized_bond.hpp"
+#pragma once
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "PropagationMode.hpp"
 
-#include <boost/variant.hpp>
+class Propagation {
+public:
+  int integ_switch = INTEG_METHOD_NVT;
+  int used_propagations = PropagationMode::NONE;
+  int default_propagation = PropagationMode::NONE;
+  int lb_skipped_md_steps = 0;
+  int ek_skipped_md_steps = 0;
+  /** If true, forces will be recalculated before the next integration. */
+  bool recalc_forces = true;
 
-void thermalized_bond_init(double time_step) {
-  for (auto &kv : bonded_ia_params) {
-    if (auto *t = boost::get<ThermalizedBond>(&(*kv.second))) {
-      t->pref1_com = t->gamma_com;
-      t->pref2_com = sqrt(24.0 * t->gamma_com / time_step * t->temp_com);
-      t->pref1_dist = t->gamma_distance;
-      t->pref2_dist =
-          sqrt(24.0 * t->gamma_distance / time_step * t->temp_distance);
-    }
+  void update_default_propagation();
+
+  template <typename Particle>
+  bool should_propagate_with(Particle const &p, int mode) const {
+    return (p.propagation() & mode) or
+           ((default_propagation & mode) and
+            (p.propagation() & PropagationMode::SYSTEM_DEFAULT));
   }
-}
+
+  void set_integ_switch(int value) {
+    integ_switch = value;
+    recalc_forces = true;
+  }
+};

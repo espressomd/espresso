@@ -20,11 +20,12 @@
 
 #ifdef NPT
 
+#include "PropagationMode.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "system/System.hpp"
 
@@ -108,21 +109,19 @@ Utils::Vector<bool, 3> NptIsoParameters::get_direction() const {
           static_cast<bool>(geometry & ::nptgeom_dir[2])};
 }
 
-void npt_ensemble_init(const BoxGeometry &box) {
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    /* prepare NpT-integration */
-    nptiso.inv_piston = 1. / nptiso.piston;
-    nptiso.volume = pow(box.length()[nptiso.non_const_dim], nptiso.dimension);
-    if (recalc_forces) {
-      nptiso.p_inst = 0.0;
-      nptiso.p_vir = Utils::Vector3d{};
-      nptiso.p_vel = Utils::Vector3d{};
-    }
+void npt_ensemble_init(Utils::Vector3d const &box_l, bool recalc_forces) {
+  nptiso.inv_piston = 1. / nptiso.piston;
+  nptiso.volume = std::pow(box_l[nptiso.non_const_dim], nptiso.dimension);
+  if (recalc_forces) {
+    nptiso.p_inst = 0.0;
+    nptiso.p_vir = Utils::Vector3d{};
+    nptiso.p_vel = Utils::Vector3d{};
   }
 }
 
 void integrator_npt_sanity_checks() {
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+  if (::System::get_system().propagation->used_propagations &
+      PropagationMode::TRANS_LANGEVIN_NPT) {
     try {
       nptiso.coulomb_dipole_sanity_checks();
     } catch (std::runtime_error const &err) {
@@ -133,19 +132,23 @@ void integrator_npt_sanity_checks() {
 
 /** reset virial part of instantaneous pressure */
 void npt_reset_instantaneous_virials() {
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
+  if (::System::get_system().propagation->used_propagations &
+      PropagationMode::TRANS_LANGEVIN_NPT) {
     nptiso.p_vir = Utils::Vector3d{};
+  }
 }
 
 void npt_add_virial_contribution(double energy) {
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+  if (::System::get_system().propagation->used_propagations &
+      PropagationMode::TRANS_LANGEVIN_NPT) {
     nptiso.p_vir[0] += energy;
   }
 }
 
 void npt_add_virial_contribution(const Utils::Vector3d &force,
                                  const Utils::Vector3d &d) {
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+  if (::System::get_system().propagation->used_propagations &
+      PropagationMode::TRANS_LANGEVIN_NPT) {
     nptiso.p_vir += hadamard_product(force, d);
   }
 }

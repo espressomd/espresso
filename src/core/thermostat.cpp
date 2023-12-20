@@ -29,7 +29,6 @@
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"

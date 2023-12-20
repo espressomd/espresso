@@ -25,7 +25,6 @@
 #include "WalberlaCheckpoint.hpp"
 
 #include "core/BoxGeometry.hpp"
-#include "core/integrate.hpp"
 #include "core/lb/LBWalberla.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
 #include "core/lees_edwards/protocols.hpp"
@@ -180,11 +179,13 @@ void LBFluid::do_construct(VariantMap const &params) {
       auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
           le_bc.shear_direction, le_bc.shear_plane_normal,
           [this, le_protocol]() {
-            return get_pos_offset(get_sim_time(), *le_protocol) /
+            auto const &system = ::System::get_system();
+            return get_pos_offset(system.get_sim_time(), *le_protocol) /
                    m_lb_params->get_agrid();
           },
           [this, le_protocol]() {
-            return get_shear_velocity(get_sim_time(), *le_protocol) *
+            auto const &system = ::System::get_system();
+            return get_shear_velocity(system.get_sim_time(), *le_protocol) *
                    (m_lb_params->get_tau() / m_lb_params->get_agrid());
           });
       m_instance->set_collision_model(std::move(lees_edwards_object));

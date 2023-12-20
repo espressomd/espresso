@@ -18,8 +18,6 @@
  */
 #include "Correlator.hpp"
 
-#include "integrate.hpp"
-
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/serialization/multi_array.hpp>

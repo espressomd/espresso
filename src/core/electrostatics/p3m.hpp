@@ -218,7 +218,7 @@ public:
   }
 
   /** Compute the k-space part of the pressure tensor */
-  Utils::Vector9d p3m_calc_kspace_pressure_tensor();
+  Utils::Vector9d long_range_pressure(ParticleRange const &particles);
 
   /** Compute the k-space part of energies. */
   double long_range_energy(ParticleRange const &particles) {

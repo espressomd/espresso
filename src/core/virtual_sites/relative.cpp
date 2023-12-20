@@ -27,7 +27,6 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
-#include "integrate.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "rotation.hpp"
 

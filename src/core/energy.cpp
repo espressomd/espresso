@@ -25,7 +25,6 @@
 #include "constraints.hpp"
 #include "energy_inline.hpp"
 #include "global_ghost_flags.hpp"
-#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
