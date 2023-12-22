@@ -323,10 +323,13 @@ template <int cao> struct AssignCharge {
         [q, &p3m](int ind, double w) { p3m.rs_mesh[ind] += w * q; });
   }
 
-  void operator()(p3m_data_struct &p3m, ParticleRange const &particles) {
-    for (auto &p : particles) {
-      if (p.q() != 0.0) {
-        this->operator()(p3m, p.q(), p.pos(), p3m.inter_weights);
+  template <typename combined_ranges>
+  void operator()(p3m_data_struct &p3m, combined_ranges const &p_q_pos_range) {
+    for (auto zipped : p_q_pos_range) {
+      auto const p_q = boost::get<0>(zipped);
+      auto const &p_pos = boost::get<1>(zipped);
+      if (p_q != 0.0) {
+        this->operator()(p3m, p_q, p_pos, p3m.inter_weights);
       }
     }
   }
@@ -340,8 +343,11 @@ void CoulombP3M::charge_assign(ParticleRange const &particles) {
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m,
-                                                     particles);
+  auto p_q_range = ParticlePropertyRange::charge_range(particles);
+  auto p_pos_range = ParticlePropertyRange::pos_range(particles);
+
+  Utils::integral_parameter<int, AssignCharge, 1, 7>(
+      p3m.params.cao, p3m, boost::combine(p_q_range, p_pos_range));
 }
 
 void CoulombP3M::assign_charge(double q, Utils::Vector3d const &real_pos,
