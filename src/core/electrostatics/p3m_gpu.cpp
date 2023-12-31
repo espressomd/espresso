@@ -29,6 +29,9 @@
 #include "electrostatics/coulomb.hpp"
 
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
+#include "integrators/Propagation.hpp"
+#include "npt.hpp"
 #include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 
@@ -46,7 +49,15 @@ static auto get_n_part_safe(GpuParticleData const &gpu) {
   return static_cast<unsigned int>(n_part);
 }
 
-void CoulombP3MGPU::add_long_range_forces(ParticleRange const &) {
+void CoulombP3MGPU::add_long_range_forces(ParticleRange const &particles) {
+#ifdef NPT
+  if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    auto const energy = long_range_energy(particles);
+    npt_add_virial_contribution(energy);
+  }
+#else
+  static_cast<void>(particles);
+#endif
   if (this_node == 0) {
     auto &gpu = get_system().gpu;
     p3m_gpu_add_farfield_force(*m_gpu_data, gpu, prefactor,

@@ -47,11 +47,7 @@
  */
 void propagate_omega_quat_particle(Particle &p, double time_step);
 
-/** @brief Convert torques to the body-fixed frame and propagate
- *  angular velocities.
- */
-void convert_torques_propagate_omega(const ParticleRange &particles,
-                                     double time_step);
+void convert_torque_propagate_omega(Particle &p, double time_step);
 
 /** Convert torques to the body-fixed frame before the integration loop. */
 void convert_initial_torques(const ParticleRange &particles);

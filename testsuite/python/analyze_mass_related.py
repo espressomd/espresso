@@ -21,6 +21,7 @@ import unittest as ut
 import numpy as np
 import espressomd
 import espressomd.galilei
+import espressomd.propagation
 
 
 class AnalyzeMassRelated(ut.TestCase):
@@ -44,12 +45,13 @@ class AnalyzeMassRelated(ut.TestCase):
             pos=np.random.random((10, 3)) * cls.box_l, type=[0] * 10)
         cls.system.part.add(
             pos=np.random.random((10, 3)) * cls.box_l, type=[1] * 10)
-        if espressomd.has_features("VIRTUAL_SITES"):
+        if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
+            Propagation = espressomd.propagation.Propagation
             cls.system.part.add(
-                pos=np.random.random((10, 3)) * cls.box_l, type=[0] * 10, virtual=[True] * 10)
+                pos=np.random.random((10, 3)) * cls.box_l, type=[0] * 10,
+                propagation=[Propagation.TRANS_LB_TRACER] * 10)
         all_partcls = cls.system.part.all()
-        all_partcls.v = np.random.random(
-            (len(all_partcls), 3)) + 0.1
+        all_partcls.v = np.random.random((len(all_partcls), 3)) + 0.1
         if espressomd.has_features("MASS"):
             all_partcls.mass = 0.5 + \
                 np.random.random(len(all_partcls))
@@ -76,7 +78,7 @@ class AnalyzeMassRelated(ut.TestCase):
     def test_itensor(self):
         # Particles of type 0
         I0 = self.i_tensor(self.system.part.select(
-            lambda p: (not p.virtual) and p.type == 0).id)
+            lambda p: (not p.is_virtual()) and p.type == 0).id)
         np.testing.assert_allclose(
             I0, self.system.analysis.moment_of_inertia_matrix(p_type=0), atol=1E-9)
         # Particles of type 1
@@ -86,18 +88,17 @@ class AnalyzeMassRelated(ut.TestCase):
 
     def test_center_of_mass(self):
         no_virtual_type_0 = self.system.part.select(
-            lambda p: (not p.virtual) and p.type == 0)
-        com = np.zeros(3)
+            lambda p: (not p.is_virtual()) and p.type == 0)
+        com_ref = np.zeros(3)
         for p in no_virtual_type_0:
-            com += p.pos * p.mass
-        com /= np.sum(no_virtual_type_0.mass)
+            com_ref += p.pos * p.mass
+        com_ref /= np.sum(no_virtual_type_0.mass)
+        com = self.system.analysis.center_of_mass(p_type=0)
 
-        np.testing.assert_allclose(
-            com,
-            self.system.analysis.center_of_mass(p_type=0))
+        np.testing.assert_allclose(com, com_ref)
 
     def test_galilei_transform(self):
-        no_virtual = self.system.part.select(virtual=False)
+        no_virtual = self.system.part.select(lambda p: not p.is_virtual())
 
         # Center of mass
         np.testing.assert_allclose(
@@ -110,7 +111,7 @@ class AnalyzeMassRelated(ut.TestCase):
 
     def test_angularmomentum(self):
         no_virtual_type_0 = self.system.part.select(
-            lambda p: (not p.virtual) and p.type == 0)
+            lambda p: (not p.is_virtual()) and p.type == 0)
         am = np.zeros(3)
         for p in no_virtual_type_0:
             am += p.mass * np.cross(p.pos, p.v)
@@ -120,14 +121,14 @@ class AnalyzeMassRelated(ut.TestCase):
             self.system.analysis.angular_momentum(p_type=0))
 
     def test_kinetic_energy(self):
-        no_virtual = self.system.part.select(virtual=False)
+        no_virtual = self.system.part.select(lambda p: not p.is_virtual())
         E_kin = 0.5 * \
             np.sum(no_virtual.mass * np.sum(no_virtual.v**2, axis=1), axis=0)
         np.testing.assert_allclose(
             E_kin, self.system.analysis.energy()["kinetic"])
 
     def test_kinetic_pressure(self):
-        no_virtual = self.system.part.select(virtual=False)
+        no_virtual = self.system.part.select(lambda p: not p.is_virtual())
         P_kin = np.sum(
             no_virtual.mass * np.sum(no_virtual.v**2, axis=1),
             axis=0) / (3 * self.system.volume())
@@ -142,7 +143,7 @@ class AnalyzeMassRelated(ut.TestCase):
             expected_pressure_tensor, analyze_pressure_tensor)
 
     def test_gyration_radius(self):
-        if self.system.part.select(virtual=True):
+        if self.system.part.select(lambda p: p.is_virtual()):
             with self.assertRaisesRegex(RuntimeError, "not well-defined"):
                 self.system.analysis.calc_rg(chain_start=0, number_of_chains=1,
                                              chain_length=len(self.system.part))

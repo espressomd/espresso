@@ -24,6 +24,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "config/config.hpp"
 
 #include <utils/Span.hpp>
@@ -36,6 +37,7 @@
 #include <algorithm>
 #include <array>
 #include <sstream>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -290,4 +292,8 @@ BOOST_AUTO_TEST_CASE(particle_bitfields) {
   p.set_cannot_rotate_all_axes();
   BOOST_CHECK(not p.can_rotate());
 #endif
+
+  static_assert(
+      std::is_same_v<std::underlying_type_t<PropagationMode::PropagationMode>,
+                     decltype(ParticleProperties::propagation)>);
 }

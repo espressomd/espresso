@@ -123,10 +123,7 @@ static void define_Qdd(Particle const &p, Utils::Quaternion<double> &Qd,
  *  \todo implement for fixed_coord_flag
  */
 void propagate_omega_quat_particle(Particle &p, double time_step) {
-
-  // If rotation for the particle is disabled entirely, return early.
-  if (!p.can_rotate())
-    return;
+  assert(p.can_rotate());
 
   Utils::Quaternion<double> Qd{}, Qdd{};
   Utils::Vector3d S{}, Wd{};
@@ -159,38 +156,32 @@ void propagate_omega_quat_particle(Particle &p, double time_step) {
   }
 }
 
-void convert_torques_propagate_omega(const ParticleRange &particles,
-                                     double time_step) {
-  for (auto &p : particles) {
-    // Skip particle if rotation is turned off entirely for it.
-    if (!p.can_rotate())
-      continue;
+void convert_torque_propagate_omega(Particle &p, double time_step) {
+  assert(p.can_rotate());
+  convert_torque_to_body_frame_apply_fix(p);
 
-    convert_torque_to_body_frame_apply_fix(p);
+  // Propagation of angular velocities
+  p.omega() += hadamard_division(0.5 * time_step * p.torque(), p.rinertia());
 
-    // Propagation of angular velocities
-    p.omega() += hadamard_division(0.5 * time_step * p.torque(), p.rinertia());
+  // zeroth estimate of omega
+  Utils::Vector3d omega_0 = p.omega();
 
-    // zeroth estimate of omega
-    Utils::Vector3d omega_0 = p.omega();
+  /* if the tensor of inertia is isotropic, the following refinement is not
+     needed.
+     Otherwise repeat this loop 2-3 times depending on the required accuracy
+   */
 
-    /* if the tensor of inertia is isotropic, the following refinement is not
-       needed.
-       Otherwise repeat this loop 2-3 times depending on the required accuracy
-     */
+  const double rinertia_diff_01 = p.rinertia()[0] - p.rinertia()[1];
+  const double rinertia_diff_12 = p.rinertia()[1] - p.rinertia()[2];
+  const double rinertia_diff_20 = p.rinertia()[2] - p.rinertia()[0];
+  for (int times = 0; times <= 5; times++) {
+    Utils::Vector3d Wd;
 
-    const double rinertia_diff_01 = p.rinertia()[0] - p.rinertia()[1];
-    const double rinertia_diff_12 = p.rinertia()[1] - p.rinertia()[2];
-    const double rinertia_diff_20 = p.rinertia()[2] - p.rinertia()[0];
-    for (int times = 0; times <= 5; times++) {
-      Utils::Vector3d Wd;
+    Wd[0] = p.omega()[1] * p.omega()[2] * rinertia_diff_12 / p.rinertia()[0];
+    Wd[1] = p.omega()[2] * p.omega()[0] * rinertia_diff_20 / p.rinertia()[1];
+    Wd[2] = p.omega()[0] * p.omega()[1] * rinertia_diff_01 / p.rinertia()[2];
 
-      Wd[0] = p.omega()[1] * p.omega()[2] * rinertia_diff_12 / p.rinertia()[0];
-      Wd[1] = p.omega()[2] * p.omega()[0] * rinertia_diff_20 / p.rinertia()[1];
-      Wd[2] = p.omega()[0] * p.omega()[1] * rinertia_diff_01 / p.rinertia()[2];
-
-      p.omega() = omega_0 + (0.5 * time_step) * Wd;
-    }
+    p.omega() = omega_0 + (0.5 * time_step) * Wd;
   }
 }
 

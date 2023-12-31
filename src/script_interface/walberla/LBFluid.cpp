@@ -25,7 +25,6 @@
 #include "WalberlaCheckpoint.hpp"
 
 #include "core/BoxGeometry.hpp"
-#include "core/integrate.hpp"
 #include "core/lb/LBWalberla.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
 #include "core/lees_edwards/protocols.hpp"
@@ -171,20 +170,21 @@ void LBFluid::do_construct(VariantMap const &params) {
     }
     m_instance =
         new_lb_walberla(lb_lattice, lb_visc, lb_dens, single_precision);
-    if (auto le_protocol = LeesEdwards::get_protocol().lock()) {
+    auto const &system = ::System::get_system();
+    if (auto le_protocol = system.lees_edwards->get_protocol()) {
       if (lb_kT != 0.) {
         throw std::runtime_error(
             "Lees-Edwards LB doesn't support thermalization");
       }
-      auto const &le_bc = ::System::get_system().box_geo->lees_edwards_bc();
+      auto const &le_bc = system.box_geo->lees_edwards_bc();
       auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
           le_bc.shear_direction, le_bc.shear_plane_normal,
-          [this, le_protocol]() {
-            return get_pos_offset(get_sim_time(), *le_protocol) /
+          [this, le_protocol, &system]() {
+            return get_pos_offset(system.get_sim_time(), *le_protocol) /
                    m_lb_params->get_agrid();
           },
-          [this, le_protocol]() {
-            return get_shear_velocity(get_sim_time(), *le_protocol) *
+          [this, le_protocol, &system]() {
+            return get_shear_velocity(system.get_sim_time(), *le_protocol) *
                    (m_lb_params->get_tau() / m_lb_params->get_agrid());
           });
       m_instance->set_collision_model(std::move(lees_edwards_object));

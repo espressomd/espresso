@@ -202,6 +202,7 @@ public:
   }
 
   /** Calculate real-space contribution of Coulomb pair energy. */
+  // Eq. (3.6) @cite deserno00b
   double pair_energy(double q1q2, double dist) const {
     if ((q1q2 == 0.) || dist >= p3m.params.r_cut || dist <= 0.) {
       return {};
@@ -217,7 +218,7 @@ public:
   }
 
   /** Compute the k-space part of the pressure tensor */
-  Utils::Vector9d p3m_calc_kspace_pressure_tensor();
+  Utils::Vector9d long_range_pressure(ParticleRange const &particles);
 
   /** Compute the k-space part of energies. */
   double long_range_energy(ParticleRange const &particles) {

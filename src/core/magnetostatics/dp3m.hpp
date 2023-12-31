@@ -169,9 +169,19 @@ struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
   void tune();
   bool is_tuned() const { return m_is_tuned; }
 
+  /** Compute the k-space part of energies. */
+  double long_range_energy(ParticleRange const &particles) {
+    return long_range_kernel(false, true, particles);
+  }
+
+  /** Compute the k-space part of forces. */
+  void add_long_range_forces(ParticleRange const &particles) {
+    long_range_kernel(true, false, particles);
+  }
+
   /** Compute the k-space part of forces and energies. */
-  double kernel(bool force_flag, bool energy_flag,
-                ParticleRange const &particles);
+  double long_range_kernel(bool force_flag, bool energy_flag,
+                           ParticleRange const &particles);
 
   /** Calculate real-space contribution of p3m dipolar pair forces and torques.
    *  If NPT is compiled in, update the NpT virial.

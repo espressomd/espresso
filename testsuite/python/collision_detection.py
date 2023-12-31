@@ -20,7 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import espressomd.interactions
-import espressomd.virtual_sites
+import espressomd.propagation
 import numpy as np
 import random
 
@@ -32,8 +32,6 @@ class CollisionDetection(ut.TestCase):
 
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(seed=42)
-    if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
     bond_center = espressomd.interactions.HarmonicBond(k=5000, r_0=0.1)
     bond_vs = espressomd.interactions.HarmonicBond(k=25000, r_0=0.02)
@@ -142,6 +140,7 @@ class CollisionDetection(ut.TestCase):
     def verify_state_after_bind_at_poc_pair(self, expected_np):
         system = self.system
         self.assertEqual(len(system.part), expected_np)
+        Propagation = espressomd.propagation.Propagation
 
         # At the end of test, this list should be empty
         parts_not_accounted_for = list(range(expected_np))
@@ -150,7 +149,7 @@ class CollisionDetection(ut.TestCase):
         # From the two vs we find the two non-virtual particles
         for p in system.part:
             # Skip non-virtual
-            if not p.virtual:
+            if not p.propagation & Propagation.TRANS_VS_RELATIVE:
                 continue
             # Skip vs that doesn't have a bond
             if p.bonds == ():
@@ -162,7 +161,7 @@ class CollisionDetection(ut.TestCase):
             # get partner
             p2 = system.part.by_id(p.bonds[0][1])
             # Is that really a vs
-            self.assertTrue(p2.virtual)
+            self.assertTrue(p2.is_virtual())
             # Get base particles
             base_p1 = system.part.by_id(p.vs_relative[0])
             base_p2 = system.part.by_id(p2.vs_relative[0])
@@ -173,7 +172,7 @@ class CollisionDetection(ut.TestCase):
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
         p = system.part.by_id(parts_not_accounted_for[0])
-        self.assertFalse(p.virtual)
+        self.assertFalse(p.propagation & Propagation.TRANS_VS_RELATIVE)
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
         self.assertEqual(parts_not_accounted_for, [])
@@ -189,7 +188,7 @@ class CollisionDetection(ut.TestCase):
         # From the two vs we find the two non-virtual particles
         for p in system.part:
             # Skip non-virtual
-            if not p.virtual:
+            if not p.is_virtual():
                 continue
             # Skip vs that doesn't have a bond
             if p.bonds == ():
@@ -206,7 +205,7 @@ class CollisionDetection(ut.TestCase):
                 # Bond type
                 self.assertEqual(p.bonds[0][0], self.bond_angle_vs)
                 # Is that really a vs
-                self.assertTrue(p.virtual)
+                self.assertTrue(p.is_virtual())
                 # Get base particles
                 base_p1 = system.part.by_id(p.bonds[0][1])
                 base_p2 = system.part.by_id(p.bonds[0][2])
@@ -219,7 +218,7 @@ class CollisionDetection(ut.TestCase):
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
         p = system.part.by_id(parts_not_accounted_for[0])
-        self.assertFalse(p.virtual)
+        self.assertFalse(p.is_virtual())
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
         self.assertEqual(parts_not_accounted_for, [])
@@ -245,8 +244,8 @@ class CollisionDetection(ut.TestCase):
             self.assertTrue(vs1.bonds == bond_vs1 or vs2.bonds == bond_vs2)
 
         # Vs properties
-        self.assertTrue(vs1.virtual)
-        self.assertTrue(vs2.virtual)
+        self.assertTrue(vs1.is_virtual())
+        self.assertTrue(vs2.is_virtual())
 
         # vs_relative properties
         seen = []
@@ -370,8 +369,8 @@ class CollisionDetection(ut.TestCase):
         system.integrator.run(5000)
 
         # Analysis
-        virtual_sites = system.part.select(virtual=True)
-        non_virtual = system.part.select(virtual=False)
+        virtual_sites = system.part.select(lambda p: p.is_virtual() == True)
+        non_virtual = system.part.select(lambda p: p.is_virtual() == False)
 
         # Check bonds on non-virtual particles
         bonds = []
@@ -462,6 +461,7 @@ class CollisionDetection(ut.TestCase):
     def verify_state_after_glue_to_surface(self, expected_np):
         system = self.system
         self.assertEqual(len(system.part), expected_np)
+        Propagation = espressomd.propagation.Propagation
 
         # At the end of test, this list should be empty
         parts_not_accounted_for = list(range(expected_np))
@@ -470,7 +470,7 @@ class CollisionDetection(ut.TestCase):
         # and partner particle via bonds
         for p in system.part:
             # Skip non-virtual
-            if not p.virtual:
+            if not p.propagation & Propagation.TRANS_VS_RELATIVE:
                 continue
             # The vs shouldn't have bonds
             self.assertEqual(p.bonds, ())
@@ -504,7 +504,7 @@ class CollisionDetection(ut.TestCase):
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
         p = system.part.by_id(parts_not_accounted_for[0])
-        self.assertFalse(p.virtual)
+        self.assertFalse(p.propagation & Propagation.TRANS_VS_RELATIVE)
         self.assertEqual(p.type, self.other_type)
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
@@ -512,6 +512,7 @@ class CollisionDetection(ut.TestCase):
 
     def verify_glue_to_surface_pair(self, base_p, vs, bound_p):
         system = self.system
+        Propagation = espressomd.propagation.Propagation
         # Check all types
         self.assertEqual(base_p.type, self.part_type_to_attach_vs_to)
         self.assertEqual(vs.type, self.part_type_vs)
@@ -530,7 +531,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(vs.bonds, ())
 
         # Vs properties
-        self.assertTrue(vs.virtual)
+        self.assertTrue(vs.propagation & Propagation.TRANS_VS_RELATIVE)
         self.assertEqual(vs.vs_relative[0], base_p.id)
 
         # Distance vs,bound_p
@@ -572,6 +573,7 @@ class CollisionDetection(ut.TestCase):
         """
         system = self.system
         system.part.clear()
+        Propagation = espressomd.propagation.Propagation
 
         # Add randomly placed particles
         system.part.add(pos=np.random.random((300, 3)),
@@ -607,8 +609,10 @@ class CollisionDetection(ut.TestCase):
         system.integrator.run(500)
 
         # Analysis
-        virtual_sites = system.part.select(virtual=True)
-        non_virtual = system.part.select(virtual=False)
+        virtual_sites = system.part.select(
+            lambda p: p.propagation & Propagation.TRANS_VS_RELATIVE)
+        non_virtual = system.part.select(lambda p: not (
+            p.propagation & Propagation.TRANS_VS_RELATIVE))
         after_glueing = system.part.select(type=self.part_type_after_glueing)
 
         # One virtual site per glued particle?

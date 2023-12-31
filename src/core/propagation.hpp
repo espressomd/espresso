@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,22 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
-#define VIRTUAL_SITES_VIRTUAL_SITES_INERTIALESS_TRACERS_HPP
 
-#include "config/config.hpp"
+#pragma once
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#include "PropagationMode.hpp"
 
-#include "VirtualSites.hpp"
+#include <string>
+#include <unordered_map>
 
-/** @brief Virtual sites which are advected with an lb fluid. Forces on them are
- * instantaneously transferred to the fluid
+/**
+ * @brief Check allowlist of valid propagation modes combinations.
  */
-class VirtualSitesInertialessTracers : public VirtualSites {
-  void after_force_calc(double time_step) override;
-  void after_lb_propagation(double time_step) override;
-};
+bool is_valid_propagation_combination(int propagation);
 
-#endif // VIRTUAL_SITES_INERTIALESS_TRACERS
-#endif
+/**
+ * @brief Convert @ref PropagationMode::PropagationMode to name/value pairs.
+ */
+std::unordered_map<std::string, int> propagation_flags_map();
+
+/**
+ * @brief Convert a propagation modes bitmask to a string.
+ */
+std::string propagation_bitmask_to_string(int propagation);

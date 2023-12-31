@@ -43,12 +43,14 @@
 #include "Particle.hpp"
 #include "ParticlePropertyIterator.hpp"
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
+#include "integrators/Propagation.hpp"
+#include "npt.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
 
@@ -404,7 +406,8 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
  *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */
-Utils::Vector9d CoulombP3M::p3m_calc_kspace_pressure_tensor() {
+Utils::Vector9d
+CoulombP3M::long_range_pressure(ParticleRange const &particles) {
   using namespace detail::FFT_indexing;
 
   auto const &box_geo = *get_system().box_geo;
@@ -412,6 +415,7 @@ Utils::Vector9d CoulombP3M::p3m_calc_kspace_pressure_tensor() {
   Utils::Vector9d node_k_space_pressure_tensor{};
 
   if (p3m.sum_q2 > 0.) {
+    charge_assign(particles);
     p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
     fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
 
@@ -464,12 +468,25 @@ Utils::Vector9d CoulombP3M::p3m_calc_kspace_pressure_tensor() {
 
 double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                                      ParticleRange const &particles) {
-  auto const &box_geo = *get_system().box_geo;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+#ifdef NPT
+  auto const npt_flag =
+      force_flag and (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO);
+#else
+  auto constexpr npt_flag = false;
+#endif
 
-  /* Gather information for FFT grid inside the nodes domain (inner local mesh)
-   * and perform forward 3D FFT (Charge Assignment Mesh). */
-  p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
-  fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
+  if (p3m.sum_q2 > 0.) {
+    if (not has_actor_of_type<ElectrostaticLayerCorrection>(
+            system.coulomb.impl->solver)) {
+      charge_assign(particles);
+    }
+    /* Gather information for FFT grid inside the nodes domain (inner local
+     * mesh) and perform forward 3D FFT (Charge Assignment Mesh). */
+    p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
+    fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
+  }
 
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
   auto p_force_range = ParticlePropertyRange::force_range(particles);
@@ -492,6 +509,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     /* sqrt(-1)*k differentiation */
     int j[3];
     int ind = 0;
+    /* compute electric field */
+    // Eq. (3.49) @cite deserno00b
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
@@ -535,6 +554,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
         boost::combine(p_q_range, p_force_range));
 
     // add dipole forces
+    // Eq. (3.19) @cite deserno00b
     if (box_dipole) {
       auto const dm = prefactor * pref * box_dipole.value();
       for (auto zipped : boost::combine(p_q_range, p_force_range)) {
@@ -546,10 +566,11 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
   }
 
   /* === k-space energy calculation  === */
-  if (energy_flag) {
+  if (energy_flag or npt_flag) {
     auto node_energy = 0.;
     for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
       // Use the energy optimized influence function for energy!
+      // Eq. (3.40) @cite deserno00b
       node_energy += p3m.g_energy[i] * (Utils::sqr(p3m.rs_mesh[2 * i]) +
                                         Utils::sqr(p3m.rs_mesh[2 * i + 1]));
     }
@@ -559,16 +580,26 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     boost::mpi::reduce(comm_cart, node_energy, energy, std::plus<>(), 0);
     if (this_node == 0) {
       /* self energy correction */
+      // Eq. (3.8) @cite deserno00b
       energy -= p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i();
       /* net charge correction */
+      // Eq. (3.11) @cite deserno00b
       energy -= p3m.square_sum_q * Utils::pi() /
                 (2. * volume * Utils::sqr(p3m.params.alpha));
       /* dipole correction */
+      // Eq. (3.9) @cite deserno00b
       if (box_dipole) {
         energy += pref * box_dipole.value().norm2();
       }
     }
-    return prefactor * energy;
+    energy *= prefactor;
+    if (npt_flag) {
+      npt_add_virial_contribution(energy);
+    }
+    if (not energy_flag) {
+      energy = 0.;
+    }
+    return energy;
   }
 
   return 0.;

@@ -22,9 +22,10 @@ import tests_common
 import numpy as np
 import espressomd
 import espressomd.integrate
+import espressomd.propagation
 
 
-@utx.skipIfMissingFeatures(["NPT", "LENNARD_JONES"])
+@utx.skipIfMissingFeatures(["NPT"])
 class IntegratorNPT(ut.TestCase):
 
     """This tests the NpT integrator interface."""
@@ -41,8 +42,20 @@ class IntegratorNPT(ut.TestCase):
             self.system.electrostatics.clear()
         if espressomd.has_features(["DIPOLES"]):
             self.system.magnetostatics.clear()
+        self.reset_rng_counter()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
+        if espressomd.has_features(["LENNARD_JONES"]):
+            self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
+
+    def reset_rng_counter(self):
+        # reset RNG counter to make tests independent of execution order
+        self.system.thermostat.set_npt(kT=0., gamma0=0., gammav=1e-6, seed=42)
+        thmst_list = self.system.thermostat.get_state()
+        for thmst in thmst_list:
+            if thmst["type"] == "NPT_ISO":
+                thmst["counter"] = 0
+        self.system.thermostat.__setstate__(thmst_list)
 
     def test_integrator_exceptions(self):
         # invalid parameters should throw exceptions
@@ -59,7 +72,83 @@ class IntegratorNPT(ut.TestCase):
             self.system.integrator.set_isotropic_npt(
                 ext_pressure=1, piston=1, direction=[True, False])
 
-    def test_00_integrator_recovery(self):
+    @utx.skipIfMissingFeatures(["MASS", "EXTERNAL_FORCES"])
+    def test_00_propagation(self):
+        """
+        Check integration of the equations of motion.
+        """
+        Propagation = espressomd.propagation.Propagation
+        gamma0 = 1.2
+        v0 = np.array([1., 2., 3.])
+        ext_force = np.array([-2., +2., -3.])
+
+        def calc_trajectory(p, x0):
+            t = self.system.time
+            gamma_t = gamma0
+            if (p.propagation & (Propagation.SYSTEM_DEFAULT |
+                                 Propagation.TRANS_LANGEVIN_NPT)):
+                friction = np.exp(-gamma_t / p.mass * t)
+                v_term = p.ext_force / gamma_t
+                x_drift = (v0 - v_term) * p.mass / gamma_t
+                ref_vel = v_term + (v0 - v_term) * friction
+                ref_pos = x0 + v_term * t + x_drift * (1. - friction)
+            elif p.propagation & Propagation.TRANS_NEWTON:
+                ref_vel = v0 + p.ext_force / p.mass * t
+                ref_pos = x0 + v0 * t + 0.5 * p.ext_force / p.mass * t**2
+            else:
+                ref_vel = v0
+                ref_pos = x0
+            return np.copy(ref_pos), np.copy(ref_vel)
+
+        system = self.system
+        system.time_step = 0.00001
+        system.thermostat.set_npt(kT=0., gamma0=gamma0, gammav=1e-6, seed=42)
+        system.integrator.set_isotropic_npt(ext_pressure=0.01, piston=1e6)
+        positions = []
+        modes_trans = [
+            Propagation.NONE,
+            Propagation.SYSTEM_DEFAULT,
+            Propagation.TRANS_NEWTON,
+            Propagation.TRANS_LANGEVIN_NPT,
+        ]
+        for mode_trans in modes_trans:
+            x0 = np.random.random(3) * np.copy(system.box_l)
+            system.part.add(pos=x0, v=v0, ext_force=ext_force,
+                            mass=4., propagation=mode_trans)
+            positions.append(x0)
+        system.time = 0.
+        for i in range(10):
+            system.integrator.run(2**i)
+            for p, x0 in zip(system.part.all(), positions):
+                pos = np.copy(p.pos)
+                vel = np.copy(p.v)
+                ref_pos, ref_vel = calc_trajectory(p, x0)
+                np.testing.assert_allclose(pos, ref_pos, rtol=1e-7)
+                np.testing.assert_allclose(vel, ref_vel, rtol=1e-7)
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
+    def test_07__virtual(self):
+        system = self.system
+        system.time_step = 0.01
+
+        virtual = system.part.add(pos=[0, 0, 0], v=[1, 0, 0])
+        physical = system.part.add(pos=[0, 0, 0], v=[2, 0, 0])
+        virtual.vs_relative = (physical.id, 0.1, (1., 0., 0., 0.))
+
+        system.thermostat.set_npt(kT=0., gamma0=2., gammav=1e-6, seed=42)
+        system.integrator.set_isotropic_npt(ext_pressure=0.01, piston=1e6)
+
+        system.integrator.run(1)
+
+        np.testing.assert_almost_equal(np.copy(physical.f), [0., 0., 0.])
+        np.testing.assert_almost_equal(np.copy(physical.v), [1.9602, 0., 0.])
+        np.testing.assert_almost_equal(np.copy(physical.pos), [0.0198, 0., 0.])
+        np.testing.assert_almost_equal(np.copy(virtual.f), [0., 0., 0.])
+        np.testing.assert_almost_equal(np.copy(virtual.v), [1.9602, 0., 0.])
+        np.testing.assert_almost_equal(np.copy(virtual.pos), [0.0198, 0., 0.1])
+
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
+    def test_09_integrator_recovery(self):
         # the system is still in a valid state after a failure
         system = self.system
         np.random.seed(42)
@@ -150,8 +239,8 @@ class IntegratorNPT(ut.TestCase):
         system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
         system.integrator.run(10)
         # check runtime warnings
-        self.system.thermostat.turn_off()
-        self.system.integrator.set_vv()
+        system.thermostat.turn_off()
+        system.integrator.set_vv()
         err_msg = f"If {method} is being used you must use the cubic box NpT"
         with self.assertRaisesRegex(RuntimeError, err_msg):
             system.integrator.set_isotropic_npt(**npt_kwargs_rectangular)
@@ -164,7 +253,7 @@ class IntegratorNPT(ut.TestCase):
         with self.assertRaisesRegex(Exception, err_msg):
             system.integrator.run(0, recalc_forces=True)
 
-    @utx.skipIfMissingFeatures(["DP3M"])
+    @utx.skipIfMissingFeatures(["DP3M", "LENNARD_JONES"])
     def test_npt_dp3m_cpu(self):
         import espressomd.magnetostatics
         dp3m = espressomd.magnetostatics.DipolarP3M(
@@ -172,7 +261,7 @@ class IntegratorNPT(ut.TestCase):
             alpha=2.995, tune=False)
         self.run_with_p3m(self.system.magnetostatics, dp3m, "magnetostatics")
 
-    @utx.skipIfMissingFeatures(["P3M"])
+    @utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
     def test_npt_p3m_cpu(self):
         import espressomd.electrostatics
         p3m = espressomd.electrostatics.P3M(
@@ -181,7 +270,7 @@ class IntegratorNPT(ut.TestCase):
         self.run_with_p3m(self.system.electrostatics, p3m, "electrostatics")
 
     @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["P3M"])
+    @utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
     def test_npt_p3m_gpu(self):
         import espressomd.electrostatics
         p3m = espressomd.electrostatics.P3MGPU(

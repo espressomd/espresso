@@ -17,23 +17,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 /** @file
  *  See @cite durlofsky87a for the Stokesian dynamics method used here.
  *  See @cite banchio03a and @cite brady88a for the thermalization method.
  */
-
-#ifndef STOKESIAN_DYNAMICS_INTERFACE_H
-#define STOKESIAN_DYNAMICS_INTERFACE_H
 
 #include "config/config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
 
 #include "ParticleRange.hpp"
-
-#include <boost/mpi/communicator.hpp>
+#include "PropagationMode.hpp"
+#include "PropagationPredicate.hpp"
 
 #include <unordered_map>
+
+struct PropagationPredicateStokesian {
+  int modes;
+  PropagationPredicateStokesian(int default_propagation) {
+    modes = PropagationMode::TRANS_STOKESIAN;
+    if (default_propagation & PropagationMode::TRANS_STOKESIAN) {
+      modes |= PropagationMode::SYSTEM_DEFAULT;
+    }
+  }
+
+  bool operator()(int prop) const { return (prop & modes); }
+};
+
+using ParticleRangeStokesian =
+    ParticleRangeFiltered<PropagationPredicateStokesian>;
 
 struct StokesianDynamicsParameters {
   double viscosity;
@@ -61,9 +75,7 @@ double get_sd_kT();
  *  is gathered from all nodes and their velocities and angular velocities are
  *  set according to the Stokesian Dynamics method.
  */
-void propagate_vel_pos_sd(const ParticleRange &particles,
-                          const boost::mpi::communicator &comm,
+void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
                           double time_step);
 
 #endif // STOKESIAN_DYNAMICS
-#endif

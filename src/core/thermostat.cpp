@@ -29,7 +29,6 @@
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
@@ -41,7 +40,6 @@
 
 int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
-bool thermo_virtual = true;
 
 using Thermostat::GammaType;
 
@@ -183,16 +181,6 @@ void mpi_set_langevin_gamma(GammaType const &gamma) {
 }
 void mpi_set_langevin_gamma_rot(GammaType const &gamma) {
   mpi_call_all(mpi_set_langevin_gamma_rot_local, gamma);
-}
-
-void mpi_set_thermo_virtual_local(bool thermo_virtual) {
-  ::thermo_virtual = thermo_virtual;
-}
-
-REGISTER_CALLBACK(mpi_set_thermo_virtual_local)
-
-void mpi_set_thermo_virtual(bool thermo_virtual) {
-  mpi_call_all(mpi_set_thermo_virtual_local, thermo_virtual);
 }
 
 void mpi_set_temperature_local(double temperature) {

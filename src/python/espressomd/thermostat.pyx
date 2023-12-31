@@ -32,7 +32,7 @@ def AssertThermostatType(*allowed_thermostats):
         cdef class Thermostat:
             @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
             def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
-                     act_on_virtual=False, seed=None):
+                             seed=None):
                 ...
 
     This will prefix an assertion that prevents setting up the Langevin
@@ -104,7 +104,6 @@ cdef class Thermostat:
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst["gamma"],
                                   gamma_rotation=thmst["gamma_rotation"],
-                                  act_on_virtual=thmst["act_on_virtual"],
                                   seed=thmst["seed"])
                 langevin_set_rng_counter(thmst["counter"])
             if thmst["type"] == "LB":
@@ -117,7 +116,6 @@ cdef class Thermostat:
                 thmst["LB_fluid"].call_method("activate")
                 self.set_lb(
                     LB_fluid=thmst["LB_fluid"],
-                    act_on_virtual=thmst["act_on_virtual"],
                     gamma=thmst["gamma"],
                     seed=thmst["rng_counter_fluid"])
                 thmst["LB_fluid"].call_method("deactivate")
@@ -133,7 +131,6 @@ cdef class Thermostat:
             if thmst["type"] == "BROWNIAN":
                 self.set_brownian(kT=thmst["kT"], gamma=thmst["gamma"],
                                   gamma_rotation=thmst["gamma_rotation"],
-                                  act_on_virtual=thmst["act_on_virtual"],
                                   seed=thmst["seed"])
                 brownian_set_rng_counter(thmst["counter"])
             if thmst["type"] == "SD":
@@ -155,7 +152,6 @@ cdef class Thermostat:
             lang_dict = {}
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
-            lang_dict["act_on_virtual"] = thermo_virtual
             lang_dict["seed"] = langevin.rng_seed()
             lang_dict["counter"] = langevin.rng_counter()
             IF PARTICLE_ANISOTROPY:
@@ -179,7 +175,6 @@ cdef class Thermostat:
             lang_dict = {}
             lang_dict["type"] = "BROWNIAN"
             lang_dict["kT"] = temperature
-            lang_dict["act_on_virtual"] = thermo_virtual
             lang_dict["seed"] = brownian.rng_seed()
             lang_dict["counter"] = brownian.rng_counter()
             IF PARTICLE_ANISOTROPY:
@@ -204,7 +199,6 @@ cdef class Thermostat:
             lb_dict["LB_fluid"] = self._LB_fluid
             lb_dict["gamma"] = lb_lbcoupling_get_gamma()
             lb_dict["type"] = "LB"
-            lb_dict["act_on_virtual"] = thermo_virtual
             lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
             thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
@@ -246,7 +240,6 @@ cdef class Thermostat:
         """
 
         self._set_temperature(0.)
-        mpi_set_thermo_virtual(True)
         IF PARTICLE_ANISOTROPY:
             mpi_set_langevin_gamma(utils.make_Vector3d((0., 0., 0.)))
             mpi_set_brownian_gamma(utils.make_Vector3d((0., 0., 0.)))
@@ -264,9 +257,8 @@ cdef class Thermostat:
         lb_lbcoupling_set_gamma(0.0)
         mpi_bcast_lb_particle_coupling()
 
-    @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
-    def set_langevin(self, kT, gamma, gamma_rotation=None,
-                     act_on_virtual=False, seed=None):
+    @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD, THERMO_LB)
+    def set_langevin(self, kT, gamma, gamma_rotation=None, seed=None):
         """
         Sets the Langevin thermostat.
 
@@ -283,9 +275,6 @@ cdef class Thermostat:
             The same applies to ``gamma_rotation``, which requires the feature
             ``ROTATION`` to work properly. But also accepts three floats
             if ``PARTICLE_ANISOTROPY`` is also compiled in.
-        act_on_virtual : :obj:`bool`, optional
-            If ``True`` the thermostat will act on virtual sites, default is
-            ``False``.
         seed : :obj:`int`
             Initial counter value (or seed) of the philox RNG.
             Required on first activation of the Langevin thermostat.
@@ -390,11 +379,8 @@ cdef class Thermostat:
             IF ROTATION:
                 mpi_set_langevin_gamma_rot(gamma_rotation)
 
-        mpi_set_thermo_virtual(act_on_virtual)
-
     @AssertThermostatType(THERMO_BROWNIAN)
-    def set_brownian(self, kT, gamma, gamma_rotation=None,
-                     act_on_virtual=False, seed=None):
+    def set_brownian(self, kT, gamma, gamma_rotation=None, seed=None):
         """Sets the Brownian thermostat.
 
         Parameters
@@ -410,9 +396,6 @@ cdef class Thermostat:
             The same applies to ``gamma_rotation``, which requires the feature
             ``ROTATION`` to work properly. But also accepts three floats
             if ``PARTICLE_ANISOTROPY`` is also compiled in.
-        act_on_virtual : :obj:`bool`, optional
-            If ``True`` the thermostat will act on virtual sites, default is
-            ``False``.
         seed : :obj:`int`
             Initial counter value (or seed) of the philox RNG.
             Required on first activation of the Brownian thermostat.
@@ -518,15 +501,8 @@ cdef class Thermostat:
             IF ROTATION:
                 mpi_set_brownian_gamma_rot(gamma_rotation)
 
-        mpi_set_thermo_virtual(act_on_virtual)
-
-    @AssertThermostatType(THERMO_LB, THERMO_DPD)
-    def set_lb(
-        self,
-        seed=None,
-        act_on_virtual=True,
-        LB_fluid=None,
-            gamma=0.0):
+    @AssertThermostatType(THERMO_LB, THERMO_DPD, THERMO_LANGEVIN)
+    def set_lb(self, seed=None, LB_fluid=None, gamma=0.0):
         """
         Sets the LB thermostat.
 
@@ -538,8 +514,6 @@ cdef class Thermostat:
         seed : :obj:`int`
             Seed for the random number generator, required if kT > 0.
             Must be positive.
-        act_on_virtual : :obj:`bool`, optional
-            If ``True`` the thermostat will act on virtual sites (default).
         gamma : :obj:`float`
             Frictional coupling constant for the MD particle coupling.
 
@@ -547,7 +521,7 @@ cdef class Thermostat:
         from .lb import HydrodynamicInteraction
         if not isinstance(LB_fluid, HydrodynamicInteraction):
             raise ValueError(
-                "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
+                "The LB thermostat requires a LB instance as a keyword arg.")
 
         self._LB_fluid = LB_fluid
         if LB_fluid.kT > 0.:
@@ -568,7 +542,6 @@ cdef class Thermostat:
         global thermo_switch
         mpi_set_thermo_switch(thermo_switch | THERMO_LB)
 
-        mpi_set_thermo_virtual(act_on_virtual)
         lb_lbcoupling_set_gamma(gamma)
         mpi_bcast_lb_particle_coupling()
 

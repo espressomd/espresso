@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CORE_PARTICLE_HPP
-#define ESPRESSO_CORE_PARTICLE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
 #include "BondList.hpp"
+#include "PropagationMode.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/compact_vector.hpp>
@@ -74,13 +75,8 @@ struct ParticleProperties {
   int mol_id = 0;
   /** particle type, used for non-bonded interactions. */
   int type = 0;
-
-#ifdef VIRTUAL_SITES
-  /** is particle virtual */
-  bool is_virtual = false;
-#else  // VIRTUAL_SITES
-  static constexpr bool is_virtual = false;
-#endif // VIRTUAL_SITES
+  /** which propagation schemes should be applied to the particle **/
+  int propagation = PropagationMode::SYSTEM_DEFAULT;
 
 #ifdef ROTATION
   /** Bitfield for the particle axes of rotation.
@@ -206,6 +202,8 @@ struct ParticleProperties {
     ar &identity;
     ar &mol_id;
     ar &type;
+    ar &propagation;
+
 #ifdef MASS
     ar &mass;
 #endif
@@ -228,12 +226,9 @@ struct ParticleProperties {
 #ifdef DIPOLE_FIELD_TRACKING
     ar &dip_fld;
 #endif
-#ifdef VIRTUAL_SITES
-    ar &is_virtual;
 #ifdef VIRTUAL_SITES_RELATIVE
     ar &vs_relative;
 #endif
-#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
     ar &gamma;
@@ -422,6 +417,9 @@ public:
   auto const &type() const { return p.type; }
   auto &type() { return p.type; }
 
+  auto const &propagation() const { return p.propagation; }
+  auto &propagation() { return p.propagation; }
+
   bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
 
   bool operator!=(Particle const &rhs) const { return id() != rhs.id(); }
@@ -516,17 +514,18 @@ public:
   auto &mu_E() { return p.mu_E; }
 #endif
 #ifdef VIRTUAL_SITES
-  auto &virtual_flag() { return p.is_virtual; }
-  auto const &virtual_flag() const { return p.is_virtual; }
-  auto is_virtual() const { return p.is_virtual; }
-  void set_virtual(bool const virt_flag) { p.is_virtual = virt_flag; }
+  auto is_virtual() const {
+    return (p.propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                             PropagationMode::ROT_VS_RELATIVE |
+                             PropagationMode::TRANS_LB_TRACER)) != 0;
+  }
+#else
+  constexpr auto is_virtual() const { return false; }
+#endif // VIRTUAL_SITES
 #ifdef VIRTUAL_SITES_RELATIVE
   auto const &vs_relative() const { return p.vs_relative; }
   auto &vs_relative() { return p.vs_relative; }
 #endif // VIRTUAL_SITES_RELATIVE
-#else
-  constexpr auto is_virtual() const { return p.is_virtual; }
-#endif
 #ifdef THERMOSTAT_PER_PARTICLE
   auto const &gamma() const { return p.gamma; }
   auto &gamma() { return p.gamma; }
@@ -623,6 +622,4 @@ BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
 BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
-#endif
-
 #endif

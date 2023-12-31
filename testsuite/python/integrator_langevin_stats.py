@@ -117,6 +117,10 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         acf = c.result()
         tau = c.lag_times()
 
+        gamma = np.copy(gamma)
+        if not gamma.shape:
+            gamma = gamma * np.ones(3)
+
         # Integrate with trapezoidal rule
         for i in range(3):
             I = np.trapz(acf[:, p.id, i], tau)
@@ -130,21 +134,20 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         kT = 1.37
         dt = 0.1
         system.time_step = dt
+        aniso = espressomd.has_features("PARTICLE_ANISOTROPY")
 
         # Translational gamma. We cannot test per-component, if rotation is on,
         # because body and space frames become different.
         gamma = 3.1
 
         # Rotational gamma
-        gamma_rot_i = 4.7
-        gamma_rot_a = [4.2, 1, 1.2]
+        gamma_rot = [4.2, 1, 1.2] if aniso else 4.7
 
         # If we have langevin per particle:
         # Translation
         per_part_gamma = 1.63
         # Rotational
-        per_part_gamma_rot_i = 2.6
-        per_part_gamma_rot_a = [2.4, 3.8, 1.1]
+        per_part_gamma_rot = [2.4, 3.8, 1.1] if aniso else 2.6
 
         # Particle with global thermostat params
         p_global = system.part.add(pos=(0, 0, 0))
@@ -155,25 +158,14 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         if espressomd.has_features("THERMOSTAT_PER_PARTICLE"):
             p_gamma = system.part.add(pos=(0, 0, 0))
             self.setup_diff_mass_rinertia(p_gamma)
-            if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                p_gamma.gamma = 3 * [per_part_gamma]
-                if espressomd.has_features("ROTATION"):
-                    p_gamma.gamma_rot = per_part_gamma_rot_a
-            else:
-                p_gamma.gamma = per_part_gamma
-                if espressomd.has_features("ROTATION"):
-                    p_gamma.gamma_rot = per_part_gamma_rot_i
+            p_gamma.gamma = 3 * [per_part_gamma] if aniso else per_part_gamma
+            if espressomd.has_features("ROTATION"):
+                p_gamma.gamma_rot = per_part_gamma_rot
 
         # Thermostat setup
         if espressomd.has_features("ROTATION"):
-            if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                # particle anisotropy and rotation
-                system.thermostat.set_langevin(
-                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_a, seed=41)
-            else:
-                # Rotation without particle anisotropy
-                system.thermostat.set_langevin(
-                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_i, seed=41)
+            system.thermostat.set_langevin(
+                kT=kT, gamma=gamma, gamma_rotation=gamma_rot, seed=41)
         else:
             # No rotation
             system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
@@ -215,31 +207,15 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
             corr_omega.finalize()
 
         # Verify diffusion
-        # Translation
-        # Cast gammas to vector, to make checks independent of
-        # PARTICLE_ANISOTROPY
-        gamma = np.ones(3) * gamma
-        per_part_gamma = np.ones(3) * per_part_gamma
         self.verify_diffusion(p_global, corr_vel, kT, gamma)
         if espressomd.has_features("THERMOSTAT_PER_PARTICLE"):
             self.verify_diffusion(p_gamma, corr_vel, kT, per_part_gamma)
 
-        # Rotation
         if espressomd.has_features("ROTATION"):
-            # Decide on effective gamma rotation, since for rotation it is
-            # direction dependent
-            eff_gamma_rot = None
-            if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                eff_gamma_rot = gamma_rot_a
-                eff_per_part_gamma_rot = per_part_gamma_rot_a
-            else:
-                eff_gamma_rot = gamma_rot_i * np.ones(3)
-                eff_per_part_gamma_rot = per_part_gamma_rot_i * np.ones(3)
-
-            self.verify_diffusion(p_global, corr_omega, kT, eff_gamma_rot)
+            self.verify_diffusion(p_global, corr_omega, kT, gamma_rot)
             if espressomd.has_features("THERMOSTAT_PER_PARTICLE"):
                 self.verify_diffusion(
-                    p_gamma, corr_omega, kT, eff_per_part_gamma_rot)
+                    p_gamma, corr_omega, kT, per_part_gamma_rot)
 
     def test_08__noise_correlation(self):
         """Checks that the Langevin noise is uncorrelated"""

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 The ESPResSo project
+# Copyright (C) 2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,5 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(espresso_script_interface
-               PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp)
+
+def update_file(filepath, function):
+    with open(filepath, "r+") as f:
+        content = function(f.read())
+        f.seek(0)
+        f.truncate()
+        f.write(content)
+
+
+def update_espressomd(content):
+    token = ".. automodule:: espressomd.propagation"
+    assert token in content
+    assert content.count(token) == 1
+    content = content.replace(token, token + "\n   :member-order: bysource", 1)
+    return content
+
+
+update_file("espressomd.rst", update_espressomd)

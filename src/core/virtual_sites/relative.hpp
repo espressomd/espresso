@@ -17,29 +17,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
-#define VIRTUAL_SITES_VIRTUAL_SITES_RELATIVE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
+
 #ifdef VIRTUAL_SITES_RELATIVE
 
-#include "VirtualSites.hpp"
+#include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 
-/** @brief Virtual sites implementation for rigid bodies */
-class VirtualSitesRelative : public VirtualSites {
-public:
-  VirtualSitesRelative() = default;
-  /** @copydoc VirtualSites::update */
-  void update() const override;
-  /** @copydoc VirtualSites::back_transfer_forces_and_torques */
-  void back_transfer_forces_and_torques() const override;
-  /** @copydoc VirtualSites::pressure_tensor */
-  Utils::Matrix<double, 3, 3> pressure_tensor() const override;
-};
+void vs_relative_update_particles(CellStructure &cell_structure,
+                                  BoxGeometry const &box_geo);
+void vs_relative_back_transfer_forces_and_torques(
+    CellStructure &cell_structure);
+Utils::Matrix<double, 3, 3>
+vs_relative_pressure_tensor(CellStructure const &cell_structure);
 
-#endif
-
-#endif
+#endif // VIRTUAL_SITES_RELATIVE

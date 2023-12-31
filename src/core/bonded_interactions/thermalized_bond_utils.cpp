@@ -20,7 +20,6 @@
  */
 
 #include "thermalized_bond_utils.hpp"
-#include "integrate.hpp"
 #include "thermalized_bond.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"

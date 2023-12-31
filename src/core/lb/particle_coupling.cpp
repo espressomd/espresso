@@ -270,9 +270,6 @@ Utils::Vector3d ParticleCoupling::get_noise_term(Particle const &p) const {
 }
 
 void ParticleCoupling::kernel(Particle &p) {
-  if (p.is_virtual() and not m_couple_virtual)
-    return;
-
   auto const agrid = m_lb.get_agrid();
   auto const &box_geo = *System::get_system().box_geo;
 
@@ -333,7 +330,7 @@ static void lb_coupling_sanity_checks(Particle const &p) {
 }
 #endif
 
-void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
+void couple_particles(ParticleRange const &real_particles,
                       ParticleRange const &ghost_particles, double time_step) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
@@ -341,11 +338,11 @@ void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
   if (lb_particle_coupling.couple_to_md) {
     auto &lb = System::get_system().lb;
     if (lb.is_solver_set()) {
-      ParticleCoupling coupling{lb, couple_virtual, time_step};
+      ParticleCoupling coupling{lb, time_step};
       CouplingBookkeeping bookkeeping{};
       for (auto const &particle_range : {real_particles, ghost_particles}) {
         for (auto &p : particle_range) {
-          if (bookkeeping.should_be_coupled(p)) {
+          if (not LB::is_tracer(p) and bookkeeping.should_be_coupled(p)) {
 #if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)
             lb_coupling_sanity_checks(p);
 #endif

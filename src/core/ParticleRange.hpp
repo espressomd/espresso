@@ -16,18 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_PARTICLE_RANGE_HPP
-#define ESPRESSO_SRC_CORE_PARTICLE_RANGE_HPP
 
+#pragma once
+
+#include "CellParticleIterator.hpp"
 #include "Particle.hpp"
 #include "ParticleIterator.hpp"
+#include "PropagationPredicate.hpp"
 #include "cell_system/Cell.hpp"
 
 #include <boost/range/iterator_range.hpp>
 
 #include <cassert>
-
-using CellParticleIterator = ParticleIterator<Cell *const *>;
 
 /**
  * @brief A range of particles.
@@ -49,8 +49,13 @@ public:
     return assert(m_size >= 0), static_cast<base_type::size_type>(m_size);
   }
 
+  template <typename Predicate>
+  ParticleRangeFiltered<Predicate> filter(Predicate pred) const {
+    auto const predicate = PropagationPredicate<Predicate>(pred);
+    return {boost::make_filter_iterator(predicate, begin(), end()),
+            boost::make_filter_iterator(predicate, end(), end())};
+  }
+
 private:
   base_type::difference_type mutable m_size = -1;
 };
-
-#endif

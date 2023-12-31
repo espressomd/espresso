@@ -442,15 +442,15 @@ General features
 -  ``THERMOSTAT_PER_PARTICLE`` Allows setting a per-particle friction
    coefficient for the Langevin and Brownian thermostats.
 
--  ``ROTATIONAL_INERTIA`` Allows to set the eigenvalues for rotational inertia matrix of particles
+-  ``ROTATIONAL_INERTIA`` Allows particles to have individual rotational inertia matrix eigenvalues.
+   When not built in, all eigenvalues are unity in simulation units.
 
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
    individually. Also allows to fix individual coordinates of particles,
    keep them at a fixed position or within a plane.
 
--  ``MASS`` Allows particles to have individual masses. Note that some analysis
-   procedures have not yet been adapted to take the masses into account
-   correctly.
+-  ``MASS`` Allows particles to have individual masses.
+   When not built in, all masses are unity in simulation units.
 
    .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.mass`
 

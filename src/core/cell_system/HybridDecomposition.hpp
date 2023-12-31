@@ -31,7 +31,6 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ghosts.hpp"
-#include "integrate.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>

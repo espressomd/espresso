@@ -126,10 +126,7 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
                      BoxGeometry const &box_geo,
                      Utils::Vector3d const *ghost_shift) {
   if (data_parts & GHOSTTRANS_PROPRTS) {
-    ar &p.id() & p.mol_id() & p.type();
-#ifdef VIRTUAL_SITES
-    ar &p.virtual_flag();
-#endif
+    ar &p.id() & p.mol_id() & p.type() & p.propagation();
 #ifdef ROTATION
     ar &p.rotation();
 #ifdef ROTATIONAL_INERTIA

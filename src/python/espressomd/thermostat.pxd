@@ -25,7 +25,6 @@ from .utils cimport Vector3d
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch
-    cbool thermo_virtual
     int THERMO_OFF
     int THERMO_LANGEVIN
     int THERMO_LB
@@ -103,7 +102,6 @@ cdef extern from "thermostat.hpp":
         void mpi_set_langevin_gamma(const double & gamma)
         void mpi_set_langevin_gamma_rot(const double & gamma)
 
-    void mpi_set_thermo_virtual(cbool thermo_virtual)
     void mpi_set_temperature(double temperature)
     void mpi_set_thermo_switch(int thermo_switch)
 
