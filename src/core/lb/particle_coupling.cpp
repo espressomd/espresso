@@ -187,12 +187,14 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
   auto const fully_inside_lower = local_geo.my_left() + 2. * halo_vec;
 
-  // If the particle is at least one agrid away from the node boundary
-  // any ghosts shifted by +- box_length cannot be in the lb volume
-  // accessible by this node (-agrid/2 to box_length +agrid/2)
-  auto const fully_inside_upper = local_geo.my_right() - 2. * halo_vec;
-  if (in_box(pos, fully_inside_lower, fully_inside_upper)) {
-    return {pos};
+  if (box_geo.type() == BoxType::CUBOID) {
+    // If the particle is at least one agrid away from the node boundary
+    // any ghosts shifted by +- box_length cannot be in the lb volume
+    // accessible by this node (-agrid/2 to box_length +agrid/2)
+    auto const fully_inside_upper = local_geo.my_right() - 2. * halo_vec;
+    if (in_box(pos, fully_inside_lower, fully_inside_upper)) {
+      return {pos};
+    }
   }
 
   // For remaingin particles, positions shifted by +- box_length
@@ -210,9 +212,11 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
         // Apply additional shift from Lees-Edwards boundary conditions, when
         // shifting across a periodic boundary
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
-          auto &le = box_geo.lees_edwards_bc();
+          auto const &le = box_geo.lees_edwards_bc();
+          auto const folded_offset =
+              std::fmod(le.pos_offset, box_geo.length()[le.shear_direction]);
           pos_shifted[le.shear_direction] +=
-              shift[le.shear_plane_normal] * le.pos_offset;
+              shift[le.shear_plane_normal] * folded_offset;
         }
 
         if (in_box(pos_shifted, halo_lower_corner, halo_upper_corner)) {
