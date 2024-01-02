@@ -407,15 +407,14 @@ cdef class Thermostat:
             The same applies to ``gamma_rotation``, which requires the feature
             ``ROTATION`` to work properly. But also accepts three floats
             if ``PARTICLE_ANISOTROPY`` is also compiled in.
-        act_on_virtual : :obj:`bool`, optional
-            If ``True`` the thermostat will act on virtual sites, default is
-            ``False``.
         seed : :obj:`int`
             Initial counter value (or seed) of the philox RNG.
             Required on first activation of the Brownian thermostat.
             Must be positive.
 
         """
+
+        assert act_on_virtual is False, "Brownian dynamics virtual sites coupling was disabled in ESPResSo 4.2.2"
 
         scalar_gamma_def = True
         scalar_gamma_rot_def = True

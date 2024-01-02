@@ -144,14 +144,6 @@ class BrownianThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.v), [1, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.v), [0, 0, 0])
 
-        virtual.pos = physical.pos = [0, 0, 0]
-        system.thermostat.set_brownian(
-            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True, seed=41)
-        system.integrator.run(1)
-
-        np.testing.assert_almost_equal(np.copy(virtual.v), [0, 0, 0])
-        np.testing.assert_almost_equal(np.copy(physical.v), [0, 0, 0])
-
     @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
     def test_fix_rotation(self):
         system = self.system
@@ -168,8 +160,7 @@ class BrownianThermostat(ut.TestCase):
         system.integrator.set_brownian_dynamics()
         system.integrator.run(3)
         np.testing.assert_allclose(
-            part.omega_lab, [
-                0, 0, 1.3 / 1.5], atol=1e-14)
+            part.omega_lab, [0, 0, 1.3 / 1.5], atol=1e-14)
 
         # noise only
         part.ext_torque = 3 * [0.]
