@@ -114,7 +114,7 @@ if n_part:
     system.non_bonded_inter[0, 0].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
     system.part.add(pos=np.random.random((n_part, 3)) * system.box_l)
-    benchmarks.minimize(system, n_part / 2.)
+    benchmarks.minimize(system, n_part / 20.)
     system.integrator.set_vv()
     system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
