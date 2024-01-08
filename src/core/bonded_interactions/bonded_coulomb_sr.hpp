@@ -37,7 +37,7 @@
 #include <cmath>
 #include <functional>
 
-/** Parameters for %Coulomb bond short-range Potential */
+/** Parameters for Coulomb bond short-range Potential */
 struct BondedCoulombSR {
   /** charge factor */
   double q1q2;
@@ -67,8 +67,8 @@ private:
 };
 
 /** Compute the short-range bonded Coulomb pair force.
- *  @param[in]  dx        %Distance between the particles.
- *  @param[in]  kernel    %Coulomb force kernel.
+ *  @param[in]  dx        Distance between the particles.
+ *  @param[in]  kernel    Coulomb force kernel.
  */
 inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
     Utils::Vector3d const &dx,
@@ -84,8 +84,8 @@ inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
 /** Compute the short-range bonded Coulomb pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
- *  @param[in]  dx        %Distance between the particles.
- *  @param[in]  kernel    %Coulomb energy kernel.
+ *  @param[in]  dx        Distance between the particles.
+ *  @param[in]  kernel    Coulomb energy kernel.
  */
 inline boost::optional<double> BondedCoulombSR::energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,

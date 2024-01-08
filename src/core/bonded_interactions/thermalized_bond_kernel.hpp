@@ -38,7 +38,7 @@
 /** Separately thermalizes the com and distance of a particle pair.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  *  @return the forces on @p p1 and @p p2
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>

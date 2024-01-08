@@ -35,18 +35,18 @@ struct Solver : public System::Leaf<Solver> {
 
   Solver();
 
-  /** @brief Return true if an @c EK solver is active. */
+  /** @brief Return true if an EK solver is active. */
   [[nodiscard]] bool is_solver_set() const;
 
-  /** @brief Return true if an @c EK solver can be propagated. */
+  /** @brief Return true if an EK solver can be propagated. */
   bool is_ready_for_propagation() const;
 
-  /** @brief Remove the @c EK solver. */
+  /** @brief Remove the EK solver. */
   void reset();
 
   /**
-   * @brief Set the @c EK solver.
-   * For developers: a specialization must exist for every new @c EK type.
+   * @brief Set the EK solver.
+   * For developers: a specialization must exist for every new EK type.
    */
   template <typename LB, class... Args> void set(Args... args);
 
@@ -60,7 +60,7 @@ struct Solver : public System::Leaf<Solver> {
   }
 
   /**
-   * @brief Propagate the @c EK species.
+   * @brief Propagate the EK species.
    */
   void propagate();
 
@@ -71,17 +71,17 @@ struct Solver : public System::Leaf<Solver> {
   void init() const {}
 
   /**
-   * @brief Get the @c EK time step.
+   * @brief Get the EK time step.
    */
   double get_tau() const;
 
   /**
-   * @brief Perform @c EK parameter checks.
+   * @brief Perform EK parameter checks.
    */
   void sanity_checks() const;
 
   /**
-   * @brief Check if a MD time step is compatible with the @c EK tau.
+   * @brief Check if a MD time step is compatible with the EK tau.
    */
   void veto_time_step(double time_step) const;
 

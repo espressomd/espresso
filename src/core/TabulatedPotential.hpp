@@ -38,7 +38,7 @@ struct TabulatedPotential {
   double minval = -1.0;
   /** Position on the x-axis of the last tabulated value. */
   double maxval = -1.0;
-  /** %Distance on the x-axis between tabulated values. */
+  /** Distance on the x-axis between tabulated values. */
   double invstepsize = 0.0;
   /** Tabulated forces. */
   std::vector<double> force_tab;

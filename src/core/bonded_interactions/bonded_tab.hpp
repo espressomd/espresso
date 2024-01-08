@@ -120,7 +120,7 @@ struct TabulatedDihedralBond : public TabulatedBond {
  *  particles. For distances smaller than the tabulated range it uses a linear
  *  extrapolation based on the first two tabulated force values.
  *
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 TabulatedDistanceBond::force(Utils::Vector3d const &dx) const {
@@ -139,7 +139,7 @@ TabulatedDistanceBond::force(Utils::Vector3d const &dx) const {
  *  extrapolation based on the first two tabulated force values and the first
  *  tabulated energy value.
  *
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 TabulatedDistanceBond::energy(Utils::Vector3d const &dx) const {

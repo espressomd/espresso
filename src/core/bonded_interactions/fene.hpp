@@ -70,7 +70,7 @@ private:
 };
 
 /** Compute the FENE bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 FeneBond::force(Utils::Vector3d const &dx) const {
@@ -95,7 +95,7 @@ FeneBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the FENE bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 FeneBond::energy(Utils::Vector3d const &dx) const {

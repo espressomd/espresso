@@ -50,8 +50,8 @@
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
  *  @param ia_params              non-bonded interaction kernels.
- *  @param kernel_forces          %Coulomb force kernel.
- *  @param kernel_pressure        %Coulomb pressure kernel.
+ *  @param kernel_forces          Coulomb force kernel.
+ *  @param kernel_pressure        Coulomb pressure kernel.
  *  @param[in,out] obs_pressure   pressure observable.
  */
 inline void add_non_bonded_pair_virials(

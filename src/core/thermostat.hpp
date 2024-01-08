@@ -144,7 +144,7 @@ private:
   boost::optional<uint32_t> m_rng_seed;
 };
 
-/** %Thermostat for Langevin dynamics. */
+/** Thermostat for Langevin dynamics. */
 struct LangevinThermostat : public BaseThermostat {
 private:
   using GammaType = Thermostat::GammaType;
@@ -196,7 +196,7 @@ public:
   /**@}*/
 };
 
-/** %Thermostat for Brownian dynamics.
+/** Thermostat for Brownian dynamics.
  *  Default particle mass is assumed to be unitary in these global parameters.
  */
 struct BrownianThermostat : public BaseThermostat {
@@ -282,7 +282,7 @@ public:
 };
 
 #ifdef NPT
-/** %Thermostat for isotropic NPT dynamics. */
+/** Thermostat for isotropic NPT dynamics. */
 struct IsotropicNptThermostat : public BaseThermostat {
 private:
   using GammaType = Thermostat::GammaType;
@@ -319,11 +319,11 @@ public:
   /**@}*/
   /** @name Prefactors */
   /**@{*/
-  /** %Particle velocity rescaling at half the time step.
+  /** Particle velocity rescaling at half the time step.
    *  Stores @f$ \gamma^{0}\cdot\frac{dt}{2} @f$.
    */
   double pref_rescale_0;
-  /** %Particle velocity rescaling noise standard deviation.
+  /** Particle velocity rescaling noise standard deviation.
    *  Stores @f$ \sqrt{k_B T \gamma^{0} dt} / \sigma_\eta @f$.
    */
   double pref_noise_0;
@@ -339,16 +339,16 @@ public:
 };
 #endif
 
-/** %Thermostat for thermalized bonds. */
+/** Thermostat for thermalized bonds. */
 struct ThermalizedBondThermostat : public BaseThermostat {};
 
 #ifdef DPD
-/** %Thermostat for dissipative particle dynamics. */
+/** Thermostat for dissipative particle dynamics. */
 struct DPDThermostat : public BaseThermostat {};
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
-/** %Thermostat for Stokesian dynamics. */
+/** Thermostat for Stokesian dynamics. */
 struct StokesianThermostat : public BaseThermostat {
   StokesianThermostat() { rng_initialize(0); }
 };

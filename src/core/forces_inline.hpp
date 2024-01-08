@@ -195,7 +195,7 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
  *  @param[in] dist        distance between @p p1 and @p p2.
  *  @param[in] dist2       distance squared between @p p1 and @p p2.
  *  @param[in] ia_params       non-bonded interaction kernels.
- *  @param[in] coulomb_kernel  %Coulomb force kernel.
+ *  @param[in] coulomb_kernel  Coulomb force kernel.
  *  @param[in] dipoles_kernel  Dipolar force kernel.
  *  @param[in] elc_kernel      ELC force correction kernel.
  */
@@ -287,7 +287,7 @@ inline void add_non_bonded_pair_force(
  *  @param[in] p2          Second particle.
  *  @param[in] iaparams    Bonded parameters for the interaction.
  *  @param[in] dx          Vector between @p p1 and @p p2.
- *  @param[in] kernel      %Coulomb force kernel.
+ *  @param[in] kernel      Coulomb force kernel.
  */
 inline boost::optional<Utils::Vector3d> calc_bond_pair_force(
     Particle const &p1, Particle const &p2,

@@ -65,7 +65,7 @@ private:
 };
 
 /** Compute the harmonic bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 HarmonicBond::force(Utils::Vector3d const &dx) const {
@@ -89,7 +89,7 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the harmonic bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 HarmonicBond::energy(Utils::Vector3d const &dx) const {

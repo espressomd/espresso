@@ -46,7 +46,7 @@
  *  See @cite sonnenschein85a. Please note that ESPResSo uses scalar-first
  *  notation for quaternions, while @cite sonnenschein85a uses scalar-last
  *  notation.
- *  @param[in]  p    %Particle
+ *  @param[in]  p    Particle
  *  @param[out] Qd   First derivative of the particle quaternion
  *  @param[out] Qdd  Second derivative of the particle quaternion
  *  @param[out] S    Function of @p Qd and @p Qdd, used to evaluate the

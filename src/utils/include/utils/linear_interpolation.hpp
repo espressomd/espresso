@@ -24,7 +24,7 @@
 namespace Utils {
 /** Linear interpolation between two data points.
  *  @param[in] table   Tabulated values, equally-spaced along the x-axis
- *  @param[in] hi      %Distance on the x-axis between tabulated values
+ *  @param[in] hi      Distance on the x-axis between tabulated values
  *  @param[in] offset  Position on the x-axis of the first tabulated value
  *  @param[in] x       Position on the x-axis at which to interpolate the value
  *  @return Interpolated value on the y-axis at @p x.

@@ -63,7 +63,7 @@ private:
 };
 
 /** Compute the quartic bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 QuarticBond::force(Utils::Vector3d const &dx) const {
@@ -88,7 +88,7 @@ QuarticBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the quartic bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 QuarticBond::energy(Utils::Vector3d const &dx) const {

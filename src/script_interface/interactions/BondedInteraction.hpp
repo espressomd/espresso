@@ -139,7 +139,6 @@ public:
 };
 
 template <class CoreIA> class BondedInteractionImpl : public BondedInteraction {
-
 public:
   using CoreBondedInteraction = CoreIA;
   CoreBondedInteraction &get_struct() {

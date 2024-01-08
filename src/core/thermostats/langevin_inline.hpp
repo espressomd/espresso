@@ -36,7 +36,7 @@
  *  Collects the langevin parameters kT, gamma (different for
  *  THERMOSTAT_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  *  @param[in]     time_step      Time step
  *  @param[in]     kT             Temperature
  */
@@ -66,7 +66,7 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
  *  Collects the langevin parameters kT, gamma_rot (different for
  *  THERMOSTAT_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  *  @param[in]     time_step      Time step
  *  @param[in]     kT             Temperature
  */
