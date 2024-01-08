@@ -42,19 +42,25 @@ auto create_transform_range(ParticleRange const &particles, Kernel kernel) {
 }
 } // namespace detail
 
-auto unfolded_pos_range(ParticleRange const &particles,
-                        BoxGeometry const &box) {
+inline auto unfolded_pos_range(ParticleRange const &particles,
+                               BoxGeometry const &box) {
   auto return_unfolded_pos = [&box](Particle &p) {
     return ::detail::unfolded_position(p.pos(), p.image_box(), box.length());
   };
   return detail::create_transform_range(particles, return_unfolded_pos);
 }
 
-auto charge_range(ParticleRange const &particles) {
+inline auto pos_range(ParticleRange const &particles) {
+  auto return_pos = [](Particle &p) -> Utils::Vector3d & { return p.pos(); };
+  return detail::create_transform_range(particles, return_pos);
+}
+
+inline auto charge_range(ParticleRange const &particles) {
   auto return_charge = [](Particle &p) -> double & { return p.q(); };
   return detail::create_transform_range(particles, return_charge);
 }
-auto force_range(ParticleRange const &particles) {
+
+inline auto force_range(ParticleRange const &particles) {
   auto return_force = [](Particle &p) -> Utils::Vector3d & {
     return p.force();
   };

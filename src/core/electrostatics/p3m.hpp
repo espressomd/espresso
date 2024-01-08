@@ -99,10 +99,6 @@ public:
 
   bool is_tuned() const { return m_is_tuned; }
 
-  /** Compute the k-space part of forces and energies. */
-  double kernel(bool force_flag, bool energy_flag,
-                ParticleRange const &particles);
-
   /** @brief Recalculate all derived parameters. */
   void init();
   void on_activation() {
