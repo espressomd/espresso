@@ -18,14 +18,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BONDED_INTERACTIONS_TABULATED_HPP
-#define CORE_BONDED_INTERACTIONS_TABULATED_HPP
+
+#pragma once
 
 /** \file
  *  Routines to calculate the energy and/or force for particle bonds, angles
  *  and dihedrals via interpolation of lookup tables.
- *
- *  Implementation in \ref bonded_tab.cpp.
  */
 
 #include "config/config.hpp"
@@ -35,6 +33,7 @@
 #include "bonded_interactions/dihedral.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>
@@ -59,7 +58,9 @@ struct TabulatedBond {
    *  @param force        @copybrief TabulatedPotential::force_tab
    */
   TabulatedBond(double min, double max, std::vector<double> const &energy,
-                std::vector<double> const &force);
+                std::vector<double> const &force) {
+    pot = std::make_shared<TabulatedPotential>(min, max, force, energy);
+  }
 
 private:
   friend boost::serialization::access;
@@ -77,7 +78,11 @@ struct TabulatedDistanceBond : public TabulatedBond {
 
   TabulatedDistanceBond(double min, double max,
                         std::vector<double> const &energy,
-                        std::vector<double> const &force);
+                        std::vector<double> const &force)
+      : TabulatedBond(min, max, energy, force) {
+    this->pot->minval = min;
+    this->pot->maxval = max;
+  }
 
   boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   boost::optional<double> energy(Utils::Vector3d const &dx) const;
@@ -90,7 +95,12 @@ struct TabulatedAngleBond : public TabulatedBond {
   static constexpr int num = 2;
 
   TabulatedAngleBond(double min, double max, std::vector<double> const &energy,
-                     std::vector<double> const &force);
+                     std::vector<double> const &force)
+      : TabulatedBond(min, max, energy, force) {
+    this->pot->minval = 0.;
+    this->pot->maxval = Utils::pi() + ROUND_ERROR_PREC;
+  }
+
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
   double energy(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
@@ -104,7 +114,12 @@ struct TabulatedDihedralBond : public TabulatedBond {
 
   TabulatedDihedralBond(double min, double max,
                         std::vector<double> const &energy,
-                        std::vector<double> const &force);
+                        std::vector<double> const &force)
+      : TabulatedBond(min, max, energy, force) {
+    this->pot->minval = 0.;
+    this->pot->maxval = 2. * Utils::pi() + ROUND_ERROR_PREC;
+  }
+
   boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                              Utils::Vector3d>>
   forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
@@ -266,5 +281,3 @@ TabulatedDihedralBond::energy(Utils::Vector3d const &v12,
 
   return pot->energy(phi);
 }
-
-#endif

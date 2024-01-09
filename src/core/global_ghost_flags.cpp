@@ -21,7 +21,7 @@
 
 #include "global_ghost_flags.hpp"
 
-#include "bonded_interactions/thermalized_bond.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "collision.hpp"
 #include "config/config.hpp"
 #include "system/System.hpp"
@@ -42,7 +42,7 @@ unsigned global_ghost_flags() {
   if (::thermo_switch & THERMO_DPD)
     data_parts |= Cells::DATA_PART_MOMENTUM;
 
-  if (::n_thermalized_bonds) {
+  if (::bonded_ia_params.get_n_thermalized_bonds()) {
     data_parts |= Cells::DATA_PART_MOMENTUM;
     data_parts |= Cells::DATA_PART_BONDS;
   }

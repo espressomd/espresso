@@ -17,14 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 /** @file
  *  The ScriptInterface counterparts of the bonded interactions parameters
  *  structs from the core are defined here.
  *
  */
-
-#ifndef SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTION_HPP
-#define SCRIPT_INTERFACE_INTERACTIONS_BONDED_INTERACTION_HPP
 
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/immersed_boundaries.hpp"
@@ -114,7 +113,7 @@ private:
   virtual void construct_bond(VariantMap const &params) = 0;
 
 public:
-  bool operator==(BondedInteraction const &other) {
+  bool operator==(BondedInteraction const &other) const {
     return m_bonded_ia == other.m_bonded_ia;
   }
 
@@ -678,5 +677,3 @@ private:
 
 } // namespace Interactions
 } // namespace ScriptInterface
-
-#endif

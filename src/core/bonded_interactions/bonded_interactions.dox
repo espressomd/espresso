@@ -44,9 +44,9 @@
  *
  *  @subsection bondedIA_new_struct Defining the new interaction
  *
- *  Every interaction resides in its own source .cpp and .hpp files. A simple
- *  example for a bonded interaction is the FENE bond in @ref fene.hpp and
- *  @ref fene.cpp. Use these two files as templates for your interaction.
+ *  Every interaction resides in its own source .hpp file. A simple
+ *  example for a bonded interaction is the FENE bond in @ref fene.hpp.
+ *  Use this file as template for your new interaction.
  *
  *  The first step is to create a new @c struct which represents your new
  *  bond type inside the .hpp file. It needs to have the following members:

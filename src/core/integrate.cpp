@@ -39,7 +39,7 @@
 #include "PropagationMode.hpp"
 #include "accumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
-#include "bonded_interactions/rigid_bond.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -416,6 +416,9 @@ int System::System::integrate(int n_steps, int reuse_forces) {
                                             PropagationMode::TRANS_VS_RELATIVE);
   };
 #endif
+#ifdef BOND_CONSTRAINT
+  auto const n_rigid_bonds = ::bonded_ia_params.get_n_rigid_bonds();
+#endif
 
   // Prepare particle structure and run sanity checks of all active algorithms
   propagation.update_default_propagation();
@@ -497,7 +500,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     auto particles = cell_structure->local_particles();
 
 #ifdef BOND_CONSTRAINT
-    if (n_rigidbonds)
+    if (n_rigid_bonds)
       save_old_position(particles, cell_structure->ghost_particles());
 #endif
 
@@ -527,7 +530,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 
 #ifdef BOND_CONSTRAINT
     // Correct particle positions that participate in a rigid/constrained bond
-    if (n_rigidbonds) {
+    if (n_rigid_bonds) {
       correct_position_shake(*cell_structure, *box_geo);
     }
 #endif
@@ -571,7 +574,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     }
 #ifdef BOND_CONSTRAINT
     // SHAKE velocity updates
-    if (n_rigidbonds) {
+    if (n_rigid_bonds) {
       correct_velocity_shake(*cell_structure, *box_geo);
     }
 #endif

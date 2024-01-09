@@ -24,14 +24,16 @@
 
 #include "config/config.hpp"
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
-#include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "errorhandling.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
+
+#include <boost/variant.hpp>
 
 #include <boost/mpi.hpp>
 
@@ -95,9 +97,11 @@ REGISTER_THERMOSTAT_CALLBACKS(dpd)
 REGISTER_THERMOSTAT_CALLBACKS(stokesian)
 #endif
 
+static void thermalized_bond_init(double time_step);
+
 void thermo_init(double time_step) {
   // initialize thermalized bond regardless of the current thermostat
-  if (n_thermalized_bonds) {
+  if (::bonded_ia_params.get_n_thermalized_bonds()) {
     thermalized_bond_init(time_step);
   }
   if (thermo_switch == THERMO_OFF) {
@@ -140,7 +144,7 @@ void philox_counter_increment() {
     stokesian.rng_increment();
   }
 #endif
-  if (n_thermalized_bonds) {
+  if (::bonded_ia_params.get_n_thermalized_bonds()) {
     thermalized_bond.rng_increment();
   }
 }
@@ -222,3 +226,11 @@ void mpi_set_nptiso_gammas(double gamma0, double gammav) {
   mpi_call_all(mpi_set_nptiso_gammas_local, gamma0, gammav);
 }
 #endif
+
+void thermalized_bond_init(double time_step) {
+  for (auto &kv : ::bonded_ia_params) {
+    if (auto *bond = boost::get<ThermalizedBond>(&(*kv.second))) {
+      bond->recalc_prefactors(time_step);
+    }
+  }
+}

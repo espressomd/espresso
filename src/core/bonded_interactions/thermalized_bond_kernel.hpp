@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THERMALIZED_DIST_KERNEL_H
-#define THERMALIZED_DIST_KERNEL_H
+#pragma once
 
 #include "thermalized_bond.hpp"
 
@@ -88,5 +87,3 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
 
   return std::make_tuple(force1, force2);
 }
-
-#endif

@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_COULOMB_HPP
-#define CORE_BN_IA_BONDED_COULOMB_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the bonded Coulomb potential between
  *  particle pairs.
@@ -85,5 +86,3 @@ BondedCoulomb::energy(double const q1q2, Utils::Vector3d const &dx) const {
   return .0;
 #endif
 }
-
-#endif

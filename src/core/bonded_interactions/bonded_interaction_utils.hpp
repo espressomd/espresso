@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_INTERACTION_UTILS_HPP
-#define CORE_BN_IA_BONDED_INTERACTION_UTILS_HPP
+
+#pragma once
 
 #include "bonded_interaction_data.hpp"
 
@@ -67,5 +67,3 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
   return pair_bond_enum_exists_on<BondType>(p1, p2) or
          pair_bond_enum_exists_on<BondType>(p2, p1);
 }
-
-#endif
