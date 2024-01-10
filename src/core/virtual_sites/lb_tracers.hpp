@@ -24,9 +24,15 @@
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "lb/Solver.hpp"
 
 void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
-                                            double time_step);
-void lb_tracers_propagate(CellStructure &cell_structure, double time_step);
+                                            BoxGeometry const &box_geo,
+                                            LocalBox const &local_box,
+                                            LB::Solver &lb, double time_step);
+void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
+                          double time_step);
 
 #endif // VIRTUAL_SITES_INERTIALESS_TRACERS

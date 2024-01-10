@@ -445,6 +445,18 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     }
   }
 
+  // check propagator exceptions
+  {
+    auto &propagation = *espresso::system->propagation;
+    auto const old_integ_switch = propagation.integ_switch;
+    auto const old_default_propagation = propagation.default_propagation;
+    propagation.integ_switch = -1;
+    BOOST_CHECK_THROW(propagation.update_default_propagation(0),
+                      std::runtime_error);
+    BOOST_CHECK_EQUAL(propagation.default_propagation, old_default_propagation);
+    propagation.integ_switch = old_integ_switch;
+  }
+
   // check bond exceptions
   {
     BOOST_CHECK_THROW(throw BondResolutionError(), std::exception);

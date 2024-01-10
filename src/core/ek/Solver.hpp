@@ -85,6 +85,11 @@ struct Solver : public System::Leaf<Solver> {
    */
   void veto_time_step(double time_step) const;
 
+  /**
+   * @brief Check if a thermostat is compatible with the EK temperature.
+   */
+  void veto_kT(double kT) const;
+
   void on_boxl_change();
   void on_node_grid_change();
   void on_cell_structure_change();

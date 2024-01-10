@@ -1010,33 +1010,17 @@ class ThermalizedBond(BondedInteraction):
         distance vector of the particle pair.
     r_cut: :obj:`float`, optional
         Maximum distance beyond which the bond is considered broken.
-    seed : :obj:`int`
-        Seed of the philox RNG. Must be positive.
-        Required for the first thermalized bond in the system. Subsequent
-        thermalized bonds don't need a seed; if one is provided nonetheless,
-        it will overwrite the seed of all previously defined thermalized bonds,
-        even if the new bond is not added to the system.
 
     """
 
     _so_name = "Interactions::ThermalizedBond"
     _type_number = BONDED_IA.THERMALIZED_DIST
 
-    def __init__(self, *args, **kwargs):
-        if kwargs and "sip" not in kwargs:
-            kwargs["rng_state"] = kwargs.get("rng_state")
-        super().__init__(*args, **kwargs)
-
-    def _serialize(self):
-        params = self._ctor_params.copy()
-        params["rng_state"] = self.call_method("get_rng_state")
-        return params
-
     def get_default_params(self):
         """Gets default values of optional parameters.
 
         """
-        return {"r_cut": 0., "seed": None}
+        return {"r_cut": 0.}
 
 
 @script_interface_register

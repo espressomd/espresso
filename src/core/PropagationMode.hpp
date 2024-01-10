@@ -20,9 +20,7 @@
 #pragma once
 
 namespace PropagationMode {
-/**
- * @brief Flags to create bitmasks for propagation modes.
- */
+/** @brief Flags to create bitmasks for propagation modes. */
 enum PropagationMode : int {
   NONE = 0,
   SYSTEM_DEFAULT = 1 << 0,
@@ -42,11 +40,23 @@ enum PropagationMode : int {
 };
 } // namespace PropagationMode
 
-/** \name Integrator switches */
+/** @brief Integrator identifier. */
 enum IntegratorSwitch : int {
   INTEG_METHOD_NPT_ISO = 0,
   INTEG_METHOD_NVT = 1,
   INTEG_METHOD_STEEPEST_DESCENT = 2,
   INTEG_METHOD_BD = 3,
-  INTEG_METHOD_SD = 7,
+  INTEG_METHOD_SD = 4,
+};
+
+/** @brief Thermostat flags. */
+enum ThermostatFlags : int {
+  THERMO_OFF = 0,
+  THERMO_LANGEVIN = 1 << 0,
+  THERMO_BROWNIAN = 1 << 1,
+  THERMO_NPT_ISO = 1 << 2,
+  THERMO_LB = 1 << 3,
+  THERMO_SD = 1 << 4,
+  THERMO_DPD = 1 << 5,
+  THERMO_BOND = 1 << 6,
 };

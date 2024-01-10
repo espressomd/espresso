@@ -401,15 +401,14 @@ To add a thermostat, call the appropriate setter::
 The different thermostats available in |es| will be described in the following
 subsections.
 
-You may combine different thermostats at your own risk by turning them on
-one by one. The list of active thermostats can be cleared at any time with
+You may combine different thermostats by turning them on sequentially.
+Not all combinations of thermostats are sensible, though, and some
+integrators only work with a specific thermostat. The list of possible
+combinations of integrators and thermostats is hardcoded and automatically
+check against at the start of integration.
+Note that there is only one temperature for all thermostats.
+The list of active thermostats can be cleared at any time with
 :py:meth:`system.thermostat.turn_off() <espressomd.thermostat.Thermostat.turn_off>`.
-Not all combinations of thermostats are allowed, though (see
-:py:func:`espressomd.thermostat.AssertThermostatType` for details).
-Some integrators only work with a specific thermostat and throw an
-error otherwise. Note that there is only one temperature for all
-thermostats, although for some thermostats like the Langevin thermostat,
-particles can be assigned individual temperatures.
 
 Since |es| does not enforce a particular unit system, it cannot know about
 the current value of the Boltzmann constant. Therefore, when specifying

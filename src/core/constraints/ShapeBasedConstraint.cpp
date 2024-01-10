@@ -101,11 +101,12 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
            calc_non_central_force(p, part_rep, ia_params, dist_vec, dist);
 
 #ifdef DPD
-      if (thermo_switch & THERMO_DPD) {
-        dpd_force =
-            dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
+      if (m_system.thermostat->thermo_switch & THERMO_DPD) {
+        dpd_force = dpd_pair_force(p, part_rep, *m_system.thermostat->dpd,
+                                   *m_system.box_geo, ia_params, dist_vec, dist,
+                                   dist * dist);
         // Additional use of DPD here requires counter increase
-        dpd.rng_increment();
+        m_system.thermostat->dpd->rng_increment();
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
@@ -117,11 +118,12 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
             calc_non_central_force(p, part_rep, ia_params, dist_vec, -dist);
 
 #ifdef DPD
-        if (thermo_switch & THERMO_DPD) {
-          dpd_force = dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
-                                     dist * dist);
+        if (m_system.thermostat->thermo_switch & THERMO_DPD) {
+          dpd_force = dpd_pair_force(p, part_rep, *m_system.thermostat->dpd,
+                                     *m_system.box_geo, ia_params, dist_vec,
+                                     dist, dist * dist);
           // Additional use of DPD here requires counter increase
-          dpd.rng_increment();
+          m_system.thermostat->dpd->rng_increment();
         }
 #endif
       }

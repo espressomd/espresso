@@ -409,20 +409,7 @@ public:
          [this]() { return get_struct().gamma_distance; }},
         {"r_cut", AutoParameter::read_only,
          [this]() { return get_struct().r_cut; }},
-        {"seed", AutoParameter::read_only,
-         []() { return static_cast<size_t>(thermalized_bond.rng_seed()); }},
     });
-  }
-
-  Variant do_call_method(std::string const &name,
-                         VariantMap const &params) override {
-    if (name == "get_rng_state") {
-      auto const state = ::thermalized_bond.rng_counter();
-      // check it's safe to forward the current state as an integer
-      assert(state < static_cast<uint64_t>(std::numeric_limits<int>::max()));
-      return static_cast<int>(state);
-    }
-    return BondedInteraction::do_call_method(name, params);
   }
 
 private:
@@ -433,33 +420,6 @@ private:
                               get_value<double>(params, "temp_distance"),
                               get_value<double>(params, "gamma_distance"),
                               get_value<double>(params, "r_cut")));
-
-    if (is_none(params.at("seed"))) {
-      if (::thermalized_bond.is_seed_required()) {
-        throw std::invalid_argument("A parameter 'seed' has to be given on "
-                                    "first activation of a thermalized bond");
-      }
-    } else {
-      auto const seed = get_value<int>(params, "seed");
-      if (seed < 0) {
-        throw std::domain_error("Parameter 'seed' must be >= 0");
-      }
-      ::thermalized_bond.rng_initialize(static_cast<uint32_t>(seed));
-    }
-
-    // handle checkpointing
-    if (params.count("rng_state") and not is_none(params.at("rng_state"))) {
-      auto const state = get_value<int>(params, "rng_state");
-      assert(state >= 0);
-      ::thermalized_bond.set_rng_counter(static_cast<uint64_t>(state));
-    }
-  }
-
-  std::set<std::string> get_valid_parameters() const override {
-    auto names =
-        BondedInteractionImpl<CoreBondedInteraction>::get_valid_parameters();
-    names.insert("rng_state");
-    return names;
   }
 };
 

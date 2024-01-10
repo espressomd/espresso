@@ -195,6 +195,8 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
  *  @param[in] dist        distance between @p p1 and @p p2.
  *  @param[in] dist2       distance squared between @p p1 and @p p2.
  *  @param[in] ia_params       non-bonded interaction kernels.
+ *  @param[in] thermostat      thermostat.
+ *  @param[in] box_geo         box geometry.
  *  @param[in] coulomb_kernel  Coulomb force kernel.
  *  @param[in] dipoles_kernel  Dipolar force kernel.
  *  @param[in] elc_kernel      ELC force correction kernel.
@@ -202,6 +204,7 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
 inline void add_non_bonded_pair_force(
     Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
     double dist2, IA_parameters const &ia_params,
+    Thermostat::Thermostat const &thermostat, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
@@ -255,8 +258,9 @@ inline void add_non_bonded_pair_force(
 
   /* The inter dpd force should not be part of the virial */
 #ifdef DPD
-  if (thermo_switch & THERMO_DPD) {
-    auto const force = dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
+  if (thermostat.thermo_switch & THERMO_DPD) {
+    auto const force = dpd_pair_force(p1, p2, *thermostat.dpd, box_geo,
+                                      ia_params, d, dist, dist2);
     p1.force() += force;
     p2.force() -= force;
   }

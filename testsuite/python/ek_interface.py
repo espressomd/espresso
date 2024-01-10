@@ -218,9 +218,10 @@ class EKTest:
         self.system.ekcontainer.add(ek_species)
         self.system.ekcontainer.solver = ek_solver
         with self.assertRaisesRegex(Exception, "Temperature change not supported by EK"):
-            self.system.thermostat.turn_off()
-        with self.assertRaisesRegex(Exception, "Time step change not supported by EK"):
-            self.system.time_step /= 2.
+            self.system.thermostat.set_langevin(kT=1., seed=42, gamma=1.)
+        with self.assertRaisesRegex(ValueError, "must be an integer multiple of the MD time_step"):
+            self.system.time_step /= 1.7
+        self.system.time_step *= 1.
         if espressomd.has_features("ELECTROSTATICS"):
             self.system.electrostatics.solver = espressomd.electrostatics.DH(
                 prefactor=1., kappa=1., r_cut=1.)  # should not fail

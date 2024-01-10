@@ -26,29 +26,18 @@
  */
 
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "rotation.hpp"
+#include "system/Leaf.hpp"
 
 #include "config/config.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-
-/** \name Thermostat switches */
-/**@{*/
-#define THERMO_OFF 0
-#define THERMO_LANGEVIN 1
-#define THERMO_DPD 2
-#define THERMO_NPT_ISO 4
-#define THERMO_LB 8
-#define THERMO_BROWNIAN 16
-#define THERMO_SD 32
-/**@}*/
 
 namespace Thermostat {
 #ifdef PARTICLE_ANISOTROPY
@@ -56,55 +45,34 @@ using GammaType = Utils::Vector3d;
 #else
 using GammaType = double;
 #endif
-} // namespace Thermostat
-
-namespace {
 /**
  * @brief Value for unset friction coefficient.
  * Sentinel value for the Langevin/Brownian parameters,
  * indicating that they have not been set yet.
  */
 #ifdef PARTICLE_ANISOTROPY
-constexpr Thermostat::GammaType gamma_sentinel{{-1.0, -1.0, -1.0}};
+constexpr GammaType gamma_sentinel{{-1.0, -1.0, -1.0}};
 #else
-constexpr Thermostat::GammaType gamma_sentinel{-1.0};
+constexpr GammaType gamma_sentinel{-1.0};
 #endif
 /**
  * @brief Value for a null friction coefficient.
  */
 #ifdef PARTICLE_ANISOTROPY
-constexpr Thermostat::GammaType gamma_null{{0.0, 0.0, 0.0}};
+constexpr GammaType gamma_null{{0.0, 0.0, 0.0}};
 #else
-constexpr Thermostat::GammaType gamma_null{0.0};
+constexpr GammaType gamma_null{0.0};
 #endif
-} // namespace
-
-/************************************************
- * exported variables
- ************************************************/
-
-/** Switch determining which thermostat(s) to use. This is a or'd value
- *  of the different possible thermostats (defines: \ref THERMO_OFF,
- *  \ref THERMO_LANGEVIN, \ref THERMO_DPD \ref THERMO_NPT_ISO). If it
- *  is zero all thermostats are switched off and the temperature is
- *  set to zero.
- */
-extern int thermo_switch;
-
-/** Temperature of the thermostat. */
-extern double temperature;
 
 #ifdef THERMOSTAT_PER_PARTICLE
-inline auto const &
-handle_particle_gamma(Thermostat::GammaType const &particle_gamma,
-                      Thermostat::GammaType const &default_gamma) {
+inline auto const &handle_particle_gamma(GammaType const &particle_gamma,
+                                         GammaType const &default_gamma) {
   return particle_gamma >= gamma_null ? particle_gamma : default_gamma;
 }
 #endif
 
-inline auto
-handle_particle_anisotropy(Particle const &p,
-                           Thermostat::GammaType const &gamma_body) {
+inline auto handle_particle_anisotropy(Particle const &p,
+                                       GammaType const &gamma_body) {
 #ifdef PARTICLE_ANISOTROPY
   auto const aniso_flag =
       (gamma_body[0] != gamma_body[1]) || (gamma_body[1] != gamma_body[2]);
@@ -118,30 +86,45 @@ handle_particle_anisotropy(Particle const &p,
 #endif
 }
 
-/************************************************
- * parameter structs
- ************************************************/
+/** @brief Check that two kT values are close up to a small tolerance. */
+inline bool are_kT_equal(double old_kT, double new_kT) {
+  constexpr auto relative_tolerance = 1e-6;
+  if (old_kT == 0. and new_kT == 0.) {
+    return true;
+  }
+  if ((old_kT < 0. and new_kT >= 0.) or (old_kT >= 0. and new_kT < 0.)) {
+    return false;
+  }
+  auto const large_kT = (old_kT > new_kT) ? old_kT : new_kT;
+  auto const small_kT = (old_kT > new_kT) ? new_kT : old_kT;
+  return (large_kT / small_kT - 1. < relative_tolerance);
+}
+} // namespace Thermostat
 
 struct BaseThermostat {
 public:
   /** Initialize or re-initialize the RNG counter with a seed. */
-  void rng_initialize(uint32_t const seed) { m_rng_seed = seed; }
+  void rng_initialize(uint32_t const seed) {
+    m_rng_seed = seed;
+    m_initialized = true;
+  }
   /** Increment the RNG counter */
   void rng_increment() { m_rng_counter.increment(); }
   /** Get current value of the RNG */
   uint64_t rng_counter() const { return m_rng_counter.value(); }
   void set_rng_counter(uint64_t value) {
-    m_rng_counter = Utils::Counter<uint64_t>(0u, value);
+    m_rng_counter = Utils::Counter<uint64_t>(uint64_t{0u}, value);
   }
   /** Is the RNG seed required */
-  bool is_seed_required() const { return !m_rng_seed; }
-  uint32_t rng_seed() const { return m_rng_seed.value(); }
+  bool is_seed_required() const { return not m_initialized; }
+  uint32_t rng_seed() const { return m_rng_seed; }
 
 private:
-  /** RNG counter. */
-  Utils::Counter<uint64_t> m_rng_counter;
-  /** RNG seed */
-  boost::optional<uint32_t> m_rng_seed;
+  /** @brief RNG counter. */
+  Utils::Counter<uint64_t> m_rng_counter{uint64_t{0u}, uint64_t{0u}};
+  /** @brief RNG seed. */
+  uint32_t m_rng_seed{0u};
+  bool m_initialized{false};
 };
 
 /** Thermostat for Langevin dynamics. */
@@ -154,13 +137,12 @@ public:
    *  Needs to be called every time the parameters are changed.
    */
   void recalc_prefactors(double kT, double time_step) {
+    // get_system().get_time_step()
     pref_friction = -gamma;
     pref_noise = sigma(kT, time_step, gamma);
-    // If gamma_rotation is not set explicitly, use the translational one.
-    if (gamma_rotation < GammaType{}) {
-      gamma_rotation = gamma;
-    }
+#ifdef ROTATION
     pref_noise_rotation = sigma(kT, time_step, gamma_rotation);
+#endif // ROTATION
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma / dt} / \sigma_\eta @f$
@@ -175,24 +157,28 @@ public:
   /** @name Parameters */
   /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
-  GammaType gamma = gamma_sentinel;
+  GammaType gamma = Thermostat::gamma_sentinel;
+#ifdef ROTATION
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
-  GammaType gamma_rotation = gamma_sentinel;
+  GammaType gamma_rotation = Thermostat::gamma_sentinel;
+#endif // ROTATION
   /**@}*/
   /** @name Prefactors */
   /**@{*/
   /** Prefactor for the friction.
    *  Stores @f$ \gamma_{\text{trans}} @f$.
    */
-  GammaType pref_friction;
+  GammaType pref_friction = Thermostat::gamma_sentinel;
   /** Prefactor for the translational velocity noise.
    *  Stores @f$ \sqrt{2 k_B T \gamma_{\text{trans}} / dt} / \sigma_\eta @f$.
    */
-  GammaType pref_noise;
+  GammaType pref_noise = Thermostat::gamma_sentinel;
+#ifdef ROTATION
   /** Prefactor for the angular velocity noise.
    *  Stores @f$ \sqrt{2 k_B T \gamma_{\text{rot}} / dt} / \sigma_\eta @f$.
    */
-  GammaType pref_noise_rotation;
+  GammaType pref_noise_rotation = Thermostat::gamma_sentinel;
+#endif // ROTATION
   /**@}*/
 };
 
@@ -223,10 +209,6 @@ public:
      *  They correspond to the friction tensor Z from the eq. (14.31) of
      *  @cite schlick10a.
      */
-    // If gamma_rotation is not set explicitly, use the translational one.
-    if (gamma_rotation < GammaType{}) {
-      gamma_rotation = gamma;
-    }
     sigma_vel_rotation = sigma(kT);
     sigma_pos_rotation = sigma(kT, gamma_rotation);
 #endif // ROTATION
@@ -252,9 +234,9 @@ public:
   /** @name Parameters */
   /**@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
-  GammaType gamma = gamma_sentinel;
+  GammaType gamma = Thermostat::gamma_sentinel;
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
-  GammaType gamma_rotation = gamma_sentinel;
+  GammaType gamma_rotation = Thermostat::gamma_sentinel;
   /**@}*/
   /** @name Prefactors */
   /**@{*/
@@ -263,21 +245,25 @@ public:
    *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
    *  the translational diffusion coefficient.
    */
-  GammaType sigma_pos = gamma_sentinel;
+  GammaType sigma_pos = Thermostat::gamma_sentinel;
+#ifdef ROTATION
   /** Rotational noise standard deviation.
    *  Stores @f$ \sqrt{2D_{\text{rot}}} @f$ with
    *  @f$ D_{\text{rot}} = k_B T/\gamma_{\text{rot}} @f$
    *  the rotational diffusion coefficient.
    */
-  GammaType sigma_pos_rotation = gamma_sentinel;
+  GammaType sigma_pos_rotation = Thermostat::gamma_sentinel;
+#endif // ROTATION
   /** Translational velocity noise standard deviation.
    *  Stores @f$ \sqrt{k_B T} @f$.
    */
-  double sigma_vel = 0;
+  double sigma_vel = 0.;
+#ifdef ROTATION
   /** Angular velocity noise standard deviation.
    *  Stores @f$ \sqrt{k_B T} @f$.
    */
-  double sigma_vel_rotation = 0;
+  double sigma_vel_rotation = 0.;
+#endif // ROTATION
   /**@}*/
 };
 
@@ -313,34 +299,47 @@ public:
   /** @name Parameters */
   /**@{*/
   /** Friction coefficient of the particles @f$ \gamma^0 @f$ */
-  double gamma0;
+  double gamma0 = 0.;
   /** Friction coefficient for the box @f$ \gamma^V @f$ */
-  double gammav;
+  double gammav = 0.;
   /**@}*/
   /** @name Prefactors */
   /**@{*/
   /** Particle velocity rescaling at half the time step.
    *  Stores @f$ \gamma^{0}\cdot\frac{dt}{2} @f$.
    */
-  double pref_rescale_0;
+  double pref_rescale_0 = 0.;
   /** Particle velocity rescaling noise standard deviation.
    *  Stores @f$ \sqrt{k_B T \gamma^{0} dt} / \sigma_\eta @f$.
    */
-  double pref_noise_0;
+  double pref_noise_0 = 0.;
   /** Volume rescaling at half the time step.
    *  Stores @f$ \frac{\gamma^{V}}{Q}\cdot\frac{dt}{2} @f$.
    */
-  double pref_rescale_V;
+  double pref_rescale_V = 0.;
   /** Volume rescaling noise standard deviation.
    *  Stores @f$ \sqrt{k_B T \gamma^{V} dt} / \sigma_\eta @f$.
    */
-  double pref_noise_V;
+  double pref_noise_V = 0.;
   /**@}*/
 };
 #endif
 
+/** Thermostat for lattice-Boltzmann particle coupling. */
+struct LBThermostat : public BaseThermostat {
+  /** @name Parameters */
+  /**@{*/
+  /** Friction coefficient. */
+  double gamma = -1.;
+  /** Internal flag to disable particle coupling during force recalculation. */
+  bool couple_to_md = false;
+  /**@}*/
+};
+
 /** Thermostat for thermalized bonds. */
-struct ThermalizedBondThermostat : public BaseThermostat {};
+struct ThermalizedBondThermostat : public BaseThermostat {
+  void recalc_prefactors(double time_step);
+};
 
 #ifdef DPD
 /** Thermostat for dissipative particle dynamics. */
@@ -354,66 +353,38 @@ struct StokesianThermostat : public BaseThermostat {
 };
 #endif
 
-/************************************************
- * functions
- ************************************************/
-
-/**
- * @brief Register MPI callbacks of thermostat objects
- *
- * @param thermostat        The thermostat object name
- */
-#define NEW_THERMOSTAT(thermostat)                                             \
-  void mpi_##thermostat##_set_rng_seed(uint32_t seed);                         \
-  void thermostat##_set_rng_seed(uint32_t seed);                               \
-  void thermostat##_set_rng_counter(uint64_t seed);
-
-NEW_THERMOSTAT(langevin)
-NEW_THERMOSTAT(brownian)
+namespace Thermostat {
+class Thermostat : public System::Leaf<Thermostat> {
+public:
+  /** @brief Thermal energy of the simulated heat bath. */
+  double kT = -1.;
+  /** @brief Bitmask of currently active thermostats. */
+  int thermo_switch = THERMO_OFF;
+  std::shared_ptr<LangevinThermostat> langevin;
+  std::shared_ptr<BrownianThermostat> brownian;
 #ifdef NPT
-NEW_THERMOSTAT(npt_iso)
+  std::shared_ptr<IsotropicNptThermostat> npt_iso;
 #endif
-NEW_THERMOSTAT(thermalized_bond)
+  std::shared_ptr<LBThermostat> lb;
 #ifdef DPD
-NEW_THERMOSTAT(dpd)
+  std::shared_ptr<DPDThermostat> dpd;
 #endif
 #ifdef STOKESIAN_DYNAMICS
-NEW_THERMOSTAT(stokesian)
+  std::shared_ptr<StokesianThermostat> stokesian;
 #endif
+  std::shared_ptr<ThermalizedBondThermostat> thermalized_bond;
 
-/* Exported thermostat globals */
-extern LangevinThermostat langevin;
-extern BrownianThermostat brownian;
-#ifdef NPT
-extern IsotropicNptThermostat npt_iso;
-#endif
-extern ThermalizedBondThermostat thermalized_bond;
-#ifdef DPD
-extern DPDThermostat dpd;
-#endif
-#ifdef STOKESIAN_DYNAMICS
-extern StokesianThermostat stokesian;
-#endif
+  /** Increment RNG counters */
+  void philox_counter_increment();
 
-/** Initialize constants of the thermostat at the start of integration */
-void thermo_init(double time_step);
+  /** Initialize constants of all thermostats. */
+  void recalc_prefactors(double time_step);
 
-/** Increment RNG counters */
-void philox_counter_increment();
-
-void mpi_set_brownian_gamma(Thermostat::GammaType const &gamma);
-void mpi_set_brownian_gamma_rot(Thermostat::GammaType const &gamma);
-
-void mpi_set_langevin_gamma(Thermostat::GammaType const &gamma);
-void mpi_set_langevin_gamma_rot(Thermostat::GammaType const &gamma);
-
-void mpi_set_temperature(double temperature);
-void mpi_set_temperature_local(double temperature);
-
-void mpi_set_thermo_switch(int thermo_switch);
-void mpi_set_thermo_switch_local(int thermo_switch);
-
-#ifdef NPT
-void mpi_set_nptiso_gammas(double gamma0, double gammav);
-void mpi_set_nptiso_gammas_local(double gamma0, double gammav);
-#endif
+  void lb_coupling_activate() {
+    if (lb) {
+      lb->couple_to_md = true;
+    }
+  }
+  void lb_coupling_deactivate();
+};
+} // namespace Thermostat

@@ -61,7 +61,9 @@ template <typename T, typename... Args> T thermostat_factory(Args... args) {
 #else
   thermostat.gamma = 2.0;
 #endif
+#ifdef ROTATION
   thermostat.gamma_rotation = 3.0 * thermostat.gamma;
+#endif
   thermostat.rng_initialize(0);
   thermostat.recalc_prefactors(args...);
   return thermostat;
@@ -314,8 +316,6 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
 
 #ifdef NPT
 BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
-  extern int thermo_switch;
-  thermo_switch |= THERMO_NPT_ISO;
   constexpr double time_step = 1.0;
   constexpr double kT = 2.0;
   constexpr std::size_t const sample_size = 10'000;

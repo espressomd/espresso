@@ -17,22 +17,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "initialize.hpp"
 
-#include "electrostatics/coulomb.hpp"
-#include "magnetostatics/dipoles.hpp"
-
-#include "ek/Implementation.hpp"
-#include "lb/Implementation.hpp"
-
-#include "bond_breakage/bond_breakage.hpp"
-#include "cell_system/CellStructure.hpp"
-#include "galilei/ComFixed.hpp"
-#include "galilei/Galilei.hpp"
-#include "integrators/Propagation.hpp"
-#include "lees_edwards/lees_edwards.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "thermostat.hpp"
 
-#include "BoxGeometry.hpp"
-#include "LocalBox.hpp"
+namespace ScriptInterface {
+namespace Thermostat {
+
+void initialize(Utils::Factory<ObjectHandle> *om) {
+  om->register_new<Thermostat>("Thermostat::Thermostat");
+  om->register_new<Langevin>("Thermostat::Langevin");
+  om->register_new<Brownian>("Thermostat::Brownian");
+#ifdef NPT
+  om->register_new<IsotropicNpt>("Thermostat::IsotropicNpt");
+#endif
+#ifdef WALBERLA
+  om->register_new<LBThermostat>("Thermostat::LB");
+#endif
+#ifdef DPD
+  om->register_new<DPDThermostat>("Thermostat::DPD");
+#endif
+#ifdef STOKESIAN_DYNAMICS
+  om->register_new<Stokesian>("Thermostat::Stokesian");
+#endif
+  om->register_new<ThermalizedBond>("Thermostat::ThermalizedBond");
+}
+
+} // namespace Thermostat
+} // namespace ScriptInterface

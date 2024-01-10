@@ -55,6 +55,7 @@ struct EKWalberla {
 
   double get_tau() const;
   void veto_time_step(double time_step) const;
+  void veto_kT(double kT) const;
   void sanity_checks(System::System const &system) const;
   bool is_ready_for_propagation() const noexcept;
   void propagate();
@@ -67,12 +68,8 @@ struct EKWalberla {
   void on_node_grid_change() const {
     throw std::runtime_error("MPI topology change not supported by EK");
   }
-  void on_timestep_change() const {
-    throw std::runtime_error("Time step change not supported by EK");
-  }
-  void on_temperature_change() const {
-    throw std::runtime_error("Temperature change not supported by EK");
-  }
+  void on_timestep_change() const {}
+  void on_temperature_change() const {}
 };
 
 } // namespace EK

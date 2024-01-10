@@ -245,7 +245,6 @@ class System(ScriptInterfaceHelper):
             checkpointable_properties.append("collision_detection")
         if has_features("WALBERLA"):
             checkpointable_properties += ["_lb", "_ekcontainer"]
-        checkpointable_properties += ["thermostat"]
 
         odict = collections.OrderedDict()
         odict["_system_handle"] = self.call_method("get_system_handle")

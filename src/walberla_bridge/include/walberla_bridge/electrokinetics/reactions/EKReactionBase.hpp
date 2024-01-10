@@ -51,7 +51,9 @@ public:
     return m_coefficient;
   }
   [[nodiscard]] auto get_lattice() const noexcept { return m_lattice; }
-  [[nodiscard]] auto get_reactants() const noexcept { return m_reactants; }
+  [[nodiscard]] auto const &get_reactants() const noexcept {
+    return m_reactants;
+  }
 
   virtual void perform_reaction() = 0;
 };

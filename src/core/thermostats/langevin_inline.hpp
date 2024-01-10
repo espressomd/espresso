@@ -32,17 +32,15 @@
 #include <utils/matrix.hpp>
 
 /** Langevin thermostat for particle translational velocities.
- *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
- *  Collects the langevin parameters kT, gamma (different for
- *  THERMOSTAT_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              Particle
  *  @param[in]     time_step      Time step
- *  @param[in]     kT             Temperature
+ *  @param[in]     kT             Thermal energy
  */
 inline Utils::Vector3d
 friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
                          double time_step, double kT) {
+  using namespace Thermostat;
   // Determine prefactors for the friction and the noise term
 #ifdef THERMOSTAT_PER_PARTICLE
   auto const gamma = handle_particle_gamma(p.gamma(), langevin.gamma);
@@ -62,18 +60,16 @@ friction_thermo_langevin(LangevinThermostat const &langevin, Particle const &p,
 
 #ifdef ROTATION
 /** Langevin thermostat for particle angular velocities.
- *  Collects the particle velocity (different for PARTICLE_ANISOTROPY).
- *  Collects the langevin parameters kT, gamma_rot (different for
- *  THERMOSTAT_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
  *  @param[in]     p              Particle
  *  @param[in]     time_step      Time step
- *  @param[in]     kT             Temperature
+ *  @param[in]     kT             Thermal energy
  */
 inline Utils::Vector3d
 friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
                                   Particle const &p, double time_step,
                                   double kT) {
+  using namespace Thermostat;
 
 #ifdef THERMOSTAT_PER_PARTICLE
   auto const gamma =

@@ -145,7 +145,7 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
- *  @param[in]     kT             Temperature
+ *  @param[in]     kT             Thermal energy
  */
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
                                       Particle const &p, double dt, double kT) {
@@ -311,7 +311,7 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
  *  @param[in]     brownian       Parameters
  *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
- *  @param[in]     kT             Temperature
+ *  @param[in]     kT             Thermal energy
  */
 inline Utils::Quaternion<double>
 bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,

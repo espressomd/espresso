@@ -42,20 +42,13 @@ class IntegratorNPT(ut.TestCase):
             self.system.electrostatics.clear()
         if espressomd.has_features(["DIPOLES"]):
             self.system.magnetostatics.clear()
-        self.reset_rng_counter()
+        # reset RNG counter to make tests independent of execution order
+        self.system.thermostat.npt_iso.call_method(
+            "override_philox_counter", counter=0)
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
         if espressomd.has_features(["LENNARD_JONES"]):
             self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
-
-    def reset_rng_counter(self):
-        # reset RNG counter to make tests independent of execution order
-        self.system.thermostat.set_npt(kT=0., gamma0=0., gammav=1e-6, seed=42)
-        thmst_list = self.system.thermostat.get_state()
-        for thmst in thmst_list:
-            if thmst["type"] == "NPT_ISO":
-                thmst["counter"] = 0
-        self.system.thermostat.__setstate__(thmst_list)
 
     def test_integrator_exceptions(self):
         # invalid parameters should throw exceptions
@@ -248,6 +241,7 @@ class IntegratorNPT(ut.TestCase):
             system.integrator.integrator,
             espressomd.integrate.VelocityVerlet)
         container.solver = None
+        system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
         system.integrator.set_isotropic_npt(**npt_kwargs_rectangular)
         container.solver = p3m
         with self.assertRaisesRegex(Exception, err_msg):

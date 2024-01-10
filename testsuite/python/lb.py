@@ -386,15 +386,28 @@ class LBTest:
         with self.assertRaisesRegex(ValueError, "Parameter 'rng_state' must be >= 0"):
             lbf.rng_state = -5
 
+    def test_temperature_mismatch(self):
+        self.system.thermostat.set_langevin(kT=2., seed=23, gamma=2.)
+        lbf = self.lb_class(kT=1., seed=42, **self.params, **self.lb_params)
+        self.system.lb = lbf
+        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1.0*: there are currently active thermostats with kT=2.0*"):
+            self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.)
+        self.assertFalse(self.system.thermostat.lb.is_active)
+        self.assertTrue(self.system.thermostat.langevin.is_active)
+
     def test_parameter_change_without_seed(self):
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
         self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=3.0)
-        with self.assertRaisesRegex(Exception, "Temperature change not supported by LB"):
+        self.assertAlmostEqual(self.system.thermostat.lb.gamma, 3.)
+        with self.assertRaisesRegex(RuntimeError, "Temperature change not supported by LB"):
             self.system.thermostat.turn_off()
-        with self.assertRaisesRegex(Exception, "Time step change not supported by LB"):
-            self.system.time_step /= 2.
+            self.system.thermostat.set_langevin(kT=2., seed=23, gamma=2.)
+        self.assertFalse(self.system.thermostat.langevin.is_active)
+        with self.assertRaisesRegex(ValueError, "must be an integer multiple of the MD time_step"):
+            self.system.time_step /= 1.7
+        self.system.time_step *= 1.
         if espressomd.has_features("ELECTROSTATICS"):
             self.system.electrostatics.solver = espressomd.electrostatics.DH(
                 prefactor=1., kappa=1., r_cut=1.)  # should not fail

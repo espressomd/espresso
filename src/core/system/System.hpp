@@ -41,6 +41,9 @@ class LocalBox;
 struct CellStructure;
 class Propagation;
 class InteractionsNonBonded;
+namespace Thermostat {
+class Thermostat;
+}
 class ComFixed;
 class Galilei;
 class Observable_stat;
@@ -121,6 +124,8 @@ public:
   /** @brief Get the interaction range. */
   double get_interaction_range() const;
 
+  unsigned get_global_ghost_flags() const;
+
   /** Check electrostatic and magnetostatic methods are properly initialized.
    *  @return true if sanity checks failed.
    */
@@ -133,7 +138,7 @@ public:
   std::shared_ptr<Observable_stat> calculate_pressure();
 
   /** @brief Calculate all forces. */
-  void calculate_forces(double kT);
+  void calculate_forces();
 
 #ifdef DIPOLE_FIELD_TRACKING
   /** @brief Calculate dipole fields. */
@@ -188,7 +193,10 @@ public:
   int integrate_with_signal_handler(int n_steps, int reuse_forces,
                                     bool update_accumulators);
 
-  void thermostats_force_init(double kT);
+  /** @brief Calculate initial particle forces from active thermostats. */
+  void thermostat_force_init();
+  /** @brief Calculate particle-lattice interactions. */
+  void lb_couple_particles(double time_step);
 
   /** \name Hook procedures
    *  These procedures are called if several significant changes to
@@ -244,6 +252,10 @@ public:
    * @brief Update the global propagation bitmask.
    */
   void update_used_propagations();
+  /**
+   * @brief Veto temperature change.
+   */
+  void check_kT(double value) const;
 
   Coulomb::Solver coulomb;
   Dipoles::Solver dipoles;
@@ -254,6 +266,7 @@ public:
   std::shared_ptr<CellStructure> cell_structure;
   std::shared_ptr<Propagation> propagation;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
+  std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<ComFixed> comfixed;
   std::shared_ptr<Galilei> galilei;
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;

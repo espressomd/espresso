@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
- *   Max-Planck-Institute for Polymer Research, Theory Group
+ * Copyright (C) 2023 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,4 +19,14 @@
 
 #pragma once
 
-unsigned global_ghost_flags();
+#include <script_interface/ObjectHandle.hpp>
+
+#include <utils/Factory.hpp>
+
+namespace ScriptInterface {
+namespace Thermostat {
+
+void initialize(Utils::Factory<ObjectHandle> *om);
+
+} // namespace Thermostat
+} // namespace ScriptInterface

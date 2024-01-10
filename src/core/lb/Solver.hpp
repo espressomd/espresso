@@ -80,6 +80,11 @@ struct Solver : public System::Leaf<Solver> {
   void veto_time_step(double time_step) const;
 
   /**
+   * @brief Check if a thermostat is compatible with the LB temperature.
+   */
+  void veto_kT(double kT) const;
+
+  /**
    * @brief Perform LB LEbc parameter checks.
    */
   void lebc_sanity_checks(unsigned int shear_direction,
