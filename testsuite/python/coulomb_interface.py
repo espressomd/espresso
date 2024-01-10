@@ -253,7 +253,7 @@ class Test(ut.TestCase):
             self.assertEqual(
                 list(self.system.cell_system.node_grid),
                 list(self.original_node_grid))
-        with self.assertRaisesRegex(Exception, "while assigning system parameter 'box_l': ERROR: ELC gap size .+ larger than box length in z-direction"):
+        with self.assertRaisesRegex(Exception, "while setting parameter 'box_l': ERROR: ELC gap size .+ larger than box length in z-direction"):
             self.system.box_l = [10., 10., 2.5]
         self.system.box_l = [10., 10., 10.]
         self.system.electrostatics.solver = None

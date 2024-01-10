@@ -21,8 +21,6 @@ from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
-cpdef check_type_or_throw_except(x, n, t, msg)
-
 cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
     cdef cppclass ErrorLevel:
         pass
@@ -39,8 +37,6 @@ cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling":
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError] mpi_gather_runtime_errors()
-
-cpdef handle_errors(msg)
 
 cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:
@@ -62,6 +58,3 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector3i:
         int & operator[](int i)
         int * data()
-
-cdef make_array_locked(Vector3d)
-cdef Vector3d make_Vector3d(a)

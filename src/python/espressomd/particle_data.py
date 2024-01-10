@@ -22,7 +22,7 @@ import collections
 import functools
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
-from .utils import nesting_level, array_locked, is_valid_type, handle_errors
+from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
@@ -598,7 +598,6 @@ class ParticleHandle(ScriptInterfaceHelper):
             "vs_relate_to",
             pid=rel_to,
             override_cutoff_check=override_cutoff_check)
-        handle_errors("vs_auto_relate_to")
         if self.propagation != Propagation.NONE:
             if couple_to_lb:
                 self.propagation |= Propagation.TRANS_LB_MOMENTUM_EXCHANGE

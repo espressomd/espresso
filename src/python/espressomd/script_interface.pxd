@@ -21,7 +21,7 @@ from libcpp.unordered_map cimport unordered_map
 from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
 from libcpp.vector cimport vector
-from libcpp cimport bool
+from libcpp cimport bool as cbool
 
 from boost cimport string_ref
 
@@ -37,8 +37,8 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant(const Variant & )
         Variant & operator = (const Variant &)
 
-    bool is_type[T](const Variant &)
-    bool is_none(const Variant &)
+    cbool is_type[T](const Variant &)
+    cbool is_none(const Variant &)
     ctypedef unordered_map[string, Variant] VariantMap
 
     Variant make_variant[T](const T & x)
@@ -71,7 +71,7 @@ cdef extern from "script_interface/initialize.hpp" namespace "ScriptInterface":
     void initialize(Factory[ObjectHandle] *)
 
 cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
-    T get_value[T](const Variant T)
+    T get_value[T](const Variant T) except +
 
 cdef extern from "script_interface/code_info/CodeInfo.hpp" namespace "ScriptInterface::CodeInfo":
     void check_features(const vector[string] & features) except +

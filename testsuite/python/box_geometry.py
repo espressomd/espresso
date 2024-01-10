@@ -36,7 +36,7 @@ class BoxGeometry(ut.TestCase):
             # the box length should not be updated
             np.testing.assert_equal(self.box_l, np.copy(self.system.box_l))
 
-        with self.assertRaisesRegex(ValueError, "Attribute 'box_l' must be a list of 3 floats"):
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type 'std::vector<double>{.size=2}' is not convertible to 'Utils::Vector<double, 3>'"):
             self.system.box_l = self.box_l[:2]
 
     def test_periodicity(self):
@@ -50,7 +50,7 @@ class BoxGeometry(ut.TestCase):
         default_periodicity = (True, True, True)
         self.system.periodicity = default_periodicity
 
-        with self.assertRaisesRegex(ValueError, "Attribute 'periodicity' must be a list of 3 bools"):
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type 'std::vector<ScriptInterface::Variant{bool}>{.size=2}' is not convertible to 'Utils::Vector<bool, 3>'"):
             self.system.periodicity = (True, True)
 
         # the periodicity should not be updated

@@ -50,7 +50,6 @@
 #include <boost/mpi/operations.hpp>
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -212,6 +211,8 @@ void ICCStar::iteration(CellStructure &cell_structure,
 }
 
 void icc_data::sanity_checks() const {
+  if (n_icc <= 0)
+    throw std::domain_error("Parameter 'n_icc' must be >= 1");
   if (convergence <= 0.)
     throw std::domain_error("Parameter 'convergence' must be > 0");
   if (relaxation < 0. or relaxation > 2.)
@@ -222,12 +223,14 @@ void icc_data::sanity_checks() const {
     throw std::domain_error("Parameter 'first_id' must be >= 0");
   if (eps_out <= 0.)
     throw std::domain_error("Parameter 'eps_out' must be > 0");
-
-  assert(n_icc >= 1);
-  assert(areas.size() == n_icc);
-  assert(epsilons.size() == n_icc);
-  assert(sigmas.size() == n_icc);
-  assert(normals.size() == n_icc);
+  if (areas.size() != n_icc)
+    throw std::invalid_argument("Parameter 'areas' has incorrect shape");
+  if (epsilons.size() != n_icc)
+    throw std::invalid_argument("Parameter 'epsilons' has incorrect shape");
+  if (sigmas.size() != n_icc)
+    throw std::invalid_argument("Parameter 'sigmas' has incorrect shape");
+  if (normals.size() != n_icc)
+    throw std::invalid_argument("Parameter 'normals' has incorrect shape");
 }
 
 ICCStar::ICCStar(icc_data data) {
