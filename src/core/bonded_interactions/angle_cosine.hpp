@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ANGLE_COSINE_H
-#define ANGLE_COSINE_H
+
+#pragma once
+
 /** \file
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple using the potential described in
@@ -50,7 +51,12 @@ struct AngleCosineBond {
 
   static constexpr int num = 2;
 
-  AngleCosineBond(double bend, double phi0);
+  AngleCosineBond(double bend, double phi0) {
+    this->bend = bend;
+    this->phi0 = phi0;
+    this->cos_phi0 = cos(phi0);
+    this->sin_phi0 = sin(phi0);
+  }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
@@ -98,5 +104,3 @@ inline double AngleCosineBond::energy(Utils::Vector3d const &vec1,
   // trig identity: cos(phi - phi0) = cos(phi)cos(phi0) + sin(phi)sin(phi0)
   return bend * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
 }
-
-#endif /* ANGLE_COSINE_H */

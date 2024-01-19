@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.lb
 import espressomd.propagation
 import numpy as np
 import tests_common
@@ -31,7 +32,7 @@ class VirtualSites(ut.TestCase):
     np.random.seed(42)
 
     def setUp(self):
-        self.system.box_l = [10.0, 10.0, 10.0]
+        self.system.box_l = [12.0, 12.0, 12.0]
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
 
@@ -40,6 +41,8 @@ class VirtualSites(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
         self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
+        if espressomd.has_features("WALBERLA"):
+            self.system.lb = None
 
     def multiply_quaternions(self, a, b):
         return np.array(
@@ -82,9 +85,13 @@ class VirtualSites(ut.TestCase):
             v_d - vs_r[1] * self.director_from_quaternion(
                 self.multiply_quaternions(rel.quat, vs_r[2]))), 1E-6)
 
+    @utx.skipIfMissingFeatures(["WALBERLA"])
     def test_vs_quat(self):
         self.system.time_step = 0.01
         self.system.min_global_cut = 0.23
+        self.system.lb = lb_fluid = espressomd.lb.LBFluidWalberla(
+            tau=0.01, agrid=2., density=1., kinematic_viscosity=1., kT=0.)
+        self.system.thermostat.set_lb(LB_fluid=lb_fluid, seed=42, gamma=1.)
         Propagation = espressomd.propagation.Propagation
         p1 = self.system.part.add(pos=[1, 1, 1], rotation=3 * [True],
                                   omega_lab=[1, 1, 1])
@@ -256,16 +263,10 @@ class VirtualSites(ut.TestCase):
                 rotation=3 * [True], id=3 * i, pos=np.random.random(3) * l, type=1,
                 omega_lab=0.3 * np.random.random(3), v=np.random.random(3))
             # lj spheres
-            p3ip1 = system.part.add(rotation=3 * [True],
-                                    id=3 * i + 1,
-                                    pos=p3i.pos +
-                                    p3i.director / 2.,
-                                    type=0)
-            p3ip2 = system.part.add(rotation=3 * [True],
-                                    id=3 * i + 2,
-                                    pos=p3i.pos -
-                                    p3i.director / 2.,
-                                    type=0)
+            p3ip1 = system.part.add(rotation=3 * [True], id=3 * i + 1,
+                                    pos=p3i.pos + p3i.director / 2., type=0)
+            p3ip2 = system.part.add(rotation=3 * [True], id=3 * i + 2,
+                                    pos=p3i.pos - p3i.director / 2., type=0)
             p3ip1.vs_auto_relate_to(p3i.id)
             self.verify_vs(p3ip1, verify_velocity=False)
             p3ip2.vs_auto_relate_to(p3i.id)

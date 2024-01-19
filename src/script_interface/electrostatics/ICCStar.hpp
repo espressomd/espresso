@@ -77,13 +77,21 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
+    auto const n_icc = get_value<int>(params, "n_icc");
+    // by default, sigmas are zeros
+    std::vector<double> sigmas{};
+    if (params.count("sigmas")) {
+      sigmas = get_value<std::vector<double>>(params, "sigmas");
+    } else if (n_icc >= 1) {
+      sigmas.resize(n_icc);
+    }
     auto icc_parameters = ::icc_data{
-        get_value<int>(params, "n_icc"),
+        n_icc,
         get_value<int>(params, "max_iterations"),
         get_value<double>(params, "eps_out"),
         get_value<std::vector<double>>(params, "areas"),
         get_value<std::vector<double>>(params, "epsilons"),
-        get_value<std::vector<double>>(params, "sigmas"),
+        sigmas,
         get_value<double>(params, "convergence"),
         get_value<std::vector<Utils::Vector3d>>(params, "normals"),
         get_value<Utils::Vector3d>(params, "ext_field"),

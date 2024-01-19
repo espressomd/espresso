@@ -143,10 +143,18 @@ public:
   auto get_zero_based_type(int bond_id) const {
     return contains(bond_id) ? at(bond_id)->which() : 0;
   }
+  auto get_n_thermalized_bonds() const { return n_thermalized_bonds; }
+#ifdef BOND_CONSTRAINT
+  auto get_n_rigid_bonds() const { return n_rigid_bonds; }
+#endif
 
 private:
   container_type m_params = {};
   key_type next_key = static_cast<key_type>(0);
+  int n_thermalized_bonds = 0;
+#ifdef BOND_CONSTRAINT
+  int n_rigid_bonds = 0;
+#endif
   void on_ia_change();
 };
 

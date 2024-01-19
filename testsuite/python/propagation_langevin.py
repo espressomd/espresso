@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.lb
 import espressomd.propagation
 import itertools
 import numpy as np
@@ -27,9 +28,10 @@ import numpy as np
 class LangevinThermostat(ut.TestCase):
 
     """Test Langevin Dynamics"""
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[12., 12., 12.])
     system.cell_system.set_regular_decomposition(use_verlet_lists=True)
-    system.cell_system.skin = 0
+    system.cell_system.skin = 0.
+    system.min_global_cut = 2.
     system.periodicity = [False, False, False]
 
     def setUp(self):
@@ -41,6 +43,8 @@ class LangevinThermostat(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
         self.system.thermostat.turn_off()
+        if espressomd.has_features("WALBERLA"):
+            self.system.lb = None
 
     def check_rng(self, per_particle_gamma=False):
         """Test for RNG consistency."""
@@ -66,8 +70,21 @@ class LangevinThermostat(ut.TestCase):
         system = self.system
         system.time_step = 0.01
 
+        self.assertIsNone(system.thermostat.kT)
+        self.assertFalse(system.thermostat.langevin.is_active)
+
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        system.thermostat.langevin.call_method(
+            "override_philox_counter", counter=0)
         system.integrator.set_vv()
+
+        self.assertIsNotNone(system.thermostat.kT)
+        np.testing.assert_almost_equal(system.thermostat.kT, kT)
+        np.testing.assert_almost_equal(
+            np.copy(system.thermostat.langevin.gamma), gamma)
+        if espressomd.has_features("ROTATION"):
+            np.testing.assert_almost_equal(
+                np.copy(system.thermostat.langevin.gamma_rotation), gamma)
 
         # run(0) does not increase the philox counter and should give the same
         # force
@@ -86,6 +103,7 @@ class LangevinThermostat(ut.TestCase):
         # run(1) should give a different force
         p = reset_particle()
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.langevin.philox_counter, 1)
         force2 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force1, force2)))
         if espressomd.has_features("ROTATION"):
@@ -97,11 +115,15 @@ class LangevinThermostat(ut.TestCase):
         # force3: langevin.rng_counter() = 1, langevin.rng_seed() = 42
         p = reset_particle()
         system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(system.thermostat.langevin.seed, 41)
+        self.assertEqual(system.thermostat.langevin.philox_counter, 1)
         force2 = np.copy(p.f)
         if espressomd.has_features("ROTATION"):
             torque2 = np.copy(p.torque_lab)
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(system.thermostat.langevin.seed, 42)
+        self.assertEqual(system.thermostat.langevin.philox_counter, 1)
         force3 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force2, force3)))
         if espressomd.has_features("ROTATION"):
@@ -112,6 +134,8 @@ class LangevinThermostat(ut.TestCase):
         p = reset_particle()
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.langevin.seed, 42)
+        self.assertEqual(system.thermostat.langevin.philox_counter, 2)
         force4 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force3, force4)))
         if espressomd.has_features("ROTATION"):
@@ -124,6 +148,8 @@ class LangevinThermostat(ut.TestCase):
         reset_particle()
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.langevin.seed, 41)
+        self.assertEqual(system.thermostat.langevin.philox_counter, 3)
         p = reset_particle()
         system.integrator.run(0, recalc_forces=True)
         force5 = np.copy(p.f)
@@ -131,6 +157,15 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             torque5 = np.copy(p.torque_lab)
             self.assertTrue(np.all(np.not_equal(torque4, torque5)))
+
+        with self.assertRaises(ValueError):
+            system.thermostat.set_langevin(kT=-1., gamma=2.)
+        with self.assertRaises(ValueError):
+            system.thermostat.set_langevin(kT=1., gamma=-2.)
+
+        self.system.thermostat.turn_off()
+        self.assertFalse(system.thermostat.langevin.is_active)
+        self.assertIsNone(system.thermostat.kT)
 
     def test_01__rng(self):
         """Test for RNG consistency."""
@@ -219,12 +254,16 @@ class LangevinThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), dt * v0 / 2. - v0)
 
-    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "WALBERLA"])
     def test_virtual_sites_relative(self):
         Propagation = espressomd.propagation.Propagation
         system = self.system
+        system.time_step = 0.01
         o0 = np.array([0, 0, 0])
 
+        system.lb = espressomd.lb.LBFluidWalberla(
+            tau=0.01, agrid=2., density=1., kinematic_viscosity=1., kT=0.)
+        system.thermostat.set_lb(LB_fluid=system.lb, seed=42, gamma=1.)
         system.thermostat.set_langevin(
             kT=0., gamma=1., gamma_rotation=1., seed=42)
 
@@ -232,6 +271,8 @@ class LangevinThermostat(ut.TestCase):
         virt_lb = system.part.add(pos=[2, 0, 0], v=[1, 2, 3], omega_lab=o0)
         virt_lg = system.part.add(pos=[2, 0, 0], v=[4, 5, 6], omega_lab=o0)
         virt_lx = system.part.add(pos=[2, 0, 0], v=[7, 8, 9], omega_lab=o0)
+        system.part.all().propagation = (
+            Propagation.TRANS_LANGEVIN | Propagation.ROT_LANGEVIN)
 
         refs = {
             "real.f": [-3, -4, -5], "real.torque_lab": [0, 0, 0],

@@ -37,15 +37,15 @@ struct Solver : public System::Leaf<Solver> {
 
   Solver();
 
-  /** @brief Return true if a @c LB solver is active. */
+  /** @brief Return true if a LB solver is active. */
   [[nodiscard]] bool is_solver_set() const;
 
-  /** @brief Remove the @c LB solver. */
+  /** @brief Remove the LB solver. */
   void reset();
 
   /**
-   * @brief Set the @c LB solver.
-   * For developers: a specialization must exist for every new @c LB type.
+   * @brief Set the LB solver.
+   * For developers: a specialization must exist for every new LB type.
    */
   template <typename LB, class... Args> void set(Args... args);
 
@@ -59,7 +59,7 @@ struct Solver : public System::Leaf<Solver> {
   }
 
   /**
-   * @brief Propagate the @c LB fluid.
+   * @brief Propagate the LB fluid.
    */
   void propagate();
 
@@ -70,33 +70,38 @@ struct Solver : public System::Leaf<Solver> {
   void init() const {}
 
   /**
-   * @brief Perform @c LB parameter and boundary velocity checks.
+   * @brief Perform LB parameter and boundary velocity checks.
    */
   void sanity_checks() const;
 
   /**
-   * @brief Check if a MD time step is compatible with the @c LB tau.
+   * @brief Check if a MD time step is compatible with the LB tau.
    */
   void veto_time_step(double time_step) const;
 
   /**
-   * @brief Perform @c LB LEbc parameter checks.
+   * @brief Check if a thermostat is compatible with the LB temperature.
+   */
+  void veto_kT(double kT) const;
+
+  /**
+   * @brief Perform LB LEbc parameter checks.
    */
   void lebc_sanity_checks(unsigned int shear_direction,
                           unsigned int shear_plane_normal) const;
 
   /**
-   * @brief Get the @c LB time step.
+   * @brief Get the LB time step.
    */
   double get_tau() const;
 
   /**
-   * @brief Get the @c LB grid spacing.
+   * @brief Get the LB grid spacing.
    */
   double get_agrid() const;
 
   /**
-   * @brief Get the thermal energy parameter of the @c LB fluid.
+   * @brief Get the thermal energy parameter of the LB fluid.
    */
   double get_kT() const;
 
@@ -110,8 +115,8 @@ struct Solver : public System::Leaf<Solver> {
   Utils::Vector3d get_momentum() const;
 
   /**
-   * @brief Calculate the interpolated fluid velocity in @c LB units.
-   * Use this function in MPI-parallel code. The @c LB ghost layer is ignored.
+   * @brief Calculate the interpolated fluid velocity in LB units.
+   * Use this function in MPI-parallel code. The LB ghost layer is ignored.
    * @param pos Position in MD units at which the velocity is to be calculated.
    * @retval interpolated fluid velocity.
    */
@@ -119,8 +124,8 @@ struct Solver : public System::Leaf<Solver> {
   get_interpolated_velocity(Utils::Vector3d const &pos) const;
 
   /**
-   * @brief Calculate the interpolated fluid density in @c LB units.
-   * Use this function in MPI-parallel code. The @c LB ghost layer is ignored.
+   * @brief Calculate the interpolated fluid density in LB units.
+   * Use this function in MPI-parallel code. The LB ghost layer is ignored.
    * @param pos Position in MD units at which the density is to be calculated.
    * @retval interpolated fluid density.
    */
@@ -129,7 +134,7 @@ struct Solver : public System::Leaf<Solver> {
 
   /**
    * @brief Calculate the interpolated fluid velocity in MD units.
-   * Special method used only for particle coupling. Uses the @c LB ghost layer.
+   * Special method used only for particle coupling. Uses the LB ghost layer.
    * @param pos Position in MD units at which the velocity is to be calculated.
    * @retval interpolated fluid velocity.
    */

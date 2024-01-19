@@ -86,7 +86,7 @@ struct IntegratorHelper : public ParticleFactory {
 #ifdef EXTERNAL_FORCES
 struct : public IntegratorHelper {
   void set_integrator() const override {
-    mpi_set_thermo_switch_local(THERMO_OFF);
+    espresso::system->thermostat->thermo_switch = THERMO_OFF;
     register_integrator(SteepestDescentParameters(0., 0.01, 100.));
     espresso::system->propagation->set_integ_switch(
         INTEG_METHOD_STEEPEST_DESCENT);
@@ -101,7 +101,7 @@ struct : public IntegratorHelper {
 
 struct : public IntegratorHelper {
   void set_integrator() const override {
-    mpi_set_thermo_switch_local(THERMO_OFF);
+    espresso::system->thermostat->thermo_switch = THERMO_OFF;
     espresso::system->propagation->set_integ_switch(INTEG_METHOD_NVT);
   }
   void set_particle_properties(int pid) const override {
@@ -113,12 +113,15 @@ struct : public IntegratorHelper {
 #ifdef NPT
 struct : public IntegratorHelper {
   void set_integrator() const override {
+    auto &npt_iso = espresso::system->thermostat->npt_iso;
     ::nptiso = NptIsoParameters(1., 1e9, {true, true, true}, true);
     espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
-    mpi_set_temperature_local(1.);
-    mpi_npt_iso_set_rng_seed(0);
-    mpi_set_thermo_switch_local(thermo_switch | THERMO_NPT_ISO);
-    mpi_set_nptiso_gammas_local(0., 0.); // disable box volume change
+    espresso::system->thermostat->thermo_switch = THERMO_NPT_ISO;
+    espresso::system->thermostat->kT = 1.;
+    npt_iso = std::make_shared<IsotropicNptThermostat>();
+    npt_iso->rng_initialize(0u);
+    npt_iso->gammav = 0.; // disable box volume change
+    npt_iso->gamma0 = 0.;
   }
   void set_particle_properties(int pid) const override {
     set_particle_v(pid, {20., 0., 0.});

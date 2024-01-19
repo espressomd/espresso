@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(check_exceptions) {
     auto const int_variant = Variant{1.5};
     auto const vec_variant = Variant{std::vector<Variant>{{so_obj}}};
     auto const vec_variant_pattern = "std::vector<" + variant_sip_name + ">";
-    auto const what = msg_prefix + "'" + vec_variant_pattern + "'";
+    auto const what = msg_prefix + "'" + vec_variant_pattern + "\\{.size=1\\}'";
     auto const predicate_nullptr = exception_message_predicate(
         what + " contains a value that is a null pointer");
     auto const predicate_conversion_containee = exception_message_predicate(

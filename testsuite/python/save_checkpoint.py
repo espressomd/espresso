@@ -262,24 +262,26 @@ if espressomd.has_features(['DPD']):
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 p2.add_bond((harmonic_bond, p1))
-# create 3 thermalized bonds that will overwrite each other's seed
-therm_params = dict(temp_com=0.1, temp_distance=0.2, gamma_com=0.3,
-                    gamma_distance=0.5, r_cut=2.)
-therm_bond1 = espressomd.interactions.ThermalizedBond(seed=1, **therm_params)
-therm_bond2 = espressomd.interactions.ThermalizedBond(seed=2, **therm_params)
-therm_bond3 = espressomd.interactions.ThermalizedBond(seed=3, **therm_params)
-system.bonded_inter.add(therm_bond1)
-p2.add_bond((therm_bond1, p1))
-checkpoint.register("therm_bond2")
-checkpoint.register("therm_params")
-# create Drude particles
-if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
-    dh = espressomd.drude_helpers.DrudeHelpers()
-    dh.add_drude_particle_to_core(
-        system=system, harmonic_bond=harmonic_bond,
-        thermalized_bond=therm_bond1, p_core=p2, type_drude=10,
-        alpha=1., mass_drude=0.6, coulomb_prefactor=0.8, thole_damping=2.)
-    checkpoint.register("dh")
+if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
+    # create Drude particles
+    system.thermostat.set_thermalized_bond(seed=3)
+    system.thermostat.thermalized_bond.call_method(
+        "override_philox_counter", counter=5)
+    therm_params = dict(temp_com=0.1, temp_distance=0.2, gamma_com=0.3,
+                        gamma_distance=0.5, r_cut=2.)
+    therm_bond1 = espressomd.interactions.ThermalizedBond(**therm_params)
+    therm_bond2 = espressomd.interactions.ThermalizedBond(**therm_params)
+    system.bonded_inter.add(therm_bond1)
+    p2.add_bond((therm_bond1, p1))
+    checkpoint.register("therm_bond2")
+    checkpoint.register("therm_params")
+    if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
+        dh = espressomd.drude_helpers.DrudeHelpers()
+        dh.add_drude_particle_to_core(
+            system=system, harmonic_bond=harmonic_bond,
+            thermalized_bond=therm_bond1, p_core=p2, type_drude=10,
+            alpha=1., mass_drude=0.6, coulomb_prefactor=0.8, thole_damping=2.)
+        checkpoint.register("dh")
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
 p4.add_bond((strong_harmonic_bond, p3))
@@ -360,9 +362,9 @@ if espressomd.has_features('SCAFACOS_DIPOLES') and 'SCAFACOS' in modes \
 
 if lbf_class:
     system.lb = lbf
-    system.ekcontainer = ekcontainer
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
+    system.ekcontainer = ekcontainer
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
     m = np.pi / 12
     grid_3D = np.fromfunction(
@@ -435,7 +437,10 @@ if espressomd.has_features('ROTATIONAL_INERTIA'):
 if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
     gamma = 2.
     if espressomd.has_features('PARTICLE_ANISOTROPY'):
-        gamma = np.array([2., 3., 4.])
+        if 'THERM.LB' in modes:
+            gamma = np.array([2., 2., 2.])
+        else:
+            gamma = np.array([2., 3., 4.])
     p4.gamma = gamma
     if espressomd.has_features('ROTATION'):
         p3.gamma_rot = 2. * gamma

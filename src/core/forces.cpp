@@ -27,6 +27,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -48,7 +49,6 @@
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
-#include "thermostats/langevin_inline.hpp"
 #include "virtual_sites/relative.hpp"
 
 #include <utils/math/sqr.hpp>
@@ -117,7 +117,7 @@ static void force_capping(ParticleRange const &particles, double force_cap) {
   }
 }
 
-void System::System::calculate_forces(double kT) {
+void System::System::calculate_forces() {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
@@ -149,7 +149,7 @@ void System::System::calculate_forces(double kT) {
   npt_reset_instantaneous_virials();
 #endif
   init_forces(particles, ghost_particles);
-  thermostats_force_init(kT);
+  thermostat_force_init();
 
   calc_long_range_forces(particles);
 
@@ -178,13 +178,14 @@ void System::System::calculate_forces(double kT) {
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
-       elc_kernel_ptr = get_ptr(elc_kernel), &nonbonded_ias = *nonbonded_ias](
-          Particle &p1, Particle &p2, Distance const &d) {
+       elc_kernel_ptr = get_ptr(elc_kernel), &nonbonded_ias = *nonbonded_ias,
+       &thermostat = *thermostat,
+       &box_geo = *box_geo](Particle &p1, Particle &p2, Distance const &d) {
         auto const &ia_params =
             nonbonded_ias.get_ia_param(p1.type(), p2.type());
-        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                  ia_params, coulomb_kernel_ptr,
-                                  dipoles_kernel_ptr, elc_kernel_ptr);
+        add_non_bonded_pair_force(
+            p1, p2, d.vec21, sqrt(d.dist2), d.dist2, ia_params, thermostat,
+            box_geo, coulomb_kernel_ptr, dipoles_kernel_ptr, elc_kernel_ptr);
 #ifdef COLLISION_DETECTION
         if (collision_params.mode != CollisionModeType::OFF)
           detect_collision(p1, p2, d.dist2);
@@ -213,8 +214,9 @@ void System::System::calculate_forces(double kT) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation(*cell_structure);
 
-  if (lb.is_solver_set()) {
-    LB::couple_particles(particles, ghost_particles, time_step);
+  if (thermostat->lb and (propagation->used_propagations &
+                          PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {
+    lb_couple_particles(time_step);
   }
 
 #ifdef CUDA

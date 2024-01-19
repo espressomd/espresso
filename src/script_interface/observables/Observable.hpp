@@ -34,7 +34,7 @@
 namespace ScriptInterface {
 namespace Observables {
 
-/** Base class for script interfaces to core %Observables classes */
+/** Base class for script interfaces to core observables classes */
 class Observable : public ObjectHandle {
 public:
   virtual std::shared_ptr<::Observables::Observable> observable() const = 0;

@@ -18,7 +18,7 @@
  */
 
 /**
- * @page SystemClassDesign %System class design
+ * @page SystemClassDesign System class design
  *
  * @tableofcontents
  *
@@ -58,7 +58,7 @@
  *    - Include the relevant header in @ref src/core/system/System.impl.hpp.
  *    - Adapt the @ref System::System::System constructor accordingly.
  * - script interface:
- *    - Define the %ScriptInterface class of the new feature, which serves as
+ *    - Define the @c ScriptInterface class of the new feature, which serves as
  *      the connection between the C++ core instance and the Python instance.
  *    - If relevant, override
  *      @ref ScriptInterface::System::Leaf::on_bind_system and

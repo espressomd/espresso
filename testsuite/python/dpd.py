@@ -59,8 +59,11 @@ class DPDThermostat(ut.TestCase):
         gamma = 1.5
 
         # No seed should throw exception
-        with self.assertRaisesRegex(ValueError, "A seed has to be given as keyword argument on first activation of the thermostat"):
+        with self.assertRaisesRegex(ValueError, "Parameter 'seed' is needed on first activation of the thermostat"):
             system.thermostat.set_dpd(kT=kT)
+
+        self.assertIsNone(system.thermostat.kT)
+        self.assertFalse(system.thermostat.dpd.is_active)
 
         system.thermostat.set_dpd(kT=kT, seed=41)
         system.non_bonded_inter[0, 0].dpd.set_params(
@@ -71,14 +74,20 @@ class DPDThermostat(ut.TestCase):
         # force
         p = reset_particles()
         system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(system.thermostat.dpd.seed, 41)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 0)
         force0 = np.copy(p.f)
         system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(system.thermostat.dpd.seed, 41)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 0)
         force1 = np.copy(p.f)
         np.testing.assert_almost_equal(force0, force1)
 
         # run(1) should give a different force
         p = reset_particles()
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.dpd.seed, 41)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 1)
         force2 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force1, force2)))
 
@@ -87,9 +96,13 @@ class DPDThermostat(ut.TestCase):
         # force3: dpd.rng_counter() = 1, dpd.rng_seed() = 42
         p = reset_particles()
         system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(system.thermostat.dpd.seed, 41)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 1)
         force2 = np.copy(p.f)
         system.thermostat.set_dpd(kT=kT, seed=42)
         system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(system.thermostat.dpd.seed, 42)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 1)
         force3 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force2, force3)))
 
@@ -97,6 +110,8 @@ class DPDThermostat(ut.TestCase):
         p = reset_particles()
         system.thermostat.set_dpd(kT=kT, seed=42)
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.dpd.seed, 42)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 2)
         force4 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force3, force4)))
 
@@ -106,8 +121,12 @@ class DPDThermostat(ut.TestCase):
         reset_particles()
         system.thermostat.set_dpd(kT=kT, seed=41)
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.dpd.seed, 41)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 3)
         p = reset_particles()
         system.integrator.run(0, recalc_forces=True)
+        self.assertEqual(system.thermostat.dpd.seed, 41)
+        self.assertEqual(system.thermostat.dpd.philox_counter, 3)
         force5 = np.copy(p.f)
         self.assertTrue(np.all(np.not_equal(force4, force5)))
 

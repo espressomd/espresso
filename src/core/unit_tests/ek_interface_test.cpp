@@ -181,14 +181,22 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     BOOST_REQUIRE(not espresso::ek_container->contains(ek_species));
     ek.propagate(); // no-op
     BOOST_REQUIRE_EQUAL(get_n_runtime_errors(), 0);
-  }
 
-  {
-    // EK prevents changing most of the system state
-    BOOST_CHECK_THROW(ek.on_boxl_change(), std::runtime_error);
-    BOOST_CHECK_THROW(ek.on_timestep_change(), std::runtime_error);
-    BOOST_CHECK_THROW(ek.on_temperature_change(), std::runtime_error);
-    BOOST_CHECK_THROW(ek.on_node_grid_change(), std::runtime_error);
+    {
+      // EK prevents changing most of the system state
+      ek.veto_kT(params.kT + 1.);
+      espresso::ek_container->add(ek_species);
+      BOOST_CHECK_THROW(ek.veto_kT(params.kT + 1.), std::runtime_error);
+      BOOST_CHECK_THROW(ek.on_boxl_change(), std::runtime_error);
+      BOOST_CHECK_THROW(ek.veto_time_step(ek.get_tau() * 2.),
+                        std::invalid_argument);
+      BOOST_CHECK_THROW(ek.veto_time_step(ek.get_tau() / 2.5),
+                        std::invalid_argument);
+      BOOST_CHECK_THROW(ek.on_node_grid_change(), std::runtime_error);
+      ek.on_timestep_change();
+      ek.on_temperature_change();
+      espresso::ek_container->remove(ek_species);
+    }
   }
 }
 #endif // WALBERLA
@@ -208,6 +216,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
     BOOST_CHECK_THROW(ek.get_tau(), NoEKActive);
     BOOST_CHECK_THROW(ek.sanity_checks(), NoEKActive);
     BOOST_CHECK_THROW(ek.veto_time_step(0.), NoEKActive);
+    BOOST_CHECK_THROW(ek.veto_kT(0.), NoEKActive);
     BOOST_CHECK_THROW(ek.on_cell_structure_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_boxl_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_node_grid_change(), NoEKActive);

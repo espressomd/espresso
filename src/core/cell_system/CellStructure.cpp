@@ -171,33 +171,33 @@ unsigned map_data_parts(unsigned data_parts) {
 
   /* clang-format off */
   return GHOSTTRANS_NONE
-         | ((DATA_PART_PROPERTIES & data_parts) ? GHOSTTRANS_PROPRTS : 0u)
-         | ((DATA_PART_POSITION & data_parts) ? GHOSTTRANS_POSITION : 0u)
-         | ((DATA_PART_MOMENTUM & data_parts) ? GHOSTTRANS_MOMENTUM : 0u)
-         | ((DATA_PART_FORCE & data_parts) ? GHOSTTRANS_FORCE : 0u)
+         | ((data_parts & DATA_PART_PROPERTIES) ? GHOSTTRANS_PROPRTS : 0u)
+         | ((data_parts & DATA_PART_POSITION) ? GHOSTTRANS_POSITION : 0u)
+         | ((data_parts & DATA_PART_MOMENTUM) ? GHOSTTRANS_MOMENTUM : 0u)
+         | ((data_parts & DATA_PART_FORCE) ? GHOSTTRANS_FORCE : 0u)
 #ifdef BOND_CONSTRAINT
-         | ((DATA_PART_RATTLE & data_parts) ? GHOSTTRANS_RATTLE : 0u)
+         | ((data_parts & DATA_PART_RATTLE) ? GHOSTTRANS_RATTLE : 0u)
 #endif
-         | ((DATA_PART_BONDS & data_parts) ? GHOSTTRANS_BONDS : 0u);
+         | ((data_parts & DATA_PART_BONDS) ? GHOSTTRANS_BONDS : 0u);
   /* clang-format on */
 }
 
 void CellStructure::ghosts_count() {
   ghost_communicator(decomposition().exchange_ghosts_comm(),
-                     GHOSTTRANS_PARTNUM);
+                     *get_system().box_geo, GHOSTTRANS_PARTNUM);
 }
 void CellStructure::ghosts_update(unsigned data_parts) {
   ghost_communicator(decomposition().exchange_ghosts_comm(),
-                     map_data_parts(data_parts));
+                     *get_system().box_geo, map_data_parts(data_parts));
 }
 void CellStructure::ghosts_reduce_forces() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
-                     GHOSTTRANS_FORCE);
+                     *get_system().box_geo, GHOSTTRANS_FORCE);
 }
 #ifdef BOND_CONSTRAINT
 void CellStructure::ghosts_reduce_rattle_correction() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
-                     GHOSTTRANS_RATTLE);
+                     *get_system().box_geo, GHOSTTRANS_RATTLE);
 }
 #endif
 
@@ -265,8 +265,9 @@ void CellStructure::set_hybrid_decomposition(double cutoff_regular,
   auto &local_geo = *system.local_geo;
   auto const &box_geo = *system.box_geo;
   set_particle_decomposition(std::make_unique<HybridDecomposition>(
-      ::comm_cart, cutoff_regular, m_verlet_skin, box_geo, local_geo,
-      n_square_types));
+      ::comm_cart, cutoff_regular, m_verlet_skin,
+      [&system]() { return system.get_global_ghost_flags(); }, box_geo,
+      local_geo, n_square_types));
   m_type = CellStructureType::HYBRID;
   local_geo.set_cell_structure_type(m_type);
   system.on_cell_structure_change();

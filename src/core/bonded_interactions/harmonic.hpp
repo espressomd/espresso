@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_HARMONIC_HPP
-#define CORE_BN_IA_HARMONIC_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the harmonic bond potential between particle pairs.
  */
@@ -65,7 +66,7 @@ private:
 };
 
 /** Compute the harmonic bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 HarmonicBond::force(Utils::Vector3d const &dx) const {
@@ -89,7 +90,7 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the harmonic bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 HarmonicBond::energy(Utils::Vector3d const &dx) const {
@@ -101,5 +102,3 @@ HarmonicBond::energy(Utils::Vector3d const &dx) const {
 
   return 0.5 * k * Utils::sqr(dist - r);
 }
-
-#endif

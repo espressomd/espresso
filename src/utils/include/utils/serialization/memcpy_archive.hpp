@@ -160,7 +160,7 @@ public:
  * e.g. that serialize to the same number of bytes independent of
  * the state of the object. This can either be automatically detected
  * for types that are trivially copyable, or by explicitly assured
- * by specializing @c is_statically_serializable to std::true_type.
+ * by specializing @ref is_statically_serializable to @c std::true_type.
  */
 class MemcpyIArchive : public detail::BasicMemcpyArchive<MemcpyIArchive> {
 private:

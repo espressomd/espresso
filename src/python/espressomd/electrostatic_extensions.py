@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from . import utils
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .code_features import has_features
-import numpy as np
 
 
 class ElectrostaticExtensions(ScriptInterfaceHelper):
@@ -33,7 +31,6 @@ class ElectrostaticExtensions(ScriptInterfaceHelper):
         if 'sip' not in kwargs:
             params = self.default_params()
             params.update(kwargs)
-            self.validate_params(params)
             super().__init__(**params)
         else:
             super().__init__(**kwargs)
@@ -41,9 +38,6 @@ class ElectrostaticExtensions(ScriptInterfaceHelper):
     def _check_required_features(self):
         if not has_features("ELECTROSTATICS"):
             raise NotImplementedError("Feature ELECTROSTATICS not compiled in")
-
-    def validate_params(self, params):
-        raise NotImplementedError("Derived classes must implement this method")
 
     def default_params(self):
         raise NotImplementedError("Derived classes must implement this method")
@@ -92,43 +86,6 @@ class ICC(ElectrostaticExtensions):
     """
     _so_name = "Coulomb::ICCStar"
     _so_creation_policy = "GLOBAL"
-
-    def validate_params(self, params):
-        utils.check_type_or_throw_except(
-            params["n_icc"], 1, int, "Invalid parameter 'n_icc'")
-        utils.check_type_or_throw_except(
-            params["first_id"], 1, int, "Invalid parameter 'first_id'")
-        utils.check_type_or_throw_except(
-            params["convergence"], 1, float, "Invalid parameter 'convergence'")
-        utils.check_type_or_throw_except(
-            params["relaxation"], 1, float, "Invalid parameter 'relaxation'")
-        utils.check_type_or_throw_except(
-            params["ext_field"], 3, float, "Invalid parameter 'ext_field'")
-        utils.check_type_or_throw_except(
-            params["max_iterations"], 1, int, "Invalid parameter 'max_iterations'")
-        utils.check_type_or_throw_except(
-            params["eps_out"], 1, float, "Invalid parameter 'eps_out'")
-
-        n_icc = params["n_icc"]
-        if n_icc <= 0:
-            raise ValueError("Parameter 'n_icc' must be >= 1")
-
-        if n_icc:
-            if np.shape(params["normals"]) != (n_icc, 3):
-                raise ValueError("Parameter 'normals' has incorrect shape")
-        utils.check_array_type_or_throw_except(
-            np.reshape(params["normals"], (-1,)), 3 * n_icc, float,
-            "Parameter 'normals' has incorrect type")
-
-        if "sigmas" not in params:
-            params["sigmas"] = np.zeros(n_icc)
-
-        for key in ("areas", "sigmas", "epsilons"):
-            if np.shape(params[key]) != (n_icc,):
-                raise ValueError(f"Parameter '{key}' has incorrect shape")
-            utils.check_array_type_or_throw_except(
-                np.reshape(params[key], (-1,)), n_icc, float,
-                f"Parameter '{key}' has incorrect type")
 
     def valid_keys(self):
         return {"n_icc", "convergence", "relaxation", "ext_field",

@@ -26,6 +26,7 @@
 #include "LocalBox.hpp"
 #include "PropagationMode.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cell_system/HybridDecomposition.hpp"
@@ -34,7 +35,6 @@
 #include "constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "global_ghost_flags.hpp"
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
@@ -61,6 +61,7 @@ System::System(Private) {
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
   propagation = std::make_shared<Propagation>();
+  thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
@@ -77,6 +78,7 @@ void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
+  thermostat->bind_system(handle);
 #ifdef CUDA
   gpu.bind_system(handle);
   gpu.initialize();
@@ -106,6 +108,15 @@ void System::set_time_step(double value) {
   }
   time_step = value;
   on_timestep_change();
+}
+
+void System::check_kT(double value) const {
+  if (lb.is_solver_set()) {
+    lb.veto_kT(value);
+  }
+  if (ek.is_solver_set()) {
+    ek.veto_kT(value);
+  }
 }
 
 void System::set_force_cap(double value) {
@@ -256,7 +267,7 @@ void System::on_lb_boundary_conditions_change() {
 }
 
 void System::on_particle_local_change() {
-  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
+  cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   propagation->recalc_forces = true;
 }
 
@@ -289,7 +300,7 @@ void System::update_dependent_particles() {
 #ifdef VIRTUAL_SITES_RELATIVE
   vs_relative_update_particles(*cell_structure, *box_geo);
 #endif
-  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
+  cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 #endif
 
 #ifdef ELECTROSTATICS
@@ -305,7 +316,7 @@ void System::update_dependent_particles() {
 void System::on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
-  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
+  cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   update_dependent_particles();
 
 #ifdef ELECTROSTATICS
@@ -384,7 +395,7 @@ void System::on_integration_start() {
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
-    thermo_init(time_step);
+    thermostat->recalc_prefactors(time_step);
     reinit_thermo = false;
     propagation->recalc_forces = true;
   }
@@ -420,6 +431,35 @@ void System::on_integration_start() {
 #endif /* ADDITIONAL_CHECKS */
 
   on_observable_calc();
+}
+
+/**
+ * @brief Returns the ghost flags required for running pair
+ *        kernels for the global state, e.g. the force calculation.
+ * @return Required data parts;
+ */
+unsigned System::get_global_ghost_flags() const {
+  /* Position and Properties are always requested. */
+  unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
+
+  if (lb.is_solver_set())
+    data_parts |= Cells::DATA_PART_MOMENTUM;
+
+  if (thermostat->thermo_switch & THERMO_DPD)
+    data_parts |= Cells::DATA_PART_MOMENTUM;
+
+  if (thermostat->thermo_switch & THERMO_BOND) {
+    data_parts |= Cells::DATA_PART_MOMENTUM;
+    data_parts |= Cells::DATA_PART_BONDS;
+  }
+
+#ifdef COLLISION_DETECTION
+  if (::collision_params.mode != CollisionModeType::OFF) {
+    data_parts |= Cells::DATA_PART_BONDS;
+  }
+#endif
+
+  return data_parts;
 }
 
 } // namespace System

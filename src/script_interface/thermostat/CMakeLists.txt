@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2023 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,4 +17,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(espresso_core PRIVATE bonded_interaction_data.cpp)
+target_sources(espresso_script_interface PRIVATE initialize.cpp)

@@ -404,7 +404,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
         lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
         if [ -d _deps/ ]; then
-          lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info $(realpath _deps/)'/*' --output-file coverage.info # filter out docs
+          lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info $(realpath _deps/)'/*' --output-file coverage.info # filter out external projects
         fi
     fi
     if [ "${with_coverage_python}" = true ]; then

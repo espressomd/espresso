@@ -153,14 +153,20 @@ class VirtualSitesTracersCommon:
 
     def test_zz_exceptions_without_lb(self):
         """
-        Check behaviour without LB. Ignore real particles, complain on tracers.
+        Check behaviour without LB.
         """
         self.set_lb()
         system = self.system
+        lbf = system.lb
         system.lb = None
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0))
-        system.integrator.run(1)
+        with self.assertRaisesRegex(Exception, "The LB thermostat requires a LB fluid"):
+            system.integrator.run(1)
         p.propagation = espressomd.propagation.Propagation.TRANS_LB_TRACER
         with self.assertRaisesRegex(Exception, "LB needs to be active for inertialess tracers"):
+            system.integrator.run(1)
+        system.lb = lbf
+        self.system.thermostat.turn_off()
+        with self.assertRaisesRegex(Exception, "The LB integrator requires the LB thermostat"):
             system.integrator.run(1)

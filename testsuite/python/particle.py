@@ -113,6 +113,8 @@ class ParticleProperties(ut.TestCase):
         Propagation = espressomd.propagation.Propagation
         flags_core = self.system.call_method("get_propagation_modes_enum")
         flags_si = {e.name: e.value for e in Propagation}
+        # Python 3.11+ skips empty bitfields during enum iteration
+        flags_si["NONE"] = Propagation.NONE
         self.assertEqual(flags_si, flags_core)
 
     test_bonds_property = generateTestForScalarProperty(

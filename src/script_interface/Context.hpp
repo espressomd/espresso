@@ -103,7 +103,7 @@ protected:
 
 public:
   /**
-   *  @brief Get the class name for an ObjectHandle instance.
+   *  @brief Get the class name for an @ref ObjectHandle instance.
    *
    *  This returns the name by which the object can be created.
    */

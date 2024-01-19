@@ -58,7 +58,7 @@ class StokesianThermostat(ut.TestCase):
         viscosity = 2.4
 
         # invalid parameters should throw exceptions
-        with self.assertRaisesRegex(ValueError, "kT has an invalid value"):
+        with self.assertRaisesRegex(ValueError, "Parameter 'kT' cannot be negative"):
             system.thermostat.set_stokesian(kT=-1)
         with self.assertRaises(ValueError):
             system.thermostat.set_stokesian(kT=1, seed=-1)
@@ -72,34 +72,44 @@ class StokesianThermostat(ut.TestCase):
         # run(0) does not increase the philox counter and should give no force
         p = reset_particle()
         system.integrator.run(0)
+        self.assertEqual(system.thermostat.stokesian.seed, 41)
+        self.assertEqual(system.thermostat.stokesian.philox_counter, 0)
         force0 = np.copy(p.pos) / pos2force
         np.testing.assert_almost_equal(force0, 0)
 
         # run(1) should give a force
         p = reset_particle()
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.stokesian.seed, 41)
+        self.assertEqual(system.thermostat.stokesian.philox_counter, 1)
         force1 = np.copy(p.pos) / pos2force
         self.assertTrue(np.all(np.not_equal(force1, [0, 0, 0])))
 
         # Same seed should not give the same force with different counter state
-        # force1: brownian.rng_counter() = 0, brownian.rng_seed() = 41
-        # force2: brownian.rng_counter() = 1, brownian.rng_seed() = 41
+        # force1: brownian.rng_counter() = 1, brownian.rng_seed() = 41
+        # force2: brownian.rng_counter() = 2, brownian.rng_seed() = 41
         p = reset_particle()
         system.thermostat.set_stokesian(kT=kT, seed=41)
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.stokesian.seed, 41)
+        self.assertEqual(system.thermostat.stokesian.philox_counter, 2)
         force2 = np.copy(p.pos) / pos2force
         self.assertTrue(np.all(np.not_equal(force2, force1)))
 
         # Seed offset should not give the same force with a lag
-        # force3: brownian.rng_counter() = 2, brownian.rng_seed() = 42
-        # force4: brownian.rng_counter() = 3, brownian.rng_seed() = 41
+        # force3: brownian.rng_counter() = 3, brownian.rng_seed() = 42
+        # force4: brownian.rng_counter() = 4, brownian.rng_seed() = 41
         p = reset_particle()
         system.thermostat.set_stokesian(kT=kT, seed=42)
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.stokesian.seed, 42)
+        self.assertEqual(system.thermostat.stokesian.philox_counter, 3)
         force3 = np.copy(p.pos) / pos2force
         p = reset_particle()
         system.thermostat.set_stokesian(kT=kT, seed=41)
         system.integrator.run(1)
+        self.assertEqual(system.thermostat.stokesian.seed, 41)
+        self.assertEqual(system.thermostat.stokesian.philox_counter, 4)
         force4 = np.copy(p.pos) / pos2force
         self.assertTrue(np.all(np.not_equal(force3, force4)))
 

@@ -74,6 +74,7 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
 /**
  * @brief Get real particle tracked by a virtual site.
  *
+ * @param cell_structure Cell structure.
  * @param p Virtual site.
  * @return Pointer to real particle.
  */

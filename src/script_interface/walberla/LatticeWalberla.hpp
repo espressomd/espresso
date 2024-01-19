@@ -57,7 +57,7 @@ public:
   }
 
   void do_construct(VariantMap const &args) override {
-    auto const &box_geo = *System::get_system().box_geo;
+    auto const &box_geo = *::System::get_system().box_geo;
     m_agrid = get_value<double>(args, "agrid");
     m_box_l = get_value_or<Utils::Vector3d>(args, "_box_l", box_geo.length());
     auto const n_ghost_layers = get_value<int>(args, "n_ghost_layers");
