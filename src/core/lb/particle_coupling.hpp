@@ -32,7 +32,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <cassert>
 #include <cmath>
 #include <unordered_set>
 #include <vector>
@@ -93,17 +92,16 @@ class ParticleCoupling {
 public:
   ParticleCoupling(LBThermostat const &thermostat, LB::Solver &lb,
                    BoxGeometry const &box_geo, LocalBox const &local_box,
-                   double time_step, double kT = -1.)
+                   double time_step)
       : m_thermostat{thermostat}, m_lb{lb}, m_box_geo{box_geo},
         m_local_box{local_box}, m_time_step{time_step} {
-    assert(kT >= 0. or kT == -1.);
     /* Eq. (16) @cite ahlrichs99a, without the gamma term.
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * The time step comes from the discretization.
      */
     auto constexpr variance_inv = 12.;
-    kT = (kT >= 0.) ? kT : lb.get_kT() * Utils::sqr(lb.get_lattice_speed());
+    auto const kT = lb.get_kT() * Utils::sqr(lb.get_lattice_speed());
     m_thermalized = (kT != 0.);
     m_noise_pref_wo_gamma = std::sqrt(variance_inv * 2. * kT / time_step);
   }

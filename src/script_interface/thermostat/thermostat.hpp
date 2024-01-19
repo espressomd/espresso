@@ -146,9 +146,9 @@ protected:
 #ifdef PARTICLE_ANISOTROPY
           static_assert(std::is_same_v<T, Utils::Vector3d>);
           T gamma{};
-          try {
+          if (is_type<int>(v) or is_type<double>(v)) {
             gamma = T::broadcast(get_value<double>(v));
-          } catch (...) {
+          } else {
             gamma = get_value<T>(v);
           }
 #else

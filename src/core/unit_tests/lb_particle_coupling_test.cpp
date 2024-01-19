@@ -175,12 +175,13 @@ BOOST_AUTO_TEST_CASE(rng) {
   auto &thermostat = *espresso::system->thermostat->lb;
   auto const &box_geo = *espresso::system->box_geo;
   auto const &local_box = *espresso::system->local_geo;
+  auto const tau = params.time_step;
   thermostat.rng_initialize(17u);
   thermostat.set_rng_counter(11ul);
   thermostat.gamma = 0.2;
+  espresso::set_lb_kT(1.);
 
-  LB::ParticleCoupling coupling{thermostat,       lb, box_geo, local_box,
-                                params.time_step, 1.};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box, tau};
   BOOST_CHECK_EQUAL(thermostat.rng_seed(), 17u);
   BOOST_CHECK_EQUAL(thermostat.rng_counter(), 11ul);
   BOOST_CHECK(not thermostat.is_seed_required());
@@ -206,8 +207,9 @@ BOOST_AUTO_TEST_CASE(rng) {
   BOOST_CHECK(step1_random1 != step2_random1);
   BOOST_CHECK(step1_random1 != step2_random2);
 
-  LB::ParticleCoupling coupling_unthermalized{
-      thermostat, lb, box_geo, local_box, params.time_step, 0.};
+  espresso::set_lb_kT(0.);
+  LB::ParticleCoupling coupling_unthermalized{thermostat, lb, box_geo,
+                                              local_box, tau};
   auto const step3_norandom =
       coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
