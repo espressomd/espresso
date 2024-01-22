@@ -28,9 +28,9 @@ add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
 add_test(convert ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${CMAKE_CURRENT_BINARY_DIR}/test_convert.py)
-set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP
-                                                  IMPORTLIB_WRAPPER)
-set_tests_properties(convert PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER)
+set_tests_properties(
+  importlib_wrapper convert PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER
+                                       SKIP_RETURN_CODE 5)
 set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER}
     PARENT_SCOPE)
 configure_file(../importlib_wrapper.py

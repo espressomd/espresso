@@ -39,9 +39,9 @@ macro(PYTHON_SCRIPTS_TEST)
   string(REGEX REPLACE "^test_" "${TEST_TYPE}_" TEST_NAME ${TEST_NAME})
   add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
            ${TEST_FILE_CONFIGURED})
-  set_tests_properties(${TEST_NAME} PROPERTIES FIXTURES_REQUIRED
-                                               IMPORTLIB_WRAPPER)
-  set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
+  set_tests_properties(
+    ${TEST_NAME} PROPERTIES FIXTURES_REQUIRED IMPORTLIB_WRAPPER
+                            SKIP_RETURN_CODE 5 LABELS "${TEST_LABELS}")
   if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
