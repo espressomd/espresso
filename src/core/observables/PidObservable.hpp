@@ -47,7 +47,7 @@ namespace Observables {
 using ParticleReferenceRange =
     std::vector<std::reference_wrapper<Particle const>>;
 
-/** %Particle-based observable.
+/** Particle-based observable.
  *
  *  Base class for observables extracting raw data from particle subsets and
  *  returning either the data or a statistic derived from it.
@@ -188,8 +188,8 @@ get_all_particle_positions(boost::mpi::communicator const &comm,
  * implements necessary algorithms needed for observables that are based on
  * single particle properties.
  * @tparam ObsType An observables composed of an algorithm from
- * src/particle_observables/include/particle_observables/algorithms.hpp and two
- * particle properties.
+ * @ref src/particle_observables/include/particle_observables/algorithms.hpp
+ * and two particle properties.
  *
  *  Example usage:
  *  @code{.cpp}

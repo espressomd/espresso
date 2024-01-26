@@ -26,6 +26,7 @@
 #include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "PropagationPredicate.hpp"
+#include "thermostat.hpp"
 
 struct PropagationPredicateNPT {
   int modes;
@@ -41,6 +42,10 @@ struct PropagationPredicateNPT {
 
 using ParticleRangeNPT = ParticleRangeFiltered<PropagationPredicateNPT>;
 
+namespace System {
+class System;
+}
+
 /** Special propagator for NpT isotropic.
  *  Propagate the velocities and positions. Integration steps before force
  *  calculation of the Velocity Verlet integrator:
@@ -51,7 +56,8 @@ using ParticleRangeNPT = ParticleRangeFiltered<PropagationPredicateNPT>;
  *  positions and velocities and check Verlet list criterion (only NpT).
  */
 void velocity_verlet_npt_step_1(ParticleRangeNPT const &particles,
-                                double time_step);
+                                IsotropicNptThermostat const &npt_iso,
+                                double time_step, System::System &system);
 
 /** Final integration step of the Velocity Verlet+NpT integrator.
  *  Finalize instantaneous pressure calculation:
@@ -59,6 +65,7 @@ void velocity_verlet_npt_step_1(ParticleRangeNPT const &particles,
  *      + 0.5 \Delta t \cdot F(t+\Delta t)/m \f]
  */
 void velocity_verlet_npt_step_2(ParticleRangeNPT const &particles,
+                                IsotropicNptThermostat const &npt_iso,
                                 double time_step);
 
 #endif // NPT

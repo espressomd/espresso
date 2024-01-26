@@ -24,7 +24,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "constraints.hpp"
 #include "energy_inline.hpp"
-#include "global_ghost_flags.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
@@ -115,7 +114,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 
 double System::particle_short_range_energy_contribution(int pid) {
   if (cell_structure->get_resort_particles()) {
-    cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
+    cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   }
 
   auto ret = 0.0;

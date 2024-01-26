@@ -19,13 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THERMALIZED_DIST_KERNEL_H
-#define THERMALIZED_DIST_KERNEL_H
+#pragma once
 
 #include "thermalized_bond.hpp"
 
 #include "Particle.hpp"
 #include "random.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -38,7 +38,7 @@
 /** Separately thermalizes the com and distance of a particle pair.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  *  @return the forces on @p p1 and @p p2
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
@@ -55,8 +55,9 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
   auto const sqrt_mass_red = sqrt(p1.mass() * p2.mass() / mass_tot);
   auto const com_vel = mass_tot_inv * (p1.mass() * p1.v() + p2.mass() * p2.v());
   auto const dist_vel = p2.v() - p1.v();
+  auto const &thermalized_bond =
+      *::System::get_system().thermostat->thermalized_bond;
 
-  extern ThermalizedBondThermostat thermalized_bond;
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
   auto const noise = Random::noise_uniform<RNGSalt::THERMALIZED_BOND>(
@@ -88,5 +89,3 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
 
   return std::make_tuple(force1, force2);
 }
-
-#endif

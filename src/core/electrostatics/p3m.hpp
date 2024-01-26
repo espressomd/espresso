@@ -99,10 +99,6 @@ public:
 
   bool is_tuned() const { return m_is_tuned; }
 
-  /** Compute the k-space part of forces and energies. */
-  double kernel(bool force_flag, bool energy_flag,
-                ParticleRange const &particles);
-
   /** @brief Recalculate all derived parameters. */
   void init();
   void on_activation() {
@@ -172,8 +168,8 @@ public:
   /**
    * @brief Assign a single charge into the current charge grid.
    *
-   * @param[in] q          %Particle charge
-   * @param[in] real_pos   %Particle position in real space
+   * @param[in] q          Particle charge
+   * @param[in] real_pos   Particle position in real space
    * @param[out] inter_weights Cached interpolation weights to be used.
    */
   void assign_charge(double q, Utils::Vector3d const &real_pos,

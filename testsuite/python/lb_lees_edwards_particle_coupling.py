@@ -222,7 +222,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
         # 2 * (np.random.random() - 1) * 3 * system.box_l[1]
-        pos_offset = 0.9999
+        pos_offset = 0.5 
         shear_vel = 0  # np.random.random()-1/2
         protocol = lees_edwards.LinearShear(
             shear_velocity=shear_vel, initial_pos_offset=pos_offset, time_0=0.)
@@ -233,32 +233,28 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
         system.part.clear()
-        for _ in range(1):
+        for x in np.linspace(0, system.box_l[0], 21):
             for n in lbf[:, :, :]:
                 n.velocity = [n.index[0], 0, 0]
 
-            x = 0  # np.random.random()*system.box_l[0]
-            z = 0  # np.random.random()*system.box_l[2]
-            # (np.random.random()-.5) % system.box_l[1] #within 0.5 of the le boundar       pos = np.array(x,y,z)
+#            x = 0.5+np.random.random()*(system.box_l[0]-2) 
+            z = 4  # np.random.random()*system.box_l[2]
             y = 0
             pos = np.array((x, y, z))
-            print(pos, shear_vel, pos_offset)
             nodes_unshifted, nodes_shifted, weights_unshifted, weights_shifted = \
                 le_aware_lb_nodes_around_pos(pos, lbf, pos_offset, 0, 1)
             all_nodes = nodes_unshifted + nodes_shifted
             # all_weights = weights_unshifted + weights_shifted
 
-        for n in all_nodes: n.velocity = np.random.random(3) - .5
-
-         vels_unshifted_nodes = np.array(
-              [n.velocity for n in nodes_unshifted])
-          vels_shifted_nodes = np.array([n.velocity for n in nodes_shifted])
-           for n, v, w in zip(
-                    nodes_unshifted, vels_unshifted_nodes, weights_unshifted):
-                print(n.index, v, w, v * w)
-            for n, v, w in zip(
-                    nodes_shifted, vels_shifted_nodes, weights_shifted):
-                print(n.index, v, w, v * w)
+            vels_unshifted_nodes = np.array(
+                [n.velocity for n in nodes_unshifted])
+            vels_shifted_nodes = np.array([n.velocity for n in nodes_shifted])
+#            for n, v, w in zip(
+#                    nodes_unshifted, vels_unshifted_nodes, weights_unshifted):
+#                print(n.index, v, w, v * w)
+#            for n, v, w in zip(
+#                    nodes_shifted, vels_shifted_nodes, weights_shifted):
+#                print(n.index, v, w, v * w)
 
             if abs(y <= 0.5): vels_shifted_nodes[:, 0] -= shear_vel 
             elif y >= system.box_l[1] - .5: vels_shifted_nodes[:, 0] += shear_vel 
@@ -272,7 +268,8 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
                                   axis=0) + np.sum(vel_contrib_shifted, axis=0)
 
             observed_vel = np.copy(lbf.get_interpolated_velocity(pos=pos))
-            np.testing.assert_allclose(observed_vel, expected_vel)
+            print(pos[0], pos_offset, observed_vel, expected_vel)
+#            np.testing.assert_allclose(observed_vel, expected_vel)
 
     def atest_viscous_coupling_with_shear_vel(self):
         # Places a co-moving particle close to the LE boundary

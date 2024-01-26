@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_COUNTER_HPP
-#define UTILS_COUNTER_HPP
+
+#pragma once
 
 #include <boost/serialization/access.hpp>
 
@@ -44,4 +44,3 @@ public:
   T initial_value() const { return m_initial; }
 };
 } // namespace Utils
-#endif // UTILS_COUNTER_HPP

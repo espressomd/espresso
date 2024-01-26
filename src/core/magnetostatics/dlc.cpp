@@ -106,7 +106,7 @@ static Utils::Vector3d calc_slab_dipole(ParticleRange const &particles) {
 
 /**
  * @brief Compute the dipolar force and torque corrections.
- * %Algorithm implemented accordingly to @cite brodka04a.
+ * Algorithm implemented accordingly to @cite brodka04a.
  */
 static void dipolar_force_corrections(int kcut,
                                       std::vector<Utils::Vector3d> &fs,
@@ -242,7 +242,7 @@ static void dipolar_force_corrections(int kcut,
 
 /**
  * @brief Compute the dipolar DLC energy correction.
- * %Algorithm implemented accordingly to @cite brodka04a.
+ * Algorithm implemented accordingly to @cite brodka04a.
  */
 static double dipolar_energy_correction(int kcut,
                                         ParticleRange const &particles,

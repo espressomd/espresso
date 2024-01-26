@@ -45,6 +45,7 @@
 #include "script_interface/integrators/IntegratorHandle.hpp"
 #include "script_interface/lees_edwards/LeesEdwards.hpp"
 #include "script_interface/magnetostatics/Container.hpp"
+#include "script_interface/thermostat/thermostat.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/vec_rotate.hpp>
@@ -72,6 +73,7 @@ struct System::Leaves {
   Leaves() = default;
   std::shared_ptr<CellSystem::CellSystem> cell_system;
   std::shared_ptr<Integrators::IntegratorHandle> integrator;
+  std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<Analysis::Analysis> analysis;
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
@@ -143,6 +145,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   });
   add_parameter("cell_system", &Leaves::cell_system);
   add_parameter("integrator", &Leaves::integrator);
+  add_parameter("thermostat", &Leaves::thermostat);
   add_parameter("analysis", &Leaves::analysis);
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);

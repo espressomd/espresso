@@ -41,6 +41,104 @@ class LBThermostatCommon:
         self.system.thermostat.turn_off()
         self.system.part.clear()
 
+    def test_01__rng(self):
+        """Test for RNG consistency."""
+
+        system = self.system
+        system.time_step = 0.01
+        kT = 1.1
+        gamma = 3.5
+
+        def reset_fluid():
+            lb_fluid = self.lb_class(agrid=1., tau=0.01, density=1., kT=kT,
+                                     kinematic_viscosity=1., **self.lb_params)
+            self.system.lb = lb_fluid
+            return lb_fluid
+
+        def reset_particle():
+            self.system.part.clear()
+            return system.part.add(pos=[0, 0, 0])
+
+        self.assertIsNone(system.thermostat.kT)
+        self.assertFalse(system.thermostat.lb.is_active)
+
+        lb_fluid = reset_fluid()
+        system.thermostat.set_lb(LB_fluid=lb_fluid, gamma=gamma, seed=41)
+        system.thermostat.lb.call_method("override_philox_counter", counter=0)
+        system.integrator.set_vv()
+
+        self.assertIsNotNone(system.thermostat.kT)
+        self.assertTrue(system.thermostat.lb.is_active)
+        np.testing.assert_almost_equal(system.thermostat.kT, kT)
+        np.testing.assert_almost_equal(
+            np.copy(system.thermostat.lb.gamma), gamma)
+
+        # run(0) does not increase the philox counter and should give the same
+        # force
+        p = reset_particle()
+        system.integrator.run(0, recalc_forces=True)
+        force0 = np.copy(p.f)
+        p = reset_particle()
+        system.integrator.run(0, recalc_forces=True)
+        force1 = np.copy(p.f)
+        np.testing.assert_almost_equal(force0, force1)
+        np.testing.assert_almost_equal(force0, [0., 0., 0.])
+
+        # run(1) should give a different force
+        p = reset_particle()
+        system.integrator.run(1)
+        self.assertEqual(system.thermostat.lb.seed, 41)
+        self.assertEqual(system.thermostat.lb.philox_counter, 1)
+        force2 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force1, force2)))
+
+        # Different seed should give a different force with same counter state
+        # force2: lb.rng_counter() = 2, lb.rng_seed() = 41
+        # force3: lb.rng_counter() = 2, lb.rng_seed() = 42
+        reset_fluid()
+        p = reset_particle()
+        system.integrator.run(1)
+        self.assertEqual(system.thermostat.lb.seed, 41)
+        self.assertEqual(system.thermostat.lb.philox_counter, 2)
+        force2 = np.copy(p.f)
+        lb_fluid = reset_fluid()
+        system.thermostat.set_lb(LB_fluid=lb_fluid, gamma=gamma, seed=42)
+        system.thermostat.lb.call_method("override_philox_counter", counter=1)
+        system.integrator.run(1)
+        self.assertEqual(system.thermostat.lb.seed, 42)
+        self.assertEqual(system.thermostat.lb.philox_counter, 2)
+        force3 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force2, force3)))
+
+        # Same seed should not give the same force with different counter state
+        # force3: lb.rng_counter() = 2, lb.rng_seed() = 42
+        # force4: lb.rng_counter() = 3, lb.rng_seed() = 42
+        lb_fluid = reset_fluid()
+        p = reset_particle()
+        system.thermostat.set_lb(LB_fluid=lb_fluid, gamma=gamma, seed=42)
+        system.integrator.run(1)
+        self.assertEqual(system.thermostat.lb.seed, 42)
+        self.assertEqual(system.thermostat.lb.philox_counter, 3)
+        force4 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force3, force4)))
+
+        # Seed offset should not give the same force with a lag
+        # force4: lb.rng_counter() = 3, lb.rng_seed() = 42
+        # force5: lb.rng_counter() = 4, lb.rng_seed() = 41
+        lb_fluid = reset_fluid()
+        reset_particle()
+        system.thermostat.set_lb(
+            LB_fluid=lb_fluid, kT=kT, gamma=gamma, seed=41)
+        system.integrator.run(1)
+        self.assertEqual(system.thermostat.lb.seed, 41)
+        self.assertEqual(system.thermostat.lb.philox_counter, 4)
+        force5 = np.copy(p.f)
+        self.assertTrue(np.all(np.not_equal(force4, force5)))
+
+        self.system.thermostat.turn_off()
+        self.assertFalse(system.thermostat.langevin.is_active)
+        self.assertIsNone(system.thermostat.kT)
+
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE",
                                 "VIRTUAL_SITES_INERTIALESS_TRACERS"])
     def test_virtual_sites_relative(self):
@@ -118,12 +216,12 @@ class LBThermostatCommon:
                 ref_vel = v0
                 ref_pos = r0
             if (p.propagation & (Propagation.SYSTEM_DEFAULT |
-                                 Propagation.ROT_EULER)):
-                ref_rot = o0 + p.ext_torque / p.rinertia * t
-            elif p.propagation & Propagation.ROT_LANGEVIN:
+                                 Propagation.ROT_LANGEVIN)):
                 friction = np.exp(-gamma_rot / p.rinertia * t)
                 o_term = p.ext_torque / gamma_rot
                 ref_rot = o_term + (o0 - o_term) * friction
+            elif p.propagation & Propagation.ROT_EULER:
+                ref_rot = o0 + p.ext_torque / p.rinertia * t
             else:
                 ref_rot = o0
             return np.copy(ref_pos), np.copy(ref_vel), np.copy(ref_rot)

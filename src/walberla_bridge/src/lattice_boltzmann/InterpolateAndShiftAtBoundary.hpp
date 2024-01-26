@@ -120,6 +120,7 @@ private:
         ((slab_dir == m_slab_max) ? FloatType{-1} : FloatType{1});
     auto const offset = get_pos_offset() * prefactor;
     auto const folded_offset = python_modulo(offset, length);
+    // 0<=folded_offset<length
     auto const weight1 = 1 - std::fmod(folded_offset, FloatType{1});
     auto const weight2 = std::fmod(folded_offset, FloatType{1});
     for (auto const &&cell : ci) {
@@ -135,10 +136,9 @@ private:
         };
         return x;
       };
-      source1[dir] =
-          cell_idx_c(std::floor(ghost_fold(target_idx + folded_offset)));
-      source2[dir] =
-          cell_idx_c(std::floor(ghost_fold(target_idx + folded_offset + 1)));
+      auto const source_pos = target_idx + folded_offset;
+      source1[dir] = cell_idx_c(ghost_fold(std::floor(source_pos)));
+      source2[dir] = cell_idx_c(ghost_fold(std::floor(source_pos + 1)));
 
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
         tmp_field->get(cell, q) =

@@ -33,7 +33,7 @@ public:
   /** If true, forces will be recalculated before the next integration. */
   bool recalc_forces = true;
 
-  void update_default_propagation();
+  void update_default_propagation(int thermo_switch);
 
   template <typename Particle>
   bool should_propagate_with(Particle const &p, int mode) const {

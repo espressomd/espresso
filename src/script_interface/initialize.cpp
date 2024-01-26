@@ -45,6 +45,7 @@
 #include "reaction_methods/initialize.hpp"
 #include "shapes/initialize.hpp"
 #include "system/initialize.hpp"
+#include "thermostat/initialize.hpp"
 #include "walberla/initialize.hpp"
 
 namespace ScriptInterface {
@@ -71,6 +72,7 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   Profiler::initialize(f);
   Shapes::initialize(f);
   System::initialize(f);
+  Thermostat::initialize(f);
   ReactionMethods::initialize(f);
 #ifdef H5MD
   Writer::initialize(f);

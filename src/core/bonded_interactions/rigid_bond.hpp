@@ -18,21 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef RIGID_BOND_HPP
-#define RIGID_BOND_HPP
+
+#pragma once
+
 /** \file
- *  Definition of the rigid bond data type. It is utilized by the
- *  Rattle algorithm.
- *
- *  Implementation in \ref rigid_bond.cpp.
+ *  Definition of the rigid bond data type for the Rattle algorithm.
  */
 
 #include <utils/Vector.hpp>
 
 #include <cmath>
-
-/** Number of rigid bonds. */
-extern int n_rigidbonds;
 
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
 struct RigidBond {
@@ -51,7 +46,11 @@ struct RigidBond {
 
   static constexpr int num = 1;
 
-  RigidBond(double d, double p_tol, double v_tol);
+  RigidBond(double d, double p_tol, double v_tol) {
+    this->d2 = d * d;
+    this->p_tol = 2.0 * p_tol;
+    this->v_tol = v_tol;
+  }
 
 private:
   friend boost::serialization::access;
@@ -62,5 +61,3 @@ private:
     ar &v_tol;
   }
 };
-
-#endif

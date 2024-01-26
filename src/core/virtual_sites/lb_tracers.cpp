@@ -21,44 +21,37 @@
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "BoxGeometry.hpp"
-#include "PropagationMode.hpp"
+#include "LocalBox.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
+#include "lb/Solver.hpp"
 #include "lb/particle_coupling.hpp"
-#include "system/System.hpp"
 
-struct DeferredActiveLBChecks {
-  DeferredActiveLBChecks() {
-    auto const &lb = System::get_system().lb;
-    m_value = lb.is_solver_set();
-  }
-  auto operator()() const { return m_value; }
-  bool m_value;
-};
-
-static bool lb_active_check(DeferredActiveLBChecks const &check) {
-  if (not check()) {
+static bool lb_sanity_checks(LB::Solver const &lb) {
+  if (not lb.is_solver_set()) {
     runtimeErrorMsg() << "LB needs to be active for inertialess tracers.";
-    return false;
+    return true;
   }
-  return true;
+  return false;
 }
 
 void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
-                                            double time_step) {
-  DeferredActiveLBChecks check_lb_solver_set{};
-  auto &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
-  auto const agrid = (check_lb_solver_set()) ? system.lb.get_agrid() : 0.;
-  auto const to_lb_units = (check_lb_solver_set()) ? 1. / agrid : 0.;
+                                            BoxGeometry const &box_geo,
+                                            LocalBox const &local_box,
+                                            LB::Solver &lb, double time_step) {
+  if (lb_sanity_checks(lb)) {
+    return;
+  }
+  auto const agrid = lb.get_agrid();
+  auto const to_lb_units = 1. / agrid;
 
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
   cell_structure.update_ghosts_and_resort_particle(Cells::DATA_PART_FORCE);
 
   // Keep track of ghost particles (ids) that have already been coupled
-  LB::CouplingBookkeeping bookkeeping{};
+  LB::CouplingBookkeeping bookkeeping{cell_structure};
   // Apply particle forces to the LB fluid at particle positions.
   // For physical particles, also set particle velocity = fluid velocity.
   for (auto const &particle_range :
@@ -66,12 +59,10 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
     for (auto const &p : particle_range) {
       if (!LB::is_tracer(p))
         continue;
-      if (!lb_active_check(check_lb_solver_set)) {
-        return;
-      }
       if (bookkeeping.should_be_coupled(p)) {
-        for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
-          add_md_force(system.lb, pos * to_lb_units, p.force(), time_step);
+        for (auto const &pos :
+             positions_in_halo(p.pos(), box_geo, local_box, agrid)) {
+          add_md_force(lb, pos * to_lb_units, p.force(), time_step);
         }
       }
     }
@@ -81,10 +72,11 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
   init_forces_ghosts(cell_structure.ghost_particles());
 }
 
-void lb_tracers_propagate(CellStructure &cell_structure, double time_step) {
-  DeferredActiveLBChecks check_lb_solver_set{};
-  auto &system = System::get_system();
-  auto const &lb = system.lb;
+void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
+                          double time_step) {
+  if (lb_sanity_checks(lb)) {
+    return;
+  }
   auto const verlet_skin = cell_structure.get_verlet_skin();
   auto const verlet_skin_sq = verlet_skin * verlet_skin;
 
@@ -92,9 +84,6 @@ void lb_tracers_propagate(CellStructure &cell_structure, double time_step) {
   for (auto &p : cell_structure.local_particles()) {
     if (!LB::is_tracer(p))
       continue;
-    if (!lb_active_check(check_lb_solver_set)) {
-      return;
-    }
     p.v() = lb.get_coupling_interpolated_velocity(p.pos());
     for (unsigned int i = 0u; i < 3u; i++) {
       if (!p.is_fixed_along(i)) {

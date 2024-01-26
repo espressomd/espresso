@@ -71,8 +71,6 @@ BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 
 static StokesianDynamicsParameters params{0., {}, 0};
 
-static double sd_kT = 0.0;
-
 /** Buffer that holds the (translational and angular) velocities of the local
  *  particles on each node, used for returning results. */
 static std::vector<double> v_sd{};
@@ -127,18 +125,9 @@ StokesianDynamicsParameters::StokesianDynamicsParameters(
   }
 }
 
-void set_sd_kT(double kT) {
-  if (kT < 0.0) {
-    throw std::domain_error("kT has an invalid value: " + std::to_string(kT));
-  }
-
-  sd_kT = kT;
-}
-
-double get_sd_kT() { return sd_kT; }
-
 void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
-                          double const time_step) {
+                          StokesianThermostat const &stokesian,
+                          double const time_step, double const kT) {
 
   static std::vector<SD_particle_data> parts_buffer{};
 
@@ -184,7 +173,7 @@ void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
     }
 
     v_sd = sd_cpu(x_host, f_host, a_host, n_part, params.viscosity,
-                  std::sqrt(sd_kT / time_step),
+                  std::sqrt(kT / time_step),
                   static_cast<std::size_t>(stokesian.rng_counter()),
                   static_cast<std::size_t>(stokesian.rng_seed()), params.flags);
   } else { // if (this_node == 0)

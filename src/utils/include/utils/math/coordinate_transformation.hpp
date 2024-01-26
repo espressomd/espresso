@@ -66,7 +66,7 @@ inline Vector3d basis_change(Vector3d const &b1, Vector3d const &b2,
  * The origins and z-axis of the coordinate systems co-incide.
  * The @f$ \phi = 0 @f$ direction corresponds to the x-axis in the
  * original coordinate system.
- * @param pos    %Vector to transform
+ * @param pos    Vector to transform
  */
 inline Vector3d
 transform_coordinate_cartesian_to_cylinder(Vector3d const &pos) {
@@ -85,7 +85,7 @@ transform_coordinate_cartesian_to_cylinder(Vector3d const &pos) {
  * in Cartesian coordinates that will be used as the reference point
  * (i.e. such that @f$ \phi = 0 @f$), by default it is the x-axis.
  *
- * @param pos    %Vector to transform
+ * @param pos    Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
  * @param orientation   Reference point (in untransformed coordinates) for
  *                      which @f$ \phi = 0 @f$
@@ -105,7 +105,7 @@ inline Vector3d transform_coordinate_cartesian_to_cylinder(
  * The origins and z-axis of the coordinate systems co-incide.
  * The @f$ \phi = 0 @f$ direction corresponds to the x-axis in the
  * transformed coordinate system.
- * @param pos    %Vector to transform
+ * @param pos    Vector to transform
  */
 inline Vector3d
 transform_coordinate_cylinder_to_cartesian(Vector3d const &pos) {
@@ -125,7 +125,7 @@ transform_coordinate_cylinder_to_cartesian(Vector3d const &pos) {
  * in Cartesian coordinates that will be used as the reference point
  * (i.e. such that @f$ \phi = 0 @f$).
  *
- * @param pos    %Vector to transform
+ * @param pos    Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
  * @param orientation   Reference point (in Cartesian coordinates) for
  *                      which @f$ \phi = 0 @f$
@@ -142,7 +142,7 @@ inline Vector3d transform_coordinate_cylinder_to_cartesian(
 
 /**
  * @brief Vector transformation from Cartesian to cylindrical coordinates.
- * @param vec    %Vector to transform
+ * @param vec    Vector to transform
  * @param axis   Longitudinal axis of the cylindrical coordinates
  * @param pos    Origin of the vector
  */

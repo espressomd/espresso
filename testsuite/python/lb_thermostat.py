@@ -63,13 +63,15 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
     # relaxation time 0.2 sim time units
     partcl_mass = 0.2 * partcl_gamma
 
-    np.random.seed(41)
-
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.lb = self.lbf
+        # make test results independent of execution order
+        np.random.seed(41)
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf, seed=5, gamma=self.global_gamma)
+        self.system.thermostat.lb.call_method(
+            "override_philox_counter", counter=0)
 
     def tearDown(self):
         self.system.lb = None

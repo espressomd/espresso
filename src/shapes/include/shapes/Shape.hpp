@@ -55,8 +55,8 @@ public:
   /**
    * @brief Rasterize a shape on a regular grid.
    * @param grid_size     Number of grid points in every direction.
-   * @param grid_spacing  %Lattice distance.
-   * @param grid_offset   %Lattice offset.
+   * @param grid_spacing  Lattice distance.
+   * @param grid_offset   Lattice offset.
    * @return Flattened 3D matrix with 1's inside the shape and 0's outside.
    */
   std::vector<int> rasterize(Utils::Vector3i const &grid_size,

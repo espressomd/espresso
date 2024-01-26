@@ -26,7 +26,6 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
-#include "global_ghost_flags.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/sendrecv.hpp>
@@ -36,12 +35,14 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <iterator>
 #include <set>
 #include <utility>
 
 HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
                                          double cutoff_regular, double skin,
+                                         std::function<bool()> get_ghost_flags,
                                          BoxGeometry const &box_geo,
                                          LocalBox const &local_box,
                                          std::set<int> n_square_types)
@@ -49,7 +50,8 @@ HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
       m_regular_decomposition(RegularDecomposition(
           m_comm, cutoff_regular + skin, m_box, local_box)),
       m_n_square(AtomDecomposition(m_comm, m_box)),
-      m_n_square_types(std::move(n_square_types)) {
+      m_n_square_types(std::move(n_square_types)),
+      m_get_global_ghost_flags(std::move(get_ghost_flags)) {
 
   /* Vector containing cells of both child decompositions */
   m_local_cells = m_regular_decomposition.get_local_cells();
@@ -155,11 +157,11 @@ void HybridDecomposition::resort(bool global,
   m_n_square.resort(global, diff);
 
   /* basically do CellStructure::ghost_count() */
-  ghost_communicator(exchange_ghosts_comm(), GHOSTTRANS_PARTNUM);
+  ghost_communicator(exchange_ghosts_comm(), m_box, GHOSTTRANS_PARTNUM);
 
   /* basically do CellStructure::ghost_update(unsigned data_parts) */
-  ghost_communicator(exchange_ghosts_comm(),
-                     map_data_parts(global_ghost_flags()));
+  ghost_communicator(exchange_ghosts_comm(), m_box,
+                     map_data_parts(m_get_global_ghost_flags()));
 }
 
 std::size_t HybridDecomposition::count_particles(

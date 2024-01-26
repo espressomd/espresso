@@ -100,9 +100,9 @@ private:
 /** Compute the OIF local forces.
  *  See @cite dupin07a, @cite jancigova16a.
  *  @param box_geo      Box geometry.
- *  @param p2           %Particle of triangle 1.
+ *  @param p2           Particle of triangle 1.
  *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
- *  @param p4           %Particle of triangle 2.
+ *  @param p4           Particle of triangle 2.
  *  @return forces on @p p1, @p p2, @p p3, @p p4
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,

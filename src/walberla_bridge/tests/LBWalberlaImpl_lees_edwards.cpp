@@ -125,22 +125,55 @@ BOOST_AUTO_TEST_CASE(test_interpolation_force) {
   BOOST_CHECK_SMALL((laf - f1).norm(), 1E-10);
 }
 
+int fold(int i, int size) {
+  while (i < 0)
+    i += size;
+  while (i >= size)
+    i -= size;
+  return i;
+}
+
+std::vector<Utils::Vector3i>
+get_mirroring_xz_ghosts(const Utils::Vector3i &n, const Utils::Vector3i shape) {
+  std::vector<Utils::Vector3i> res;
+  for (int dx : {-shape[0], 0, shape[0]}) {
+    for (int dz : {-shape[2], 0, shape[2]}) {
+      if (dx == 0 and dz == 0)
+        continue;
+      auto shifted = Utils::Vector3i{n[0] + dx, n[1], n[2] + dz};
+      if (shifted[0] == -1 or shifted[0] == shape[0] or shifted[2] == -1 or
+          shifted[2] == shape[2]) {
+        res.push_back(shifted);
+      }
+    }
+  }
+  return res;
+}
+
 BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
   auto const offset = 2;
   auto lb = setup_lb_with_offset(offset);
   auto const shape = lb->get_lattice().get_grid_dimensions();
-  auto const xz = shape[0] / 2;
-  auto const y_max = shape[1] - 1;
+  for (int x = 0; x < shape[0]; x++) {
+    for (int z : {0, 3, shape[2] - 1}) {
+      auto const y_max = shape[1] - 1;
+      auto const v = Vector3d{0.3, -0.2, 0.3};
 
-  auto const source_node = Vector3i{xz, y_max, xz};
-  auto const v = Vector3d{0.3, -0.2, 0.3};
-  lb->set_node_velocity(source_node, v);
+      auto const source_node = Vector3i{x, y_max, z};
+      auto const ghost_node =
+          Vector3i{fold(source_node[0] - offset, shape[0]), -1, source_node[2]};
 
-  lb->ghost_communication();
+      lb->set_node_velocity(source_node, v);
+      lb->ghost_communication();
+      auto const ghost_vel = *(lb->get_node_velocity(ghost_node, true));
+      BOOST_CHECK_SMALL((ghost_vel - v).norm(), 1E-10);
 
-  auto const ghost_node = Vector3i{source_node[0] - offset, -1, source_node[2]};
-  auto const ghost_vel = *(lb->get_node_velocity(ghost_node, true));
-  BOOST_CHECK_SMALL((ghost_vel - v).norm(), 1E-10);
+      for (auto const cell : get_mirroring_xz_ghosts(ghost_node, shape)) {
+        auto const ghost_vel = *(lb->get_node_velocity(ghost_node, true));
+        BOOST_CHECK_SMALL((ghost_vel - v).norm(), 1E-10);
+      }
+    }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(test_interpolation_pdf) {

@@ -34,7 +34,7 @@ namespace Observables {
  *  An observable extracts raw data from a system or compute a statistic based
  *  on the state of a system, and returns an array of doubles.
  *
- *  %Observables typically don't have setters or getters to access and modify
+ *  Observables typically don't have setters or getters to access and modify
  *  their member variables, and usually only have a default constructor with no
  *  argument. Each observable class has a corresponding interface in
  *  @ref ScriptInterface::Observables, where setters and getters are defined.

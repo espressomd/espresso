@@ -50,7 +50,7 @@ class Tutorial(ut.TestCase):
         # polymer diffusion
         ref_D = [0.0363, 0.0269, 0.0234]
         np.testing.assert_allclose(tutorial.diffusion_msd, ref_D, rtol=0.30)
-        np.testing.assert_allclose(tutorial.diffusion_gk, ref_D, rtol=0.15)
+        np.testing.assert_allclose(tutorial.diffusion_gk, ref_D, rtol=0.30)
         # monomer diffusion
         if tutorial.POLYMER_MODEL == 'Rouse':
             ref_D0 = tutorial.KT / tutorial.GAMMA

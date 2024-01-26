@@ -1,5 +1,5 @@
 # build system
-cython>=0.29.21,<3.0
+cython>=0.29.21,<=3.0.7
 setuptools>=59.6.0
 # required scientific packages
 numpy>=1.23

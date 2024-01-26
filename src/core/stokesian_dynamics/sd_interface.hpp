@@ -31,6 +31,7 @@
 #include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "PropagationPredicate.hpp"
+#include "thermostat.hpp"
 
 #include <unordered_map>
 
@@ -67,15 +68,13 @@ enum class sd_flags : int {
 
 void register_integrator(StokesianDynamicsParameters const &obj);
 
-void set_sd_kT(double kT);
-double get_sd_kT();
-
 /** Takes the forces and torques on all particles and computes their
  *  velocities. Acts globally on particles on all nodes; i.e. particle data
  *  is gathered from all nodes and their velocities and angular velocities are
  *  set according to the Stokesian Dynamics method.
  */
 void propagate_vel_pos_sd(ParticleRangeStokesian const &particles,
-                          double time_step);
+                          StokesianThermostat const &stokesian,
+                          double time_step, double kT);
 
 #endif // STOKESIAN_DYNAMICS

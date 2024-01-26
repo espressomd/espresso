@@ -39,6 +39,7 @@
 #include <boost/optional.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <set>
 #include <utility>
 #include <vector>
@@ -69,14 +70,17 @@ class HybridDecomposition : public ParticleDecomposition {
   /** Set containing the types that should be handled using n_square */
   std::set<int> const m_n_square_types;
 
+  std::function<bool()> m_get_global_ghost_flags;
+
   bool is_n_square_type(int type_id) const {
     return (m_n_square_types.find(type_id) != m_n_square_types.end());
   }
 
 public:
   HybridDecomposition(boost::mpi::communicator comm, double cutoff_regular,
-                      double skin, BoxGeometry const &box_geo,
-                      LocalBox const &local_box, std::set<int> n_square_types);
+                      double skin, std::function<bool()> get_ghost_flags,
+                      BoxGeometry const &box_geo, LocalBox const &local_box,
+                      std::set<int> n_square_types);
 
   auto get_cell_grid() const { return m_regular_decomposition.cell_grid; }
 

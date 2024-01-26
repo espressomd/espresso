@@ -45,6 +45,7 @@ static constexpr Utils::Vector3i nptgeom_dir{{1, 2, 4}};
 
 static void
 velocity_verlet_npt_propagate_vel_final(ParticleRangeNPT const &particles,
+                                        IsotropicNptThermostat const &npt_iso,
                                         double time_step) {
   nptiso.p_vel = {};
 
@@ -65,7 +66,9 @@ velocity_verlet_npt_propagate_vel_final(ParticleRangeNPT const &particles,
 }
 
 /** Scale and communicate instantaneous NpT pressure */
-static void velocity_verlet_npt_finalize_p_inst(double time_step) {
+static void
+velocity_verlet_npt_finalize_p_inst(IsotropicNptThermostat const &npt_iso,
+                                    double time_step) {
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
   for (unsigned int i = 0; i < 3; i++) {
@@ -84,17 +87,18 @@ static void velocity_verlet_npt_finalize_p_inst(double time_step) {
   }
 }
 
-static void velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
-                                              double time_step) {
+static void
+velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
+                                  IsotropicNptThermostat const &npt_iso,
+                                  double time_step, System::System &system) {
 
-  auto &system = System::get_system();
   auto &box_geo = *system.box_geo;
   auto &cell_structure = *system.cell_structure;
   Utils::Vector3d scal{};
   double L_new = 0.0;
 
   /* finalize derivation of p_inst */
-  velocity_verlet_npt_finalize_p_inst(time_step);
+  velocity_verlet_npt_finalize_p_inst(npt_iso, time_step);
 
   /* adjust \ref NptIsoParameters::nptiso.volume; prepare pos- and
    * vel-rescaling
@@ -158,8 +162,10 @@ static void velocity_verlet_npt_propagate_pos(ParticleRangeNPT const &particles,
   system.on_boxl_change(true);
 }
 
-static void velocity_verlet_npt_propagate_vel(ParticleRangeNPT const &particles,
-                                              double time_step) {
+static void
+velocity_verlet_npt_propagate_vel(ParticleRangeNPT const &particles,
+                                  IsotropicNptThermostat const &npt_iso,
+                                  double time_step) {
   nptiso.p_vel = {};
 
   for (auto &p : particles) {
@@ -179,15 +185,17 @@ static void velocity_verlet_npt_propagate_vel(ParticleRangeNPT const &particles,
 }
 
 void velocity_verlet_npt_step_1(ParticleRangeNPT const &particles,
-                                double time_step) {
-  velocity_verlet_npt_propagate_vel(particles, time_step);
-  velocity_verlet_npt_propagate_pos(particles, time_step);
+                                IsotropicNptThermostat const &npt_iso,
+                                double time_step, System::System &system) {
+  velocity_verlet_npt_propagate_vel(particles, npt_iso, time_step);
+  velocity_verlet_npt_propagate_pos(particles, npt_iso, time_step, system);
 }
 
 void velocity_verlet_npt_step_2(ParticleRangeNPT const &particles,
+                                IsotropicNptThermostat const &npt_iso,
                                 double time_step) {
-  velocity_verlet_npt_propagate_vel_final(particles, time_step);
-  velocity_verlet_npt_finalize_p_inst(time_step);
+  velocity_verlet_npt_propagate_vel_final(particles, npt_iso, time_step);
+  velocity_verlet_npt_finalize_p_inst(npt_iso, time_step);
 }
 
 #endif // NPT

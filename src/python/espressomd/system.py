@@ -38,8 +38,6 @@ from . import particle_data
 from . import thermostat
 
 from .code_features import has_features, assert_features
-from . import utils
-
 from .script_interface import script_interface_register, ScriptInterfaceHelper
 
 
@@ -152,16 +150,6 @@ class System(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = _System._so_bind_methods
 
-    def __setattr__(self, attr, value):
-        if attr == "periodicity":
-            utils.check_type_or_throw_except(
-                value, 3, bool, "Attribute 'periodicity' must be a list of 3 bools")
-        if attr == "box_l":
-            utils.check_type_or_throw_except(
-                value, 3, float, "Attribute 'box_l' must be a list of 3 floats")
-        super().__setattr__(attr, value)
-        utils.handle_errors(f"while assigning system parameter '{attr}'")
-
     def __init__(self, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
@@ -245,7 +233,6 @@ class System(ScriptInterfaceHelper):
             checkpointable_properties.append("collision_detection")
         if has_features("WALBERLA"):
             checkpointable_properties += ["_lb", "_ekcontainer"]
-        checkpointable_properties += ["thermostat"]
 
         odict = collections.OrderedDict()
         odict["_system_handle"] = self.call_method("get_system_handle")
@@ -429,14 +416,10 @@ class System(ScriptInterfaceHelper):
         if isinstance(p1, particle_data.ParticleHandle):
             pos1 = p1.pos_folded
         else:
-            utils.check_type_or_throw_except(
-                p1, 3, float, "p1 must be a particle or 3 floats")
             pos1 = p1
         if isinstance(p2, particle_data.ParticleHandle):
             pos2 = p2.pos_folded
         else:
-            utils.check_type_or_throw_except(
-                p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = p2
 
         return self.call_method("distance_vec", pos1=pos1, pos2=pos2)

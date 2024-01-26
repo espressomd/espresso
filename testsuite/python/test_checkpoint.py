@@ -50,6 +50,9 @@ modes = config.get_modes()
 has_lb_mode = ('LB.WALBERLA' in modes and espressomd.has_features('WALBERLA')
                and ('LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available))
 has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
+has_thermalized_bonds = 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes
+has_drude = (espressomd.has_features(['ELECTROSTATICS' and 'MASS', 'ROTATION'])
+             and has_thermalized_bonds)
 
 
 class CheckpointTest(ut.TestCase):
@@ -397,7 +400,7 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(p4.rinertia), [1., 1., 1.])
         if espressomd.has_features('ELECTROSTATICS'):
             np.testing.assert_allclose(p1.q, 1.)
-            if espressomd.has_features(['MASS', 'ROTATION']):
+            if has_drude:
                 # check Drude particles
                 p5 = system.part.by_id(5)
                 np.testing.assert_allclose(p2.q, +0.118, atol=1e-3)
@@ -428,7 +431,10 @@ class CheckpointTest(ut.TestCase):
         if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
             gamma = 2.
             if espressomd.has_features('PARTICLE_ANISOTROPY'):
-                gamma = np.array([2., 3., 4.])
+                if 'THERM.LB' in modes:
+                    gamma = np.array([2., 2., 2.])
+                else:
+                    gamma = np.array([2., 3., 4.])
             np.testing.assert_allclose(p4.gamma, gamma)
             if espressomd.has_features('ROTATION'):
                 np.testing.assert_allclose(p3.gamma_rot, 2. * gamma)
@@ -497,63 +503,85 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
-        thmst = system.thermostat.get_state()[0]
-        self.assertEqual(thmst['type'], 'LB')
-        # rng_counter_fluid = seed, seed is 0 because kT=0
-        self.assertEqual(thmst['rng_counter_fluid'], 0)
-        self.assertEqual(thmst['gamma'], 2.0)
+        thmst = system.thermostat.lb
+        self.assertTrue(thmst.is_active)
+        self.assertEqual(thmst.seed, 23)
+        self.assertEqual(thmst.philox_counter, 0)
+        self.assertAlmostEqual(thmst.gamma, 2., delta=1e-10)
+        self.assertAlmostEqual(system.thermostat.kT, 0., delta=1e-10)
 
     @ut.skipIf('THERM.LANGEVIN' not in modes,
                'Langevin thermostat not in modes')
     def test_thermostat_Langevin(self):
-        thmst = system.thermostat.get_state()[0]
-        self.assertEqual(thmst['type'], 'LANGEVIN')
-        self.assertEqual(thmst['kT'], 1.0)
-        self.assertEqual(thmst['seed'], 42)
-        self.assertEqual(thmst['counter'], 0)
-        np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
+        thmst = system.thermostat.langevin
+        self.assertTrue(thmst.is_active)
+        self.assertEqual(thmst.seed, 42)
+        self.assertEqual(thmst.philox_counter, 0)
+        self.assertAlmostEqual(system.thermostat.kT, 1., delta=1e-10)
+        np.testing.assert_allclose(np.copy(thmst.gamma), 2., atol=1e-10)
         if espressomd.has_features('ROTATION'):
-            np.testing.assert_array_equal(thmst['gamma_rotation'], 3 * [2.0])
+            np.testing.assert_allclose(
+                np.copy(thmst.gamma_rotation), 2., atol=1e-10)
 
     @ut.skipIf('THERM.BD' not in modes,
                'Brownian thermostat not in modes')
     def test_thermostat_Brownian(self):
-        thmst = system.thermostat.get_state()[0]
-        self.assertEqual(thmst['type'], 'BROWNIAN')
-        self.assertEqual(thmst['kT'], 1.0)
-        self.assertEqual(thmst['seed'], 42)
-        self.assertEqual(thmst['counter'], 0)
-        np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
+        thmst = system.thermostat.brownian
+        self.assertTrue(thmst.is_active)
+        self.assertEqual(thmst.seed, 42)
+        self.assertEqual(thmst.philox_counter, 0)
+        self.assertAlmostEqual(system.thermostat.kT, 1., delta=1e-10)
+        np.testing.assert_allclose(np.copy(thmst.gamma), 2., atol=1e-10)
         if espressomd.has_features('ROTATION'):
-            np.testing.assert_array_equal(thmst['gamma_rotation'], 3 * [2.0])
+            np.testing.assert_allclose(
+                np.copy(thmst.gamma_rotation), 2., atol=1e-10)
 
     @utx.skipIfMissingFeatures('DPD')
     @ut.skipIf('THERM.DPD' not in modes, 'DPD thermostat not in modes')
     def test_thermostat_DPD(self):
-        thmst = system.thermostat.get_state()[0]
-        self.assertEqual(thmst['type'], 'DPD')
-        self.assertEqual(thmst['kT'], 1.0)
-        self.assertEqual(thmst['seed'], 42)
-        self.assertEqual(thmst['counter'], 0)
+        thmst = system.thermostat.dpd
+        self.assertTrue(thmst.is_active)
+        self.assertEqual(thmst.seed, 42)
+        self.assertEqual(thmst.philox_counter, 0)
+        self.assertAlmostEqual(system.thermostat.kT, 1., delta=1e-10)
 
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')
     def test_thermostat_NPT(self):
-        thmst = system.thermostat.get_state()[0]
-        self.assertEqual(thmst['type'], 'NPT_ISO')
-        self.assertEqual(thmst['seed'], 42)
-        self.assertEqual(thmst['counter'], 0)
-        self.assertEqual(thmst['gamma0'], 2.0)
-        self.assertEqual(thmst['gammav'], 0.1)
+        thmst = system.thermostat.npt_iso
+        self.assertTrue(thmst.is_active)
+        self.assertEqual(thmst.seed, 42)
+        self.assertEqual(thmst.philox_counter, 0)
+        self.assertAlmostEqual(thmst.gamma0, 2.0, delta=1e-10)
+        self.assertAlmostEqual(thmst.gammav, 0.1, delta=1e-10)
+        self.assertAlmostEqual(system.thermostat.kT, 1., delta=1e-10)
 
     @utx.skipIfMissingFeatures('STOKESIAN_DYNAMICS')
     @ut.skipIf('THERM.SDM' not in modes, 'SDM thermostat not in modes')
     def test_thermostat_SDM(self):
-        thmst = system.thermostat.get_state()[0]
-        self.assertEqual(thmst['type'], 'SD')
-        self.assertEqual(thmst['kT'], 1.0)
-        self.assertEqual(thmst['seed'], 42)
-        self.assertEqual(thmst['counter'], 0)
+        thmst = system.thermostat.stokesian
+        self.assertTrue(thmst.is_active)
+        self.assertEqual(thmst.seed, 42)
+        self.assertEqual(thmst.philox_counter, 0)
+        self.assertAlmostEqual(system.thermostat.kT, 1., delta=1e-10)
+
+    @ut.skipIf(not has_thermalized_bonds,
+               'thermalized bond thermostat not in modes')
+    def test_thermostat_thermalized_bond(self):
+        thmst = system.thermostat.thermalized_bond
+        self.assertEqual(thmst.seed, 3)
+        self.assertEqual(thmst.philox_counter, 5)
+        therm_bonds = [therm_bond2]
+        for bond in system.bonded_inter:
+            if isinstance(bond, espressomd.interactions.ThermalizedBond):
+                therm_bonds.append(bond)
+        self.assertEqual(len(therm_bonds), 2)
+        for bond in therm_bonds:
+            self.assertAlmostEqual(bond.temp_com, 0.1, delta=1e-10)
+            self.assertAlmostEqual(bond.gamma_com, 0.3, delta=1e-10)
+            self.assertAlmostEqual(bond.temp_distance, 0.2, delta=1e-10)
+            self.assertAlmostEqual(bond.gamma_distance, 0.5, delta=1e-10)
+            self.assertAlmostEqual(bond.r_cut, 2., delta=1e-10)
 
     def test_integrator(self):
         params = system.integrator.get_params()
@@ -655,10 +683,11 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(partcl_1.bonds[0][0].params, reference)
         self.assertEqual(system.bonded_inter[0].params, reference)
         # all thermalized bonds should be identical
-        reference = {**therm_params, 'seed': 3}
-        self.assertEqual(partcl_1.bonds[1][0].params, reference)
-        self.assertEqual(system.bonded_inter[1].params, reference)
-        self.assertEqual(therm_bond2.params, reference)
+        if has_drude:
+            reference = therm_params
+            self.assertEqual(partcl_1.bonds[1][0].params, reference)
+            self.assertEqual(system.bonded_inter[1].params, reference)
+            self.assertEqual(therm_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
@@ -686,7 +715,7 @@ class CheckpointTest(ut.TestCase):
             delta=1e-10)
         self.assertEqual(break_spec.action_type, cpt_spec.action_type)
 
-    @utx.skipIfMissingFeatures(['ELECTROSTATICS', 'MASS', 'ROTATION'])
+    @ut.skipIf(not has_drude, 'no Drude particles')
     def test_drude_helpers(self):
         drude_type = 10
         core_type = 0
@@ -973,6 +1002,7 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures("WCA")
     @ut.skipIf(has_lb_mode, "LB not supported")
     @ut.skipIf("INT.SDM" in modes, "Stokesian integrator not supported")
+    @ut.skipIf("INT.NPT" in modes, "NPT integrator not supported")
     @ut.skipIf("INT.BD" in modes, "Brownian integrator not supported")
     @ut.skipIf("INT.SD" in modes, "Steepest descent not supported")
     def test_union(self):

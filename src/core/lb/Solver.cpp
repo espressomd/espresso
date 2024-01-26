@@ -28,6 +28,7 @@
 
 #include "BoxGeometry.hpp"
 #include "system/System.hpp"
+#include "thermostat.hpp"
 
 #ifdef WALBERLA
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
@@ -80,6 +81,12 @@ void Solver::veto_time_step(double time_step) const {
   if (impl->solver) {
     std::visit([=](auto &ptr) { ptr->veto_time_step(time_step); },
                *impl->solver);
+  }
+}
+
+void Solver::veto_kT(double kT) const {
+  if (impl->solver) {
+    std::visit([=](auto &ptr) { ptr->veto_kT(kT); }, *impl->solver);
   }
 }
 

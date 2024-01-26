@@ -166,7 +166,7 @@ public:
 
   /** @brief Get a value.
    *
-   *  The value is owned by the Cache and can not be modified.
+   *  The value is owned by the cache and can not be modified.
    *  Pointers into the cache can be invalidated at any point
    *  and should not be stored beyond the calling function.
    */

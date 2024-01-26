@@ -75,22 +75,28 @@ auto simplify_symbol(Utils::Vector<T, N> const *) {
 }
 
 /** @overload */
-template <typename T> auto simplify_symbol(std::vector<T> const *) {
+template <typename T> auto simplify_symbol(std::vector<T> const *vec) {
   auto const name_val = simplify_symbol(static_cast<T *>(nullptr));
-  return "std::vector<" + name_val + ">";
+  std::string metadata{""};
+  if (vec) {
+    metadata += "{.size=" + std::to_string(vec->size()) + "}";
+  }
+  return "std::vector<" + name_val + ">" + metadata;
 }
 
 /** @overload */
 inline auto simplify_symbol(std::vector<Variant> const *vec) {
   auto value_type_name = std::string("ScriptInterface::Variant");
+  std::string metadata{""};
   if (vec) {
     std::set<std::string> types = {};
     for (auto const &v : *vec) {
       types.insert(simplify_symbol_variant(v));
     }
     value_type_name += "{" + boost::algorithm::join(types, ", ") + "}";
+    metadata += "{.size=" + std::to_string(vec->size()) + "}";
   }
-  return "std::vector<" + value_type_name + ">";
+  return "std::vector<" + value_type_name + ">" + metadata;
 }
 
 /** @overload */
@@ -214,7 +220,7 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
       throw boost::bad_get{};
     }
 
-    Utils::Vector<T, N> ret;
+    Utils::Vector<T, N> ret{};
     boost::transform(vv, ret.begin(),
                      [](const Variant &v) { return get_value_helper<T>{}(v); });
 
@@ -344,14 +350,18 @@ struct get_value_helper<
  * is a container.
  * @tparam T     Which type the variant was supposed to convert to
  */
-template <typename T> inline void handle_bad_get(Variant const &v) {
+template <typename T>
+inline void handle_bad_get(Variant const &v, std::string const &name) {
   auto const container_name = demangle::simplify_symbol_variant(v);
   auto const containee_name = demangle::simplify_symbol_containee_variant(v);
   auto const expected_containee_name =
       demangle::simplify_symbol_containee(static_cast<T *>(nullptr));
   auto const from_container = !containee_name.empty();
   auto const to_container = !expected_containee_name.empty();
-  auto const what = "Provided argument of type '" + container_name + "'";
+  auto what = "Provided argument of type '" + container_name + "'";
+  if (not name.empty()) {
+    what += " for parameter '" + name + "'";
+  }
   try {
     throw;
   } catch (bad_get_nullptr const &) {
@@ -369,6 +379,15 @@ template <typename T> inline void handle_bad_get(Variant const &v) {
   }
 }
 
+template <typename T> T get_value(Variant const &v, std::string const &name) {
+  try {
+    return detail::get_value_helper<T>{}(v);
+  } catch (...) {
+    detail::handle_bad_get<T>(v, name);
+    throw;
+  }
+}
+
 } // namespace detail
 
 /**
@@ -381,27 +400,20 @@ template <typename T> inline void handle_bad_get(Variant const &v) {
  * to a requested type.
  */
 template <typename T> T get_value(Variant const &v) {
-  try {
-    return detail::get_value_helper<T>{}(v);
-  } catch (...) {
-    detail::handle_bad_get<T>(v);
-    throw;
-  }
+  return detail::get_value<T>(v, "");
 }
 
 /**
  * @brief Get a value from a VariantMap by name, or throw
  *        if it does not exist or is not convertible to
  *        the target type.
- *
  */
 template <typename T>
 T get_value(VariantMap const &vals, std::string const &name) {
-  try {
-    return get_value<T>(vals.at(name));
-  } catch (std::out_of_range const &) {
+  if (vals.count(name) == 0ul) {
     throw Exception("Parameter '" + name + "' is missing.");
   }
+  return detail::get_value<T>(vals.at(name), name);
 }
 
 /**

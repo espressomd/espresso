@@ -247,7 +247,7 @@ endif()
 # Python interpreter and Cython interface library
 if(ESPRESSO_BUILD_WITH_PYTHON)
   find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 0.29.21...<3.0 REQUIRED)
+  find_package(Cython 0.29.21...<3.0.8 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif()
 

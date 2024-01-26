@@ -32,7 +32,6 @@ add_library(
   errorhandling.cpp
   forces.cpp
   ghosts.cpp
-  global_ghost_flags.cpp
   immersed_boundaries.cpp
   integrate.cpp
   npt.cpp

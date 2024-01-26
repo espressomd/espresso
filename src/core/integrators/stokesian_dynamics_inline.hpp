@@ -25,10 +25,12 @@
 
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
+#include "thermostat.hpp"
 
 inline void stokesian_dynamics_step_1(ParticleRangeStokesian const &particles,
-                                      double time_step) {
-  propagate_vel_pos_sd(particles, time_step);
+                                      StokesianThermostat const &stokesian,
+                                      double time_step, double kT) {
+  propagate_vel_pos_sd(particles, stokesian, time_step, kT);
 
   for (auto &p : particles) {
     // translate

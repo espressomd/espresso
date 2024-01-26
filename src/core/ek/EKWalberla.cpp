@@ -37,6 +37,8 @@
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include <cstddef>
+#include <memory>
+#include <stdexcept>
 #include <variant>
 
 namespace EK {
@@ -108,6 +110,13 @@ void EKWalberla::perform_reactions() {
 
 void EKWalberla::veto_time_step(double time_step) const {
   walberla_tau_sanity_checks("EK", ek_container->get_tau(), time_step);
+}
+
+void EKWalberla::veto_kT(double) const {
+  if (not ek_container->empty()) {
+    // can only throw, because without agrid, we can't do the unit conversion
+    throw std::runtime_error("Temperature change not supported by EK");
+  }
 }
 
 void EKWalberla::sanity_checks(System::System const &system) const {

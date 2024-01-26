@@ -84,6 +84,12 @@ void Solver::veto_time_step(double time_step) const {
   }
 }
 
+void Solver::veto_kT(double kT) const {
+  if (impl->solver) {
+    std::visit([=](auto &ptr) { ptr->veto_kT(kT); }, *impl->solver);
+  }
+}
+
 void Solver::on_cell_structure_change() {
   if (impl->solver) {
     auto &solver = *impl->solver;

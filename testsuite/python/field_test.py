@@ -59,14 +59,16 @@ class FieldTest(ut.TestCase):
 
         self.system.integrator.run(0)
 
-        np.testing.assert_almost_equal(g_const, np.copy(p.f) / p.mass)
+        np.testing.assert_allclose(np.copy(p.f / p.mass), g_const)
         self.assertAlmostEqual(self.system.analysis.energy()['total'], 0.)
 
         # Virtual sites don't feel gravity
-        if espressomd.has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
-            p.propagation = espressomd.propagation.Propagation.TRANS_LB_TRACER
+        if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+            p_vs = self.system.part.add(pos=[0, 1, 0])
+            p_vs.vs_auto_relate_to(p)
             self.system.integrator.run(0)
-            np.testing.assert_allclose(np.copy(p.f), 0)
+            np.testing.assert_allclose(np.copy(p.f / p.mass), g_const)
+            np.testing.assert_allclose(np.copy(p_vs.f), [0., 0., 0.])
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_linear_electric_potential(self):

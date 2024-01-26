@@ -258,10 +258,11 @@ cation_drude_parts = []
 
 if args.drude:
     print("-->Adding Drude related bonds")
+    system.thermostat.set_thermalized_bond(seed=123)
     thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
         temp_com=temperature_com, gamma_com=gamma_com,
         temp_distance=temperature_drude, gamma_distance=gamma_drude,
-        r_cut=min(lj_sigmas.values()) * 0.5, seed=123)
+        r_cut=min(lj_sigmas.values()) * 0.5)
     harmonic_bond = espressomd.interactions.HarmonicBond(
         k=k_drude, r_0=0.0, r_cut=1.0)
     system.bonded_inter.add(thermalized_dist_bond)
