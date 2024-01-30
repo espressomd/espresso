@@ -25,6 +25,7 @@ endfunction(SAMPLE_TEST)
 # configure Python module importlib_wrapper.py
 add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
+set_tests_properties(importlib_wrapper PROPERTIES SKIP_RETURN_CODE 5)
 set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP
                                                   IMPORTLIB_WRAPPER)
 set(samples_tests ${samples_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER}

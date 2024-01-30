@@ -57,6 +57,7 @@ function(PYTHON_TEST)
   endif()
   set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
                                                DEPENDS "${TEST_DEPENDS}")
+  set_tests_properties(${TEST_NAME} PROPERTIES SKIP_RETURN_CODE 5)
 
   if("gpu" IN_LIST TEST_LABELS AND WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
