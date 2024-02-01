@@ -41,7 +41,7 @@
 #include <core/debug/Debug.h>
 
 #include <functional>
-#include <set>
+#include <memory>
 #include <vector>
 
 {% for header in interface_spec.headers %}
@@ -122,7 +122,7 @@ public:
         {%- endif %}
     };
 
-    {{class_name}}( const shared_ptr<StructuredBlockForest> & blocks,
+    {{class_name}}( const std::shared_ptr<StructuredBlockForest> & blocks,
                    {{kernel|generate_constructor_parameters(['indexVector', 'indexVectorSize'])}}{{additional_data_handler.constructor_arguments}})
         :{{additional_data_handler.initialiser_list}} {{ kernel|generate_constructor_initializer_list(['indexVector', 'indexVectorSize']) }}
     {
@@ -177,7 +177,7 @@ public:
     }
 
     template<typename FlagField_T>
-    void fillFromFlagField( const shared_ptr<StructuredBlockForest> & blocks, ConstBlockDataID flagFieldID,
+    void fillFromFlagField( const std::shared_ptr<StructuredBlockForest> & blocks, ConstBlockDataID flagFieldID,
                             FlagUID boundaryFlagUID, FlagUID domainFlagUID)
     {
         for( auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt )

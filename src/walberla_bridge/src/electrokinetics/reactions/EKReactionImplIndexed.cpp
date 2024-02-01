@@ -105,7 +105,7 @@ void fillFromFlagField(IBlock *block, BlockDataID indexVectorID,
 }
 
 template <typename FlagField, typename IndexVectors, typename IndexInfo>
-void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
+void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                        BlockDataID indexVectorID, ConstBlockDataID flagFieldID,
                        FlagUID boundaryFlagUID, FlagUID domainFlagUID) {
   for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)

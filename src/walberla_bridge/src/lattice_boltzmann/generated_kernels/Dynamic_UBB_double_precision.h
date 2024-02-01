@@ -31,7 +31,8 @@
 #include "field/FlagField.h"
 #include "field/GhostLayerField.h"
 
-#include <set>
+#include <functional>
+#include <memory>
 #include <vector>
 
 #ifdef __GNUC__
@@ -85,10 +86,10 @@ public:
   };
 
   Dynamic_UBB_double_precision(
-      const shared_ptr<StructuredBlockForest> &blocks, BlockDataID pdfsID_,
-      std::function<Vector3<double>(const Cell &,
-                                    const shared_ptr<StructuredBlockForest> &,
-                                    IBlock &)> &velocityCallback)
+      const std::shared_ptr<StructuredBlockForest> &blocks, BlockDataID pdfsID_,
+      std::function<Vector3<double>(
+          const Cell &, const std::shared_ptr<StructuredBlockForest> &,
+          IBlock &)> &velocityCallback)
       : elementInitaliser(velocityCallback), pdfsID(pdfsID_) {
     auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
       return new IndexVectors();
@@ -118,7 +119,7 @@ public:
   }
 
   template <typename FlagField_T>
-  void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
+  void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          ConstBlockDataID flagFieldID, FlagUID boundaryFlagUID,
                          FlagUID domainFlagUID) {
     for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)
@@ -127,7 +128,7 @@ public:
   }
 
   template <typename FlagField_T>
-  void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
+  void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          IBlock *block, ConstBlockDataID flagFieldID,
                          FlagUID boundaryFlagUID, FlagUID domainFlagUID) {
     auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
@@ -558,7 +559,7 @@ private:
 
   BlockDataID indexVectorID;
   std::function<Vector3<double>(
-      const Cell &, const shared_ptr<StructuredBlockForest> &, IBlock &)>
+      const Cell &, const std::shared_ptr<StructuredBlockForest> &, IBlock &)>
       elementInitaliser;
 
 public:
