@@ -53,20 +53,6 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
     def __str__(self):
         return f"{self.__class__.__name__}({self.get_params()})"
 
-    def _activate(self):
-        self._activate_method()
-
-    def _deactivate(self):
-        self._deactivate_method()
-
-    def _activate_method(self):
-        self.call_method("activate")
-        utils.handle_errors("HydrodynamicInteraction activation failed")
-
-    def _deactivate_method(self):
-        self.call_method("deactivate")
-        utils.handle_errors("HydrodynamicInteraction deactivation failed")
-
     def validate_params(self, params):
         pass
 
@@ -342,13 +328,6 @@ class LBFluidNodeWalberla(ScriptInterfaceHelper):
     def required_keys(self):
         return {"parent_sip", "index"}
 
-    def __init__(self, *args, **kwargs):
-        if "sip" not in kwargs:
-            super().__init__(*args, **kwargs)
-            utils.handle_errors("LBFluidNode instantiation failed")
-        else:
-            super().__init__(**kwargs)
-
     def __reduce__(self):
         raise NotImplementedError("Cannot serialize LB fluid node objects")
 
@@ -494,7 +473,6 @@ class LBFluidSliceWalberla(ScriptInterfaceHelper):
                 slice_range, grid_size)
             node = LBFluidNodeWalberla(index=np.array([0, 0, 0]), **kwargs)
             super().__init__(*args, node_sip=node, **kwargs, **extra_kwargs)
-            utils.handle_errors("LBFluidSliceWalberla instantiation failed")
 
     def __iter__(self):
         lower, upper = self.call_method("get_slice_ranges")
