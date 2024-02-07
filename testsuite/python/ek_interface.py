@@ -170,6 +170,7 @@ class EKTest:
         ek_solver = espressomd.electrokinetics.EKFFT(
             lattice=self.lattice, permittivity=0.01,
             single_precision=self.ek_params["single_precision"])
+        self.assertEqual(ek_solver.lattice, self.lattice)
         self.assertEqual(
             ek_solver.single_precision,
             self.ek_params["single_precision"])
