@@ -435,7 +435,7 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
   // todo: check a less symmetrical situation, where the force is applied not
   // in the middle between the nodes
 
-  for (Vector3i n : all_nodes_incl_ghosts(lb->get_lattice())) {
+  for (auto const &n : all_nodes_incl_ghosts(lb->get_lattice())) {
     if (lb->get_lattice().node_in_local_halo(n)) {
       auto const pos = 1. * n; // Mid point between nodes
       auto const f = Vector3d{{1., 2., -3.5}};

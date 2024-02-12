@@ -40,6 +40,7 @@
 #include <field/FlagField.h>
 #include <core/debug/Debug.h>
 
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -197,8 +198,8 @@ public:
         auto * flagField = block->getData< FlagField_T > ( flagFieldID );
         {{additional_data_handler.additional_field_data|indent(4)}}
 
-        if( !(flagField->flagExists(boundaryFlagUID) && flagField->flagExists(domainFlagUID) ))
-            return;
+        assert(flagField->flagExists(boundaryFlagUID and
+               flagField->flagExists(domainFlagUID));
 
         auto boundaryFlag = flagField->getFlag(boundaryFlagUID);
         auto domainFlag = flagField->getFlag(domainFlagUID);

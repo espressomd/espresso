@@ -195,7 +195,7 @@ public:
             m_density_field_id));
 
     // Synchronize ghost layers
-    (*m_full_communication)();
+    ghost_communication();
   }
 
   // Global parameters
@@ -453,7 +453,8 @@ public:
     if (!bc)
       return false;
 
-    m_boundary_flux->set_node_value_at_boundary(node, flux, *bc);
+    m_boundary_flux->set_node_value_at_boundary(
+        node, to_vector3<FloatType>(flux), *bc);
 
     return true;
   }
@@ -465,7 +466,7 @@ public:
     if (!bc or !m_boundary_flux->node_is_boundary(node))
       return std::nullopt;
 
-    return {m_boundary_flux->get_node_value_at_boundary(node)};
+    return {to_vector3d(m_boundary_flux->get_node_value_at_boundary(node))};
   }
 
   bool remove_node_from_flux_boundary(Utils::Vector3i const &node) override {
@@ -517,7 +518,8 @@ public:
             auto const bc = get_block_and_cell(lattice, node, false);
             auto const &opt = *it;
             if (opt) {
-              m_boundary_density->set_node_value_at_boundary(node, *opt, *bc);
+              m_boundary_density->set_node_value_at_boundary(
+                  node, FloatType_c(*opt), *bc);
             } else {
               m_boundary_density->remove_node_from_boundary(node, *bc);
             }
@@ -545,8 +547,8 @@ public:
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
             if (m_boundary_density->node_is_boundary(node)) {
-              out.emplace_back(
-                  m_boundary_density->get_node_value_at_boundary(node));
+              out.emplace_back(double_c(
+                  m_boundary_density->get_node_value_at_boundary(node)));
             } else {
               out.emplace_back(std::nullopt);
             }
@@ -575,7 +577,8 @@ public:
             auto const bc = get_block_and_cell(lattice, node, false);
             auto const &opt = *it;
             if (opt) {
-              m_boundary_flux->set_node_value_at_boundary(node, *opt, *bc);
+              m_boundary_flux->set_node_value_at_boundary(
+                  node, to_vector3<FloatType>(*opt), *bc);
             } else {
               m_boundary_flux->remove_node_from_boundary(node, *bc);
             }
@@ -603,8 +606,8 @@ public:
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
             if (m_boundary_flux->node_is_boundary(node)) {
-              out.emplace_back(
-                  m_boundary_flux->get_node_value_at_boundary(node));
+              out.emplace_back(to_vector3d(
+                  m_boundary_flux->get_node_value_at_boundary(node)));
             } else {
               out.emplace_back(std::nullopt);
             }

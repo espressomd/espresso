@@ -973,18 +973,17 @@ public:
     if (!bc or !m_boundary->node_is_boundary(node))
       return std::nullopt;
 
-    return {m_boundary->get_node_value_at_boundary(node)};
+    return {to_vector3d(m_boundary->get_node_value_at_boundary(node))};
   }
 
   bool set_node_velocity_at_boundary(Utils::Vector3i const &node,
                                      Utils::Vector3d const &velocity) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
-    if (!bc)
-      return false;
-
-    m_boundary->set_node_value_at_boundary(node, velocity, *bc);
-
-    return true;
+    if (bc) {
+      m_boundary->set_node_value_at_boundary(
+          node, to_vector3<FloatType>(velocity), *bc);
+    }
+    return bc.has_value();
   }
 
   std::vector<std::optional<Utils::Vector3d>> get_slice_velocity_at_boundary(
@@ -1003,7 +1002,8 @@ public:
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
             if (m_boundary->node_is_boundary(node)) {
-              out.emplace_back(m_boundary->get_node_value_at_boundary(node));
+              out.emplace_back(
+                  to_vector3d(m_boundary->get_node_value_at_boundary(node)));
             } else {
               out.emplace_back(std::nullopt);
             }
@@ -1032,7 +1032,8 @@ public:
             auto const bc = get_block_and_cell(lattice, node, false);
             auto const &opt = *it;
             if (opt) {
-              m_boundary->set_node_value_at_boundary(node, *opt, *bc);
+              m_boundary->set_node_value_at_boundary(
+                  node, to_vector3<FloatType>(*opt), *bc);
             } else {
               m_boundary->remove_node_from_boundary(node, *bc);
             }
@@ -1054,12 +1055,10 @@ public:
 
   bool remove_node_from_boundary(Utils::Vector3i const &node) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
-    if (!bc)
-      return false;
-
-    m_boundary->remove_node_from_boundary(node, *bc);
-
-    return true;
+    if (bc) {
+      m_boundary->remove_node_from_boundary(node, *bc);
+    }
+    return bc.has_value();
   }
 
   std::optional<bool>

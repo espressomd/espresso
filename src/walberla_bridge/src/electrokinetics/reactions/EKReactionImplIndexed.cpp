@@ -30,6 +30,7 @@
 #include <domain_decomposition/IBlock.h>
 #include <field/AddToStorage.h>
 
+#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -68,9 +69,8 @@ void fillFromFlagField(IBlock *block, BlockDataID indexVectorID,
 
   auto *flagField = block->getData<FlagField>(flagFieldID);
 
-  if (!(flagField->flagExists(boundaryFlagUID) &&
-        flagField->flagExists(domainFlagUID)))
-    return;
+  assert(flagField->flagExists(boundaryFlagUID) and
+         flagField->flagExists(domainFlagUID));
 
   auto boundaryFlag = flagField->getFlag(boundaryFlagUID);
   auto domainFlag = flagField->getFlag(domainFlagUID);
