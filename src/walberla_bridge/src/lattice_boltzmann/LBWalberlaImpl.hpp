@@ -45,6 +45,7 @@
 #include <stencil/D3Q27.h>
 
 #include "../BoundaryHandling.hpp"
+#include "../BoundaryPackInfo.hpp"
 #include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
@@ -235,8 +236,9 @@ protected:
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
 
   // communicators
-  std::shared_ptr<FullCommunicator> m_full_communication;
-  std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
+  std::shared_ptr<FullCommunicator> m_boundary_communicator;
+  std::shared_ptr<FullCommunicator> m_pdf_full_communicator;
+  std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communicator;
 
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
@@ -350,27 +352,33 @@ public:
     reset_boundary_handling();
 
     // Set up the communication and register fields
-    m_pdf_streaming_communication =
+    m_pdf_streaming_communicator =
         std::make_shared<PDFStreamingCommunicator>(blocks);
-    m_pdf_streaming_communication->addPackInfo(
+    m_pdf_streaming_communicator->addPackInfo(
         std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
-    m_pdf_streaming_communication->addPackInfo(
+    m_pdf_streaming_communicator->addPackInfo(
         std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
                                                 n_ghost_layers));
-    m_pdf_streaming_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<FlagField>>(
-            m_flag_field_id, n_ghost_layers));
 
-    m_full_communication = std::make_shared<FullCommunicator>(blocks);
-    m_full_communication->addPackInfo(
+    m_pdf_full_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_pdf_full_communicator->addPackInfo(
         std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(std::make_shared<PackInfo<VectorField>>(
-        m_last_applied_force_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(std::make_shared<PackInfo<VectorField>>(
-        m_velocity_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(
+    m_pdf_full_communicator->addPackInfo(
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
+                                                n_ghost_layers));
+    m_pdf_full_communicator->addPackInfo(
+        std::make_shared<PackInfo<VectorField>>(m_velocity_field_id,
+                                                n_ghost_layers));
+
+    m_boundary_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_boundary_communicator->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_id, n_ghost_layers));
+    auto boundary_packinfo = std::make_shared<
+        field::communication::BoundaryPackInfo<FlagField, BoundaryModel>>(
+        m_flag_field_id, n_ghost_layers);
+    boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary);
+    m_boundary_communicator->addPackInfo(boundary_packinfo);
 
     // Instantiate the sweep responsible for force double buffering and
     // external forces
@@ -439,13 +447,13 @@ private:
     integrate_reset_force(blocks);
     // LB collide
     integrate_collide(blocks);
-    m_pdf_streaming_communication->communicate();
+    m_pdf_streaming_communicator->communicate();
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
     // Refresh ghost layers
-    m_full_communication->communicate();
+    ghost_communication_pdfs();
   }
 
   void integrate_pull_scheme() {
@@ -458,7 +466,7 @@ private:
     // LB collide
     integrate_collide(blocks);
     // Refresh ghost layers
-    ghost_communication();
+    ghost_communication_pdfs();
   }
 
 protected:
@@ -474,7 +482,6 @@ protected:
 
 public:
   void integrate() override {
-    reallocate_ubb_field();
     if (has_lees_edwards_bc()) {
       integrate_pull_scheme();
     } else {
@@ -485,7 +492,16 @@ public:
   }
 
   void ghost_communication() override {
-    m_full_communication->communicate();
+    ghost_communication_boundary();
+    ghost_communication_pdfs();
+  }
+
+  void ghost_communication_boundary() {
+    m_boundary_communicator->communicate();
+  }
+
+  void ghost_communication_pdfs() {
+    m_pdf_full_communicator->communicate();
     if (has_lees_edwards_bc()) {
       auto const &blocks = get_lattice().get_blocks();
       apply_lees_edwards_pdf_interpolation(blocks);
@@ -1097,7 +1113,10 @@ public:
 
   void reallocate_ubb_field() override { m_boundary->boundary_update(); }
 
-  void clear_boundaries() override { reset_boundary_handling(); }
+  void clear_boundaries() override {
+    reset_boundary_handling();
+    ghost_communication();
+  }
 
   void
   update_boundary_from_shape(std::vector<int> const &raster_flat,
@@ -1105,6 +1124,8 @@ public:
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
+    ghost_communication();
+    reallocate_ubb_field();
   }
 
   // Pressure tensor

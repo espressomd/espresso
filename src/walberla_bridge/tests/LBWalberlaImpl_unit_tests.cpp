@@ -202,6 +202,7 @@ BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
     std::vector<double> vel_flat(vel_3d.data(),
                                  vel_3d.data() + vel_3d.num_elements());
     lb->update_boundary_from_shape(raster_flat, vel_flat);
+    lb->ghost_communication();
   }
 
   for (auto const &node : nodes) {

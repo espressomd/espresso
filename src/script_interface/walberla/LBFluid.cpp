@@ -108,7 +108,6 @@ Variant LBFluid::do_call_method(std::string const &name,
   }
   if (name == "clear_boundaries") {
     m_instance->clear_boundaries();
-    m_instance->ghost_communication();
     ::System::get_system().on_lb_boundary_conditions_change();
     return {};
   }
@@ -269,8 +268,8 @@ void LBFluid::load_checkpoint(std::string const &filename, int mode) {
   };
 
   auto const on_success = [&lb_obj]() {
-    lb_obj.reallocate_ubb_field();
     lb_obj.ghost_communication();
+    lb_obj.reallocate_ubb_field();
   };
 
   load_checkpoint_common(*context(), "LB", filename, mode, read_metadata,

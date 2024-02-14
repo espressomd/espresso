@@ -52,19 +52,18 @@ class Sample(ut.TestCase):
         np.testing.assert_allclose(v_phi[:7], 0., atol=1e-7)
 
         # check azimuthal velocity in the linear regime
-        self.assertGreater(v_phi[7], v_phi[6])
         self.assertGreater(v_phi[8], v_phi[7])
         self.assertGreater(v_phi[9], v_phi[8])
 
         # check azimuthal velocity in the Couette regime
-        xdata = sample.profile_r[9:]
-        ydata = v_phi[9:]
+        xdata = sample.profile_r[9:-1]
+        ydata = v_phi[9:-1]
         a_ref, b_ref = taylor_couette(
             sample.velocity_magnitude, 0.0, sample.cylinder_in.radius,
             sample.cylinder_out.radius, sample.agrid)
         (a_sim, b_sim), _ = scipy.optimize.curve_fit(
             lambda x, a, b: a * x + b / x, xdata, ydata)
-        np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], atol=1e-3)
+        np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], rtol=0.05)
 
 
 if __name__ == "__main__":

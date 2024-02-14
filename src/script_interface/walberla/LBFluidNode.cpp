@@ -53,6 +53,7 @@ Variant LBFluidNode::do_call_method(std::string const &name,
       m_lb_fluid->set_node_velocity_at_boundary(m_index, u);
     }
     m_lb_fluid->ghost_communication();
+    m_lb_fluid->reallocate_ubb_field();
     return {};
   }
   if (name == "get_velocity_at_boundary") {
