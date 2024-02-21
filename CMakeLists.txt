@@ -435,6 +435,9 @@ if(ESPRESSO_BUILD_TESTS)
 endif()
 
 find_package(Boost 1.74.0 REQUIRED ${BOOST_COMPONENTS})
+if(${Boost_VERSION} VERSION_GREATER_EQUAL 1.84.0)
+  message(FATAL_ERROR "Boost version ${Boost_VERSION} is unsupported.")
+endif()
 
 #
 # Paths
