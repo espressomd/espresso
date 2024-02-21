@@ -19,28 +19,37 @@
 
 #pragma once
 
+#include "generated_kernels/ReactionKernelBulk_all.h"
+
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactant.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
 
-#include <memory>
-#include <vector>
+#include <blockforest/StructuredBlockForest.h>
 
 namespace walberla {
 
 class EKReactionImplBulk : public EKReactionBase {
 public:
-  EKReactionImplBulk(const std::shared_ptr<LatticeWalberla> &lattice,
-                     const std::vector<std::shared_ptr<EKReactant>> &reactants,
-                     double coefficient)
-      : EKReactionBase(lattice, reactants, coefficient) {}
   ~EKReactionImplBulk() override = default;
 
+  using EKReactionBase::EKReactionBase;
   using EKReactionBase::get_coefficient;
   using EKReactionBase::get_lattice;
   using EKReactionBase::get_reactants;
 
-  void perform_reaction() override;
+  void perform_reaction() override {
+    // TODO: if my understanding is correct:
+    // the kernels need to either run in the ghost layers and do the
+    // synchronization before or not run and do a synchronization afterwards.
+    // The better solution is probably the latter one. Not sure why it fails
+    // atm.
+    auto kernel = detail::ReactionKernelBulkSelector::get_kernel(
+        get_reactants(), get_coefficient());
+    for (auto &block : *get_lattice()->get_blocks()) {
+      kernel(&block);
+    }
+  }
 };
 
 } // namespace walberla

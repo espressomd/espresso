@@ -86,6 +86,7 @@ Utils::Vector3d lb_drag_force(LB::Solver const &lb, double lb_gamma,
 /**
  * @brief Check if a position is within the local box + halo.
  *
+ * @param local_box Local geometry
  * @param pos Position to check
  * @param halo Halo
  *

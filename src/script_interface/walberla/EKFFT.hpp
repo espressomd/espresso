@@ -55,8 +55,8 @@ public:
     auto const permittivity =
         get_value<double>(args, "permittivity") * m_conv_permittivity;
 
-    m_instance = new_ek_poisson_fft(m_lattice->lattice(), permittivity,
-                                    m_single_precision);
+    m_instance = ::walberla::new_ek_poisson_fft(
+        m_lattice->lattice(), permittivity, m_single_precision);
 
     add_parameters({
         {"permittivity",

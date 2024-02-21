@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,26 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "EKReactionImplBulk.hpp"
+#pragma once
 
-#include "generated_kernels/ReactionKernelBulk_all.h"
+#include "EKReactionBase.hpp"
 
-#include <blockforest/StructuredBlockForest.h>
+#include <utils/Vector.hpp>
+
+#include <optional>
 
 namespace walberla {
 
-void EKReactionImplBulk::perform_reaction() {
-  // TODO: if my understanding is correct:
-  //  the kernels need to either run in the ghost layers and do the
-  //  synchronization before or not run and do a synchronization afterwards.
-  //  The better solution is probably the latter one. Not sure why it fails
-  //  atm.
+class EKReactionBaseIndexed : public EKReactionBase {
+public:
+  using EKReactionBase::EKReactionBase;
+  ~EKReactionBaseIndexed() override = default;
+  virtual void set_node_is_boundary(Utils::Vector3i const &node,
+                                    bool is_boundary) = 0;
+  virtual std::optional<bool>
+  get_node_is_boundary(Utils::Vector3i const &node) = 0;
+};
 
-  auto kernel = detail::ReactionKernelBulkSelector::get_kernel(
-      get_reactants(), get_coefficient());
-
-  for (auto &block : *get_lattice()->get_blocks()) {
-    kernel(&block);
-  }
-}
 } // namespace walberla

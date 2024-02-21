@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "walberla_utils.hpp"
+#include "types_conversion.hpp"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 

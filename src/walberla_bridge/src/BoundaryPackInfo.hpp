@@ -23,6 +23,7 @@
 #include <core/mpi/RecvBuffer.h>
 #include <core/mpi/SendBuffer.h>
 #include <domain_decomposition/IBlock.h>
+#include <field/FlagUID.h>
 #include <field/communication/PackInfo.h>
 #include <stencil/Directions.h>
 
@@ -38,6 +39,10 @@ template <typename GhostLayerField_T, typename Boundary_T>
 class BoundaryPackInfo : public PackInfo<GhostLayerField_T> {
 protected:
   using PackInfo<GhostLayerField_T>::bdId_;
+  /** Flag for domain cells, i.e. all cells. */
+  FlagUID const Domain_flag{"domain"};
+  /** Flag for boundary cells. */
+  FlagUID const Boundary_flag{"boundary"};
 
 public:
   using PackInfo<GhostLayerField_T>::PackInfo;

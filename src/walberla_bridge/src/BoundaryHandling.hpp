@@ -20,7 +20,8 @@
 #pragma once
 
 #include <walberla_bridge/BlockAndCell.hpp>
-#include <walberla_bridge/utils/walberla_utils.hpp>
+
+#include "utils/types_conversion.hpp"
 
 #include <blockforest/StructuredBlockForest.h>
 #include <domain_decomposition/BlockDataID.h>
@@ -38,12 +39,13 @@
 
 namespace walberla {
 
-/// Flag for domain cells, i.e. all cells
-FlagUID const Domain_flag("domain");
-/// Flag for boundary cells
-FlagUID const Boundary_flag("boundary");
-
 template <typename T, typename BoundaryClass> class BoundaryHandling {
+private:
+  /** Flag for domain cells, i.e. all cells. */
+  FlagUID const Domain_flag{"domain"};
+  /** Flag for boundary cells. */
+  FlagUID const Boundary_flag{"boundary"};
+
   /** Container for the map between cells and values. */
   class DynamicValueCallback {
   public:
@@ -172,7 +174,7 @@ private:
   std::shared_ptr<BoundaryClass> m_boundary;
   bool m_pending_changes;
 
-  /** Register flags and set all cells to @ref Domain_flag. */
+  /** Register flags and reset all cells. */
   void flag_reset_kernel(IBlock *const block) {
     auto flag_field = block->template getData<FlagField>(m_flag_field_id);
     // register flags

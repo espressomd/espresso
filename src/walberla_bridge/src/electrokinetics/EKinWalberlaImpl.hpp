@@ -22,21 +22,21 @@
 #include <blockforest/communication/UniformBufferedScheme.h>
 #include <field/AddToStorage.h>
 #include <field/FlagField.h>
+#include <field/FlagUID.h>
 #include <field/GhostLayerField.h>
 #include <field/communication/PackInfo.h>
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
-#include <lbm/lattice_model/D3Q27.h>
-#include <timeloop/SweepTimeloop.h>
+#include <stencil/D3Q27.h>
 
 #include "../BoundaryHandling.hpp"
+#include "../utils/boundary.hpp"
+#include "../utils/types_conversion.hpp"
 #include "ek_kernels.hpp"
 
 #include <walberla_bridge/BlockAndCell.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
-#include <walberla_bridge/utils/boundary_utils.hpp>
-#include <walberla_bridge/utils/walberla_utils.hpp>
 
 #include <utils/Vector.hpp>
 
@@ -108,6 +108,11 @@ protected:
 
   BlockDataID m_flag_field_density_id;
   BlockDataID m_flag_field_flux_id;
+
+  /** Flag for domain cells, i.e. all cells. */
+  FlagUID const Domain_flag{"domain"};
+  /** Flag for boundary cells. */
+  FlagUID const Boundary_flag{"boundary"};
 
   /** Block forest */
   std::shared_ptr<LatticeWalberla> m_lattice;

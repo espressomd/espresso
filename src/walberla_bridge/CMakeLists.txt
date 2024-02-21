@@ -42,8 +42,8 @@ if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
                         PRIVATE ${WALBERLA_LIBS})
   target_include_directories(espresso_walberla_cuda PUBLIC include)
   target_include_directories(
-    espresso_walberla_cuda PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)
+    espresso_walberla_cuda PRIVATE ${WALBERLA_INCLUDE_DIRS}
+                                   ${walberla_BINARY_DIR}/src)
   install(TARGETS espresso_walberla_cuda
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
   target_link_libraries(espresso_walberla PUBLIC espresso::walberla_cuda)
@@ -52,9 +52,8 @@ endif()
 target_link_libraries(
   espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
   PRIVATE espresso::cpp_flags espresso::walberla::cpp_flags ${WALBERLA_LIBS})
-target_include_directories(
-  espresso_walberla PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-  PRIVATE ${WALBERLA_INCLUDE_DIRS} ${walberla_BINARY_DIR}/src)
+target_include_directories(espresso_walberla PRIVATE ${WALBERLA_INCLUDE_DIRS}
+                                                     ${walberla_BINARY_DIR}/src)
 
 add_subdirectory(src)
 

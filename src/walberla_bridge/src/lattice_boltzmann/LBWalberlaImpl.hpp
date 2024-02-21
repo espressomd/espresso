@@ -29,23 +29,20 @@
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>
 #include <blockforest/communication/UniformBufferedScheme.h>
+#include <domain_decomposition/BlockDataID.h>
 #include <domain_decomposition/IBlock.h>
+#include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
+#include <field/communication/PackInfo.h>
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
-
-#include <field/AddToStorage.h>
-#include <field/FlagField.h>
-#include <field/communication/PackInfo.h>
-#include <lbm/communication/PdfFieldPackInfo.h>
-#include <lbm/field/AddToStorage.h>
-#include <lbm/field/PdfField.h>
-
 #include <stencil/D3Q19.h>
 #include <stencil/D3Q27.h>
 
 #include "../BoundaryHandling.hpp"
 #include "../BoundaryPackInfo.hpp"
+#include "../utils/boundary.hpp"
+#include "../utils/types_conversion.hpp"
 #include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
@@ -55,8 +52,6 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
-#include <walberla_bridge/utils/boundary_utils.hpp>
-#include <walberla_bridge/utils/walberla_utils.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -71,6 +66,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -106,8 +102,8 @@ public:
 
 protected:
   template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct FieldTrait {
-    using PdfField = GhostLayerField<FT, Stencil::Size>;
-    using VectorField = GhostLayerField<FT, uint_t{3u}>;
+    using PdfField = field::GhostLayerField<FT, Stencil::Size>;
+    using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
   };
@@ -216,6 +212,9 @@ protected:
 
   BlockDataID m_velocity_field_id;
   BlockDataID m_vec_tmp_field_id;
+
+  /** Flag for boundary cells. */
+  FlagUID const Boundary_flag{"boundary"};
 
   /**
    * @brief Full communicator.
