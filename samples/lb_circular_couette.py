@@ -57,7 +57,7 @@ system.lb = lb_fluid
 cyl_center = agrid * (grid_size // 2 + 0.5) * [1, 1, 0]
 cylinder_in = espressomd.shapes.Cylinder(
     center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
-    radius=8.1 * agrid, direction=1)
+    radius=8.6 * agrid, direction=1)
 cylinder_out = espressomd.shapes.Cylinder(
     center=cyl_center, axis=[0, 0, 1], length=3 * system.box_l[2],
     radius=14.5 * agrid, direction=-1)

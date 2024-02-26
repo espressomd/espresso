@@ -99,8 +99,10 @@ Variant LBFluidSlice::do_call_method(std::string const &name,
                 1. / m_conv_velocity);
   }
   if (name == "set_velocity_at_boundary") {
-    return call(&LatticeModel::set_slice_velocity_at_boundary, {1},
-                m_conv_velocity);
+    auto const retval = call(&LatticeModel::set_slice_velocity_at_boundary, {1},
+                             m_conv_velocity);
+    m_lb_fluid->reallocate_ubb_field();
+    return retval;
   }
   if (name == "get_pressure_tensor") {
     return call(&LatticeModel::get_slice_pressure_tensor, {3, 3},

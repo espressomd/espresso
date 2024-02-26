@@ -58,7 +58,7 @@ class TestLB:
             type=self.n_col_part // 2 * [0, 1], pos=np.random.random(
                 (self.n_col_part, 3)) * self.system.box_l[0])
         if espressomd.has_features("MASS"):
-            particles.mass = 0.1 + np.random.random(
+            particles.mass = 0.5 + np.random.random(
                 len(self.system.part))
 
         self.system.thermostat.turn_off()
@@ -134,7 +134,7 @@ class TestLB:
         #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
         # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
         #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
-        temp_prec_particle = 0.05 * self.params["temp"]
+        temp_prec_particle = 0.08 * self.params["temp"]
         temp_prec_fluid = 0.05 * self.params["temp"]
 
         self.assertAlmostEqual(

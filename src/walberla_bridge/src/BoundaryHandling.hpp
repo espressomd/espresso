@@ -20,10 +20,14 @@
 #pragma once
 
 #include <walberla_bridge/BlockAndCell.hpp>
-#include <walberla_bridge/utils/walberla_utils.hpp>
+
+#include "utils/types_conversion.hpp"
 
 #include <blockforest/StructuredBlockForest.h>
+#include <domain_decomposition/BlockDataID.h>
+#include <domain_decomposition/IBlock.h>
 #include <field/FlagField.h>
+#include <field/FlagUID.h>
 
 #include <utils/Vector.hpp>
 
@@ -35,12 +39,13 @@
 
 namespace walberla {
 
-/// Flag for domain cells, i.e. all cells
-FlagUID const Domain_flag("domain");
-/// Flag for boundary cells
-FlagUID const Boundary_flag("boundary");
-
 template <typename T, typename BoundaryClass> class BoundaryHandling {
+private:
+  /** Flag for domain cells, i.e. all cells. */
+  FlagUID const Domain_flag{"domain"};
+  /** Flag for boundary cells. */
+  FlagUID const Boundary_flag{"boundary"};
+
   /** Container for the map between cells and values. */
   class DynamicValueCallback {
   public:
@@ -57,10 +62,9 @@ template <typename T, typename BoundaryClass> class BoundaryHandling {
       return get_value(global);
     }
 
-    template <typename U>
-    void set_node_boundary_value(Utils::Vector3i const &node, U const &val) {
+    void set_node_boundary_value(Utils::Vector3i const &node, T const &val) {
       auto const global = Cell(node[0], node[1], node[2]);
-      (*m_value_boundary)[global] = es2walberla<U, T>(val);
+      (*m_value_boundary)[global] = val;
     }
 
     void unset_node_boundary_value(Utils::Vector3i const &node) {
@@ -72,7 +76,7 @@ template <typename T, typename BoundaryClass> class BoundaryHandling {
     [[nodiscard]] auto
     get_node_boundary_value(Utils::Vector3i const &node) const {
       auto const global = Cell(node[0], node[1], node[2]);
-      return walberla2es(get_value(global));
+      return get_value(global);
     }
 
     bool node_is_boundary(Utils::Vector3i const &node) const {
@@ -105,9 +109,8 @@ public:
 
   BoundaryHandling(std::shared_ptr<StructuredBlockForest> blocks,
                    BlockDataID value_field_id, BlockDataID flag_field_id)
-      : m_blocks(std::move(blocks)), m_value_field_id(value_field_id),
-        m_flag_field_id(flag_field_id), m_callback(DynamicValueCallback()),
-        m_pending_changes(false) {
+      : m_blocks(std::move(blocks)), m_flag_field_id(flag_field_id),
+        m_callback(DynamicValueCallback()), m_pending_changes(false) {
     // reinitialize the flag field
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       flag_reset_kernel(&*b);
@@ -115,7 +118,7 @@ public:
     // instantiate the boundary sweep
     std::function callback = m_callback;
     m_boundary =
-        std::make_shared<BoundaryClass>(m_blocks, m_value_field_id, callback);
+        std::make_shared<BoundaryClass>(m_blocks, value_field_id, callback);
   }
 
   void operator()(IBlock *block) { (*m_boundary)(block); }
@@ -129,13 +132,16 @@ public:
     return m_callback.get_node_boundary_value(node);
   }
 
-  template <typename U>
-  void set_node_value_at_boundary(Utils::Vector3i const &node, U const &v,
+  void set_node_value_at_boundary(Utils::Vector3i const &node, T const &v,
                                   BlockAndCell const &bc) {
     auto [flag_field, boundary_flag] = get_flag_field_and_flag(bc.block);
     m_callback.set_node_boundary_value(node, v);
     flag_field->addFlag(bc.cell, boundary_flag);
     m_pending_changes = true;
+  }
+
+  void unpack_node(Utils::Vector3i const &node, T const &v) {
+    m_callback.set_node_boundary_value(node, v);
   }
 
   void remove_node_from_boundary(Utils::Vector3i const &node,
@@ -163,13 +169,12 @@ public:
 
 private:
   std::shared_ptr<StructuredBlockForest> m_blocks;
-  BlockDataID m_value_field_id;
   BlockDataID m_flag_field_id;
   DynamicValueCallback m_callback;
   std::shared_ptr<BoundaryClass> m_boundary;
   bool m_pending_changes;
 
-  /** Register flags and set all cells to @ref Domain_flag. */
+  /** Register flags and reset all cells. */
   void flag_reset_kernel(IBlock *const block) {
     auto flag_field = block->template getData<FlagField>(m_flag_field_id);
     // register flags

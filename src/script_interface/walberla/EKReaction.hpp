@@ -27,9 +27,9 @@
 #include "LatticeIndices.hpp"
 #include "LatticeWalberla.hpp"
 
+#include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 #include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
-#include <walberla_bridge/src/electrokinetics/reactions/EKReactionImplBulk.hpp>
-#include <walberla_bridge/src/electrokinetics/reactions/EKReactionImplIndexed.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactionBaseIndexed.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
@@ -80,22 +80,21 @@ protected:
     return tau / std::pow(Utils::int_pow<3>(agrid), sum_alphas - 1.);
   }
 
-  template <typename T>
-  std::shared_ptr<T> make_instance(VariantMap const &args) const {
+  template <typename F>
+  auto make_instance(VariantMap const &args, F &allocator) const {
     auto lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
-    auto reactant = get_value<std::vector<Variant>>(args, "reactants");
-    auto output =
-        std::vector<std::shared_ptr<::walberla::EKReactant>>(reactant.size());
+    auto reactants = get_value<std::vector<Variant>>(args, "reactants");
+    auto output = ::walberla::EKReactionBase::reactants_type(reactants.size());
     auto get_instance = [](Variant const &v) {
       return get_value<std::shared_ptr<EKReactant>>(v)->get_instance();
     };
-    std::transform(reactant.begin(), reactant.end(), output.begin(),
+    std::transform(reactants.begin(), reactants.end(), output.begin(),
                    get_instance);
 
     auto const coefficient =
         get_value<double>(args, "coefficient") * get_conversion_coefficient();
 
-    return std::make_shared<T>(lattice->lattice(), output, coefficient);
+    return allocator(lattice->lattice(), output, coefficient);
   }
 
   std::shared_ptr<::walberla::EKReactionBase> m_ekreaction;
@@ -118,7 +117,7 @@ public:
 
   void do_construct(VariantMap const &args) override {
     m_conv_coefficient = calculate_bulk_conversion_factor(args);
-    m_ekreaction = make_instance<::walberla::EKReactionImplBulk>(args);
+    m_ekreaction = make_instance(args, ::walberla::new_ek_reaction_bulk);
   }
 };
 
@@ -143,10 +142,9 @@ public:
   void do_construct(VariantMap const &args) override {
     auto const agrid = get_agrid(args);
     m_conv_coefficient = calculate_bulk_conversion_factor(args) / agrid;
-    m_ekreaction = make_instance<::walberla::EKReactionImplIndexed>(args);
     m_ekreaction_impl =
-        std::dynamic_pointer_cast<::walberla::EKReactionImplIndexed>(
-            get_instance());
+        make_instance(args, ::walberla::new_ek_reaction_indexed);
+    m_ekreaction = m_ekreaction_impl;
   }
 
   [[nodiscard]] Variant do_call_method(std::string const &method,
@@ -170,7 +168,7 @@ public:
   }
 
 private:
-  std::shared_ptr<::walberla::EKReactionImplIndexed> m_ekreaction_impl;
+  std::shared_ptr<::walberla::EKReactionBaseIndexed> m_ekreaction_impl;
 };
 
 } // namespace ScriptInterface::walberla

@@ -31,6 +31,7 @@
 #include "script_interface/get_value.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
 
+#include <iomanip>
 #include <regex>
 #include <set>
 #include <sstream>
