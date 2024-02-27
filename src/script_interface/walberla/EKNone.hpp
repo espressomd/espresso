@@ -45,7 +45,8 @@ public:
     m_single_precision = get_value_or<bool>(args, "single_precision", false);
     m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
 
-    m_instance = new_ek_poisson_none(m_lattice->lattice(), m_single_precision);
+    m_instance = ::walberla::new_ek_poisson_none(m_lattice->lattice(),
+                                                 m_single_precision);
 
     add_parameters({
         {"single_precision", AutoParameter::read_only,

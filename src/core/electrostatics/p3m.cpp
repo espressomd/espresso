@@ -599,9 +599,11 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
       }
     }
     energy *= prefactor;
+#ifdef NPT
     if (npt_flag) {
       npt_add_virial_contribution(energy);
     }
+#endif
     if (not energy_flag) {
       energy = 0.;
     }

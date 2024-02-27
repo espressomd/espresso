@@ -53,11 +53,11 @@ args = parser.parse_args()
 
 # process and check arguments
 n_iterations = 30
-assert args.volume_fraction > 0, "volume_fraction must be a positive number"
+assert args.volume_fraction > 0, "--volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
-    "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
+    "--volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 assert "box_l" not in args or args.particles_per_core == 0, \
-    "Argument box_l requires particles_per_core=0"
+    "Argument --box_l requires --particles_per_core=0"
 
 required_features = ["LENNARD_JONES", "WALBERLA"]
 if args.gpu:
@@ -85,6 +85,7 @@ n_part = n_proc * args.particles_per_core
 if n_part == 0:
     box_l = args.box_l
     agrid = 1.
+    lb_grid = args.box_l
     measurement_steps = 80
 else:
     # volume of N spheres with radius r: N * (4/3*pi*r^3)

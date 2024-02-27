@@ -100,8 +100,6 @@ function(python_test)
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
              ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS})
   endif()
-  set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
-                                               DEPENDS "${TEST_DEPENDS}")
 
   if(${TEST_GPU_SLOTS} GREATER 0 AND ESPRESSO_BUILD_WITH_CUDA)
     set_property(TEST ${TEST_NAME} PROPERTY RESOURCE_GROUPS
@@ -117,7 +115,10 @@ function(python_test)
   if(${TEST_NUM_PROC} EQUAL 3)
     list(APPEND TEST_LABELS "parallel_odd")
   endif()
-  set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
+
+  set_tests_properties(
+    ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC} SKIP_RETURN_CODE 5
+                            DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
 
   set(python_tests ${python_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(python_test)
@@ -333,6 +334,7 @@ python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_slice.py MAX_NUM_PROC 2)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
 # python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO
+python_test(FILE lb_boundary_ghost_layer.py MAX_NUM_PROC 2)
 python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 2 GPU_SLOTS 1)

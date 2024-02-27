@@ -19,7 +19,8 @@
 
 #include <walberla_bridge/BlockAndCell.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
-#include <walberla_bridge/utils/walberla_utils.hpp>
+
+#include "utils/types_conversion.hpp"
 
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>

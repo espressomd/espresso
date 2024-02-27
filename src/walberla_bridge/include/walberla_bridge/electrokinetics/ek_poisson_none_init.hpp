@@ -20,11 +20,14 @@
 #pragma once
 
 #include <walberla_bridge/LatticeWalberla.hpp>
-
-#include "PoissonSolver/PoissonSolver.hpp"
+#include <walberla_bridge/electrokinetics/PoissonSolver/PoissonSolver.hpp>
 
 #include <memory>
+
+namespace walberla {
 
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
                     bool single_precision);
+
+} // namespace walberla

@@ -18,13 +18,19 @@
  */
 
 #include "EKinWalberlaImpl.hpp"
+#include "reactions/EKReactionImplBulk.hpp"
+#include "reactions/EKReactionImplIndexed.hpp"
 
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactionBase.hpp>
+#include <walberla_bridge/electrokinetics/reactions/EKReactionBaseIndexed.hpp>
 
 #include <utils/Vector.hpp>
 
 #include <memory>
+
+namespace walberla {
 
 std::shared_ptr<EKinWalberlaBase>
 new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
@@ -32,12 +38,29 @@ new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
                 Utils::Vector3d ext_efield, double density, bool advection,
                 bool friction_coupling, bool single_precision) {
   if (single_precision) {
-    return std::make_shared<walberla::EKinWalberlaImpl<13, float>>(
+    return std::make_shared<EKinWalberlaImpl<13, float>>(
         lattice, diffusion, kT, valency, ext_efield, density, advection,
         friction_coupling);
   }
 
-  return std::make_shared<walberla::EKinWalberlaImpl<13, double>>(
+  return std::make_shared<EKinWalberlaImpl<13, double>>(
       lattice, diffusion, kT, valency, ext_efield, density, advection,
       friction_coupling);
 }
+
+std::shared_ptr<EKReactionBase>
+new_ek_reaction_bulk(std::shared_ptr<LatticeWalberla> const &lattice,
+                     typename EKReactionBase::reactants_type const &reactants,
+                     double coefficient) {
+  return std::make_shared<EKReactionImplBulk>(lattice, reactants, coefficient);
+}
+
+std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed(
+    std::shared_ptr<LatticeWalberla> const &lattice,
+    typename EKReactionBase::reactants_type const &reactants,
+    double coefficient) {
+  return std::make_shared<EKReactionImplIndexed>(lattice, reactants,
+                                                 coefficient);
+}
+
+} // namespace walberla

@@ -29,18 +29,19 @@
 namespace walberla {
 
 class EKReactionBase {
-private:
-  std::vector<std::shared_ptr<EKReactant>> m_reactants;
-  double m_coefficient;
+public:
+  using reactants_type = std::vector<std::shared_ptr<EKReactant>>;
 
+private:
   std::shared_ptr<LatticeWalberla> m_lattice;
+  reactants_type m_reactants;
+  double m_coefficient;
 
 public:
   EKReactionBase(std::shared_ptr<LatticeWalberla> lattice,
-                 std::vector<std::shared_ptr<EKReactant>> reactants,
-                 double coefficient)
-      : m_reactants(std::move(reactants)), m_coefficient(coefficient),
-        m_lattice(std::move(lattice)) {}
+                 reactants_type reactants, double coefficient)
+      : m_lattice(std::move(lattice)), m_reactants(std::move(reactants)),
+        m_coefficient(coefficient) {}
 
   virtual ~EKReactionBase() = default;
 
