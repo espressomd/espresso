@@ -27,7 +27,11 @@
 #include "EKPoissonSolver.hpp"
 #include "LatticeWalberla.hpp"
 
+#include "core/MpiCallbacks.hpp"
+#include "core/communication.hpp"
+
 #include <walberla_bridge/electrokinetics/ek_poisson_fft_init.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
@@ -39,6 +43,7 @@
 namespace ScriptInterface::walberla {
 
 class EKFFT : public EKPoissonSolver {
+  std::unique_ptr<ResourceManager> m_resources_lock;
   std::shared_ptr<::walberla::PoissonSolver> m_instance;
   std::shared_ptr<LatticeWalberla> m_lattice;
   double m_conv_permittivity;
@@ -57,7 +62,13 @@ public:
 
     m_instance = ::walberla::new_ek_poisson_fft(
         m_lattice->lattice(), permittivity, m_single_precision);
+    m_resources_lock = std::make_unique<ResourceManager>();
+    // MPI communicator is needed to destroy the FFT plans
+    m_resources_lock->acquire_lock(
+        Communication::mpiCallbacksHandle()->share_mpi_env());
+  }
 
+  EKFFT() {
     add_parameters({
         {"permittivity",
          [this](Variant const &v) {
@@ -71,6 +82,12 @@ public:
          [this]() { return m_single_precision; }},
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
     });
+  }
+
+  ~EKFFT() override {
+    m_lattice.reset();
+    m_instance.reset();
+    m_resources_lock.reset();
   }
 
   [[nodiscard]] std::shared_ptr<::walberla::PoissonSolver>

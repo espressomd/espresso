@@ -571,10 +571,15 @@ def script_interface_register(c):
     return c
 
 
-cdef void init(MpiCallbacks & cb):
+cdef void init(const shared_ptr[MpiCallbacks] & cb):
     cdef Factory[ObjectHandle] f
 
     initialize(& f)
 
     global _om
     _om = make_shared[ContextManager](cb, f)
+
+
+cdef void deinit():
+    global _om
+    _om.reset()

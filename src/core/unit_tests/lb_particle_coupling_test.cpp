@@ -635,7 +635,7 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
 }
 
 int main(int argc, char **argv) {
-  mpi_init_stand_alone(argc, argv);
+  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
   espresso::system = System::System::create();
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);

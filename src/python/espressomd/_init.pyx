@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import sys
+import atexit
 from . cimport script_interface
 from . cimport communication
 from libcpp.memory cimport shared_ptr
@@ -28,7 +29,16 @@ communication.init(mpi_env)
 
 # Initialize script interface
 # Has to be _after_ mpi_init
-script_interface.init(communication.mpiCallbacks())
+script_interface.init(communication.mpiCallbacksHandle())
+
+
+def session_shutdown():
+    mpi_env.reset()
+    communication.deinit()
+    script_interface.deinit()
+
+
+atexit.register(session_shutdown)
 
 # Block the worker nodes in the callback loop.
 # The head node is just returning to the user script.
