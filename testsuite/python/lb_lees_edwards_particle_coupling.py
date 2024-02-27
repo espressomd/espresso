@@ -222,7 +222,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
         # 2 * (np.random.random() - 1) * 3 * system.box_l[1]
-        pos_offset = 0.5 
+        pos_offset = 1.6 
         shear_vel = 0  # np.random.random()-1/2
         protocol = lees_edwards.LinearShear(
             shear_velocity=shear_vel, initial_pos_offset=pos_offset, time_0=0.)
@@ -237,7 +237,6 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             for n in lbf[:, :, :]:
                 n.velocity = [n.index[0], 0, 0]
 
-#            x = 0.5+np.random.random()*(system.box_l[0]-2) 
             z = 4  # np.random.random()*system.box_l[2]
             y = 0
             pos = np.array((x, y, z))
@@ -269,7 +268,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
 
             observed_vel = np.copy(lbf.get_interpolated_velocity(pos=pos))
             print(pos[0], pos_offset, observed_vel, expected_vel)
-#            np.testing.assert_allclose(observed_vel, expected_vel)
+            np.testing.assert_allclose(observed_vel, expected_vel)
 
     def atest_viscous_coupling_with_shear_vel(self):
         # Places a co-moving particle close to the LE boundary
@@ -318,12 +317,12 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         p = system.part.add(
             pos=pos, v=(0, 0, 0))
         system.integrator.run(1) 
-#        initial_mom = np.copy(system.analysis.linear_momentum())
+        initial_mom = np.copy(system.analysis.linear_momentum())
         for _ in range(1000): 
             system.integrator.run(1)
             current_mom = np.copy(system.analysis.linear_momentum())
             print(current_mom, p.pos_folded)
-#            np.testing.assert_allclose(initial_mom, current_mom, atol=1E-6)
+            np.testing.assert_allclose(initial_mom, current_mom, atol=1E-6)
 
 
 if __name__ == '__main__':

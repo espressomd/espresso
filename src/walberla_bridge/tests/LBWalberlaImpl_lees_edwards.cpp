@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(test_transient_shear) {
   }
 }
 
-static auto setup_lb_with_offset(double offset) {
+static auto setup_lb_with_offset(double offset, double vel_shift = 0.) {
   using LBImplementation = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
   auto density = 1.;
   auto viscosity = 1. / 7.;
@@ -100,7 +100,7 @@ static auto setup_lb_with_offset(double offset) {
       std::make_shared<LatticeWalberla>(Vector3i{10, 10, 10}, mpi_shape, 1);
   auto lb = std::make_shared<LBImplementation>(lattice, viscosity, density);
   auto le_pack = std::make_unique<LeesEdwardsPack>(
-      0u, 1u, [=]() { return offset; }, []() { return 0.0; });
+      0u, 1u, [=]() { return offset; }, [=]() { return vel_shift; });
   lb->set_collision_model(std::move(le_pack));
   lb->ghost_communication();
   return lb;
@@ -136,42 +136,81 @@ int fold(int i, int size) {
 std::vector<Utils::Vector3i>
 get_mirroring_xz_ghosts(const Utils::Vector3i &n, const Utils::Vector3i shape) {
   std::vector<Utils::Vector3i> res;
+
+  auto in_ghost_layer = [](int i, int shape) {
+    return (i == -1 or i == shape);
+  };
+  auto in_box_or_ghost_layer = [](int i, int shape) {
+    return (i >= -1 and i <= shape);
+  };
+
   for (int dx : {-shape[0], 0, shape[0]}) {
     for (int dz : {-shape[2], 0, shape[2]}) {
-      if (dx == 0 and dz == 0)
+      if (dx == 0 and dz == 0) // no shift
         continue;
+
       auto shifted = Utils::Vector3i{n[0] + dx, n[1], n[2] + dz};
-      if (shifted[0] == -1 or shifted[0] == shape[0] or shifted[2] == -1 or
-          shifted[2] == shape[2]) {
+      if ((in_ghost_layer(shifted[0], shape[0]) and
+           in_box_or_ghost_layer(shifted[2], shape[2])) or
+          (in_ghost_layer(shifted[2], shape[2]) and
+           in_box_or_ghost_layer(shifted[0], shape[0]))) {
         res.push_back(shifted);
       }
     }
   }
   return res;
 }
+template <typename LB>
+void check_mirroring_ghost_vel(const LB &lb, Vector3i orig_ghost_node) {
+  auto const ref_vel = *(lb->get_node_velocity(orig_ghost_node, true));
+  auto const shape = lb->get_lattice().get_grid_dimensions();
+  //    std::cerr << "mirrors of "<<orig_ghost_node<<" v="<<ref_vel<<" lb
+  //    shape="<<shape<<std::endl;
+  for (auto const mirror_node :
+       get_mirroring_xz_ghosts(orig_ghost_node, shape)) {
+    auto const mirror_vel = *(lb->get_node_velocity(mirror_node, true));
+    //    std::cerr << "node "<<mirror_node<<" v="<<mirror_vel<<std::endl;
+    BOOST_CHECK_SMALL((mirror_vel - ref_vel).norm(), 1E-10);
+  }
+}
 
 BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
-  auto const offset = 2;
-  auto lb = setup_lb_with_offset(offset);
+  auto const offset = 12;
+  auto vel_shift = 1.5;
+  Vector3d vel_shift_vec{vel_shift, 0., 0.};
+  auto lb = setup_lb_with_offset(offset, vel_shift);
   auto const shape = lb->get_lattice().get_grid_dimensions();
   for (int x = 0; x < shape[0]; x++) {
     for (int z : {0, 3, shape[2] - 1}) {
       auto const y_max = shape[1] - 1;
-      auto const v = Vector3d{0.3, -0.2, 0.3};
+      auto const v_upper = Vector3d{0.3 + x, -0.2 + y_max, 0.3 + z};
+      auto const v_lower = Vector3d{0.5 + x, -0.7, 0.9 + z};
 
-      auto const source_node = Vector3i{x, y_max, z};
-      auto const ghost_node =
-          Vector3i{fold(source_node[0] - offset, shape[0]), -1, source_node[2]};
+      auto const upper_source_node = Vector3i{x, y_max, z};
+      auto const lower_source_node = Vector3i{x, 0, z};
+      auto const ghost_of_upper_node =
+          Vector3i{fold(upper_source_node[0] - offset, shape[0]), -1,
+                   upper_source_node[2]};
+      auto const ghost_of_lower_node =
+          Vector3i{fold(lower_source_node[0] + offset, shape[0]), y_max + 1,
+                   lower_source_node[2]};
 
-      lb->set_node_velocity(source_node, v);
+      lb->set_node_velocity(upper_source_node, v_upper);
+      lb->set_node_velocity(lower_source_node, v_lower);
+
       lb->ghost_communication();
-      auto const ghost_vel = *(lb->get_node_velocity(ghost_node, true));
-      BOOST_CHECK_SMALL((ghost_vel - v).norm(), 1E-10);
 
-      for (auto const cell : get_mirroring_xz_ghosts(ghost_node, shape)) {
-        auto const ghost_vel = *(lb->get_node_velocity(ghost_node, true));
-        BOOST_CHECK_SMALL((ghost_vel - v).norm(), 1E-10);
-      }
+      auto const ghost_vel_for_upper =
+          *(lb->get_node_velocity(ghost_of_upper_node, true));
+      auto const ghost_vel_for_lower =
+          *(lb->get_node_velocity(ghost_of_lower_node, true));
+
+      BOOST_CHECK_SMALL((ghost_vel_for_upper + vel_shift_vec - v_upper).norm(),
+                        1E-10);
+      BOOST_CHECK_SMALL((ghost_vel_for_lower - vel_shift_vec - v_lower).norm(),
+                        1E-10);
+      check_mirroring_ghost_vel(lb, ghost_of_upper_node);
+      check_mirroring_ghost_vel(lb, ghost_of_lower_node);
     }
   }
 }
