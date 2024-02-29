@@ -63,7 +63,7 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        mode : :obj:`str`, {"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"}
+        mode : :obj:`str`, {"off", "bind_centers", "bind_at_point_of_collision", "glue_to_surface"}
             Collision detection mode
 
         distance : :obj:`float`
@@ -92,22 +92,13 @@ class CollisionDetection(ScriptInterfaceHelper):
         distance_glued_particle_to_vs : :obj:`float`
             Distance for ``"glue_to_surface"`` mode. See user guide.
 
-        bond_three_particles : :obj:`espressomd.interactions.BondedInteraction`
-            First angular bond for the ``"bind_three_particles"`` mode. See
-            user guide
-
-        three_particle_binding_angle_resolution : :obj:`int`
-            Resolution for the angular bonds (mode ``"bind_three_particles"``).
-            Resolution+1 bonds are needed to accommodate the case of 180 degrees
-            angles
-
         """
 
         if "mode" not in kwargs:
             raise ValueError(
                 "Collision mode must be specified via the 'mode' argument")
         # Convert bonds to bond ids
-        for name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
+        for name in ["bond_centers", "bond_vs"]:
             if name in kwargs:
                 if isinstance(kwargs[name], BondedInteraction):
                     kwargs[name] = kwargs[name]._bond_id
@@ -117,7 +108,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         """Gets a single parameter from the collision detection."""
 
         value = super().get_parameter(name)
-        if name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
+        if name in ["bond_centers", "bond_vs"]:
             if value == -1:  # Not defined
                 value = None
             else:

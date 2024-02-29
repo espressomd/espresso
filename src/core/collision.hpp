@@ -26,33 +26,65 @@
 #include "BondList.hpp"
 #include "Particle.hpp"
 
-/** @brief Protocols for collision handling. */
-enum class CollisionModeType : int {
-  /** @brief Deactivate collision detection. */
-  OFF = 0,
-  /** @brief Create bond between centers of colliding particles. */
-  BIND_CENTERS = 1,
-  /**
-   * @brief Create a bond between the centers of the colliding particles,
-   * plus two virtual sites at the point of collision and bind them
-   * together. This prevents the particles from sliding against each
-   * other. Requires VIRTUAL_SITES_RELATIVE.
+struct CollisionOff: public Collision_parameters{ 
+  CollisionOff() : Collision_parameters() {}
+
+  //TODO: Check function for specifics
+}
+
+struct CollisionBindCenters: public Collision_parameters{
+  CollisionBindCenters() : Collision_parameters() {}
+
+  //TODO: Check function for specifics
+}
+
+struct CollisionBindVS: public Collision_parameters{
+  CollisionBindVS() : Collision_parameters(), vs_particle_type(-1), vs_placement(-1.) {}
+
+  /// particle type for virtual sites created on collision
+  int vs_particle_type;
+
+  /** Placement of virtual sites
+   *  0=on same particle as related to,
+   *  1=on collision partner,
+   *  0.5=in the middle between
    */
-  BIND_VS = 2,
-  /** @brief Glue a particle to a specific spot on another particle. */
-  GLUE_TO_SURF = 3,
-  /** @brief Three particle binding mode. */
-  BIND_THREE_PARTICLES = 4
-};
+  double vs_placement;
+
+  //TODO: Check function for specifics
+}
+
+struct CollisionGlueToSurf: public Collision_parameters{
+  CollisionGlueToSurf() : Collision_parameters(), dist_glued_part_to_vs(0.), //TODO: Check if this actually should use 0.?
+        part_type_to_be_glued(-1), part_type_to_attach_vs_to(-1),
+        part_type_after_glueing(-1)  {}
+  /// The distance from the particle which is to be
+  /// glued to the new virtual site
+  double dist_glued_part_to_vs;
+  /// The particle type being glued
+  int part_type_to_be_glued;
+  /// The particle type to which the virtual site is attached
+  int part_type_to_attach_vs_to;
+  /// Particle type to which the newly glued particle is converted
+  int part_type_after_glueing;
+
+  //TODO: Check function for specifics
+
+  /** @brief Check additional criteria for the glue_to_surface collision mode */
+  inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
+    return (((p1.type() == collision_params.part_type_to_be_glued) &&
+            (p2.type() == collision_params.part_type_to_attach_vs_to)) ||
+            ((p2.type() == collision_params.part_type_to_be_glued) &&
+            (p1.type() == collision_params.part_type_to_attach_vs_to)));
+  }
+}
 
 class Collision_parameters {
 public:
   Collision_parameters()
       : mode(CollisionModeType::OFF), distance(0.), distance2(0.),
-        bond_centers(-1), bond_vs(-1), bond_three_particles(-1) {}
+        bond_centers(-1), bond_vs(-1) {}
 
-  /// collision protocol
-  CollisionModeType mode;
   /// distance at which particles are bound
   double distance;
   // Square of distance at which particle are bound
@@ -62,32 +94,6 @@ public:
   int bond_centers;
   /// bond type used between virtual sites
   int bond_vs;
-  /// particle type for virtual sites created on collision
-  int vs_particle_type;
-
-  /// For mode "glue to surface": The distance from the particle which is to be
-  /// glued to the new virtual site
-  double dist_glued_part_to_vs;
-  /// For mode "glue to surface": The particle type being glued
-  int part_type_to_be_glued;
-  /// For mode "glue to surface": The particle type to which the virtual site is
-  /// attached
-  int part_type_to_attach_vs_to;
-  /// Particle type to which the newly glued particle is converted
-  int part_type_after_glueing;
-  /// First bond type (for zero degrees) used for the three-particle bond
-  /// (angle potential)
-  int bond_three_particles;
-  /// Number of angle bonds to use (angular resolution)
-  /// different angle bonds with different equilibrium angles
-  /// Are expected to have ids immediately following to bond_three_particles
-  int three_particle_angle_resolution;
-  /** Placement of virtual sites for MODE_VS.
-   *  0=on same particle as related to,
-   *  1=on collision partner,
-   *  0.5=in the middle between
-   */
-  double vs_placement;
 
   /** @brief Validates parameters and creates particle types if needed. */
   void initialize();
@@ -107,14 +113,6 @@ void handle_collisions(CellStructure &cell_structure);
  *  queue
  */
 void queue_collision(int part1, int part2);
-
-/** @brief Check additional criteria for the glue_to_surface collision mode */
-inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
-  return (((p1.type() == collision_params.part_type_to_be_glued) &&
-           (p2.type() == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2.type() == collision_params.part_type_to_be_glued) &&
-           (p1.type() == collision_params.part_type_to_attach_vs_to)));
-}
 
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(Particle const &p1, Particle const &p2,
