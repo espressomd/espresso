@@ -45,12 +45,15 @@
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
 
 namespace utf = boost::unit_test;
+
+static std::weak_ptr<boost::mpi::environment> mpi_env;
 
 namespace Testing {
 struct Error : public std::exception {};
@@ -68,7 +71,8 @@ struct if_parallel_test {
 BOOST_TEST_DECORATOR(*utf::precondition(if_parallel_test()))
 BOOST_AUTO_TEST_CASE(parallel_exceptions) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks callbacks{world};
+  auto callbacks =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
   ErrorHandling::init_error_handling(callbacks);
   auto handler = ScriptInterface::ParallelExceptionHandler{world};
 
@@ -130,10 +134,14 @@ BOOST_AUTO_TEST_CASE(parallel_exceptions) {
     // runtime error messages are printed to stderr and cleared
     BOOST_CHECK_EQUAL(check_runtime_errors_local(), 0);
   }
+  if (world.rank() != 0) {
+    callbacks->loop();
+  }
 }
 
 int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
+  auto const mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
+  ::mpi_env = mpi_env;
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

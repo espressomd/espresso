@@ -357,5 +357,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory,
 int main(int argc, char **argv) {
   espresso::system = std::make_unique<EspressoSystemStandAlone>(argc, argv);
 
-  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  int retval = boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  espresso::system.reset();
+  return retval;
 }

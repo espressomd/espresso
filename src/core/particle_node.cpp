@@ -407,7 +407,7 @@ static int mpi_place_new_particle(int p_id, const Utils::Vector3d &pos) {
 
 void mpi_place_particle_local(int pnode, int p_id) {
   if (pnode == this_node) {
-    Utils::Vector3d pos;
+    Utils::Vector3d pos{};
     comm_cart.recv(0, some_tag, pos);
     local_move_particle(p_id, pos);
   }

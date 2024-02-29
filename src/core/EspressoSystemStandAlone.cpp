@@ -29,17 +29,18 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <memory>
 
 EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
-  auto mpi_env = mpi_init(argc, argv);
+  m_mpi_env = mpi_init(argc, argv);
 
   boost::mpi::communicator world;
   head_node = world.rank() == 0;
 
   // initialize the MpiCallbacks framework
-  Communication::init(mpi_env);
+  Communication::init(m_mpi_env);
 
   // default-construct global state of the system
 #ifdef VIRTUAL_SITES
@@ -48,6 +49,10 @@ EspressoSystemStandAlone::EspressoSystemStandAlone(int argc, char **argv) {
 
   // initialize the MpiCallbacks loop (blocking on worker nodes)
   mpi_loop();
+}
+
+EspressoSystemStandAlone::~EspressoSystemStandAlone() {
+  Communication::deinit();
 }
 
 void EspressoSystemStandAlone::set_box_l(Utils::Vector3d const &box_l) const {

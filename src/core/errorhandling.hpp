@@ -31,6 +31,7 @@
 #include "error_handling/RuntimeError.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -85,7 +86,7 @@ namespace ErrorHandling {
  *
  * @param callbacks Callbacks system the error handler should be on.
  */
-void init_error_handling(Communication::MpiCallbacks &callbacks);
+void init_error_handling(std::weak_ptr<Communication::MpiCallbacks> callbacks);
 
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                                          const std::string &file, int line,

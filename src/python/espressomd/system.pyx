@@ -202,9 +202,19 @@ cdef class System:
             self._active_virtual_sites_handle = virtual_sites.ActiveVirtualSitesHandle(
                 implementation=virtual_sites.VirtualSitesOff())
 
+        self._setup_atexit()
+
         # lock class
         global _system_created
         _system_created = True
+
+    def _setup_atexit(self):
+        import atexit
+
+        def session_shutdown():
+            self.actors.clear()
+
+        atexit.register(session_shutdown)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -230,6 +240,7 @@ cdef class System:
     def __setstate__(self, params):
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
+        self._setup_atexit()
 
     property box_l:
         """
