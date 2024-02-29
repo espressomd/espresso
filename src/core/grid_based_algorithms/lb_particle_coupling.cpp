@@ -312,9 +312,11 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
           if (p.is_virtual() and !couple_virtual)
             return;
 
+          auto const folded_pos = folded_position(p.pos(), box_geo);
+
           // Calculate coupling force
           Utils::Vector3d force = {};
-          for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+          for (auto pos : positions_in_halo(folded_pos, box_geo)) {
             if (in_local_halo(pos)) {
               force = lb_viscous_coupling(p, pos,
                                           noise_amplitude * f_random(p.id()));
@@ -324,7 +326,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 
           // couple positions including shifts by one box length to add
           // forces to ghost layers
-          for (auto pos : positions_in_halo(p.pos(), box_geo)) {
+          for (auto pos : positions_in_halo(folded_pos, box_geo)) {
             if (in_local_domain(pos)) {
               /* if the particle is in our LB volume, this node
                * is responsible to adding its force */

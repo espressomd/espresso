@@ -21,12 +21,21 @@
 
 #include <utils/Vector.hpp>
 
+#include <memory>
+
+namespace boost {
+namespace mpi {
+class environment;
+}
+} // namespace boost
+
 /** Manager for a stand-alone ESPResSo system.
  *  The system is default-initialized, MPI-ready and has no script interface.
  */
 class EspressoSystemStandAlone {
 public:
   EspressoSystemStandAlone(int argc, char **argv);
+  ~EspressoSystemStandAlone();
   void set_box_l(Utils::Vector3d const &box_l) const;
   void set_node_grid(Utils::Vector3i const &node_grid) const;
   void set_time_step(double time_step) const;
@@ -34,6 +43,7 @@ public:
 
 private:
   bool head_node;
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
 };
 
 #endif

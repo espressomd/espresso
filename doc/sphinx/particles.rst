@@ -386,6 +386,7 @@ For correct results, the LB thermostat has to be deactivated for virtual sites::
    system.thermostat.set_lb(kT=0, act_on_virtual=False)
 
 Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
+With the LB GPU implementation, inertialess tracers only work on 1 MPI rank.
 
 .. _Interacting with groups of particles:
 

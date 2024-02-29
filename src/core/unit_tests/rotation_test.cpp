@@ -33,6 +33,7 @@
 #include <utils/constants.hpp>
 #include <utils/quaternion.hpp>
 
+#include <initializer_list>
 #include <limits>
 #include <stdexcept>
 #include <tuple>
@@ -41,13 +42,13 @@ auto constexpr tol = 5. * 100. * std::numeric_limits<double>::epsilon();
 
 namespace Testing {
 std::tuple<Utils::Quaternion<double>, Utils::Vector3d>
-setup_trivial_quat(int i, Utils::Vector3d const &v_in) {
+setup_trivial_quat(unsigned int i, Utils::Vector3d const &v_in) {
   auto quat = Utils::Quaternion<double>{{0., 0., 0., 0.}};
   quat[i] = 1.;
   auto v_ref = v_in;
-  if (i) {
+  if (i >= 1) {
     v_ref *= -1.;
-    v_ref[i - 1] *= -1.;
+    v_ref[static_cast<unsigned int>(i - 1)] *= -1.;
   }
   return std::make_tuple(quat, v_ref);
 }
@@ -55,12 +56,12 @@ setup_trivial_quat(int i, Utils::Vector3d const &v_in) {
 
 BOOST_AUTO_TEST_CASE(convert_vector_space_to_body_test) {
   auto const t_in = Utils::Vector3d{{1., 2., 3.}};
-  for (int i : {0, 1, 2, 3}) {
+  for (unsigned int i : {0u, 1u, 2u, 3u}) {
     auto p = Particle();
     Utils::Vector3d t_ref;
     std::tie(p.quat(), t_ref) = Testing::setup_trivial_quat(i, t_in);
     auto const t_out = convert_vector_space_to_body(p, t_in);
-    for (int j : {0, 1, 2}) {
+    for (unsigned int j : {0u, 1u, 2u}) {
       BOOST_CHECK_CLOSE(t_out[j], t_ref[j], tol);
     }
   }
@@ -70,7 +71,7 @@ BOOST_AUTO_TEST_CASE(convert_torque_to_body_frame_apply_fix_test) {
   auto const t_in = Utils::Vector3d{{1., 2., 3.}};
   {
     // test particle torque conversion
-    for (int i : {0, 1, 2, 3}) {
+    for (unsigned int i : {0u, 1u, 2u, 3u}) {
       auto p = Particle();
       p.set_can_rotate_all_axes();
       Utils::Vector3d t_ref;
@@ -78,14 +79,14 @@ BOOST_AUTO_TEST_CASE(convert_torque_to_body_frame_apply_fix_test) {
       p.torque() = t_in;
       convert_torque_to_body_frame_apply_fix(p);
       auto const t_out = p.torque();
-      for (int j : {0, 1, 2}) {
+      for (unsigned int j : {0u, 1u, 2u}) {
         BOOST_CHECK_CLOSE(t_out[j], t_ref[j], tol);
       }
     }
   }
   {
     // torque is set to zero for axes without rotation
-    for (int j : {0, 1, 2}) {
+    for (unsigned int j : {0u, 1u, 2u}) {
       auto p = Particle();
       p.set_can_rotate_all_axes();
       p.set_can_rotate_around(j, false);
@@ -139,7 +140,7 @@ BOOST_AUTO_TEST_CASE(rotate_particle_body_test) {
     auto const phi = Utils::pi<double>();
     auto const quat = local_rotate_particle_body(p, {0., 0., 1.}, phi);
     auto const quat_ref = Utils::Vector4d{{-4., 3., -2., 1.}};
-    for (int i : {0, 1, 2, 3}) {
+    for (unsigned int i : {0u, 1u, 2u, 3u}) {
       BOOST_CHECK_CLOSE(quat[i], quat_ref[i], tol);
     }
   }
@@ -149,7 +150,7 @@ BOOST_AUTO_TEST_CASE(rotate_particle_body_test) {
     auto const phi = 2. * Utils::pi<double>();
     auto const quat = local_rotate_particle_body(p, {0., 0., 1.}, phi);
     auto const quat_ref = Utils::Vector4d{{-1., -2., -3., -4.}};
-    for (int i : {0, 1, 2, 3}) {
+    for (unsigned int i : {0u, 1u, 2u, 3u}) {
       BOOST_CHECK_CLOSE(quat[i], quat_ref[i], tol);
     }
   }
@@ -165,7 +166,7 @@ BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
     propagate_omega_quat_particle(p, 0.01);
     auto const quat = p.quat();
     auto const quat_ref = Utils::Quaternion<double>::identity();
-    for (int i : {0, 1, 2, 3}) {
+    for (unsigned int i : {0u, 1u, 2u, 3u}) {
       BOOST_CHECK_CLOSE(quat[i], quat_ref[i], tol);
     }
   }
@@ -173,7 +174,7 @@ BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
     // test trivial cases with parameters extremely close to the limit:
     // time step almost 1.0 and product of time step with omega almost 2.0
     auto const time_step = 0.99;
-    for (int j : {0, 1, 2}) {
+    for (unsigned int j : {0u, 1u, 2u}) {
       p.quat() = Utils::Quaternion<double>::identity();
       p.omega() = {0., 0., 0.};
       p.omega()[j] = 2.;
@@ -182,7 +183,7 @@ BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
       auto quat_ref = Utils::Quaternion<double>::identity();
       quat_ref[1 + j] = time_step;
       quat_ref[0] = std::sqrt(1. - time_step * time_step);
-      for (int i : {0, 1, 2, 3}) {
+      for (unsigned int i : {0u, 1u, 2u, 3u}) {
         BOOST_CHECK_CLOSE(quat[i], quat_ref[i], tol);
       }
     }
@@ -207,8 +208,8 @@ BOOST_AUTO_TEST_CASE(convert_operator_body_to_space_test) {
   auto const linear_transf_space =
       convert_body_to_space(quat, linear_transf_body);
 
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
+  for (unsigned int i = 0; i < 3; i++) {
+    for (unsigned int j = 0; j < 3; j++) {
       if (linear_transf_space_ref(i, j) == 0.0) {
         BOOST_CHECK_SMALL(
             std::abs(linear_transf_space(i, j) - linear_transf_space_ref(i, j)),
@@ -233,7 +234,7 @@ BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
     auto const pair = convert_dip_to_quat({0., 0., dipm});
     auto const quat = quat_to_vector4d(pair.first);
     auto const quat_ref = Utils::Vector4d{{1., 0., 0., 0.}};
-    for (int i : {0, 1, 2, 3}) {
+    for (unsigned int i : {0u, 1u, 2u, 3u}) {
       BOOST_CHECK_CLOSE(quat[i], quat_ref[i], tol);
     }
     BOOST_CHECK_CLOSE(pair.second, dipm, tol);
@@ -243,7 +244,7 @@ BOOST_AUTO_TEST_CASE(convert_dip_to_quat_test) {
     auto const pair = convert_dip_to_quat({dipm, 0., 0.});
     auto const quat = quat_to_vector4d(pair.first);
     auto const quat_ref = Utils::Vector4d{{0.5, -0.5, 0.5, -0.5}};
-    for (int i : {0, 1, 2, 3}) {
+    for (unsigned int i : {0u, 1u, 2u, 3u}) {
       BOOST_CHECK_CLOSE(quat[i], quat_ref[i], tol);
     }
     BOOST_CHECK_CLOSE(pair.second, dipm, tol);

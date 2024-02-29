@@ -67,7 +67,7 @@ public:
     GLOBAL
   };
 
-  ContextManager(Communication::MpiCallbacks &callbacks,
+  ContextManager(std::shared_ptr<Communication::MpiCallbacks> const &callbacks,
                  const Utils::Factory<ObjectHandle> &factory);
 
   /**

@@ -31,6 +31,7 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "config.hpp"
+#include "constraints.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -289,6 +290,8 @@ void on_boxl_change(bool skip_method_adaption) {
     LBBoundaries::lb_init_boundaries();
 #endif
   }
+
+  Constraints::constraints.on_boxl_change();
 }
 
 void on_cell_structure_change() {

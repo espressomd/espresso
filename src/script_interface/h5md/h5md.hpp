@@ -26,6 +26,8 @@
 
 #ifdef H5MD
 
+#include "core/MpiCallbacks.hpp"
+#include "core/communication.hpp"
 #include "io/writer/h5md_core.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -66,8 +68,16 @@ private:
         params, "file_path", "script_path", "fields", "mass_unit",
         "length_unit", "time_unit", "force_unit", "velocity_unit",
         "charge_unit");
+    // MPI communicator is needed to close parallel file handles
+    m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
   }
 
+  ~H5md() override {
+    m_h5md.reset();
+    m_mpi_env_lock.reset();
+  }
+
+  std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
   std::shared_ptr<::Writer::H5md::File> m_h5md;
   std::vector<std::string> m_output_fields;
 };

@@ -55,6 +55,7 @@ class IntegratorSteepestDescent(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
+        self.system.constraints.clear()
         self.system.integrator.set_vv()
 
     def test_relaxation_integrator(self):

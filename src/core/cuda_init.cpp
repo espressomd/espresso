@@ -91,7 +91,7 @@ static std::vector<EspressoGpuDevice> mpi_cuda_gather_gpus_local() {
 
   if (this_node == 0) {
     std::set<EspressoGpuDevice, CompareDevices> device_set;
-    int *n_gpu_array = new int[n_nodes];
+    int *n_gpu_array = new int[static_cast<unsigned int>(n_nodes)];
     MPI_Gather(&n_gpus, 1, MPI_INT, n_gpu_array, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     /* insert local devices */

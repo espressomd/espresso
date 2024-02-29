@@ -52,9 +52,9 @@ void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   }
 
   /* calculate dist and vec */
-  for (int i = 0; i < 3; i++) {
-    vec[i] = (ppos_e[i] - Utils::sqr(m_semiaxes[i]) * ppos_e[i] /
-                              (l + Utils::sqr(m_semiaxes[i])));
+  for (unsigned int i = 0; i < 3; i++) {
+    auto const semi_sq = Utils::sqr(m_semiaxes[i]);
+    vec[i] = (ppos_e[i] - semi_sq * ppos_e[i] / (l + semi_sq));
   }
 
   dist = distance_prefactor * m_direction * vec.norm();
@@ -67,7 +67,7 @@ bool Ellipsoid::inside_ellipsoid(const Utils::Vector3d &ppos) const {
 double Ellipsoid::newton_term(const Utils::Vector3d &ppos,
                               const double &l) const {
   Utils::Vector3d axpos, lax, lax2;
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     axpos[i] = Utils::sqr(m_semiaxes[i]) * Utils::sqr(ppos[i]);
     lax[i] = l + Utils::sqr(m_semiaxes[i]);
     lax2[i] = Utils::sqr(lax[i]);

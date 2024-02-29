@@ -33,8 +33,10 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     help="Fraction of the simulation box volume occupied by "
                     "particles (range: [0.01-0.74], default: 0.25)")
 parser.add_argument("--prefactor", metavar="PREFACTOR", action="store",
-                    type=float, default=4., required=False,
+                    type=float, default=1., required=False,
                     help="P3M prefactor (default: 4)")
+parser.add_argument("--gpu", default=False, action="store_true")
+parser.add_argument("--no-gpu", dest="gpu", action="store_false")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
                    type=str, required=False, default="benchmarks.csv",
@@ -55,7 +57,9 @@ if not args.visualizer:
     assert measurement_steps >= 50, \
         f"{measurement_steps} steps per tick are too short"
 
-required_features = ["P3M", "LENNARD_JONES", "MASS"]
+required_features = ["P3M", "LENNARD_JONES"]
+if args.gpu:
+    required_features.append("CUDA")
 espressomd.assert_features(required_features)
 
 # make simulation deterministic
@@ -67,7 +71,6 @@ system = espressomd.System(box_l=[1, 1, 1])
 
 # Interaction parameters (Lennard-Jones, Coulomb)
 #############################################################
-
 species = ["anion", "cation"]
 types = {"anion": 0, "cation": 0}
 charges = {"anion": -1.0, "cation": 1.0}
@@ -76,12 +79,10 @@ lj_epsilons = {"anion": 1.0, "cation": 1.0}
 WCA_cut = 2.**(1. / 6.)
 lj_cuts = {"anion": WCA_cut * lj_sigmas["anion"],
            "cation": WCA_cut * lj_sigmas["cation"]}
-masses = {"anion": 1.0, "cation": 1.0}
 
 # System parameters
 #############################################################
-
-n_proc = system.cell_system.get_state()['n_nodes']
+n_proc = system.cell_system.get_state()["n_nodes"]
 n_part = n_proc * args.particles_per_core
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
 lj_sig = (lj_sigmas["cation"] + lj_sigmas["anion"]) / 2
@@ -96,12 +97,10 @@ system.cell_system.set_regular_decomposition(use_verlet_lists=True)
 # Integration parameters
 #############################################################
 system.time_step = 0.01
-system.cell_system.skin = .4
-system.thermostat.turn_off()
+system.cell_system.skin = 0.5
 
 # Interaction setup
 #############################################################
-
 for i in range(len(species)):
     ion1 = species[i]
     for j in range(i, len(species)):
@@ -115,26 +114,32 @@ for i in range(len(species)):
 
 # Particle setup
 #############################################################
-
+pid = 0
 for i in range(0, n_part, len(species)):
     for t in species:
         system.part.add(pos=np.random.random(3) * system.box_l,
-                        q=charges[t], type=types[t], mass=masses[t])
+                        id=pid, q=charges[t], type=types[t])
+        pid += 1
 
 #  Warmup Integration
 #############################################################
 
 # warmup
-benchmarks.minimize(system, n_part / 10.)
+benchmarks.minimize(system, n_part / 2.)
 
 system.integrator.set_vv()
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
+p3m_class = espressomd.electrostatics.P3M
+if args.gpu:
+    p3m_class = espressomd.electrostatics.P3MGPU
+
 # tuning and equilibration
 min_skin = 0.2
 max_skin = 1.6
-p3m_params = {'prefactor': args.prefactor, 'accuracy': 1e-4}
-print("Equilibration")
+p3m_params = {"prefactor": args.prefactor, "accuracy": 1e-3}
+p3m = p3m_class(**p3m_params)
+print("Quick equilibration")
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100,
@@ -142,7 +147,6 @@ print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
-p3m = espressomd.electrostatics.P3M(**p3m_params)
 system.actors.add(p3m)
 print("Equilibration")
 system.integrator.run(min(3 * measurement_steps, 3000))

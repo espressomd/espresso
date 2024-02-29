@@ -28,6 +28,8 @@
 #include <utils/mpi/cart_comm.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <mpi.h>
 #ifdef OPEN_MPI
@@ -39,21 +41,22 @@
 #include <cstdlib>
 #include <memory>
 
-namespace Communication {
-auto const &mpi_datatype_cache = boost::mpi::detail::mpi_datatype_cache();
-std::shared_ptr<boost::mpi::environment> mpi_env;
-} // namespace Communication
-
 boost::mpi::communicator comm_cart;
 
 namespace Communication {
-std::unique_ptr<MpiCallbacks> m_callbacks;
+static std::shared_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singleton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
   assert(m_callbacks && "Mpi not initialized!");
 
   return *m_callbacks;
+}
+
+std::shared_ptr<MpiCallbacks> mpiCallbacksHandle() {
+  assert(m_callbacks && "Mpi not initialized!");
+
+  return m_callbacks;
 }
 } // namespace Communication
 
@@ -120,8 +123,6 @@ void openmpi_global_namespace() {
 
 namespace Communication {
 void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
-  Communication::mpi_env = std::move(mpi_env);
-
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
   node_grid = Utils::Mpi::dims_create<3>(n_nodes);
 
@@ -131,12 +132,14 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   this_node = comm_cart.rank();
 
   Communication::m_callbacks =
-      std::make_unique<Communication::MpiCallbacks>(comm_cart);
+      std::make_shared<Communication::MpiCallbacks>(comm_cart, mpi_env);
 
-  ErrorHandling::init_error_handling(mpiCallbacks());
+  ErrorHandling::init_error_handling(Communication::m_callbacks);
 
   on_program_start();
 }
+
+void deinit() { Communication::m_callbacks.reset(); }
 } // namespace Communication
 
 std::shared_ptr<boost::mpi::environment> mpi_init(int argc, char **argv) {

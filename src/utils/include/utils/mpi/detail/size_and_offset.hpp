@@ -36,16 +36,17 @@ template <typename T>
 int size_and_offset(std::vector<int> &sizes, std::vector<int> &displ,
                     int n_elem, const boost::mpi::communicator &comm,
                     int root = 0) {
-  sizes.resize(comm.size());
-  displ.resize(comm.size());
+  auto const world_size = static_cast<unsigned int>(comm.size());
+  sizes.resize(world_size);
+  displ.resize(world_size);
 
   /* Gather sizes */
   boost::mpi::gather(comm, n_elem, sizes, root);
 
-  auto total_size = std::accumulate(sizes.begin(), sizes.end(), 0);
+  auto const total_size = std::accumulate(sizes.begin(), sizes.end(), 0);
 
   int offset = 0;
-  for (int i = 0; i < sizes.size(); i++) {
+  for (unsigned int i = 0; i < sizes.size(); i++) {
     displ[i] = offset;
     offset += sizes[i];
   }
@@ -58,6 +59,7 @@ inline void size_and_offset(int n_elem, const boost::mpi::communicator &comm,
   /* Send local size */
   boost::mpi::gather(comm, n_elem, root);
 }
+
 } // namespace detail
 } // namespace Mpi
 } // namespace Utils

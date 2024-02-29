@@ -8,10 +8,10 @@ This chapter will describe how to get, compile and run the software.
 |es| releases are available as source code packages from the homepage [1]_.
 This is where new users should get the code. The code within release packages
 is tested and known to run on a number of platforms.
-Alternatively, people that want to use the newest features of |es| or that
-want to start contributing to the software can instead obtain the
+Alternatively, people who want to use the newest features of |es| or
+start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from |es|'s project page at Github  [3]_. This code might be not as well
+from |es|'s project page at GitHub  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -87,7 +87,7 @@ To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
-      libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
+      libboost-all-dev openmpi-common fftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
       python3-scipy python3-opengl libgsl-dev freeglut3
 
 Optionally the ccmake utility can be installed for easier configuration:
@@ -188,7 +188,7 @@ To use Jupyter Notebook, install the following packages:
 
 .. code-block:: bash
 
-    pip3 install --user nbformat notebook 'jupyter_contrib_nbextensions==0.5.1'
+    pip3 install --user 'nbformat==5.1.3' 'nbconvert==6.4.5' 'notebook==6.4.8' 'jupyter_contrib_nbextensions==0.5.1'
     jupyter contrib nbextension install --user
     jupyter nbextension enable rubberband/main
     jupyter nbextension enable exercise2/main
@@ -404,15 +404,15 @@ General features
 -  ``THERMOSTAT_PER_PARTICLE`` Allows setting a per-particle friction
    coefficient for the Langevin and Brownian thermostats.
 
--  ``ROTATIONAL_INERTIA``
+-  ``ROTATIONAL_INERTIA`` Allows particles to have individual rotational inertia matrix eigenvalues.
+   When not built in, all eigenvalues are unity in simulation units.
 
 -  ``EXTERNAL_FORCES`` Allows to define an arbitrary constant force for each particle
    individually. Also allows to fix individual coordinates of particles,
    keep them at a fixed position or within a plane.
 
--  ``MASS`` Allows particles to have individual masses. Note that some analysis
-   procedures have not yet been adapted to take the masses into account
-   correctly.
+-  ``MASS`` Allows particles to have individual masses.
+   When not built in, all masses are unity in simulation units.
 
    .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.mass`
 

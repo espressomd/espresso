@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE tests
+#define BOOST_TEST_MODULE energy calculation
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -68,6 +68,23 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
     auto const expected =
         0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia());
     BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
+  }
+
+  // virtual particle
+  {
+#ifdef VIRTUAL_SITES
+
+    Particle p;
+#ifdef ROTATIONAL_INERTIA
+    p.rinertia() = {1., 2., 3.};
+#endif
+    p.set_virtual(true);
+    p.omega() = {3., 4., 5.};
+    p.set_can_rotate_all_axes();
+
+    auto const expected = 0.;
+    BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
+#endif
   }
 #endif
 }

@@ -385,6 +385,21 @@ class TestLB:
         np.testing.assert_allclose(
             np.copy(p.f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
+    def test_viscous_coupling_rounding(self):
+        lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.params['time_step'],
+            kT=1., seed=1)
+        self.system.actors.add(lbf)
+        self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1, seed=1)
+        p = self.system.part.add(pos=[-1E-30] * 3, v=[-1, 0, 0])
+        self.system.integrator.run(1)
+        for _ in range(20):
+            self.system.integrator.run(1)
+            self.assertTrue(np.all(p.f != 0.0))
+
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ext_force_density(self):
         ext_force_density = [2.3, 1.2, 0.1]

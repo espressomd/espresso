@@ -39,6 +39,7 @@ macro(PYTHON_SCRIPTS_TEST)
   string(REGEX REPLACE "^test_" "${TEST_TYPE}_" TEST_NAME ${TEST_NAME})
   add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
            ${TEST_FILE_CONFIGURED})
+  set_tests_properties(${TEST_NAME} PROPERTIES SKIP_RETURN_CODE 5)
   set_tests_properties(${TEST_NAME} PROPERTIES FIXTURES_REQUIRED
                                                IMPORTLIB_WRAPPER)
   set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")

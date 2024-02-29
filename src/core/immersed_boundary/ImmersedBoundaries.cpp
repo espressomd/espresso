@@ -71,7 +71,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
         // reference
         BoundariesFound = true;
         if (v->volRef == 0.) {
-          v->volRef = VolumesCurrent[v->softID];
+          v->volRef = VolumesCurrent[static_cast<unsigned int>(v->softID)];
         }
       }
     }
@@ -104,7 +104,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
   // Loop over all particles on local node
   cs.bond_loop([&tempVol](Particle &p1, int bond_id,
                           Utils::Span<Particle *> partners) {
-    auto vol_cons_params = vol_cons_parameters(p1);
+    auto const vol_cons_params = vol_cons_parameters(p1);
 
     if (vol_cons_params &&
         boost::get<IBMTriel>(bonded_ia_params.at(bond_id).get()) != nullptr) {
@@ -138,7 +138,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
       const double v213 = x2[0] * x1[1] * x3[2];
       const double v123 = x1[0] * x2[1] * x3[2];
 
-      tempVol[vol_cons_params->softID] +=
+      tempVol[static_cast<unsigned int>(vol_cons_params->softID)] +=
           1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
     }
     return false;
@@ -162,11 +162,12 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
       // IBM VolCons bonded interaction. Basically this loops over all
       // triangles, not all particles. First round to check for volume
       // conservation.
-      const IBMVolCons *ibmVolConsParameters = vol_cons_parameters(p1);
-      if (not ibmVolConsParameters)
+      auto const vol_cons_params = vol_cons_parameters(p1);
+      if (not vol_cons_params)
         return false;
 
-      auto current_volume = VolumesCurrent[ibmVolConsParameters->softID];
+      auto const current_volume =
+          VolumesCurrent[static_cast<unsigned int>(vol_cons_params->softID)];
 
       // Our particle is the leading particle of a triel
       // Get second and third particle of the triangle
@@ -189,8 +190,8 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
       auto const n = vector_product(a12, a13);
       const double ln = n.norm();
       const double A = 0.5 * ln;
-      const double fact = ibmVolConsParameters->kappaV *
-                          (current_volume - ibmVolConsParameters->volRef) /
+      const double fact = vol_cons_params->kappaV *
+                          (current_volume - vol_cons_params->volRef) /
                           current_volume;
 
       auto const nHat = n / ln;

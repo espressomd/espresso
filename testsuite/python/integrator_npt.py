@@ -120,6 +120,14 @@ class IntegratorNPT(ut.TestCase):
             np.copy(system.part.all().pos),
             positions_start + np.array([[-1.2e-3, 0, 0], [1.2e-3, 0, 0]]))
 
+        if espressomd.has_features("ROTATION"):
+            # propagator doesn't handle angular velocities
+            system.part.all().rotation = [3 * [False], [True, False, False]]
+            system.thermostat.set_npt(kT=1., gamma0=2., gammav=0.04, seed=42)
+            system.integrator.set_isotropic_npt(**npt_params)
+            with self.assertRaisesRegex(Exception, "The isotropic NpT integrator doesn't propagate angular velocities"):
+                system.integrator.run(1)
+
     def run_with_p3m(self, p3m, method):
         system = self.system
         npt_kwargs = {"ext_pressure": 0.001, "piston": 0.001}
@@ -147,8 +155,8 @@ class IntegratorNPT(ut.TestCase):
         system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.04, seed=42)
         system.integrator.run(10)
         # check runtime warnings
-        self.system.thermostat.turn_off()
-        self.system.integrator.set_vv()
+        system.thermostat.turn_off()
+        system.integrator.set_vv()
         err_msg = f"If {method} is being used you must use the cubic box NpT"
         with self.assertRaisesRegex(RuntimeError, err_msg):
             system.integrator.set_isotropic_npt(**npt_kwargs_rectangular)

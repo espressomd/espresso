@@ -95,10 +95,10 @@ template <typename T>
 void gatherv(const boost::mpi::communicator &comm, const T *in_values,
              int in_size, T *out_values, const int *sizes, int root) {
   if (comm.rank() == root) {
-    std::vector<int> displ(comm.size());
+    std::vector<int> displ(static_cast<unsigned int>(comm.size()));
 
     int offset = 0;
-    for (unsigned i = 0; i < displ.size(); i++) {
+    for (unsigned int i = 0; i < displ.size(); i++) {
       displ[i] = offset;
       offset += sizes[i];
     }

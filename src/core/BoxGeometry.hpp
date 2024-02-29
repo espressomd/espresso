@@ -187,7 +187,8 @@ public:
   Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                     const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
-      auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
+      auto const shear_plane_normal =
+          static_cast<unsigned int>(lees_edwards_bc().shear_plane_normal);
       auto a_tmp = a;
       auto b_tmp = b;
       a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
@@ -226,9 +227,13 @@ public:
     auto ret = u - v;
     if (type() == BoxType::LEES_EDWARDS) {
       auto const &le = m_lees_edwards_bc;
-      auto const dy = x[le.shear_plane_normal] - y[le.shear_plane_normal];
-      if (fabs(dy) > 0.5 * length_half()[le.shear_plane_normal]) {
-        ret[le.shear_direction] -= Utils::sgn(dy) * le.shear_velocity;
+      auto const shear_plane_normal =
+          static_cast<unsigned int>(le.shear_plane_normal);
+      auto const shear_direction =
+          static_cast<unsigned int>(le.shear_direction);
+      auto const dy = x[shear_plane_normal] - y[shear_plane_normal];
+      if (fabs(dy) > 0.5 * length_half()[shear_plane_normal]) {
+        ret[shear_direction] -= Utils::sgn(dy) * le.shear_velocity;
       }
     }
     return ret;
@@ -263,7 +268,7 @@ inline std::pair<double, int> fold_coordinate(double pos, int image_box,
  */
 inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
                           const BoxGeometry &box) {
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     if (box.periodic(i)) {
       std::tie(pos[i], image_box[i]) =
           fold_coordinate(pos[i], image_box[i], box.length()[i]);
@@ -279,7 +284,7 @@ inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
 inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
                                        const BoxGeometry &box) {
   Utils::Vector3d p_folded;
-  for (int i = 0; i < 3; i++) {
+  for (unsigned int i = 0; i < 3; i++) {
     if (box.periodic(i)) {
       p_folded[i] = Algorithm::periodic_fold(p[i], box.length()[i]);
     } else {

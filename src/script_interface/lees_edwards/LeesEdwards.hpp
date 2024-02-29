@@ -22,6 +22,7 @@
 #include "Protocol.hpp"
 
 #include "core/grid.hpp"
+#include "core/lees_edwards/LeesEdwardsBC.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -35,7 +36,7 @@ namespace LeesEdwards {
 
 class LeesEdwards : public AutoParameters<LeesEdwards> {
   std::shared_ptr<Protocol> m_protocol;
-  LeesEdwardsBC const &m_lebc = box_geo.lees_edwards_bc();
+  LeesEdwardsBC const &m_lebc = ::box_geo.lees_edwards_bc();
 
 public:
   LeesEdwards() : m_protocol{nullptr} {
@@ -44,13 +45,14 @@ public:
           [this](Variant const &value) {
             if (is_none(value)) {
               m_protocol = nullptr;
-              box_geo.set_lees_edwards_bc(LeesEdwardsBC{0., 0., -1, -1});
+              ::box_geo.set_lees_edwards_bc(LeesEdwardsBC{});
               ::LeesEdwards::unset_protocol();
               return;
             }
             context()->parallel_try_catch([this]() {
-              if (m_lebc.shear_direction == -1 or
-                  m_lebc.shear_plane_normal == -1) {
+              auto constexpr invalid_dir = LeesEdwardsBC::invalid_dir;
+              if (m_lebc.shear_direction == invalid_dir or
+                  m_lebc.shear_plane_normal == invalid_dir) {
                 throw std::runtime_error(
                     "Parameters 'shear_plane_normal' and 'shear_direction' "
                     "must be initialized together with 'protocol' on first "
@@ -94,7 +96,7 @@ public:
                                       "'shear_plane_normal' must differ");
         }
         // update box geometry and cell structure
-        box_geo.set_lees_edwards_bc(
+        ::box_geo.set_lees_edwards_bc(
             LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});
         ::LeesEdwards::set_protocol(m_protocol->protocol());
       });
@@ -109,28 +111,28 @@ public:
   }
 
 private:
-  int get_shear_axis(VariantMap const &params, std::string name) {
+  unsigned int get_shear_axis(VariantMap const &params, std::string name) {
     auto const value = get_value<std::string>(params, name);
     if (value == "x") {
-      return 0;
+      return 0u;
     }
     if (value == "y") {
-      return 1;
+      return 1u;
     }
     if (value == "z") {
-      return 2;
+      return 2u;
     }
     throw std::invalid_argument("Parameter '" + name + "' is invalid");
   }
 
-  Variant get_shear_name(int axis) {
-    if (axis == 0) {
+  Variant get_shear_name(unsigned int axis) {
+    if (axis == 0u) {
       return {std::string("x")};
     }
-    if (axis == 1) {
+    if (axis == 1u) {
       return {std::string("y")};
     }
-    if (axis == 2) {
+    if (axis == 2u) {
       return {std::string("z")};
     }
     return {none};

@@ -184,7 +184,7 @@ inline void add_non_bonded_pair_energy(
   if (do_nonbonded(p1, p2))
 #endif
     obs_energy.add_non_bonded_contribution(
-        p1.type(), p2.type(),
+        p1.type(), p2.type(), p1.mol_id(), p2.mol_id(),
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist,
                                     coulomb_kernel));
 
@@ -300,7 +300,7 @@ inline double translational_kinetic_energy(Particle const &p) {
  */
 inline double rotational_kinetic_energy(Particle const &p) {
 #ifdef ROTATION
-  return p.can_rotate()
+  return (p.can_rotate() and not p.is_virtual())
              ? 0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia())
              : 0.0;
 #else

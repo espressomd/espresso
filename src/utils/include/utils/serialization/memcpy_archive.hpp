@@ -72,9 +72,12 @@ public:
   explicit BasicMemcpyArchive(Utils::Span<char> buf)
       : buf(buf), insert(buf.data()) {}
 
-  std::size_t get_library_version() const { return 4; }
+  auto get_library_version() const { return std::size_t{4}; }
 
-  std::size_t bytes_processed() const { return insert - buf.data(); }
+  auto bytes_processed() const {
+    return static_cast<std::size_t>(insert - buf.data());
+  }
+
   void skip(std::size_t bytes) {
     assert((insert + bytes) <= buf.end());
     insert += bytes;

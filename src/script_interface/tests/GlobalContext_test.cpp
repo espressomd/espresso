@@ -26,11 +26,14 @@
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <string>
+
+static std::weak_ptr<boost::mpi::environment> mpi_env;
 
 namespace si = ScriptInterface;
 
@@ -54,18 +57,18 @@ struct Dummy : si::ObjectHandle {
   }
 };
 
-auto make_global_context(Communication::MpiCallbacks &cb) {
+auto make_global_context(std::shared_ptr<Communication::MpiCallbacks> &cb) {
   Utils::Factory<si::ObjectHandle> factory;
   factory.register_new<Dummy>("Dummy");
-  boost::mpi::communicator comm;
 
   return std::make_shared<si::GlobalContext>(
-      cb, std::make_shared<si::LocalContext>(factory, comm));
+      cb, std::make_shared<si::LocalContext>(factory, cb->comm()));
 }
 
 BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cb{world};
+  auto cb =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
   auto ctx = make_global_context(cb);
 
   if (world.rank() == 0) {
@@ -74,13 +77,14 @@ BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {
     BOOST_CHECK_EQUAL(res->context(), ctx.get());
     BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
   } else {
-    cb.loop();
+    cb->loop();
   }
 }
 
 BOOST_AUTO_TEST_CASE(GlobalContext_serialization) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cb{world};
+  auto cb =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
   auto ctx = make_global_context(cb);
 
   if (world.rank() == 0) {
@@ -108,12 +112,13 @@ BOOST_AUTO_TEST_CASE(GlobalContext_serialization) {
     BOOST_REQUIRE(d3);
     BOOST_CHECK_EQUAL(boost::get<int>(d3->get_parameter("id")), 3);
   } else {
-    cb.loop();
+    cb->loop();
   }
 }
 
 int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
+  auto const mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
+  ::mpi_env = mpi_env;
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

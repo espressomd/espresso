@@ -38,6 +38,8 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.03, required=False,
                     help="Fraction of the simulation box volume occupied by "
                     "particles (range: [0.01-0.74], default: 0.50)")
+parser.add_argument("--gpu", default=False, action="store_true")
+parser.add_argument("--no-gpu", dest="gpu", action="store_false")
 parser.add_argument("--output", metavar="FILEPATH", action="store",
                     type=str, required=False, default="benchmarks.csv",
                     help="Output file (default: benchmarks.csv)")
@@ -51,6 +53,8 @@ assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
 
 required_features = ["LENNARD_JONES"]
+if args.gpu:
+    required_features.append("CUDA")
 espressomd.assert_features(required_features)
 
 # System
@@ -66,8 +70,7 @@ lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 
 # System parameters
 #############################################################
-
-n_proc = system.cell_system.get_state()['n_nodes']
+n_proc = system.cell_system.get_state()["n_nodes"]
 n_part = n_proc * args.particles_per_core
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
 box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
@@ -84,7 +87,6 @@ system.box_l = 3 * (box_l,)
 #############################################################
 system.time_step = 0.01
 system.cell_system.skin = 0.5
-system.thermostat.turn_off()
 
 # Interaction setup
 #############################################################
@@ -121,14 +123,11 @@ system.integrator.run(500)
 system.thermostat.turn_off()
 print(f"LB shape: [{lb_grid}, {lb_grid}, {lb_grid}]")
 print(f"LB agrid: {agrid:.3f}")
-if hasattr(espressomd.lb, "LBFluid"):
-    LBClass = espressomd.lb.LBFluid
-elif hasattr(espressomd.lb, "LBFluidWalberla"):
-    LBClass = espressomd.lb.LBFluidWalberla
-else: 
-    raise Exception("LB not built in")
 
-lbf = LBClass(agrid=agrid, dens=1, visc=1, tau=system.time_step, kT=1, seed=1)
+lb_class = espressomd.lb.LBFluid
+if args.gpu:
+    lb_class = espressomd.lb.LBFluidGPU
+lbf = lb_class(agrid=agrid, dens=1, visc=1, tau=system.time_step, kT=1, seed=1)
 system.actors.add(lbf)
 system.thermostat.set_lb(gamma=10, LB_fluid=lbf, seed=2)
 

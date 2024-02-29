@@ -34,6 +34,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ErrorHandling {
@@ -45,14 +46,14 @@ namespace {
 std::unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
 /** The callback loop we are on. */
-Communication::MpiCallbacks *m_callbacks = nullptr;
+std::weak_ptr<Communication::MpiCallbacks> m_callbacks;
 } // namespace
 
-void init_error_handling(Communication::MpiCallbacks &cb) {
-  m_callbacks = &cb;
+void init_error_handling(std::weak_ptr<Communication::MpiCallbacks> callbacks) {
+  m_callbacks = std::move(callbacks);
 
   runtimeErrorCollector =
-      std::make_unique<RuntimeErrorCollector>(m_callbacks->comm());
+      std::make_unique<RuntimeErrorCollector>(m_callbacks.lock()->comm());
 }
 
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
@@ -69,7 +70,7 @@ static void mpi_gather_runtime_errors_local() {
 REGISTER_CALLBACK(mpi_gather_runtime_errors_local)
 
 std::vector<RuntimeError> mpi_gather_runtime_errors() {
-  m_callbacks->call(mpi_gather_runtime_errors_local);
+  m_callbacks.lock()->call(mpi_gather_runtime_errors_local);
   return runtimeErrorCollector->gather();
 }
 
@@ -83,7 +84,7 @@ std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node) {
 } // namespace ErrorHandling
 
 void errexit() {
-  ErrorHandling::m_callbacks->comm().abort(1);
+  ErrorHandling::m_callbacks.lock()->comm().abort(1);
 
   std::abort();
 }

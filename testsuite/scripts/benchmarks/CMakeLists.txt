@@ -25,6 +25,7 @@ endfunction(BENCHMARK_TEST)
 # configure Python module importlib_wrapper.py
 add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
          ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
+set_tests_properties(importlib_wrapper PROPERTIES SKIP_RETURN_CODE 5)
 set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP
                                                   IMPORTLIB_WRAPPER)
 set(benchmarks_tests ${benchmarks_tests}
@@ -41,8 +42,10 @@ add_custom_target(
           ${CMAKE_SOURCE_DIR}/maintainer/benchmarks ${BENCHMARKS_DIR})
 
 benchmark_test(FILE test_lj.py)
-benchmark_test(FILE test_lb.py)
-benchmark_test(FILE test_p3m.py)
+benchmark_test(FILE test_lb.py SUFFIX cpu)
+benchmark_test(FILE test_lb.py SUFFIX gpu LABELS "gpu")
+benchmark_test(FILE test_p3m.py SUFFIX cpu)
+benchmark_test(FILE test_p3m.py SUFFIX gpu LABELS "gpu")
 benchmark_test(FILE test_ferrofluid.py)
 benchmark_test(FILE test_mc_acid_base_reservoir.py)
 

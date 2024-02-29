@@ -2888,8 +2888,6 @@ class BondedInteractions(ScriptObjectMap):
         return bond_id
 
     def __getitem__(self, bond_id):
-        self._assert_key_type(bond_id)
-
         if self.call_method('has_bond', bond_id=bond_id):
             bond_obj = self.call_method('get_bond', bond_id=bond_id)
             bond_obj._bond_id = bond_id
@@ -2932,7 +2930,6 @@ class BondedInteractions(ScriptObjectMap):
             bond_id = self.call_method("insert", object=bond_obj)
         else:
             # Throw error if attempting to overwrite a bond of different type
-            self._assert_key_type(bond_id)
             if self.call_method("contains", key=bond_id):
                 old_type = bonded_interaction_classes[
                     get_bonded_interaction_type_from_es_core(bond_id)]
@@ -2969,3 +2966,14 @@ class BondedInteractions(ScriptObjectMap):
         for bond_id, (bond_params, bond_type) in params.items():
             self[bond_id] = bonded_interaction_classes[bond_type](
                 **bond_params)
+
+    def __reduce__(self):
+        so_callback, (so_name, so_bytestring) = super().__reduce__()
+        return (BondedInteractions._restore_object,
+                (so_callback, (so_name, so_bytestring), self.__getstate__()))
+
+    @classmethod
+    def _restore_object(cls, so_callback, so_callback_args, state):
+        so = so_callback(*so_callback_args)
+        so.__setstate__(state)
+        return so

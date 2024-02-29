@@ -35,10 +35,11 @@ T linear_interpolation(Container const &table, T hi, T offset, T x) {
   auto const ind = static_cast<int>(dind);
   assert(ind <= dind);
   assert((ind >= 0) and (ind < table.size()));
-  auto const dx = dind - ind;
+  auto const dx = dind - static_cast<T>(ind);
+  auto const uind = static_cast<unsigned int>(ind);
 
   /* linear interpolation between data points */
-  return table[ind] * (T{1} - dx) + table[ind + 1] * dx;
+  return table[uind] * (T{1} - dx) + table[uind + 1] * dx;
 }
 } // namespace Utils
 

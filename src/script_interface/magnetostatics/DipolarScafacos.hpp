@@ -26,11 +26,15 @@
 
 #include "Actor.hpp"
 
+#include "core/MpiCallbacks.hpp"
+#include "core/communication.hpp"
 #include "core/magnetostatics/scafacos.hpp"
 #include "core/scafacos/ScafacosContextBase.hpp"
 
 #include "script_interface/scafacos/scafacos.hpp"
 
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -38,6 +42,7 @@ namespace ScriptInterface {
 namespace Dipoles {
 
 class DipolarScafacos : public Actor<DipolarScafacos, ::DipolarScafacos> {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
 
 public:
   DipolarScafacos() {
@@ -49,6 +54,11 @@ public:
            return Scafacos::deserialize_parameters(actor()->get_parameters());
          }},
     });
+  }
+
+  ~DipolarScafacos() override {
+    m_actor.reset();
+    m_mpi_env_lock.reset();
   }
 
   void do_construct(VariantMap const &params) override {
@@ -65,6 +75,8 @@ public:
       m_actor = make_dipolar_scafacos(method_name, method_params);
       actor()->prefactor = prefactor;
     });
+    // MPI communicator is needed to destroy the FFT plans
+    m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,

@@ -115,7 +115,7 @@ protected:
       if (m_parameters.count(p.name)) {
         m_parameters.erase(p.name);
       }
-      m_parameters.emplace(std::make_pair(p.name, std::move(p)));
+      m_parameters.emplace(p.name, std::move(p));
     }
   }
 

@@ -53,7 +53,7 @@ template <int cao> struct InterpolationWeights {
  * type InterpolationWeights.
  */
 class p3m_interpolation_cache {
-  std::size_t m_cao = 0;
+  int m_cao = 0;
   /** Charge fractions for mesh assignment. */
   std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
@@ -109,10 +109,10 @@ public:
     InterpolationWeights<cao> ret;
     ret.ind = ca_fmp[i];
 
-    auto const offset = ca_frac.data() + 3 * i * m_cao;
-    boost::copy(make_const_span(offset + 0 * m_cao, m_cao), ret.w_x.begin());
-    boost::copy(make_const_span(offset + 1 * m_cao, m_cao), ret.w_y.begin());
-    boost::copy(make_const_span(offset + 2 * m_cao, m_cao), ret.w_z.begin());
+    auto const offset = ca_frac.data() + 3 * i * cao;
+    boost::copy(make_const_span(offset + 0 * cao, cao), ret.w_x.begin());
+    boost::copy(make_const_span(offset + 1 * cao, cao), ret.w_y.begin());
+    boost::copy(make_const_span(offset + 2 * cao, cao), ret.w_z.begin());
 
     return ret;
   }
@@ -149,7 +149,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   /* nearest mesh point */
   Utils::Vector3i nmp;
 
-  for (int d = 0; d < 3; d++) {
+  for (unsigned int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
     auto const pos = ((position[d] - local_mesh.ld_pos[d]) * ai[d]) - pos_shift;
 

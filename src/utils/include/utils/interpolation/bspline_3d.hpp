@@ -25,10 +25,10 @@
 #include "utils/math/bspline.hpp"
 
 #include <array>
-#include <cstddef>
 
 namespace Utils {
 namespace Interpolation {
+
 /**
  * @brief cardinal B-spline interpolation with internal iteration.
  *
@@ -41,7 +41,7 @@ namespace Interpolation {
  * @param grid_spacing The distance between the grid points.
  * @param offset Shift of the grid relative to the origin.
  */
-template <std::size_t order, typename Kernel>
+template <int order, typename Kernel>
 void bspline_3d(const Vector3d &pos, const Kernel &kernel,
                 const Vector3d &grid_spacing, const Vector3d &offset) {
   using Utils::bspline;
@@ -53,8 +53,8 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
   std::array<double, order> w_y{};
   std::array<double, order> w_z{};
   for (int i = 0; i < order; i++) {
-    w_y[i] = bspline<order>(i, block.distance[1]);
-    w_z[i] = bspline<order>(i, block.distance[2]);
+    w_y[static_cast<unsigned>(i)] = bspline<order>(i, block.distance[1]);
+    w_z[static_cast<unsigned>(i)] = bspline<order>(i, block.distance[2]);
   }
 
   std::array<int, 3> ind;
@@ -63,10 +63,10 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
     const auto wx = bspline<order>(i, block.distance[0]);
     for (int j = 0; j < order; j++) {
       ind[1] = block.corner[1] + j;
-      const auto wxy = wx * w_y[j];
+      const auto wxy = wx * w_y[static_cast<unsigned>(j)];
       for (int k = 0; k < order; k++) {
         ind[2] = block.corner[2] + k;
-        kernel(ind, wxy * w_z[k]);
+        kernel(ind, wxy * w_z[static_cast<unsigned>(k)]);
       }
     }
   }
@@ -75,7 +75,7 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
 /**
  * @brief cardinal B-spline weighted sum.
  */
-template <std::size_t order, typename T, typename Kernel>
+template <int order, typename T, typename Kernel>
 T bspline_3d_accumulate(const Vector3d &pos, const Kernel &kernel,
                         const Vector3d &grid_spacing, const Vector3d &offset,
                         T const &init) {
@@ -89,6 +89,7 @@ T bspline_3d_accumulate(const Vector3d &pos, const Kernel &kernel,
 
   return value;
 }
+
 } // namespace Interpolation
 } // namespace Utils
 

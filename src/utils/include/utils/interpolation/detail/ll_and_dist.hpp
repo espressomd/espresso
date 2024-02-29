@@ -23,9 +23,7 @@
 
 #include <array>
 #include <cmath>
-#include <cstddef>
 #include <type_traits>
-#include <utility>
 
 namespace Utils {
 namespace Interpolation {
@@ -38,9 +36,9 @@ struct Block {
   const Vector3d distance;
 };
 
-template <std::size_t order, typename = void> struct ll_and_dist_;
+template <int order, typename = void> struct ll_and_dist_;
 
-template <std::size_t order>
+template <int order>
 struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 1>> {
   Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
                    const Vector3d &offset) const {
@@ -59,7 +57,7 @@ struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 1>> {
   }
 };
 
-template <std::size_t order>
+template <int order>
 struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 0>> {
   Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
                    const Vector3d &offset) const {
@@ -82,7 +80,7 @@ struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 0>> {
  * @brief Calculate the lower left index of a block
  *        stencil with order points side length.
  */
-template <std::size_t order>
+template <int order>
 Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
                   const Vector3d &offset) {
   return ll_and_dist_<order>{}(pos, grid_spacing, offset);
