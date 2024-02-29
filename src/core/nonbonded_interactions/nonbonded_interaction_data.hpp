@@ -436,4 +436,57 @@ public:
 
   /** @brief Get maximal cutoff. */
   double maximal_cutoff() const;
+
+  double maximal_cutoff(std::vector<int> types) const {
+    auto max_cut_nonbonded = INACTIVE_CUTOFF;
+    auto const n_types = static_cast<int>(types.size());
+    for (int i = 0; i < n_types; i++) {
+      for (int j = i; j < n_types; j++) {
+        if (types[i] > max_seen_particle_type or
+            types[j] > max_seen_particle_type) {
+          continue;
+        }
+        auto const data = get_ia_param(types[i], types[j]);
+        max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
+      }
+    }
+    return max_cut_nonbonded;
+  }
+
+  double maximal_cutoff_all_except(std::vector<int> types) const {
+    auto max_cut_nonbonded = INACTIVE_CUTOFF;
+    for (int i = 0; i < max_seen_particle_type; i++) {
+      if (std::find(types.begin(), types.end(), i) != types.end()) {
+        // i in types
+        continue;
+      }
+      for (int j = i; j < max_seen_particle_type; j++) {
+        if (std::find(types.begin(), types.end(), j) != types.end()) {
+          // j in types
+          continue;
+        }
+        auto const data = get_ia_param(i, j);
+        max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
+      }
+    }
+    return max_cut_nonbonded;
+  }
+
+  bool only_central_forces(std::vector<int> types) const {
+    // gay-berne is the only non-central force
+    bool ret = true;
+#ifdef GAY_BERNE
+    auto const n_types = static_cast<int>(types.size());
+    for (int i = 0; i < n_types; i++) {
+      for (int j = i; j < n_types; j++) {
+        auto const data = get_ia_param(i, j);
+        if (data.gay_berne.cut != INACTIVE_CUTOFF) {
+          ret = false;
+          break;
+        }
+      }
+    }
+#endif
+    return ret;
+  }
 };
