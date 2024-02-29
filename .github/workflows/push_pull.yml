@@ -10,7 +10,7 @@ permissions:
 jobs:
   macos:
     runs-on: macos-12
-    if: false
+    if: ${{ github.repository == 'espressomd/espresso' }}
     steps:
       - name: Checkout
         uses: actions/checkout@main

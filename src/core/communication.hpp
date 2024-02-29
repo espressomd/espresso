@@ -83,6 +83,7 @@ namespace Communication {
  * @brief Returns a reference to the global callback class instance.
  */
 MpiCallbacks &mpiCallbacks();
+std::shared_ptr<MpiCallbacks> mpiCallbacksHandle();
 } // namespace Communication
 
 /**************************************************
@@ -124,12 +125,18 @@ namespace Communication {
 /**
  * @brief Init globals for communication.
  *
- * and calls @ref cuda_on_program_start. Keeps a copy of
- * the pointer to the mpi environment to keep it alive
- * while the program is loaded.
- *
  * @param mpi_env MPI environment that should be used
  */
 void init(std::shared_ptr<boost::mpi::environment> mpi_env);
+void deinit();
 } // namespace Communication
+
+struct MpiContainerUnitTest {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
+  MpiContainerUnitTest(int argc, char **argv) {
+    m_mpi_env = mpi_init(argc, argv);
+    Communication::init(m_mpi_env);
+  }
+  ~MpiContainerUnitTest() { Communication::deinit(); }
+};
 #endif

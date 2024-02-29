@@ -308,10 +308,3 @@ void reset_system();
 bool is_system_set();
 
 } // namespace System
-
-/**
- * @brief Initialize MPI global state to run ESPResSo in stand-alone mode.
- * Use this function in simulations written in C++, such as unit tests.
- * The script interface has its own MPI initialization mechanism.
- */
-void mpi_init_stand_alone(int argc, char **argv);

@@ -151,7 +151,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
 }
 
 int main(int argc, char **argv) {
-  mpi_init_stand_alone(argc, argv);
+  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

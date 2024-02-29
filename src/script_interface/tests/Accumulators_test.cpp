@@ -39,12 +39,15 @@
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+static std::weak_ptr<boost::mpi::environment> mpi_env;
 
 namespace Observables {
 class MockObservable : public Observable {
@@ -72,8 +75,7 @@ using MeanVarianceCalculator =
 
 using namespace ScriptInterface;
 
-auto make_global_context(boost::mpi::communicator const &comm,
-                         Communication::MpiCallbacks &cb) {
+auto make_global_context(std::shared_ptr<Communication::MpiCallbacks> &cb) {
   Utils::Factory<ScriptInterface::ObjectHandle> factory;
   factory.register_new<TestObs>("TestObs");
   factory.register_new<TimeSeries>("TimeSeries");
@@ -81,16 +83,17 @@ auto make_global_context(boost::mpi::communicator const &comm,
   factory.register_new<MeanVarianceCalculator>("MeanVarianceCalculator");
 
   return std::make_shared<ScriptInterface::GlobalContext>(
-      cb, std::make_shared<ScriptInterface::LocalContext>(factory, comm));
+      cb, std::make_shared<ScriptInterface::LocalContext>(factory, cb->comm()));
 }
 
 BOOST_AUTO_TEST_CASE(time_series) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cb(world);
-  auto ctx = make_global_context(world, cb);
+  auto cb =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
+  auto ctx = make_global_context(cb);
 
   if (world.rank() != 0) {
-    cb.loop();
+    cb->loop();
   } else {
     auto const obs = ctx->make_shared("TestObs", {});
     BOOST_REQUIRE(obs != nullptr);
@@ -131,11 +134,12 @@ BOOST_AUTO_TEST_CASE(time_series) {
 
 BOOST_AUTO_TEST_CASE(correlator) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cb(world);
-  auto ctx = make_global_context(world, cb);
+  auto cb =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
+  auto ctx = make_global_context(cb);
 
   if (world.rank() != 0) {
-    cb.loop();
+    cb->loop();
   } else {
     auto const obs = ctx->make_shared("TestObs", {});
     BOOST_REQUIRE(obs != nullptr);
@@ -204,11 +208,12 @@ BOOST_AUTO_TEST_CASE(correlator) {
 
 BOOST_AUTO_TEST_CASE(mean_variance) {
   boost::mpi::communicator world;
-  Communication::MpiCallbacks cb(world);
-  auto ctx = make_global_context(world, cb);
+  auto cb =
+      std::make_shared<Communication::MpiCallbacks>(world, ::mpi_env.lock());
+  auto ctx = make_global_context(cb);
 
   if (world.rank() != 0) {
-    cb.loop();
+    cb->loop();
   } else {
     auto const obs = ctx->make_shared("TestObs", {});
 
@@ -260,7 +265,8 @@ BOOST_AUTO_TEST_CASE(mean_variance) {
 }
 
 int main(int argc, char **argv) {
-  boost::mpi::environment mpi_env(argc, argv);
+  auto const mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
+  ::mpi_env = mpi_env;
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

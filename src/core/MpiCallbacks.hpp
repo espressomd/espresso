@@ -41,6 +41,7 @@
 
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
 #include <boost/range/algorithm/remove_if.hpp>
 
@@ -201,8 +202,8 @@ public:
     template <typename F, class = std::enable_if_t<std::is_same_v<
                               typename detail::functor_types<F>::argument_types,
                               std::tuple<Args...>>>>
-    CallbackHandle(MpiCallbacks *cb, F &&f)
-        : m_id(cb->add(std::forward<F>(f))), m_cb(cb) {}
+    CallbackHandle(std::shared_ptr<MpiCallbacks> cb, F &&f)
+        : m_id(cb->add(std::forward<F>(f))), m_cb(std::move(cb)) {}
 
     CallbackHandle(CallbackHandle const &) = delete;
     CallbackHandle(CallbackHandle &&rhs) noexcept = default;
@@ -211,7 +212,7 @@ public:
 
   private:
     int m_id;
-    MpiCallbacks *m_cb;
+    std::shared_ptr<MpiCallbacks> m_cb;
 
   public:
     /**
@@ -237,7 +238,6 @@ public:
         m_cb->remove(m_id);
     }
 
-    MpiCallbacks *cb() const { return m_cb; }
     int id() const { return m_id; }
   };
 
@@ -255,9 +255,9 @@ private:
   }
 
 public:
-  explicit MpiCallbacks(boost::mpi::communicator comm,
-                        bool abort_on_exit = true)
-      : m_abort_on_exit(abort_on_exit), m_comm(std::move(comm)) {
+  MpiCallbacks(boost::mpi::communicator comm,
+               std::shared_ptr<boost::mpi::environment> mpi_env)
+      : m_comm(std::move(comm)), m_mpi_env(std::move(mpi_env)) {
     /* Add a dummy at id 0 for loop abort. */
     m_callback_map.add(nullptr);
 
@@ -268,7 +268,7 @@ public:
 
   ~MpiCallbacks() {
     /* Release the clients on exit */
-    if (m_abort_on_exit && (m_comm.rank() == 0)) {
+    if (m_comm.rank() == 0) {
       try {
         abort_loop();
       } catch (...) {
@@ -447,22 +447,25 @@ public:
    */
   boost::mpi::communicator const &comm() const { return m_comm; }
 
+  std::shared_ptr<boost::mpi::environment> share_mpi_env() const {
+    return m_mpi_env;
+  }
+
 private:
   /**
    * @brief Id for the @ref abort_loop. Has to be 0.
    */
-  enum { LOOP_ABORT = 0 };
-
-  /**
-   * @brief If @ref abort_loop should be called on destruction
-   *        on the head node.
-   */
-  bool m_abort_on_exit;
+  static constexpr int LOOP_ABORT = 0;
 
   /**
    * The MPI communicator used for the callbacks.
    */
   boost::mpi::communicator m_comm;
+
+  /**
+   * The MPI environment used for the callbacks.
+   */
+  std::shared_ptr<boost::mpi::environment> m_mpi_env;
 
   /**
    * Internal storage for the callback functions.
