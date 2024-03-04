@@ -1,10 +1,12 @@
 import numpy as np
 from zndraw import ZnDraw
-from zndraw.frame import Frame
-from zndraw.vec import LatticeVecField, OriginVecField
+from znframe.frame import Frame
+from znframe.vec import LatticeVecField, OriginVecField
+from zndraw.utils import SphereGeometry, CylinderGeometry, PlaneGeometry
 import networkx as nx
 import webbrowser
 import time
+import espressomd.shapes
 
 
 class Visualizer():
@@ -32,9 +34,8 @@ class Visualizer():
             "bonds": False,
             "colors": None,
             "size": None,
-            "vector_field_lattice_constant": None,
+            "vector_field": None,
             "open_browser": True,
-            "mozilla": False, #TODO check automatically for mozilla
             "jupyter": True
         }
 
@@ -47,48 +48,50 @@ class Visualizer():
         self.vis = ZnDraw(jupyter=False)
         self.vis.socket.sleep(2)
 
-        if self.info["open_browser"]:
-            if self.info["mozilla"] and self.info["jupyter"]:
-                # Annoying workaround for firefox not allowing new tabs to be opened by command-line
-                # if there is already a window open. 
+        if self.info["jupyter"]:
+            from IPython.display import display, IFrame
+            display(IFrame(src=self.vis.url, width="100%", height="700px"))
+            time.sleep(4)
+        elif self.info["open_browser"]:
+            if webbrowser.get().name == "firefox":
+                print("browser is:", webbrowser.get().name)
                 from IPython.display import Javascript, display
                 display(Javascript('window.open("{url}");'.format(url=self.vis.url)))
             else:
                 webbrowser.open_new_tab(self.vis.url)
             time.sleep(4) #give the website time to open
+
+        self._get_box()
                 
-    def distance(self, p1, p2):
+    def _distance(self, p1, p2):
         """
         Calculates non periodic distance between particles
-
-        #TODO this should be optimized. 
         """
         if self.info["folded"]:
             return np.linalg.norm(p1.pos_folded - p2.pos_folded)
         else:
             return np.linalg.norm(p1.pos - p2.pos)
 
-    def get_bonds(self):
+    def _get_bonds(self):
         if not self.info["bonds"]:
-            return nx.empty_graph(), False
+            return []
         else:
-            connectivity_matrix = np.zeros((self.length, self.length))
+            bonds = []
 
             for particle in self.system.part.all():
                 if not particle.bonds:
                     continue
                 for bond in particle.bonds:
                     bond_id = bond[-1]
-                    distance = self.distance(
+                    distance = self._distance(
                         self.system.part.by_id(bond_id), particle)
                     if distance > 0.5 * min(self.system.box_l):
                         break
-                    connectivity_matrix[particle.id, bond_id] = 1
+                    bonds.append((particle.id, bond_id, 1))
+            return bonds
 
-            bond_graph = nx.from_numpy_array(connectivity_matrix)
-            return bond_graph, True
 
-    def get_colors(self):
+    def _get_colors(self):
         if self.info["colors"] is None:
             return ["#ffffff"] * self.length
         elif isinstance(self.info["colors"], list):
@@ -103,41 +106,55 @@ class Visualizer():
         elif isinstance(self.info["colors"], str):
             return [self.color_dict[self.info["colors"]]] * self.length
 
-    def get_sizes(self):
+    def _get_sizes(self):
         if self.info["size"] is None:
             return np.ones((self.length))
         elif isinstance(self.info["size"], int):
-            return self.info["size"] * np.ones((self.length))
+            return self.info["size"] * np.ones((self.length), dtype=int)
         elif isinstance(self.info["size"], list) or isinstance(self.info["size"], np.ndarray):
             size_list = [""] * self.length
             try:
                 for particle in self.system.part.all():
-                    size_list[particle.id] = size[particle.type]
+                    size_list[particle.id] = int(size[particle.type])
                 return size_list
             except IndexError:
                 raise AttributeError(
                     "The number of sizes does not match the number of particle types")
 
-    def get_box(self):
+    def _get_box(self):
         self.sim_box = np.array([[self.system.box_l[0], 0,0], [0,self.system.box_l[1], 0], [0,0,self.system.box_l[2]]])
-        
-    def get_vector_field(self):
-        lbf = self.system.lb
-        vectors = []
-        origins = []
-        lattice_constant = self.info["vector_field_lattice_constant"]
-        for i in range(lattice_constant[0]):
-            for j in range(lattice_constant[1]):
-                for k in range(lattice_constant[2]):
-                    origin = list(self.sim_box[0]/lattice_constant[0]*(i+0.5) 
-                    + self.sim_box[1]/lattice_constant[1]*(j+0.5) 
-                    + self.sim_box[2]/lattice_constant[2]*(k+0.5))
-                    origins.append(origin)
-                    vectors.append(list(lbf.get_interpolated_velocity(pos=origin)))
-        vector_field = OriginVecField(vectors=vectors, origins=origins, color="#e6194B")
-        return vector_field
 
-    def system_to_frame(self):
+    def draw_constraints(self):
+        self.shapes = []
+
+        for constraint in self.system.constraints:
+            if isinstance(constraint, espressomd.constraints.ShapeBasedConstraint):
+                shape = constraint.get_parameter("shape")
+                shape_name = shape.name()
+
+                if shape_name == "Shapes::Cylinder":
+                    center = shape.center
+                    axis = shape.axis
+                    length = shape.length
+                    radius = shape.radius
+
+                    self.vis.draw_obj(CylinderGeometry(position=list(center), direction=list(axis), height=length, radius=radius, color="#000000", opacity=0.2, locked=True, wireframe=True))
+
+                elif shape_name == "Shapes::Wall":
+                    dist = shape.dist
+                    normal = np.array(shape.normal)
+
+                    self.vis.draw_obj(PlaneGeometry(position=list(dist*normal), direction=list(normal), color="#000000",
+                                                    width = np.max(np.diag(self.sim_box)), height = np.max(np.diag(self.sim_box)), opacity=0.2, locked=True, wireframe=True))
+
+                elif shape_name == "Shapes::Sphere":
+                    center = shape.center
+                    radius = shape.radius
+
+                    self.vis.draw_obj(SphereGeometry(position=list(center), radius=radius, color="#000000", opacity=0.2, locked=True, wireframe=True))
+
+                
+    def _system_to_frame(self):
         """
         Converts the espresso.system.System object to a zndraw.Frame object using the
         given parameters, such as particles sizes and colors.
@@ -150,24 +167,89 @@ class Visualizer():
         else:
             pos = self.system.part.all().pos
 
-        bond_graph, draw_bonds = self.get_bonds()
-        color_list = self.get_colors()
-        sizes = self.get_sizes()
-        self.get_box()
+        bond_graph = self._get_bonds()
+        color_list = self._get_colors()
+        sizes = self._get_sizes()
+
+        if self.info["vector_field"] is not None:
+            vec = self.info["vector_field"]()
+        else:
+            vec = []
+
+        arrays = {"colors": color_list}
 
         frame = Frame(positions=pos, 
                       numbers=sizes,
-                      colors=color_list,
+                      arrays=arrays,
                       cell=self.sim_box,
                       connectivity=bond_graph,
-                      bonds=draw_bonds,
-                      auto_bonds=False,
-                      vector_field=self.get_vector_field()
+                      vector_field=vec,
+                      recompute = []
                       )
-
         return frame
 
     def update(self):
-        new_frame = self.system_to_frame()
+        
+        new_frame = self._system_to_frame()
         self.vis[self.current_frame] = new_frame
         self.current_frame += 1
+    
+
+class LBField:
+
+    def __init__(self, system, lattice_constants, scale = 1):
+        self.system = system
+        self.lc = lattice_constants
+        self.scale = scale
+
+    def __call__(self):
+        lbf = self.system.lb
+        sim_box = np.array([[self.system.box_l[0], 0,0], [0,self.system.box_l[1], 0], [0,0,self.system.box_l[2]]])
+        vectors = []
+        origins = []
+
+        for i in range(self.lc[0]):
+            for j in range(self.lc[1]):
+                for k in range(self.lc[2]):
+                    origin = list(sim_box[0]/(self.lc[0]+1)*(i+1) 
+                    + sim_box[1]/(self.lc[1]+1)*(j+1) 
+                    + sim_box[2]/(self.lc[2]+1)*(k+1))
+                    origins.append(origin)
+                    if self.scale != 1:
+                        vectors.append(list(self.scale * np.array(lbf.get_interpolated_velocity(pos=origin))))
+                    else:
+                        vectors.append(list(lbf.get_interpolated_velocity(pos=origin)))
+
+        return OriginVecField(vectors=vectors, origins=origins, color="#e6194B")
+        
+
+# typing should be addressed, as switching between numpy and list is not optimal
+class LatticeVectorField:
+
+    def __init__(self, vectors, origin, color, box, lattice_constants, scale = 1):
+        self.vectors = vectors
+        self.origin = origin
+        self.color = color
+        self.box = box
+        self.lc = lattice_constants
+        self.scale = scale
+
+    def __call__(self):
+        vectors = self.vectors
+        if self.scale != 1:
+            vectors = self.scale * np.array(vectors)
+        return LatticeVecField(vectors=list(self.vectors), origin=self.origin, color=self.color, box=self.box, density=self.lc)
+
+class OriginVectorField:
+
+    def __init__(self, vectors, origins, scale = 1):
+        self.vectors = vectors
+        self.origins = origins
+        self.scale = scale
+
+    def __call__(self):
+        vectors = self.vectors
+        if self.scale != 1:
+            vectors = self.scale * np.array(vectors)
+        return OriginVecField(vectors=list(self.vectors), origins=self.origins)
+
