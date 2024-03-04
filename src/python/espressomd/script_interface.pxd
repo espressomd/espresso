@@ -62,7 +62,7 @@ cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterfac
 
 cdef extern from "script_interface/ContextManager.hpp" namespace "ScriptInterface":
     cdef cppclass ContextManager:
-        ContextManager(MpiCallbacks & , const Factory[ObjectHandle] & )
+        ContextManager(const shared_ptr[MpiCallbacks] & , const Factory[ObjectHandle] & )
         shared_ptr[ObjectHandle] make_shared(CreationPolicy, const string &, const VariantMap) except +
         shared_ptr[ObjectHandle] deserialize(const string &) except +
         string serialize(const ObjectHandle *) except +
@@ -76,4 +76,5 @@ cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
 cdef extern from "script_interface/code_info/CodeInfo.hpp" namespace "ScriptInterface::CodeInfo":
     void check_features(const vector[string] & features) except +
 
-cdef void init(MpiCallbacks &)
+cdef void init(const shared_ptr[MpiCallbacks] &)
+cdef void deinit()

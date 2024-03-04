@@ -463,10 +463,3 @@ unsigned System::get_global_ghost_flags() const {
 }
 
 } // namespace System
-
-void mpi_init_stand_alone(int argc, char **argv) {
-  auto mpi_env = mpi_init(argc, argv);
-
-  // initialize the MpiCallbacks framework
-  Communication::init(mpi_env);
-}

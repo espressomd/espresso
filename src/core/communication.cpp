@@ -35,6 +35,7 @@
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 
 #include <mpi.h>
 
@@ -47,16 +48,19 @@ boost::mpi::communicator comm_cart;
 Communicator communicator{};
 
 namespace Communication {
-static auto const &mpi_datatype_cache =
-    boost::mpi::detail::mpi_datatype_cache();
-static std::shared_ptr<boost::mpi::environment> mpi_env;
-static std::unique_ptr<MpiCallbacks> m_callbacks;
+static std::shared_ptr<MpiCallbacks> m_callbacks;
 
 /* We use a singleton callback class for now. */
 MpiCallbacks &mpiCallbacks() {
   assert(m_callbacks && "Mpi not initialized!");
 
   return *m_callbacks;
+}
+
+std::shared_ptr<MpiCallbacks> mpiCallbacksHandle() {
+  assert(m_callbacks && "Mpi not initialized!");
+
+  return m_callbacks;
 }
 } // namespace Communication
 
@@ -66,14 +70,12 @@ int this_node = -1;
 
 namespace Communication {
 void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
-  Communication::mpi_env = std::move(mpi_env);
-
   communicator.full_initialization();
 
   Communication::m_callbacks =
-      std::make_unique<Communication::MpiCallbacks>(comm_cart);
+      std::make_shared<Communication::MpiCallbacks>(comm_cart, mpi_env);
 
-  ErrorHandling::init_error_handling(mpiCallbacks());
+  ErrorHandling::init_error_handling(Communication::m_callbacks);
 
 #ifdef WALBERLA
   walberla::mpi_init();
@@ -83,6 +85,8 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   cuda_on_program_start();
 #endif
 }
+
+void deinit() { Communication::m_callbacks.reset(); }
 } // namespace Communication
 
 Communicator::Communicator()
