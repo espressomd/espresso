@@ -174,7 +174,7 @@ void check_mirroring_ghost_vel(const LB &lb, Vector3i orig_ghost_node) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
+BOOST_AUTO_TEST_CASE(test_interpolation_velocity_int_offset) {
   auto const offset = 12;
   auto vel_shift = 1.5;
   Vector3d vel_shift_vec{vel_shift, 0., 0.};
@@ -212,6 +212,60 @@ BOOST_AUTO_TEST_CASE(test_interpolation_velocity) {
       check_mirroring_ghost_vel(lb, ghost_of_upper_node);
       check_mirroring_ghost_vel(lb, ghost_of_lower_node);
     }
+  }
+}
+
+
+Vector3d pos_from_node(Vector3i n) {
+  return {0.5+n[0],0.5+n[1],0.5+n[2]};
+}
+
+BOOST_AUTO_TEST_CASE(test_interpolation_velocity_non_int_offset) {
+  auto const offset = .5;
+  auto vel_shift = 0;
+  Vector3d vel_shift_vec{vel_shift, 0., 0.};
+  auto lb = setup_lb_with_offset(offset, vel_shift);
+  auto const shape = lb->get_lattice().get_grid_dimensions();
+  for (int x = 0; x < shape[0]; x++) {
+    for (int z : {0, 3, shape[2] - 1}) {
+      auto const y_max = shape[1] - 1;
+      auto const v_upper = Vector3d{x, -0.2 + y_max, 0.3 + z};
+      auto const v_lower = Vector3d{x, -0.7, 0.9 + z};
+
+      auto const upper_source_node = Vector3i{x, y_max, z};
+      auto const lower_source_node = Vector3i{x, 0, z};
+      lb->set_node_velocity(upper_source_node, v_upper);
+      lb->set_node_velocity(lower_source_node, v_lower);
+      auto upper_source_pos = pos_from_node(upper_source_node);
+      auto lower_source_pos = pos_from_node(lower_source_node);
+      BOOST_CHECK_SMALL((*(lb->get_velocity_at_pos(lower_source_pos)) - v_lower).norm(), 1E-8);
+      BOOST_CHECK_SMALL((*(lb->get_velocity_at_pos(upper_source_pos)) - v_upper).norm(), 1E-8);
+
+    }
+  }
+  
+  lb->ghost_communication();
+  
+  for (int y: {0,10,9,-1}) {
+    std::cout << "y: "<<y<<"| ";
+    for (int x = -1; x <= shape[0]; x++) {
+       Vector3i node{x,y,0};
+       std::cout << (*(lb->get_node_velocity(node,true)))[0] << " ";
+    }
+    std::cout << std::endl;
+  }
+  return;
+  for (int x = 0; x < shape[0]; x++) {
+    int z=0;
+    Vector3i node = {x,-1,z};
+    auto vel = *(lb->get_node_velocity(node,true));
+    BOOST_CHECK_SMALL((*(lb->get_velocity_at_pos(pos_from_node(node),true)) - vel).norm(), 1E-8);
+    check_mirroring_ghost_vel(lb,node);
+
+    node = {x,10,z};
+    vel = *(lb->get_node_velocity(node,true));
+    BOOST_CHECK_SMALL((*(lb->get_velocity_at_pos(pos_from_node(node), true)) - vel).norm(), 1E-8);
+    check_mirroring_ghost_vel(lb,node);
   }
 }
 

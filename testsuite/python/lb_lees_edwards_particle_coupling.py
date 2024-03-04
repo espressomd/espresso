@@ -38,16 +38,27 @@ def unit_vec(k):
 def within_grid(idx, shape):
     return np.all(idx >= 0) and np.all(idx < shape)
 
+def min_image_dist(a,b,l):
+   res = b-a 
+   for i in range(3):
+     while res[i]<-l[i]/2: res+=l[i]
+     while res[i]>=l[i]/2: res-=l[i]
+   return res
 
 def coupling_weight(pos_lb_units, node_idx, lb_shape):
-    # minimum image convention
-    dx = np.abs(pos_lb_units - node_idx) 
-    for i in range(3):
-        while dx[i] > lb_shape[i] / 2: dx[i] -= lb_shape[i]
+    # 1. For the coupling weights it does not matter on which side of the lb_node the posiiton is
+    # 2. To determine the lb node to position distance, we need 
+    # minimum image convetion, node and coupling position can be at different sides
+    # of a periodic boudnary  
+    dx = np.abs(min_image_dist(pos_lb_units,node_idx, lb_shape))
+    # If the coupling point is >=1 lattice constant away from the node, no coupling.
+    if np.any(dx>=1): 
+       weight=0
+    else:
+      # distance pos to node via module with lattice constant 1
+      weight =np.product(1-dx)
 
-    if np.any(np.abs(dx) >= 1): return 0.  # only couple to neighbors
-
-    return np.product(1 - np.abs(dx))
+    return weight
 
 
 class MockLBF:
@@ -216,14 +227,11 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
                 np.testing.assert_allclose(
                     np.copy(n.last_applied_force), -w * np.copy(p.f))
 
-    def test_velocity_interpolation(self):
+    def check_velocity_interpolation(self, pos_offset, shear_vel, test_positions):
         system.lb = None
         system.time_step = 1
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
-        # 2 * (np.random.random() - 1) * 3 * system.box_l[1]
-        pos_offset = 1.6 
-        shear_vel = 0  # np.random.random()-1/2
         protocol = lees_edwards.LinearShear(
             shear_velocity=shear_vel, initial_pos_offset=pos_offset, time_0=0.)
         system.lees_edwards.set_boundary_conditions(
@@ -233,50 +241,55 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
         system.part.clear()
-        for x in np.linspace(0, system.box_l[0], 21):
-            for n in lbf[:, :, :]:
-                n.velocity = [n.index[0], 0, 0]
+        v_x = lambda x: np.interp(x,[0.5,lbf.shape[0]-.5],[0,lbf.shape[0]-1],period=lbf.shape[0])
+        nodes_at_y_boundary = list(lbf[:,0,:]) +list(lbf[:,lbf.shape[1]-1,:])
+        for n in nodes_at_y_boundary:
+                node_x = 0.5+n.index[0]
+                n.velocity = [v_x(node_x), 0, 0]
+        for pos in test_positions:
 
-            z = 4  # np.random.random()*system.box_l[2]
-            y = 0
-            pos = np.array((x, y, z))
-            nodes_unshifted, nodes_shifted, weights_unshifted, weights_shifted = \
-                le_aware_lb_nodes_around_pos(pos, lbf, pos_offset, 0, 1)
-            all_nodes = nodes_unshifted + nodes_shifted
-            # all_weights = weights_unshifted + weights_shifted
-
-            vels_unshifted_nodes = np.array(
-                [n.velocity for n in nodes_unshifted])
-            vels_shifted_nodes = np.array([n.velocity for n in nodes_shifted])
-#            for n, v, w in zip(
-#                    nodes_unshifted, vels_unshifted_nodes, weights_unshifted):
-#                print(n.index, v, w, v * w)
-#            for n, v, w in zip(
-#                    nodes_shifted, vels_shifted_nodes, weights_shifted):
-#                print(n.index, v, w, v * w)
-
-            if abs(y <= 0.5): vels_shifted_nodes[:, 0] -= shear_vel 
-            elif y >= system.box_l[1] - .5: vels_shifted_nodes[:, 0] += shear_vel 
-            # else: raise Exception()
-
-            vel_contrib_unshifted = np.array(
-                [w * vel for vel, w in zip(vels_unshifted_nodes, weights_unshifted)])
-            vel_contrib_shifted = np.array(
-                [w * vel for vel, w in zip(vels_shifted_nodes, weights_shifted)])
-            expected_vel = np.sum(vel_contrib_unshifted,
-                                  axis=0) + np.sum(vel_contrib_shifted, axis=0)
-
+            y = pos[1]
+            if abs(y <= 0.5): 
+               pref = -1
+               dist_to_unshifted_lb_nodes = 0.5-y
+            elif y >= system.box_l[1] - .5: 
+               pref = 1
+               dist_to_unshifted_lb_nodes = y-(system.box_l[2]-.5)
+            else: raise Exception()
+            vel_shift = pref * shear_vel
+            xs = 0.5+np.arange(lbf.shape[0])
+            ys = [v_x(x-pref*pos_offset) for x in xs]
+            v_x_shifted = lambda x: np.interp(x,xs,ys,period=system.box_l[0])
+            unshifted_vel = v_x(pos[0])
+            shifted_vel = v_x_shifted(pos[0]) +vel_shift
+            weight_unshifted = 1-dist_to_unshifted_lb_nodes
+            weight_shifted = 1-weight_unshifted
+            expected_vel = np.array([weight_unshifted *unshifted_vel +weight_shifted * shifted_vel,0,0])
             observed_vel = np.copy(lbf.get_interpolated_velocity(pos=pos))
-            print(pos[0], pos_offset, observed_vel, expected_vel)
             np.testing.assert_allclose(observed_vel, expected_vel)
+    
+    def test_vel_interpol_all(self):
+       n = 25
+       xs = np.linspace(0,system.box_l[0],n)
+       y_ls = [0.2]*n
+       y_us = [system.box_l[1]-.2]*n
+       zs = np.random.random(n) * system.box_l[2]
+       pos_lower = np.vstack((xs,y_ls,zs)).T       
+       pos_upper = np.vstack((xs,y_us,zs)).T       
+       pos_all = np.vstack((pos_lower, pos_upper))
+       # non-integer offset 
+       pos_offsets = 100 * system.box_l[0] *(np.random.random(10) -.5)
+       for pos_offset in pos_offsets:
+         self.check_velocity_interpolation(pos_offset, 0, pos_all)
 
-    def atest_viscous_coupling_with_shear_vel(self):
+    def test_viscous_coupling_with_shear_vel(self):
         # Places a co-moving particle close to the LE boundary
         # in shear flow. checks that it remains force free
         # this is only the case, if the periodic images in the 
         # halo regoin calculate the drag force including the LE
         # shear velocity.
         system.lb = None
+        system.part.clear()
         system.time_step = 0.1
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
@@ -290,22 +303,26 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
         system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
-        system.integrator.run(2000) 
+        system.integrator.run(5000) 
+        for n in lbf[:,:,:]:
+           np.testing.assert_allclose(n.velocity[1:],[0,0],atol=1E-8)
         pos = np.random.random(3) * system.box_l
         p = system.part.add(
             pos=pos, v=lbf.get_interpolated_velocity(pos=pos))
+        np.testing.assert_allclose(p.v[1:],[0,0],atol=1E-8)
         for _ in range(1000): 
             system.integrator.run(1)
             np.testing.assert_allclose(np.copy(p.f), np.zeros(3), atol=2E-6)
 
-    def xtest_momentum_conservation(self):
+    def test_momentum_conservation(self):
         system.lb = None
-        system.time_step = 0.1
+        system.part.clear()
+        system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
         v_shear = 0.5
         protocol = lees_edwards.LinearShear(
-            shear_velocity=v_shear, initial_pos_offset=0, time_0=0.)
+            shear_velocity=0.5, initial_pos_offset=13.7, time_0=0.)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
@@ -318,11 +335,17 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             pos=pos, v=(0, 0, 0))
         system.integrator.run(1) 
         initial_mom = np.copy(system.analysis.linear_momentum())
-        for _ in range(1000): 
+        for i in range(100): 
+            before = (p.pos_folded,p.v,lbf.get_interpolated_velocity(pos=p.pos_folded))
             system.integrator.run(1)
+            after = (p.pos_folded,p.v,lbf.get_interpolated_velocity(pos=p.pos_folded))
+            np.testing.assert_allclose(-np.copy(p.f), np.copy(np.sum(lbf[:,:,:].last_applied_force,axis=(0,1,2))),atol=1E-9)
+            print("b", before)
+            print("a",after)
             current_mom = np.copy(system.analysis.linear_momentum())
-            print(current_mom, p.pos_folded)
-            np.testing.assert_allclose(initial_mom, current_mom, atol=1E-6)
+            print("m" ,(initial_mom-current_mom)[1:])
+            print()
+            np.testing.assert_allclose(initial_mom[1:], current_mom[1:], atol=2E-7)
 
 
 if __name__ == '__main__':

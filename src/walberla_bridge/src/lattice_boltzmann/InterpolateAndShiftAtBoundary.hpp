@@ -127,18 +127,13 @@ private:
       Cell source1 = cell;
       Cell source2 = cell;
       int target_idx = cell[dir];
-      auto ghost_fold = [dim](FloatType x) {
-        while (x > dim) {
-          x -= dim;
-        };
-        while (x < -1) {
-          x += dim;
-        };
-        return x;
-      };
       auto const source_pos = target_idx + folded_offset;
-      source1[dir] = cell_idx_c(ghost_fold(std::floor(source_pos)));
-      source2[dir] = cell_idx_c(ghost_fold(std::floor(source_pos + 1)));
+      auto folded_source_pos = python_modulo(source_pos, length);
+      // 0<=folded_source_pos <length
+      source1[dir] = cell_idx_c(std::floor(folded_source_pos));
+      //  0<=source1[dir]<length, i.e. integer value sbetw. 0  and length-1 inclusive
+      source2[dir] = python_modulo(source1[dir]+1, length);
+      // ineger values between 0 and length -1 inclusive
 
       for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
         tmp_field->get(cell, q) =

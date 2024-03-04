@@ -565,7 +565,7 @@ public:
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
             n_ghost_layers, shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset);
+            [this]() { return -1.0*m_lees_edwards_callbacks->get_pos_offset();});
   }
 
   void check_lebc(unsigned int shear_direction,
@@ -707,14 +707,11 @@ public:
         pos, [this, &v, &pos](std::array<int, 3> const node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
-          std::cout << Utils::Vector3i(node) << " " << weight << std::endl;
           if (weight != 0.) {
             auto const res = get_node_velocity(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("velocity", pos, node, weight);
             }
-            std::cout << Utils::Vector3i(node) << " " << weight << " " << (*res)
-                      << std::endl;
             v += *res * weight;
           }
         });
