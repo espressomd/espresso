@@ -457,7 +457,6 @@ private:
 
   void integrate_pull_scheme() {
     auto const &blocks = get_lattice().get_blocks();
-    integrate_reset_force(blocks);
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
@@ -465,6 +464,7 @@ private:
     // LB collide
     integrate_collide(blocks);
     // Refresh ghost layers
+    integrate_reset_force(blocks);
     ghost_communication_pdfs();
   }
 
@@ -565,7 +565,7 @@ public:
         std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
             blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
             n_ghost_layers, shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset);
+            [this]() { return -1.0*m_lees_edwards_callbacks->get_pos_offset();});
   }
 
   void check_lebc(unsigned int shear_direction,
