@@ -457,7 +457,6 @@ private:
 
   void integrate_pull_scheme() {
     auto const &blocks = get_lattice().get_blocks();
-    integrate_reset_force(blocks);
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
@@ -465,6 +464,7 @@ private:
     // LB collide
     integrate_collide(blocks);
     // Refresh ghost layers
+    integrate_reset_force(blocks);
     ghost_communication_pdfs();
   }
 

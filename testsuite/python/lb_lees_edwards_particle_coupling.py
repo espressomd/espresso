@@ -163,8 +163,6 @@ def le_aware_lb_nodes_around_pos(
 
     return unshifted_nodes, shifted_nodes, unshifted_weights, shifted_weights
 
-# print(le_aware_lb_nodes_around_pos(np.array((0.5,9.99999,0)),mock_lbf,0.51,0,1))
-# exit()
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
@@ -336,15 +334,9 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.integrator.run(1) 
         initial_mom = np.copy(system.analysis.linear_momentum())
         for i in range(100): 
-            before = (p.pos_folded,p.v,lbf.get_interpolated_velocity(pos=p.pos_folded))
             system.integrator.run(1)
-            after = (p.pos_folded,p.v,lbf.get_interpolated_velocity(pos=p.pos_folded))
             np.testing.assert_allclose(-np.copy(p.f), np.copy(np.sum(lbf[:,:,:].last_applied_force,axis=(0,1,2))),atol=1E-9)
-            print("b", before)
-            print("a",after)
             current_mom = np.copy(system.analysis.linear_momentum())
-            print("m" ,(initial_mom-current_mom)[1:])
-            print()
             np.testing.assert_allclose(initial_mom[1:], current_mom[1:], atol=2E-7)
 
 
