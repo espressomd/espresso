@@ -56,13 +56,16 @@ class Visualizer():
             if webbrowser.get().name == "firefox":
                 print("browser is:", webbrowser.get().name)
                 from IPython.display import Javascript, display
-                display(Javascript('window.open("{url}");'.format(url=self.vis.url)))
+                display(
+                    Javascript(
+                        'window.open("{url}");'.format(
+                            url=self.vis.url)))
             else:
                 webbrowser.open_new_tab(self.vis.url)
-            time.sleep(4) #give the website time to open
+            time.sleep(4)  # give the website time to open
 
         self._get_box()
-                
+
     def _distance(self, p1, p2):
         """
         Calculates non periodic distance between particles
@@ -89,7 +92,6 @@ class Visualizer():
                         break
                     bonds.append((particle.id, bond_id, 1))
             return bonds
-
 
     def _get_colors(self):
         if self.info["colors"] is None:
@@ -122,13 +124,15 @@ class Visualizer():
                     "The number of sizes does not match the number of particle types")
 
     def _get_box(self):
-        self.sim_box = np.array([[self.system.box_l[0], 0,0], [0,self.system.box_l[1], 0], [0,0,self.system.box_l[2]]])
+        self.sim_box = np.array([[self.system.box_l[0], 0, 0], [
+                                0, self.system.box_l[1], 0], [0, 0, self.system.box_l[2]]])
 
     def draw_constraints(self):
         self.shapes = []
 
         for constraint in self.system.constraints:
-            if isinstance(constraint, espressomd.constraints.ShapeBasedConstraint):
+            if isinstance(constraint,
+                          espressomd.constraints.ShapeBasedConstraint):
                 shape = constraint.get_parameter("shape")
                 shape_name = shape.name()
 
@@ -138,22 +142,37 @@ class Visualizer():
                     length = shape.length
                     radius = shape.radius
 
-                    self.vis.draw_obj(CylinderGeometry(position=list(center), direction=list(axis), height=length, radius=radius, color="#000000", opacity=0.2, locked=True, wireframe=True))
+                    self.vis.draw_obj(
+                        CylinderGeometry(
+                            position=list(center),
+                            direction=list(axis),
+                            height=length,
+                            radius=radius,
+                            color="#000000",
+                            opacity=0.2,
+                            locked=True,
+                            wireframe=True))
 
                 elif shape_name == "Shapes::Wall":
                     dist = shape.dist
                     normal = np.array(shape.normal)
 
-                    self.vis.draw_obj(PlaneGeometry(position=list(dist*normal), direction=list(normal), color="#000000",
-                                                    width = np.max(np.diag(self.sim_box)), height = np.max(np.diag(self.sim_box)), opacity=0.2, locked=True, wireframe=True))
+                    self.vis.draw_obj(PlaneGeometry(position=list(dist * normal), direction=list(normal), color="#000000",
+                                                    width=np.max(np.diag(self.sim_box)), height=np.max(np.diag(self.sim_box)), opacity=0.2, locked=True, wireframe=True))
 
                 elif shape_name == "Shapes::Sphere":
                     center = shape.center
                     radius = shape.radius
 
-                    self.vis.draw_obj(SphereGeometry(position=list(center), radius=radius, color="#000000", opacity=0.2, locked=True, wireframe=True))
+                    self.vis.draw_obj(
+                        SphereGeometry(
+                            position=list(center),
+                            radius=radius,
+                            color="#000000",
+                            opacity=0.2,
+                            locked=True,
+                            wireframe=True))
 
-                
     def _system_to_frame(self):
         """
         Converts the espresso.system.System object to a zndraw.Frame object using the
@@ -184,49 +203,61 @@ class Visualizer():
                       cell=self.sim_box,
                       connectivity=bond_graph,
                       vector_field=vec,
-                      recompute = []
+                      recompute=[]
                       )
         return frame
 
     def update(self):
-        
+
         new_frame = self._system_to_frame()
         self.vis[self.current_frame] = new_frame
         self.current_frame += 1
-    
+
 
 class LBField:
 
-    def __init__(self, system, lattice_constants, scale = 1):
+    def __init__(self, system, lattice_constants, scale=1):
         self.system = system
         self.lc = lattice_constants
         self.scale = scale
 
     def __call__(self):
         lbf = self.system.lb
-        sim_box = np.array([[self.system.box_l[0], 0,0], [0,self.system.box_l[1], 0], [0,0,self.system.box_l[2]]])
+        sim_box = np.array([[self.system.box_l[0], 0, 0], [
+                           0, self.system.box_l[1], 0], [0, 0, self.system.box_l[2]]])
         vectors = []
         origins = []
 
         for i in range(self.lc[0]):
             for j in range(self.lc[1]):
                 for k in range(self.lc[2]):
-                    origin = list(sim_box[0]/(self.lc[0]+1)*(i+1) 
-                    + sim_box[1]/(self.lc[1]+1)*(j+1) 
-                    + sim_box[2]/(self.lc[2]+1)*(k+1))
+                    origin = list(sim_box[0] / (self.lc[0] + 1) * (i + 1) 
+                                  + sim_box[1] / (self.lc[1] + 1) * (j + 1) 
+                                  + sim_box[2] / (self.lc[2] + 1) * (k + 1))
                     origins.append(origin)
                     if self.scale != 1:
-                        vectors.append(list(self.scale * np.array(lbf.get_interpolated_velocity(pos=origin))))
+                        vectors.append(
+                            list(
+                                self.scale *
+                                np.array(
+                                    lbf.get_interpolated_velocity(
+                                        pos=origin))))
                     else:
-                        vectors.append(list(lbf.get_interpolated_velocity(pos=origin)))
+                        vectors.append(
+                            list(
+                                lbf.get_interpolated_velocity(
+                                    pos=origin)))
 
-        return OriginVecField(vectors=vectors, origins=origins, color="#e6194B")
-        
+        return OriginVecField(
+            vectors=vectors, origins=origins, color="#e6194B")
 
-# typing should be addressed, as switching between numpy and list is not optimal
+
+# typing should be addressed, as switching between numpy and list is not
+# optimal
 class LatticeVectorField:
 
-    def __init__(self, vectors, origin, color, box, lattice_constants, scale = 1):
+    def __init__(self, vectors, origin, color,
+                 box, lattice_constants, scale=1):
         self.vectors = vectors
         self.origin = origin
         self.color = color
@@ -238,11 +269,13 @@ class LatticeVectorField:
         vectors = self.vectors
         if self.scale != 1:
             vectors = self.scale * np.array(vectors)
-        return LatticeVecField(vectors=list(self.vectors), origin=self.origin, color=self.color, box=self.box, density=self.lc)
+        return LatticeVecField(vectors=list(
+            self.vectors), origin=self.origin, color=self.color, box=self.box, density=self.lc)
+
 
 class OriginVectorField:
 
-    def __init__(self, vectors, origins, scale = 1):
+    def __init__(self, vectors, origins, scale=1):
         self.vectors = vectors
         self.origins = origins
         self.scale = scale
@@ -252,4 +285,3 @@ class OriginVectorField:
         if self.scale != 1:
             vectors = self.scale * np.array(vectors)
         return OriginVecField(vectors=list(self.vectors), origins=self.origins)
-
