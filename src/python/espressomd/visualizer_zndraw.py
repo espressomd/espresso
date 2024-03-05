@@ -116,7 +116,8 @@ class Visualizer():
             size_list = [""] * self.length
             try:
                 for particle in self.system.part.all():
-                    size_list[particle.id] = int(self.info["size"][particle.type])
+                    size_list[particle.id] = int(
+                        self.info["size"][particle.type])
                 return size_list
             except IndexError:
                 raise AttributeError(
