@@ -3,7 +3,6 @@ from zndraw import ZnDraw
 from znframe.frame import Frame
 from znframe.vec import LatticeVecField, OriginVecField
 from zndraw.utils import SphereGeometry, CylinderGeometry, PlaneGeometry
-import networkx as nx
 import webbrowser
 import time
 import espressomd.shapes
@@ -117,7 +116,7 @@ class Visualizer():
             size_list = [""] * self.length
             try:
                 for particle in self.system.part.all():
-                    size_list[particle.id] = int(size[particle.type])
+                    size_list[particle.id] = int(self.info["size"][particle.type])
                 return size_list
             except IndexError:
                 raise AttributeError(
