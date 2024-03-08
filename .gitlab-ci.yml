@@ -278,6 +278,11 @@ tutorials-samples-maxset:
      test_timeout: '1200'
   script:
     - bash maintainer/CI/build_cmake.sh
+    - git clone https://github.com/zincware/ZnDraw.git
+    - cd ZnDraw
+    - git checkout -b pinned 0c2dfdb
+    - cd zndraw/static
+    - npm install
   tags:
     - espresso
     - cuda
