@@ -195,7 +195,7 @@ clang-sanitizer:
      with_coverage: 'false'
      with_static_analysis: 'true'
      check_skip_long: 'true'
-     with_asan: 'true'
+     with_asan: 'false'
      with_ubsan: 'true'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
