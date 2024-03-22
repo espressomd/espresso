@@ -30,20 +30,24 @@ namespace utf = boost::unit_test;
 #include "EspressoSystemStandAlone.hpp"
 #include "Particle.hpp"
 #include "accumulators/TimeSeries.hpp"
+#include "actor/registration.hpp"
 #include "bonded_interactions/bonded_interaction_utils.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
+#include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
-#include "electrostatics/registration.hpp"
 #include "energy.hpp"
 #include "event.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
+#include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "observables/ParticleVelocities.hpp"
+#include "observables/PidObservable.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -56,7 +60,9 @@ namespace utf = boost::unit_test;
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -108,12 +114,56 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_REQUIRE_GE(get_particle_node_parallel(pid2), rank ? -1 : 1);
     BOOST_REQUIRE_GE(get_particle_node_parallel(pid3), rank ? -1 : 1);
   }
+  set_particle_property(pid1, &Particle::mol_id, type_a);
+  set_particle_property(pid2, &Particle::mol_id, type_b);
+  set_particle_property(pid3, &Particle::mol_id, type_b);
 
   auto const reset_particle_positions = [&start_positions]() {
     for (auto const &kv : start_positions) {
       set_particle_pos(kv.first, kv.second);
     }
   };
+
+  // check observables
+  {
+    auto const &cell_structure = *System::get_system().cell_structure;
+    auto const pid4 = 10;
+    auto const pids = std::vector<int>{pid2, pid3, pid1, pid4};
+    Observables::ParticleReferenceRange particle_range{};
+    for (int pid : pids) {
+      if (auto const p = cell_structure.get_local_particle(pid)) {
+        particle_range.emplace_back(*p);
+      }
+    }
+    Particle p{};
+    p.id() = pid4;
+    p.pos() = {1., 1., 1.};
+    p.image_box() = {1, -1, 0};
+    if (rank == 0) {
+      particle_range.emplace_back(p);
+    }
+    for (auto const use_folded_positions : {true, false}) {
+      auto const vec = Observables::detail::get_all_particle_positions(
+          comm, particle_range, pids, {}, use_folded_positions);
+      if (rank == 0) {
+        BOOST_CHECK_EQUAL(vec.size(), 4ul);
+        for (std::size_t i = 0u; i < pids.size(); ++i) {
+          Utils::Vector3d dist{};
+          if (pids[i] == pid4) {
+            dist = p.pos() - vec[i];
+            if (not use_folded_positions) {
+              dist += p.image_box() * box_l;
+            }
+          } else {
+            dist = start_positions.at(pids[i]) - vec[i];
+          }
+          BOOST_CHECK_LE(dist.norm(), tol);
+        }
+      } else {
+        BOOST_CHECK_EQUAL(vec.size(), 0ul);
+      }
+    }
+  }
 
   // check accumulators
   if (n_nodes == 1) {
@@ -130,12 +180,12 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     for (int i = 0; i < 5; ++i) {
       set_particle_v(pid2, {static_cast<double>(i), 0., 0.});
 
-      acc.update();
+      acc.update(comm);
       auto const time_series = acc.time_series();
       BOOST_REQUIRE_EQUAL(time_series.size(), i + 1);
 
       auto const acc_value = time_series.back();
-      auto const obs_value = (*obs)();
+      auto const obs_value = (*obs)(comm);
       auto const &p = get_particle_data(pid2);
       BOOST_TEST(obs_value == p.v(), boost::test_tools::per_element());
       BOOST_TEST(acc_value == p.v(), boost::test_tools::per_element());
@@ -179,10 +229,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     on_non_bonded_ia_change();
 
     // matrix indices and reference energy value
-    auto const max_type = type_b + 1;
-    auto const n_pairs = Utils::upper_triangular(type_b, type_b, max_type) + 1;
-    auto const lj_pair_ab = Utils::upper_triangular(type_a, type_b, max_type);
-    auto const lj_pair_bb = Utils::upper_triangular(type_b, type_b, max_type);
+    auto const size = std::max(type_a, type_b) + 1;
+    auto const n_pairs = Utils::upper_triangular(type_b, type_b, size) + 1;
+    auto const lj_pair_ab = Utils::upper_triangular(type_a, type_b, size);
+    auto const lj_pair_bb = Utils::upper_triangular(type_b, type_b, size);
     auto const frac6 = Utils::int_pow<6>(sig / r_off);
     auto const lj_energy = 4.0 * eps * (Utils::sqr(frac6) - frac6 + shift);
 
@@ -190,6 +240,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     auto const obs_energy = calculate_energy();
     if (rank == 0) {
       for (int i = 0; i < n_pairs; ++i) {
+        // particles were set up with type == mol_id
         auto const ref_inter = (i == lj_pair_ab) ? lj_energy : 0.;
         auto const ref_intra = (i == lj_pair_bb) ? lj_energy : 0.;
         BOOST_CHECK_CLOSE(obs_energy->non_bonded_inter[i], ref_inter, 1e-10);
@@ -260,7 +311,8 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              1e-3};
     auto solver =
         std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
-    ::Coulomb::add_actor(solver);
+    add_actor(comm, System::get_system().coulomb.impl->solver, solver,
+              ::on_coulomb_change);
 
     // measure energies
     auto const step = 0.02;

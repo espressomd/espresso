@@ -19,8 +19,9 @@
 
 #include "PartCfg.hpp"
 
-#include "grid.hpp"
+#include "BoxGeometry.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/Span.hpp>
 
@@ -30,6 +31,8 @@
 void PartCfg::update() {
   if (m_valid)
     return;
+
+  auto const &box_geo = *System::get_system().box_geo;
 
   m_parts.clear();
 
@@ -48,7 +51,7 @@ void PartCfg::update() {
       m_parts.push_back(get_particle_data(id));
 
       auto &p = m_parts.back();
-      p.pos() += image_shift(p.image_box(), box_geo.length());
+      p.pos() += box_geo.image_shift(p.image_box());
       p.image_box() = {};
     }
 

@@ -22,12 +22,16 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "PidProfileObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
 
-#include <array>
+#include <boost/mpi/collectives/gather.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace Observables {
@@ -41,13 +45,33 @@ public:
   }
 
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
-           const ParticleObservables::traits<Particle> &) const override {
-    Utils::Histogram<double, 3> histogram(n_bins(), limits());
-    for (auto const &p : particles) {
-      histogram.update(folded_position(p.get().pos(), box_geo),
-                       p.get().force());
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
+           const ParticleObservables::traits<Particle> &traits) const override {
+    using pos_type = decltype(traits.position(std::declval<Particle>()));
+    using force_type = decltype(traits.force(std::declval<Particle>()));
+    auto const &box_geo = *System::get_system().box_geo;
+
+    std::vector<pos_type> local_folded_positions{};
+    local_folded_positions.reserve(local_particles.size());
+    std::vector<force_type> local_forces{};
+    local_forces.reserve(local_particles.size());
+
+    for (auto const &p : local_particles) {
+      local_folded_positions.emplace_back(
+          box_geo.folded_position(traits.position(p)));
+      local_forces.emplace_back(traits.force(p));
     }
+
+    auto const [global_folded_positions, global_forces] =
+        detail::gather(comm, local_folded_positions, local_forces);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
+    Utils::Histogram<double, 3> histogram(n_bins(), limits());
+    detail::accumulate(histogram, global_folded_positions, global_forces);
     histogram.normalize();
     return histogram.get_histogram();
   }

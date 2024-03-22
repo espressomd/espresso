@@ -35,6 +35,8 @@
 #include <utils/Vector.hpp>
 #include <utils/compact_vector.hpp>
 #include <utils/quaternion.hpp>
+#include <utils/serialization/optional.hpp>
+#include <utils/serialization/unordered_map.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -332,6 +334,47 @@ BOOST_AUTO_TEST_CASE(compact_vector_test) {
   static_assert(boost::mpi::is_mpi_datatype<compact_vector<int>>::value);
   static_assert(sizeof(compact_vector<int>) < sizeof(std::vector<int>));
   BOOST_TEST_PASSPOINT();
+}
+
+BOOST_AUTO_TEST_CASE(std_unordered_map_test) {
+  boost::mpi::communicator comm;
+  {
+    boost::mpi::packed_archive buffer;
+    std::unordered_map<int, unsigned int> const value_send{{1, 2u}, {-3, 4u}};
+    std::unordered_map<int, unsigned int> value_recv{};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE_EQUAL(value_recv.size(), 2ul);
+    BOOST_CHECK_EQUAL(value_recv.at(1), 2u);
+    BOOST_CHECK_EQUAL(value_recv.at(-3), 4u);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(std_optional_test) {
+  boost::mpi::communicator comm;
+  {
+    boost::mpi::packed_archive buffer;
+    std::optional<int> const value_send{-10};
+    std::optional<int> value_recv = std::nullopt;
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE(value_recv.has_value());
+    BOOST_CHECK_EQUAL(*value_recv, *value_send);
+  }
+  {
+    boost::mpi::packed_archive buffer;
+    std::optional<int> const value_send = std::nullopt;
+    std::optional<int> value_recv{1};
+    boost::mpi::packed_oarchive oa{comm, buffer};
+    oa << value_send;
+    boost::mpi::packed_iarchive ia{comm, buffer};
+    ia >> value_recv;
+    BOOST_REQUIRE(not value_recv.has_value());
+  }
 }
 
 int main(int argc, char **argv) {

@@ -78,7 +78,7 @@ system.lees_edwards.set_boundary_conditions(
 
 lbf = espressomd.lb.LBFluidWalberla(
     agrid=1., density=1., kinematic_viscosity=nu, tau=1.)
-system.actors.add(lbf)
+system.lb = lbf
 
 # sampling
 time_breakpoints = [50, 200, 500, 2000]

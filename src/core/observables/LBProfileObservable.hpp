@@ -20,7 +20,6 @@
 #define OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 
 #include "ProfileObservable.hpp"
-#include "grid.hpp"
 
 #include <utils/Vector.hpp>
 

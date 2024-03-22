@@ -25,7 +25,6 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include "core/grid.hpp"
 #include "core/integrate.hpp"
 #include "core/stokesian_dynamics/sd_interface.hpp"
 

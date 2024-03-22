@@ -48,7 +48,8 @@ unit_test(NAME ObjectList_test SRC ObjectList_test.cpp DEPENDS
 unit_test(NAME ObjectMap_test SRC ObjectMap_test.cpp DEPENDS
           espresso::script_interface espresso::core Boost::mpi)
 unit_test(NAME Accumulators_test SRC Accumulators_test.cpp DEPENDS
-          espresso::script_interface espresso::core)
+          espresso::script_interface espresso::core Boost::mpi MPI::MPI_CXX
+          NUM_PROC 2)
 unit_test(NAME Constraints_test SRC Constraints_test.cpp DEPENDS
           espresso::script_interface espresso::core)
 unit_test(NAME Actors_test SRC Actors_test.cpp DEPENDS

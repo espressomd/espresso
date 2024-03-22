@@ -49,7 +49,8 @@ public:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "update") {
-      m_accumulator->update();
+      ObjectHandle::context()->parallel_try_catch(
+          [&]() { m_accumulator->update(context()->get_comm()); });
     }
     if (method == "time_series") {
       auto const &series = m_accumulator->time_series();

@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2019-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
 import importlib_wrapper
@@ -22,9 +24,11 @@ import numpy as np
 # make simulation deterministic
 np.random.seed(42)
 
+gpu = "gpu" in "@TEST_LABELS@".split(";")
+cmd_arguments = ["--particles_per_core", "80", "--gpu" if gpu else "--no-gpu"]
 benchmark, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@BENCHMARKS_DIR@/lb.py", cmd_arguments=["--particles_per_core", "80"],
-    measurement_steps=200, n_iterations=2)
+    "@BENCHMARKS_DIR@/lb.py", gpu=gpu, measurement_steps=200, n_iterations=2,
+    cmd_arguments=cmd_arguments, script_suffix="@TEST_SUFFIX@")
 
 
 @skipIfMissingFeatures

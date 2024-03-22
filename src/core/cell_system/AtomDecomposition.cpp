@@ -102,7 +102,7 @@ void AtomDecomposition::mark_cells() {
 void AtomDecomposition::resort(bool global_flag,
                                std::vector<ParticleChange> &diff) {
   for (auto &p : local().particles()) {
-    fold_position(p.pos(), p.image_box(), m_box);
+    m_box.fold_position(p.pos(), p.image_box());
 
     p.pos_at_last_verlet_update() = p.pos();
   }

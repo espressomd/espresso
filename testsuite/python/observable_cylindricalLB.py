@@ -65,10 +65,10 @@ class CylindricalLBObservableCommon:
 
     def setUp(self):
         self.lbf = self.lb_class(**self.lb_params, **self.lb_params_extra)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.part.clear()
 
     def calc_vel_at_pos(self, positions):

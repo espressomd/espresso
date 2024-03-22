@@ -27,6 +27,7 @@
 #include "event.hpp"
 #include "integrate.hpp"
 #include "magnetostatics/dipoles.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -47,18 +48,21 @@ void synchronize_npt_state() {
 }
 
 void NptIsoParameters::coulomb_dipole_sanity_checks() const {
+#if defined(ELECTROSTATICS) or defined(DIPOLES)
+  auto &system = System::get_system();
 #ifdef ELECTROSTATICS
-  if (dimension < 3 && !cubic_box && electrostatics_actor) {
+  if (dimension < 3 and not cubic_box and system.coulomb.impl->solver) {
     throw std::runtime_error("If electrostatics is being used you must "
                              "use the cubic box NpT.");
   }
 #endif
 
 #ifdef DIPOLES
-  if (dimension < 3 && !cubic_box && magnetostatics_actor) {
+  if (dimension < 3 and not cubic_box and system.dipoles.impl->solver) {
     throw std::runtime_error("If magnetostatics is being used you must "
                              "use the cubic box NpT.");
   }
+#endif
 #endif
 }
 

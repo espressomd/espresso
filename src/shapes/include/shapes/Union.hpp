@@ -33,6 +33,10 @@ namespace Shapes {
 
 class Union : public Shape {
 public:
+  bool contains(std::shared_ptr<Shapes::Shape> const &shape) const noexcept {
+    return std::find(m_shapes.begin(), m_shapes.end(), shape) != m_shapes.end();
+  }
+
   void add(std::shared_ptr<Shapes::Shape> const &shape) {
     m_shapes.emplace_back(shape);
   }

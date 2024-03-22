@@ -40,14 +40,14 @@ class Test(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
         self.system.periodicity = [False, False, False]
 
     def dds_gpu_data(self):
         system = self.system
 
         dds_cpu = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1.2)
-        system.actors.add(dds_cpu)
+        system.magnetostatics.solver = dds_cpu
         # check MD cell reset has no impact
         self.system.box_l = self.system.box_l
         self.system.periodicity = self.system.periodicity
@@ -58,7 +58,7 @@ class Test(ut.TestCase):
         ref_f = np.copy(self.particles.f)
         ref_t = np.copy(self.particles.torque_lab)
 
-        system.actors.clear()
+        system.magnetostatics.clear()
 
         return (ref_e, ref_f, ref_t)
 
@@ -66,7 +66,7 @@ class Test(ut.TestCase):
         system = self.system
 
         dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.2)
-        system.actors.add(dds_cpu)
+        system.magnetostatics.solver = dds_cpu
         # check MD cell reset has no impact
         self.system.box_l = self.system.box_l
         self.system.periodicity = self.system.periodicity
@@ -77,7 +77,7 @@ class Test(ut.TestCase):
         ref_f = np.copy(self.particles.f)
         ref_t = np.copy(self.particles.torque_lab)
 
-        system.actors.clear()
+        system.magnetostatics.clear()
 
         return (ref_e, ref_f, ref_t)
 
@@ -89,14 +89,14 @@ class Test(ut.TestCase):
             method_name="direct",
             method_params={"direct_periodic_images": "0,0,0",
                            "direct_cutoff": 0})
-        system.actors.add(scafacos_direct)
+        system.magnetostatics.solver = scafacos_direct
 
         system.integrator.run(0, recalc_forces=True)
         ref_e = system.analysis.energy()["dipolar"]
         ref_f = np.copy(self.particles.f)
         ref_t = np.copy(self.particles.torque_lab)
 
-        system.actors.clear()
+        system.magnetostatics.clear()
 
         return (ref_e, ref_f, ref_t)
 
@@ -203,7 +203,7 @@ class Test(ut.TestCase):
         ref_min_img_energy = 62.5
         ref_min_img_forces = 937.5 * np.array([[-1., 0., 0.], [+1., 0., 0.]])
         ref_min_img_torques = 62.5 * np.array([[+1., 0., 0.], [-1., 0., 0.]])
-        system.actors.add(solver)
+        system.magnetostatics.solver = solver
 
         # check min image against reference data
         system.periodicity = [False, False, False]
@@ -268,10 +268,10 @@ class Test(ut.TestCase):
         p2 = system.part.add(pos=[1., 0., 0.], dip=[0., 0., 1.],
                              rotation=[True, True, True])
         for n_replicas in [0, 1]:
-            system.actors.clear()
+            system.magnetostatics.clear()
             solver = espressomd.magnetostatics.DipolarDirectSumCpu(
                 prefactor=1., n_replicas=n_replicas)
-            system.actors.add(solver)
+            system.magnetostatics.solver = solver
 
             # intra-node calculation
             p1.pos = [system.box_l[0] / 2. - 0.1, 0., 2.]

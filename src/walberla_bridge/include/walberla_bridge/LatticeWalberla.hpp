@@ -27,10 +27,13 @@
 #include <memory>
 #include <utility>
 
+// forward declarations
 namespace walberla::blockforest {
-// forward declare
 class StructuredBlockForest;
 } // namespace walberla::blockforest
+namespace walberla::domain_decomposition {
+class IBlock;
+} // namespace walberla::domain_decomposition
 
 /** Class that runs and controls the BlockForest in waLBerla. */
 class LatticeWalberla {
@@ -43,6 +46,8 @@ private:
 
   /** Block forest */
   std::shared_ptr<Lattice_T> m_blocks;
+  using IBlock = walberla::domain_decomposition::IBlock;
+  std::vector<IBlock *> m_cached_blocks;
 
 public:
   LatticeWalberla(Utils::Vector3i const &grid_dimensions,
@@ -53,6 +58,9 @@ public:
   [[nodiscard]] auto get_ghost_layers() const { return m_n_ghost_layers; }
   [[nodiscard]] auto get_grid_dimensions() const { return m_grid_dimensions; }
   [[nodiscard]] auto get_blocks() const { return m_blocks; }
+  [[nodiscard]] auto const &get_cached_blocks() const {
+    return m_cached_blocks;
+  }
   [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
   get_local_domain() const;
   [[nodiscard]] auto get_local_grid_range() const {

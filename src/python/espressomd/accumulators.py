@@ -41,7 +41,7 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
         "update",
         "shape",
     )
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
     def mean(self):
         """
@@ -90,7 +90,7 @@ class TimeSeries(ScriptInterfaceHelper):
         "shape",
         "clear"
     )
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
     def time_series(self):
         """
@@ -263,7 +263,7 @@ class Correlator(ScriptInterfaceHelper):
         "update",
         "shape",
         "finalize")
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
     def result(self):
         """
@@ -307,7 +307,7 @@ class AutoUpdateAccumulators(ScriptObjectList):
 
     """
     _so_name = "Accumulators::AutoUpdateAccumulators"
-    _so_creation_policy = "LOCAL"
+    _so_creation_policy = "GLOBAL"
 
     def add(self, accumulator):
         """

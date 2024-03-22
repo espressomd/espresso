@@ -20,6 +20,7 @@ with solid obstacles. For more details, see :ref:`Object-in-fluid`.
 """
 
 import espressomd
+import espressomd.lb
 import espressomd.shapes
 
 required_features = ["WALBERLA", "EXTERNAL_FORCES", "SOFT_SPHERE", "MASS"]
@@ -73,7 +74,7 @@ system.non_bonded_inter[cell0.particle_type, 10].soft_sphere.set_params(
 lbf = espressomd.lb.LBFluidWalberla(
     agrid=1., density=1., kinematic_viscosity=1.5, tau=system.time_step,
     ext_force_density=[0.025, 0., 0.], single_precision=True)
-system.actors.add(lbf)
+system.lb = lbf
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # creating boundaries and obstacles in the channel

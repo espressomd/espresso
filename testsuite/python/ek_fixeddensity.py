@@ -43,7 +43,7 @@ class EKFixedDensity(ut.TestCase):
     system.cell_system.skin = 0.4
 
     def tearDown(self) -> None:
-        self.system.ekcontainer.clear()
+        self.system.ekcontainer = None
 
     def test_constant_density_bc_single(self):
         self.detail_test_constant_density_bc(single_precision=True)
@@ -66,8 +66,8 @@ class EKFixedDensity(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.tau = self.TAU
-        self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
 
         # left and right no flux

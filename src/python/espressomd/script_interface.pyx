@@ -426,10 +426,16 @@ def _unpickle_so_class(so_name, state):
 
 class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
+    _so_features = ()
     _so_bind_methods = ()
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
+        cdef vector[string] features_vec
+        if self._so_features:
+            for feature in self._so_features:
+                features_vec.push_back(utils.to_char_pointer(feature))
+            check_features(features_vec)
         super().__init__(self._so_name, policy=self._so_creation_policy,
                          **kwargs)
         self.define_bound_methods()

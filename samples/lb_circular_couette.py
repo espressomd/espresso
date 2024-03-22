@@ -51,7 +51,7 @@ system.cell_system.skin = 0.1
 system.periodicity = [False, False, True]
 lb_fluid = espressomd.lb.LBFluidWalberla(
     agrid=agrid, density=0.5, kinematic_viscosity=3.2, tau=system.time_step)
-system.actors.add(lb_fluid)
+system.lb = lb_fluid
 
 # set up cylinders
 cyl_center = agrid * (grid_size // 2 + 0.5) * [1, 1, 0]

@@ -20,17 +20,17 @@
 #pragma once
 
 #include <utils/Vector.hpp>
+#include <utils/serialization/optional.hpp>
 
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/multi_array.hpp>
-#include <boost/optional.hpp>
-#include <boost/serialization/optional.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
@@ -40,10 +40,10 @@ namespace ScriptInterface::walberla {
 
 namespace detail {
 
-// boundary types are always boost::optional types
+// boundary types are always std::optional types
 template <class> struct is_optional_type : public std::false_type {};
 template <class T>
-struct is_optional_type<boost::optional<T>> : public std::true_type {};
+struct is_optional_type<std::optional<T>> : public std::true_type {};
 
 template <class ArrayView, typename T>
 void unflatten_grid(ArrayView &view, std::vector<T> const &values) {
@@ -84,7 +84,7 @@ void flatten_grid(ArrayView const &view, std::vector<T> &out,
             if (view[i][j][k][t]) {
               out.emplace_back(*(view[i][j][k][t]) * units_conversion);
             } else {
-              out.emplace_back(boost::none);
+              out.emplace_back(std::nullopt);
             }
           } else {
             out.emplace_back(view[i][j][k][t]);

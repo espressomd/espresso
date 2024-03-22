@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import abc
 import itertools
 import numpy as np
 
@@ -42,15 +41,11 @@ class VelocityBounceBack:
         self.velocity = velocity
 
 
-class HydrodynamicInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
+class HydrodynamicInteraction(ScriptInterfaceHelper):
     """
     Base class for LB implementations.
 
     """
-
-    @abc.abstractmethod
-    def _check_features(self):
-        pass
 
     def __getitem__(self, key):
         raise NotImplementedError("Derived classes must implement this method")
@@ -128,8 +123,9 @@ class HydrodynamicInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
         raise RuntimeError(f"Property 'pressure_tensor' is read-only")
 
 
-class LBFluidWalberlaBase(HydrodynamicInteraction,
-                          espressomd.detail.walberla.LatticeModel):
+@script_interface_register
+class LBFluidWalberla(HydrodynamicInteraction,
+                      espressomd.detail.walberla.LatticeModel):
     """
     The lattice-Boltzmann method for hydrodynamics using waLBerla.
     If argument ``lattice`` is not provided, one will be default
@@ -229,6 +225,9 @@ class LBFluidWalberlaBase(HydrodynamicInteraction,
 
     """
 
+    _so_name = "walberla::LBFluidCPU"
+    _so_features = ("WALBERLA",)
+    _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "add_force_at_pos",
         "clear_boundaries",
@@ -239,7 +238,6 @@ class LBFluidWalberlaBase(HydrodynamicInteraction,
     )
 
     def __init__(self, *args, **kwargs):
-        self._check_features()
         if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)
@@ -323,34 +321,21 @@ class LBFluidWalberlaBase(HydrodynamicInteraction,
 
 
 @script_interface_register
-class LBFluidWalberla(LBFluidWalberlaBase):
-    _so_name = "walberla::LBFluidCPU"
-    _so_creation_policy = "GLOBAL"
+class LBFluidWalberlaGPU(LBFluidWalberla):
+    """
+    Initialize the lattice-Boltzmann method for hydrodynamic flow using
+    waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
+    list of parameters.
 
-    def _check_features(self):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-
-@script_interface_register
-class LBFluidWalberlaGPU(LBFluidWalberlaBase):
+    """
     _so_name = "walberla::LBFluidGPU"
     _so_creation_policy = "GLOBAL"
-
-    def _check_features(self):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-        if not espressomd.code_features.has_features("CUDA"):
-            raise NotImplementedError("Feature CUDA not compiled in")
+    _so_features = ("WALBERLA", "CUDA")
 
     def default_params(self):
         params = super().default_params()
         params["single_precision"] = True
         return params
-
-
-LBFluidWalberla.__doc__ = LBFluidWalberlaBase.__doc__
-LBFluidWalberlaGPU.__doc__ = LBFluidWalberlaBase.__doc__
 
 
 @script_interface_register

@@ -25,24 +25,26 @@ from .detail.walberla import VTKOutputBase, LatticeWalberla  # pylint: disable=u
 from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList, array_variant
 import espressomd.detail.walberla
 import espressomd.shapes
-import espressomd.code_features
 
 
 @script_interface_register
 class EKFFT(ScriptInterfaceHelper):
     """
     A FFT-based Poisson solver.
+    Intrinsically assumes periodic boundary conditions.
 
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object.
+    permittivity : :obj:`float`
+        permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
     """
-
     _so_name = "walberla::EKFFT"
+    _so_features = ("WALBERLA_FFT",)
     _so_creation_policy = "GLOBAL"
-
-    def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA_FFT"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-        super().__init__(*args, **kwargs)
 
 
 @script_interface_register
@@ -51,35 +53,16 @@ class EKNone(ScriptInterfaceHelper):
     The default Poisson solver.
     Imposes a null electrostatic potential everywhere.
 
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
     """
     _so_name = "walberla::EKNone"
+    _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
-
-    def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-        super().__init__(*args, **kwargs)
-
-
-@script_interface_register
-class EKContainer(ScriptObjectList):
-    _so_name = "walberla::EKContainer"
-
-    def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
-        super().__init__(*args, **kwargs)
-
-    def add(self, ekspecies):
-        self.call_method("add", object=ekspecies)
-
-    def remove(self, ekspecies):
-        self.call_method("remove", object=ekspecies)
-
-    def clear(self):
-        self.call_method("clear")
 
 
 @script_interface_register
@@ -165,6 +148,7 @@ class EKSpecies(ScriptInterfaceHelper,
     """
 
     _so_name = "walberla::EKSpecies"
+    _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "clear_density_boundaries",
@@ -176,9 +160,6 @@ class EKSpecies(ScriptInterfaceHelper,
     )
 
     def __init__(self, *args, **kwargs):
-        if not espressomd.code_features.has_features("WALBERLA"):
-            raise NotImplementedError("Feature WALBERLA not compiled in")
-
         if "sip" not in kwargs:
             params = self.default_params()
             params.update(kwargs)
@@ -610,16 +591,61 @@ class VTKOutput(VTKOutputBase):
 
 @script_interface_register
 class EKReactant(ScriptInterfaceHelper):
+    """
+    Reactant-object which specifies the contribution of a species to a reaction.
+
+    Parameters
+    ----------
+    ekspecies : :obj:`~espressomd.electrokinetics.EKSpecies`
+        EK species to react
+    stoech_coeff: :obj:`float`
+        Stoechiometric coefficient of this species in the reaction.
+        Products have positive coefficients whereas educts have negative ones.
+    order: :obj:`float`
+        Partial-order of this species in the reaction.
+
+    """
     _so_name = "walberla::EKReactant"
     _so_creation_policy = "GLOBAL"
 
 
 class EKBulkReaction(ScriptInterfaceHelper):
+    """
+    Reaction type that is applied everywhere in the domain.
+
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object.
+    tau : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
+    coefficient : :obj:`float`
+        Reaction rate constant of the reaction.
+    reactants: array_like of :obj:`~espressomd.electrokinetics.EKReactant`
+        Reactants that participate this reaction.
+
+    """
     _so_name = "walberla::EKBulkReaction"
     _so_creation_policy = "GLOBAL"
 
 
 class EKIndexedReaction(ScriptInterfaceHelper):
+    """
+    Reaction type that is applied only on specific cells in the domain.
+    Can be used to model surface-reactions.
+
+    Parameters
+    ----------
+    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+        Lattice object.
+    tau : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
+    coefficient : :obj:`float`
+        Reaction rate constant of the reaction.
+    reactants: array_like of :obj:`~espressomd.electrokinetics.EKReactant`
+        Reactants that participate this reaction.
+
+    """
     _so_name = "walberla::EKIndexedReaction"
     _so_creation_policy = "GLOBAL"
 
@@ -682,19 +708,106 @@ class EKIndexedReaction(ScriptInterfaceHelper):
 
 @script_interface_register
 class EKReactions(ScriptObjectList):
+    """
+    Container object holding all EK-reactions that are considered.
+
+    Methods
+    -------
+    clear()
+        Remove all reactions.
+
+    """
     _so_name = "walberla::EKReactions"
     _so_creation_policy = "GLOBAL"
+    _so_bind_methods = ("clear",)
 
     def add(self, reaction):
+        """
+        Add a reaction to the container.
+
+        Parameters
+        ----------
+        reaction : :obj:`~espressomd.electrokinetics.EKBulkReaction` or :obj:`~espressomd.electrokinetics.EKIndexedReaction`
+            Reaction to be added.
+
+        """
         if not isinstance(reaction, (EKBulkReaction, EKIndexedReaction)):
             raise TypeError("reaction object is not of correct type.")
-
         self.call_method("add", object=reaction)
 
-        return reaction
-
     def remove(self, reaction):
+        """
+        Remove a reaction from the container.
+
+        Parameters
+        ----------
+        reaction : :obj:`~espressomd.electrokinetics.EKBulkReaction` or :obj:`~espressomd.electrokinetics.EKIndexedReaction`
+            Reaction to be removed.
+
+        """
         self.call_method("remove", object=reaction)
 
-    def clear(self):
-        self.call_method("clear")
+
+@script_interface_register
+class EKContainer(ScriptObjectList):
+    """
+    Container object holding the :obj:`~espressomd.electrokinetics.EKSpecies`.
+
+    Parameters
+    ----------
+    tau : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
+    solver : :obj:`~espressomd.electrokinetics.EKNone` or :obj:`~espressomd.electrokinetics.EKFFT`
+        Solver defining the treatment of the electrostatic Poisson-equation.
+
+    Methods
+    -------
+    clear()
+        Removes all species.
+
+    """
+    _so_name = "walberla::EKContainer"
+    _so_creation_policy = "GLOBAL"
+    _so_features = ("WALBERLA",)
+    _so_bind_methods = ("clear",)
+
+    def __init__(self, *args, **kwargs):
+        if "sip" not in kwargs:
+            kwargs["reactions"] = EKReactions()
+            super().__init__(*args, **kwargs)
+        else:
+            super().__init__(**kwargs)
+
+    @property
+    def reactions(self):
+        """
+        Returns
+        -------
+        Reactions-container of the current reactions (:obj:`~espressomd.electrokinetics.EKReactions`).
+
+        """
+        return self._getter("reactions")
+
+    def add(self, ekspecies):
+        """
+        Add an :obj:`~espressomd.electrokinetics.EKSpecies` to the container.
+
+        Parameters
+        ----------
+        ekspecies : :obj:`~espressomd.electrokinetics.EKSpecies`
+            Species to be added.
+
+        """
+        self.call_method("add", object=ekspecies)
+
+    def remove(self, ekspecies):
+        """
+        Remove an :obj:`~espressomd.electrokinetics.EKSpecies` from the container.
+
+        Parameters
+        ----------
+        ekspecies : :obj:`~espressomd.electrokinetics.EKSpecies`
+            Species to be removed.
+
+        """
+        self.call_method("remove", object=ekspecies)

@@ -47,11 +47,11 @@ class LBMassCommon:
 
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, gamma=2.0)
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.thermostat.turn_off()
 
     def test_mass_conservation(self):

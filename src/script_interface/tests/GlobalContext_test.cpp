@@ -54,10 +54,10 @@ struct Dummy : si::ObjectHandle {
   }
 };
 
-auto make_global_context(Communication::MpiCallbacks &cb) {
+auto make_global_context(boost::mpi::communicator const &comm,
+                         Communication::MpiCallbacks &cb) {
   Utils::Factory<si::ObjectHandle> factory;
   factory.register_new<Dummy>("Dummy");
-  boost::mpi::communicator comm;
 
   return std::make_shared<si::GlobalContext>(
       cb, std::make_shared<si::LocalContext>(factory, comm));
@@ -66,7 +66,7 @@ auto make_global_context(Communication::MpiCallbacks &cb) {
 BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {
   boost::mpi::communicator world;
   Communication::MpiCallbacks cb{world};
-  auto ctx = make_global_context(cb);
+  auto ctx = make_global_context(world, cb);
 
   if (world.rank() == 0) {
     auto res = ctx->make_shared("Dummy", {});
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(GlobalContext_make_shared) {
 BOOST_AUTO_TEST_CASE(GlobalContext_serialization) {
   boost::mpi::communicator world;
   Communication::MpiCallbacks cb{world};
-  auto ctx = make_global_context(cb);
+  auto ctx = make_global_context(world, cb);
 
   if (world.rank() == 0) {
     auto const serialized = [&]() {

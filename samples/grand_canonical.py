@@ -104,7 +104,7 @@ RE.set_non_interacting_type(type=max(types) + 1)
 RE.reaction(steps=10000)
 
 p3m = espressomd.electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 p3m_params = p3m.get_params()
 for key, value in p3m_params.items():
     print(f"{key} = {value}")

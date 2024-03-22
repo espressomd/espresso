@@ -254,7 +254,7 @@ else:
     print("\n-->Tune P3M CPU")
     p3m = espressomd.electrostatics.P3M(**p3m_params)
 
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 
 cation_drude_parts = []
 

@@ -31,11 +31,10 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cstddef>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 
@@ -136,7 +135,7 @@ public:
                      double r_cut_iL) const = 0;
 
   /** @brief Veto real-space cutoffs larger than the layer correction gap. */
-  virtual boost::optional<std::string>
+  virtual std::optional<std::string>
   layer_correction_veto_r_cut(double r_cut) const = 0;
 
   /** @brief Write tuned parameters to the P3M parameter struct. */

@@ -25,19 +25,20 @@
  */
 #include "event.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
+#include "constraints.hpp"
 #include "cuda/init.hpp"
 #include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
@@ -46,6 +47,7 @@
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -55,14 +57,6 @@
 
 /** whether the thermostat has to be reinitialized before integration */
 static bool reinit_thermo = true;
-#ifdef ELECTROSTATICS
-/** whether electrostatics actor has to be reinitialized on observable calc */
-static bool reinit_electrostatics = false;
-#endif
-#ifdef DIPOLES
-/** whether magnetostatics actor has to be reinitialized on observable calc */
-static bool reinit_magnetostatics = false;
-#endif
 
 void on_program_start() {
 #ifdef CUDA
@@ -75,11 +69,6 @@ void on_program_start() {
   }
 #endif
 
-  init_node_grid();
-
-  /* initially go for regular decomposition */
-  cells_re_init(CellStructureType::CELL_STRUCTURE_REGULAR);
-
   /* make sure interaction 0<->0 always exists */
   make_particle_type_exist(0);
 }
@@ -89,12 +78,14 @@ void on_integration_start(double time_step) {
   /* sanity checks                            */
   /********************************************/
 
+  auto &system = System::get_system();
   integrator_sanity_checks();
 #ifdef NPT
   integrator_npt_sanity_checks();
 #endif
   long_range_interactions_sanity_checks();
-  LB::sanity_checks(time_step);
+  system.lb.sanity_checks();
+  system.ek.sanity_checks();
 
   /********************************************/
   /* end sanity checks                        */
@@ -108,29 +99,30 @@ void on_integration_start(double time_step) {
   }
 
 #ifdef NPT
-  npt_ensemble_init(box_geo);
+  npt_ensemble_init(*system.box_geo);
 #endif
 
   partCfg().invalidate();
   invalidate_fetch_cache();
 
 #ifdef ADDITIONAL_CHECKS
+  auto &cell_structure = *system.cell_structure;
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
 #ifdef ELECTROSTATICS
   {
-    auto const &actor = electrostatics_actor;
-    if (!Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
-        (actor and !Utils::Mpi::all_compare(comm_cart, (*actor).which())))
+    auto const &actor = system.coulomb.impl->solver;
+    if (not Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
+        (actor and not Utils::Mpi::all_compare(comm_cart, (*actor).index())))
       runtimeErrorMsg() << "Nodes disagree about Coulomb long-range method";
   }
 #endif
 #ifdef DIPOLES
   {
-    auto const &actor = magnetostatics_actor;
-    if (!Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
-        (actor and !Utils::Mpi::all_compare(comm_cart, (*actor).which())))
+    auto const &actor = system.dipoles.impl->solver;
+    if (not Utils::Mpi::all_compare(comm_cart, static_cast<bool>(actor)) or
+        (actor and not Utils::Mpi::all_compare(comm_cart, (*actor).index())))
       runtimeErrorMsg() << "Nodes disagree about dipolar long-range method";
   }
 #endif
@@ -144,33 +136,37 @@ void on_observable_calc() {
    * information */
   cells_update_ghosts(global_ghost_flags());
   update_dependent_particles();
+
 #ifdef ELECTROSTATICS
-  if (reinit_electrostatics) {
-    Coulomb::on_observable_calc();
-    reinit_electrostatics = false;
-  }
-#endif /* ELECTROSTATICS */
+  System::get_system().coulomb.on_observable_calc();
+#endif
 
 #ifdef DIPOLES
-  if (reinit_magnetostatics) {
-    Dipoles::on_observable_calc();
-    reinit_magnetostatics = false;
-  }
-#endif /* DIPOLES */
+  System::get_system().dipoles.on_observable_calc();
+#endif
 
   clear_particle_node();
 }
 
 void on_particle_charge_change() {
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
+  System::get_system().coulomb.on_particle_change();
 #endif
 
   /* the particle information is no longer valid */
   partCfg().invalidate();
 }
 
+void on_particle_local_change() {
+  cells_update_ghosts(global_ghost_flags());
+
+  recalc_forces = true;
+}
+
 void on_particle_change() {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+
   if (cell_structure.decomposition_type() ==
       CellStructureType::CELL_STRUCTURE_HYBRID) {
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
@@ -178,10 +174,10 @@ void on_particle_change() {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
+  system.coulomb.on_particle_change();
 #endif
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
+  system.dipoles.on_particle_change();
 #endif
   recalc_forces = true;
 
@@ -194,28 +190,24 @@ void on_particle_change() {
 
 void on_coulomb_and_dipoles_change() {
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
-  Coulomb::on_coulomb_change();
+  System::get_system().coulomb.on_coulomb_change();
 #endif
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
-  Dipoles::on_dipoles_change();
+  System::get_system().dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
 }
 
 void on_coulomb_change() {
 #ifdef ELECTROSTATICS
-  reinit_electrostatics = true;
-  Coulomb::on_coulomb_change();
+  System::get_system().coulomb.on_coulomb_change();
 #endif
   on_short_range_ia_change();
 }
 
 void on_dipoles_change() {
 #ifdef DIPOLES
-  reinit_magnetostatics = true;
-  Dipoles::on_dipoles_change();
+  System::get_system().dipoles.on_dipoles_change();
 #endif
   on_short_range_ia_change();
 }
@@ -226,7 +218,8 @@ void on_non_bonded_ia_change() {
 }
 
 void on_short_range_ia_change() {
-  cells_re_init(cell_structure.decomposition_type());
+  auto const &system = System::get_system();
+  cells_re_init(*system.cell_structure);
   recalc_forces = true;
 }
 
@@ -234,65 +227,69 @@ void on_constraint_change() { recalc_forces = true; }
 
 void on_lb_boundary_conditions_change() { recalc_forces = true; }
 
+static void update_local_geo(System::System &system) {
+  *system.local_geo = LocalBox::make_regular_decomposition(
+      system.box_geo->length(), ::communicator.calc_node_index(),
+      ::communicator.node_grid);
+}
+
 void on_boxl_change(bool skip_method_adaption) {
-  grid_changed_box_l(box_geo);
-  /* Electrostatics cutoffs mostly depend on the system size,
-   * therefore recalculate them. */
-  cells_re_init(cell_structure.decomposition_type());
+  auto &system = System::get_system();
+  update_local_geo(system);
+  cells_re_init(*system.cell_structure);
 
+  /* Now give methods a chance to react to the change in box length */
   if (not skip_method_adaption) {
-    /* Now give methods a chance to react to the change in box length */
+    system.lb.on_boxl_change();
+    system.ek.on_boxl_change();
 #ifdef ELECTROSTATICS
-    Coulomb::on_boxl_change();
+    system.coulomb.on_boxl_change();
 #endif
-
 #ifdef DIPOLES
-    Dipoles::on_boxl_change();
+    system.dipoles.on_boxl_change();
 #endif
-
-    LB::init();
   }
+
+  Constraints::constraints.on_boxl_change();
 }
 
 void on_cell_structure_change() {
   clear_particle_node();
 
-  if (lattice_switch == ActiveLB::WALBERLA_LB) {
-    throw std::runtime_error(
-        "LB does not currently support handling changes of the MD cell "
-        "geometry. Setup the cell system, skin and interactions before "
-        "activating the LB.");
-  }
-
   /* Now give methods a chance to react to the change in cell structure.
    * Most ES methods need to reinitialize, as they depend on skin,
    * node grid and so on. */
+  if (System::is_system_set()) {
+    auto &system = System::get_system();
+    system.lb.on_cell_structure_change();
+    system.ek.on_cell_structure_change();
 #ifdef ELECTROSTATICS
-  Coulomb::on_cell_structure_change();
+    system.coulomb.on_cell_structure_change();
 #endif
-
 #ifdef DIPOLES
-  Dipoles::on_cell_structure_change();
+    system.dipoles.on_cell_structure_change();
 #endif
+  }
 }
 
 void on_temperature_change() {
-  if (lattice_switch != ActiveLB::NONE) {
-    throw std::runtime_error("Temperature change not supported by LB");
-  }
+  auto &system = System::get_system();
+  system.lb.on_temperature_change();
+  system.ek.on_temperature_change();
 }
 
 void on_periodicity_change() {
 #ifdef ELECTROSTATICS
-  Coulomb::on_periodicity_change();
+  System::get_system().coulomb.on_periodicity_change();
 #endif
 
 #ifdef DIPOLES
-  Dipoles::on_periodicity_change();
+  System::get_system().dipoles.on_periodicity_change();
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
   if (integ_switch == INTEG_METHOD_SD) {
+    auto const &box_geo = *System::get_system().box_geo;
     if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
       runtimeErrorMsg() << "Stokesian Dynamics requires periodicity "
                         << "(False, False, False)\n";
@@ -302,30 +299,35 @@ void on_periodicity_change() {
 }
 
 void on_skin_change() {
-  cells_re_init(cell_structure.decomposition_type());
+  auto const &system = System::get_system();
+  cells_re_init(*system.cell_structure);
   on_coulomb_and_dipoles_change();
 }
 
 void on_thermostat_param_change() { reinit_thermo = true; }
 
 void on_timestep_change() {
-  if (lattice_switch != ActiveLB::NONE) {
-    throw std::runtime_error("Time step change not supported by LB");
-  }
+  auto &system = System::get_system();
+  system.lb.on_timestep_change();
+  system.ek.on_timestep_change();
   on_thermostat_param_change();
 }
 
 void on_forcecap_change() { recalc_forces = true; }
 
 void on_node_grid_change() {
-  grid_changed_n_nodes();
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  update_local_geo(system);
+  system.lb.on_node_grid_change();
+  system.ek.on_node_grid_change();
 #ifdef ELECTROSTATICS
-  Coulomb::on_node_grid_change();
+  system.coulomb.on_node_grid_change();
 #endif
 #ifdef DIPOLES
-  Dipoles::on_node_grid_change();
+  system.dipoles.on_node_grid_change();
 #endif
-  cells_re_init(cell_structure.decomposition_type());
+  cells_re_init(cell_structure);
 }
 
 /**
@@ -337,7 +339,7 @@ unsigned global_ghost_flags() {
   /* Position and Properties are always requested. */
   unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
-  if (lattice_switch == ActiveLB::WALBERLA_LB)
+  if (System::get_system().lb.is_solver_set())
     data_parts |= Cells::DATA_PART_MOMENTUM;
 
   if (thermo_switch & THERMO_DPD)
@@ -358,6 +360,8 @@ unsigned global_ghost_flags() {
 }
 
 void update_dependent_particles() {
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
 #ifdef VIRTUAL_SITES
   virtual_sites()->update();
   cells_update_ghosts(global_ghost_flags());

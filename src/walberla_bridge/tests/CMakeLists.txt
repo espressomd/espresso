@@ -22,53 +22,47 @@ include(unit_test)
 function(ESPRESSO_WALBERLA_UNIT_TEST)
   cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC;DEPENDS" ${ARGN})
   unit_test(NAME ${TEST_NAME} NUM_PROC ${TEST_NUM_PROC} SRC ${TEST_SRC} DEPENDS
-            ${TEST_DEPENDS})
+            ${TEST_DEPENDS} espresso::walberla espresso::walberla::cpp_flags
+            espresso::utils)
   set_target_properties(${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "")
   target_include_directories(${TEST_NAME} PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                   ${walberla_BINARY_DIR}/src)
   target_link_libraries(${TEST_NAME} PRIVATE ${WALBERLA_LIBS})
 endfunction()
 
-espresso_walberla_unit_test(
-  NAME ResourceManager_test SRC ResourceManager_test.cpp DEPENDS
-  espresso::walberla espresso::walberla::cpp_flags)
+espresso_walberla_unit_test(NAME ResourceManager_test SRC
+                            ResourceManager_test.cpp)
 
-espresso_walberla_unit_test(
-  NAME kernels_unit_tests SRC kernels_unit_tests.cpp DEPENDS espresso::walberla
-  espresso::walberla::cpp_flags espresso::utils)
+espresso_walberla_unit_test(NAME lb_kernels_unit_tests SRC
+                            lb_kernels_unit_tests.cpp)
+
+espresso_walberla_unit_test(NAME ek_kernels_unit_tests SRC
+                            ek_kernels_unit_tests.cpp)
 
 espresso_walberla_unit_test(
   NAME LatticeWalberla_unit_tests SRC LatticeWalberla_unit_tests.cpp DEPENDS
-  espresso::walberla espresso::walberla::cpp_flags espresso::utils Boost::mpi
-  NUM_PROC 2)
+  Boost::boost Boost::mpi NUM_PROC 2)
 
 espresso_walberla_unit_test(
   NAME LBWalberlaImpl_unit_tests SRC LBWalberlaImpl_unit_tests.cpp DEPENDS
-  espresso::walberla espresso::walberla::cpp_flags espresso::utils Boost::mpi
-  NUM_PROC 2)
+  Boost::boost Boost::mpi NUM_PROC 2)
 
 espresso_walberla_unit_test(
   NAME LBWalberlaImpl_bspline_tests SRC LBWalberlaImpl_bspline_tests.cpp
-  DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-  Boost::mpi NUM_PROC 2)
+  DEPENDS Boost::mpi NUM_PROC 2)
 
 if(NOT (ESPRESSO_BUILD_WITH_ASAN OR ESPRESSO_BUILD_WITH_UBSAN))
   espresso_walberla_unit_test(
     NAME LBWalberlaImpl_statistical_tests SRC
-    LBWalberlaImpl_statistical_tests.cpp DEPENDS espresso::walberla
-    espresso::walberla::cpp_flags espresso::utils Boost::mpi)
+    LBWalberlaImpl_statistical_tests.cpp DEPENDS Boost::mpi)
 endif()
 
-espresso_walberla_unit_test(
-  NAME LBWalberlaImpl_flow_tests SRC LBWalberlaImpl_flow_tests.cpp DEPENDS
-  espresso::walberla espresso::walberla::cpp_flags espresso::utils Boost::mpi)
+espresso_walberla_unit_test(NAME LBWalberlaImpl_flow_tests SRC
+                            LBWalberlaImpl_flow_tests.cpp DEPENDS Boost::mpi)
 
-espresso_walberla_unit_test(
-  NAME LBWalberlaImpl_lees_edwards_test SRC LBWalberlaImpl_lees_edwards.cpp
-  DEPENDS espresso::walberla espresso::walberla::cpp_flags espresso::utils
-  Boost::mpi)
+espresso_walberla_unit_test(NAME LBWalberlaImpl_lees_edwards_test SRC
+                            LBWalberlaImpl_lees_edwards.cpp DEPENDS Boost::mpi)
 
 espresso_walberla_unit_test(
   NAME EKinWalberlaImpl_unit_tests SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS
-  espresso::walberla espresso::walberla::cpp_flags espresso::utils Boost::mpi
-  NUM_PROC 2)
+  Boost::boost Boost::mpi NUM_PROC 2)

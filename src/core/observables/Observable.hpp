@@ -25,6 +25,8 @@
 #include <numeric>
 #include <vector>
 
+#include <boost/mpi/communicator.hpp>
+
 namespace Observables {
 
 /** Base class for observables.
@@ -42,7 +44,8 @@ public:
   Observable() = default;
   virtual ~Observable() = default;
   /** Calculate the set of values measured by the observable */
-  virtual std::vector<double> operator()() const = 0;
+  virtual std::vector<double>
+  operator()(boost::mpi::communicator const &comm) const = 0;
 
   /** Size of the flat array returned by the observable */
   std::size_t n_values() const {

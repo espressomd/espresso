@@ -22,6 +22,11 @@
 #include <cstddef>
 #include <vector>
 
+// Forward declaration
+namespace boost::mpi {
+class communicator;
+}
+
 namespace Accumulators {
 
 class AccumulatorBase {
@@ -31,7 +36,7 @@ public:
 
   int &delta_N() { return m_delta_N; }
 
-  virtual void update() = 0;
+  virtual void update(boost::mpi::communicator const &comm) = 0;
   /** Dimensions needed to reshape the flat array returned by the accumulator */
   virtual std::vector<std::size_t> shape() const = 0;
 

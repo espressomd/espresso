@@ -83,7 +83,7 @@ class LBPoiseuilleCommon:
               'orientation': [1, 0, 0]}
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     def prepare(self):
         """
@@ -98,7 +98,7 @@ class LBPoiseuilleCommon:
         local_lb_params['ext_force_density'] = np.array(
             self.params['axis']) * EXT_FORCE
         self.lbf = self.lb_class(**local_lb_params, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
 
         cylinder_shape = espressomd.shapes.Cylinder(
             center=self.system.box_l / 2.0, axis=self.params['axis'],

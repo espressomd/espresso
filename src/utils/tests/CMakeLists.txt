@@ -109,3 +109,5 @@ unit_test(NAME matrix_test SRC matrix_test.cpp DEPENDS espresso::utils
           Boost::serialization NUM_PROC 1)
 unit_test(NAME orthonormal_vec_test SRC orthonormal_vec_test.cpp DEPENDS
           espresso::utils Boost::serialization NUM_PROC 1)
+unit_test(NAME reduce_optional_test SRC reduce_optional_test.cpp DEPENDS
+          espresso::utils::mpi Boost::mpi MPI::MPI_CXX NUM_PROC 4)

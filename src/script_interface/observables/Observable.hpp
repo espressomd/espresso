@@ -41,7 +41,11 @@ public:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "calculate") {
-      return observable()->operator()();
+      std::vector<double> out{};
+      context()->parallel_try_catch([this, &out]() {
+        out = observable()->operator()(context()->get_comm());
+      });
+      return out;
     }
     if (method == "shape") {
       auto const shape = observable()->shape();

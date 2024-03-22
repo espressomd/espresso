@@ -52,24 +52,26 @@ T average(std::vector<T> const &value, std::size_t denominator) {
 BOOST_AUTO_TEST_CASE(algorithms_integer) {
   std::vector<int> const values{1, 2, 3, 4};
   {
-    auto const res = WeightedAverage<Testing::Identity, Testing::One>()(values);
+    auto const res =
+        WeightedAverage<Testing::Identity, Testing::One>()(values).first;
     BOOST_CHECK_EQUAL(res, Testing::average(values, values.size()));
   }
   {
     auto const res =
-        WeightedAverage<Testing::Identity, Testing::PlusOne>()(values);
+        WeightedAverage<Testing::Identity, Testing::PlusOne>()(values).first;
     BOOST_CHECK_EQUAL(res, (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5) / 14);
   }
   {
-    auto const res = WeightedSum<Testing::Identity, Testing::PlusOne>()(values);
+    auto const res =
+        WeightedSum<Testing::Identity, Testing::PlusOne>()(values).first;
     BOOST_CHECK_EQUAL(res, (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5));
   }
   {
-    auto const res = Average<Testing::Identity>()(values);
+    auto const res = Average<Testing::Identity>()(values).first;
     BOOST_CHECK_EQUAL(res, Testing::average(values, values.size()));
   }
   {
-    auto const res = Sum<Testing::Identity>{}(values);
+    auto const res = Sum<Testing::Identity>{}(values).first;
     BOOST_CHECK_EQUAL(res, Testing::average(values, 1u));
   }
   {
@@ -82,15 +84,16 @@ BOOST_AUTO_TEST_CASE(algorithms_double) {
   auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   std::vector<double> const values{1., 2., 3., 4.};
   {
-    auto const res = WeightedAverage<Testing::Identity, Testing::One>()(values);
+    auto const res =
+        WeightedAverage<Testing::Identity, Testing::One>()(values).first;
     BOOST_CHECK_CLOSE(res, Testing::average(values, values.size()), tol);
   }
   {
-    auto const res = Average<Testing::Identity>()(values);
+    auto const res = Average<Testing::Identity>()(values).first;
     BOOST_CHECK_EQUAL(res, Testing::average(values, values.size()));
   }
   {
-    auto const res = Sum<Testing::Identity>{}(values);
+    auto const res = Sum<Testing::Identity>{}(values).first;
     BOOST_CHECK_EQUAL(res, Testing::average(values, 1u));
   }
   {

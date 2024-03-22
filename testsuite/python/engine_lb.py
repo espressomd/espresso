@@ -116,12 +116,12 @@ class SwimmerTest:
         )
         self.set_cellsystem()
         self.lbf = self.lb_class(**self.LB_params, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.thermostat.turn_off()
 
     def test_dipole_particle_addition(self):

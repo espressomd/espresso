@@ -21,10 +21,10 @@
 
 #include "Protocol.hpp"
 
-#include "core/grid.hpp"
-#include "core/grid_based_algorithms/lb_interface.hpp"
+#include "core/BoxGeometry.hpp"
 #include "core/lees_edwards/LeesEdwardsBC.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
+#include "core/system/System.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
@@ -37,20 +37,23 @@ namespace LeesEdwards {
 
 class LeesEdwards : public AutoParameters<LeesEdwards> {
   std::shared_ptr<Protocol> m_protocol;
-  LeesEdwardsBC const &m_lebc = ::box_geo.lees_edwards_bc();
+  LeesEdwardsBC const &m_lebc;
 
 public:
-  LeesEdwards() : m_protocol{nullptr} {
+  LeesEdwards()
+      : m_protocol{nullptr},
+        m_lebc{System::get_system().box_geo->lees_edwards_bc()} {
     add_parameters(
         {{"protocol",
           [this](Variant const &value) {
             if (is_none(value)) {
-              context()->parallel_try_catch([]() {
+              auto const &system = System::get_system();
+              context()->parallel_try_catch([&system]() {
                 auto constexpr invalid_dir = LeesEdwardsBC::invalid_dir;
-                LB::lebc_sanity_checks(invalid_dir, invalid_dir);
+                system.lb.lebc_sanity_checks(invalid_dir, invalid_dir);
               });
               m_protocol = nullptr;
-              ::box_geo.set_lees_edwards_bc(LeesEdwardsBC{});
+              system.box_geo->set_lees_edwards_bc(LeesEdwardsBC{});
               ::LeesEdwards::unset_protocol();
               return;
             }
@@ -100,9 +103,10 @@ public:
           throw std::invalid_argument("Parameters 'shear_direction' and "
                                       "'shear_plane_normal' must differ");
         }
-        LB::lebc_sanity_checks(shear_direction, shear_plane_normal);
+        auto const &system = System::get_system();
+        system.lb.lebc_sanity_checks(shear_direction, shear_plane_normal);
         // update box geometry and cell structure
-        ::box_geo.set_lees_edwards_bc(
+        system.box_geo->set_lees_edwards_bc(
             LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});
         ::LeesEdwards::set_protocol(m_protocol->protocol());
       });

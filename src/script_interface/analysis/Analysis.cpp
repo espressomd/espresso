@@ -19,16 +19,17 @@
 
 #include "Analysis.hpp"
 
+#include "core/BoxGeometry.hpp"
 #include "core/analysis/statistics.hpp"
 #include "core/analysis/statistics_chain.hpp"
 #include "core/cells.hpp"
 #include "core/dpd.hpp"
 #include "core/energy.hpp"
 #include "core/event.hpp"
-#include "core/grid.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/partCfg_global.hpp"
 #include "core/particle_node.hpp"
+#include "core/system/System.hpp"
 
 #include "script_interface/communication.hpp"
 
@@ -109,6 +110,12 @@ Variant Analysis::do_call_method(std::string const &name,
     });
     return make_unordered_map_of_variants(dict);
   }
+#ifdef DPD
+  if (name == "dpd_stress") {
+    auto const result = dpd_stress(context()->get_comm());
+    return result.as_vector();
+  }
+#endif // DPD
   if (not context()->is_head_node()) {
     return {};
   }
@@ -139,12 +146,6 @@ Variant Analysis::do_call_method(std::string const &name,
     auto const result = nbhood(partCfg(), pos, radius);
     return result;
   }
-#ifdef DPD
-  if (name == "dpd_stress") {
-    auto const result = dpd_stress();
-    return result.as_vector();
-  }
-#endif // DPD
   if (name == "calc_re") {
     auto const chain_start = get_value<int>(parameters, "chain_start");
     auto const chain_length = get_value<int>(parameters, "chain_length");
@@ -217,9 +218,9 @@ Variant Analysis::do_call_method(std::string const &name,
     return make_vector_of_variants(result);
   }
   if (name == "distribution") {
+    auto const &box_l = System::get_system().box_geo->length();
     auto const r_max_limit =
-        0.5 * std::min(std::min(::box_geo.length()[0], ::box_geo.length()[1]),
-                       ::box_geo.length()[2]);
+        0.5 * std::min(std::min(box_l[0], box_l[1]), box_l[2]);
     auto const r_min = get_value_or<double>(parameters, "r_min", 0.);
     auto const r_max = get_value_or<double>(parameters, "r_max", r_max_limit);
     auto const r_bins = get_value_or<int>(parameters, "r_bins", 100);

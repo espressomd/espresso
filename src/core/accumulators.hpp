@@ -29,8 +29,9 @@ namespace Accumulators {
  * they need to be updated and if so does.
  *
  */
-void auto_update(int steps);
+void auto_update(boost::mpi::communicator const &comm, int steps);
 int auto_update_next_update();
+bool auto_update_contains(AccumulatorBase const *) noexcept;
 void auto_update_add(AccumulatorBase *);
 void auto_update_remove(AccumulatorBase *);
 

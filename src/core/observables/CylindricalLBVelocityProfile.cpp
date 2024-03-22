@@ -19,34 +19,50 @@
 
 #include "CylindricalLBVelocityProfile.hpp"
 
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
-#include <algorithm>
-#include <functional>
 #include <vector>
 
 namespace Observables {
 
-std::vector<double> CylindricalLBVelocityProfile::operator()() const {
-  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
-  for (auto const &p : sampling_positions) {
-    auto const velocity =
-        LB::get_interpolated_velocity(p) * LB::get_lattice_speed();
-    auto const pos_shifted = p - transform_params->center();
-    auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
-        pos_shifted, transform_params->axis(), transform_params->orientation());
-    histogram.update(pos_cyl,
-                     Utils::transform_vector_cartesian_to_cylinder(
-                         velocity, transform_params->axis(), pos_shifted));
+std::vector<double> CylindricalLBVelocityProfile::operator()(
+    boost::mpi::communicator const &comm) const {
+  using vel_type = Utils::Vector3d;
+
+  decltype(sampling_positions) local_positions{};
+  std::vector<vel_type> local_velocities{};
+
+  auto const &lb = System::get_system().lb;
+  auto const vel_conv = lb.get_lattice_speed();
+
+  for (auto const &pos : sampling_positions) {
+    if (auto const vel = lb.get_interpolated_velocity(pos)) {
+      auto const pos_shifted = pos - transform_params->center();
+      auto const pos_cyl = Utils::transform_coordinate_cartesian_to_cylinder(
+          pos_shifted, transform_params->axis(),
+          transform_params->orientation());
+      auto const vel_cyl = Utils::transform_vector_cartesian_to_cylinder(
+          (*vel) * vel_conv, transform_params->axis(), pos_shifted);
+
+      local_positions.emplace_back(pos_cyl);
+      local_velocities.emplace_back(vel_cyl);
+    }
   }
-  auto hist_data = histogram.get_histogram();
-  auto const tot_count = histogram.get_tot_count();
-  std::transform(hist_data.begin(), hist_data.end(), tot_count.begin(),
-                 hist_data.begin(), std::divides<double>());
-  return hist_data;
+
+  auto const [global_positions, global_velocities] =
+      detail::gather(comm, local_positions, local_velocities);
+
+  if (comm.rank() != 0) {
+    return {};
+  }
+
+  Utils::CylindricalHistogram<double, 3> histogram(n_bins(), limits());
+  detail::accumulate(histogram, global_positions, global_velocities);
+  return detail::normalize_by_bin_size(histogram);
 }
 
 } // namespace Observables

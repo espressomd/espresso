@@ -103,15 +103,37 @@ struct P3MGpuData {
   REAL_TYPE pos_shift;
 };
 
-P3MGpuData p3m_gpu_data;
-
-struct p3m_gpu_fft_plans_t {
-  /** FFT plans */
+struct P3MGpuFftPlan {
+  /** Forward FFT plan */
   cufftHandle forw_plan;
+  /** Backward FFT plan */
   cufftHandle back_plan;
-} p3m_gpu_fft_plans;
+};
 
-static bool p3m_gpu_data_initialized = false;
+struct P3MGpuParams {
+  P3MGpuData p3m_gpu_data;
+  P3MGpuFftPlan p3m_fft;
+  bool is_initialized;
+
+  ~P3MGpuParams() { free_device_memory(); }
+
+  void free_device_memory() {
+    auto const free_device_pointer = [](auto *&ptr) {
+      if (ptr != nullptr) {
+        cuda_safe_mem(cudaFree(reinterpret_cast<void *>(ptr)));
+        ptr = nullptr;
+      }
+    };
+    free_device_pointer(p3m_gpu_data.charge_mesh);
+    free_device_pointer(p3m_gpu_data.force_mesh_x);
+    free_device_pointer(p3m_gpu_data.force_mesh_y);
+    free_device_pointer(p3m_gpu_data.force_mesh_z);
+    free_device_pointer(p3m_gpu_data.G_hat);
+    cufftDestroy(p3m_fft.forw_plan);
+    cufftDestroy(p3m_fft.back_plan);
+    is_initialized = false;
+  }
+};
 
 template <int cao>
 __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
@@ -333,7 +355,7 @@ __global__ void assign_charge_kernel(P3MGpuData const params,
   }
 }
 
-void assign_charges(P3MGpuData const params,
+void assign_charges(P3MGpuData const &params,
                     float const *const __restrict__ part_pos,
                     float const *const __restrict__ part_q) {
   auto const cao = params.cao;
@@ -469,7 +491,7 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
   atomicAdd(&(part_f[3 * id + 2]), c * force_mesh_z[index]);
 }
 
-void assign_forces(P3MGpuData const params,
+void assign_forces(P3MGpuData const &params,
                    float const *const __restrict__ part_pos,
                    float const *const __restrict__ part_q,
                    float *const __restrict__ part_f,
@@ -482,10 +504,10 @@ void assign_forces(P3MGpuData const params,
     parts_per_block++;
   }
 
-  if ((p3m_gpu_data.n_part % parts_per_block) == 0)
-    n_blocks = std::max<int>(1, p3m_gpu_data.n_part / parts_per_block);
+  if ((params.n_part % parts_per_block) == 0)
+    n_blocks = std::max<int>(1, params.n_part / parts_per_block);
   else
-    n_blocks = p3m_gpu_data.n_part / parts_per_block + 1;
+    n_blocks = params.n_part / parts_per_block + 1;
 
   dim3 block(static_cast<unsigned>(parts_per_block * cao),
              static_cast<unsigned>(cao), static_cast<unsigned>(cao));
@@ -548,28 +570,34 @@ void assign_forces(P3MGpuData const params,
  * We use real to complex FFTs, so the size of the reciprocal mesh
  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
  */
-void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
+void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
+                  const int mesh[3], double alpha) {
   if (mesh[0] == -1 && mesh[1] == -1 && mesh[2] == -1)
     throw std::runtime_error("P3M: invalid mesh size");
 
+  if (not data) {
+    data = std::make_shared<P3MGpuParams>();
+  }
+
+  auto &p3m_gpu_data = data->p3m_gpu_data;
   auto &gpu_particle_data = System::get_system().gpu;
   bool do_reinit = false, mesh_changed = false;
   p3m_gpu_data.n_part = static_cast<int>(gpu_particle_data.n_particles());
 
-  if (!p3m_gpu_data_initialized || p3m_gpu_data.alpha != alpha) {
+  if (not data->is_initialized or p3m_gpu_data.alpha != alpha) {
     p3m_gpu_data.alpha = static_cast<REAL_TYPE>(alpha);
     do_reinit = true;
   }
 
-  if (!p3m_gpu_data_initialized || p3m_gpu_data.cao != cao) {
+  if (not data->is_initialized or p3m_gpu_data.cao != cao) {
     p3m_gpu_data.cao = cao;
     // NOLINTNEXTLINE(bugprone-integer-division)
     p3m_gpu_data.pos_shift = static_cast<REAL_TYPE>((p3m_gpu_data.cao - 1) / 2);
     do_reinit = true;
   }
 
-  if (!p3m_gpu_data_initialized || (p3m_gpu_data.mesh[0] != mesh[0]) ||
-      (p3m_gpu_data.mesh[1] != mesh[1]) || (p3m_gpu_data.mesh[2] != mesh[2])) {
+  if (not data->is_initialized or (p3m_gpu_data.mesh[0] != mesh[0]) or
+      (p3m_gpu_data.mesh[1] != mesh[1]) or (p3m_gpu_data.mesh[2] != mesh[2])) {
     std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
     mesh_changed = true;
     do_reinit = true;
@@ -577,8 +605,8 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
 
   auto const box_l = System::get_system().box();
 
-  if (!p3m_gpu_data_initialized || (p3m_gpu_data.box[0] != box_l[0]) ||
-      (p3m_gpu_data.box[1] != box_l[1]) || (p3m_gpu_data.box[2] != box_l[2])) {
+  if (not data->is_initialized or (p3m_gpu_data.box[0] != box_l[0]) or
+      (p3m_gpu_data.box[1] != box_l[1]) or (p3m_gpu_data.box[2] != box_l[2])) {
     std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
     do_reinit = true;
   }
@@ -591,25 +619,12 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
         static_cast<REAL_TYPE>(p3m_gpu_data.mesh[i]) / p3m_gpu_data.box[i];
   }
 
-  if (p3m_gpu_data_initialized && mesh_changed) {
-    cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
-    p3m_gpu_data.charge_mesh = nullptr;
-    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
-    p3m_gpu_data.force_mesh_x = nullptr;
-    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_y));
-    p3m_gpu_data.force_mesh_y = nullptr;
-    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_z));
-    p3m_gpu_data.force_mesh_z = nullptr;
-    cuda_safe_mem(cudaFree(p3m_gpu_data.G_hat));
-    p3m_gpu_data.G_hat = nullptr;
-
-    cufftDestroy(p3m_gpu_fft_plans.forw_plan);
-    cufftDestroy(p3m_gpu_fft_plans.back_plan);
-
-    p3m_gpu_data_initialized = false;
+  if (data->is_initialized and mesh_changed) {
+    data->free_device_memory();
+    data->is_initialized = false;
   }
 
-  if (!p3m_gpu_data_initialized && p3m_gpu_data.mesh_size > 0) {
+  if (not data->is_initialized and p3m_gpu_data.mesh_size > 0) {
     /* Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
     auto const cmesh_size =
         static_cast<std::size_t>(p3m_gpu_data.mesh[0]) *
@@ -623,15 +638,15 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
                              cmesh_size * sizeof(REAL_TYPE)));
 
-    if (cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
-                    FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
-        cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
+    if (cufftPlan3d(&(data->p3m_fft.forw_plan), mesh[0], mesh[1], mesh[2],
+                    FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS or
+        cufftPlan3d(&(data->p3m_fft.back_plan), mesh[0], mesh[1], mesh[2],
                     FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
       throw std::runtime_error("Unable to create fft plan");
     }
   }
 
-  if ((do_reinit or !p3m_gpu_data_initialized) && p3m_gpu_data.mesh_size > 0) {
+  if ((do_reinit or not data->is_initialized) and p3m_gpu_data.mesh_size > 0) {
     dim3 grid(1, 1, 1);
     dim3 block(1, 1, 1);
     block.x = static_cast<unsigned>(512 / mesh[0] + 1);
@@ -672,14 +687,15 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
   }
   if (p3m_gpu_data.mesh_size > 0)
-    p3m_gpu_data_initialized = true;
+    data->is_initialized = true;
 }
 
 /**
  *  \brief The long-range part of the P3M algorithm.
  */
-void p3m_gpu_add_farfield_force(double prefactor) {
+void p3m_gpu_add_farfield_force(P3MGpuParams &data, double prefactor) {
   auto &gpu = System::get_system().gpu;
+  auto &p3m_gpu_data = data.p3m_gpu_data;
   p3m_gpu_data.n_part = static_cast<int>(gpu.n_particles());
 
   if (p3m_gpu_data.n_part == 0)
@@ -705,7 +721,7 @@ void p3m_gpu_add_farfield_force(double prefactor) {
   assign_charges(p3m_gpu_data, positions_device, charges_device);
 
   /* Do forward FFT of the charge mesh */
-  if (FFT_FORW_FFT(p3m_gpu_fft_plans.forw_plan,
+  if (FFT_FORW_FFT(data.p3m_fft.forw_plan,
                    (REAL_TYPE *)p3m_gpu_data.charge_mesh,
                    p3m_gpu_data.charge_mesh) != CUFFT_SUCCESS) {
     fprintf(stderr, "CUFFT error: Forward FFT failed\n");
@@ -719,11 +735,11 @@ void p3m_gpu_add_farfield_force(double prefactor) {
   KERNELCALL(apply_diff_op, gridConv, threadsConv, p3m_gpu_data);
 
   /* Transform the components of the electric field back */
-  FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_x,
+  FFT_BACK_FFT(data.p3m_fft.back_plan, p3m_gpu_data.force_mesh_x,
                (REAL_TYPE *)p3m_gpu_data.force_mesh_x);
-  FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_y,
+  FFT_BACK_FFT(data.p3m_fft.back_plan, p3m_gpu_data.force_mesh_y,
                (REAL_TYPE *)p3m_gpu_data.force_mesh_y);
-  FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_z,
+  FFT_BACK_FFT(data.p3m_fft.back_plan, p3m_gpu_data.force_mesh_z,
                (REAL_TYPE *)p3m_gpu_data.force_mesh_z);
 
   /* Assign the forces from the mesh back to the particles */

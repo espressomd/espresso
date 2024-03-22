@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_ROTATE_SYSTEM_HPP
-#define ESPRESSO_SRC_CORE_ROTATE_SYSTEM_HPP
+
+#pragma once
+
+#include "cell_system/CellStructure.hpp"
 
 /** Rotate all particle coordinates around an axis given by phi,theta through
  *  the center of mass by an angle alpha.
  */
-void rotate_system(double phi, double theta, double alpha);
-
-#endif
+void rotate_system(CellStructure &cell_structure, double phi, double theta,
+                   double alpha);

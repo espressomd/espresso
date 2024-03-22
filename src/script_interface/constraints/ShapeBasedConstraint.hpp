@@ -23,9 +23,10 @@
 #define SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
 #include "Constraint.hpp"
-#include "core/cells.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ShapeBasedConstraint.hpp"
+#include "core/system/System.hpp"
 
 #include "script_interface/shapes/Shape.hpp"
 
@@ -64,6 +65,8 @@ public:
       return shape_based_constraint()->total_force();
     }
     if (name == "min_dist") {
+      auto const &system = ::System::get_system();
+      auto &cell_structure = *system.cell_structure;
       return shape_based_constraint()->min_dist(
           cell_structure.local_particles());
     }

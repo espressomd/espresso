@@ -45,7 +45,7 @@ template <class ValueOp, class WeightOp> struct WeightedSum {
     using particle_type = typename ParticleRange::value_type;
     using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
     using weight_op_type = decltype(WeightOp{}(std::declval<particle_type>()));
-    auto func = [](auto sum, auto const &p) {
+    auto func = [](auto const &sum, auto const &p) {
       auto const w = WeightOp{}(p);
       return std::make_pair(sum.first + ValueOp{}(p)*w, sum.second + w);
     };
@@ -59,14 +59,25 @@ template <class ValueOp, class WeightOp> struct WeightedSum {
 template <class ValueOp, class WeightOp> struct WeightedSum {
   template <class ParticleRange>
   auto operator()(ParticleRange const &particles) const {
-    return detail::WeightedSum<ValueOp, WeightOp>()(particles).first;
+    auto const ws = detail::WeightedSum<ValueOp, WeightOp>()(particles);
+
+    return std::make_pair(ws.first, ws.second);
+  }
+
+  template <typename T> auto operator()(T const &acc, T const &val) const {
+    return std::make_pair(acc.first + val.first, acc.second + val.second);
   }
 };
 
 template <class ValueOp> struct Sum {
   template <class ParticleRange>
   auto operator()(ParticleRange const &particles) const {
-    return detail::WeightedSum<ValueOp, detail::One>()(particles).first;
+    return std::make_pair(
+        detail::WeightedSum<ValueOp, detail::One>()(particles).first, 0.0);
+  }
+
+  template <typename T> auto operator()(T const &acc, T const &val) const {
+    return WeightedSum<ValueOp, detail::One>{}.operator()(acc, val);
   }
 };
 
@@ -74,7 +85,14 @@ template <class ValueOp, class WeightOp> struct WeightedAverage {
   template <class ParticleRange>
   auto operator()(ParticleRange const &particles) const {
     auto const ws = detail::WeightedSum<ValueOp, WeightOp>()(particles);
-    return (ws.second) ? ws.first / ws.second : ws.first;
+    return std::make_pair((ws.second) ? ws.first / ws.second : ws.first,
+                          ws.second);
+  }
+
+  template <typename T> auto operator()(T const &acc, T const &val) const {
+    auto const value = acc.first * acc.second + val.first * val.second;
+    auto const weight = acc.second + val.second;
+    return std::make_pair((weight) ? value / weight : value, weight);
   }
 };
 
@@ -82,6 +100,10 @@ template <class ValueOp> struct Average {
   template <class ParticleRange>
   auto operator()(ParticleRange const &particles) const {
     return WeightedAverage<ValueOp, detail::One>()(particles);
+  }
+
+  template <typename T> auto operator()(T const &acc, T const &val) const {
+    return WeightedAverage<ValueOp, detail::One>{}.operator()(acc, val);
   }
 };
 

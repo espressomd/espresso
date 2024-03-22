@@ -70,6 +70,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
   using ReactionMethods::SingleReaction;
   auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   auto const comm = boost::mpi::communicator();
+  auto const &cell_structure = *System::get_system().cell_structure;
 
   // check acceptance rate
   auto r_algo = Testing::ReactionAlgorithm(comm, 42, 1., 0., {});
@@ -153,7 +154,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
       BOOST_REQUIRE(pid == 0 or pid == 1);
       auto const ref_old_pos = ref_positions[pid].first;
       auto const ref_old_vel = ref_positions[pid].second;
-      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+      if (auto const p = cell_structure.get_local_particle(pid)) {
         auto const &new_pos = p->pos();
         auto const &new_vel = p->v();
         BOOST_CHECK_EQUAL(old_pos, ref_old_pos);
@@ -196,7 +197,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
     // check none of the particles moved
     for (auto const pid : {0, 1}) {
       auto const ref_old_pos = ref_positions[pid];
-      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+      if (auto const p = cell_structure.get_local_particle(pid)) {
         auto const &new_pos = p->pos();
         BOOST_CHECK_LE((new_pos - ref_old_pos).norm(), tol);
       }
@@ -207,7 +208,7 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
     std::vector<double> distances(2);
     // check that only one particle moved
     for (auto const pid : {0, 1}) {
-      if (auto const p = ::cell_structure.get_local_particle(pid)) {
+      if (auto const p = cell_structure.get_local_particle(pid)) {
         distances[pid] = (ref_positions[pid] - p->pos()).norm();
       }
     }

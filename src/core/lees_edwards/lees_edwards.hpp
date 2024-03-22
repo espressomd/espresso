@@ -65,7 +65,7 @@ public:
     p.v()[m_le.shear_direction] += dir * m_le.shear_velocity;
     p.pos()[m_le.shear_direction] += pos_prefactor * dir * m_le.pos_offset;
     p.lees_edwards_offset() -= pos_prefactor * dir * m_le.pos_offset;
-    fold_position(p.pos(), p.image_box(), m_box);
+    m_box.fold_position(p.pos(), p.image_box());
     //    UpdateOffset::operator()(p,pos_prefactor);
   }
 };

@@ -38,8 +38,8 @@ class EKDiffusion(ut.TestCase):
     system.time_step = TAU
     system.cell_system.skin = 0.4
 
-    def tearDown(self) -> None:
-        self.system.ekcontainer.clear()
+    def tearDown(self):
+        self.system.ekcontainer = None
 
     def analytical_density(self, pos: np.ndarray, time: int, D: float):
         return (4 * np.pi * D * time)**(-3 / 2) * \
@@ -68,8 +68,8 @@ class EKDiffusion(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.tau = self.TAU
-        self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
 
         center = np.asarray(lattice.shape // 2, dtype=int)

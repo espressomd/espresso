@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE tests
+#define BOOST_TEST_MODULE LocalBox
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -29,23 +29,22 @@
 
 #include <boost/range/algorithm/equal.hpp>
 
-#include <algorithm>
 #include <limits>
 
 /* Check that the box corners and side length agree. */
-template <class T> void check_length(LocalBox<T> box) {
+void check_length(LocalBox const &box) {
   auto const expected = box.my_right() - box.my_left();
   auto const result = box.length();
 
   BOOST_CHECK_SMALL((result - expected).norm2(),
-                    std::numeric_limits<T>::epsilon());
+                    std::numeric_limits<double>::epsilon());
 }
 
 BOOST_AUTO_TEST_CASE(constructors) {
   /* default */
   {
-    auto const box = LocalBox<float>();
-    BOOST_CHECK_EQUAL(box.my_left().norm2(), 0.f);
+    LocalBox const box{};
+    BOOST_CHECK_EQUAL(box.my_left().norm2(), 0.);
     check_length(box);
   }
 
@@ -56,8 +55,7 @@ BOOST_AUTO_TEST_CASE(constructors) {
     Utils::Array<int, 6> const boundaries = {{{-1, 0, 1, 1, 0, -1}}};
     CellStructureType const type = CellStructureType::CELL_STRUCTURE_REGULAR;
 
-    auto const box =
-        LocalBox<double>(lower_corner, local_box_length, boundaries, type);
+    auto const box = LocalBox(lower_corner, local_box_length, boundaries, type);
 
     BOOST_CHECK(box.my_left() == lower_corner);
     BOOST_CHECK(box.length() == local_box_length);

@@ -43,7 +43,7 @@
 HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
                                          double cutoff_regular,
                                          BoxGeometry const &box_geo,
-                                         LocalBox<double> const &local_box,
+                                         LocalBox const &local_box,
                                          std::set<int> n_square_types)
     : m_comm(std::move(comm)), m_box(box_geo), m_cutoff_regular(cutoff_regular),
       m_regular_decomposition(RegularDecomposition(

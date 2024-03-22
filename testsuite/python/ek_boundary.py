@@ -30,6 +30,7 @@ import espressomd.electrokinetics
 class EKBoundariesBase:
     system = espressomd.System(box_l=[10.0, 5.0, 5.0])
     system.cell_system.skin = 0.1
+    system.time_step = 1.0
     ek_species_params = {"kT": 1.5,
                          "density": 0.85,
                          "valency": 0.0,
@@ -43,9 +44,12 @@ class EKBoundariesBase:
 
     def setUp(self):
         self.lattice = self.ek_lattice_class(agrid=0.5, n_ghost_layers=1)
+        ek_solver = espressomd.electrokinetics.EKNone(lattice=self.lattice)
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.ek_species_params["tau"], solver=ek_solver)
 
     def tearDown(self):
-        self.system.ekcontainer.clear()
+        self.system.ekcontainer = None
 
     def make_default_ek_species(self):
         return self.ek_species_class(

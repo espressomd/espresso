@@ -34,7 +34,4 @@
 /** Parallel pressure calculation from a virial expansion. */
 std::shared_ptr<Observable_stat> calculate_pressure();
 
-/** Helper function for @ref Observables::PressureTensor. */
-Utils::Vector9d mpi_observable_compute_pressure_tensor();
-
 #endif

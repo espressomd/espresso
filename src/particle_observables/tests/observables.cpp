@@ -52,17 +52,17 @@ BOOST_AUTO_TEST_CASE(obs) {
   std::vector<Testing::Particle> parts{p, Testing::Particle{}};
   parts[1].mass = 5.;
   {
-    auto const res = AverageMomentum{}(parts);
+    auto const res = AverageMomentum{}(parts).first;
     BOOST_CHECK(res == 0.5 * (Momentum{}(parts[0]) + Momentum{}(parts[1])));
   }
   {
-    auto const res = CenterOfMassPosition{}(parts);
+    auto const res = CenterOfMassPosition{}(parts).first;
     BOOST_CHECK(res == (Mass{}(parts[0]) * Position{}(parts[0]) +
                         Mass{}(parts[1]) * Position{}(parts[1])) /
                            (Mass{}(parts[0]) + Mass{}(parts[1])));
   }
   {
-    auto const res = CenterOfMassVelocity{}(parts);
+    auto const res = CenterOfMassVelocity{}(parts).first;
     BOOST_CHECK(res == (Mass{}(parts[0]) * Velocity{}(parts[0]) +
                         Mass{}(parts[1]) * Velocity{}(parts[1])) /
                            (Mass{}(parts[0]) + Mass{}(parts[1])));

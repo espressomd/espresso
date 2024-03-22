@@ -161,18 +161,22 @@ Here is a minimal working example::
     system.time_step = 0.01
     system.cell_system.skin = 1.0
 
-    ek_lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
-    ek_solver = espressomd.electrokinetics.EKNone(lattice=ek_lattice)
-    system.ekcontainer.solver = ek_solver
-    system.ekcontainer.tau = system.time_step
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    system.ekcontainer = espressomd.electrokinetics.EKContainer(
+        solver=ek_solver, tau=system.time_step)
 
 where ``system.ekcontainer`` is the EK system, ``ek_solver`` is the Poisson
 solver (here ``EKNone`` doesn't actually solve the electrostatic field, but
-instead imposes a zero field), and ``ek_lattice`` contains the grid parameters.
+instead imposes a zero field), and ``lattice`` contains the grid parameters.
 In this setup, the EK system doesn't contain any species. The following
 sections will show how to add species that can diffuse, advect, react and/or
 electrostatically interact. An EK system can be set up at the same time as a
 LB system.
+
+To detach an EK system, use the following syntax::
+
+    system.ekcontainer = None
 
 .. _Diffusive species:
 
@@ -181,9 +185,10 @@ Diffusive species
 ::
 
     ek_species = espressomd.electrokinetics.EKSpecies(
-        lattice=ek_lattice,
+        lattice=lattice,
         single_precision=False,
         kT=1.0,
+        tau=system.time_step,
         density=0.85,
         valency=0.0,
         diffusion=0.1,
@@ -234,8 +239,8 @@ Checkpointing
 
 ::
 
-    ek.save_checkpoint(path, binary)
-    ek.load_checkpoint(path, binary)
+    ek_species.save_checkpoint(path, binary)
+    ek_species.ekcontainer.load_checkpoint(path, binary)
 
 The first command saves all of the EK nodes' properties to an ASCII
 (``binary=False``) or binary (``binary=True``) format respectively.
@@ -260,7 +265,7 @@ one or multiple fluid field data into a single file using
     # create a VTK callback that automatically writes every 10 EK steps
     ek_vtk = espressomd.electrokinetics.VTKOutput(
         identifier="ek_vtk_automatic", observables=vtk_obs, delta_N=10)
-    ek.add_vtk_writer(vtk=ek_vtk)
+    ek_species.add_vtk_writer(vtk=ek_vtk)
     system.integrator.run(100)
     # can be deactivated
     ek_vtk.disable()
@@ -269,7 +274,7 @@ one or multiple fluid field data into a single file using
     # create a VTK callback that writes only when explicitly called
     ek_vtk_on_demand = espressomd.electrokinetics.VTKOutput(
         identifier="ek_vtk_now", observables=vtk_obs)
-    ek.add_vtk_writer(vtk=ek_vtk_on_demand)
+    ek_species.add_vtk_writer(vtk=ek_vtk_on_demand)
     ek_vtk_on_demand.write()
 
 Currently only supports the species density.
@@ -306,12 +311,14 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
     system.cell_system.skin = 0.4
     system.time_step = 0.1
 
-    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=1.)
-    species = espressomd.electrokinetics.EKSpecies(
-            lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
-            advection=False, friction_coupling=False, tau=system.time_step)
-    system.ekcontainer.tau = species.tau
-    system.ekcontainer.add(species)
+    lattice = espressomd.electrokinetics.LatticeWalberla(agrid=1., n_ghost_layers=1)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
+    ek_species = espressomd.electrokinetics.EKSpecies(
+        lattice=lattice, density=1., kT=1., diffusion=0.1, valency=0.,
+        advection=False, friction_coupling=False, tau=system.time_step)
+    system.ekcontainer = espressomd.electrokinetics.EKContainer(
+        solver=ek_solver, tau=ek_species.tau)
+    system.ekcontainer.add(ek_species)
     system.integrator.run(10)
 
     vtk_reader = espressomd.io.vtk.VTKReader()
@@ -327,7 +334,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
             identifier=label_vtk, delta_N=0,
             observables=["density"],
             base_folder=str(path_vtk_root))
-        species.add_vtk_writer(vtk=ek_vtk)
+        ek_species.add_vtk_writer(vtk=ek_vtk)
         ek_vtk.write()
 
         # read VTK file
@@ -335,7 +342,7 @@ is available through :class:`~espressomd.io.vtk.VTKReader`::
         vtk_density = vtk_grids[label_density]
 
         # check VTK values match node values
-        ek_density = np.copy(lbf[:, :, :].density)
+        ek_density = np.copy(ek_species[:, :, :].density)
         np.testing.assert_allclose(vtk_density, ek_density, rtol=1e-10, atol=0.)
 
 .. _Setting up EK boundary conditions:
@@ -361,17 +368,19 @@ One can set (or update) the boundary conditions of individual nodes::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
     ek_species = espressomd.electrokinetics.EKSpecies(
-        kT=1.5, lattice=self.lattice, density=0.85, valency=0., diffusion=0.1,
+        kT=1.5, lattice=lattice, density=0.85, valency=0., diffusion=0.1,
         advection=False, friction_coupling=False, tau=system.time_step)
-    system.ekcontainer.tau = species.tau
+    system.ekcontainer = espressomd.electrokinetics.EKContainer(
+        solver=ek_solver, tau=ek_species.tau)
     system.ekcontainer.add(ek_species)
     # set node fixed density boundary conditions
-    lbf[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(1.)
+    ek_species[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(1.)
     # update node fixed density boundary conditions
-    lbf[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(2.)
+    ek_species[0, 0, 0].boundary = espressomd.electrokinetics.DensityBoundary(2.)
     # remove node boundary conditions
-    lbf[0, 0, 0].boundary = None
+    ek_species[0, 0, 0].boundary = None
 
 .. _Shape-based EK boundary conditions:
 
@@ -387,10 +396,12 @@ Adding a shape-based boundary is straightforward::
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     lattice = espressomd.electrokinetics.LatticeWalberla(agrid=0.5, n_ghost_layers=1)
+    ek_solver = espressomd.electrokinetics.EKNone(lattice=lattice)
     ek_species = espressomd.electrokinetics.EKSpecies(
-        kT=1.5, lattice=self.lattice, density=0.85, valency=0.0, diffusion=0.1,
+        kT=1.5, lattice=lattice, density=0.85, valency=0.0, diffusion=0.1,
         advection=False, friction_coupling=False, tau=system.time_step)
-    system.ekcontainer.tau = species.tau
+    system.ekcontainer = espressomd.electrokinetics.EKContainer(
+        solver=ek_solver, tau=ek_species.tau)
     system.ekcontainer.add(ek_species)
     # set fixed density boundary conditions
     wall = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)

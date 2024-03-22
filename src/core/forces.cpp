@@ -24,6 +24,7 @@
  *  The corresponding header file is forces.hpp.
  */
 
+#include "BoxGeometry.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -35,11 +36,10 @@
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
 #include "integrate.hpp"
 #include "interactions.hpp"
+#include "lb/particle_coupling.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -53,10 +53,13 @@
 
 #include <boost/variant.hpp>
 
-#include <profiler/profiler.hpp>
+#ifdef CALIPER
+#include <caliper/cali.h>
+#endif
 
 #include <cassert>
 #include <memory>
+#include <variant>
 
 std::shared_ptr<ComFixed> comfixed = std::make_shared<ComFixed>();
 
@@ -112,7 +115,10 @@ inline ParticleForce init_real_particle_force(Particle const &p,
 static void init_forces(const ParticleRange &particles,
                         const ParticleRange &ghost_particles, double time_step,
                         double kT) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
@@ -143,12 +149,22 @@ void init_forces_ghosts(const ParticleRange &particles) {
 }
 
 void force_calc(CellStructure &cell_structure, double time_step, double kT) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-
-#ifdef CUDA
-  auto &espresso_system = System::get_system();
-  espresso_system.gpu.update();
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
 #endif
+
+  auto &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const n_nodes = ::communicator.size;
+#ifdef CUDA
+#ifdef CALIPER
+  CALI_MARK_BEGIN("copy_particles_to_GPU");
+#endif
+  system.gpu.update();
+#ifdef CALIPER
+  CALI_MARK_END("copy_particles_to_GPU");
+#endif
+#endif // CUDA
 
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
@@ -157,9 +173,9 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
   auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  if (electrostatics_extension) {
-    if (auto icc = boost::get<std::shared_ptr<ICCStar>>(
-            electrostatics_extension.get_ptr())) {
+  if (system.coulomb.impl->extension) {
+    if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
+            get_ptr(system.coulomb.impl->extension))) {
       (**icc).iteration(cell_structure, particles, ghost_particles);
     }
   }
@@ -168,31 +184,32 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 
   calc_long_range_forces(particles);
 
-  auto const elc_kernel = Coulomb::pair_force_elc_kernel();
-  auto const coulomb_kernel = Coulomb::pair_force_kernel();
-  auto const dipoles_kernel = Dipoles::pair_force_kernel();
+  auto const elc_kernel = system.coulomb.pair_force_elc_kernel();
+  auto const coulomb_kernel = system.coulomb.pair_force_kernel();
+  auto const dipoles_kernel = system.dipoles.pair_force_kernel();
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff();
+  auto const coulomb_cutoff = system.coulomb.cutoff();
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipoles::cutoff();
+  auto const dipole_cutoff = system.dipoles.cutoff();
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
   short_range_loop(
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr()](
-          Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-        return add_bonded_force(p1, bond_id, partners, coulomb_kernel_ptr);
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       &box_geo](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        return add_bonded_force(p1, bond_id, partners, box_geo,
+                                coulomb_kernel_ptr);
       },
-      [coulomb_kernel_ptr = coulomb_kernel.get_ptr(),
-       dipoles_kernel_ptr = dipoles_kernel.get_ptr(),
-       elc_kernel_ptr = elc_kernel.get_ptr()](Particle &p1, Particle &p2,
-                                              Distance const &d) {
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+       dipoles_kernel_ptr = get_ptr(dipoles_kernel),
+       elc_kernel_ptr = get_ptr(elc_kernel)](Particle &p1, Particle &p2,
+                                             Distance const &d) {
         add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
                                   elc_kernel_ptr);
@@ -201,37 +218,44 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
           detect_collision(p1, p2, d.dist2);
 #endif
       },
-      maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
+      cell_structure, maximal_cutoff(n_nodes), maximal_cutoff_bonded(),
       VerletCriterion<>{skin, interaction_range(), coulomb_cutoff,
                         dipole_cutoff, collision_detection_cutoff()});
 
-  Constraints::constraints.add_forces(particles, get_sim_time());
+  Constraints::constraints.add_forces(box_geo, particles, get_sim_time());
 
   if (max_oif_objects) {
     // There are two global quantities that need to be evaluated:
     // object's surface and object's volume.
     for (int i = 0; i < max_oif_objects; i++) {
       auto const area_volume = boost::mpi::all_reduce(
-          comm_cart, calc_oif_global(i, cell_structure), std::plus<>());
+          comm_cart, calc_oif_global(i, box_geo, cell_structure),
+          std::plus<>());
       auto const oif_part_area = std::abs(area_volume[0]);
       auto const oif_part_vol = std::abs(area_volume[1]);
       if (oif_part_area < 1e-100 and oif_part_vol < 1e-100) {
         break;
       }
-      add_oif_global_forces(area_volume, i, cell_structure);
+      add_oif_global_forces(area_volume, i, box_geo, cell_structure);
     }
   }
 
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation(cell_structure);
 
-  if (lattice_switch != ActiveLB::NONE) {
+  if (system.lb.is_solver_set()) {
     LB::couple_particles(thermo_virtual, particles, ghost_particles, time_step);
   }
 
 #ifdef CUDA
-  espresso_system.gpu.copy_forces_to_host(particles, this_node);
+#ifdef CALIPER
+  CALI_MARK_BEGIN("copy_forces_from_GPU");
 #endif
+  system.gpu.copy_forces_to_host(particles, this_node);
+#ifdef CALIPER
+  CALI_MARK_END("copy_forces_from_GPU");
+#endif
+#endif // CUDA
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
@@ -252,16 +276,19 @@ void force_calc(CellStructure &cell_structure, double time_step, double kT) {
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {
-  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_force(particles);
+  Coulomb::get_coulomb().calc_long_range_force(particles);
 
 #endif // ELECTROSTATICS
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipoles::calc_long_range_force(particles);
+  Dipoles::get_dipoles().calc_long_range_force(particles);
 #endif // DIPOLES
 }
 

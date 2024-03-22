@@ -31,28 +31,20 @@
  * e.g. to broadcast global variables or run an algorithm in parallel.
  *
  * Callbacks are registered on the head node as function pointers via
- * the @ref callback_macros "callback macros". The visitor pattern
- * allows using arbitrary function signatures. For non-void returning
- * callbacks, several return value policies are available: ignore return
- * value, return only one value (this is achieved using a boost optional
- * that is empty on all but one node), return the value of the head node,
- * or return a reduced value (by specifying the reduction operation).
+ * the @ref REGISTER_CALLBACK. The visitor pattern allows using arbitrary
+ * function signatures.
  */
 
 #include <utils/NumeratedContainer.hpp>
 #include <utils/tuple.hpp>
 #include <utils/type_traits.hpp>
 
-#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
+#include <boost/mpi/packed_iarchive.hpp>
 #include <boost/range/algorithm/remove_if.hpp>
 
 #include <cassert>
-#include <functional>
-#include <initializer_list>
 #include <memory>
 #include <tuple>
 #include <type_traits>
@@ -62,26 +54,6 @@
 namespace Communication {
 
 class MpiCallbacks;
-
-/**
- * This namespace contains tag types
- * to indicate what to do with the return
- * values of callbacks.
- */
-namespace Result {
-/** %Ignore result */
-struct Ignore {};
-constexpr auto ignore = Ignore{};
-/** Return value from one rank */
-struct OneRank {};
-constexpr auto one_rank = OneRank{};
-/** Return value from the head node */
-struct MainRank {};
-constexpr auto main_rank = MainRank{};
-/** Reduce return value over all ranks */
-struct Reduction {};
-constexpr auto reduction = Reduction{};
-} // namespace Result
 
 namespace detail {
 /**
@@ -153,8 +125,7 @@ struct callback_concept_t {
  * @brief Callback without a return value.
  *
  * This is an implementation of a callback for a specific callable
- * @p F and a set of arguments to call it with, where the there
- * is no return value.
+ * @p F and a set of arguments to call it with.
  */
 template <class F, class... Args>
 struct callback_void_t final : public callback_concept_t {
@@ -168,112 +139,6 @@ struct callback_void_t final : public callback_concept_t {
   void operator()(boost::mpi::communicator const &,
                   boost::mpi::packed_iarchive &ia) const override {
     detail::invoke<F, Args...>(m_f, ia);
-  }
-};
-
-/**
- * @brief Callback where the return value is ignored.
- *
- * This is an implementation of a callback for a specific callable
- * @p F and a set of arguments to call it with, where the valued from
- * all ranks are ignored.
- */
-template <class F, class... Args>
-struct callback_ignore_t final : public callback_concept_t {
-  F m_f;
-
-  callback_ignore_t(callback_ignore_t const &) = delete;
-  callback_ignore_t(callback_ignore_t &&) = delete;
-
-  template <class FRef>
-  explicit callback_ignore_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
-  void operator()(boost::mpi::communicator const &,
-                  boost::mpi::packed_iarchive &ia) const override {
-    detail::invoke<F, Args...>(m_f, ia);
-  }
-};
-
-/**
- * @brief Callback with a return value from one rank.
- *
- * This is an implementation of a callback for a specific callable
- * @p F and a set of arguments to call it with, where the value from
- * one rank is returned. Only one node is allowed to return a value.
- */
-template <class F, class... Args>
-struct callback_one_rank_t final : public callback_concept_t {
-  F m_f;
-
-  callback_one_rank_t(callback_one_rank_t const &) = delete;
-  callback_one_rank_t(callback_one_rank_t &&) = delete;
-
-  template <class FRef>
-  explicit callback_one_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
-  void operator()(boost::mpi::communicator const &comm,
-                  boost::mpi::packed_iarchive &ia) const override {
-    auto const result = detail::invoke<F, Args...>(m_f, ia);
-
-    assert(1 == boost::mpi::all_reduce(comm, static_cast<int>(!!result),
-                                       std::plus<>()) &&
-           "Incorrect number of return values");
-
-    /* If this rank returned a result, send it to the head node. */
-    if (!!result) {
-      comm.send(0, 42, *result);
-    }
-  }
-};
-
-/**
- * @brief Callback with a return value from the head node.
- *
- * This is an implementation of a callback for a specific callable
- * @p F and a set of arguments to call it with, where the value from
- * the head node is returned.
- */
-template <class F, class... Args>
-struct callback_main_rank_t final : public callback_concept_t {
-  F m_f;
-
-  callback_main_rank_t(callback_main_rank_t const &) = delete;
-  callback_main_rank_t(callback_main_rank_t &&) = delete;
-
-  template <class FRef>
-  explicit callback_main_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
-  void operator()(boost::mpi::communicator const &,
-                  boost::mpi::packed_iarchive &ia) const override {
-    std::ignore = detail::invoke<F, Args...>(m_f, ia);
-  }
-};
-
-/**
- * @brief Callback with return value reduction.
- *
- * This is an implementation of a callback for a specific callable
- * @p F and a set of arguments to call it with, where the return
- * value is reduced over the communicator.
- */
-template <class Op, class F, class... Args>
-struct callback_reduce_t final : public callback_concept_t {
-  Op m_op;
-  F m_f;
-
-  template <class OpRef, class FRef>
-  explicit callback_reduce_t(OpRef &&op, FRef &&f)
-      : m_op(std::forward<OpRef>(op)), m_f(std::forward<FRef>(f)) {}
-
-  /**
-   * @brief Execute the callback.
-   *
-   * Receive parameters for this callback, and then call it.
-   *
-   * @param comm The communicator to receive the parameters on.
-   */
-  void operator()(boost::mpi::communicator const &comm,
-                  boost::mpi::packed_iarchive &ia) const override {
-    /* Call the callback function, and reduce over the results with
-     * the stored reduction operation. */
-    boost::mpi::reduce(comm, detail::invoke<F, Args...>(m_f, ia), m_op, 0);
   }
 };
 
@@ -293,7 +158,7 @@ using functor_types =
     decltype(functor_types_impl(&std::remove_reference_t<F>::operator()));
 
 template <class CRef, class C, class R, class... Args>
-auto make_model_impl(Result::Ignore, CRef &&c, FunctorTypes<C, R, Args...>) {
+auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
   return std::make_unique<callback_void_t<C, Args...>>(std::forward<CRef>(c));
 }
 
@@ -304,42 +169,14 @@ auto make_model_impl(Result::Ignore, CRef &&c, FunctorTypes<C, R, Args...>) {
  * to exist and can not be overloaded.
  */
 template <typename F> auto make_model(F &&f) {
-  return make_model_impl(Result::Ignore{}, std::forward<F>(f),
-                         functor_types<F>{});
+  return make_model_impl(std::forward<F>(f), functor_types<F>{});
 }
 
 /**
  * @brief Make a @ref callback_model_t for a function pointer.
- *
- * This instantiates an implementation of a callback for a function
- * pointer. The main task here is to transfer the signature from
- * the pointer to the callback_model_t by template argument type
- * deduction.
  */
 template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
   return std::make_unique<callback_void_t<void (*)(Args...), Args...>>(f_ptr);
-}
-
-template <class Op, class R, class... Args>
-auto make_model(Result::Reduction, R (*f_ptr)(Args...), Op &&op) {
-  return std::make_unique<
-      callback_reduce_t<std::remove_reference_t<Op>, R (*)(Args...), Args...>>(
-      std::forward<Op>(op), f_ptr);
-}
-
-template <class R, class... Args>
-auto make_model(Result::Ignore, R (*f_ptr)(Args...)) {
-  return std::make_unique<callback_ignore_t<R (*)(Args...), Args...>>(f_ptr);
-}
-
-template <class R, class... Args>
-auto make_model(Result::OneRank, R (*f_ptr)(Args...)) {
-  return std::make_unique<callback_one_rank_t<R (*)(Args...), Args...>>(f_ptr);
-}
-
-template <class R, class... Args>
-auto make_model(Result::MainRank, R (*f_ptr)(Args...)) {
-  return std::make_unique<callback_main_rank_t<R (*)(Args...), Args...>>(f_ptr);
 }
 } // namespace detail
 
@@ -484,25 +321,6 @@ public:
                                     detail::make_model(fp));
   }
 
-  /**
-   * @brief Add a new callback with a return value.
-   *
-   * Add a new callback to the system. This is a collective
-   * function that must be run on all nodes.
-   * @p tag is one of the tag types from @ref Communication::Result,
-   * which indicates what to do with the return values.
-   *
-   * @param tag Tag type indicating return operation
-   * @param tag_args Argument for the return operation, if any.
-   * @param fp Pointer to the static callback function to add.
-   */
-  template <class Tag, class R, class... Args, class... TagArgs>
-  static void add_static(Tag tag, R (*fp)(Args...), TagArgs &&...tag_args) {
-    static_callbacks().emplace_back(
-        reinterpret_cast<void (*)()>(fp),
-        detail::make_model(tag, fp, std::forward<TagArgs>(tag_args)...));
-  }
-
 private:
   /**
    * @brief Remove callback.
@@ -566,8 +384,7 @@ public:
    */
   template <class... Args, class... ArgRef>
   auto call(void (*fp)(Args...), ArgRef &&...args) const ->
-      /* Enable only if fp can be called with the provided arguments,
-       * e.g. if fp(args...) is well-formed. */
+      /* enable only if fp can be called with the provided arguments */
       std::enable_if_t<std::is_void_v<decltype(fp(args...))>> {
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
@@ -585,102 +402,11 @@ public:
    * @param args Arguments for the callback.
    */
   template <class... Args, class... ArgRef>
-  void call_all(void (*fp)(Args...), ArgRef &&...args) const {
+  auto call_all(void (*fp)(Args...), ArgRef &&...args) const ->
+      /* enable only if fp can be called with the provided arguments */
+      std::enable_if_t<std::is_void_v<decltype(fp(args...))>> {
     call(fp, args...);
     fp(args...);
-  }
-
-  /**
-   * @brief Call a callback and reduce the result over all nodes.
-   *
-   * This calls a callback on all nodes, including the head node,
-   * and does a mpi reduction with the registered operation.
-   *
-   * This method can only be called on the head node.
-   */
-  template <class Op, class R, class... Args>
-  auto call(Result::Reduction, Op op, R (*fp)(Args...), Args... args) const
-      -> std::remove_reference_t<decltype(op(std::declval<R>(),
-                                             std::declval<R>()))> {
-    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
-
-    call(id, args...);
-
-    std::remove_cv_t<std::remove_reference_t<decltype(op(std::declval<R>(),
-                                                         std::declval<R>()))>>
-        result{};
-    boost::mpi::reduce(m_comm, fp(args...), result, op, 0);
-
-    return result;
-  }
-
-  /**
-   * @brief Call a callback and ignore the result over all nodes.
-   *
-   * This calls a callback on all nodes, including the head node,
-   * and ignore all return values.
-   *
-   * This method can only be called on the head node.
-   */
-  template <class R, class... Args, class... ArgRef>
-  auto call(Result::Ignore, R (*fp)(Args...), ArgRef... args) const
-      -> std::remove_reference_t<R> {
-
-    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
-    call(id, args...);
-
-    fp(std::forward<Args>(args)...);
-
-    return {};
-  }
-
-  /**
-   * @brief Call a callback and reduce the result over all nodes.
-   *
-   * This calls a callback on all nodes, including the head node,
-   * and returns the value from the node which returned an engaged
-   * optional. Only one node is allowed to return a value.
-   *
-   * This method can only be called on the head node.
-   */
-  template <class R, class... Args, class... ArgRef>
-  auto call(Result::OneRank, boost::optional<R> (*fp)(Args...),
-            ArgRef... args) const -> std::remove_reference_t<R> {
-
-    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
-    call(id, args...);
-
-    auto const local_result = fp(std::forward<Args>(args)...);
-
-    assert(1 == boost::mpi::all_reduce(m_comm, static_cast<int>(!!local_result),
-                                       std::plus<>()) &&
-           "Incorrect number of return values");
-
-    if (!!local_result) {
-      return *local_result;
-    }
-
-    std::remove_cv_t<std::remove_reference_t<R>> result;
-    m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
-    return result;
-  }
-
-  /**
-   * @brief Call a callback and return the result of the head node.
-   *
-   * This calls a callback on all nodes, including the head node,
-   * and returns the value from the head node.
-   *
-   * This method can only be called on the head node.
-   */
-  template <class R, class... Args, class... ArgRef>
-  auto call(Result::MainRank, R (*fp)(Args...), ArgRef... args) const
-      -> std::remove_reference_t<R> {
-
-    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
-    call(id, args...);
-
-    return fp(std::forward<Args>(args)...);
   }
 
   /**
@@ -771,19 +497,8 @@ public:
   template <class... Args> explicit RegisterCallback(void (*cb)(Args...)) {
     MpiCallbacks::add_static(cb);
   }
-
-  template <class Tag, class R, class... Args, class... TagArgs>
-  explicit RegisterCallback(Tag tag, R (*cb)(Args...), TagArgs &&...tag_args) {
-    MpiCallbacks::add_static(tag, cb, std::forward<TagArgs>(tag_args)...);
-  }
 };
 } /* namespace Communication */
-
-/**
- * @name Callback macros
- * @anchor callback_macros
- */
-/**@{*/
 
 /**
  * @brief Register a static callback without return value.
@@ -797,71 +512,5 @@ public:
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback register_##cb(&(cb));               \
   }
-
-/**
- * @brief Register a static callback whose return value is reduced.
- *
- * This registers a function as an mpi callback with
- * reduction of the return values from the nodes.
- * The macro should be used at global scope.
- *
- * @param cb A function
- * @param op Reduction operation
- */
-#define REGISTER_CALLBACK_REDUCTION(cb, op)                                    \
-  namespace Communication {                                                    \
-  static ::Communication::RegisterCallback                                     \
-      register_reduction_##cb(::Communication::Result::Reduction{}, &(cb),     \
-                              (op));                                           \
-  }
-
-/**
- * @brief Register a static callback whose return value is to be ignored.
- *
- * This registers a function as an mpi callback with
- * ignored return values.
- * The macro should be used at global scope.
- *
- * @param cb A function
- */
-#define REGISTER_CALLBACK_IGNORE(cb)                                           \
-  namespace Communication {                                                    \
-  static ::Communication::RegisterCallback                                     \
-      register_ignore_##cb(::Communication::Result::Ignore{}, &(cb));          \
-  }
-
-/**
- * @brief Register a static callback which returns a value on only one node.
- *
- * This registers a function as an mpi callback with
- * reduction of the return values from one node
- * where the value of the optional is set.
- * The macro should be used at global scope.
- *
- * @param cb A function
- */
-#define REGISTER_CALLBACK_ONE_RANK(cb)                                         \
-  namespace Communication {                                                    \
-  static ::Communication::RegisterCallback                                     \
-      register_one_rank_##cb(::Communication::Result::OneRank{}, &(cb));       \
-  }
-
-/**
- * @brief Register a static callback whose return value is ignored except on
- * the head node.
- *
- * This registers a function as an mpi callback with
- * reduction of the return values from the head node.
- * The macro should be used at global scope.
- *
- * @param cb A function
- */
-#define REGISTER_CALLBACK_MAIN_RANK(cb)                                        \
-  namespace Communication {                                                    \
-  static ::Communication::RegisterCallback                                     \
-      register_main_rank_##cb(::Communication::Result::MainRank{}, &(cb));     \
-  }
-
-/**@}*/
 
 #endif

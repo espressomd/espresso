@@ -28,9 +28,11 @@
 
 #include "tuning.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "communication.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
+#include "system/System.hpp"
 
 #include <boost/range/algorithm/min_element.hpp>
 
@@ -55,6 +57,9 @@ static auto constexpr P3M_TUNE_ACCURACY_TOO_LARGE = 3.;
 static auto constexpr P3M_RCUT_PREC = 1e-3;
 
 void TuningAlgorithm::determine_r_cut_limits() {
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &local_geo = *system.local_geo;
   auto const r_cut_iL = get_params().r_cut_iL;
   if (r_cut_iL == 0.) {
     auto const min_box_l = *boost::min_element(box_geo.length());
@@ -84,6 +89,7 @@ void TuningAlgorithm::determine_cao_limits(int initial_cao) {
 
 void TuningAlgorithm::commit(Utils::Vector3i const &mesh, int cao,
                              double r_cut_iL, double alpha_L) {
+  auto const &box_geo = *System::get_system().box_geo;
   auto &p3m_params = get_params();
   p3m_params.r_cut = r_cut_iL * box_geo.length()[0];
   p3m_params.r_cut_iL = r_cut_iL;
@@ -113,6 +119,9 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
                                     double &tuned_r_cut_iL,
                                     double &tuned_alpha_L,
                                     double &tuned_accuracy) {
+  auto const &system = System::get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const &local_geo = *system.local_geo;
   auto const target_accuracy = get_params().accuracy;
   double rs_err, ks_err;
   double r_cut_iL_min = m_r_cut_iL_min;

@@ -30,6 +30,7 @@
 #include "system/GpuParticleData.hpp"
 #include "system/ResourceCleanup.hpp"
 #include "system/System.hpp"
+#include "system/System.impl.hpp"
 
 #include <boost/mpi.hpp>
 

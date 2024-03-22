@@ -25,8 +25,12 @@
 
 #include "unit_tests/ParticleFactory.hpp"
 
+#include "cell_system/CellStructure.hpp"
+#include "cell_system/CellStructureType.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <boost/mpi.hpp>
 
@@ -65,6 +69,9 @@ BOOST_FIXTURE_TEST_CASE(particle_type_map_test, ParticleFactory) {
 int main(int argc, char **argv) {
   auto mpi_env = std::make_shared<boost::mpi::environment>(argc, argv);
   Communication::init(mpi_env);
+
+  auto &cell_structure = *System::get_system().cell_structure;
+  cells_re_init(cell_structure, CellStructureType::CELL_STRUCTURE_REGULAR);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

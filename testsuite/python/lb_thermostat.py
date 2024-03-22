@@ -67,12 +67,12 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
     def setUp(self):
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf, seed=5, gamma=self.global_gamma)
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.thermostat.turn_off()
         self.system.part.clear()
 

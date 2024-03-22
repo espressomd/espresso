@@ -178,20 +178,29 @@ void CoulombMMM1DGpu::setup() {
       break;
     }
   }
-  if (dev_forcePairs)
-    cudaFree(dev_forcePairs);
+  if (dev_forcePairs) {
+    cuda_safe_mem(cudaFree(dev_forcePairs));
+  }
   if (pairs) {
     // we need memory to store force pairs
     cuda_safe_mem(cudaMalloc((void **)&dev_forcePairs, part_mem_size));
   }
-  if (dev_energyBlocks)
-    cudaFree(dev_energyBlocks);
+  if (dev_energyBlocks) {
+    cuda_safe_mem(cudaFree(dev_energyBlocks));
+  }
   cuda_safe_mem(cudaMalloc((void **)&dev_energyBlocks,
                            numBlocks(n_part) * sizeof(float)));
   host_npart = static_cast<unsigned int>(n_part);
 }
 
-CoulombMMM1DGpu::~CoulombMMM1DGpu() { cudaFree(dev_forcePairs); }
+CoulombMMM1DGpu::~CoulombMMM1DGpu() {
+  if (dev_forcePairs) {
+    cuda_safe_mem(cudaFree(dev_forcePairs));
+  }
+  if (dev_energyBlocks) {
+    cuda_safe_mem(cudaFree(dev_energyBlocks));
+  }
+}
 
 __forceinline__ __device__ float sqpow(float x) { return x * x; }
 __forceinline__ __device__ float cbpow(float x) { return x * x * x; }
@@ -279,7 +288,7 @@ void CoulombMMM1DGpu::tune(double maxPWerror, double far_switch_radius,
     int best_cutoff = 0;
     cuda_safe_mem(cudaMemcpy(&best_cutoff, dev_cutoff, sizeof(int),
                              cudaMemcpyDeviceToHost));
-    cudaFree(dev_cutoff);
+    cuda_safe_mem(cudaFree(dev_cutoff));
     if (bessel_cutoff != -2 && best_cutoff >= maxCut) {
       // we already had our switching radius and only needed to
       // determine the cutoff, i.e. this was the final tuning round

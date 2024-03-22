@@ -93,17 +93,18 @@ class InteractionsAngleBondTest(ut.TestCase):
 
         d_phi = np.pi / self.N
         for i in range(1, self.N):  # avoid corner cases at phi = 0 or phi = pi
+            phi = i * d_phi
             self.p2.pos = self.start_pos + \
-                self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
+                self.rotate_vector(self.rel_pos, self.axis, phi)
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = energy_func(i * d_phi)
+            E_ref = energy_func(phi)
             # Check that energies match
             np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
 
-            f_ref = force_func(i * d_phi)
+            f_ref = force_func(phi)
             phi_diff = i * d_phi - phi0
             for p, sign in [[self.p1, -1], [self.p2, +1]]:
                 # Check that force is perpendicular
@@ -122,6 +123,18 @@ class InteractionsAngleBondTest(ut.TestCase):
                         np.sign(phi_diff),
                         np.sign(sign * np.dot(force_axis, self.axis)),
                         msg="The force moves particles in the wrong direction")
+
+            # Check that force vectors are correct
+            v1 = np.copy(self.system.distance_vec(self.p1, self.p0))
+            v2 = np.copy(self.system.distance_vec(self.p2, self.p0))
+            d1 = np.linalg.norm(v1)
+            d2 = np.linalg.norm(v2)
+            v1 /= d1
+            v2 /= d2
+            ref_f1 = (f_ref / d1 / np.sin(phi)) * (v1 * np.cos(phi) - v2)
+            ref_f2 = (f_ref / d2 / np.sin(phi)) * (v2 * np.cos(phi) - v1)
+            np.testing.assert_allclose(np.copy(self.p1.f), ref_f1, atol=1E-8)
+            np.testing.assert_allclose(np.copy(self.p2.f), ref_f2, atol=1E-8)
 
             # Total force =0?
             np.testing.assert_allclose(

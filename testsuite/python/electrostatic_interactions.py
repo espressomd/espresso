@@ -37,7 +37,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def calc_dh_potential(self, r, dh_params):
         kT = 1.0
@@ -92,7 +92,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # check metallic case
         p3m = espressomd.electrostatics.P3M(
             prefactor=prefactor, epsilon='metallic', tune=False, **p3m_params)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
         self.system.integrator.run(0, recalc_forces=True)
         p3m_energy = self.system.analysis.energy()['coulomb']
         tol = 1e-5
@@ -103,7 +103,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # keep current values as reference to check for P3M dipole correction
         ref_energy_metallic = self.system.analysis.energy()['coulomb']
         ref_forces_metallic = np.copy(self.system.part.all().f)
-        self.system.actors.remove(p3m)
+        self.system.electrostatics.clear()
 
         # check non-metallic case
         tol = 1e-10
@@ -116,13 +116,13 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             ref_forces = ref_forces_metallic - prefactor * forces_correction
             p3m = espressomd.electrostatics.P3M(
                 prefactor=prefactor, epsilon=epsilon, tune=False, **p3m_params)
-            self.system.actors.add(p3m)
+            self.system.electrostatics.solver = p3m
             self.system.integrator.run(0, recalc_forces=True)
             p3m_forces = np.array([self.p0.f, self.p1.f])
             p3m_energy = self.system.analysis.energy()['coulomb']
             np.testing.assert_allclose(p3m_energy, ref_energy, atol=tol)
             np.testing.assert_allclose(p3m_forces, ref_forces, atol=tol)
-            self.system.actors.remove(p3m)
+            self.system.electrostatics.clear()
 
     def test_dh(self):
         dh_params = dict(prefactor=1.2, kappa=0.8, r_cut=2.0)
@@ -131,7 +131,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             kappa=dh_params['kappa'],
             r_cut=dh_params['r_cut'])
 
-        self.system.actors.add(dh)
+        self.system.electrostatics.solver = dh
         # actor should remain in a valid state after a cell system reset
         self.system.box_l = self.system.box_l
         self.system.periodicity = self.system.periodicity
@@ -166,7 +166,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             kappa=dh_params['kappa'],
             r_cut=dh_params['r_cut'])
 
-        self.system.actors.add(dh)
+        self.system.electrostatics.solver = dh
         dr = 0.001
         r = np.arange(.5, 1.01 * dh_params['r_cut'], dr)
         u_dh = self.calc_dh_potential(r, dh_params)
@@ -207,7 +207,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             epsilon2=rf_params['epsilon2'],
             r_cut=rf_params['r_cut'])
 
-        self.system.actors.add(rf)
+        self.system.electrostatics.solver = rf
         # actor should remain in a valid state after a cell system reset
         self.system.box_l = self.system.box_l
         self.system.periodicity = self.system.periodicity

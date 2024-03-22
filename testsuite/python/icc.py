@@ -35,7 +35,7 @@ class TestICC(ut.TestCase):
     system.time_step = 0.01
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
         self.system.part.clear()
 
     def add_icc_particles(self, side_num_particles,
@@ -111,8 +111,8 @@ class TestICC(ut.TestCase):
             prefactor=1., mesh=32, cao=7, accuracy=1e-5)
         p3m.charge_neutrality_tolerance = 1e-11
 
-        self.system.actors.add(p3m)
-        self.system.actors.add(icc)
+        self.system.electrostatics.solver = p3m
+        self.system.electrostatics.extension = icc
         self.system.integrator.run(0)
 
         charge_lower = sum(part_slice_lower.q)

@@ -24,9 +24,10 @@
 
 #include "analysis/statistics_chain.hpp"
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "grid.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -36,6 +37,7 @@
 #include <stdexcept>
 
 std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length) {
+  auto const &box_geo = *System::get_system().box_geo;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
   std::array<double, 4> re;
 
@@ -44,9 +46,8 @@ std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length) {
         get_particle_data(chain_start + i * chain_length + chain_length - 1);
     auto const &p2 = get_particle_data(chain_start + i * chain_length);
 
-    auto const d =
-        unfolded_position(p1.pos(), p1.image_box(), box_geo.length()) -
-        unfolded_position(p2.pos(), p2.image_box(), box_geo.length());
+    auto const d = box_geo.unfolded_position(p1.pos(), p1.image_box()) -
+                   box_geo.unfolded_position(p2.pos(), p2.image_box());
     auto const norm2 = d.norm2();
     dist += sqrt(norm2);
     dist2 += norm2;
@@ -61,6 +62,7 @@ std::array<double, 4> calc_re(int chain_start, int n_chains, int chain_length) {
 }
 
 std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length) {
+  auto const &box_geo = *System::get_system().box_geo;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
   std::array<double, 4> rg;
 
@@ -75,16 +77,14 @@ std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length) {
             "Gyration tensor is not well-defined for chains including virtual "
             "sites. Virtual sites do not have a meaningful mass.");
       }
-      r_CM += unfolded_position(p.pos(), p.image_box(), box_geo.length()) *
-              p.mass();
+      r_CM += box_geo.unfolded_position(p.pos(), p.image_box()) * p.mass();
       M += p.mass();
     }
     r_CM /= M;
     double tmp = 0.0;
     for (int j = 0; j < chain_length; ++j) {
       auto const &p = get_particle_data(chain_start + i * chain_length + j);
-      Utils::Vector3d const d =
-          unfolded_position(p.pos(), p.image_box(), box_geo.length()) - r_CM;
+      auto const d = box_geo.unfolded_position(p.pos(), p.image_box()) - r_CM;
       tmp += d.norm2();
     }
     tmp /= static_cast<double>(chain_length);
@@ -101,6 +101,7 @@ std::array<double, 4> calc_rg(int chain_start, int n_chains, int chain_length) {
 }
 
 std::array<double, 2> calc_rh(int chain_start, int n_chains, int chain_length) {
+  auto const &box_geo = *System::get_system().box_geo;
   double r_H = 0.0, r_H2 = 0.0;
   std::array<double, 2> rh;
 
@@ -113,9 +114,8 @@ std::array<double, 2> calc_rh(int chain_start, int n_chains, int chain_length) {
       auto const &p1 = get_particle_data(i);
       for (int j = i + 1; j < chain_start + chain_length * (p + 1); j++) {
         auto const &p2 = get_particle_data(j);
-        auto const d =
-            unfolded_position(p1.pos(), p1.image_box(), box_geo.length()) -
-            unfolded_position(p2.pos(), p2.image_box(), box_geo.length());
+        auto const d = box_geo.unfolded_position(p1.pos(), p1.image_box()) -
+                       box_geo.unfolded_position(p2.pos(), p2.image_box());
         ri += 1.0 / d.norm();
       }
     }

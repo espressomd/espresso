@@ -38,11 +38,11 @@ class EKFixedFlux(ut.TestCase):
     INFLOW_FLUX = 0.1
 
     system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
-    system.time_step = 1.0
+    system.time_step = TAU
     system.cell_system.skin = 0.4
 
-    def tearDown(self) -> None:
-        self.system.ekcontainer.clear()
+    def tearDown(self):
+        self.system.ekcontainer = None
 
     def test_inflow_single(self):
         self.detail_test_inflow(single_precision=True)
@@ -67,8 +67,8 @@ class EKFixedFlux(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.tau = self.TAU
-        self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
 
         ekspecies[1:-1, 1:-1, 1:-1].density = self.DENSITY

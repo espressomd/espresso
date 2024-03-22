@@ -36,6 +36,7 @@ def get_docstring(filenames):
 # extract docstrings
 samples = [x for x in os.listdir(samples_dir) if x.endswith('.py')]
 samples += ['immersed_boundary/sampleImmersedBoundary.py',
+            'high_throughput_with_dask/run_pv.py',
             'object_in_fluid/motivation.py']
 docstrings = get_docstring(samples)
 

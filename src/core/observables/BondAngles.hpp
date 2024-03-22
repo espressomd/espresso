@@ -21,7 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "PidObservable.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -48,15 +48,23 @@ public:
   }
 
   std::vector<double>
-  evaluate(ParticleReferenceRange particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override {
+    auto const positions_sorted = detail::get_all_particle_positions(
+        comm, local_particles, ids(), traits, false);
+
+    if (comm.rank() != 0) {
+      return {};
+    }
+
+    auto const &box_geo = *System::get_system().box_geo;
     std::vector<double> res(n_values());
-    auto v1 = box_geo.get_mi_vector(traits.position(particles[1]),
-                                    traits.position(particles[0]));
+    auto v1 = box_geo.get_mi_vector(positions_sorted[1], positions_sorted[0]);
     auto n1 = v1.norm();
     for (std::size_t i = 0, end = n_values(); i < end; i++) {
-      auto v2 = box_geo.get_mi_vector(traits.position(particles[i + 2]),
-                                      traits.position(particles[i + 1]));
+      auto v2 = box_geo.get_mi_vector(positions_sorted[i + 2],
+                                      positions_sorted[i + 1]);
       auto const n2 = v2.norm();
       auto const cosine =
           std::clamp((v1 * v2) / (n1 * n2), -TINY_COS_VALUE, TINY_COS_VALUE);

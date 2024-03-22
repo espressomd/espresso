@@ -39,8 +39,8 @@ class EKNoFlux(ut.TestCase):
     system.time_step = 1.0
     system.cell_system.skin = 0.4
 
-    def tearDown(self) -> None:
-        self.system.ekcontainer.clear()
+    def tearDown(self):
+        self.system.ekcontainer = None
 
     def test_noflux_single(self):
         self.detail_test_noflux(single_precision=True)
@@ -65,8 +65,8 @@ class EKNoFlux(ut.TestCase):
 
         eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
 
-        self.system.ekcontainer.tau = 1.0
-        self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=1., solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
 
         center = np.asarray(self.system.box_l / 2, dtype=int)

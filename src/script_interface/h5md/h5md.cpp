@@ -25,9 +25,9 @@
 
 #include "h5md.hpp"
 
-#include "core/cells.hpp"
-#include "core/grid.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "core/integrate.hpp"
+#include "core/system/System.hpp"
 
 #include <cmath>
 #include <string>
@@ -37,17 +37,20 @@ namespace Writer {
 
 Variant H5md::do_call_method(const std::string &name,
                              const VariantMap &parameters) {
-  if (name == "write")
+  if (name == "write") {
+    auto const &system = System::get_system();
+    auto &cell_structure = *system.cell_structure;
     m_h5md->write(
         cell_structure.local_particles(), get_sim_time(),
         static_cast<int>(std::round(get_sim_time() / get_time_step())),
-        box_geo);
-  else if (name == "flush")
+        *system.box_geo);
+  } else if (name == "flush") {
     m_h5md->flush();
-  else if (name == "close")
+  } else if (name == "close") {
     m_h5md->close();
-  else if (name == "valid_fields")
+  } else if (name == "valid_fields") {
     return make_vector_of_variants(m_h5md->valid_fields());
+  }
   return {};
 }
 

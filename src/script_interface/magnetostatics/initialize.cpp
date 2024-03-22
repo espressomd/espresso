@@ -24,6 +24,7 @@
 
 #include "Actor_impl.hpp"
 
+#include "Container.hpp"
 #include "DipolarBarnesHutGpu.hpp"
 #include "DipolarDirectSum.hpp"
 #include "DipolarDirectSumGpu.hpp"
@@ -32,7 +33,6 @@
 #include "DipolarScafacos.hpp"
 
 #include "core/magnetostatics/dipoles.hpp"
-#include "core/magnetostatics/registration.hpp"
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
@@ -59,6 +59,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<DipolarScafacos>("Dipoles::DipolarScafacos");
 #endif
   om->register_new<DipolarLayerCorrection>("Dipoles::DipolarLayerCorrection");
+  om->register_new<Container>("Dipoles::Container");
 #endif // DIPOLES
 }
 

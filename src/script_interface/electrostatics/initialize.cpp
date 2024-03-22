@@ -25,6 +25,7 @@
 
 #include "Actor_impl.hpp"
 
+#include "Container.hpp"
 #include "CoulombMMM1D.hpp"
 #include "CoulombMMM1DGpu.hpp"
 #include "CoulombP3M.hpp"
@@ -36,7 +37,6 @@
 #include "ReactionField.hpp"
 
 #include "core/electrostatics/coulomb.hpp"
-#include "core/electrostatics/registration.hpp"
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
@@ -67,6 +67,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<CoulombScafacos>("Coulomb::CoulombScafacos");
 #endif
   om->register_new<ReactionField>("Coulomb::ReactionField");
+  om->register_new<Container>("Coulomb::Container");
 #endif // ELECTROSTATICS
 }
 

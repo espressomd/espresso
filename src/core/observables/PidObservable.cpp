@@ -21,16 +21,15 @@
 #include "ParticleTraits.hpp"
 #include "fetch_particles.hpp"
 
-#include <functional>
+#include <boost/mpi/communicator.hpp>
+
 #include <vector>
 
 namespace Observables {
-std::vector<double> PidObservable::operator()() const {
-  std::vector<Particle> particles = fetch_particles(ids());
-
-  std::vector<std::reference_wrapper<const Particle>> particle_refs(
-      particles.begin(), particles.end());
-  return this->evaluate(ParticleReferenceRange(particle_refs),
+std::vector<double>
+PidObservable::operator()(boost::mpi::communicator const &comm) const {
+  auto const &local_particles = fetch_particles(ids());
+  return this->evaluate(comm, local_particles,
                         ParticleObservables::traits<Particle>{});
 }
 } // namespace Observables

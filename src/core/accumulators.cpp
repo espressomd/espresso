@@ -39,12 +39,12 @@ struct AutoUpdateAccumulator {
 std::vector<AutoUpdateAccumulator> auto_update_accumulators;
 } // namespace
 
-void auto_update(int steps) {
+void auto_update(boost::mpi::communicator const &comm, int steps) {
   for (auto &acc : auto_update_accumulators) {
     assert(steps <= acc.frequency);
     acc.counter -= steps;
     if (acc.counter <= 0) {
-      acc.acc->update();
+      acc.acc->update(comm);
       acc.counter = acc.frequency;
     }
 
@@ -60,24 +60,33 @@ int auto_update_next_update() {
                            });
 }
 
+namespace detail {
+struct MatchPredicate {
+  AccumulatorBase const *m_acc;
+  template <typename T> bool operator()(T const &a) const {
+    return a.acc == m_acc;
+  }
+};
+} // namespace detail
+
 void auto_update_add(AccumulatorBase *acc) {
-  assert(acc);
-  assert(std::find_if(auto_update_accumulators.begin(),
-                      auto_update_accumulators.end(), [acc](auto const &a) {
-                        return a.acc == acc;
-                      }) == auto_update_accumulators.end());
+  assert(not auto_update_contains(acc));
   auto_update_accumulators.emplace_back(acc);
 }
+
 void auto_update_remove(AccumulatorBase *acc) {
-  assert(std::find_if(auto_update_accumulators.begin(),
-                      auto_update_accumulators.end(), [acc](auto const &a) {
-                        return a.acc == acc;
-                      }) != auto_update_accumulators.end());
+  assert(auto_update_contains(acc));
+  auto const beg = auto_update_accumulators.begin();
+  auto const end = auto_update_accumulators.end();
   auto_update_accumulators.erase(
-      boost::remove_if(
-          auto_update_accumulators,
-          [acc](AutoUpdateAccumulator const &au) { return au.acc == acc; }),
-      auto_update_accumulators.end());
+      std::remove_if(beg, end, detail::MatchPredicate{acc}), end);
+}
+
+bool auto_update_contains(AccumulatorBase const *acc) noexcept {
+  assert(acc);
+  auto const beg = auto_update_accumulators.begin();
+  auto const end = auto_update_accumulators.end();
+  return std::find_if(beg, end, detail::MatchPredicate{acc}) != end;
 }
 
 } // namespace Accumulators

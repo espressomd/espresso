@@ -29,11 +29,10 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
 #include <initializer_list>
 #include <limits>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -65,6 +64,9 @@ LatticeWalberla::LatticeWalberla(Utils::Vector3i const &grid_dimensions,
       uint_c(node_grid[0]), uint_c(node_grid[1]), uint_c(node_grid[2]),
       // periodicity
       true, true, true);
+  for (IBlock &block : *m_blocks) {
+    m_cached_blocks.push_back(&block);
+  }
 }
 
 [[nodiscard]] std::pair<Utils::Vector3d, Utils::Vector3d>
@@ -80,11 +82,11 @@ LatticeWalberla::get_local_domain() const {
 [[nodiscard]] bool
 LatticeWalberla::node_in_local_domain(Utils::Vector3i const &node) const {
   // Note: Lattice constant =1, cell centers offset by .5
-  return ::walberla::get_block_and_cell(*this, node, false) != boost::none;
+  return ::walberla::get_block_and_cell(*this, node, false) != std::nullopt;
 }
 [[nodiscard]] bool
 LatticeWalberla::node_in_local_halo(Utils::Vector3i const &node) const {
-  return ::walberla::get_block_and_cell(*this, node, true) != boost::none;
+  return ::walberla::get_block_and_cell(*this, node, true) != std::nullopt;
 }
 [[nodiscard]] bool
 LatticeWalberla::pos_in_local_domain(Utils::Vector3d const &pos) const {

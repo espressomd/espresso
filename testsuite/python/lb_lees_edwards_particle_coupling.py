@@ -42,7 +42,7 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
 
         lbf = espressomd.lb.LBFluidWalberla(
             agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step)
-        system.actors.add(lbf)
+        system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
 
         pos = [system.box_l[0] / 2., 0., system.box_l[0] / 2.]

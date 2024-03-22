@@ -45,7 +45,7 @@ class Test:
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def test_elc(self):
         """
@@ -69,7 +69,7 @@ class Test:
                                             maxPWerror=self.accuracy,
                                             delta_mid_bot=self.delta_mid_bot,
                                             delta_mid_top=self.delta_mid_top)
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
 
         elc_forces, elc_energy = self.scan()
 

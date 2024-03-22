@@ -348,8 +348,7 @@ BOOST_DATA_TEST_CASE(velocity_at_node_and_pos, bdata::make(all_lbs()),
   }
 }
 
-BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
-                     lb_generator) {
+BOOST_DATA_TEST_CASE(density_at_pos, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(params);
 
   // Values
@@ -381,32 +380,30 @@ BOOST_DATA_TEST_CASE(interpolated_density_at_pos, bdata::make(all_lbs()),
         BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
         // Check that the interpolated density at the node pos equals the node
         // density
-        res = lb->get_interpolated_density_at_pos(n_pos(node));
+        res = lb->get_density_at_pos(n_pos(node));
         BOOST_REQUIRE(res);                          // value available?
         BOOST_CHECK_SMALL(*res - n_dens(node), eps); // value correct?
       } else {
         BOOST_CHECK(!lb->get_node_density(node));
-        BOOST_CHECK(!lb->get_interpolated_density_at_pos(n_pos(node), false));
+        BOOST_CHECK(!lb->get_density_at_pos(n_pos(node), false));
       }
     } else {
       // Check that access to node density is not possible
       BOOST_CHECK(!lb->get_node_density(node));
-      BOOST_CHECK(!lb->get_interpolated_density_at_pos(n_pos(node), true));
+      BOOST_CHECK(!lb->get_density_at_pos(n_pos(node), true));
     }
   }
 
   {
     // check interpolation works for edge cases (box corners)
     auto const [low_corner, up_corner] = params.lattice->get_local_domain();
-    BOOST_CHECK(lb->get_interpolated_density_at_pos(low_corner));
-    BOOST_CHECK(lb->get_interpolated_density_at_pos(up_corner -
-                                                    Vector3d::broadcast(1e-6)));
+    BOOST_CHECK(lb->get_density_at_pos(low_corner));
+    BOOST_CHECK(lb->get_density_at_pos(up_corner - Vector3d::broadcast(1e-6)));
     // check interpolation fails outside local domain
     auto const pos_outside_domain =
         low_corner - Utils::Vector3d::broadcast(0.6);
-    BOOST_CHECK_THROW(
-        lb->get_interpolated_density_at_pos(pos_outside_domain, true),
-        std::runtime_error);
+    BOOST_CHECK_THROW(lb->get_density_at_pos(pos_outside_domain, true),
+                      std::runtime_error);
   }
 }
 

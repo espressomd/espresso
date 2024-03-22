@@ -24,30 +24,45 @@
 #include "GpuParticleData.hpp"
 #include "ResourceCleanup.hpp"
 
+#include "electrostatics/solver.hpp"
+#include "magnetostatics/solver.hpp"
+
+#include "ek/Solver.hpp"
+#include "lb/Solver.hpp"
+
 #include <utils/Vector.hpp>
 
-#include <cstddef>
 #include <memory>
+
+class BoxGeometry;
+class LocalBox;
+struct CellStructure;
 
 namespace System {
 
 class System {
 public:
+  System();
 #ifdef CUDA
   GpuParticleData gpu;
 #endif
   ResourceCleanup cleanup_queue;
 
   Utils::Vector3d box() const;
-  void init() {
-#ifdef CUDA
-    gpu.init();
-#endif
-  }
+  void init();
+
+  Coulomb::Solver coulomb;
+  Dipoles::Solver dipoles;
+  LB::Solver lb;
+  EK::Solver ek;
+  std::shared_ptr<BoxGeometry> box_geo;
+  std::shared_ptr<LocalBox> local_geo;
+  std::shared_ptr<CellStructure> cell_structure;
 };
 
 System &get_system();
 void set_system(std::shared_ptr<System> new_instance);
 void reset_system();
+bool is_system_set();
 
 } // namespace System

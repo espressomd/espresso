@@ -23,10 +23,11 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "cells.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "rotation.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -93,6 +94,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
     f_max = std::max(f_max, f);
   }
 
+  auto &cell_structure = *System::get_system().cell_structure;
   cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   // Synchronize maximum force/torque encountered

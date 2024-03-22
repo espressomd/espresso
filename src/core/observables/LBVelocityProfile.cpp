@@ -18,36 +18,49 @@
  */
 #include "LBVelocityProfile.hpp"
 
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "system/System.hpp"
+#include "utils_histogram.hpp"
 
 #include <utils/Histogram.hpp>
+#include <utils/Vector.hpp>
 
-#include <cstddef>
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 namespace Observables {
 
-std::vector<double> LBVelocityProfile::operator()() const {
+std::vector<double>
+LBVelocityProfile::operator()(boost::mpi::communicator const &comm) const {
+  using vel_type = Utils::Vector3d;
+
+  decltype(sampling_positions) local_positions{};
+  std::vector<vel_type> local_velocities{};
+
+  auto const &lb = System::get_system().lb;
+  auto const vel_conv = lb.get_lattice_speed();
+
+  for (auto const &pos : sampling_positions) {
+    if (auto const vel = lb.get_interpolated_velocity(pos)) {
+      local_positions.emplace_back(pos);
+      local_velocities.emplace_back((*vel) * vel_conv);
+    }
+  }
+
+  auto const [global_positions, global_velocities] =
+      detail::gather(comm, local_positions, local_velocities);
+
+  if (comm.rank() != 0) {
+    return {};
+  }
+
   Utils::Histogram<double, 3> histogram(n_bins(), limits());
-  for (auto const &p : sampling_positions) {
-    const auto v = LB::get_interpolated_velocity(p) * LB::get_lattice_speed();
-    histogram.update(p, v);
+  detail::accumulate(histogram, global_positions, global_velocities);
+  try {
+    return detail::normalize_by_bin_size(histogram, allow_empty_bins);
+  } catch (detail::empty_bin_exception const &) {
+    throw std::runtime_error(
+        "Decrease sampling delta(s), some bins have no hit");
   }
-  auto hist_tmp = histogram.get_histogram();
-  auto const tot_count = histogram.get_tot_count();
-  for (std::size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-    if (tot_count[ind] == 0 and not allow_empty_bins) {
-      auto const error = "Decrease sampling delta(s), bin " +
-                         std::to_string(ind) + " has no hit";
-      throw std::runtime_error(error);
-    }
-    if (tot_count[ind] > 0) {
-      hist_tmp[ind] /= static_cast<double>(tot_count[ind]);
-    }
-  }
-  return hist_tmp;
 }
 
 } // namespace Observables

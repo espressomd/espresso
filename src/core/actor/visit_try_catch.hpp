@@ -16,34 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_ACTOR_VISIT_TRY_CATCH_HPP
-#define ESPRESSO_SRC_CORE_ACTOR_VISIT_TRY_CATCH_HPP
+
+#pragma once
 
 #include "errorhandling.hpp"
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <stdexcept>
-#include <utility>
+#include <variant>
 
 /** @brief Run a kernel on a variant and queue errors. */
 template <typename Visitor, typename Variant>
-void visit_active_actor_try_catch(Visitor &&visitor, Variant &actor) {
+void visit_try_catch(Visitor &&visitor, Variant &actor) {
   try {
-    boost::apply_visitor(visitor, actor);
+    std::visit(visitor, actor);
   } catch (std::runtime_error const &err) {
     runtimeErrorMsg() << err.what();
   }
 }
-
-/** @brief Run a kernel on a variant and queue errors. */
-template <typename Visitor, typename Variant>
-void visit_active_actor_try_catch(Visitor &&visitor,
-                                  boost::optional<Variant> &actor) {
-  if (actor) {
-    visit_active_actor_try_catch(std::forward<Visitor>(visitor), *actor);
-  }
-}
-
-#endif

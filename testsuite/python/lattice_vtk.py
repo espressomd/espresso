@@ -117,11 +117,11 @@ class TestLBVTK(TestVTK):
 
     def add_actor(self):
         self.lbf = self.make_actor()
-        self.system.actors.add(self.lbf)
+        self.system.lb = self.lbf
         return self.lbf
 
     def clear_actors(self):
-        self.system.actors.clear()
+        self.system.lb = None
 
     @utx.skipIfMissingModules("espressomd.io.vtk")
     def test_vtk(self):
@@ -240,13 +240,13 @@ class TestEKVTK(TestVTK):
     def add_actor(self):
         self.solver = self.ek_solver(lattice=self.lattice)
         self.species = self.make_actor()
-        self.system.ekcontainer.tau = 0.1
-        self.system.ekcontainer.solver = self.solver
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=0.1, solver=self.solver)
         self.system.ekcontainer.add(self.species)
         return self.species
 
     def clear_actors(self):
-        self.system.ekcontainer.clear()
+        self.system.ekcontainer = None
 
     @utx.skipIfMissingModules("espressomd.io.vtk")
     def test_vtk(self):

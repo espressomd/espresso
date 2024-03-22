@@ -42,8 +42,12 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     wall2->d() = -10.0;
 
     Shapes::Union uni;
+    BOOST_CHECK(not uni.contains(wall1));
+    BOOST_CHECK(not uni.contains(wall2));
     uni.add(wall1);
     uni.add(wall2);
+    BOOST_CHECK(uni.contains(wall1));
+    BOOST_CHECK(uni.contains(wall2));
 
     auto check_union = [&wall1, &wall2, &uni](Utils::Vector3d const &pos) {
       double wall1_dist;

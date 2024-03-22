@@ -53,7 +53,7 @@ PROJECT_BRIEF          = "Extensible Simulation Package for Research on Soft Mat
 # pixels and the maximum width should not exceed 200 pixels. Doxygen will copy
 # the logo to the output directory.
 
-PROJECT_LOGO           = "@CMAKE_SOURCE_DIR@/doc/logo/logo_48x48.png"
+PROJECT_LOGO           = "@CMAKE_SOURCE_DIR@/doc/logo/logo_100x100.png"
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
@@ -1160,7 +1160,7 @@ HTML_STYLESHEET        =
 # list). For an example see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  =
+HTML_EXTRA_STYLESHEET  = "@CMAKE_CURRENT_SOURCE_DIR@/doxygen_extra.css"
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note

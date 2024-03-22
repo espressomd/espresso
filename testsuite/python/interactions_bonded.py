@@ -92,7 +92,8 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part.add(pos=self.start_pos, type=0)
 
     def tearDown(self):
-        self.system.actors.clear()
+        if espressomd.has_features(["ELECTROSTATICS"]):
+            self.system.electrostatics.clear()
         self.system.part.clear()
         self.system.bonded_inter.clear()
 
@@ -174,7 +175,7 @@ class InteractionsBondedTest(ut.TestCase):
 
         sr_solver = espressomd.electrostatics.DH(
             prefactor=2, kappa=0.8, r_cut=r_cut)
-        self.system.actors.add(sr_solver)
+        self.system.electrostatics.solver = sr_solver
         coulomb_sr = espressomd.interactions.BondedCoulombSRBond(
             q1q2=- q1 * q2)
 

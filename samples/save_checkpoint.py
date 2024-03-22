@@ -74,7 +74,7 @@ system.part.add(pos=np.random.random((n_part, 3)) * system.box_l,
                 q=np.resize((1, -1), n_part))
 
 p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 
 # let's also register the p3m reference for easy access later
 checkpoint.register("p3m")

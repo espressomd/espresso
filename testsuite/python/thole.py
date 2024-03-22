@@ -53,10 +53,14 @@ class TestThole(ut.TestCase):
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=3 * [52], cao=4)
-        self.system.actors.add(p3m)
+        self.system.electrostatics.solver = p3m
 
         self.system.non_bonded_inter[0, 0].thole.set_params(
             scaling_coeff=self.thole_s, q1q2=self.q1 * self.q2)
+
+    def tearDown(self):
+        self.system.electrostatics.solver = None
+        self.system.part.clear()
 
     def test(self):
         ns = 100

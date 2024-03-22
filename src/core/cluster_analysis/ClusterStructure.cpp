@@ -22,9 +22,9 @@
 #include "Cluster.hpp"
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "particle_node.hpp"
+#include "system/System.hpp"
 
 #include <utils/for_each_pair.hpp>
 
@@ -195,7 +195,7 @@ int ClusterStructure::get_next_free_cluster_id() {
 }
 
 void ClusterStructure::sanity_checks() const {
-  if (::box_geo.type() != BoxType::CUBOID) {
+  if (System::get_system().box_geo->type() != BoxType::CUBOID) {
     throw std::runtime_error(
         "Cluster analysis is not compatible with non-cuboid box types");
   }

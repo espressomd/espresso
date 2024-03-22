@@ -43,7 +43,7 @@ add_library(espresso::cuda_flags ALIAS espresso_cuda_flags)
 target_compile_options(
   espresso_cuda_flags
   INTERFACE
-  $<$<CONFIG:Debug>:>
+  $<$<CONFIG:Debug>:-g -G>
   $<$<CONFIG:Release>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
   $<$<CONFIG:MinSizeRel>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
   $<$<CONFIG:RelWithDebInfo>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>

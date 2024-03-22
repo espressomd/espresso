@@ -55,7 +55,7 @@ if args.visualizer:
 system.cell_system.skin = 0.1
 lb_fluid = espressomd.lb.LBFluidWalberla(
     agrid=agrid, density=0.5, kinematic_viscosity=3.2, tau=system.time_step)
-system.actors.add(lb_fluid)
+system.lb = lb_fluid
 
 # set up rollers by adding tangential slip velocities to cylinders
 logging.info('Setting up the rollers')

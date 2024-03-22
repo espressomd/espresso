@@ -36,26 +36,31 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v);
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
+#include "BoxGeometry.hpp"
+
 #include <utils/quaternion.hpp>
 
 #include <tuple>
 
 std::tuple<Utils::Quaternion<double>, double>
 calculate_vs_relate_to_params(Particle const &p_current,
-                              Particle const &p_relate_to);
+                              Particle const &p_relate_to,
+                              BoxGeometry const &box_geo);
 
 /**
  * @brief Setup a virtual site to track a real particle.
+ * @param[in]     box_geo      Box geometry.
  * @param[in,out] p_vs         Virtual site.
  * @param[in]     p_relate_to  Real particle to follow.
  */
-inline void vs_relate_to(Particle &p_vs, Particle const &p_relate_to) {
+inline void vs_relate_to(Particle &p_vs, Particle const &p_relate_to,
+                         BoxGeometry const &box_geo) {
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
   auto &vs_relative = p_vs.vs_relative();
   vs_relative.to_particle_id = p_relate_to.id();
   std::tie(vs_relative.rel_orientation, vs_relative.distance) =
-      calculate_vs_relate_to_params(p_vs, p_relate_to);
+      calculate_vs_relate_to_params(p_vs, p_relate_to, box_geo);
 }
 
 #endif // VIRTUAL_SITES_RELATIVE

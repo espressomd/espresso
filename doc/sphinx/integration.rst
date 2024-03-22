@@ -659,7 +659,7 @@ parameter ``gamma``. To enable the LB thermostat, use::
     import espressomd.lb
     system = espressomd.System(box_l=[1, 1, 1])
     lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1, kinematic_viscosity=1, tau=0.01)
-    system.actors.add(lbf)
+    self.system.lb = lbf
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
 No other thermostatting mechanism is necessary

@@ -116,14 +116,12 @@ else:
     p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-3)
 
 print("\nSCRIPT--->Add actor (automatic tuning)\n")
-system.actors.add(p3m)
+system.electrostatics.solver = p3m
 
 print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
 for key, val in p3m_params.items():
     print(f"{key} = {val}")
-
-print(system.actors)
 
 #############################################################
 #  Warmup Integration                                       #

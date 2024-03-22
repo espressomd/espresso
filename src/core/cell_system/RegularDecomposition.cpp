@@ -23,9 +23,10 @@
 
 #include "cell_system/Cell.hpp"
 
+#include "communication.hpp"
 #include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
+#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -53,7 +54,7 @@
 Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
   Utils::Vector3i cpos;
 
-  for (unsigned int i = 0; i < 3; i++) {
+  for (unsigned int i = 0u; i < 3u; i++) {
     cpos[i] = static_cast<int>(std::floor(pos[i] * inv_cell_size[i])) + 1 -
               cell_offset[i];
 
@@ -63,14 +64,14 @@ Cell *RegularDecomposition::position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rounding errors. */
     if (cpos[i] < 1) {
-      if ((!m_box.periodic(i) or (pos[i] >= m_box.length()[i])) &&
-          m_local_box.boundary()[2 * i])
+      if ((!m_box.periodic(i) or (pos[i] >= m_box.length()[i])) and
+          m_local_box.boundary()[2u * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > cell_grid[i]) {
-      if ((!m_box.periodic(i) or (pos[i] < m_box.length()[i])) &&
-          m_local_box.boundary()[2 * i + 1])
+      if ((!m_box.periodic(i) or (pos[i] < m_box.length()[i])) and
+          m_local_box.boundary()[2u * i + 1u])
         cpos[i] = cell_grid[i];
       else
         return nullptr;
@@ -102,17 +103,19 @@ void RegularDecomposition::move_left_or_right(ParticleList &src,
                                               ParticleList &left,
                                               ParticleList &right,
                                               int dir) const {
+  auto const is_open_boundary_left = m_local_box.boundary()[2 * dir] != 0;
+  auto const is_open_boundary_right = m_local_box.boundary()[2 * dir + 1] != 0;
+  auto const can_move_left = m_box.periodic(dir) or not is_open_boundary_left;
+  auto const can_move_right = m_box.periodic(dir) or not is_open_boundary_right;
+  auto const my_left = m_local_box.my_left()[dir];
+  auto const my_right = m_local_box.my_right()[dir];
   for (auto it = src.begin(); it != src.end();) {
-    if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_left()[dir], dir) <
-         0.0) and
-        (m_box.periodic(dir) || (m_local_box.boundary()[2 * dir] == 0))) {
-      left.insert(std::move(*it));
-      it = src.erase(it);
-    } else if ((m_box.get_mi_coord(it->pos()[dir], m_local_box.my_right()[dir],
-                                   dir) >= 0.0) and
-               (m_box.periodic(dir) ||
-                (m_local_box.boundary()[2 * dir + 1] == 0))) {
+    auto const pos = it->pos()[dir];
+    if (m_box.get_mi_coord(pos, my_right, dir) >= 0. and can_move_right) {
       right.insert(std::move(*it));
+      it = src.erase(it);
+    } else if (m_box.get_mi_coord(pos, my_left, dir) < 0. and can_move_left) {
+      left.insert(std::move(*it));
       it = src.erase(it);
     } else {
       ++it;
@@ -162,16 +165,14 @@ void RegularDecomposition::exchange_neighbors(
   }
 }
 
-namespace {
 /**
  * @brief Fold coordinates to box and reset the old position.
  */
-void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
-  fold_position(p.pos(), p.image_box(), box_geo);
+static void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
+  box_geo.fold_position(p.pos(), p.image_box());
 
   p.pos_at_last_verlet_update() = p.pos();
 }
-} // namespace
 
 void RegularDecomposition::resort(bool global,
                                   std::vector<ParticleChange> &diff) {
@@ -393,9 +394,11 @@ template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
 
 void RegularDecomposition::init_cell_interactions() {
 
+  auto const &box_geo = *System::get_system().box_geo;
   auto const halo = Utils::Vector3i{1, 1, 1};
   auto const cart_info = Utils::Mpi::cart_get<3>(m_comm);
-  auto const node_pos = cart_info.coords;
+  auto const &node_pos = cart_info.coords;
+  auto const &node_grid = ::communicator.node_grid;
   auto const global_halo_offset = hadamard_product(node_pos, cell_grid) - halo;
   auto const global_size = hadamard_product(node_grid, cell_grid);
 
@@ -633,7 +636,7 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
 RegularDecomposition::RegularDecomposition(boost::mpi::communicator comm,
                                            double range,
                                            BoxGeometry const &box_geo,
-                                           LocalBox<double> const &local_geo)
+                                           LocalBox const &local_geo)
     : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo) {
   /* set up new regular decomposition cell structure */
   create_cell_grid(range);

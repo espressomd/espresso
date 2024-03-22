@@ -21,7 +21,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "grid.hpp"
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -211,7 +212,7 @@ BOOST_AUTO_TEST_CASE(image_shift_test) {
   Utils::Vector3i img{1, -2, 3};
   Utils::Vector3d box{1., 2., 3.};
 
-  auto const result = image_shift(img, box);
+  auto const result = detail::image_shift(img, box);
   auto const expected =
       Utils::Vector3d{img[0] * box[0], img[1] * box[1], img[2] * box[2]};
 
@@ -223,17 +224,24 @@ BOOST_AUTO_TEST_CASE(unfolded_position_test) {
   Utils::Vector3i img{1, -2, 3};
   Utils::Vector3d box{1., 2., 3.};
 
-  auto expected = pos + image_shift(img, box);
-  auto result = unfolded_position(pos, img, box);
+  auto expected = pos + detail::image_shift(img, box);
+  auto result = detail::unfolded_position(pos, img, box);
 
   BOOST_CHECK_SMALL((result - expected).norm(), epsilon<double>);
 }
 
-BOOST_AUTO_TEST_CASE(fold_coordinate_test) {
-  BOOST_CHECK_THROW(fold_coordinate(0., std::numeric_limits<int>::max(), 1.),
-                    std::runtime_error);
-  BOOST_CHECK_THROW(fold_coordinate(0., std::numeric_limits<int>::min(), 1.),
-                    std::runtime_error);
+BOOST_AUTO_TEST_CASE(fold_position_exceptions_test) {
+  auto const box = BoxGeometry();
+  {
+    auto pos = Utils::Vector3d::broadcast(0.);
+    auto img = Utils::Vector3i::broadcast(std::numeric_limits<int>::max());
+    BOOST_CHECK_THROW(box.fold_position(pos, img), std::runtime_error);
+  }
+  {
+    auto pos = Utils::Vector3d::broadcast(0.);
+    auto img = Utils::Vector3i::broadcast(std::numeric_limits<int>::min());
+    BOOST_CHECK_THROW(box.fold_position(pos, img), std::runtime_error);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(fold_position_test) {
@@ -251,7 +259,7 @@ BOOST_AUTO_TEST_CASE(fold_position_test) {
     Utils::Vector3d const expected_pos{0.1, 0.1, 7.};
     Utils::Vector3i const expected_img{-1, 2, 1};
 
-    fold_position(pos, img, box);
+    box.fold_position(pos, img);
 
     BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3 * epsilon<double>);
     BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
@@ -264,7 +272,7 @@ BOOST_AUTO_TEST_CASE(fold_position_test) {
     Utils::Vector3d const expected_pos{1., 3., 7.};
     Utils::Vector3i const expected_img{0, -1, -1};
 
-    fold_position(pos, img, box);
+    box.fold_position(pos, img);
 
     BOOST_CHECK_SMALL((pos - expected_pos).norm(), 3 * epsilon<double>);
     BOOST_CHECK_EQUAL((img - expected_img).norm2(), 0);
@@ -275,13 +283,12 @@ BOOST_AUTO_TEST_CASE(regular_decomposition_test) {
   auto const eps = std::numeric_limits<double>::epsilon();
 
   auto const box_l = Utils::Vector3d{10, 20, 30};
-  auto box = BoxGeometry();
-  box.set_length(box_l);
   auto const node_grid = Utils::Vector3i{1, 2, 3};
 
   /* check length */
   {
-    auto const result = regular_decomposition(box, {0, 0, 0}, node_grid);
+    auto const result =
+        LocalBox::make_regular_decomposition(box_l, {0, 0, 0}, node_grid);
     auto const local_box_l = result.length();
 
     BOOST_CHECK_CLOSE(box_l[0], local_box_l[0] * node_grid[0], 100. * eps);
@@ -295,7 +302,8 @@ BOOST_AUTO_TEST_CASE(regular_decomposition_test) {
     for (node_pos[0] = 0; node_pos[0] < node_grid[0]; node_pos[0]++)
       for (node_pos[1] = 0; node_pos[1] < node_grid[1]; node_pos[1]++)
         for (node_pos[2] = 0; node_pos[2] < node_grid[2]; node_pos[2]++) {
-          auto const result = regular_decomposition(box, node_pos, node_grid);
+          auto const result =
+              LocalBox::make_regular_decomposition(box_l, node_pos, node_grid);
           auto const local_box_l = result.length();
           auto const lower_corner = result.my_left();
 

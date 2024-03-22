@@ -23,11 +23,11 @@
 
 #ifdef ELECTROSTATICS
 
+#include "electrostatics/solver.hpp"
+
 #include <stdexcept>
 
 namespace Coulomb {
-
-void check_charge_neutrality(double excess_ratio);
 
 template <typename Class> class Actor {
 public:
@@ -51,7 +51,7 @@ public:
 
   void sanity_checks_charge_neutrality() const {
     if (charge_neutrality_tolerance != -1.) {
-      Coulomb::check_charge_neutrality(charge_neutrality_tolerance);
+      check_charge_neutrality(charge_neutrality_tolerance);
     }
   }
 };

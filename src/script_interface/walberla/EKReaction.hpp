@@ -33,7 +33,8 @@
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
-#include <script_interface/communication.hpp>
+
+#include <utils/mpi/reduce_optional.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -163,7 +164,7 @@ public:
           get_value<Utils::Vector3i>(parameters, "node"),
           get_instance()->get_lattice()->get_grid_dimensions());
       auto const result = m_ekreaction_impl->get_node_is_boundary(index);
-      return mpi_reduce_optional(context()->get_comm(), result);
+      return Utils::Mpi::reduce_optional(context()->get_comm(), result);
     }
     return {};
   }

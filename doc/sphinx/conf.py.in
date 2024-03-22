@@ -274,3 +274,35 @@ def isfunction(obj):
 
 import inspect
 inspect.isfunction = isfunction
+
+
+# -- Custom Pybtex formatter to handle LaTeX macros in BibTeX records -----
+
+import pybtex.plugin
+import pybtex.richtext
+
+BaseFormatter = pybtex.plugin.find_plugin(
+    "pybtex.style.formatting", bibtex_default_style)
+
+class Formatter(BaseFormatter):
+
+    @classmethod
+    def visitor(cls, node, token, markup):
+        for i, x in enumerate(node.parts):
+            if isinstance(x, pybtex.richtext.BaseMultipartText):
+                cls.visitor(x, token, markup)
+            elif isinstance(x, pybtex.richtext.String) and x.endswith(token):
+                if (j := i + 1) >= len(node.parts):
+                    continue
+                if isinstance(node.parts[j], pybtex.richtext.Protected):
+                    node.parts[i] = node.parts[i][:-len(token)]
+                    node.parts[j] = pybtex.richtext.Tag(markup, node.parts[j])
+
+    def format_entry(self, *args, **kwargs):
+        formatted = super().format_entry(*args, **kwargs)
+        self.visitor(formatted.text, r"\textsuperscript ", "sup")
+        self.visitor(formatted.text, r"\textsubscript ", "sub")
+        return formatted
+
+pybtex.plugin.register_plugin(
+    "pybtex.style.formatting", bibtex_default_style, Formatter, force=True)

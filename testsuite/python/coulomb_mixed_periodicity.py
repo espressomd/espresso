@@ -48,7 +48,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def compare(self, method_name, force_tol, energy_tol):
         self.system.integrator.run(0)
@@ -96,7 +96,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         elc = espressomd.electrostatics.ELC(
             actor=p3m, maxPWerror=1E-6, gap_size=3)
 
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
         self.compare("elc", force_tol=1e-5, energy_tol=1e-4)
 
     @utx.skipIfMissingGPU()
@@ -110,7 +110,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         elc = espressomd.electrostatics.ELC(
             actor=p3m, maxPWerror=1E-6, gap_size=3.)
 
-        self.system.actors.add(elc)
+        self.system.electrostatics.solver = elc
         self.compare("elc", force_tol=1e-5, energy_tol=1e-4)
 
     @utx.skipIfMissingFeatures(["SCAFACOS"])
@@ -129,7 +129,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
                 "pnfft_N": "96,96,128",
                 "r_cut": 2.4,
                 "pnfft_m": 3})
-        self.system.actors.add(scafacos)
+        self.system.electrostatics.solver = scafacos
         self.assertTrue(scafacos.call_method("get_near_field_delegation"))
         self.compare("scafacos_p2nfft", force_tol=1e-4, energy_tol=1.8e-3)
 

@@ -23,10 +23,11 @@
 #include "script_interface/ObjectState.hpp"
 #include "script_interface/ScriptInterface.hpp"
 
-#include "core/cells.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/event.hpp"
 #include "core/exclusions.hpp"
 #include "core/particle_node.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -131,8 +132,11 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   std::unordered_map<int, std::vector<std::pair<int, int>>> partners;
   std::vector<int> bonded_pairs;
 
+  auto const &system = ::System::get_system();
+  auto &cell_structure = *system.cell_structure;
+
   // determine initial connectivity
-  for (auto const &p : ::cell_structure.local_particles()) {
+  for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
     for (auto const bond : p.bonds()) {
       if (bond.partner_ids().size() == 1) {
@@ -196,10 +200,10 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
     auto const &partner_list = kv.second;
     for (auto const &partner : partner_list) {
       auto const pid2 = partner.first;
-      if (auto p1 = ::cell_structure.get_local_particle(pid1)) {
+      if (auto p1 = cell_structure.get_local_particle(pid1)) {
         add_exclusion(*p1, pid2);
       }
-      if (auto p2 = ::cell_structure.get_local_particle(pid2)) {
+      if (auto p2 = cell_structure.get_local_particle(pid2)) {
         add_exclusion(*p2, pid1);
       }
     }

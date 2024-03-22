@@ -78,8 +78,7 @@ if args.volcons:
 lbf = espressomd.lb.LBFluidWalberla(
     agrid=1, density=1, kinematic_viscosity=1, tau=system.time_step,
     ext_force_density=[force, 0, 0])
-system.actors.add(lbf)
-
+system.lb = lbf
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0, act_on_virtual=False)
 
 # Setup boundaries

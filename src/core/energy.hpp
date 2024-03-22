@@ -33,12 +33,6 @@
 /** Parallel energy calculation. */
 std::shared_ptr<Observable_stat> calculate_energy();
 
-/** Calculate the total energy of the system. */
-double mpi_calculate_potential_energy();
-
-/** Helper function for @ref Observables::Energy. */
-double mpi_observable_compute_energy();
-
 /**
  * @brief Compute short-range energy of a particle.
  *
@@ -50,9 +44,9 @@ double mpi_observable_compute_energy();
  */
 double particle_short_range_energy_contribution(int pid);
 
-#endif
 #ifdef DIPOLE_FIELD_TRACKING
 /** Calculate dipole fields. */
 void calc_long_range_fields();
-void mpi_calc_long_range_fields();
+#endif // DIPOLE_FIELD_TRACKING
+
 #endif

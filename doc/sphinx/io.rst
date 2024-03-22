@@ -111,11 +111,10 @@ Be aware of the following limitations:
   for a specific combination of features, please share your findings
   with the |es| community.
 
-* The active actors, i.e., the content of ``system.actors`` resp.
-  ``system.ekcontainers``, are checkpointed. For lattice-based methods like
-  lattice-Boltzmann fluids and advection-diffusion-reaction models, this only
-  includes the parameters such as the lattice constant (``agrid``) and initial
-  densities.
+* All long-range solvers for electrostatics, magnetostatics, lattice-Boltzmann
+  and advection-diffusion-reaction are checkpointed. For lattice-Boltzmann
+  fluids and advection-diffusion-reaction models, this only includes the
+  parameters such as the lattice constant (``agrid``) and initial densities.
   The actual fields have to be saved separately with the lattice-specific
   methods :meth:`espressomd.lb.LBFluidWalberla.save_checkpoint
   <espressomd.detail.walberla.LatticeModel.save_checkpoint>` resp.
@@ -181,10 +180,10 @@ Be aware of the following limitations:
   This is because loading a checkpoint reinitializes the system and enforces
   a recalculation of the forces. However, this computes the forces from the
   velocities at the current time step and not at the previous half time step.
-  Please note that long-range actors can make trajectories non-reproducible.
+  Please note that long-range solvers can make trajectories non-reproducible.
   For example, lattice-Boltzmann introduces errors of the order of 1e-15 with
   binary checkpoint files, or 1e-7 with ASCII checkpoint files. In addition,
-  several electrostatic and magnetostatic actors automatically introduce
+  several electrostatic and magnetostatic solvers automatically introduce
   a deviation of the order of 1e-7, either due to floating-point rounding
   errors (:class:`~espressomd.electrostatics.P3MGPU`), or due to re-tuning
   using the most recent system state (:class:`~espressomd.electrostatics.MMM1D`,

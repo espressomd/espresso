@@ -56,7 +56,7 @@ class CoulombCloudWall(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def compare(self, method_name, prefactor, force_tol, energy_tol):
         # Compare forces and energy now in the system to reference data
@@ -75,29 +75,26 @@ class CoulombCloudWall(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_cpu(self):
-        self.system.actors.add(
-            espressomd.electrostatics.P3M(
-                **self.p3m_params, prefactor=3., tune=False))
+        self.system.electrostatics.solver = espressomd.electrostatics.P3M(
+            **self.p3m_params, prefactor=3., tune=False)
         self.system.integrator.run(0)
         self.compare("p3m", prefactor=3., force_tol=2e-3, energy_tol=1e-3)
 
     @utx.skipIfMissingGPU()
     @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m_gpu(self):
-        self.system.actors.add(
-            espressomd.electrostatics.P3MGPU(
-                **self.p3m_params, prefactor=2.2, tune=False))
+        self.system.electrostatics.solver = espressomd.electrostatics.P3MGPU(
+            **self.p3m_params, prefactor=2.2, tune=False)
         self.system.integrator.run(0)
         self.compare("p3m_gpu", prefactor=2.2, force_tol=2e-3, energy_tol=1e-3)
 
     @utx.skipIfMissingFeatures(["SCAFACOS"])
     @utx.skipIfMissingScafacosMethod("p2nfft")
     def test_scafacos_p2nfft(self):
-        self.system.actors.add(
-            espressomd.electrostatics.Scafacos(
-                prefactor=2.8,
-                method_name="p2nfft",
-                method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-4}))
+        self.system.electrostatics.solver = espressomd.electrostatics.Scafacos(
+            prefactor=2.8,
+            method_name="p2nfft",
+            method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-4})
         self.system.integrator.run(0)
         self.compare(
             "scafacos_p2nfft",

@@ -36,15 +36,17 @@
 
 void CoulombP3MGPU::add_long_range_forces(ParticleRange const &) {
   if (this_node == 0) {
-    p3m_gpu_add_farfield_force(prefactor);
+    p3m_gpu_add_farfield_force(*m_gpu_data, prefactor);
   }
 }
 
 void CoulombP3MGPU::init() {
-  if (has_actor_of_type<ElectrostaticLayerCorrection>(electrostatics_actor)) {
+  if (has_actor_of_type<ElectrostaticLayerCorrection>(
+          System::get_system().coulomb.impl->solver)) {
     init_cpu_kernels();
   }
-  p3m_gpu_init(p3m.params.cao, p3m.params.mesh.data(), p3m.params.alpha);
+  p3m_gpu_init(m_gpu_data, p3m.params.cao, p3m.params.mesh.data(),
+               p3m.params.alpha);
 }
 
 void CoulombP3MGPU::init_cpu_kernels() { CoulombP3M::init(); }

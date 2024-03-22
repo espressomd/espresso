@@ -23,11 +23,18 @@
 #include "config/version.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
 
+#include <boost/algorithm/string/join.hpp>
+
+#include <algorithm>
 #include <string>
 #include <vector>
 
 namespace ScriptInterface {
 namespace CodeInfo {
+
+static auto get_feature_vector(char const *const ptr[], unsigned int len) {
+  return std::vector<std::string>{ptr, ptr + len};
+}
 
 static Variant get_feature_list(char const *const ptr[], unsigned int len) {
   return make_vector_of_variants(std::vector<std::string>{ptr, ptr + len});
@@ -52,6 +59,24 @@ Variant CodeInfo::do_call_method(std::string const &name,
 #endif // SCAFACOS
   }
   return {};
+}
+
+void check_features(std::vector<std::string> const &features) {
+  auto const allowed = get_feature_vector(FEATURES_ALL, NUM_FEATURES_ALL);
+  auto const built = get_feature_vector(FEATURES, NUM_FEATURES);
+  std::vector<std::string> missing_features{};
+  for (auto const &feature : features) {
+    if (std::find(allowed.begin(), allowed.end(), feature) == allowed.end()) {
+      throw std::runtime_error("Unknown feature '" + feature + "'");
+    }
+    if (std::find(built.begin(), built.end(), feature) == built.end()) {
+      missing_features.emplace_back(feature);
+    }
+  }
+  if (not missing_features.empty()) {
+    throw std::runtime_error("Missing features " +
+                             boost::algorithm::join(missing_features, ", "));
+  }
 }
 
 } // namespace CodeInfo

@@ -42,8 +42,8 @@ class EKEOF:
     system.cell_system.skin = 0.4
 
     def tearDown(self):
-        self.system.actors.clear()
-        self.system.ekcontainer.clear()
+        self.system.lb = None
+        self.system.ekcontainer = None
 
     def test_eof(self):
         """
@@ -78,15 +78,15 @@ class EKEOF:
         eksolver = self.ek_solver_class(
             lattice=lattice, permittivity=eps0 * epsR, **self.ek_params)
 
-        self.system.ekcontainer.tau = self.TAU
-        self.system.ekcontainer.solver = eksolver
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
         self.system.ekcontainer.add(ekwallcharge)
 
         lb_fluid = espressomd.lb.LBFluidWalberla(
             lattice=lattice, density=1.0, kinematic_viscosity=visc,
             tau=self.TAU, **self.ek_params)
-        self.system.actors.add(lb_fluid)
+        self.system.lb = lb_fluid
 
         wall_bot = espressomd.shapes.Wall(normal=[1, 0, 0], dist=offset)
         wall_top = espressomd.shapes.Wall(

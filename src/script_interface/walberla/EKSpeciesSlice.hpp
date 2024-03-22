@@ -38,6 +38,7 @@
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -45,8 +46,8 @@
 
 namespace ScriptInterface::walberla {
 
-using DensityBoundaryType = boost::optional<double>;
-using FluxBoundaryType = boost::optional<Utils::Vector3d>;
+using DensityBoundaryType = std::optional<double>;
+using FluxBoundaryType = std::optional<Utils::Vector3d>;
 
 struct EKFieldSerializer {
 
@@ -77,7 +78,7 @@ struct EKFieldSerializer {
       auto const vector_variants = get_value<std::vector<Variant>>(variant);
       for (auto const &value : vector_variants) {
         if (is_none(value)) {
-          values.emplace_back(boost::none);
+          values.emplace_back(std::nullopt);
         } else {
           values.emplace_back(get_value<Utils::Vector3d>(value));
         }
@@ -86,7 +87,7 @@ struct EKFieldSerializer {
       auto const vector_variants = get_value<std::vector<Variant>>(variant);
       for (auto const &value : vector_variants) {
         if (is_none(value)) {
-          values.emplace_back(boost::none);
+          values.emplace_back(std::nullopt);
         } else {
           values.emplace_back(get_value<double>(value));
         }

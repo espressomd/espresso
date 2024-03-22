@@ -16,25 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_LOCALBOX_HPP
-#define ESPRESSO_SRC_CORE_LOCALBOX_HPP
+
+#pragma once
 
 #include "cell_system/CellStructureType.hpp"
 
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>
 
-template <class T> class LocalBox {
-  Utils::Vector<T, 3> m_local_box_l = {1, 1, 1};
-  Utils::Vector<T, 3> m_lower_corner = {0, 0, 0};
-  Utils::Vector<T, 3> m_upper_corner = {1, 1, 1};
+class LocalBox {
+  Utils::Vector3d m_local_box_l = {1., 1., 1.};
+  Utils::Vector3d m_lower_corner = {0., 0., 0.};
+  Utils::Vector3d m_upper_corner = {1., 1., 1.};
   Utils::Array<int, 6> m_boundaries = {};
   CellStructureType m_cell_structure_type;
 
 public:
   LocalBox() = default;
-  LocalBox(Utils::Vector<T, 3> const &lower_corner,
-           Utils::Vector<T, 3> const &local_box_length,
+  LocalBox(Utils::Vector3d const &lower_corner,
+           Utils::Vector3d const &local_box_length,
            Utils::Array<int, 6> const &boundaries,
            CellStructureType const cell_structure_type)
       : m_local_box_l(local_box_length), m_lower_corner(lower_corner),
@@ -42,11 +42,11 @@ public:
         m_boundaries(boundaries), m_cell_structure_type(cell_structure_type) {}
 
   /** Left (bottom, front) corner of this nodes local box. */
-  Utils::Vector<T, 3> const &my_left() const { return m_lower_corner; }
+  auto const &my_left() const { return m_lower_corner; }
   /** Right (top, back) corner of this nodes local box. */
-  Utils::Vector<T, 3> const &my_right() const { return m_upper_corner; }
+  auto const &my_right() const { return m_upper_corner; }
   /** Dimensions of the box a single node is responsible for. */
-  Utils::Vector<T, 3> const &length() const { return m_local_box_l; }
+  auto const &length() const { return m_local_box_l; }
   /** @brief Boundary information for the local box.
    *
    * This returns for each of the faces of the local box if
@@ -56,17 +56,32 @@ public:
    *
    * @return Array with boundary information.
    */
-  Utils::Array<int, 6> const &boundary() const { return m_boundaries; }
+  auto const &boundary() const { return m_boundaries; }
 
   /** Return cell structure type. */
-  CellStructureType const &cell_structure_type() const {
-    return m_cell_structure_type;
-  }
+  auto const &cell_structure_type() const { return m_cell_structure_type; }
 
   /** Set cell structure type. */
   void set_cell_structure_type(CellStructureType cell_structure_type) {
     m_cell_structure_type = cell_structure_type;
   }
-};
 
-#endif
+  static LocalBox make_regular_decomposition(Utils::Vector3d const &box_l,
+                                             Utils::Vector3i const &node_index,
+                                             Utils::Vector3i const &node_grid) {
+
+    auto const local_length = Utils::hadamard_division(box_l, node_grid);
+    auto const my_left = Utils::hadamard_product(node_index, local_length);
+
+    decltype(LocalBox::m_boundaries) boundaries;
+    for (unsigned int dir = 0u; dir < 3u; dir++) {
+      /* left boundary ? */
+      boundaries[2u * dir] = (node_index[dir] == 0);
+      /* right boundary ? */
+      boundaries[2u * dir + 1u] = -(node_index[dir] + 1 == node_grid[dir]);
+    }
+
+    return {my_left, local_length, boundaries,
+            CellStructureType::CELL_STRUCTURE_REGULAR};
+  }
+};

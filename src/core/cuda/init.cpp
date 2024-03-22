@@ -83,7 +83,8 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
     }
   }
 
-  int const n_gpus = static_cast<int>(devices_local.size());
+  auto const n_gpus = static_cast<int>(devices_local.size());
+  auto const n_nodes = ::communicator.size;
 
   if (this_node == 0) {
     std::set<EspressoGpuDevice, CompareDevices> device_set;

@@ -46,12 +46,12 @@ class ElectrostaticInteractionsTests:
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.electrostatics.clear()
 
     def test_forces_and_energy(self):
         self.system.part.add(pos=self.p_pos, q=self.p_q)
         mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)
+        self.system.electrostatics.solver = mmm1d
         self.system.integrator.run(steps=0)
         measured_f = np.copy(self.system.part.all().f)
         np.testing.assert_allclose(measured_f, self.forces_target,
@@ -85,7 +85,7 @@ class ElectrostaticInteractionsTests:
         self.system.part.add(pos=[0, 0, 0], q=1)
         self.system.part.add(pos=[0, 0, 1], q=-1)
         mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)
+        self.system.electrostatics.solver = mmm1d
         self.assertTrue(mmm1d.is_tuned)
         self.system.integrator.run(steps=0, recalc_forces=True)
         self.check_with_analytical_result(prefactor=1.0, accuracy=0.0004)
@@ -94,7 +94,7 @@ class ElectrostaticInteractionsTests:
         self.system.part.add(pos=[0, 0, 0], q=1)
         self.system.part.add(pos=[0, 0, 1], q=-1)
         mmm1d = self.MMM1D(prefactor=2.0, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)
+        self.system.electrostatics.solver = mmm1d
         self.assertTrue(mmm1d.is_tuned)
         self.system.integrator.run(steps=0, recalc_forces=True)
         self.check_with_analytical_result(prefactor=2.0, accuracy=0.0017)
@@ -122,8 +122,9 @@ class ElectrostaticInteractionsTests:
         for i in range(n_pairs):
             self.system.part.add(pos=[0., 0., 2. * i + 0.], q=+1.)
             self.system.part.add(pos=[0., 0., 2. * i + 1.], q=-1.)
-        self.system.actors.add(self.MMM1D(
-            prefactor=1., maxPWerror=1e-20, far_switch_radius=n_pairs / 2.))
+        mmm1d = self.MMM1D(
+            prefactor=1., maxPWerror=1e-20, far_switch_radius=n_pairs / 2.)
+        self.system.electrostatics.solver = mmm1d
         energy = self.system.analysis.energy()["coulomb"]
         p_scalar = self.system.analysis.pressure()["coulomb"]
         p_tensor = self.system.analysis.pressure_tensor()["coulomb"]

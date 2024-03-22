@@ -52,11 +52,11 @@ class LBEHTest(ut.TestCase):
             kT=self.params['temp']
         )
 
-        system.actors.add(lbf)
+        self.system.lb = lbf
         system.thermostat.set_lb(LB_fluid=lbf, gamma=self.params['friction'])
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.lb = None
         self.system.part.clear()
 
     def test(self):

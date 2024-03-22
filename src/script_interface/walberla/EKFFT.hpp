@@ -25,8 +25,8 @@
 #ifdef WALBERLA_FFT
 
 #include "EKPoissonSolver.hpp"
+#include "LatticeWalberla.hpp"
 
-#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_poisson_fft_init.hpp>
 
 #include <script_interface/ScriptInterface.hpp>
@@ -47,7 +47,7 @@ class EKFFT : public EKPoissonSolver {
 public:
   void do_construct(VariantMap const &args) override {
     m_single_precision = get_value_or<bool>(args, "single_precision", false);
-    m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
+    m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
 
     // unit conversions
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));

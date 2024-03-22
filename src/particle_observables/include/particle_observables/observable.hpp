@@ -50,6 +50,7 @@ using Momentum = Product<Mass, Velocity>;
 using AverageMomentum = Average<Momentum>;
 using CenterOfMassPosition = WeightedAverage<Position, Mass>;
 using CenterOfMassVelocity = WeightedAverage<Velocity, Mass>;
+using Identities = Map<Identity>;
 using Forces = Map<Force>;
 using Positions = Map<Position>;
 using Velocities = Map<Velocity>;

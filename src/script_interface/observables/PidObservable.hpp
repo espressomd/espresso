@@ -52,8 +52,10 @@ public:
   }
 
   void do_construct(VariantMap const &params) override {
-    m_observable =
-        make_shared_from_args<CorePidObs, std::vector<int>>(params, "ids");
+    ObjectHandle::context()->parallel_try_catch([&]() {
+      m_observable =
+          make_shared_from_args<CorePidObs, std::vector<int>>(params, "ids");
+    });
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

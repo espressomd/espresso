@@ -69,9 +69,6 @@
 #include <utils/interpolation/bspline_3d.hpp>
 #include <utils/math/make_lin_space.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
-
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -79,10 +76,12 @@
 #include <initializer_list>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace walberla {
@@ -106,7 +105,7 @@ protected:
                        typename detail::BoundaryHandlingTrait<
                            FloatType, Architecture>::Dynamic_UBB>;
   using CollisionModel =
-      boost::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
+      std::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
 
 public:
   // Type definitions
@@ -156,7 +155,7 @@ public:
   }
 
 private:
-  class : public boost::static_visitor<> {
+  class CollideSweepVisitor {
   public:
     void operator()(CollisionModelThermalized &cm, IBlock *b) { cm(b); }
 
@@ -165,15 +164,16 @@ private:
           m_lees_edwards_callbacks->get_shear_velocity());
       cm(b);
     }
-    void register_lees_edwards_callbacks(
-        std::shared_ptr<LeesEdwardsPack> lees_edwards_callbacks) {
-      m_lees_edwards_callbacks = std::move(lees_edwards_callbacks);
+
+    CollideSweepVisitor() = default;
+    explicit CollideSweepVisitor(std::shared_ptr<LeesEdwardsPack> callbacks) {
+      m_lees_edwards_callbacks = std::move(callbacks);
     }
 
   private:
-    std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
-
-  } run_collide_sweep;
+    std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks{};
+  };
+  CollideSweepVisitor m_run_collide_sweep{};
 
   FloatType shear_mode_relaxation_rate() const {
     return FloatType{2} / (FloatType{6} * m_viscosity + FloatType{1});
@@ -287,7 +287,7 @@ protected:
   // lattice
   std::shared_ptr<LatticeWalberla> m_lattice;
 
-  [[nodiscard]] boost::optional<CellInterval>
+  [[nodiscard]] std::optional<CellInterval>
   get_interval(Utils::Vector3i const &lower_corner,
                Utils::Vector3i const &upper_corner) const {
     auto const &lattice = get_lattice();
@@ -296,7 +296,7 @@ protected:
     auto const lower_bc = get_block_and_cell(lattice, cell_min, true);
     auto const upper_bc = get_block_and_cell(lattice, cell_max, true);
     if (not lower_bc or not upper_bc) {
-      return {};
+      return std::nullopt;
     }
     assert(&(*(lower_bc->block)) == &(*(upper_bc->block)));
     return {CellInterval(lower_bc->cell, upper_bc->cell)};
@@ -435,17 +435,17 @@ private:
   }
 
   void integrate_collide(std::shared_ptr<Lattice_T> const &blocks) {
+    auto &cm_variant = *m_collision_model;
     for (auto b = blocks->begin(); b != blocks->end(); ++b)
-      boost::apply_visitor(run_collide_sweep, *m_collision_model,
-                           boost::variant<IBlock *>(&*b));
-    if (auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model)) {
+      std::visit(m_run_collide_sweep, cm_variant, std::variant<IBlock *>(&*b));
+    if (auto *cm = std::get_if<CollisionModelThermalized>(&cm_variant)) {
       cm->time_step_++;
     }
   }
 
   auto has_lees_edwards_bc() const {
-    return boost::get<CollisionModelLeesEdwards>(&*m_collision_model) !=
-           nullptr;
+    return std::holds_alternative<CollisionModelLeesEdwards>(
+        *m_collision_model);
   }
 
   void apply_lees_edwards_pdf_interpolation(
@@ -577,7 +577,7 @@ public:
         m_last_applied_force_field_id, m_pdf_field_id, agrid, omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
-    run_collide_sweep.register_lees_edwards_callbacks(m_lees_edwards_callbacks);
+    m_run_collide_sweep = CollideSweepVisitor{m_lees_edwards_callbacks};
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,
@@ -620,7 +620,7 @@ public:
   }
 
   // Velocity
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   get_node_velocity(Utils::Vector3i const &node,
                     bool consider_ghosts = false) const override {
     auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
@@ -629,9 +629,10 @@ public:
         return get_node_velocity_at_boundary(node, consider_ghosts);
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {};
+      return std::nullopt;
 
-    auto field = bc->block->template getData<VectorField>(m_velocity_field_id);
+    auto field = bc->block->template uncheckedFastGetData<VectorField>(
+        m_velocity_field_id);
     auto const vec = lbm::accessor::Vector::get(field, bc->cell);
     return to_vector3d(vec);
   }
@@ -722,19 +723,19 @@ public:
     }
   }
 
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &pos,
                       bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
-      return {};
+      return std::nullopt;
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
-      return {};
-    Utils::Vector3d v{0.0, 0.0, 0.0};
+      return std::nullopt;
+    Utils::Vector3d v{0., 0., 0.};
     interpolate_bspline_at_pos(
-        pos, [this, &v, pos](std::array<int, 3> const node, double weight) {
+        pos, [this, &v, &pos](std::array<int, 3> const node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
-          if (weight != 0) {
+          if (weight != 0.) {
             auto const res = get_node_velocity(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("velocity", pos, node, weight);
@@ -745,55 +746,64 @@ public:
     return {std::move(v)};
   }
 
-  std::vector<Utils::Vector3d>
-  get_velocities_at_pos(std::vector<Utils::Vector3d> const &positions) const override {
-  std::vector<Utils::Vector3d> velocities{};
-  std::unordered_map<std::size_t, std::unordered_map<std::size_t, Cell>> queue;
-  std::unordered_map<std::size_t, std::vector<std::tuple<std::size_t, double, std::size_t>>> apply;
-  std::unordered_map<std::size_t, VectorField*> fields;
+  std::vector<Utils::Vector3d> get_velocities_at_pos(
+      std::vector<Utils::Vector3d> const &positions) const override {
+    std::vector<Utils::Vector3d> velocities{};
+    std::unordered_map<std::size_t, std::unordered_map<std::size_t, Cell>>
+        queue;
+    std::unordered_map<
+        std::size_t, std::vector<std::tuple<std::size_t, double, std::size_t>>>
+        apply;
+    std::unordered_map<std::size_t, VectorField *> fields;
     auto const cell_offset = static_cast<int>(get_lattice().get_ghost_layers());
-  for (auto const &pos : positions) {
-    if (!m_lattice->pos_in_local_halo(pos)) {
-      throw std::runtime_error(
-          "Interpolated velocity could not be obtained from Walberla");
-    }
-    std::size_t v_index = velocities.size();
-    auto v = Utils::Vector3d::broadcast(0.);
-    interpolate_bspline_at_pos(
-        pos, [this, &v, pos, &queue, &apply, &fields, v_index](std::array<int, 3> const node_arr, double weight) {
-          // Nodes with zero weight might not be accessible, because they can be
-          // outside ghost layers
-          if (weight != 0) {
-            auto constexpr with_ghosts = true;
-            auto const node = Utils::Vector3i(node_arr);
-            auto const bc = get_block_and_cell(get_lattice(), node, with_ghosts);
-            if (!bc)
-              throw interpolation_illegal_access("velocity", pos, node_arr, weight);
+    for (auto const &pos : positions) {
+      if (!m_lattice->pos_in_local_halo(pos)) {
+        throw std::runtime_error(
+            "Interpolated velocity could not be obtained from Walberla");
+      }
+      std::size_t v_index = velocities.size();
+      auto v = Utils::Vector3d::broadcast(0.);
+      interpolate_bspline_at_pos(
+          pos, [this, &v, pos, &queue, &apply, &fields,
+                v_index](std::array<int, 3> const node_arr, double weight) {
+            // Nodes with zero weight might not be accessible, because they can
+            // be outside ghost layers
+            if (weight != 0) {
+              auto constexpr with_ghosts = true;
+              auto const node = Utils::Vector3i(node_arr);
+              auto const bc =
+                  get_block_and_cell(get_lattice(), node, with_ghosts);
+              if (!bc)
+                throw interpolation_illegal_access("velocity", pos, node_arr,
+                                                   weight);
 
-            if (m_boundary->node_is_boundary(node)) {
-              v += weight * m_boundary->get_node_value_at_boundary(node);
-              return;
-            }
+              if (m_boundary->node_is_boundary(node)) {
+                v += weight * m_boundary->get_node_value_at_boundary(node);
+                return;
+              }
 
-            auto vel_field = bc->block->template uncheckedFastGetData<VectorField>(m_velocity_field_id);
-            auto const key = reinterpret_cast<std::size_t>(static_cast<void*>(vel_field));
-            if (queue.count(key) == 0) {
-              queue[key] = {};
-              fields[key] = vel_field;
+              auto vel_field =
+                  bc->block->template uncheckedFastGetData<VectorField>(
+                      m_velocity_field_id);
+              auto const key =
+                  reinterpret_cast<std::size_t>(static_cast<void *>(vel_field));
+              if (queue.count(key) == 0) {
+                queue[key] = {};
+                fields[key] = vel_field;
+              }
+              auto const &cell = bc->cell;
+              auto const cell_hash = std::hash<Cell>{}(cell);
+              if (queue[key].count(cell_hash) == 0) {
+                queue[key][cell_hash] = cell;
+              }
+              apply[key].emplace_back(cell_hash, weight, v_index);
             }
-            auto const &cell = bc->cell;
-            auto const cell_hash = std::hash<Cell>{}(cell);
-            if (queue[key].count(cell_hash) == 0) {
-              queue[key][cell_hash] = cell;
-            }
-            apply[key].emplace_back(cell_hash, weight, v_index);
-          }
-        });
+          });
       velocities.emplace_back(v);
     }
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
-    if constexpr (std::is_same_v<FloatType, float>) {
+      if constexpr (std::is_same_v<FloatType, float>) {
         for (auto const &kv : queue) {
           auto vel_field = fields[kv.first];
           std::vector<cell_idx_t> cells_flat{};
@@ -805,38 +815,39 @@ public:
             }
             cells_hash_flat.emplace_back(it.first);
           }
-          auto const vels = lbm::accessor::Vector::get_at(vel_field, cells_flat);
+          auto const vels =
+              lbm::accessor::Vector::get_at(vel_field, cells_flat);
           assert(cells_hash_flat.size() * 3ul == vels.size());
           std::unordered_map<std::size_t, Utils::Vector3d> cell2vel{};
           for (std::size_t i = 0; i < cells_hash_flat.size(); ++i) {
-            cell2vel[cells_hash_flat[i]] = Utils::Vector3d{
-                static_cast<double>(vels[i * 3ul + 0ul]),
-                static_cast<double>(vels[i * 3ul + 1ul]),
-                static_cast<double>(vels[i * 3ul + 2ul])
-            };
+            cell2vel[cells_hash_flat[i]] =
+                Utils::Vector3d{static_cast<double>(vels[i * 3ul + 0ul]),
+                                static_cast<double>(vels[i * 3ul + 1ul]),
+                                static_cast<double>(vels[i * 3ul + 2ul])};
           }
           for (auto const [cell_hash, weight, v_index] : apply[kv.first]) {
             velocities[v_index] += weight * cell2vel.at(cell_hash);
           }
         }
-    }}
+      }
+    }
 #endif
     return velocities;
   }
 
-  boost::optional<double> get_interpolated_density_at_pos(
-      Utils::Vector3d const &pos,
-      bool consider_points_in_halo = false) const override {
+  std::optional<double>
+  get_density_at_pos(Utils::Vector3d const &pos,
+                     bool consider_points_in_halo = false) const override {
     if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
-      return {};
+      return std::nullopt;
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
-      return {};
-    double dens = 0.0;
+      return std::nullopt;
+    double dens = 0.;
     interpolate_bspline_at_pos(
-        pos, [this, &dens, pos](std::array<int, 3> const node, double weight) {
+        pos, [this, &dens, &pos](std::array<int, 3> const node, double weight) {
           // Nodes with zero weight might not be accessible, because they can be
           // outside ghost layers
-          if (weight != 0) {
+          if (weight != 0.) {
             auto const res = get_node_density(Utils::Vector3i(node), true);
             if (!res) {
               throw interpolation_illegal_access("density", pos, node, weight);
@@ -852,8 +863,8 @@ public:
                         Utils::Vector3d const &force) override {
     if (!m_lattice->pos_in_local_halo(pos))
       return false;
-    auto const force_at_node = [this, force](std::array<int, 3> const node,
-                                             double weight) {
+    auto const force_at_node = [this, &force](std::array<int, 3> const node,
+                                              double weight) {
       auto const bc =
           get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
       if (bc) {
@@ -871,40 +882,45 @@ public:
   void add_forces_at_pos(std::vector<Utils::Vector3d> const &positions,
                          std::vector<Utils::Vector3d> const &forces) override {
     assert(positions.size() == forces.size());
-    std::unordered_map<std::size_t, std::unordered_map<std::size_t, std::pair<Cell, Utils::Vector3d>>> queue;
-    std::unordered_map<std::size_t, VectorField*> fields;
+    std::unordered_map<
+        std::size_t,
+        std::unordered_map<std::size_t, std::pair<Cell, Utils::Vector3d>>>
+        queue;
+    std::unordered_map<std::size_t, VectorField *> fields;
     auto const cell_offset = static_cast<int>(get_lattice().get_ghost_layers());
     for (std::size_t i = 0; i < positions.size(); ++i) {
       auto const &pos = positions[i];
       auto const &force = forces[i];
-    auto const force_at_node = [this, &force, &queue, &fields](std::array<int, 3> const node,
-                                             double weight) {
-      auto const bc =
-          get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
-      if (bc) {
-        auto force_field =
-            bc->block->template uncheckedFastGetData<VectorField>(
-                m_force_to_be_applied_id);
-        auto const key = reinterpret_cast<std::size_t>(static_cast<void*>(force_field));
-        if (queue.count(key) == 0) {
-          queue[key] = {};
-          fields[key] = force_field;
+      auto const force_at_node = [this, &force, &queue,
+                                  &fields](std::array<int, 3> const node,
+                                           double weight) {
+        auto const bc =
+            get_block_and_cell(get_lattice(), Utils::Vector3i(node), true);
+        if (bc) {
+          auto force_field =
+              bc->block->template uncheckedFastGetData<VectorField>(
+                  m_force_to_be_applied_id);
+          auto const key =
+              reinterpret_cast<std::size_t>(static_cast<void *>(force_field));
+          if (queue.count(key) == 0) {
+            queue[key] = {};
+            fields[key] = force_field;
+          }
+          auto const &cell = bc->cell;
+          auto const cell_hash = std::hash<Cell>{}(cell);
+          auto const cell_force = weight * force;
+          if (queue[key].count(cell_hash) == 0) {
+            queue[key][cell_hash] = {cell, cell_force};
+          } else {
+            queue[key][cell_hash].second += cell_force;
+          }
         }
-        auto const &cell = bc->cell;
-        auto const cell_hash = std::hash<Cell>{}(cell);
-        auto const cell_force = weight * force;
-        if (queue[key].count(cell_hash) == 0) {
-          queue[key][cell_hash] = {cell, cell_force};
-        } else {
-          queue[key][cell_hash].second += cell_force;
-        }
-      }
-    };
-    interpolate_bspline_at_pos(pos, force_at_node);
+      };
+      interpolate_bspline_at_pos(pos, force_at_node);
     }
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
-    if constexpr (std::is_same_v<FloatType, float>) {
+      if constexpr (std::is_same_v<FloatType, float>) {
         for (auto const &kv : queue) {
           auto force_field = fields[kv.first];
           std::vector<cell_idx_t> cells_flat{};
@@ -916,18 +932,19 @@ public:
               forces_flat.emplace_back(static_cast<FloatType>(force[j]));
             }
           }
-          //std::cout << kv.first << " " << (cells_flat.size() / 3ul) << "\n";
+          // std::cout << kv.first << " " << (cells_flat.size() / 3ul) << "\n";
           lbm::accessor::Vector::add_at(force_field, forces_flat, cells_flat);
         }
-    }}
+      }
+    }
 #endif
   }
 
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   get_node_force_to_be_applied(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
-      return {};
+      return std::nullopt;
 
     auto field =
         bc->block->template getData<VectorField>(m_force_to_be_applied_id);
@@ -935,12 +952,12 @@ public:
     return to_vector3d(vec);
   }
 
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   get_node_last_applied_force(Utils::Vector3i const &node,
                               bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {};
+      return std::nullopt;
 
     auto const field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
@@ -1018,12 +1035,12 @@ public:
   }
 
   // Population
-  boost::optional<std::vector<double>>
+  std::optional<std::vector<double>>
   get_node_population(Utils::Vector3i const &node,
                       bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
     auto const pop = lbm::accessor::Population::get(pdf_field, bc->cell);
@@ -1085,14 +1102,15 @@ public:
   }
 
   // Density
-  boost::optional<double>
+  std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const override {
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
-    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto pdf_field =
+        bc->block->template uncheckedFastGetData<PdfField>(m_pdf_field_id);
     auto const density = lbm::accessor::Density::get(pdf_field, bc->cell);
     return {double_c(density)};
   }
@@ -1141,12 +1159,12 @@ public:
     }
   }
 
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(Utils::Vector3i const &node,
                                 bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary->node_is_boundary(node))
-      return {boost::none};
+      return std::nullopt;
 
     return {m_boundary->get_node_value_at_boundary(node)};
   }
@@ -1162,10 +1180,10 @@ public:
     return true;
   }
 
-  std::vector<boost::optional<Utils::Vector3d>> get_slice_velocity_at_boundary(
+  std::vector<std::optional<Utils::Vector3d>> get_slice_velocity_at_boundary(
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
-    std::vector<boost::optional<Utils::Vector3d>> out;
+    std::vector<std::optional<Utils::Vector3d>> out;
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -1180,7 +1198,7 @@ public:
             if (m_boundary->node_is_boundary(node)) {
               out.emplace_back(m_boundary->get_node_value_at_boundary(node));
             } else {
-              out.emplace_back(boost::none);
+              out.emplace_back(std::nullopt);
             }
           }
         }
@@ -1192,7 +1210,7 @@ public:
 
   void set_slice_velocity_at_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
-      std::vector<boost::optional<Utils::Vector3d>> const &velocity) override {
+      std::vector<std::optional<Utils::Vector3d>> const &velocity) override {
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -1218,11 +1236,11 @@ public:
     }
   }
 
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   get_node_boundary_force(Utils::Vector3i const &node) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc or !m_boundary->node_is_boundary(node))
-      return {boost::none};
+      return std::nullopt;
 
     return get_node_last_applied_force(node, true);
   }
@@ -1237,12 +1255,12 @@ public:
     return true;
   }
 
-  boost::optional<bool>
+  std::optional<bool>
   get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
     return {m_boundary->node_is_boundary(node)};
   }
@@ -1284,11 +1302,11 @@ public:
   }
 
   // Pressure tensor
-  boost::optional<Utils::VectorXd<9>>
+  std::optional<Utils::VectorXd<9>>
   get_node_pressure_tensor(Utils::Vector3i const &node) const override {
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
-      return {boost::none};
+      return std::nullopt;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
     auto tensor = lbm::accessor::PressureTensor::get(pdf_field, bc->cell);
@@ -1368,16 +1386,16 @@ public:
     return numeric_cast<double>(m_kT);
   }
 
-  [[nodiscard]] boost::optional<uint64_t> get_rng_state() const override {
-    auto const *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
+  [[nodiscard]] std::optional<uint64_t> get_rng_state() const override {
+    auto const cm = std::get_if<CollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.) {
-      return {boost::none};
+      return std::nullopt;
     }
     return {static_cast<uint64_t>(cm->time_step_)};
   }
 
   void set_rng_state(uint64_t counter) override {
-    auto *cm = boost::get<CollisionModelThermalized>(&*m_collision_model);
+    auto const cm = std::get_if<CollisionModelThermalized>(&*m_collision_model);
     if (!cm or m_kT == 0.) {
       throw std::runtime_error("This LB instance is unthermalized");
     }

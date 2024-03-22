@@ -24,10 +24,7 @@
 #include "Particle.hpp"
 #include "observables/ParticleTraits.hpp"
 
-#include <utils/Span.hpp>
-
 #include <cstddef>
-#include <functional>
 #include <vector>
 
 namespace Observables {
@@ -37,7 +34,8 @@ public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+  evaluate(boost::mpi::communicator const &comm,
+           ParticleReferenceRange const &local_particles,
            const ParticleObservables::traits<Particle> &traits) const override;
 
   std::vector<std::size_t> shape() const override {

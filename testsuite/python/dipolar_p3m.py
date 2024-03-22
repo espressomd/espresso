@@ -30,7 +30,7 @@ class MagnetostaticsP3M(ut.TestCase):
 
     def tearDown(self):
         self.system.part.clear()
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
 
     def test_dp3m(self):
         self.system.time_step = 0.01
@@ -58,7 +58,7 @@ class MagnetostaticsP3M(ut.TestCase):
         # check metallic case
         dp3m = espressomd.magnetostatics.DipolarP3M(
             prefactor=prefactor, epsilon='metallic', tune=False, **dp3m_params)
-        self.system.actors.add(dp3m)
+        self.system.magnetostatics.solver = dp3m
         self.system.integrator.run(0, recalc_forces=True)
         energy = self.system.analysis.energy()['dipolar']
         tol = 1e-5
@@ -80,9 +80,9 @@ class MagnetostaticsP3M(ut.TestCase):
             p2.convert_vector_space_to_body(p2.torque_lab)])
 
         # MDLC cancels out dipole correction
-        self.system.actors.remove(dp3m)
+        self.system.magnetostatics.clear()
         mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
-        self.system.actors.add(mdlc)
+        self.system.magnetostatics.solver = mdlc
         self.assertAlmostEqual(mdlc.prefactor, 1.1, delta=1e-12)
 
         # keep current values as reference to check for MDLC dipole correction
@@ -91,7 +91,7 @@ class MagnetostaticsP3M(ut.TestCase):
         ref_mdlc_forces_metallic = np.copy(partcls.f)
         ref_mdlc_torque_metallic = np.copy(partcls.torque_lab)
 
-        # actors should remain in a valid state after a cell system reset
+        # solvers should remain in a valid state after a cell system reset
         self.system.box_l = self.system.box_l
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
@@ -106,7 +106,7 @@ class MagnetostaticsP3M(ut.TestCase):
         np.testing.assert_allclose(mdlc_energy, ref_mdlc_energy_metallic,
                                    atol=1e-12)
 
-        self.system.actors.clear()
+        self.system.magnetostatics.clear()
 
         # check non-metallic case
         tol = 1e-10
@@ -119,7 +119,7 @@ class MagnetostaticsP3M(ut.TestCase):
             ref_dp3m_torque = ref_dp3m_torque_metallic - prefactor * t_correction
             dp3m = espressomd.magnetostatics.DipolarP3M(
                 prefactor=prefactor, epsilon=epsilon, tune=False, **dp3m_params)
-            self.system.actors.add(dp3m)
+            self.system.magnetostatics.solver = dp3m
             self.system.integrator.run(0, recalc_forces=True)
             dp3m_forces = np.copy(partcls.f)
             dp3m_torque = np.array([
@@ -134,9 +134,9 @@ class MagnetostaticsP3M(ut.TestCase):
             ref_mdlc_energy = ref_mdlc_energy_metallic
             ref_mdlc_forces = ref_mdlc_forces_metallic
             ref_mdlc_torque = ref_mdlc_torque_metallic
-            self.system.actors.remove(dp3m)
+            self.system.magnetostatics.clear()
             mdlc = espressomd.magnetostatics.DLC(actor=dp3m, **mdlc_params)
-            self.system.actors.add(mdlc)
+            self.system.magnetostatics.solver = mdlc
             self.system.integrator.run(0, recalc_forces=True)
             mdlc_forces = np.copy(partcls.f)
             mdlc_torque = np.copy(partcls.torque_lab)
@@ -145,7 +145,7 @@ class MagnetostaticsP3M(ut.TestCase):
             np.testing.assert_allclose(mdlc_torque, ref_mdlc_torque, atol=tol)
             np.testing.assert_allclose(mdlc_energy, ref_mdlc_energy, atol=tol)
 
-            self.system.actors.clear()
+            self.system.magnetostatics.clear()
 
 
 if __name__ == "__main__":
