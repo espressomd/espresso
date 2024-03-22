@@ -32,7 +32,9 @@
 #include "Implementation.hpp"
 #include "LBWalberla.hpp"
 
+#ifdef WALBERLA
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+#endif
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
@@ -266,7 +268,7 @@ Utils::Vector3d ParticleCoupling::get_noise_term(Particle const &p) const {
 // TODO: verify in which order to subtract offset and divide by agrid
 void ParticleCoupling::commit(System::System const &system,
                               std::vector<Particle *> const &particles) {
-  if (particles.size() == 0ul) {
+  if (particles.empty()) {
     return;
   }
   auto const agrid = m_lb.get_agrid();
@@ -315,6 +317,7 @@ void ParticleCoupling::commit(System::System const &system,
     return;
   }
   std::vector<double> res{};
+#ifdef WALBERLA
   system.lb.connect([&](LB::Solver::Implementation const &impl) {
     using lb_value_type = std::shared_ptr<LBWalberla>;
     if (impl.solver.has_value()) {
@@ -325,6 +328,7 @@ void ParticleCoupling::commit(System::System const &system,
       }
     }
   });
+#endif
 
   auto const &domain_lower_corner = local_geo.my_left();
   auto const &domain_upper_corner = local_geo.my_right();
@@ -372,6 +376,7 @@ void ParticleCoupling::commit(System::System const &system,
       ++it_positions_force_coupling;
     }
   }
+#ifdef WALBERLA
   system.lb.connect([&](LB::Solver::Implementation const &impl) {
     using lb_value_type = std::shared_ptr<LBWalberla>;
     if (impl.solver.has_value()) {
@@ -382,6 +387,7 @@ void ParticleCoupling::commit(System::System const &system,
       }
     }
   });
+#endif
 }
 
 void ParticleCoupling::kernel(Particle &p) {
@@ -454,6 +460,7 @@ void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
   auto &system = System::get_system();
   if (lb_particle_coupling.couple_to_md) {
     auto is_gpu = false;
+#ifdef WALBERLA
     system.lb.connect([&is_gpu](LB::Solver::Implementation const &impl) {
       using lb_value_type = std::shared_ptr<LBWalberla>;
       if (impl.solver.has_value()) {
@@ -463,6 +470,7 @@ void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
         }
       }
     });
+#endif
     auto &lb = system.lb;
     if (lb.is_solver_set()) {
       ParticleCoupling coupling{lb, couple_virtual, time_step};
