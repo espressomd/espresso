@@ -210,14 +210,15 @@ class LBInterpolationWalberlaSinglePrecisionCPU(LBInterpolation, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
 
+
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBInterpolationWalberlaDoublePrecisionGPU(LBInterpolation, ut.TestCase):
 
-   """Test for the Walberla implementation of the LB in double-precision."""
+    """Test for the Walberla implementation of the LB in double-precision."""
 
-   lb_class = espressomd.lb.LBFluidWalberlaGPU
-   lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingGPU()
