@@ -60,7 +60,8 @@ particle = system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
 
 
 lb_params = {'agrid': 1, 'density': 1, 'kinematic_viscosity': 1, 'tau': 0.01,
-             'ext_force_density': [0, 0, -1.0 / (box_l**3)]}
+             'ext_force_density': [0, 0, -1.0 / (box_l**3)],
+             'single_precision': False}
 
 if args.gpu:
     lbf = espressomd.lb.LBFluidWalberlaGPU(**lb_params)
@@ -69,20 +70,20 @@ else:
 system.lb = lbf
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 print(lbf.get_params())
-system.integrator.run(steps=100)
-#f_list = np.zeros((10, 3))
-# for i in range(10):
-#    f_list[i] = particle.f
-#    system.integrator.run(steps=10)
-#    print(i)
 
-#fig1 = plt.figure()
-#ax = fig1.add_subplot(111)
-#ax.plot(f_list[:, 0], label=r"$F_x$")
-#ax.plot(f_list[:, 1], label=r"$F_y$")
-#ax.plot(f_list[:, 2], label=r"$F_z$")
-# ax.legend()
-# ax.set_xlabel("t")
-# ax.set_ylabel("F")
+f_list = np.zeros((10, 3))
+for i in range(10):
+    f_list[i] = particle.f
+    system.integrator.run(steps=10)
+    print(i)
 
-# plt.show()
+fig1 = plt.figure()
+ax = fig1.add_subplot(111)
+ax.plot(f_list[:, 0], label=r"$F_x$")
+ax.plot(f_list[:, 1], label=r"$F_y$")
+ax.plot(f_list[:, 2], label=r"$F_z$")
+ax.legend()
+ax.set_xlabel("t")
+ax.set_ylabel("F")
+
+plt.show()

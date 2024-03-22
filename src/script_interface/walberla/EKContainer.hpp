@@ -91,6 +91,13 @@ class EKContainer : public ObjectList<EKSpecies> {
     }
   };
 
+  struct GetPoissonSolverParameters {
+    template <typename T>
+    VariantMap operator()(std::shared_ptr<T> const &solver) const {
+      return solver->get_parameters();
+    }
+  };
+
   auto extract_solver(Variant const &v) {
     std::optional<decltype(m_poisson_solver)> solver;
     auto so_ptr = get_value<ObjectRef>(v);
@@ -165,8 +172,14 @@ protected:
     }
     if (method == "deallocate_fields") {
       clear();
-      m_poisson_solver = std::shared_ptr<EKNone>();
-      m_ek_container->set_poisson_solver(nullptr);
+#ifdef WALBERLA_FFT
+      auto poisson_solver = std::make_shared<EKNone>();
+      poisson_solver->do_construct(
+          std::visit(GetPoissonSolverParameters{}, m_poisson_solver));
+      m_poisson_solver = poisson_solver;
+      m_ek_container->set_poisson_solver(
+          std::visit(GetPoissonSolverCoreInstance{}, m_poisson_solver));
+#endif
       return {};
     }
 

@@ -400,7 +400,6 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
     // check box shifts
     if (rank == 0) {
-      auto const &box_geo = *system.box_geo;
       auto constexpr reference_shifts =
           std::array<Utils::Vector3i, 8>{{{{0, 0, 0}},
                                           {{0, 0, 8}},
@@ -415,7 +414,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const cutoff = 8 / world.size();
       auto const agrid = params.agrid;
       {
-        auto const shifts = positions_in_halo({0., 0., 0.}, box_geo, agrid);
+        auto const shifts = positions_in_halo(system, {0., 0., 0.}, agrid);
         BOOST_REQUIRE_EQUAL(shifts.size(), cutoff);
         for (std::size_t i = 0; i < shifts.size(); ++i) {
           BOOST_REQUIRE_EQUAL(shifts[i], reference_shifts[i]);
@@ -423,14 +422,14 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       }
       {
         auto const reference_shift = Utils::Vector3d{1., 1., 1.};
-        auto const shifts = positions_in_halo({1., 1., 1.}, box_geo, agrid);
+        auto const shifts = positions_in_halo(system, {1., 1., 1.}, agrid);
         BOOST_REQUIRE_EQUAL(shifts.size(), 1);
         BOOST_REQUIRE_EQUAL(shifts[0], reference_shift);
       }
       {
         auto const reference_origin = Utils::Vector3d{1., 2., 0.};
         auto const reference_shift = Utils::Vector3d{1., 2., 8.};
-        auto const shifts = positions_in_halo({1., 2., 0.}, box_geo, agrid);
+        auto const shifts = positions_in_halo(system, {1., 2., 0.}, agrid);
         BOOST_REQUIRE_EQUAL(shifts.size(), 2);
         BOOST_REQUIRE_EQUAL(shifts[0], reference_origin);
         BOOST_REQUIRE_EQUAL(shifts[1], reference_shift);
@@ -623,6 +622,10 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(lb_impl->get_density_at_pos(vec, true), NoLBActive);
     BOOST_CHECK_THROW(lb_impl->get_velocity_at_pos(vec, true), NoLBActive);
     BOOST_CHECK_THROW(lb_impl->add_force_at_pos(vec, vec), NoLBActive);
+    BOOST_CHECK_THROW(lb_impl->add_force_density_simplified_cuda({}, {}),
+                      NoLBActive);
+    BOOST_CHECK_THROW(lb_impl->get_velocity_at_pos_simplified_cuda({}),
+                      NoLBActive);
     lb.reset();
   }
 }

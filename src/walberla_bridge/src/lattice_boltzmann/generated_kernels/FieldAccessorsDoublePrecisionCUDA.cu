@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2024 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
  *
  * This file is part of ESPResSo.
@@ -92,7 +92,7 @@ namespace lbm {
 namespace accessor {
 
 namespace Population {
-__global__ void kernel_get(
+__global__ void kernel_get_interval(
     cuda::FieldAccessor<double> pdf,
     double *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
@@ -120,7 +120,35 @@ __global__ void kernel_get(
   }
 }
 
-__global__ void kernel_set(
+__global__ void kernel_get(
+    cuda::FieldAccessor<double> pdf,
+    double *RESTRICT const pop) {
+  pdf.set(blockIdx, threadIdx);
+  if (pdf.isValidPosition()) {
+    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 19u);
+    pop[0u] = pdf.get(0);
+    pop[1u] = pdf.get(1);
+    pop[2u] = pdf.get(2);
+    pop[3u] = pdf.get(3);
+    pop[4u] = pdf.get(4);
+    pop[5u] = pdf.get(5);
+    pop[6u] = pdf.get(6);
+    pop[7u] = pdf.get(7);
+    pop[8u] = pdf.get(8);
+    pop[9u] = pdf.get(9);
+    pop[10u] = pdf.get(10);
+    pop[11u] = pdf.get(11);
+    pop[12u] = pdf.get(12);
+    pop[13u] = pdf.get(13);
+    pop[14u] = pdf.get(14);
+    pop[15u] = pdf.get(15);
+    pop[16u] = pdf.get(16);
+    pop[17u] = pdf.get(17);
+    pop[18u] = pdf.get(18);
+  }
+}
+
+__global__ void kernel_set_interval(
     cuda::FieldAccessor<double> pdf,
     const double *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
@@ -145,6 +173,34 @@ __global__ void kernel_set(
     pdf.get(16) = pop[offset + 16u];
     pdf.get(17) = pop[offset + 17u];
     pdf.get(18) = pop[offset + 18u];
+  }
+}
+
+__global__ void kernel_set(
+    cuda::FieldAccessor<double> pdf,
+    const double *RESTRICT const pop) {
+  pdf.set(blockIdx, threadIdx);
+  if (pdf.isValidPosition()) {
+    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 19u);
+    pdf.get(0) = pop[0u];
+    pdf.get(1) = pop[1u];
+    pdf.get(2) = pop[2u];
+    pdf.get(3) = pop[3u];
+    pdf.get(4) = pop[4u];
+    pdf.get(5) = pop[5u];
+    pdf.get(6) = pop[6u];
+    pdf.get(7) = pop[7u];
+    pdf.get(8) = pop[8u];
+    pdf.get(9) = pop[9u];
+    pdf.get(10) = pop[10u];
+    pdf.get(11) = pop[11u];
+    pdf.get(12) = pop[12u];
+    pdf.get(13) = pop[13u];
+    pdf.get(14) = pop[14u];
+    pdf.get(15) = pop[15u];
+    pdf.get(16) = pop[16u];
+    pdf.get(17) = pop[17u];
+    pdf.get(18) = pop[18u];
   }
 }
 
@@ -193,7 +249,7 @@ std::vector<double> get(
     CellInterval const &ci) {
   thrust::device_vector<double> dev_data(ci.numCells() * 19u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-  auto kernel = cuda::make_kernel(kernel_get);
+  auto kernel = cuda::make_kernel(kernel_get_interval);
   kernel.addFieldIndexingParam(cuda::FieldIndexing<double>::interval(*pdf_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
@@ -208,7 +264,7 @@ void set(
     CellInterval const &ci) {
   thrust::device_vector<double> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-  auto kernel = cuda::make_kernel(kernel_set);
+  auto kernel = cuda::make_kernel(kernel_set_interval);
   kernel.addFieldIndexingParam(cuda::FieldIndexing<double>::interval(*pdf_field, ci));
   kernel.addParam(const_cast<const double *>(dev_data_ptr));
   kernel();
@@ -216,7 +272,7 @@ void set(
 } // namespace Population
 
 namespace Vector {
-__global__ void kernel_get(
+__global__ void kernel_get_interval(
     cuda::FieldAccessor<double> vec,
     double *const out) {
   vec.set(blockIdx, threadIdx);
@@ -228,7 +284,19 @@ __global__ void kernel_get(
   }
 }
 
-__global__ void kernel_set(
+__global__ void kernel_get(
+    cuda::FieldAccessor<double> vec,
+    double *const out) {
+  vec.set(blockIdx, threadIdx);
+  if (vec.isValidPosition()) {
+    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
+    out[0u] = vec.get(0);
+    out[1u] = vec.get(1);
+    out[2u] = vec.get(2);
+  }
+}
+
+__global__ void kernel_set_interval(
     cuda::FieldAccessor<double> vec,
     const double *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
@@ -240,7 +308,19 @@ __global__ void kernel_set(
   }
 }
 
-__global__ void kernel_add(
+__global__ void kernel_set(
+    cuda::FieldAccessor<double> vec,
+    const double *RESTRICT const u) {
+  vec.set(blockIdx, threadIdx);
+  if (vec.isValidPosition()) {
+    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
+    vec.get(0) = u[0u];
+    vec.get(1) = u[1u];
+    vec.get(2) = u[2u];
+  }
+}
+
+__global__ void kernel_add_interval(
     cuda::FieldAccessor<double> vec,
     const double *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
@@ -250,6 +330,151 @@ __global__ void kernel_add(
     vec.get(1) += u[offset + 1u];
     vec.get(2) += u[offset + 2u];
   }
+}
+
+__global__ void kernel_add(
+    cuda::FieldAccessor<double> vec,
+    const double *RESTRICT const u) {
+  vec.set(blockIdx, threadIdx);
+  if (vec.isValidPosition()) {
+    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
+    vec.get(0) += u[0u];
+    vec.get(1) += u[1u];
+    vec.get(2) += u[2u];
+  }
+}
+
+__global__ void kernel_get_part_coupling(cuda::FieldAccessor<double> vec,
+                                         double const *RESTRICT const pos,
+                                         double *RESTRICT const vel,
+                                         uint n_part, uint gl) {
+
+  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
+                            blockDim.x * blockIdx.x + threadIdx.x;
+
+  vec.set({0u, 0u, 0u}, {0u, 0u, 0u});
+  if (vec.isValidPosition() and part_index < n_part) {
+    auto const array_offset = part_index * 3u;
+    int corner[3];
+    double distance[3];
+    for (unsigned int dim = 0u; dim < 3u; ++dim) {
+      auto const fractional_index = pos[array_offset + dim] - 0.5;
+      auto const nmp = floorf(fractional_index);
+      distance[dim] = fractional_index - nmp - 0.5;
+      corner[dim] = __double2int_rn(nmp) + gl;
+    }
+    double w_x[2] = {0.5 - distance[0], 0.5 + distance[0]};
+    double w_y[2] = {0.5 - distance[1], 0.5 + distance[1]};
+    double w_z[2] = {0.5 - distance[2], 0.5 + distance[2]};
+    for (int i = 0; i < 2; i++) {
+      auto const cx = corner[0] + i;
+      auto const wx = w_x[static_cast<unsigned>(i)];
+      for (int j = 0; j < 2; j++) {
+        auto const cy = corner[1] + j;
+        auto const wxy = wx * w_y[static_cast<unsigned>(j)];
+        for (int k = 0; k < 2; k++) {
+          auto const cz = corner[2] + k;
+          auto const weight = wxy * w_z[static_cast<unsigned>(k)];
+          vel[array_offset + 0u] += weight * vec.getNeighbor(cx, cy, cz, 0);
+          vel[array_offset + 1u] += weight * vec.getNeighbor(cx, cy, cz, 1);
+          vel[array_offset + 2u] += weight * vec.getNeighbor(cx, cy, cz, 2);
+        }
+      }
+    }
+  }
+}
+
+__global__ void kernel_set_part_coupling(cuda::FieldAccessor<double> vec,
+                                         double const *RESTRICT const pos,
+                                         double const *RESTRICT const forces,
+                                         uint n_part, uint gl) {
+
+  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
+                            blockDim.x * blockIdx.x + threadIdx.x;
+
+  vec.set({0u, 0u, 0u}, {0u, 0u, 0u});
+  if (vec.isValidPosition() and part_index < n_part) {
+    auto const array_offset = part_index * 3u;
+    int corner[3];
+    double distance[3];
+    for (unsigned int dim = 0u; dim < 3u; ++dim) {
+      auto const fractional_index = pos[array_offset + dim] - 0.5f;
+      auto const nmp = floorf(fractional_index);
+      distance[dim] = fractional_index - nmp - 0.5;
+      corner[dim] = __double2int_rn(nmp) + static_cast<int>(gl);
+    }
+    double w_x[2] = {0.5f - distance[0], 0.5f + distance[0]};
+    double w_y[2] = {0.5f - distance[1], 0.5f + distance[1]};
+    double w_z[2] = {0.5f - distance[2], 0.5f + distance[2]};
+    for (int i = 0; i < 2; i++) {
+      auto const cx = corner[0] + i;
+      auto const wx = w_x[static_cast<unsigned>(i)];
+      for (int j = 0; j < 2; j++) {
+        auto const cy = corner[1] + j;
+        auto const wxy = wx * w_y[static_cast<unsigned>(j)];
+        for (int k = 0; k < 2; k++) {
+          auto const cz = corner[2] + k;
+          auto const weight = wxy * w_z[static_cast<unsigned>(k)];
+          atomicAdd(&vec.getNeighbor(cx, cy, cz, 0),
+                    weight * forces[array_offset + 0u]);
+          atomicAdd(&vec.getNeighbor(cx, cy, cz, 1),
+                    weight * forces[array_offset + 1u]);
+          atomicAdd(&vec.getNeighbor(cx, cy, cz, 2),
+                    weight * forces[array_offset + 2u]);
+        }
+      }
+    }
+  }
+}
+
+inline dim3 calculate_dim_grid(unsigned const threads_x,
+                               unsigned const blocks_per_grid_y,
+                               unsigned const threads_per_block) {
+  assert(threads_x >= 1);
+  assert(blocks_per_grid_y >= 1);
+  assert(threads_per_block >= 1);
+  auto const threads_y = threads_per_block * blocks_per_grid_y;
+  auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
+  return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+}
+
+std::vector<double> get_part_coupling(cuda::GPUField<double> const *vec_field,
+                                      std::vector<double> const &pos, uint gl) {
+  thrust::device_vector<double> dev_pos(pos.begin(), pos.end());
+  thrust::device_vector<double> dev_vel(pos.size());
+  auto const dev_pos_ptr = thrust::raw_pointer_cast(dev_pos.data());
+  auto const dev_vel_ptr = thrust::raw_pointer_cast(dev_vel.data());
+
+  auto const threads_per_block = 64u;
+  auto const n_part = pos.size() / 3ul;
+  dim3 dim_grid =
+      calculate_dim_grid(static_cast<unsigned>(n_part), 4u, threads_per_block);
+  kernel_get_part_coupling<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+      cuda::FieldIndexing<double>::withGhostLayerXYZ(*vec_field, gl)
+          .gpuAccess(),
+      dev_pos_ptr, dev_vel_ptr, static_cast<uint>(pos.size() / 3ul), gl);
+
+  std::vector<double> out(pos.size());
+  thrust::copy(dev_vel.begin(), dev_vel.end(), out.data());
+  return out;
+}
+
+void set_part_coupling(cuda::GPUField<double> const *vec_field,
+                       std::vector<double> const &pos,
+                       std::vector<double> const &forces, uint gl) {
+  thrust::device_vector<double> dev_pos(pos.begin(), pos.end());
+  thrust::device_vector<double> dev_for(forces.begin(), forces.end());
+  auto const dev_pos_ptr = thrust::raw_pointer_cast(dev_pos.data());
+  auto const dev_for_ptr = thrust::raw_pointer_cast(dev_for.data());
+
+  auto const threads_per_block = 64u;
+  auto const n_part = pos.size() / 3ul;
+  dim3 dim_grid =
+      calculate_dim_grid(static_cast<unsigned>(n_part), 4u, threads_per_block);
+  kernel_set_part_coupling<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+      cuda::FieldIndexing<double>::withGhostLayerXYZ(*vec_field, gl)
+          .gpuAccess(),
+      dev_pos_ptr, dev_for_ptr, static_cast<uint>(pos.size() / 3ul), gl);
 }
 
 Vector3<double> get(
@@ -293,6 +518,83 @@ void add(
   kernel();
 }
 
+__global__ void kernel_add_at(cuda::FieldAccessor<double> vec,
+                              const double *RESTRICT const v,
+                              const int *RESTRICT const c, uint size) {
+  vec.set(blockIdx, threadIdx);
+  if (vec.isValidPosition()) {
+    auto const x = threadIdx.x;
+    auto const y = blockIdx.x;
+    auto const z = blockIdx.y;
+    for (uint offset = 0u; offset < size; offset += 3u) {
+      auto const x_ = c[offset + 0u];
+      auto const y_ = c[offset + 1u];
+      auto const z_ = c[offset + 2u];
+      if (x == x_ and y == y_ and z == z_) {
+        vec.get(0) += v[offset + 0u];
+        vec.get(1) += v[offset + 1u];
+        vec.get(2) += v[offset + 2u];
+      }
+    }
+  }
+}
+
+__global__ void kernel_get_at(cuda::FieldAccessor<double> vec,
+                              double *RESTRICT const v,
+                              const int *RESTRICT const c, uint size) {
+  vec.set(blockIdx, threadIdx);
+  if (vec.isValidPosition()) {
+    auto const x = threadIdx.x;
+    auto const y = blockIdx.x;
+    auto const z = blockIdx.y;
+    for (uint offset = 0u; offset < size; offset += 3u) {
+      auto const x_ = c[offset + 0u];
+      auto const y_ = c[offset + 1u];
+      auto const z_ = c[offset + 2u];
+      if (x == x_ and y == y_ and z == z_) {
+        v[offset + 0u] = vec.get(0);
+        v[offset + 1u] = vec.get(1);
+        v[offset + 2u] = vec.get(2);
+      }
+    }
+  }
+}
+
+void add_at(cuda::GPUField<double> *vec_field, std::vector<double> const &vecs,
+            std::vector<cell_idx_t> const &cells) {
+  CellInterval ci = vec_field->xyzSizeWithGhostLayer();
+  thrust::device_vector<double> dev_data(vecs.begin(), vecs.end());
+  thrust::device_vector<cell_idx_t> dev_cell(cells.begin(), cells.end());
+  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+  auto const dev_cell_ptr = thrust::raw_pointer_cast(dev_cell.data());
+  auto kernel = cuda::make_kernel(kernel_add_at);
+  kernel.addFieldIndexingParam(
+      cuda::FieldIndexing<double>::interval(*vec_field, ci));
+  kernel.addParam(const_cast<const double *>(dev_data_ptr));
+  kernel.addParam(const_cast<const int *>(dev_cell_ptr));
+  kernel.addParam(static_cast<unsigned int>(cells.size()));
+  kernel();
+}
+
+std::vector<double> get_at(cuda::GPUField<double> *vec_field,
+                           std::vector<cell_idx_t> const &cells) {
+  CellInterval ci = vec_field->xyzSizeWithGhostLayer();
+  thrust::device_vector<double> dev_data(cells.size());
+  thrust::device_vector<cell_idx_t> dev_cell(cells.begin(), cells.end());
+  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+  auto const dev_cell_ptr = thrust::raw_pointer_cast(dev_cell.data());
+  auto kernel = cuda::make_kernel(kernel_get_at);
+  kernel.addFieldIndexingParam(
+      cuda::FieldIndexing<double>::interval(*vec_field, ci));
+  kernel.addParam(dev_data_ptr);
+  kernel.addParam(const_cast<const int *>(dev_cell_ptr));
+  kernel.addParam(static_cast<unsigned int>(cells.size()));
+  kernel();
+  std::vector<double> out(cells.size());
+  thrust::copy(dev_data.begin(), dev_data.end(), out.data());
+  return out;
+}
+
 void broadcast(
     cuda::GPUField<double> *vec_field,
     Vector3<double> const &vec) {
@@ -322,7 +624,7 @@ std::vector<double> get(
     CellInterval const &ci) {
   thrust::device_vector<double> dev_data(ci.numCells() * 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-  auto kernel = cuda::make_kernel(kernel_get);
+  auto kernel = cuda::make_kernel(kernel_get_interval);
   kernel.addFieldIndexingParam(cuda::FieldIndexing<double>::interval(*vec_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
@@ -337,7 +639,7 @@ void set(
     CellInterval const &ci) {
   thrust::device_vector<double> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-  auto kernel = cuda::make_kernel(kernel_set);
+  auto kernel = cuda::make_kernel(kernel_set_interval);
   kernel.addFieldIndexingParam(cuda::FieldIndexing<double>::interval(*vec_field, ci));
   kernel.addParam(const_cast<const double *>(dev_data_ptr));
   kernel();
@@ -595,7 +897,6 @@ __global__ void kernel_sum(
     const double momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const double vel2Term = f_12 + f_13 + f_5;
     const double momdensity_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     const double md_0 = force.get(0) * 0.50000000000000000 + momdensity_0;
     const double md_1 = force.get(1) * 0.50000000000000000 + momdensity_1;
     const double md_2 = force.get(2) * 0.50000000000000000 + momdensity_2;

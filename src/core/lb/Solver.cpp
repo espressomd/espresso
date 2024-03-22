@@ -176,9 +176,10 @@ Solver::get_coupling_interpolated_velocity(Utils::Vector3d const &pos) const {
   return std::visit(
       [&](auto &ptr) {
         auto const agrid = ptr->get_agrid();
+        auto const tau = ptr->get_tau();
         auto const res = ptr->get_velocity_at_pos(pos / agrid, true);
         assert(res);
-        return *res * (ptr->get_agrid() / ptr->get_tau());
+        return *res * (agrid / tau);
       },
       *impl->solver);
 }

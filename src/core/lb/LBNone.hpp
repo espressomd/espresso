@@ -37,8 +37,17 @@ struct LBNone {
                                            bool) const {
     throw NoLBActive{};
   }
-  bool add_force_at_pos(Utils::Vector3d const &pos,
-                        Utils::Vector3d const &force) const {
+  bool add_force_at_pos(Utils::Vector3d const &,
+                        Utils::Vector3d const &) const {
+    throw NoLBActive{};
+  }
+  void add_force_density_simplified_cuda(
+      std::vector<Utils::Vector3d> const &,
+      std::vector<Utils::Vector3d> const &) const {
+    throw NoLBActive{};
+  }
+  std::vector<double> get_velocity_at_pos_simplified_cuda(
+      std::vector<Utils::Vector3d> const &) const {
     throw NoLBActive{};
   }
   Utils::Vector3d get_momentum() const { throw NoLBActive{}; }

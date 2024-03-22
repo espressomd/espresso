@@ -23,6 +23,7 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "lb/Solver.hpp"
+#include "system/System.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
@@ -80,8 +81,8 @@ void add_md_force(LB::Solver &lb, Utils::Vector3d const &pos,
                   Utils::Vector3d const &force, double time_step);
 
 // internal function exposed for unit testing
-std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
-                                               BoxGeometry const &box,
+std::vector<Utils::Vector3d> positions_in_halo(System::System const &system,
+                                               Utils::Vector3d const &pos,
                                                double agrid);
 
 // internal function exposed for unit testing
@@ -132,21 +133,12 @@ namespace LB {
 void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
                       ParticleRange const &ghost_particles, double time_step);
 
-//#define LB_VECTORS_FORCE_COUPLING
 class ParticleCoupling {
   LB::Solver &m_lb;
   bool m_couple_virtual;
   bool m_thermalized;
   double m_time_step;
   double m_noise_pref_wo_gamma;
-
-#ifdef LB_VECTORS_FORCE_COUPLING
-  std::vector<Utils::Vector3d> m_forces;
-  std::vector<Utils::Vector3d> m_positions;
-
-public:
-  void commit();
-#endif
 
 public:
   ParticleCoupling(LB::Solver &lb, bool couple_virtual, double time_step,
@@ -169,6 +161,8 @@ public:
 
   Utils::Vector3d get_noise_term(Particle const &p) const;
   void kernel(Particle &p);
+  void commit(System::System const &system,
+              std::vector<Particle *> const &particles);
 
   /**
    * @brief Calculate particle drift velocity offset due to ENGINE and

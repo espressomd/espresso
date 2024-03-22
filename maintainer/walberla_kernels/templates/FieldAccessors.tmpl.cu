@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2024 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
  *
  * This file is part of ESPResSo.
@@ -91,10 +91,10 @@ namespace accessor {
 
 namespace Population
 {
-   __global__ void kernel_get(
+    __global__ void kernel_get_interval(
         cuda::FieldAccessor< {{dtype}} > pdf,
         {{dtype}} * RESTRICT const pop )
-   {
+    {
         pdf.set( blockIdx, threadIdx );
         if (pdf.isValidPosition()) {
             const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
@@ -102,12 +102,25 @@ namespace Population
                 pop[offset + {{i}}u] = pdf.get({{i}});
             {% endfor -%}
         }
-   }
+    }
 
-   __global__ void kernel_set(
+    __global__ void kernel_get(
+        cuda::FieldAccessor< {{dtype}} > pdf,
+        {{dtype}} * RESTRICT const pop )
+    {
+        pdf.set( blockIdx, threadIdx );
+        if (pdf.isValidPosition()) {
+            const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
+            {% for i in range(Q) -%}
+                pop[{{i}}u] = pdf.get({{i}});
+            {% endfor -%}
+        }
+    }
+
+    __global__ void kernel_set_interval(
         cuda::FieldAccessor< {{dtype}} > pdf,
         const {{dtype}} * RESTRICT const pop )
-   {
+    {
         pdf.set( blockIdx, threadIdx );
         if (pdf.isValidPosition()) {
             const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
@@ -115,7 +128,20 @@ namespace Population
                 pdf.get({{i}}) = pop[offset + {{i}}u];
             {% endfor -%}
         }
-   }
+    }
+
+    __global__ void kernel_set(
+        cuda::FieldAccessor< {{dtype}} > pdf,
+        const {{dtype}} * RESTRICT const pop )
+    {
+        pdf.set( blockIdx, threadIdx );
+        if (pdf.isValidPosition()) {
+            const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
+            {% for i in range(Q) -%}
+                pdf.get({{i}}) = pop[{{i}}u];
+            {% endfor -%}
+        }
+    }
 
     std::array<{{dtype}}, {{Q}}u> get(
         cuda::GPUField< {{dtype}} > const * pdf_field,
@@ -166,7 +192,7 @@ namespace Population
     {
         thrust::device_vector< {{dtype}} > dev_data(ci.numCells() * {{Q}}u);
         auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-        auto kernel = cuda::make_kernel( kernel_get );
+        auto kernel = cuda::make_kernel( kernel_get_interval );
         kernel.addFieldIndexingParam( cuda::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( dev_data_ptr );
         kernel();
@@ -182,7 +208,7 @@ namespace Population
     {
         thrust::device_vector< {{dtype}} > dev_data(values.begin(), values.end());
         auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-        auto kernel = cuda::make_kernel( kernel_set );
+        auto kernel = cuda::make_kernel( kernel_set_interval );
         kernel.addFieldIndexingParam( cuda::FieldIndexing< {{dtype}} >::interval( *pdf_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
         kernel();
@@ -191,7 +217,7 @@ namespace Population
 
 namespace Vector
 {
-    __global__ void kernel_get(
+    __global__ void kernel_get_interval(
         cuda::FieldAccessor< {{dtype}} > vec,
         {{dtype}} * const out )
     {
@@ -204,7 +230,20 @@ namespace Vector
         }
     }
 
-    __global__ void kernel_set(
+    __global__ void kernel_get(
+        cuda::FieldAccessor< {{dtype}} > vec,
+        {{dtype}} * const out )
+    {
+        vec.set( blockIdx, threadIdx );
+        if (vec.isValidPosition()) {
+            const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
+            {% for i in range(D) -%}
+                out[{{i}}u] = vec.get({{i}});
+            {% endfor %}
+        }
+    }
+
+    __global__ void kernel_set_interval(
         cuda::FieldAccessor< {{dtype}} > vec,
         const {{dtype}} * RESTRICT const u )
     {
@@ -217,7 +256,20 @@ namespace Vector
         }
     }
 
-    __global__ void kernel_add(
+    __global__ void kernel_set(
+        cuda::FieldAccessor< {{dtype}} > vec,
+        const {{dtype}} * RESTRICT const u )
+    {
+        vec.set( blockIdx, threadIdx );
+        if (vec.isValidPosition()) {
+            const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
+            {% for i in range(D) -%}
+                vec.get({{i}}) = u[{{i}}u];
+            {% endfor %}
+        }
+    }
+
+    __global__ void kernel_add_interval(
         cuda::FieldAccessor< {{dtype}} > vec,
         const {{dtype}} * RESTRICT const u )
     {
@@ -226,6 +278,19 @@ namespace Vector
             const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
             {% for i in range(D) -%}
                 vec.get({{i}}) += u[offset + {{i}}u];
+            {% endfor %}
+        }
+    }
+
+    __global__ void kernel_add(
+        cuda::FieldAccessor< {{dtype}} > vec,
+        const {{dtype}} * RESTRICT const u )
+    {
+        vec.set( blockIdx, threadIdx );
+        if (vec.isValidPosition()) {
+            const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
+            {% for i in range(D) -%}
+                vec.get({{i}}) += u[{{i}}u];
             {% endfor %}
         }
     }
@@ -306,7 +371,7 @@ namespace Vector
     {
         thrust::device_vector< {{dtype}} > dev_data(ci.numCells() * {{D}}u);
         auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-        auto kernel = cuda::make_kernel( kernel_get );
+        auto kernel = cuda::make_kernel( kernel_get_interval );
         kernel.addFieldIndexingParam( cuda::FieldIndexing< {{dtype}} >::interval( *vec_field, ci ) );
         kernel.addParam( dev_data_ptr );
         kernel();
@@ -322,7 +387,7 @@ namespace Vector
     {
         thrust::device_vector< {{dtype}} > dev_data(values.begin(), values.end());
         auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-        auto kernel = cuda::make_kernel( kernel_set );
+        auto kernel = cuda::make_kernel( kernel_set_interval );
         kernel.addFieldIndexingParam( cuda::FieldIndexing< {{dtype}} >::interval( *vec_field, ci ) );
         kernel.addParam( const_cast<const {{dtype}} *>(dev_data_ptr) );
         kernel();
@@ -481,7 +546,6 @@ namespace Velocity
         kernel();
     }
 } // namespace Velocity
-
 
 namespace MomentumDensity
 {

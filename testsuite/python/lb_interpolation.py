@@ -62,6 +62,8 @@ class LBInterpolation:
 
     def tearDown(self):
         self.system.lb = None
+        self.system.thermostat.turn_off()
+        self.system.part.clear()
 
     def set_boundaries(self, velocity):
         """Place boundaries *not* exactly on a LB node."""
@@ -125,9 +127,74 @@ class LBInterpolation:
             self.lbf.add_boundary_from_shape(shape, vbb.velocity)
         self.assertIsNone(self.lbf[0, 0, 0].boundary)
 
+    def test_interpolated_force(self):
+
+        system = self.system
+        system.thermostat.set_lb(LB_fluid=system.lb, seed=42, gamma=1.)
+        system.integrator.run(1)
+        lb_vel = np.zeros([12, 12, 12, 3], dtype=float)
+        for i in range(12):
+            for j in range(12):
+                for k in range(12):
+                    lb_vel[i, j, k] = 1e-3 * np.array([i + 1, j + 1, k + 1])
+        p = system.part.add(pos=3 * [1.5])
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    system.lb[:, :, :].velocity = lb_vel
+                    p.pos = (
+                        (i + 0.5) * AGRID,
+                        (j + 0.5) * AGRID,
+                        (k + 0.5) * AGRID)
+                    p.v = [0., 0., 0.]
+                    system.integrator.run(1)
+                    np.testing.assert_allclose(np.copy(p.f), lb_vel[i, j, k])
+
+    def mytest_interpolated_force(self):
+        KT = 0.002
+        KT = 0.00
+        AGRID = 1.
+        KIN_VISC = 0.3
+        DENS = 1.
+        TIME_STEP = 0.01
+
+        LB_PARAMS = {'agrid': AGRID,
+                     'density': DENS,
+                     'kinematic_viscosity': KIN_VISC,
+                     'tau': TIME_STEP,
+                     'kT': KT,
+                     'seed': 42}
+
+        #system = espressomd.System(box_l=[AGRID * 8] * 3)
+        system = self.system
+        system.lb = None
+        system.box_l = [AGRID * 6] * 3
+        system.time_step = TIME_STEP
+        system.cell_system.skin = 0.4 * AGRID
+        lb_class = espressomd.lb.LBFluidWalberla
+        lb_class = espressomd.lb.LBFluidWalberlaGPU
+        system.lb = lb_class(single_precision=True, **LB_PARAMS)
+        system.thermostat.set_lb(LB_fluid=system.lb, seed=42, gamma=1.)
+        system.integrator.run(1)
+        lb_vel = np.zeros([6, 6, 6, 3], dtype=float)
+        for i in range(6):
+            for j in range(6):
+                for k in range(6):
+                    lb_vel[i, j, k] = 1e-3 * np.array([i + 1, j + 1, k + 1])
+        p = system.part.add(pos=3 * [1.5])
+        for i in range(3):
+            for j in range(3):
+                for k in range(6):
+                    system.lb[:, :, :].velocity = lb_vel
+                    p.pos = (i + 0.5, j + 0.5, k + 0.5)
+                    p.v = [0., 0., 0.]
+                    system.integrator.run(1)
+                    print(f"{[i,j,k]}: {p.f}")
+                    assert np.linalg.norm(p.f - lb_vel[i, j, k]) < 1e-5
+
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBInterpolationWalberla(LBInterpolation, ut.TestCase):
+class LBInterpolationWalberlaDoublePrecisionCPU(LBInterpolation, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
@@ -136,11 +203,30 @@ class LBInterpolationWalberla(LBInterpolation, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBInterpolationWalberlaSinglePrecision(LBInterpolation, ut.TestCase):
+class LBInterpolationWalberlaSinglePrecisionCPU(LBInterpolation, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBInterpolationWalberlaDoublePrecisionGPU(LBInterpolation, ut.TestCase):
+
+   """Test for the Walberla implementation of the LB in double-precision."""
+
+   lb_class = espressomd.lb.LBFluidWalberlaGPU
+   lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBInterpolationWalberlaSinglePrecisionGPU(LBInterpolation, ut.TestCase):
+
+    """Test for the Walberla implementation of the LB in single-precision."""
+
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}
 
 

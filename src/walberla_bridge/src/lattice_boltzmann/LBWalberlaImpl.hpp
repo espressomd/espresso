@@ -86,6 +86,21 @@
 
 namespace walberla {
 
+#if defined(__CUDACC__)
+namespace lbm::accessor::Vector {
+std::vector<float> get_part_coupling(cuda::GPUField<float> const *vec_field,
+                                     std::vector<float> const &pos, uint gl);
+void set_part_coupling(cuda::GPUField<float> const *vec_field,
+                       std::vector<float> const &pos,
+                       std::vector<float> const &forces, uint gl);
+std::vector<double> get_part_coupling(cuda::GPUField<double> const *vec_field,
+                                      std::vector<double> const &pos, uint gl);
+void set_part_coupling(cuda::GPUField<double> const *vec_field,
+                       std::vector<double> const &pos,
+                       std::vector<double> const &forces, uint gl);
+} // namespace lbm::accessor::Vector
+#endif
+
 /** @brief Class that runs and controls the LB on waLBerla. */
 template <typename FloatType, lbmpy::Arch Architecture>
 class LBWalberlaImpl : public LBWalberlaBase {
@@ -345,13 +360,14 @@ protected:
           blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
       if constexpr (std::is_same_v<Field, _VectorField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-          auto vec_field = block->template getData<GPUField>(field_id);
-          lbm::accessor::Vector::broadcast(vec_field, Vector3<FloatType>{0});
+          auto field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Vector::broadcast(field, Vector3<FloatType>{0});
         }
       } else if constexpr (std::is_same_v<Field, _PdfField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-          auto vec_field = block->template getData<GPUField>(field_id);
-          lbm::accessor::Vector::broadcast(vec_field, Vector3<FloatType>{0});
+          auto field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Population::broadcast(
+              field, std::array<FloatType, Stencil::Size>{});
         }
       }
       return field_id;
@@ -723,6 +739,87 @@ public:
     }
   }
 
+  [[nodiscard]] bool is_gpu() const noexcept override {
+#if defined(__CUDACC__)
+    return true;
+#else
+    return false;
+#endif
+  }
+
+  void add_force_density_simplified_cuda(
+      std::vector<Utils::Vector3d> const &pos,
+      std::vector<Utils::Vector3d> const &forces) override {
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      if (pos.empty())
+        return;
+      std::vector<FloatType> host_pos(3ul * pos.size());
+      std::vector<FloatType> host_force(3ul * pos.size());
+      {
+        std::size_t i{0ul};
+        for (auto const &vec : pos) {
+          host_pos[i + 0ul] = static_cast<FloatType>(vec[0ul]);
+          host_pos[i + 1ul] = static_cast<FloatType>(vec[1ul]);
+          host_pos[i + 2ul] = static_cast<FloatType>(vec[2ul]);
+          i += 3ul;
+        }
+      }
+      {
+        std::size_t i{0ul};
+        for (auto const &vec : forces) {
+          host_force[i + 0ul] = static_cast<FloatType>(vec[0ul]);
+          host_force[i + 1ul] = static_cast<FloatType>(vec[1ul]);
+          host_force[i + 2ul] = static_cast<FloatType>(vec[2ul]);
+          i += 3ul;
+        }
+      }
+      auto const &lattice = get_lattice();
+      auto const &block = *(lattice.get_blocks()->begin());
+      auto const gl = lattice.get_ghost_layers();
+      auto field = block.template uncheckedFastGetData<VectorField>(
+          m_force_to_be_applied_id);
+      lbm::accessor::Vector::set_part_coupling(field, host_pos, host_force, gl);
+    }
+#endif
+  }
+
+  std::vector<double> get_velocity_at_pos_simplified_cuda(
+      std::vector<Utils::Vector3d> const &pos) override {
+    if (pos.empty())
+      return {};
+#if defined(__CUDACC__)
+    // auto const agrid = FloatType_c(get_lattice().get_grid_dimensions()[0ul]);
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      std::vector<FloatType> host_pos(3ul * pos.size());
+      std::size_t i{0ul};
+      for (auto const &vec : pos) {
+        host_pos[i + 0ul] = static_cast<FloatType>(vec[0ul]);
+        host_pos[i + 1ul] = static_cast<FloatType>(vec[1ul]);
+        host_pos[i + 2ul] = static_cast<FloatType>(vec[2ul]);
+        i += 3ul;
+      }
+      auto const &lattice = get_lattice();
+      auto const &block = *(lattice.get_blocks()->begin());
+      auto const gl = lattice.get_ghost_layers();
+      auto field =
+          block.template uncheckedFastGetData<VectorField>(m_velocity_field_id);
+      auto const res =
+          lbm::accessor::Vector::get_part_coupling(field, host_pos, gl);
+      if constexpr (std::is_same_v<FloatType, double>) {
+        return res;
+      }
+      std::vector<double> res_type{};
+      res_type.reserve(res.size());
+      for (auto const v : res) {
+        res_type.emplace_back(static_cast<double>(v));
+      }
+      return res_type;
+    }
+#endif
+    return {};
+  }
+
   std::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &pos,
                       bool consider_points_in_halo = false) const override {
@@ -755,7 +852,6 @@ public:
         std::size_t, std::vector<std::tuple<std::size_t, double, std::size_t>>>
         apply;
     std::unordered_map<std::size_t, VectorField *> fields;
-    auto const cell_offset = static_cast<int>(get_lattice().get_ghost_layers());
     for (auto const &pos : positions) {
       if (!m_lattice->pos_in_local_halo(pos)) {
         throw std::runtime_error(
@@ -803,31 +899,30 @@ public:
     }
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
-      if constexpr (std::is_same_v<FloatType, float>) {
-        for (auto const &kv : queue) {
-          auto vel_field = fields[kv.first];
-          std::vector<cell_idx_t> cells_flat{};
-          std::vector<std::size_t> cells_hash_flat{};
-          for (auto const &it : kv.second) {
-            auto const &cell = it.second;
-            for (auto const j : {0u, 1u, 2u}) {
-              cells_flat.emplace_back(cell[j] + cell_offset);
-            }
-            cells_hash_flat.emplace_back(it.first);
+      auto const cell_offset =
+          static_cast<int>(get_lattice().get_ghost_layers());
+      for (auto const &kv : queue) {
+        auto vel_field = fields[kv.first];
+        std::vector<cell_idx_t> cells_flat{};
+        std::vector<std::size_t> cells_hash_flat{};
+        for (auto const &it : kv.second) {
+          auto const &cell = it.second;
+          for (auto const j : {0u, 1u, 2u}) {
+            cells_flat.emplace_back(cell[j] + cell_offset);
           }
-          auto const vels =
-              lbm::accessor::Vector::get_at(vel_field, cells_flat);
-          assert(cells_hash_flat.size() * 3ul == vels.size());
-          std::unordered_map<std::size_t, Utils::Vector3d> cell2vel{};
-          for (std::size_t i = 0; i < cells_hash_flat.size(); ++i) {
-            cell2vel[cells_hash_flat[i]] =
-                Utils::Vector3d{static_cast<double>(vels[i * 3ul + 0ul]),
-                                static_cast<double>(vels[i * 3ul + 1ul]),
-                                static_cast<double>(vels[i * 3ul + 2ul])};
-          }
-          for (auto const [cell_hash, weight, v_index] : apply[kv.first]) {
-            velocities[v_index] += weight * cell2vel.at(cell_hash);
-          }
+          cells_hash_flat.emplace_back(it.first);
+        }
+        auto const vels = lbm::accessor::Vector::get_at(vel_field, cells_flat);
+        assert(cells_hash_flat.size() * 3ul == vels.size());
+        std::unordered_map<std::size_t, Utils::Vector3d> cell2vel{};
+        for (std::size_t i = 0; i < cells_hash_flat.size(); ++i) {
+          cell2vel[cells_hash_flat[i]] =
+              Utils::Vector3d{static_cast<double>(vels[i * 3ul + 0ul]),
+                              static_cast<double>(vels[i * 3ul + 1ul]),
+                              static_cast<double>(vels[i * 3ul + 2ul])};
+        }
+        for (auto const [cell_hash, weight, v_index] : apply[kv.first]) {
+          velocities[v_index] += weight * cell2vel.at(cell_hash);
         }
       }
     }
@@ -887,7 +982,6 @@ public:
         std::unordered_map<std::size_t, std::pair<Cell, Utils::Vector3d>>>
         queue;
     std::unordered_map<std::size_t, VectorField *> fields;
-    auto const cell_offset = static_cast<int>(get_lattice().get_ghost_layers());
     for (std::size_t i = 0; i < positions.size(); ++i) {
       auto const &pos = positions[i];
       auto const &force = forces[i];
@@ -920,21 +1014,20 @@ public:
     }
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
-      if constexpr (std::is_same_v<FloatType, float>) {
-        for (auto const &kv : queue) {
-          auto force_field = fields[kv.first];
-          std::vector<cell_idx_t> cells_flat{};
-          std::vector<FloatType> forces_flat{};
-          for (auto const &it : kv.second) {
-            auto const &[cell, force] = it.second;
-            for (auto const j : {0u, 1u, 2u}) {
-              cells_flat.emplace_back(cell[j] + cell_offset);
-              forces_flat.emplace_back(static_cast<FloatType>(force[j]));
-            }
+      auto const cell_offset =
+          static_cast<int>(get_lattice().get_ghost_layers());
+      for (auto const &kv : queue) {
+        auto force_field = fields[kv.first];
+        std::vector<cell_idx_t> cells_flat{};
+        std::vector<FloatType> forces_flat{};
+        for (auto const &it : kv.second) {
+          auto const &[cell, force] = it.second;
+          for (auto const j : {0u, 1u, 2u}) {
+            cells_flat.emplace_back(cell[j] + cell_offset);
+            forces_flat.emplace_back(static_cast<FloatType>(force[j]));
           }
-          // std::cout << kv.first << " " << (cells_flat.size() / 3ul) << "\n";
-          lbm::accessor::Vector::add_at(force_field, forces_flat, cells_flat);
         }
+        lbm::accessor::Vector::add_at(force_field, forces_flat, cells_flat);
       }
     }
 #endif

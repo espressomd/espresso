@@ -143,13 +143,14 @@ class TestLB:
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
 
-# TODO GPU check diff
+@ut.skipIf(TestLB.n_nodes == 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
 @utx.skipIfMissingFeatures("WALBERLA")
 class TestRegularLBWalberla(TestLB, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_class = espressomd.lb.LBFluidWalberla
 
     def setUp(self):
         self.system.cell_system.set_regular_decomposition()

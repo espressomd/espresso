@@ -63,6 +63,11 @@ struct LBWalberla {
   Utils::Vector3d get_momentum() const;
   bool add_force_at_pos(Utils::Vector3d const &pos,
                         Utils::Vector3d const &force);
+  void
+  add_force_density_simplified_cuda(std::vector<Utils::Vector3d> const &pos,
+                                    std::vector<Utils::Vector3d> const &forces);
+  std::vector<double>
+  get_velocity_at_pos_simplified_cuda(std::vector<Utils::Vector3d> const &pos);
   void propagate();
   void veto_time_step(double time_step) const;
   void sanity_checks() const;

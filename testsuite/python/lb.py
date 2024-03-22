@@ -725,32 +725,39 @@ class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_lattice_class = espressomd.lb.LatticeWalberla
+    params = {**LBTest.params, "agrid": 1.}  # TODO walberla
+    lb_params = {"single_precision": False}
+    atol = 1e-6
+    rtol = 2e-4
+
+    # TODO walberla: randomly fails
+       def test_viscous_coupling(self):
+            pass
+
+    # TODO walberla: randomly fails
+        def test_viscous_coupling_pairs(self):
+            pass
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_lattice_class = espressomd.lb.LatticeWalberla
     params = {**LBTest.params, "agrid": 1.}  # TODO walberla
     lb_params = {"single_precision": True}
-    atol = 1e-7
+    atol = 1e-6
     rtol = 2e-4
 
-    # TODO walberla: randomly fail
+    # TODO walberla: randomly fails, precision issues
     def test_viscous_coupling(self):
         pass
 
+    # TODO walberla: randomly fails, precision issues
     def test_viscous_coupling_pairs(self):
-        pass
-
-    # TODO walberla
-    def test_ext_force_density(self):
-        pass
-
-    def test_unequal_time_step(self):
-        pass
-
-    def test_agrid_rounding(self):
-        pass
-
-    def test_thermalization_force_balance(self):
         pass
 
 

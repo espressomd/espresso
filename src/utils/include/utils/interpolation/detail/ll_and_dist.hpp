@@ -39,7 +39,7 @@ struct Block {
  */
 template <int order>
 auto ll_and_dist(Vector3d const &pos, Vector3d const &grid_spacing,
-                  Vector3d const &offset) {
+                 Vector3d const &offset) {
   Block block{};
   for (unsigned int dim = 0u; dim < 3u; ++dim) {
     auto const fractional_index = (pos[dim] - offset[dim]) / grid_spacing[dim];
