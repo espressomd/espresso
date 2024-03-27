@@ -1,9 +1,26 @@
 [build-system]
 requires = [
-  "setuptools>=42",
-  "scikit-build>=0.13",
+  "scikit-build-core",
   "cmake>=3.18",
   "numpy>=1.23",
   "cython>=0.29.21,<=3.0.7",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "espressomd"
+version = "4.3"
+requires-python = ">=3.9"
+dependencies = [
+  "numpy>=1.23"
+]
+description = "Extensible Simulation Package for Research on Soft Matter Systems"
+readme = "Readme.md"
+authors = [{name = "The ESPResSo project"}]
+license = {file = "COPYING"}
+
+[project.urls]
+Homepage = "https://espressomd.org"
+Repository = "https://github.com/espressomd/espresso"
+Issues = "https://github.com/espressomd/espresso/issues"
+Documentation = "https://espressomd.github.io/"
