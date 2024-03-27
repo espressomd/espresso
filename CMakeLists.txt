@@ -266,8 +266,8 @@ set(ESPRESSO_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 # python site-packages, can be overriden with CMake options
 if(ESPRESSO_BUILD_WITH_PYTHON)
   # override: package C++, CUDA and Cython shared objects together
-	set(ESPRESSO_INSTALL_PYTHON "${Python_SITEARCH}")
-	set(ESPRESSO_INSTALL_LIBDIR "${ESPRESSO_INSTALL_PYTHON}/espressomd")
+  set(ESPRESSO_INSTALL_PYTHON "${Python_SITEARCH}")
+  set(ESPRESSO_INSTALL_LIBDIR "${ESPRESSO_INSTALL_PYTHON}/espressomd")
 endif()
 
 #
