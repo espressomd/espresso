@@ -752,30 +752,28 @@ public:
       std::vector<Utils::Vector3d> const &forces) override {
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
+      assert(pos.size() == forces.size());
       if (pos.empty())
         return;
-      std::vector<FloatType> host_pos(3ul * pos.size());
-      std::vector<FloatType> host_force(3ul * pos.size());
-      {
-        std::size_t i{0ul};
-        for (auto const &vec : pos) {
-          host_pos[i + 0ul] = static_cast<FloatType>(vec[0ul]);
-          host_pos[i + 1ul] = static_cast<FloatType>(vec[1ul]);
-          host_pos[i + 2ul] = static_cast<FloatType>(vec[2ul]);
-          i += 3ul;
-        }
-      }
-      {
-        std::size_t i{0ul};
-        for (auto const &vec : forces) {
-          host_force[i + 0ul] = static_cast<FloatType>(vec[0ul]);
-          host_force[i + 1ul] = static_cast<FloatType>(vec[1ul]);
-          host_force[i + 2ul] = static_cast<FloatType>(vec[2ul]);
-          i += 3ul;
-        }
-      }
       auto const &lattice = get_lattice();
       auto const &block = *(lattice.get_blocks()->begin());
+      auto const origin = block.getAABB().min();
+      std::vector<FloatType> host_pos;
+      std::vector<FloatType> host_force;
+      host_pos.reserve(3ul * pos.size());
+      host_force.reserve(3ul * pos.size());
+      for (auto const &vec : pos) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_pos.emplace_back(static_cast<FloatType>(vec[i] - origin[i]));
+        }
+      }
+      for (auto const &vec : forces) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_force.emplace_back(static_cast<FloatType>(vec[i]));
+        }
+      }
       auto const gl = lattice.get_ghost_layers();
       auto field = block.template uncheckedFastGetData<VectorField>(
           m_force_to_be_applied_id);
@@ -791,16 +789,17 @@ public:
 #if defined(__CUDACC__)
     // auto const agrid = FloatType_c(get_lattice().get_grid_dimensions()[0ul]);
     if constexpr (Architecture == lbmpy::Arch::GPU) {
-      std::vector<FloatType> host_pos(3ul * pos.size());
-      std::size_t i{0ul};
-      for (auto const &vec : pos) {
-        host_pos[i + 0ul] = static_cast<FloatType>(vec[0ul]);
-        host_pos[i + 1ul] = static_cast<FloatType>(vec[1ul]);
-        host_pos[i + 2ul] = static_cast<FloatType>(vec[2ul]);
-        i += 3ul;
-      }
       auto const &lattice = get_lattice();
       auto const &block = *(lattice.get_blocks()->begin());
+      auto const origin = block.getAABB().min();
+      std::vector<FloatType> host_pos;
+      host_pos.reserve(3ul * pos.size());
+      for (auto const &vec : pos) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_pos.emplace_back(static_cast<FloatType>(vec[i] - origin[i]));
+        }
+      }
       auto const gl = lattice.get_ghost_layers();
       auto field =
           block.template uncheckedFastGetData<VectorField>(m_velocity_field_id);

@@ -486,6 +486,12 @@ class LBTest:
         self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
+        particle_rtol = 1e-10
+        fluid_rtol = 1e-10
+        if self.lb_params["single_precision"]:
+            particle_rtol = 4e-6
+            fluid_rtol = 4e-6
+
         # Random velocities
         lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
         # Test several particle positions
@@ -504,12 +510,14 @@ class LBTest:
             self.system.integrator.run(1)
             # Check friction force
             np.testing.assert_allclose(
-                np.copy(p.f), -self.gamma * (v_part - v_fluid), atol=1E-10)
+                np.copy(p.f), -self.gamma * (v_part - v_fluid),
+                rtol=particle_rtol, atol=0.)
 
             # check particle/fluid force balance
             applied_forces = np.array([n.last_applied_force for n in lb_nodes])
             np.testing.assert_allclose(
-                np.sum(applied_forces, axis=0), -np.copy(p.f), atol=1E-10)
+                np.sum(applied_forces, axis=0), -np.copy(p.f),
+                rtol=fluid_rtol, atol=0.)
 
             # Check that last_applied_force gets cleared
             p.remove()
@@ -522,6 +530,12 @@ class LBTest:
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
+
+        particle_rtol = 1e-10
+        fluid_rtol = 1e-10
+        if self.lb_params["single_precision"]:
+            particle_rtol = 4e-6
+            fluid_rtol = 4e-6
 
         # Random velocities
         lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
@@ -553,15 +567,18 @@ class LBTest:
             self.system.integrator.run(1)
             # Check friction force
             np.testing.assert_allclose(
-                np.copy(p1.f), -self.gamma * (v_part1 - v_fluid1), atol=1E-10)
+                np.copy(p1.f), -self.gamma * (v_part1 - v_fluid1),
+                rtol=particle_rtol, atol=0.)
             np.testing.assert_allclose(
-                np.copy(p2.f), -self.gamma * (v_part2 - v_fluid2), atol=1E-10)
+                np.copy(p2.f), -self.gamma * (v_part2 - v_fluid2),
+                rtol=particle_rtol, atol=0.)
 
             # check particle/fluid force balance
             applied_forces = np.array(
                 [n.last_applied_force for n in all_coupling_nodes])
             np.testing.assert_allclose(
-                np.sum(applied_forces, axis=0), -np.copy(p1.f) - np.copy(p2.f), atol=1E-10)
+                np.sum(applied_forces, axis=0), -np.copy(p1.f) - np.copy(p2.f),
+                rtol=fluid_rtol, atol=0.)
 
             # Check that last_applied_force gets cleared
             self.system.part.clear()
@@ -728,18 +745,13 @@ class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
 class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_lattice_class = espressomd.lb.LatticeWalberla
-    params = {**LBTest.params, "agrid": 1.}  # TODO walberla
     lb_params = {"single_precision": False}
-    atol = 1e-6
-    rtol = 2e-4
+    atol = 1e-10
+    rtol = 1e-7
 
     # TODO walberla: randomly fails
-       def test_viscous_coupling(self):
-            pass
-
-    # TODO walberla: randomly fails
-        def test_viscous_coupling_pairs(self):
-            pass
+    def test_thermalization_force_balance(self):
+        pass
 
 
 @utx.skipIfMissingGPU()
@@ -747,17 +759,12 @@ class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
 class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_lattice_class = espressomd.lb.LatticeWalberla
-    params = {**LBTest.params, "agrid": 1.}  # TODO walberla
     lb_params = {"single_precision": True}
     atol = 1e-6
     rtol = 2e-4
 
-    # TODO walberla: randomly fails, precision issues
-    def test_viscous_coupling(self):
-        pass
-
-    # TODO walberla: randomly fails, precision issues
-    def test_viscous_coupling_pairs(self):
+    # TODO walberla: randomly fails
+    def test_thermalization_force_balance(self):
         pass
 
 

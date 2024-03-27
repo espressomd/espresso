@@ -265,7 +265,6 @@ Utils::Vector3d ParticleCoupling::get_noise_term(Particle const &p) const {
              Random::noise_uniform<RNGSalt::PARTICLES>(counter, 0, p.id()));
 }
 
-// TODO: verify in which order to subtract offset and divide by agrid
 void ParticleCoupling::commit(System::System const &system,
                               std::vector<Particle *> const &particles) {
   if (particles.empty()) {
@@ -369,9 +368,9 @@ void ParticleCoupling::commit(System::System const &system,
          * is responsible to adding its force */
         p.force() += force_on_particle;
       }
-      /* transform momentum transfer to lattice units
-         (eq. (12) @cite ahlrichs99a) */
+      // convert momentum to lattice units (eq. (12) @cite ahlrichs99a)
       force_coupling_forces.emplace_back(force_on_fluid * lb_force_conv_inv);
+      // convert positions to lattice units
       pos /= agrid;
       ++it_positions_force_coupling;
     }

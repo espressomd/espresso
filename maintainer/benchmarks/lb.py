@@ -28,7 +28,6 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Benchmark LB simulations. "
                                  "Save the results to a CSV file.")
-group = parser.add_mutually_exclusive_group()
 parser.add_argument("--particles_per_core", metavar="N", action="store",
                     type=int, default=125, required=False,
                     help="Number of particles per core")
@@ -53,7 +52,7 @@ parser.add_argument("--output", metavar="FILEPATH", action="store",
 args = parser.parse_args()
 
 # process and check arguments
-n_iterations = 5
+n_iterations = 30
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
@@ -141,7 +140,6 @@ lbf = lb_class(agrid=agrid, tau=system.time_step, kinematic_viscosity=1.,
                density=1., single_precision=args.single_precision)
 system.lb = lbf
 if n_part:
-    assert args.gpu is False  # TODO walberla
     system.thermostat.set_lb(LB_fluid=lbf, gamma=1., seed=42)
 
 
