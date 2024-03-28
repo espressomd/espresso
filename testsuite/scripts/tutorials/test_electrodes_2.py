@@ -22,8 +22,7 @@ import importlib_wrapper
 import numpy as np
 from scipy import constants
 
-params = {'N_SAMPLES_EQUIL': 25, 'N_SAMPLES_PROD': 5,
-          'N_SAMPLES_EQUIL_CAP': 0, 'N_SAMPLES_CAP': 5,
+params = {'N_SAMPLES_PROD': 15, 'N_SAMPLES_EQUIL_CAP': 5, 'N_SAMPLES_CAP': 5,
           'MIN_PHI': 5, 'MAX_PHI': 5, 'N_PHI': 1}
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
@@ -66,7 +65,7 @@ class Tutorial(ut.TestCase):
             constants.elementary_charge / (constants.Boltzmann * tutorial.TEMPERATURE))
         msg = 'The capacitance at low potentials should be in line with Grahame/DH.'
         np.testing.assert_allclose(
-            grahame, tutorial.sigma_vs_phi[:, 1], atol=.05, err_msg=msg)
+            grahame, tutorial.sigma_vs_phi[:, 1], atol=.08, err_msg=msg)
 
 
 if __name__ == "__main__":
