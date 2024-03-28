@@ -283,6 +283,7 @@ void ParticleCoupling::commit(System::System const &system,
   std::vector<Utils::Vector3d> positions_force_coupling;
   std::vector<Utils::Vector3d> force_coupling_forces;
   std::vector<unsigned> positions_force_coupling_counter;
+  std::vector<Particle *> coupled_particles;
   auto const lb_vel_conv = m_lb.get_lattice_speed();
   auto const lb_force_conv_inv = m_time_step / lb_vel_conv;
   for (auto ptr : particles) {
@@ -298,6 +299,7 @@ void ParticleCoupling::commit(System::System const &system,
       auto const new_size = positions_force_coupling.size();
       span_size = static_cast<unsigned>(new_size - old_size);
     }
+    auto found = false;
 #ifdef ENGINE
     if (not p.swimming().is_engine_force_on_fluid)
 #endif
@@ -306,24 +308,34 @@ void ParticleCoupling::commit(System::System const &system,
         auto const &pos = *it;
         if (pos >= halo_lower_corner and pos < halo_upper_corner) {
           positions_velocity_coupling.emplace_back(pos / agrid);
+          found = true;
           break;
         }
       }
-    positions_force_coupling_counter.emplace_back(span_size);
+    if (found) {
+      coupled_particles.emplace_back(ptr);
+      positions_force_coupling_counter.emplace_back(span_size);
+    } else {
+      positions_force_coupling.erase(positions_force_coupling.end() - span_size,
+                                     positions_force_coupling.end());
+    }
   }
 
   if (positions_velocity_coupling.empty()) {
     return;
   }
-  std::vector<double> res{};
+  std::vector<double> interpolated_velocities{};
 #ifdef WALBERLA
   system.lb.connect([&](LB::Solver::Implementation const &impl) {
     using lb_value_type = std::shared_ptr<LBWalberla>;
     if (impl.solver.has_value()) {
       if (auto const *ptr = std::get_if<lb_value_type>(&(*impl.solver))) {
-        auto &instance = **ptr;
-        res = instance.lb_fluid->get_velocity_at_pos_simplified_cuda(
+        auto &lb_fluid = *(*ptr)->lb_fluid;
+        interpolated_velocities = lb_fluid.get_velocity_at_pos_simplified_cuda(
             positions_velocity_coupling);
+        for (auto &v : interpolated_velocities) {
+          v *= lb_vel_conv;
+        }
       }
     }
   });
@@ -331,11 +343,11 @@ void ParticleCoupling::commit(System::System const &system,
 
   auto const &domain_lower_corner = local_geo.my_left();
   auto const &domain_upper_corner = local_geo.my_right();
-  auto it_interpolated_velocities = res.begin();
+  auto it_interpolated_velocities = interpolated_velocities.begin();
   auto it_positions_force_coupling = positions_force_coupling.begin();
   auto it_positions_force_coupling_counter =
       positions_force_coupling_counter.begin();
-  for (auto ptr : particles) {
+  for (auto ptr : coupled_particles) {
     auto &p = *ptr;
     Utils::Vector3d force_on_particle = {};
 #ifdef ENGINE
@@ -343,13 +355,11 @@ void ParticleCoupling::commit(System::System const &system,
 #endif
     {
       auto const v_fluid = Utils::Vector3d{it_interpolated_velocities,
-                                           it_interpolated_velocities + 3ul} *
-                           lb_vel_conv;
+                                           it_interpolated_velocities += 3ul};
       auto const vel_offset = lb_drift_velocity_offset(p);
       auto const drag_force = lb_drag_force(p, v_fluid, vel_offset);
       auto const random_force = get_noise_term(p);
       force_on_particle = drag_force + random_force;
-      it_interpolated_velocities += 3ul;
     }
 
     auto force_on_fluid = -force_on_particle;

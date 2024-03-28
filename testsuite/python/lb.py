@@ -749,10 +749,6 @@ class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
     atol = 1e-10
     rtol = 1e-7
 
-    # TODO walberla: randomly fails
-    def test_thermalization_force_balance(self):
-        pass
-
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
@@ -762,10 +758,6 @@ class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
     lb_params = {"single_precision": True}
     atol = 1e-6
     rtol = 2e-4
-
-    # TODO walberla: randomly fails
-    def test_thermalization_force_balance(self):
-        pass
 
 
 if __name__ == "__main__":
