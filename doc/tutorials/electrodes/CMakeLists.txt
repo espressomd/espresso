@@ -22,5 +22,5 @@ configure_tutorial_target(TARGET tutorial_electrodes DEPENDS
 
 nb_export(TARGET tutorial_electrodes SUFFIX "1" FILE "electrodes_part1.ipynb"
           HTML_RUN)
-# TODO: fix time step issues (#4798) before adding HTML_RUN back
-nb_export(TARGET tutorial_electrodes SUFFIX "2" FILE "electrodes_part2.ipynb")
+nb_export(TARGET tutorial_electrodes SUFFIX "2" FILE "electrodes_part2.ipynb"
+          HTML_RUN)
