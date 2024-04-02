@@ -470,6 +470,7 @@ run_tutorials:
     paths:
     - build/doc/tutorials
     expire_in: 1 week
+  timeout: 2h
   tags:
     - espresso
     - cuda
