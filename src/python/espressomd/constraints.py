@@ -194,7 +194,7 @@ class HomogeneousMagneticField(Constraint):
 
     :math:`U = -\\vec{\\mu} \\cdot \\vec{H}`
 
-    where :math:`\\vec{\\mu}` and :math:`\\vec{r}` are the particle dipole moment and position.
+    where :math:`\\vec{\\mu}` is the particle dipole moment.
 
     Attributes
     ----------
@@ -431,14 +431,15 @@ class LinearElectricPotential(Constraint):
     """
     Electric potential of the form
 
-    :math:`\\phi = -\\vec{E} \\cdot \\vec{r} + \\phi_0`,
+    :math:`\\phi = -\\vec{E} \\cdot \\vec{x} + \\phi_0`,
 
     resulting in the electric field :math:`\\vec{E}` everywhere.
     The resulting force on the particles are then
 
     :math:`\\vec{F} = q \\cdot \\vec{E}`
 
-    where :math:`q` and :math:`\\vec{r}` are the particle charge and position.
+    where :math:`q` and :math:`\\vec{x}` are the particle charge and position
+    in folded coordinates.
     This can be used to model a plate capacitor.
 
     Arguments
@@ -473,15 +474,18 @@ class ElectricPlaneWave(Constraint):
     """
     Electric field of the form
 
-    :math:`\\vec{E} = \\vec{E_0} \\cdot \\sin(\\vec{k} \\cdot \\vec{r} + \\omega \\cdot t + \\phi)`
+    :math:`\\vec{E} = \\vec{E_0} \\cdot \\sin(\\vec{k} \\cdot \\vec{x} + \\omega \\cdot t + \\phi)`
 
     The resulting force on the particles are then
 
     :math:`\\vec{F} = q \\cdot \\vec{E}`
 
-    where :math:`q` and :math:`\\vec{r}` are the particle charge and position.
+    where :math:`q` and :math:`\\vec{x}` are the particle charge and position
+    in folded coordinates.
     This can be used to generate a homogeneous AC
     field by setting :math:`\\vec{k}` to the null vector.
+    For periodic systems, :math:`\\vec{k}` must be an integer multiple
+    of :math:`2\\pi \\vec{L}^{-1}` with :math:`\\vec{L}` the box length.
 
     Arguments
     ----------
@@ -530,10 +534,10 @@ class FlowField(_Interpolated):
     Viscous coupling to a flow field that is
     interpolated from tabulated data like
 
-    :math:`\\vec{F} = -\\gamma \\cdot \\left( \\vec{u}(\\vec{r}) - \\vec{v} \\right)`
+    :math:`\\vec{F} = -\\gamma \\cdot \\left( \\vec{u}(\\vec{x}) - \\vec{v} \\right)`
 
-    where :math:`\\vec{v}` and :math:`\\vec{r}` are the particle velocity and position,
-    and :math:`\\vec{u}(\\vec{r})` is a 3D flow field on a grid.
+    where :math:`\\vec{v}` and :math:`\\vec{x}` are the particle velocity and position
+    in folded coordinates, and :math:`\\vec{u}(\\vec{x})` is a 3D flow field on a grid.
 
     Arguments
     ----------
