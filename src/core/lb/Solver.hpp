@@ -154,6 +154,7 @@ struct Solver : public System::Leaf<Solver> {
   void on_cell_structure_change();
   void on_timestep_change();
   void on_temperature_change();
+  void veto_boxl_change() const;
 
 private:
   /** @brief Pointer-to-implementation. */

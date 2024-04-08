@@ -229,8 +229,7 @@ class EKTest:
             self.system.electrostatics.clear()
         with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by EK"):
             self.system.box_l = [1., 2., 3.]
-        np.testing.assert_allclose(
-            np.copy(self.system.box_l), [1., 2., 3.], atol=1e-7)
+        np.testing.assert_allclose(np.copy(self.system.box_l), 6., atol=1e-7)
         with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by EK"):
             self.system.cell_system.node_grid = self.system.cell_system.node_grid
 

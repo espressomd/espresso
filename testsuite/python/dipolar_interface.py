@@ -112,7 +112,7 @@ class Test(ut.TestCase):
             self.system.magnetostatics.solver = mdlc
         self.assertIsNone(self.system.magnetostatics.solver)
         self.system.periodicity = [True, True, True]
-        self.system.box_l = [10., 10. + 2e-3, 10.]
+        self.system.change_volume_and_rescale_particles(10. + 2e-3, "y")
         with self.assertRaisesRegex(Exception, "box size in x direction is different from y direction"):
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
             self.system.magnetostatics.solver = mdlc
@@ -128,14 +128,14 @@ class Test(ut.TestCase):
             self.system.magnetostatics.clear()
         # check it's safe to resize the box, i.e. there are no currently
         # active sanity check in the core
-        self.system.box_l = [10., 10., 10.]
+        self.system.change_volume_and_rescale_particles(10., "y")
         with self.assertRaisesRegex(Exception, "box size in x direction is different from y direction"):
             ddsr = DDSR(prefactor=1., n_replicas=1)
             mdlc = MDLC(gap_size=1., maxPWerror=1e-5, actor=ddsr)
             self.system.magnetostatics.solver = mdlc
-            self.system.box_l = [9., 10., 10.]
+            self.system.change_volume_and_rescale_particles(9., "x")
         self.system.magnetostatics.clear()
-        self.system.box_l = [10., 10., 10.]
+        self.system.change_volume_and_rescale_particles(10., "x")
 
     @utx.skipIfMissingFeatures(["DP3M"])
     def test_exceptions_p3m(self):

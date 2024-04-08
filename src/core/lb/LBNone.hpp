@@ -52,6 +52,7 @@ struct LBNone {
   void lebc_sanity_checks(unsigned int, unsigned int) const {
     throw NoLBActive{};
   }
+  void veto_boxl_change() const { throw NoLBActive{}; }
   void on_cell_structure_change() const { throw NoLBActive{}; }
   void on_boxl_change() const { throw NoLBActive{}; }
   void on_node_grid_change() const { throw NoLBActive{}; }

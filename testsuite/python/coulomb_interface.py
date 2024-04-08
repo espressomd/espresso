@@ -253,12 +253,12 @@ class Test(ut.TestCase):
             self.assertEqual(
                 list(self.system.cell_system.node_grid),
                 list(self.original_node_grid))
-        with self.assertRaisesRegex(Exception, "while setting parameter 'box_l': ERROR: ELC gap size .+ larger than box length in z-direction"):
-            self.system.box_l = [10., 10., 2.5]
-        self.system.box_l = [10., 10., 10.]
+        with self.assertRaisesRegex(Exception, "ERROR: ELC gap size .+ larger than box length in z-direction"):
+            self.system.change_volume_and_rescale_particles(2.5, "z")
+        self.system.change_volume_and_rescale_particles(10., "z")
         self.system.electrostatics.solver = None
         with self.assertRaisesRegex(RuntimeError, "P3M real-space cutoff too large for ELC w/ dielectric contrast"):
-            self.system.box_l = [10., 10., 5.]
+            self.system.change_volume_and_rescale_particles(5., "z")
             elc = espressomd.electrostatics.ELC(
                 actor=p3m,
                 gap_size=1.,
@@ -271,7 +271,7 @@ class Test(ut.TestCase):
             )
             self.system.electrostatics.solver = elc
         self.assertIsNone(self.system.electrostatics.solver)
-        self.system.box_l = [10., 10., 10.]
+        self.system.change_volume_and_rescale_particles(10., "z")
         self.system.periodicity = [True, True, False]
         with self.assertRaisesRegex(RuntimeError, periodicity_err_msg):
             elc = espressomd.electrostatics.ELC(
