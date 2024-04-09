@@ -520,6 +520,7 @@ BOOST_AUTO_TEST_CASE(runtime_exceptions) {
   // LB prevents changing most of the system state
   {
     BOOST_CHECK_THROW(lb.on_boxl_change(), std::runtime_error);
+    BOOST_CHECK_THROW(lb.veto_boxl_change(), std::runtime_error);
     BOOST_CHECK_THROW(lb.veto_time_step(lb.get_tau() * 2.),
                       std::invalid_argument);
     BOOST_CHECK_THROW(lb.veto_time_step(lb.get_tau() / 2.5),
@@ -618,6 +619,7 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(lb.get_pressure_tensor(), NoLBActive);
     BOOST_CHECK_THROW(lb.get_momentum(), NoLBActive);
     BOOST_CHECK_THROW(lb.sanity_checks(), NoLBActive);
+    BOOST_CHECK_THROW(lb.veto_boxl_change(), NoLBActive);
     BOOST_CHECK_THROW(lb.veto_time_step(0.), NoLBActive);
     BOOST_CHECK_THROW(lb.veto_kT(0.), NoLBActive);
     BOOST_CHECK_THROW(lb.lebc_sanity_checks(0u, 1u), NoLBActive);

@@ -101,7 +101,8 @@ class ElectrostaticInteractionsTests:
 
         # actor should remain in a valid state after a cell system reset
         forces1 = np.copy(self.system.part.all().f)
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
         self.system.integrator.run(steps=0, recalc_forces=True)

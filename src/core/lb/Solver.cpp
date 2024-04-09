@@ -107,6 +107,12 @@ void Solver::on_cell_structure_change() {
   }
 }
 
+void Solver::veto_boxl_change() const {
+  if (impl->solver) {
+    std::visit([](auto const &ptr) { ptr->veto_boxl_change(); }, *impl->solver);
+  }
+}
+
 void Solver::on_boxl_change() {
   if (impl->solver) {
     std::visit([](auto &ptr) { ptr->on_boxl_change(); }, *impl->solver);

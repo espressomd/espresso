@@ -111,6 +111,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
            if (not(new_value > Utils::Vector3d::broadcast(0.))) {
              throw std::domain_error("Attribute 'box_l' must be > 0");
            }
+           m_instance->veto_boxl_change();
            m_instance->box_geo->set_length(new_value);
            m_instance->on_boxl_change();
          });
@@ -256,12 +257,15 @@ Variant System::do_call_method(std::string const &name,
     auto &box_geo = *m_instance->box_geo;
     auto const coord = get_value<int>(parameters, "coord");
     auto const length = get_value<double>(parameters, "length");
+    assert(coord != 3 or ((box_geo.length()[0] == box_geo.length()[1]) and
+                          (box_geo.length()[1] == box_geo.length()[2])));
     auto const scale = (coord == 3) ? length * box_geo.length_inv()[0]
                                     : length * box_geo.length_inv()[coord];
     context()->parallel_try_catch([&]() {
       if (length <= 0.) {
         throw std::domain_error("Parameter 'd_new' must be > 0");
       }
+      m_instance->veto_boxl_change(true);
     });
     auto new_value = Utils::Vector3d{};
     if (coord == 3) {

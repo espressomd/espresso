@@ -80,7 +80,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
                 prefactor=pf_dds_gpu)
             system.magnetostatics.solver = dds_gpu
             # check MD cell reset has no impact
-            system.box_l = system.box_l
+            system.change_volume_and_rescale_particles(system.box_l[0], "x")
             system.periodicity = system.periodicity
             system.cell_system.node_grid = system.cell_system.node_grid
             system.integrator.run(steps=0, recalc_forces=True)
@@ -97,7 +97,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
                 prefactor=pf_bh_gpu, epssq=200.0, itolsq=8.0)
             system.magnetostatics.solver = bh_gpu
             # check MD cell reset has no impact
-            system.box_l = system.box_l
+            system.change_volume_and_rescale_particles(system.box_l[0], "x")
             system.periodicity = system.periodicity
             system.cell_system.node_grid = system.cell_system.node_grid
             system.integrator.run(steps=0, recalc_forces=True)

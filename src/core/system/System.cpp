@@ -167,6 +167,20 @@ void System::on_boxl_change(bool skip_method_adaption) {
   Constraints::constraints.on_boxl_change();
 }
 
+void System::veto_boxl_change(bool skip_particle_checks) const {
+  if (not skip_particle_checks) {
+    auto const n_part = boost::mpi::all_reduce(
+        ::comm_cart, cell_structure->local_particles().size(), std::plus<>());
+    if (n_part > 0ul) {
+      throw std::runtime_error(
+          "Cannot reset the box length when particles are present");
+    }
+  }
+  Constraints::constraints.veto_boxl_change();
+  lb.veto_boxl_change();
+  ek.veto_boxl_change();
+}
+
 void System::on_node_grid_change() {
   update_local_geo();
   lb.on_node_grid_change();

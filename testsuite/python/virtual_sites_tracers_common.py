@@ -150,6 +150,7 @@ class VirtualSitesTracersCommon:
                 self.assertAlmostEqual(tracer_dist / ref_dist, 1., delta=0.01)
 
             system.lb = None
+            system.part.clear()
 
     def test_zz_exceptions_without_lb(self):
         """

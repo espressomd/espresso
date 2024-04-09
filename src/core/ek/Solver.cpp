@@ -90,6 +90,12 @@ void Solver::veto_kT(double kT) const {
   }
 }
 
+void Solver::veto_boxl_change() const {
+  if (impl->solver) {
+    std::visit([](auto const &ptr) { ptr->veto_boxl_change(); }, *impl->solver);
+  }
+}
+
 void Solver::on_cell_structure_change() {
   if (impl->solver) {
     auto &solver = *impl->solver;

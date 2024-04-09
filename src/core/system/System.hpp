@@ -241,6 +241,7 @@ public:
    *  initialized immediately (P3M etc.).
    */
   void on_observable_calc();
+  void veto_boxl_change(bool skip_particle_checks = false) const;
   /**@}*/
 
   /**
