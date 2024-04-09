@@ -44,7 +44,6 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
     return;
   }
   auto const agrid = lb.get_agrid();
-  auto const to_lb_units = 1. / agrid;
 
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
@@ -62,7 +61,7 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
       if (bookkeeping.should_be_coupled(p)) {
         for (auto const &pos :
              positions_in_halo(p.pos(), box_geo, local_box, agrid)) {
-          add_md_force(lb, pos * to_lb_units, p.force(), time_step);
+          add_md_force(lb, pos, p.force(), time_step);
         }
       }
     }

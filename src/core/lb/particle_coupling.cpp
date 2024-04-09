@@ -125,8 +125,9 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
   auto const fully_inside_lower = local_box.my_left() + 2. * halo_vec;
   auto const fully_inside_upper = local_box.my_right() - 2. * halo_vec;
-  if (in_box(pos, fully_inside_lower, fully_inside_upper)) {
-    return {pos};
+  auto const pos_folded = box_geo.folded_position(pos);
+  if (in_box(pos_folded, fully_inside_lower, fully_inside_upper)) {
+    return {pos_folded};
   }
   auto const halo_lower_corner = local_box.my_left() - halo_vec;
   auto const halo_upper_corner = local_box.my_right() + halo_vec;
@@ -137,11 +138,11 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
       for (int k : {-1, 0, 1}) {
         Utils::Vector3d shift{{double(i), double(j), double(k)}};
         Utils::Vector3d pos_shifted =
-            pos + Utils::hadamard_product(box_geo.length(), shift);
+            pos_folded + Utils::hadamard_product(box_geo.length(), shift);
 
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
           auto le = box_geo.lees_edwards_bc();
-          auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
+          auto normal_shift = (pos_shifted - pos_folded)[le.shear_plane_normal];
           if (normal_shift > std::numeric_limits<double>::epsilon())
             pos_shifted[le.shear_direction] += le.pos_offset;
           if (normal_shift < -std::numeric_limits<double>::epsilon())

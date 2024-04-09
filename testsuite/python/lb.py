@@ -588,6 +588,25 @@ class LBTest:
             self.system.integrator.run(1)
             self.assertTrue(np.all(p.f != 0.0))
 
+    def test_tracers_coupling_rounding(self):
+        import espressomd.propagation
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf
+        ext_f = np.array([0.01, 0.02, 0.03])
+        lbf.ext_force_density = ext_f
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
+        rtol = self.rtol
+        if lbf.single_precision:
+            rtol *= 100.
+        mode_tracer = espressomd.propagation.Propagation.TRANS_LB_TRACER
+        self.system.time = 0.
+        p = self.system.part.add(pos=[-1E-30] * 3, propagation=mode_tracer)
+        for _ in range(10):
+            self.system.integrator.run(1)
+            vel = np.copy(p.v) * self.params["density"]
+            vel_ref = (self.system.time + lbf.tau * 0.5) * ext_f
+            np.testing.assert_allclose(vel, vel_ref, rtol=rtol, atol=0.)
+
     def test_thermalization_force_balance(self):
         system = self.system
 
