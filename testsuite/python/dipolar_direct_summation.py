@@ -48,7 +48,8 @@ class dds(ut.TestCase):
         dds_cpu = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1.2)
         system.actors.add(dds_cpu)
         # check MD cell reset has no impact
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -67,7 +68,8 @@ class dds(ut.TestCase):
         dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.2)
         system.actors.add(dds_cpu)
         # check MD cell reset has no impact
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -87,7 +89,8 @@ class dds(ut.TestCase):
             prefactor=1.2, n_replica=0)
         system.actors.add(dds_cpu)
         # check MD cell reset has no impact
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 

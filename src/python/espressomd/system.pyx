@@ -362,8 +362,8 @@ cdef class System:
 
         """
 
-        if d_new < 0:
-            raise ValueError("No negative lengths")
+        if d_new <= 0.:
+            raise ValueError("Parameter 'd_new' must be > 0")
         if dir == "xyz":
             rescale_boxl(3, d_new)
         elif dir == "x" or dir == 0:
@@ -375,6 +375,7 @@ cdef class System:
         else:
             raise ValueError(
                 'Usage: change_volume_and_rescale_particles(<L_new>, [{ "x" | "y" | "z" | "xyz" }])')
+        utils.handle_errors("Exception while updating the box length")
 
     def volume(self):
         """Return box volume of the cuboid box.

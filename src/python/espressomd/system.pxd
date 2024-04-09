@@ -24,7 +24,7 @@ from .utils cimport Vector3d
 cdef extern from "grid.hpp":
     void mpi_set_box_length(Vector3d length) except +
     void mpi_set_periodicity(bool x, bool y, bool z)
-    void rescale_boxl(int dir, double d_new)
+    void rescale_boxl(int dir, double d_new) except +
 
 cdef extern from "rotate_system.hpp":
     void mpi_rotate_system(double phi, double theta, double alpha)

@@ -101,12 +101,14 @@ public:
     }
   }
 
-  void on_boxl_change() const {
+  void veto_boxl_change() const {
     if (not m_constraints.empty()) {
       throw std::runtime_error("The box size can not be changed because there "
                                "are active constraints.");
     }
   }
+
+  void on_boxl_change() const { veto_boxl_change(); }
 };
 } // namespace Constraints
 

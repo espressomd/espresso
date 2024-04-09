@@ -125,7 +125,8 @@ class AnalyzeChain(ut.TestCase):
         # increase PBC to remove interactions with periodic images
         all_partcls = self.system.part.all()
         old_pos = all_partcls.pos.copy()
-        self.system.box_l = self.system.box_l * 2.
+        self.system.change_volume_and_rescale_particles(
+            2. * self.system.box_l[0], "xyz")
         all_partcls.pos = old_pos
         # compare calc_re()
         core_re = self.system.analysis.calc_re(chain_start=0,

@@ -107,28 +107,6 @@ void grid_changed_n_nodes() {
   grid_changed_box_l(box_geo);
 }
 
-void rescale_boxl(int dir, double d_new) {
-  double scale = (dir - 3) ? d_new * box_geo.length_inv()[dir]
-                           : d_new * box_geo.length_inv()[0];
-
-  /* If shrinking, rescale the particles first. */
-  if (scale <= 1.) {
-    mpi_rescale_particles(dir, scale);
-  }
-
-  if (dir < 3) {
-    auto box_l = box_geo.length();
-    box_l[dir] = d_new;
-    mpi_set_box_length(box_l);
-  } else {
-    mpi_set_box_length({d_new, d_new, d_new});
-  }
-
-  if (scale > 1.) {
-    mpi_rescale_particles(dir, scale);
-  }
-}
-
 void mpi_set_box_length_local(const Utils::Vector3d &length) {
   box_geo.set_length(length);
   try {
@@ -140,11 +118,43 @@ void mpi_set_box_length_local(const Utils::Vector3d &length) {
 
 REGISTER_CALLBACK(mpi_set_box_length_local)
 
-void mpi_set_box_length(const Utils::Vector3d &length) {
+void rescale_boxl(int dir, double d_new) {
+  assert(dir != 3 or ((box_geo.length()[0] == box_geo.length()[1]) and
+                      (box_geo.length()[1] == box_geo.length()[2])));
+  double scale = (dir - 3) ? d_new * box_geo.length_inv()[dir]
+                           : d_new * box_geo.length_inv()[0];
+
+  assert(scale > 0.);
+  veto_boxl_change(true);
+
+  /* If shrinking, rescale the particles first. */
+  if (scale <= 1.) {
+    mpi_rescale_particles(dir, scale);
+  }
+
+  if (dir < 3) {
+    auto box_l = box_geo.length();
+    box_l[dir] = d_new;
+    mpi_call_all(mpi_set_box_length_local, box_l);
+  } else {
+    mpi_call_all(mpi_set_box_length_local, Utils::Vector3d::broadcast(d_new));
+  }
+
+  if (scale > 1.) {
+    mpi_rescale_particles(dir, scale);
+  }
+}
+
+static void check_new_length(const Utils::Vector3d &length) {
   if (boost::algorithm::any_of(length,
                                [](double value) { return value <= 0; })) {
     throw std::domain_error("Box length must be >0");
   }
+  veto_boxl_change(false);
+}
+
+void mpi_set_box_length(const Utils::Vector3d &length) {
+  check_new_length(length);
 
   mpi_call_all(mpi_set_box_length_local, length);
 }

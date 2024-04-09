@@ -83,6 +83,13 @@ void on_short_range_ia_change();
 void on_constraint_change();
 
 /**
+ * @brief Called before the box length is changed.
+ *
+ * @param skip_particle_checks skip the particle checks
+ */
+void veto_boxl_change(bool skip_particle_checks);
+
+/**
  * @brief Called when the box length has changed. This routine is relatively
  * fast, and changing the box length every time step as for example necessary
  * for NpT is more or less ok.

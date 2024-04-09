@@ -133,7 +133,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         self.system.actors.add(dh)
         # actor should remain in a valid state after a cell system reset
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -209,7 +210,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
         self.system.actors.add(rf)
         # actor should remain in a valid state after a cell system reset
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 

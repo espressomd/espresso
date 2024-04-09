@@ -44,8 +44,8 @@ class NPTThermostat(ut.TestCase):
     def test_01__rng(self):
         """Test for RNG consistency."""
         def reset_particle_and_box():
-            self.system.box_l = [1, 1, 1]
             self.system.part.clear()
+            self.system.box_l = [1, 1, 1]
             p = self.system.part.add(pos=[0, 0, 0])
             return p
 
@@ -122,13 +122,13 @@ class NPTThermostat(ut.TestCase):
 
         system = self.system
         system.box_l = 3 * [ref_box_l]
-        system.part.add(pos=data[:, 0:3], type=len(data) * [2])
         system.non_bonded_inter[2, 2].wca.set_params(epsilon=1., sigma=1.)
         system.time_step = 0.01
 
         for n in range(3):
             direction = np.roll([True, False, False], n)
             system.box_l = 3 * [ref_box_l]
+            system.part.add(pos=data[:, 0:3], type=len(data) * [2])
             system.part.all().pos = data[:, 0:3]
             system.part.all().v = data[:, 3:6]
             system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
@@ -139,6 +139,7 @@ class NPTThermostat(ut.TestCase):
             box_l_rel_ref = np.roll([np.max(box_l_rel), 1., 1.], n)
             np.testing.assert_allclose(box_l_rel, box_l_rel_ref, atol=1e-10)
             self.assertGreater(np.max(box_l_rel), 2)
+            system.part.clear()
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
