@@ -701,7 +701,7 @@ private:
   }
 
   /**
-   * @brief Instantiate default-contructed thermostats.
+   * @brief Instantiate default-constructed thermostats.
    * Can only be run on the head node!
    */
   void make_default_constructed_thermostats() {

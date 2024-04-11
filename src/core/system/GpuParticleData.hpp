@@ -104,7 +104,7 @@ private:
 
 public:
   GpuParticleData() = default;
-  ~GpuParticleData();
+  ~GpuParticleData() = default;
 
   void update() {
     if (m_need_particles_update and m_communication_enabled) {

@@ -35,12 +35,11 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
 namespace detail {
-inline void check_axis_idx_valid(unsigned int const axis) { assert(axis <= 2); }
-
 inline bool get_nth_bit(uint8_t const bitfield, unsigned int const bit_idx) {
   return bitfield & (1u << bit_idx);
 }
@@ -458,11 +457,11 @@ public:
   auto &rotation() { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
   bool can_rotate_around(unsigned int const axis) const {
-    detail::check_axis_idx_valid(axis);
+    assert(axis <= 2u);
     return detail::get_nth_bit(p.rotation, axis);
   }
   void set_can_rotate_around(unsigned int const axis, bool const rot_flag) {
-    detail::check_axis_idx_valid(axis);
+    assert(axis <= 2u);
     if (rot_flag) {
       p.rotation |= static_cast<uint8_t>(1u << axis);
     } else {
@@ -539,7 +538,7 @@ public:
   auto &fixed() { return p.ext_flag; }
   bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
   bool is_fixed_along(unsigned int const axis) const {
-    detail::check_axis_idx_valid(axis);
+    assert(axis <= 2u);
     return detail::get_nth_bit(p.ext_flag, axis);
   }
   void set_fixed_along(int const axis, bool const fixed_flag) {

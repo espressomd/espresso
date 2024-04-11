@@ -44,7 +44,14 @@
 #include <utils/Vector.hpp>
 #include <utils/mpi/all_compare.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+
+#include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <stdexcept>
+#include <utility>
 
 namespace System {
 
