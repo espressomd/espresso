@@ -102,19 +102,6 @@ ReactionAlgorithm::ReactionAlgorithm() {
         }}});
 }
 
-static auto get_real_particle(boost::mpi::communicator const &comm, int p_id) {
-  assert(p_id >= 0);
-  auto const &system = ::System::get_system();
-  auto &cell_structure = *system.cell_structure;
-  auto ptr = cell_structure.get_local_particle(p_id);
-  if (ptr != nullptr and ptr->is_ghost()) {
-    ptr = nullptr;
-  }
-  assert(boost::mpi::all_reduce(comm, static_cast<int>(ptr != nullptr),
-                                std::plus<>()) == 1);
-  return ptr;
-}
-
 Variant ReactionAlgorithm::do_call_method(std::string const &name,
                                           VariantMap const &params) {
   if (name == "calculate_factorial_expression") {
