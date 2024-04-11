@@ -58,11 +58,20 @@ int cuda_check_gpu_compute_capability(int dev) {
   return ES_OK;
 }
 
-void cuda_get_gpu_name(int dev, char name[64]) {
+/**
+ * @brief Safely copy the device name and pad the string with null characters.
+ */
+static void cuda_copy_gpu_name(char *const name, cudaDeviceProp const &prop) {
+  char buffer[256] = {'\0'};
+  std::strncpy(buffer, prop.name, 256);
+  name[255] = '\0';
+  std::strncpy(name, buffer, 256);
+}
+
+void cuda_get_gpu_name(int dev, char *const name) {
   cudaDeviceProp deviceProp;
   CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
-  std::strncpy(name, deviceProp.name, 63);
-  name[63] = 0;
+  cuda_copy_gpu_name(name, deviceProp);
 }
 
 EspressoGpuDevice cuda_get_device_props(const int dev) {
@@ -76,8 +85,7 @@ EspressoGpuDevice cuda_get_device_props(const int dev) {
                            deviceProp.minor,
                            deviceProp.totalGlobalMem,
                            deviceProp.multiProcessorCount};
-  std::strncpy(device.name, deviceProp.name, 64);
-  device.name[63] = '\0';
+  cuda_copy_gpu_name(device.name, deviceProp);
   return device;
 }
 

@@ -22,7 +22,7 @@ from libcpp.vector cimport vector
 cdef extern from "cuda_init.hpp":
     cdef struct EspressoGpuDevice:
         int id
-        char name[64]
+        char name[256]
         char proc_name[64]
         int node
         int compute_capability_major
@@ -33,5 +33,5 @@ cdef extern from "cuda_init.hpp":
     void cuda_set_device(int dev) except +
     int cuda_get_device() except +
     int cuda_get_n_gpus() except +
-    void cuda_get_gpu_name(int dev, char name[64]) except +
+    void cuda_get_gpu_name(int dev, char * name) except +
     vector[EspressoGpuDevice] cuda_gather_gpus()

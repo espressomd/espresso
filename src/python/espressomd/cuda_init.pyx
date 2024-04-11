@@ -63,7 +63,7 @@ cdef class CudaInitHandle:
                 List of available CUDA devices.
 
             """
-            cdef char gpu_name_buffer[4 + 64]
+            cdef char gpu_name_buffer[256]
             n_gpus = 0
             try:
                 n_gpus = cuda_get_n_gpus()
