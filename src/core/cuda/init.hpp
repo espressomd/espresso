@@ -36,7 +36,7 @@ struct EspressoGpuDevice {
   /** Local CUDA device id */
   int id;
   /** Local CUDA device name */
-  char name[64];
+  char name[256];
   /** Node identification */
   char proc_name[64];
   /** MPI process identification */
@@ -73,9 +73,9 @@ int cuda_check_gpu_compute_capability(int dev);
 /** Get the name of a CUDA device.
  *
  *  @param[in]  dev the CUDA device number to ask the name for
- *  @param[out] name a buffer to write the name to, at least 64 characters
+ *  @param[out] name a buffer to write the name to, at least 256 characters
  */
-void cuda_get_gpu_name(int dev, char name[64]);
+void cuda_get_gpu_name(int dev, char *name);
 
 /** Choose a device for future CUDA computations.
  *
