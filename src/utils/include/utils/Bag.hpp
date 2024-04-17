@@ -75,7 +75,7 @@ private:
    * Serialization requires T to be serializable.
    */
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &m_storage;
+    ar & m_storage;
   }
 
 public:

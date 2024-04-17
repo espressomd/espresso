@@ -97,6 +97,7 @@ void IntegratorHandle::on_bind_system(::System::System &system) {
   auto const &params = *m_params;
   for (auto const &key : get_parameter_insertion_order()) {
     if (params.count(key) != 0ul) {
+      // NOLINTNEXTLINE(readability-simplify-boolean-expr)
       if (not(key == "time_step" and
               system.propagation->integ_switch == INTEG_METHOD_NVT and
               system.get_time_step() == -1. and

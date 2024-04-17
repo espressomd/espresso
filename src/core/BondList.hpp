@@ -108,13 +108,13 @@ private:
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     if (Archive::is_loading::value) {
       std::size_t size{};
-      ar &size;
+      ar & size;
       m_storage.resize(size);
     }
 
     if (Archive::is_saving::value) {
       auto size = m_storage.size();
-      ar &size;
+      ar & size;
     }
 
     ar &boost::serialization::make_array(m_storage.data(), m_storage.size());

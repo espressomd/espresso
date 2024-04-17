@@ -92,8 +92,8 @@ protected:
 
 public:
   TuningAlgorithm(System::System &system, double prefactor, int timings)
-      : m_system{system}, m_timings{timings}, m_n_trials{0ul}, m_prefactor{
-                                                                   prefactor} {}
+      : m_system{system}, m_timings{timings}, m_n_trials{0ul},
+        m_prefactor{prefactor} {}
 
   virtual ~TuningAlgorithm() = default;
 

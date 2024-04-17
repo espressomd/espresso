@@ -47,7 +47,7 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
-    ar &m_data;
+    ar & m_data;
   }
 };
 
@@ -178,7 +178,7 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int /* version */) {
-    ar &m_storage;
+    ar & m_storage;
   }
 
   static std::ostream &format(std::ostream &out, Array const &a,

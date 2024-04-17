@@ -271,7 +271,7 @@ public:
     if (m_comm.rank() == 0) {
       try {
         abort_loop();
-      } catch (...) {
+      } catch (...) { // NOLINT(bugprone-empty-catch)
       }
     }
   }

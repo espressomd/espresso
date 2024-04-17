@@ -56,7 +56,7 @@ struct ParticleParametersSwimming {
   bool is_engine_force_on_fluid = false;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &f_swim &swimming &is_engine_force_on_fluid;
+    ar & f_swim & swimming & is_engine_force_on_fluid;
   }
 };
 #endif
@@ -159,10 +159,10 @@ struct ParticleProperties {
     Utils::Quaternion<double> quat = Utils::Quaternion<double>::identity();
 
     template <class Archive> void serialize(Archive &ar, long int) {
-      ar &to_particle_id;
-      ar &distance;
-      ar &rel_orientation;
-      ar &quat;
+      ar & to_particle_id;
+      ar & distance;
+      ar & rel_orientation;
+      ar & quat;
     }
   } vs_relative;
 #endif // VIRTUAL_SITES_RELATIVE
@@ -198,53 +198,53 @@ struct ParticleProperties {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &identity;
-    ar &mol_id;
-    ar &type;
-    ar &propagation;
+    ar & identity;
+    ar & mol_id;
+    ar & type;
+    ar & propagation;
 
 #ifdef MASS
-    ar &mass;
+    ar & mass;
 #endif
 #ifdef ROTATIONAL_INERTIA
-    ar &rinertia;
+    ar & rinertia;
 #endif
 #ifdef ROTATION
-    ar &rotation;
+    ar & rotation;
 #endif
 #ifdef ELECTROSTATICS
-    ar &q;
+    ar & q;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-    ar &mu_E;
+    ar & mu_E;
 #endif
 #ifdef DIPOLES
-    ar &dipm;
+    ar & dipm;
 #endif
 #ifdef DIPOLE_FIELD_TRACKING
-    ar &dip_fld;
+    ar & dip_fld;
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-    ar &vs_relative;
+    ar & vs_relative;
 #endif
 
 #ifdef THERMOSTAT_PER_PARTICLE
-    ar &gamma;
+    ar & gamma;
 #ifdef ROTATION
-    ar &gamma_rot;
+    ar & gamma_rot;
 #endif
 #endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-    ar &ext_flag;
-    ar &ext_force;
+    ar & ext_flag;
+    ar & ext_force;
 #ifdef ROTATION
-    ar &ext_torque;
+    ar & ext_torque;
 #endif
 #endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
-    ar &swim;
+    ar & swim;
 #endif
   }
 };
@@ -273,13 +273,13 @@ struct ParticlePosition {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &p;
-    ar &i;
+    ar & p;
+    ar & i;
 #ifdef ROTATION
-    ar &quat;
+    ar & quat;
 #endif
 #ifdef BOND_CONSTRAINT
-    ar &p_last_timestep;
+    ar & p_last_timestep;
 #endif
   }
 };
@@ -319,9 +319,9 @@ struct ParticleForce {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &f;
+    ar & f;
 #ifdef ROTATION
-    ar &torque;
+    ar & torque;
 #endif
   }
 };
@@ -342,9 +342,9 @@ struct ParticleMomentum {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &v;
+    ar & v;
 #ifdef ROTATION
-    ar &omega;
+    ar & omega;
 #endif
   }
 };
@@ -362,10 +362,10 @@ struct ParticleLocal {
   double lees_edwards_offset = 0.;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &ghost;
-    ar &lees_edwards_flag;
-    ar &p_old;
-    ar &lees_edwards_offset;
+    ar & ghost;
+    ar & lees_edwards_flag;
+    ar & p_old;
+    ar & lees_edwards_offset;
   }
 };
 
@@ -384,7 +384,7 @@ struct ParticleRattle {
   }
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &correction;
+    ar & correction;
   }
 };
 #endif
@@ -579,14 +579,14 @@ public:
 private:
   friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &p;
-    ar &r;
-    ar &m;
-    ar &f;
-    ar &l;
-    ar &bl;
+    ar & p;
+    ar & r;
+    ar & m;
+    ar & f;
+    ar & l;
+    ar & bl;
 #ifdef EXCLUSIONS
-    ar &el;
+    ar & el;
 #endif
   }
 };

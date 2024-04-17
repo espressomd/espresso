@@ -148,7 +148,9 @@ concentrations_numerical = {
 
 print("concentrations sampled with the reaction ensemble vs. analytical solutions:")
 for ptype in types:
-    print(f"  type {types_name[ptype]}: {concentrations[ptype]:.4f} +/- {concentrations_95ci[ptype]:.4f} mol/l (95% CI), expected: {concentrations_numerical[ptype]:.4f} mol/l")
+    print(f"  type {types_name[ptype]}: {concentrations[ptype]:.4f} "
+          f"+/- {concentrations_95ci[ptype]:.4f} mol/l (95% CI), "
+          f"expected: {concentrations_numerical[ptype]:.4f} mol/l")
 
 K_sim = ((concentrations[type_C] / c_ref_in_mol_per_l)**nu_C
          * (concentrations[type_D] / c_ref_in_mol_per_l)**nu_D

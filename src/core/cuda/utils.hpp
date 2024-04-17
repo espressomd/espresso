@@ -42,7 +42,7 @@ template <class F, class... Args>
 void invoke_skip_cuda_exceptions(F &&f, Args &&...args) {
   try {
     return f(args...);
-  } catch (cuda_runtime_error const &) {
+  } catch (cuda_runtime_error const &) { // NOLINT(bugprone-empty-catch)
     // pass
   }
 }

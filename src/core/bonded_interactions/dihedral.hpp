@@ -67,9 +67,9 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &mult;
-    ar &bend;
-    ar &phase;
+    ar & mult;
+    ar & bend;
+    ar & phase;
   }
 };
 

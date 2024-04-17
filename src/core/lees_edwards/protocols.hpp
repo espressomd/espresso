@@ -39,8 +39,8 @@ struct LinearShear {
   LinearShear()
       : m_initial_pos_offset{0.}, m_shear_velocity{0.}, m_time_0{0.} {}
   LinearShear(double initial_offset, double shear_velocity, double time_0)
-      : m_initial_pos_offset{initial_offset},
-        m_shear_velocity{shear_velocity}, m_time_0{time_0} {}
+      : m_initial_pos_offset{initial_offset}, m_shear_velocity{shear_velocity},
+        m_time_0{time_0} {}
   double shear_velocity(double time) const { return m_shear_velocity; }
   double pos_offset(double time) const {
     return m_initial_pos_offset + (time - m_time_0) * m_shear_velocity;
@@ -56,8 +56,8 @@ struct OscillatoryShear {
       : m_initial_pos_offset{0.}, m_amplitude{0.}, m_omega{0.}, m_time_0{0.} {}
   OscillatoryShear(double initial_offset, double amplitude, double omega,
                    double time_0)
-      : m_initial_pos_offset{initial_offset},
-        m_amplitude{amplitude}, m_omega{omega}, m_time_0{time_0} {}
+      : m_initial_pos_offset{initial_offset}, m_amplitude{amplitude},
+        m_omega{omega}, m_time_0{time_0} {}
   double pos_offset(double time) const {
     return m_initial_pos_offset +
            m_amplitude * std::sin(m_omega * (time - m_time_0));

@@ -573,8 +573,8 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
                 u[l] += bhpara->u[3 * ch + l];
               }
             } // m >= 0.0f
-          }   // ch >= 0
-        }     // missing_max
+          } // ch >= 0
+        } // missing_max
         // repeat until we are done or child is not ready
       }
 

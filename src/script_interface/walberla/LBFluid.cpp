@@ -228,8 +228,7 @@ void LBFluid::load_checkpoint(std::string const &filename, int mode) {
     cpfile.read(read_pop_size);
     if (read_grid_size != expected_grid_size) {
       std::stringstream message;
-      message << "grid dimensions mismatch, "
-              << "read [" << read_grid_size << "], "
+      message << "grid dimensions mismatch, read [" << read_grid_size << "], "
               << "expected [" << expected_grid_size << "].";
       throw std::runtime_error(message.str());
     }

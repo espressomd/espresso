@@ -1,4 +1,5 @@
 #!/bin/sh
+#
 # Copyright (C) 2018-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -15,6 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 CMAKE_FORMAT_VER=0.6.13
 python3 -m cmakelang.format 2>&1 > /dev/null

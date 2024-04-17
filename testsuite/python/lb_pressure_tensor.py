@@ -22,7 +22,7 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-#import scipy.optimize
+# import scipy.optimize
 
 N_CELLS = 12
 

@@ -45,7 +45,7 @@
 struct NonTrivial {
   boost::optional<Utils::Vector3d> ov;
 
-  template <class Archive> void serialize(Archive &ar, long int) { ar &ov; }
+  template <class Archive> void serialize(Archive &ar, long int) { ar & ov; }
 };
 
 using OpVec = boost::optional<Utils::Vector3d>;

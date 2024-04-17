@@ -288,8 +288,8 @@ CoulombP3M::CoulombP3M(P3MParameters &&parameters, double prefactor,
                        int tune_timings, bool tune_verbose,
                        bool check_complex_residuals)
     : p3m{std::move(parameters)}, tune_timings{tune_timings},
-      tune_verbose{tune_verbose}, check_complex_residuals{
-                                      check_complex_residuals} {
+      tune_verbose{tune_verbose},
+      check_complex_residuals{check_complex_residuals} {
 
   if (tune_timings <= 0) {
     throw std::domain_error("Parameter 'timings' must be > 0");

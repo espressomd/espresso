@@ -93,7 +93,7 @@ TOTAL_NUM_MC_STEPS = int(1e5)
 NUM_SAMPLES = 100
 INTEGRATION_STEPS_PER_SAMPLE = 100
 assert TOTAL_NUM_MC_STEPS % NUM_SAMPLES == 0, \
-    f"Total number of MC steps must be divisible by total number of samples, got {TOTAL_NUM_MC_STEPS} and {NUM_SAMPLES}"
+    f"Total number of MC steps must be divisible by total number of samples, got {TOTAL_NUM_MC_STEPS} and {NUM_SAMPLES}"  # nopep8
 MC_STEPS_PER_SAMPLE = TOTAL_NUM_MC_STEPS // NUM_SAMPLES
 
 # definitions of reduced units
@@ -266,7 +266,8 @@ def report_progress(system, i, next_i):
     n_All = len(system.part)
     if i == next_i:
         print(
-            f"run {i:d} time {system.time:.3g} completed {i / NUM_SAMPLES * 100:.0f}%",
+            f"run {i:d} time {system.time:.3g} completed "
+            f"{i / NUM_SAMPLES * 100:.0f}%",
             f"instantaneous values: All {n_All:d}  Na {n_Na:d}  Cl {n_Cl:d}",
             f"A {n_A:d}  alpha {n_A / N_ACID:.3f}")
         if i == 0:
@@ -308,7 +309,8 @@ if args.output:
         energy = system.analysis.energy()["total"]
         verlet = system.cell_system.get_state()["verlet_reuse"]
         print(
-            f"step {i}, time MD: {t_MD:.2e}, time MC: {t_MC:.2e}, verlet: {verlet:.2f}, energy: {energy:.2e}")
+            f"step {i}, time MD: {t_MD:.2e}, time MC: {t_MC:.2e}, "
+            f"verlet: {verlet:.2f}, energy: {energy:.2e}")
 
     # average time
     avg_MC, ci_MC = benchmarks.get_average_time(timings_MC)

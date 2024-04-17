@@ -35,7 +35,7 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, unsigned int /* version */) {
-    ar &density &is_boundary_density &density_boundary &is_boundary_flux
-        &flux_boundary;
+    ar & density & is_boundary_density & density_boundary & is_boundary_flux &
+        flux_boundary;
   }
 };

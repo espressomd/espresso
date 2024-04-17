@@ -55,9 +55,9 @@ struct QueueEntry {
   friend class boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    ar &particle_id;
-    ar &bond_partners;
-    ar &bond_type;
+    ar & particle_id;
+    ar & bond_partners;
+    ar & bond_type;
   }
 };
 
