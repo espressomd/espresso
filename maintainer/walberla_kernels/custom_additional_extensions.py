@@ -189,7 +189,7 @@ class FluxAdditionalDataHandler(
         dirVec = self.stencil_info[direction][1]
 
         init_list = [
-            f"Vector3<{self.data_type}> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + {dirVec[0]}, it.y() + {dirVec[1]}, it.z() + {dirVec[2]}), blocks, *block);",
+            f"Vector3<{self.data_type}> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + {dirVec[0]}, it.y() + {dirVec[1]}, it.z() + {dirVec[2]}), blocks, *block);",  # nopep8
             "element.flux_0 = InitialisatonAdditionalData[0];",
             "element.flux_1 = InitialisatonAdditionalData[1];"]
         if self._dim == 3:

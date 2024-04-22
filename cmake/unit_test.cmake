@@ -30,6 +30,10 @@ function(UNIT_TEST)
   endif()
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
   target_link_libraries(${TEST_NAME} PRIVATE espresso::config espresso::cpp_flags)
+  if(ESPRESSO_BUILD_WITH_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(
+      ${TEST_NAME} PRIVATE -fno-default-inline -fno-elide-constructors)
+  endif()
 
   # If NUM_PROC is given, set up MPI parallel test case
   if(TEST_NUM_PROC)

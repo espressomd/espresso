@@ -25,6 +25,7 @@ import lbmpy
 import lbmpy_walberla
 import pystencils
 import pystencils_walberla
+import pystencils_walberla.codegen
 
 
 def adapt_pystencils():

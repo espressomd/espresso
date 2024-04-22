@@ -67,6 +67,7 @@ def paramlist(parameters, keys):
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
     if target == ps.Target.GPU:
+        ctx.gpu = True
         ctx.cuda = True
 
     # vectorization parameters

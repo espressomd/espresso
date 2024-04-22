@@ -121,3 +121,10 @@ add_subdirectory(virtual_sites)
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(unit_tests)
 endif()
+
+if(ESPRESSO_BUILD_WITH_HDF5 AND ESPRESSO_BUILD_WITH_COVERAGE
+   AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set_source_files_properties(
+    io/writer/h5md_core.cpp PROPERTIES COMPILE_OPTIONS -felide-constructors
+                                       DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endif()

@@ -41,7 +41,9 @@ class SigintTest(ut.TestCase):
         # capture stderr and return code (negative of signum)
         stdout, stderr = process.communicate(input=None, timeout=16.)
         assert stdout is None
-        traceback = stderr.decode()
+        traceback = (
+            stderr.decode()
+            .replace("\n[WARNING] yaksa: 1 leaked handle pool objects", ""))
         return_code = process.poll()
         signum = -return_code
         self.assertEqual(signum, sig.value)
