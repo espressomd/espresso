@@ -63,7 +63,10 @@ static void check_solver(std::unique_ptr<Solver::Implementation> const &ptr) {
 
 bool Solver::is_solver_set() const { return LB::is_solver_set(impl); }
 
-void Solver::reset() { System::get_system().lb.impl->solver = std::nullopt; }
+void Solver::reset() {
+  System::get_system().lb.impl->solver = std::nullopt;
+  m_conv = Conversions{};
+}
 
 void Solver::propagate() {
   check_solver(impl);
@@ -137,6 +140,11 @@ void Solver::on_temperature_change() {
   }
 }
 
+bool Solver::is_gpu() const {
+  check_solver(impl);
+  return std::visit([](auto &ptr) { return ptr->is_gpu(); }, *impl->solver);
+}
+
 double Solver::get_agrid() const {
   check_solver(impl);
   return std::visit([](auto &ptr) { return ptr->get_agrid(); }, *impl->solver);
@@ -165,9 +173,8 @@ Solver::get_interpolated_velocity(Utils::Vector3d const &pos) const {
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   return std::visit(
       [&](auto &ptr) {
-        auto const agrid = ptr->get_agrid();
         auto const &box_geo = *System::get_system().box_geo;
-        auto const lb_pos = box_geo.folded_position(pos) / agrid;
+        auto const lb_pos = box_geo.folded_position(pos) * m_conv.pos_to_lb;
         return ptr->get_velocity_at_pos(lb_pos, false);
       },
       *impl->solver);
@@ -177,9 +184,8 @@ std::optional<double>
 Solver::get_interpolated_density(Utils::Vector3d const &pos) const {
   return std::visit(
       [&](auto &ptr) {
-        auto const agrid = ptr->get_agrid();
         auto const &box_geo = *System::get_system().box_geo;
-        auto const lb_pos = box_geo.folded_position(pos) / agrid;
+        auto const lb_pos = box_geo.folded_position(pos) * m_conv.pos_to_lb;
         return ptr->get_density_at_pos(lb_pos, false);
       },
       *impl->solver);
@@ -189,10 +195,46 @@ Utils::Vector3d
 Solver::get_coupling_interpolated_velocity(Utils::Vector3d const &pos) const {
   return std::visit(
       [&](auto &ptr) {
-        auto const agrid = ptr->get_agrid();
-        auto const res = ptr->get_velocity_at_pos(pos / agrid, true);
+        auto const res = ptr->get_velocity_at_pos(pos * m_conv.pos_to_lb, true);
         assert(res);
-        return *res * (ptr->get_agrid() / ptr->get_tau());
+        return *res * m_conv.vel_to_md;
+      },
+      *impl->solver);
+}
+
+std::vector<Utils::Vector3d> Solver::get_coupling_interpolated_velocities(
+    std::vector<Utils::Vector3d> const &pos) const {
+  return std::visit(
+      [&](auto &ptr) {
+        std::vector<Utils::Vector3d> pos_lb;
+        pos_lb.reserve(pos.size());
+        for (auto const &pos_md : pos) {
+          pos_lb.emplace_back(pos_md * m_conv.pos_to_lb);
+        }
+        auto res = ptr->get_velocities_at_pos(pos_lb);
+        for (auto &v : res) {
+          v *= m_conv.vel_to_md;
+        }
+        return res;
+      },
+      *impl->solver);
+}
+
+void Solver::add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
+                               std::vector<Utils::Vector3d> const &forces) {
+  std::visit(
+      [&](auto &ptr) {
+        std::vector<Utils::Vector3d> pos_lb;
+        std::vector<Utils::Vector3d> force_lb;
+        pos_lb.reserve(pos.size());
+        force_lb.reserve(pos.size());
+        for (auto const &pos_md : pos) {
+          pos_lb.emplace_back(pos_md * m_conv.pos_to_lb);
+        }
+        for (auto const &force_md : forces) {
+          force_lb.emplace_back(force_md * m_conv.force_to_lb);
+        }
+        ptr->add_forces_at_pos(pos_lb, force_lb);
       },
       *impl->solver);
 }
@@ -201,7 +243,8 @@ void Solver::add_force_density(Utils::Vector3d const &pos,
                                Utils::Vector3d const &force_density) {
   std::visit(
       [&](auto &ptr) {
-        if (not ptr->add_force_at_pos(pos / ptr->get_agrid(), force_density)) {
+        if (not ptr->add_force_at_pos(pos * m_conv.pos_to_lb,
+                                      force_density * m_conv.force_to_lb)) {
           throw std::runtime_error("Cannot apply force to LB");
         }
       },
@@ -232,6 +275,9 @@ void Solver::set<LBWalberla>(std::shared_ptr<LBWalberlaBase> lb_fluid,
   auto const &lebc = system.box_geo->lees_edwards_bc();
   lb_fluid->check_lebc(lebc.shear_direction, lebc.shear_plane_normal);
   impl->solver = lb_instance;
+  auto const agrid = lb_instance->get_agrid();
+  auto const tau = lb_instance->get_tau();
+  m_conv = Conversions{1. / agrid, agrid / tau, tau * tau / agrid};
 }
 #endif // WALBERLA
 

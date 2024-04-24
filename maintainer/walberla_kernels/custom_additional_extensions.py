@@ -135,7 +135,7 @@ class DirichletAdditionalDataHandler(
 
     @property
     def constructor_arguments(self):
-        return f", std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& dirichletCallback "
+        return f", std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& dirichletCallback "  # nopep8
 
     @property
     def initialiser_list(self):
@@ -151,14 +151,14 @@ class DirichletAdditionalDataHandler(
 
     def data_initialisation(self, _):
         init_list = [
-            f"{self.data_type} InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);",
+            f"{self.data_type} InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);",  # nopep8
             "element.value = InitialisatonAdditionalData;"]
 
         return "\n".join(init_list)
 
     @property
     def additional_member_variable(self):
-        return f"std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "
+        return f"std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "  # nopep8
 
 
 class FluxAdditionalDataHandler(
@@ -171,7 +171,7 @@ class FluxAdditionalDataHandler(
 
     @property
     def constructor_arguments(self):
-        return f", std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& fluxCallback "
+        return f", std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& fluxCallback "  # nopep8
 
     @property
     def initialiser_list(self):
@@ -200,7 +200,7 @@ class FluxAdditionalDataHandler(
 
     @property
     def additional_member_variable(self):
-        return f"std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "
+        return f"std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "  # nopep8
 
 
 # this custom boundary generator is necessary because our boundary condition

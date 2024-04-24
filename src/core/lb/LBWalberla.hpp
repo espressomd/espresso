@@ -58,6 +58,7 @@ struct LBWalberla {
   auto get_agrid() const { return lb_params->get_agrid(); }
   auto get_lattice_speed() const { return get_agrid() / get_tau(); }
   Utils::VectorXd<9> get_pressure_tensor() const;
+  bool is_gpu() const;
   std::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &pos,
                       bool consider_points_in_halo) const;
@@ -66,6 +67,10 @@ struct LBWalberla {
   Utils::Vector3d get_momentum() const;
   bool add_force_at_pos(Utils::Vector3d const &pos,
                         Utils::Vector3d const &force);
+  void add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
+                         std::vector<Utils::Vector3d> const &forces);
+  std::vector<Utils::Vector3d>
+  get_velocities_at_pos(std::vector<Utils::Vector3d> const &pos);
   void propagate();
   void veto_time_step(double time_step) const;
   void veto_kT(double kT) const;

@@ -174,7 +174,7 @@ with code_generation_context.CodeGeneration() as ctx:
         filename = f"FieldAccessors{precision_prefix}{target_suffix}"
         if target == ps.Target.GPU:
             templates = {
-                f"{filename}.h": "templates/FieldAccessors.tmpl.cuh",
+                f"{filename}.cuh": "templates/FieldAccessors.tmpl.cuh",
                 f"{filename}.cu": "templates/FieldAccessors.tmpl.cu",
             }
         else:

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_MATH_BSPLINE_HPP
-#define UTILS_MATH_BSPLINE_HPP
+
+#pragma once
 
 #include "sqr.hpp"
 #include "utils/device_qualifier.hpp"
@@ -323,5 +323,3 @@ bspline_d(int i, T x) -> std::enable_if_t<(order > 0) && (order <= 7), T> {
   return T{};
 }
 } // namespace Utils
-
-#endif

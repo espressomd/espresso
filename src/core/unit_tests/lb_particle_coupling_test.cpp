@@ -104,8 +104,8 @@ static auto make_lb_actor() {
   lb_params = std::make_shared<LB::LBWalberlaParams>(params.agrid, params.tau);
   lb_lattice = std::make_shared<LatticeWalberla>(
       params.grid_dimensions, ::communicator.node_grid, n_ghost_layers);
-  lb_fluid = new_lb_walberla(lb_lattice, params.viscosity, params.density,
-                             single_precision);
+  lb_fluid = new_lb_walberla_cpu(lb_lattice, params.viscosity, params.density,
+                                 single_precision);
   lb_fluid->set_collision_model(params.kT, params.seed);
   lb_fluid->ghost_communication();
 }
@@ -175,13 +175,12 @@ BOOST_AUTO_TEST_CASE(rng) {
   auto &thermostat = *espresso::system->thermostat->lb;
   auto const &box_geo = *espresso::system->box_geo;
   auto const &local_box = *espresso::system->local_geo;
-  auto const tau = params.time_step;
   thermostat.rng_initialize(17u);
   thermostat.set_rng_counter(11ul);
   thermostat.gamma = 0.2;
   espresso::set_lb_kT(1.);
 
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box, tau};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
   BOOST_CHECK_EQUAL(thermostat.rng_seed(), 17u);
   BOOST_CHECK_EQUAL(thermostat.rng_counter(), 11ul);
   BOOST_CHECK(not thermostat.is_seed_required());
@@ -209,28 +208,10 @@ BOOST_AUTO_TEST_CASE(rng) {
 
   espresso::set_lb_kT(0.);
   LB::ParticleCoupling coupling_unthermalized{thermostat, lb, box_geo,
-                                              local_box, tau};
+                                              local_box};
   auto const step3_norandom =
       coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
-}
-
-BOOST_AUTO_TEST_CASE(drift_vel_offset) {
-  Particle p{};
-  auto &lb = espresso::system->lb;
-  auto &thermostat = *espresso::system->thermostat->lb;
-  auto const &box_geo = *espresso::system->box_geo;
-  auto const &local_box = *espresso::system->local_geo;
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
-                                params.time_step};
-  BOOST_CHECK_EQUAL(coupling.lb_drift_velocity_offset(p).norm(), 0);
-  Utils::Vector3d expected{};
-#ifdef LB_ELECTROHYDRODYNAMICS
-  p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
-  expected += p.mu_E();
-#endif
-  BOOST_CHECK_SMALL((coupling.lb_drift_velocity_offset(p) - expected).norm(),
-                    eps);
 }
 
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
@@ -241,12 +222,17 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   p.v() = {-2.5, 1.5, 2.};
   p.pos() = espresso::lb_fluid->get_lattice().get_local_domain().first;
   thermostat.gamma = 0.2;
-  Utils::Vector3d drift_offset{-1., 1., 1.};
+#ifdef LB_ELECTROHYDRODYNAMICS
+  p.mu_E() = Utils::Vector3d{-1., 1., 1.};
+#endif
 
   // Drag force in quiescent fluid
   {
-    auto const observed = lb_drag_force(lb, 0.2, p, p.pos(), drift_offset);
-    const Utils::Vector3d expected{0.3, -0.1, -.2};
+    auto const observed = lb_drag_force(lb, 0.2, p, p.pos());
+    Utils::Vector3d expected{0.5, -0.3, -0.4};
+#ifdef LB_ELECTROHYDRODYNAMICS
+    expected += thermostat.gamma * p.mu_E();
+#endif
     BOOST_CHECK_SMALL((observed - expected).norm(), eps);
   }
 }
@@ -269,9 +255,8 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   // swimmer coupling
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
-      LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
-                                    params.time_step};
-      coupling.kernel(p);
+      LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+      coupling.kernel({&p});
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
           params.force_md_to_lb(Utils::Vector3d{0., 0., p.swimming().f_swim});
@@ -303,8 +288,8 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   // remove force of the particle from the fluid
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
-      add_md_force(lb, p.pos(), -Utils::Vector3d{0., 0., p.swimming().f_swim},
-                   params.time_step);
+      lb.add_force_density(p.pos(),
+                           -Utils::Vector3d{0., 0., p.swimming().f_swim});
       auto const reset = LB::get_force_to_be_applied(p.pos());
       BOOST_REQUIRE_SMALL(reset.norm(), eps);
     }
@@ -323,8 +308,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   thermostat.gamma = 0.2;
   Particle p{};
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
-                                params.time_step};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
   auto expected = coupling.get_noise_term(p);
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
@@ -335,7 +319,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   // coupling
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
-      coupling.kernel(p);
+      coupling.kernel({&p});
       BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
 
       auto const interpolated = -LB::get_force_to_be_applied(p.pos());
@@ -347,7 +331,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
   // remove force of the particle from the fluid
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
-      add_md_force(lb, p.pos(), -expected, params.time_step);
+      lb.add_force_density(p.pos(), -expected);
     }
   }
 }
@@ -373,6 +357,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   create_particle({box_l[0] / 2. - skin * 2., skin * 2., skin * 2.}, 0, 0);
 
   // sanity checks
+  BOOST_REQUIRE_EQUAL(lb.is_gpu(), false);
   BOOST_REQUIRE_EQUAL(get_particle_node_parallel(pid), rank ? -1 : 0);
   BOOST_REQUIRE_EQUAL(
       ErrorHandling::mpi_gather_runtime_errors_all(rank == 0).size(), 0);
@@ -385,8 +370,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
 
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
-                                params.time_step};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
   auto const p_opt = copy_particle_to_head_node(comm, system, pid);
   auto expected = Utils::Vector3d{};
   if (rank == 0) {
@@ -495,7 +479,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       }
       // remove force of the particle from the fluid
       set_particle_property(pid, &Particle::force, Utils::Vector3d{});
-      add_md_force(lb, p_pos, -expected, params.time_step);
+      lb.add_force_density(p_pos, -expected);
     }
   }
 
@@ -553,7 +537,7 @@ bool test_lb_domain_mismatch_local() {
   ::communicator.node_grid = node_grid_reversed;
   auto const lattice = std::make_shared<LatticeWalberla>(
       Utils::Vector3i{12, 12, 12}, node_grid_original, n_ghost_layers);
-  auto const ptr = new_lb_walberla(lattice, 1.0, 1.0, false);
+  auto const ptr = new_lb_walberla_cpu(lattice, 1.0, 1.0, false);
   ptr->set_collision_model(0.0, 0);
   ::communicator.node_grid = node_grid_original;
   auto lb_instance = std::make_shared<LB::LBWalberla>(ptr, params);
@@ -574,16 +558,16 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
   auto &lb = espresso::system->lb;
   // LB exceptions mechanism
   {
-    using std::exception;
     // getters and setters
-    BOOST_CHECK_THROW(lb.get_agrid(), exception);
-    BOOST_CHECK_THROW(lb.get_tau(), exception);
-    BOOST_CHECK_THROW(lb.get_kT(), exception);
-    BOOST_CHECK_THROW(lb.get_pressure_tensor(), exception);
+    BOOST_CHECK_THROW(lb.is_gpu(), std::exception);
+    BOOST_CHECK_THROW(lb.get_agrid(), std::exception);
+    BOOST_CHECK_THROW(lb.get_tau(), std::exception);
+    BOOST_CHECK_THROW(lb.get_kT(), std::exception);
+    BOOST_CHECK_THROW(lb.get_pressure_tensor(), std::exception);
     BOOST_CHECK_THROW(LB::get_force_to_be_applied({-10., -10., -10.}),
                       std::runtime_error);
     // coupling, interpolation, boundaries
-    BOOST_CHECK_THROW(lb.get_momentum(), exception);
+    BOOST_CHECK_THROW(lb.get_momentum(), std::exception);
   }
 
   // waLBerla and ESPResSo must agree on domain decomposition
@@ -613,6 +597,7 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     auto const vec = Utils::Vector3d{};
     auto lb_impl = std::make_shared<LB::LBNone>();
     lb.set<LB::LBNone>(lb_impl);
+    BOOST_CHECK_THROW(lb.is_gpu(), NoLBActive);
     BOOST_CHECK_THROW(lb.get_agrid(), NoLBActive);
     BOOST_CHECK_THROW(lb.get_tau(), NoLBActive);
     BOOST_CHECK_THROW(lb.get_kT(), NoLBActive);
@@ -632,6 +617,8 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(lb_impl->get_density_at_pos(vec, true), NoLBActive);
     BOOST_CHECK_THROW(lb_impl->get_velocity_at_pos(vec, true), NoLBActive);
     BOOST_CHECK_THROW(lb_impl->add_force_at_pos(vec, vec), NoLBActive);
+    BOOST_CHECK_THROW(lb_impl->add_forces_at_pos({}, {}), NoLBActive);
+    BOOST_CHECK_THROW(lb_impl->get_velocities_at_pos({}), NoLBActive);
     lb.reset();
   }
 }

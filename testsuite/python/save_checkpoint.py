@@ -66,7 +66,7 @@ for filepath in path_cpt_root.iterdir():
     filepath.unlink(missing_ok=True)
 
 # Lees-Edwards boundary conditions
-if 'INT.NPT' not in modes:
+if 'INT.NPT' not in modes and 'LB.GPU' not in modes:
     protocol = espressomd.lees_edwards.LinearShear(
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
@@ -75,7 +75,10 @@ if 'INT.NPT' not in modes:
 lbf_class = None
 lb_lattice = None
 if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
-    lbf_class = espressomd.lb.LBFluidWalberla
+    if 'LB.GPU' in modes and espressomd.gpu_available():
+        lbf_class = espressomd.lb.LBFluidWalberlaGPU
+    elif 'LB.CPU' in modes:
+        lbf_class = espressomd.lb.LBFluidWalberla
     lb_lattice = espressomd.lb.LatticeWalberla(agrid=2.0, n_ghost_layers=1)
 if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
@@ -385,20 +388,21 @@ if lbf_class:
     vtk_suffix = config.test_name
     vtk_root = pathlib.Path("vtk_out")
     # create LB VTK callbacks
-    lb_vtk_auto_id = f"auto_lb_{vtk_suffix}"
-    lb_vtk_manual_id = f"manual_lb_{vtk_suffix}"
-    config.recursive_unlink(vtk_root / lb_vtk_auto_id)
-    config.recursive_unlink(vtk_root / lb_vtk_manual_id)
-    lb_vtk_auto = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_auto_id, delta_N=1,
-        observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
-    lbf.add_vtk_writer(vtk=lb_vtk_auto)
-    lb_vtk_auto.disable()
-    lb_vtk_manual = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_manual_id, delta_N=0,
-        observables=('density',), base_folder=str(vtk_root))
-    lbf.add_vtk_writer(vtk=lb_vtk_manual)
-    lb_vtk_manual.write()
+    if 'LB.GPU' not in modes:  # TODO WALBERLA
+        lb_vtk_auto_id = f"auto_lb_{vtk_suffix}"
+        lb_vtk_manual_id = f"manual_lb_{vtk_suffix}"
+        config.recursive_unlink(vtk_root / lb_vtk_auto_id)
+        config.recursive_unlink(vtk_root / lb_vtk_manual_id)
+        lb_vtk_auto = espressomd.lb.VTKOutput(
+            identifier=lb_vtk_auto_id, delta_N=1,
+            observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
+        lbf.add_vtk_writer(vtk=lb_vtk_auto)
+        lb_vtk_auto.disable()
+        lb_vtk_manual = espressomd.lb.VTKOutput(
+            identifier=lb_vtk_manual_id, delta_N=0,
+            observables=('density',), base_folder=str(vtk_root))
+        lbf.add_vtk_writer(vtk=lb_vtk_manual)
+        lb_vtk_manual.write()
     # create EK VTK callbacks
     ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
     ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"

@@ -52,7 +52,10 @@ namespace ScriptInterface::walberla {
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LatticeWalberla>("walberla::LatticeWalberla");
 
-  om->register_new<LBFluid>("walberla::LBFluid");
+  om->register_new<LBFluidCPU>("walberla::LBFluidCPU");
+#ifdef CUDA
+  om->register_new<LBFluidGPU>("walberla::LBFluidGPU");
+#endif // CUDA
   om->register_new<LBFluidNode>("walberla::LBFluidNode");
   om->register_new<LBFluidSlice>("walberla::LBFluidSlice");
   om->register_new<LBVTKHandle>("walberla::LBVTKHandle");

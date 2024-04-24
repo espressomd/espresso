@@ -43,6 +43,7 @@ namespace ScriptInterface::walberla {
 class EKVTKHandle;
 
 class EKSpecies : public LatticeModel<::EKinWalberlaBase, EKVTKHandle> {
+protected:
   using Base = LatticeModel<::EKinWalberlaBase, EKVTKHandle>;
   double m_conv_diffusion;
   double m_conv_ext_efield;
@@ -51,6 +52,8 @@ class EKSpecies : public LatticeModel<::EKinWalberlaBase, EKVTKHandle> {
   double m_conv_flux;
   double m_tau;
   double m_density;
+
+  void make_instance(VariantMap const &params) override;
 
 public:
   EKSpecies() {
@@ -99,7 +102,7 @@ public:
     });
   }
 
-  void do_construct(VariantMap const &args) override;
+  void do_construct(VariantMap const &params) override;
 
   [[nodiscard]] auto get_ekinstance() const { return m_instance; }
   [[nodiscard]] auto get_lattice() const { return m_lattice; }

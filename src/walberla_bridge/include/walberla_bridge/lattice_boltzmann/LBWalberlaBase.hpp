@@ -59,6 +59,10 @@ public:
   get_velocity_at_pos(Utils::Vector3d const &position,
                       bool consider_points_in_halo = false) const = 0;
 
+  /** @brief Get interpolated velocities at positions. */
+  virtual std::vector<Utils::Vector3d>
+  get_velocities_at_pos(std::vector<Utils::Vector3d> const &pos) = 0;
+
   /** @brief Get interpolated densities at a position. */
   virtual std::optional<double>
   get_density_at_pos(Utils::Vector3d const &position,
@@ -70,6 +74,14 @@ public:
    */
   virtual bool add_force_at_pos(Utils::Vector3d const &position,
                                 Utils::Vector3d const &force) = 0;
+
+  /**
+   * @brief Interpolate forces to the stored forces to be applied on nodes
+   * in the next time step.
+   */
+  virtual void
+  add_forces_at_pos(std::vector<Utils::Vector3d> const &positions,
+                    std::vector<Utils::Vector3d> const &forces) = 0;
 
   /** @brief Get stored force to be applied on node in the next time step. */
   virtual std::optional<Utils::Vector3d>
@@ -256,4 +268,6 @@ public:
 
   /** @brief get the force field id */
   [[nodiscard]] virtual std::size_t get_force_field_id() const noexcept = 0;
+
+  [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
 };

@@ -124,6 +124,28 @@ Variant LBFluid::do_call_method(std::string const &name,
   return Base::do_call_method(name, params);
 }
 
+void LBFluidCPU::make_instance(VariantMap const &params) {
+  auto const visc = get_value<double>(params, "kinematic_viscosity");
+  auto const dens = get_value<double>(params, "density");
+  auto const precision = get_value<bool>(params, "single_precision");
+  auto const lb_lattice = m_lattice->lattice();
+  auto const lb_visc = m_conv_visc * visc;
+  auto const lb_dens = m_conv_dens * dens;
+  m_instance = new_lb_walberla_cpu(lb_lattice, lb_visc, lb_dens, precision);
+}
+
+#ifdef CUDA
+void LBFluidGPU::make_instance(VariantMap const &params) {
+  auto const visc = get_value<double>(params, "kinematic_viscosity");
+  auto const dens = get_value<double>(params, "density");
+  auto const precision = get_value<bool>(params, "single_precision");
+  auto const lb_lattice = m_lattice->lattice();
+  auto const lb_visc = m_conv_visc * visc;
+  auto const lb_dens = m_conv_dens * dens;
+  m_instance = new_lb_walberla_gpu(lb_lattice, lb_visc, lb_dens, precision);
+}
+#endif // CUDA
+
 void LBFluid::do_construct(VariantMap const &params) {
   m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
   m_vtk_writers =
@@ -134,7 +156,6 @@ void LBFluid::do_construct(VariantMap const &params) {
   auto const dens = get_value<double>(params, "density");
   auto const kT = get_value<double>(params, "kT");
   auto const ext_f = get_value<Utils::Vector3d>(params, "ext_force_density");
-  auto const single_precision = get_value<bool>(params, "single_precision");
   m_lb_params = std::make_shared<::LB::LBWalberlaParams>(agrid, tau);
   m_is_active = false;
   m_seed = get_value<int>(params, "seed");
@@ -150,7 +171,6 @@ void LBFluid::do_construct(VariantMap const &params) {
     m_conv_press = Utils::int_pow<2>(tau) * Utils::int_pow<1>(agrid);
     m_conv_force = Utils::int_pow<2>(tau) / Utils::int_pow<1>(agrid);
     m_conv_force_dens = Utils::int_pow<2>(tau) * Utils::int_pow<2>(agrid);
-    auto const lb_lattice = m_lattice->lattice();
     auto const lb_visc = m_conv_visc * visc;
     auto const lb_dens = m_conv_dens * dens;
     auto const lb_kT = m_conv_energy * kT;
@@ -167,8 +187,7 @@ void LBFluid::do_construct(VariantMap const &params) {
     if (lb_visc < 0.) {
       throw std::domain_error("Parameter 'kinematic_viscosity' must be >= 0");
     }
-    m_instance =
-        new_lb_walberla(lb_lattice, lb_visc, lb_dens, single_precision);
+    make_instance(params);
     auto const &system = ::System::get_system();
     if (auto le_protocol = system.lees_edwards->get_protocol()) {
       if (lb_kT != 0.) {
