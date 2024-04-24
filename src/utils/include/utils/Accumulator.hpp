@@ -41,7 +41,7 @@ private:
 
   template <typename Archive>
   void serialize(Archive &ar, const unsigned /*version*/) {
-    ar &mean &m;
+    ar & mean & m;
   }
 };
 
@@ -61,7 +61,7 @@ private:
 
   template <typename Archive>
   void serialize(Archive &ar, const unsigned /*version*/) {
-    ar &m_n &m_acc_data;
+    ar & m_n & m_acc_data;
   }
 };
 
@@ -71,10 +71,9 @@ inline void Accumulator::operator()(const std::vector<double> &data) {
         "The given data size does not fit the initialized size!");
   ++m_n;
   if (m_n == 1) {
-    std::transform(data.begin(), data.end(), m_acc_data.begin(),
-                   [](double d) -> AccumulatorData<double> {
-                     return {d, 0.0};
-                   });
+    std::transform(
+        data.begin(), data.end(), m_acc_data.begin(),
+        [](double d) -> AccumulatorData<double> { return {d, 0.0}; });
   } else {
     std::transform(m_acc_data.begin(), m_acc_data.end(), data.begin(),
                    m_acc_data.begin(),

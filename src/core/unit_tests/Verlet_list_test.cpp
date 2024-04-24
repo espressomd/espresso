@@ -77,8 +77,8 @@ struct IntegratorHelper : public ParticleFactory {
   /** Set particle to move along the x-axis. */
   virtual void set_particle_properties(int) const = 0;
   virtual char const *name() const = 0;
-  friend auto operator<<(std::ostream &os, IntegratorHelper const &obj)
-      -> std::ostream & {
+  friend auto operator<<(std::ostream &os,
+                         IntegratorHelper const &obj) -> std::ostream & {
     return os << obj.name();
   }
 };

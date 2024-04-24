@@ -77,7 +77,7 @@ template <typename T, std::size_t Rows, std::size_t Cols> struct Matrix {
 private:
   friend class boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, const unsigned int) {
-    ar &m_data;
+    ar & m_data;
   }
 
 public:

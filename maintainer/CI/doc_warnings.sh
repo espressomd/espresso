@@ -31,7 +31,7 @@
 # not enclosed within <a href="..."></a> tags. Sphinx doesn't use line
 # wrapping, so these broken links can be found via text search. The first
 # negative lookahead filters out common Python types (for performance reasons).
-regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|complex|bool|str|bytes|array|bytearray|memoryview|object|list|tuple|range|slice|dict|set|frozenset|(?:numpy\.|np\.)?(?:nd)?array)<)[^<>]+?</span></code>(?!</a>)'
+regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|complex|bool|str|bytes|array|bytearray|memoryview|object|list|tuple|range|slice|dict|set|frozenset|(?:numpy\.|np\.)?(?:nd)?array|EnumType|IntEnum|StrEnum|ReprEnum|Enum|IntFlag|Flag)<)[^<>]+?</span></code>(?!</a>)'
 
 if [ ! -f doc/sphinx/html/index.html ]; then
     echo "Please run Sphinx first."

@@ -60,6 +60,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <memory>
@@ -123,7 +124,7 @@ public:
   }
 
   [[nodiscard]] virtual bool is_double_precision() const noexcept override {
-    return std::is_same<FloatType, double>::value;
+    return std::is_same_v<FloatType, double>;
   }
 
 private:
@@ -183,9 +184,8 @@ private:
                                           std::array<int, 3> const &node,
                                           double weight)
         : std::runtime_error("Access to LB " + field + " field failed") {
-      std::cerr << "pos [" << pos << "], "
-                << "node [" << Utils::Vector3i(node) << "], "
-                << "weight " << weight << "\n";
+      std::cerr << "pos [" << pos << "], node [" << Utils::Vector3i(node)
+                << "], weight " << weight << "\n";
     }
   };
 

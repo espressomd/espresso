@@ -88,9 +88,9 @@ private:
       if (obs_map.count(name) == 0) {
         auto const valid_names = get_valid_observable_names();
         std::stringstream message;
-        message << "Only the following VTK observables are supported: ["
-                << "'" << boost::algorithm::join(valid_names, "', '") << "'"
-                << "], got '" << name << "'";
+        message << "Only the following VTK observables are supported: ['"
+                << boost::algorithm::join(valid_names, "', '") << "'], got '"
+                << name << "'";
         throw std::invalid_argument(message.str());
       }
       flag |= obs_map.at(name);

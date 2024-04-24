@@ -598,7 +598,8 @@ class ConstantpHEnsemble(ReactionAlgorithm):
         if warn_user:
             warnings.warn(warn_msg, FutureWarning)
 
-        if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
+        if (len(kwargs["product_types"]) != 2 or len(
+                kwargs["reactant_types"]) != 1):
             raise ValueError(
                 "The constant pH method is only implemented for reactions "
                 "with two product types and one adduct type.")

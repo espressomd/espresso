@@ -61,9 +61,9 @@ struct SD_particle_data {
   ParticleForce ext_force;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &type;
-    ar &pos;
-    ar &ext_force;
+    ar & type;
+    ar & pos;
+    ar & ext_force;
   }
 };
 

@@ -53,7 +53,7 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &prefactor;
+    ar & prefactor;
   }
 };
 

@@ -54,11 +54,11 @@ auto mask_impl(Integral mask, T t, std::index_sequence<I...>) {
  * @return t partially zeroed out according to mask
  */
 template <class T, class Integral>
-auto mask(Integral mask, T t)
-    -> std::enable_if_t<std::is_unsigned_v<Integral> &&
-                            (size_in_bits<Integral>::value >=
-                             tuple_size<T>::value),
-                        T> {
+auto mask(Integral mask,
+          T t) -> std::enable_if_t<std::is_unsigned_v<Integral> &&
+                                       (size_in_bits<Integral>::value >=
+                                        tuple_size<T>::value),
+                                   T> {
   return detail::mask_impl(mask, t,
                            std::make_index_sequence<tuple_size<T>::value>{});
 }

@@ -58,8 +58,8 @@ namespace boost {
 namespace serialization {
 template <typename Archive>
 void serialize(Archive &ar, CollisionPair &c, const unsigned int) {
-  ar &c.pp1;
-  ar &c.pp2;
+  ar & c.pp1;
+  ar & c.pp2;
 }
 } // namespace serialization
 } // namespace boost
@@ -475,7 +475,7 @@ static void three_particle_binding_domain_decomposition(
         three_particle_binding_do_search(cell2, p1, p2, box_geo);
 
     } // If local particles exist
-  }   // Loop over total collisions
+  } // Loop over total collisions
 }
 
 // Handle the collisions stored in the queue
@@ -643,7 +643,7 @@ void handle_collisions(CellStructure &cell_structure) {
                                           cell_structure);
         }
       } // we considered the pair
-    }   // Loop over all collisions in the queue
+    } // Loop over all collisions in the queue
 #ifdef ADDITIONAL_CHECKS
     if (!Utils::Mpi::all_compare(comm_cart, current_vs_pid)) {
       throw std::runtime_error("Nodes disagree about current_vs_pid");
@@ -657,7 +657,7 @@ void handle_collisions(CellStructure &cell_structure) {
           Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS);
     }
     system.update_used_propagations();
-  }    // are we in one of the vs_based methods
+  } // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE
 
   // three-particle-binding part

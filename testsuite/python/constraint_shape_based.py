@@ -868,7 +868,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     dist_vec = np.array([0.0, 0.0, 0.0])
 
                     # check if outside or inside
-                    if(pos[0] < (self.box_l + length[0] - abs(length[0])) / 2.0 or
+                    if (pos[0] < (self.box_l + length[0] - abs(length[0])) / 2.0 or
                        pos[0] > (self.box_l + length[0] + abs(length[0])) / 2.0 or
                        pos[1] < (self.box_l + length[1] - abs(length[1])) / 2.0 or
                        pos[1] > (self.box_l + length[1] + abs(length[1])) / 2.0 or

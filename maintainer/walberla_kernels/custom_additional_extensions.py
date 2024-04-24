@@ -88,10 +88,8 @@ class Flux(ps.boundaries.boundaryconditions.Boundary):
         conds = [
             sp.Equality(
                 direction_symbol,
-                ps.typing.CastFunc(
-                    d + 1,
-                    np.int32)) for d in range(
-                len(accesses))]
+                ps.typing.CastFunc(d + 1, np.int32))
+            for d in range(len(accesses))]
 
         # use conditional
         conditional = None
@@ -137,8 +135,7 @@ class DirichletAdditionalDataHandler(
 
     @property
     def constructor_arguments(self):
-        return f", std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& " \
-               "dirichletCallback "
+        return f", std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& dirichletCallback "
 
     @property
     def initialiser_list(self):
@@ -153,15 +150,15 @@ class DirichletAdditionalDataHandler(
         return " const shared_ptr<StructuredBlockForest> &blocks, "
 
     def data_initialisation(self, _):
-        init_list = [f"{self.data_type} InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), "
-                     "blocks, *block);", "element.value = InitialisatonAdditionalData;"]
+        init_list = [
+            f"{self.data_type} InitialisatonAdditionalData = elementInitaliser(Cell(it.x(), it.y(), it.z()), blocks, *block);",
+            "element.value = InitialisatonAdditionalData;"]
 
         return "\n".join(init_list)
 
     @property
     def additional_member_variable(self):
-        return f"std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> " \
-               "elementInitaliser; "
+        return f"std::function<{self.data_type}(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "
 
 
 class FluxAdditionalDataHandler(
@@ -174,8 +171,7 @@ class FluxAdditionalDataHandler(
 
     @property
     def constructor_arguments(self):
-        return f", std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& " \
-               "fluxCallback "
+        return f", std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)>& fluxCallback "
 
     @property
     def initialiser_list(self):
@@ -193,8 +189,8 @@ class FluxAdditionalDataHandler(
         dirVec = self.stencil_info[direction][1]
 
         init_list = [
-            f"Vector3<{self.data_type}> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + {dirVec[0]}, it.y() + {dirVec[1]}, it.z() + {dirVec[2]}), "
-            "blocks, *block);", "element.flux_0 = InitialisatonAdditionalData[0];",
+            f"Vector3<{self.data_type}> InitialisatonAdditionalData = elementInitaliser(Cell(it.x() + {dirVec[0]}, it.y() + {dirVec[1]}, it.z() + {dirVec[2]}), blocks, *block);",  # nopep8
+            "element.flux_0 = InitialisatonAdditionalData[0];",
             "element.flux_1 = InitialisatonAdditionalData[1];"]
         if self._dim == 3:
             init_list.append(
@@ -204,13 +200,11 @@ class FluxAdditionalDataHandler(
 
     @property
     def additional_member_variable(self):
-        return f"std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> " \
-               "elementInitaliser; "
+        return f"std::function<Vector3<{self.data_type}>(const Cell &, const shared_ptr<StructuredBlockForest>&, IBlock&)> elementInitaliser; "
 
 
-# this custom boundary generator is necessary because our boundary
-# condition writes to several fields at once which is impossible with the
-# shipped one
+# this custom boundary generator is necessary because our boundary condition
+# writes to several fields at once which is impossible with the shipped one
 def generate_boundary(
         generation_context,
         stencil,
@@ -250,9 +244,8 @@ def generate_boundary(
         index_struct_dtype,
         layout=[0],
         shape=(
-            ps.typing.TypedSymbol(
-                "indexVectorSize", ps.typing.BasicType(np.int32)
-            ),
+            ps.typing.TypedSymbol("indexVectorSize",
+                                  ps.typing.BasicType(np.int32)),
             1,
         ),
         strides=(1, 1),

@@ -74,19 +74,19 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &l0;
-    ar &lp0;
-    ar &sinPhi0;
-    ar &cosPhi0;
-    ar &area0;
-    ar &a1;
-    ar &a2;
-    ar &b1;
-    ar &b2;
-    ar &maxDist;
-    ar &elasticLaw;
-    ar &k1;
-    ar &k2;
+    ar & l0;
+    ar & lp0;
+    ar & sinPhi0;
+    ar & cosPhi0;
+    ar & area0;
+    ar & a1;
+    ar & a2;
+    ar & b1;
+    ar & b2;
+    ar & maxDist;
+    ar & elasticLaw;
+    ar & k1;
+    ar & k2;
   }
 };
 

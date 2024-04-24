@@ -49,7 +49,6 @@ target_compile_options(
   $<$<CONFIG:RelWithDebInfo>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
   $<$<CONFIG:Coverage>:-Xptxas=-O3 -Xcompiler=-Og,-g>
   $<$<CONFIG:RelWithAssert>:-Xptxas=-O3 -Xcompiler=-O3,-g>
-  $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
   $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
 )
 

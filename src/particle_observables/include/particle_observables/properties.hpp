@@ -27,7 +27,9 @@ namespace ParticleObservables {
 template <class DoF> struct traits;
 
 namespace detail {
-template <class T> struct decay { using type = typename std::decay_t<T>; };
+template <class T> struct decay {
+  using type = typename std::decay_t<T>;
+};
 
 template <class U> struct decay<std::reference_wrapper<U>> {
   using type = std::decay_t<U>;

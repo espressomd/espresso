@@ -499,7 +499,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
             particles);
       }
     } /* if (dp3m.sum_mu2 > 0) */
-  }   /* if (force_flag) */
+  } /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
     auto const surface_term =

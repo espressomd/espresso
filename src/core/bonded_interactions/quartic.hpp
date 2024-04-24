@@ -56,10 +56,10 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &k0;
-    ar &k1;
-    ar &r;
-    ar &r_cut;
+    ar & k0;
+    ar & k1;
+    ar & r;
+    ar & r_cut;
   }
 };
 

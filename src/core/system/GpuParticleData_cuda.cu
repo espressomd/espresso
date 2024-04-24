@@ -153,8 +153,6 @@ void GpuParticleData::initialize() {
   m_data = GpuParticleData::Storage::make_shared(get_system().cleanup_queue);
 }
 
-GpuParticleData::~GpuParticleData() {}
-
 std::size_t GpuParticleData::n_particles() const {
   return m_data->particle_data_device.size();
 }

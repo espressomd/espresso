@@ -164,7 +164,9 @@ struct PosMom {
   Utils::Vector3d pos;
   Utils::Vector3d m;
 
-  template <class Archive> void serialize(Archive &ar, long int) { ar &pos &m; }
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar & pos & m;
+  }
 };
 
 /**

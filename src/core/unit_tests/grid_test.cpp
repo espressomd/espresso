@@ -38,47 +38,35 @@ BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
   auto const box_l = 3.1415;
 
   /* Non-periodic */
-  {{auto const a = 1.;
-  auto const b = 2.;
-
-  BOOST_CHECK_EQUAL(get_mi_coord(a, b, box_l, /* periodic */ false), a - b);
-}
-
-{
-  auto const a = 1.;
-  auto const b = 3.;
-
-  BOOST_CHECK_EQUAL(get_mi_coord(a, b, box_l, /* periodic */ false), a - b);
-}
-}
-
-/* Regular distance */
-{
-  auto const a = -0.5;
-  auto const b = +1.0;
-
-  BOOST_CHECK_EQUAL(get_mi_coord(a, b, box_l, /* periodic */ true), a - b);
-  BOOST_CHECK_EQUAL(get_mi_coord(b, a, box_l, /* periodic */ true), b - a);
-}
-
-/* Wrapped */
-{
-  auto const a = 1.;
-  auto const b = 3.;
-
-  BOOST_CHECK_SMALL(std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) -
-                             (a - b) - box_l),
-                    epsilon<double>);
-  BOOST_CHECK_SMALL(std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) -
-                             (b - a) + box_l),
-                    epsilon<double>);
-}
-
-/* Corner cases */
-{
   {
-    auto const a = 0.4;
-    auto const b = a + 0.5 * box_l;
+    {
+      auto const a = 1.;
+      auto const b = 2.;
+
+      BOOST_CHECK_EQUAL(get_mi_coord(a, b, box_l, /* periodic */ false), a - b);
+    }
+
+    {
+      auto const a = 1.;
+      auto const b = 3.;
+
+      BOOST_CHECK_EQUAL(get_mi_coord(a, b, box_l, /* periodic */ false), a - b);
+    }
+  }
+
+  /* Regular distance */
+  {
+    auto const a = -0.5;
+    auto const b = +1.0;
+
+    BOOST_CHECK_EQUAL(get_mi_coord(a, b, box_l, /* periodic */ true), a - b);
+    BOOST_CHECK_EQUAL(get_mi_coord(b, a, box_l, /* periodic */ true), b - a);
+  }
+
+  /* Wrapped */
+  {
+    auto const a = 1.;
+    auto const b = 3.;
 
     BOOST_CHECK_SMALL(std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) -
                                (a - b) - box_l),
@@ -88,30 +76,48 @@ BOOST_AUTO_TEST_CASE(get_mi_coord_test) {
                       epsilon<double>);
   }
 
+  /* Corner cases */
   {
-    auto const a = 0.4;
-    auto const b = std::nextafter(a + 0.5 * box_l, box_l);
+    {
+      auto const a = 0.4;
+      auto const b = a + 0.5 * box_l;
 
-    BOOST_CHECK_SMALL(std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) -
-                               (a - b) - box_l),
-                      epsilon<double>);
-    BOOST_CHECK_SMALL(std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) -
-                               (b - a) + box_l),
-                      epsilon<double>);
+      BOOST_CHECK_SMALL(
+          std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) - (a - b) -
+                   box_l),
+          epsilon<double>);
+      BOOST_CHECK_SMALL(
+          std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) - (b - a) +
+                   box_l),
+          epsilon<double>);
+    }
+
+    {
+      auto const a = 0.4;
+      auto const b = std::nextafter(a + 0.5 * box_l, box_l);
+
+      BOOST_CHECK_SMALL(
+          std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) - (a - b) -
+                   box_l),
+          epsilon<double>);
+      BOOST_CHECK_SMALL(
+          std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) - (b - a) +
+                   box_l),
+          epsilon<double>);
+    }
+
+    {
+      auto const a = 0.4;
+      auto const b = std::nextafter(a + 0.5 * box_l, 0.);
+
+      BOOST_CHECK_SMALL(
+          std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) - (a - b)),
+          epsilon<double>);
+      BOOST_CHECK_SMALL(
+          std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) - (b - a)),
+          epsilon<double>);
+    }
   }
-
-  {
-    auto const a = 0.4;
-    auto const b = std::nextafter(a + 0.5 * box_l, 0.);
-
-    BOOST_CHECK_SMALL(
-        std::abs(get_mi_coord(a, b, box_l, /* periodic */ true) - (a - b)),
-        epsilon<double>);
-    BOOST_CHECK_SMALL(
-        std::abs(get_mi_coord(b, a, box_l, /* periodic */ true) - (b - a)),
-        epsilon<double>);
-  }
-}
 }
 
 BOOST_AUTO_TEST_CASE(get_mi_vector_test) {

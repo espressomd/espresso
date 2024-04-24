@@ -85,15 +85,15 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &r0;
-    ar &ks;
-    ar &kslin;
-    ar &phi0;
-    ar &kb;
-    ar &A01;
-    ar &A02;
-    ar &kal;
-    ar &kvisc;
+    ar & r0;
+    ar & ks;
+    ar & kslin;
+    ar & phi0;
+    ar & kb;
+    ar & A01;
+    ar & A02;
+    ar & kal;
+    ar & kvisc;
   }
 };
 

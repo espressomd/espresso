@@ -50,7 +50,7 @@ void GlobalContext::make_handle(ObjectId id, const std::string &name,
         name, unpack(parameters, m_local_objects));
 
     m_local_objects[id] = std::move(so);
-  } catch (Exception const &) {
+  } catch (Exception const &) { // NOLINT(bugprone-empty-catch)
   }
 }
 
@@ -63,7 +63,7 @@ void GlobalContext::set_parameter(ObjectId id, std::string const &name,
                                   PackedVariant const &value) {
   try {
     m_local_objects.at(id)->set_parameter(name, unpack(value, m_local_objects));
-  } catch (Exception const &) {
+  } catch (Exception const &) { // NOLINT(bugprone-empty-catch)
   }
 }
 
@@ -78,7 +78,7 @@ void GlobalContext::call_method(ObjectId id, std::string const &name,
   try {
     m_local_objects.at(id)->call_method(name,
                                         unpack(arguments, m_local_objects));
-  } catch (Exception const &) {
+  } catch (Exception const &) { // NOLINT(bugprone-empty-catch)
   }
 }
 

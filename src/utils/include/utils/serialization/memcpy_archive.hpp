@@ -123,14 +123,14 @@ private:
 
 public:
   template <class T>
-  auto operator>>(T &value)
-      -> std::enable_if_t<detail::use_serialize<T>::value> {
+  auto
+  operator>>(T &value) -> std::enable_if_t<detail::use_serialize<T>::value> {
     process(value);
   }
 
   template <class T>
-  auto operator<<(T &value)
-      -> std::enable_if_t<detail::use_serialize<T>::value> {
+  auto
+  operator<<(T &value) -> std::enable_if_t<detail::use_serialize<T>::value> {
     process(value);
   }
 

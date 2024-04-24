@@ -25,7 +25,7 @@ performance of the code. Therefore it is not possible to build a single
 binary that can satisfy all needs. For performance reasons a user
 should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
-The build system of |es| uses CMake [4]_ to compile
+The build system of |es| uses CMake to compile
 software easily on a wide range of platforms.
 
 Users who only need a "default" installation of |es| and have an account
@@ -45,7 +45,7 @@ are required to be able to compile and use |es|:
 .. glossary::
 
     CMake
-        The build system is based on CMake.
+        The build system is based on CMake version 3 or later [4]_.
 
     C++ compiler
         The C++ core of |es| needs to be built by a C++17-capable compiler.
@@ -57,6 +57,11 @@ are required to be able to compile and use |es|:
     FFTW
         For some algorithms like P\ :math:`^3`\ M, |es| needs the FFTW library
         version 3 or later [5]_ for Fourier transforms, including header files.
+
+    CUDA
+        For some algorithms like P\ :math:`^3`\ M,
+        |es| provides GPU-accelerated implementations for NVIDIA GPUs.
+        We strongly recommend CUDA 12.0 or later [6]_.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -88,7 +93,7 @@ are required to be able to compile and use |es|:
 Installing requirements on Ubuntu Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To compile |es| on Ubuntu 22.04 LTS, install the following dependencies:
+To compile |es| on Ubuntu 24.04 LTS, install the following dependencies:
 
 .. code-block:: bash
 
@@ -120,7 +125,7 @@ paths before building the project, for example via environment variables:
 
 .. code-block:: bash
 
-    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-11.5"
+    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-12.0"
     export PATH="${CUDA_TOOLKIT_ROOT_DIR}/bin${PATH:+:$PATH}"
     export LD_LIBRARY_PATH="${CUDA_TOOLKIT_ROOT_DIR}/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
@@ -130,41 +135,41 @@ to activate CUDA. These commands may need to be adapted depending on which
 operating system and CUDA version you are using.
 
 You can control the list of CUDA architectures to generate device code for.
-For example, ``-D CMAKE_CUDA_ARCHITECTURES=61;75`` will generate device code
-for both sm_61 and sm_75 architectures.
+For example, ``CUDAARCHS="61;75" cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
+will generate device code for both sm_61 and sm_75 architectures.
 
-On Ubuntu 22.04, the default GCC compiler is too recent for nvcc and will fail
-to compile sources that rely on ``std::function``. You can either use GCC 10:
-
-.. code-block:: bash
-
-    CC=gcc-10 CXX=g++-10 CUDACXX=/usr/local/cuda-11.5/bin/nvcc cmake .. \
-      -D ESPRESSO_BUILD_WITH_CUDA=ON \
-      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
-      -D CMAKE_CUDA_FLAGS="--compiler-bindir=/usr/bin/g++-10"
-
-or alternatively install Clang 14 as a replacement for nvcc and GCC:
+On Ubuntu 24.04, the default GCC compiler may too recent for nvcc.
+You can either use GCC 12:
 
 .. code-block:: bash
 
-    CC=clang-14 CXX=clang++-14 CUDACXX=clang++-14 cmake .. \
+    CC=gcc-12 CXX=g++-12 CUDACXX=/usr/local/cuda-12.0/bin/nvcc cmake .. \
       -D ESPRESSO_BUILD_WITH_CUDA=ON \
-      -D CUDAToolkit_ROOT=/usr/local/cuda-11.5 \
-      -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5" \
-      -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/10 -I/usr/include/c++/10 --cuda-path=/usr/local/cuda-11.5"
+      -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
+      -D CMAKE_CUDA_FLAGS="--compiler-bindir=/usr/bin/g++-12"
+
+or alternatively install Clang 18 as a replacement for nvcc and GCC:
+
+.. code-block:: bash
+
+    CC=clang-18 CXX=clang++-18 CUDACXX=clang++-18 cmake .. \
+      -D ESPRESSO_BUILD_WITH_CUDA=ON \
+      -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
+      -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12 --cuda-path=/usr/local/cuda-12.0" \
+      -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12 --cuda-path=/usr/local/cuda-12.0"
 
 Please note that all CMake options and compiler flags that involve
 ``/usr/local/cuda-*`` need to be adapted to your CUDA environment.
 But they are only necessary on systems with multiple CUDA releases installed,
 and can be safely removed if you have only one CUDA release installed.
 
-Please also note that with Clang, you still need the GCC 10 toolchain,
-which can be set up with ``apt install gcc-10 g++-10 libstdc++-10-dev``.
+Please also note that with Clang, you still need the GCC 12 toolchain,
+which can be set up with ``apt install gcc-12 g++-12 libstdc++-12-dev``.
 The extra compiler flags in the Clang CMake command above are needed to pin
 the search paths of Clang. By default, it searches trough the most recent
-GCC version, which is GCC 12 on Ubuntu 22.04. It is not possible to install
-the NVIDIA driver without GCC 12 due to a dependency resolution issue
-(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-12``).
+GCC version, which is GCC 13 on Ubuntu 24.04. It is not possible to install
+the NVIDIA driver without GCC 13 due to a dependency resolution issue
+(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-13``).
 
 .. _Requirements for building the documentation:
 
@@ -255,11 +260,11 @@ Installing requirements on Windows via WSL
 
 To run |es| on Windows, use the Linux subsystem. For that you need to
 
-* follow `these instructions <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`__ to install Ubuntu
-* start Ubuntu (or open an Ubuntu tab in `Windows Terminal <https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701>`__)
+* follow `these instructions <https://learn.microsoft.com/en-us/windows/wsl/install>`__ to install Ubuntu
+* start Ubuntu (or open an Ubuntu tab in `Windows Terminal <https://apps.microsoft.com/detail/9n0dx20hk701?hl=en-us&gl=US>`__)
 * execute ``sudo apt update`` to prepare the installation of dependencies
 * optional step: If you have a NVIDIA graphics card available and want to make
-  use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html#ch03a-setting-up-cuda>`__
+  use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html>`__
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
 
@@ -807,12 +812,13 @@ When an option is enabled, additional options may become available.
 For example with ``-D ESPRESSO_BUILD_TESTS=ON``, one can specify
 the CTest parameters with ``-D ESPRESSO_CTEST_ARGS=-j$(nproc)``.
 
-Environment variables can be passed to CMake. For example, to select Clang, use
-``CC=clang CXX=clang++ CUDACXX=clang++ cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``.
-If you have multiple versions of the CUDA library installed, you can select the
-correct one with ``CUDA_BIN_PATH=/usr/local/cuda-11.5 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
-(with Clang as the CUDA compiler, you also need to override its default CUDA
-path with ``-D CMAKE_CUDA_FLAGS=--cuda-path=/usr/local/cuda-11.5``).
+Environment variables can be passed to CMake. For example, to select the Clang
+compiler and specify which GPU architectures to generate device code for, use
+``CC=clang CXX=clang++ CUDACXX=clang++ CUDAARCHS="61;75" cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``.
+When multiple versions of the CUDA library are available, the correct one can be
+selected with ``CUDA_BIN_PATH=/usr/local/cuda-12.0 cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
+(with Clang as the CUDA compiler, it is also necessary to override its default
+CUDA path with ``-D CMAKE_CUDA_FLAGS=--cuda-path=/usr/local/cuda-12.0``).
 
 .. _Build types and compiler flags:
 
@@ -990,3 +996,6 @@ ____
 
 .. [5]
    https://www.fftw.org/
+
+.. [6]
+   https://docs.nvidia.com/cuda/

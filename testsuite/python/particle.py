@@ -543,7 +543,7 @@ class ParticleProperties(ut.TestCase):
         np.testing.assert_equal(system.part.by_ids(range(3, 6)).id,
                                 [i for i in sorted(ids) if i >= 3 and i < 6])
         np.testing.assert_equal(system.part.by_ids(range(6, 3, -1)).id,
-                                [i for i in sorted(ids, key=lambda i:-i) if i > 3 and i <= 6])
+                                [i for i in sorted(ids, key=lambda i: -i) if i > 3 and i <= 6])
 
         # Setting particle properties on a slice
         system.part.by_ids(range(9, 10)).pos = (0, 0, 0)

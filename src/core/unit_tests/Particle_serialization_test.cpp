@@ -145,7 +145,7 @@ class BitwiseSerializable {
 
   friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &a &b;
+    ar & a & b;
     ar << c << d;
   }
 };
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TraitChecker_test) {
   Checker::buffer_type buffer;
   Checker oa{buffer};
   Testing::BitwiseSerializable serializable;
-  oa &serializable;
+  oa & serializable;
   BOOST_REQUIRE_EQUAL(buffer.size(), 0);
   Testing::MixedSerializable mixed;
   oa | mixed;
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
     typename Checker::buffer_type buffer = {};
     Checker oa{buffer};
     Particle p;
-    oa &p;
+    oa & p;
     BOOST_TEST(buffer == buffer_ref, boost::test_tools::per_element());
   }
 
