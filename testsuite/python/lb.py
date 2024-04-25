@@ -107,6 +107,12 @@ class TestLB:
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(Exception):
             lbf[0, 1].velocity = [1, 2, 3]
+        with self.assertRaises(TypeError):
+            lbf.ext_force_density = 0
+        with self.assertRaises(AssertionError):
+            lbf.ext_force_density = [1, 2]
+        with self.assertRaises(AssertionError):
+            lbf.ext_force_density = [1, 2, 3, 4]
 
     def test_raise_if_not_active(self):
         class MockLBFluid(self.lb_class):

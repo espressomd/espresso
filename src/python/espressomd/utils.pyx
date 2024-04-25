@@ -241,15 +241,17 @@ cdef make_array_locked_vector(vector[Vector3d] v):
     return array_locked(ret)
 
 
-cdef Vector3d make_Vector3d(a):
+cdef Vector3d make_Vector3d(a) except *:
     cdef Vector3d v
+    assert len(a) == 3
     for i, ai in enumerate(a):
         v[i] = ai
     return v
 
 
-cdef Vector3i make_Vector3i(a):
+cdef Vector3i make_Vector3i(a) except *:
     cdef Vector3i v
+    assert len(a) == 3
     for i, ai in enumerate(a):
         v[i] = ai
     return v
