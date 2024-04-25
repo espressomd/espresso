@@ -82,25 +82,8 @@
 #define RESTRICT
 #endif
 
-__device__ inline uint get_num_threads(uint3 gridDim, uint3 blockDim) {
-  return gridDim.x * gridDim.y * gridDim.z * blockDim.x * blockDim.y * blockDim.z;
-}
-
-__device__ inline uint getLinearIndexXYZF(uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim) {
-  auto const x = threadIdx.x;
-  auto const y = blockIdx.x;
-  auto const z = blockIdx.y;
-  auto const f = blockIdx.z;
-  auto const xSize = blockDim.x;
-  auto const ySize = gridDim.x;
-  auto const zSize = gridDim.y;
-  return x +
-         y * xSize +
-         z * xSize * ySize +
-         f * xSize * ySize * zSize;
-}
-
-__device__ inline uint getLinearIndexFZYX(uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset) {
+/** @brief Get linear index of flattened data with original layout @c fzyx. */
+static __forceinline__ __device__ uint getLinearIndex(uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset) {
   auto const x = threadIdx.x;
   auto const y = blockIdx.x;
   auto const z = blockIdx.y;
@@ -124,7 +107,7 @@ __global__ void kernel_get_interval(
     float *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 19u);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
     pop[offset + 0u] = pdf.get(0);
     pop[offset + 1u] = pdf.get(1);
     pop[offset + 2u] = pdf.get(2);
@@ -152,7 +135,6 @@ __global__ void kernel_get(
     float *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 19u);
     pop[0u] = pdf.get(0);
     pop[1u] = pdf.get(1);
     pop[2u] = pdf.get(2);
@@ -177,10 +159,10 @@ __global__ void kernel_get(
 
 __global__ void kernel_set_interval(
     gpu::FieldAccessor<float> pdf,
-    const float *RESTRICT const pop) {
+    float const *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 19u);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
     pdf.get(0) = pop[offset + 0u];
     pdf.get(1) = pop[offset + 1u];
     pdf.get(2) = pop[offset + 2u];
@@ -205,10 +187,9 @@ __global__ void kernel_set_interval(
 
 __global__ void kernel_set(
     gpu::FieldAccessor<float> pdf,
-    const float *RESTRICT const pop) {
+    float const *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 19u);
     pdf.get(0) = pop[0u];
     pdf.get(1) = pop[1u];
     pdf.get(2) = pop[2u];
@@ -259,7 +240,7 @@ void set(
   kernel();
 }
 
-void broadcast(
+void initialize(
     gpu::GPUField<float> *pdf_field,
     std::array<float, 19u> const &pop) {
   CellInterval ci = pdf_field->xyzSizeWithGhostLayer();
@@ -304,7 +285,7 @@ __global__ void kernel_get_interval(
     float *const out) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
     out[offset + 0u] = vec.get(0);
     out[offset + 1u] = vec.get(1);
     out[offset + 2u] = vec.get(2);
@@ -316,7 +297,6 @@ __global__ void kernel_get(
     float *const out) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
     out[0u] = vec.get(0);
     out[1u] = vec.get(1);
     out[2u] = vec.get(2);
@@ -325,10 +305,10 @@ __global__ void kernel_get(
 
 __global__ void kernel_set_interval(
     gpu::FieldAccessor<float> vec,
-    const float *RESTRICT const u) {
+    float const *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
     vec.get(0) = u[offset + 0u];
     vec.get(1) = u[offset + 1u];
     vec.get(2) = u[offset + 2u];
@@ -340,7 +320,6 @@ __global__ void kernel_set(
     const float *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
     vec.get(0) = u[0u];
     vec.get(1) = u[1u];
     vec.get(2) = u[2u];
@@ -349,10 +328,10 @@ __global__ void kernel_set(
 
 __global__ void kernel_add_interval(
     gpu::FieldAccessor<float> vec,
-    const float *RESTRICT const u) {
+    float const *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
     vec.get(0) += u[offset + 0u];
     vec.get(1) += u[offset + 1u];
     vec.get(2) += u[offset + 2u];
@@ -361,10 +340,9 @@ __global__ void kernel_add_interval(
 
 __global__ void kernel_add(
     gpu::FieldAccessor<float> vec,
-    const float *RESTRICT const u) {
+    float const *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, 3u);
     vec.get(0) += u[0u];
     vec.get(1) += u[1u];
     vec.get(2) += u[2u];
@@ -412,7 +390,7 @@ void add(
   kernel();
 }
 
-void broadcast(
+void initialize(
     gpu::GPUField<float> *vec_field,
     Vector3<float> const &vec) {
   CellInterval ci = vec_field->xyzSizeWithGhostLayer();
@@ -463,44 +441,52 @@ void set(
 }
 } // namespace Vector
 
-namespace Coupling {
-__global__ void kernel_get_interpolated(
+namespace Interpolation {
+/** @brief Calculate interpolation weights. */
+static __forceinline__ __device__ void calculate_weights(
+    float const *RESTRICT const pos,
+    int *RESTRICT const corner,
+    float *RESTRICT const weights,
+    uint gl) {
+#pragma unroll
+  for (int dim = 0; dim < 3; ++dim) {
+    auto const fractional_index = pos[dim] - float{0.5};
+    auto const nmp = floorf(fractional_index);
+    auto const distance = fractional_index - nmp - float{0.5};
+    corner[dim] = __float2int_rn(nmp) + static_cast<int>(gl);
+    weights[dim * 2 + 0] = float{0.5} - distance;
+    weights[dim * 2 + 1] = float{0.5} + distance;
+  }
+}
+
+__global__ void kernel_get(
     gpu::FieldAccessor<float> vec,
     float const *RESTRICT const pos,
     float *RESTRICT const vel,
-    uint n_part,
+    uint n_pos,
     uint gl) {
 
-  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
-                            blockDim.x * blockIdx.x + threadIdx.x;
+  uint pos_index = blockIdx.y * gridDim.x * blockDim.x +
+                   blockDim.x * blockIdx.x + threadIdx.x;
 
   vec.set({0u, 0u, 0u}, {0u, 0u, 0u});
-  if (vec.isValidPosition() and part_index < n_part) {
-    auto const array_offset = part_index * 3u;
+  if (vec.isValidPosition() and pos_index < n_pos) {
+    auto const array_offset = pos_index * uint(3u);
     int corner[3];
-    float distance[3];
-#pragma unroll
-    for (unsigned int dim = 0u; dim < 3u; ++dim) {
-      auto const fractional_index = pos[array_offset + dim] - float{0.5};
-      auto const nmp = floorf(fractional_index);
-      distance[dim] = fractional_index - nmp - float{0.5};
-      corner[dim] = __float2int_rn(nmp) + static_cast<int>(gl);
-    }
-    float w_x[2] = {float{0.5} - distance[0], float{0.5} + distance[0]};
-    float w_y[2] = {float{0.5} - distance[1], float{0.5} + distance[1]};
-    float w_z[2] = {float{0.5} - distance[2], float{0.5} + distance[2]};
+    float weights[3][2];
+    calculate_weights(pos + array_offset, corner, &weights[0][0], gl);
 #pragma unroll
     for (int i = 0; i < 2; i++) {
       auto const cx = corner[0] + i;
-      auto const wx = w_x[static_cast<unsigned>(i)];
+      auto const wx = weights[0][i];
 #pragma unroll
       for (int j = 0; j < 2; j++) {
         auto const cy = corner[1] + j;
-        auto const wxy = wx * w_y[static_cast<unsigned>(j)];
+        auto const wxy = wx * weights[1][j];
 #pragma unroll
         for (int k = 0; k < 2; k++) {
           auto const cz = corner[2] + k;
-          auto const weight = wxy * w_z[static_cast<unsigned>(k)];
+          auto const weight = wxy * weights[2][k];
           vel[array_offset + 0u] += weight * vec.getNeighbor(cx, cy, cz, 0);
           vel[array_offset + 1u] += weight * vec.getNeighbor(cx, cy, cz, 1);
           vel[array_offset + 2u] += weight * vec.getNeighbor(cx, cy, cz, 2);
@@ -510,43 +496,34 @@ __global__ void kernel_get_interpolated(
   }
 }
 
-__global__ void kernel_set_interpolated(
+__global__ void kernel_set(
     gpu::FieldAccessor<float> vec,
     float const *RESTRICT const pos,
     float const *RESTRICT const forces,
-    uint n_part,
+    uint n_pos,
     uint gl) {
 
-  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
-                            blockDim.x * blockIdx.x + threadIdx.x;
+  uint pos_index = blockIdx.y * gridDim.x * blockDim.x +
+                   blockDim.x * blockIdx.x + threadIdx.x;
 
   vec.set({0u, 0u, 0u}, {0u, 0u, 0u});
-  if (vec.isValidPosition() and part_index < n_part) {
-    auto const array_offset = part_index * 3u;
+  if (vec.isValidPosition() and pos_index < n_pos) {
+    auto const array_offset = pos_index * uint(3u);
     int corner[3];
-    float distance[3];
-#pragma unroll
-    for (unsigned int dim = 0u; dim < 3u; ++dim) {
-      auto const fractional_index = pos[array_offset + dim] - float{0.5};
-      auto const nmp = floorf(fractional_index);
-      distance[dim] = fractional_index - nmp - float{0.5};
-      corner[dim] = __float2int_rn(nmp) + static_cast<int>(gl);
-    }
-    float w_x[2] = {float{0.5} - distance[0], float{0.5} + distance[0]};
-    float w_y[2] = {float{0.5} - distance[1], float{0.5} + distance[1]};
-    float w_z[2] = {float{0.5} - distance[2], float{0.5} + distance[2]};
+    float weights[3][2];
+    calculate_weights(pos + array_offset, corner, &weights[0][0], gl);
 #pragma unroll
     for (int i = 0; i < 2; i++) {
       auto const cx = corner[0] + i;
-      auto const wx = w_x[static_cast<unsigned>(i)];
+      auto const wx = weights[0][i];
 #pragma unroll
       for (int j = 0; j < 2; j++) {
         auto const cy = corner[1] + j;
-        auto const wxy = wx * w_y[static_cast<unsigned>(j)];
+        auto const wxy = wx * weights[1][j];
 #pragma unroll
         for (int k = 0; k < 2; k++) {
           auto const cz = corner[2] + k;
-          auto const weight = wxy * w_z[static_cast<unsigned>(k)];
+          auto const weight = wxy * weights[2][k];
           atomicAdd(&vec.getNeighbor(cx, cy, cz, 0),
                     weight * forces[array_offset + 0u]);
           atomicAdd(&vec.getNeighbor(cx, cy, cz, 1),
@@ -559,19 +536,19 @@ __global__ void kernel_set_interpolated(
   }
 }
 
-static dim3 calculate_dim_grid(unsigned const threads_x,
-                               unsigned const blocks_per_grid_y,
-                               unsigned const threads_per_block) {
-  assert(threads_x >= 1);
-  assert(blocks_per_grid_y >= 1);
-  assert(threads_per_block >= 1);
+static dim3 calculate_dim_grid(uint const threads_x,
+                               uint const blocks_per_grid_y,
+                               uint const threads_per_block) {
+  assert(threads_x >= 1u);
+  assert(blocks_per_grid_y >= 1u);
+  assert(threads_per_block >= 1u);
   auto const threads_y = threads_per_block * blocks_per_grid_y;
   auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
   return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 }
 
 std::vector<float>
-get_interpolated(
+get(
     gpu::GPUField<float> const *vec_field,
     std::vector<float> const &pos,
     uint gl) {
@@ -580,20 +557,19 @@ get_interpolated(
   auto const dev_pos_ptr = thrust::raw_pointer_cast(dev_pos.data());
   auto const dev_vel_ptr = thrust::raw_pointer_cast(dev_vel.data());
 
-  auto const threads_per_block = 64u;
-  auto const n_part = pos.size() / 3ul;
-  dim3 dim_grid =
-      calculate_dim_grid(static_cast<unsigned>(n_part), 4u, threads_per_block);
-  kernel_get_interpolated<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+  auto const threads_per_block = uint(64u);
+  auto const n_pos = static_cast<uint>(pos.size() / 3ul);
+  auto const dim_grid = calculate_dim_grid(n_pos, 4u, threads_per_block);
+  kernel_get<<<dim_grid, threads_per_block, 0u, nullptr>>>(
       gpu::FieldIndexing<float>::withGhostLayerXYZ(*vec_field, gl).gpuAccess(),
-      dev_pos_ptr, dev_vel_ptr, static_cast<uint>(pos.size() / 3ul), gl);
+      dev_pos_ptr, dev_vel_ptr, n_pos, gl);
 
   std::vector<float> out(pos.size());
   thrust::copy(dev_vel.begin(), dev_vel.end(), out.data());
   return out;
 }
 
-void set_interpolated(
+void set(
     gpu::GPUField<float> const *vec_field,
     std::vector<float> const &pos,
     std::vector<float> const &forces,
@@ -603,20 +579,19 @@ void set_interpolated(
   auto const dev_pos_ptr = thrust::raw_pointer_cast(dev_pos.data());
   auto const dev_for_ptr = thrust::raw_pointer_cast(dev_for.data());
 
-  auto const threads_per_block = 64u;
-  auto const n_part = pos.size() / 3ul;
-  dim3 dim_grid =
-      calculate_dim_grid(static_cast<unsigned>(n_part), 4u, threads_per_block);
-  kernel_set_interpolated<<<dim_grid, threads_per_block, 0u, nullptr>>>(
+  auto const threads_per_block = uint(64u);
+  auto const n_pos = static_cast<uint>(pos.size() / 3ul);
+  auto const dim_grid = calculate_dim_grid(n_pos, 4u, threads_per_block);
+  kernel_set<<<dim_grid, threads_per_block, 0u, nullptr>>>(
       gpu::FieldIndexing<float>::withGhostLayerXYZ(*vec_field, gl).gpuAccess(),
-      dev_pos_ptr, dev_for_ptr, static_cast<uint>(pos.size() / 3ul), gl);
+      dev_pos_ptr, dev_for_ptr, n_pos, gl);
 }
-} // namespace Coupling
+} // namespace Interpolation
 
 namespace Equilibrium {
 __device__ void kernel_set_device(
     gpu::FieldAccessor<float> pdf,
-    const float *RESTRICT const u,
+    float const *RESTRICT const u,
     float rho) {
 
   pdf.get(0) = rho * -0.33333333333333331f * (u[0] * u[0]) + rho * -0.33333333333333331f * (u[1] * u[1]) + rho * -0.33333333333333331f * (u[2] * u[2]) + rho * 0.33333333333333331f;
@@ -647,26 +622,26 @@ __global__ void kernel_get(
     float *RESTRICT const out) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
-    const float f_0 = pdf.get(0);
-    const float f_1 = pdf.get(1);
-    const float f_2 = pdf.get(2);
-    const float f_3 = pdf.get(3);
-    const float f_4 = pdf.get(4);
-    const float f_5 = pdf.get(5);
-    const float f_6 = pdf.get(6);
-    const float f_7 = pdf.get(7);
-    const float f_8 = pdf.get(8);
-    const float f_9 = pdf.get(9);
-    const float f_10 = pdf.get(10);
-    const float f_11 = pdf.get(11);
-    const float f_12 = pdf.get(12);
-    const float f_13 = pdf.get(13);
-    const float f_14 = pdf.get(14);
-    const float f_15 = pdf.get(15);
-    const float f_16 = pdf.get(16);
-    const float f_17 = pdf.get(17);
-    const float f_18 = pdf.get(18);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
+    float const f_0 = pdf.get(0);
+    float const f_1 = pdf.get(1);
+    float const f_2 = pdf.get(2);
+    float const f_3 = pdf.get(3);
+    float const f_4 = pdf.get(4);
+    float const f_5 = pdf.get(5);
+    float const f_6 = pdf.get(6);
+    float const f_7 = pdf.get(7);
+    float const f_8 = pdf.get(8);
+    float const f_9 = pdf.get(9);
+    float const f_10 = pdf.get(10);
+    float const f_11 = pdf.get(11);
+    float const f_12 = pdf.get(12);
+    float const f_13 = pdf.get(13);
+    float const f_14 = pdf.get(14);
+    float const f_15 = pdf.get(15);
+    float const f_16 = pdf.get(16);
+    float const f_17 = pdf.get(17);
+    float const f_18 = pdf.get(18);
     const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float vel2Term = f_12 + f_13 + f_5;
@@ -677,29 +652,29 @@ __global__ void kernel_get(
 
 __global__ void kernel_set(
     gpu::FieldAccessor<float> pdf,
-    const float *RESTRICT const rho_in) {
+    float const *RESTRICT const rho_in) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
-    const float f_0 = pdf.get(0);
-    const float f_1 = pdf.get(1);
-    const float f_2 = pdf.get(2);
-    const float f_3 = pdf.get(3);
-    const float f_4 = pdf.get(4);
-    const float f_5 = pdf.get(5);
-    const float f_6 = pdf.get(6);
-    const float f_7 = pdf.get(7);
-    const float f_8 = pdf.get(8);
-    const float f_9 = pdf.get(9);
-    const float f_10 = pdf.get(10);
-    const float f_11 = pdf.get(11);
-    const float f_12 = pdf.get(12);
-    const float f_13 = pdf.get(13);
-    const float f_14 = pdf.get(14);
-    const float f_15 = pdf.get(15);
-    const float f_16 = pdf.get(16);
-    const float f_17 = pdf.get(17);
-    const float f_18 = pdf.get(18);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
+    float const f_0 = pdf.get(0);
+    float const f_1 = pdf.get(1);
+    float const f_2 = pdf.get(2);
+    float const f_3 = pdf.get(3);
+    float const f_4 = pdf.get(4);
+    float const f_5 = pdf.get(5);
+    float const f_6 = pdf.get(6);
+    float const f_7 = pdf.get(7);
+    float const f_8 = pdf.get(8);
+    float const f_9 = pdf.get(9);
+    float const f_10 = pdf.get(10);
+    float const f_11 = pdf.get(11);
+    float const f_12 = pdf.get(12);
+    float const f_13 = pdf.get(13);
+    float const f_14 = pdf.get(14);
+    float const f_15 = pdf.get(15);
+    float const f_16 = pdf.get(16);
+    float const f_17 = pdf.get(17);
+    float const f_18 = pdf.get(18);
     const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const float momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -709,8 +684,8 @@ __global__ void kernel_set(
     const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
 
     // calculate current velocity (before density change)
-    const float conversion = float(1) / rho;
-    const float u_old[3] = {momdensity_0 * conversion, momdensity_1 * conversion, momdensity_2 * conversion};
+    float const conversion = float(1) / rho;
+    float const u_old[3] = {momdensity_0 * conversion, momdensity_1 * conversion, momdensity_2 * conversion};
 
     Equilibrium::kernel_set_device(pdf, u_old, rho_in[offset]);
   }
@@ -774,32 +749,32 @@ namespace Velocity {
 __global__ void kernel_set(
     gpu::FieldAccessor<float> pdf,
     gpu::FieldAccessor<float> force,
-    const float *RESTRICT const u_in) {
+    float const *RESTRICT const u_in) {
   pdf.set(blockIdx, threadIdx);
   force.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, uint(3u));
-    const uint_t bufsize = 3u;
-    const float *RESTRICT const u = u_in + bufsize * offset;
-    const float f_0 = pdf.get(0);
-    const float f_1 = pdf.get(1);
-    const float f_2 = pdf.get(2);
-    const float f_3 = pdf.get(3);
-    const float f_4 = pdf.get(4);
-    const float f_5 = pdf.get(5);
-    const float f_6 = pdf.get(6);
-    const float f_7 = pdf.get(7);
-    const float f_8 = pdf.get(8);
-    const float f_9 = pdf.get(9);
-    const float f_10 = pdf.get(10);
-    const float f_11 = pdf.get(11);
-    const float f_12 = pdf.get(12);
-    const float f_13 = pdf.get(13);
-    const float f_14 = pdf.get(14);
-    const float f_15 = pdf.get(15);
-    const float f_16 = pdf.get(16);
-    const float f_17 = pdf.get(17);
-    const float f_18 = pdf.get(18);
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(3u));
+    uint const bufsize = 3u;
+    float const *RESTRICT const u = u_in + bufsize * offset;
+    float const f_0 = pdf.get(0);
+    float const f_1 = pdf.get(1);
+    float const f_2 = pdf.get(2);
+    float const f_3 = pdf.get(3);
+    float const f_4 = pdf.get(4);
+    float const f_5 = pdf.get(5);
+    float const f_6 = pdf.get(6);
+    float const f_7 = pdf.get(7);
+    float const f_8 = pdf.get(8);
+    float const f_9 = pdf.get(9);
+    float const f_10 = pdf.get(10);
+    float const f_11 = pdf.get(11);
+    float const f_12 = pdf.get(12);
+    float const f_13 = pdf.get(13);
+    float const f_14 = pdf.get(14);
+    float const f_15 = pdf.get(15);
+    float const f_16 = pdf.get(16);
+    float const f_17 = pdf.get(17);
+    float const f_18 = pdf.get(18);
     const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float vel2Term = f_12 + f_13 + f_5;
@@ -837,27 +812,27 @@ __global__ void kernel_sum(
   pdf.set(blockIdx, threadIdx);
   force.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint bufsize = 3u;
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, bufsize);
-    const float f_0 = pdf.get(0);
-    const float f_1 = pdf.get(1);
-    const float f_2 = pdf.get(2);
-    const float f_3 = pdf.get(3);
-    const float f_4 = pdf.get(4);
-    const float f_5 = pdf.get(5);
-    const float f_6 = pdf.get(6);
-    const float f_7 = pdf.get(7);
-    const float f_8 = pdf.get(8);
-    const float f_9 = pdf.get(9);
-    const float f_10 = pdf.get(10);
-    const float f_11 = pdf.get(11);
-    const float f_12 = pdf.get(12);
-    const float f_13 = pdf.get(13);
-    const float f_14 = pdf.get(14);
-    const float f_15 = pdf.get(15);
-    const float f_16 = pdf.get(16);
-    const float f_17 = pdf.get(17);
-    const float f_18 = pdf.get(18);
+    uint const bufsize = 3u;
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, bufsize);
+    float const f_0 = pdf.get(0);
+    float const f_1 = pdf.get(1);
+    float const f_2 = pdf.get(2);
+    float const f_3 = pdf.get(3);
+    float const f_4 = pdf.get(4);
+    float const f_5 = pdf.get(5);
+    float const f_6 = pdf.get(6);
+    float const f_7 = pdf.get(7);
+    float const f_8 = pdf.get(8);
+    float const f_9 = pdf.get(9);
+    float const f_10 = pdf.get(10);
+    float const f_11 = pdf.get(11);
+    float const f_12 = pdf.get(12);
+    float const f_13 = pdf.get(13);
+    float const f_14 = pdf.get(14);
+    float const f_15 = pdf.get(15);
+    float const f_16 = pdf.get(16);
+    float const f_17 = pdf.get(17);
+    float const f_18 = pdf.get(18);
     const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const float momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -900,27 +875,27 @@ __global__ void kernel_get(
     float *RESTRICT const out) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    const uint bufsize = 9u;
-    const uint offset = getLinearIndexFZYX(blockIdx, threadIdx, gridDim, blockDim, bufsize);
-    const float f_0 = pdf.get(0);
-    const float f_1 = pdf.get(1);
-    const float f_2 = pdf.get(2);
-    const float f_3 = pdf.get(3);
-    const float f_4 = pdf.get(4);
-    const float f_5 = pdf.get(5);
-    const float f_6 = pdf.get(6);
-    const float f_7 = pdf.get(7);
-    const float f_8 = pdf.get(8);
-    const float f_9 = pdf.get(9);
-    const float f_10 = pdf.get(10);
-    const float f_11 = pdf.get(11);
-    const float f_12 = pdf.get(12);
-    const float f_13 = pdf.get(13);
-    const float f_14 = pdf.get(14);
-    const float f_15 = pdf.get(15);
-    const float f_16 = pdf.get(16);
-    const float f_17 = pdf.get(17);
-    const float f_18 = pdf.get(18);
+    uint const bufsize = 9u;
+    uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, bufsize);
+    float const f_0 = pdf.get(0);
+    float const f_1 = pdf.get(1);
+    float const f_2 = pdf.get(2);
+    float const f_3 = pdf.get(3);
+    float const f_4 = pdf.get(4);
+    float const f_5 = pdf.get(5);
+    float const f_6 = pdf.get(6);
+    float const f_7 = pdf.get(7);
+    float const f_8 = pdf.get(8);
+    float const f_9 = pdf.get(9);
+    float const f_10 = pdf.get(10);
+    float const f_11 = pdf.get(11);
+    float const f_12 = pdf.get(12);
+    float const f_13 = pdf.get(13);
+    float const f_14 = pdf.get(14);
+    float const f_15 = pdf.get(15);
+    float const f_16 = pdf.get(16);
+    float const f_17 = pdf.get(17);
+    float const f_18 = pdf.get(18);
     const float p_0 = f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
     const float p_1 = -f_10 - f_7 + f_8 + f_9;
     const float p_2 = -f_13 + f_14 + f_17 - f_18;

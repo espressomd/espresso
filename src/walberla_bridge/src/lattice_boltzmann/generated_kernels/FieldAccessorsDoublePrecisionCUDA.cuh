@@ -60,40 +60,51 @@ namespace lbm {
 namespace accessor {
 
 namespace Population {
+/** @brief Get populations from a single cell. */
 std::array<double, 19u> get(gpu::GPUField<double> const *pdf_field,
                             Cell const &cell);
+/** @brief Set populations on a single cell. */
 void set(gpu::GPUField<double> *pdf_field, std::array<double, 19u> const &pop,
          Cell const &cell);
-void broadcast(gpu::GPUField<double> *pdf_field,
-               std::array<double, 19u> const &pop);
+/** @brief Initialize all cells with the same value. */
+void initialize(gpu::GPUField<double> *pdf_field,
+                std::array<double, 19u> const &pop);
+/** @brief Get populations from a cell interval. */
 std::vector<double> get(gpu::GPUField<double> const *pdf_field,
                         CellInterval const &ci);
+/** @brief Set populations on a cell interval. */
 void set(gpu::GPUField<double> *pdf_field, std::vector<double> const &values,
          CellInterval const &ci);
 } // namespace Population
 
 namespace Vector {
+/** @brief Get value from a single cell. */
 Vector3<double> get(gpu::GPUField<double> const *field, Cell const &cell);
+/** @brief Set value on a single cell. */
 void set(gpu::GPUField<double> *field, Vector3<double> const &vec,
          Cell const &cell);
+/** @brief Add value to a single cell. */
 void add(gpu::GPUField<double> *field, Vector3<double> const &vec,
          Cell const &cell);
-void broadcast(gpu::GPUField<double> *field, Vector3<double> const &vec);
+/** @brief Initialize all cells with the same value. */
+void initialize(gpu::GPUField<double> *field, Vector3<double> const &vec);
+/** @brief Add value to all cells. */
 void add_to_all(gpu::GPUField<double> *field, Vector3<double> const &vec);
+/** @brief Get values from a cell interval. */
 std::vector<double> get(gpu::GPUField<double> const *vec_field,
                         CellInterval const &ci);
+/** @brief Set values on a cell interval. */
 void set(gpu::GPUField<double> *vec_field, std::vector<double> const &values,
          CellInterval const &ci);
 
 } // namespace Vector
 
-namespace Coupling {
-std::vector<double> get_interpolated(gpu::GPUField<double> const *vec_field,
-                                     std::vector<double> const &pos, uint gl);
-void set_interpolated(gpu::GPUField<double> const *vec_field,
-                      std::vector<double> const &pos,
-                      std::vector<double> const &forces, uint gl);
-} // namespace Coupling
+namespace Interpolation {
+std::vector<double> get(gpu::GPUField<double> const *vec_field,
+                        std::vector<double> const &pos, uint gl);
+void set(gpu::GPUField<double> const *vec_field, std::vector<double> const &pos,
+         std::vector<double> const &forces, uint gl);
+} // namespace Interpolation
 
 namespace Density {
 double get(gpu::GPUField<double> const *pdf_field, Cell const &cell);

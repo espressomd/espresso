@@ -56,19 +56,24 @@ namespace {{namespace}} {
 namespace accessor {
 
 namespace Population {
+    /** @brief Get populations from a single cell. */
     std::array<{{dtype}}, {{Q}}u>
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
          Cell const & cell );
+    /** @brief Set populations on a single cell. */
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
          std::array< {{dtype}}, {{Q}}u > const & pop,
          Cell const & cell );
-    void broadcast(
+    /** @brief Initialize all cells with the same value. */
+    void initialize(
          gpu::GPUField< {{dtype}} > * pdf_field,
          std::array< {{dtype}}, {{Q}}u > const & pop );
+    /** @brief Get populations from a cell interval. */
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
          CellInterval const & ci );
+    /** @brief Set populations on a cell interval. */
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
          std::vector< {{dtype}} > const & values,
@@ -76,22 +81,29 @@ namespace Population {
 } // namespace Population
 
 namespace Vector {
+    /** @brief Get value from a single cell. */
     Vector{{D}}< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * field,
          Cell const & cell );
+    /** @brief Set value on a single cell. */
     void set( gpu::GPUField< {{dtype}} > * field,
               Vector{{D}}< {{dtype}} > const & vec,
               Cell const & cell );
+    /** @brief Add value to a single cell. */
     void add( gpu::GPUField< {{dtype}} > * field,
               Vector{{D}}< {{dtype}} > const & vec,
               Cell const & cell );
-    void broadcast( gpu::GPUField< {{dtype}} > * field,
+    /** @brief Initialize all cells with the same value. */
+    void initialize( gpu::GPUField< {{dtype}} > * field,
                     Vector{{D}}< {{dtype}} > const & vec);
+    /** @brief Add value to all cells. */
     void add_to_all( gpu::GPUField< {{dtype}} > * field,
                      Vector{{D}}< {{dtype}} > const & vec);
+    /** @brief Get values from a cell interval. */
     std::vector< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * vec_field,
          CellInterval const & ci);
+    /** @brief Set values on a cell interval. */
     void
     set( gpu::GPUField< {{dtype}} > * vec_field,
          std::vector< {{dtype}} > const & values,
@@ -99,17 +111,17 @@ namespace Vector {
 
 } // namespace Vector
 
-namespace Coupling {
+namespace Interpolation {
     std::vector< {{dtype}} >
-    get_interpolated( gpu::GPUField< {{dtype}} > const *vec_field,
-                      std::vector< {{dtype}} > const &pos,
-                      uint gl );
+    get( gpu::GPUField< {{dtype}} > const *vec_field,
+         std::vector< {{dtype}} > const &pos,
+         uint gl );
     void
-    set_interpolated( gpu::GPUField< {{dtype}} > const *vec_field,
-                      std::vector< {{dtype}} > const &pos,
-                      std::vector< {{dtype}} > const &forces,
-                      uint gl );
-} // namespace Coupling
+    set( gpu::GPUField< {{dtype}} > const *vec_field,
+         std::vector< {{dtype}} > const &pos,
+         std::vector< {{dtype}} > const &forces,
+         uint gl );
+} // namespace Interpolation
 
 namespace Density {
     {{dtype}}

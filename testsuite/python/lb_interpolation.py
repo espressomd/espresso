@@ -163,6 +163,8 @@ class LBInterpolationWalberlaSinglePrecisionCPU(LBInterpolation, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
+@ut.skipIf(LBInterpolation.system.cell_system.get_state()["n_nodes"] != 1,
+           "only runs for 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBInterpolationWalberlaDoublePrecisionGPU(LBInterpolation, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU
@@ -170,6 +172,8 @@ class LBInterpolationWalberlaDoublePrecisionGPU(LBInterpolation, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
+@ut.skipIf(LBInterpolation.system.cell_system.get_state()["n_nodes"] != 1,
+           "only runs for 1 MPI rank")
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBInterpolationWalberlaSinglePrecisionGPU(LBInterpolation, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU

@@ -345,12 +345,12 @@ protected:
       if constexpr (std::is_same_v<Field, _VectorField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
           auto field = block->template getData<GPUField>(field_id);
-          lbm::accessor::Vector::broadcast(field, Vector3<FloatType>{0});
+          lbm::accessor::Vector::initialize(field, Vector3<FloatType>{0});
         }
       } else if constexpr (std::is_same_v<Field, _PdfField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
           auto field = block->template getData<GPUField>(field_id);
-          lbm::accessor::Population::broadcast(
+          lbm::accessor::Population::initialize(
               field, std::array<FloatType, Stencil::Size>{});
         }
       }
@@ -784,8 +784,7 @@ public:
       auto const gl = lattice.get_ghost_layers();
       auto field = block.template uncheckedFastGetData<VectorField>(
           m_force_to_be_applied_id);
-      lbm::accessor::Coupling::set_interpolated(field, host_pos, host_force,
-                                                gl);
+      lbm::accessor::Interpolation::set(field, host_pos, host_force, gl);
     }
 #endif
   }
@@ -822,8 +821,7 @@ public:
       auto const gl = lattice.get_ghost_layers();
       auto field =
           block.template uncheckedFastGetData<VectorField>(m_velocity_field_id);
-      auto const res =
-          lbm::accessor::Coupling::get_interpolated(field, host_pos, gl);
+      auto const res = lbm::accessor::Interpolation::get(field, host_pos, gl);
       std::vector<Utils::Vector3d> vel{};
       vel.reserve(res.size() / 3ul);
       for (auto it = res.begin(); it != res.end(); it += 3) {

@@ -82,8 +82,8 @@ namespace Population
     }
 
     inline void
-    broadcast( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
-               std::array<{{dtype}}, {{Q}}u> const & pop)
+    initialize( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > * pdf_field,
+                std::array<{{dtype}}, {{Q}}u> const & pop)
      {
          WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(pdf_field, {
              {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
@@ -170,8 +170,8 @@ namespace Vector
     }
 
     inline void
-    broadcast( GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * vec_field,
-               Vector{{D}}< {{dtype}} > const & vec)
+    initialize( GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > * vec_field,
+                Vector{{D}}< {{dtype}} > const & vec)
      {
          WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
              {{dtype}} & xyz0 = vec_field->get(x, y, z, uint_t{ 0u });

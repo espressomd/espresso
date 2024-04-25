@@ -102,7 +102,7 @@ class TestLBMomentumConservation:
 @ut.skipIf(TestLBMomentumConservation.n_nodes == 1,
            "LB with regular decomposition already tested with 2 MPI ranks")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
-class TestLBMomentumConservationRegularWalberla(
+class TestLBMomentumConservationRegularDoublePrecisionWalberlaCPU(
         TestLBMomentumConservation, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
@@ -116,10 +116,25 @@ class TestLBMomentumConservationRegularWalberla(
 @ut.skipIf(TestLBMomentumConservation.n_nodes == 1,
            "LB with regular decomposition already tested with 2 MPI ranks")
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
-class TestLBMomentumConservationRegularWalberlaSinglePrecision(
+class TestLBMomentumConservationRegularSinglePrecisionWalberlaCPU(
         TestLBMomentumConservation, ut.TestCase):
 
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 6.5e-4
+
+    def set_cellsystem(self):
+        self.system.cell_system.set_regular_decomposition()
+
+
+@utx.skipIfMissingGPU()
+@ut.skipIf(TestLBMomentumConservation.n_nodes != 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
+@utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES", "CUDA"])
+class TestLBMomentumConservationRegularSinglePrecisionWalberlaGPU(
+        TestLBMomentumConservation, ut.TestCase):
+
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}
     atol = 6.5e-4
 

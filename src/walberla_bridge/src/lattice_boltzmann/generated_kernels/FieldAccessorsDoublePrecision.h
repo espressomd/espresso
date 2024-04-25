@@ -112,8 +112,8 @@ inline void set(GhostLayerField<double, uint_t{19u}> *pdf_field,
   pdf_field->getF(&xyz0, uint_t{18u}) = pop[18u];
 }
 
-inline void broadcast(GhostLayerField<double, uint_t{19u}> *pdf_field,
-                      std::array<double, 19u> const &pop) {
+inline void initialize(GhostLayerField<double, uint_t{19u}> *pdf_field,
+                       std::array<double, 19u> const &pop) {
   WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(pdf_field, {
     double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
     pdf_field->getF(&xyz0, uint_t{0u}) = pop[0u];
@@ -233,8 +233,8 @@ inline void add(GhostLayerField<double, uint_t{3u}> *vec_field,
   vec_field->getF(&xyz0, uint_t{2u}) += vec[2u];
 }
 
-inline void broadcast(GhostLayerField<double, uint_t{3u}> *vec_field,
-                      Vector3<double> const &vec) {
+inline void initialize(GhostLayerField<double, uint_t{3u}> *vec_field,
+                       Vector3<double> const &vec) {
   WALBERLA_FOR_ALL_CELLS_INCLUDING_GHOST_LAYER_XYZ(vec_field, {
     double &xyz0 = vec_field->get(x, y, z, uint_t{0u});
     vec_field->getF(&xyz0, uint_t{0u}) = vec[0u];
