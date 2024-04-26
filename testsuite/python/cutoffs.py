@@ -80,8 +80,6 @@ class CutOff(ut.TestCase):
     @utx.skipIfMissingFeatures(["LENNARD_JONES",
                                "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION", "DP3M"])
     def test_2cutoff_by_type(self):
-        import espressomd.virtual_sites
-
         sys = self.system
         min_global_cut = 0.1
         sys.min_global_cut = min_global_cut
@@ -103,8 +101,6 @@ class CutOff(ut.TestCase):
         sys.non_bonded_inter[0, 2].lennard_jones.set_params(
             sigma=0.1, epsilon=1, cutoff=2, shift="auto")
         self.assertEqual(sys.cutoff_by_types([0, 2]), 2)
-
-        sys.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         bond = espressomd.interactions.HarmonicBond(k=1000, r_0=0)
         sys.bonded_inter.add(bond)
         sys.collision_detection.set_params(
