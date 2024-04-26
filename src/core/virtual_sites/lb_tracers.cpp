@@ -61,7 +61,7 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
       if (bookkeeping.should_be_coupled(p)) {
         for (auto const &pos :
              positions_in_halo(p.pos(), box_geo, local_box, agrid)) {
-          add_md_force(lb, pos, p.force(), time_step);
+          lb.add_force_density(pos, p.force());
         }
       }
     }

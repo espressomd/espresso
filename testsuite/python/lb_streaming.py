@@ -95,6 +95,7 @@ class LBStreamingCommon:
     system.time_step = TAU
 
     def setUp(self):
+        self.system.box_l = self.box_l
         self.lbf = self.lb_class(**LB_PARAMETERS, **self.lb_params)
         self.system.lb = self.lbf
 
@@ -107,9 +108,7 @@ class LBStreamingCommon:
         grid = np.array(self.system.box_l / AGRID, dtype=int)
 
         # reset fluid populations
-        for i in itertools.product(
-                range(grid[0]), range(grid[1]), range(grid[2])):
-            self.lbf[i].population = pop_default
+        self.lbf[:, :, :].population = pop_default
 
         # check streaming
         for grid_index in itertools.product(
@@ -117,8 +116,8 @@ class LBStreamingCommon:
             self.lbf[grid_index].population = pop_source
             self.system.integrator.run(1)
             for n_v in range(19):
-                target_node_index = np.mod(
-                    grid_index + VELOCITY_VECTORS[n_v], grid)
+                dst_vec = np.array(VELOCITY_VECTORS[n_v])
+                target_node_index = np.mod(grid_index + dst_vec, grid)
                 np.testing.assert_allclose(
                     self.lbf[target_node_index].population[n_v],
                     REFERENCE_POPULATIONS[n_v], rtol=self.rtol,
@@ -127,35 +126,41 @@ class LBStreamingCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBStreamingWalberla(LBStreamingCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBStreamingWalberlaDoublePrecisionCPU(LBStreamingCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
+    box_l = [3., 2., 2.]
     rtol = 1e-10
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBStreamingWalberlaSinglePrecision(LBStreamingCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBStreamingWalberlaSinglePrecisionCPU(LBStreamingCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
+    box_l = [3., 2., 2.]
     rtol = 1e-5
 
 
-# TODO WALBERLA
-# @utx.skipIfMissingGPU()
-# @utx.skipIfMissingFeatures(["WALBERLA"])
-# class LBGPU(LBStreamingCommon, ut.TestCase):
+@utx.skipIfMissingGPU()
+@ut.skipIf(LBStreamingCommon.system.cell_system.get_state()["n_nodes"] > 2,
+           "only runs for 2 or less MPI ranks")
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBStreamingWalberlaDoublePrecisionGPU(LBStreamingCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+    box_l = [2., 1.5, 1.5]
+    rtol = 1e-10
 
-#    """Test for the Walberla implementation of the LB on the GPU."""
 
-#    lb_class = espressomd.lb.LBFluidWalberlaGPU
-#    lb_params = {}
-#    rtol = 1e-7
+@utx.skipIfMissingGPU()
+@ut.skipIf(LBStreamingCommon.system.cell_system.get_state()["n_nodes"] > 2,
+           "only runs for 2 or less MPI ranks")
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBStreamingWalberlaSinglePrecisionGPU(LBStreamingCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+    box_l = [2., 1.5, 1.5]
+    rtol = 1e-5
 
 
 if __name__ == "__main__":

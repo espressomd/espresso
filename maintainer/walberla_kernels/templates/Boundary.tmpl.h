@@ -49,12 +49,14 @@
 #include {{header}}
 {% endfor %}
 
-#ifdef __GNUC__
-#define RESTRICT __restrict__
-#elif _MSC_VER
-#define RESTRICT __restrict
-#else
-#define RESTRICT
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 namespace walberla {

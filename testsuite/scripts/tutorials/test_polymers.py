@@ -22,7 +22,7 @@ import numpy as np
 if '@TEST_SUFFIX@' == 'rouse':
     params = {}
 elif '@TEST_SUFFIX@' == 'zimm':
-    params = {'LOOPS': 400, 'POLYMER_MODEL': 'Zimm'}
+    params = {'LOOPS': 480, 'POLYMER_MODEL': 'Zimm'}
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/polymers/polymers.py",

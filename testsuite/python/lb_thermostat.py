@@ -210,31 +210,33 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBWalberlaThermostat(LBThermostatCommon, ut.TestCase):
-
-    """Test for the CPU implementation of the LB."""
-
+class LBThermostatWalberlaDoublePrecisionCPU(LBThermostatCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBWalberlaThermostatSinglePrecision(LBThermostatCommon, ut.TestCase):
-
-    """Test for the CPU implementation of the LB in single-precision."""
-
+class LBThermostatWalberlaSinglePrecisionCPU(LBThermostatCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
 
 
-# @utx.skipIfMissingGPU()
-# @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-# class LBWalberlaGPUThermostat(LBThermostatCommon, ut.TestCase):
+@utx.skipIfMissingGPU()
+@ut.skipIf(LBThermostatCommon.system.cell_system.get_state()["n_nodes"] != 1,
+           "only runs for 1 MPI rank")
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBThermostatWalberlaDoublePrecisionGPU(LBThermostatCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
 
-#    """Test for the GPU implementation of the LB."""
 
-#    lb_class = espressomd.lb.LBFluidWalberlaGPU
-#    lb_params = {"single_precision": True}
+@utx.skipIfMissingGPU()
+@ut.skipIf(LBThermostatCommon.system.cell_system.get_state()["n_nodes"] != 1,
+           "only runs for 1 MPI rank")
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBThermostatWalberlaSinglePrecisionGPU(LBThermostatCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
 
 
 if __name__ == '__main__':

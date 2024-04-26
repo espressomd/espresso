@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_INTERPOLATION_GRADIENT_HPP
-#define UTILS_INTERPOLATION_GRADIENT_HPP
+
+#pragma once
 
 #include "utils/Vector.hpp"
 
@@ -43,12 +43,12 @@ namespace Interpolation {
  * @param offset Shift of the grid relative to the origin.
  */
 template <std::size_t order, typename Kernel>
-void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
-                         const Vector3d &grid_spacing, const Vector3d &offset) {
+void bspline_3d_gradient(Vector3d const &pos, Kernel const &kernel,
+                         Vector3d const &grid_spacing, Vector3d const &offset) {
   using Utils::bspline;
 
   /* The coordinates and relative distance of the assignment cube. */
-  const auto block = detail::ll_and_dist<order>(pos, grid_spacing, offset);
+  auto const block = detail::ll_and_dist<order>(pos, grid_spacing, offset);
 
   /* Precalc weights that are used multiple times. */
   std::array<double, order> w_y;
@@ -65,8 +65,8 @@ void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
   std::array<int, 3> ind;
   for (int i = 0; i < order; i++) {
     ind[0] = block.corner[0] + i;
-    const auto w_x = bspline<order>(i, block.distance[0]);
-    const auto dw_x = bspline_d<order>(i, block.distance[0]) / grid_spacing[0];
+    auto const w_x = bspline<order>(i, block.distance[0]);
+    auto const dw_x = bspline_d<order>(i, block.distance[0]) / grid_spacing[0];
     for (int j = 0; j < order; j++) {
       ind[1] = block.corner[1] + j;
       for (int k = 0; k < order; k++) {
@@ -82,9 +82,9 @@ void bspline_3d_gradient(const Vector3d &pos, const Kernel &kernel,
  * @brief cardinal B-spline weighted sum.
  */
 template <std::size_t order, typename T, typename Kernel>
-T bspline_3d_gradient_accumulate(const Vector3d &pos, const Kernel &kernel,
-                                 const Vector3d &grid_spacing,
-                                 const Vector3d &offset, T const &init) {
+T bspline_3d_gradient_accumulate(Vector3d const &pos, Kernel const &kernel,
+                                 Vector3d const &grid_spacing,
+                                 Vector3d const &offset, T const &init) {
   T value = init;
   bspline_3d_gradient<order>(
       pos,
@@ -97,5 +97,3 @@ T bspline_3d_gradient_accumulate(const Vector3d &pos, const Kernel &kernel,
 }
 } // namespace Interpolation
 } // namespace Utils
-
-#endif

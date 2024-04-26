@@ -90,7 +90,10 @@ target_link_libraries(
 target_include_directories(espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  target_link_libraries(espresso_core PRIVATE espresso::walberla)
+  target_link_libraries(
+    espresso_core
+    PRIVATE espresso::walberla
+            $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:espresso::walberla_cuda>)
 endif()
 
 add_subdirectory(accumulators)

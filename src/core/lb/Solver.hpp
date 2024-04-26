@@ -34,6 +34,11 @@ namespace LB {
 
 struct Solver : public System::Leaf<Solver> {
   struct Implementation;
+  struct Conversions {
+    double pos_to_lb;
+    double vel_to_md;
+    double force_to_lb;
+  };
 
   Solver();
 
@@ -90,6 +95,8 @@ struct Solver : public System::Leaf<Solver> {
   void lebc_sanity_checks(unsigned int shear_direction,
                           unsigned int shear_plane_normal) const;
 
+  bool is_gpu() const;
+
   /**
    * @brief Get the LB time step.
    */
@@ -135,11 +142,18 @@ struct Solver : public System::Leaf<Solver> {
   /**
    * @brief Calculate the interpolated fluid velocity in MD units.
    * Special method used only for particle coupling. Uses the LB ghost layer.
+   * Achieved by linear interpolation (eq. 11 in @cite ahlrichs99a).
    * @param pos Position in MD units at which the velocity is to be calculated.
    * @retval interpolated fluid velocity.
    */
   Utils::Vector3d
   get_coupling_interpolated_velocity(Utils::Vector3d const &pos) const;
+
+  std::vector<Utils::Vector3d> get_coupling_interpolated_velocities(
+      std::vector<Utils::Vector3d> const &pos) const;
+
+  void add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
+                         std::vector<Utils::Vector3d> const &forces);
 
   /**
    * @brief Add a force density to the fluid at the given position.
@@ -159,6 +173,7 @@ struct Solver : public System::Leaf<Solver> {
 private:
   /** @brief Pointer-to-implementation. */
   std::unique_ptr<Implementation> impl;
+  Conversions m_conv{};
 };
 
 } // namespace LB

@@ -29,6 +29,8 @@
 #include "domain_decomposition/StructuredBlockStorage.h"
 #include "field/GhostLayerField.h"
 #include "field/SwapableCompare.h"
+
+#include <functional>
 #include <set>
 
 #ifdef __GNUC__

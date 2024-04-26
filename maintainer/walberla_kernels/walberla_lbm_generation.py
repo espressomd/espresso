@@ -110,8 +110,16 @@ def substitute_force_getter_cpp(code):
     return code.replace(field_getter, "force_field->")
 
 
+def substitute_force_getter_cu(code):
+    field_getter = "force->get(x,y,z,"
+    assert field_getter in code is not None, \
+        f"pattern '{field_getter} not found in '''\n{code}\n'''"
+    return code.replace(field_getter, "force.get(")
+
+
 def add_espresso_filters_to_jinja_env(jinja_env):
     jinja_env.filters["substitute_force_getter_cpp"] = substitute_force_getter_cpp
+    jinja_env.filters["substitute_force_getter_cu"] = substitute_force_getter_cu
 
 
 def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):

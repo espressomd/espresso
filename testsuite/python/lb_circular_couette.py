@@ -43,7 +43,7 @@ def taylor_couette(v1, v2, r1, r2):
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBCircularCouetteCommon:
+class LBCouetteTest:
 
     system = espressomd.System(box_l=(GRID_SIZE + [1, 1, 0]) * AGRID)
     system.time_step = TIME_STEP
@@ -148,21 +148,20 @@ class LBCircularCouetteCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBCircularCouetteWalberla(LBCircularCouetteCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBCircularCouetteWalberlaDoublePRecisionCPU(LBCouetteTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBCircularCouetteWalberlaSinglePrecision(
-        LBCircularCouetteCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBCircularCouetteWalberlaSinglePrecisionCPU(LBCouetteTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBCircularCouetteWalberlaSinglePrecisionGPU(LBCouetteTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}
 
 

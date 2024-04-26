@@ -43,6 +43,7 @@ protected:
 
   virtual ::LatticeModel::units_map
   get_latice_to_md_units_conversion() const = 0;
+  virtual void make_instance(VariantMap const &params) = 0;
 
   auto find_vtk(std::shared_ptr<VTKHandle> const &vtk) const {
     return std::find(m_vtk_writers.begin(), m_vtk_writers.end(), vtk);
