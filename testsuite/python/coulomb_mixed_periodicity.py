@@ -41,6 +41,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.
 
+    def setup_particles(self):
         # Add particles to system and store reference forces in hash
         # Input format: id pos q f
         self.system.part.add(pos=self.data[:, 1:4], q=self.data[:, 4])
@@ -64,17 +65,21 @@ class CoulombMixedPeriodicity(ut.TestCase):
         # triggering a solver re-initialization via a box resize
         # should not affect the forces nor the energies
         original_box_l = np.copy(self.system.box_l)
-        self.system.box_l = original_box_l * 1.1
-        self.system.box_l = original_box_l
+        for i in range(3):
+            self.system.change_volume_and_rescale_particles(
+                1.05 * original_box_l[i], "xyz"[i])
+        for i in range(3):
+            self.system.change_volume_and_rescale_particles(
+                original_box_l[i], "xyz"[i])
         self.system.integrator.run(0)
         forces_step2 = np.copy(self.system.part.all().f)
         energy_step2 = self.system.analysis.energy()["total"]
 
         err_msg = f"method {method_name} deviates after cells reinitialization"
-        np.testing.assert_allclose(forces_step1, forces_step2, atol=1e-12,
-                                   err_msg=f"Force {err_msg}")
-        np.testing.assert_allclose(energy_step2, energy_step1, rtol=1e-12,
-                                   err_msg=f"Energy {err_msg}")
+        np.testing.assert_allclose(forces_step1, forces_step2, rtol=1e-9,
+                                   atol=0., err_msg=f"Force {err_msg}")
+        np.testing.assert_allclose(energy_step2, energy_step1, rtol=1e-9,
+                                   atol=0., err_msg=f"Energy {err_msg}")
 
     def setup_elc_system(self):
         # Make sure, the data satisfies the gap
@@ -89,6 +94,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc_cpu(self):
         self.system.box_l = [10., 10., 12.]
+        self.setup_particles()
         self.setup_elc_system()
 
         p3m = espressomd.electrostatics.P3M(
@@ -103,6 +109,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc_gpu(self):
         self.system.box_l = [10., 10., 12.]
+        self.setup_particles()
         self.setup_elc_system()
 
         p3m = espressomd.electrostatics.P3M(
@@ -119,6 +126,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.system.box_l = [10., 10., 10.]
         self.system.periodicity = [True, True, False]
         self.system.cell_system.set_regular_decomposition()
+        self.setup_particles()
 
         scafacos = espressomd.electrostatics.Scafacos(
             prefactor=1,

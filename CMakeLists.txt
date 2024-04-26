@@ -47,11 +47,11 @@ macro(espresso_minimal_compiler_version)
   endif()
 endmacro()
 
-espresso_minimal_compiler_version("GNU" 8.0.0)
-espresso_minimal_compiler_version("Clang" 9.0.0)
-espresso_minimal_compiler_version("AppleClang" 11.0.0)
-espresso_minimal_compiler_version("Intel" 18.0)
-espresso_minimal_compiler_version("IntelLLVM" 2021.0)
+espresso_minimal_compiler_version("GNU" 10.5.0)
+espresso_minimal_compiler_version("Clang" 14.0.0)
+espresso_minimal_compiler_version("AppleClang" 14.0.0)
+espresso_minimal_compiler_version("Intel" 2021.9)
+espresso_minimal_compiler_version("IntelLLVM" 2023.1)
 
 include(FeatureSummary)
 project(ESPResSo)
@@ -190,46 +190,25 @@ add_library(espresso::avx_flags ALIAS espresso_avx_flags)
 
 # CUDA compiler
 if(ESPRESSO_BUILD_WITH_CUDA)
-  set(ESPRESSO_DEFINE_CUDA_ARCHITECTURES OFF)
-  if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-    set(ESPRESSO_DEFINE_CUDA_ARCHITECTURES ON)
-  endif()
   include(CheckLanguage)
   enable_language(CUDA)
   check_language(CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-  set(ESPRESSO_MINIMAL_CUDA_VERSION 11.0)
+  set(ESPRESSO_MINIMAL_CUDA_VERSION 11.5)
   find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
-  if(ESPRESSO_DEFINE_CUDA_ARCHITECTURES)
-    unset(ESPRESSO_CUDA_ARCHITECTURES)
-    # 1. sm_75: RTX-2000 series (Turing)
-    # 2. sm_61: GTX-1000 series (Pascal)
-    # 3. sm_52: GTX-900  series (Maxwell)
-    if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
-      list(APPEND ESPRESSO_CUDA_ARCHITECTURES 75)
-      list(APPEND ESPRESSO_CUDA_ARCHITECTURES 61)
-    elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
-      # GTX-900 series (Maxwell)
-      if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 12)
-        list(APPEND ESPRESSO_CUDA_ARCHITECTURES 52)
-      endif()
-      if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
-        list(APPEND ESPRESSO_CUDA_ARCHITECTURES 61)
-        # With Clang 14+, architectures sm_70+ are only supported with Thrust
-        # 1.11+ from CUDA 11.3+, for details see
-        # https://github.com/NVIDIA/cub/pull/170
-        if((CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 14)
-           OR (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.3.0))
-          list(APPEND ESPRESSO_CUDA_ARCHITECTURES 75)
-        endif()
-      endif()
+  if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
+    if("$ENV{CUDAARCHS}" STREQUAL "")
+      # 1. sm_75: RTX-2000 series (Turing)
+      # 2. sm_61: GTX-1000 series (Pascal)
+      set(ESPRESSO_CUDA_ARCHITECTURES "61;75")
+    else()
+      set(ESPRESSO_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}")
     endif()
-    # only override CMAKE_CUDA_ARCHITECTURES when dependencies are satisfied
-    if(DEFINED ESPRESSO_CUDA_ARCHITECTURES)
-      set(CMAKE_CUDA_ARCHITECTURES ${ESPRESSO_CUDA_ARCHITECTURES})
-    endif()
+    set(ESPRESSO_CMAKE_CUDA_ARCHITECTURES "${ESPRESSO_CUDA_ARCHITECTURES}"
+        CACHE INTERNAL "")
   endif()
+  set(CMAKE_CUDA_ARCHITECTURES "${ESPRESSO_CMAKE_CUDA_ARCHITECTURES}")
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     find_package(CUDACompilerNVCC ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
   elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
@@ -238,7 +217,7 @@ if(ESPRESSO_BUILD_WITH_CUDA)
         FATAL_ERROR
           "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
-    find_package(CUDACompilerClang 9.0 REQUIRED)
+    find_package(CUDACompilerClang 14.0 REQUIRED)
   else()
     message(FATAL_ERROR "Unknown CUDA compiler '${CMAKE_CUDA_COMPILER_ID}'")
   endif()
@@ -246,8 +225,8 @@ endif()
 
 # Python interpreter and Cython interface library
 if(ESPRESSO_BUILD_WITH_PYTHON)
-  find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 0.29.21...<3.0 REQUIRED)
+  find_package(Python 3.10 REQUIRED COMPONENTS Interpreter Development NumPy)
+  find_package(Cython 0.29.28...<3.0.10 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif()
 
@@ -457,9 +436,8 @@ if(ESPRESSO_BUILD_WITH_COVERAGE)
       espresso_coverage_flags INTERFACE -g -fprofile-instr-generate
                                         -fcoverage-mapping)
   else()
-    target_compile_options(
-      espresso_coverage_flags INTERFACE -g --coverage -fprofile-arcs
-                                        -ftest-coverage)
+    target_compile_options(espresso_coverage_flags INTERFACE -g --coverage
+                                                             -fprofile-abs-path)
     target_link_libraries(espresso_coverage_flags INTERFACE gcov)
   endif()
 endif()
@@ -472,7 +450,6 @@ target_compile_options(
     -Wall
     -Wextra
     -pedantic
-    $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:-Werror>
     # add extra warnings
     $<$<CXX_COMPILER_ID:Clang>:-Wextern-initializer>
     $<$<CXX_COMPILER_ID:Clang>:-Wrange-loop-analysis>
@@ -486,12 +463,30 @@ target_compile_options(
     -Wno-sign-compare
     -Wno-unused-function
     -Wno-unused-parameter
+    -Wno-array-bounds
     $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered>
     $<$<CXX_COMPILER_ID:Intel,IntelLLVM>:-diag-disable=592>
     $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-gnu-zero-variadic-macro-arguments>
     $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,8.1.0>>:-Wno-cast-function-type>
     $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-implicit-fallthrough>
-    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM,GNU>>:-Wno-unused-private-field>)
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM,GNU>>:-Wno-unused-private-field>
+    # warnings are errors
+    $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:-Werror>)
+
+if(ESPRESSO_BUILD_WITH_CUDA)
+  target_compile_options(
+    espresso_cuda_flags
+    INTERFACE
+      -Wall
+      -Wextra
+      -Wno-sign-compare
+      -Wno-unused-parameter
+      $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-implicit-fallthrough>
+      # warnings are errors
+      $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<CUDA_COMPILER_ID:NVIDIA>>:--Werror=all-warnings>
+      $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<CUDA_COMPILER_ID:Clang>>:-Werror>
+  )
+endif()
 
 # disable warning from -Wextra on ARM processors
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES
@@ -595,7 +590,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        065ce5f311850371a97ac4766f47dbb5ca8424ba
+    GIT_TAG        0c8b4b926c6979288fd8a6846d02ec0870e1fe41
   )
   # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
   if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")
@@ -637,7 +632,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_LIBS ${WALBERLA_LIBS} walberla::fft)
   endif()
   if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
-    set(WALBERLA_LIBS ${WALBERLA_LIBS} walberla::cuda)
+    set(WALBERLA_LIBS ${WALBERLA_LIBS} walberla::gpu)
   endif()
   # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21283
   foreach(target_w_namespace IN LISTS WALBERLA_LIBS)
@@ -660,7 +655,7 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   FetchContent_Declare(
     caliper
     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-    GIT_TAG        v2.9.1
+    GIT_TAG        v2.10.0
   )
   if(NOT DEFINED caliper_SOURCE_DIR OR NOT EXISTS "${caliper_SOURCE_DIR}")
     FetchContent_Populate(caliper)
@@ -678,6 +673,9 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
                                               "GNU")
     target_compile_options(caliper-services
                            PRIVATE -Wno-deprecated-declarations)
+    target_compile_options(
+      caliper-runtime
+      PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>)
   endif()
 endif()
 

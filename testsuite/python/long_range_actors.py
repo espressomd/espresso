@@ -105,9 +105,12 @@ class Test(ut.TestCase):
         self.system.electrostatics.extension = icc
         if espressomd.has_features(["NPT"]):
             with self.assertRaisesRegex(Exception, "ERROR: ICC does not work in the NPT ensemble"):
+                self.system.thermostat.set_npt(
+                    kT=1., gamma0=2., gammav=0., seed=42)
                 self.system.integrator.set_isotropic_npt(
                     ext_pressure=2., piston=0.01)
                 self.system.integrator.run(0)
+            self.system.thermostat.turn_off()
             self.system.integrator.set_vv()
         with self.assertRaisesRegex(RuntimeError, "Cannot change solver when an extension is active"):
             self.system.electrostatics.solver = p3m_new

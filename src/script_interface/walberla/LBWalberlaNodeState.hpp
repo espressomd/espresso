@@ -36,6 +36,6 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, unsigned int /* version */) {
-    ar &populations &last_applied_force &slip_velocity &is_boundary;
+    ar & populations & last_applied_force & slip_velocity & is_boundary;
   }
 };

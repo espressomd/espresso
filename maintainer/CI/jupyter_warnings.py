@@ -23,9 +23,11 @@ pointing to sections of the notebooks or to the online Sphinx documentation.
 """
 
 import sys
+import json
 import pathlib
 
 import lxml.etree
+import jupyter_core.paths
 import nbformat
 import nbconvert
 
@@ -58,7 +60,15 @@ def detect_invalid_urls(nb, build_root='.', html_exporter=None):
     '''
     # convert notebooks to HTML
     if html_exporter is None:
-        html_exporter = nbconvert.HTMLExporter()
+        kwargs = {}
+        for path in jupyter_core.paths.jupyter_config_path():
+            filepath = pathlib.Path(path) / "jupyter_nbconvert_config.json"
+            if filepath.is_file():
+                with open(filepath) as f:
+                    config = json.load(f)
+                kwargs = config.get("Exporter", {})
+                break
+        html_exporter = nbconvert.HTMLExporter(**kwargs)
     html_exporter.template_name = 'classic'
     html_string = html_exporter.from_notebook_node(nb)[0]
     # parse HTML

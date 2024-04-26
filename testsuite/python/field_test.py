@@ -24,6 +24,7 @@ import itertools
 
 import espressomd
 import espressomd.constraints
+import espressomd.propagation
 
 
 class FieldTest(ut.TestCase):
@@ -53,21 +54,21 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(gravity)
 
-        if espressomd.has_features("MASS"):
-            p = self.system.part.add(pos=[0, 0, 0], mass=3.1)
-        else:
-            p = self.system.part.add(pos=[0, 0, 0])
+        mass = 3.1 if espressomd.has_features("MASS") else 1.
+        p = self.system.part.add(pos=[0, 0, 0], mass=mass)
 
         self.system.integrator.run(0)
 
-        np.testing.assert_almost_equal(g_const, np.copy(p.f) / p.mass)
+        np.testing.assert_allclose(np.copy(p.f / p.mass), g_const)
         self.assertAlmostEqual(self.system.analysis.energy()['total'], 0.)
 
         # Virtual sites don't feel gravity
-        if espressomd.has_features("VIRTUAL_SITES"):
-            p.virtual = True
+        if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+            p_vs = self.system.part.add(pos=[0, 1, 0])
+            p_vs.vs_auto_relate_to(p)
             self.system.integrator.run(0)
-            np.testing.assert_allclose(np.copy(p.f), 0)
+            np.testing.assert_allclose(np.copy(p.f / p.mass), g_const)
+            np.testing.assert_allclose(np.copy(p_vs.f), [0., 0., 0.])
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_linear_electric_potential(self):
@@ -81,14 +82,13 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(electric_field)
 
-        p = self.system.part.add(pos=[0.5, 0.5, 0.5])
-        p.q = -3.1
+        p = self.system.part.add(pos=[0.5, -0.5, 10.5], q=-3.1)
 
         self.system.integrator.run(0)
         np.testing.assert_almost_equal(p.q * E, np.copy(p.f))
 
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
-                               p.q * (- np.dot(E, p.pos) + phi0))
+                               p.q * (- np.dot(E, p.pos_folded) + phi0))
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                self.system.analysis.energy()['external_fields'])
 
@@ -116,7 +116,7 @@ class FieldTest(ut.TestCase):
 
         self.system.constraints.add(electric_wave)
 
-        p = self.system.part.add(pos=[0.4, 0.1, 0.11], q=-14.)
+        p = self.system.part.add(pos=[0.4, -0.1, 10.11], q=-14.)
         self.system.time = 1042.
 
         self.system.integrator.run(0)
@@ -264,7 +264,7 @@ class FieldTest(ut.TestCase):
             f_val = np.array(F.call_method("_eval_field", x=x))
             np.testing.assert_allclose(f_val, self.force(x))
 
-            p.pos = x
+            p.pos = x + np.multiply([0, -1, 1], self.system.box_l)
             self.system.integrator.run(0)
             np.testing.assert_allclose(
                 -gamma * (p.v - f_val), np.copy(p.f), atol=1e-12)

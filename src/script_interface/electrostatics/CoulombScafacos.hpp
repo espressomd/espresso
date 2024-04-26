@@ -25,12 +25,16 @@
 
 #include "Actor.hpp"
 
+#include "core/MpiCallbacks.hpp"
+#include "core/communication.hpp"
 #include "core/electrostatics/scafacos.hpp"
 #include "core/scafacos/ScafacosContextBase.hpp"
 
 #include "script_interface/get_value.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
 
+#include <iomanip>
+#include <memory>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -41,6 +45,8 @@ namespace ScriptInterface {
 namespace Coulomb {
 
 class CoulombScafacos : public Actor<CoulombScafacos, ::CoulombScafacos> {
+  std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
+
 public:
   CoulombScafacos() {
     add_parameters({
@@ -76,6 +82,11 @@ public:
     });
   }
 
+  ~CoulombScafacos() override {
+    m_actor.reset();
+    m_mpi_env_lock.reset();
+  }
+
   void do_construct(VariantMap const &params) override {
     auto const method_name = get_value<std::string>(params, "method_name");
     auto const param_list = params.at("method_params");
@@ -88,6 +99,8 @@ public:
       actor()->set_prefactor(prefactor);
     });
     set_charge_neutrality_tolerance(params);
+    // MPI communicator is needed to destroy the FFT plans
+    m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
   }
 
   Variant do_call_method(std::string const &name,

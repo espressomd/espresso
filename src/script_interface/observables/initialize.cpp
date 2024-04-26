@@ -57,7 +57,7 @@
 namespace ScriptInterface {
 namespace Observables {
 
-/** @name %Observables registration
+/** @name Observables registration
  *  Convenience macro functions to automatize the registration of observable
  *  interfaces via a factory.
  */

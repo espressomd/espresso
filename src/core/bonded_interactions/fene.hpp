@@ -18,18 +18,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_FENE_HPP
-#define CORE_BN_IA_FENE_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the FENE potential between particle pairs.
- *
- *  Implementation in \ref fene.cpp.
  */
 
 #include "config/config.hpp"
 #include "errorhandling.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>
 
@@ -52,7 +52,14 @@ struct FeneBond {
 
   static constexpr int num = 1;
 
-  FeneBond(double k, double drmax, double r0);
+  FeneBond(double k, double drmax, double r0) {
+    this->k = k;
+    this->drmax = drmax;
+    this->r0 = r0;
+
+    this->drmax2 = Utils::sqr(this->drmax);
+    this->drmax2i = 1. / this->drmax2;
+  }
 
   boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   boost::optional<double> energy(Utils::Vector3d const &dx) const;
@@ -61,16 +68,16 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &k;
-    ar &drmax;
-    ar &r0;
-    ar &drmax2;
-    ar &drmax2i;
+    ar & k;
+    ar & drmax;
+    ar & r0;
+    ar & drmax2;
+    ar & drmax2i;
   }
 };
 
 /** Compute the FENE bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 FeneBond::force(Utils::Vector3d const &dx) const {
@@ -95,7 +102,7 @@ FeneBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the FENE bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 FeneBond::energy(Utils::Vector3d const &dx) const {
@@ -109,5 +116,3 @@ FeneBond::energy(Utils::Vector3d const &dx) const {
 
   return -0.5 * k * drmax2 * log(1.0 - dr * dr * drmax2i);
 }
-
-#endif

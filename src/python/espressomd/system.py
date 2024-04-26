@@ -36,11 +36,8 @@ from . import integrate
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
-from . import virtual_sites
 
 from .code_features import has_features, assert_features
-from . import utils
-
 from .script_interface import script_interface_register, ScriptInterfaceHelper
 
 
@@ -153,16 +150,6 @@ class System(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = _System._so_bind_methods
 
-    def __setattr__(self, attr, value):
-        if attr == "periodicity":
-            utils.check_type_or_throw_except(
-                value, 3, bool, "Attribute 'periodicity' must be a list of 3 bools")
-        if attr == "box_l":
-            utils.check_type_or_throw_except(
-                value, 3, float, "Attribute 'box_l' must be a list of 3 floats")
-        super().__setattr__(attr, value)
-        utils.handle_errors(f"while assigning system parameter '{attr}'")
-
     def __init__(self, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
@@ -178,8 +165,6 @@ class System(ScriptInterfaceHelper):
 
         setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
                               "time_step", "force_cap", "max_oif_objects"]
-        if has_features("VIRTUAL_SITES"):
-            setable_properties.append("_active_virtual_sites_handle")
 
         self.call_method("set_system_handle", obj=_System(**kwargs))
         self.integrator = integrate.IntegratorHandle()
@@ -215,9 +200,6 @@ class System(ScriptInterfaceHelper):
         self.non_bonded_inter = interactions.NonBondedInteractions()
         self.part = particle_data.ParticleList()
         self.thermostat = thermostat.Thermostat()
-        if has_features("VIRTUAL_SITES"):
-            self._active_virtual_sites_handle = virtual_sites.ActiveVirtualSitesHandle(
-                implementation=virtual_sites.VirtualSitesOff())
 
         # lock class
         self.call_method("lock_system_creation")
@@ -242,11 +224,8 @@ class System(ScriptInterfaceHelper):
         return so
 
     def __getstate__(self):
-        checkpointable_properties = []
-        if has_features("VIRTUAL_SITES"):
-            checkpointable_properties.append("_active_virtual_sites_handle")
-        checkpointable_properties += [
-            "non_bonded_inter", "bonded_inter", "lees_edwards",
+        checkpointable_properties = [
+            "non_bonded_inter", "bonded_inter",
             "part", "auto_update_accumulators",
             "constraints",
         ]
@@ -254,7 +233,6 @@ class System(ScriptInterfaceHelper):
             checkpointable_properties.append("collision_detection")
         if has_features("WALBERLA"):
             checkpointable_properties += ["_lb", "_ekcontainer"]
-        checkpointable_properties += ["thermostat"]
 
         odict = collections.OrderedDict()
         odict["_system_handle"] = self.call_method("get_system_handle")
@@ -339,24 +317,6 @@ class System(ScriptInterfaceHelper):
 
         """
         return self.cell_system.max_cut_bonded
-
-    @property
-    def virtual_sites(self):
-        """
-        Set the virtual site implementation.
-
-        Requires feature ``VIRTUAL_SITES``.
-
-        Type: :obj:`espressomd.virtual_sites.ActiveVirtualSitesHandle`
-
-        """
-        assert_features("VIRTUAL_SITES")
-        return self._active_virtual_sites_handle.implementation
-
-    @virtual_sites.setter
-    def virtual_sites(self, value):
-        assert_features("VIRTUAL_SITES")
-        self._active_virtual_sites_handle.implementation = value
 
     @property
     def lb(self):
@@ -456,14 +416,10 @@ class System(ScriptInterfaceHelper):
         if isinstance(p1, particle_data.ParticleHandle):
             pos1 = p1.pos_folded
         else:
-            utils.check_type_or_throw_except(
-                p1, 3, float, "p1 must be a particle or 3 floats")
             pos1 = p1
         if isinstance(p2, particle_data.ParticleHandle):
             pos2 = p2.pos_folded
         else:
-            utils.check_type_or_throw_except(
-                p2, 3, float, "p2 must be a particle or 3 floats")
             pos2 = p2
 
         return self.call_method("distance_vec", pos1=pos1, pos2=pos2)

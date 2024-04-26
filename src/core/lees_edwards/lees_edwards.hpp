@@ -16,17 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_LEES_EDWARDS_LEES_EDWARDS_HPP
-#define CORE_LEES_EDWARDS_LEES_EDWARDS_HPP
+
+#pragma once
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "lees_edwards/protocols.hpp"
+#include "system/Leaf.hpp"
 
 #include <cmath>
 #include <memory>
 
-#include <iostream>
 namespace LeesEdwards {
 class UpdateOffset {
 protected:
@@ -90,14 +90,20 @@ inline Utils::Vector3d verlet_list_offset(BoxGeometry const &box,
   return {};
 }
 
-/** @brief Get currently active Lees-Edwards protocol. */
-std::weak_ptr<ActiveProtocol> get_protocol();
+class LeesEdwards : public System::Leaf<LeesEdwards> {
+  std::shared_ptr<ActiveProtocol> m_protocol;
 
-/** @brief Set a new Lees-Edwards protocol. */
-void set_protocol(std::shared_ptr<ActiveProtocol> new_protocol);
+public:
+  /** @brief Get currently active Lees-Edwards protocol. */
+  auto get_protocol() const { return m_protocol; }
 
-/** @brief Delete the currently active Lees-Edwards protocol. */
-void unset_protocol();
+  /** @brief Set a new Lees-Edwards protocol. */
+  void set_protocol(std::shared_ptr<ActiveProtocol> protocol);
+
+  /** @brief Delete the currently active Lees-Edwards protocol. */
+  void unset_protocol();
+
+  void update_box_params(BoxGeometry &box_geo, double sim_time);
+};
 
 } // namespace LeesEdwards
-#endif

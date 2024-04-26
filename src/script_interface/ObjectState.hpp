@@ -44,7 +44,7 @@ struct ObjectState {
   std::string internal_state;
 
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &name &params &objects &internal_state;
+    ar & name & params & objects & internal_state;
   }
 };
 } // namespace ScriptInterface

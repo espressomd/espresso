@@ -24,7 +24,6 @@
 #include "EKWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
 
-#include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/ek_walberla_init.hpp>
 
 #include <boost/mpi.hpp>
@@ -119,7 +118,7 @@ void EKSpecies::do_construct(VariantMap const &args) {
     auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
     auto const ek_density = m_density = density * m_conv_density;
     auto const ek_kT = kT * m_conv_energy;
-    m_instance = new_ek_walberla(
+    m_instance = ::walberla::new_ek_walberla(
         m_lattice->lattice(), ek_diffusion, ek_kT,
         get_value<double>(args, "valency"), ek_ext_efield, ek_density,
         get_value<bool>(args, "advection"),
@@ -139,8 +138,7 @@ void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
     cpfile.read(read_grid_size);
     if (read_grid_size != expected_grid_size) {
       std::stringstream message;
-      message << "grid dimensions mismatch, "
-              << "read [" << read_grid_size << "], "
+      message << "grid dimensions mismatch, read [" << read_grid_size << "], "
               << "expected [" << expected_grid_size << "].";
       throw std::runtime_error(message.str());
     }

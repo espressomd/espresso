@@ -32,7 +32,9 @@ struct EKNone {
   void propagate() { throw NoEKActive{}; }
   double get_tau() const { throw NoEKActive{}; }
   void veto_time_step(double) const { throw NoEKActive{}; }
+  void veto_kT(double) const { throw NoEKActive{}; }
   void sanity_checks(System::System const &) const { throw NoEKActive{}; }
+  void veto_boxl_change() const { throw NoEKActive{}; }
   void on_cell_structure_change() const { throw NoEKActive{}; }
   void on_boxl_change() const { throw NoEKActive{}; }
   void on_node_grid_change() const { throw NoEKActive{}; }

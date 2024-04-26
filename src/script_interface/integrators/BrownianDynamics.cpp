@@ -21,12 +21,15 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include "core/integrate.hpp"
+#include "core/PropagationMode.hpp"
+#include "core/integrators/Propagation.hpp"
 
 namespace ScriptInterface {
 namespace Integrators {
 
-void BrownianDynamics::activate() { set_integ_switch(INTEG_METHOD_BD); }
+void ScriptInterface::Integrators::BrownianDynamics::activate() {
+  get_system().propagation->set_integ_switch(INTEG_METHOD_BD);
+}
 
 } // namespace Integrators
 } // namespace ScriptInterface

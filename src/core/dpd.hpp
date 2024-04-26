@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_DPD_HPP
-#define ESPRESSO_SRC_CORE_DPD_HPP
+
+#pragma once
+
 /** \file
  *  Routines to use DPD as thermostat or pair force @cite soddemann03a
  *
@@ -30,7 +31,9 @@
 
 #ifdef DPD
 
+#include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -43,11 +46,10 @@ struct IA_parameters;
 
 void dpd_init(double kT, double time_step);
 
-Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
-                               IA_parameters const &ia_params,
-                               Utils::Vector3d const &d, double dist,
-                               double dist2);
+Utils::Vector3d
+dpd_pair_force(Particle const &p1, Particle const &p2, DPDThermostat const &dpd,
+               BoxGeometry const &box_geo, IA_parameters const &ia_params,
+               Utils::Vector3d const &d, double dist, double dist2);
 Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm);
 
 #endif // DPD
-#endif

@@ -106,7 +106,7 @@ def equations_to_code(equations, variable_prefix="",
 
 def substitute_force_getter_cpp(code):
     field_getter = "force->"
-    assert field_getter in code is not None, f"pattern '{field_getter} not found in '''\n{code}\n'''"
+    assert field_getter in code is not None, f"pattern '{field_getter} not found in '''\n{code}\n'''"  # nopep8
     return code.replace(field_getter, "force_field->")
 
 

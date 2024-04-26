@@ -71,8 +71,8 @@ class GlobalContext : public Context {
 
   std::shared_ptr<LocalContext> m_node_local_context;
 
-  bool m_is_head_node;
   boost::mpi::communicator const &m_comm;
+  bool m_is_head_node;
 
   ParallelExceptionHandler m_parallel_exception_handler;
 
@@ -88,28 +88,28 @@ class GlobalContext : public Context {
   Communication::CallbackHandle<ObjectId> cb_delete_handle;
 
 public:
-  GlobalContext(Communication::MpiCallbacks &callbacks,
+  GlobalContext(std::shared_ptr<Communication::MpiCallbacks> const &callbacks,
                 std::shared_ptr<LocalContext> node_local_context)
       : m_local_objects(), m_node_local_context(std::move(node_local_context)),
-        m_is_head_node(callbacks.comm().rank() == 0), m_comm(callbacks.comm()),
+        m_comm(callbacks->comm()), m_is_head_node(m_comm.rank() == 0),
         // NOLINTNEXTLINE(bugprone-throw-keyword-missing)
-        m_parallel_exception_handler(callbacks.comm()),
-        cb_make_handle(&callbacks,
+        m_parallel_exception_handler(m_comm),
+        cb_make_handle(callbacks,
                        [this](ObjectId id, const std::string &name,
                               const PackedMap &parameters) {
                          make_handle(id, name, parameters);
                        }),
-        cb_set_parameter(&callbacks,
+        cb_set_parameter(callbacks,
                          [this](ObjectId id, std::string const &name,
                                 PackedVariant const &value) {
                            set_parameter(id, name, value);
                          }),
-        cb_call_method(&callbacks,
+        cb_call_method(callbacks,
                        [this](ObjectId id, std::string const &name,
                               PackedMap const &arguments) {
                          call_method(id, name, arguments);
                        }),
-        cb_delete_handle(&callbacks,
+        cb_delete_handle(callbacks,
                          [this](ObjectId id) { delete_handle(id); }) {}
 
 private:

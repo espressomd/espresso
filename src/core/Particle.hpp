@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CORE_PARTICLE_HPP
-#define ESPRESSO_CORE_PARTICLE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
 #include "BondList.hpp"
+#include "PropagationMode.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/compact_vector.hpp>
@@ -34,12 +35,11 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
 namespace detail {
-inline void check_axis_idx_valid(unsigned int const axis) { assert(axis <= 2); }
-
 inline bool get_nth_bit(uint8_t const bitfield, unsigned int const bit_idx) {
   return bitfield & (1u << bit_idx);
 }
@@ -56,7 +56,7 @@ struct ParticleParametersSwimming {
   bool is_engine_force_on_fluid = false;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &f_swim &swimming &is_engine_force_on_fluid;
+    ar & f_swim & swimming & is_engine_force_on_fluid;
   }
 };
 #endif
@@ -74,13 +74,8 @@ struct ParticleProperties {
   int mol_id = 0;
   /** particle type, used for non-bonded interactions. */
   int type = 0;
-
-#ifdef VIRTUAL_SITES
-  /** is particle virtual */
-  bool is_virtual = false;
-#else  // VIRTUAL_SITES
-  static constexpr bool is_virtual = false;
-#endif // VIRTUAL_SITES
+  /** which propagation schemes should be applied to the particle **/
+  int propagation = PropagationMode::SYSTEM_DEFAULT;
 
 #ifdef ROTATION
   /** Bitfield for the particle axes of rotation.
@@ -164,10 +159,10 @@ struct ParticleProperties {
     Utils::Quaternion<double> quat = Utils::Quaternion<double>::identity();
 
     template <class Archive> void serialize(Archive &ar, long int) {
-      ar &to_particle_id;
-      ar &distance;
-      ar &rel_orientation;
-      ar &quat;
+      ar & to_particle_id;
+      ar & distance;
+      ar & rel_orientation;
+      ar & quat;
     }
   } vs_relative;
 #endif // VIRTUAL_SITES_RELATIVE
@@ -203,54 +198,53 @@ struct ParticleProperties {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &identity;
-    ar &mol_id;
-    ar &type;
+    ar & identity;
+    ar & mol_id;
+    ar & type;
+    ar & propagation;
+
 #ifdef MASS
-    ar &mass;
+    ar & mass;
 #endif
 #ifdef ROTATIONAL_INERTIA
-    ar &rinertia;
+    ar & rinertia;
 #endif
 #ifdef ROTATION
-    ar &rotation;
+    ar & rotation;
 #endif
 #ifdef ELECTROSTATICS
-    ar &q;
+    ar & q;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-    ar &mu_E;
+    ar & mu_E;
 #endif
 #ifdef DIPOLES
-    ar &dipm;
+    ar & dipm;
 #endif
 #ifdef DIPOLE_FIELD_TRACKING
-    ar &dip_fld;
+    ar & dip_fld;
 #endif
-#ifdef VIRTUAL_SITES
-    ar &is_virtual;
 #ifdef VIRTUAL_SITES_RELATIVE
-    ar &vs_relative;
+    ar & vs_relative;
 #endif
-#endif // VIRTUAL_SITES
 
 #ifdef THERMOSTAT_PER_PARTICLE
-    ar &gamma;
+    ar & gamma;
 #ifdef ROTATION
-    ar &gamma_rot;
+    ar & gamma_rot;
 #endif
 #endif // THERMOSTAT_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-    ar &ext_flag;
-    ar &ext_force;
+    ar & ext_flag;
+    ar & ext_force;
 #ifdef ROTATION
-    ar &ext_torque;
+    ar & ext_torque;
 #endif
 #endif // EXTERNAL_FORCES
 
 #ifdef ENGINE
-    ar &swim;
+    ar & swim;
 #endif
   }
 };
@@ -279,13 +273,13 @@ struct ParticlePosition {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &p;
-    ar &i;
+    ar & p;
+    ar & i;
 #ifdef ROTATION
-    ar &quat;
+    ar & quat;
 #endif
 #ifdef BOND_CONSTRAINT
-    ar &p_last_timestep;
+    ar & p_last_timestep;
 #endif
   }
 };
@@ -325,9 +319,9 @@ struct ParticleForce {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &f;
+    ar & f;
 #ifdef ROTATION
-    ar &torque;
+    ar & torque;
 #endif
   }
 };
@@ -348,9 +342,9 @@ struct ParticleMomentum {
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &v;
+    ar & v;
 #ifdef ROTATION
-    ar &omega;
+    ar & omega;
 #endif
   }
 };
@@ -368,10 +362,10 @@ struct ParticleLocal {
   double lees_edwards_offset = 0.;
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &ghost;
-    ar &lees_edwards_flag;
-    ar &p_old;
-    ar &lees_edwards_offset;
+    ar & ghost;
+    ar & lees_edwards_flag;
+    ar & p_old;
+    ar & lees_edwards_offset;
   }
 };
 
@@ -390,7 +384,7 @@ struct ParticleRattle {
   }
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &correction;
+    ar & correction;
   }
 };
 #endif
@@ -421,6 +415,9 @@ public:
   auto &mol_id() { return p.mol_id; }
   auto const &type() const { return p.type; }
   auto &type() { return p.type; }
+
+  auto const &propagation() const { return p.propagation; }
+  auto &propagation() { return p.propagation; }
 
   bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
 
@@ -460,11 +457,11 @@ public:
   auto &rotation() { return p.rotation; }
   bool can_rotate() const { return static_cast<bool>(p.rotation); }
   bool can_rotate_around(unsigned int const axis) const {
-    detail::check_axis_idx_valid(axis);
+    assert(axis <= 2u);
     return detail::get_nth_bit(p.rotation, axis);
   }
   void set_can_rotate_around(unsigned int const axis, bool const rot_flag) {
-    detail::check_axis_idx_valid(axis);
+    assert(axis <= 2u);
     if (rot_flag) {
       p.rotation |= static_cast<uint8_t>(1u << axis);
     } else {
@@ -516,17 +513,18 @@ public:
   auto &mu_E() { return p.mu_E; }
 #endif
 #ifdef VIRTUAL_SITES
-  auto &virtual_flag() { return p.is_virtual; }
-  auto const &virtual_flag() const { return p.is_virtual; }
-  auto is_virtual() const { return p.is_virtual; }
-  void set_virtual(bool const virt_flag) { p.is_virtual = virt_flag; }
+  auto is_virtual() const {
+    return (p.propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                             PropagationMode::ROT_VS_RELATIVE |
+                             PropagationMode::TRANS_LB_TRACER)) != 0;
+  }
+#else
+  constexpr auto is_virtual() const { return false; }
+#endif // VIRTUAL_SITES
 #ifdef VIRTUAL_SITES_RELATIVE
   auto const &vs_relative() const { return p.vs_relative; }
   auto &vs_relative() { return p.vs_relative; }
 #endif // VIRTUAL_SITES_RELATIVE
-#else
-  constexpr auto is_virtual() const { return p.is_virtual; }
-#endif
 #ifdef THERMOSTAT_PER_PARTICLE
   auto const &gamma() const { return p.gamma; }
   auto &gamma() { return p.gamma; }
@@ -540,7 +538,7 @@ public:
   auto &fixed() { return p.ext_flag; }
   bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
   bool is_fixed_along(unsigned int const axis) const {
-    detail::check_axis_idx_valid(axis);
+    assert(axis <= 2u);
     return detail::get_nth_bit(p.ext_flag, axis);
   }
   void set_fixed_along(int const axis, bool const fixed_flag) {
@@ -581,14 +579,14 @@ public:
 private:
   friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    ar &p;
-    ar &r;
-    ar &m;
-    ar &f;
-    ar &l;
-    ar &bl;
+    ar & p;
+    ar & r;
+    ar & m;
+    ar & f;
+    ar & l;
+    ar & bl;
 #ifdef EXCLUSIONS
-    ar &el;
+    ar & el;
 #endif
   }
 };
@@ -623,6 +621,4 @@ BOOST_IS_BITWISE_SERIALIZABLE(ParticleRattle)
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
 BOOST_IS_BITWISE_SERIALIZABLE(decltype(ParticleProperties::vs_relative))
-#endif
-
 #endif

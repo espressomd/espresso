@@ -25,7 +25,7 @@
 /**
  * @brief Returns the position of a given particle.
  *
- * @param pid %Particle id.
+ * @param pid Particle id.
  * @return position of the particle.
  */
 Utils::Vector3d get_ibm_particle_position(int pid);

@@ -51,7 +51,7 @@ class TestVTK:
                "this test is slow on more than 4 MPI ranks")
     def test_exceptions(self):
         label_invalid_obs = f"test_vtk_{self.vtk_id}_invalid_obs"
-        error_msg = rf"Only the following VTK observables are supported: \[{repr(sorted(self.valid_obs))[1:-1]}\], got 'dens'"
+        error_msg = rf"Only the following VTK observables are supported: \[{repr(sorted(self.valid_obs))[1:-1]}\], got 'dens'"  # nopep8
         with self.assertRaisesRegex(ValueError, error_msg):
             self.vtk_class(
                 identifier=label_invalid_obs, delta_N=0, observables=["dens"])

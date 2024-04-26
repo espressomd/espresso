@@ -28,7 +28,7 @@ import pystencils_walberla
 def skip_philox_unthermalized(code, result_symbols, rng_name):
     for r in result_symbols:
         statement = f" {r.name};"
-        assert statement in code, f"no declaration for variable '{r.name}' in '{code}'"
+        assert statement in code, f"no declaration for variable '{r.name}' in '{code}'"  # nopep8
         code = code.replace(statement, f" {r.name}{{}};", 1)
     statement = f"{rng_name}("
     assert code.count(statement) == 1, f"need 1 '{rng_name}' call in '{code}'"

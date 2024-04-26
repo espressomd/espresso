@@ -99,10 +99,6 @@ public:
 
   bool is_tuned() const { return m_is_tuned; }
 
-  /** Compute the k-space part of forces and energies. */
-  double kernel(bool force_flag, bool energy_flag,
-                ParticleRange const &particles);
-
   /** @brief Recalculate all derived parameters. */
   void init();
   void on_activation() {
@@ -172,8 +168,8 @@ public:
   /**
    * @brief Assign a single charge into the current charge grid.
    *
-   * @param[in] q          %Particle charge
-   * @param[in] real_pos   %Particle position in real space
+   * @param[in] q          Particle charge
+   * @param[in] real_pos   Particle position in real space
    * @param[out] inter_weights Cached interpolation weights to be used.
    */
   void assign_charge(double q, Utils::Vector3d const &real_pos,
@@ -202,6 +198,7 @@ public:
   }
 
   /** Calculate real-space contribution of Coulomb pair energy. */
+  // Eq. (3.6) @cite deserno00b
   double pair_energy(double q1q2, double dist) const {
     if ((q1q2 == 0.) || dist >= p3m.params.r_cut || dist <= 0.) {
       return {};
@@ -217,7 +214,7 @@ public:
   }
 
   /** Compute the k-space part of the pressure tensor */
-  Utils::Vector9d p3m_calc_kspace_pressure_tensor();
+  Utils::Vector9d long_range_pressure(ParticleRange const &particles);
 
   /** Compute the k-space part of energies. */
   double long_range_energy(ParticleRange const &particles) {

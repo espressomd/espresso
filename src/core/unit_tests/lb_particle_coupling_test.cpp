@@ -33,12 +33,13 @@ namespace utf = boost::unit_test;
 #include "ParticleFactory.hpp"
 #include "particle_management.hpp"
 
+#include "BoxGeometry.hpp"
+#include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "global_ghost_flags.hpp"
 #include "lb/LBNone.hpp"
 #include "lb/LBWalberla.hpp"
 #include "lb/particle_coupling.hpp"
@@ -152,41 +153,38 @@ struct CleanupActorLB : public ParticleFactory {
 
 BOOST_FIXTURE_TEST_SUITE(suite, CleanupActorLB)
 
-static void lb_lbcoupling_broadcast() {
-  boost::mpi::communicator world;
-  boost::mpi::broadcast(world, lb_particle_coupling, 0);
+BOOST_AUTO_TEST_CASE(lb_reactivate) {
+  espresso::system->thermostat->lb_coupling_deactivate();
+  espresso::system->thermostat->lb_coupling_activate();
+  BOOST_CHECK(espresso::system->thermostat->lb->couple_to_md);
 }
 
-BOOST_AUTO_TEST_CASE(activate) {
-  lb_lbcoupling_deactivate();
-  lb_lbcoupling_broadcast();
-  lb_lbcoupling_activate();
-  lb_lbcoupling_broadcast();
-  BOOST_CHECK(lb_particle_coupling.couple_to_md);
-}
-
-BOOST_AUTO_TEST_CASE(de_activate) {
-  lb_lbcoupling_activate();
-  lb_lbcoupling_broadcast();
-  lb_lbcoupling_deactivate();
-  lb_lbcoupling_broadcast();
-  BOOST_CHECK(not lb_particle_coupling.couple_to_md);
+BOOST_AUTO_TEST_CASE(lb_deactivate) {
+  espresso::system->thermostat->lb_coupling_activate();
+  espresso::system->thermostat->lb_coupling_deactivate();
+  BOOST_CHECK(not espresso::system->thermostat->lb->couple_to_md);
 }
 
 BOOST_AUTO_TEST_CASE(rng_initial_state) {
-  BOOST_CHECK(lb_lbcoupling_is_seed_required());
-  BOOST_CHECK(!lb_particle_coupling.rng_counter_coupling);
+  BOOST_CHECK(espresso::system->thermostat->lb->is_seed_required());
+  BOOST_CHECK(espresso::system->thermostat->lb->rng_counter() == 0ul);
 }
 
 BOOST_AUTO_TEST_CASE(rng) {
-  lb_lbcoupling_set_rng_state(17);
-  lb_particle_coupling.gamma = 0.2;
   auto &lb = espresso::system->lb;
+  auto &thermostat = *espresso::system->thermostat->lb;
+  auto const &box_geo = *espresso::system->box_geo;
+  auto const &local_box = *espresso::system->local_geo;
+  auto const tau = params.time_step;
+  thermostat.rng_initialize(17u);
+  thermostat.set_rng_counter(11ul);
+  thermostat.gamma = 0.2;
+  espresso::set_lb_kT(1.);
 
-  LB::ParticleCoupling coupling{lb, true, params.time_step, 1.};
-  BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
-  BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 17);
-  BOOST_CHECK(not lb_lbcoupling_is_seed_required());
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box, tau};
+  BOOST_CHECK_EQUAL(thermostat.rng_seed(), 17u);
+  BOOST_CHECK_EQUAL(thermostat.rng_counter(), 11ul);
+  BOOST_CHECK(not thermostat.is_seed_required());
   Particle test_partcl_1{};
   test_partcl_1.id() = 1;
   Particle test_partcl_2{};
@@ -200,16 +198,18 @@ BOOST_AUTO_TEST_CASE(rng) {
 
   // Propagation queries kT from LB, so LB needs to be initialized
   espresso::set_lb_kT(1E-4);
-  lb_lbcoupling_propagate();
+  thermostat.rng_increment();
 
-  BOOST_REQUIRE(lb_particle_coupling.rng_counter_coupling);
-  BOOST_CHECK_EQUAL(lb_lbcoupling_get_rng_state(), 18);
+  BOOST_CHECK_EQUAL(thermostat.rng_seed(), 17u);
+  BOOST_CHECK_EQUAL(thermostat.rng_counter(), 12ul);
   auto const step2_random1 = coupling.get_noise_term(test_partcl_1);
   auto const step2_random2 = coupling.get_noise_term(test_partcl_2);
   BOOST_CHECK(step1_random1 != step2_random1);
   BOOST_CHECK(step1_random1 != step2_random2);
 
-  LB::ParticleCoupling coupling_unthermalized{lb, true, params.time_step, 0.};
+  espresso::set_lb_kT(0.);
+  LB::ParticleCoupling coupling_unthermalized{thermostat, lb, box_geo,
+                                              local_box, tau};
   auto const step3_norandom =
       coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
@@ -218,7 +218,11 @@ BOOST_AUTO_TEST_CASE(rng) {
 BOOST_AUTO_TEST_CASE(drift_vel_offset) {
   Particle p{};
   auto &lb = espresso::system->lb;
-  LB::ParticleCoupling coupling{lb, false, params.time_step};
+  auto &thermostat = *espresso::system->thermostat->lb;
+  auto const &box_geo = *espresso::system->box_geo;
+  auto const &local_box = *espresso::system->local_geo;
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   BOOST_CHECK_EQUAL(coupling.lb_drift_velocity_offset(p).norm(), 0);
   Utils::Vector3d expected{};
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -232,15 +236,16 @@ BOOST_AUTO_TEST_CASE(drift_vel_offset) {
 BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
   auto &lb = espresso::system->lb;
+  auto &thermostat = *espresso::system->thermostat->lb;
   Particle p{};
   p.v() = {-2.5, 1.5, 2.};
   p.pos() = espresso::lb_fluid->get_lattice().get_local_domain().first;
-  lb_lbcoupling_set_gamma(0.2);
+  thermostat.gamma = 0.2;
   Utils::Vector3d drift_offset{-1., 1., 1.};
 
   // Drag force in quiescent fluid
   {
-    auto const observed = lb_drag_force(lb, p, p.pos(), drift_offset);
+    auto const observed = lb_drag_force(lb, 0.2, p, p.pos(), drift_offset);
     const Utils::Vector3d expected{0.3, -0.1, -.2};
     BOOST_CHECK_SMALL((observed - expected).norm(), eps);
   }
@@ -250,6 +255,9 @@ BOOST_DATA_TEST_CASE(drag_force, bdata::make(kTs), kT) {
 BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
   espresso::set_lb_kT(kT);
   auto &lb = espresso::system->lb;
+  auto &thermostat = *espresso::system->thermostat->lb;
+  auto const &box_geo = *espresso::system->box_geo;
+  auto const &local_box = *espresso::system->local_geo;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   Particle p{};
@@ -260,8 +268,9 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   // swimmer coupling
   {
-    if (in_local_halo(p.pos())) {
-      LB::ParticleCoupling coupling{lb, true, params.time_step};
+    if (in_local_halo(local_box, p.pos(), params.agrid)) {
+      LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                    params.time_step};
       coupling.kernel(p);
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
@@ -282,7 +291,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
           };
           if ((pos - p.pos()).norm() < 1e-6)
             continue;
-          if (in_local_halo(pos)) {
+          if (in_local_halo(local_box, pos, params.agrid)) {
             auto const interpolated = LB::get_force_to_be_applied(pos);
             BOOST_CHECK_SMALL(interpolated.norm(), eps);
           }
@@ -293,7 +302,7 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 
   // remove force of the particle from the fluid
   {
-    if (in_local_halo(p.pos())) {
+    if (in_local_halo(local_box, p.pos(), params.agrid)) {
       add_md_force(lb, p.pos(), -Utils::Vector3d{0., 0., p.swimming().f_swim},
                    params.time_step);
       auto const reset = LB::get_force_to_be_applied(p.pos());
@@ -304,25 +313,28 @@ BOOST_DATA_TEST_CASE(swimmer_force, bdata::make(kTs), kT) {
 #endif // ENGINE
 
 BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
-  espresso::set_lb_kT(kT);
-  lb_lbcoupling_set_rng_state(17);
   auto &lb = espresso::system->lb;
+  auto &thermostat = *espresso::system->thermostat->lb;
+  espresso::set_lb_kT(kT);
+  thermostat.rng_initialize(17u);
+  auto const &box_geo = *espresso::system->box_geo;
+  auto const &local_box = *espresso::system->local_geo;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
-  auto const gamma = 0.2;
-  lb_lbcoupling_set_gamma(gamma);
+  thermostat.gamma = 0.2;
   Particle p{};
-  LB::ParticleCoupling coupling{lb, false, params.time_step};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   auto expected = coupling.get_noise_term(p);
 #ifdef LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
-  expected += gamma * p.mu_E();
+  expected += thermostat.gamma * p.mu_E();
 #endif
   p.pos() = first_lb_node + Utils::Vector3d::broadcast(0.5);
 
   // coupling
   {
-    if (in_local_halo(p.pos())) {
+    if (in_local_halo(local_box, p.pos(), params.agrid)) {
       coupling.kernel(p);
       BOOST_CHECK_SMALL((p.force() - expected).norm(), eps);
 
@@ -334,7 +346,7 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
 
   // remove force of the particle from the fluid
   {
-    if (in_local_halo(p.pos())) {
+    if (in_local_halo(local_box, p.pos(), params.agrid)) {
       add_md_force(lb, p.pos(), -expected, params.time_step);
     }
   }
@@ -342,14 +354,16 @@ BOOST_DATA_TEST_CASE(particle_coupling, bdata::make(kTs), kT) {
 
 BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
                        bdata::make(kTs), kT) {
+  auto &lb = espresso::system->lb;
+  auto &thermostat = *espresso::system->thermostat->lb;
   auto const comm = boost::mpi::communicator();
   auto const rank = comm.rank();
   espresso::set_lb_kT(kT);
-  lb_lbcoupling_set_rng_state(17);
+  thermostat.rng_initialize(17u);
   auto &system = *espresso::system;
   auto &cell_structure = *system.cell_structure;
-  auto &lb = system.lb;
   auto const &box_geo = *system.box_geo;
+  auto const &local_box = *system.local_geo;
   auto const first_lb_node =
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   auto const gamma = 0.2;
@@ -371,7 +385,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
 
-  LB::ParticleCoupling coupling{lb, thermo_virtual, params.time_step};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   auto const p_opt = copy_particle_to_head_node(comm, system, pid);
   auto expected = Utils::Vector3d{};
   if (rank == 0) {
@@ -384,12 +399,13 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   boost::mpi::broadcast(comm, expected, 0);
   auto const p_pos = first_lb_node + Utils::Vector3d::broadcast(0.5);
   set_particle_pos(pid, p_pos);
-  lb_lbcoupling_set_gamma(gamma);
+  thermostat.gamma = gamma;
 
   for (bool with_ghosts : {false, true}) {
     {
       if (with_ghosts) {
-        cell_structure.update_ghosts_and_resort_particle(global_ghost_flags());
+        cell_structure.update_ghosts_and_resort_particle(
+            system.get_global_ghost_flags());
       }
       if (rank == 0) {
         auto const particles = cell_structure.local_particles();
@@ -415,7 +431,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       auto const cutoff = 8 / world.size();
       auto const agrid = params.agrid;
       {
-        auto const shifts = positions_in_halo({0., 0., 0.}, box_geo, agrid);
+        auto const shifts =
+            positions_in_halo({0., 0., 0.}, box_geo, local_box, agrid);
         BOOST_REQUIRE_EQUAL(shifts.size(), cutoff);
         for (std::size_t i = 0; i < shifts.size(); ++i) {
           BOOST_REQUIRE_EQUAL(shifts[i], reference_shifts[i]);
@@ -423,14 +440,16 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
       }
       {
         auto const reference_shift = Utils::Vector3d{1., 1., 1.};
-        auto const shifts = positions_in_halo({1., 1., 1.}, box_geo, agrid);
+        auto const shifts =
+            positions_in_halo({1., 1., 1.}, box_geo, local_box, agrid);
         BOOST_REQUIRE_EQUAL(shifts.size(), 1);
         BOOST_REQUIRE_EQUAL(shifts[0], reference_shift);
       }
       {
         auto const reference_origin = Utils::Vector3d{1., 2., 0.};
         auto const reference_shift = Utils::Vector3d{1., 2., 8.};
-        auto const shifts = positions_in_halo({1., 2., 0.}, box_geo, agrid);
+        auto const shifts =
+            positions_in_halo({1., 2., 0.}, box_geo, local_box, agrid);
         BOOST_REQUIRE_EQUAL(shifts.size(), 2);
         BOOST_REQUIRE_EQUAL(shifts[0], reference_origin);
         BOOST_REQUIRE_EQUAL(shifts[1], reference_shift);
@@ -439,12 +458,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
     // check without LB coupling
     {
-      lb_lbcoupling_deactivate();
-      lb_lbcoupling_broadcast();
-      auto const particles = cell_structure.local_particles();
-      auto const ghost_particles = cell_structure.ghost_particles();
-      LB::couple_particles(thermo_virtual, particles, ghost_particles,
-                           params.time_step);
+      system.thermostat->lb_coupling_deactivate();
+      system.lb_couple_particles(params.time_step);
       auto const p_opt = copy_particle_to_head_node(comm, system, pid);
       if (rank == 0) {
         auto const &p = *p_opt;
@@ -454,10 +469,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
 
     // check with LB coupling
     {
-      lb_lbcoupling_activate();
-      lb_lbcoupling_broadcast();
-      auto const particles = cell_structure.local_particles();
-      auto const ghost_particles = cell_structure.ghost_particles();
+      system.thermostat->lb_coupling_activate();
       Utils::Vector3d lb_before{};
       {
         auto const p_opt = copy_particle_to_head_node(comm, system, pid);
@@ -468,8 +480,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         }
       }
       // couple particle to LB
-      LB::couple_particles(thermo_virtual, particles, ghost_particles,
-                           params.time_step);
+      system.lb_couple_particles(params.time_step);
       {
         auto const p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {
@@ -500,13 +511,6 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     for (auto const &error_message : error_messages) {
       BOOST_CHECK_EQUAL(error_message.what(), error_message_ref);
     }
-    lb_particle_coupling.rng_counter_coupling = {};
-    if (kT == 0.) {
-      BOOST_CHECK_EQUAL(coupling.get_noise_term(Particle{}).norm(), 0.);
-    } else {
-      BOOST_CHECK_THROW(coupling.get_noise_term(Particle{}),
-                        std::runtime_error);
-    }
   }
 }
 
@@ -516,9 +520,14 @@ BOOST_AUTO_TEST_CASE(runtime_exceptions) {
   // LB prevents changing most of the system state
   {
     BOOST_CHECK_THROW(lb.on_boxl_change(), std::runtime_error);
-    BOOST_CHECK_THROW(lb.on_timestep_change(), std::runtime_error);
-    BOOST_CHECK_THROW(lb.on_temperature_change(), std::runtime_error);
+    BOOST_CHECK_THROW(lb.veto_boxl_change(), std::runtime_error);
+    BOOST_CHECK_THROW(lb.veto_time_step(lb.get_tau() * 2.),
+                      std::invalid_argument);
+    BOOST_CHECK_THROW(lb.veto_time_step(lb.get_tau() / 2.5),
+                      std::invalid_argument);
+    BOOST_CHECK_THROW(lb.veto_kT(lb.get_kT() + 7.), std::runtime_error);
     BOOST_CHECK_THROW(lb.on_node_grid_change(), std::runtime_error);
+    lb.on_timestep_change();
   }
   // check access out of the LB local domain
   {
@@ -574,8 +583,6 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(LB::get_force_to_be_applied({-10., -10., -10.}),
                       std::runtime_error);
     // coupling, interpolation, boundaries
-    BOOST_CHECK_THROW(lb_lbcoupling_get_rng_state(), std::runtime_error);
-    BOOST_CHECK_THROW(lb_lbcoupling_set_rng_state(0ul), std::runtime_error);
     BOOST_CHECK_THROW(lb.get_momentum(), exception);
   }
 
@@ -612,7 +619,9 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(lb.get_pressure_tensor(), NoLBActive);
     BOOST_CHECK_THROW(lb.get_momentum(), NoLBActive);
     BOOST_CHECK_THROW(lb.sanity_checks(), NoLBActive);
+    BOOST_CHECK_THROW(lb.veto_boxl_change(), NoLBActive);
     BOOST_CHECK_THROW(lb.veto_time_step(0.), NoLBActive);
+    BOOST_CHECK_THROW(lb.veto_kT(0.), NoLBActive);
     BOOST_CHECK_THROW(lb.lebc_sanity_checks(0u, 1u), NoLBActive);
     BOOST_CHECK_THROW(lb.propagate(), NoLBActive);
     BOOST_CHECK_THROW(lb.on_cell_structure_change(), NoLBActive);
@@ -628,12 +637,13 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
 }
 
 int main(int argc, char **argv) {
-  mpi_init_stand_alone(argc, argv);
+  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
   espresso::system = System::System::create();
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);
   espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
   espresso::system->cell_structure->set_verlet_skin(params.skin);
+  espresso::system->thermostat->lb = std::make_shared<LBThermostat>();
   ::System::set_system(espresso::system);
 
   boost::mpi::communicator world;

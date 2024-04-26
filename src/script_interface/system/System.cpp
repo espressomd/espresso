@@ -31,6 +31,7 @@
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
+#include "core/propagation.hpp"
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
@@ -42,7 +43,9 @@
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
+#include "script_interface/lees_edwards/LeesEdwards.hpp"
 #include "script_interface/magnetostatics/Container.hpp"
+#include "script_interface/thermostat/thermostat.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/vec_rotate.hpp>
@@ -70,10 +73,12 @@ struct System::Leaves {
   Leaves() = default;
   std::shared_ptr<CellSystem::CellSystem> cell_system;
   std::shared_ptr<Integrators::IntegratorHandle> integrator;
+  std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<Analysis::Analysis> analysis;
   std::shared_ptr<Galilei::ComFixed> comfixed;
   std::shared_ptr<Galilei::Galilei> galilei;
   std::shared_ptr<BondBreakage::BreakageSpecs> bond_breakage;
+  std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
 #ifdef ELECTROSTATICS
   std::shared_ptr<Coulomb::Container> electrostatics;
 #endif
@@ -106,11 +111,12 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
            if (not(new_value > Utils::Vector3d::broadcast(0.))) {
              throw std::domain_error("Attribute 'box_l' must be > 0");
            }
+           m_instance->veto_boxl_change();
            m_instance->box_geo->set_length(new_value);
            m_instance->on_boxl_change();
          });
        },
-       []() { return ::System::get_system().box_geo->length(); }},
+       [this]() { return m_instance->box_geo->length(); }},
       {"periodicity",
        [this](Variant const &v) {
          auto const periodicity = get_value<Utils::Vector3b>(v);
@@ -140,10 +146,12 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   });
   add_parameter("cell_system", &Leaves::cell_system);
   add_parameter("integrator", &Leaves::integrator);
+  add_parameter("thermostat", &Leaves::thermostat);
   add_parameter("analysis", &Leaves::analysis);
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);
   add_parameter("bond_breakage", &Leaves::bond_breakage);
+  add_parameter("lees_edwards", &Leaves::lees_edwards);
 #ifdef ELECTROSTATICS
   add_parameter("electrostatics", &Leaves::electrostatics);
 #endif
@@ -216,6 +224,8 @@ static void rotate_system(CellStructure &cell_structure, double phi,
   }
 
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.update_ghosts_and_resort_particle(Cells::DATA_PART_POSITION |
+                                                   Cells::DATA_PART_PROPERTIES);
 }
 
 /** Rescale all particle positions in direction @p dir by a factor @p scale.
@@ -247,12 +257,15 @@ Variant System::do_call_method(std::string const &name,
     auto &box_geo = *m_instance->box_geo;
     auto const coord = get_value<int>(parameters, "coord");
     auto const length = get_value<double>(parameters, "length");
+    assert(coord != 3 or ((box_geo.length()[0] == box_geo.length()[1]) and
+                          (box_geo.length()[1] == box_geo.length()[2])));
     auto const scale = (coord == 3) ? length * box_geo.length_inv()[0]
                                     : length * box_geo.length_inv()[coord];
     context()->parallel_try_catch([&]() {
       if (length <= 0.) {
         throw std::domain_error("Parameter 'd_new' must be > 0");
       }
+      m_instance->veto_boxl_change(true);
     });
     auto new_value = Utils::Vector3d{};
     if (coord == 3) {
@@ -311,6 +324,9 @@ Variant System::do_call_method(std::string const &name,
     m_instance->on_particle_change();
     m_instance->update_dependent_particles();
     return {};
+  }
+  if (name == "get_propagation_modes_enum") {
+    return make_unordered_map_of_variants(propagation_flags_map());
   }
   if (name == "session_shutdown") {
     if (m_instance) {

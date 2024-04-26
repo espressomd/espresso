@@ -28,10 +28,12 @@
 #include "errorhandling.hpp"
 #include "integrate.hpp"
 #include "system/System.hpp"
+#include "thermostat.hpp"
 
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/math/int_pow.hpp>
 
 #include <optional>
 
@@ -73,6 +75,15 @@ bool LBWalberla::add_force_at_pos(Utils::Vector3d const &pos,
 
 void LBWalberla::veto_time_step(double time_step) const {
   walberla_tau_sanity_checks("LB", lb_params->get_tau(), time_step);
+}
+
+void LBWalberla::veto_kT(double kT) const {
+  auto const energy_conversion =
+      Utils::int_pow<2>(lb_params->get_agrid() / lb_params->get_tau());
+  auto const lb_kT = lb_fluid->get_kT() * energy_conversion;
+  if (not ::Thermostat::are_kT_equal(lb_kT, kT)) {
+    throw std::runtime_error("Temperature change not supported by LB");
+  }
 }
 
 void LBWalberla::sanity_checks(System::System const &system) const {

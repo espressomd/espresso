@@ -16,30 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef STOKESIAN_DYNAMICS_INLINE_HPP
-#define STOKESIAN_DYNAMICS_INLINE_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
 #ifdef STOKESIAN_DYNAMICS
-#include "ParticleRange.hpp"
-#include "communication.hpp"
-#include "integrate.hpp"
+
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
+#include "thermostat.hpp"
 
-inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
-                                                 double time_step) {
-
-  // Compute new (translational and rotational) velocities
-  propagate_vel_pos_sd(particles, comm_cart, time_step);
+inline void stokesian_dynamics_step_1(ParticleRangeStokesian const &particles,
+                                      StokesianThermostat const &stokesian,
+                                      double time_step, double kT) {
+  propagate_vel_pos_sd(particles, stokesian, time_step, kT);
 
   for (auto &p : particles) {
-
-    // Translate particle
+    // translate
     p.pos() += p.v() * time_step;
-
-    // Perform rotation
+    // rotate
     auto const norm = p.omega().norm();
     if (norm != 0.) {
       auto const omega_unit = (1. / norm) * p.omega();
@@ -48,11 +44,4 @@ inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles,
   }
 }
 
-inline void stokesian_dynamics_step_1(const ParticleRange &particles,
-                                      double time_step) {
-  stokesian_dynamics_propagate_vel_pos(particles, time_step);
-  increment_sim_time(time_step);
-}
-
 #endif // STOKESIAN_DYNAMICS
-#endif

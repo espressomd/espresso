@@ -23,6 +23,7 @@ from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.vector cimport vector
 from libcpp.utility cimport pair
 from libcpp.unordered_map cimport unordered_map
+from libcpp cimport bool as cbool
 
 cdef shared_ptr[ContextManager] _om
 
@@ -192,6 +193,7 @@ cdef class PScriptInterface:
         for name, value in kwargs.items():
             self.sip.get().set_parameter(utils.to_char_pointer(name),
                                          python_object_to_variant(value))
+            utils.handle_errors(f"while setting parameter '{name}'")
 
     def get_parameter(self, name):
         cdef Variant value = self.sip.get().get_parameter(utils.to_char_pointer(name))
@@ -299,7 +301,7 @@ cdef Variant python_object_to_variant(value) except *:
             vec_variant.push_back(python_object_to_variant(e))
         return make_variant[vector[Variant]](vec_variant)
     elif isinstance(value, (type(True), np.bool_)):
-        return make_variant[bool](value)
+        return make_variant[cbool](value)
     elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
         return make_variant[int](value)
     elif np.issubdtype(np.dtype(type(value)), np.floating):
@@ -308,7 +310,7 @@ cdef Variant python_object_to_variant(value) except *:
         raise TypeError(
             f"No conversion from type '{type(value).__name__}' to 'Variant'")
 
-cdef variant_to_python_object(const Variant & value) except +:
+cdef variant_to_python_object(const Variant & value):
     """Convert C++ Variant objects to Python objects."""
 
     cdef vector[Variant] vec
@@ -324,8 +326,8 @@ cdef variant_to_python_object(const Variant & value) except +:
     cdef Vector4d vec4d
     if is_none(value):
         return None
-    if is_type[bool](value):
-        return get_value[bool](value)
+    if is_type[cbool](value):
+        return get_value[cbool](value)
     if is_type[int](value):
         return get_value[int](value)
     if is_type[double](value):
@@ -417,7 +419,8 @@ def _unpickle_so_class(so_name, state):
     so_ptr.sip = _om.get().deserialize(state)
 
     assert so_name in _python_class_by_so_name, \
-        f"C++ class '{so_name}' is not associated to any Python class (hint: the corresponding 'import espressomd.*' may be missing)"
+        f"C++ class '{so_name}' is not associated to any Python class " \
+        "(hint: the corresponding 'import espressomd.*' may be missing)"
     so = _python_class_by_so_name[so_name](sip=so_ptr)
     so.define_bound_methods()
 
@@ -569,10 +572,15 @@ def script_interface_register(c):
     return c
 
 
-cdef void init(MpiCallbacks & cb):
+cdef void init(const shared_ptr[MpiCallbacks] & cb):
     cdef Factory[ObjectHandle] f
 
     initialize(& f)
 
     global _om
     _om = make_shared[ContextManager](cb, f)
+
+
+cdef void deinit():
+    global _om
+    _om.reset()

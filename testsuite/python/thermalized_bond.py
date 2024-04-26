@@ -28,25 +28,30 @@ import espressomd.interactions
 @utx.skipIfMissingFeatures(["MASS"])
 class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
 
-    """Tests the two velocity distributions for COM and distance created by the
-       thermalized bond independently against the single component Maxwell
-       distribution. Adapted from langevin_thermostat testcase."""
+    """
+    Test the two velocity distributions for COM and distance created by the
+    thermalized bond independently against the single component Maxwell
+    distribution.
+    """
 
-    box_l = 10.0
-    system = espressomd.System(box_l=[box_l] * 3)
+    system = espressomd.System(box_l=[10., 10., 10.])
     system.cell_system.set_n_square()
     system.cell_system.skin = 0.3
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         np.random.seed(42)
+        self.system.time_step = 0.01
+        self.system.periodicity = [True, True, True]
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.thermostat.turn_off()
 
     def test_com_langevin(self):
         """Test for COM thermalization."""
 
         N = 200
         N_half = int(N / 2)
-        self.system.part.clear()
         self.system.time_step = 0.02
         self.system.periodicity = [False, False, False]
 
@@ -66,9 +71,10 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         t_com = 2.0
         g_com = 4.0
 
+        self.system.thermostat.set_thermalized_bond(seed=55)
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
             temp_com=t_com, gamma_com=g_com, temp_distance=t_dist,
-            gamma_distance=g_dist, r_cut=2.0, seed=55)
+            gamma_distance=g_dist, r_cut=2.0)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for p1, p2 in zip(partcls_m1, partcls_m2):
@@ -98,7 +104,6 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
 
         N = 100
         N_half = int(N / 2)
-        self.system.part.clear()
         self.system.time_step = 0.02
         self.system.periodicity = [True, True, True]
 
@@ -117,9 +122,10 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         t_com = 0.0
         g_com = 0.0
 
+        self.system.thermostat.set_thermalized_bond(seed=51)
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
             temp_com=t_com, gamma_com=g_com, temp_distance=t_dist,
-            gamma_distance=g_dist, r_cut=9, seed=51)
+            gamma_distance=g_dist, r_cut=9)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for p1, p2 in zip(partcls_m1, partcls_m2):
@@ -141,6 +147,13 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         error_tol = 0.015
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, t_dist)
+
+    def test_exceptions(self):
+        espressomd.interactions.ThermalizedBond(
+            temp_com=1., gamma_com=1., temp_distance=1., gamma_distance=1.,
+            r_cut=3.)
+        with self.assertRaisesRegex(Exception, "Thermalized bonds require the thermalized_bond thermostat"):
+            self.system.integrator.run(0)
 
 
 if __name__ == "__main__":

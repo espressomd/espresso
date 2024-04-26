@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bonded_interaction_data.hpp"
+#include "rigid_bond.hpp"
 #include "system/System.hpp"
+#include "thermalized_bond.hpp"
 
 #include <boost/range/numeric.hpp>
 #include <boost/variant.hpp>
@@ -59,7 +61,23 @@ double maximal_cutoff_bonded() {
 }
 
 void BondedInteractionsMap::on_ia_change() {
+  n_thermalized_bonds = 0;
+#ifdef BOND_CONSTRAINT
+  n_rigid_bonds = 0;
+#endif
+  for (auto &kv : *this) {
+    if (boost::get<ThermalizedBond>(&(*kv.second)) != nullptr) {
+      ++n_thermalized_bonds;
+    }
+#ifdef BOND_CONSTRAINT
+    if (boost::get<RigidBond>(&(*kv.second)) != nullptr) {
+      ++n_rigid_bonds;
+    }
+#endif
+  }
   if (System::is_system_set()) {
-    System::get_system().on_short_range_ia_change();
+    auto &system = System::get_system();
+    system.on_short_range_ia_change();
+    system.on_thermostat_param_change(); // thermalized bonds
   }
 }

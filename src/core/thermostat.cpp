@@ -24,213 +24,83 @@
 
 #include "config/config.hpp"
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
-#include "bonded_interactions/thermalized_bond_utils.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
-#include <boost/mpi.hpp>
+#include <boost/variant.hpp>
 
-#include <algorithm>
-#include <cstdint>
-
-int thermo_switch = THERMO_OFF;
-double temperature = 0.0;
-bool thermo_virtual = true;
-
-using Thermostat::GammaType;
-
-/**
- * @brief Create MPI callbacks of thermostat objects
- *
- * @param thermostat        The thermostat object name
- */
-#define REGISTER_THERMOSTAT_CALLBACKS(thermostat)                              \
-  void mpi_##thermostat##_set_rng_seed(uint32_t const seed) {                  \
-    (thermostat).rng_initialize(seed);                                         \
-  }                                                                            \
-                                                                               \
-  REGISTER_CALLBACK(mpi_##thermostat##_set_rng_seed)                           \
-                                                                               \
-  void thermostat##_set_rng_seed(uint32_t const seed) {                        \
-    mpi_call_all(mpi_##thermostat##_set_rng_seed, seed);                       \
-  }                                                                            \
-                                                                               \
-  void mpi_##thermostat##_set_rng_counter(uint64_t const value) {              \
-    (thermostat).set_rng_counter(value);                                       \
-  }                                                                            \
-                                                                               \
-  REGISTER_CALLBACK(mpi_##thermostat##_set_rng_counter)                        \
-                                                                               \
-  void thermostat##_set_rng_counter(uint64_t const value) {                    \
-    mpi_call_all(mpi_##thermostat##_set_rng_counter, value);                   \
+void Thermostat::Thermostat::recalc_prefactors(double time_step) {
+  if (thermalized_bond) {
+    thermalized_bond->recalc_prefactors(time_step);
   }
-
-LangevinThermostat langevin = {};
-BrownianThermostat brownian = {};
-#ifdef NPT
-IsotropicNptThermostat npt_iso = {};
-#endif
-ThermalizedBondThermostat thermalized_bond = {};
-#ifdef DPD
-DPDThermostat dpd = {};
-#endif
-#ifdef STOKESIAN_DYNAMICS
-StokesianThermostat stokesian = {};
-#endif
-
-REGISTER_THERMOSTAT_CALLBACKS(langevin)
-REGISTER_THERMOSTAT_CALLBACKS(brownian)
-#ifdef NPT
-REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
-#endif
-REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
-#ifdef DPD
-REGISTER_THERMOSTAT_CALLBACKS(dpd)
-#endif
-#ifdef STOKESIAN_DYNAMICS
-REGISTER_THERMOSTAT_CALLBACKS(stokesian)
-#endif
-
-void thermo_init(double time_step) {
-  // initialize thermalized bond regardless of the current thermostat
-  if (n_thermalized_bonds) {
-    thermalized_bond_init(time_step);
+  if (langevin) {
+    langevin->recalc_prefactors(kT, time_step);
   }
-  if (thermo_switch == THERMO_OFF) {
-    return;
+  if (brownian) {
+    brownian->recalc_prefactors(kT);
   }
-  if (thermo_switch & THERMO_LANGEVIN)
-    langevin.recalc_prefactors(temperature, time_step);
 #ifdef DPD
-  if (thermo_switch & THERMO_DPD)
-    dpd_init(temperature, time_step);
+  if (dpd) {
+    dpd_init(kT, time_step);
+  }
 #endif
 #ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso.recalc_prefactors(temperature, nptiso.piston, time_step);
+  if (npt_iso) {
+    npt_iso->recalc_prefactors(kT, nptiso.piston, time_step);
   }
 #endif
-  if (thermo_switch & THERMO_BROWNIAN)
-    brownian.recalc_prefactors(temperature);
 }
 
-void philox_counter_increment() {
+void Thermostat::Thermostat::philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
-    langevin.rng_increment();
+    langevin->rng_increment();
   }
   if (thermo_switch & THERMO_BROWNIAN) {
-    brownian.rng_increment();
+    brownian->rng_increment();
   }
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso.rng_increment();
+    npt_iso->rng_increment();
   }
 #endif
 #ifdef DPD
   if (thermo_switch & THERMO_DPD) {
-    dpd.rng_increment();
+    dpd->rng_increment();
   }
 #endif
 #ifdef STOKESIAN_DYNAMICS
   if (thermo_switch & THERMO_SD) {
-    stokesian.rng_increment();
+    stokesian->rng_increment();
   }
 #endif
-  if (n_thermalized_bonds) {
-    thermalized_bond.rng_increment();
+  if (thermo_switch & THERMO_BOND) {
+    thermalized_bond->rng_increment();
   }
 }
 
-void mpi_set_brownian_gamma_local(GammaType const &gamma) {
-  brownian.gamma = gamma;
-}
-
-void mpi_set_brownian_gamma_rot_local(GammaType const &gamma) {
-  brownian.gamma_rotation = gamma;
-}
-
-void mpi_set_langevin_gamma_local(GammaType const &gamma) {
-  langevin.gamma = gamma;
-  System::get_system().on_thermostat_param_change();
-}
-
-void mpi_set_langevin_gamma_rot_local(GammaType const &gamma) {
-  langevin.gamma_rotation = gamma;
-  System::get_system().on_thermostat_param_change();
-}
-
-REGISTER_CALLBACK(mpi_set_brownian_gamma_local)
-REGISTER_CALLBACK(mpi_set_brownian_gamma_rot_local)
-REGISTER_CALLBACK(mpi_set_langevin_gamma_local)
-REGISTER_CALLBACK(mpi_set_langevin_gamma_rot_local)
-
-void mpi_set_brownian_gamma(GammaType const &gamma) {
-  mpi_call_all(mpi_set_brownian_gamma_local, gamma);
-}
-
-void mpi_set_brownian_gamma_rot(GammaType const &gamma) {
-  mpi_call_all(mpi_set_brownian_gamma_rot_local, gamma);
-}
-
-void mpi_set_langevin_gamma(GammaType const &gamma) {
-  mpi_call_all(mpi_set_langevin_gamma_local, gamma);
-}
-void mpi_set_langevin_gamma_rot(GammaType const &gamma) {
-  mpi_call_all(mpi_set_langevin_gamma_rot_local, gamma);
-}
-
-void mpi_set_thermo_virtual_local(bool thermo_virtual) {
-  ::thermo_virtual = thermo_virtual;
-}
-
-REGISTER_CALLBACK(mpi_set_thermo_virtual_local)
-
-void mpi_set_thermo_virtual(bool thermo_virtual) {
-  mpi_call_all(mpi_set_thermo_virtual_local, thermo_virtual);
-}
-
-void mpi_set_temperature_local(double temperature) {
-  ::temperature = temperature;
-  try {
-    System::get_system().on_temperature_change();
-  } catch (std::exception const &err) {
-    runtimeErrorMsg() << err.what();
+void Thermostat::Thermostat::lb_coupling_deactivate() {
+  if (lb) {
+    if (get_system().lb.is_solver_set() and ::comm_cart.rank() == 0 and
+        lb->gamma > 0.) {
+      runtimeWarningMsg()
+          << "Recalculating forces, so the LB coupling forces are not "
+             "included in the particle force the first time step. This "
+             "only matters if it happens frequently during sampling.";
+    }
+    lb->couple_to_md = false;
   }
-  System::get_system().on_thermostat_param_change();
 }
 
-REGISTER_CALLBACK(mpi_set_temperature_local)
-
-void mpi_set_temperature(double temperature) {
-  mpi_call_all(mpi_set_temperature_local, temperature);
+void ThermalizedBondThermostat::recalc_prefactors(double time_step) {
+  for (auto &kv : ::bonded_ia_params) {
+    if (auto *bond = boost::get<ThermalizedBond>(&(*kv.second))) {
+      bond->recalc_prefactors(time_step);
+    }
+  }
 }
-
-void mpi_set_thermo_switch_local(int thermo_switch) {
-  ::thermo_switch = thermo_switch;
-}
-
-REGISTER_CALLBACK(mpi_set_thermo_switch_local)
-
-void mpi_set_thermo_switch(int thermo_switch) {
-  mpi_call_all(mpi_set_thermo_switch_local, thermo_switch);
-}
-
-#ifdef NPT
-void mpi_set_nptiso_gammas_local(double gamma0, double gammav) {
-  npt_iso.gamma0 = gamma0;
-  npt_iso.gammav = gammav;
-  System::get_system().on_thermostat_param_change();
-}
-
-REGISTER_CALLBACK(mpi_set_nptiso_gammas_local)
-
-void mpi_set_nptiso_gammas(double gamma0, double gammav) {
-  mpi_call_all(mpi_set_nptiso_gammas_local, gamma0, gammav);
-}
-#endif

@@ -170,6 +170,7 @@ class EKTest:
         ek_solver = espressomd.electrokinetics.EKFFT(
             lattice=self.lattice, permittivity=0.01,
             single_precision=self.ek_params["single_precision"])
+        self.assertEqual(ek_solver.lattice, self.lattice)
         self.assertEqual(
             ek_solver.single_precision,
             self.ek_params["single_precision"])
@@ -218,17 +219,17 @@ class EKTest:
         self.system.ekcontainer.add(ek_species)
         self.system.ekcontainer.solver = ek_solver
         with self.assertRaisesRegex(Exception, "Temperature change not supported by EK"):
-            self.system.thermostat.turn_off()
-        with self.assertRaisesRegex(Exception, "Time step change not supported by EK"):
-            self.system.time_step /= 2.
+            self.system.thermostat.set_langevin(kT=1., seed=42, gamma=1.)
+        with self.assertRaisesRegex(ValueError, "must be an integer multiple of the MD time_step"):
+            self.system.time_step /= 1.7
+        self.system.time_step *= 1.
         if espressomd.has_features("ELECTROSTATICS"):
             self.system.electrostatics.solver = espressomd.electrostatics.DH(
                 prefactor=1., kappa=1., r_cut=1.)  # should not fail
             self.system.electrostatics.clear()
         with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by EK"):
             self.system.box_l = [1., 2., 3.]
-        np.testing.assert_allclose(
-            np.copy(self.system.box_l), [1., 2., 3.], atol=1e-7)
+        np.testing.assert_allclose(np.copy(self.system.box_l), 6., atol=1e-7)
         with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by EK"):
             self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -280,7 +281,7 @@ class EKTest:
             for offset in (shape[i] + 1, -(shape[i] + 1)):
                 n = [0, 0, 0]
                 n[i] += offset
-                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"
+                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"  # nopep8
                 with self.assertRaisesRegex(IndexError, err_msg):
                     ek_reaction[tuple(n)]
                 with self.assertRaisesRegex(IndexError, err_msg):

@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef THERMOSTATS_BROWNIAN_INLINE_HPP
-#define THERMOSTATS_BROWNIAN_INLINE_HPP
+#pragma once
 
 #include "config/config.hpp"
 
@@ -36,7 +35,7 @@
 /** Determine position: viscous drag driven by conservative forces.
  *  From eq. (14.39) in @cite schlick10a.
  *  @param[in]     brownian_gamma Brownian translational gamma
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
  */
 inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
@@ -90,7 +89,7 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
 /** Set the terminal velocity driven by the conservative forces drag.
  *  From eq. (14.34) in @cite schlick10a.
  *  @param[in]     brownian_gamma Brownian translational gamma
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  */
 inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
                                    Particle const &p) {
@@ -144,16 +143,12 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
 /** Determine the positions: random walk part.
  *  From eq. (14.37) in @cite schlick10a.
  *  @param[in]     brownian       Parameters
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
- *  @param[in]     kT             Temperature
+ *  @param[in]     kT             Thermal energy
  */
 inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
                                       Particle const &p, double dt, double kT) {
-  // skip the translation thermalizing for virtual sites unless enabled
-  if (p.is_virtual() and !thermo_virtual)
-    return {};
-
   Thermostat::GammaType sigma_pos = brownian.sigma_pos;
 #ifdef THERMOSTAT_PER_PARTICLE
   // override default if particle-specific gamma
@@ -215,14 +210,10 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
 /** Determine the velocities: random walk part.
  *  From eq. (10.2.16) in @cite pottier10a.
  *  @param[in]     brownian       Parameters
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  */
 inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
                                           Particle const &p) {
-  // skip the translation thermalizing for virtual sites unless enabled
-  if (p.is_virtual() and !thermo_virtual)
-    return {};
-
   auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(
       brownian.rng_counter(), brownian.rng_seed(), p.id());
   Utils::Vector3d velocity = {};
@@ -246,7 +237,7 @@ inline Utils::Vector3d bd_random_walk_vel(BrownianThermostat const &brownian,
 /** Determine quaternions: viscous drag driven by conservative torques.
  *  An analogy of eq. (14.39) in @cite schlick10a.
  *  @param[in]     brownian_gamma_rotation Brownian rotational gamma
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
  */
 inline Utils::Quaternion<double>
@@ -286,7 +277,7 @@ bd_drag_rot(Thermostat::GammaType const &brownian_gamma_rotation, Particle &p,
 /** Set the terminal angular velocity driven by the conservative torques drag.
  *  An analogy of the 1st term of eq. (14.34) in @cite schlick10a.
  *  @param[in]     brownian_gamma_rotation Brownian rotational gamma
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  */
 inline Utils::Vector3d
 bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
@@ -318,9 +309,9 @@ bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
 /** Determine the quaternions: random walk part.
  *  An analogy of eq. (14.37) in @cite schlick10a.
  *  @param[in]     brownian       Parameters
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  *  @param[in]     dt             Time step
- *  @param[in]     kT             Temperature
+ *  @param[in]     kT             Thermal energy
  */
 inline Utils::Quaternion<double>
 bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
@@ -367,7 +358,7 @@ bd_random_walk_rot(BrownianThermostat const &brownian, Particle const &p,
 /** Determine the angular velocities: random walk part.
  *  An analogy of eq. (10.2.16) in @cite pottier10a.
  *  @param[in]     brownian       Parameters
- *  @param[in]     p              %Particle
+ *  @param[in]     p              Particle
  */
 inline Utils::Vector3d
 bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
@@ -384,5 +375,3 @@ bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle const &p) {
   return mask(p.rotation(), domega);
 }
 #endif // ROTATION
-
-#endif // THERMOSTATS_BROWNIAN_INLINE_HPP

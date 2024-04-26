@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef DIHEDRAL_H
-#define DIHEDRAL_H
+
+#pragma once
+
 /** \file
  *  Routines to calculate the dihedral energy or/and
  *  force for a particle quadruple. Note that usage of dihedrals
@@ -66,9 +67,9 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &mult;
-    ar &bend;
-    ar &phase;
+    ar & mult;
+    ar & bend;
+    ar & phase;
   }
 };
 
@@ -210,5 +211,3 @@ DihedralBond::energy(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
 
   return bend * (1. - cos(mult * phi - phase));
 }
-
-#endif

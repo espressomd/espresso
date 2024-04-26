@@ -202,6 +202,7 @@ BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
     std::vector<double> vel_flat(vel_3d.data(),
                                  vel_3d.data() + vel_3d.num_elements());
     lb->update_boundary_from_shape(raster_flat, vel_flat);
+    lb->ghost_communication();
   }
 
   for (auto const &node : nodes) {
@@ -435,7 +436,7 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
   // todo: check a less symmetrical situation, where the force is applied not
   // in the middle between the nodes
 
-  for (Vector3i n : all_nodes_incl_ghosts(lb->get_lattice())) {
+  for (auto const &n : all_nodes_incl_ghosts(lb->get_lattice())) {
     if (lb->get_lattice().node_in_local_halo(n)) {
       auto const pos = 1. * n; // Mid point between nodes
       auto const f = Vector3d{{1., 2., -3.5}};

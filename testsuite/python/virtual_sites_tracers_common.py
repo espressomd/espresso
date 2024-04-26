@@ -21,16 +21,17 @@ import numpy as np
 import espressomd
 import espressomd.lb
 import espressomd.shapes
-import espressomd.virtual_sites
 import espressomd.utils
+import espressomd.propagation
 
 import tests_common
 import unittest_decorators as utx
 
 
 class VirtualSitesTracersCommon:
-    box_height = 10.
-    box_lw = 8.
+    agrid = 0.5
+    box_height = 10. * agrid
+    box_lw = 8. * agrid
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))
     system.time_step = 0.08
     system.cell_system.skin = 0.1
@@ -46,52 +47,41 @@ class VirtualSitesTracersCommon:
     def set_lb(self, ext_force_density=(0, 0, 0), dir_walls=2):
         self.system.lb = None
         self.lbf = self.LBClass(
-            kT=0.0, agrid=1., density=1., kinematic_viscosity=1.8,
+            kT=0.0, agrid=self.agrid, density=1., kinematic_viscosity=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
         self.system.lb = self.lbf
-        self.system.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            act_on_virtual=False,
-            gamma=1)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.)
 
         # Setup boundaries
         normal = [0, 0, 0]
         normal[dir_walls] = 1
-        wall_shape = espressomd.shapes.Wall(normal=normal, dist=0.5)
+        wall_shape = espressomd.shapes.Wall(
+            normal=normal, dist=0.5 * self.agrid)
         self.lbf.add_boundary_from_shape(wall_shape)
         normal[dir_walls] = -1
         wall_shape = espressomd.shapes.Wall(
-            normal=normal, dist=-(self.system.box_l[dir_walls] - 0.5))
+            normal=normal, dist=-(self.system.box_l[dir_walls] - 0.5 * self.agrid))
         self.lbf.add_boundary_from_shape(wall_shape)
 
         espressomd.utils.handle_errors("setup")
-
-    def test_aa_method_switching(self):
-        # Virtual sites should be disabled by default
-        self.assertIsInstance(
-            self.system.virtual_sites,
-            espressomd.virtual_sites.VirtualSitesOff)
-
-        # Switch implementation
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
-        self.assertIsInstance(
-            self.system.virtual_sites, espressomd.virtual_sites.VirtualSitesInertialessTracers)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_ab_single_step(self):
         self.set_lb()
         self.system.part.clear()
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
         # Random velocities
         self.lbf[:, :, :].velocity = np.random.random((*self.lbf.shape, 3))
         force = [1, -2, 3]
         # Test several particle positions
-        for pos in [[3, 2, 1], [0, 0, 0],
+        for pos in [[3 * self.agrid, 2 * self.agrid, 1 * self.agrid], [0, 0, 0],
                     self.system.box_l * 0.49,
                     self.system.box_l,
                     self.system.box_l * 0.99]:
-            p = self.system.part.add(pos=pos, ext_force=force, virtual=True)
+            p = self.system.part.add(
+                pos=pos,
+                ext_force=force,
+                propagation=espressomd.propagation.Propagation.TRANS_LB_TRACER)
 
             coupling_pos = p.pos
             # Nodes to which forces will be interpolated
@@ -131,7 +121,6 @@ class VirtualSitesTracersCommon:
         for direction in [0, 1, 2]:
             # System setup
             system = self.system
-            system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
 
             # LB setup with walls
             ext_force = [0., 0., 0.]
@@ -146,9 +135,11 @@ class VirtualSitesTracersCommon:
             system.integrator.run(400)
 
             # Add tracer in the fluid domain
-            pos_initial = [3.5, 3.5, 3.5]
-            pos_initial[direction] = 0.5
-            p = system.part.add(pos=pos_initial, virtual=True)
+            pos_initial = 3 * [3.5 * self.agrid]
+            pos_initial[direction] = 0.5 * self.agrid
+            p = system.part.add(
+                pos=pos_initial,
+                propagation=espressomd.propagation.Propagation.TRANS_LB_TRACER)
 
             # Perform integration
             system.time = 0
@@ -161,19 +152,24 @@ class VirtualSitesTracersCommon:
                 self.assertAlmostEqual(tracer_dist / ref_dist, 1., delta=0.01)
 
             system.lb = None
+            system.part.clear()
 
     def test_zz_exceptions_without_lb(self):
-        """Check behaviour without lb. Ignore non-virtual particles, complain on
-        virtual ones.
-
+        """
+        Check behaviour without LB.
         """
         self.set_lb()
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesInertialessTracers()
+        lbf = system.lb
         system.lb = None
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0))
-        system.integrator.run(1)
-        p.virtual = True
+        with self.assertRaisesRegex(Exception, "The LB thermostat requires a LB fluid"):
+            system.integrator.run(1)
+        p.propagation = espressomd.propagation.Propagation.TRANS_LB_TRACER
         with self.assertRaisesRegex(Exception, "LB needs to be active for inertialess tracers"):
+            system.integrator.run(1)
+        system.lb = lbf
+        self.system.thermostat.turn_off()
+        with self.assertRaisesRegex(Exception, "The LB integrator requires the LB thermostat"):
             system.integrator.run(1)

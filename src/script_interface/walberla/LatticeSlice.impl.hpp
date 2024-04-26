@@ -152,7 +152,7 @@ Variant LatticeSlice<FieldSerializer>::gather_3d(
     std::vector<T> out;
     detail::flatten_grid<FieldSerializer>(array, out, units_conversion);
     std::vector<int> shape = {m_shape.begin(), m_shape.end()};
-    if (not(data_dims.size() == 1ul and data_dims[0] == 1)) {
+    if (data_dims.size() != 1ul or data_dims[0] != 1) {
       shape.insert(shape.end(), data_dims.begin(), data_dims.end());
     }
     auto const variant = FieldSerializer::serialize(out);

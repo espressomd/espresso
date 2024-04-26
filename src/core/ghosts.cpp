@@ -126,46 +126,43 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
                      BoxGeometry const &box_geo,
                      Utils::Vector3d const *ghost_shift) {
   if (data_parts & GHOSTTRANS_PROPRTS) {
-    ar &p.id() & p.mol_id() & p.type();
-#ifdef VIRTUAL_SITES
-    ar &p.virtual_flag();
-#endif
+    ar & p.id() & p.mol_id() & p.type() & p.propagation();
 #ifdef ROTATION
-    ar &p.rotation();
+    ar & p.rotation();
 #ifdef ROTATIONAL_INERTIA
-    ar &p.rinertia();
+    ar & p.rinertia();
 #endif
 #endif
 #ifdef MASS
-    ar &p.mass();
+    ar & p.mass();
 #endif
 #ifdef ELECTROSTATICS
-    ar &p.q();
+    ar & p.q();
 #endif
 #ifdef DIPOLES
-    ar &p.dipm();
+    ar & p.dipm();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-    ar &p.mu_E();
+    ar & p.mu_E();
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-    ar &p.vs_relative();
+    ar & p.vs_relative();
 #endif
 #ifdef THERMOSTAT_PER_PARTICLE
-    ar &p.gamma();
+    ar & p.gamma();
 #ifdef ROTATION
-    ar &p.gamma_rot();
+    ar & p.gamma_rot();
 #endif
 #endif
 #ifdef EXTERNAL_FORCES
-    ar &p.fixed();
-    ar &p.ext_force();
+    ar & p.fixed();
+    ar & p.ext_force();
 #ifdef ROTATION
-    ar &p.ext_torque();
+    ar & p.ext_torque();
 #endif
 #endif
 #ifdef ENGINE
-    ar &p.swimming();
+    ar & p.swimming();
 #endif
   }
   if (data_parts & GHOSTTRANS_POSITION) {
@@ -174,42 +171,42 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
       auto pos = p.pos() + *ghost_shift;
       auto img = p.image_box();
       box_geo.fold_position(pos, img);
-      ar &pos;
-      ar &img;
+      ar & pos;
+      ar & img;
     } else {
-      ar &p.pos();
-      ar &p.image_box();
+      ar & p.pos();
+      ar & p.image_box();
     }
 #ifdef ROTATION
-    ar &p.quat();
+    ar & p.quat();
 #endif
 #ifdef BOND_CONSTRAINT
-    ar &p.pos_last_time_step();
+    ar & p.pos_last_time_step();
 #endif
   }
   if (data_parts & GHOSTTRANS_MOMENTUM) {
-    ar &p.v();
+    ar & p.v();
 #ifdef ROTATION
-    ar &p.omega();
+    ar & p.omega();
 #endif
   }
   if (data_parts & GHOSTTRANS_FORCE) {
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d force;
-      ar &force;
+      ar & force;
       p.force() += force;
     } else {
-      ar &p.force();
+      ar & p.force();
     }
 #ifdef ROTATION
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d torque;
-      ar &torque;
+      ar & torque;
       p.torque() += torque;
     } else {
-      ar &p.torque();
+      ar & p.torque();
     }
 #endif
   }
@@ -218,10 +215,10 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d correction;
-      ar &correction;
+      ar & correction;
       p.rattle_correction() += correction;
     } else {
-      ar &p.rattle_correction();
+      ar & p.rattle_correction();
     }
   }
 #endif
@@ -250,9 +247,9 @@ static auto calc_transmit_size(GhostCommunication const &ghost_comm,
 }
 
 static void prepare_send_buffer(CommBuf &send_buffer,
-                                const GhostCommunication &ghost_comm,
+                                GhostCommunication const &ghost_comm,
+                                BoxGeometry const &box_geo,
                                 unsigned int data_parts) {
-  auto const &box_geo = *System::get_system().box_geo;
 
   /* reallocate send buffer */
   send_buffer.resize(calc_transmit_size(ghost_comm, box_geo, data_parts));
@@ -298,9 +295,9 @@ static void prepare_ghost_cell(ParticleList *cell, std::size_t size) {
 }
 
 static void prepare_recv_buffer(CommBuf &recv_buffer,
-                                const GhostCommunication &ghost_comm,
+                                GhostCommunication const &ghost_comm,
+                                BoxGeometry const &box_geo,
                                 unsigned int data_parts) {
-  auto const &box_geo = *System::get_system().box_geo;
   /* reallocate recv buffer */
   recv_buffer.resize(calc_transmit_size(ghost_comm, box_geo, data_parts));
   /* clear bond buffer */
@@ -308,11 +305,11 @@ static void prepare_recv_buffer(CommBuf &recv_buffer,
 }
 
 static void put_recv_buffer(CommBuf &recv_buffer,
-                            const GhostCommunication &ghost_comm,
+                            GhostCommunication const &ghost_comm,
+                            BoxGeometry const &box_geo,
                             unsigned int data_parts) {
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
-  auto const &box_geo = *System::get_system().box_geo;
 
   if (data_parts & GHOSTTRANS_PARTNUM) {
     for (auto part_list : ghost_comm.part_lists) {
@@ -375,9 +372,9 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
   }
 }
 
-static void cell_cell_transfer(const GhostCommunication &ghost_comm,
+static void cell_cell_transfer(GhostCommunication const &ghost_comm,
+                               BoxGeometry const &box_geo,
                                unsigned int data_parts) {
-  auto const &box_geo = *System::get_system().box_geo;
   CommBuf buffer;
   if (!(data_parts & GHOSTTRANS_PARTNUM)) {
     buffer.resize(calc_transmit_size(box_geo, data_parts));
@@ -440,15 +437,13 @@ static bool is_poststorable(GhostCommunication const &ghost_comm,
   return is_recv_op(comm_type, node, this_node) && poststore;
 }
 
-void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
+void ghost_communicator(GhostCommunicator const &gcr,
+                        BoxGeometry const &box_geo, unsigned int data_parts) {
   if (GHOSTTRANS_NONE == data_parts)
     return;
 
   static CommBuf send_buffer, recv_buffer;
 
-#ifndef NDEBUG
-  auto const &box_geo = *System::get_system().box_geo;
-#endif
   auto const &comm = gcr.mpi_comm;
 
   for (auto it = gcr.communications.begin(); it != gcr.communications.end();
@@ -457,7 +452,7 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
-      cell_cell_transfer(ghost_comm, data_parts);
+      cell_cell_transfer(ghost_comm, box_geo, data_parts);
       continue;
     }
 
@@ -469,7 +464,7 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
     if (is_send_op(comm_type, node, comm.rank())) {
       /* ok, we send this step, prepare send buffer if not yet done */
       if (!prefetch) {
-        prepare_send_buffer(send_buffer, ghost_comm, data_parts);
+        prepare_send_buffer(send_buffer, ghost_comm, box_geo, data_parts);
       }
       // Check prefetched send buffers (must also hold for buffers allocated
       // in the previous lines.)
@@ -484,12 +479,13 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
           });
 
       if (prefetch_ghost_comm != gcr.communications.end())
-        prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
+        prepare_send_buffer(send_buffer, *prefetch_ghost_comm, box_geo,
+                            data_parts);
     }
 
     /* recv buffer for recv and multinode operations to this node */
     if (is_recv_op(comm_type, node, comm.rank()))
-      prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
+      prepare_recv_buffer(recv_buffer, ghost_comm, box_geo, data_parts);
 
     /* transfer data */
     // Use two send/recvs in order to avoid having to serialize CommBuf
@@ -543,7 +539,7 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
           add_rattle_correction_from_recv_buffer(recv_buffer, ghost_comm);
 #endif
         else
-          put_recv_buffer(recv_buffer, ghost_comm, data_parts);
+          put_recv_buffer(recv_buffer, ghost_comm, box_geo, data_parts);
       }
     } else if (poststore) {
       /* send op; write back delayed data from last recv, when this was a
@@ -567,7 +563,8 @@ void ghost_communicator(const GhostCommunicator &gcr, unsigned int data_parts) {
                                                  *poststore_ghost_comm);
 #endif
         else
-          put_recv_buffer(recv_buffer, *poststore_ghost_comm, data_parts);
+          put_recv_buffer(recv_buffer, *poststore_ghost_comm, box_geo,
+                          data_parts);
       }
     }
   }

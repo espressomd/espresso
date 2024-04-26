@@ -30,7 +30,6 @@
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "system/System.hpp"
@@ -56,7 +55,7 @@
  *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
  *     seed-per-node)
  */
-Utils::Vector3d dpd_noise(int pid1, int pid2) {
+Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
   return Random::noise_uniform<RNGSalt::SALT_DPD>(
       dpd.rng_counter(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
       (pid1 < pid2) ? pid1 : pid2);
@@ -100,21 +99,19 @@ Utils::Vector3d dpd_pair_force(DPDParameters const &params,
   return {};
 }
 
-Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
-                               IA_parameters const &ia_params,
-                               Utils::Vector3d const &d, double dist,
-                               double dist2) {
+Utils::Vector3d
+dpd_pair_force(Particle const &p1, Particle const &p2, DPDThermostat const &dpd,
+               BoxGeometry const &box_geo, IA_parameters const &ia_params,
+               Utils::Vector3d const &d, double dist, double dist2) {
   if (ia_params.dpd.radial.cutoff <= 0.0 && ia_params.dpd.trans.cutoff <= 0.0) {
     return {};
   }
-
-  auto const &box_geo = *System::get_system().box_geo;
 
   auto const v21 =
       box_geo.velocity_difference(p1.pos(), p2.pos(), p1.v(), p2.v());
   auto const noise_vec =
       (ia_params.dpd.radial.pref > 0.0 || ia_params.dpd.trans.pref > 0.0)
-          ? dpd_noise(p1.id(), p2.id())
+          ? dpd_noise(dpd, p1.id(), p2.id())
           : Utils::Vector3d{};
 
   auto const f_r = dpd_pair_force(ia_params.dpd.radial, v21, dist, noise_vec);

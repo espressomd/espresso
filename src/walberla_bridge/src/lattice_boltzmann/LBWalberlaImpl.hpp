@@ -29,22 +29,20 @@
 #include <blockforest/Initialization.h>
 #include <blockforest/StructuredBlockForest.h>
 #include <blockforest/communication/UniformBufferedScheme.h>
+#include <domain_decomposition/BlockDataID.h>
 #include <domain_decomposition/IBlock.h>
+#include <field/AddToStorage.h>
 #include <field/GhostLayerField.h>
+#include <field/communication/PackInfo.h>
 #include <field/vtk/FlagFieldCellFilter.h>
 #include <field/vtk/VTKWriter.h>
-
-#include <field/AddToStorage.h>
-#include <field/FlagField.h>
-#include <field/communication/PackInfo.h>
-#include <lbm/communication/PdfFieldPackInfo.h>
-#include <lbm/field/AddToStorage.h>
-#include <lbm/field/PdfField.h>
-
 #include <stencil/D3Q19.h>
 #include <stencil/D3Q27.h>
 
 #include "../BoundaryHandling.hpp"
+#include "../BoundaryPackInfo.hpp"
+#include "../utils/boundary.hpp"
+#include "../utils/types_conversion.hpp"
 #include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
@@ -54,8 +52,6 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 #include <walberla_bridge/lattice_boltzmann/LeesEdwardsPack.hpp>
-#include <walberla_bridge/utils/boundary_utils.hpp>
-#include <walberla_bridge/utils/walberla_utils.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/interpolation/bspline_3d.hpp>
@@ -64,12 +60,14 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -105,8 +103,8 @@ public:
 
 protected:
   template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct FieldTrait {
-    using PdfField = GhostLayerField<FT, Stencil::Size>;
-    using VectorField = GhostLayerField<FT, uint_t{3u}>;
+    using PdfField = field::GhostLayerField<FT, Stencil::Size>;
+    using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
   };
@@ -126,7 +124,7 @@ public:
   }
 
   [[nodiscard]] virtual bool is_double_precision() const noexcept override {
-    return std::is_same<FloatType, double>::value;
+    return std::is_same_v<FloatType, double>;
   }
 
 private:
@@ -186,9 +184,8 @@ private:
                                           std::array<int, 3> const &node,
                                           double weight)
         : std::runtime_error("Access to LB " + field + " field failed") {
-      std::cerr << "pos [" << pos << "], "
-                << "node [" << Utils::Vector3i(node) << "], "
-                << "weight " << weight << "\n";
+      std::cerr << "pos [" << pos << "], node [" << Utils::Vector3i(node)
+                << "], weight " << weight << "\n";
     }
   };
 
@@ -216,6 +213,9 @@ protected:
   BlockDataID m_velocity_field_id;
   BlockDataID m_vec_tmp_field_id;
 
+  /** Flag for boundary cells. */
+  FlagUID const Boundary_flag{"boundary"};
+
   /**
    * @brief Full communicator.
    * We use the D3Q27 directions to update cells along the diagonals during
@@ -235,8 +235,9 @@ protected:
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
 
   // communicators
-  std::shared_ptr<FullCommunicator> m_full_communication;
-  std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communication;
+  std::shared_ptr<FullCommunicator> m_boundary_communicator;
+  std::shared_ptr<FullCommunicator> m_pdf_full_communicator;
+  std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communicator;
 
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
@@ -350,27 +351,33 @@ public:
     reset_boundary_handling();
 
     // Set up the communication and register fields
-    m_pdf_streaming_communication =
+    m_pdf_streaming_communicator =
         std::make_shared<PDFStreamingCommunicator>(blocks);
-    m_pdf_streaming_communication->addPackInfo(
+    m_pdf_streaming_communicator->addPackInfo(
         std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
-    m_pdf_streaming_communication->addPackInfo(
+    m_pdf_streaming_communicator->addPackInfo(
         std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
                                                 n_ghost_layers));
-    m_pdf_streaming_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<FlagField>>(
-            m_flag_field_id, n_ghost_layers));
 
-    m_full_communication = std::make_shared<FullCommunicator>(blocks);
-    m_full_communication->addPackInfo(
+    m_pdf_full_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_pdf_full_communicator->addPackInfo(
         std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(std::make_shared<PackInfo<VectorField>>(
-        m_last_applied_force_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(std::make_shared<PackInfo<VectorField>>(
-        m_velocity_field_id, n_ghost_layers));
-    m_full_communication->addPackInfo(
+    m_pdf_full_communicator->addPackInfo(
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
+                                                n_ghost_layers));
+    m_pdf_full_communicator->addPackInfo(
+        std::make_shared<PackInfo<VectorField>>(m_velocity_field_id,
+                                                n_ghost_layers));
+
+    m_boundary_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_boundary_communicator->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_id, n_ghost_layers));
+    auto boundary_packinfo = std::make_shared<
+        field::communication::BoundaryPackInfo<FlagField, BoundaryModel>>(
+        m_flag_field_id, n_ghost_layers);
+    boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary);
+    m_boundary_communicator->addPackInfo(boundary_packinfo);
 
     // Instantiate the sweep responsible for force double buffering and
     // external forces
@@ -439,13 +446,13 @@ private:
     integrate_reset_force(blocks);
     // LB collide
     integrate_collide(blocks);
-    m_pdf_streaming_communication->communicate();
+    m_pdf_streaming_communicator->communicate();
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
     // Refresh ghost layers
-    m_full_communication->communicate();
+    ghost_communication_pdfs();
   }
 
   void integrate_pull_scheme() {
@@ -458,7 +465,7 @@ private:
     // LB collide
     integrate_collide(blocks);
     // Refresh ghost layers
-    ghost_communication();
+    ghost_communication_pdfs();
   }
 
 protected:
@@ -474,7 +481,6 @@ protected:
 
 public:
   void integrate() override {
-    reallocate_ubb_field();
     if (has_lees_edwards_bc()) {
       integrate_pull_scheme();
     } else {
@@ -485,7 +491,16 @@ public:
   }
 
   void ghost_communication() override {
-    m_full_communication->communicate();
+    ghost_communication_boundary();
+    ghost_communication_pdfs();
+  }
+
+  void ghost_communication_boundary() {
+    m_boundary_communicator->communicate();
+  }
+
+  void ghost_communication_pdfs() {
+    m_pdf_full_communicator->communicate();
     if (has_lees_edwards_bc()) {
       auto const &blocks = get_lattice().get_blocks();
       apply_lees_edwards_pdf_interpolation(blocks);
@@ -973,18 +988,17 @@ public:
     if (!bc or !m_boundary->node_is_boundary(node))
       return std::nullopt;
 
-    return {m_boundary->get_node_value_at_boundary(node)};
+    return {to_vector3d(m_boundary->get_node_value_at_boundary(node))};
   }
 
   bool set_node_velocity_at_boundary(Utils::Vector3i const &node,
                                      Utils::Vector3d const &velocity) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
-    if (!bc)
-      return false;
-
-    m_boundary->set_node_value_at_boundary(node, velocity, *bc);
-
-    return true;
+    if (bc) {
+      m_boundary->set_node_value_at_boundary(
+          node, to_vector3<FloatType>(velocity), *bc);
+    }
+    return bc.has_value();
   }
 
   std::vector<std::optional<Utils::Vector3d>> get_slice_velocity_at_boundary(
@@ -1003,7 +1017,8 @@ public:
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
             if (m_boundary->node_is_boundary(node)) {
-              out.emplace_back(m_boundary->get_node_value_at_boundary(node));
+              out.emplace_back(
+                  to_vector3d(m_boundary->get_node_value_at_boundary(node)));
             } else {
               out.emplace_back(std::nullopt);
             }
@@ -1032,7 +1047,8 @@ public:
             auto const bc = get_block_and_cell(lattice, node, false);
             auto const &opt = *it;
             if (opt) {
-              m_boundary->set_node_value_at_boundary(node, *opt, *bc);
+              m_boundary->set_node_value_at_boundary(
+                  node, to_vector3<FloatType>(*opt), *bc);
             } else {
               m_boundary->remove_node_from_boundary(node, *bc);
             }
@@ -1054,12 +1070,10 @@ public:
 
   bool remove_node_from_boundary(Utils::Vector3i const &node) override {
     auto bc = get_block_and_cell(get_lattice(), node, true);
-    if (!bc)
-      return false;
-
-    m_boundary->remove_node_from_boundary(node, *bc);
-
-    return true;
+    if (bc) {
+      m_boundary->remove_node_from_boundary(node, *bc);
+    }
+    return bc.has_value();
   }
 
   std::optional<bool>
@@ -1098,7 +1112,10 @@ public:
 
   void reallocate_ubb_field() override { m_boundary->boundary_update(); }
 
-  void clear_boundaries() override { reset_boundary_handling(); }
+  void clear_boundaries() override {
+    reset_boundary_handling();
+    ghost_communication();
+  }
 
   void
   update_boundary_from_shape(std::vector<int> const &raster_flat,
@@ -1106,6 +1123,8 @@ public:
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
+    ghost_communication();
+    reallocate_ubb_field();
   }
 
   // Pressure tensor

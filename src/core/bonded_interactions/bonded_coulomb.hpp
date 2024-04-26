@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_COULOMB_HPP
-#define CORE_BN_IA_BONDED_COULOMB_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the bonded Coulomb potential between
  *  particle pairs.
@@ -33,9 +34,9 @@
 
 #include <cmath>
 
-/** Parameters for %Coulomb bond Potential */
+/** Parameters for Coulomb bond Potential */
 struct BondedCoulomb {
-  /** %Coulomb prefactor */
+  /** Coulomb prefactor */
   double prefactor;
 
   double cutoff() const { return 0.; }
@@ -52,13 +53,13 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &prefactor;
+    ar & prefactor;
   }
 };
 
 /** Compute the bonded Coulomb pair force.
  *  @param[in]  q1q2      Product of the particle charges.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 BondedCoulomb::force(double const q1q2, Utils::Vector3d const &dx) const {
@@ -74,7 +75,7 @@ BondedCoulomb::force(double const q1q2, Utils::Vector3d const &dx) const {
 
 /** Compute the bonded Coulomb pair energy.
  *  @param[in]  q1q2      Product of the particle charges.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 BondedCoulomb::energy(double const q1q2, Utils::Vector3d const &dx) const {
@@ -85,5 +86,3 @@ BondedCoulomb::energy(double const q1q2, Utils::Vector3d const &dx) const {
   return .0;
 #endif
 }
-
-#endif

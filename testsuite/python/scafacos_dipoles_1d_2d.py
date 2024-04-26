@@ -54,9 +54,9 @@ class Scafacos1d2d(ut.TestCase):
         particle_radius = 0.5
 
         box_l = np.cbrt(4 * n_particle * np.pi / (3 * rho)) * particle_radius
-        system.box_l = 3 * [box_l]
 
         for dim in (2, 1):
+            system.box_l = 3 * [box_l]
             with self.subTest(f"{dim} dimensions"):
                 # Read reference data
                 if dim == 2:
@@ -92,7 +92,9 @@ class Scafacos1d2d(ut.TestCase):
                             "p2nfft_epsB": "0.05"})
                     # change box geometry in x,y direction to ensure that
                     # scafacos survives it
-                    system.box_l = np.array([1., 1., 1.3]) * box_l
+                    system.change_volume_and_rescale_particles(
+                        1.3 * box_l, "z")
+                    system.part.all().pos = data[:, 1:4]
                 else:
                     # 1d periodic in x
                     scafacos = espressomd.magnetostatics.Scafacos(
@@ -112,7 +114,7 @@ class Scafacos1d2d(ut.TestCase):
                             "pnfft_m": "8",
                             "pnfft_diff_ik": "1",
                             "p2nfft_epsB": "0.125"})
-                    system.box_l = np.array([1., 1., 1.]) * box_l
+                    system.change_volume_and_rescale_particles(box_l, "z")
 
                 system.magnetostatics.solver = scafacos
                 system.integrator.run(0)

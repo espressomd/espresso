@@ -29,6 +29,7 @@ namespace utf = boost::unit_test;
 
 #include "Observable_stat.hpp"
 #include "Particle.hpp"
+#include "PropagationMode.hpp"
 #include "accumulators/TimeSeries.hpp"
 #include "actor/registration.hpp"
 #include "bonded_interactions/bonded_interaction_utils.hpp"
@@ -42,6 +43,7 @@ namespace utf = boost::unit_test;
 #include "electrostatics/p3m.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -340,7 +342,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   // check integration
   {
     // set up velocity-Verlet integrator
-    set_integ_switch(INTEG_METHOD_NVT);
+    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NVT);
 
     // reset system
     remove_translational_motion(system);
@@ -443,6 +445,18 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     }
   }
 
+  // check propagator exceptions
+  {
+    auto &propagation = *espresso::system->propagation;
+    auto const old_integ_switch = propagation.integ_switch;
+    auto const old_default_propagation = propagation.default_propagation;
+    propagation.integ_switch = -1;
+    BOOST_CHECK_THROW(propagation.update_default_propagation(0),
+                      std::runtime_error);
+    BOOST_CHECK_EQUAL(propagation.default_propagation, old_default_propagation);
+    propagation.integ_switch = old_integ_switch;
+  }
+
   // check bond exceptions
   {
     BOOST_CHECK_THROW(throw BondResolutionError(), std::exception);
@@ -469,7 +483,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
 }
 
 int main(int argc, char **argv) {
-  mpi_init_stand_alone(argc, argv);
+  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
   espresso::system = System::System::create();
   espresso::system->set_cell_structure_topology(CellStructureType::REGULAR);
   ::System::set_system(espresso::system);

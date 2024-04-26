@@ -89,8 +89,6 @@ static void mpi_synchronize_max_seen_pid_local() {
   boost::mpi::broadcast(::comm_cart, ::max_seen_pid, 0);
 }
 
-REGISTER_CALLBACK(mpi_synchronize_max_seen_pid_local)
-
 void init_type_map(int type) {
   if (type < 0) {
     throw std::runtime_error("Types may not be negative");

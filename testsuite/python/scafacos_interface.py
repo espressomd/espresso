@@ -119,7 +119,7 @@ class ScafacosInterface(ut.TestCase):
                           'p3m_grid': 32, 'p3m_alpha': 2.799269})
 
         # check MD cell reset event
-        system.box_l = system.box_l
+        system.change_volume_and_rescale_particles(system.box_l[0], "x")
         system.periodicity = system.periodicity
 
         # force data array update, no-op since there are no particles
@@ -256,7 +256,7 @@ class ScafacosInterface(ut.TestCase):
                          {k: type(v) for k, v in method_params_ref.items()})
 
         # check MD cell reset event
-        system.box_l = system.box_l
+        system.change_volume_and_rescale_particles(system.box_l[0], "x")
         system.periodicity = system.periodicity
 
         # force data array update, no-op since there are no particles
@@ -340,7 +340,7 @@ class ScafacosInterface(ut.TestCase):
         ref_torques = np.copy(system.part.all().torque_lab)
 
         # check MD cell reset has no impact
-        system.box_l = system.box_l
+        system.change_volume_and_rescale_particles(system.box_l[0], "x")
         system.periodicity = system.periodicity
         system.cell_system.node_grid = system.cell_system.node_grid
         system.integrator.run(0, recalc_forces=True)

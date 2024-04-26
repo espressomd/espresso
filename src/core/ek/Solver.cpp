@@ -26,7 +26,6 @@
 #include "ek/EKNone.hpp"
 #include "ek/EKWalberla.hpp"
 
-#include "integrate.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
@@ -82,6 +81,18 @@ void Solver::veto_time_step(double time_step) const {
   if (impl->solver) {
     std::visit([=](auto &ptr) { ptr->veto_time_step(time_step); },
                *impl->solver);
+  }
+}
+
+void Solver::veto_kT(double kT) const {
+  if (impl->solver) {
+    std::visit([=](auto &ptr) { ptr->veto_kT(kT); }, *impl->solver);
+  }
+}
+
+void Solver::veto_boxl_change() const {
+  if (impl->solver) {
+    std::visit([](auto const &ptr) { ptr->veto_boxl_change(); }, *impl->solver);
   }
 }
 

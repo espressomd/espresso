@@ -103,7 +103,7 @@ inline auto fields_list_to_bitfield(std::vector<std::string> const &fields) {
 class File {
 public:
   /**
-   * @brief Constructor of the File class.
+   * @brief Constructor.
    * @param file_path Name for the hdf5 file on disk.
    * @param script_path Path to the simulation script.
    * @param output_fields Properties to write to disk.

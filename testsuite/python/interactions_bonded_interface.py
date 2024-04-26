@@ -253,14 +253,6 @@ class BondedInteractions(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid value for parameter 'elasticLaw': 'Unknown'"):
             espressomd.interactions.IBM_Triel(
                 ind1=0, ind2=1, ind3=2, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='Unknown')
-        with self.assertRaisesRegex(ValueError, "A parameter 'seed' has to be given on first activation of a thermalized bond"):
-            espressomd.interactions.ThermalizedBond(
-                temp_com=1., gamma_com=1., temp_distance=1., gamma_distance=1.,
-                r_cut=2.)
-        with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
-            espressomd.interactions.ThermalizedBond(
-                temp_com=1., gamma_com=1., temp_distance=1., gamma_distance=1.,
-                r_cut=2., seed=-1)
 
         # sanity checks when removing bonds
         self.system.bonded_inter.clear()

@@ -23,6 +23,8 @@
 
 #include <memory>
 
+namespace walberla {
+
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
                    double permittivity, bool single_precision) {
@@ -31,3 +33,5 @@ new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,
   }
   return std::make_shared<walberla::FFT<double>>(lattice, permittivity);
 }
+
+} // namespace walberla

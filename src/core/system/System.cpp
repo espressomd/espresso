@@ -24,7 +24,9 @@
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
+#include "PropagationMode.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cell_system/HybridDecomposition.hpp"
@@ -33,19 +35,23 @@
 #include "constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "global_ghost_flags.hpp"
 #include "immersed_boundaries.hpp"
-#include "integrate.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "thermostat.hpp"
-#include "virtual_sites.hpp"
-#include "virtual_sites/VirtualSitesOff.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/all_compare.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+
+#include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <stdexcept>
+#include <utility>
 
 namespace System {
 
@@ -61,12 +67,16 @@ System::System(Private) {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
+  propagation = std::make_shared<Propagation>();
+  thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
   bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
+  lees_edwards = std::make_shared<LeesEdwards::LeesEdwards>();
   reinit_thermo = true;
   time_step = -1.;
+  sim_time = 0.;
   force_cap = 0.;
   min_global_cut = INACTIVE_CUTOFF;
 }
@@ -74,6 +84,8 @@ System::System(Private) {
 void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
+  lees_edwards->bind_system(handle);
+  thermostat->bind_system(handle);
 #ifdef CUDA
   gpu.bind_system(handle);
   gpu.initialize();
@@ -105,9 +117,18 @@ void System::set_time_step(double value) {
   on_timestep_change();
 }
 
+void System::check_kT(double value) const {
+  if (lb.is_solver_set()) {
+    lb.veto_kT(value);
+  }
+  if (ek.is_solver_set()) {
+    ek.veto_kT(value);
+  }
+}
+
 void System::set_force_cap(double value) {
   force_cap = value;
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 }
 
 void System::set_min_global_cut(double value) {
@@ -153,6 +174,20 @@ void System::on_boxl_change(bool skip_method_adaption) {
   Constraints::constraints.on_boxl_change();
 }
 
+void System::veto_boxl_change(bool skip_particle_checks) const {
+  if (not skip_particle_checks) {
+    auto const n_part = boost::mpi::all_reduce(
+        ::comm_cart, cell_structure->local_particles().size(), std::plus<>());
+    if (n_part > 0ul) {
+      throw std::runtime_error(
+          "Cannot reset the box length when particles are present");
+    }
+  }
+  Constraints::constraints.veto_boxl_change();
+  lb.veto_boxl_change();
+  ek.veto_boxl_change();
+}
+
 void System::on_node_grid_change() {
   update_local_geo();
   lb.on_node_grid_change();
@@ -176,7 +211,7 @@ void System::on_periodicity_change() {
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
-  if (::integ_switch == INTEG_METHOD_SD) {
+  if (propagation->integ_switch == INTEG_METHOD_SD) {
     if (box_geo->periodic(0u) or box_geo->periodic(1u) or box_geo->periodic(2u))
       runtimeErrorMsg() << "Stokesian Dynamics requires periodicity "
                         << "(False, False, False)\n";
@@ -223,13 +258,13 @@ void System::on_timestep_change() {
 
 void System::on_short_range_ia_change() {
   rebuild_cell_structure();
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 }
 
 void System::on_non_bonded_ia_change() {
   nonbonded_ias->recalc_maximal_cutoffs();
   rebuild_cell_structure();
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 }
 
 void System::on_coulomb_change() {
@@ -246,13 +281,15 @@ void System::on_dipoles_change() {
   on_short_range_ia_change();
 }
 
-void System::on_constraint_change() { ::recalc_forces = true; }
+void System::on_constraint_change() { propagation->recalc_forces = true; }
 
-void System::on_lb_boundary_conditions_change() { ::recalc_forces = true; }
+void System::on_lb_boundary_conditions_change() {
+  propagation->recalc_forces = true;
+}
 
 void System::on_particle_local_change() {
-  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
-  ::recalc_forces = true;
+  cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
+  propagation->recalc_forces = true;
 }
 
 void System::on_particle_change() {
@@ -267,7 +304,7 @@ void System::on_particle_change() {
 #ifdef DIPOLES
   dipoles.on_particle_change();
 #endif
-  ::recalc_forces = true;
+  propagation->recalc_forces = true;
 
   /* the particle information is no longer valid */
   invalidate_fetch_cache();
@@ -281,8 +318,10 @@ void System::on_particle_charge_change() {
 
 void System::update_dependent_particles() {
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update();
-  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
+#ifdef VIRTUAL_SITES_RELATIVE
+  vs_relative_update_particles(*cell_structure, *box_geo);
+#endif
+  cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 #endif
 
 #ifdef ELECTROSTATICS
@@ -298,7 +337,7 @@ void System::update_dependent_particles() {
 void System::on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
-  cell_structure->update_ghosts_and_resort_particle(global_ghost_flags());
+  cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   update_dependent_particles();
 
 #ifdef ELECTROSTATICS
@@ -383,13 +422,15 @@ void System::on_integration_start() {
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
-    thermo_init(time_step);
+    thermostat->recalc_prefactors(time_step);
     reinit_thermo = false;
-    ::recalc_forces = true;
+    propagation->recalc_forces = true;
   }
 
 #ifdef NPT
-  npt_ensemble_init(*box_geo);
+  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    npt_ensemble_init(box_geo->length(), propagation->recalc_forces);
+  }
 #endif
 
   invalidate_fetch_cache();
@@ -419,16 +460,33 @@ void System::on_integration_start() {
   on_observable_calc();
 }
 
-} // namespace System
+/**
+ * @brief Returns the ghost flags required for running pair
+ *        kernels for the global state, e.g. the force calculation.
+ * @return Required data parts;
+ */
+unsigned System::get_global_ghost_flags() const {
+  /* Position and Properties are always requested. */
+  unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
-void mpi_init_stand_alone(int argc, char **argv) {
-  auto mpi_env = mpi_init(argc, argv);
+  if (lb.is_solver_set())
+    data_parts |= Cells::DATA_PART_MOMENTUM;
 
-  // initialize the MpiCallbacks framework
-  Communication::init(mpi_env);
+  if (thermostat->thermo_switch & THERMO_DPD)
+    data_parts |= Cells::DATA_PART_MOMENTUM;
 
-  // default-construct global state of the system
-#ifdef VIRTUAL_SITES
-  set_virtual_sites(std::make_shared<VirtualSitesOff>());
+  if (thermostat->thermo_switch & THERMO_BOND) {
+    data_parts |= Cells::DATA_PART_MOMENTUM;
+    data_parts |= Cells::DATA_PART_BONDS;
+  }
+
+#ifdef COLLISION_DETECTION
+  if (::collision_params.mode != CollisionModeType::OFF) {
+    data_parts |= Cells::DATA_PART_BONDS;
+  }
 #endif
+
+  return data_parts;
 }
+
+} // namespace System

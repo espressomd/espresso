@@ -25,11 +25,13 @@
 #include "script_interface/get_value.hpp"
 
 #include "core/BoxGeometry.hpp"
+#include "core/PropagationMode.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/exclusions.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
+#include "core/propagation.hpp"
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/virtual_sites.hpp"
@@ -238,19 +240,6 @@ ParticleHandle::ParticleHandle() {
        },
 #endif // ELECTROSTATICS
        [this]() { return get_particle_data(m_pid).q(); }},
-      {"virtual",
-#ifdef VIRTUAL_SITES
-       [this](Variant const &value) {
-         set_particle_property(&Particle::virtual_flag, value);
-       },
-#else  // VIRTUAL_SITES
-       [](Variant const &value) {
-         if (get_value<bool>(value)) {
-           throw std::runtime_error("Feature VIRTUAL_SITES not compiled in");
-         }
-       },
-#endif // VIRTUAL_SITES
-       [this]() { return get_particle_data(m_pid).is_virtual(); }},
 #ifdef ROTATION
       {"director",
        [this](Variant const &value) {
@@ -375,6 +364,17 @@ ParticleHandle::ParticleHandle() {
        [this]() { return get_particle_data(m_pid).ext_torque(); }},
 #endif // ROTATION
 #endif // EXTERNAL_FORCES
+      {"propagation",
+       [this](Variant const &value) {
+         auto const propagation = get_value<int>(value);
+         if (!is_valid_propagation_combination(propagation)) {
+           throw std::domain_error(error_msg(
+               "propagation", "propagation combination not accepted: " +
+                                  propagation_bitmask_to_string(propagation)));
+         }
+         set_particle_property(&Particle::propagation, value);
+       },
+       [this]() { return get_particle_data(m_pid).propagation(); }},
 #ifdef THERMOSTAT_PER_PARTICLE
       {"gamma",
        [this](Variant const &value) {
@@ -396,7 +396,6 @@ ParticleHandle::ParticleHandle() {
          auto const &box_geo = *System::get_system().box_geo;
          return box_geo.folded_position(get_particle_data(m_pid).pos());
        }},
-
       {"lees_edwards_offset",
        [this](Variant const &value) {
          set_particle_property(&Particle::lees_edwards_offset, value);
@@ -446,8 +445,14 @@ ParticleHandle::ParticleHandle() {
            throw std::invalid_argument(error_msg(
                "vs_relative", "must take the form [id, distance, quaternion]"));
          }
-         set_particle_property(
-             [&vs_relative](Particle &p) { p.vs_relative() = vs_relative; });
+         set_particle_property([&vs_relative](Particle &p) {
+           p.vs_relative() = vs_relative;
+           if (vs_relative.to_particle_id != -1) {
+             p.propagation() = PropagationMode::TRANS_VS_RELATIVE |
+                               PropagationMode::ROT_VS_RELATIVE;
+           }
+           assert(is_valid_propagation_combination(p.propagation()));
+         });
        },
        [this]() {
          auto const vs_rel = get_particle_data(m_pid).vs_relative();
@@ -587,12 +592,19 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       std::ignore = get_real_particle(context()->get_comm(), m_pid);
       remove_particle(m_pid);
     });
+  } else if (name == "is_virtual") {
+    if (not context()->is_head_node()) {
+      return {};
+    }
+    return get_particle_data(m_pid).is_virtual();
 #ifdef VIRTUAL_SITES_RELATIVE
   } else if (name == "vs_relate_to") {
     if (not context()->is_head_node()) {
       return {};
     }
     auto const other_pid = get_value<int>(params, "pid");
+    auto const override_cutoff_check =
+        get_value<bool>(params, "override_cutoff_check");
     if (m_pid == other_pid) {
       throw std::invalid_argument("A virtual site cannot relate to itself");
     }
@@ -613,10 +625,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const &p_current = get_particle_data(m_pid);
     auto const &p_relate_to = get_particle_data(other_pid);
     auto const [quat, dist] = calculate_vs_relate_to_params(
-        p_current, p_relate_to, *system.box_geo, system.get_min_global_cut());
+        p_current, p_relate_to, *system.box_geo, system.get_min_global_cut(),
+        override_cutoff_check);
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
-    set_parameter("virtual", true);
 #endif // VIRTUAL_SITES_RELATIVE
 #ifdef EXCLUSIONS
   } else if (name == "has_exclusion") {
@@ -763,38 +775,41 @@ void ParticleHandle::do_construct(VariantMap const &params) {
   // create a default-constructed particle
   make_new_particle(m_pid, pos);
 
-  context()->parallel_try_catch([&]() {
-    // set particle properties (filter out read-only and deferred properties)
-    std::set<std::string> const skip = {
-        "pos_folded", "pos", "quat", "director",  "id",    "lees_edwards_flag",
-        "exclusions", "dip", "node", "image_box", "bonds", "__cpt_sentinel",
-    };
+  try {
+    context()->parallel_try_catch([&]() {
+      /* clang-format off */
+      // set particle properties (filter out read-only and deferred properties)
+      std::set<std::string> const skip = {
+          "pos_folded", "pos", "quat", "director", "id",
+          "exclusions", "dip", "node", "image_box", "bonds",
+          "lees_edwards_flag", "__cpt_sentinel",
+      };
+      /* clang-format on */
 #ifdef ROTATION
-    // multiple parameters can potentially set the quaternion, but only one
-    // can be allowed to; these conditionals are required to handle a reload
-    // from a checkpoint file, where all properties exist (avoids accidentally
-    // overwriting the quaternion by the default-constructed dipole moment)
-    for (std::string name : {"quat", "director", "dip"}) {
-      if (has_param(name)) {
-        do_set_parameter(name, params.at(name));
-        break;
+      // multiple parameters can potentially set the quaternion, but only one
+      // can be allowed to; these conditionals are required to handle a reload
+      // from a checkpoint file, where all properties exist (avoids accidentally
+      // overwriting the quaternion by the default-constructed dipole moment)
+      for (std::string name : {"quat", "director", "dip"}) {
+        if (has_param(name)) {
+          do_set_parameter(name, params.at(name));
+          break;
+        }
       }
-    }
 #endif // ROTATION
-    std::vector<std::string> sorted_param_names = {};
-    std::for_each(params.begin(), params.end(), [&](auto const &kv) {
-      if (skip.count(kv.first) == 0) {
-        sorted_param_names.push_back(kv.first);
+      for (auto const &name : get_parameter_insertion_order()) {
+        if (params.count(name) != 0ul and skip.count(name) == 0ul) {
+          do_set_parameter(name, params.at(name));
+        }
+      }
+      if (not has_param("type")) {
+        do_set_parameter("type", 0);
       }
     });
-    std::sort(sorted_param_names.begin(), sorted_param_names.end());
-    for (auto const &name : sorted_param_names) {
-      do_set_parameter(name, params.at(name));
-    }
-    if (not has_param("type")) {
-      do_set_parameter("type", 0);
-    }
-  });
+  } catch (...) {
+    remove_particle(m_pid);
+    throw;
+  }
 }
 
 } // namespace Particles

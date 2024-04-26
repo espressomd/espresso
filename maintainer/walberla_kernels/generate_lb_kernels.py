@@ -18,7 +18,7 @@
 #
 
 import argparse
-import pkg_resources
+import packaging.specifiers
 
 import sympy as sp
 
@@ -53,8 +53,9 @@ else:
 
 # Make sure we have the correct versions of the required dependencies
 for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
-    assert pkg_resources.packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
-        f"{module.__name__} version {module.__version__} doesn't match requirement {requirement}"
+    assert packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
+        f"{module.__name__} version {module.__version__} " \
+        f"doesn't match requirement {requirement}"
 
 
 def paramlist(parameters, keys):
@@ -66,6 +67,7 @@ def paramlist(parameters, keys):
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
     if target == ps.Target.GPU:
+        ctx.gpu = True
         ctx.cuda = True
 
     # vectorization parameters

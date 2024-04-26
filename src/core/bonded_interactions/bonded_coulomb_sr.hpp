@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_BONDED_COULOMB_SR_HPP
-#define CORE_BN_IA_BONDED_COULOMB_SR_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the short-range part of the bonded Coulomb potential
  *  between particle pairs. Can be used to subtract certain intramolecular
@@ -37,7 +38,7 @@
 #include <cmath>
 #include <functional>
 
-/** Parameters for %Coulomb bond short-range Potential */
+/** Parameters for Coulomb bond short-range Potential */
 struct BondedCoulombSR {
   /** charge factor */
   double q1q2;
@@ -62,13 +63,13 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &q1q2;
+    ar & q1q2;
   }
 };
 
 /** Compute the short-range bonded Coulomb pair force.
- *  @param[in]  dx        %Distance between the particles.
- *  @param[in]  kernel    %Coulomb force kernel.
+ *  @param[in]  dx        Distance between the particles.
+ *  @param[in]  kernel    Coulomb force kernel.
  */
 inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
     Utils::Vector3d const &dx,
@@ -84,8 +85,8 @@ inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
 /** Compute the short-range bonded Coulomb pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
- *  @param[in]  dx        %Distance between the particles.
- *  @param[in]  kernel    %Coulomb energy kernel.
+ *  @param[in]  dx        Distance between the particles.
+ *  @param[in]  kernel    Coulomb energy kernel.
  */
 inline boost::optional<double> BondedCoulombSR::energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
@@ -98,5 +99,3 @@ inline boost::optional<double> BondedCoulombSR::energy(
   return 0.;
 #endif
 }
-
-#endif

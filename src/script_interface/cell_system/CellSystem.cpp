@@ -28,7 +28,6 @@
 #include "core/cell_system/RegularDecomposition.hpp"
 #include "core/cells.hpp"
 #include "core/communication.hpp"
-#include "core/integrate.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
 #include "core/system/System.hpp"

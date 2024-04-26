@@ -46,65 +46,6 @@
 #include <stdexcept>
 #include <vector>
 
-LB::ParticleCouplingConfig lb_particle_coupling;
-
-static auto is_lb_active() { return System::get_system().lb.is_solver_set(); }
-
-void mpi_bcast_lb_particle_coupling_local() {
-  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
-}
-
-REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_local)
-
-void mpi_bcast_lb_particle_coupling() {
-  mpi_call_all(mpi_bcast_lb_particle_coupling_local);
-}
-
-void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
-
-void lb_lbcoupling_deactivate() {
-  if (is_lb_active() and this_node == 0 and lb_particle_coupling.gamma > 0.) {
-    runtimeWarningMsg()
-        << "Recalculating forces, so the LB coupling forces are not "
-           "included in the particle force the first time step. This "
-           "only matters if it happens frequently during sampling.";
-  }
-
-  lb_particle_coupling.couple_to_md = false;
-}
-
-void lb_lbcoupling_set_gamma(double gamma) {
-  lb_particle_coupling.gamma = gamma;
-}
-
-double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
-
-bool lb_lbcoupling_is_seed_required() {
-  if (is_lb_active()) {
-    return not lb_particle_coupling.rng_counter_coupling.is_initialized();
-  }
-  return false;
-}
-
-uint64_t lb_coupling_get_rng_state_cpu() {
-  return lb_particle_coupling.rng_counter_coupling->value();
-}
-
-uint64_t lb_lbcoupling_get_rng_state() {
-  if (is_lb_active()) {
-    return lb_coupling_get_rng_state_cpu();
-  }
-  throw std::runtime_error("No LB active");
-}
-
-void lb_lbcoupling_set_rng_state(uint64_t counter) {
-  if (is_lb_active()) {
-    lb_particle_coupling.rng_counter_coupling =
-        Utils::Counter<uint64_t>(counter);
-  } else
-    throw std::runtime_error("No LB active");
-}
-
 void add_md_force(LB::Solver &lb, Utils::Vector3d const &pos,
                   Utils::Vector3d const &force, double time_step) {
   /* transform momentum transfer to lattice units
@@ -113,8 +54,8 @@ void add_md_force(LB::Solver &lb, Utils::Vector3d const &pos,
   lb.add_force_density(pos, delta_j);
 }
 
-static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p) {
-  auto const lb_gamma = lb_lbcoupling_get_gamma();
+static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p,
+                                                           double lb_gamma) {
 #ifdef THERMOSTAT_PER_PARTICLE
   auto const &partcl_gamma = p.gamma();
 #ifdef PARTICLE_ANISOTROPY
@@ -122,20 +63,21 @@ static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p) {
 #else
   auto const default_gamma = lb_gamma;
 #endif // PARTICLE_ANISOTROPY
-  return handle_particle_gamma(partcl_gamma, default_gamma);
+  return Thermostat::handle_particle_gamma(partcl_gamma, default_gamma);
 #else
   return lb_gamma;
 #endif // THERMOSTAT_PER_PARTICLE
 }
 
-Utils::Vector3d lb_drag_force(LB::Solver const &lb, Particle const &p,
+Utils::Vector3d lb_drag_force(LB::Solver const &lb, double lb_gamma,
+                              Particle const &p,
                               Utils::Vector3d const &shifted_pos,
                               Utils::Vector3d const &vel_offset) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const v_fluid = lb.get_coupling_interpolated_velocity(shifted_pos);
   auto const v_drift = v_fluid + vel_offset;
-  auto const gamma = lb_handle_particle_anisotropy(p);
+  auto const gamma = lb_handle_particle_anisotropy(p, lb_gamma);
 
   /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
   return Utils::hadamard_product(gamma, v_drift - p.v());
@@ -144,16 +86,17 @@ Utils::Vector3d lb_drag_force(LB::Solver const &lb, Particle const &p,
 /**
  * @brief Check if a position is within the local box + halo.
  *
+ * @param local_box Local geometry
  * @param pos Position to check
  * @param halo Halo
  *
  * @return True iff the point is inside of the box up to halo.
  */
-static bool in_local_domain(Utils::Vector3d const &pos, double halo = 0.) {
+static bool in_local_domain(LocalBox const &local_box,
+                            Utils::Vector3d const &pos, double halo = 0.) {
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
-  auto const &local_geo = *System::get_system().local_geo;
-  auto const lower_corner = local_geo.my_left() - halo_vec;
-  auto const upper_corner = local_geo.my_right() + halo_vec;
+  auto const lower_corner = local_box.my_left() - halo_vec;
+  auto const upper_corner = local_box.my_right() + halo_vec;
 
   return pos >= lower_corner and pos < upper_corner;
 }
@@ -164,13 +107,10 @@ static bool in_box(Utils::Vector3d const &pos,
   return pos >= lower_corner and pos < upper_corner;
 }
 
-static bool in_local_halo(Utils::Vector3d const &pos, double agrid) {
+bool in_local_halo(LocalBox const &local_box, Utils::Vector3d const &pos,
+                   double agrid) {
   auto const halo = 0.5 * agrid;
-  return in_local_domain(pos, halo);
-}
-
-bool in_local_halo(Utils::Vector3d const &pos) {
-  return in_local_domain(pos, System::get_system().lb.get_agrid());
+  return in_local_domain(local_box, pos, halo);
 }
 
 /**
@@ -178,20 +118,19 @@ bool in_local_halo(Utils::Vector3d const &pos) {
  * coordinate
  */
 std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
-                                               BoxGeometry const &box,
+                                               BoxGeometry const &box_geo,
+                                               LocalBox const &local_box,
                                                double agrid) {
-  auto const &system = System::get_system();
-  auto const &box_geo = *system.box_geo;
-  auto const &local_geo = *system.local_geo;
   auto const halo = 0.5 * agrid;
   auto const halo_vec = Utils::Vector3d::broadcast(halo);
-  auto const fully_inside_lower = local_geo.my_left() + 2. * halo_vec;
-  auto const fully_inside_upper = local_geo.my_right() - 2. * halo_vec;
-  if (in_box(pos, fully_inside_lower, fully_inside_upper)) {
-    return {pos};
+  auto const fully_inside_lower = local_box.my_left() + 2. * halo_vec;
+  auto const fully_inside_upper = local_box.my_right() - 2. * halo_vec;
+  auto const pos_folded = box_geo.folded_position(pos);
+  if (in_box(pos_folded, fully_inside_lower, fully_inside_upper)) {
+    return {pos_folded};
   }
-  auto const halo_lower_corner = local_geo.my_left() - halo_vec;
-  auto const halo_upper_corner = local_geo.my_right() + halo_vec;
+  auto const halo_lower_corner = local_box.my_left() - halo_vec;
+  auto const halo_upper_corner = local_box.my_right() + halo_vec;
 
   std::vector<Utils::Vector3d> res;
   for (int i : {-1, 0, 1}) {
@@ -199,11 +138,11 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
       for (int k : {-1, 0, 1}) {
         Utils::Vector3d shift{{double(i), double(j), double(k)}};
         Utils::Vector3d pos_shifted =
-            pos + Utils::hadamard_product(box.length(), shift);
+            pos_folded + Utils::hadamard_product(box_geo.length(), shift);
 
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
           auto le = box_geo.lees_edwards_bc();
-          auto normal_shift = (pos_shifted - pos)[le.shear_plane_normal];
+          auto normal_shift = (pos_shifted - pos_folded)[le.shear_plane_normal];
           if (normal_shift > std::numeric_limits<double>::epsilon())
             pos_shifted[le.shear_direction] += le.pos_offset;
           if (normal_shift < -std::numeric_limits<double>::epsilon())
@@ -225,38 +164,30 @@ Utils::Vector3d ParticleCoupling::get_noise_term(Particle const &p) const {
   if (not m_thermalized) {
     return Utils::Vector3d{};
   }
-  auto const &rng_counter = lb_particle_coupling.rng_counter_coupling;
-  if (not rng_counter) {
-    throw std::runtime_error(
-        "Access to uninitialized LB particle coupling RNG counter");
-  }
   using std::sqrt;
   using Utils::sqrt;
-  auto const counter = rng_counter->value();
-  auto const gamma = lb_handle_particle_anisotropy(p);
-  return m_noise_pref_wo_gamma *
-         Utils::hadamard_product(
-             sqrt(gamma),
-             Random::noise_uniform<RNGSalt::PARTICLES>(counter, 0, p.id()));
+  auto const gamma = lb_handle_particle_anisotropy(p, m_thermostat.gamma);
+  auto const noise = Random::noise_uniform<RNGSalt::PARTICLES>(
+      m_thermostat.rng_counter(), m_thermostat.rng_seed(), p.id());
+  return m_noise_pref_wo_gamma * Utils::hadamard_product(sqrt(gamma), noise);
 }
 
 void ParticleCoupling::kernel(Particle &p) {
-  if (p.is_virtual() and not m_couple_virtual)
-    return;
-
   auto const agrid = m_lb.get_agrid();
-  auto const &box_geo = *System::get_system().box_geo;
 
   // Calculate coupling force
   Utils::Vector3d force_on_particle = {};
+  auto const halo_pos = positions_in_halo(m_box_geo.folded_position(p.pos()),
+                                          m_box_geo, m_local_box, agrid);
 
 #ifdef ENGINE
   if (not p.swimming().is_engine_force_on_fluid)
 #endif
-    for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
-      if (in_local_halo(pos, agrid)) {
+    for (auto const &pos : halo_pos) {
+      if (in_local_halo(m_local_box, pos, agrid)) {
         auto const vel_offset = lb_drift_velocity_offset(p);
-        auto const drag_force = lb_drag_force(m_lb, p, pos, vel_offset);
+        auto const drag_force =
+            lb_drag_force(m_lb, m_thermostat.gamma, p, pos, vel_offset);
         auto const random_force = get_noise_term(p);
         force_on_particle = drag_force + random_force;
         break;
@@ -272,20 +203,14 @@ void ParticleCoupling::kernel(Particle &p) {
 
   // couple positions including shifts by one box length to add
   // forces to ghost layers
-  for (auto pos : positions_in_halo(p.pos(), box_geo, agrid)) {
-    if (in_local_domain(pos)) {
+  for (auto const &pos : halo_pos) {
+    if (in_local_domain(m_local_box, pos)) {
       /* Particle is in our LB volume, so this node
        * is responsible to adding its force */
       p.force() += force_on_particle;
     }
     add_md_force(m_lb, pos, force_on_fluid, m_time_step);
   }
-}
-
-bool CouplingBookkeeping::is_ghost_for_local_particle(Particle const &p) const {
-  auto const &system = System::get_system();
-  auto const &cell_structure = *system.cell_structure;
-  return not cell_structure.get_local_particle(p.id())->is_ghost();
 }
 
 #if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)
@@ -302,35 +227,32 @@ static void lb_coupling_sanity_checks(Particle const &p) {
 }
 #endif
 
-void couple_particles(bool couple_virtual, ParticleRange const &real_particles,
-                      ParticleRange const &ghost_particles, double time_step) {
+} // namespace LB
+
+void System::System::lb_couple_particles(double time_step) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
-  if (lb_particle_coupling.couple_to_md) {
-    auto &lb = System::get_system().lb;
-    if (lb.is_solver_set()) {
-      ParticleCoupling coupling{lb, couple_virtual, time_step};
-      CouplingBookkeeping bookkeeping{};
-      for (auto const &particle_range : {real_particles, ghost_particles}) {
-        for (auto &p : particle_range) {
-          if (bookkeeping.should_be_coupled(p)) {
+  assert(thermostat->lb != nullptr);
+  if (thermostat->lb->couple_to_md) {
+    if (not lb.is_solver_set()) {
+      runtimeErrorMsg() << "The LB thermostat requires a LB fluid";
+      return;
+    }
+    auto const real_particles = cell_structure->local_particles();
+    auto const ghost_particles = cell_structure->ghost_particles();
+    LB::ParticleCoupling coupling{*thermostat->lb, lb, *box_geo, *local_geo,
+                                  time_step};
+    LB::CouplingBookkeeping bookkeeping{*cell_structure};
+    for (auto const *particle_range : {&real_particles, &ghost_particles}) {
+      for (auto &p : *particle_range) {
+        if (not LB::is_tracer(p) and bookkeeping.should_be_coupled(p)) {
 #if defined(THERMOSTAT_PER_PARTICLE) and defined(PARTICLE_ANISOTROPY)
-            lb_coupling_sanity_checks(p);
+          LB::lb_coupling_sanity_checks(p);
 #endif
-            coupling.kernel(p);
-          }
+          coupling.kernel(p);
         }
       }
     }
-  }
-}
-
-} // namespace LB
-
-void lb_lbcoupling_propagate() {
-  auto const &lb = System::get_system().lb;
-  if (lb.is_solver_set() and lb.get_kT() > 0.0) {
-    lb_particle_coupling.rng_counter_coupling->increment();
   }
 }

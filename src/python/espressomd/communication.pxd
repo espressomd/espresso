@@ -30,4 +30,6 @@ cdef extern from "communication.hpp":
 
 cdef extern from "communication.hpp" namespace "Communication":
     MpiCallbacks & mpiCallbacks()
+    shared_ptr[MpiCallbacks] mpiCallbacksHandle()
     void init(shared_ptr[environment])
+    void deinit()

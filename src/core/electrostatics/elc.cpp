@@ -32,6 +32,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "ParticlePropertyIterator.hpp"
 #include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
@@ -43,6 +44,7 @@
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/range/combine.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -1060,8 +1062,8 @@ elc_data::elc_data(double maxPWerror, double gap_size, double far_cut,
       dielectric_contrast_on{delta_top != 0. or delta_bot != 0.},
       const_pot{with_const_pot and dielectric_contrast_on},
       neutralize{neutralize and !dielectric_contrast_on},
-      delta_mid_top{std::clamp(delta_top, -1., +1.)}, delta_mid_bot{std::clamp(
-                                                          delta_bot, -1., +1.)},
+      delta_mid_top{std::clamp(delta_top, -1., +1.)},
+      delta_mid_bot{std::clamp(delta_bot, -1., +1.)},
       pot_diff{(with_const_pot) ? potential_diff : 0.},
       // initial setup of parameters, may change later when P3M is finally tuned
       // set the space_layer to be 1/3 of the gap size, so that box = layer
@@ -1118,9 +1120,9 @@ static void p3m_assign_image_charge(elc_data const &elc, CoulombP3M &p3m,
   }
 }
 
-template <ChargeProtocol protocol>
+template <ChargeProtocol protocol, typename combined_ranges>
 void charge_assign(elc_data const &elc, CoulombP3M &solver,
-                   ParticleRange const &particles) {
+                   combined_ranges const &p_q_pos_range) {
   if (protocol == ChargeProtocol::BOTH or protocol == ChargeProtocol::IMAGE) {
     solver.p3m.inter_weights.reset(solver.p3m.params.cao);
   }
@@ -1128,49 +1130,52 @@ void charge_assign(elc_data const &elc, CoulombP3M &solver,
   for (int i = 0; i < solver.p3m.local_mesh.size; i++)
     solver.p3m.rs_mesh[i] = 0.;
 
-  for (auto const &p : particles) {
-    if (p.q() != 0.) {
+  for (auto zipped : p_q_pos_range) {
+    auto const p_q = boost::get<0>(zipped);
+    auto const &p_pos = boost::get<1>(zipped);
+    if (p_q != 0.) {
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {
-        solver.assign_charge(p.q(), p.pos(), solver.p3m.inter_weights);
+        solver.assign_charge(p_q, p_pos, solver.p3m.inter_weights);
       }
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::IMAGE) {
-        p3m_assign_image_charge(elc, solver, p.q(), p.pos());
+        p3m_assign_image_charge(elc, solver, p_q, p_pos);
       }
     }
   }
 }
 
-template <ChargeProtocol protocol>
+template <ChargeProtocol protocol, typename combined_range>
 void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver,
-                     ParticleRange const &particles) {
+                     combined_range const &p_q_pos_range) {
 
   Utils::Vector3d node_sums{};
-  for (auto const &p : particles) {
-    auto const q = p.q();
-    if (q != 0.) {
-      auto const z = p.pos()[2];
+  for (auto zipped : p_q_pos_range) {
+    auto const p_q = boost::get<0>(zipped);
+    auto const &p_pos = boost::get<1>(zipped);
+    if (p_q != 0.) {
+      auto const p_z = p_pos[2];
 
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {
         node_sums[0] += 1.;
-        node_sums[1] += Utils::sqr(q);
-        node_sums[2] += q;
+        node_sums[1] += Utils::sqr(p_q);
+        node_sums[2] += p_q;
       }
 
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::IMAGE) {
-        if (z < elc.space_layer) {
+        if (p_z < elc.space_layer) {
           node_sums[0] += 1.;
-          node_sums[1] += Utils::sqr(elc.delta_mid_bot * q);
-          node_sums[2] += elc.delta_mid_bot * q;
+          node_sums[1] += Utils::sqr(elc.delta_mid_bot * p_q);
+          node_sums[2] += elc.delta_mid_bot * p_q;
         }
 
-        if (z > (elc.box_h - elc.space_layer)) {
+        if (p_z > (elc.box_h - elc.space_layer)) {
           node_sums[0] += 1.;
-          node_sums[1] += Utils::sqr(elc.delta_mid_top * q);
-          node_sums[2] += elc.delta_mid_top * q;
+          node_sums[1] += Utils::sqr(elc.delta_mid_top * p_q);
+          node_sums[2] += elc.delta_mid_top * p_q;
         }
       }
     }
@@ -1190,6 +1195,10 @@ double ElectrostaticLayerCorrection::long_range_energy(
         auto &solver = *solver_ptr;
         auto const &box_geo = *get_system().box_geo;
 
+        auto p_q_range = ParticlePropertyRange::charge_range(particles);
+        auto p_pos_range = ParticlePropertyRange::pos_range(particles);
+        auto p_q_pos_range = boost::combine(p_q_range, p_pos_range);
+
         // assign the original charges (they may not have been assigned yet)
         solver.charge_assign(particles);
 
@@ -1203,17 +1212,17 @@ double ElectrostaticLayerCorrection::long_range_energy(
             0.5 * elc.dielectric_layers_self_energy(solver, box_geo, particles);
 
         // assign both original and image charges
-        charge_assign<ChargeProtocol::BOTH>(elc, solver, particles);
-        modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, particles);
+        charge_assign<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
+        modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
         energy += 0.5 * solver.long_range_energy(particles);
 
         // assign only the image charges now
-        charge_assign<ChargeProtocol::IMAGE>(elc, solver, particles);
-        modify_p3m_sums<ChargeProtocol::IMAGE>(elc, solver, particles);
+        charge_assign<ChargeProtocol::IMAGE>(elc, solver, p_q_pos_range);
+        modify_p3m_sums<ChargeProtocol::IMAGE>(elc, solver, p_q_pos_range);
         energy -= 0.5 * solver.long_range_energy(particles);
 
         // restore modified sums
-        modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, particles);
+        modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, p_q_pos_range);
 
         return energy;
       },
@@ -1226,17 +1235,20 @@ void ElectrostaticLayerCorrection::add_long_range_forces(
   std::visit(
       [this, &particles](auto const &solver_ptr) {
         auto &solver = *solver_ptr;
+        auto p_q_range = ParticlePropertyRange::charge_range(particles);
+        auto p_pos_range = ParticlePropertyRange::pos_range(particles);
+        auto p_q_pos_range = boost::combine(p_q_range, p_pos_range);
         if (elc.dielectric_contrast_on) {
           auto const &box_geo = *get_system().box_geo;
-          modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, particles);
-          charge_assign<ChargeProtocol::BOTH>(elc, solver, particles);
+          modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
+          charge_assign<ChargeProtocol::BOTH>(elc, solver, p_q_pos_range);
           elc.dielectric_layers_self_forces(solver, box_geo, particles);
         } else {
           solver.charge_assign(particles);
         }
         solver.add_long_range_forces(particles);
         if (elc.dielectric_contrast_on) {
-          modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, particles);
+          modify_p3m_sums<ChargeProtocol::REAL>(elc, solver, p_q_pos_range);
         }
       },
       base_solver);

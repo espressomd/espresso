@@ -31,8 +31,8 @@
 {% if target is equalto 'cpu' -%}
 #include <field/GhostLayerField.h>
 {%- elif target is equalto 'gpu' -%}
-#include <cuda/GPUField.h>
-#include <cuda/FieldCopy.h>
+#include <gpu/GPUField.h>
+#include <gpu/FieldCopy.h>
 {%- endif %}
 #include <domain_decomposition/BlockDataID.h>
 #include <domain_decomposition/IBlock.h>
@@ -40,8 +40,9 @@
 #include <field/FlagField.h>
 #include <core/debug/Debug.h>
 
+#include <cassert>
 #include <functional>
-#include <set>
+#include <memory>
 #include <vector>
 
 {% for header in interface_spec.headers %}
@@ -84,7 +85,7 @@ public:
         {% if target == 'gpu' -%}
         ~IndexVectors() {
             for( auto & gpuVec: gpuVectors_)
-                cudaFree( gpuVec );
+                gpuFree( gpuVec );
         }
         {% endif -%}
 
@@ -99,7 +100,7 @@ public:
         {
             {% if target == 'gpu' -%}
             for( auto & gpuVec: gpuVectors_)
-                cudaFree( gpuVec );
+                gpuFree( gpuVec );
             gpuVectors_.resize( cpuVectors_.size() );
 
             WALBERLA_ASSERT_EQUAL(cpuVectors_.size(), NUM_TYPES);
@@ -107,8 +108,8 @@ public:
             {
                 auto & gpuVec = gpuVectors_[i];
                 auto & cpuVec = cpuVectors_[i];
-                cudaMalloc( &gpuVec, sizeof({{StructName}}) * cpuVec.size() );
-                cudaMemcpy( gpuVec, &cpuVec[0], sizeof({{StructName}}) * cpuVec.size(), cudaMemcpyHostToDevice );
+                gpuMalloc( &gpuVec, sizeof({{StructName}}) * cpuVec.size() );
+                gpuMemcpy( gpuVec, &cpuVec[0], sizeof({{StructName}}) * cpuVec.size(), gpuMemcpyHostToDevice );
             }
             {%- endif %}
         }
@@ -122,7 +123,7 @@ public:
         {%- endif %}
     };
 
-    {{class_name}}( const shared_ptr<StructuredBlockForest> & blocks,
+    {{class_name}}( const std::shared_ptr<StructuredBlockForest> & blocks,
                    {{kernel|generate_constructor_parameters(['indexVector', 'indexVectorSize'])}}{{additional_data_handler.constructor_arguments}})
         :{{additional_data_handler.initialiser_list}} {{ kernel|generate_constructor_initializer_list(['indexVector', 'indexVectorSize']) }}
     {
@@ -135,12 +136,12 @@ public:
     {};
 
     void run (
-        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
+        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
     );
 
     {% if generate_functor -%}
     void operator() (
-        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
+        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
     )
     {
         run( {{- ["block", kernel.kernel_selection_parameters, ["stream"] if target == 'gpu' else []] | identifier_list -}} );
@@ -148,28 +149,28 @@ public:
     {%- endif %}
 
     void inner (
-        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
+        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
     );
 
     void outer (
-        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
+        {{- ["IBlock * block", kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}}
     );
 
-    std::function<void (IBlock *)> getSweep( {{- [interface_spec.high_level_args, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}} )
+    std::function<void (IBlock *)> getSweep( {{- [interface_spec.high_level_args, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}} )
     {
         return [ {{- ["this", interface_spec.high_level_args, ["stream"] if target == 'gpu' else []] | identifier_list -}} ]
                (IBlock * b)
                { this->run( {{- [ ['b'], interface_spec.mapping_codes, ["stream"] if target == 'gpu' else [] ] | identifier_list -}} ); };
     }
 
-    std::function<void (IBlock *)> getInnerSweep( {{- [interface_spec.high_level_args, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}} )
+    std::function<void (IBlock *)> getInnerSweep( {{- [interface_spec.high_level_args, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}} )
     {
         return [ {{- [ ['this'], interface_spec.high_level_args, ["stream"] if target == 'gpu' else [] ] | identifier_list -}} ]
                (IBlock * b)
                { this->inner( {{- [ ['b'], interface_spec.mapping_codes, ["stream"] if target == 'gpu' else [] ] | identifier_list -}} ); };
     }
 
-    std::function<void (IBlock *)> getOuterSweep( {{- [interface_spec.high_level_args, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}} )
+    std::function<void (IBlock *)> getOuterSweep( {{- [interface_spec.high_level_args, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []] | type_identifier_list -}} )
     {
         return [ {{- [ ['this'], interface_spec.high_level_args, ["stream"] if target == 'gpu' else [] ] | identifier_list -}} ]
                (IBlock * b)
@@ -177,7 +178,7 @@ public:
     }
 
     template<typename FlagField_T>
-    void fillFromFlagField( const shared_ptr<StructuredBlockForest> & blocks, ConstBlockDataID flagFieldID,
+    void fillFromFlagField( const std::shared_ptr<StructuredBlockForest> & blocks, ConstBlockDataID flagFieldID,
                             FlagUID boundaryFlagUID, FlagUID domainFlagUID)
     {
         for( auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt )
@@ -197,8 +198,8 @@ public:
         auto * flagField = block->getData< FlagField_T > ( flagFieldID );
         {{additional_data_handler.additional_field_data|indent(4)}}
 
-        if( !(flagField->flagExists(boundaryFlagUID) && flagField->flagExists(domainFlagUID) ))
-            return;
+        assert(flagField->flagExists(boundaryFlagUID) and
+               flagField->flagExists(domainFlagUID));
 
         auto boundaryFlag = flagField->getFlag(boundaryFlagUID);
         auto domainFlag = flagField->getFlag(domainFlagUID);
@@ -292,7 +293,7 @@ public:
 private:
     void run_impl(
         {{- ["IBlock * block", "IndexVectors::Type type",
-             kernel.kernel_selection_parameters, ["cudaStream_t stream = nullptr"] if target == 'gpu' else []]
+             kernel.kernel_selection_parameters, ["gpuStream_t stream = nullptr"] if target == 'gpu' else []]
             | type_identifier_list -}}
    );
 

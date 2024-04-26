@@ -98,13 +98,33 @@ class Test(ut.TestCase):
                            "Parameter 'relaxation' must be >= 0 and <= 2"),
                           ({"relaxation": 2.1},
                            "Parameter 'relaxation' must be >= 0 and <= 2"),
+                          ({"eps_out": "1"},
+                           "parameter 'eps_out' is not convertible to 'double'"),
+                          ({"epsilons": [1.]},
+                           "Parameter 'epsilons' has incorrect shape"),
+                          ({"areas": [1.]},
+                           "Parameter 'areas' has incorrect shape"),
+                          ({"sigmas": [1.]},
+                           "Parameter 'sigmas' has incorrect shape"),
+                          ({"normals": [[1., 2., 3.]]},
+                           "Parameter 'normals' has incorrect shape"),
+                          ({"epsilons": len(areas) * ["str"]},
+                           "parameter 'epsilons' is not convertible to 'std::vector<double>'"),
+                          ({"areas": len(areas) * ["str"]},
+                           "parameter 'areas' is not convertible to 'std::vector<double>'"),
+                          ({"sigmas": len(areas) * ["str"]},
+                           "parameter 'sigmas' is not convertible to 'std::vector<double>'"),
+                          ({"normals": len(areas) * [3 * ["str"]]},
+                           "parameter 'normals' is not convertible to 'std::vector<Utils::Vector<double, 3>>'"),
                           ({"eps_out": -1.}, "Parameter 'eps_out' must be > 0"),
-                          ({"ext_field": 0.}, 'A single value was given but 3 were expected'), ]
+                          ({"ext_field": 0.},
+                           "parameter 'ext_field' is not convertible to 'Utils::Vector<double, 3>'"),
+                          ]
 
         for kwargs, error in invalid_params:
             params = valid_params.copy()
             params.update(kwargs)
-            with self.assertRaisesRegex(ValueError, error):
+            with self.assertRaisesRegex((ValueError, RuntimeError), error):
                 espressomd.electrostatic_extensions.ICC(**params)
 
     @utx.skipIfMissingFeatures(["P3M"])

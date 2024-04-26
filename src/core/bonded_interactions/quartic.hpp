@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_BN_IA_QUARTIC_HPP
-#define CORE_BN_IA_QUARTIC_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the quartic potential between particle pairs.
  */
@@ -55,15 +56,15 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &k0;
-    ar &k1;
-    ar &r;
-    ar &r_cut;
+    ar & k0;
+    ar & k1;
+    ar & r;
+    ar & r_cut;
   }
 };
 
 /** Compute the quartic bond force.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
 QuarticBond::force(Utils::Vector3d const &dx) const {
@@ -88,7 +89,7 @@ QuarticBond::force(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the quartic bond energy.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  */
 inline boost::optional<double>
 QuarticBond::energy(Utils::Vector3d const &dx) const {
@@ -102,5 +103,3 @@ QuarticBond::energy(Utils::Vector3d const &dx) const {
 
   return 0.5 * k0 * dr2 + 0.25 * k1 * Utils::sqr(dr2);
 }
-
-#endif

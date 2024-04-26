@@ -68,23 +68,21 @@ struct LBWalberla {
                         Utils::Vector3d const &force);
   void propagate();
   void veto_time_step(double time_step) const;
+  void veto_kT(double kT) const;
   void sanity_checks(System::System const &system) const;
   void lebc_sanity_checks(unsigned int shear_direction,
                           unsigned int shear_plane_normal) const;
 
   void on_cell_structure_change() const {}
-  void on_boxl_change() const {
+  void veto_boxl_change() const {
     throw std::runtime_error("MD cell geometry change not supported by LB");
   }
+  void on_boxl_change() const { veto_boxl_change(); }
   void on_node_grid_change() const {
     throw std::runtime_error("MPI topology change not supported by LB");
   }
-  void on_timestep_change() const {
-    throw std::runtime_error("Time step change not supported by LB");
-  }
-  void on_temperature_change() const {
-    throw std::runtime_error("Temperature change not supported by LB");
-  }
+  void on_timestep_change() const {}
+  void on_temperature_change() const {}
 };
 
 } // namespace LB

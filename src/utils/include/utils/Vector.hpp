@@ -465,7 +465,9 @@ template <typename T, std::size_t N> struct decay_to_scalar<Vector<T, N>> {
   using type = Vector<T, N>;
 };
 
-template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
+template <typename T> struct decay_to_scalar<Vector<T, 1>> {
+  using type = T;
+};
 
 template <std::size_t I, class T, std::size_t N>
 struct tuple_element<I, Vector<T, N>> {

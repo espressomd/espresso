@@ -30,7 +30,7 @@
 #ifdef ELECTROSTATICS
 
 #define P3M_GPU_FLOAT
-//#define P3M_GPU_REAL_DOUBLE
+// #define P3M_GPU_REAL_DOUBLE
 
 #ifdef P3M_GPU_FLOAT
 #define REAL_TYPE float

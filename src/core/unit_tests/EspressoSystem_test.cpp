@@ -50,11 +50,10 @@
 /* Decorator to run a unit test depending on GPU availability. */
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   bool has_compatible_gpu = false;
-  try {
+  invoke_skip_cuda_exceptions([&]() {
     cuda_check_device();
     has_compatible_gpu = true;
-  } catch (cuda_runtime_error const &) {
-  }
+  });
   return has_compatible_gpu;
 }
 
@@ -151,7 +150,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
 }
 
 int main(int argc, char **argv) {
-  mpi_init_stand_alone(argc, argv);
+  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

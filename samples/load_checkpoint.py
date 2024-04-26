@@ -60,10 +60,6 @@ print(
 print("\n### system.part test ###")
 print(f"system.part.all().pos = {system.part.all().pos}")
 
-# test "system.thermostat"
-print("\n### system.thermostat test ###")
-print(f"system.thermostat.get_state() = {system.thermostat.get_state()}")
-
 # test "p3m"
 print("\n### p3m test ###")
 print(f"p3m.get_params() = {p3m.get_params()}")

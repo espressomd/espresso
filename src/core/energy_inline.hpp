@@ -68,7 +68,7 @@
  *  @param ia_params  the interaction parameters between the two particles
  *  @param d          vector between p1 and p2.
  *  @param dist       distance between p1 and p2.
- *  @param coulomb_kernel   %Coulomb energy kernel.
+ *  @param coulomb_kernel   Coulomb energy kernel.
  *  @return the short-range interaction energy between the two particles
  */
 inline double calc_non_bonded_pair_energy(
@@ -168,7 +168,7 @@ inline double calc_non_bonded_pair_energy(
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  *  @param[in] ia_params        non-bonded interaction kernels.
- *  @param[in] coulomb_kernel   %Coulomb energy kernel.
+ *  @param[in] coulomb_kernel   Coulomb energy kernel.
  *  @param[in] dipoles_kernel   Dipolar energy kernel.
  *  @param[in,out] obs_energy   energy observable.
  */
@@ -305,7 +305,7 @@ inline double translational_kinetic_energy(Particle const &p) {
  */
 inline double rotational_kinetic_energy(Particle const &p) {
 #ifdef ROTATION
-  return p.can_rotate()
+  return (p.can_rotate() and not p.is_virtual())
              ? 0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia())
              : 0.0;
 #else

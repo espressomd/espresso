@@ -26,16 +26,23 @@ import sys
 import os
 
 EXPECTED_LABELS = """
-calc_energies
-  short_range_loop
 integrate
+  Initial Force Calculation
+    calculate_forces
+      copy_particles_to_GPU
+      init_forces
+      calc_long_range_forces
+      short_range_loop
+      copy_forces_from_GPU
   Integration loop
     calculate_forces
-      copy_forces_from_GPU
-      short_range_loop
-      calc_long_range_forces
-      init_forces
       copy_particles_to_GPU
+      init_forces
+      calc_long_range_forces
+      short_range_loop
+      copy_forces_from_GPU
+calc_energies
+  short_range_loop
 """
 
 
@@ -47,7 +54,7 @@ class Test(ut.TestCase):
         has_cuda = espressomd.has_features(["CUDA"])
         script = str(pathlib.Path(__file__).parent / "caliper_child.py")
         my_env = os.environ.copy()
-        my_env["CALI_CONFIG_PROFILE"] = "runtime-report"
+        my_env["CALI_CONFIG"] = "runtime-report"
         process = subprocess.Popen([sys.executable, script],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
@@ -58,7 +65,7 @@ class Test(ut.TestCase):
             if not line.startswith("WARNING:"):
                 lines = lines[i:]
                 break
-        header = "Path\tInclusive time\tExclusive\ttime\tTime %"
+        header = "Path\tMin time/rank\tMax time/rank\tAvg time/rank\tTime %"
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
         labels = [line[:30].strip() for line in lines[1:]]

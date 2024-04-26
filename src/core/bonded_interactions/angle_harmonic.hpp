@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ANGLE_HARMONIC_H
-#define ANGLE_HARMONIC_H
+
+#pragma once
+
 /** \file
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple using the potential described in
@@ -58,8 +59,8 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &bend;
-    ar &phi0;
+    ar & bend;
+    ar & phi0;
   }
 };
 
@@ -91,5 +92,3 @@ inline double AngleHarmonicBond::energy(Utils::Vector3d const &vec1,
   auto const phi = acos(cos_phi);
   return 0.5 * bend * Utils::sqr(phi - phi0);
 }
-
-#endif /* ANGLE_HARMONIC_H */

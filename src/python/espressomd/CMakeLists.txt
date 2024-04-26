@@ -17,24 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-add_custom_command(
-  OUTPUT gen_pxiconfig.cpp
-  COMMAND
-    ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
-    ${CMAKE_SOURCE_DIR}/src/config/features.def
-    ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig.cpp
-  DEPENDS ${CMAKE_SOURCE_DIR}/src/config/features.def)
-
-add_executable(gen_pxiconfig gen_pxiconfig.cpp)
-target_link_libraries(gen_pxiconfig espresso::config)
-set_target_properties(gen_pxiconfig PROPERTIES CXX_CLANG_TIDY
-                                               "${ESPRESSO_CXX_CLANG_TIDY}")
-
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
-  COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig >
-          ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi DEPENDS gen_pxiconfig)
-
 add_custom_target(espressomd)
 
 # Make the cython_SRC, cython_HEADER and cython_AUX a cached variable to be able
@@ -63,6 +45,7 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU>:-Wno-strict-aliasing>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-volatile>
+    $<$<CXX_COMPILER_ID:AppleClang>:-Wno-missing-field-initializers>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
     -Wno-unused-variable)
@@ -87,14 +70,11 @@ foreach(cython_file ${cython_SRC})
     add_custom_command(
       OUTPUT ${outputpath}
       COMMAND
-        ${CYTHON_EXECUTABLE}
-        $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:--warning-errors> -3 --cplus
-        --directive embedsignature=True --directive binding=True -I
-        ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_CURRENT_BINARY_DIR}
-        ${cython_file} -o ${outputpath}
+        ${CYTHON_EXECUTABLE} -3 --cplus --directive embedsignature=True
+        --directive binding=True -I ${CMAKE_CURRENT_SOURCE_DIR} -I
+        ${CMAKE_CURRENT_BINARY_DIR} ${cython_file} -o ${outputpath}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi ${cython_file}
-              ${cython_HEADER})
+      DEPENDS ${cython_file} ${cython_HEADER})
     set(target "espressomd_${basename}")
     add_library(${target} SHARED ${outputpath})
     if(NOT "${relpath}" STREQUAL "")

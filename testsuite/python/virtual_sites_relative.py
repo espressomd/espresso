@@ -19,7 +19,8 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
-import espressomd.virtual_sites
+import espressomd.lb
+import espressomd.propagation
 import numpy as np
 import tests_common
 
@@ -31,7 +32,7 @@ class VirtualSites(ut.TestCase):
     np.random.seed(42)
 
     def setUp(self):
-        self.system.box_l = [10.0, 10.0, 10.0]
+        self.system.box_l = [12.0, 12.0, 12.0]
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
 
@@ -40,7 +41,8 @@ class VirtualSites(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
         self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
+        if espressomd.has_features("WALBERLA"):
+            self.system.lb = None
 
     def multiply_quaternions(self, a, b):
         return np.array(
@@ -58,8 +60,10 @@ class VirtualSites(ut.TestCase):
 
     def verify_vs(self, vs, verify_velocity=True):
         """Verify virtual site position and velocity."""
-        self.assertTrue(vs.virtual)
-
+        Propagation = espressomd.propagation.Propagation
+        self.assertTrue(vs.is_virtual())
+        self.assertTrue(vs.propagation & Propagation.TRANS_VS_RELATIVE)
+        self.assertTrue(vs.propagation & Propagation.ROT_VS_RELATIVE)
         vs_r = vs.vs_relative
 
         # Get related particle
@@ -81,49 +85,23 @@ class VirtualSites(ut.TestCase):
             v_d - vs_r[1] * self.director_from_quaternion(
                 self.multiply_quaternions(rel.quat, vs_r[2]))), 1E-6)
 
-    def test_aa_method_switching(self):
-        # Virtual sites should be disabled by default
-        self.assertIsInstance(
-            self.system.virtual_sites,
-            espressomd.virtual_sites.VirtualSitesOff)
-        self.assertFalse(self.system.virtual_sites.have_quaternion)
-        self.assertFalse(self.system.virtual_sites.override_cutoff_check)
-
-        # Set properties
-        self.system.virtual_sites.have_quaternion = True
-        self.system.virtual_sites.override_cutoff_check = True
-        self.assertTrue(self.system.virtual_sites.have_quaternion)
-        self.assertTrue(self.system.virtual_sites.override_cutoff_check)
-
-        # Switch implementation
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
-        self.assertIsInstance(
-            self.system.virtual_sites,
-            espressomd.virtual_sites.VirtualSitesRelative)
-        self.assertFalse(self.system.virtual_sites.have_quaternion)
-        self.assertFalse(self.system.virtual_sites.override_cutoff_check)
-
+    @utx.skipIfMissingFeatures(["WALBERLA"])
     def test_vs_quat(self):
         self.system.time_step = 0.01
         self.system.min_global_cut = 0.23
-        # First check that quaternion of virtual particle is unchanged if
-        # have_quaternion is false.
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-            have_quaternion=False)
-        self.assertFalse(self.system.virtual_sites.have_quaternion)
+        self.system.lb = lb_fluid = espressomd.lb.LBFluidWalberla(
+            tau=0.01, agrid=2., density=1., kinematic_viscosity=1., kT=0.)
+        self.system.thermostat.set_lb(LB_fluid=lb_fluid, seed=42, gamma=1.)
+        Propagation = espressomd.propagation.Propagation
         p1 = self.system.part.add(pos=[1, 1, 1], rotation=3 * [True],
                                   omega_lab=[1, 1, 1])
         p2 = self.system.part.add(pos=[1, 1, 1], rotation=3 * [True])
-        p2.vs_auto_relate_to(p1)
-        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
-        self.system.integrator.run(1)
-        np.testing.assert_array_equal(np.copy(p2.quat), [1, 0, 0, 0])
-        # Now check that quaternion of the virtual particle gets updated.
-        self.system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-            have_quaternion=True)
-        self.system.integrator.run(1)
-        self.assertRaises(AssertionError, np.testing.assert_array_equal,
-                          np.copy(p2.quat), [1, 0, 0, 0])
+        p2.vs_auto_relate_to(p1, couple_to_lb=True)
+        np.testing.assert_array_almost_equal(np.copy(p1.quat), [1, 0, 0, 0])
+        np.testing.assert_array_almost_equal(np.copy(p2.quat), [1, 0, 0, 0])
+        self.assertEqual(p1.propagation, Propagation.SYSTEM_DEFAULT)
+        self.assertEqual(p2.propagation, Propagation.TRANS_VS_RELATIVE |
+                         Propagation.ROT_VS_RELATIVE | Propagation.TRANS_LB_MOMENTUM_EXCHANGE)
 
         # co-aligned case
         p2.vs_quat = (1, 0, 0, 0)
@@ -149,17 +127,17 @@ class VirtualSites(ut.TestCase):
 
     def test_vs_exceptions(self):
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.1
+        Propagation = espressomd.propagation.Propagation
         p1 = system.part.add(pos=[0.0, 0.0, 0.0], rotation=3 * [True], id=1)
         p2 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=2)
         p3 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=3)
         p4 = system.part.add(pos=[1.0, 1.0, 1.0], rotation=3 * [True], id=4)
         # dangling virtual sites are not allowed
         with self.assertRaisesRegex(Exception, "Particle with id 4 is a dangling virtual site"):
-            p4.virtual = True
+            p4.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE
             self.assertEqual(p4.vs_relative[0], -1)
             system.integrator.run(0, recalc_forces=True)
         p4.remove()
@@ -174,19 +152,18 @@ class VirtualSites(ut.TestCase):
         # relating to a deleted particle is not allowed
         with self.assertRaisesRegex(Exception, "No real particle with id 3 for virtual site with id 2"):
             p2.vs_auto_relate_to(p3)
+            p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE
             p3.remove()
             system.integrator.run(0, recalc_forces=True)
         if system.cell_system.get_state()["n_nodes"] > 1:
             with self.assertRaisesRegex(Exception, r"The distance between virtual and non-virtual particle \([0-9\.]+\) is larger than the minimum global cutoff"):
                 p2.vs_auto_relate_to(p1)
             # If overridden this check should not raise an exception
-            system.virtual_sites.override_cutoff_check = True
-            p2.vs_auto_relate_to(p1)
+            p2.vs_auto_relate_to(p1, override_cutoff_check=True)
 
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         system.time_step = 0.004
 
         # Check setting of min_global_cut
@@ -203,7 +180,7 @@ class VirtualSites(ut.TestCase):
             p = system.part.add(rotation=3 * [True], pos=pos)
             p.vs_auto_relate_to(p1)
             # Was the particle made virtual
-            self.assertTrue(p.virtual)
+            self.assertTrue(p.is_virtual())
             # Are vs relative to id and
             vs_r = p.vs_relative
             # id
@@ -260,7 +237,6 @@ class VirtualSites(ut.TestCase):
         get lost or are outdated in the short range loop.
         """
         system = self.system
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         # Parameters
         n = 40
         phi = 0.6
@@ -287,16 +263,10 @@ class VirtualSites(ut.TestCase):
                 rotation=3 * [True], id=3 * i, pos=np.random.random(3) * l, type=1,
                 omega_lab=0.3 * np.random.random(3), v=np.random.random(3))
             # lj spheres
-            p3ip1 = system.part.add(rotation=3 * [True],
-                                    id=3 * i + 1,
-                                    pos=p3i.pos +
-                                    p3i.director / 2.,
-                                    type=0)
-            p3ip2 = system.part.add(rotation=3 * [True],
-                                    id=3 * i + 2,
-                                    pos=p3i.pos -
-                                    p3i.director / 2.,
-                                    type=0)
+            p3ip1 = system.part.add(rotation=3 * [True], id=3 * i + 1,
+                                    pos=p3i.pos + p3i.director / 2., type=0)
+            p3ip2 = system.part.add(rotation=3 * [True], id=3 * i + 2,
+                                    pos=p3i.pos - p3i.director / 2., type=0)
             p3ip1.vs_auto_relate_to(p3i.id)
             self.verify_vs(p3ip1, verify_velocity=False)
             p3ip2.vs_auto_relate_to(p3i.id)
@@ -370,7 +340,6 @@ class VirtualSites(ut.TestCase):
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.2
         # Should not have a pressure
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesOff()
         pressure_tensor_vs = system.analysis.pressure_tensor()[
             "virtual_sites", 0]
         p_vs = system.analysis.pressure()["virtual_sites", 0]
@@ -378,7 +347,6 @@ class VirtualSites(ut.TestCase):
         np.testing.assert_allclose(p_vs, 0., atol=1e-10)
 
         # vs relative contrib
-        system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
         p0 = system.part.add(id=0, pos=(0.0, 0.0, 0.0))
         p1 = system.part.add(id=1, pos=(0.1, 0.1, 0.1), ext_force=(1, 2, 3))
         p2 = system.part.add(id=2, pos=(0.1, 0.0, 0.0), ext_force=(-1, 0, 0))

@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ANGLE_COMMON_H
-#define ANGLE_COMMON_H
+
+#pragma once
+
 /** \file
  *  Common code for functions calculating angle forces.
  */
@@ -95,5 +96,3 @@ angle_generic_force(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2,
   auto f_mid = -(f_left + f_right);
   return std::make_tuple(f_mid, f_left, f_right);
 }
-
-#endif /* ANGLE_COMMON_H */

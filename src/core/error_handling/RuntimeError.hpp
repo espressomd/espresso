@@ -65,12 +65,12 @@ private:
   /** Boost serialization */
   friend class boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, const unsigned int) {
-    ar &m_level;
-    ar &m_who;
-    ar &m_what;
-    ar &m_function;
-    ar &m_file;
-    ar &m_line;
+    ar & m_level;
+    ar & m_who;
+    ar & m_what;
+    ar & m_function;
+    ar & m_file;
+    ar & m_line;
   }
 
   ErrorLevel m_level;

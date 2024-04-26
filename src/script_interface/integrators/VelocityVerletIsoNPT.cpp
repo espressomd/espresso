@@ -25,7 +25,8 @@
 
 #include "script_interface/ScriptInterface.hpp"
 
-#include "core/integrate.hpp"
+#include "core/PropagationMode.hpp"
+#include "core/integrators/Propagation.hpp"
 #include "core/npt.hpp"
 
 #include <utils/Vector.hpp>
@@ -64,7 +65,7 @@ void VelocityVerletIsoNPT::do_construct(VariantMap const &params) {
 
 void VelocityVerletIsoNPT::activate() {
   ::nptiso = get_instance();
-  set_integ_switch(INTEG_METHOD_NPT_ISO);
+  get_system().propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
   get_system().on_thermostat_param_change();
 }
 

@@ -81,12 +81,20 @@ class RescaleTest(ut.TestCase):
         self.dir_test(2)
 
     def test_exceptions(self):
+        box_l = np.copy(self.system.box_l)
         with self.assertRaisesRegex(ValueError, "Parameter 'd_new' must be > 0"):
             self.system.change_volume_and_rescale_particles(d_new=0.)
         with self.assertRaisesRegex(ValueError, "Parameter 'd_new' must be > 0"):
             self.system.change_volume_and_rescale_particles(d_new=-1.)
         with self.assertRaisesRegex(ValueError, "Usage: change_volume_and_rescale_particles"):
             self.system.change_volume_and_rescale_particles(d_new=1., dir=5)
+        with self.assertRaisesRegex(RuntimeError, "Cannot reset the box length when particles are present"):
+            self.system.box_l = 0.5 * box_l
+        np.testing.assert_allclose(
+            np.copy(self.system.box_l), box_l, atol=1e-7)
+        self.system.change_volume_and_rescale_particles(0.5 * box_l[0], "xyz")
+        np.testing.assert_allclose(
+            np.copy(self.system.box_l), 0.5 * box_l, atol=1e-7)
 
 
 if __name__ == "__main__":

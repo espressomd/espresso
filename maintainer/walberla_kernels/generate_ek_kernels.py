@@ -186,12 +186,6 @@ with code_generation_context.CodeGeneration() as ctx:
         index_shape=density_field.index_shape,
         target=target)
 
-    pystencils_walberla.generate_pack_info_from_kernel(
-        ctx,
-        f"DensityPackInfo_{precision_suffix}",
-        ek_electrostatic.continuity(),
-        target=target)
-
     # ek reactions
     for i in range(1, max_num_reactants + 1):
         assignments = list(reaction_obj.generate_reaction(num_reactants=i))

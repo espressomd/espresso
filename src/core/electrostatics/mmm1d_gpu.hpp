@@ -21,7 +21,7 @@
 
 /**
  * @file
- * MMM1D algorithm for long-range %Coulomb interactions on the GPU.
+ * MMM1D algorithm for long-range Coulomb interactions on the GPU.
  * Implementation of the MMM1D method for the calculation of the electrostatic
  * interaction in one-dimensionally periodic systems. For details on the
  * method see MMM in general. The MMM1D method works only with the N-squared

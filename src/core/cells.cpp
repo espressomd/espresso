@@ -35,7 +35,6 @@
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 

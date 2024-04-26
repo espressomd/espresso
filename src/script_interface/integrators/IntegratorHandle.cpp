@@ -27,7 +27,8 @@
 #include "VelocityVerlet.hpp"
 #include "VelocityVerletIsoNPT.hpp"
 
-#include "core/integrate.hpp"
+#include "core/PropagationMode.hpp"
+#include "core/integrators/Propagation.hpp"
 #include "core/system/System.hpp"
 
 #include <memory>
@@ -44,8 +45,11 @@ IntegratorHandle::IntegratorHandle() {
              [&]() { get_system().set_time_step(get_value<double>(v)); });
        },
        [this]() { return get_system().get_time_step(); }},
-      {"time", [](Variant const &v) { set_time(get_value<double>(v)); },
-       []() { return get_sim_time(); }},
+      {"time",
+       [&](Variant const &v) {
+         get_system().set_sim_time(get_value<double>(v));
+       },
+       [this]() { return get_system().get_sim_time(); }},
       {"force_cap",
        [this](Variant const &v) {
          get_system().set_force_cap(get_value<double>(v));
@@ -62,7 +66,7 @@ IntegratorHandle::IntegratorHandle() {
          m_instance->activate();
        },
        [this]() {
-         switch (::integ_switch) {
+         switch (get_system().propagation->integ_switch) {
          case INTEG_METHOD_STEEPEST_DESCENT:
            return Variant{
                std::dynamic_pointer_cast<SteepestDescent>(m_instance)};
@@ -93,7 +97,9 @@ void IntegratorHandle::on_bind_system(::System::System &system) {
   auto const &params = *m_params;
   for (auto const &key : get_parameter_insertion_order()) {
     if (params.count(key) != 0ul) {
-      if (not(key == "time_step" and ::integ_switch == INTEG_METHOD_NVT and
+      // NOLINTNEXTLINE(readability-simplify-boolean-expr)
+      if (not(key == "time_step" and
+              system.propagation->integ_switch == INTEG_METHOD_NVT and
               system.get_time_step() == -1. and
               is_type<double>(params.at(key)) and
               get_value<double>(is_type<double>(params.at(key))) == -1.)) {

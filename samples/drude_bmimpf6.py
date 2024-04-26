@@ -34,7 +34,6 @@ import espressomd.accumulators
 import espressomd.electrostatics
 import espressomd.interactions
 import espressomd.drude_helpers
-import espressomd.virtual_sites
 import espressomd.visualization
 
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
@@ -80,7 +79,6 @@ box_l = box_volume**(1. / 3.)
 print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 
 if args.visu:
     d_scale = 0.988 * 0.5
@@ -260,10 +258,11 @@ cation_drude_parts = []
 
 if args.drude:
     print("-->Adding Drude related bonds")
+    system.thermostat.set_thermalized_bond(seed=123)
     thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
         temp_com=temperature_com, gamma_com=gamma_com,
         temp_distance=temperature_drude, gamma_distance=gamma_drude,
-        r_cut=min(lj_sigmas.values()) * 0.5, seed=123)
+        r_cut=min(lj_sigmas.values()) * 0.5)
     harmonic_bond = espressomd.interactions.HarmonicBond(
         k=k_drude, r_0=0.0, r_cut=1.0)
     system.bonded_inter.add(thermalized_dist_bond)

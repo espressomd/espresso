@@ -27,6 +27,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -38,7 +39,7 @@
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
 #include "immersed_boundaries.hpp"
-#include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "lb/particle_coupling.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
@@ -48,8 +49,7 @@
 #include "short_range_loop.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
-#include "thermostats/langevin_inline.hpp"
-#include "virtual_sites.hpp"
+#include "virtual_sites/relative.hpp"
 
 #include <utils/math/sqr.hpp>
 
@@ -64,11 +64,8 @@
 #include <memory>
 #include <variant>
 
-/** Initialize the forces for a ghost particle */
-inline ParticleForce init_ghost_force(Particle const &) { return {}; }
-
 /** External particle forces */
-inline ParticleForce external_force(Particle const &p) {
+static ParticleForce external_force(Particle const &p) {
   ParticleForce f = {};
 
 #ifdef EXTERNAL_FORCES
@@ -89,63 +86,22 @@ inline ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-inline ParticleForce thermostat_force(Particle const &p, double time_step,
-                                      double kT) {
-  extern LangevinThermostat langevin;
-  if (!(thermo_switch & THERMO_LANGEVIN)) {
-    return {};
-  }
-
-#ifdef ROTATION
-  return {friction_thermo_langevin(langevin, p, time_step, kT),
-          p.can_rotate() ? convert_vector_body_to_space(
-                               p, friction_thermo_langevin_rotation(
-                                      langevin, p, time_step, kT))
-                         : Utils::Vector3d{}};
-#else
-  return friction_thermo_langevin(langevin, p, time_step, kT);
-#endif
-}
-
-/** Initialize the forces for a real particle */
-inline ParticleForce init_real_particle_force(Particle const &p,
-                                              double time_step, double kT) {
-  return thermostat_force(p, time_step, kT) + external_force(p);
-}
-
-static void init_forces(const ParticleRange &particles,
-                        const ParticleRange &ghost_particles, double time_step,
-                        double kT) {
+static void init_forces(ParticleRange const &particles,
+                        ParticleRange const &ghost_particles) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  /* The force initialization depends on the used thermostat and the
-     thermodynamic ensemble */
-
-#ifdef NPT
-  npt_reset_instantaneous_virials();
-#endif
-
-  /* initialize forces with Langevin thermostat forces
-     or zero depending on the thermostat
-     set torque to zero for all and rescale quaternions
-  */
   for (auto &p : particles) {
-    p.force_and_torque() = init_real_particle_force(p, time_step, kT);
+    p.force_and_torque() = external_force(p);
   }
 
-  /* initialize ghost forces with zero
-     set torque to zero for all and rescale quaternions
-  */
-  for (auto &p : ghost_particles) {
-    p.force_and_torque() = init_ghost_force(p);
-  }
+  init_forces_ghosts(ghost_particles);
 }
 
-void init_forces_ghosts(const ParticleRange &particles) {
+void init_forces_ghosts(ParticleRange const &particles) {
   for (auto &p : particles) {
-    p.force_and_torque() = init_ghost_force(p);
+    p.force_and_torque() = {};
   }
 }
 
@@ -161,7 +117,7 @@ static void force_capping(ParticleRange const &particles, double force_cap) {
   }
 }
 
-void System::System::calculate_forces(double kT) {
+void System::System::calculate_forces() {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
@@ -188,8 +144,12 @@ void System::System::calculate_forces(double kT) {
       (**icc).iteration(*cell_structure, particles, ghost_particles);
     }
   }
+#endif // ELECTROSTATICS
+#ifdef NPT
+  npt_reset_instantaneous_virials();
 #endif
-  init_forces(particles, ghost_particles, time_step, kT);
+  init_forces(particles, ghost_particles);
+  thermostat_force_init();
 
   calc_long_range_forces(particles);
 
@@ -218,13 +178,14 @@ void System::System::calculate_forces(double kT) {
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
-       elc_kernel_ptr = get_ptr(elc_kernel), &nonbonded_ias = *nonbonded_ias](
-          Particle &p1, Particle &p2, Distance const &d) {
+       elc_kernel_ptr = get_ptr(elc_kernel), &nonbonded_ias = *nonbonded_ias,
+       &thermostat = *thermostat,
+       &box_geo = *box_geo](Particle &p1, Particle &p2, Distance const &d) {
         auto const &ia_params =
             nonbonded_ias.get_ia_param(p1.type(), p2.type());
-        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                  ia_params, coulomb_kernel_ptr,
-                                  dipoles_kernel_ptr, elc_kernel_ptr);
+        add_non_bonded_pair_force(
+            p1, p2, d.vec21, sqrt(d.dist2), d.dist2, ia_params, thermostat,
+            box_geo, coulomb_kernel_ptr, dipoles_kernel_ptr, elc_kernel_ptr);
 #ifdef COLLISION_DETECTION
         if (collision_params.mode != CollisionModeType::OFF)
           detect_collision(p1, p2, d.dist2);
@@ -253,8 +214,9 @@ void System::System::calculate_forces(double kT) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation(*cell_structure);
 
-  if (lb.is_solver_set()) {
-    LB::couple_particles(thermo_virtual, particles, ghost_particles, time_step);
+  if (thermostat->lb and (propagation->used_propagations &
+                          PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {
+    lb_couple_particles(time_step);
   }
 
 #ifdef CUDA
@@ -267,12 +229,14 @@ void System::System::calculate_forces(double kT) {
 #endif
 #endif // CUDA
 
-// VIRTUAL_SITES distribute forces
-#ifdef VIRTUAL_SITES
-  virtual_sites()->back_transfer_forces_and_torques();
+#ifdef VIRTUAL_SITES_RELATIVE
+  if (propagation->used_propagations &
+      (PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE)) {
+    vs_relative_back_transfer_forces_and_torques(*cell_structure);
+  }
 #endif
 
-  // Communication Step: ghost forces
+  // Communication step: ghost forces
   cell_structure->ghosts_reduce_forces();
 
   // should be pretty late, since it needs to zero out the total force
@@ -282,7 +246,7 @@ void System::System::calculate_forces(double kT) {
   force_capping(particles, force_cap);
 
   // mark that forces are now up-to-date
-  recalc_forces = false;
+  propagation->recalc_forces = false;
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {
@@ -293,7 +257,6 @@ void calc_long_range_forces(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   Coulomb::get_coulomb().calc_long_range_force(particles);
-
 #endif // ELECTROSTATICS
 
 #ifdef DIPOLES

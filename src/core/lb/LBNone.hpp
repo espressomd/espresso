@@ -47,10 +47,12 @@ struct LBNone {
   }
   Utils::Vector3d get_momentum() const { throw NoLBActive{}; }
   void veto_time_step(double) const { throw NoLBActive{}; }
+  void veto_kT(double) const { throw NoLBActive{}; }
   void sanity_checks(System::System const &) const { throw NoLBActive{}; }
   void lebc_sanity_checks(unsigned int, unsigned int) const {
     throw NoLBActive{};
   }
+  void veto_boxl_change() const { throw NoLBActive{}; }
   void on_cell_structure_change() const { throw NoLBActive{}; }
   void on_boxl_change() const { throw NoLBActive{}; }
   void on_node_grid_change() const { throw NoLBActive{}; }

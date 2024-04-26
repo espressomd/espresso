@@ -22,6 +22,7 @@
 #include <list>
 #include <memory>
 #include <stack>
+#include <utility>
 
 /**
  * @brief Manager to control the lifetime of shared resources.
@@ -58,8 +59,8 @@ class ResourceManager {
     std::shared_ptr<T> m_resource;
 
   public:
-    explicit ResourceLockImpl(std::shared_ptr<T> const &resource)
-        : m_resource(resource) {}
+    explicit ResourceLockImpl(std::shared_ptr<T> resource)
+        : m_resource(std::move(resource)) {}
     ~ResourceLockImpl() override { m_resource.reset(); }
   };
 

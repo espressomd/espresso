@@ -102,8 +102,8 @@ namespace boost {
 namespace serialization {
 template <class Archive>
 void serialize(Archive &ar, NeighborPIDs &n, unsigned int const /* version */) {
-  ar &n.pid;
-  ar &n.neighbor_pids;
+  ar & n.pid;
+  ar & n.neighbor_pids;
 }
 } // namespace serialization
 } // namespace boost
@@ -132,12 +132,12 @@ namespace boost {
 namespace serialization {
 template <class Archive>
 void serialize(Archive &ar, PairInfo &p, unsigned int const /* version */) {
-  ar &p.id1;
-  ar &p.id2;
-  ar &p.pos1;
-  ar &p.pos2;
-  ar &p.vec21;
-  ar &p.node;
+  ar & p.id1;
+  ar & p.id2;
+  ar & p.pos1;
+  ar & p.pos2;
+  ar & p.vec21;
+  ar & p.node;
 }
 } // namespace serialization
 } // namespace boost

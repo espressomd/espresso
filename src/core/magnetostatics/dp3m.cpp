@@ -43,11 +43,12 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "integrate.hpp"
+#include "integrators/Propagation.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -64,6 +65,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <functional>
 #include <optional>
 #include <sstream>
@@ -251,17 +253,22 @@ template <int cao> struct AssignForces {
 };
 } // namespace
 
-double DipolarP3M::kernel(bool force_flag, bool energy_flag,
-                          ParticleRange const &particles) {
-  int i, ind, j[3];
+double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
+                                     ParticleRange const &particles) {
   /* k-space energy */
-  double k_space_energy_dip = 0.;
-  double tmp0, tmp1;
-
-  auto const &box_geo = *get_system().box_geo;
+  double energy = 0.;
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
   auto const dipole_prefac = prefactor / Utils::int_pow<3>(dp3m.params.mesh[0]);
+#ifdef NPT
+  auto const npt_flag =
+      force_flag and (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO);
+#else
+  auto constexpr npt_flag = false;
+#endif
 
-  if (dp3m.sum_mu2 > 0) {
+  if (dp3m.sum_mu2 > 0.) {
+    dipole_assign(particles);
     /* Gather information for FFT grid inside the nodes domain (inner local
      * mesh) and perform forward 3D FFT (Charge Assignment Mesh). */
     std::array<double *, 3> meshes = {{dp3m.rs_mesh_dip[0].data(),
@@ -279,20 +286,21 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
   }
 
   /* === k-space energy calculation  === */
-  if (energy_flag) {
+  if (energy_flag or npt_flag) {
     /*********************
        Dipolar energy
     **********************/
-    if (dp3m.sum_mu2 > 0) {
+    if (dp3m.sum_mu2 > 0.) {
       /* i*k differentiation for dipolar gradients:
        * |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
-      ind = 0;
-      i = 0;
-      double node_k_space_energy_dip = 0.0;
+      int ind = 0;
+      int i = 0;
+      int j[3];
+      double node_energy = 0.0;
       for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) {
         for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1]; j[1]++) {
           for (j[2] = 0; j[2] < dp3m.fft.plan[3].new_mesh[2]; j[2]++) {
-            node_k_space_energy_dip +=
+            node_energy +=
                 dp3m.g_energy[i] *
                 (Utils::sqr(
                      dp3m.rs_mesh_dip[0][ind] *
@@ -313,23 +321,19 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
           }
         }
       }
-      node_k_space_energy_dip *=
-          dipole_prefac * Utils::pi() * box_geo.length_inv()[0];
-      boost::mpi::reduce(comm_cart, node_k_space_energy_dip, k_space_energy_dip,
-                         std::plus<>(), 0);
+      node_energy *= dipole_prefac * Utils::pi() * box_geo.length_inv()[0];
+      boost::mpi::reduce(comm_cart, node_energy, energy, std::plus<>(), 0);
 
       if (dp3m.energy_correction == 0.)
         calc_energy_correction();
 
       if (this_node == 0) {
         /* self energy correction */
-        k_space_energy_dip -= prefactor * dp3m.sum_mu2 * 2. *
-                              Utils::int_pow<3>(dp3m.params.alpha) *
-                              Utils::sqrt_pi_i() / 3.;
+        energy -= prefactor * dp3m.sum_mu2 * Utils::sqrt_pi_i() * (2. / 3.) *
+                  Utils::int_pow<3>(dp3m.params.alpha);
 
         /* dipolar energy correction due to systematic Madelung-self effects */
-        auto const volume = box_geo.volume();
-        k_space_energy_dip += prefactor * dp3m.energy_correction / volume;
+        energy += prefactor * dp3m.energy_correction / box_geo.volume();
       }
     }
   } // if (energy_flag)
@@ -339,11 +343,13 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
     /****************************
      * DIPOLAR TORQUES (k-space)
      ****************************/
-    if (dp3m.sum_mu2 > 0) {
+    if (dp3m.sum_mu2 > 0.) {
       auto const two_pi_L_i = 2. * Utils::pi() * box_geo.length_inv()[0];
       /* fill in ks_mesh array for torque calculation */
-      ind = 0;
-      i = 0;
+      int ind = 0;
+      int i = 0;
+      int j[3];
+      double tmp0, tmp1;
 
       for (j[0] = 0; j[0] < dp3m.fft.plan[3].new_mesh[0]; j[0]++) { // j[0]=n_y
         for (j[1] = 0; j[1] < dp3m.fft.plan[3].new_mesh[1];
@@ -493,16 +499,24 @@ double DipolarP3M::kernel(bool force_flag, bool energy_flag,
             particles);
       }
     } /* if (dp3m.sum_mu2 > 0) */
-  }   /* if (force_flag) */
+  } /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
     auto const surface_term =
-        calc_surface_term(force_flag, energy_flag, particles);
-    if (this_node == 0)
-      k_space_energy_dip += surface_term;
+        calc_surface_term(force_flag, energy_flag or npt_flag, particles);
+    if (this_node == 0) {
+      energy += surface_term;
+    }
+  }
+  if (npt_flag) {
+    npt_add_virial_contribution(energy);
+    fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
+  }
+  if (not energy_flag) {
+    energy = 0.;
   }
 
-  return k_space_energy_dip;
+  return energy;
 }
 
 double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,

@@ -6,7 +6,7 @@ runs:
     - run: |
        brew install boost boost-mpi fftw
        brew install hdf5-mpi
-       pip3 install -c requirements.txt numpy cython h5py scipy
+       pip3 install -c requirements.txt "cython<3.0" numpy scipy h5py packaging
       shell: bash
       if: runner.os == 'macOS'
     - run: |

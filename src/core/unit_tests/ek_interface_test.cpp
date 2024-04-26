@@ -85,7 +85,7 @@ static auto make_ek_actor() {
   ek_lattice = std::make_shared<LatticeWalberla>(
       params.grid_dimensions, ::communicator.node_grid, n_ghost_layers);
   ek_container = std::make_shared<EK::EKWalberla::ek_container_type>(
-      params.tau, new_ek_poisson_none(ek_lattice, single_precision));
+      params.tau, walberla::new_ek_poisson_none(ek_lattice, single_precision));
   ek_reactions = std::make_shared<EK::EKWalberla::ek_reactions_type>();
   ek_instance = std::make_shared<EK::EKWalberla>(ek_container, ek_reactions);
 #endif
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     auto constexpr single_precision = true;
     auto constexpr stoich = 1.;
     auto constexpr order = 2.;
-    auto ek_species = new_ek_walberla(
+    auto ek_species = walberla::new_ek_walberla(
         espresso::ek_lattice, params.diffusion, params.kT, params.valency,
         params.ext_efield, params.density, false, false, single_precision);
     auto ek_reactant = std::make_shared<EKReactant>(ek_species, stoich, order);
@@ -181,14 +181,23 @@ BOOST_AUTO_TEST_CASE(ek_interface_walberla) {
     BOOST_REQUIRE(not espresso::ek_container->contains(ek_species));
     ek.propagate(); // no-op
     BOOST_REQUIRE_EQUAL(get_n_runtime_errors(), 0);
-  }
 
-  {
-    // EK prevents changing most of the system state
-    BOOST_CHECK_THROW(ek.on_boxl_change(), std::runtime_error);
-    BOOST_CHECK_THROW(ek.on_timestep_change(), std::runtime_error);
-    BOOST_CHECK_THROW(ek.on_temperature_change(), std::runtime_error);
-    BOOST_CHECK_THROW(ek.on_node_grid_change(), std::runtime_error);
+    {
+      // EK prevents changing most of the system state
+      ek.veto_kT(params.kT + 1.);
+      espresso::ek_container->add(ek_species);
+      BOOST_CHECK_THROW(ek.veto_kT(params.kT + 1.), std::runtime_error);
+      BOOST_CHECK_THROW(ek.on_boxl_change(), std::runtime_error);
+      BOOST_CHECK_THROW(ek.veto_boxl_change(), std::runtime_error);
+      BOOST_CHECK_THROW(ek.veto_time_step(ek.get_tau() * 2.),
+                        std::invalid_argument);
+      BOOST_CHECK_THROW(ek.veto_time_step(ek.get_tau() / 2.5),
+                        std::invalid_argument);
+      BOOST_CHECK_THROW(ek.on_node_grid_change(), std::runtime_error);
+      ek.on_timestep_change();
+      ek.on_temperature_change();
+      espresso::ek_container->remove(ek_species);
+    }
   }
 }
 #endif // WALBERLA
@@ -207,7 +216,9 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
     BOOST_CHECK_THROW(ek.propagate(), NoEKActive);
     BOOST_CHECK_THROW(ek.get_tau(), NoEKActive);
     BOOST_CHECK_THROW(ek.sanity_checks(), NoEKActive);
+    BOOST_CHECK_THROW(ek.veto_boxl_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.veto_time_step(0.), NoEKActive);
+    BOOST_CHECK_THROW(ek.veto_kT(0.), NoEKActive);
     BOOST_CHECK_THROW(ek.on_cell_structure_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_boxl_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_node_grid_change(), NoEKActive);
@@ -223,7 +234,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
 BOOST_AUTO_TEST_SUITE_END()
 
 int main(int argc, char **argv) {
-  mpi_init_stand_alone(argc, argv);
+  auto const mpi_handle = MpiContainerUnitTest(argc, argv);
   espresso::system = System::System::create();
   espresso::system->set_box_l(params.box_dimensions);
   espresso::system->set_time_step(params.time_step);

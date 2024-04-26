@@ -386,23 +386,35 @@ class LBTest:
         with self.assertRaisesRegex(ValueError, "Parameter 'rng_state' must be >= 0"):
             lbf.rng_state = -5
 
+    def test_temperature_mismatch(self):
+        self.system.thermostat.set_langevin(kT=2., seed=23, gamma=2.)
+        lbf = self.lb_class(kT=1., seed=42, **self.params, **self.lb_params)
+        self.system.lb = lbf
+        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1.0*: there are currently active thermostats with kT=2.0*"):
+            self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.)
+        self.assertFalse(self.system.thermostat.lb.is_active)
+        self.assertTrue(self.system.thermostat.langevin.is_active)
+
     def test_parameter_change_without_seed(self):
         lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
         self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=3.0)
-        with self.assertRaisesRegex(Exception, "Temperature change not supported by LB"):
+        self.assertAlmostEqual(self.system.thermostat.lb.gamma, 3.)
+        with self.assertRaisesRegex(RuntimeError, "Temperature change not supported by LB"):
             self.system.thermostat.turn_off()
-        with self.assertRaisesRegex(Exception, "Time step change not supported by LB"):
-            self.system.time_step /= 2.
+            self.system.thermostat.set_langevin(kT=2., seed=23, gamma=2.)
+        self.assertFalse(self.system.thermostat.langevin.is_active)
+        with self.assertRaisesRegex(ValueError, "must be an integer multiple of the MD time_step"):
+            self.system.time_step /= 1.7
+        self.system.time_step *= 1.
         if espressomd.has_features("ELECTROSTATICS"):
             self.system.electrostatics.solver = espressomd.electrostatics.DH(
                 prefactor=1., kappa=1., r_cut=1.)  # should not fail
             self.system.electrostatics.clear()
         with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by LB"):
             self.system.box_l = [1., 2., 3.]
-        np.testing.assert_allclose(
-            np.copy(self.system.box_l), [1., 2., 3.], atol=1e-7)
+        np.testing.assert_allclose(np.copy(self.system.box_l), 6., atol=1e-7)
         with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by LB"):
             self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -419,7 +431,7 @@ class LBTest:
             for offset in (shape[i] + 1, -(shape[i] + 1)):
                 n = [0, 0, 0]
                 n[i] += offset
-                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"
+                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"  # nopep8
                 with self.assertRaisesRegex(IndexError, err_msg):
                     lbf[tuple(n)].velocity
         # node index
@@ -565,6 +577,35 @@ class LBTest:
                 [n.last_applied_force for n in all_coupling_nodes])
             np.testing.assert_allclose(
                 np.sum(applied_forces, axis=0), [0, 0, 0])
+
+    def test_viscous_coupling_rounding(self):
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
+        p = self.system.part.add(pos=[-1E-30] * 3, v=[-1, 0, 0])
+        self.system.integrator.run(1)
+        for _ in range(20):
+            self.system.integrator.run(1)
+            self.assertTrue(np.all(p.f != 0.0))
+
+    def test_tracers_coupling_rounding(self):
+        import espressomd.propagation
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf
+        ext_f = np.array([0.01, 0.02, 0.03])
+        lbf.ext_force_density = ext_f
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
+        rtol = self.rtol
+        if lbf.single_precision:
+            rtol *= 100.
+        mode_tracer = espressomd.propagation.Propagation.TRANS_LB_TRACER
+        self.system.time = 0.
+        p = self.system.part.add(pos=[-1E-30] * 3, propagation=mode_tracer)
+        for _ in range(10):
+            self.system.integrator.run(1)
+            vel = np.copy(p.v) * self.params["density"]
+            vel_ref = (self.system.time + lbf.tau * 0.5) * ext_f
+            np.testing.assert_allclose(vel, vel_ref, rtol=rtol, atol=0.)
 
     def test_thermalization_force_balance(self):
         system = self.system

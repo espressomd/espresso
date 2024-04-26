@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ANGLE_COSSQUARE_H
-#define ANGLE_COSSQUARE_H
+
+#pragma once
+
 /** \file
  *  Routines to calculate the angle energy or/and and force
  *  for a particle triple using the potential described in
@@ -31,6 +32,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cmath>
 #include <tuple>
 
 /** Parameters for three-body angular potential (cossquare). */
@@ -46,7 +48,11 @@ struct AngleCossquareBond {
 
   static constexpr int num = 2;
 
-  AngleCossquareBond(double bend, double phi0);
+  AngleCossquareBond(double bend, double phi0) {
+    this->bend = bend;
+    this->phi0 = phi0;
+    this->cos_phi0 = cos(phi0);
+  }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
@@ -56,9 +62,9 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &bend;
-    ar &phi0;
-    ar &cos_phi0;
+    ar & bend;
+    ar & phi0;
+    ar & cos_phi0;
   }
 };
 
@@ -87,5 +93,3 @@ inline double AngleCossquareBond::energy(Utils::Vector3d const &vec1,
   auto const cos_phi = calc_cosine(vec1, vec2, true);
   return 0.5 * bend * Utils::sqr(cos_phi - cos_phi0);
 }
-
-#endif /* ANGLE_COSSQUARE_H */

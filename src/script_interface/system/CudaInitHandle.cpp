@@ -59,7 +59,7 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
       invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
       for (int i = 0; i < n_gpus; ++i) {
         invoke_skip_cuda_exceptions([&devices, i]() {
-          char gpu_name_buffer[4 + 64];
+          char gpu_name_buffer[256] = {'\0'};
           cuda_get_gpu_name(i, gpu_name_buffer);
           devices[i] = std::string{gpu_name_buffer};
         });

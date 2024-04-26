@@ -16,14 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_LEES_EDWARDS_PROTOCOLS_HPP
-#define CORE_LEES_EDWARDS_PROTOCOLS_HPP
+
+#pragma once
 
 #include <utils/Vector.hpp>
 
-#include <boost/variant.hpp>
-
 #include <cmath>
+#include <variant>
 
 namespace LeesEdwards {
 
@@ -40,8 +39,8 @@ struct LinearShear {
   LinearShear()
       : m_initial_pos_offset{0.}, m_shear_velocity{0.}, m_time_0{0.} {}
   LinearShear(double initial_offset, double shear_velocity, double time_0)
-      : m_initial_pos_offset{initial_offset},
-        m_shear_velocity{shear_velocity}, m_time_0{time_0} {}
+      : m_initial_pos_offset{initial_offset}, m_shear_velocity{shear_velocity},
+        m_time_0{time_0} {}
   double shear_velocity(double time) const { return m_shear_velocity; }
   double pos_offset(double time) const {
     return m_initial_pos_offset + (time - m_time_0) * m_shear_velocity;
@@ -57,8 +56,8 @@ struct OscillatoryShear {
       : m_initial_pos_offset{0.}, m_amplitude{0.}, m_omega{0.}, m_time_0{0.} {}
   OscillatoryShear(double initial_offset, double amplitude, double omega,
                    double time_0)
-      : m_initial_pos_offset{initial_offset},
-        m_amplitude{amplitude}, m_omega{omega}, m_time_0{time_0} {}
+      : m_initial_pos_offset{initial_offset}, m_amplitude{amplitude},
+        m_omega{omega}, m_time_0{time_0} {}
   double pos_offset(double time) const {
     return m_initial_pos_offset +
            m_amplitude * std::sin(m_omega * (time - m_time_0));
@@ -73,12 +72,12 @@ struct OscillatoryShear {
 };
 
 /** Type which holds the currently active protocol */
-using ActiveProtocol = boost::variant<Off, LinearShear, OscillatoryShear>;
+using ActiveProtocol = std::variant<Off, LinearShear, OscillatoryShear>;
 
-class PosOffsetGetter : public boost::static_visitor<double> {
+class PosOffsetGetter {
 public:
   PosOffsetGetter(double time) : m_time{time} {}
-  template <typename T> double operator()(const T &protocol) const {
+  template <typename T> double operator()(T const &protocol) const {
     return protocol.pos_offset(m_time);
   }
 
@@ -87,14 +86,14 @@ private:
 };
 
 inline double get_pos_offset(double time, ActiveProtocol const &protocol) {
-  return boost::apply_visitor(PosOffsetGetter(time), protocol);
+  return std::visit(PosOffsetGetter(time), protocol);
 }
 
 /** Visitor to get shear velocity from the Lees-Edwards protocol */
-class ShearVelocityGetter : public boost::static_visitor<double> {
+class ShearVelocityGetter {
 public:
   ShearVelocityGetter(double time) : m_time{time} {}
-  template <typename T> double operator()(const T &protocol) const {
+  template <typename T> double operator()(T const &protocol) const {
     return protocol.shear_velocity(m_time);
   }
 
@@ -104,9 +103,7 @@ private:
 
 /** Calculation of current velocity */
 inline double get_shear_velocity(double time, ActiveProtocol const &protocol) {
-  return boost::apply_visitor(ShearVelocityGetter(time), protocol);
+  return std::visit(ShearVelocityGetter(time), protocol);
 }
 
 } // namespace LeesEdwards
-
-#endif

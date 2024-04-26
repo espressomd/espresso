@@ -45,7 +45,7 @@ public:
     // create a dummy system to be able to read the list of parameters
     m_instance = std::make_shared<System>();
   }
-  void do_construct(VariantMap const &) override{};
+  void do_construct(VariantMap const &) override {};
   Variant get_parameter(const std::string &name) const override {
     return m_instance->get_parameter(name);
   }
