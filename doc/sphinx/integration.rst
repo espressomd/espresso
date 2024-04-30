@@ -39,7 +39,7 @@ If you used a different integrator and want to switch back, use
 
 :meth:`espressomd.integrate.IntegratorHandle.set_vv`
 
-The Velocity Verlet algotithm is used for equations of motion of the general form
+The Velocity Verlet algorithm is used for equations of motion of the general form
 
 .. math:: 
     
@@ -214,7 +214,11 @@ A code snippet could look like::
 
 The 'equation of motion' in discretised form reads
 
-.. math:: \vec{x}(t + dt) = \vec{x}(t) + \min\left(|\gamma\vec{F}dt|, r_{\text{max_displacement}}\right)  \vec{F}/|\vec{F}|
+.. math:: \vec{x}(t + \Delta t) = \vec{x}(t) + \min\left(|\gamma\vec{F}(t)\Delta t|, \vec{r}_{\text{max}}\right) \cdot \vec{F}(t)/|\vec{F}(t)|
+
+with :math:`\vec{r}_{\text{max}}` the maximal displacement, :math:`\gamma`
+the friction coefficient, :math:`\vec{x}` the particle position,
+:math:`\vec{F}` the force on the particle, and :math:`\Delta t` the time step.
 
 This feature is used to propagate each particle by a small distance parallel to the force acting on it.
 When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
