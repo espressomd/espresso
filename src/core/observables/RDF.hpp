@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef OBSERVABLES_RDF_HPP
-#define OBSERVABLES_RDF_HPP
+#pragma once
 
 #include "Observable.hpp"
 
@@ -53,8 +52,8 @@ public:
 
   std::vector<std::size_t> shape() const override { return {n_r_bins}; }
 
-  explicit RDF(std::vector<int> ids1, std::vector<int> ids2, int n_r_bins,
-               double min_r, double max_r)
+  RDF(std::vector<int> ids1, std::vector<int> ids2, int n_r_bins, double min_r,
+      double max_r)
       : m_ids1(std::move(ids1)), m_ids2(std::move(ids2)), min_r(min_r),
         max_r(max_r), n_r_bins(n_r_bins) {
     if (max_r <= min_r)
@@ -72,4 +71,3 @@ public:
 };
 
 } // Namespace Observables
-#endif

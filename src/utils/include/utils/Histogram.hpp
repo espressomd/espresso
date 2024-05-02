@@ -108,7 +108,7 @@ public:
       for (std::size_t i = 0; i < M; ++i) {
         index[i] = calc_bin_index(pos[i], m_limits[i].first, m_bin_sizes[i]);
       }
-      for (array_index i = 0; i < N; ++i) {
+      for (array_index i = 0; i < static_cast<array_index>(N); ++i) {
         index.back() = i;
         m_array(index) += value[i];
         m_count(index)++;

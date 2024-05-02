@@ -125,6 +125,7 @@ public:
   Utils::Vector3d max_cutoff() const override {
     return m_n_square.max_cutoff();
   }
+
   Utils::Vector3d max_range() const override { return m_n_square.max_range(); }
 
   boost::optional<BoxGeometry> minimum_image_distance() const override {

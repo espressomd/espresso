@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_SLICE_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_SLICE_HPP
+#pragma once
 
 #include "ParticleHandle.hpp"
 
@@ -53,5 +52,3 @@ public:
 
 } // namespace Particles
 } // namespace ScriptInterface
-
-#endif

@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_MPI_ALL_GATHERV_HPP
-#define UTILS_MPI_ALL_GATHERV_HPP
+#pragma once
 
 #include "utils/Span.hpp"
 
@@ -26,6 +25,7 @@
 #include <boost/mpi/request.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 namespace Utils {
@@ -36,7 +36,7 @@ inline std::vector<int> displacements(Span<int const> sizes) {
   std::vector<int> displ(sizes.size());
 
   int offset = 0;
-  for (int i = 0; i < displ.size(); i++) {
+  for (std::size_t i = 0u; i < displ.size(); i++) {
     displ[i] = offset;
     offset += sizes[i];
   }
@@ -81,4 +81,3 @@ auto iall_gatherv(boost::mpi::communicator const &comm, T const *in_values,
 }
 } // namespace Mpi
 } // namespace Utils
-#endif

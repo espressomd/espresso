@@ -878,6 +878,7 @@ private:
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
+    assert(params.empty());
     if (name == "get_types") {
       return std::vector<int>{{m_types[0], m_types[1]}};
     }

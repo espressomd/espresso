@@ -30,12 +30,16 @@
 
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
+#include <cassert>
+#include <string>
+
 namespace ScriptInterface {
 namespace Dipoles {
 
 template <class SIClass, class CoreClass>
 Variant Actor<SIClass, CoreClass>::do_call_method(std::string const &name,
                                                   VariantMap const &params) {
+  assert(params.empty());
   if (name == "activate") {
     context()->parallel_try_catch([this]() {
       auto &system = get_system();

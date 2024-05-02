@@ -52,7 +52,7 @@ int RegularDecomposition::position_to_cell_index(
     Utils::Vector3d const &pos) const {
   Utils::Vector3i cpos;
 
-  for (unsigned int i = 0u; i < 3u; i++) {
+  for (auto i = 0u; i < 3u; i++) {
     cpos[i] = static_cast<int>(std::floor(pos[i] * inv_cell_size[i])) + 1 -
               cell_offset[i];
 
@@ -306,7 +306,7 @@ void RegularDecomposition::create_cell_grid(double range) {
     auto const volume = Utils::product(local_box_l);
     auto const scale = std::cbrt(RegularDecomposition::max_num_cells / volume);
 
-    for (unsigned int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       /* this is at least 1 */
       cell_grid[i] = static_cast<int>(std::ceil(local_box_l[i] * scale));
       cell_range[i] = local_box_l[i] / static_cast<double>(cell_grid[i]);
@@ -336,11 +336,11 @@ void RegularDecomposition::create_cell_grid(double range) {
         break;
 
       /* find coordinate with the smallest cell range */
-      int min_ind = 0;
-      double min_size = cell_range[0];
+      auto min_ind = 0u;
+      auto min_size = cell_range[0];
 
-      for (int i = 1; i < 3; i++) {
-        if (cell_grid[i] > 1 && cell_range[i] < min_size) {
+      for (auto i = 1u; i < 3u; ++i) {
+        if (cell_grid[i] > 1 and cell_range[i] < min_size) {
           min_ind = i;
           min_size = cell_range[i];
         }
@@ -369,7 +369,7 @@ void RegularDecomposition::create_cell_grid(double range) {
 
   /* now set all dependent variables */
   int new_cells = 1;
-  for (unsigned int i = 0; i < 3; i++) {
+  for (auto i = 0u; i < 3u; i++) {
     ghost_cell_grid[i] = cell_grid[i] + 2;
     new_cells *= ghost_cell_grid[i];
     cell_size[i] = m_local_box.length()[i] / static_cast<double>(cell_grid[i]);

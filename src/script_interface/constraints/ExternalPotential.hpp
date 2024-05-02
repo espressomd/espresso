@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_POTENTIAL_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_EXTERNAL_POTENTIAL_HPP
+#pragma once
 
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ExternalPotential.hpp"
@@ -83,5 +82,3 @@ private:
 };
 } // namespace Constraints
 } // namespace ScriptInterface
-
-#endif

@@ -31,7 +31,7 @@
 void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
                                             BoxGeometry const &box_geo,
                                             LocalBox const &local_box,
-                                            LB::Solver &lb, double time_step);
+                                            LB::Solver &lb);
 void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
                           double time_step);
 

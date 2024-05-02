@@ -77,14 +77,12 @@
 #include <optional>
 #include <tuple>
 
-inline ParticleForce calc_central_radial_force(Particle const &p1,
-                                               Particle const &p2,
-                                               IA_parameters const &ia_params,
+inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
                                                Utils::Vector3d const &d,
                                                double const dist) {
 
   ParticleForce pf{};
-  double force_factor = 0;
+  auto force_factor = 0.;
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
   force_factor += lj_pair_force_factor(ia_params, dist);
@@ -219,7 +217,7 @@ inline void add_non_bonded_pair_force(
 #ifdef EXCLUSIONS
     if (do_nonbonded(p1, p2)) {
 #endif
-      pf += calc_central_radial_force(p1, p2, ia_params, d, dist);
+      pf += calc_central_radial_force(ia_params, d, dist);
       pf += calc_central_radial_charge_force(p1, p2, ia_params, d, dist,
                                              coulomb_kernel);
       pf += calc_non_central_force(p1, p2, ia_params, d, dist);

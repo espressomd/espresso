@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_MEMCPY_ARCHIVE_HPP
-#define ESPRESSO_MEMCPY_ARCHIVE_HPP
+
+#pragma once
 
 #include "utils/Span.hpp"
 
@@ -115,7 +115,7 @@ private:
     boost::serialization::serialize_adl(*static_cast<Derived *>(this), value,
                                         4);
     auto const new_pos = insert;
-    assert((new_pos - old_pos) <= sizeof(T));
+    assert(static_cast<std::size_t>(new_pos - old_pos) <= sizeof(T));
 
     auto const padding_size = sizeof(T) - (new_pos - old_pos);
     skip(padding_size);
@@ -226,5 +226,3 @@ public:
   }
 };
 } // namespace Utils
-
-#endif // ESPRESSO_MEMCPY_ARCHIVE_HPP

@@ -58,6 +58,7 @@ public:
     assert(system);
     assert(not m_system.expired());
     assert(system == m_system.lock());
+    static_cast<void>(system);
     m_system.reset();
   }
 };

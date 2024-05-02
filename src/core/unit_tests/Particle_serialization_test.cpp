@@ -152,7 +152,7 @@ class BitwiseSerializable {
 
 class NotBitwiseSerializable {
   friend boost::serialization::access;
-  template <class Archive> void serialize(Archive &ar, long int) {}
+  template <class Archive> void serialize(Archive &, long int) {}
 };
 
 class MixedSerializable {

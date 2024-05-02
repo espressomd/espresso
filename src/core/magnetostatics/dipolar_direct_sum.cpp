@@ -220,8 +220,7 @@ T image_sum(InputIterator begin, InputIterator end, InputIterator it,
 }
 
 static auto gather_particle_data(BoxGeometry const &box_geo,
-                                 ParticleRange const &particles,
-                                 int n_replicas) {
+                                 ParticleRange const &particles) {
   auto const &comm = ::comm_cart;
   std::vector<Particle *> local_particles;
   std::vector<PosMom> local_posmom;
@@ -293,7 +292,7 @@ void DipolarDirectSum::add_long_range_forces(
   auto const &box_geo = *get_system().box_geo;
   auto const &box_l = box_geo.length();
   auto [local_particles, all_posmom, reqs, offset] =
-      gather_particle_data(box_geo, particles, n_replicas);
+      gather_particle_data(box_geo, particles);
 
   /* Number of image boxes considered */
   auto const ncut = get_n_cut(box_geo, n_replicas);
@@ -381,7 +380,7 @@ double
 DipolarDirectSum::long_range_energy(ParticleRange const &particles) const {
   auto const &box_geo = *get_system().box_geo;
   auto [local_particles, all_posmom, reqs, offset] =
-      gather_particle_data(box_geo, particles, n_replicas);
+      gather_particle_data(box_geo, particles);
 
   /* Number of image boxes considered */
   auto const ncut = get_n_cut(box_geo, n_replicas);
@@ -421,7 +420,7 @@ void DipolarDirectSum::dipole_field_at_part(
   auto const &box_geo = *get_system().box_geo;
   /* collect particle data */
   auto [local_particles, all_posmom, reqs, offset] =
-      gather_particle_data(box_geo, particles, n_replicas);
+      gather_particle_data(box_geo, particles);
 
   auto const ncut = get_n_cut(box_geo, n_replicas);
   auto const with_replicas = (ncut.norm2() > 0);

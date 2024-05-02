@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_UNIT_TESTS_RANDOM_TEST_HPP
-#define CORE_UNIT_TESTS_RANDOM_TEST_HPP
+
+#pragma once
+
 #include <boost/test/unit_test.hpp>
 
 /* Helper functions to compute random numbers covariance in a single pass */
@@ -57,8 +58,8 @@ public:
   std::size_t operator()(Vector<double, N> const &v) const {
     return v.size();
   }
-  std::size_t operator()(Utils::Quaternion<double> const &q) const { return 4; }
-  std::size_t operator()(double v) const { return 1; }
+  std::size_t operator()(Utils::Quaternion<double> const &) const { return 4u; }
+  std::size_t operator()(double) const { return 1u; }
 };
 
 class visitor_get : public boost::static_visitor<double> {
@@ -71,7 +72,7 @@ public:
     return q[i];
   }
   double operator()(double v, std::size_t i) const {
-    assert(i == 0);
+    assert(i == 0u);
     return v;
   }
 };
@@ -110,7 +111,7 @@ noise_statistics(NoiseKernel &&noise_function, std::size_t sample_size) {
   std::transform(first_value.begin(), first_value.end(), dimensions.begin(),
                  [](auto const &element) { return get_size(element); });
   auto const matrix_dim = std::accumulate(dimensions.begin(), dimensions.end(),
-                                          0, std::plus<std::size_t>());
+                                          std::size_t{0u}, std::plus<>());
 
   // set up boost accumulators
   namespace ba = boost::accumulators;
@@ -123,21 +124,21 @@ noise_statistics(NoiseKernel &&noise_function, std::size_t sample_size) {
   auto acc_covariance = ::square_matrix<boost_covariance>(matrix_dim);
 
   // accumulate
-  for (std::size_t step = 0; step < sample_size; ++step) {
+  for (std::size_t step = 0u; step < sample_size; ++step) {
     auto const noise_tuple = noise_function();
     // for each vector, pool the random numbers of all columns
-    for (std::size_t vec1 = 0; vec1 < dimensions.size(); ++vec1) {
-      for (std::size_t col1 = 0; col1 < dimensions[vec1]; ++col1) {
+    for (std::size_t vec1 = 0u; vec1 < dimensions.size(); ++vec1) {
+      for (std::size_t col1 = 0u; col1 < dimensions[vec1]; ++col1) {
         acc_variance[vec1](::get_value(noise_tuple[vec1], col1));
       }
     }
     // fill the covariance matrix (upper triangle)
-    std::size_t index1 = 0;
-    for (std::size_t vec1 = 0; vec1 < dimensions.size(); ++vec1) {
-      for (std::size_t col1 = 0; col1 < dimensions[vec1]; ++col1) {
+    std::size_t index1 = 0u;
+    for (std::size_t vec1 = 0u; vec1 < dimensions.size(); ++vec1) {
+      for (std::size_t col1 = 0u; col1 < dimensions[vec1]; ++col1) {
         std::size_t index2 = index1;
         for (std::size_t vec2 = vec1; vec2 < dimensions.size(); ++vec2) {
-          for (std::size_t col2 = (vec2 == vec1) ? col1 : 0;
+          for (std::size_t col2 = (vec2 == vec1) ? col1 : std::size_t{0u};
                col2 < dimensions[vec2]; ++col2) {
             acc_covariance[index1][index2](
                 ::get_value(noise_tuple[vec1], col1),
@@ -153,19 +154,19 @@ noise_statistics(NoiseKernel &&noise_function, std::size_t sample_size) {
   // compute statistics
   std::vector<double> means(n_vectors);
   std::vector<double> variances(n_vectors);
-  for (std::size_t i = 0; i < n_vectors; ++i) {
+  for (std::size_t i = 0u; i < n_vectors; ++i) {
     means[i] = ba::mean(acc_variance[i]);
     variances[i] = ba::variance(acc_variance[i]);
   }
   auto covariance = ::square_matrix<double>(matrix_dim);
-  for (std::size_t i = 0; i < matrix_dim; ++i) {
+  for (std::size_t i = 0u; i < matrix_dim; ++i) {
     for (std::size_t j = i; j < matrix_dim; ++j) {
       covariance[i][j] = covariance[j][i] =
           ba::covariance(acc_covariance[i][j]);
     }
   }
   auto correlation = ::square_matrix<double>(matrix_dim);
-  for (std::size_t i = 0; i < matrix_dim; ++i) {
+  for (std::size_t i = 0u; i < matrix_dim; ++i) {
     for (std::size_t j = i; j < matrix_dim; ++j) {
       correlation[i][j] = correlation[j][i] =
           covariance[i][j] / sqrt(covariance[i][i] * covariance[j][j]);
@@ -189,4 +190,3 @@ boost::test_tools::predicate_result correlation_almost_equal(
   }
   return true;
 }
-#endif

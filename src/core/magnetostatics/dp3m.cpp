@@ -65,6 +65,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdio>
 #include <functional>
 #include <optional>
@@ -532,7 +533,7 @@ double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
   std::vector<double> my(n_local_part);
   std::vector<double> mz(n_local_part);
 
-  int ip = 0;
+  std::size_t ip = 0u;
   for (auto const &p : particles) {
     auto const dip = p.calc_dip();
     mx[ip] = dip[0];
@@ -543,7 +544,7 @@ double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
 
   // we will need the sum of all dipolar momenta vectors
   auto local_dip = Utils::Vector3d{};
-  for (int i = 0; i < n_local_part; i++) {
+  for (std::size_t i = 0u; i < n_local_part; i++) {
     local_dip[0] += mx[i];
     local_dip[1] += my[i];
     local_dip[2] += mz[i];
@@ -554,7 +555,7 @@ double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
   double energy = 0.;
   if (energy_flag) {
     double sum_e = 0.;
-    for (int i = 0; i < n_local_part; i++) {
+    for (std::size_t i = 0u; i < n_local_part; i++) {
       sum_e += mx[i] * box_dip[0] + my[i] * box_dip[1] + mz[i] * box_dip[2];
     }
     energy =
@@ -567,13 +568,13 @@ double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
     std::vector<double> sumiy(n_local_part);
     std::vector<double> sumiz(n_local_part);
 
-    for (int i = 0; i < n_local_part; i++) {
+    for (std::size_t i = 0u; i < n_local_part; i++) {
       sumix[i] = my[i] * box_dip[2] - mz[i] * box_dip[1];
       sumiy[i] = mz[i] * box_dip[0] - mx[i] * box_dip[2];
       sumiz[i] = mx[i] * box_dip[1] - my[i] * box_dip[0];
     }
 
-    ip = 0;
+    ip = 0u;
     for (auto &p : particles) {
       auto &torque = p.torque();
       torque[0] -= pref * sumix[ip];

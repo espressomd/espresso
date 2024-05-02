@@ -47,9 +47,8 @@ if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
   espresso_add_gpu_library(espresso_walberla_cuda SHARED)
   add_library(espresso::walberla_cuda ALIAS espresso_walberla_cuda)
   espresso_configure_walberla_target(espresso_walberla_cuda)
-  target_link_libraries(
-    espresso_walberla_cuda PUBLIC espresso::utils espresso::walberla
-    PRIVATE CUDA::cuda_driver CUDA::cudart)
+  target_link_libraries(espresso_walberla_cuda PUBLIC espresso::utils
+                        PRIVATE CUDA::cuda_driver CUDA::cudart)
 endif()
 
 add_subdirectory(src)

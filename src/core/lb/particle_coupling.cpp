@@ -112,8 +112,6 @@ bool in_local_halo(LocalBox const &local_box, Utils::Vector3d const &pos,
 }
 
 static void positions_in_halo_impl(Utils::Vector3d const &pos_folded,
-                                   Utils::Vector3d const &fully_inside_lower,
-                                   Utils::Vector3d const &fully_inside_upper,
                                    Utils::Vector3d const &halo_lower_corner,
                                    Utils::Vector3d const &halo_upper_corner,
                                    BoxGeometry const &box_geo,
@@ -161,8 +159,8 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
   auto const halo_lower_corner = local_box.my_left() - halo_vec;
   auto const halo_upper_corner = local_box.my_right() + halo_vec;
   std::vector<Utils::Vector3d> res;
-  positions_in_halo_impl(pos_folded, fully_inside_lower, fully_inside_upper,
-                         halo_lower_corner, halo_upper_corner, box_geo, res);
+  positions_in_halo_impl(pos_folded, halo_lower_corner, halo_upper_corner,
+                         box_geo, res);
   return res;
 }
 
@@ -204,9 +202,8 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
       positions_force_coupling.emplace_back(folded_pos);
     } else {
       auto const old_size = positions_force_coupling.size();
-      positions_in_halo_impl(folded_pos, fully_inside_lower, fully_inside_upper,
-                             halo_lower_corner, halo_upper_corner, m_box_geo,
-                             positions_force_coupling);
+      positions_in_halo_impl(folded_pos, halo_lower_corner, halo_upper_corner,
+                             m_box_geo, positions_force_coupling);
       auto const new_size = positions_force_coupling.size();
       span_size = static_cast<uint8_t>(new_size - old_size);
     }
@@ -304,7 +301,7 @@ static void lb_coupling_sanity_checks(Particle const &p) {
 
 } // namespace LB
 
-void System::System::lb_couple_particles(double time_step) {
+void System::System::lb_couple_particles() {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif

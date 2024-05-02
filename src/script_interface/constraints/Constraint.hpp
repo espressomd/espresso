@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
+#pragma once
 
 #include "core/constraints/Constraint.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -37,5 +36,3 @@ public:
 
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
-
-#endif

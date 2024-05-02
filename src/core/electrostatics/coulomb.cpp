@@ -116,11 +116,11 @@ struct LongRangePressure {
   }
 #endif // P3M
 
-  auto operator()(std::shared_ptr<DebyeHueckel> const &actor) const {
+  auto operator()(std::shared_ptr<DebyeHueckel> const &) const {
     return Utils::Vector9d{};
   }
 
-  auto operator()(std::shared_ptr<ReactionField> const &actor) const {
+  auto operator()(std::shared_ptr<ReactionField> const &) const {
     return Utils::Vector9d{};
   }
 
@@ -156,11 +156,11 @@ struct ShortRangeCutoff {
   }
 #endif // P3M
 #ifdef MMM1D_GPU
-  auto operator()(std::shared_ptr<CoulombMMM1DGpu> const &actor) const {
+  auto operator()(std::shared_ptr<CoulombMMM1DGpu> const &) const {
     return std::numeric_limits<double>::infinity();
   }
 #endif // MMM1D_GPU
-  auto operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
+  auto operator()(std::shared_ptr<CoulombMMM1D> const &) const {
     return std::numeric_limits<double>::infinity();
   }
 #ifdef SCAFACOS

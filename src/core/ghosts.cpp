@@ -94,7 +94,7 @@ class SerializationSizeCalculator {
 public:
   auto size() const { return m_size; }
 
-  template <class T> auto &operator<<(T &t) {
+  template <class T> auto &operator<<(T &) {
     m_size += sizeof(T);
     return *this;
   }

@@ -51,6 +51,7 @@ void AtomDecomposition::configure_neighbors() {
 
   local().m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 }
+
 GhostCommunicator AtomDecomposition::prepare_comm() {
   /* no need for comm for only 1 node */
   if (m_comm.size() == 1) {
@@ -68,6 +69,7 @@ GhostCommunicator AtomDecomposition::prepare_comm() {
 
   return ghost_comm;
 }
+
 void AtomDecomposition::configure_comms() {
   m_exchange_ghosts_comm = prepare_comm();
   m_collect_ghost_force_comm = prepare_comm();
@@ -90,6 +92,7 @@ void AtomDecomposition::configure_comms() {
     }
   }
 }
+
 void AtomDecomposition::mark_cells() {
   m_local_cells.resize(1, std::addressof(local()));
   m_ghost_cells.clear();
@@ -99,6 +102,7 @@ void AtomDecomposition::mark_cells() {
     }
   }
 }
+
 void AtomDecomposition::resort(bool global_flag,
                                std::vector<ParticleChange> &diff) {
   for (auto &p : local().particles()) {

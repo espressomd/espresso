@@ -78,13 +78,13 @@ struct LogHandle : public ObjectHandle {
     call_log.emplace_back(MockCall::Construct{&params});
   }
 
-  void do_set_parameter(const std::string &name,
-                        const Variant &value) override {
+  void do_set_parameter(std::string const &name,
+                        Variant const &value) override {
     call_log.emplace_back(MockCall::SetParameter{&name, &value});
   }
 
-  Variant do_call_method(const std::string &name,
-                         const VariantMap &params) override {
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
     call_log.emplace_back(MockCall::CallMethod{&name, &params});
 
     return none;
@@ -177,19 +177,19 @@ namespace Testing {
  * Logging mock for Context.
  */
 struct LogContext : public Context {
-  std::vector<std::pair<const ObjectHandle *, MockCall::Info>> call_log;
+  std::vector<std::pair<ObjectHandle const *, MockCall::Info>> call_log;
 
-  void notify_call_method(const ObjectHandle *o, std::string const &n,
+  void notify_call_method(ObjectHandle const *o, std::string const &n,
                           VariantMap const &p) override {
     call_log.emplace_back(o, MockCall::CallMethod{&n, &p});
   }
-  void notify_set_parameter(const ObjectHandle *o, std::string const &n,
+  void notify_set_parameter(ObjectHandle const *o, std::string const &n,
                             Variant const &v) override {
     call_log.emplace_back(o, MockCall::SetParameter{&n, &v});
   }
 
   std::shared_ptr<ObjectHandle> make_shared(std::string const &,
-                                            const VariantMap &) override {
+                                            VariantMap const &) override {
     auto it = std::make_shared<Testing::LogHandle>();
     set_context(it.get());
 
@@ -200,7 +200,7 @@ struct LogContext : public Context {
     return make_shared(s, v);
   }
 
-  boost::string_ref name(const ObjectHandle *o) const override {
+  boost::string_ref name(ObjectHandle const *) const override {
     return "Dummy";
   }
 

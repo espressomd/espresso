@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_COUPLINGS_HPP
+
+#pragma once
 
 /**
  * @file
@@ -98,5 +98,3 @@ template <> inline Scaled make_coupling<Scaled>(const VariantMap &params) {
 } // namespace detail
 } // namespace Constraints
 } // namespace ScriptInterface
-
-#endif

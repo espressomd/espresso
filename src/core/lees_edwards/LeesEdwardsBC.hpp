@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_LEES_EDWARDS_LEES_EDWARDS_BC_HPP
-#define CORE_LEES_EDWARDS_LEES_EDWARDS_BC_HPP
+
+#pragma once
 
 #include <utils/Vector.hpp>
 
@@ -32,7 +32,7 @@ struct LeesEdwardsBC {
   unsigned int shear_direction = invalid_dir;
   unsigned int shear_plane_normal = invalid_dir;
   Utils::Vector3d distance(Utils::Vector3d const &d, Utils::Vector3d const &l,
-                           Utils::Vector3d const &hal_l,
+                           Utils::Vector3d const &,
                            Utils::Vector3d const &l_inv,
                            std::bitset<3> const periodic) const {
 
@@ -58,5 +58,3 @@ struct LeesEdwardsBC {
     return res;
   }
 };
-
-#endif

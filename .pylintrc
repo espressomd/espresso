@@ -11,7 +11,7 @@ analyse-fallback-blocks=no
 extension-pkg-allow-list=
 
 # Files or directories to be skipped. They should be base names, not paths.
-ignore=CVS build
+ignore=build
 
 # Files or directories matching the regular expression patterns are skipped.
 # The regex matches against base names, not paths. The default value ignores
@@ -25,7 +25,7 @@ ignore-patterns=
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use, and will cap the count on Windows to
 # avoid hangs.
-jobs=2
+jobs=4
 
 # Control the amount of potential inferred values when inferring a single
 # object. This can help the performance when dealing with large functions or
@@ -41,7 +41,7 @@ persistent=yes
 
 # Minimum Python version to use for version dependent checks. Will default to
 # the version used to run pylint.
-py-version=3.12
+py-version=3.10
 
 # When enabled, pylint would attempt to guess common misconfiguration and emit
 # user-friendly hints instead of false-positive error messages.
@@ -229,8 +229,7 @@ min-public-methods=2
 [EXCEPTIONS]
 
 # Exceptions that will emit a warning when caught.
-overgeneral-exceptions=BaseException,
-                       Exception
+overgeneral-exceptions=builtins.BaseException,builtins.Exception
 
 
 [FORMAT]
@@ -253,13 +252,6 @@ max-line-length=100
 
 # Maximum number of lines in a module.
 max-module-lines=1000
-
-# List of optional constructs for which whitespace checking is disabled. `dict-
-# separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
-# `trailing-comma` allows a space between comma and closing bracket: (a, ).
-# `empty-line` allows space-only lines.
-no-space-check=trailing-comma,
-               dict-separator
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -303,7 +295,7 @@ known-third-party=enchant
 
 # The type of string formatting that logging methods do. `old` means using %
 # formatting, `new` is for `{}` formatting.
-logging-format-style=old
+logging-format-style=new
 
 # Logging modules to check that the string format arguments are in logging
 # function parameter format.

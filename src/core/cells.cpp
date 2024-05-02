@@ -101,7 +101,7 @@ static void search_distance_sanity_check_max_range(System::System const &system,
 }
 static void
 search_distance_sanity_check_cell_structure(System::System const &system,
-                                            double const distance) {
+                                            double const) {
   auto const &cell_structure = *system.cell_structure;
   if (cell_structure.decomposition_type() == CellStructureType::HYBRID) {
     throw std::runtime_error("Cannot search for neighbors in the hybrid "

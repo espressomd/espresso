@@ -44,9 +44,8 @@ BOOST_AUTO_TEST_CASE(read_only) {
   BOOST_CHECK(boost::get<int>(p.get()) == i);
 
   /* Setting should throw */
-  BOOST_CHECK_EXCEPTION(
-      p.set(2), AutoParameter::WriteError,
-      [](AutoParameter::WriteError const &e) { return true; });
+  BOOST_CHECK_EXCEPTION(p.set(2), AutoParameter::WriteError,
+                        [](AutoParameter::WriteError const &) { return true; });
 }
 
 BOOST_AUTO_TEST_CASE(user_provided) {

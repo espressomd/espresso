@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(lees_edwards_mi_vector) {
 
     auto const result = box.get_mi_vector(a, b);
 
-    for (int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       auto expected = get_mi_coord(a[i], b[i], box_l[i], box.periodic(i));
       if (i == le.shear_direction) {
         expected -= le.pos_offset = 1.;

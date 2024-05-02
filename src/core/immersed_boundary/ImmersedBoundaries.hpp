@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef IMMERSED_BOUNDARY_IMMERSED_BOUNDARIES_HPP
-#define IMMERSED_BOUNDARY_IMMERSED_BOUNDARIES_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
@@ -43,7 +43,7 @@ public:
   }
   double get_current_volume(int softID) const {
     assert(softID >= 0);
-    assert(softID < VolumesCurrent.size());
+    assert(static_cast<std::size_t>(softID) < VolumesCurrent.size());
     return VolumesCurrent[static_cast<unsigned int>(softID)];
   }
 
@@ -55,5 +55,3 @@ private:
   bool VolumeInitDone;
   bool BoundariesFound;
 };
-
-#endif

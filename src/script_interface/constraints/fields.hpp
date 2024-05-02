@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_FIELDS_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_DETAIL_FIELDS_HPP
+
+#pragma once
 
 #include "core/field_coupling/fields/AffineMap.hpp"
 #include "core/field_coupling/fields/Constant.hpp"
@@ -165,5 +165,3 @@ template <typename Field> Field make_field(const VariantMap &params) {
 } // namespace detail
 } // namespace Constraints
 } // namespace ScriptInterface
-
-#endif

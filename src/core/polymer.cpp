@@ -193,7 +193,7 @@ draw_polymer_positions(System::System const &system, int const n_polymers,
   /* Try up to max_tries times to draw a valid position */
   auto draw_valid_monomer_position =
       [&](int p, int m) -> boost::optional<Utils::Vector3d> {
-    for (unsigned i = 0; i < max_tries; i++) {
+    for (auto i = 0; i < max_tries; i++) {
       auto const trial_pos = draw_monomer_position(p, m);
       if (is_valid_pos(trial_pos)) {
         return trial_pos;

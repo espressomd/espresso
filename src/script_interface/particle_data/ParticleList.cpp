@@ -36,6 +36,7 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/range/algorithm.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -174,13 +175,13 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
       for (auto const pid1 : pids) {
         // loop over partners (counter-based loops due to iterator invalidation)
         // NOLINTNEXTLINE(modernize-loop-convert)
-        for (int i = 0; i < partners[pid1].size(); ++i) {
+        for (std::size_t i = 0u; i < partners[pid1].size(); ++i) {
           auto const [pid2, dist21] = partners[pid1][i];
           if (dist21 > n_bonds_max)
             continue;
           // loop over all partners of the partner
           // NOLINTNEXTLINE(modernize-loop-convert)
-          for (int j = 0; j < partners[pid2].size(); ++j) {
+          for (std::size_t j = 0u; j < partners[pid2].size(); ++j) {
             auto const [pid3, dist32] = partners[pid2][j];
             auto const dist31 = dist32 + dist21;
             if (dist31 > n_bonds_max)

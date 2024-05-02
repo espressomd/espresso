@@ -216,7 +216,7 @@ void System::System::calculate_forces() {
 
   if (thermostat->lb and (propagation->used_propagations &
                           PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {
-    lb_couple_particles(time_step);
+    lb_couple_particles();
   }
 
 #ifdef CUDA

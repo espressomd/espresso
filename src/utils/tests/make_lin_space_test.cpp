@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
@@ -35,7 +36,7 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
   {
     auto const start = 1.;
     auto const stop = 2.;
-    auto const num = 13;
+    auto const num = 13u;
 
     auto const lin_space =
         make_lin_space(start, stop, num, /* endpoint */ true);
@@ -45,10 +46,11 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
     BOOST_CHECK_EQUAL(values.front(), start);
     BOOST_CHECK_EQUAL(values.back(), stop);
 
-    auto const dx = (stop - start) / (num - 1);
-    for (int i = 0; i < values.size(); i++) {
-      BOOST_CHECK(std::fabs(start + i * dx - values.at(i)) <=
-                  std::numeric_limits<double>::epsilon());
+    auto const dx = (stop - start) / static_cast<double>(num - 1u);
+    for (std::size_t i = 0u; i < values.size(); i++) {
+      BOOST_CHECK(
+          std::fabs(start + static_cast<double>(i) * dx - values.at(i)) <=
+          std::numeric_limits<double>::epsilon());
     }
   }
 
@@ -56,7 +58,7 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
   {
     auto const start = 1.;
     auto const stop = 2.;
-    auto const num = 13;
+    auto const num = 13u;
 
     auto const lin_space =
         make_lin_space(start, stop, num, /* endpoint */ false);
@@ -66,10 +68,11 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
     BOOST_CHECK_EQUAL(values.front(), start);
     BOOST_CHECK_LT(values.back(), stop);
 
-    auto const dx = (stop - start) / num;
-    for (int i = 0; i < values.size(); i++) {
-      BOOST_CHECK(std::fabs(start + i * dx - values.at(i)) <=
-                  std::numeric_limits<double>::epsilon());
+    auto const dx = (stop - start) / static_cast<double>(num);
+    for (std::size_t i = 0u; i < values.size(); i++) {
+      BOOST_CHECK(
+          std::fabs(start + static_cast<double>(i) * dx - values.at(i)) <=
+          std::numeric_limits<double>::epsilon());
     }
   }
 }

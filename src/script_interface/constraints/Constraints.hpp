@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
-#define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINTS_HPP
+#pragma once
 
 #include "Constraint.hpp"
 
@@ -45,9 +44,7 @@ class Constraints : public ObjectList<Constraint> {
 private:
   // disable serialization: pickling done by the python interface
   std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
+  void set_internal_state(std::string const &) override {}
 };
 } /* namespace Constraints */
 } /* namespace ScriptInterface */
-
-#endif

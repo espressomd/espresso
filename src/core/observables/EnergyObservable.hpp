@@ -30,9 +30,9 @@ namespace Observables {
 
 class Energy : public Observable {
 public:
-  std::vector<std::size_t> shape() const override { return {1}; }
+  std::vector<std::size_t> shape() const override { return {1u}; }
   std::vector<double>
-  operator()(boost::mpi::communicator const &comm) const override {
+  operator()(boost::mpi::communicator const &) const override {
     return {System::get_system().calculate_energy()->accumulate(0u)};
   }
 };
