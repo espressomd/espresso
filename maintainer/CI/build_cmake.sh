@@ -130,7 +130,7 @@ set_default_value with_scafacos false
 set_default_value with_walberla false
 set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
-set_default_value test_timeout 400
+set_default_value test_timeout 500
 set_default_value hide_gpu false
 set_default_value mpiexec_preflags ""
 

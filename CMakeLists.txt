@@ -669,14 +669,14 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   endif()
   set(CALIPER_BUILD_SHARED_LIBS on CACHE BOOL "")
   add_subdirectory("${caliper_SOURCE_DIR}")
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
-                                              "GNU")
-    target_compile_options(caliper-services
-                           PRIVATE -Wno-deprecated-declarations)
-    target_compile_options(
-      caliper-runtime
-      PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>)
-  endif()
+  target_compile_options(
+    caliper-services
+    PRIVATE
+      $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wno-deprecated-declarations>)
+  target_compile_options(
+    caliper-runtime
+    PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
+            $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wno-volatile>)
 endif()
 
 #

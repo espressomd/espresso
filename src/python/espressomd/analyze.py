@@ -285,13 +285,16 @@ class Analysis(ScriptInterfaceHelper):
             and [1] contains the structure factors S(q)
 
     distribution()
-        Calculates the distance distribution of particles (probability of
-        finding a particle of type A at a certain distance around a particle of
+        Calculate the minimal distance distribution of particles (probability of
+        finding a particle of type A at a certain distance to the nearest particle of
         type B, disregarding the fact that a spherical shell of a larger radius
         covers a larger volume). The distance is defined as the minimal distance
         between a particle of group ``type_list_a`` to any of the group
         ``type_list_b``. Returns two arrays, the bins and the (normalized)
         distribution.
+
+        For the radial distribution function,
+        use :class:`espressomd.observables.RDF` instead.
 
         Parameters
         ----------
@@ -319,7 +322,7 @@ class Analysis(ScriptInterfaceHelper):
         -------
         :obj:`ndarray`
             Where [0] contains the midpoints of the bins,
-            and [1] contains the values of the rdf.
+            and [1] contains the values of the minimal distance distribution function.
 
     """
     _so_name = "Analysis::Analysis"

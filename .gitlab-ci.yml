@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu:7843821c7cfe66dc8b718bb4041eba52adaa2df0
+image: ghcr.io/espressomd/docker/ubuntu:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b
 
 stages:
   - prepare
@@ -18,7 +18,7 @@ stages:
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
-  image: ghcr.io/espressomd/docker/fedora:7843821c7cfe66dc8b718bb4041eba52adaa2df0
+  image: ghcr.io/espressomd/docker/fedora:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b
   variables:
     GIT_SUBMODULE_STRATEGY: none
   before_script:
@@ -145,7 +145,7 @@ no_rotation:
 fedora:40:
   <<: *global_job_definition
   stage: build
-  image: ghcr.io/espressomd/docker/fedora:7843821c7cfe66dc8b718bb4041eba52adaa2df0
+  image: ghcr.io/espressomd/docker/fedora:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b
   variables:
      with_cuda: 'false'
      with_gsl: 'false'
