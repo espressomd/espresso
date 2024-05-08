@@ -40,7 +40,8 @@
 #include <stencil/D3Q27.h>
 #if defined(__CUDACC__)
 #include <gpu/AddGPUFieldToStorage.h>
-#include <gpu/communication/GPUPackInfo.h>
+#include <gpu/communication/MemcpyPackInfo.h>
+#include <gpu/communication/UniformGPUScheme.h>
 #endif
 
 #include "../BoundaryHandling.hpp"
@@ -104,8 +105,11 @@ protected:
       std::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
 
 public:
-  // Type definitions
+  /** @brief Stencil for collision and streaming operations. */
   using Stencil = stencil::D3Q19;
+  /** @brief Stencil for ghost communication (includes domain corners). */
+  using StencilFull = stencil::D3Q27;
+  /** @brief Lattice model (e.g. blockforest). */
   using Lattice_T = LatticeWalberla::Lattice_T;
 
 protected:
@@ -114,6 +118,12 @@ protected:
     using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
+    template <class Stencil>
+    using RegularCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
+    template <class Stencil>
+    using BoundaryCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
   };
 
 #if defined(__CUDACC__)
@@ -121,7 +131,12 @@ protected:
     using PdfField = gpu::GPUField<FT>;
     using VectorField = gpu::GPUField<FT>;
     template <class Field>
-    using PackInfo = gpu::communication::GPUPackInfo<Field>;
+    using PackInfo = gpu::communication::MemcpyPackInfo<Field>;
+    template <class Stencil>
+    using RegularCommScheme = gpu::communication::UniformGPUScheme<Stencil>;
+    template <class Stencil>
+    using BoundaryCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
   };
 #endif
 
@@ -245,21 +260,26 @@ protected:
    * a full ghost communication. This is needed to properly update the corners
    * of the ghost layer when setting cell velocities or populations.
    */
-  using FullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
+  using RegularFullCommunicator =
+      typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
+          typename stencil::D3Q27>;
+  using BoundaryFullCommunicator =
+      typename FieldTrait<FloatType, Architecture>::template BoundaryCommScheme<
+          typename stencil::D3Q27>;
   /**
    * @brief Regular communicator.
    * We use the same directions as the stencil during integration.
    */
   using PDFStreamingCommunicator =
-      blockforest::communication::UniformBufferedScheme<Stencil>;
+      typename FieldTrait<FloatType,
+                          Architecture>::template RegularCommScheme<Stencil>;
   template <class Field>
   using PackInfo =
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
 
   // communicators
-  std::shared_ptr<FullCommunicator> m_boundary_communicator;
-  std::shared_ptr<FullCommunicator> m_pdf_full_communicator;
+  std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
+  std::shared_ptr<RegularFullCommunicator> m_pdf_full_communicator;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communicator;
 
   // ResetForce sweep + external force handling
@@ -396,28 +416,26 @@ public:
     m_pdf_streaming_communicator =
         std::make_shared<PDFStreamingCommunicator>(blocks);
     m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
+        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
     m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
-                                                n_ghost_layers));
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
 
-    m_pdf_full_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_pdf_full_communicator = std::make_shared<RegularFullCommunicator>(blocks);
     m_pdf_full_communicator->addPackInfo(
-        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
+        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
     m_pdf_full_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
-                                                n_ghost_layers));
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
     m_pdf_full_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_velocity_field_id,
-                                                n_ghost_layers));
+        std::make_shared<PackInfo<VectorField>>(m_velocity_field_id));
 
-    m_boundary_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_boundary_communicator =
+        std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
-            m_flag_field_id, n_ghost_layers));
+            m_flag_field_id));
     auto boundary_packinfo = std::make_shared<
         field::communication::BoundaryPackInfo<FlagField, BoundaryModel>>(
-        m_flag_field_id, n_ghost_layers);
+        m_flag_field_id);
     boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary);
     m_boundary_communicator->addPackInfo(boundary_packinfo);
 
