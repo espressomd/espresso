@@ -42,6 +42,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -69,7 +70,7 @@ void CellStructure::check_particle_index() const {
   }
 
   /* checks: local particle id */
-  int local_part_cnt = 0;
+  std::size_t local_part_cnt = 0u;
   for (int n = 0; n < get_max_local_particle_id() + 1; n++) {
     if (get_local_particle(n) != nullptr) {
       local_part_cnt++;

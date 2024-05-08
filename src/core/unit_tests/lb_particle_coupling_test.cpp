@@ -443,7 +443,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
     // check without LB coupling
     {
       system.thermostat->lb_coupling_deactivate();
-      system.lb_couple_particles(params.time_step);
+      system.lb_couple_particles();
       auto const p_opt = copy_particle_to_head_node(comm, system, pid);
       if (rank == 0) {
         auto const &p = *p_opt;
@@ -464,7 +464,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         }
       }
       // couple particle to LB
-      system.lb_couple_particles(params.time_step);
+      system.lb_couple_particles();
       {
         auto const p_opt = copy_particle_to_head_node(comm, system, pid);
         if (rank == 0) {

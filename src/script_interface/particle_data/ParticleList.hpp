@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_LIST_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_PARTICLE_DATA_PARTICLE_LIST_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
 
@@ -33,7 +32,7 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
 
-  void do_construct(VariantMap const &params) override {}
+  void do_construct(VariantMap const &) override {}
 
 private:
   std::string get_internal_state() const override;
@@ -42,5 +41,3 @@ private:
 
 } // namespace Particles
 } // namespace ScriptInterface
-
-#endif

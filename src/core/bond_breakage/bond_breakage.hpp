@@ -54,7 +54,7 @@ struct QueueEntry {
   // Serialization for synchronization across mpi ranks
   friend class boost::serialization::access;
   template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
+  void serialize(Archive &ar, unsigned int const /* version */) {
     ar & particle_id;
     ar & bond_partners;
     ar & bond_type;

@@ -66,7 +66,7 @@ def detect_invalid_urls(nb, build_root='.', html_exporter=None):
             if filepath.is_file():
                 with open(filepath) as f:
                     config = json.load(f)
-                kwargs = config.get("Exporter", {})
+                kwargs = config.get("HTMLExporter", {})
                 break
         html_exporter = nbconvert.HTMLExporter(**kwargs)
     html_exporter.template_name = 'classic'

@@ -30,9 +30,9 @@ namespace Observables {
 
 class PressureTensor : public Observable {
 public:
-  std::vector<std::size_t> shape() const override { return {3, 3}; }
+  std::vector<std::size_t> shape() const override { return {3u, 3u}; }
   std::vector<double>
-  operator()(boost::mpi::communicator const &comm) const override {
+  operator()(boost::mpi::communicator const &) const override {
     auto const obs = System::get_system().calculate_pressure();
 
     std::vector<double> result;

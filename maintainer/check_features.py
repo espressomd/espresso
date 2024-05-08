@@ -26,7 +26,7 @@ sys.path.append(os.path.join(sys.path[0], '..', 'config'))
 import featuredefs
 
 if len(sys.argv) != 2:
-    print("Usage: %s FILE" % sys.argv[0])
+    print(f"Usage: {sys.argv[0]} FILE")
     exit(2)
 
 fdefs = featuredefs.defs(sys.argv[1])

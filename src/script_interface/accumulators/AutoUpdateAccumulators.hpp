@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
-#define SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
+#pragma once
 
 #include "AccumulatorBase.hpp"
 
@@ -46,9 +45,7 @@ class AutoUpdateAccumulators : public ObjectList<AccumulatorBase> {
 private:
   // disable serialization: pickling done by the python interface
   std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &state) override {}
+  void set_internal_state(std::string const &) override {}
 };
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */
-
-#endif // SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP

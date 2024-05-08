@@ -43,7 +43,7 @@ void check_pointer(boost::mpi::communicator comm, int root) {
       }
     }
 
-    BOOST_CHECK(buf.size() == total_size);
+    BOOST_CHECK_EQUAL(static_cast<int>(buf.size()), total_size);
 
     Utils::Mpi::scatter_buffer(buf.data(), comm.rank(), comm, root);
   } else {

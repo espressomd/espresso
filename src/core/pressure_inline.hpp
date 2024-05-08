@@ -64,7 +64,7 @@ inline void add_non_bonded_pair_virials(
   if (do_nonbonded(p1, p2))
 #endif
   {
-    auto const force = calc_central_radial_force(p1, p2, ia_params, d, dist).f +
+    auto const force = calc_central_radial_force(ia_params, d, dist).f +
                        calc_central_radial_charge_force(p1, p2, ia_params, d,
                                                         dist, kernel_forces)
                            .f +

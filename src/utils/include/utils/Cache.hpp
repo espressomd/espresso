@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTILS_CACHE_HPP
-#define CORE_UTILS_CACHE_HPP
+#pragma once
 
+#include <cstddef>
 #include <memory>
 #include <random>
 #include <type_traits>
@@ -149,11 +149,12 @@ public:
   KeyInputIterator put(KeyInputIterator kbegin, KeyInputIterator kend,
                        ValueInputIterator vbegin) {
     auto const range_len = std::distance(kbegin, kend);
-    auto const len = (range_len > max_size()) ? max_size() : range_len;
+    auto const size_max = static_cast<decltype(range_len)>(max_size());
+    auto const len = (range_len > size_max) ? size_max : range_len;
     kend = std::next(kbegin, len);
 
     /* Make some space. */
-    while ((max_size() - size()) < len) {
+    while (static_cast<decltype(len)>(max_size() - size()) < len) {
       drop_random_element();
     }
 
@@ -180,5 +181,3 @@ public:
   }
 };
 } // namespace Utils
-
-#endif

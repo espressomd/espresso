@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef OBSERVABLES_PIDOBSERVABLE_HPP
-#define OBSERVABLES_PIDOBSERVABLE_HPP
+#pragma once
 
 #include <particle_observables/observable.hpp>
 
@@ -214,7 +213,7 @@ public:
   std::vector<double>
   evaluate(boost::mpi::communicator const &comm,
            ParticleReferenceRange const &local_particles,
-           ParticleObservables::traits<Particle> const &traits) const override {
+           ParticleObservables::traits<Particle> const &) const override {
     if constexpr (is_map<ObsType>::value) {
       std::vector<double> local_traits{};
       local_traits.reserve(local_particles.size());
@@ -271,4 +270,3 @@ public:
 };
 
 } // namespace Observables
-#endif

@@ -57,7 +57,7 @@ struct ConvertToStringVector
   }
 
   template <typename T, typename = std::enable_if_t<!std::is_arithmetic_v<T>>>
-  std::vector<std::string> operator()(T const &value) const {
+  std::vector<std::string> operator()(T const &) const {
     throw std::runtime_error("Cannot convert " + Utils::demangle<T>());
   }
 

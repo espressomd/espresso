@@ -87,7 +87,8 @@ void set_boundary_from_grid(BoundaryModel &boundary,
   auto const grid_size = lattice.get_grid_dimensions();
   auto const offset = lattice.get_local_grid_range().first;
   auto const gl = static_cast<int>(lattice.get_ghost_layers());
-  assert(raster_flat.size() == Utils::product(grid_size));
+  assert(raster_flat.size() ==
+         static_cast<std::size_t>(Utils::product(grid_size)));
   auto const n_y = grid_size[1];
   auto const n_z = grid_size[2];
 

@@ -209,10 +209,8 @@ static bool calculate_velocity_correction(RigidBond const &ia_params,
  * @brief Apply velocity corrections
  *
  * @param particles particle range
- * @param box_geo Box geometry
  */
-static void apply_velocity_correction(ParticleRange const &particles,
-                                      BoxGeometry const &box_geo) {
+static void apply_velocity_correction(ParticleRange const &particles) {
   boost::for_each(particles,
                   [](Particle &p) { p.v() += p.rattle_params().correction; });
 }
@@ -237,7 +235,7 @@ void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo) {
 
     cs.ghosts_reduce_rattle_correction();
 
-    apply_velocity_correction(particles, box_geo);
+    apply_velocity_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
   }
 

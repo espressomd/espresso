@@ -119,7 +119,10 @@ public:
    * @param name Name of the parameter
    * @return Value of parameter @p name
    */
-  virtual Variant get_parameter(const std::string &name) const { return {}; }
+  virtual Variant get_parameter(std::string const &name) const {
+    static_cast<void>(name);
+    return {};
+  }
 
   /**
    * @brief Set single parameter.
@@ -169,6 +172,6 @@ public:
 
 private:
   virtual std::string get_internal_state() const { return {}; }
-  virtual void set_internal_state(std::string const &state) {}
+  virtual void set_internal_state(std::string const &) {}
 };
 } /* namespace ScriptInterface */

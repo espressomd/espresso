@@ -27,6 +27,7 @@
 #include <boost/mpi.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -96,7 +97,7 @@ BOOST_AUTO_TEST_CASE(multiple_elements) {
     auto reqs = Utils::Mpi::iall_gatherv(world, in.data(), rank + 1, out.data(),
                                          sizes.data());
     boost::mpi::wait_all(reqs.begin(), reqs.end());
-    for (int i = 0; i < expected_values.size(); i++) {
+    for (std::size_t i = 0u; i < expected_values.size(); i++) {
       BOOST_CHECK_EQUAL(out.at(i), expected_values.at(i));
     }
   }
@@ -112,7 +113,7 @@ BOOST_AUTO_TEST_CASE(multiple_elements) {
     auto reqs = Utils::Mpi::iall_gatherv(world, out.data(), rank + 1,
                                          out.data(), sizes.data());
     boost::mpi::wait_all(reqs.begin(), reqs.end());
-    for (int i = 0; i < expected_values.size(); i++) {
+    for (std::size_t i = 0u; i < expected_values.size(); i++) {
       BOOST_CHECK_EQUAL(out.at(i), expected_values.at(i));
     }
   }

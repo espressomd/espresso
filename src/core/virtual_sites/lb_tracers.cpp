@@ -39,7 +39,7 @@ static bool lb_sanity_checks(LB::Solver const &lb) {
 void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
                                             BoxGeometry const &box_geo,
                                             LocalBox const &local_box,
-                                            LB::Solver &lb, double time_step) {
+                                            LB::Solver &lb) {
   if (lb_sanity_checks(lb)) {
     return;
   }
@@ -84,7 +84,7 @@ void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
     if (!LB::is_tracer(p))
       continue;
     p.v() = lb.get_coupling_interpolated_velocity(p.pos());
-    for (unsigned int i = 0u; i < 3u; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       if (!p.is_fixed_along(i)) {
         p.pos()[i] += p.v()[i] * time_step;
       }

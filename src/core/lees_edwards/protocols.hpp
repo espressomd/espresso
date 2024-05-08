@@ -30,8 +30,8 @@ namespace LeesEdwards {
 
 /** Lees-Edwards protocol for un-altered periodic boundary conditions */
 struct Off {
-  double shear_velocity(double time) const { return 0.; }
-  double pos_offset(double time) const { return 0.; }
+  double shear_velocity(double) const { return 0.; }
+  double pos_offset(double) const { return 0.; }
 };
 
 /** Lees-Edwards protocol for linear shearing */
@@ -41,7 +41,7 @@ struct LinearShear {
   LinearShear(double initial_offset, double shear_velocity, double time_0)
       : m_initial_pos_offset{initial_offset}, m_shear_velocity{shear_velocity},
         m_time_0{time_0} {}
-  double shear_velocity(double time) const { return m_shear_velocity; }
+  double shear_velocity(double) const { return m_shear_velocity; }
   double pos_offset(double time) const {
     return m_initial_pos_offset + (time - m_time_0) * m_shear_velocity;
   }
