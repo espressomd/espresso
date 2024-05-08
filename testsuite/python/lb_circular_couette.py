@@ -42,7 +42,6 @@ def taylor_couette(v1, v2, r1, r2):
     return a, b
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
 class LBCouetteTest:
 
     system = espressomd.System(box_l=(GRID_SIZE + [1, 1, 0]) * AGRID)
@@ -61,9 +60,9 @@ class LBCouetteTest:
         """
 
         system = self.system
-        lb_fluid = espressomd.lb.LBFluidWalberla(
+        lb_fluid = self.lb_class(
             agrid=AGRID, density=0.5, kinematic_viscosity=3.2,
-            tau=system.time_step)
+            tau=system.time_step, **self.lb_params)
         self.system.lb = lb_fluid
 
         # set up two cylinders
@@ -159,7 +158,15 @@ class LBCircularCouetteWalberlaSinglePrecisionCPU(LBCouetteTest, ut.TestCase):
     lb_params = {"single_precision": True}
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBCircularCouetteWalberlaDoublePrecisionGPU(LBCouetteTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBCircularCouetteWalberlaSinglePrecisionGPU(LBCouetteTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}

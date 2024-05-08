@@ -76,15 +76,10 @@ class ObservableProfileLBCommon:
     def tearDown(self):
         self.system.lb = None
 
-    def set_fluid_velocities(self):
-        """Set an x dependent fluid velocity."""
-        for x in range(int(np.around(self.system.box_l[0] / AGRID))):
-            for y in range(int(np.around(self.system.box_l[1] / AGRID))):
-                for z in range(int(np.around(self.system.box_l[2] / AGRID))):
-                    self.lbf[x, y, z].velocity = [float(x), 0.0, 0.0]
-
     def test_velocity_profile(self):
-        self.set_fluid_velocities()
+        # set an x-dependent fluid velocity
+        for x in range(self.lbf.shape[0]):
+            self.lbf[x, :, :].velocity = [float(x), 0.0, 0.0]
         obs = espressomd.observables.LBVelocityProfile(
             **LB_VELOCITY_PROFILE_PARAMS)
         obs_data = obs.calculate()
@@ -200,21 +195,32 @@ class ObservableProfileLBCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class ObservableProfileWalberla(ObservableProfileLBCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class ObservableProfileWalberlaDoublePrecisionCPU(
+        ObservableProfileLBCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class ObservableProfileWalberlaSinglePrecision(
+class ObservableProfileWalberlaSinglePrecisionCPU(
         ObservableProfileLBCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class ObservableProfileWalberlaDoublePrecisionGPU(
+        ObservableProfileLBCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class ObservableProfileWalberlaSinglePrecisionGPU(
+        ObservableProfileLBCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}
 
 

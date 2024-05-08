@@ -255,8 +255,8 @@ class LBThermostatCommon:
         make_particle(Propagation.TRANS_LB_MOMENTUM_EXCHANGE |
                       Propagation.ROT_LANGEVIN)
         system.time = 0.
-        for i in range(10):
-            system.integrator.run(2**i)
+        for power in range(self.lb_geom_progression):
+            system.integrator.run(2**power)
             for p, r0 in zip(system.part.all(), positions):
                 pos = np.copy(p.pos)
                 vel = np.copy(p.v)
@@ -269,20 +269,32 @@ class LBThermostatCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBWalberlaThermostatDoublePrecisionCPU(LBThermostatCommon, ut.TestCase):
-
-    """Test for the CPU implementation of the LB."""
-
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
+    lb_geom_progression = 10
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBWalberlaThermostatSinglePrecisionCPU(LBThermostatCommon, ut.TestCase):
-
-    """Test for the CPU implementation of the LB in single-precision."""
-
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
+    lb_geom_progression = 10
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBWalberlaThermostatDoublePrecisionGPU(LBThermostatCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": False}
+    lb_geom_progression = 9
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBWalberlaThermostatSinglePrecisionGPU(LBThermostatCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+    lb_geom_progression = 9
 
 
 if __name__ == "__main__":
