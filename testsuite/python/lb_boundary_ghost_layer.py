@@ -87,15 +87,31 @@ class TestCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
-class LBPoiseuilleWalberlaSinglePrecision(TestCommon, ut.TestCase):
+class LBPoiseuilleWalberlaSinglePrecisionCPU(TestCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
-class LBPoiseuilleWalberlaDoublePrecision(TestCommon, ut.TestCase):
+class LBPoiseuilleWalberlaDoublePrecisionCPU(TestCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+@ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
+class LBPoiseuilleWalberlaSinglePrecisionGPU(TestCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+@ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
+class LBPoiseuilleWalberlaDoublePrecisionGPU(TestCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": False}
 
 

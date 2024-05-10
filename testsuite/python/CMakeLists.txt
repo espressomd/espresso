@@ -334,7 +334,7 @@ python_test(FILE thole.py MAX_NUM_PROC 4)
 python_test(FILE lb_slice.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1)
 # python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 2) # TODO
-python_test(FILE lb_boundary_ghost_layer.py MAX_NUM_PROC 2)
+python_test(FILE lb_boundary_ghost_layer.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_circular_couette.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille.py MAX_NUM_PROC 4 GPU_SLOTS 1)
 python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 2 GPU_SLOTS 1)

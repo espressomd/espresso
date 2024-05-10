@@ -39,6 +39,16 @@
 
 namespace walberla {
 
+/**
+ * @brief Boundary class optimized for sparse data.
+ *
+ * Instead of storing the boundary data on a vector field,
+ * store individual vectors in a map.
+ * The global cell is used as key.
+ *
+ * Requires a custom communicator:
+ * @ref walberla::field::communication::BoundaryPackInfo.
+ */
 template <typename T, typename BoundaryClass> class BoundaryHandling {
 private:
   /** Flag for domain cells, i.e. all cells. */

@@ -197,20 +197,28 @@ class LBPoiseuilleCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBPoiseuilleWalberla(LBPoiseuilleCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBPoiseuilleWalberlaDoublePrecisionCPU(LBPoiseuilleCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBPoiseuilleWalberlaSinglePrecision(LBPoiseuilleCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBPoiseuilleWalberlaSinglePrecisionCPU(LBPoiseuilleCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBPoiseuilleWalberlaDoublePrecisionGPU(LBPoiseuilleCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBPoiseuilleWalberlaSinglePrecisionGPU(LBPoiseuilleCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": True}
 
 
