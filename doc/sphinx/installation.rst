@@ -84,8 +84,29 @@ are required to be able to compile and use |es|:
     Python
         |es|'s main user interface relies on Python 3.
 
+        We strongly recommend using Python environments to isolate
+        packages required by |es| from packages installed system-wide.
+        This can be achieved using venv [7]_, conda [8]_, or any similar tool.
+        Inside an environment, commands of the form
+        ``sudo apt install python3-numpy python3-scipy``
+        can be rewritten as ``python3 -m pip install numpy scipy``,
+        and thus do not require root privileges.
+
+        Depending on your needs, you may choose to install all |es|
+        dependencies inside the environment, or only the subset of
+        dependencies not already satisfied by your workstation or cluster.
+        For the exact syntax to create and configure an environment,
+        please refer to the tool documentation.
+
     Cython
         Cython is used for connecting the C++ core to Python.
+
+        Python environment tools may allow you to install a Python executable
+        that is more recent than the system-wide Python executable.
+        Be aware this might lead to compatibility issues if Cython
+        accidentally picks up the system-wide :file:`Python.h` header file.
+        In that scenario, you will have to manually adapt the C++ compiler
+        include paths to find the correct :file:`Python.h` header file.
 
 
 .. _Installing requirements on Ubuntu Linux:
@@ -97,9 +118,9 @@ To compile |es| on Ubuntu 24.04 LTS, install the following dependencies:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cython3 python3-pip python3-numpy \
-      libboost-all-dev openmpi-common fftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-scipy python3-opengl libgsl-dev freeglut3
+    sudo apt install build-essential cmake cython3 python3-dev openmpi-bin \
+      libboost-all-dev fftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
+      python3-pip python3-numpy python3-scipy python3-opengl libgsl-dev freeglut3
 
 Optionally the ccmake utility can be installed for easier configuration:
 
@@ -999,3 +1020,9 @@ ____
 
 .. [6]
    https://docs.nvidia.com/cuda/
+
+.. [7]
+   https://docs.python.org/3/library/venv.html
+
+.. [8]
+   https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
