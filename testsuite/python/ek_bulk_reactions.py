@@ -112,7 +112,7 @@ class EKReaction(ut.TestCase):
 
         self.system.integrator.run(self.TIME)
 
-        domain_volume = np.product(ek_species_product.shape)
+        domain_volume = np.prod(ek_species_product.shape)
         analytic_time = (self.TIME + 0.5) * self.system.time_step
 
         measured_educt_densities = np.zeros(len(stoech_coeffs))
