@@ -209,7 +209,7 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(res[0], 0, f"vs_relative: {res}")
         self.assertEqual(res[1], 5.0, f"vs_relative: {res}")
         np.testing.assert_allclose(
-            res[2], np.array((0.5, -0.5, -0.5, -0.5)),
+            np.copy(res[2]), np.array([0.5, -0.5, -0.5, -0.5]),
             err_msg=f"vs_relative: {res}", atol=self.tol)
         # check exceptions
         error_msg = r"attribute 'vs_relative' of 'ParticleHandle' must take the form \[id, distance, quaternion\]"

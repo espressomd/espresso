@@ -3,7 +3,7 @@ cython>=0.29.21,<3.0.10
 setuptools>=68.1.2
 packaging>=24.0
 # required scientific packages
-numpy>=1.26.4
+numpy>=1.26.4,<2.0
 h5py>=3.10.0
 # optional scientific packages
 scipy>=1.11.4
@@ -18,16 +18,16 @@ pygame>=2.1.2
 # waLBerla dependencies
 pystencils==1.2
 lbmpy==1.2
-sympy==1.12
+sympy==1.9
 islpy==2022.2.1
 jinja2>=3.1.2
 # CI-related
-requests>=2.31.0
+requests>=2.32.0
 lxml>=5.1.0
 coverage>=7.4.4
 # sphinx and its dependencies
 sphinx>=7.2.6
-sphinx-toggleprompt==0.4.0
+sphinx-toggleprompt==0.5.2
 sphinxcontrib-bibtex>=2.6.2
 numpydoc>=1.6.0
 pybtex>=0.24.0
