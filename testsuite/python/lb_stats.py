@@ -106,9 +106,9 @@ class TestLB:
                 fluid_temp += np.sum(np.copy(lb_node.velocity)**2) * dens
 
             # Normalize
-            fluid_mass /= np.product(self.lbf.shape)
+            fluid_mass /= np.prod(self.lbf.shape)
             fluid_temp *= self.system.volume() / (
-                3. * np.product(self.lbf.shape)**2)
+                3. * np.prod(self.lbf.shape)**2)
 
             # check mass conversation
             self.assertAlmostEqual(fluid_mass, self.params["dens"],

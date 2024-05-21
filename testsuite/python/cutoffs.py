@@ -42,7 +42,7 @@ class CutOff(ut.TestCase):
         fene = FeneBond(r_0=1, d_r_max=2, k=1)
         system.bonded_inter.add(fene)
         self.assertEqual(system.cell_system.max_cut_bonded, 3)
-        n_nodes = np.product(system.cell_system.node_grid)
+        n_nodes = np.prod(system.cell_system.node_grid)
         if n_nodes == 1:
             # Bonds don't influence interaction range
             self.assertEqual(system.cell_system.interaction_range, -1)

@@ -1,7 +1,7 @@
 # build system
-cython>=0.29.14,<3.0
+cython>=0.29.14,<3.0.10
 # required scientific packages
-numpy>=1.17.4
+numpy>=1.17.4,<2.0
 h5py>=2.7.1
 # optional scientific packages
 scipy>=1.4.0
@@ -13,8 +13,8 @@ vtk>=7.1.1
 PyOpenGL>=3.1.0
 pygame>=1.9.6
 # CI-related
-requests>=2.18.4 # to post on GitHub as espresso-ci
-lxml>=4.2.1 # to deploy tutorials
+requests>=2.32.0
+lxml>=4.2.1
 # sphinx and its dependencies
 sphinx>=2.3.0,!=3.0.0
 sphinx-toggleprompt==0.0.5
