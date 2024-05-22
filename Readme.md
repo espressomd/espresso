@@ -70,7 +70,7 @@ For most users, we recommend downloading the latest release version of ESPResSo.
 can find it in the [release page](https://github.com/espressomd/espresso/releases),
 together with past releases until 4.0. When choosing a release, we recommend that
 you get the latest bugfix release in that line. For example, for 4.2 you would like
-to use 4.2.1.
+to use 4.2.2.
 
 ### Join the community
 
