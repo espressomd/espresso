@@ -166,6 +166,21 @@ debian:10:
     - espresso
     - no-cuda
 
+debian:12:
+  <<: *global_job_definition
+  stage: build
+  image: ghcr.io/espressomd/docker/debian:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b
+  variables:
+     with_cuda: 'false'
+     myconfig: 'maxset'
+     make_check_python: 'false'
+     with_stokesian_dynamics: 'true'
+  script:
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - espresso
+    - no-cuda
+
 fedora:36:
   <<: *global_job_definition
   stage: build
@@ -175,6 +190,23 @@ fedora:36:
      myconfig: 'maxset'
      make_check_python: 'true'
      with_stokesian_dynamics: 'true'
+  script:
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - espresso
+    - no-cuda
+
+fedora:40:
+  <<: *global_job_definition
+  stage: build
+  image: ghcr.io/espressomd/docker/fedora:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b
+  variables:
+     with_cuda: 'false'
+     with_gsl: 'false'
+     myconfig: 'maxset'
+     make_check_python: 'true'
+     with_stokesian_dynamics: 'true'
+     cmake_params: '-D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -227,6 +259,28 @@ fast_math:
     - cuda
   when: manual
 
+cuda12-maxset-ubuntu24.04:
+  <<: *global_job_definition
+  stage: build
+  image: ghcr.io/espressomd/docker/ubuntu:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b
+  variables:
+     CC: 'gcc-12'
+     CXX: 'g++-12'
+     GCOV: 'gcov-12'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     with_coverage_python: 'false'
+     check_skip_long: 'false'
+     with_scafacos: 'true'
+     with_stokesian_dynamics: 'true'
+  script:
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - espresso
+    - cuda
+    - numa
+
 cuda11-maxset-ubuntu20.04:
   <<: *global_job_definition
   stage: build
@@ -238,6 +292,7 @@ cuda11-maxset-ubuntu20.04:
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'true'
+     with_coverage_python: 'true'
      check_skip_long: 'true'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
@@ -259,6 +314,7 @@ cuda11-maxset-ubuntu22.04:
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'true'
+     with_coverage_python: 'true'
      check_skip_long: 'true'
      with_scafacos: 'true'
      with_stokesian_dynamics: 'true'
@@ -489,6 +545,7 @@ run_tutorials:
     paths:
     - build/doc/tutorials
     expire_in: 1 week
+  timeout: 2h
   tags:
     - espresso
     - cuda

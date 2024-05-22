@@ -19,6 +19,8 @@
 import numpy as np
 import espressomd
 
+np.random.seed(42)
+
 system = espressomd.System(box_l=[100, 100, 100])
 system.time_step = 0.01
 system.cell_system.skin = 0.1

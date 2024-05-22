@@ -25,7 +25,7 @@ performance of the code. Therefore it is not possible to build a single
 binary that can satisfy all needs. For performance reasons a user
 should always activate only those features that are actually needed.
 This means, however, that learning how to compile is a necessary evil.
-The build system of |es| uses CMake [4]_ to compile
+The build system of |es| uses CMake to compile
 software easily on a wide range of platforms.
 
 .. _Requirements:
@@ -39,7 +39,7 @@ are required to be able to compile and use |es|:
 .. glossary::
 
     CMake
-        The build system is based on CMake.
+        The build system is based on CMake version 3 or later [4]_.
 
     C++ compiler
         The C++ core of |es| needs to be built by a C++14-capable compiler.
@@ -51,6 +51,11 @@ are required to be able to compile and use |es|:
     FFTW
         For some algorithms like P\ :math:`^3`\ M, |es| needs the FFTW library
         version 3 or later [5]_ for Fourier transforms, including header files.
+
+    CUDA
+        For some algorithms like P\ :math:`^3`\ M,
+        |es| provides GPU-accelerated implementations for NVIDIA GPUs.
+        We strongly recommend CUDA 12.0 or later [6]_.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -247,11 +252,11 @@ Installing requirements on Windows via WSL
 
 To run |es| on Windows, use the Linux subsystem. For that you need to
 
-* follow `these instructions <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`__ to install Ubuntu
-* start Ubuntu (or open an Ubuntu tab in `Windows Terminal <https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701>`__)
+* follow `these instructions <https://learn.microsoft.com/en-us/windows/wsl/install>`__ to install Ubuntu
+* start Ubuntu (or open an Ubuntu tab in `Windows Terminal <https://apps.microsoft.com/detail/9n0dx20hk701?hl=en-us&gl=US>`__)
 * execute ``sudo apt update`` to prepare the installation of dependencies
 * optional step: If you have a NVIDIA graphics card available and want to make
-  use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html#ch03a-setting-up-cuda>`__
+  use of |es|'s GPU acceleration, follow `these instructions <https://docs.nvidia.com/cuda/wsl-user-guide/index.html>`__
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu Linux`
 

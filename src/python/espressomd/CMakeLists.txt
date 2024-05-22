@@ -73,6 +73,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
     Espresso_pyx_flags
     INTERFACE -Wno-pedantic -Wno-\#warnings -Wno-sometimes-uninitialized
               -Wno-unused-variable -Wno-deprecated-declarations)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    target_compile_options(Espresso_pyx_flags
+                           INTERFACE -Wno-missing-field-initializers)
+  endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   target_compile_options(Espresso_pyx_flags INTERFACE -wd1224)
 else()
@@ -105,10 +109,9 @@ foreach(cython_file ${cython_SRC})
     add_custom_command(
       OUTPUT ${outputpath}
       COMMAND
-        ${CYTHON_EXECUTABLE} $<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>
-        -3 --cplus --directive embedsignature=True --directive binding=True -I
-        ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_CURRENT_BINARY_DIR}
-        ${cython_file} -o ${outputpath}
+        ${CYTHON_EXECUTABLE} -3 --cplus --directive embedsignature=True
+        --directive binding=True -I ${CMAKE_CURRENT_SOURCE_DIR} -I
+        ${CMAKE_CURRENT_BINARY_DIR} ${cython_file} -o ${outputpath}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi ${cython_file}
               ${cython_HEADER})

@@ -133,18 +133,15 @@ Utils::Vector3d angularmomentum(PartCfg &partCfg, int type) {
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
-  int i, count;
   double massi;
   Utils::Vector3d p1{};
-  count = 0;
 
-  for (i = 0; i < 9; i++)
+  for (unsigned int i = 0; i < 9; i++)
     MofImatrix[i] = 0.;
 
   auto const com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
     if (type == p.type() and (not p.is_virtual())) {
-      count++;
       p1 = p.pos() - com;
       massi = p.mass();
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]);
