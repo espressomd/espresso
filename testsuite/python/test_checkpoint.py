@@ -42,6 +42,10 @@ with contextlib.suppress(ImportError):
     import espressomd.io.vtk
 
 with contextlib.suppress(ImportError):
+    import ase
+    import espressomd.plugins.ase
+
+with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
 
 config = utg.TestGenerator()
@@ -53,6 +57,7 @@ has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
 has_thermalized_bonds = 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes
 has_drude = (espressomd.has_features(['ELECTROSTATICS' and 'MASS', 'ROTATION'])
              and has_thermalized_bonds)
+has_ase = 'ASE' in modes
 
 
 class CheckpointTest(ut.TestCase):
@@ -448,13 +453,13 @@ class CheckpointTest(ut.TestCase):
                 p3.swimming,
                 {"f_swim": 0.03, "is_engine_force_on_fluid": False})
             if espressomd.has_features(
-                    'VIRTUAL_SITES_RELATIVE') and has_lb_mode:
+                    'VIRTUAL_SITES_RELATIVE') and has_lb_mode and not has_ase:
                 self.assertEqual(
                     p4.swimming,
                     {"f_swim": 0., "is_engine_force_on_fluid": True})
         if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and has_lb_mode:
             np.testing.assert_allclose(np.copy(p8.mu_E), [-0.1, 0.2, -0.3])
-        if espressomd.has_features('VIRTUAL_SITES_RELATIVE'):
+        if espressomd.has_features('VIRTUAL_SITES_RELATIVE') and not has_ase:
             from scipy.spatial.transform import Rotation as R
             q_ind = ([1, 2, 3, 0],)  # convert from scalar-first to scalar-last
             vs_id, vs_dist, vs_quat = p2.vs_relative
@@ -739,6 +744,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(dh.drude_id_list, [5])
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
+    @ut.skipIf("ASE" in modes, "virtual sites not allowed by ASE")
     def test_virtual_sites(self):
         Propagation = espressomd.propagation.Propagation
         p_real = system.part.by_id(0)
@@ -1022,6 +1028,22 @@ class CheckpointTest(ut.TestCase):
         p1.remove()
         p2.remove()
         system.non_bonded_inter[2, 6].reset()
+
+    @ut.skipIf("ase" not in sys.modules, "missing module 'ase'")
+    @ut.skipIf("ASE" not in modes, "missing combination")
+    def test_ase_plugin(self):
+        atoms = system.ase.get()
+        self.assertIsNotNone(atoms)
+        self.assertIsInstance(atoms, ase.Atoms)
+        self.assertEqual(set(atoms.get_chemical_symbols()), {"H", "O"})
+        np.testing.assert_equal(atoms.pbc, np.copy(system.periodicity))
+        np.testing.assert_allclose(atoms.cell, np.diag(system.box_l))
+        np.testing.assert_allclose(
+            atoms.get_positions(),
+            np.copy(system.part.select(lambda p: p.type in [0, 1]).pos))
+        np.testing.assert_allclose(
+            atoms.get_forces(),
+            np.copy(system.part.select(lambda p: p.type in [0, 1]).f))
 
 
 if __name__ == '__main__':

@@ -30,6 +30,7 @@ set(cython_AUX "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
 add_subdirectory(detail)
+add_subdirectory(plugins)
 
 list(REMOVE_DUPLICATES cython_SRC)
 
