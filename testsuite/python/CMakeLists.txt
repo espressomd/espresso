@@ -202,6 +202,7 @@ checkpoint_test(MODES dp3m_cpu__therm_langevin__int_nvt)
 checkpoint_test(MODES therm_dpd__int_nvt)
 checkpoint_test(MODES scafacos__therm_bd__int_bd)
 checkpoint_test(MODES therm_sdm__int_sdm)
+checkpoint_test(MODES lj__ase SUFFIX 1_core MAX_NUM_PROC 1)
 
 python_test(FILE bond_breakage.py MAX_NUM_PROC 4)
 python_test(FILE cell_system.py MAX_NUM_PROC 4)

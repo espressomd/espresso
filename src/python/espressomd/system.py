@@ -200,6 +200,7 @@ class System(ScriptInterfaceHelper):
         self.non_bonded_inter = interactions.NonBondedInteractions()
         self.part = particle_data.ParticleList()
         self.thermostat = thermostat.Thermostat()
+        self._ase_interface = None
 
         # lock class
         self.call_method("lock_system_creation")
@@ -238,11 +239,17 @@ class System(ScriptInterfaceHelper):
         odict["_system_handle"] = self.call_method("get_system_handle")
         for property_name in checkpointable_properties:
             odict[property_name] = System.__getattribute__(self, property_name)
+        if self._ase_interface is not None:
+            odict["_ase_interface"] = self._ase_interface.__getstate__()
         return odict
 
     def __setstate__(self, params):
         # note: this class is initialized twice by pickle
         self.call_method("set_system_handle", obj=params.pop("_system_handle"))
+        # initialize Python-only members
+        if "_ase_interface" in params:
+            from espressomd.plugins.ase import ASEInterface
+            self.ase = ASEInterface(**params.pop("_ase_interface"))
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
         # note: several members can only be instantiated once
@@ -337,6 +344,15 @@ class System(ScriptInterfaceHelper):
             if lb is not None:
                 lb.call_method("activate")
                 self._lb = lb
+
+    @property
+    def ase(self):
+        return self._ase_interface
+
+    @ase.setter
+    def ase(self, ase):
+        ase.register_system(self)
+        self._ase_interface = ase
 
     @property
     def ekcontainer(self):
