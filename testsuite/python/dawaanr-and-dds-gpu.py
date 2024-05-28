@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,100 +23,83 @@ import tests_common
 import numpy as np
 
 import espressomd
-import espressomd.interactions
 import espressomd.magnetostatics
-import espressomd.analyze
-import espressomd.galilei
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["DIPOLES", "ROTATION", "LENNARD_JONES"])
+@utx.skipIfMissingFeatures(["DIPOLAR_DIRECT_SUM", "LENNARD_JONES"])
 class DDSGPUTest(ut.TestCase):
-    # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    np.random.seed(seed=42)
 
-    @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
-               "Skipping test: only runs for n_nodes == 1")
     def test(self):
-        pf_dds_gpu = 2.34
-        pf_dawaanr = 3.524
-        ratio_dawaanr_dds_gpu = pf_dawaanr / pf_dds_gpu
-        self.system.box_l = [15., 15., 15.]
-        self.system.periodicity = [False, False, False]
-        self.system.time_step = 1E-4
-        self.system.cell_system.skin = 0.1
+        pf_dds_cpu = 2.34
+        pf_dds_gpu = 3.524
+        ratio = pf_dds_cpu / pf_dds_gpu
+        system = self.system
+        system.box_l = [15., 15., 15.]
+        system.periodicity = [False, False, False]
+        system.time_step = 0.01
+        system.cell_system.skin = 0.1
 
         for n in [128, 541]:
             dipole_modulus = 1.3
             part_dip = dipole_modulus * tests_common.random_dipoles(n)
-            part_pos = np.random.random((n, 3)) * self.system.box_l[0]
-            self.system.part.add(pos=part_pos, dip=part_dip)
+            part_pos = np.random.random((n, 3)) * system.box_l[0]
+            system.part.add(pos=part_pos, dip=part_dip)
 
-            self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            # warmup
+            system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
+            system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
+            system.integrator.set_vv()
+            system.integrator.run(steps=20)
+            system.non_bonded_inter[0, 0].lennard_jones.deactivate()
+            system.thermostat.turn_off()
+            system.galilei.kill_particle_motion(rotation=True)
 
-            self.system.thermostat.turn_off()
-            self.system.integrator.set_steepest_descent(
-                f_max=0.0, gamma=0.1, max_displacement=0.1)
-            self.system.integrator.run(500)
-            self.system.galilei.kill_particle_motion(rotation=True)
-            self.system.integrator.set_vv()
-
-            self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
-
-            self.system.cell_system.skin = 0.0
-            self.system.time_step = 0.01
-            self.system.thermostat.turn_off()
             # gamma should be zero in order to avoid the noise term in force
             # and torque
-            self.system.thermostat.set_langevin(kT=1.297, gamma=0.0, seed=42)
+            system.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
             dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
-                prefactor=pf_dawaanr)
-            self.system.magnetostatics.solver = dds_cpu
-            self.system.integrator.run(steps=0, recalc_forces=True)
+                prefactor=pf_dds_cpu)
+            system.magnetostatics.solver = dds_cpu
+            system.integrator.run(steps=0, recalc_forces=True)
 
-            dawaanr_f = np.copy(self.system.part.all().f)
-            dawaanr_t = np.copy(self.system.part.all().torque_lab)
-            dawaanr_e = self.system.analysis.energy()["total"]
+            dawaanr_f = np.copy(system.part.all().f)
+            dawaanr_t = np.copy(system.part.all().torque_lab)
+            dawaanr_e = system.analysis.energy()["total"]
 
             del dds_cpu
-            self.system.magnetostatics.clear()
+            system.magnetostatics.clear()
 
-            self.system.integrator.run(steps=0, recalc_forces=True)
+            system.integrator.run(steps=0, recalc_forces=True)
             dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
                 prefactor=pf_dds_gpu)
-            self.system.magnetostatics.solver = dds_gpu
-            self.system.integrator.run(steps=0, recalc_forces=True)
+            system.magnetostatics.solver = dds_gpu
+            system.integrator.run(steps=0, recalc_forces=True)
 
-            ddsgpu_f = np.copy(self.system.part.all().f)
-            ddsgpu_t = np.copy(self.system.part.all().torque_lab)
-            ddsgpu_e = self.system.analysis.energy()["total"]
+            dds_gpu_f = np.copy(system.part.all().f)
+            dds_gpu_t = np.copy(system.part.all().torque_lab)
+            dds_gpu_e = system.analysis.energy()["total"]
 
-            # compare
-            for i in range(n):
-                np.testing.assert_allclose(
-                    np.array(dawaanr_t[i]),
-                    ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
-                    err_msg=f'Torques do not match for particle {i}',
-                    atol=3.2e-3)
-                np.testing.assert_allclose(
-                    np.array(dawaanr_f[i]),
-                    ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
-                    err_msg=f'Forces do not match for particle {i}',
-                    atol=3.2e-3)
-            self.assertAlmostEqual(
-                dawaanr_e,
-                ddsgpu_e * ratio_dawaanr_dds_gpu,
-                places=2,
-                msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'
-                .format(dawaanr_e, ratio_dawaanr_dds_gpu * ddsgpu_e))
+            np.testing.assert_allclose(dawaanr_t, ratio * dds_gpu_t,
+                                       atol=1e-10, rtol=1e-2)
+            np.testing.assert_allclose(dawaanr_f, ratio * dds_gpu_f,
+                                       atol=1e-10, rtol=1e-2)
+            np.testing.assert_allclose(dawaanr_e, ratio * dds_gpu_e,
+                                       atol=1e-10, rtol=1e-5)
 
-            self.system.integrator.run(steps=0, recalc_forces=True)
+            # check MD cell reset has no impact
+            system.change_volume_and_rescale_particles(system.box_l[0], "x")
+            system.periodicity = system.periodicity
+            system.cell_system.node_grid = system.cell_system.node_grid
+            system.integrator.run(steps=0, recalc_forces=True)
 
             del dds_gpu
-            self.system.magnetostatics.clear()
-            self.system.part.clear()
+            system.magnetostatics.clear()
+            system.part.clear()
 
 
 if __name__ == '__main__':

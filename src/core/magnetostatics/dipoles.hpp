@@ -27,7 +27,6 @@
 
 #include "magnetostatics/solver.hpp"
 
-#include "magnetostatics/barnes_hut_gpu.hpp"
 #include "magnetostatics/dipolar_direct_sum.hpp"
 #include "magnetostatics/dipolar_direct_sum_gpu.hpp"
 #include "magnetostatics/dlc.hpp"
@@ -48,9 +47,6 @@ using MagnetostaticsActor =
     std::variant<std::shared_ptr<DipolarDirectSum>,
 #ifdef DIPOLAR_DIRECT_SUM
                  std::shared_ptr<DipolarDirectSumGpu>,
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-                 std::shared_ptr<DipolarBarnesHutGpu>,
 #endif
 #ifdef DP3M
                  std::shared_ptr<DipolarP3M>,
