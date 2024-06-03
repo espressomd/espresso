@@ -435,10 +435,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``MMM1D_GPU``: This enables MMM1D on GPU. It is faster than the CPU version
-   by several orders of magnitude, but has float precision instead of double
-   precision.
-
 -  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
    for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
    functions are enabled by default and are precise enough for most applications.

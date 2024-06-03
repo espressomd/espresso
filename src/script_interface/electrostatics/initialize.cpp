@@ -27,7 +27,6 @@
 
 #include "Container.hpp"
 #include "CoulombMMM1D.hpp"
-#include "CoulombMMM1DGpu.hpp"
 #include "CoulombP3M.hpp"
 #include "CoulombP3MGPU.hpp"
 #include "CoulombScafacos.hpp"
@@ -59,9 +58,6 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
       "Coulomb::ElectrostaticLayerCorrection");
 #endif // P3M
   om->register_new<ICCStar>("Coulomb::ICCStar");
-#ifdef MMM1D_GPU
-  om->register_new<CoulombMMM1DGpu>("Coulomb::CoulombMMM1DGpu");
-#endif
   om->register_new<CoulombMMM1D>("Coulomb::CoulombMMM1D");
 #ifdef SCAFACOS
   om->register_new<CoulombScafacos>("Coulomb::CoulombScafacos");

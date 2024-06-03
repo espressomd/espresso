@@ -54,7 +54,6 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
-MMM1D_GPU                       requires CUDA and ELECTROSTATICS
 MMM1D_MACHINE_PREC              requires ELECTROSTATICS
 
 /* Magnetostatics */
