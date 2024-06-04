@@ -52,6 +52,8 @@ class LBTest:
     system.periodicity = [True, True, True]
     system.time_step = params['tau']
     system.cell_system.skin = 1.0
+    if espressomd.gpu_available():
+        system.cuda_init_handle.call_method("set_device_id_per_rank")
     interpolation = False
 
     def setUp(self):

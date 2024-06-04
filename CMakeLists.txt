@@ -612,7 +612,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     if(CMAKE_VERSION VERSION_LESS 3.25 OR NOT ESPRESSO_CUDA_COMPILER STREQUAL
                                           "clang")
       if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        set(CMAKE_CUDA_ARCHITECTURES 75)
+        message(FATAL_ERROR "variable CMAKE_CUDA_ARCHITECTURES is undefined")
       endif()
     endif()
   endif()

@@ -38,6 +38,8 @@ class TestCommon:
     system = espressomd.System(box_l=[16.0, 1.0, 1.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+    if espressomd.gpu_available():
+        system.cuda_init_handle.call_method("set_device_id_per_rank")
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     def setUp(self):

@@ -21,6 +21,9 @@
 
 #include "utils.cuh"
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 #include <cstdio>
 
 cudaStream_t stream[1];

@@ -44,6 +44,8 @@
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
+#include <gpu/DeviceSelectMPI.h>
+
 #include <memory>
 
 std::shared_ptr<LBWalberlaBase>
@@ -56,3 +58,5 @@ new_lb_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
   return std::make_shared<walberla::LBWalberlaImpl<double, lbmpy::Arch::GPU>>(
       lattice, viscosity, density);
 }
+
+void set_device_id_per_rank() { walberla::gpu::selectDeviceBasedOnMpiRank(); }
