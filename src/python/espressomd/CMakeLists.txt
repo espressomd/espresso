@@ -55,9 +55,10 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU>:-Wno-strict-aliasing>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-volatile>
-    $<$<CXX_COMPILER_ID:AppleClang>:-Wno-missing-field-initializers>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
+    $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-deprecated-volatile>
+    -Wno-missing-field-initializers
     -Wno-unused-variable)
 
 # Configure, compile and install Cython files

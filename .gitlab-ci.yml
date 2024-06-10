@@ -106,7 +106,6 @@ maxset:
      CXX: 'g++-13'
      GCOV: 'gcov-13'
      with_cuda: 'false'
-     with_cxx_standard: '20'
      myconfig: 'maxset'
      with_coverage: 'true'
      with_scafacos: 'true'
@@ -114,7 +113,7 @@ maxset:
      with_stokesian_dynamics: 'true'
      with_caliper: 'true'
      check_skip_long: 'true'
-     cmake_params: '-D ESPRESSO_TEST_NP=8'
+     cmake_params: '-D CMAKE_CXX_STANDARD=23 -D ESPRESSO_TEST_NP=8'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
