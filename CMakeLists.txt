@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25.1)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 if(POLICY CMP0076)
   # make target_sources() convert relative paths to absolute
@@ -459,7 +459,7 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wmissing-variable-declarations>
     $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,11.0.0>>:-Wnon-c-typedef-for-linkage>
     $<$<NOT:$<CXX_COMPILER_ID:Intel>>:-Wdelete-non-virtual-dtor>
-    # disable warnings from -Wextra
+    # disable warnings from -Wall and -Wextra
     -Wno-sign-compare
     -Wno-unused-function
     -Wno-unused-parameter
@@ -521,16 +521,25 @@ if(ESPRESSO_BUILD_WITH_ASAN)
   target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=address
                                                       -fno-omit-frame-pointer)
   target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=address)
+  if(ESPRESSO_BUILD_WITH_CUDA)
+    target_link_libraries(espresso_cuda_flags INTERFACE -fsanitize=address)
+  endif()
 endif()
 if(ESPRESSO_BUILD_WITH_MSAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
   target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=memory
                                                       -fno-omit-frame-pointer)
   target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=memory)
+  if(ESPRESSO_BUILD_WITH_CUDA)
+    target_link_libraries(espresso_cuda_flags INTERFACE -fsanitize=memory)
+  endif()
 endif()
 if(ESPRESSO_BUILD_WITH_UBSAN)
   target_compile_options(espresso_cpp_flags INTERFACE -fsanitize=undefined)
   target_link_libraries(espresso_cpp_flags INTERFACE -fsanitize=undefined)
+  if(ESPRESSO_BUILD_WITH_CUDA)
+    target_link_libraries(espresso_cuda_flags INTERFACE -fsanitize=undefined)
+  endif()
 endif()
 
 target_link_libraries(espresso_cpp_flags INTERFACE espresso::coverage_flags)
@@ -609,8 +618,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   if(ESPRESSO_BUILD_WITH_CUDA)
     set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
-    if(CMAKE_VERSION VERSION_LESS 3.25 OR NOT ESPRESSO_CUDA_COMPILER STREQUAL
-                                          "clang")
+    if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
       if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
         message(FATAL_ERROR "variable CMAKE_CUDA_ARCHITECTURES is undefined")
       endif()
@@ -663,10 +671,8 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
   set(CALIPER_WITH_MPI on CACHE BOOL "")
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    set(CALIPER_WITH_NVTX on CACHE BOOL "")
-    set(CALIPER_WITH_CUPTI on CACHE BOOL "")
-  endif()
+  set(CALIPER_WITH_NVTX off CACHE BOOL "")
+  set(CALIPER_WITH_CUPTI off CACHE BOOL "")
   set(CALIPER_BUILD_SHARED_LIBS on CACHE BOOL "")
   add_subdirectory("${caliper_SOURCE_DIR}")
   target_compile_options(

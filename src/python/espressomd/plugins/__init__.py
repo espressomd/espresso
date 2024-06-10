@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2024 The ESPResSo project
+# Copyright (C) 2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,5 +16,3 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-espresso_target_resources(espressomd __init__.py walberla.py)
