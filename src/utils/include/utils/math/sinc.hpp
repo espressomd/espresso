@@ -19,8 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_MATH_SINC_HPP
-#define UTILS_MATH_SINC_HPP
+#pragma once
 
 #include "utils/constants.hpp"
 #include "utils/device_qualifier.hpp"
@@ -60,5 +59,3 @@ template <typename T> DEVICE_QUALIFIER T sinc(T d) {
   return T(1) + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
 }
 } // namespace Utils
-
-#endif

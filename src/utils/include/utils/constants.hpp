@@ -21,8 +21,6 @@
 
 #include "device_qualifier.hpp"
 
-#include <boost/math/constants/constants.hpp>
-
 namespace Utils {
 
 /*************************************************************/
@@ -73,11 +71,6 @@ template <class T = double> DEVICE_QUALIFIER constexpr T cbrt_2() {
 }
 
 /**@}*/
-
-/// error code if no error occurred
-#define ES_OK 0
-/// error code if an error occurred
-#define ES_ERROR 1
 
 } // namespace Utils
 

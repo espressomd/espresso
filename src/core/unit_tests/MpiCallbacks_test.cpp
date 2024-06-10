@@ -43,7 +43,7 @@ static bool called = false;
 BOOST_AUTO_TEST_CASE(invoke_test) {
   using Communication::detail::invoke;
 
-  auto f = [](int i, unsigned j) { return i + j; };
+  auto f = [](int i, unsigned j) { return i + static_cast<int>(j); };
 
   boost::mpi::communicator world;
   boost::mpi::packed_oarchive::buffer_type buff;

@@ -50,7 +50,7 @@ void scatter_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
 
     detail::size_and_offset<T>(sizes, displ, n_elem, comm, root);
 
-    for (int i = 0; i < comm.size(); i++) {
+    for (auto i = 0u; i < static_cast<unsigned>(comm.size()); i++) {
       sizes[i] *= sizeof(T);
       displ[i] *= sizeof(T);
     }

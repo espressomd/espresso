@@ -23,12 +23,13 @@
 
 #include <utils/Vector.hpp>
 
+#include <cstddef>
 #include <memory>
 
 struct P3MGpuParams;
 
 void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &p3m_gpu_data_ptr, int cao,
-                  const int mesh[3], double alpha, Utils::Vector3d const &box_l,
-                  unsigned n_part);
+                  Utils::Vector3i const &mesh, double alpha,
+                  Utils::Vector3d const &box_l, std::size_t n_part);
 void p3m_gpu_add_farfield_force(P3MGpuParams &data, GpuParticleData &gpu,
-                                double prefactor, unsigned n_part);
+                                double prefactor, std::size_t n_part);

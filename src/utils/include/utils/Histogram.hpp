@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_HISTOGRAM_HPP
-#define UTILS_HISTOGRAM_HPP
+
+#pragma once
 
 #include "utils/Span.hpp"
 
@@ -47,6 +47,8 @@ template <typename T, std::size_t N, std::size_t M = 3, typename U = double>
 class Histogram {
   using array_type = boost::multi_array<T, M + 1>;
   using count_type = boost::multi_array<std::size_t, M + 1>;
+
+protected:
   using array_index = typename array_type::index;
 
 public:
@@ -110,7 +112,7 @@ public:
       }
       for (array_index i = 0; i < static_cast<array_index>(N); ++i) {
         index.back() = i;
-        m_array(index) += value[i];
+        m_array(index) += value[static_cast<std::size_t>(i)];
         m_count(index)++;
       }
     }
@@ -196,6 +198,7 @@ class CylindricalHistogram : public Histogram<T, N, M, U> {
   using Histogram<T, N, M, U>::m_limits;
   using Histogram<T, N, M, U>::m_bin_sizes;
   using Histogram<T, N, M, U>::m_array;
+  using typename Histogram<T, N, M, U>::array_index;
 
 public:
   using Histogram<T, N, M, U>::Histogram;
@@ -205,12 +208,12 @@ public:
     auto const r_bin_size = m_bin_sizes[0];
     auto const phi_bin_size = m_bin_sizes[1];
     auto const z_bin_size = m_bin_sizes[2];
-    auto const n_bins_r = m_n_bins[0];
-    for (std::size_t i = 0; i < n_bins_r; i++) {
+    auto const n_bins_r = static_cast<array_index>(m_n_bins[0]);
+    for (array_index i = 0; i < n_bins_r; i++) {
       auto const r_left = min_r + static_cast<U>(i) * r_bin_size;
       auto const r_right = r_left + r_bin_size;
-      auto const bin_volume =
-          (r_right * r_right - r_left * r_left) * z_bin_size * phi_bin_size / 2;
+      auto const bin_volume = (r_right * r_right - r_left * r_left) *
+                              z_bin_size * phi_bin_size / U(2);
       auto *begin = m_array[i].origin();
       std::transform(
           begin, begin + m_array[i].num_elements(), begin,
@@ -220,5 +223,3 @@ public:
 };
 
 } // Namespace Utils
-
-#endif

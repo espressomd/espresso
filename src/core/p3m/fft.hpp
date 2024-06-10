@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_P3M_FFT_HPP
-#define CORE_P3M_FFT_HPP
+
+#pragma once
+
 /** \file
  *
  *  Routines, row decomposition, data structures and communication for the
@@ -53,6 +54,7 @@
 #include <fftw3.h>
 
 #include <cstddef>
+#include <limits>
 #include <new>
 #include <vector>
 
@@ -72,7 +74,7 @@ template <class T> struct fft_allocator {
     if (n == 0) {
       return nullptr;
     }
-    if (n > static_cast<std::size_t>(-1) / sizeof(T)) {
+    if (n > std::numeric_limits<std::size_t>::max() / sizeof(T)) {
       throw std::bad_array_new_length();
     }
     void *const pv = fftw_malloc(n * sizeof(T));
@@ -246,5 +248,3 @@ void fft_unpack_block(double const *in, double *out, int const start[3],
                       int const size[3], int const dim[3], int element);
 
 #endif // defined(P3M) || defined(DP3M)
-
-#endif

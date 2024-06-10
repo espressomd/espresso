@@ -887,7 +887,7 @@ void DipolarP3M::sanity_checks_boxl() const {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
-  for (unsigned int i = 0u; i < 3u; i++) {
+  for (auto i = 0u; i < 3u; i++) {
     /* check k-space cutoff */
     if (dp3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;

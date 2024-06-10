@@ -35,7 +35,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/checks/charge_neutrality.hpp>
 #include <utils/constants.hpp>
 #include <utils/demangle.hpp>
 

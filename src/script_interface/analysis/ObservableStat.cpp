@@ -77,7 +77,7 @@ static auto get_summary(::System::System const &system,
 
   {
     auto values = std::vector<double>(obs_dim);
-    for (std::size_t i = 0; i < obs_dim; ++i) {
+    for (std::size_t i = 0ul; i < obs_dim; ++i) {
       values[i] = obs.accumulate(0., i);
     }
     dict["total"] = get_obs_contrib({values.data(), obs_dim});
@@ -106,7 +106,7 @@ static auto get_summary(::System::System const &system,
 #ifdef ELECTROSTATICS
   {
     auto const values = get_obs_contribs(obs.coulomb);
-    for (std::size_t i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["coulomb," + std::to_string(i)] = values[i];
     }
   }
@@ -115,7 +115,7 @@ static auto get_summary(::System::System const &system,
 #ifdef DIPOLES
   {
     auto const values = get_obs_contribs(obs.dipolar);
-    for (std::size_t i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["dipolar," + std::to_string(i)] = values[i];
     }
   }
@@ -124,7 +124,7 @@ static auto get_summary(::System::System const &system,
 #ifdef VIRTUAL_SITES
   {
     auto const values = get_obs_contribs(obs.virtual_sites);
-    for (std::size_t i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
       dict["virtual_sites," + std::to_string(i)] = values[i];
     }
   }

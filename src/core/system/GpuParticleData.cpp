@@ -37,6 +37,7 @@
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/split_free.hpp>
 
+#include <cstddef>
 #include <vector>
 
 void GpuParticleData::enable_particle_transfer() {
@@ -84,7 +85,7 @@ BOOST_SERIALIZATION_SPLIT_FREE(GpuParticleData::GpuParticle)
 static void pack_particles(ParticleRange const &particles,
                            GpuParticleData::GpuParticle *buffer) {
   auto const &box = *System::get_system().box_geo;
-  unsigned long int i = 0u;
+  std::size_t i = 0u;
   for (auto const &p : particles) {
     buffer[i].p = static_cast<Utils::Vector3f>(box.folded_position(p.pos()));
 #ifdef DIPOLES
@@ -131,9 +132,9 @@ void GpuParticleData::gather_particle_data(
 static void add_forces_and_torques(ParticleRange const &particles,
                                    Utils::Span<const float> forces,
                                    Utils::Span<const float> torques) {
-  unsigned long int i = 0u;
+  std::size_t i = 0ul;
   for (auto &p : particles) {
-    for (unsigned long int j = 0u; j < 3u; j++) {
+    for (std::size_t j = 0ul; j < 3ul; j++) {
       p.force()[j] += static_cast<double>(forces[3ul * i + j]);
 #ifdef ROTATION
       p.torque()[j] += static_cast<double>(torques[3ul * i + j]);

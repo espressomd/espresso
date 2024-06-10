@@ -99,7 +99,7 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::xrange(3u), n_ghost_layers) {
 }
 
 BOOST_AUTO_TEST_CASE(exceptions) {
-  for (int i : {0, 1, 2}) {
+  for (auto i : {0u, 1u, 2u}) {
     auto node_grid = Vector3i::broadcast(1);
     auto grid_dims = Vector3i::broadcast(1);
     grid_dims[i] = 3;

@@ -29,7 +29,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
 #include <utils/Span.hpp>
-#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>

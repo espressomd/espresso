@@ -110,7 +110,7 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
   int my_group = 0;
 
   /* calculate dimension of comm. group cells for both grids */
-  if ((grid1[0] * grid1[1] * grid1[2]) != (grid2[0] * grid2[1] * grid2[2]))
+  if (Utils::product(grid1) != Utils::product(grid2))
     return boost::none; /* unlike number of nodes */
   for (i = 0; i < 3; i++) {
     s1[i] = grid1[i] / grid2[i];

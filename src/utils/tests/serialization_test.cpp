@@ -281,8 +281,8 @@ BOOST_AUTO_TEST_CASE(mpi_archive_test) {
   BOOST_TEST(buffer_vector == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_storage == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_quat == buffer_ref, boost::test_tools::per_element());
-  auto const index_lsb = (is_big_endian()) ? 1 : 0;
-  auto const index_hsb = (is_big_endian()) ? 0 : 1;
+  auto const index_lsb = (is_big_endian()) ? 1u : 0u;
+  auto const index_hsb = (is_big_endian()) ? 0u : 1u;
   BOOST_TEST(buffer_cv[index_lsb] == Testing::N);
   BOOST_TEST(buffer_cv[index_hsb] == 0);
   buffer_cv.erase(buffer_cv.begin());

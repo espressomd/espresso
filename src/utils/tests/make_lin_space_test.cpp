@@ -31,6 +31,7 @@
 
 BOOST_AUTO_TEST_CASE(make_lin_space_test) {
   using Utils::make_lin_space;
+  constexpr auto tol = 100. * std::numeric_limits<double>::epsilon();
 
   /* With endpoint */
   {
@@ -44,13 +45,11 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
 
     std::vector<double> values(lin_space.begin(), lin_space.end());
     BOOST_CHECK_EQUAL(values.front(), start);
-    BOOST_CHECK_EQUAL(values.back(), stop);
+    BOOST_CHECK_CLOSE(values.back(), stop, tol);
 
     auto const dx = (stop - start) / static_cast<double>(num - 1u);
     for (std::size_t i = 0u; i < values.size(); i++) {
-      BOOST_CHECK(
-          std::fabs(start + static_cast<double>(i) * dx - values.at(i)) <=
-          std::numeric_limits<double>::epsilon());
+      BOOST_CHECK_CLOSE(values.at(i), start + static_cast<double>(i) * dx, tol);
     }
   }
 
@@ -70,9 +69,7 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
 
     auto const dx = (stop - start) / static_cast<double>(num);
     for (std::size_t i = 0u; i < values.size(); i++) {
-      BOOST_CHECK(
-          std::fabs(start + static_cast<double>(i) * dx - values.at(i)) <=
-          std::numeric_limits<double>::epsilon());
+      BOOST_CHECK_CLOSE(values.at(i), start + static_cast<double>(i) * dx, tol);
     }
   }
 }

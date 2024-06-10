@@ -54,11 +54,10 @@ public:
     m_system = system;
   }
 
-  void detach_system(std::shared_ptr<System> const &system) {
+  void detach_system([[maybe_unused]] std::shared_ptr<System> const &system) {
     assert(system);
     assert(not m_system.expired());
     assert(system == m_system.lock());
-    static_cast<void>(system);
     m_system.reset();
   }
 };

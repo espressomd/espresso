@@ -154,11 +154,11 @@ private:
    */
   Cell *position_to_cell(Utils::Vector3d const &pos) {
     auto const index = position_to_cell_index(pos);
-    return (index < 0) ? nullptr : &(cells.at(index));
+    return (index < 0) ? nullptr : &(cells.at(static_cast<std::size_t>(index)));
   }
   Cell const *position_to_cell(Utils::Vector3d const &pos) const {
     auto const index = position_to_cell_index(pos);
-    return (index < 0) ? nullptr : &(cells.at(index));
+    return (index < 0) ? nullptr : &(cells.at(static_cast<std::size_t>(index)));
   }
 
   /**

@@ -61,6 +61,7 @@ namespace utf = boost::unit_test;
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/numeric.hpp>
+#include <boost/variant.hpp>
 
 #include <cassert>
 #include <cmath>

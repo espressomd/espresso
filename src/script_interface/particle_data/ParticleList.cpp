@@ -139,7 +139,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
     for (auto const bond : p.bonds()) {
-      if (bond.partner_ids().size() == 1) {
+      if (bond.partner_ids().size() == 1u) {
         auto const pid2 = bond.partner_ids()[0];
         if (pid1 != pid2) {
           bonded_pairs.emplace_back(pid1);

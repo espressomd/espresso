@@ -156,7 +156,7 @@ get_all_particle_positions(boost::mpi::communicator const &comm,
   auto const argsort = detail::get_argsort(comm, local_pids, sorted_pids);
 
   std::vector<std::vector<pos_type>> global_positions{};
-  global_positions.reserve(comm.size());
+  global_positions.reserve(static_cast<std::size_t>(comm.size()));
   boost::mpi::gather(comm, local_positions, global_positions, 0);
 
   if (comm.rank() != 0) {

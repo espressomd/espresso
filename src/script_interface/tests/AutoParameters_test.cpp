@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/range/algorithm/find.hpp>
+#include <boost/variant.hpp>
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 

@@ -110,8 +110,8 @@ inline bool calc_dihedral_angle(Utils::Vector3d const &a,
 
   /* catch case of undefined dihedral angle */
   if (l_aXb <= TINY_LENGTH_VALUE || l_bXc <= TINY_LENGTH_VALUE) {
-    phi = -1.0;
-    cosphi = 0.0;
+    phi = -1.;
+    cosphi = 0.;
     return true;
   }
 
@@ -120,13 +120,13 @@ inline bool calc_dihedral_angle(Utils::Vector3d const &a,
 
   cosphi = aXb * bXc;
 
-  if (fabs(fabs(cosphi) - 1) < TINY_SIN_VALUE)
+  if (fabs(fabs(cosphi) - 1.) < TINY_SIN_VALUE)
     cosphi = std::round(cosphi);
 
   /* Calculate dihedral angle */
   phi = acos(cosphi);
-  if ((aXb * c) < 0.0)
-    phi = (2.0 * Utils::pi()) - phi;
+  if ((aXb * c) < 0.)
+    phi = 2. * Utils::pi() - phi;
   return false;
 }
 

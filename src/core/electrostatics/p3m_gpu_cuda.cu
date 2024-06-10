@@ -63,8 +63,12 @@
 #include <cuda.h>
 #include <cufft.h>
 
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <stdexcept>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
@@ -90,7 +94,7 @@ struct P3MGpuData {
   /** Ewald parameter */
   REAL_TYPE alpha;
   /** Number of particles */
-  unsigned int n_part;
+  unsigned int n_part; // oddity: size_t causes UB with GCC 11.4 in Debug mode
   /** Box size */
   REAL_TYPE box[3];
   /** Mesh dimensions */
@@ -193,7 +197,7 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
   auto index = 0;
   REAL_TYPE Leni[3];
   for (int i = 0; i < 3; ++i) {
-    Leni[i] = 1.0f / p.box[i];
+    Leni[i] = REAL_TYPE{1} / p.box[i];
   }
 
   if ((NX >= p.mesh[0]) || (NY >= p.mesh[1]) || (NZ >= (p.mesh[2] / 2 + 1)))
@@ -216,7 +220,7 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
           Dnz * Zaehler[2] * Leni[2];
     zwi /= ((sqr(Dnx * Leni[0]) + sqr(Dny * Leni[1]) + sqr(Dnz * Leni[2])) *
             sqr(Nenner));
-    p.G_hat[index] = 2 * zwi / Utils::pi<REAL_TYPE>();
+    p.G_hat[index] = REAL_TYPE{2} * zwi / Utils::pi<REAL_TYPE>();
   }
 }
 
@@ -260,8 +264,8 @@ __global__ void apply_diff_op(const P3MGpuData p) {
 
   const FFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
   FFT_TYPE_COMPLEX buf;
-  buf.x = -2.0f * Utils::pi<float>() * meshw.y;
-  buf.y = 2.0f * Utils::pi<float>() * meshw.x;
+  buf.x = REAL_TYPE(-2) * Utils::pi<REAL_TYPE>() * meshw.y;
+  buf.y = REAL_TYPE(+2) * Utils::pi<REAL_TYPE>() * meshw.x;
 
   p.force_mesh_x[linear_index].x =
       static_cast<decltype(FFT_TYPE_COMPLEX::x)>(nx) * buf.x / p.box[0];
@@ -384,15 +388,16 @@ void assign_charges(P3MGpuData const &params,
       grid.x = n_blocks / grid.y + 1u;
   }
 
-  auto const data_length =
-      3 * static_cast<std::size_t>(parts_per_block * cao) * sizeof(REAL_TYPE);
-  switch (cao) {
+  auto const data_length = std::size_t(3u) *
+                           static_cast<std::size_t>(parts_per_block) *
+                           static_cast<std::size_t>(cao) * sizeof(REAL_TYPE);
+  switch (params.cao) {
   case 1:
-    (assign_charge_kernel<1, false>)<<<grid, block, 0, nullptr>>>(
+    (assign_charge_kernel<1, false>)<<<grid, block, std::size_t(0u), nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 2:
-    (assign_charge_kernel<2, false>)<<<grid, block, 0, nullptr>>>(
+    (assign_charge_kernel<2, false>)<<<grid, block, std::size_t(0u), nullptr>>>(
         params, part_pos, part_q, parts_per_block);
     break;
   case 3:
@@ -434,16 +439,16 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
   /* id of the particle */
   auto const id =
       parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
-  if (id >= params.n_part)
+  if (id >= static_cast<unsigned>(params.n_part))
     return;
   /* position relative to the closest grid point */
   REAL_TYPE m_pos[3];
   /* index of the nearest mesh point */
   int nmp_x, nmp_y, nmp_z;
 
-  m_pos[0] = part_pos[3 * id + 0] * params.hi[0] - params.pos_shift;
-  m_pos[1] = part_pos[3 * id + 1] * params.hi[1] - params.pos_shift;
-  m_pos[2] = part_pos[3 * id + 2] * params.hi[2] - params.pos_shift;
+  m_pos[0] = part_pos[3u * id + 0u] * params.hi[0] - params.pos_shift;
+  m_pos[1] = part_pos[3u * id + 1u] * params.hi[1] - params.pos_shift;
+  m_pos[2] = part_pos[3u * id + 2u] * params.hi[2] - params.pos_shift;
 
   nmp_x = static_cast<int>(floorf(m_pos[0] + REAL_TYPE{0.5}));
   nmp_y = static_cast<int>(floorf(m_pos[1] + REAL_TYPE{0.5}));
@@ -495,11 +500,11 @@ void assign_forces(P3MGpuData const &params,
                    float const *const __restrict__ part_q,
                    float *const __restrict__ part_f,
                    REAL_TYPE const prefactor) {
-  auto const cao = params.cao;
+  auto const cao = static_cast<unsigned int>(params.cao);
   auto const cao3 = int_pow<3>(cao);
   unsigned int parts_per_block = 1u, n_blocks = 1u;
 
-  while ((parts_per_block + 1u) * static_cast<unsigned int>(cao3) <= 1024u) {
+  while ((parts_per_block + 1u) * cao3 <= 1024u) {
     parts_per_block++;
   }
 
@@ -508,8 +513,7 @@ void assign_forces(P3MGpuData const &params,
   else
     n_blocks = params.n_part / parts_per_block + 1u;
 
-  dim3 block(parts_per_block * static_cast<unsigned int>(cao),
-             static_cast<unsigned int>(cao), static_cast<unsigned int>(cao));
+  dim3 block(parts_per_block * cao, cao, cao);
   dim3 grid(n_blocks, 1u, 1u);
   while (grid.x > 65536u) {
     grid.y++;
@@ -521,18 +525,16 @@ void assign_forces(P3MGpuData const &params,
 
   /* Switch for assignment templates, the shared version only is faster for cao
    * > 2 */
-  auto const data_length =
-      3u *
-      static_cast<std::size_t>(parts_per_block *
-                               static_cast<unsigned int>(cao)) *
-      sizeof(float);
-  switch (cao) {
+  auto const data_length = std::size_t(3u) *
+                           static_cast<std::size_t>(parts_per_block) *
+                           static_cast<std::size_t>(cao) * sizeof(float);
+  switch (params.cao) {
   case 1:
-    (assign_forces_kernel<1, false>)<<<grid, block, 0, nullptr>>>(
+    (assign_forces_kernel<1, false>)<<<grid, block, std::size_t(0u), nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 2:
-    (assign_forces_kernel<2, false>)<<<grid, block, 0, nullptr>>>(
+    (assign_forces_kernel<2, false>)<<<grid, block, std::size_t(0u), nullptr>>>(
         params, part_pos, part_q, part_f, prefactor, parts_per_block);
     break;
   case 3:
@@ -561,16 +563,17 @@ void assign_forces(P3MGpuData const &params,
   cuda_check_errors_exit(block, grid, "assign_forces", __FILE__, __LINE__);
 }
 
-/* Init the internal data structures of the P3M GPU.
+/**
+ * @brief Initialize the internal data structure of the P3M GPU.
  * Mainly allocation on the device and influence function calculation.
- * Be advised: this needs mesh^3*5*sizeof(REAL_TYPE) of device memory.
+ * Be advised: this needs `mesh^3*5*sizeof(REAL_TYPE)` of device memory.
  * We use real to complex FFTs, so the size of the reciprocal mesh
- * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
+ * is (cuFFT convention) `Nx * Ny * ( Nz /2 + 1 )`.
  */
 void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
-                  const int mesh[3], double alpha, Utils::Vector3d const &box_l,
-                  unsigned n_part) {
-  if (mesh[0] == -1 && mesh[1] == -1 && mesh[2] == -1)
+                  Utils::Vector3i const &mesh, double alpha,
+                  Utils::Vector3d const &box_l, std::size_t n_part) {
+  if (mesh == Utils::Vector3i::broadcast(-1))
     throw std::runtime_error("P3M: invalid mesh size");
 
   if (not data) {
@@ -579,7 +582,8 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
 
   auto &p3m_gpu_data = data->p3m_gpu_data;
   bool do_reinit = false, mesh_changed = false;
-  p3m_gpu_data.n_part = n_part;
+  assert(n_part <= std::numeric_limits<unsigned int>::max());
+  p3m_gpu_data.n_part = static_cast<unsigned>(n_part);
 
   if (not data->is_initialized or p3m_gpu_data.alpha != alpha) {
     p3m_gpu_data.alpha = static_cast<REAL_TYPE>(alpha);
@@ -593,15 +597,16 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
     do_reinit = true;
   }
 
-  if (not data->is_initialized or (p3m_gpu_data.mesh[0] != mesh[0]) or
-      (p3m_gpu_data.mesh[1] != mesh[1]) or (p3m_gpu_data.mesh[2] != mesh[2])) {
-    std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
+  if (not data->is_initialized or mesh != Utils::Vector3i(p3m_gpu_data.mesh)) {
+    std::copy(mesh.begin(), mesh.end(), p3m_gpu_data.mesh);
     mesh_changed = true;
     do_reinit = true;
   }
 
-  if (not data->is_initialized or (p3m_gpu_data.box[0] != box_l[0]) or
-      (p3m_gpu_data.box[1] != box_l[1]) or (p3m_gpu_data.box[2] != box_l[2])) {
+  if (auto constexpr eps =
+          static_cast<double>(std::numeric_limits<float>::epsilon());
+      not data->is_initialized or
+      (box_l - Utils::Vector3d(p3m_gpu_data.box)).norm() >= eps) {
     std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
     do_reinit = true;
   }
@@ -609,7 +614,7 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
   p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
   p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * p3m_gpu_data.mesh_z_padded;
 
-  for (int i = 0; i < 3; i++) {
+  for (auto i = 0u; i < 3u; ++i) {
     p3m_gpu_data.hi[i] =
         static_cast<REAL_TYPE>(p3m_gpu_data.mesh[i]) / p3m_gpu_data.box[i];
   }
@@ -689,11 +694,11 @@ void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
  *  \brief The long-range part of the P3M algorithm.
  */
 void p3m_gpu_add_farfield_force(P3MGpuParams &data, GpuParticleData &gpu,
-                                double prefactor, unsigned n_part) {
+                                double prefactor, std::size_t n_part) {
   auto &p3m_gpu_data = data.p3m_gpu_data;
-  p3m_gpu_data.n_part = n_part;
+  p3m_gpu_data.n_part = static_cast<unsigned>(n_part);
 
-  if (p3m_gpu_data.n_part == 0u)
+  if (n_part == 0u)
     return;
 
   auto const positions_device = gpu.get_particle_positions_device();

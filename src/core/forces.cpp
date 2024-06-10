@@ -51,6 +51,7 @@
 #include "thermostat.hpp"
 #include "virtual_sites/relative.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/variant.hpp>

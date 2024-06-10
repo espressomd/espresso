@@ -79,9 +79,9 @@ inline void add_non_bonded_pair_virials(
     /* real space Coulomb */
     auto const p_coulomb = (*kernel_pressure)(p1.q() * p2.q(), d, dist);
 
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        obs_pressure.coulomb[i * 3 + j] += p_coulomb(i, j);
+    for (std::size_t i = 0u; i < 3u; i++) {
+      for (std::size_t j = 0u; j < 3u; j++) {
+        obs_pressure.coulomb[i * 3u + j] += p_coulomb(i, j);
       }
     }
   }
@@ -174,7 +174,7 @@ inline void add_kinetic_virials(Particle const &p1,
     return;
 
   /* kinetic pressure */
-  for (int k = 0; k < 3; k++)
-    for (int l = 0; l < 3; l++)
-      obs_pressure.kinetic[k * 3 + l] += p1.v()[k] * p1.v()[l] * p1.mass();
+  for (std::size_t k = 0u; k < 3u; k++)
+    for (std::size_t l = 0u; l < 3u; l++)
+      obs_pressure.kinetic[k * 3u + l] += p1.v()[k] * p1.v()[l] * p1.mass();
 }

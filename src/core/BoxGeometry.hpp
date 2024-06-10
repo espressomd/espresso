@@ -99,17 +99,17 @@ class BoxGeometry {
 public:
   BoxGeometry() {
     set_length(Utils::Vector3d{1., 1., 1.});
-    set_periodic(0, true);
-    set_periodic(1, true);
-    set_periodic(2, true);
+    set_periodic(0u, true);
+    set_periodic(1u, true);
+    set_periodic(2u, true);
     set_type(BoxType::CUBOID);
   }
   BoxGeometry(BoxGeometry const &rhs) {
     m_type = rhs.type();
     set_length(rhs.length());
-    set_periodic(0, rhs.periodic(0));
-    set_periodic(1, rhs.periodic(1));
-    set_periodic(2, rhs.periodic(2));
+    set_periodic(0u, rhs.periodic(0u));
+    set_periodic(1u, rhs.periodic(1u));
+    set_periodic(2u, rhs.periodic(2u));
     m_lees_edwards_bc = rhs.m_lees_edwards_bc;
   }
 
@@ -190,7 +190,7 @@ public:
    *         i.e. <tt>a - b</tt>. Can be negative.
    */
   template <typename T> T inline get_mi_coord(T a, T b, unsigned coord) const {
-    assert(coord <= 2);
+    assert(coord <= 2u);
 
     return detail::get_mi_coord(a, b, m_length[coord], m_length_inv[coord],
                                 m_length_half[coord], m_periodic[coord]);
@@ -210,8 +210,7 @@ public:
   Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
                                     const Utils::Vector<T, 3> &b) const {
     if (type() == BoxType::LEES_EDWARDS) {
-      auto const shear_plane_normal =
-          static_cast<unsigned int>(lees_edwards_bc().shear_plane_normal);
+      auto const shear_plane_normal = lees_edwards_bc().shear_plane_normal;
       auto a_tmp = a;
       auto b_tmp = b;
       a_tmp[shear_plane_normal] = Algorithm::periodic_fold(
@@ -250,10 +249,8 @@ public:
     auto ret = u - v;
     if (type() == BoxType::LEES_EDWARDS) {
       auto const &le = m_lees_edwards_bc;
-      auto const shear_plane_normal =
-          static_cast<unsigned int>(le.shear_plane_normal);
-      auto const shear_direction =
-          static_cast<unsigned int>(le.shear_direction);
+      auto const shear_plane_normal = le.shear_plane_normal;
+      auto const shear_direction = le.shear_direction;
       auto const dy = x[shear_plane_normal] - y[shear_plane_normal];
       if (fabs(dy) > 0.5 * length_half()[shear_plane_normal]) {
         ret[shear_direction] -= Utils::sgn(dy) * le.shear_velocity;

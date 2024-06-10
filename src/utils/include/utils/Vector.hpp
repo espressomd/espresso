@@ -122,7 +122,7 @@ public:
     Vector<U, N> ret;
 
     std::transform(begin(), end(), ret.begin(),
-                   [](auto e) { return static_cast<U>(e); });
+                   [](auto const &e) { return static_cast<U>(e); });
 
     return ret;
   }
@@ -140,7 +140,7 @@ public:
   Vector &normalize() {
     auto const l = norm();
     if (l > T(0)) {
-      for (std::size_t i = 0; i < N; i++)
+      for (std::size_t i = 0u; i < N; ++i)
         this->operator[](i) /= l;
     }
 
@@ -247,8 +247,7 @@ template <std::size_t N, typename T>
 Vector<T, N> operator-(Vector<T, N> const &a) {
   Vector<T, N> ret;
 
-  std::transform(std::begin(a), std::end(a), std::begin(ret),
-                 [](T const &v) { return -v; });
+  std::transform(std::begin(a), std::end(a), std::begin(ret), std::negate<T>());
 
   return ret;
 }
@@ -367,7 +366,7 @@ auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
 
   Vector<R, N> ret;
   std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
-                 [](auto ai, auto bi) { return ai * bi; });
+                 [](auto const &ai, auto const &bi) { return ai * bi; });
 
   return ret;
 }
@@ -410,7 +409,7 @@ auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
 
   Vector<R, N> ret;
   std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
-                 [](auto ai, auto bi) { return ai / bi; });
+                 [](auto const &ai, auto const &bi) { return ai / bi; });
 
   return ret;
 }
@@ -448,11 +447,11 @@ auto hadamard_division(T const &a, U const &b) {
 }
 
 template <typename T> Vector<T, 3> unit_vector(unsigned int i) {
-  if (i == 0)
+  if (i == 0u)
     return {T{1}, T{0}, T{0}};
-  if (i == 1)
+  if (i == 1u)
     return {T{0}, T{1}, T{0}};
-  if (i == 2)
+  if (i == 2u)
     return {T{0}, T{0}, T{1}};
   throw std::domain_error("coordinate out of range");
 }

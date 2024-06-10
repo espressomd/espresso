@@ -35,6 +35,9 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm.hpp>
 
+#include <cmath>
+#include <functional>
+
 /**
  * @brief copy current position
  *

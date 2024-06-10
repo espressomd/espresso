@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_SAMPLING_HPP
-#define UTILS_SAMPLING_HPP
+
+#pragma once
 
 #include "utils/Vector.hpp"
-#include "utils/constants.hpp"
 #include "utils/math/make_lin_space.hpp"
 #include "utils/math/sqr.hpp"
 
@@ -105,5 +104,3 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
 }
 
 } // namespace Utils
-
-#endif

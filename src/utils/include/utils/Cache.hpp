@@ -76,12 +76,12 @@ private:
     }
 
     /* Pick a random element form that bucket. */
-    auto const elem_in_bucket = std::uniform_int_distribution<size_type>{
+    auto const elem_index = std::uniform_int_distribution<size_type>{
         0, m_cache.bucket_size(bucket) - 1}(m_rand);
 
     /* Get the element in the bucket */
     auto const drop_key =
-        std::next(m_cache.cbegin(bucket), elem_in_bucket)->first;
+        std::next(m_cache.cbegin(bucket), static_cast<long>(elem_index))->first;
 
     /* And drop it. */
     m_cache.erase(drop_key);

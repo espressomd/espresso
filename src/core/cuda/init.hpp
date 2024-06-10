@@ -66,9 +66,9 @@ int cuda_get_n_gpus();
  *  \ref computeCapabilityMinMajor . \ref computeCapabilityMinMinor .
  *
  *  @param dev CUDA device number
- *  @return \ref ES_OK if the GPU meets the requirements, else \ref ES_ERROR.
+ *  @return @c false if the GPU meets the requirements, else @c true.
  */
-int cuda_check_gpu_compute_capability(int dev);
+bool cuda_check_gpu_compute_capability(int dev);
 
 /** Get the name of a CUDA device.
  *
@@ -89,10 +89,10 @@ void cuda_set_device(int dev);
  */
 int cuda_get_device();
 
-/** Test if actual CUDA device works.
- *  @return \ref ES_OK on success, \ref ES_ERROR else.
+/** Test if communication to the CUDA device works.
+ *  @return @c false on success, else @c true.
  */
-int cuda_test_device_access();
+bool cuda_test_device_access();
 
 /**
  * Check that a device is available, that its compute capability

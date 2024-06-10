@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_RASTER_HPP
-#define UTILS_RASTER_HPP
+
+#pragma once
 
 #include "utils/Vector.hpp"
 #include "utils/math/make_lin_space.hpp"
@@ -59,5 +59,3 @@ auto raster(Vector<T, 3> const &offset, Vector<T, 3> const &grid_spacing,
   return res;
 }
 } // namespace Utils
-
-#endif // UTILS_RASTER_HPP

@@ -75,6 +75,7 @@
 #include <complex>
 #include <cstddef>
 #include <functional>
+#include <initializer_list>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -714,7 +715,7 @@ public:
       assert(p3m.params.mesh[0] >= 1);
       if (p3m.params.mesh[1] == -1 and p3m.params.mesh[2] == -1) {
         // determine the two missing values by rescaling by the box length
-        for (int i : {1, 2}) {
+        for (auto i : {1, 2}) {
           p3m.params.mesh[i] =
               static_cast<int>(std::round(mesh_density * box_geo.length()[i]));
           // make the mesh even in all directions
@@ -734,7 +735,7 @@ public:
     while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       if (m_tune_mesh) {
-        for (int i : {0, 1, 2}) {
+        for (auto i : {0, 1, 2}) {
           trial_params.mesh[i] =
               static_cast<int>(std::round(box_geo.length()[i] * mesh_density));
           // make the mesh even in all directions
@@ -811,7 +812,7 @@ void CoulombP3M::sanity_checks_boxl() const {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
-  for (unsigned int i = 0u; i < 3u; i++) {
+  for (auto i = 0u; i < 3u; i++) {
     /* check k-space cutoff */
     if (p3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;

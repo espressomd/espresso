@@ -113,10 +113,10 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
     auto const alias1 = ex2 / n2;
     auto const d = alias1 - sqr(U2 * ex / cs) / n2;
 
-    if (d > 0 && (d / alias1 > ROUND_ERROR_PREC))
+    if (d > 0. and (d / alias1 > ROUND_ERROR_PREC))
       he_q[lind] = d;
   } else {
-    he_q[lind] = 0;
+    he_q[lind] = 0.;
   }
 }
 
@@ -175,5 +175,5 @@ double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
 
   auto const he_q_final = thrust::reduce(he_q.begin(), he_q.end());
 
-  return 2 * prefactor * sum_q2 * sqrt(he_q_final / npart) / (box[1] * box[2]);
+  return 2. * prefactor * sum_q2 * sqrt(he_q_final / npart) / (box[1] * box[2]);
 }

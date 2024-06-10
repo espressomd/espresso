@@ -47,20 +47,19 @@ inline double ljcos2_pair_force_factor(IA_parameters const &ia_params,
                                        double dist) {
   if (dist < (ia_params.ljcos2.cut + ia_params.ljcos2.offset)) {
     auto const r_off = dist - ia_params.ljcos2.offset;
-    auto fac = 0.0;
+    auto fac = 0.;
     if (r_off < ia_params.ljcos2.rchange) {
       auto const frac6 = Utils::int_pow<6>(ia_params.ljcos2.sig / r_off);
-      fac =
-          48.0 * ia_params.ljcos2.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
+      fac = 48. * ia_params.ljcos2.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     } else if (r_off < ia_params.ljcos2.rchange + ia_params.ljcos2.w) {
-      fac = -ia_params.ljcos2.eps * Utils::pi() / 2 / ia_params.ljcos2.w /
+      fac = -ia_params.ljcos2.eps * Utils::pi() / 2. / ia_params.ljcos2.w /
             dist *
             sin(Utils::pi() * (r_off - ia_params.ljcos2.rchange) /
                 ia_params.ljcos2.w);
     }
     return fac;
   }
-  return 0.0;
+  return 0.;
 }
 
 /** Calculate Lennard-Jones cosine squared energy */
@@ -69,16 +68,16 @@ inline double ljcos2_pair_energy(IA_parameters const &ia_params, double dist) {
     auto const r_off = dist - ia_params.ljcos2.offset;
     if (r_off < ia_params.ljcos2.rchange) {
       auto const frac6 = Utils::int_pow<6>(ia_params.ljcos2.sig / r_off);
-      return 4.0 * ia_params.ljcos2.eps * (Utils::sqr(frac6) - frac6);
+      return 4. * ia_params.ljcos2.eps * (Utils::sqr(frac6) - frac6);
     }
     if (r_off < (ia_params.ljcos2.rchange + ia_params.ljcos2.w)) {
-      return -ia_params.ljcos2.eps / 2 *
+      return -ia_params.ljcos2.eps / 2. *
              (cos(Utils::pi() * (r_off - ia_params.ljcos2.rchange) /
                   ia_params.ljcos2.w) +
-              1);
+              1.);
     }
   }
-  return 0.0;
+  return 0.;
 }
 
 #endif /* ifdef LJCOS2 */

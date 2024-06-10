@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef UTILS_MATH_QUATERNION_HPP
-#define UTILS_MATH_QUATERNION_HPP
+#pragma once
+
 /** \file
  *  Quaternion algebra.
  */
@@ -63,19 +63,19 @@ Quaternion<T> convert_director_to_quaternion(Vector<T, 3> const &d) {
   // Calculate angles
   auto const d_xy = std::sqrt(d[0] * d[0] + d[1] * d[1]);
   T theta2, phi2;
-  if (d_xy == 0) {
+  if (d_xy == 0.) {
     // Here the director is co-linear with the z-axis
     // We need to distinguish between (0, 0, +d_z) and (0, 0, -d_z)
-    theta2 = (d[2] > 0) ? 0 : Utils::pi<T>() / 2;
-    phi2 = 0;
+    theta2 = (d[2] > 0.) ? 0. : Utils::pi<T>() / 2.;
+    phi2 = 0.;
   } else {
     // Here we take care of all other directions
     // We suppose that theta2 = theta/2 and phi2 = (phi - pi/2)/2,
     // where angles theta and phi are in spherical coordinates
-    theta2 = std::acos(d[2] / dm) / 2;
+    theta2 = std::acos(d[2] / dm) / 2.;
     // here we do not use the signum function due to the edge case d[1] = 0
-    auto const phi = ((d[1] > 0) ? 1 : -1) * std::acos(d[0] / d_xy);
-    phi2 = phi / 2 - Utils::pi<T>() / 4;
+    auto const phi = ((d[1] > 0.) ? 1. : -1.) * std::acos(d[0] / d_xy);
+    phi2 = phi / 2. - Utils::pi<T>() / 4.;
   }
 
   // Calculate the quaternion from the angles
@@ -88,4 +88,3 @@ Quaternion<T> convert_director_to_quaternion(Vector<T, 3> const &d) {
 }
 
 } // namespace Utils
-#endif

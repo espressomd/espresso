@@ -446,7 +446,7 @@ void File::write_connectivity(const ParticleRange &particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     for (auto const b : p.bonds()) {
       auto const partner_ids = b.partner_ids();
-      if (partner_ids.size() == 1) {
+      if (partner_ids.size() == 1u) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
         bond[0][nbonds_local][0] = p.id();
         bond[0][nbonds_local][1] = partner_ids[0];

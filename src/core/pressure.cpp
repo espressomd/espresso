@@ -40,6 +40,7 @@
 
 #include <boost/range/algorithm/copy.hpp>
 
+#include <cstddef>
 #include <memory>
 
 namespace System {
@@ -77,9 +78,9 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
         if (result) {
           auto const &tensor = result.get();
           /* pressure tensor part */
-          for (int k = 0; k < 3; k++)
-            for (int l = 0; l < 3; l++)
-              obs_pressure.bonded_contribution(bond_id)[k * 3 + l] +=
+          for (std::size_t k = 0u; k < 3u; k++)
+            for (std::size_t l = 0u; l < 3u; l++)
+              obs_pressure.bonded_contribution(bond_id)[k * 3u + l] +=
                   tensor(k, l);
 
           return false;

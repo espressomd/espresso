@@ -43,9 +43,9 @@ get_system_params() {
   auto const &system = System::get_system();
   auto const &box_geo = *system.box_geo;
   auto const &cell_structure = *system.cell_structure;
-  auto periodicity = Utils::Vector3i{static_cast<int>(box_geo.periodic(0)),
-                                     static_cast<int>(box_geo.periodic(1)),
-                                     static_cast<int>(box_geo.periodic(2))};
+  auto periodicity = Utils::Vector3i{static_cast<int>(box_geo.periodic(0u)),
+                                     static_cast<int>(box_geo.periodic(1u)),
+                                     static_cast<int>(box_geo.periodic(2u))};
   auto const n_part = boost::mpi::all_reduce(
       comm_cart, cell_structure.local_particles().size(), std::plus<>());
   return {box_geo.length(), periodicity, n_part};

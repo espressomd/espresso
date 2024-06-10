@@ -55,7 +55,7 @@
 template <class RNG>
 static Utils::Vector3d random_position(BoxGeometry const &box_geo, RNG &rng) {
   Utils::Vector3d v;
-  for (int i = 0; i < 3; ++i)
+  for (auto i = 0u; i < 3u; ++i)
     v[i] = box_geo.length()[i] * rng();
   return v;
 }

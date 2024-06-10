@@ -43,8 +43,7 @@
 using Utils::Vector;
 
 /* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
-#define TEST_NUMBERS                                                           \
-  { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
+#define TEST_NUMBERS {0, 1, 1, 7, 21, 112, 456, 2603, 13203}
 
 constexpr int test_numbers[] = TEST_NUMBERS;
 constexpr std::size_t n_test_numbers = sizeof(test_numbers) / sizeof(int);
@@ -106,9 +105,8 @@ BOOST_AUTO_TEST_CASE(range_constructor_test) {
 }
 
 BOOST_AUTO_TEST_CASE(unit_vector_test) {
-  BOOST_CHECK((Utils::unit_vector<int>(2) == Utils::Vector3i{0, 0, 1}));
-  BOOST_CHECK_THROW(Utils::unit_vector<double>(3), std::domain_error);
-  BOOST_CHECK_THROW(Utils::unit_vector<float>(-1), std::domain_error);
+  BOOST_CHECK((Utils::unit_vector<int>(2u) == Utils::Vector3i{0, 0, 1}));
+  BOOST_CHECK_THROW(Utils::unit_vector<double>(3u), std::domain_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_norm2) {

@@ -62,8 +62,8 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
   auto constexpr exp_limit = 30.;
   auto const exponent = 2. * params.cao;
 
-  auto numerator = 0.0;
-  auto denominator = 0.0;
+  auto numerator = 0.;
+  auto denominator = 0.;
 
   auto const f1 = 1.0 / static_cast<double>(params.mesh[0]);
   auto const f2 = Utils::sqr(Utils::pi() / params.alpha_L);

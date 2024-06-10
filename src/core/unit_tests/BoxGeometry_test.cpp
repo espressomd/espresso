@@ -32,22 +32,22 @@ BOOST_AUTO_TEST_CASE(periodicity_test) {
   {
     auto const box = BoxGeometry{};
 
-    BOOST_CHECK(box.periodic(0));
-    BOOST_CHECK(box.periodic(1));
-    BOOST_CHECK(box.periodic(2));
+    BOOST_CHECK(box.periodic(0u));
+    BOOST_CHECK(box.periodic(1u));
+    BOOST_CHECK(box.periodic(2u));
   }
 
   /* setter */
   {
     auto box = BoxGeometry{};
 
-    box.set_periodic(0, false);
-    BOOST_CHECK(not box.periodic(0));
-    box.set_periodic(1, false);
-    BOOST_CHECK(not box.periodic(1));
-    box.set_periodic(2, false);
-    BOOST_CHECK(not box.periodic(2));
-    BOOST_CHECK_THROW(box.set_periodic(3, false), std::out_of_range);
+    box.set_periodic(0u, false);
+    BOOST_CHECK(not box.periodic(0u));
+    box.set_periodic(1u, false);
+    BOOST_CHECK(not box.periodic(1u));
+    box.set_periodic(2u, false);
+    BOOST_CHECK(not box.periodic(2u));
+    BOOST_CHECK_THROW(box.set_periodic(3u, false), std::out_of_range);
   }
 }
 

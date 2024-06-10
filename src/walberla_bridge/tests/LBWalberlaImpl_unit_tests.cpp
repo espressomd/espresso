@@ -271,7 +271,7 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 
     // If the cell is in the global physical domain
     // check that only one mpi rank said the node was local
-    auto constexpr origin = Vector3i{0, 0, 0};
+    auto constexpr origin = Vector3i{{0, 0, 0}};
     if (n >= origin and n < params.grid_dimensions) {
       boost::mpi::communicator world;
       auto const is_local_sum =
@@ -282,7 +282,7 @@ BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
 }
 
 static auto fold_node(Vector3i n) {
-  for (unsigned int i = 0; i < 3; i++) {
+  for (auto i = 0u; i < 3u; ++i) {
     if (n[i] < 0) {
       n[i] += params.grid_dimensions[i];
     } else if (n[i] >= params.grid_dimensions[i]) {

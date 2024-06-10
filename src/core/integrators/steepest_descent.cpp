@@ -52,7 +52,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
     auto f = 0.0;
 
     // For all Cartesian coordinates
-    for (unsigned int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       // Skip, if coordinate is fixed
       if (!p.is_fixed_along(j)) {
         // Square of force on particle

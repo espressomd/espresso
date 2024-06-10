@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_ORTHONORMAL_VEC_HPP
-#define ESPRESSO_ORTHONORMAL_VEC_HPP
+
+#pragma once
 
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
@@ -34,10 +34,10 @@ Vector<T, N> calc_orthonormal_vector(Vector<T, N> const &vec) {
    trial vector. Only works if the trial vector is not parallel, so we have to
    try a second one in that case
   */
-  Vector<Vector<T, N>, 2> try_vectors = {Vector<T, N>::broadcast(0),
-                                         Vector<T, N>::broadcast(0)};
-  try_vectors[0][0] = 1;
-  try_vectors[1][1] = 1;
+  Vector<Vector<T, N>, 2> try_vectors = {Vector<T, N>::broadcast(T(0)),
+                                         Vector<T, N>::broadcast(T(0))};
+  try_vectors[0][0] = T(1);
+  try_vectors[1][1] = T(1);
 
   Vector<T, N> ret;
   for (auto v : try_vectors) {
@@ -52,5 +52,3 @@ Vector<T, N> calc_orthonormal_vector(Vector<T, N> const &vec) {
 }
 
 } // namespace Utils
-
-#endif // ESPRESSO_ORTHONORMAL_VEC_HPP
