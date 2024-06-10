@@ -40,9 +40,6 @@
 
 // Charges and dipoles
 #define ELECTROSTATICS
-#ifdef CUDA
-#define MMM1D_GPU
-#endif
 #define DIPOLES
 
 // Active matter

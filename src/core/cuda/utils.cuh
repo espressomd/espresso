@@ -26,6 +26,7 @@
 #include "utils.hpp"
 
 #include <cuda.h>
+#include <cuda_runtime.h>
 
 #include <string>
 

@@ -387,6 +387,16 @@ of the LBM in analogy to the example for the CPU given in section
     system.lb = lbf
     system.integrator.run(100)
 
+The waLBerla library supports multi-GPU simulations.
+Without a suitable CUDA-aware MPI library, multi-GPU simulations are slower
+than single-GPU simulations, and would only be relevant for LB systems that
+are too large to fit in the memory of a single GPU device.
+Multi-GPU support in |es| is an experimental feature whose API may change at any time.
+It can be activated by invoking the following expression before the creation
+of the first LB GPU instance::
+
+    system.cuda_init_handle.call_method("set_device_id_per_rank")
+
 .. _Electrohydrodynamics:
 
 Electrohydrodynamics

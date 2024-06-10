@@ -24,6 +24,10 @@
 #include "core/cuda/init.hpp"
 #include "core/cuda/utils.hpp"
 
+#if defined(CUDA) && defined(WALBERLA)
+#include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
+#endif
+
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -100,6 +104,14 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
 #endif // CUDA
     return n_gpus;
   }
+#if defined(CUDA) && defined(WALBERLA)
+  if (name == "set_device_id_per_rank") {
+    if (cuda_get_n_gpus()) {
+      set_device_id_per_rank();
+    }
+    return {};
+  }
+#endif
   return {};
 }
 

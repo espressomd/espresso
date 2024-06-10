@@ -25,7 +25,6 @@
 #include "Actor_impl.hpp"
 
 #include "Container.hpp"
-#include "DipolarBarnesHutGpu.hpp"
 #include "DipolarDirectSum.hpp"
 #include "DipolarDirectSumGpu.hpp"
 #include "DipolarLayerCorrection.hpp"
@@ -48,9 +47,6 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<DipolarDirectSum>("Dipoles::DipolarDirectSumCpu");
 #ifdef DIPOLAR_DIRECT_SUM
   om->register_new<DipolarDirectSumGpu>("Dipoles::DipolarDirectSumGpu");
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-  om->register_new<DipolarBarnesHutGpu>("Dipoles::DipolarBarnesHutGpu");
 #endif
 #ifdef DP3M
   om->register_new<DipolarP3M>("Dipoles::DipolarP3M");

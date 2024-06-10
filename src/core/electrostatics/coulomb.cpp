@@ -155,11 +155,6 @@ struct ShortRangeCutoff {
                     std::visit(*this, actor->base_solver));
   }
 #endif // P3M
-#ifdef MMM1D_GPU
-  auto operator()(std::shared_ptr<CoulombMMM1DGpu> const &) const {
-    return std::numeric_limits<double>::infinity();
-  }
-#endif // MMM1D_GPU
   auto operator()(std::shared_ptr<CoulombMMM1D> const &) const {
     return std::numeric_limits<double>::infinity();
   }
@@ -224,11 +219,6 @@ struct LongRangeForce {
     actor->add_long_range_forces(m_particles);
   }
 #endif // P3M
-#ifdef MMM1D_GPU
-  void operator()(std::shared_ptr<CoulombMMM1DGpu> const &actor) const {
-    actor->add_long_range_forces();
-  }
-#endif
 #ifdef SCAFACOS
   void operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     actor->add_long_range_forces();
@@ -256,12 +246,6 @@ struct LongRangeEnergy {
     return actor->long_range_energy(m_particles);
   }
 #endif // P3M
-#ifdef MMM1D_GPU
-  auto operator()(std::shared_ptr<CoulombMMM1DGpu> const &actor) const {
-    actor->add_long_range_energy();
-    return 0.;
-  }
-#endif // MMM1D_GPU
 #ifdef SCAFACOS
   auto operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     return actor->long_range_energy();

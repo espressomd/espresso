@@ -186,8 +186,7 @@ Be aware of the following limitations:
   several electrostatic and magnetostatic solvers automatically introduce
   a deviation of the order of 1e-7, either due to floating-point rounding
   errors (:class:`~espressomd.electrostatics.P3MGPU`), or due to re-tuning
-  using the most recent system state (:class:`~espressomd.electrostatics.MMM1D`,
-  :class:`~espressomd.electrostatics.MMM1DGPU`).
+  using the most recent system state (:class:`~espressomd.electrostatics.MMM1D`).
   When in doubt, you can easily verify the absence of a "force jump" when
   loading from a checkpoint by replacing the electrostatics actor with your
   combination of features in files :file:`samples/save_checkpoint.py` and

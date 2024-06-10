@@ -342,10 +342,6 @@ MMM1D
 
 :class:`espressomd.electrostatics.MMM1D`
 
-.. note::
-    Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version
-    additionally needs the features ``CUDA`` and ``MMM1D_GPU``.
-
 Please cite :cite:`arnold05b` when using MMM1D. See :ref:`MMM1D theory` for
 the details.
 
@@ -368,34 +364,6 @@ radii to find out the fastest one. If this takes too long, you can
 change the value of the ``timings`` argument of the
 :class:`~espressomd.electrostatics.MMM1D` class,
 which controls the number of test force calculations.
-
-.. _MMM1D on GPU:
-
-MMM1D on GPU
-~~~~~~~~~~~~
-
-:class:`espressomd.electrostatics.MMM1DGPU`
-
-MMM1D is also available in a GPU implementation. Unlike its CPU
-counterpart, it does not need the N-squared cell system.
-
-::
-
-    import espressomd.electrostatics
-    mmm1d = espressomd.electrostatics.MMM1DGPU(prefactor=C, far_switch_radius=fr,
-                                               maxPWerror=err, tune=False, bessel_cutoff=bc)
-    mmm1d = espressomd.electrostatics.MMM1DGPU(prefactor=C, maxPWerror=err)
-
-The first form sets parameters manually. The switch radius determines at which
-xy-distance the force calculation switches from the near to the far
-formula. If the Bessel cutoff is not explicitly given, it is determined
-from the maximal pairwise error, otherwise this error only counts for
-the near formula. The second tuning form just takes the maximal pairwise
-error and tries out a lot of switching radii to find out the fastest one.
-
-For details on the MMM family of algorithms, refer to appendix
-:ref:`The MMM family of algorithms`.
-
 
 .. _ScaFaCoS electrostatics:
 

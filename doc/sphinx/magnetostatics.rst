@@ -168,31 +168,6 @@ via an observable.
 Both the CPU and GPU implementations support MPI-parallelization.
 
 
-.. _Barnes-Hut octree sum on GPU:
-
-Barnes-Hut octree sum on GPU
-----------------------------
-
-:class:`espressomd.magnetostatics.DipolarBarnesHutGpu`
-
-This interaction calculates energies and forces between dipoles by
-summing over the spatial octree cells (aka ``leaves``).
-Far enough cells are considered as a single dipole with a cumulative
-vector in the cell center of mass. Parameters which determine that the
-cell is far enough are :math:`I_{\mathrm{tol}}^2` and
-:math:`\varepsilon^2` which define a fraction of the cell and
-an additive distance respectively. For the detailed description of the
-Barnes-Hut method application to the dipole-dipole interactions, please
-refer to :cite:`polyakov13a`.
-
-To use the method, create an instance of :class:`~espressomd.magnetostatics.DipolarBarnesHutGpu`
-and attach it to the system::
-
-    import espressomd.magnetostatics
-    bh = espressomd.magnetostatics.DipolarBarnesHutGpu(prefactor=1., epssq=200.0, itolsq=8.0)
-    system.magnetostatics.solver = bh
-
-
 .. _ScaFaCoS magnetostatics:
 
 ScaFaCoS magnetostatics

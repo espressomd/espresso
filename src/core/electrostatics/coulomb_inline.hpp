@@ -61,12 +61,6 @@ struct ShortRangeForceKernel {
     return std::visit(*this, ptr->base_solver);
   }
 #endif // P3M
-
-#ifdef MMM1D_GPU
-  result_type operator()(std::shared_ptr<CoulombMMM1DGpu> const &) const {
-    return {};
-  }
-#endif // MMM1D_GPU
 #endif // ELECTROSTATICS
 };
 
@@ -145,11 +139,6 @@ struct ShortRangeEnergyKernel {
     }};
   }
 #endif // P3M
-#ifdef MMM1D_GPU
-  result_type operator()(std::shared_ptr<CoulombMMM1DGpu> const &) const {
-    return {};
-  }
-#endif // MMM1D_GPU
   result_type operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
     return kernel_type{[&actor](Particle const &, Particle const &, double q1q2,
                                 Utils::Vector3d const &d, double dist) {

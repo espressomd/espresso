@@ -256,38 +256,6 @@ class DipolarDirectSumGpu(MagnetostaticInteraction):
 
 
 @script_interface_register
-class DipolarBarnesHutGpu(MagnetostaticInteraction):
-
-    """
-    Calculates magnetostatic interactions by direct summation over all
-    pairs. See :ref:`Barnes-Hut octree sum on GPU` for more details.
-
-    TODO: If the system has periodic boundaries, the minimum image
-    convention is applied.
-
-    Requires feature ``DIPOLAR_BARNES_HUT``, which depends on
-    ``DIPOLES`` and ``CUDA``.
-
-    Parameters
-    ----------
-    epssq : :obj:`float`, optional
-        Squared skin of the octant cells.
-    itolsq : :obj:`float`, optional
-        Squared inverse fraction of the octant cells.
-
-    """
-    _so_name = "Dipoles::DipolarBarnesHutGpu"
-    _so_creation_policy = "GLOBAL"
-    _so_features = ("DIPOLAR_BARNES_HUT", "CUDA")
-
-    def default_params(self):
-        return {"epssq": 100.0, "itolsq": 4.0}
-
-    def required_keys(self):
-        return {"prefactor"}
-
-
-@script_interface_register
 class DLC(MagnetostaticInteraction):
 
     """

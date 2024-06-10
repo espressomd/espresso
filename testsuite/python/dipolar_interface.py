@@ -54,12 +54,6 @@ class Test(ut.TestCase):
             system.magnetostatics, espressomd.magnetostatics.DipolarDirectSumGpu,
             dict(prefactor=3.4))
 
-    if espressomd.has_features(
-            "DIPOLAR_BARNES_HUT") and espressomd.gpu_available():
-        test_dds_gpu = tests_common.generate_test_for_actor_class(
-            system.magnetostatics, espressomd.magnetostatics.DipolarBarnesHutGpu,
-            dict(prefactor=3.4, epssq=200.0, itolsq=8.0))
-
     if espressomd.has_features("DP3M"):
         test_dp3m_metallic = tests_common.generate_test_for_actor_class(
             system.magnetostatics, espressomd.magnetostatics.DipolarP3M,
@@ -158,16 +152,6 @@ class Test(ut.TestCase):
             MDLC(gap_size=2., maxPWerror=0.1, actor=mdlc)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'accuracy' is not a valid parameter"):
             MDLC(gap_size=2., maxPWerror=0.1, actor=dp3m, accuracy=1e-3)
-
-    @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT"])
-    def test_exceptions_barnes_hut(self):
-        valid_params = dict(prefactor=2., epssq=200., itolsq=8.)
-        for key in valid_params.keys():
-            invalid_params = valid_params.copy()
-            invalid_params[key] = -1.
-            with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
-                espressomd.magnetostatics.DipolarBarnesHutGpu(**invalid_params)
 
 
 if __name__ == "__main__":

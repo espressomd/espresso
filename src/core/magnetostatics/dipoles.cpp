@@ -135,11 +135,6 @@ struct LongRangeForce {
     actor->add_long_range_forces();
   }
 #endif
-#ifdef DIPOLAR_BARNES_HUT
-  void operator()(std::shared_ptr<DipolarBarnesHutGpu> const &actor) const {
-    actor->add_long_range_forces();
-  }
-#endif
 #ifdef SCAFACOS_DIPOLES
   void operator()(std::shared_ptr<DipolarScafacos> const &actor) const {
     actor->add_long_range_forces();
@@ -167,12 +162,6 @@ struct LongRangeEnergy {
   }
 #ifdef DIPOLAR_DIRECT_SUM
   double operator()(std::shared_ptr<DipolarDirectSumGpu> const &actor) const {
-    actor->long_range_energy();
-    return 0.;
-  }
-#endif
-#ifdef DIPOLAR_BARNES_HUT
-  double operator()(std::shared_ptr<DipolarBarnesHutGpu> const &actor) const {
     actor->long_range_energy();
     return 0.;
   }

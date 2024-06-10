@@ -17,12 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cuda.h>
-
 #include "init.hpp"
 #include "utils.cuh"
 
 #include <utils/constants.hpp>
+
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #include <cstring>
 #include <string>
