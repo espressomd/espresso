@@ -197,12 +197,11 @@ void GpuParticleData::enable_property(std::size_t property) {
 }
 
 bool GpuParticleData::has_compatible_device_impl() const {
-  auto result = true;
-  try {
+  auto result = false;
+  invoke_skip_cuda_exceptions([&result]() {
     cuda_check_device();
-  } catch (cuda_runtime_error const &err) {
-    result = false;
-  }
+    result = true;
+  });
   return result;
 }
 
@@ -213,8 +212,7 @@ void GpuParticleData::gpu_init_particle_comm() {
   try {
     cuda_check_device();
   } catch (cuda_runtime_error const &err) {
-    fprintf(stderr, "ERROR: %s\n", err.what());
-    errexit();
+    throw cuda_fatal_error(err.what());
   }
   m_data->realloc_device_memory();
 }

@@ -40,7 +40,6 @@ unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           espresso::utils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS
           espresso::utils)
-unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS espresso::utils espresso::core)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS espresso::utils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS espresso::utils
           Boost::serialization)
@@ -88,4 +87,16 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
                                       espresso::walberla::cpp_flags)
   target_link_libraries(ek_interface_test PRIVATE espresso::walberla
                                                   espresso::walberla::cpp_flags)
+endif()
+
+if(ESPRESSO_BUILD_WITH_FFTW)
+  unit_test(NAME p3m_test SRC p3m_test.cpp DEPENDS espresso::utils
+            espresso::core)
+  unit_test(NAME fft_test SRC fft_test.cpp DEPENDS espresso::utils
+            espresso::core)
+endif()
+
+if(ESPRESSO_BUILD_WITH_CUDA)
+  unit_test(NAME cuda_test SRC cuda_test.cu DEPENDS espresso::utils
+            espresso::core espresso::cuda)
 endif()

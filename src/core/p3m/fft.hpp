@@ -33,12 +33,7 @@
  *  redistributed.
  *
  *  For simplicity at the moment I have implemented a full complex to
- *  complex FFT (even though a real to complex FFT would be
- *  sufficient)
- *
- *  \todo Combine the forward and backward structures.
- *  \todo The packing routines could be moved to utils.hpp when they are needed
- * elsewhere.
+ *  complex FFT (even though a real to complex FFT would be sufficient).
  *
  *  For more information about FFT usage, see \ref fft.cpp "fft.cpp".
  */
@@ -88,22 +83,24 @@ template <class T> struct fft_allocator {
 
 template <class T> using fft_vector = std::vector<T, fft_allocator<T>>;
 
-/** Structure for performing a 1D FFT.
- *
- *  This includes the information about the redistribution of the 3D
- *  FFT *grid before the actual FFT.
- */
-struct fft_forw_plan {
-  /** plan direction: 0 = Forward FFT, 1 = Backward FFT. */
+struct fft_plan {
+  /** plan direction: forward or backward FFT (enum value from FFTW). */
   int dir;
+  /** plan for the FFT. */
+  fftw_plan our_fftw_plan;
+  /** packing function for send blocks. */
+  void (*pack_function)(double const *const, double *const, int const *,
+                        int const *, int const *, int);
+};
+
+/** @brief Plan for a forward 1D FFT of a flattened 3D array. */
+struct fft_forw_plan : public fft_plan {
   /** row direction of that FFT. */
   int row_dir;
   /** permutations from normal coordinate system. */
   int n_permute;
   /** number of 1D FFTs. */
   int n_ffts;
-  /** plan for fft. */
-  fftw_plan our_fftw_plan;
 
   /** size of local mesh before communication. */
   int old_mesh[3];
@@ -117,9 +114,6 @@ struct fft_forw_plan {
   /** group of nodes which have to communicate with each other. */
   std::vector<int> group;
 
-  /** packing function for send blocks. */
-  void (*pack_function)(double const *const, double *const, int const *,
-                        int const *, int const *, int);
   /** Send block specification. 6 integers for each node: start[3], size[3]. */
   std::vector<int> send_block;
   /** Send block communication sizes. */
@@ -132,17 +126,8 @@ struct fft_forw_plan {
   int element;
 };
 
-/** Additional information for backwards FFT. */
-struct fft_back_plan {
-  /** plan direction. (e.g. fftw macro) */
-  int dir;
-  /** plan for fft. */
-  fftw_plan our_fftw_plan;
-
-  /** packing function for send blocks. */
-  void (*pack_function)(double const *const, double *const, int const *,
-                        int const *, int const *, int);
-};
+/** @brief Plan for a backward 1D FFT of a flattened 3D array. */
+struct fft_back_plan : public fft_plan {};
 
 /** Information about the three one dimensional FFTs and how the nodes
  *  have to communicate inbetween.
@@ -246,5 +231,7 @@ void fft_pack_block(double const *in, double *out, int const start[3],
  */
 void fft_unpack_block(double const *in, double *out, int const start[3],
                       int const size[3], int const dim[3], int element);
+
+int map_3don2d_grid(int const g3d[3], int g2d[3]);
 
 #endif // defined(P3M) || defined(DP3M)

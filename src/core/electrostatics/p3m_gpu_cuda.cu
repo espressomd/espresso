@@ -66,9 +66,8 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <cstdio>
-#include <cstdlib>
 #include <limits>
+#include <numbers>
 #include <stdexcept>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
@@ -138,6 +137,31 @@ struct P3MGpuParams {
     is_initialized = false;
   }
 };
+
+static auto p3m_calc_blocks(unsigned int cao, std::size_t n_part) {
+  auto const cao3 = Utils::int_pow<3>(cao);
+  auto parts_per_block = 1u;
+  while ((parts_per_block + 1u) * cao3 <= 1024u) {
+    ++parts_per_block;
+  }
+  assert((n_part / parts_per_block) <= std::numeric_limits<unsigned>::max());
+  auto n = static_cast<unsigned int>(n_part / parts_per_block);
+  auto n_blocks = ((n_part % parts_per_block) == 0u) ? std::max(1u, n) : n + 1u;
+  assert(n_blocks <= std::numeric_limits<unsigned>::max());
+  return std::make_pair(parts_per_block, static_cast<unsigned>(n_blocks));
+}
+
+dim3 p3m_make_grid(unsigned int n_blocks) {
+  dim3 grid(n_blocks, 1u, 1u);
+  while (grid.x > 65536u) {
+    grid.y++;
+    if ((n_blocks % grid.y) == 0u)
+      grid.x = std::max(1u, n_blocks / grid.y);
+    else
+      grid.x = n_blocks / grid.y + 1u;
+  }
+  return grid;
+}
 
 template <int cao>
 __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
@@ -367,26 +391,9 @@ void assign_charges(P3MGpuData const &params,
                     float const *const __restrict__ part_pos,
                     float const *const __restrict__ part_q) {
   auto const cao = static_cast<unsigned int>(params.cao);
-  auto const cao3 = int_pow<3>(cao);
-  unsigned int parts_per_block = 1u, n_blocks = 1u;
-
-  while ((parts_per_block + 1u) * cao3 <= 1024u) {
-    parts_per_block++;
-  }
-  if ((params.n_part % parts_per_block) == 0u)
-    n_blocks = std::max<unsigned>(1u, params.n_part / parts_per_block);
-  else
-    n_blocks = params.n_part / parts_per_block + 1u;
-
+  auto const [parts_per_block, n_blocks] = p3m_calc_blocks(cao, params.n_part);
   dim3 block(parts_per_block * cao, cao, cao);
-  dim3 grid(n_blocks, 1u, 1u);
-  while (grid.x > 65536u) {
-    grid.y++;
-    if ((n_blocks % grid.y) == 0u)
-      grid.x = std::max<unsigned>(1u, n_blocks / grid.y);
-    else
-      grid.x = n_blocks / grid.y + 1u;
-  }
+  dim3 grid = p3m_make_grid(n_blocks);
 
   auto const data_length = std::size_t(3u) *
                            static_cast<std::size_t>(parts_per_block) *
@@ -501,27 +508,9 @@ void assign_forces(P3MGpuData const &params,
                    float *const __restrict__ part_f,
                    REAL_TYPE const prefactor) {
   auto const cao = static_cast<unsigned int>(params.cao);
-  auto const cao3 = int_pow<3>(cao);
-  unsigned int parts_per_block = 1u, n_blocks = 1u;
-
-  while ((parts_per_block + 1u) * cao3 <= 1024u) {
-    parts_per_block++;
-  }
-
-  if ((params.n_part % parts_per_block) == 0u)
-    n_blocks = std::max<unsigned>(1u, params.n_part / parts_per_block);
-  else
-    n_blocks = params.n_part / parts_per_block + 1u;
-
+  auto const [parts_per_block, n_blocks] = p3m_calc_blocks(cao, params.n_part);
   dim3 block(parts_per_block * cao, cao, cao);
-  dim3 grid(n_blocks, 1u, 1u);
-  while (grid.x > 65536u) {
-    grid.y++;
-    if (n_blocks % grid.y == 0u)
-      grid.x = std::max<unsigned>(1u, n_blocks / grid.y);
-    else
-      grid.x = n_blocks / grid.y + 1u;
-  }
+  dim3 grid = p3m_make_grid(n_blocks);
 
   /* Switch for assignment templates, the shared version only is faster for cao
    * > 2 */
@@ -724,8 +713,7 @@ void p3m_gpu_add_farfield_force(P3MGpuParams &data, GpuParticleData &gpu,
   if (FFT_FORW_FFT(data.p3m_fft.forw_plan,
                    (REAL_TYPE *)p3m_gpu_data.charge_mesh,
                    p3m_gpu_data.charge_mesh) != CUFFT_SUCCESS) {
-    fprintf(stderr, "CUFFT error: Forward FFT failed\n");
-    return;
+    throw std::runtime_error("CUFFT error: Forward FFT failed");
   }
 
   /* Do convolution */
