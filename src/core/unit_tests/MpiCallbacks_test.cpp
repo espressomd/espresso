@@ -30,7 +30,6 @@
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/environment.hpp>
-#include <boost/optional.hpp>
 
 #include <algorithm>
 #include <functional>

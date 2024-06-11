@@ -71,7 +71,6 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
 #include <optional>
@@ -291,7 +290,7 @@ inline void add_non_bonded_pair_force(
  *  @param[in] dx          Vector between @p p1 and @p p2.
  *  @param[in] kernel      Coulomb force kernel.
  */
-inline boost::optional<Utils::Vector3d> calc_bond_pair_force(
+inline std::optional<Utils::Vector3d> calc_bond_pair_force(
     Particle const &p1, Particle const &p2,
     Bonded_IA_Parameters const &iaparams, Utils::Vector3d const &dx,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
@@ -337,7 +336,7 @@ inline bool add_bonded_two_body_force(
   if (auto const *iap = boost::get<ThermalizedBond>(&iaparams)) {
     auto result = iap->forces(p1, p2, dx);
     if (result) {
-      auto const &forces = result.get();
+      auto const &forces = result.value();
 
       p1.force() += std::get<0>(forces);
       p2.force() += std::get<1>(forces);
@@ -347,11 +346,11 @@ inline bool add_bonded_two_body_force(
   } else {
     auto result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
     if (result) {
-      p1.force() += result.get();
-      p2.force() -= result.get();
+      p1.force() += result.value();
+      p2.force() -= result.value();
 
 #ifdef NPT
-      npt_add_virial_force_contribution(result.get(), dx);
+      npt_add_virial_force_contribution(result.value(), dx);
 #endif
       return false;
     }
@@ -359,7 +358,7 @@ inline bool add_bonded_two_body_force(
   return true;
 }
 
-inline boost::optional<
+inline std::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
                              BoxGeometry const &box_geo, Particle const &p1,
@@ -396,7 +395,7 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
   auto const result =
       calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
   if (result) {
-    auto const &forces = result.get();
+    auto const &forces = result.value();
 
     p1.force() += std::get<0>(forces);
     p2.force() += std::get<1>(forces);
@@ -407,8 +406,8 @@ inline bool add_bonded_three_body_force(Bonded_IA_Parameters const &iaparams,
   return true;
 }
 
-inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-                                  Utils::Vector3d, Utils::Vector3d>>
+inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                Utils::Vector3d, Utils::Vector3d>>
 calc_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
                             BoxGeometry const &box_geo, Particle const &p1,
                             Particle const &p2, Particle const &p3,
@@ -441,7 +440,7 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
   auto const result =
       calc_bonded_four_body_force(iaparams, box_geo, p1, p2, p3, p4);
   if (result) {
-    auto const &forces = result.get();
+    auto const &forces = result.value();
 
     p1.force() += std::get<0>(forces);
     p2.force() += std::get<1>(forces);

@@ -59,8 +59,7 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -85,7 +84,7 @@ get_pairs_of_types(System::System const &system, double distance,
  * @brief Get ids of particles that are within a certain distance
  * of another particle.
  */
-boost::optional<std::vector<int>>
+std::optional<std::vector<int>>
 get_short_range_neighbors(System::System const &system, int pid,
                           double distance);
 

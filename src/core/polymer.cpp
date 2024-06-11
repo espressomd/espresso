@@ -43,12 +43,12 @@
 #include <utils/math/vec_rotate.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/optional.hpp>
 
 #include <cmath>
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -192,7 +192,7 @@ draw_polymer_positions(System::System const &system, int const n_polymers,
 
   /* Try up to max_tries times to draw a valid position */
   auto draw_valid_monomer_position =
-      [&](int p, int m) -> boost::optional<Utils::Vector3d> {
+      [&](int p, int m) -> std::optional<Utils::Vector3d> {
     for (auto i = 0; i < max_tries; i++) {
       auto const trial_pos = draw_monomer_position(p, m);
       if (is_valid_pos(trial_pos)) {
@@ -200,7 +200,7 @@ draw_polymer_positions(System::System const &system, int const n_polymers,
       }
     }
 
-    return {};
+    return std::nullopt;
   };
 
   // create remaining monomers' positions by backtracking.

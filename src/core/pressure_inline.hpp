@@ -38,9 +38,9 @@
 #include <utils/Vector.hpp>
 #include <utils/math/tensor_product.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
+#include <optional>
 #include <string>
 #include <tuple>
 
@@ -96,7 +96,7 @@ inline void add_non_bonded_pair_virials(
 #endif // DIPOLES
 }
 
-inline boost::optional<Utils::Matrix<double, 3, 3>>
+inline std::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_virial_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Particle const &p2, BoxGeometry const &box_geo,
@@ -104,7 +104,7 @@ calc_bonded_virial_pressure_tensor(
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
   if (result) {
-    auto const &force = result.get();
+    auto const &force = result.value();
 
     return Utils::tensor_product(force, dx);
   }
@@ -112,7 +112,7 @@ calc_bonded_virial_pressure_tensor(
   return {};
 }
 
-inline boost::optional<Utils::Matrix<double, 3, 3>>
+inline std::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
                                        Particle const &p3,
@@ -130,7 +130,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
         calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
     if (result) {
       Utils::Vector3d force2, force3;
-      std::tie(std::ignore, force2, force3) = result.get();
+      std::tie(std::ignore, force2, force3) = result.value();
 
       return Utils::tensor_product(force2, dx21) +
              Utils::tensor_product(force3, dx31);
@@ -145,7 +145,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
   return {};
 }
 
-inline boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
+inline std::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Utils::Span<Particle *> partners, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {

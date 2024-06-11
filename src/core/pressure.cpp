@@ -76,7 +76,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
         auto const result = calc_bonded_pressure_tensor(
             iaparams, p1, partners, *box_geo, coulomb_force_kernel_ptr);
         if (result) {
-          auto const &tensor = result.get();
+          auto const &tensor = result.value();
           /* pressure tensor part */
           for (std::size_t k = 0u; k < 3u; k++)
             for (std::size_t l = 0u; l < 3u; l++)

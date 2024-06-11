@@ -46,6 +46,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -115,7 +116,7 @@ static void search_neighbors_sanity_checks(System::System const &system,
 }
 } // namespace detail
 
-boost::optional<std::vector<int>>
+std::optional<std::vector<int>>
 get_short_range_neighbors(System::System const &system, int const pid,
                           double const distance) {
   detail::search_neighbors_sanity_checks(system, distance);

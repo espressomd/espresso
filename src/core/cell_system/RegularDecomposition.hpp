@@ -35,8 +35,8 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
+#include <optional>
 #include <vector>
 
 /**
@@ -119,7 +119,7 @@ public:
   Utils::Vector3d max_cutoff() const override;
   Utils::Vector3d max_range() const override;
 
-  boost::optional<BoxGeometry> minimum_image_distance() const override {
+  std::optional<BoxGeometry> minimum_image_distance() const override {
     return {m_box};
   }
 

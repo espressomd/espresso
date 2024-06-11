@@ -27,9 +27,9 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
+#include <optional>
 #include <vector>
 
 struct RemovedParticle {
@@ -128,7 +128,7 @@ public:
    *        if minimum image convention should be used needed for
    *        distance calculation.
    */
-  virtual boost::optional<BoxGeometry> minimum_image_distance() const = 0;
+  virtual std::optional<BoxGeometry> minimum_image_distance() const = 0;
 
   virtual BoxGeometry const &box() const = 0;
 

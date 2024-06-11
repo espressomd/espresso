@@ -31,12 +31,13 @@
 #include <utils/demangle.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include <algorithm>
 #include <functional>
 #include <iomanip>
 #include <iterator>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -142,7 +143,7 @@ std::string serialize_parameters(Variant const &pack) {
 }
 
 template <typename T>
-boost::optional<Variant> string_to_number(std::string const &s) {
+std::optional<Variant> string_to_number(std::string const &s) {
   auto deserializer = std::istringstream(s);
   T result;
   deserializer >> result;

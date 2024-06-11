@@ -40,7 +40,6 @@
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
-#include <boost/optional.hpp>
 #include <boost/range/algorithm/sort.hpp>
 #include <boost/range/numeric.hpp>
 

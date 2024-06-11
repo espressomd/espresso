@@ -33,8 +33,8 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -106,7 +106,7 @@ public:
 
   /* Return true if minimum image convention is
    * needed for distance calculation. */
-  boost::optional<BoxGeometry> minimum_image_distance() const override {
+  std::optional<BoxGeometry> minimum_image_distance() const override {
     return m_box;
   }
 

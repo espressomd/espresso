@@ -36,7 +36,7 @@ namespace Utils {
 /** @brief Type trait to indicate that a type is
  *         serializable with a static size, e.g. is
  *         suitable for memcpy serialization. Only
- *         specialize this to std::true_type if it is
+ *         specialize this to @c std::true_type if it is
  *         guaranteed that serializing this type always
  *         returns the same number of bytes, independent
  *         of object state.
@@ -45,22 +45,21 @@ namespace Utils {
  */
 template <class T>
 struct is_statically_serializable
-    : std::integral_constant<
-          bool, std::is_trivially_copyable_v<T> or
-                    boost::serialization::is_bitwise_serializable<T>::value> {};
+    : std::bool_constant<
+          std::is_trivially_copyable_v<T> or
+          boost::serialization::is_bitwise_serializable<T>::value> {};
 
 namespace detail {
 /* Use memcpy for packing */
 template <class T>
-using use_memcpy = std::integral_constant<
-    bool, std::is_trivially_copyable_v<T> or
-              boost::serialization::is_bitwise_serializable<T>::value>;
+using use_memcpy =
+    std::bool_constant<std::is_trivially_copyable_v<T> or
+                       boost::serialization::is_bitwise_serializable<T>::value>;
 /* Use serialize function only if the type is opt-in but not
  * trivially copyable, in which case memcpy is more efficient. */
 template <class T>
-using use_serialize =
-    std::integral_constant<bool, not use_memcpy<T>::value and
-                                     is_statically_serializable<T>::value>;
+using use_serialize = std::bool_constant<not use_memcpy<T>::value and
+                                         is_statically_serializable<T>::value>;
 
 template <class Derived> class BasicMemcpyArchive {
   /** Buffer to write to */

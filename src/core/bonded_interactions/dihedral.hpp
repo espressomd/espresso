@@ -33,9 +33,8 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
+#include <optional>
 #include <tuple>
 
 /** Parameters for four-body angular potential (dihedral-angle potentials). */
@@ -54,14 +53,14 @@ struct DihedralBond {
     this->phase = phase;
   }
 
-  boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
-                             Utils::Vector3d>>
+  std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
+                           Utils::Vector3d>>
   forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
          Utils::Vector3d const &v34) const;
 
-  boost::optional<double> energy(Utils::Vector3d const &v12,
-                                 Utils::Vector3d const &v23,
-                                 Utils::Vector3d const &v34) const;
+  std::optional<double> energy(Utils::Vector3d const &v12,
+                               Utils::Vector3d const &v23,
+                               Utils::Vector3d const &v34) const;
 
 private:
   friend boost::serialization::access;
@@ -139,8 +138,8 @@ inline bool calc_dihedral_angle(Utils::Vector3d const &a,
  *  @param[in] v34  Vector from @p p3 to @p p4
  *  @return the forces on @p p2, @p p1, @p p3
  */
-inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-                                  Utils::Vector3d, Utils::Vector3d>>
+inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                Utils::Vector3d, Utils::Vector3d>>
 DihedralBond::forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
                      Utils::Vector3d const &v34) const {
   /* vectors for dihedral angle calculation */
@@ -193,7 +192,7 @@ DihedralBond::forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
  *  @param[in] v23  Vector from @p p2 to @p p3
  *  @param[in] v34  Vector from @p p3 to @p p4
  */
-inline boost::optional<double>
+inline std::optional<double>
 DihedralBond::energy(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
                      Utils::Vector3d const &v34) const {
   /* vectors for dihedral calculations. */

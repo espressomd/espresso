@@ -70,7 +70,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
         auto const result = calc_bonded_energy(iaparams, p1, partners, *box_geo,
                                                coulomb_kernel_ptr);
         if (result) {
-          obs_energy.bonded_contribution(bond_id)[0] += result.get();
+          obs_energy.bonded_contribution(bond_id)[0] += result.value();
           return false;
         }
         return true;
