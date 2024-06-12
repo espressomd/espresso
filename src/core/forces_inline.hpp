@@ -68,12 +68,12 @@
 #include "exclusions.hpp"
 #include "thermostat.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/variant.hpp>
 
 #include <optional>
+#include <span>
 #include <tuple>
 
 inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
@@ -454,7 +454,7 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
 }
 
 inline bool
-add_bonded_force(Particle &p1, int bond_id, Utils::Span<Particle *> partners,
+add_bonded_force(Particle &p1, int bond_id, std::span<Particle *> partners,
                  BondBreakage::BondBreakage &bond_breakage,
                  BoxGeometry const &box_geo,
                  Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {

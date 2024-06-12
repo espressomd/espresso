@@ -28,20 +28,21 @@
 
 #include "p3m/fft.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <array>
 #include <cstddef>
 #include <limits>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
-std::optional<std::vector<int>>
-find_comm_groups(Utils::Vector3i const &, Utils::Vector3i const &,
-                 Utils::Span<const int>, Utils::Span<int>, Utils::Span<int>,
-                 Utils::Span<int>, int);
+std::optional<std::vector<int>> find_comm_groups(Utils::Vector3i const &,
+                                                 Utils::Vector3i const &,
+                                                 std::span<int const>,
+                                                 std::span<int>, std::span<int>,
+                                                 std::span<int>, int);
 
 BOOST_AUTO_TEST_CASE(fft_find_comm_groups_mismatch) {
   int my_pos[3] = {0};

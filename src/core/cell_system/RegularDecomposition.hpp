@@ -31,12 +31,12 @@
 #include "ParticleList.hpp"
 #include "ghosts.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
 
 #include <optional>
+#include <span>
 #include <vector>
 
 /**
@@ -96,12 +96,8 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *const> local_cells() const override {
-    return Utils::make_span(m_local_cells);
-  }
-  Utils::Span<Cell *const> ghost_cells() const override {
-    return Utils::make_span(m_ghost_cells);
-  }
+  std::span<Cell *const> local_cells() const override { return m_local_cells; }
+  std::span<Cell *const> ghost_cells() const override { return m_ghost_cells; }
 
   /* Getter needed for HybridDecomposition */
   auto const &get_local_cells() const { return m_local_cells; }

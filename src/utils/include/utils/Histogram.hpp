@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "utils/Span.hpp"
-
 #include <boost/multi_array.hpp>
 
 #include <algorithm>
@@ -30,6 +28,7 @@
 #include <cstddef>
 #include <functional>
 #include <numeric>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -91,14 +90,14 @@ public:
    * \brief Add data to the histogram.
    * \param pos    Position to update.
    */
-  void update(Span<const U> pos) { update(pos, m_ones); }
+  void update(std::span<const U> pos) { update(pos, m_ones); }
 
   /**
    * \brief Add data to the histogram.
    * \param pos    Position to update.
    * \param value  Value to add.
    */
-  void update(Span<const U> pos, Span<const T> value) {
+  void update(std::span<const U> pos, std::span<const T> value) {
     if (pos.size() != M) {
       throw std::invalid_argument("Wrong dimensions for the coordinates");
     }
@@ -154,7 +153,7 @@ private:
    * \brief Check if the position lies within the histogram limits.
    * \param pos     Position to check.
    */
-  bool check_limits(Span<const U> pos) const {
+  bool check_limits(std::span<const U> pos) const {
     assert(pos.size() == M);
     bool within_range = true;
     for (std::size_t i = 0; i < M; ++i) {

@@ -24,6 +24,7 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include <memory>
+#include <span>
 #include <string>
 
 namespace ScriptInterface {
@@ -52,7 +53,7 @@ public:
   void do_set_parameter(const std::string &name, const Variant &v) override {
     m_instance->do_set_parameter(name, v);
   }
-  Utils::Span<const boost::string_ref> valid_parameters() const override {
+  std::span<const boost::string_ref> valid_parameters() const override {
     return m_instance->valid_parameters();
   }
   Variant do_call_method(std::string const &name,

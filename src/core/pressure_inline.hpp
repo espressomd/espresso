@@ -34,13 +34,13 @@
 #include "exclusions.hpp"
 #include "forces_inline.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/math/tensor_product.hpp>
 
 #include <boost/variant.hpp>
 
 #include <optional>
+#include <span>
 #include <string>
 #include <tuple>
 
@@ -147,7 +147,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
 
 inline std::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
-    Utils::Span<Particle *> partners, BoxGeometry const &box_geo,
+    std::span<Particle *> partners, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   switch (number_of_partners(iaparams)) {
   case 1:

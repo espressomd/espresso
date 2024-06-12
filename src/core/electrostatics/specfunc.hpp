@@ -36,10 +36,9 @@
 
 #pragma once
 
-#include <utils/Span.hpp>
-
 #include <cassert>
 #include <numeric>
+#include <span>
 #include <utility>
 
 /** Hurwitz zeta function. This function was taken from the GSL code. */
@@ -90,7 +89,7 @@ std::pair<double, double> LPK01(double x);
 /** Evaluate the polynomial interpreted as a Taylor series via the
  *  Horner scheme.
  */
-inline double evaluateAsTaylorSeriesAt(Utils::Span<const double> series,
+inline double evaluateAsTaylorSeriesAt(std::span<const double> series,
                                        double x) {
   assert(not series.empty());
   auto const value = std::accumulate(
@@ -102,7 +101,7 @@ inline double evaluateAsTaylorSeriesAt(Utils::Span<const double> series,
 /** Evaluate the polynomial interpreted as a Chebychev series. Requires a
  *  series with at least three coefficients, i.e. no linear approximations!
  */
-inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
+inline double evaluateAsChebychevSeriesAt(std::span<const double> series,
                                           double x) {
   assert(series.size() >= 3);
 

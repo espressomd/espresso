@@ -21,15 +21,15 @@
 #ifndef ESPRESSO_CORE_P3M_INTERPOLATION_HPP
 #define ESPRESSO_CORE_P3M_INTERPOLATION_HPP
 
-#include <utils/Span.hpp>
 #include <utils/index.hpp>
 #include <utils/math/bspline.hpp>
 
-#include <boost/range/algorithm/copy.hpp>
-
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <span>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 /**
@@ -84,9 +84,9 @@ public:
 
     ca_fmp.push_back(w.ind);
     auto it = std::back_inserter(ca_frac);
-    boost::copy(w.w_x, it);
-    boost::copy(w.w_y, it);
-    boost::copy(w.w_z, it);
+    std::ranges::copy(w.w_x, it);
+    std::ranges::copy(w.w_y, it);
+    std::ranges::copy(w.w_z, it);
   }
 
   /**
@@ -102,17 +102,17 @@ public:
    */
   template <int cao> InterpolationWeights<cao> load(std::size_t i) const {
     assert(cao == m_cao);
-
-    using Utils::make_const_span;
     assert(i < size());
 
     InterpolationWeights<cao> ret;
     ret.ind = ca_fmp[i];
 
-    auto const offset = ca_frac.data() + 3 * i * cao;
-    boost::copy(make_const_span(offset + 0 * cao, cao), ret.w_x.begin());
-    boost::copy(make_const_span(offset + 1 * cao, cao), ret.w_y.begin());
-    boost::copy(make_const_span(offset + 2 * cao, cao), ret.w_z.begin());
+    auto const view = std::span(std::as_const(ca_frac));
+    auto const offset = 3ul * i * static_cast<std::size_t>(cao);
+
+    std::ranges::copy(view.subspan(offset + 0ul * cao, cao), ret.w_x.begin());
+    std::ranges::copy(view.subspan(offset + 1ul * cao, cao), ret.w_y.begin());
+    std::ranges::copy(view.subspan(offset + 2ul * cao, cao), ret.w_z.begin());
 
     return ret;
   }

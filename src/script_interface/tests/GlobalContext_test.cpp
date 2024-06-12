@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <span>
 #include <string>
 
 static std::weak_ptr<boost::mpi::environment> mpi_env;
@@ -49,11 +50,10 @@ struct Dummy : si::ObjectHandle {
     params[name] = val;
   }
 
-  Utils::Span<const boost::string_ref> valid_parameters() const override {
+  std::span<const boost::string_ref> valid_parameters() const override {
     static const boost::string_ref parameter_names[] = {"id", "object_param"};
 
-    return Utils::make_const_span(parameter_names,
-                                  std::min(params.size(), std::size_t{2u}));
+    return {parameter_names, std::min(params.size(), std::size_t{2u})};
   }
 };
 

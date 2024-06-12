@@ -63,6 +63,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <span>
 #include <variant>
 
 /** External particle forces */
@@ -173,7 +174,7 @@ void System::System::calculate_forces() {
   short_range_loop(
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        &bond_breakage = *bond_breakage, &box_geo = *box_geo](
-          Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+          Particle &p1, int bond_id, std::span<Particle *> partners) {
         return add_bonded_force(p1, bond_id, partners, bond_breakage, box_geo,
                                 coulomb_kernel_ptr);
       },

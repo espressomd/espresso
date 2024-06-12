@@ -21,7 +21,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 #include <utils/serialization/optional.hpp>
@@ -73,7 +72,7 @@ BOOST_AUTO_TEST_CASE(type_traits) {
 BOOST_AUTO_TEST_CASE(skipping_and_position) {
   std::array<char, 10> buf;
 
-  auto ar = Utils::MemcpyOArchive(Utils::make_span(buf));
+  auto ar = Utils::MemcpyOArchive(buf);
 
   BOOST_CHECK_EQUAL(0, ar.bytes_processed());
   ar.skip(5);
@@ -86,14 +85,14 @@ BOOST_AUTO_TEST_CASE(memcpy_processing) {
   auto const test_number = 5;
 
   {
-    auto oa = Utils::MemcpyOArchive(Utils::make_span(buf));
+    auto oa = Utils::MemcpyOArchive(buf);
     oa << test_number;
     BOOST_CHECK_EQUAL(oa.bytes_written(), sizeof(test_number));
     BOOST_CHECK_EQUAL(oa.get_library_version(), 4);
   }
 
   {
-    auto ia = Utils::MemcpyIArchive(Utils::make_span(buf));
+    auto ia = Utils::MemcpyIArchive(buf);
     int out;
     ia >> out;
     BOOST_CHECK_EQUAL(out, test_number);
@@ -108,7 +107,7 @@ BOOST_AUTO_TEST_CASE(serializaton_processing) {
   const OpVec active = Utils::Vector3d{1., 2., 3.};
   const OpVec inactive = std::nullopt;
   {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+    auto oa = Utils::MemcpyOArchive{buf};
     auto in1 = active;
     auto in2 = inactive;
     oa << in1;
@@ -118,7 +117,7 @@ BOOST_AUTO_TEST_CASE(serializaton_processing) {
   }
 
   {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    auto ia = Utils::MemcpyIArchive{buf};
     OpVec out1 = Utils::Vector3d{};
     OpVec out2;
     ia >> out1;

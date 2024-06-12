@@ -37,6 +37,7 @@
 
 #include <cmath>
 #include <functional>
+#include <span>
 
 /**
  * @brief copy current position
@@ -111,20 +112,19 @@ static bool compute_correction_vector(CellStructure &cs,
                                       BoxGeometry const &box_geo,
                                       Kernel kernel) {
   bool correction = false;
-  cs.bond_loop(
-      [&correction, &kernel, &box_geo](Particle &p1, int bond_id,
-                                       Utils::Span<Particle *> partners) {
-        auto const &iaparams = *bonded_ia_params.at(bond_id);
+  cs.bond_loop([&correction, &kernel, &box_geo](
+                   Particle &p1, int bond_id, std::span<Particle *> partners) {
+    auto const &iaparams = *bonded_ia_params.at(bond_id);
 
-        if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
-          auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
-          if (corrected)
-            correction = true;
-        }
+    if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
+      auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
+      if (corrected)
+        correction = true;
+    }
 
-        /* Rigid bonds cannot break */
-        return false;
-      });
+    /* Rigid bonds cannot break */
+    return false;
+  });
 
   return correction;
 }

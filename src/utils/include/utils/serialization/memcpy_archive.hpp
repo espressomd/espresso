@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "utils/Span.hpp"
-
 #include <boost/mpl/bool.hpp>
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/nvp.hpp>
@@ -30,6 +28,7 @@
 #include <cstddef>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <type_traits>
 
 namespace Utils {
@@ -63,12 +62,12 @@ using use_serialize = std::bool_constant<not use_memcpy<T>::value and
 
 template <class Derived> class BasicMemcpyArchive {
   /** Buffer to write to */
-  Utils::Span<char> buf;
+  std::span<char> buf;
   /** Current position in the buffer */
   char *insert;
 
 public:
-  explicit BasicMemcpyArchive(Utils::Span<char> buf)
+  explicit BasicMemcpyArchive(std::span<char> buf)
       : buf(buf), insert(buf.data()) {}
 
   auto get_library_version() const { return std::size_t{4}; }
@@ -78,21 +77,21 @@ public:
   }
 
   void skip(std::size_t bytes) {
-    assert((insert + bytes) <= buf.end());
+    assert((insert + bytes) <= &*buf.end());
     insert += bytes;
   }
 
 private:
   void read(void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
-    assert((insert + bytes) <= buf.end());
+    assert((insert + bytes) <= &*buf.end());
     std::memcpy(data, insert, bytes);
     insert += bytes;
   }
 
   void write(const void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
-    assert((insert + bytes) <= buf.end());
+    assert((insert + bytes) <= &*buf.end());
     std::memcpy(insert, data, bytes);
     insert += bytes;
   }
@@ -172,7 +171,7 @@ public:
   /**
    * @param buf Buffer to read from.
    */
-  explicit MemcpyIArchive(Utils::Span<char> buf) : base_type(buf) {}
+  explicit MemcpyIArchive(std::span<char> buf) : base_type(buf) {}
 
   /**
    * @brief Number of bytes read from the buffer.
@@ -206,7 +205,7 @@ public:
   /**
    * @param buf Buffer to write to.
    */
-  explicit MemcpyOArchive(Utils::Span<char> buf) : base_type(buf) {}
+  explicit MemcpyOArchive(std::span<char> buf) : base_type(buf) {}
 
   /**
    * @brief Number of bytes written to the buffer.

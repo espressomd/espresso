@@ -23,8 +23,6 @@
 
 #include "core/particle_node.hpp"
 
-#include <utils/Span.hpp>
-
 #include <string>
 #include <vector>
 
@@ -40,7 +38,7 @@ Variant ParticleSlice::do_call_method(std::string const &name,
                                       VariantMap const &params) {
   if (name == "prefetch_particle_data") {
     auto p_ids = get_value<std::vector<int>>(params, "chunk");
-    prefetch_particle_data(Utils::Span<int>(p_ids));
+    prefetch_particle_data(p_ids);
   } else if (name == "particle_exists") {
     return particle_exists(get_value<int>(params, "p_id"));
   }

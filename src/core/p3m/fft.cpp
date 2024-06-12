@@ -31,7 +31,6 @@
 
 #include "p3m/fft.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/math/permute_ifield.hpp>
@@ -44,6 +43,7 @@
 #include <cstdio>
 #include <cstring>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -84,8 +84,8 @@ using Utils::permute_ifield;
  */
 std::optional<std::vector<int>>
 find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
-                 Utils::Span<const int> node_list1, Utils::Span<int> node_list2,
-                 Utils::Span<int> pos, Utils::Span<int> my_pos, int rank) {
+                 std::span<int const> node_list1, std::span<int> node_list2,
+                 std::span<int> pos, std::span<int> my_pos, int rank) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];
@@ -534,11 +534,10 @@ int fft_init(Utils::Vector3i const &ca_mesh_dim, int const *ca_mesh_margin,
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
 
   for (int i = 1; i < 4; i++) {
-    using Utils::make_span;
     auto group = find_comm_groups(
         {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
         {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1],
-        make_span(n_id[i]), make_span(n_pos[i]), my_pos[i], rank);
+        std::span(n_id[i]), std::span(n_pos[i]), my_pos[i], rank);
     if (not group) {
       /* try permutation */
       std::swap(n_grid[i][(fft.plan[i].row_dir + 1) % 3],
@@ -546,8 +545,8 @@ int fft_init(Utils::Vector3i const &ca_mesh_dim, int const *ca_mesh_margin,
 
       group = find_comm_groups(
           {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, make_span(n_id[i - 1]),
-          make_span(n_id[i]), make_span(n_pos[i]), my_pos[i], rank);
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, std::span(n_id[i - 1]),
+          std::span(n_id[i]), std::span(n_pos[i]), my_pos[i], rank);
 
       if (not group) {
         throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");

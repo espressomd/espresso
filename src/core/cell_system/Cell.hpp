@@ -22,11 +22,10 @@
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 
-#include <utils/Span.hpp>
-
 #include <boost/range/iterator_range.hpp>
 
 #include <algorithm>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -56,8 +55,8 @@ public:
     return *this;
   }
 
-  Neighbors(Utils::Span<const CellRef> red_neighbors,
-            Utils::Span<const CellRef> black_neighbors) {
+  Neighbors(std::span<const CellRef> red_neighbors,
+            std::span<const CellRef> black_neighbors) {
     m_neighbors.resize(red_neighbors.size() + black_neighbors.size());
     m_red_black_divider = std::copy(red_neighbors.begin(), red_neighbors.end(),
                                     m_neighbors.begin());

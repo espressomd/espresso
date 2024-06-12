@@ -32,7 +32,6 @@
 #include "Particle.hpp"
 #include "ghosts.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
@@ -41,6 +40,7 @@
 #include <functional>
 #include <optional>
 #include <set>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -100,13 +100,8 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *const> local_cells() const override {
-    return Utils::make_span(m_local_cells);
-  }
-
-  Utils::Span<Cell *const> ghost_cells() const override {
-    return Utils::make_span(m_ghost_cells);
-  }
+  std::span<Cell *const> local_cells() const override { return m_local_cells; }
+  std::span<Cell *const> ghost_cells() const override { return m_ghost_cells; }
 
   Cell *particle_to_cell(Particle const &p) override {
     if (is_n_square_type(p.type())) {

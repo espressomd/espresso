@@ -276,8 +276,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
                                        dp3m.rs_mesh_dip[1].data(),
                                        dp3m.rs_mesh_dip[2].data()}};
 
-    dp3m.sm.gather_grid(Utils::make_span(meshes), comm_cart,
-                        dp3m.local_mesh.dim);
+    dp3m.sm.gather_grid(meshes, comm_cart, dp3m.local_mesh.dim);
 
     fft_perform_forw(dp3m.rs_mesh_dip[0].data(), dp3m.fft, comm_cart);
     fft_perform_forw(dp3m.rs_mesh_dip[1].data(), dp3m.fft, comm_cart);
@@ -492,8 +491,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
                                            dp3m.rs_mesh_dip[1].data(),
                                            dp3m.rs_mesh_dip[2].data()}};
 
-        dp3m.sm.spread_grid(Utils::make_span(meshes), comm_cart,
-                            dp3m.local_mesh.dim);
+        dp3m.sm.spread_grid(meshes, comm_cart, dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
         Utils::integral_parameter<int, AssignForces, 1, 7>(
             dp3m.params.cao, dp3m, dipole_prefac * Utils::sqr(two_pi_L_i), d_rs,

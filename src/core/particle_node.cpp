@@ -30,7 +30,6 @@
 #include "system/System.hpp"
 
 #include <utils/Cache.hpp>
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/keys.hpp>
 #include <utils/mpi/gatherv.hpp>
@@ -45,6 +44,7 @@
 #include <cmath>
 #include <functional>
 #include <iterator>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -218,7 +218,7 @@ REGISTER_CALLBACK(mpi_get_particles_local)
  *
  * @returns The particle list.
  */
-static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
+static std::vector<Particle> mpi_get_particles(std::span<const int> ids) {
   mpi_call(mpi_get_particles_local);
   /* Return value */
   std::vector<Particle> parts(ids.size());
@@ -261,7 +261,7 @@ static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
   return parts;
 }
 
-void prefetch_particle_data(Utils::Span<const int> in_ids) {
+void prefetch_particle_data(std::span<const int> in_ids) {
   /* Nothing to do on a single node. */
   // NOLINTNEXTLINE(clang-analyzer-core.NonNullParamChecker)
   if (comm_cart.size() == 1)

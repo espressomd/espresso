@@ -26,9 +26,8 @@
 
 #include "core/Observable_stat.hpp"
 
-#include <utils/Span.hpp>
-
 #include <cstddef>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -46,17 +45,17 @@ static auto get_summary(::System::System const &system,
   auto const obs_dim = obs.get_chunk_size();
 
   auto const get_obs_contribs = [obs_dim,
-                                 calc_sp](Utils::Span<double> const views) {
-    if (obs_dim == 1) {
+                                 calc_sp](std::span<double> const &views) {
+    if (obs_dim == 1ul) {
       return std::vector<Variant>(views.begin(), views.end());
     }
     assert(obs_dim == 9ul);
     assert(views.size() % 9ul == 0ul);
     std::vector<Variant> out;
     for (std::size_t i = 0ul; i < views.size() / 9ul; ++i) {
-      auto const view = Utils::Span<double>{views.data() + i * 9ul, 9ul};
+      auto const view = views.subspan(i * 9ul, 9ul);
       if (calc_sp) {
-        auto const trace = view[0] + view[4] + view[8];
+        auto const trace = view[0ul] + view[4ul] + view[8ul];
         out.emplace_back(trace / 3.);
       } else {
         auto const flat_matrix = std::vector<double>(view.begin(), view.end());
@@ -67,8 +66,8 @@ static auto get_summary(::System::System const &system,
   };
 
   auto const get_obs_contrib =
-      [&get_obs_contribs](Utils::Span<double> const views) -> Variant {
-    return get_obs_contribs(views)[0];
+      [&get_obs_contribs](std::span<double> const &views) -> Variant {
+    return get_obs_contribs(views)[0ul];
   };
 
   std::unordered_map<std::string, Variant> dict;

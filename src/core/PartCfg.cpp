@@ -23,10 +23,9 @@
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
-#include <utils/Span.hpp>
-
 #include <algorithm>
 #include <cstddef>
+#include <span>
 
 void PartCfg::update() {
   m_parts.clear();
@@ -37,8 +36,7 @@ void PartCfg::update() {
   for (std::size_t offset = 0; offset < ids.size();) {
     auto const this_size = std::clamp(chunk_size, std::size_t{0},
                                       std::size_t{ids.size() - offset});
-    auto const chunk_ids =
-        Utils::make_const_span(ids.data() + offset, this_size);
+    auto const chunk_ids = std::span(ids.data() + offset, this_size);
 
     prefetch_particle_data(chunk_ids);
 

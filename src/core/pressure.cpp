@@ -34,13 +34,13 @@
 #include "system/System.hpp"
 #include "virtual_sites/relative.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/flatten.hpp>
 
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <span>
 
 namespace System {
 std::shared_ptr<Observable_stat> System::calculate_pressure() {
@@ -70,7 +70,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   short_range_loop(
       [this, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
        &obs_pressure](Particle const &p1, int bond_id,
-                      Utils::Span<Particle *> partners) {
+                      std::span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
             iaparams, p1, partners, *box_geo, coulomb_force_kernel_ptr);

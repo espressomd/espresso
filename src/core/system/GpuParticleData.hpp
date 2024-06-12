@@ -27,12 +27,12 @@
 #include "cuda/CudaHostAllocator.hpp"
 #include "system/Leaf.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <bitset>
 #include <cstddef>
 #include <memory>
+#include <span>
 
 /**
  * @brief Particle data communication manager for the GPU.
@@ -99,8 +99,8 @@ private:
                             pinned_vector<GpuParticle> &particle_data_host,
                             int this_node);
   void particles_scatter_forces(ParticleRange const &particles,
-                                Utils::Span<float> host_forces,
-                                Utils::Span<float> host_torques) const;
+                                std::span<float> host_forces,
+                                std::span<float> host_torques) const;
 
 public:
   GpuParticleData() = default;

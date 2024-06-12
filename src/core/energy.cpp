@@ -31,9 +31,8 @@
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
 
-#include <utils/Span.hpp>
-
 #include <memory>
+#include <span>
 
 namespace System {
 
@@ -65,7 +64,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 
   short_range_loop(
       [this, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy](
-          Particle const &p1, int bond_id, Utils::Span<Particle *> partners) {
+          Particle const &p1, int bond_id, std::span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_energy(iaparams, p1, partners, *box_geo,
                                                coulomb_kernel_ptr);

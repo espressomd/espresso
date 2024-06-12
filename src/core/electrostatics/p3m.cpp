@@ -54,7 +54,6 @@
 #include "system/System.hpp"
 #include "tuning.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
@@ -366,9 +365,6 @@ template <int cao> struct AssignForces {
   template <typename combined_ranges>
   void operator()(p3m_data_struct &p3m, double force_prefac,
                   combined_ranges const &p_q_force_range) const {
-    using Utils::make_const_span;
-    using Utils::Span;
-    using Utils::Vector;
 
     assert(cao == p3m.inter_weights.cao());
 
@@ -552,8 +548,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     /* redistribute force component mesh */
     std::array<double *, 3> E_fields = {
         {p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()}};
-    p3m.sm.spread_grid(Utils::make_span(E_fields), comm_cart,
-                       p3m.local_mesh.dim);
+    p3m.sm.spread_grid(E_fields, comm_cart, p3m.local_mesh.dim);
 
     auto const force_prefac = prefactor / volume;
     Utils::integral_parameter<int, AssignForces, 1, 7>(

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_PACKED_VARIANT_HPP
-#define SCRIPT_INTERFACE_PACKED_VARIANT_HPP
+
+#pragma once
 
 #include "Variant.hpp"
 
@@ -220,5 +220,3 @@ unpack(const PackedMap &v,
   return ret;
 }
 } // namespace ScriptInterface
-
-#endif

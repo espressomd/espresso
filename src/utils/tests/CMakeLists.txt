@@ -46,7 +46,6 @@ unit_test(NAME interpolation_gradient SRC interpolation_gradient_test.cpp
           DEPENDS espresso::utils)
 unit_test(NAME interpolation SRC interpolation_test.cpp DEPENDS espresso::utils)
 unit_test(NAME bspline_test SRC bspline_test.cpp DEPENDS espresso::utils)
-unit_test(NAME Span_test SRC Span_test.cpp DEPENDS espresso::utils)
 unit_test(NAME matrix_vector_product SRC matrix_vector_product.cpp DEPENDS
           espresso::utils)
 unit_test(NAME index_test SRC index_test.cpp DEPENDS espresso::utils)

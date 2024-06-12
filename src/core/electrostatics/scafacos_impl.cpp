@@ -33,13 +33,14 @@
 #include "system/System.hpp"
 #include "tuning.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <iterator>
 #include <limits>
+#include <span>
 #include <string>
 
 std::shared_ptr<CoulombScafacos>
@@ -74,8 +75,8 @@ void CoulombScafacosImpl::update_particle_forces() const {
   auto it_fields = fields.begin();
   for (auto &p : cell_structure.local_particles()) {
     p.force() += prefactor * p.q() *
-                 Utils::Vector3d(Utils::Span<const double>(&*it_fields, 3));
-    it_fields += 3;
+                 Utils::Vector3d(std::span<const double>(&*it_fields, 3ul));
+    std::advance(it_fields, 3);
   }
 
   /* Check that the particle number did not change */

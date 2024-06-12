@@ -34,7 +34,6 @@
 #include "Particle.hpp"
 #include "system/System.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -51,6 +50,7 @@
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <span>
 #include <vector>
 
 /** Tag for ghosts communications. */
@@ -81,6 +81,8 @@ public:
    */
   auto &bonds() { return bondbuf; }
   const auto &bonds() const { return bondbuf; }
+
+  auto make_span() { return std::span(buf.data(), buf.size()); }
 
 private:
   std::vector<char> buf;     ///< Buffer for everything but bonds
@@ -255,7 +257,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   send_buffer.resize(calc_transmit_size(ghost_comm, box_geo, data_parts));
   send_buffer.bonds().clear();
 
-  auto archiver = Utils::MemcpyOArchive{Utils::make_span(send_buffer)};
+  auto archiver = Utils::MemcpyOArchive{send_buffer.make_span()};
 
   /* Construct archive that pushes back to the bond buffer */
   namespace io = boost::iostreams;
@@ -309,7 +311,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
                             BoxGeometry const &box_geo,
                             unsigned int data_parts) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
 
   if (data_parts & GHOSTTRANS_PARTNUM) {
     for (auto part_list : ghost_comm.part_lists) {
@@ -348,7 +350,7 @@ static void
 add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
                                        const GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : *part_list) {
       ParticleRattle pr;
@@ -362,7 +364,7 @@ add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
                                         const GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : *part_list) {
       ParticleForce pf;
@@ -393,8 +395,8 @@ static void cell_cell_transfer(GhostCommunication const &ghost_comm,
       assert(src_part.size() == dst_part.size());
 
       for (std::size_t i = 0; i < src_part.size(); i++) {
-        auto ar_out = Utils::MemcpyOArchive{Utils::make_span(buffer)};
-        auto ar_in = Utils::MemcpyIArchive{Utils::make_span(buffer)};
+        auto ar_out = Utils::MemcpyOArchive{buffer.make_span()};
+        auto ar_in = Utils::MemcpyIArchive{buffer.make_span()};
         auto &p1 = src_part.begin()[i];
         auto &p2 = dst_part.begin()[i];
         serialize_and_reduce(ar_out, p1, data_parts, ReductionPolicy::UPDATE,

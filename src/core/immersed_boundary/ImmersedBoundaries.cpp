@@ -28,13 +28,13 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/constants.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 
 #include <functional>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -105,7 +105,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
 
   // Loop over all particles on local node
   cs.bond_loop([&tempVol, &box_geo](Particle &p1, int bond_id,
-                                    Utils::Span<Particle *> partners) {
+                                    std::span<Particle *> partners) {
     auto const vol_cons_params = vol_cons_parameters(p1);
 
     if (vol_cons_params &&
@@ -159,7 +159,7 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
   auto const &box_geo = *System::get_system().box_geo;
 
   cs.bond_loop([this, &box_geo](Particle &p1, int bond_id,
-                                Utils::Span<Particle *> partners) {
+                                std::span<Particle *> partners) {
     if (boost::get<IBMTriel>(bonded_ia_params.at(bond_id).get()) != nullptr) {
       // Check if particle has an IBM Triel bonded interaction and an
       // IBM VolCons bonded interaction. Basically this loops over all

@@ -24,6 +24,7 @@
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
 #include <algorithm>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -129,7 +130,7 @@ protected:
 
 public:
   /* ObjectHandle implementation */
-  Utils::Span<const boost::string_ref> valid_parameters() const final {
+  std::span<const boost::string_ref> valid_parameters() const final {
     static std::vector<boost::string_ref> valid_params;
     valid_params.clear();
 
