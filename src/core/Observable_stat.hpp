@@ -19,15 +19,13 @@
 
 #pragma once
 
-#include <boost/range/algorithm/transform.hpp>
-#include <boost/range/numeric.hpp>
-
 #include <utils/Span.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <numeric>
 #include <vector>
 
 /** Observable for the pressure and energy. */
@@ -54,8 +52,8 @@ public:
    */
   double accumulate(double acc = 0.0, std::size_t column = 0) const {
     assert(column < m_chunk_size);
-    if (m_chunk_size == 1)
-      return boost::accumulate(m_data, acc);
+    if (m_chunk_size == 1ul)
+      return std::accumulate(m_data.begin(), m_data.end(), acc);
 
     for (auto it = m_data.begin() + static_cast<std::ptrdiff_t>(column);
          it < m_data.end(); it += static_cast<std::ptrdiff_t>(m_chunk_size))
@@ -65,8 +63,8 @@ public:
 
   /** Rescale values */
   void rescale(double volume) {
-    auto const fac = 1. / volume;
-    boost::transform(m_data, m_data.begin(), [fac](auto e) { return e * fac; });
+    std::ranges::transform(m_data, m_data.begin(),
+                           std::bind_front(std::multiplies{}, 1. / volume));
   }
 
   /** Contribution from linear and angular kinetic energy (accumulated). */
@@ -98,7 +96,7 @@ public:
     auto const span = (molid1 == molid2) ? non_bonded_intra : non_bonded_inter;
     auto const dest = get_non_bonded_contribution(span, type1, type2);
 
-    boost::transform(dest, data, dest.begin(), std::plus<>{});
+    std::ranges::transform(dest, data, dest.begin(), std::plus{});
   }
 
   void add_non_bonded_contribution(int type1, int type2, int molid1, int molid2,

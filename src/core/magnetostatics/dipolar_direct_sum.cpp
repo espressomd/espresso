@@ -38,7 +38,6 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/range/counting_range.hpp>
 
 #include <mpi.h>
 
@@ -46,6 +45,7 @@
 #include <cassert>
 #include <cmath>
 #include <iterator>
+#include <ranges>
 #include <stdexcept>
 #include <tuple>
 #include <utility>
@@ -152,9 +152,9 @@ template <typename F> void for_each_image(Utils::Vector3i const &ncut, F f) {
           f(nx, ny, nz);
         }
       },
-      boost::counting_range(-ncut[0], ncut[0] + 1),
-      boost::counting_range(-ncut[1], ncut[1] + 1),
-      boost::counting_range(-ncut[2], ncut[2] + 1));
+      std::views::iota(-ncut[0], ncut[0] + 1),
+      std::views::iota(-ncut[1], ncut[1] + 1),
+      std::views::iota(-ncut[2], ncut[2] + 1));
 }
 
 /**

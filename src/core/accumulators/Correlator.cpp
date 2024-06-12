@@ -26,7 +26,6 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -527,8 +526,8 @@ std::vector<double> Correlator::get_correlation() {
 
 std::vector<double> Correlator::get_lag_times() const {
   std::vector<double> res(n_values());
-  boost::transform(tau, res.begin(),
-                   [dt = m_dt](auto const &a) { return a * dt; });
+  std::ranges::transform(tau, res.begin(),
+                         [dt = m_dt](auto const &a) { return a * dt; });
   return res;
 }
 

@@ -37,7 +37,6 @@
 #include <utils/contains.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/range/algorithm/min_element.hpp>
 #include <boost/variant.hpp>
 
 #include <algorithm>
@@ -290,7 +289,7 @@ void CellStructure::set_verlet_skin_heuristic() {
   }
   /* maximal skin that can be used without resorting is the maximal
    * range of the cell system minus what is needed for interactions. */
-  auto const max_range = *boost::min_element(max_cutoff());
+  auto const max_range = std::ranges::min(max_cutoff());
   auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
   set_verlet_skin(new_skin);
 }

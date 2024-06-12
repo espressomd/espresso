@@ -34,8 +34,8 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
@@ -68,7 +68,7 @@ std::string ParticleList::get_internal_state() const {
   auto const p_ids = get_particle_ids();
   std::vector<std::string> object_states(p_ids.size());
 
-  boost::transform(p_ids, object_states.begin(), [this](auto const p_id) {
+  std::ranges::transform(p_ids, object_states.begin(), [this](auto const p_id) {
     auto p_obj =
         context()->make_shared("Particles::ParticleHandle", {{"id", p_id}});
     auto &p_handle = dynamic_cast<ParticleHandle &>(*p_obj);

@@ -24,8 +24,7 @@
 
 #include "core/accumulators/TimeSeries.hpp"
 
-#include <boost/range/algorithm/transform.hpp>
-
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -56,7 +55,7 @@ public:
       auto const &series = m_accumulator->time_series();
       std::vector<Variant> ret(series.size());
 
-      boost::transform(
+      std::ranges::transform(
           series, ret.begin(),
           [](std::vector<double> const &sample) { return sample; });
 

@@ -64,7 +64,7 @@ public:
   void remove(std::shared_ptr<Constraint> const &constraint) {
     auto &system = System::get_system();
     assert(contains(constraint));
-    m_constraints.erase(std::remove(begin(), end(), constraint), end());
+    std::erase(m_constraints, constraint);
     system.on_constraint_change();
   }
 

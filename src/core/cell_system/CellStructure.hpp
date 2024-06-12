@@ -86,9 +86,8 @@ unsigned map_data_parts(unsigned data_parts);
 namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *const> cells) {
   /* Find first non-empty cell */
-  auto first_non_empty =
-      std::find_if(cells.begin(), cells.end(),
-                   [](const Cell *c) { return not c->particles().empty(); });
+  auto first_non_empty = std::ranges::find_if(
+      cells, [](const Cell *c) { return not c->particles().empty(); });
 
   return {CellParticleIterator(first_non_empty, cells.end()),
           CellParticleIterator(cells.end())};
@@ -254,8 +253,8 @@ public:
 
   template <class InputRange, class OutputIterator>
   void get_local_particles(InputRange ids, OutputIterator out) {
-    boost::transform(ids, out,
-                     [this](int id) { return get_local_particle(id); });
+    std::ranges::transform(ids, out,
+                           [this](int id) { return get_local_particle(id); });
   }
 
   CellStructureType decomposition_type() const { return m_type; }
@@ -484,8 +483,7 @@ private:
     get_local_particles(partner_ids, std::back_inserter(partners));
 
     /* Check if id resolution failed for any partner */
-    if (std::any_of(partners.begin(), partners.end(),
-                    [](Particle const *const p) { return p == nullptr; })) {
+    if (std::ranges::find(partners, nullptr) != partners.end()) {
       throw BondResolutionError{};
     }
 

@@ -24,7 +24,6 @@
 
 #include <boost/container/vector.hpp>
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/version.hpp>
@@ -56,7 +55,7 @@ public:
   Utils::Span<const int> const &partner_ids() const { return m_partners; }
 
   bool operator==(BondView const &rhs) const {
-    return m_id == rhs.m_id and boost::equal(m_partners, rhs.m_partners);
+    return m_id == rhs.m_id and std::ranges::equal(m_partners, rhs.m_partners);
   }
 
   bool operator!=(BondView const &rhs) const { return not(*this == rhs); }
@@ -188,7 +187,7 @@ public:
    * @param bond Bond to add.
    */
   void insert(BondView const &bond) {
-    boost::copy(bond.partner_ids(), std::back_inserter(m_storage));
+    std::ranges::copy(bond.partner_ids(), std::back_inserter(m_storage));
     assert(bond.bond_id() >= 0);
     m_storage.push_back(-(bond.bond_id() + 1));
   }

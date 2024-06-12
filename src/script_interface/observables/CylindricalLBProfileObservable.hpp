@@ -30,8 +30,7 @@
 
 #include "script_interface/math/CylindricalTransformationParameters.hpp"
 
-#include <boost/range/algorithm.hpp>
-
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -127,8 +126,8 @@ public:
                          VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
-      boost::copy(cylindrical_profile_observable()->edges(),
-                  std::back_inserter(variant_edges));
+      std::ranges::copy(cylindrical_profile_observable()->edges(),
+                        std::back_inserter(variant_edges));
       return variant_edges;
     }
     return Base::do_call_method(method, parameters);

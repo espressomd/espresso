@@ -30,10 +30,10 @@
 
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <iterator>
@@ -84,7 +84,7 @@ template <class _, std::size_t N> struct shape_impl<Utils::Vector<_, N>> {
 template <class T> struct shape_impl<std::vector<T>> {
   static std::vector<std::size_t> eval(std::size_t n_part) {
     std::vector<std::size_t> ret{n_part};
-    boost::copy(shape_impl<T>::eval(n_part), std::back_inserter(ret));
+    std::ranges::copy(shape_impl<T>::eval(n_part), std::back_inserter(ret));
 
     return ret;
   }

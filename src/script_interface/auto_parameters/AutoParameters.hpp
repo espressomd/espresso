@@ -23,6 +23,7 @@
 #include "script_interface/ObjectHandle.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -114,11 +115,9 @@ protected:
     for (auto const &p : params) {
       if (m_parameters.count(p.name)) {
         m_parameters.erase(p.name);
-        for (auto it = m_key_order.begin(); it != m_key_order.end(); ++it) {
-          if (*it == p.name) {
-            m_key_order.erase(it);
-            break;
-          }
+        if (auto const it = std::ranges::find(m_key_order, p.name);
+            it != m_key_order.end()) {
+          m_key_order.erase(it);
         }
       }
       m_key_order.emplace_back(p.name);

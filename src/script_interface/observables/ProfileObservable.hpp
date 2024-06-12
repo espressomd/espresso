@@ -28,6 +28,7 @@
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/ProfileObservable.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -108,8 +109,8 @@ public:
                       VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
-      boost::copy(profile_observable()->edges(),
-                  std::back_inserter(variant_edges));
+      std::ranges::copy(profile_observable()->edges(),
+                        std::back_inserter(variant_edges));
       return variant_edges;
     }
     return Base::call_method(method, parameters);

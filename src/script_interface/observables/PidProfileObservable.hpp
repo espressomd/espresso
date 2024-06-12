@@ -30,8 +30,7 @@
 #include "core/observables/ForceDensityProfile.hpp"
 #include "core/observables/PidProfileObservable.hpp"
 
-#include <boost/range/algorithm.hpp>
-
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -93,8 +92,8 @@ public:
                          VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
-      boost::copy(pid_profile_observable()->edges(),
-                  std::back_inserter(variant_edges));
+      std::ranges::copy(pid_profile_observable()->edges(),
+                        std::back_inserter(variant_edges));
       return variant_edges;
     }
     return Base::do_call_method(method, parameters);

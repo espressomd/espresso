@@ -20,7 +20,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <boost/range/algorithm/find.hpp>
 #include <boost/variant.hpp>
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
@@ -37,11 +36,11 @@ struct A : AutoParameters<A> {
 BOOST_AUTO_TEST_CASE(basic) {
   A a{0, 42};
 
-  auto const &valid_parameters = a.valid_parameters();
+  auto const &parameters = a.valid_parameters();
 
-  BOOST_CHECK(valid_parameters.size() == 2);
-  BOOST_CHECK(boost::find(valid_parameters, "i") != valid_parameters.end());
-  BOOST_CHECK(boost::find(valid_parameters, "j") != valid_parameters.end());
+  BOOST_CHECK(parameters.size() == 2u);
+  BOOST_CHECK(std::ranges::find(parameters, "i") != parameters.end());
+  BOOST_CHECK(std::ranges::find(parameters, "j") != parameters.end());
 
   BOOST_CHECK(0 == boost::get<int>(a.get_parameter("i")));
   BOOST_CHECK(42 == boost::get<int>(a.get_parameter("j")));

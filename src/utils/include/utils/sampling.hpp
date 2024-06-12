@@ -65,8 +65,11 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
   auto const delta_z =
       (z_limits.second - z_limits.first) / static_cast<double>(min_n_samples);
 
-  auto const r_range = make_lin_space(r_limits.first + .5 * delta_r,
-                                      r_limits.second, n_r_bins, endpoint);
+  std::vector<double> r_range;
+  std::ranges::copy(make_lin_space(r_limits.first + .5 * delta_r,
+                                   r_limits.second, n_r_bins, endpoint),
+                    std::back_inserter(r_range));
+
   auto const phi_range =
       make_lin_space(phi_limits.first + .5 * delta_phi, phi_limits.second,
                      n_phi_bins, endpoint);
@@ -77,7 +80,7 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
   std::vector<Vector3d> sampling_positions;
   for (auto const z : z_range) {
     for (auto const phi : phi_range) {
-      sampling_positions.push_back(Vector3d{{*r_range.begin(), phi, z}});
+      sampling_positions.push_back(Vector3d{{r_range.front(), phi, z}});
     }
   }
 
@@ -85,17 +88,17 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
   auto phis = [n_phi_bins, phi_limits](long r_bin) {
     auto const phis_range = make_lin_space(
         phi_limits.first, phi_limits.second,
-        n_phi_bins * (static_cast<std::size_t>(r_bin) + 1), endpoint);
+        n_phi_bins * (static_cast<std::size_t>(r_bin) + 1u), endpoint);
     return phis_range;
   };
   // Calculate the sampling positions
   // Along z
   for (auto const z : z_range) {
     // Along r
-    for (auto r = ++r_range.begin(); r != r_range.end(); ++r) {
+    for (auto r_it = ++r_range.begin(); r_it != r_range.end(); ++r_it) {
       // Along phi
-      for (auto const phi : phis(std::distance(r_range.begin(), r))) {
-        sampling_positions.push_back(Vector3d{{*r, phi, z}});
+      for (auto const phi : phis(std::distance(r_range.begin(), r_it))) {
+        sampling_positions.push_back(Vector3d{{*r_it, phi, z}});
       }
     }
   }

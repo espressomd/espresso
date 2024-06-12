@@ -38,8 +38,7 @@
 #include <utils/Vector.hpp>
 #include <utils/flatten.hpp>
 
-#include <boost/range/algorithm/copy.hpp>
-
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 
@@ -102,7 +101,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   auto const coulomb_pressure = coulomb.calc_pressure_long_range(local_parts);
-  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
+  std::ranges::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9u);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
@@ -112,8 +111,8 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 #ifdef VIRTUAL_SITES_RELATIVE
   if (!obs_pressure.virtual_sites.empty()) {
     auto const vs_pressure = vs_relative_pressure_tensor(*cell_structure);
-    boost::copy(Utils::flatten(vs_pressure),
-                obs_pressure.virtual_sites.begin());
+    std::ranges::copy(Utils::flatten(vs_pressure),
+                      obs_pressure.virtual_sites.begin());
   }
 #endif
 

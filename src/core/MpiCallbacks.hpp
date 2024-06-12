@@ -43,7 +43,6 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/environment.hpp>
 #include <boost/mpi/packed_iarchive.hpp>
-#include <boost/range/algorithm/remove_if.hpp>
 
 #include <cassert>
 #include <memory>
@@ -331,12 +330,9 @@ private:
    * @param id Identifier of the callback to remove.
    */
   void remove(int id) {
-    m_callbacks.erase(
-        boost::remove_if(m_callbacks,
-                         [ptr = m_callback_map[id]](auto const &e) {
-                           return e.get() == ptr;
-                         }),
-        m_callbacks.end());
+    std::erase_if(m_callbacks, [ptr = m_callback_map[id]](auto const &e) {
+      return e.get() == ptr;
+    });
     m_callback_map.remove(id);
   }
 

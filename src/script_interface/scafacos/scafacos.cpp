@@ -30,7 +30,6 @@
 
 #include <utils/demangle.hpp>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/variant.hpp>
 
 #include <algorithm>
@@ -53,12 +52,10 @@ std::vector<std::string> available_methods() {
 
 struct ConvertToStringVector
     : public boost::static_visitor<std::vector<std::string>> {
-  auto operator()(std::string const &value) const {
-    return std::vector<std::string>{value};
-  }
+  auto operator()(std::string const &value) const { return result_type{value}; }
 
   template <typename T, typename = std::enable_if_t<!std::is_arithmetic_v<T>>>
-  std::vector<std::string> operator()(T const &) const {
+  result_type operator()(T const &) const {
     throw std::runtime_error("Cannot convert " + Utils::demangle<T>());
   }
 
@@ -71,12 +68,10 @@ struct ConvertToStringVector
     return operator()(to_str(value));
   }
 
-  auto operator()(std::vector<std::string> const &values) const {
-    return values;
-  }
+  auto operator()(result_type const &values) const { return values; }
 
   auto operator()(std::vector<Variant> const &values) const {
-    std::vector<std::string> values_str;
+    result_type values_str;
     for (auto const &v : values) {
       values_str.emplace_back(boost::apply_visitor(*this, v).front());
     }
@@ -85,7 +80,7 @@ struct ConvertToStringVector
 
   template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
   auto operator()(std::vector<T> const &values) const {
-    std::vector<std::string> values_str;
+    result_type values_str;
     for (auto const &v : values) {
       values_str.emplace_back(to_str(v));
     }
@@ -105,9 +100,7 @@ private:
 
 struct GetParameterList
     : public boost::static_visitor<std::unordered_map<std::string, Variant>> {
-  auto operator()(std::unordered_map<std::string, Variant> const &obj) const {
-    return obj;
-  }
+  auto operator()(result_type const &obj) const { return obj; }
 
   template <typename T>
   auto operator()(std::unordered_map<T, Variant> const &obj) const {
@@ -166,9 +159,11 @@ deserialize_parameters(std::string const &parameters) {
   auto const numbers = std::string("-0123456789");
   std::unordered_map<std::string, Variant> method_params{};
   std::vector<std::string> flat_array;
-  // Clang 10 false positive: https://github.com/boostorg/algorithm/issues/63
-  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
-  boost::split(flat_array, parameters, boost::is_any_of(","));
+  std::istringstream buffer;
+  buffer.str(parameters);
+  for (std::string line; std::getline(buffer, line, ',');) {
+    flat_array.emplace_back(line);
+  }
   for (auto it = flat_array.begin(); it != flat_array.end();) {
     auto const parameter_name = *it;
     auto parameter_list = std::vector<Variant>{};

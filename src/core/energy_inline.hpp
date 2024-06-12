@@ -58,7 +58,6 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/range/algorithm/find_if.hpp>
 #include <boost/variant.hpp>
 
 #include <optional>

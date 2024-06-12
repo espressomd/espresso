@@ -27,8 +27,8 @@
 #include <utils/demangle.hpp>
 
 #include <boost/algorithm/string/join.hpp>
-#include <boost/range/algorithm/transform.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <set>
@@ -221,8 +221,7 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
     }
 
     Utils::Vector<T, N> ret{};
-    boost::transform(vv, ret.begin(),
-                     [](const Variant &v) { return get_value_helper<T>{}(v); });
+    std::ranges::transform(vv, ret.begin(), get_value_helper<T>{});
 
     return ret;
   }
@@ -264,8 +263,7 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
   std::vector<T> operator()(std::vector<Variant> const &vv) const {
     std::vector<T> ret(vv.size());
 
-    boost::transform(vv, ret.begin(),
-                     [](const Variant &v) { return get_value_helper<T>{}(v); });
+    std::ranges::transform(vv, ret.begin(), get_value_helper<T>{});
 
     return ret;
   }

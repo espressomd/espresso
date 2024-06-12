@@ -40,8 +40,6 @@
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
-#include <boost/range/algorithm/sort.hpp>
-#include <boost/range/numeric.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -421,10 +419,9 @@ static void clear_particle_type_map() {
  * largest id.
  */
 static int calculate_max_seen_id() {
-  return boost::accumulate(particle_node, -1,
-                           [](int max, const std::pair<int, int> &kv) {
-                             return std::max(max, kv.first);
-                           });
+  return std::accumulate(
+      particle_node.begin(), particle_node.end(), -1,
+      [](int max, auto const &kv) { return std::max(max, kv.first); });
 }
 
 /**
@@ -585,7 +582,7 @@ std::vector<int> get_particle_ids() {
     build_particle_node();
 
   auto ids = Utils::keys(particle_node);
-  boost::sort(ids);
+  std::ranges::sort(ids);
 
   return ids;
 }

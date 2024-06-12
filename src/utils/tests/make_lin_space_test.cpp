@@ -43,7 +43,8 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
         make_lin_space(start, stop, num, /* endpoint */ true);
     BOOST_CHECK_EQUAL(lin_space.size(), num);
 
-    std::vector<double> values(lin_space.begin(), lin_space.end());
+    std::vector<double> values;
+    std::ranges::copy(lin_space, std::back_inserter(values));
     BOOST_CHECK_EQUAL(values.front(), start);
     BOOST_CHECK_CLOSE(values.back(), stop, tol);
 
@@ -63,7 +64,8 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
         make_lin_space(start, stop, num, /* endpoint */ false);
     BOOST_CHECK_EQUAL(lin_space.size(), num);
 
-    std::vector<double> values(lin_space.begin(), lin_space.end());
+    std::vector<double> values;
+    std::ranges::copy(lin_space, std::back_inserter(values));
     BOOST_CHECK_EQUAL(values.front(), start);
     BOOST_CHECK_LT(values.back(), stop);
 

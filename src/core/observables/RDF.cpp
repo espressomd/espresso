@@ -28,7 +28,6 @@
 #include <utils/math/int_pow.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm/transform.hpp>
 #include <boost/range/combine.hpp>
 
 #include <cmath>

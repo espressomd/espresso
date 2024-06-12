@@ -28,8 +28,6 @@
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/range/numeric.hpp>
-
 #include <cmath>
 #include <cstddef>
 #include <functional>
@@ -122,8 +120,7 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
   auto const size = n_end - n_start;
 
   /* The influence function grid */
-  auto g =
-      std::vector<double>(boost::accumulate(size, 1, std::multiplies<>()), 0.);
+  auto g = std::vector<double>(Utils::product(size), 0.);
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */

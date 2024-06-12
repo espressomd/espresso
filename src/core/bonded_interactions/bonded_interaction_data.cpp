@@ -21,7 +21,6 @@
 #include "system/System.hpp"
 #include "thermalized_bond.hpp"
 
-#include <boost/range/numeric.hpp>
 #include <boost/variant.hpp>
 
 #include <utils/constants.hpp>
@@ -41,8 +40,8 @@ public:
 };
 
 double maximal_cutoff_bonded() {
-  auto const max_cut_bonded = boost::accumulate(
-      bonded_ia_params, BONDED_INACTIVE_CUTOFF,
+  auto const max_cut_bonded = std::accumulate(
+      bonded_ia_params.begin(), bonded_ia_params.end(), BONDED_INACTIVE_CUTOFF,
       [](auto max_cut, auto const &kv) {
         return std::max(max_cut,
                         boost::apply_visitor(BondCutoff(), *kv.second));

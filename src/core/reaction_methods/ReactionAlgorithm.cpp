@@ -336,8 +336,7 @@ void ReactionAlgorithm::check_exclusion_range(int p_id, int p_type) {
   if (neighbor_search_order_n) {
     auto all_ids = get_particle_ids_parallel();
     /* remove the inserted particle id */
-    all_ids.erase(std::remove(all_ids.begin(), all_ids.end(), p_id),
-                  all_ids.end());
+    std::erase(all_ids, p_id);
     particle_ids = all_ids;
   } else {
     auto &system = System::get_system();

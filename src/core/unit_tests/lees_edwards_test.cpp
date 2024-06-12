@@ -28,8 +28,6 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/range/algorithm/equal.hpp>
-
 #include <algorithm>
 #include <cmath>
 #include <limits>

@@ -27,8 +27,7 @@
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/range/algorithm/equal.hpp>
-
+#include <algorithm>
 #include <limits>
 
 /* Check that the box corners and side length agree. */
@@ -59,7 +58,7 @@ BOOST_AUTO_TEST_CASE(constructors) {
 
     BOOST_CHECK(box.my_left() == lower_corner);
     BOOST_CHECK(box.length() == local_box_length);
-    BOOST_CHECK(boost::equal(boundaries, box.boundary()));
+    BOOST_CHECK(std::ranges::equal(boundaries, box.boundary()));
     BOOST_CHECK(box.cell_structure_type() == type);
     check_length(box);
   }
