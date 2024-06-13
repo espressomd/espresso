@@ -32,7 +32,6 @@
 #include "system/System.hpp"
 
 #include <utils/cartesian_product.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/iall_gatherv.hpp>
 

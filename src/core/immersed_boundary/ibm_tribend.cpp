@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <tuple>
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
@@ -127,7 +128,7 @@ IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
 
     auto const desc = dx1 * vector_product(n1, n2);
     if (desc < 0.)
-      theta0 = 2. * Utils::pi() - theta0;
+      theta0 = 2. * std::numbers::pi - theta0;
   }
 
   // NOTE: This is the bare bending modulus used by the program.

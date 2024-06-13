@@ -29,7 +29,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/contains.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -43,6 +42,7 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#include <numbers>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -464,7 +464,7 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
     auto const random_radius =
         m_cyl_radius * std::sqrt(m_uniform_real_distribution(m_generator));
     auto const random_phi =
-        2. * Utils::pi() * m_uniform_real_distribution(m_generator);
+        2. * std::numbers::pi * m_uniform_real_distribution(m_generator);
     out_pos[0] = m_cyl_x + random_radius * cos(random_phi);
     out_pos[1] = m_cyl_y + random_radius * sin(random_phi);
     out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);

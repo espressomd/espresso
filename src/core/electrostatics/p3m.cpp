@@ -55,7 +55,6 @@
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
@@ -75,6 +74,7 @@
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
+#include <numbers>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -136,7 +136,7 @@ static auto p3m_tune_aliasing_sums(int nx, int ny, int nz,
                                    double alpha_L_i) {
   using Utils::sinc;
 
-  auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
+  auto const factor1 = Utils::sqr(std::numbers::pi * alpha_L_i);
 
   auto alias1 = 0.;
   auto alias2 = 0.;
@@ -429,13 +429,13 @@ CoulombP3M::long_range_pressure(ParticleRange const &particles) {
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          auto const kx = 2. * Utils::pi() *
+          auto const kx = 2. * std::numbers::pi *
                           p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] *
                           box_geo.length_inv()[RX];
-          auto const ky = 2. * Utils::pi() *
+          auto const ky = 2. * std::numbers::pi *
                           p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] *
                           box_geo.length_inv()[RY];
-          auto const kz = 2. * Utils::pi() *
+          auto const kz = 2. * std::numbers::pi *
                           p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] *
                           box_geo.length_inv()[RZ];
           auto const sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
@@ -505,7 +505,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                 comm_cart, boost::combine(p_q_range, p_unfolded_pos_range)))
           : std::nullopt;
   auto const volume = box_geo.volume();
-  auto const pref = 4. * Utils::pi() / volume / (2. * p3m.params.epsilon + 1.);
+  auto const pref =
+      4. * std::numbers::pi / volume / (2. * p3m.params.epsilon + 1.);
 
   /* === k-space force calculation  === */
   if (force_flag) {
@@ -525,7 +526,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
             /* direction in r-space: */
             int d_rs = (d + p3m.ks_pnum) % 3;
             /* directions */
-            auto const k = 2. * Utils::pi() *
+            auto const k = 2. * std::numbers::pi *
                            p3m.d_op[d_rs][j[d] + p3m.fft.plan[3].start[d]] *
                            box_geo.length_inv()[d_rs];
 
@@ -583,10 +584,10 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     if (this_node == 0) {
       /* self energy correction */
       // Eq. (3.8) @cite deserno00b
-      energy -= p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i();
+      energy -= p3m.sum_q2 * p3m.params.alpha * std::numbers::inv_sqrtpi;
       /* net charge correction */
       // Eq. (3.11) @cite deserno00b
-      energy -= p3m.square_sum_q * Utils::pi() /
+      energy -= p3m.square_sum_q * std::numbers::pi /
                 (2. * volume * Utils::sqr(p3m.params.alpha));
       /* dipole correction */
       // Eq. (3.9) @cite deserno00b
@@ -661,10 +662,10 @@ public:
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, 0., box_geo.length());
 
-    if (Utils::sqrt_2() * rs_err > p3m.params.accuracy) {
+    if (std::numbers::sqrt2 * rs_err > p3m.params.accuracy) {
       /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-      alpha_L =
-          sqrt(log(Utils::sqrt_2() * rs_err / p3m.params.accuracy)) / r_cut_iL;
+      alpha_L = sqrt(log(std::numbers::sqrt2 * rs_err / p3m.params.accuracy)) /
+                r_cut_iL;
     } else {
       /* even alpha=0 is ok, however, we cannot choose it since it kills the
          k-space error formula.

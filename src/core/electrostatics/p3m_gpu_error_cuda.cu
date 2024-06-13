@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <numbers>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -52,7 +53,7 @@ using Utils::sqr;
 
 template <int cao>
 __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
-  const double c = sqr(cos(Utils::pi() * mesh_i * n));
+  const double c = sqr(cos(std::numbers::pi * mesh_i * n));
 
   switch (cao) {
   case 1:
@@ -105,7 +106,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
     const double cs = p3m_analytic_cotangent_sum<cao>(nz, meshi.z) *
                       p3m_analytic_cotangent_sum<cao>(nx, meshi.x) *
                       p3m_analytic_cotangent_sum<cao>(ny, meshi.y);
-    const double ex = exp(-sqr(Utils::pi() * alpha_L_i) * n2);
+    const double ex = exp(-sqr(std::numbers::pi * alpha_L_i) * n2);
     const double ex2 = sqr(ex);
     const double U2 =
         int_pow<2 * cao>(Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) *

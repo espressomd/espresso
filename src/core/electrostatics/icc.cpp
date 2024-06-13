@@ -44,8 +44,6 @@
 #include "integrators/Propagation.hpp"
 #include "system/System.hpp"
 
-#include <utils/constants.hpp>
-
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
@@ -53,6 +51,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <numbers>
 #include <stdexcept>
 #include <variant>
 #include <vector>
@@ -111,7 +110,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
   auto const &coulomb = system.coulomb;
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
-  auto const pref = 1. / (prefactor * 2. * Utils::pi());
+  auto const pref = 1. / (prefactor * 2. * std::numbers::pi);
   auto const kernel = coulomb.pair_force_kernel();
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;

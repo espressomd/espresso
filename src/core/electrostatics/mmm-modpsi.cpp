@@ -24,9 +24,8 @@
 #include "mmm-modpsi.hpp"
 #include "specfunc.hpp"
 
-#include <utils/constants.hpp>
-
 #include <cmath>
+#include <numbers>
 #include <vector>
 
 std::vector<std::vector<double>> modPsi;
@@ -40,7 +39,7 @@ static void preparePolygammaEven(int n, double binom,
     // psi^0 has a slightly different series expansion
     double maxx = 0.25;
     series.resize(1);
-    series[0] = 2 * (1 - Utils::gamma());
+    series[0] = 2. * (1. - std::numbers::egamma);
     for (int order = 1;; order += 1) {
       auto const x_order = static_cast<double>(2 * order);
       auto const coeff = -2 * hzeta(x_order + 1, 2);

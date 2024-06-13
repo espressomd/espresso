@@ -40,7 +40,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -51,6 +50,7 @@
 #include <cmath>
 #include <cstddef>
 #include <functional>
+#include <numbers>
 #include <variant>
 #include <vector>
 
@@ -108,7 +108,7 @@ static std::vector<SCCache> scycache;
 template <std::size_t dir>
 static std::vector<SCCache> calc_sc_cache(ParticleRange const &particles,
                                           std::size_t n_freq, double u) {
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const n_part = particles.size();
   std::vector<SCCache> ret(n_freq * n_part);
 
@@ -204,7 +204,7 @@ void ElectrostaticLayerCorrection::add_dipole_force(
     ParticleRange const &particles) const {
   constexpr std::size_t size = 3;
   auto const &box_geo = *get_system().box_geo;
-  auto const pref = prefactor * 4. * Utils::pi() / box_geo.volume();
+  auto const pref = prefactor * 4. * std::numbers::pi / box_geo.volume();
 
   /* for non-neutral systems, this shift gives the background contribution
    * (rsp. for this shift, the DM of the background is zero) */
@@ -270,7 +270,7 @@ double ElectrostaticLayerCorrection::dipole_energy(
     ParticleRange const &particles) const {
   constexpr std::size_t size = 7;
   auto const &box_geo = *get_system().box_geo;
-  auto const pref = prefactor * 2. * Utils::pi() / box_geo.volume();
+  auto const pref = prefactor * 2. * std::numbers::pi / box_geo.volume();
   auto const lz = box_geo.length()[2];
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
@@ -369,7 +369,7 @@ ElectrostaticLayerCorrection::z_energy(ParticleRange const &particles) const {
   constexpr std::size_t size = 4;
   auto const &box_geo = *get_system().box_geo;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
-  auto const pref = prefactor * 2. * Utils::pi() * xy_area_inv;
+  auto const pref = prefactor * 2. * std::numbers::pi * xy_area_inv;
   auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
   auto const fac_delta_mid_bot = elc.delta_mid_bot / (1. - delta);
   auto const fac_delta_mid_top = elc.delta_mid_top / (1. - delta);
@@ -445,7 +445,7 @@ void ElectrostaticLayerCorrection::add_z_force(
   constexpr std::size_t size = 1;
   auto const &box_geo = *get_system().box_geo;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
-  auto const pref = prefactor * 2. * Utils::pi() * xy_area_inv;
+  auto const pref = prefactor * 2. * std::numbers::pi * xy_area_inv;
   auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
   auto const fac_delta_mid_bot = elc.delta_mid_bot / (1. - delta);
   auto const fac_delta_mid_top = elc.delta_mid_top / (1. - delta);
@@ -506,7 +506,7 @@ void setup_PoQ(elc_data const &elc, double prefactor, std::size_t index,
   assert(index >= 1);
   constexpr std::size_t size = 4;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
-  auto const pref_di = prefactor * 4. * Utils::pi() * xy_area_inv;
+  auto const pref_di = prefactor * 4. * std::numbers::pi * xy_area_inv;
   auto const pref = -pref_di / expm1(omega * box_geo.length()[2]);
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1., fac_delta_mid_top = 1., fac_delta = 1.;
@@ -648,10 +648,10 @@ static void setup_PQ(elc_data const &elc, double prefactor, std::size_t index_p,
   assert(index_q >= 1);
   constexpr std::size_t size = 8;
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
-  auto const pref_di = prefactor * 8 * Utils::pi() * xy_area_inv;
+  auto const pref_di = prefactor * 8. * std::numbers::pi * xy_area_inv;
   auto const pref = -pref_di / expm1(omega * box_geo.length()[2]);
   double lclimgebot[8], lclimgetop[8], lclimge[8];
-  double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
+  double fac_delta_mid_bot = 1., fac_delta_mid_top = 1., fac_delta = 1.;
   if (elc.dielectric_contrast_on) {
     auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
     auto const fac_elc = 1. / (1. - delta * exp(-omega * 2. * elc.box_h));
@@ -773,7 +773,7 @@ static void setup_PQ(elc_data const &elc, double prefactor, std::size_t index_p,
 static void add_PQ_force(std::size_t index_p, std::size_t index_q, double omega,
                          ParticleRange const &particles,
                          BoxGeometry const &box_geo) {
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const pref_x =
       c_2pi * box_geo.length_inv()[0] * static_cast<double>(index_p) / omega;
   auto const pref_y =
@@ -831,7 +831,7 @@ static double PQ_energy(double omega, std::size_t n_part) {
 
 void ElectrostaticLayerCorrection::add_force(
     ParticleRange const &particles) const {
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &box_geo = *get_system().box_geo;
   auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
   auto const n_scxcache = std::get<0>(n_freqs);
@@ -886,7 +886,7 @@ void ElectrostaticLayerCorrection::add_force(
 
 double ElectrostaticLayerCorrection::calc_energy(
     ParticleRange const &particles) const {
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &box_geo = *get_system().box_geo;
   auto energy = dipole_energy(particles) + z_energy(particles);
   auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
@@ -956,7 +956,7 @@ double ElectrostaticLayerCorrection::tune_far_cut() const {
   auto tuned_far_cut = min_inv_boxl;
   double err;
   do {
-    auto const pref = 2. * Utils::pi() * tuned_far_cut;
+    auto const pref = 2. * std::numbers::pi * tuned_far_cut;
     auto const sum = pref + 2. * (box_l_x_inv + box_l_y_inv);
     auto const den = -expm1(-pref * lz);
     auto const num1 = exp(pref * (elc.box_h - lz));

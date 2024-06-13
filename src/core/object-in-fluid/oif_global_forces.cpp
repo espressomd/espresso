@@ -26,7 +26,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/triangle_functions.hpp>
 
 #include <span>

@@ -31,9 +31,9 @@
 #include "config/config.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <cmath>
+#include <numbers>
 #include <optional>
 #include <tuple>
 
@@ -125,7 +125,7 @@ inline bool calc_dihedral_angle(Utils::Vector3d const &a,
   /* Calculate dihedral angle */
   phi = acos(cosphi);
   if ((aXb * c) < 0.)
-    phi = 2. * Utils::pi() - phi;
+    phi = 2. * std::numbers::pi - phi;
   return false;
 }
 

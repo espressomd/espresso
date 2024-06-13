@@ -20,9 +20,9 @@
 #pragma once
 
 #include "utils/Vector.hpp"
-#include "utils/constants.hpp"
 
 #include <cstddef>
+#include <numbers>
 
 namespace Utils {
 /**
@@ -43,7 +43,7 @@ Vector<T, N> calc_orthonormal_vector(Vector<T, N> const &vec) {
   for (auto v : try_vectors) {
     auto orth_component = v - (v * vec) / vec.norm2() * vec;
     auto norm = orth_component.norm();
-    if (norm >= 1. / Utils::sqrt_2()) {
+    if (norm >= 1. / std::numbers::sqrt2) {
       ret = orth_component / norm;
       break;
     }

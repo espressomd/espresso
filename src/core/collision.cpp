@@ -32,7 +32,6 @@
 #include "virtual_sites.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -43,6 +42,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <numbers>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -334,7 +334,7 @@ static void coldet_do_three_particle_bond(Particle &p, Particle const &p1,
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
   auto const bond_id = static_cast<int>(
-      floor(0.5 + phi / Utils::pi() *
+      floor(0.5 + phi / std::numbers::pi *
                       (collision_params.three_particle_angle_resolution - 1)) +
       collision_params.bond_three_particles);
 

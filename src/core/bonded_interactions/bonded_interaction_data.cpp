@@ -23,8 +23,6 @@
 
 #include <boost/variant.hpp>
 
-#include <utils/constants.hpp>
-
 #include <algorithm>
 #include <cstddef>
 #include <vector>

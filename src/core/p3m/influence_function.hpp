@@ -22,7 +22,6 @@
 #include "p3m/common.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
@@ -31,6 +30,7 @@
 #include <cmath>
 #include <cstddef>
 #include <functional>
+#include <numbers>
 #include <utility>
 #include <vector>
 
@@ -56,7 +56,7 @@ double G_opt(int cao, double alpha, Utils::Vector3d const &k,
   using Utils::int_pow;
   using Utils::sinc;
 
-  auto constexpr two_pi = 2. * Utils::pi();
+  auto constexpr two_pi = 2. * std::numbers::pi;
   auto constexpr two_pi_i = 1. / two_pi;
   auto constexpr limit = 30.;
 
@@ -81,7 +81,7 @@ double G_opt(int cao, double alpha, Utils::Vector3d const &k,
         auto const km2 = km.norm2();
         auto const exponent = Utils::sqr(1. / (2. * alpha)) * km2;
         if (exponent < limit) {
-          auto const f3 = std::exp(-exponent) * (4. * Utils::pi() / km2);
+          auto const f3 = std::exp(-exponent) * (4. * std::numbers::pi / km2);
           numerator += U2 * f3 * int_pow<S>(k * km);
         }
         denominator += U2;
@@ -141,7 +141,7 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
             (n[KZ] % (params.mesh[RZ] / 2) == 0)) {
           g[ind] = 0.0;
         } else {
-          auto const k = 2 * Utils::pi() *
+          auto const k = 2. * std::numbers::pi *
                          Utils::Vector3d{shifts[RX][n[KX]] / box_l[RX],
                                          shifts[RY][n[KY]] / box_l[RY],
                                          shifts[RZ][n[KZ]] / box_l[RZ]};

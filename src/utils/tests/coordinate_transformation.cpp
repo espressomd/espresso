@@ -22,11 +22,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 #include <utils/math/vec_rotate.hpp>
 
 #include <cmath>
+#include <numbers>
 #include <random>
 
 using Utils::Vector3d;
@@ -99,9 +99,9 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_and_orientation_test) {
     auto const x_cyl = transform_coordinate_cartesian_to_cylinder(x, z, y);
     auto const y_cyl = transform_coordinate_cartesian_to_cylinder(y, z, y);
     auto const z_cyl = transform_coordinate_cartesian_to_cylinder(z, z, y);
-    auto const x_ref = Vector3d{{1.0, -Utils::pi() / 2.0, 0.0}};
-    auto const y_ref = Vector3d{{1.0, 0.0, 0.0}};
-    auto const z_ref = Vector3d{{0.0, z_cyl[1], 1.0}};
+    auto const x_ref = Vector3d{{1., -std::numbers::pi / 2., 0.}};
+    auto const y_ref = Vector3d{{1., 0., 0.}};
+    auto const z_ref = Vector3d{{0., z_cyl[1], 1.}};
     for (auto i = 0u; i < 3u; ++i) {
       BOOST_CHECK_SMALL(x_cyl[i] - x_ref[i], eps);
       BOOST_CHECK_SMALL(y_cyl[i] - y_ref[i], eps);
@@ -110,12 +110,12 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_and_orientation_test) {
   }
   // check transformation with orientation for another angle
   {
-    auto const u = vec_rotate(z, Utils::pi() / 3.0, x);
-    auto const v = vec_rotate(z, Utils::pi() / 3.0, y);
+    auto const u = vec_rotate(z, std::numbers::pi / 3., x);
+    auto const v = vec_rotate(z, std::numbers::pi / 3., y);
     auto const u_cyl = transform_coordinate_cartesian_to_cylinder(u, z, y);
     auto const v_cyl = transform_coordinate_cartesian_to_cylinder(v, z, y);
-    auto const u_ref = Vector3d{{1.0, Utils::pi() * (1. / 3. - 1. / 2.), 0.0}};
-    auto const v_ref = Vector3d{{1.0, Utils::pi() / 3.0, 0.0}};
+    auto const u_ref = Vector3d{{1., std::numbers::pi * (1. / 3. - 0.5), 0.}};
+    auto const v_ref = Vector3d{{1., std::numbers::pi / 3., 0.}};
     for (auto i = 0u; i < 3u; ++i) {
       BOOST_CHECK_SMALL(u_cyl[i] - u_ref[i], eps);
       BOOST_CHECK_SMALL(v_cyl[i] - v_ref[i], eps);
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_and_orientation_test) {
 
 BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_test) {
   constexpr auto eps = 1e-14;
-  auto const cyl = Vector3d{{1.0, Utils::pi() / 4, 2.0}};
+  auto const cyl = Vector3d{{1., std::numbers::pi / 4., 2.}};
   auto const pos = transform_coordinate_cylinder_to_cartesian(cyl);
   BOOST_CHECK_SMALL(pos[0] - std::sqrt(2) / 2, eps);
   BOOST_CHECK_SMALL(pos[1] - std::sqrt(2) / 2, eps);
@@ -171,10 +171,10 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_and_orientation_test) {
   // We transform from cylinder zu cartesian and have to rotate back. See test
   // cartesian_to_cylinder_test.
   auto const expected_x = vec_rotate(
-      e_y, Utils::pi() / 2.0,
+      e_y, std::numbers::pi / 2.0,
       transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_z, e_x));
   auto const expected_y = vec_rotate(
-      e_x, -Utils::pi() / 2.0,
+      e_x, -std::numbers::pi / 2.0,
       transform_coordinate_cylinder_to_cartesian(cylinder_coord, e_z, e_x));
   // x = r * cos(phi); y = r * sin(phi); z = z
   auto const expected_z = Vector3d{
@@ -210,8 +210,8 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_with_phi_2_test) {
   }
   // check transformation with orientation for another angle
   {
-    auto const u = vec_rotate(z, Utils::pi() / 3.0, x);
-    auto const v = vec_rotate(z, Utils::pi() / 3.0, y);
+    auto const u = vec_rotate(z, std::numbers::pi / 3., x);
+    auto const v = vec_rotate(z, std::numbers::pi / 3., y);
     auto const u_cyl = transform_coordinate_cartesian_to_cylinder(u, z, y);
     auto const v_cyl = transform_coordinate_cartesian_to_cylinder(v, z, y);
     auto const u_cart = transform_coordinate_cylinder_to_cartesian(u_cyl, z, y);

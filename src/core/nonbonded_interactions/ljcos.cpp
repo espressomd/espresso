@@ -27,9 +27,9 @@
 #ifdef LJCOS
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <numbers>
 #include <stdexcept>
 
 LJcos_Parameters::LJcos_Parameters(double epsilon, double sigma, double cutoff,
@@ -44,11 +44,13 @@ LJcos_Parameters::LJcos_Parameters(double epsilon, double sigma, double cutoff,
   if (cutoff < 0.) {
     throw std::domain_error("LJcos parameter 'cutoff' has to be >= 0");
   }
-  auto const facsq = Utils::cbrt_2() * Utils::sqr(sig);
 
-  rmin = sqrt(Utils::cbrt_2()) * sig;
-  alfa = Utils::pi() / (Utils::sqr(cut) - facsq);
-  beta = Utils::pi() * (1. - (1. / (Utils::sqr(cut) / facsq - 1.)));
+  constexpr auto cbrt2 = 1.25992104989487316476721060727822835057025;
+  auto const facsq = cbrt2 * Utils::sqr(sig);
+
+  rmin = sqrt(cbrt2) * sig;
+  alfa = std::numbers::pi / (Utils::sqr(cut) - facsq);
+  beta = std::numbers::pi * (1. - (1. / (Utils::sqr(cut) / facsq - 1.)));
 }
 
 #endif // LJCOS

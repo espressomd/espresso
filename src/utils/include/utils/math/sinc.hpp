@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "utils/constants.hpp"
 #include "utils/device_qualifier.hpp"
 #include "utils/math/abs.hpp"
 
 #include <cmath>
+#include <numbers>
 
 namespace Utils {
 /**
@@ -44,7 +44,7 @@ namespace Utils {
 template <typename T> DEVICE_QUALIFIER T sinc(T d) {
   const constexpr T epsi = T(0.1);
 
-  const auto PId = pi<T>() * d;
+  const auto PId = std::numbers::pi_v<T> * d;
 
   if (::Utils::abs(d) > epsi)
     return sin(PId) / PId;

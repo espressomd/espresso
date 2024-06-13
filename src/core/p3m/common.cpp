@@ -28,15 +28,15 @@
 #include "LocalBox.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
+#include <numbers>
 #include <stdexcept>
 
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   auto const c =
-      Utils::sqr(std::cos(Utils::pi() * mesh_i * static_cast<double>(n)));
+      Utils::sqr(std::cos(std::numbers::pi * mesh_i * static_cast<double>(n)));
 
   switch (cao) {
   case 1: {

@@ -35,7 +35,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/demangle.hpp>
 
 #include <boost/accumulators/accumulators.hpp>

@@ -198,7 +198,7 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
         NM2 = sqr(NMX * Leni[0]) + sqr(NMY * Leni[1]) + sqr(NMZ * Leni[2]);
         *Nenner += S3;
 
-        TE = exp(-sqr(Utils::pi<REAL_TYPE>() / (p.alpha)) * NM2);
+        TE = exp(-sqr(std::numbers::pi_v<REAL_TYPE> / (p.alpha)) * NM2);
         zwi = S3 * TE / NM2;
         Zaehler[0] += NMX * zwi * Leni[0];
         Zaehler[1] += NMY * zwi * Leni[1];
@@ -244,7 +244,7 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
           Dnz * Zaehler[2] * Leni[2];
     zwi /= ((sqr(Dnx * Leni[0]) + sqr(Dny * Leni[1]) + sqr(Dnz * Leni[2])) *
             sqr(Nenner));
-    p.G_hat[index] = REAL_TYPE{2} * zwi / Utils::pi<REAL_TYPE>();
+    p.G_hat[index] = REAL_TYPE{2} * zwi / std::numbers::pi_v<REAL_TYPE>;
   }
 }
 
@@ -288,8 +288,8 @@ __global__ void apply_diff_op(const P3MGpuData p) {
 
   const FFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
   FFT_TYPE_COMPLEX buf;
-  buf.x = REAL_TYPE(-2) * Utils::pi<REAL_TYPE>() * meshw.y;
-  buf.y = REAL_TYPE(+2) * Utils::pi<REAL_TYPE>() * meshw.x;
+  buf.x = REAL_TYPE(-2) * std::numbers::pi_v<REAL_TYPE> * meshw.y;
+  buf.y = REAL_TYPE(+2) * std::numbers::pi_v<REAL_TYPE> * meshw.x;
 
   p.force_mesh_x[linear_index].x =
       static_cast<decltype(FFT_TYPE_COMPLEX::x)>(nx) * buf.x / p.box[0];

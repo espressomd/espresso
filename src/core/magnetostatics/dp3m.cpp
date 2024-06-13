@@ -54,7 +54,6 @@
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sinc.hpp>
@@ -68,6 +67,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <functional>
+#include <numbers>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -113,7 +113,7 @@ double DipolarP3M::calc_average_self_energy_k_space() const {
   double phi = 0.;
   boost::mpi::reduce(comm_cart, node_phi, phi, std::plus<>(), 0);
   phi /= 3. * box_geo.length()[0] * Utils::int_pow<3>(dp3m.params.mesh[0]);
-  return phi * Utils::pi();
+  return phi * std::numbers::pi;
 }
 
 void DipolarP3M::init() {
@@ -321,7 +321,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
           }
         }
       }
-      node_energy *= dipole_prefac * Utils::pi() * box_geo.length_inv()[0];
+      node_energy *= dipole_prefac * std::numbers::pi * box_geo.length_inv()[0];
       boost::mpi::reduce(comm_cart, node_energy, energy, std::plus<>(), 0);
 
       if (dp3m.energy_correction == 0.)
@@ -329,8 +329,8 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
 
       if (this_node == 0) {
         /* self energy correction */
-        energy -= prefactor * dp3m.sum_mu2 * Utils::sqrt_pi_i() * (2. / 3.) *
-                  Utils::int_pow<3>(dp3m.params.alpha);
+        energy -= prefactor * dp3m.sum_mu2 * std::numbers::inv_sqrtpi *
+                  (2. / 3.) * Utils::int_pow<3>(dp3m.params.alpha);
 
         /* dipolar energy correction due to systematic Madelung-self effects */
         energy += prefactor * dp3m.energy_correction / box_geo.volume();
@@ -344,7 +344,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
      * DIPOLAR TORQUES (k-space)
      ****************************/
     if (dp3m.sum_mu2 > 0.) {
-      auto const two_pi_L_i = 2. * Utils::pi() * box_geo.length_inv()[0];
+      auto const two_pi_L_i = 2. * std::numbers::pi * box_geo.length_inv()[0];
       /* fill in ks_mesh array for torque calculation */
       int ind = 0;
       int i = 0;
@@ -521,7 +521,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
 double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
                                      ParticleRange const &particles) {
   auto const &box_geo = *get_system().box_geo;
-  auto const pref = prefactor * 4. * Utils::pi() / box_geo.volume() /
+  auto const pref = prefactor * 4. * std::numbers::pi / box_geo.volume() /
                     (2. * dp3m.params.epsilon + 1.);
   auto const n_local_part = particles.size();
 
@@ -641,7 +641,7 @@ public:
                                    dp3m.sum_dip_part, dp3m.sum_mu2, 0.001);
     // alpha cannot be zero for dipoles because real-space formula breaks down
 
-    if (Utils::sqrt_2() * rs_err > dp3m.params.accuracy) {
+    if (std::numbers::sqrt2 * rs_err > dp3m.params.accuracy) {
       /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
       alpha_L = dp3m_rtbisection(
           box_geo.length()[0], r_cut_iL, dp3m.sum_dip_part, dp3m.sum_mu2,
@@ -753,7 +753,7 @@ static auto dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
                                     double mesh_i, int cao, double alpha_L_i) {
   using Utils::sinc;
 
-  auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
+  auto const factor1 = Utils::sqr(std::numbers::pi * alpha_L_i);
 
   auto alias1 = 0.;
   auto alias2 = 0.;
@@ -806,8 +806,8 @@ static double dp3m_k_space_error(double box_size, int mesh, int cao,
             he_q += d;
         }
 
-  return 8. * Utils::sqr(Utils::pi()) / 3. * sum_q2 * sqrt(he_q / n_c_part) /
-         Utils::int_pow<4>(box_size);
+  return 8. * Utils::sqr(std::numbers::pi) / 3. * sum_q2 *
+         sqrt(he_q / n_c_part) / Utils::int_pow<4>(box_size);
 }
 
 /** Calculate the value of the errors for the REAL part of the force in terms
@@ -853,7 +853,7 @@ double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
                         double tuned_accuracy) {
   constexpr int JJ_RTBIS_MAX = 40;
 
-  auto const constant = tuned_accuracy / Utils::sqrt_2();
+  auto const constant = tuned_accuracy / std::numbers::sqrt2;
 
   auto const f1 =
       dp3m_real_space_error(box_size, r_cut_iL, n_c_part, sum_q2, x1) -
@@ -954,9 +954,9 @@ void DipolarP3M::calc_energy_correction() {
   auto const &box_geo = *get_system().box_geo;
   auto const Ukp3m = calc_average_self_energy_k_space() * box_geo.volume();
   auto const Ewald_volume = Utils::int_pow<3>(dp3m.params.alpha_L);
-  auto const Eself = -2. * Ewald_volume * Utils::sqrt_pi_i() / 3.;
+  auto const Eself = -2. * Ewald_volume * std::numbers::inv_sqrtpi / 3.;
   dp3m.energy_correction =
-      -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
+      -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * std::numbers::pi / 3.);
 }
 
 #ifdef NPT

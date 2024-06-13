@@ -36,11 +36,11 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include <utils/constants.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
+#include <numbers>
 
 /** Calculate Lennard-Jones cosine squared force factor */
 inline double ljcos2_pair_force_factor(IA_parameters const &ia_params,
@@ -52,9 +52,9 @@ inline double ljcos2_pair_force_factor(IA_parameters const &ia_params,
       auto const frac6 = Utils::int_pow<6>(ia_params.ljcos2.sig / r_off);
       fac = 48. * ia_params.ljcos2.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     } else if (r_off < ia_params.ljcos2.rchange + ia_params.ljcos2.w) {
-      fac = -ia_params.ljcos2.eps * Utils::pi() / 2. / ia_params.ljcos2.w /
+      fac = -ia_params.ljcos2.eps * std::numbers::pi / 2. / ia_params.ljcos2.w /
             dist *
-            sin(Utils::pi() * (r_off - ia_params.ljcos2.rchange) /
+            sin(std::numbers::pi * (r_off - ia_params.ljcos2.rchange) /
                 ia_params.ljcos2.w);
     }
     return fac;
@@ -72,7 +72,7 @@ inline double ljcos2_pair_energy(IA_parameters const &ia_params, double dist) {
     }
     if (r_off < (ia_params.ljcos2.rchange + ia_params.ljcos2.w)) {
       return -ia_params.ljcos2.eps / 2. *
-             (cos(Utils::pi() * (r_off - ia_params.ljcos2.rchange) /
+             (cos(std::numbers::pi * (r_off - ia_params.ljcos2.rchange) /
                   ia_params.ljcos2.w) +
               1.);
     }

@@ -34,6 +34,7 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
+#include <numbers>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -113,8 +114,8 @@ public:
             get_value_or<int>(params, "n_z_bins", 1),
             get_value_or<double>(params, "min_r", 0.),
             get_value<double>(params, "max_r"),
-            get_value_or<double>(params, "min_phi", -Utils::pi()),
-            get_value_or<double>(params, "max_phi", Utils::pi()),
+            get_value_or<double>(params, "min_phi", -std::numbers::pi),
+            get_value_or<double>(params, "max_phi", std::numbers::pi),
             get_value<double>(params, "min_z"),
             get_value<double>(params, "max_z"),
             get_value<double>(params, "sampling_density"));

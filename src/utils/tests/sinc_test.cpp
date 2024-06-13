@@ -19,11 +19,11 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/constants.hpp"
 #include "utils/math/sinc.hpp"
 
 #include <cmath>
 #include <cstdlib>
+#include <numbers>
 
 BOOST_AUTO_TEST_CASE(zero) { BOOST_CHECK_EQUAL(Utils::sinc(0.0), 1.0); }
 
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(approx) {
   auto x = 0.001;
   while (x <= 0.11) {
     auto const approx = Utils::sinc(x);
-    auto const pi_x = Utils::pi() * x;
+    auto const pi_x = std::numbers::pi * x;
     auto const exact = std::sin(pi_x) / (pi_x);
     BOOST_CHECK_SMALL(approx - exact, 1e-13);
     x += 0.01;

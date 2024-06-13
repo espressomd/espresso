@@ -26,11 +26,11 @@
  */
 
 #include "utils/Vector.hpp"
-#include "utils/constants.hpp"
 #include "utils/quaternion.hpp"
 
 #include <cmath>
 #include <limits>
+#include <numbers>
 
 namespace Utils {
 
@@ -66,7 +66,7 @@ Quaternion<T> convert_director_to_quaternion(Vector<T, 3> const &d) {
   if (d_xy == 0.) {
     // Here the director is co-linear with the z-axis
     // We need to distinguish between (0, 0, +d_z) and (0, 0, -d_z)
-    theta2 = (d[2] > 0.) ? 0. : Utils::pi<T>() / 2.;
+    theta2 = (d[2] > 0.) ? 0. : std::numbers::pi_v<T> / 2.;
     phi2 = 0.;
   } else {
     // Here we take care of all other directions
@@ -75,7 +75,7 @@ Quaternion<T> convert_director_to_quaternion(Vector<T, 3> const &d) {
     theta2 = std::acos(d[2] / dm) / 2.;
     // here we do not use the signum function due to the edge case d[1] = 0
     auto const phi = ((d[1] > 0.) ? 1. : -1.) * std::acos(d[0] / d_xy);
-    phi2 = phi / 2. - Utils::pi<T>() / 4.;
+    phi2 = phi / 2. - std::numbers::pi_v<T> / 4.;
   }
 
   // Calculate the quaternion from the angles

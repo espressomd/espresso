@@ -39,7 +39,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -48,6 +47,7 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -63,7 +63,7 @@ static Utils::Vector3d random_position(BoxGeometry const &box_geo, RNG &rng) {
 template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
   Utils::Vector3d v;
   double const phi = acos(1. - 2. * rng());
-  double const theta = 2. * Utils::pi() * rng();
+  double const theta = 2. * std::numbers::pi * rng();
   v[0] = sin(phi) * cos(theta);
   v[1] = sin(phi) * sin(theta);
   v[2] = cos(phi);
