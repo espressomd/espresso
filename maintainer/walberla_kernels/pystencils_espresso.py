@@ -23,6 +23,7 @@ import lbmpy.macroscopic_value_kernels
 import lbmpy.updatekernels
 import pystencils as ps
 import pystencils_walberla
+import pystencils_walberla.utility
 
 
 def skip_philox_unthermalized(code, result_symbols, rng_name):
@@ -107,11 +108,11 @@ def generate_fields(config, stencil):
 
 
 def generate_config(ctx, params):
-    return pystencils_walberla.codegen.config_from_context(ctx, **params)
+    return pystencils_walberla.utility.config_from_context(ctx, **params)
 
 
 def generate_collision_sweep(
-        ctx, lb_method, collision_rule, class_name, params):
+        ctx, lb_method, collision_rule, class_name, params, **kwargs):
     config = generate_config(ctx, params)
 
     # Symbols for PDF (twice, due to double buffering)
@@ -127,8 +128,8 @@ def generate_collision_sweep(
         collide_update_rule, config=config, **params)
     collide_ast.function_name = 'kernel_collide'
     collide_ast.assumed_inner_stride_one = True
-    pystencils_walberla.codegen.generate_sweep(
-        ctx, class_name, collide_ast, **params)
+    pystencils_walberla.generate_sweep(
+        ctx, class_name, collide_ast, **params, **kwargs)
 
 
 def generate_stream_sweep(ctx, lb_method, class_name, params):
@@ -144,7 +145,7 @@ def generate_stream_sweep(ctx, lb_method, class_name, params):
     stream_ast = ps.create_kernel(stream_update_rule, config=config, **params)
     stream_ast.function_name = 'kernel_stream'
     stream_ast.assumed_inner_stride_one = True
-    pystencils_walberla.codegen.generate_sweep(
+    pystencils_walberla.generate_sweep(
         ctx, class_name, stream_ast,
         field_swaps=[(fields['pdfs'], fields['pdfs_tmp'])], **params)
 

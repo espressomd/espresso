@@ -17,12 +17,13 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2,
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 0c8b4b926c6979288fd8a6846d02ec0870e1fe41
+// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 #pragma once
 #include "core/DataTypes.h"
+#include "core/logging/Logging.h"
 
 #include "blockforest/StructuredBlockForest.h"
 #include "core/debug/Debug.h"
@@ -42,6 +43,10 @@
 #define RESTRICT __restrict
 #else
 #define RESTRICT
+#endif
+
+#ifdef WALBERLA_BUILD_WITH_HALF_PRECISION_SUPPORT
+using walberla::half;
 #endif
 
 namespace walberla {
@@ -114,7 +119,7 @@ public:
       std::function<Vector3<double>(const Cell &,
                                     const shared_ptr<StructuredBlockForest> &,
                                     IBlock &)> &velocityCallback)
-      : elementInitaliser(velocityCallback), pdfsID(pdfsID_) {
+      : elementInitialiser(velocityCallback), pdfsID(pdfsID_) {
     auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
       return new IndexVectors();
     };
@@ -186,11 +191,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, 0, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 0);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() + 0, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -207,11 +212,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, 1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 1);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() + 1, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -228,11 +233,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, -1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 2);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() - 1, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -249,11 +254,11 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 0, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 3);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() - 1, it.y() + 0, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -270,11 +275,11 @@ public:
 
       if (isFlagSet(it.neighbor(1, 0, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 4);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 1, it.y() + 0, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -291,11 +296,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, 0, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 5);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() + 0, it.z() + 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -312,11 +317,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, 0, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 6);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() + 0, it.z() - 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -333,11 +338,11 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 7);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() - 1, it.y() + 1, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -354,11 +359,11 @@ public:
 
       if (isFlagSet(it.neighbor(1, 1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 8);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 1, it.y() + 1, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -375,11 +380,11 @@ public:
 
       if (isFlagSet(it.neighbor(-1, -1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 9);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() - 1, it.y() - 1, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -396,11 +401,11 @@ public:
 
       if (isFlagSet(it.neighbor(1, -1, 0, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 10);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 1, it.y() - 1, it.z() + 0), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -417,11 +422,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, 1, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 11);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() + 1, it.z() + 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -438,11 +443,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, -1, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 12);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() - 1, it.z() + 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -459,11 +464,11 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 0, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 13);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() - 1, it.y() + 0, it.z() + 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -480,11 +485,11 @@ public:
 
       if (isFlagSet(it.neighbor(1, 0, 1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 14);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 1, it.y() + 0, it.z() + 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -501,11 +506,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, 1, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 15);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() + 1, it.z() - 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -522,11 +527,11 @@ public:
 
       if (isFlagSet(it.neighbor(0, -1, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 16);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 0, it.y() - 1, it.z() - 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -543,11 +548,11 @@ public:
 
       if (isFlagSet(it.neighbor(-1, 0, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 17);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() - 1, it.y() + 0, it.z() - 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -564,11 +569,11 @@ public:
 
       if (isFlagSet(it.neighbor(1, 0, -1, 0), boundaryFlag)) {
         auto element = IndexInfo(it.x(), it.y(), it.z(), 18);
-        Vector3<double> InitialisatonAdditionalData = elementInitaliser(
+        auto const InitialisationAdditionalData = elementInitialiser(
             Cell(it.x() + 1, it.y() + 0, it.z() - 1), blocks, *block);
-        element.vel_0 = InitialisatonAdditionalData[0];
-        element.vel_1 = InitialisatonAdditionalData[1];
-        element.vel_2 = InitialisatonAdditionalData[2];
+        element.vel_0 = InitialisationAdditionalData[0];
+        element.vel_1 = InitialisationAdditionalData[1];
+        element.vel_2 = InitialisationAdditionalData[2];
         indexVectorAll.push_back(element);
         if (inner.contains(it.x(), it.y(), it.z()))
           indexVectorInner.push_back(element);
@@ -587,7 +592,7 @@ private:
   BlockDataID indexVectorID;
   std::function<Vector3<double>(
       const Cell &, const shared_ptr<StructuredBlockForest> &, IBlock &)>
-      elementInitaliser;
+      elementInitialiser;
 
 public:
   BlockDataID pdfsID;

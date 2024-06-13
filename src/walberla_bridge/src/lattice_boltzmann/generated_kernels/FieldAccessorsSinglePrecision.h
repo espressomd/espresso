@@ -18,12 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.2, lbmpy v1.2,
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
+// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
-/**
- * @file
+/*
  * Lattice field accessors.
  * Adapted from the waLBerla source file
  * https://i10git.cs.fau.de/walberla/walberla/-/blob/a16141524c58ab88386e2a0f8fdd7c63c5edd704/python/lbmpy_walberla/templates/LatticeModel.tmpl.h

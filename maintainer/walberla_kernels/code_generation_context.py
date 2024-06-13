@@ -19,55 +19,11 @@
 
 import os
 import re
-import jinja2
 import hashlib
 import lbmpy
 import lbmpy_walberla
 import pystencils
 import pystencils_walberla
-import pystencils_walberla.codegen
-
-
-def adapt_pystencils():
-    """
-    Adapt pystencils to the SFINAE method (add the block offset lambda
-    callback and the time_step increment).
-    """
-    old_add_pystencils_filters_to_jinja_env = pystencils_walberla.codegen.add_pystencils_filters_to_jinja_env
-
-    def new_add_pystencils_filters_to_jinja_env(jinja_env):
-        # save original pystencils to adapt
-        old_add_pystencils_filters_to_jinja_env(jinja_env)
-        old_generate_members = jinja_env.filters["generate_members"]
-        old_generate_refs_for_kernel_parameters = jinja_env.filters[
-            "generate_refs_for_kernel_parameters"]
-
-        @jinja2.pass_context
-        def new_generate_members(*args, **kwargs):
-            output = old_generate_members(*args, **kwargs)
-            token = " block_offset_0_;"
-            if token in output:
-                i = output.index(token)
-                vartype = output[:i].split("\n")[-1].strip()
-                output += f"\nstd::function<void(IBlock *, {vartype}&, {vartype}&, {vartype}&)> block_offset_generator = [](IBlock * const, {vartype}&, {vartype}&, {vartype}&) {{ }};"  # nopep8
-            return output
-
-        def new_generate_refs_for_kernel_parameters(*args, **kwargs):
-            output = old_generate_refs_for_kernel_parameters(*args, **kwargs)
-            if "block_offset_0" in output:
-                old_token = "auto & block_offset_"
-                new_token = "auto block_offset_"
-                assert output.count(old_token) == 3, \
-                    f"could not find '{old_token}' in '''\n{output}\n'''"
-                output = output.replace(old_token, new_token)
-                output += "\nblock_offset_generator(block, block_offset_0, block_offset_1, block_offset_2);"
-            return output
-
-        # replace pystencils
-        jinja_env.filters["generate_members"] = new_generate_members
-        jinja_env.filters["generate_refs_for_kernel_parameters"] = new_generate_refs_for_kernel_parameters
-
-    pystencils_walberla.codegen.add_pystencils_filters_to_jinja_env = new_add_pystencils_filters_to_jinja_env
 
 
 def earmark_generated_kernels():
@@ -140,7 +96,6 @@ class CodeGeneration(pystencils_walberla.CodeGeneration):
         sys.argv = sys.argv[:1]
         super().__init__()
         sys.argv = old_sys_argv
-        adapt_pystencils()
 
     def __exit__(self, *args, **kwargs):
         super().__exit__(*args, **kwargs)

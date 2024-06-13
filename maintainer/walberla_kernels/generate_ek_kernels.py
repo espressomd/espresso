@@ -22,6 +22,7 @@ import pystencils_walberla
 import sympy as sp
 import lbmpy
 import argparse
+import packaging.specifiers
 
 import pystencils_espresso
 import code_generation_context
@@ -34,6 +35,12 @@ parser = argparse.ArgumentParser(description='Generate the waLBerla kernels.')
 parser.add_argument('--single-precision', action='store_true', required=False,
                     help='Use single-precision')
 args = parser.parse_args()
+
+# Make sure we have the correct versions of the required dependencies
+for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
+    assert packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
+        f"{module.__name__} version {module.__version__} " \
+        f"doesn't match requirement {requirement}"
 
 double_precision: bool = not args.single_precision
 

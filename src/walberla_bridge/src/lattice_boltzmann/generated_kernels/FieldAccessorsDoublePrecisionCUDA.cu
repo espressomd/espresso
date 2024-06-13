@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit 0c8b4b926c6979288fd8a6846d02ec0870e1fe41
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 /**
  * @file
@@ -108,25 +108,25 @@ __global__ void kernel_get_interval(
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
-    pop[offset + 0u] = pdf.get(0);
-    pop[offset + 1u] = pdf.get(1);
-    pop[offset + 2u] = pdf.get(2);
-    pop[offset + 3u] = pdf.get(3);
-    pop[offset + 4u] = pdf.get(4);
-    pop[offset + 5u] = pdf.get(5);
-    pop[offset + 6u] = pdf.get(6);
-    pop[offset + 7u] = pdf.get(7);
-    pop[offset + 8u] = pdf.get(8);
-    pop[offset + 9u] = pdf.get(9);
-    pop[offset + 10u] = pdf.get(10);
-    pop[offset + 11u] = pdf.get(11);
-    pop[offset + 12u] = pdf.get(12);
-    pop[offset + 13u] = pdf.get(13);
-    pop[offset + 14u] = pdf.get(14);
-    pop[offset + 15u] = pdf.get(15);
-    pop[offset + 16u] = pdf.get(16);
-    pop[offset + 17u] = pdf.get(17);
-    pop[offset + 18u] = pdf.get(18);
+    pop[offset + 0u] = pdf.get(0u);
+    pop[offset + 1u] = pdf.get(1u);
+    pop[offset + 2u] = pdf.get(2u);
+    pop[offset + 3u] = pdf.get(3u);
+    pop[offset + 4u] = pdf.get(4u);
+    pop[offset + 5u] = pdf.get(5u);
+    pop[offset + 6u] = pdf.get(6u);
+    pop[offset + 7u] = pdf.get(7u);
+    pop[offset + 8u] = pdf.get(8u);
+    pop[offset + 9u] = pdf.get(9u);
+    pop[offset + 10u] = pdf.get(10u);
+    pop[offset + 11u] = pdf.get(11u);
+    pop[offset + 12u] = pdf.get(12u);
+    pop[offset + 13u] = pdf.get(13u);
+    pop[offset + 14u] = pdf.get(14u);
+    pop[offset + 15u] = pdf.get(15u);
+    pop[offset + 16u] = pdf.get(16u);
+    pop[offset + 17u] = pdf.get(17u);
+    pop[offset + 18u] = pdf.get(18u);
   }
 }
 
@@ -135,25 +135,25 @@ __global__ void kernel_get(
     double *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    pop[0u] = pdf.get(0);
-    pop[1u] = pdf.get(1);
-    pop[2u] = pdf.get(2);
-    pop[3u] = pdf.get(3);
-    pop[4u] = pdf.get(4);
-    pop[5u] = pdf.get(5);
-    pop[6u] = pdf.get(6);
-    pop[7u] = pdf.get(7);
-    pop[8u] = pdf.get(8);
-    pop[9u] = pdf.get(9);
-    pop[10u] = pdf.get(10);
-    pop[11u] = pdf.get(11);
-    pop[12u] = pdf.get(12);
-    pop[13u] = pdf.get(13);
-    pop[14u] = pdf.get(14);
-    pop[15u] = pdf.get(15);
-    pop[16u] = pdf.get(16);
-    pop[17u] = pdf.get(17);
-    pop[18u] = pdf.get(18);
+    pop[0u] = pdf.get(0u);
+    pop[1u] = pdf.get(1u);
+    pop[2u] = pdf.get(2u);
+    pop[3u] = pdf.get(3u);
+    pop[4u] = pdf.get(4u);
+    pop[5u] = pdf.get(5u);
+    pop[6u] = pdf.get(6u);
+    pop[7u] = pdf.get(7u);
+    pop[8u] = pdf.get(8u);
+    pop[9u] = pdf.get(9u);
+    pop[10u] = pdf.get(10u);
+    pop[11u] = pdf.get(11u);
+    pop[12u] = pdf.get(12u);
+    pop[13u] = pdf.get(13u);
+    pop[14u] = pdf.get(14u);
+    pop[15u] = pdf.get(15u);
+    pop[16u] = pdf.get(16u);
+    pop[17u] = pdf.get(17u);
+    pop[18u] = pdf.get(18u);
   }
 }
 
@@ -163,25 +163,25 @@ __global__ void kernel_set_interval(
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
-    pdf.get(0) = pop[offset + 0u];
-    pdf.get(1) = pop[offset + 1u];
-    pdf.get(2) = pop[offset + 2u];
-    pdf.get(3) = pop[offset + 3u];
-    pdf.get(4) = pop[offset + 4u];
-    pdf.get(5) = pop[offset + 5u];
-    pdf.get(6) = pop[offset + 6u];
-    pdf.get(7) = pop[offset + 7u];
-    pdf.get(8) = pop[offset + 8u];
-    pdf.get(9) = pop[offset + 9u];
-    pdf.get(10) = pop[offset + 10u];
-    pdf.get(11) = pop[offset + 11u];
-    pdf.get(12) = pop[offset + 12u];
-    pdf.get(13) = pop[offset + 13u];
-    pdf.get(14) = pop[offset + 14u];
-    pdf.get(15) = pop[offset + 15u];
-    pdf.get(16) = pop[offset + 16u];
-    pdf.get(17) = pop[offset + 17u];
-    pdf.get(18) = pop[offset + 18u];
+    pdf.get(0u) = pop[offset + 0u];
+    pdf.get(1u) = pop[offset + 1u];
+    pdf.get(2u) = pop[offset + 2u];
+    pdf.get(3u) = pop[offset + 3u];
+    pdf.get(4u) = pop[offset + 4u];
+    pdf.get(5u) = pop[offset + 5u];
+    pdf.get(6u) = pop[offset + 6u];
+    pdf.get(7u) = pop[offset + 7u];
+    pdf.get(8u) = pop[offset + 8u];
+    pdf.get(9u) = pop[offset + 9u];
+    pdf.get(10u) = pop[offset + 10u];
+    pdf.get(11u) = pop[offset + 11u];
+    pdf.get(12u) = pop[offset + 12u];
+    pdf.get(13u) = pop[offset + 13u];
+    pdf.get(14u) = pop[offset + 14u];
+    pdf.get(15u) = pop[offset + 15u];
+    pdf.get(16u) = pop[offset + 16u];
+    pdf.get(17u) = pop[offset + 17u];
+    pdf.get(18u) = pop[offset + 18u];
   }
 }
 
@@ -190,25 +190,25 @@ __global__ void kernel_set(
     double const *RESTRICT const pop) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
-    pdf.get(0) = pop[0u];
-    pdf.get(1) = pop[1u];
-    pdf.get(2) = pop[2u];
-    pdf.get(3) = pop[3u];
-    pdf.get(4) = pop[4u];
-    pdf.get(5) = pop[5u];
-    pdf.get(6) = pop[6u];
-    pdf.get(7) = pop[7u];
-    pdf.get(8) = pop[8u];
-    pdf.get(9) = pop[9u];
-    pdf.get(10) = pop[10u];
-    pdf.get(11) = pop[11u];
-    pdf.get(12) = pop[12u];
-    pdf.get(13) = pop[13u];
-    pdf.get(14) = pop[14u];
-    pdf.get(15) = pop[15u];
-    pdf.get(16) = pop[16u];
-    pdf.get(17) = pop[17u];
-    pdf.get(18) = pop[18u];
+    pdf.get(0u) = pop[0u];
+    pdf.get(1u) = pop[1u];
+    pdf.get(2u) = pop[2u];
+    pdf.get(3u) = pop[3u];
+    pdf.get(4u) = pop[4u];
+    pdf.get(5u) = pop[5u];
+    pdf.get(6u) = pop[6u];
+    pdf.get(7u) = pop[7u];
+    pdf.get(8u) = pop[8u];
+    pdf.get(9u) = pop[9u];
+    pdf.get(10u) = pop[10u];
+    pdf.get(11u) = pop[11u];
+    pdf.get(12u) = pop[12u];
+    pdf.get(13u) = pop[13u];
+    pdf.get(14u) = pop[14u];
+    pdf.get(15u) = pop[15u];
+    pdf.get(16u) = pop[16u];
+    pdf.get(17u) = pop[17u];
+    pdf.get(18u) = pop[18u];
   }
 }
 
@@ -286,9 +286,9 @@ __global__ void kernel_get_interval(
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-    out[offset + 0u] = vec.get(0);
-    out[offset + 1u] = vec.get(1);
-    out[offset + 2u] = vec.get(2);
+    out[offset + 0u] = vec.get(0u);
+    out[offset + 1u] = vec.get(1u);
+    out[offset + 2u] = vec.get(2u);
   }
 }
 
@@ -297,9 +297,9 @@ __global__ void kernel_get(
     double *const out) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    out[0u] = vec.get(0);
-    out[1u] = vec.get(1);
-    out[2u] = vec.get(2);
+    out[0u] = vec.get(0u);
+    out[1u] = vec.get(1u);
+    out[2u] = vec.get(2u);
   }
 }
 
@@ -309,9 +309,9 @@ __global__ void kernel_set_interval(
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-    vec.get(0) = u[offset + 0u];
-    vec.get(1) = u[offset + 1u];
-    vec.get(2) = u[offset + 2u];
+    vec.get(0u) = u[offset + 0u];
+    vec.get(1u) = u[offset + 1u];
+    vec.get(2u) = u[offset + 2u];
   }
 }
 
@@ -320,9 +320,9 @@ __global__ void kernel_set(
     const double *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    vec.get(0) = u[0u];
-    vec.get(1) = u[1u];
-    vec.get(2) = u[2u];
+    vec.get(0u) = u[0u];
+    vec.get(1u) = u[1u];
+    vec.get(2u) = u[2u];
   }
 }
 
@@ -332,9 +332,9 @@ __global__ void kernel_add_interval(
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-    vec.get(0) += u[offset + 0u];
-    vec.get(1) += u[offset + 1u];
-    vec.get(2) += u[offset + 2u];
+    vec.get(0u) += u[offset + 0u];
+    vec.get(1u) += u[offset + 1u];
+    vec.get(2u) += u[offset + 2u];
   }
 }
 
@@ -343,9 +343,9 @@ __global__ void kernel_add(
     double const *RESTRICT const u) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
-    vec.get(0) += u[0u];
-    vec.get(1) += u[1u];
-    vec.get(2) += u[2u];
+    vec.get(0u) += u[0u];
+    vec.get(1u) += u[1u];
+    vec.get(2u) += u[2u];
   }
 }
 
@@ -487,9 +487,9 @@ __global__ void kernel_get(
         for (int k = 0; k < 2; k++) {
           auto const cz = corner[2] + k;
           auto const weight = wxy * weights[2][k];
-          vel[array_offset + 0u] += weight * vec.getNeighbor(cx, cy, cz, 0);
-          vel[array_offset + 1u] += weight * vec.getNeighbor(cx, cy, cz, 1);
-          vel[array_offset + 2u] += weight * vec.getNeighbor(cx, cy, cz, 2);
+          vel[array_offset + 0u] += weight * vec.getNeighbor(cx, cy, cz, 0u);
+          vel[array_offset + 1u] += weight * vec.getNeighbor(cx, cy, cz, 1u);
+          vel[array_offset + 2u] += weight * vec.getNeighbor(cx, cy, cz, 2u);
         }
       }
     }
@@ -524,11 +524,11 @@ __global__ void kernel_set(
         for (int k = 0; k < 2; k++) {
           auto const cz = corner[2] + k;
           auto const weight = wxy * weights[2][k];
-          atomicAdd(&vec.getNeighbor(cx, cy, cz, 0),
+          atomicAdd(&vec.getNeighbor(cx, cy, cz, 0u),
                     weight * forces[array_offset + 0u]);
-          atomicAdd(&vec.getNeighbor(cx, cy, cz, 1),
+          atomicAdd(&vec.getNeighbor(cx, cy, cz, 1u),
                     weight * forces[array_offset + 1u]);
-          atomicAdd(&vec.getNeighbor(cx, cy, cz, 2),
+          atomicAdd(&vec.getNeighbor(cx, cy, cz, 2u),
                     weight * forces[array_offset + 2u]);
         }
       }
@@ -594,25 +594,25 @@ __device__ void kernel_set_device(
     double const *RESTRICT const u,
     double rho) {
 
-  pdf.get(0) = rho * -0.33333333333333331 * (u[0] * u[0]) + rho * -0.33333333333333331 * (u[1] * u[1]) + rho * -0.33333333333333331 * (u[2] * u[2]) + rho * 0.33333333333333331;
-  pdf.get(1) = rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[1] + rho * 0.16666666666666666 * (u[1] * u[1]);
-  pdf.get(2) = rho * -0.16666666666666666 * u[1] + rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * (u[1] * u[1]);
-  pdf.get(3) = rho * -0.16666666666666666 * u[0] + rho * -0.16666666666666666 * (u[1] * u[1]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * (u[0] * u[0]);
-  pdf.get(4) = rho * -0.16666666666666666 * (u[1] * u[1]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[0] + rho * 0.16666666666666666 * (u[0] * u[0]);
-  pdf.get(5) = rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[1] * u[1]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[2] + rho * 0.16666666666666666 * (u[2] * u[2]);
-  pdf.get(6) = rho * -0.16666666666666666 * u[2] + rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[1] * u[1]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * (u[2] * u[2]);
-  pdf.get(7) = rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[1] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]);
-  pdf.get(8) = rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.25 * u[0] * u[1];
-  pdf.get(9) = rho * -0.083333333333333329 * u[0] + rho * -0.083333333333333329 * u[1] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.25 * u[0] * u[1];
-  pdf.get(10) = rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[0] * u[1] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]);
-  pdf.get(11) = rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[1] * u[2];
-  pdf.get(12) = rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[1] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]);
-  pdf.get(13) = rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]);
-  pdf.get(14) = rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[0] * u[2];
-  pdf.get(15) = rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[1] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]);
-  pdf.get(16) = rho * -0.083333333333333329 * u[1] + rho * -0.083333333333333329 * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[1] * u[2];
-  pdf.get(17) = rho * -0.083333333333333329 * u[0] + rho * -0.083333333333333329 * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[0] * u[2];
-  pdf.get(18) = rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[0] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]);
+  pdf.get(0u) = rho * -0.33333333333333331 * (u[0] * u[0]) + rho * -0.33333333333333331 * (u[1] * u[1]) + rho * -0.33333333333333331 * (u[2] * u[2]) + rho * 0.33333333333333331;
+  pdf.get(1u) = rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[1] + rho * 0.16666666666666666 * (u[1] * u[1]);
+  pdf.get(2u) = rho * -0.16666666666666666 * u[1] + rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * (u[1] * u[1]);
+  pdf.get(3u) = rho * -0.16666666666666666 * u[0] + rho * -0.16666666666666666 * (u[1] * u[1]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * (u[0] * u[0]);
+  pdf.get(4u) = rho * -0.16666666666666666 * (u[1] * u[1]) + rho * -0.16666666666666666 * (u[2] * u[2]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[0] + rho * 0.16666666666666666 * (u[0] * u[0]);
+  pdf.get(5u) = rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[1] * u[1]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * u[2] + rho * 0.16666666666666666 * (u[2] * u[2]);
+  pdf.get(6u) = rho * -0.16666666666666666 * u[2] + rho * -0.16666666666666666 * (u[0] * u[0]) + rho * -0.16666666666666666 * (u[1] * u[1]) + rho * 0.055555555555555552 + rho * 0.16666666666666666 * (u[2] * u[2]);
+  pdf.get(7u) = rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[1] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]);
+  pdf.get(8u) = rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.25 * u[0] * u[1];
+  pdf.get(9u) = rho * -0.083333333333333329 * u[0] + rho * -0.083333333333333329 * u[1] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.25 * u[0] * u[1];
+  pdf.get(10u) = rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[0] * u[1] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[1] * u[1]);
+  pdf.get(11u) = rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[1] * u[2];
+  pdf.get(12u) = rho * -0.083333333333333329 * u[1] + rho * -0.25 * u[1] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]);
+  pdf.get(13u) = rho * -0.083333333333333329 * u[0] + rho * -0.25 * u[0] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]);
+  pdf.get(14u) = rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * u[2] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[0] * u[2];
+  pdf.get(15u) = rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[1] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[1] + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]);
+  pdf.get(16u) = rho * -0.083333333333333329 * u[1] + rho * -0.083333333333333329 * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[1] * u[1]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[1] * u[2];
+  pdf.get(17u) = rho * -0.083333333333333329 * u[0] + rho * -0.083333333333333329 * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]) + rho * 0.25 * u[0] * u[2];
+  pdf.get(18u) = rho * -0.083333333333333329 * u[2] + rho * -0.25 * u[0] * u[2] + rho * 0.027777777777777776 + rho * 0.083333333333333329 * u[0] + rho * 0.083333333333333329 * (u[0] * u[0]) + rho * 0.083333333333333329 * (u[2] * u[2]);
 }
 } // namespace Equilibrium
 
@@ -623,25 +623,25 @@ __global__ void kernel_get(
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
-    double const f_0 = pdf.get(0);
-    double const f_1 = pdf.get(1);
-    double const f_2 = pdf.get(2);
-    double const f_3 = pdf.get(3);
-    double const f_4 = pdf.get(4);
-    double const f_5 = pdf.get(5);
-    double const f_6 = pdf.get(6);
-    double const f_7 = pdf.get(7);
-    double const f_8 = pdf.get(8);
-    double const f_9 = pdf.get(9);
-    double const f_10 = pdf.get(10);
-    double const f_11 = pdf.get(11);
-    double const f_12 = pdf.get(12);
-    double const f_13 = pdf.get(13);
-    double const f_14 = pdf.get(14);
-    double const f_15 = pdf.get(15);
-    double const f_16 = pdf.get(16);
-    double const f_17 = pdf.get(17);
-    double const f_18 = pdf.get(18);
+    double const f_0 = pdf.get(0u);
+    double const f_1 = pdf.get(1u);
+    double const f_2 = pdf.get(2u);
+    double const f_3 = pdf.get(3u);
+    double const f_4 = pdf.get(4u);
+    double const f_5 = pdf.get(5u);
+    double const f_6 = pdf.get(6u);
+    double const f_7 = pdf.get(7u);
+    double const f_8 = pdf.get(8u);
+    double const f_9 = pdf.get(9u);
+    double const f_10 = pdf.get(10u);
+    double const f_11 = pdf.get(11u);
+    double const f_12 = pdf.get(12u);
+    double const f_13 = pdf.get(13u);
+    double const f_14 = pdf.get(14u);
+    double const f_15 = pdf.get(15u);
+    double const f_16 = pdf.get(16u);
+    double const f_17 = pdf.get(17u);
+    double const f_18 = pdf.get(18u);
     const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const double vel1Term = f_1 + f_11 + f_15 + f_7;
     const double vel2Term = f_12 + f_13 + f_5;
@@ -656,25 +656,25 @@ __global__ void kernel_set(
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
-    double const f_0 = pdf.get(0);
-    double const f_1 = pdf.get(1);
-    double const f_2 = pdf.get(2);
-    double const f_3 = pdf.get(3);
-    double const f_4 = pdf.get(4);
-    double const f_5 = pdf.get(5);
-    double const f_6 = pdf.get(6);
-    double const f_7 = pdf.get(7);
-    double const f_8 = pdf.get(8);
-    double const f_9 = pdf.get(9);
-    double const f_10 = pdf.get(10);
-    double const f_11 = pdf.get(11);
-    double const f_12 = pdf.get(12);
-    double const f_13 = pdf.get(13);
-    double const f_14 = pdf.get(14);
-    double const f_15 = pdf.get(15);
-    double const f_16 = pdf.get(16);
-    double const f_17 = pdf.get(17);
-    double const f_18 = pdf.get(18);
+    double const f_0 = pdf.get(0u);
+    double const f_1 = pdf.get(1u);
+    double const f_2 = pdf.get(2u);
+    double const f_3 = pdf.get(3u);
+    double const f_4 = pdf.get(4u);
+    double const f_5 = pdf.get(5u);
+    double const f_6 = pdf.get(6u);
+    double const f_7 = pdf.get(7u);
+    double const f_8 = pdf.get(8u);
+    double const f_9 = pdf.get(9u);
+    double const f_10 = pdf.get(10u);
+    double const f_11 = pdf.get(11u);
+    double const f_12 = pdf.get(12u);
+    double const f_13 = pdf.get(13u);
+    double const f_14 = pdf.get(14u);
+    double const f_15 = pdf.get(15u);
+    double const f_16 = pdf.get(16u);
+    double const f_17 = pdf.get(17u);
+    double const f_18 = pdf.get(18u);
     const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const double momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
     const double vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -756,25 +756,25 @@ __global__ void kernel_set(
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(3u));
     uint const bufsize = 3u;
     double const *RESTRICT const u = u_in + bufsize * offset;
-    double const f_0 = pdf.get(0);
-    double const f_1 = pdf.get(1);
-    double const f_2 = pdf.get(2);
-    double const f_3 = pdf.get(3);
-    double const f_4 = pdf.get(4);
-    double const f_5 = pdf.get(5);
-    double const f_6 = pdf.get(6);
-    double const f_7 = pdf.get(7);
-    double const f_8 = pdf.get(8);
-    double const f_9 = pdf.get(9);
-    double const f_10 = pdf.get(10);
-    double const f_11 = pdf.get(11);
-    double const f_12 = pdf.get(12);
-    double const f_13 = pdf.get(13);
-    double const f_14 = pdf.get(14);
-    double const f_15 = pdf.get(15);
-    double const f_16 = pdf.get(16);
-    double const f_17 = pdf.get(17);
-    double const f_18 = pdf.get(18);
+    double const f_0 = pdf.get(0u);
+    double const f_1 = pdf.get(1u);
+    double const f_2 = pdf.get(2u);
+    double const f_3 = pdf.get(3u);
+    double const f_4 = pdf.get(4u);
+    double const f_5 = pdf.get(5u);
+    double const f_6 = pdf.get(6u);
+    double const f_7 = pdf.get(7u);
+    double const f_8 = pdf.get(8u);
+    double const f_9 = pdf.get(9u);
+    double const f_10 = pdf.get(10u);
+    double const f_11 = pdf.get(11u);
+    double const f_12 = pdf.get(12u);
+    double const f_13 = pdf.get(13u);
+    double const f_14 = pdf.get(14u);
+    double const f_15 = pdf.get(15u);
+    double const f_16 = pdf.get(16u);
+    double const f_17 = pdf.get(17u);
+    double const f_18 = pdf.get(18u);
     const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const double vel1Term = f_1 + f_11 + f_15 + f_7;
     const double vel2Term = f_12 + f_13 + f_5;
@@ -814,25 +814,25 @@ __global__ void kernel_sum(
   if (pdf.isValidPosition()) {
     uint const bufsize = 3u;
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, bufsize);
-    double const f_0 = pdf.get(0);
-    double const f_1 = pdf.get(1);
-    double const f_2 = pdf.get(2);
-    double const f_3 = pdf.get(3);
-    double const f_4 = pdf.get(4);
-    double const f_5 = pdf.get(5);
-    double const f_6 = pdf.get(6);
-    double const f_7 = pdf.get(7);
-    double const f_8 = pdf.get(8);
-    double const f_9 = pdf.get(9);
-    double const f_10 = pdf.get(10);
-    double const f_11 = pdf.get(11);
-    double const f_12 = pdf.get(12);
-    double const f_13 = pdf.get(13);
-    double const f_14 = pdf.get(14);
-    double const f_15 = pdf.get(15);
-    double const f_16 = pdf.get(16);
-    double const f_17 = pdf.get(17);
-    double const f_18 = pdf.get(18);
+    double const f_0 = pdf.get(0u);
+    double const f_1 = pdf.get(1u);
+    double const f_2 = pdf.get(2u);
+    double const f_3 = pdf.get(3u);
+    double const f_4 = pdf.get(4u);
+    double const f_5 = pdf.get(5u);
+    double const f_6 = pdf.get(6u);
+    double const f_7 = pdf.get(7u);
+    double const f_8 = pdf.get(8u);
+    double const f_9 = pdf.get(9u);
+    double const f_10 = pdf.get(10u);
+    double const f_11 = pdf.get(11u);
+    double const f_12 = pdf.get(12u);
+    double const f_13 = pdf.get(13u);
+    double const f_14 = pdf.get(14u);
+    double const f_15 = pdf.get(15u);
+    double const f_16 = pdf.get(16u);
+    double const f_17 = pdf.get(17u);
+    double const f_18 = pdf.get(18u);
     const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const double momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
     const double vel1Term = f_1 + f_11 + f_15 + f_7;
@@ -877,25 +877,25 @@ __global__ void kernel_get(
   if (pdf.isValidPosition()) {
     uint const bufsize = 9u;
     uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, bufsize);
-    double const f_0 = pdf.get(0);
-    double const f_1 = pdf.get(1);
-    double const f_2 = pdf.get(2);
-    double const f_3 = pdf.get(3);
-    double const f_4 = pdf.get(4);
-    double const f_5 = pdf.get(5);
-    double const f_6 = pdf.get(6);
-    double const f_7 = pdf.get(7);
-    double const f_8 = pdf.get(8);
-    double const f_9 = pdf.get(9);
-    double const f_10 = pdf.get(10);
-    double const f_11 = pdf.get(11);
-    double const f_12 = pdf.get(12);
-    double const f_13 = pdf.get(13);
-    double const f_14 = pdf.get(14);
-    double const f_15 = pdf.get(15);
-    double const f_16 = pdf.get(16);
-    double const f_17 = pdf.get(17);
-    double const f_18 = pdf.get(18);
+    double const f_0 = pdf.get(0u);
+    double const f_1 = pdf.get(1u);
+    double const f_2 = pdf.get(2u);
+    double const f_3 = pdf.get(3u);
+    double const f_4 = pdf.get(4u);
+    double const f_5 = pdf.get(5u);
+    double const f_6 = pdf.get(6u);
+    double const f_7 = pdf.get(7u);
+    double const f_8 = pdf.get(8u);
+    double const f_9 = pdf.get(9u);
+    double const f_10 = pdf.get(10u);
+    double const f_11 = pdf.get(11u);
+    double const f_12 = pdf.get(12u);
+    double const f_13 = pdf.get(13u);
+    double const f_14 = pdf.get(14u);
+    double const f_15 = pdf.get(15u);
+    double const f_16 = pdf.get(16u);
+    double const f_17 = pdf.get(17u);
+    double const f_18 = pdf.get(18u);
     const double p_0 = f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
     const double p_1 = -f_10 - f_7 + f_8 + f_9;
     const double p_2 = -f_13 + f_14 + f_17 - f_18;

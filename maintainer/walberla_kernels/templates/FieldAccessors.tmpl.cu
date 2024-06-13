@@ -109,7 +109,7 @@ namespace Population
         if (pdf.isValidPosition()) {
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
             {% for i in range(Q) -%}
-                pop[offset + {{i}}u] = pdf.get({{i}});
+                pop[offset + {{i}}u] = pdf.get({{i}}u);
             {% endfor -%}
         }
     }
@@ -121,7 +121,7 @@ namespace Population
         pdf.set( blockIdx, threadIdx );
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
-                pop[{{i}}u] = pdf.get({{i}});
+                pop[{{i}}u] = pdf.get({{i}}u);
             {% endfor -%}
         }
     }
@@ -134,7 +134,7 @@ namespace Population
         if (pdf.isValidPosition()) {
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
             {% for i in range(Q) -%}
-                pdf.get({{i}}) = pop[offset + {{i}}u];
+                pdf.get({{i}}u) = pop[offset + {{i}}u];
             {% endfor -%}
         }
     }
@@ -146,7 +146,7 @@ namespace Population
         pdf.set( blockIdx, threadIdx );
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
-                pdf.get({{i}}) = pop[{{i}}u];
+                pdf.get({{i}}u) = pop[{{i}}u];
             {% endfor -%}
         }
     }
@@ -233,7 +233,7 @@ namespace Vector
         if (vec.isValidPosition()) {
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
             {% for i in range(D) -%}
-                out[offset + {{i}}u] = vec.get({{i}});
+                out[offset + {{i}}u] = vec.get({{i}}u);
             {% endfor %}
         }
     }
@@ -245,7 +245,7 @@ namespace Vector
         vec.set( blockIdx, threadIdx );
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
-                out[{{i}}u] = vec.get({{i}});
+                out[{{i}}u] = vec.get({{i}}u);
             {% endfor %}
         }
     }
@@ -258,7 +258,7 @@ namespace Vector
         if (vec.isValidPosition()) {
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
             {% for i in range(D) -%}
-                vec.get({{i}}) = u[offset + {{i}}u];
+                vec.get({{i}}u) = u[offset + {{i}}u];
             {% endfor %}
         }
     }
@@ -270,7 +270,7 @@ namespace Vector
         vec.set( blockIdx, threadIdx );
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
-                vec.get({{i}}) = u[{{i}}u];
+                vec.get({{i}}u) = u[{{i}}u];
             {% endfor %}
         }
     }
@@ -283,7 +283,7 @@ namespace Vector
         if (vec.isValidPosition()) {
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
             {% for i in range(D) -%}
-                vec.get({{i}}) += u[offset + {{i}}u];
+                vec.get({{i}}u) += u[offset + {{i}}u];
             {% endfor %}
         }
     }
@@ -295,7 +295,7 @@ namespace Vector
         vec.set( blockIdx, threadIdx );
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
-                vec.get({{i}}) += u[{{i}}u];
+                vec.get({{i}}u) += u[{{i}}u];
             {% endfor %}
         }
     }
@@ -449,7 +449,7 @@ namespace Interpolation
               auto const cz = corner[2] + k;
               auto const weight = wxy * weights[2][k];
               {% for cf in range(D) -%}
-                vel[array_offset + {{cf}}u] += weight * vec.getNeighbor(cx, cy, cz, {{cf}});
+                vel[array_offset + {{cf}}u] += weight * vec.getNeighbor(cx, cy, cz, {{cf}}u);
               {% endfor %}
             }
           }
@@ -487,7 +487,7 @@ namespace Interpolation
               auto const cz = corner[2] + k;
               auto const weight = wxy * weights[2][k];
               {% for cf in range(D) -%}
-                atomicAdd(&vec.getNeighbor(cx, cy, cz, {{cf}}),
+                atomicAdd(&vec.getNeighbor(cx, cy, cz, {{cf}}u),
                           weight * forces[array_offset + {{cf}}u]);
               {% endfor %}
             }
@@ -562,7 +562,7 @@ namespace Equilibrium
         {%endif %}
 
         {% for eqTerm in equilibrium -%}
-            pdf.get({{loop.index0 }}) = {{eqTerm}};
+            pdf.get({{loop.index0 }}u) = {{eqTerm}};
         {% endfor -%}
     }
 } // namespace Equilibrium
@@ -577,7 +577,7 @@ namespace Density
         if (pdf.isValidPosition()) {
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
             {% for i in range(Q) -%}
-                {{dtype}} const f_{{i}} = pdf.get({{i}});
+                {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
             {{density_getters | indent(12)}}
             out[offset] = rho;
@@ -592,7 +592,7 @@ namespace Density
         if (pdf.isValidPosition()) {
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, uint(1u));
             {% for i in range(Q) -%}
-                {{dtype}} const f_{{i}} = pdf.get({{i}});
+                {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
             {{unshifted_momentum_density_getter | indent(12)}}
 
@@ -676,7 +676,7 @@ namespace Velocity
             uint const bufsize = {{D}}u;
             {{dtype}} const * RESTRICT const u = u_in + bufsize * offset;
             {% for i in range(Q) -%}
-                {{dtype}} const f_{{i}} = pdf.get({{i}});
+                {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
             {{density_getters | indent(8)}}
             {{density_velocity_setter_macroscopic_values | substitute_force_getter_cu | indent(8)}}
@@ -716,7 +716,7 @@ namespace MomentumDensity
             uint const bufsize = {{D}}u;
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, bufsize);
             {% for i in range(Q) -%}
-                {{dtype}} const f_{{i}} = pdf.get({{i}});
+                {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
             {{momentum_density_getter | substitute_force_getter_cu | indent(8) }}
             {% for i in range(D) -%}
@@ -757,7 +757,7 @@ namespace PressureTensor
             uint const bufsize = {{D**2}}u;
             uint const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, bufsize);
             {% for i in range(Q) -%}
-                {{dtype}} const f_{{i}} = pdf.get({{i}});
+                {{dtype}} const f_{{i}} = pdf.get({{i}}u);
             {% endfor -%}
             {{second_momentum_getter | indent(12) }}
             {% for i in range(D) -%}
