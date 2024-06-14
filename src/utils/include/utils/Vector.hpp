@@ -39,6 +39,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <numeric>
+#include <span>
 #include <type_traits>
 #include <vector>
 
@@ -79,7 +80,8 @@ private:
 
 public:
   template <class Range>
-  explicit Vector(Range const &rng) : Vector(std::begin(rng), std::end(rng)) {}
+  explicit constexpr Vector(Range const &rng)
+      : Vector(std::begin(rng), std::end(rng)) {}
   explicit constexpr Vector(T const (&v)[N]) : Base() {
     copy_init(std::begin(v), std::end(v));
   }
@@ -103,20 +105,25 @@ public:
     }
   }
 
-  /**
-   * @brief Create a vector that has all entries set to
-   *         one value.
-   */
-  static Vector<T, N> broadcast(T const &s) {
-    Vector<T, N> ret;
-    std::fill(ret.begin(), ret.end(), s);
-
+  /** @brief Create a vector that has all entries set to the same value. */
+  DEVICE_QUALIFIER static constexpr Vector<T, N>
+  broadcast(typename Base::value_type const &value) {
+    Vector<T, N> ret{};
+    for (std::size_t i = 0u; i != N; ++i) {
+      ret[i] = value;
+    }
     return ret;
   }
 
   std::vector<T> as_vector() const { return std::vector<T>(begin(), end()); }
 
   operator std::vector<T>() const { return as_vector(); }
+
+  constexpr std::span<T, N> as_span() const {
+    return std::span<T, N>(const_cast<T *>(begin()), size());
+  }
+
+  constexpr operator std::span<T, N>() const { return as_span(); }
 
   template <class U> explicit operator Vector<U, N>() const {
     Vector<U, N> ret;
@@ -296,6 +303,15 @@ Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
 
   std::transform(std::begin(a), std::end(a), ret.begin(),
                  [b](T const &val) { return val / b; });
+  return ret;
+}
+
+template <std::size_t N, typename T>
+Vector<T, N> operator/(T const &a, Vector<T, N> const &b) {
+  Vector<T, N> ret;
+
+  std::transform(std::begin(b), std::end(b), ret.begin(),
+                 [a](T const &val) { return a / val; });
   return ret;
 }
 

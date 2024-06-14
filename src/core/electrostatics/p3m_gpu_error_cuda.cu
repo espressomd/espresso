@@ -23,12 +23,12 @@
  *  The corresponding header file is p3m_gpu_error.hpp.
  */
 
+#include "p3m/math.hpp"
 #include "p3m_gpu_error.hpp"
 
 #include "cuda/utils.cuh"
 
 #include <utils/math/int_pow.hpp>
-#include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <thrust/device_vector.h>
@@ -44,49 +44,12 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-using Utils::int_pow;
-using Utils::sqr;
-
-/** @todo Extend to higher order. This comes from some 1/sin expansion in
- *  @cite hockney88a
- */
-
-template <int cao>
-__device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
-  const double c = sqr(cos(std::numbers::pi * mesh_i * n));
-
-  switch (cao) {
-  case 1:
-    return 1;
-  case 2:
-    return (1.0 + c * 2.0) / 3.0;
-  case 3:
-    return (2.0 + c * (11.0 + c * 2.0)) / 15.0;
-  case 4:
-    return (17.0 + c * (180.0 + c * (114.0 + c * 4.0))) / 315.0;
-  case 5:
-    return (62.0 + c * (1072.0 + c * (1452.0 + c * (247.0 + c * 2.0)))) /
-           2835.0;
-  case 6:
-    return (1382.0 +
-            c * (35396.0 +
-                 c * (83021.0 + c * (34096.0 + c * (2026.0 + c * 4.0))))) /
-           155925.0;
-  case 7:
-    return (21844.0 +
-            c * (776661.0 +
-                 c * (2801040.0 +
-                      c * (2123860.0 +
-                           c * (349500.0 + c * (8166.0 + c * 4.0)))))) /
-           6081075.0;
-  }
-
-  return 0.0;
-}
-
 template <int cao>
 __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
                                                 double alpha_L, double *he_q) {
+  using Utils::int_pow;
+  using Utils::sqr;
+
   const int nx =
       -mesh.x / 2 + static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
   const int ny =
@@ -103,14 +66,14 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
   if ((nx != 0) || (ny != 0) || (nz != 0)) {
     const double alpha_L_i = 1. / alpha_L;
     const double n2 = sqr(nx) + sqr(ny) + sqr(nz);
-    const double cs = p3m_analytic_cotangent_sum<cao>(nz, meshi.z) *
-                      p3m_analytic_cotangent_sum<cao>(nx, meshi.x) *
-                      p3m_analytic_cotangent_sum<cao>(ny, meshi.y);
+    const double cs = math::analytic_cotangent_sum<cao>(nz, meshi.z) *
+                      math::analytic_cotangent_sum<cao>(nx, meshi.x) *
+                      math::analytic_cotangent_sum<cao>(ny, meshi.y);
     const double ex = exp(-sqr(std::numbers::pi * alpha_L_i) * n2);
     const double ex2 = sqr(ex);
     const double U2 =
-        int_pow<2 * cao>(Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) *
-                         Utils::sinc(meshi.z * nz));
+        int_pow<2 * cao>(math::sinc(meshi.x * nx) * math::sinc(meshi.y * ny) *
+                         math::sinc(meshi.z * nz));
     auto const alias1 = ex2 / n2;
     auto const d = alias1 - sqr(U2 * ex / cs) / n2;
 

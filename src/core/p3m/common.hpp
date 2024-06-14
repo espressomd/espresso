@@ -38,6 +38,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <array>
 #include <vector>
 
@@ -49,6 +50,7 @@ auto constexpr P3M_EPSILON_METALLIC = 0.0;
 #include "LocalBox.hpp"
 
 #include <array>
+#include <cstddef>
 #include <stdexcept>
 #include <vector>
 
@@ -225,16 +227,6 @@ struct P3MLocalMesh {
                           LocalBox const &local_geo, double skin,
                           double space_layer);
 };
-
-/** One of the aliasing sums used to compute k-space errors.
- *  Fortunately the one which is most important (because it converges
- *  most slowly, since it is not damped exponentially) can be
- *  calculated analytically. The result (which depends on the order of
- *  the spline interpolation) can be written as an even trigonometric
- *  polynomial. The results are tabulated here (the employed formula
- *  is eq. (7.66) in @cite hockney88a).
- */
-double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 
 #endif /* P3M || DP3M */
 

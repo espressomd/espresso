@@ -53,11 +53,11 @@
 #include "electrostatics/p3m_gpu_cuda.cuh"
 
 #include "cuda/utils.cuh"
+#include "p3m/math.hpp"
 #include "system/System.hpp"
 
 #include <utils/math/bspline.hpp>
 #include <utils/math/int_pow.hpp>
-#include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cuda.h>
@@ -185,15 +185,15 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
   for (MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++) {
     NMX = static_cast<REAL_TYPE>(((NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX) +
                                  p.mesh[0] * MX);
-    S1 = int_pow<2 * cao>(Utils::sinc(Meshi[0] * NMX));
+    S1 = int_pow<2 * cao>(math::sinc(Meshi[0] * NMX));
     for (MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++) {
       NMY = static_cast<REAL_TYPE>(
           ((NY > p.mesh[1] / 2) ? NY - p.mesh[1] : NY) + p.mesh[1] * MY);
-      S2 = S1 * int_pow<2 * cao>(Utils::sinc(Meshi[1] * NMY));
+      S2 = S1 * int_pow<2 * cao>(math::sinc(Meshi[1] * NMY));
       for (MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++) {
         NMZ = static_cast<REAL_TYPE>(
             ((NZ > p.mesh[2] / 2) ? NZ - p.mesh[2] : NZ) + p.mesh[2] * MZ);
-        S3 = S2 * int_pow<2 * cao>(Utils::sinc(Meshi[2] * NMZ));
+        S3 = S2 * int_pow<2 * cao>(math::sinc(Meshi[2] * NMZ));
 
         NM2 = sqr(NMX * Leni[0]) + sqr(NMY * Leni[1]) + sqr(NMZ * Leni[2]);
         *Nenner += S3;

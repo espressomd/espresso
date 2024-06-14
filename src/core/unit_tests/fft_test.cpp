@@ -27,6 +27,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "p3m/fft.hpp"
+#include "p3m/for_each_3d.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -163,6 +164,43 @@ BOOST_AUTO_TEST_CASE(fft_exceptions) {
   fft_allocator<int> allocator{};
   BOOST_CHECK_EQUAL(allocator.allocate(0ul), nullptr);
   BOOST_CHECK_THROW(allocator.allocate(bad_size), std::bad_array_new_length);
+}
+
+BOOST_AUTO_TEST_CASE(for_each_3d_test) {
+  auto const m_start = Utils::Vector3i{{0, -1, 3}};
+  auto const m_stop = Utils::Vector3i{{2, 2, 5}};
+  auto ref_loop_counters = m_start;
+  auto indices = Utils::Vector3i{};
+
+  auto const kernel = [&]() {
+    BOOST_REQUIRE_EQUAL(indices, ref_loop_counters);
+    if (++ref_loop_counters[2u] == m_stop[2u]) {
+      ref_loop_counters[2u] = m_start[2u];
+      if (++ref_loop_counters[1u] == m_stop[1u]) {
+        ref_loop_counters[1u] = m_start[1u];
+        if (++ref_loop_counters[0u] == m_stop[0u]) {
+          ref_loop_counters[0u] = m_start[0u];
+        }
+      }
+    }
+  };
+
+  {
+    for_each_3d(m_start, m_stop, indices, kernel, [&](unsigned dim, int n) {
+      BOOST_REQUIRE_GE(dim, 0);
+      BOOST_REQUIRE_LE(dim, 2);
+      BOOST_REQUIRE_EQUAL(n, ref_loop_counters[dim]);
+    });
+
+    BOOST_REQUIRE_EQUAL(indices, m_stop);
+    BOOST_REQUIRE_EQUAL(ref_loop_counters, m_start);
+  }
+  {
+    for_each_3d(m_start, m_stop, indices, kernel);
+
+    BOOST_REQUIRE_EQUAL(indices, m_stop);
+    BOOST_REQUIRE_EQUAL(ref_loop_counters, m_start);
+  }
 }
 
 #else  // defined(P3M) || defined(DP3M)

@@ -36,6 +36,7 @@
 #include <iterator>
 #include <limits>
 #include <numeric>
+#include <span>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
@@ -43,7 +44,8 @@
 using Utils::Vector;
 
 /* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
-#define TEST_NUMBERS {0, 1, 1, 7, 21, 112, 456, 2603, 13203}
+#define TEST_NUMBERS                                                           \
+  { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
 
 constexpr int test_numbers[] = TEST_NUMBERS;
 constexpr std::size_t n_test_numbers = sizeof(test_numbers) / sizeof(int);
@@ -187,6 +189,13 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
     BOOST_CHECK(v4 == (v3 /= 2));
   }
 
+  {
+    Utils::Vector3i v3{2, 12, 91};
+    Utils::Vector3i v4{180, 30, 3};
+    auto v5 = 360 / v3;
+    BOOST_CHECK(v5 == v4);
+  }
+
   BOOST_CHECK((sqrt(Utils::Vector3d{1., 2., 3.}) ==
                Utils::Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
 
@@ -307,6 +316,27 @@ BOOST_AUTO_TEST_CASE(conversion) {
   {
     auto const result = Utils::Vector3d{orig.as_vector()};
     BOOST_TEST(result == orig);
+  }
+
+  // check span conversion
+  {
+    auto const view = static_cast<std::span<double, 3>>(orig);
+    BOOST_TEST(view.data() == orig.data());
+    BOOST_TEST(view.size() == orig.size());
+  }
+
+  // check span conversion
+  {
+    auto const view = std::span(orig);
+    BOOST_TEST(view.data() == orig.data());
+    BOOST_TEST(view.size() == orig.size());
+  }
+
+  // check span conversion
+  {
+    auto const view = orig.as_span();
+    BOOST_TEST(view.data() == orig.data());
+    BOOST_TEST(view.size() == orig.size());
   }
 }
 
