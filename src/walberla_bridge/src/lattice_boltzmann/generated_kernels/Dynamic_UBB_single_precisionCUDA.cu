@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit 0c8b4b926c6979288fd8a6846d02ec0870e1fe41
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 #include "Dynamic_UBB_single_precisionCUDA.h"
 #include "core/DataTypes.h"
@@ -86,11 +86,11 @@ static FUNC_PREFIX __launch_bounds__(256) void dynamic_ubb_single_precisioncuda_
 
   if (blockDim.x * blockIdx.x + threadIdx.x < indexVectorSize) {
     uint8_t *RESTRICT _data_indexVector_10 = _data_indexVector;
-    const int64_t x = *((int32_t *)(&_data_indexVector_10[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
+    const int32_t x = *((int32_t *)(&_data_indexVector_10[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
     uint8_t *RESTRICT _data_indexVector_14 = _data_indexVector + 4;
-    const int64_t y = *((int32_t *)(&_data_indexVector_14[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
+    const int32_t y = *((int32_t *)(&_data_indexVector_14[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
     uint8_t *RESTRICT _data_indexVector_18 = _data_indexVector + 8;
-    const int64_t z = *((int32_t *)(&_data_indexVector_18[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
+    const int32_t z = *((int32_t *)(&_data_indexVector_18[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
     uint8_t *RESTRICT _data_indexVector_112 = _data_indexVector + 12;
     const int32_t dir = *((int32_t *)(&_data_indexVector_112[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]));
     float *RESTRICT _data_pdfs_10_2m1_318 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z - _stride_pdfs_2 + 18 * _stride_pdfs_3;
@@ -116,12 +116,12 @@ static FUNC_PREFIX __launch_bounds__(256) void dynamic_ubb_single_precisioncuda_
     float *RESTRICT _data_pdfs_1m1_20_32 = _data_pdfs + _stride_pdfs_1 * y - _stride_pdfs_1 + _stride_pdfs_2 * z + 2 * _stride_pdfs_3;
     float *RESTRICT _data_pdfs_10_20_33 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + 3 * _stride_pdfs_3;
     const float rho = vel0Term + vel1Term + vel2Term + _data_pdfs_10_20_30[_stride_pdfs_0 * x] + _data_pdfs_10_20_33[_stride_pdfs_0 * x - _stride_pdfs_0] + _data_pdfs_10_2m1_317[_stride_pdfs_0 * x - _stride_pdfs_0] + _data_pdfs_10_2m1_36[_stride_pdfs_0 * x] + _data_pdfs_1m1_20_32[_stride_pdfs_0 * x] + _data_pdfs_1m1_20_39[_stride_pdfs_0 * x - _stride_pdfs_0] + _data_pdfs_1m1_2m1_316[_stride_pdfs_0 * x];
-    float *RESTRICT _data_pdfs93b1f9de6e9ad9c1 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_1 * neighbour_offset_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * neighbour_offset_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir];
+    float *RESTRICT _data_pdfs51aa77f0c2cd7c8d = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_1 * neighbour_offset_y[dir] + _stride_pdfs_2 * z + _stride_pdfs_2 * neighbour_offset_z[dir] + _stride_pdfs_3 * f_in_inv_dir_idx[dir];
     uint8_t *RESTRICT _data_indexVector_116 = _data_indexVector + 16;
     uint8_t *RESTRICT _data_indexVector_120 = _data_indexVector + 20;
     uint8_t *RESTRICT _data_indexVector_124 = _data_indexVector + 24;
-    float *RESTRICT _data_pdfs_10_20e88f2f033b4b7207 = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir;
-    _data_pdfs93b1f9de6e9ad9c1[_stride_pdfs_0 * x + _stride_pdfs_0 * neighbour_offset_x[dir]] = rho * (6.0f * ((float)(neighbour_offset_x[dir])) * *((float *)(&_data_indexVector_116[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_y[dir])) * *((float *)(&_data_indexVector_120[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_z[dir])) * *((float *)(&_data_indexVector_124[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]))) * -1.0f * weights[dir] + _data_pdfs_10_20e88f2f033b4b7207[_stride_pdfs_0 * x];
+    float *RESTRICT _data_pdfs_10_20cc174ab22360a76a = _data_pdfs + _stride_pdfs_1 * y + _stride_pdfs_2 * z + _stride_pdfs_3 * dir;
+    _data_pdfs51aa77f0c2cd7c8d[_stride_pdfs_0 * x + _stride_pdfs_0 * neighbour_offset_x[dir]] = -rho * (6.0f * ((float)(neighbour_offset_x[dir])) * *((float *)(&_data_indexVector_116[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_y[dir])) * *((float *)(&_data_indexVector_120[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x])) + 6.0f * ((float)(neighbour_offset_z[dir])) * *((float *)(&_data_indexVector_124[28 * blockDim.x * blockIdx.x + 28 * threadIdx.x]))) * weights[dir] + _data_pdfs_10_20cc174ab22360a76a[_stride_pdfs_0 * x];
   }
 }
 } // namespace internal_dynamic_ubb_single_precisioncuda_boundary_Dynamic_UBB_single_precisionCUDA
@@ -166,8 +166,8 @@ void Dynamic_UBB_single_precisionCUDA::run_impl(IBlock *block, IndexVectors::Typ
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  dim3 _block(uint32_t(((256 < indexVectorSize) ? 256 : indexVectorSize)), uint32_t(1), uint32_t(1));
-  dim3 _grid(uint32_t(((indexVectorSize) % (((256 < indexVectorSize) ? 256 : indexVectorSize)) == 0 ? (int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize)) : ((int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize))) + 1)), uint32_t(1), uint32_t(1));
+  dim3 _block(uint32_c(((256 < indexVectorSize) ? 256 : indexVectorSize)), uint32_c(1), uint32_c(1));
+  dim3 _grid(uint32_c(((indexVectorSize) % (((256 < indexVectorSize) ? 256 : indexVectorSize)) == 0 ? (int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize)) : ((int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize))) + 1)), uint32_c(1), uint32_c(1));
   internal_dynamic_ubb_single_precisioncuda_boundary_Dynamic_UBB_single_precisionCUDA::dynamic_ubb_single_precisioncuda_boundary_Dynamic_UBB_single_precisionCUDA<<<_grid, _block, 0, stream>>>(_data_indexVector, _data_pdfs, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, indexVectorSize);
 }
 

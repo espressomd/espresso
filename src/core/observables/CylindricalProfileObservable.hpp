@@ -23,8 +23,6 @@
 
 #include <utils/math/cylindrical_transformation_parameters.hpp>
 
-#include <boost/range/algorithm.hpp>
-
 #include <memory>
 #include <utility>
 

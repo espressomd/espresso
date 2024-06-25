@@ -20,11 +20,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
 
 #include <cmath>
 #include <limits>
+#include <numbers>
 
 BOOST_AUTO_TEST_CASE(rotation) {
   using std::cos;
@@ -52,5 +52,5 @@ BOOST_AUTO_TEST_CASE(angle_between) {
   Utils::Vector3d const v2 = {1.0, 1.0, 0.0};
 
   auto const angle = Utils::angle_between(v1, v2);
-  BOOST_CHECK_CLOSE(angle, Utils::pi() / 4.0, 1e-7);
+  BOOST_CHECK_CLOSE(angle, std::numbers::pi / 4., 1e-7);
 }

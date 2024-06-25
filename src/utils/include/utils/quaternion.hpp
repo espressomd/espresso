@@ -42,6 +42,7 @@
 #include "utils/Array.hpp"
 #include "utils/Vector.hpp"
 #include "utils/matrix.hpp"
+#include "utils/serialization/array.hpp"
 
 #include <cassert>
 #include <cstddef>

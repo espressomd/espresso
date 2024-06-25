@@ -26,6 +26,7 @@
 
 #include <utils/serialization/pack.hpp>
 
+#include <algorithm>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -58,16 +59,18 @@ std::string ObjectHandle::serialize() const {
   PackVisitor visit;
 
   /* Pack parameters and keep track of ObjectRef parameters */
-  boost::transform(params, state.params.begin(),
-                   [&visit](auto const &kv) -> PackedMap::value_type {
-                     return {kv.first, boost::apply_visitor(visit, kv.second)};
-                   });
+  std::ranges::transform(params, state.params.begin(),
+                         [&visit](auto const &kv) -> PackedMap::value_type {
+                           return {kv.first,
+                                   boost::apply_visitor(visit, kv.second)};
+                         });
 
   /* Packed Object parameters */
   state.objects.resize(visit.objects().size());
-  boost::transform(visit.objects(), state.objects.begin(), [](auto const &kv) {
-    return std::make_pair(kv.first, kv.second->serialize());
-  });
+  std::ranges::transform(
+      visit.objects(), state.objects.begin(), [](auto const &kv) {
+        return std::make_pair(kv.first, kv.second->serialize());
+      });
 
   state.name = name().to_string();
   state.internal_state = get_internal_state();
@@ -80,11 +83,11 @@ ObjectRef ObjectHandle::deserialize(const std::string &packed_state,
   auto const state = Utils::unpack<ObjectState>(packed_state);
 
   std::unordered_map<ObjectId, ObjectRef> objects;
-  boost::transform(state.objects, std::inserter(objects, objects.end()),
-                   [&ctx](auto const &kv) {
-                     return std::make_pair(kv.first,
-                                           deserialize(kv.second, ctx));
-                   });
+  std::ranges::transform(state.objects, std::inserter(objects, objects.end()),
+                         [&ctx](auto const &kv) {
+                           return std::make_pair(kv.first,
+                                                 deserialize(kv.second, ctx));
+                         });
 
   VariantMap params;
   for (auto const &kv : state.params) {

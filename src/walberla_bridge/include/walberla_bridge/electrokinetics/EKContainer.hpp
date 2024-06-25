@@ -73,8 +73,7 @@ public:
       : m_tau{tau}, m_poisson_solver{std::move(solver)}, m_ekcontainer{} {}
 
   bool contains(std::shared_ptr<EKSpecies> const &ek_species) const noexcept {
-    return std::find(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species) !=
-           m_ekcontainer.end();
+    return std::ranges::find(m_ekcontainer, ek_species) != m_ekcontainer.end();
   }
 
   void add(std::shared_ptr<EKSpecies> const &ek_species) {
@@ -85,9 +84,7 @@ public:
 
   void remove(std::shared_ptr<EKSpecies> const &ek_species) {
     assert(contains(ek_species));
-    m_ekcontainer.erase(
-        std::remove(m_ekcontainer.begin(), m_ekcontainer.end(), ek_species),
-        m_ekcontainer.end());
+    std::erase(m_ekcontainer, ek_species);
   }
 
   iterator begin() noexcept { return m_ekcontainer.begin(); }

@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_PACKED_VARIANT_HPP
-#define SCRIPT_INTERFACE_PACKED_VARIANT_HPP
+
+#pragma once
 
 #include "Variant.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <string>
@@ -80,7 +81,7 @@ public:
   auto operator()(const std::vector<Variant> &vec) const {
     std::vector<PackedVariant> ret(vec.size());
 
-    boost::transform(vec, ret.begin(), [this](const Variant &v) {
+    std::ranges::transform(vec, ret.begin(), [this](const Variant &v) {
       return boost::apply_visitor(*this, v);
     });
 
@@ -129,7 +130,7 @@ struct UnpackVisitor : boost::static_visitor<Variant> {
   auto operator()(const std::vector<PackedVariant> &vec) const {
     std::vector<Variant> ret(vec.size());
 
-    boost::transform(vec, ret.begin(), [this](const PackedVariant &v) {
+    std::ranges::transform(vec, ret.begin(), [this](const PackedVariant &v) {
       return boost::apply_visitor(*this, v);
     });
 
@@ -192,7 +193,7 @@ inline Variant unpack(const PackedVariant &v,
 inline PackedMap pack(const VariantMap &v) {
   PackedMap ret(v.size());
 
-  boost::transform(v, ret.begin(), [](auto const &kv) {
+  std::ranges::transform(v, ret.begin(), [](auto const &kv) {
     return std::pair<std::string, PackedVariant>{kv.first, pack(kv.second)};
   });
 
@@ -210,7 +211,7 @@ unpack(const PackedMap &v,
        std::unordered_map<ObjectId, ObjectRef> const &objects) {
   VariantMap ret;
 
-  boost::transform(
+  std::ranges::transform(
       v, std::inserter(ret, ret.end()),
       [&objects](auto const &kv) -> std::pair<std::string, Variant> {
         return {kv.first, unpack(kv.second, objects)};
@@ -219,5 +220,3 @@ unpack(const PackedMap &v,
   return ret;
 }
 } // namespace ScriptInterface
-
-#endif

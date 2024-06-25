@@ -31,6 +31,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/hana.hpp>
 #include <boost/mpl/list.hpp>
+#include <boost/utility/identity_type.hpp>
 
 #include <cstddef>
 #include <regex>

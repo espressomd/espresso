@@ -33,7 +33,6 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi.hpp>
-#include <boost/serialization/optional.hpp>
 
 #ifdef CALIPER
 #include <caliper/cali.h>

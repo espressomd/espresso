@@ -22,18 +22,18 @@
 #include <boost/test/unit_test.hpp>
 
 #include <utils/Histogram.hpp>
-#include <utils/constants.hpp>
 #include <utils/sampling.hpp>
 
 #include <array>
 #include <cstddef>
+#include <numbers>
 #include <utility>
 
 BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   auto const min_r = 0.0;
   auto const max_r = 5.0;
-  auto const min_phi = -Utils::pi();
-  auto const max_phi = Utils::pi();
+  auto const min_phi = -std::numbers::pi;
+  auto const max_phi = std::numbers::pi;
   auto const min_z = 0.0;
   auto const max_z = 10.0;
   auto const n_r_bins = std::size_t{10};

@@ -38,6 +38,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <array>
 #include <vector>
 
@@ -49,6 +50,7 @@ auto constexpr P3M_EPSILON_METALLIC = 0.0;
 #include "LocalBox.hpp"
 
 #include <array>
+#include <cstddef>
 #include <stdexcept>
 #include <vector>
 
@@ -212,7 +214,7 @@ struct P3MLocalMesh {
    */
   void recalc_ld_pos(P3MParameters const &params) {
     // spatial position of left down mesh point
-    for (unsigned int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       ld_pos[i] = (ld_ind[i] + params.mesh_off[i]) * params.a[i];
     }
   }
@@ -225,16 +227,6 @@ struct P3MLocalMesh {
                           LocalBox const &local_geo, double skin,
                           double space_layer);
 };
-
-/** One of the aliasing sums used to compute k-space errors.
- *  Fortunately the one which is most important (because it converges
- *  most slowly, since it is not damped exponentially) can be
- *  calculated analytically. The result (which depends on the order of
- *  the spline interpolation) can be written as an even trigonometric
- *  polynomial. The results are tabulated here (the employed formula
- *  is eq. (7.66) in @cite hockney88a).
- */
-double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 
 #endif /* P3M || DP3M */
 
@@ -250,8 +242,8 @@ std::array<std::vector<int>, 3> inline calc_meshift(
     Utils::Vector3i const &mesh_size, bool zero_out_midpoint = false) {
   std::array<std::vector<int>, 3> ret{};
 
-  for (unsigned int i = 0; i < 3; i++) {
-    ret[i] = std::vector<int>(mesh_size[i]);
+  for (auto i = 0u; i < 3u; ++i) {
+    ret[i] = std::vector<int>(static_cast<std::size_t>(mesh_size[i]));
 
     for (int j = 1; j <= mesh_size[i] / 2; j++) {
       ret[i][j] = j;

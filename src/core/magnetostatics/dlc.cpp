@@ -37,7 +37,6 @@
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -51,6 +50,7 @@
 #include <cmath>
 #include <cstdio>
 #include <functional>
+#include <numbers>
 #include <numeric>
 #include <stdexcept>
 #include <variant>
@@ -113,8 +113,8 @@ static void dipolar_force_corrections(int kcut,
                                       std::vector<Utils::Vector3d> &ts,
                                       ParticleRange const &particles,
                                       BoxGeometry const &box_geo) {
-  auto const facux = 2. * Utils::pi() * box_geo.length_inv()[0];
-  auto const facuy = 2. * Utils::pi() * box_geo.length_inv()[1];
+  auto const facux = 2. * std::numbers::pi * box_geo.length_inv()[0];
+  auto const facuy = 2. * std::numbers::pi * box_geo.length_inv()[1];
 
   auto const n_local_particles = particles.size();
   std::vector<double> ReSjp(n_local_particles);
@@ -233,7 +233,7 @@ static void dipolar_force_corrections(int kcut,
   // Multiply by the factors we have left during the loops
 
   auto const piarea =
-      Utils::pi() * box_geo.length_inv()[0] * box_geo.length_inv()[1];
+      std::numbers::pi * box_geo.length_inv()[0] * box_geo.length_inv()[1];
   for (std::size_t j = 0; j < n_local_particles; ++j) {
     fs[j] *= piarea;
     ts[j] *= piarea;
@@ -247,8 +247,8 @@ static void dipolar_force_corrections(int kcut,
 static double dipolar_energy_correction(int kcut,
                                         ParticleRange const &particles,
                                         BoxGeometry const &box_geo) {
-  auto const facux = 2. * Utils::pi() * box_geo.length_inv()[0];
-  auto const facuy = 2. * Utils::pi() * box_geo.length_inv()[1];
+  auto const facux = 2. * std::numbers::pi * box_geo.length_inv()[0];
+  auto const facuy = 2. * std::numbers::pi * box_geo.length_inv()[1];
 
   double energy = 0.;
   double sum_S[4] = {0., 0., 0., 0.};
@@ -296,7 +296,7 @@ static double dipolar_energy_correction(int kcut,
   }
 
   auto const piarea =
-      Utils::pi() * box_geo.length_inv()[0] * box_geo.length_inv()[1];
+      std::numbers::pi * box_geo.length_inv()[0] * box_geo.length_inv()[1];
   energy *= -piarea;
   return (this_node == 0) ? energy : 0.;
 }
@@ -306,7 +306,7 @@ void DipolarLayerCorrection::add_force_corrections(
   assert(dlc.far_cut > 0.);
   auto const &box_geo = *get_system().box_geo;
   auto const volume = box_geo.volume();
-  auto const correc = 4. * Utils::pi() / volume;
+  auto const correc = 4. * std::numbers::pi / volume;
 
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.
@@ -358,7 +358,7 @@ double DipolarLayerCorrection::energy_correction(
   assert(dlc.far_cut > 0.);
   auto const &box_geo = *get_system().box_geo;
   auto const volume = box_geo.volume();
-  auto const pref = prefactor * 2. * Utils::pi() / volume;
+  auto const pref = prefactor * 2. * std::numbers::pi / volume;
 
   // Check if particles aren't in the forbidden gap region
   // This loop is needed, because there is no other guaranteed
@@ -430,12 +430,12 @@ double DipolarLayerCorrection::tune_far_cut() const {
   }
 
   auto constexpr limitkc = 200;
-  auto const piarea = Utils::pi() / (lx * ly);
+  auto const piarea = std::numbers::pi / (lx * ly);
   auto const nmp = static_cast<double>(count_magnetic_particles(system));
   auto const h = dlc.box_h;
   auto far_cut = -1.;
   for (int kc = 1; kc < limitkc; kc++) {
-    auto const gc = kc * 2. * Utils::pi() / lx;
+    auto const gc = kc * 2. * std::numbers::pi / lx;
     auto const fa0 = sqrt(9. * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
                           9. * exp(-2. * gc * h) * g1_DLC_dip(gc, lz + h) +
                           22. * g1_DLC_dip(gc, lz));

@@ -55,6 +55,7 @@ class LBTest:
     if espressomd.gpu_available():
         system.cuda_init_handle.call_method("set_device_id_per_rank")
     interpolation = False
+    n_nodes = system.cell_system.get_state()["n_nodes"]
 
     def setUp(self):
         self.system.box_l = 3 * [6.0]
@@ -628,6 +629,17 @@ class LBTest:
             vel = np.copy(p.v) * self.params["density"]
             vel_ref = (self.system.time + lbf.tau * 0.5) * ext_f
             np.testing.assert_allclose(vel, vel_ref, rtol=rtol, atol=0.)
+
+    @ut.skipIf(n_nodes != 2, "test is designed to run on 2 MPI ranks")
+    def test_rng(self):
+        system = self.system
+        system.lb = self.lb_class(kT=15., **self.params, **self.lb_params)
+        system.integrator.run(1)
+        diff = system.lb[0, :, :].population - system.lb[6, :, :].population
+        # if the RNG uses the local cell index instead of the global cell index,
+        # the noise will be identical in all blocks, and the RMS is zero
+        rms = np.sqrt(np.mean(np.square(diff)))
+        self.assertGreater(rms, 0.01, msg="thermal noise might be correlated!")
 
     def test_thermalization_force_balance(self):
         system = self.system

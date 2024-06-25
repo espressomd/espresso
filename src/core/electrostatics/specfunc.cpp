@@ -47,10 +47,10 @@
 
 #include "specfunc.hpp"
 
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <cmath>
+#include <numbers>
 #include <tuple>
 #include <utility>
 
@@ -251,7 +251,7 @@ double K0(double x) {
   if (x <= 2.0) {
     auto const c = evaluateAsChebychevSeriesAt(bk0_cs, 0.5 * x * x - 1.0);
     auto const i0 = evaluateAsChebychevSeriesAt(bi0_cs, x * x / 4.5 - 1.0);
-    return (-std::log(x) + Utils::ln_2()) * i0 + c;
+    return (-std::log(x) + std::numbers::ln2) * i0 + c;
   }
   auto const c =
       (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak0_cs, (16.0 / x - 5.0) / 3.0)
@@ -263,7 +263,7 @@ double K1(double x) {
   if (x <= 2.0) {
     auto const c = evaluateAsChebychevSeriesAt(bk1_cs, 0.5 * x * x - 1.0);
     auto const i1 = x * evaluateAsChebychevSeriesAt(bi1_cs, x * x / 4.5 - 1.0);
-    return (std::log(x) - Utils::ln_2()) * i1 + c / x;
+    return (std::log(x) - std::numbers::ln2) * i1 + c / x;
   }
   auto const c =
       (x <= 8.0) ? evaluateAsChebychevSeriesAt(ak1_cs, (16.0 / x - 5.0) / 3.0)
@@ -328,7 +328,7 @@ double LPK0(double x) {
       d0 = x2 * d0 - dd0 + bi0_cs[j];
       dd0 = tmp0;
     }
-    auto const tmp = std::log(x) - Utils::ln_2();
+    auto const tmp = std::log(x) - std::numbers::ln2;
     auto const ret = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
 
     /* K0/K1 correction */
@@ -388,7 +388,7 @@ double LPK1(double x) {
       d1 = x2 * d1 - dd1 + bi1_cs[j];
       dd1 = tmp1;
     }
-    auto const tmp = std::log(x) - Utils::ln_2();
+    auto const tmp = std::log(x) - std::numbers::ln2;
     auto const ret = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
 
     /* K0/K1 correction */
@@ -464,7 +464,7 @@ std::pair<double, double> LPK01(double x) {
       dd0 = tmp0;
       dd1 = tmp1;
     }
-    auto const tmp = std::log(x) - Utils::ln_2();
+    auto const tmp = std::log(x) - std::numbers::ln2;
     auto k0 = -tmp * (0.5 * (bi0_cs[0] + x2 * d0) - dd0);
     auto k1 = x * tmp * (0.5 * (bi1_cs[0] + x2 * d1) - dd1);
 

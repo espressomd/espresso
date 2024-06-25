@@ -31,13 +31,9 @@
 
 #include "p3m/fft.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/math/permute_ifield.hpp>
-
-#include <boost/none.hpp>
-#include <boost/optional.hpp>
 
 #include <fftw3.h>
 #include <mpi.h>
@@ -46,6 +42,8 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <optional>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -61,7 +59,6 @@ using Utils::permute_ifield;
 #define REQ_FFT_BACK 302
 /**@}*/
 
-namespace {
 /** This ugly function does the bookkeeping: which nodes have to
  *  communicate to each other, when you change the node grid.
  *  Changing the regular decomposition requires communication. This
@@ -82,14 +79,13 @@ namespace {
  *  \param[out] node_list2  Linear node index list for grid2.
  *  \param[out] pos         Positions of the nodes in grid2
  *  \param[out] my_pos      Position of comm.rank() in grid2.
- *  \param[in]  comm        MPI communicator.
+ *  \param[in]  rank        MPI rank.
  *  \return Size of the communication group.
  */
-boost::optional<std::vector<int>>
+std::optional<std::vector<int>>
 find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
-                 Utils::Span<const int> node_list1, Utils::Span<int> node_list2,
-                 Utils::Span<int> pos, Utils::Span<int> my_pos,
-                 boost::mpi::communicator const &comm) {
+                 std::span<int const> node_list1, std::span<int> node_list2,
+                 std::span<int> pos, std::span<int> my_pos, int rank) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];
@@ -110,20 +106,20 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
   int my_group = 0;
 
   /* calculate dimension of comm. group cells for both grids */
-  if ((grid1[0] * grid1[1] * grid1[2]) != (grid2[0] * grid2[1] * grid2[2]))
-    return boost::none; /* unlike number of nodes */
+  if (Utils::product(grid1) != Utils::product(grid2))
+    return std::nullopt; /* unlike number of nodes */
   for (i = 0; i < 3; i++) {
     s1[i] = grid1[i] / grid2[i];
     if (s1[i] == 0)
       s1[i] = 1;
     else if (grid1[i] != grid2[i] * s1[i])
-      return boost::none; /* grids do not match!!! */
+      return std::nullopt; /* grids do not match!!! */
 
     s2[i] = grid2[i] / grid1[i];
     if (s2[i] == 0)
       s2[i] = 1;
     else if (grid2[i] != grid1[i] * s2[i])
-      return boost::none; /* grids do not match!!! */
+      return std::nullopt; /* grids do not match!!! */
 
     ds[i] = grid2[i] / s2[i];
     g_size *= s2[i];
@@ -154,7 +150,7 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
           pos[3 * n + 2] = p2[2];
           if (my_group == 1)
             group[i] = n;
-          if (n == comm.rank() && my_group == 0) {
+          if (n == rank && my_group == 0) {
             my_group = 1;
             c_pos = i;
             my_pos[0] = p2[0];
@@ -178,6 +174,7 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
   return {group};
 }
 
+namespace {
 /** Calculate the local fft mesh. Calculate the local mesh (@p loc_mesh)
  *  of a node at position (@p n_pos) in a node grid (@p n_grid) for a global
  *  mesh of size (@p mesh) and a mesh offset (@p mesh_off (in mesh units))
@@ -414,6 +411,7 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                      plan_f.element);
   }
 }
+} // namespace
 
 /** Calculate 'best' mapping between a 2D and 3D grid.
  *  Required for the communication from 3D regular domain
@@ -466,7 +464,7 @@ int map_3don2d_grid(int const g3d[3], int g2d[3]) {
 }
 
 /** Calculate most square 2D grid. */
-void calc_2d_grid(int n, int grid[3]) {
+static void calc_2d_grid(int n, int grid[3]) {
   grid[0] = n;
   grid[1] = 1;
   grid[2] = 1;
@@ -479,7 +477,6 @@ void calc_2d_grid(int n, int grid[3]) {
     }
   }
 }
-} // namespace
 
 int fft_init(Utils::Vector3i const &ca_mesh_dim, int const *ca_mesh_margin,
              Utils::Vector3i const &global_mesh_dim,
@@ -492,8 +489,9 @@ int fft_init(Utils::Vector3i const &ca_mesh_dim, int const *ca_mesh_margin,
   std::vector<int> n_id[4]; /* linear node identity lists for the node grids. */
   std::vector<int> n_pos[4]; /* positions of nodes in the node grids. */
 
+  int const rank = comm.rank();
   int node_pos[3];
-  MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
+  MPI_Cart_coords(comm, rank, 3, node_pos);
 
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
@@ -536,11 +534,10 @@ int fft_init(Utils::Vector3i const &ca_mesh_dim, int const *ca_mesh_margin,
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
 
   for (int i = 1; i < 4; i++) {
-    using Utils::make_span;
     auto group = find_comm_groups(
         {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
         {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1],
-        make_span(n_id[i]), make_span(n_pos[i]), my_pos[i], comm);
+        std::span(n_id[i]), std::span(n_pos[i]), my_pos[i], rank);
     if (not group) {
       /* try permutation */
       std::swap(n_grid[i][(fft.plan[i].row_dir + 1) % 3],
@@ -548,15 +545,15 @@ int fft_init(Utils::Vector3i const &ca_mesh_dim, int const *ca_mesh_margin,
 
       group = find_comm_groups(
           {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, make_span(n_id[i - 1]),
-          make_span(n_id[i]), make_span(n_pos[i]), my_pos[i], comm);
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, std::span(n_id[i - 1]),
+          std::span(n_id[i]), std::span(n_pos[i]), my_pos[i], rank);
 
       if (not group) {
         throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
       }
     }
 
-    fft.plan[i].group = *group;
+    fft.plan[i].group = group.value();
 
     fft.plan[i].send_block.resize(6 * fft.plan[i].group.size());
     fft.plan[i].send_size.resize(fft.plan[i].group.size());

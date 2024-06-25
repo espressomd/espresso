@@ -25,11 +25,12 @@
 #include "system/System.hpp"
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
+
+#include <optional>
 
 inline auto copy_particle_to_head_node(boost::mpi::communicator const &comm,
                                        System::System &system, int p_id) {
-  boost::optional<Particle> result{};
+  std::optional<Particle> result{};
   auto p = system.cell_structure->get_local_particle(p_id);
   if (p and not p->is_ghost()) {
     if (comm.rank() == 0) {

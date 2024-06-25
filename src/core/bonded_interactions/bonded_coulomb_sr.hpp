@@ -33,10 +33,9 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
 #include <functional>
+#include <optional>
 
 /** Parameters for Coulomb bond short-range Potential */
 struct BondedCoulombSR {
@@ -49,11 +48,11 @@ struct BondedCoulombSR {
 
   BondedCoulombSR(double q1q2) { this->q1q2 = q1q2; }
 
-  boost::optional<Utils::Vector3d>
+  std::optional<Utils::Vector3d>
   force(Utils::Vector3d const &dx,
         std::function<Utils::Vector3d(double, Utils::Vector3d const &,
                                       double)> const &kernel) const;
-  boost::optional<double>
+  std::optional<double>
   energy(Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
          std::function<double(Particle const &, Particle const &, double,
                               Utils::Vector3d const &, double)> const &kernel)
@@ -71,7 +70,7 @@ private:
  *  @param[in]  dx        Distance between the particles.
  *  @param[in]  kernel    Coulomb force kernel.
  */
-inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
+inline std::optional<Utils::Vector3d> BondedCoulombSR::force(
     Utils::Vector3d const &dx,
     std::function<Utils::Vector3d(double, Utils::Vector3d const &,
                                   double)> const &kernel) const {
@@ -88,7 +87,7 @@ inline boost::optional<Utils::Vector3d> BondedCoulombSR::force(
  *  @param[in]  dx        Distance between the particles.
  *  @param[in]  kernel    Coulomb energy kernel.
  */
-inline boost::optional<double> BondedCoulombSR::energy(
+inline std::optional<double> BondedCoulombSR::energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &dx,
     std::function<double(Particle const &, Particle const &, double,
                          Utils::Vector3d const &, double)> const &kernel)

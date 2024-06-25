@@ -67,12 +67,12 @@
  *    is @ref BONDED_INACTIVE_CUTOFF to ensure that it is always skipped by
  *    the short-range loop.
  *  * @code{.cpp}
- *    boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+ *    std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
  *    @endcode
  *    This function returns the bond force. If it is a bond involving three
  *    or four particles, a @c std::tuple with three or four force vectors
  *    has to be returned, respectively.
- *    - The returned value is in a @c boost::optional container if the bond is
+ *    - The returned value is in a @c std::optional container if the bond is
  *      breakable. If the bond is broken, the returned object is empty; this
  *      will stop the integrator with a runtime error.
  *    - The function can make use of a pre-calculated distance vector (\p dx)
@@ -83,7 +83,7 @@
  *      a look at @ref forces_inline.hpp to see where this function will be
  *      called and which other variables may be available for your calculation.
  *  * @code{.cpp}
- *    boost::optional<double> energy(Utils::Vector3d const &dx) const;
+ *    std::optional<double> energy(Utils::Vector3d const &dx) const;
  *    @endcode
  *    This function returns the bond energy. The same information as given for
  *    the force calculation above applies here. This function will be called

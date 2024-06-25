@@ -22,4 +22,4 @@
 #include "ParticleIterator.hpp"
 #include "cell_system/Cell.hpp"
 
-using CellParticleIterator = ParticleIterator<Cell *const *>;
+using CellParticleIterator = ParticleIterator<std::span<Cell *const>::iterator>;

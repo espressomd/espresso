@@ -21,7 +21,6 @@
 
 include(unit_test)
 
-unit_test(NAME abs_test SRC abs_test.cpp DEPENDS espresso::utils)
 unit_test(NAME Vector_test SRC Vector_test.cpp DEPENDS espresso::utils)
 unit_test(NAME Factory_test SRC Factory_test.cpp DEPENDS espresso::utils)
 unit_test(NAME NumeratedContainer_test SRC NumeratedContainer_test.cpp DEPENDS
@@ -34,7 +33,6 @@ unit_test(NAME accumulator SRC accumulator.cpp DEPENDS espresso::utils
 unit_test(NAME int_pow SRC int_pow_test.cpp DEPENDS espresso::utils)
 unit_test(NAME sgn SRC sgn_test.cpp DEPENDS espresso::utils)
 unit_test(NAME AS_erfc_part SRC AS_erfc_part_test.cpp DEPENDS espresso::utils)
-unit_test(NAME sinc SRC sinc_test.cpp DEPENDS espresso::utils)
 unit_test(NAME permute_ifield_test SRC permute_ifield_test.cpp DEPENDS
           espresso::utils)
 unit_test(NAME vec_rotate SRC vec_rotate_test.cpp DEPENDS espresso::utils)
@@ -46,7 +44,6 @@ unit_test(NAME interpolation_gradient SRC interpolation_gradient_test.cpp
           DEPENDS espresso::utils)
 unit_test(NAME interpolation SRC interpolation_test.cpp DEPENDS espresso::utils)
 unit_test(NAME bspline_test SRC bspline_test.cpp DEPENDS espresso::utils)
-unit_test(NAME Span_test SRC Span_test.cpp DEPENDS espresso::utils)
 unit_test(NAME matrix_vector_product SRC matrix_vector_product.cpp DEPENDS
           espresso::utils)
 unit_test(NAME index_test SRC index_test.cpp DEPENDS espresso::utils)

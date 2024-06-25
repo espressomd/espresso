@@ -56,7 +56,7 @@
 function(python_test)
   cmake_parse_arguments(TEST "NO_MPI" "FILE;MAX_NUM_PROC;GPU_SLOTS;SUFFIX"
                         "DEPENDS;DEPENDENCIES;LABELS;ARGUMENTS" ${ARGN})
-  get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+  cmake_path(GET TEST_FILE STEM TEST_NAME)
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_${TEST_SUFFIX}")

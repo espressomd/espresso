@@ -28,7 +28,6 @@
 #include "cuda/CudaHostAllocator.hpp"
 #include "system/System.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
@@ -37,6 +36,8 @@
 #include <boost/serialization/is_bitwise_serializable.hpp>
 #include <boost/serialization/split_free.hpp>
 
+#include <cstddef>
+#include <span>
 #include <vector>
 
 void GpuParticleData::enable_particle_transfer() {
@@ -84,7 +85,7 @@ BOOST_SERIALIZATION_SPLIT_FREE(GpuParticleData::GpuParticle)
 static void pack_particles(ParticleRange const &particles,
                            GpuParticleData::GpuParticle *buffer) {
   auto const &box = *System::get_system().box_geo;
-  unsigned long int i = 0u;
+  std::size_t i = 0u;
   for (auto const &p : particles) {
     buffer[i].p = static_cast<Utils::Vector3f>(box.folded_position(p.pos()));
 #ifdef DIPOLES
@@ -129,11 +130,11 @@ void GpuParticleData::gather_particle_data(
  *                this is only touched if ROTATION is active.
  */
 static void add_forces_and_torques(ParticleRange const &particles,
-                                   Utils::Span<const float> forces,
-                                   Utils::Span<const float> torques) {
-  unsigned long int i = 0u;
+                                   std::span<const float> forces,
+                                   std::span<const float> torques) {
+  std::size_t i = 0ul;
   for (auto &p : particles) {
-    for (unsigned long int j = 0u; j < 3u; j++) {
+    for (std::size_t j = 0ul; j < 3ul; j++) {
       p.force()[j] += static_cast<double>(forces[3ul * i + j]);
 #ifdef ROTATION
       p.torque()[j] += static_cast<double>(torques[3ul * i + j]);
@@ -155,8 +156,8 @@ static void add_forces_and_torques(ParticleRange const &particles,
  *                     relevant on the head node.
  */
 void GpuParticleData::particles_scatter_forces(
-    ParticleRange const &particles, Utils::Span<float> host_forces,
-    Utils::Span<float> host_torques) const {
+    ParticleRange const &particles, std::span<float> host_forces,
+    std::span<float> host_torques) const {
 
   auto const size = 3ul * particles.size();
   auto const n_elements = static_cast<int>(size);

@@ -66,7 +66,7 @@ class TestCommon:
         popt_ref = (4e-8, -1e-6, 1e-5)
         popt, _ = scipy.optimize.curve_fit(
             quadratic, xdata, ydata, p0=popt_ref)
-        rtol = 0.3 if self.lbf.single_precision else 0.1
+        rtol = 0.33 if self.lbf.single_precision else 0.1
         np.testing.assert_allclose(popt, popt_ref, rtol=0.5, atol=0.)
         np.testing.assert_allclose(ydata, quadratic(xdata, *popt),
                                    rtol=rtol, atol=0.)

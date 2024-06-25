@@ -34,6 +34,7 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
+// LCOV_EXCL_START
 __device__ inline float scalar_product(float const *a, float const *b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
@@ -131,6 +132,7 @@ __device__ float dipole_ia_energy(float pf, float const *r1, float const *r2,
   // Energy
   return pf * (pe1 * r3_inv - pe4 * pe2 * pe3);
 }
+// LCOV_EXCL_STOP
 
 __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
                                               float *pos, float *dip, float *f,
@@ -183,6 +185,7 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
   }
 }
 
+// LCOV_EXCL_START
 __device__ void dds_sumReduction(float *input, float *sum) {
   auto const tid = static_cast<int>(threadIdx.x);
   for (auto i = static_cast<int>(blockDim.x); i > 1; i /= 2) {
@@ -197,6 +200,7 @@ __device__ void dds_sumReduction(float *input, float *sum) {
     sum[0] = input[0];
   }
 }
+// LCOV_EXCL_STOP
 
 __global__ void DipolarDirectSum_kernel_energy(float pf, unsigned int n,
                                                float *pos, float *dip,

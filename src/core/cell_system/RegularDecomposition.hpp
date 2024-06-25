@@ -31,12 +31,12 @@
 #include "ParticleList.hpp"
 #include "ghosts.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
+#include <optional>
+#include <span>
 #include <vector>
 
 /**
@@ -96,12 +96,8 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *const> local_cells() const override {
-    return Utils::make_span(m_local_cells);
-  }
-  Utils::Span<Cell *const> ghost_cells() const override {
-    return Utils::make_span(m_ghost_cells);
-  }
+  std::span<Cell *const> local_cells() const override { return m_local_cells; }
+  std::span<Cell *const> ghost_cells() const override { return m_ghost_cells; }
 
   /* Getter needed for HybridDecomposition */
   auto const &get_local_cells() const { return m_local_cells; }
@@ -119,7 +115,7 @@ public:
   Utils::Vector3d max_cutoff() const override;
   Utils::Vector3d max_range() const override;
 
-  boost::optional<BoxGeometry> minimum_image_distance() const override {
+  std::optional<BoxGeometry> minimum_image_distance() const override {
     return {m_box};
   }
 
@@ -154,11 +150,11 @@ private:
    */
   Cell *position_to_cell(Utils::Vector3d const &pos) {
     auto const index = position_to_cell_index(pos);
-    return (index < 0) ? nullptr : &(cells.at(index));
+    return (index < 0) ? nullptr : &(cells.at(static_cast<std::size_t>(index)));
   }
   Cell const *position_to_cell(Utils::Vector3d const &pos) const {
     auto const index = position_to_cell_index(pos);
-    return (index < 0) ? nullptr : &(cells.at(index));
+    return (index < 0) ? nullptr : &(cells.at(static_cast<std::size_t>(index)));
   }
 
   /**

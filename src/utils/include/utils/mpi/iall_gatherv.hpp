@@ -19,20 +19,19 @@
 
 #pragma once
 
-#include "utils/Span.hpp"
-
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/request.hpp>
 
 #include <algorithm>
 #include <cstddef>
+#include <span>
 #include <vector>
 
 namespace Utils {
 namespace Mpi {
 namespace detail {
 
-inline std::vector<int> displacements(Span<int const> sizes) {
+inline std::vector<int> displacements(std::span<int const> sizes) {
   std::vector<int> displ(sizes.size());
 
   int offset = 0;

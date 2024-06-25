@@ -29,9 +29,8 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
+#include <optional>
 #include <tuple>
 
 /** Parameters for Thermalized bond */
@@ -71,7 +70,7 @@ struct ThermalizedBond {
     pref2_dist = std::sqrt(24. * gamma_distance / time_step * temp_distance);
   }
 
-  boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
+  std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
   forces(Particle const &p1, Particle const &p2,
          Utils::Vector3d const &dx) const;
 

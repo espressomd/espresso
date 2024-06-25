@@ -20,7 +20,7 @@ The kernels can be regenerated with this shell script:
 
 ```sh
 # adapt these paths to the build environment
-export VERSION=1.2
+export VERSION=1.3.3
 export DEPS="${HOME}/walberla_deps"
 export PYTHONPATH="${DEPS}/${VERSION}/lbmpy:${DEPS}/${VERSION}/pystencils:${DEPS}/devel/walberla/python/"
 
@@ -49,6 +49,7 @@ generate_lb_kernels --single-precision
 generate_lb_kernels --gpu
 generate_lb_kernels --gpu --single-precision
 format_lb_kernels
+git diff src/walberla_bridge/src/lattice_boltzmann/generated_kernels/Dynamic_UBB_*CUDA*.cu # verify pragmas
 
 # EK kernels
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/

@@ -59,7 +59,9 @@ public:
     for (auto const &e : l) {
       m_container[e.first] = e.second;
       /* Remove the index from the index set if it exists. */
-      m_free_indices.erase(m_free_indices.find(e.first), m_free_indices.end());
+      if (auto it = m_free_indices.find(e.first); it != m_free_indices.end()) {
+        m_free_indices.erase(it);
+      }
     }
 
     /* Refill the index set */

@@ -21,11 +21,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/Histogram.hpp"
-#include "utils/constants.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <numbers>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -66,10 +66,10 @@ BOOST_AUTO_TEST_CASE(histogram) {
 }
 
 BOOST_AUTO_TEST_CASE(cylindrical_histogram) {
-  constexpr auto pi = Utils::pi<double>();
+  constexpr auto pi = std::numbers::pi;
   std::array<std::size_t, 3> n_bins{{10, 10, 10}};
   std::array<std::pair<double, double>, 3> limits{{std::make_pair(0.0, 2.0),
-                                                   std::make_pair(0.0, 2 * pi),
+                                                   std::make_pair(0.0, 2. * pi),
                                                    std::make_pair(0.0, 10.0)}};
   constexpr std::size_t n_dims_data = 3;
   auto hist = Utils::CylindricalHistogram<double, n_dims_data>(n_bins, limits);
@@ -77,12 +77,12 @@ BOOST_AUTO_TEST_CASE(cylindrical_histogram) {
   BOOST_CHECK(hist.get_limits() == limits);
   BOOST_CHECK(hist.get_n_bins() == n_bins);
   BOOST_CHECK((hist.get_bin_sizes() ==
-               std::array<double, 3>{{2.0 / 10.0, 2 * pi / 10.0, 1.0}}));
+               std::array<double, 3>{{2.0 / 10.0, 2. * pi / 10.0, 1.0}}));
   // Check that histogram is initialized to zero.
   BOOST_CHECK(hist.get_histogram() ==
               std::vector<double>(n_dims_data * 1000, 0.0));
   // Check that histogram still empty if data is out of bounds.
-  hist.update(std::vector<double>{{1.0, 3 * pi, 1.0}});
+  hist.update(std::vector<double>{{1.0, 3. * pi, 1.0}});
   BOOST_CHECK(hist.get_histogram() ==
               std::vector<double>(n_dims_data * 1000, 0.0));
   // Check if putting in data at the first bin is set correctly.

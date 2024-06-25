@@ -19,7 +19,7 @@
 
 function(CMAKE_TEST)
   cmake_parse_arguments(TEST "" "FILE" "DEPENDENCIES" ${ARGN})
-  get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+  cmake_path(GET TEST_FILE STEM TEST_NAME)
   configure_file(${TEST_FILE} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE} @ONLY)
   foreach(dependency IN LISTS TEST_DEPENDENCIES)
     configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency}

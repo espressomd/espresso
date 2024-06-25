@@ -41,11 +41,11 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/set.hpp>
 
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -85,7 +85,7 @@ static auto get_pairs_filtered(System::System const &system,
 namespace detail {
 static auto get_max_neighbor_search_range(System::System const &system) {
   auto const &cell_structure = *system.cell_structure;
-  return *boost::min_element(cell_structure.max_range());
+  return std::ranges::min(cell_structure.max_range());
 }
 static void search_distance_sanity_check_max_range(System::System const &system,
                                                    double const distance) {
@@ -115,7 +115,7 @@ static void search_neighbors_sanity_checks(System::System const &system,
 }
 } // namespace detail
 
-boost::optional<std::vector<int>>
+std::optional<std::vector<int>>
 get_short_range_neighbors(System::System const &system, int const pid,
                           double const distance) {
   detail::search_neighbors_sanity_checks(system, distance);
@@ -142,7 +142,7 @@ get_short_range_neighbors(System::System const &system, int const pid,
 static auto get_interacting_neighbors(System::System const &system,
                                       Particle const &p) {
   auto &cell_structure = *system.cell_structure;
-  auto const distance = *boost::min_element(cell_structure.max_range());
+  auto const distance = std::ranges::min(cell_structure.max_range());
   detail::search_neighbors_sanity_checks(system, distance);
   std::vector<Particle const *> ret;
   auto const cutoff2 = Utils::sqr(distance);

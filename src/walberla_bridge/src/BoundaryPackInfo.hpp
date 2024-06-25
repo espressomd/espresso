@@ -119,7 +119,7 @@ protected:
     auto const boundary_flag = flag_field->getFlag(Boundary_flag);
     auto const gl = numberOfGhostLayersToCommunicate(flag_field);
     auto const begin = [gl, dir](auto const *flag_field) {
-      return flag_field->beginSliceBeforeGhostLayer(dir, gl);
+      return flag_field->beginSliceBeforeGhostLayer(dir, cell_idx_c(gl));
     };
 
 #ifndef NDEBUG

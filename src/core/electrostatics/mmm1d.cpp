@@ -38,13 +38,13 @@
 #include "tuning.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <limits>
+#include <numbers>
 #include <vector>
 
 /* if you define this feature, the Bessel functions are calculated up
@@ -56,7 +56,7 @@
 #endif
 
 static auto far_error(int P, double minrad, Utils::Vector3d const &box_l_inv) {
-  auto const wavenumber = 2. * Utils::pi() * box_l_inv[2];
+  auto const wavenumber = 2. * std::numbers::pi * box_l_inv[2];
   // this uses an upper bound to all force components and the potential
   auto const rhores = wavenumber * minrad;
   auto const pref = 4. * box_l_inv[2] * std::max(1., wavenumber);
@@ -172,7 +172,7 @@ void CoulombMMM1D::recalc_boxl_parameters() {
 
 Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
                                          double dist) const {
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &box_geo = *get_system().box_geo;
   auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
@@ -266,7 +266,7 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
   if (q1q2 == 0.)
     return 0.;
 
-  auto constexpr c_2pi = 2. * Utils::pi();
+  auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &box_geo = *get_system().box_geo;
   auto const n_modPsi = static_cast<int>(modPsi.size()) >> 1;
   auto const rxy2 = d[0] * d[0] + d[1] * d[1];
@@ -276,10 +276,10 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
 
   if (rxy2 <= far_switch_radius_sq) {
     /* near range formula */
-    energy = -2. * Utils::gamma();
+    energy = -2. * std::numbers::egamma;
 
     /* polygamma summation */
-    double r2n = 1.0;
+    double r2n = 1.;
     for (int n = 0; n < n_modPsi; n++) {
       auto const add = mod_psi_even(n, z_d) * r2n;
       energy -= add;
@@ -310,7 +310,8 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
     auto const rxy_d = rxy * box_geo.length_inv()[2];
     /* The first Bessel term will compensate a little bit the
        log term, so add them close together */
-    energy = -0.25 * log(rxy2_d) + 0.5 * (Utils::ln_2() - Utils::gamma());
+    energy =
+        -0.25 * log(rxy2_d) + 0.5 * (std::numbers::ln2 - std::numbers::egamma);
     for (int bp = 1; bp < MAXIMAL_B_CUT; bp++) {
       if (bessel_radii[bp - 1] < rxy)
         break;

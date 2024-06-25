@@ -34,7 +34,7 @@ namespace Shapes {
 class Union : public Shape {
 public:
   bool contains(std::shared_ptr<Shapes::Shape> const &shape) const noexcept {
-    return std::find(m_shapes.begin(), m_shapes.end(), shape) != m_shapes.end();
+    return std::ranges::find(m_shapes, shape) != m_shapes.end();
   }
 
   void add(std::shared_ptr<Shapes::Shape> const &shape) {
@@ -42,8 +42,7 @@ public:
   }
 
   void remove(std::shared_ptr<Shapes::Shape> const &shape) {
-    m_shapes.erase(std::remove(m_shapes.begin(), m_shapes.end(), shape),
-                   m_shapes.end());
+    std::erase(m_shapes, shape);
   }
 
   /**

@@ -27,11 +27,11 @@
 
 #include "p3m/common.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
 
+#include <span>
 #include <vector>
 
 /** Structure for send/recv meshes. */
@@ -68,19 +68,19 @@ class p3m_send_mesh {
 public:
   void resize(const boost::mpi::communicator &comm,
               const P3MLocalMesh &local_mesh);
-  void gather_grid(Utils::Span<double *> meshes,
+  void gather_grid(std::span<double *> meshes,
                    const boost::mpi::communicator &comm,
                    const Utils::Vector3i &dim);
   void gather_grid(double *mesh, const boost::mpi::communicator &comm,
                    const Utils::Vector3i &dim) {
-    gather_grid(Utils::make_span(&mesh, 1), comm, dim);
+    gather_grid(std::span(&mesh, 1u), comm, dim);
   }
-  void spread_grid(Utils::Span<double *> meshes,
+  void spread_grid(std::span<double *> meshes,
                    const boost::mpi::communicator &comm,
                    const Utils::Vector3i &dim);
   void spread_grid(double *mesh, const boost::mpi::communicator &comm,
                    const Utils::Vector3i &dim) {
-    spread_grid(Utils::make_span(&mesh, 1), comm, dim);
+    spread_grid(std::span(&mesh, 1u), comm, dim);
   }
 };
 #endif

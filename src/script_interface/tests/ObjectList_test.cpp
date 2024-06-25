@@ -23,8 +23,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <boost/range/algorithm/find.hpp>
-
 #include "script_interface/LocalContext.hpp"
 #include "script_interface/ObjectList.hpp"
 
@@ -44,15 +42,13 @@ struct ObjectListImpl : ObjectList<ObjectHandle> {
 
 private:
   bool has_in_core(const ObjectRef &obj_ptr) const override {
-    return std::find(mock_core.begin(), mock_core.end(), obj_ptr) !=
-           mock_core.end();
+    return std::ranges::count(mock_core, obj_ptr) >= 1;
   }
   void add_in_core(const ObjectRef &obj_ptr) override {
     mock_core.push_back(obj_ptr);
   }
   void remove_in_core(const ObjectRef &obj_ptr) override {
-    mock_core.erase(std::remove(mock_core.begin(), mock_core.end(), obj_ptr),
-                    mock_core.end());
+    std::erase(mock_core, obj_ptr);
   }
 };
 
@@ -68,7 +64,7 @@ BOOST_AUTO_TEST_CASE(adding_elements) {
   list.add(e);
   BOOST_CHECK(list.elements().back() == e);
   // And is added to the core
-  BOOST_CHECK(boost::find(list.mock_core, e) != list.mock_core.end());
+  BOOST_CHECK(std::ranges::count(list.mock_core, e) == 1);
 }
 
 BOOST_AUTO_TEST_CASE(removing_elements) {
@@ -78,9 +74,9 @@ BOOST_AUTO_TEST_CASE(removing_elements) {
   ObjectListImpl list;
   list.add(e);
   list.remove(e);
-  BOOST_CHECK(boost::find(list.elements(), e) == list.elements().end());
+  BOOST_CHECK(std::ranges::count(list.elements(), e) == 0);
   // And is removed from the core
-  BOOST_CHECK(boost::find(list.mock_core, e) == list.mock_core.end());
+  BOOST_CHECK(std::ranges::count(list.mock_core, e) == 0);
 }
 
 BOOST_AUTO_TEST_CASE(clearing_elements) {

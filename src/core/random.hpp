@@ -27,13 +27,13 @@
  */
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
 
 #include <cstddef>
+#include <numbers>
 #include <random>
 #include <vector>
 
@@ -165,18 +165,17 @@ auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
   // optimizations: the modulo is cached (logarithms are expensive), the
   // sin/cos are evaluated simultaneously by gcc or separately by Clang
   Utils::VectorXd<N> noise{};
-  constexpr double two_pi = 2.0 * Utils::pi();
   {
-    auto const modulo = sqrt(-2.0 * log(u[0]));
-    auto const angle = two_pi * u[1];
+    auto const modulo = sqrt(-2. * log(u[0]));
+    auto const angle = 2. * std::numbers::pi * u[1];
     noise[0] = modulo * cos(angle);
     if (N > 1) {
       noise[1] = modulo * sin(angle);
     }
   }
   if (N > 2) {
-    auto const modulo = sqrt(-2.0 * log(u[2]));
-    auto const angle = two_pi * u[3];
+    auto const modulo = sqrt(-2. * log(u[2]));
+    auto const angle = 2. * std::numbers::pi * u[3];
     noise[2] = modulo * cos(angle);
     if (N > 3) {
       noise[3] = modulo * sin(angle);

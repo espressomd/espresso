@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(inner_product) {
   auto constexpr tol = 8. * 100. * std::numeric_limits<double>::epsilon();
   const std::array<double, 3> vector{{0.5, 1.25, 3.1}};
   auto const result = Utils::matrix_vector_product<double, 3, matrix>(vector);
-  for (int i = 0; i < 3; ++i) {
+  for (auto i = 0u; i < 3u; ++i) {
     auto const ref = boost::inner_product(matrix[i], vector, 0.0);
     BOOST_CHECK_CLOSE(result[i], ref, tol);
   }

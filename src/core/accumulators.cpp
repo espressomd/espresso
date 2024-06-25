@@ -18,7 +18,6 @@
  */
 #include "accumulators.hpp"
 
-#include <boost/range/algorithm/remove_if.hpp>
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
@@ -76,17 +75,13 @@ void auto_update_add(AccumulatorBase *acc) {
 
 void auto_update_remove(AccumulatorBase *acc) {
   assert(auto_update_contains(acc));
-  auto const beg = auto_update_accumulators.begin();
-  auto const end = auto_update_accumulators.end();
-  auto_update_accumulators.erase(
-      std::remove_if(beg, end, detail::MatchPredicate{acc}), end);
+  std::erase_if(auto_update_accumulators, detail::MatchPredicate{acc});
 }
 
 bool auto_update_contains(AccumulatorBase const *acc) noexcept {
   assert(acc);
-  auto const beg = auto_update_accumulators.begin();
-  auto const end = auto_update_accumulators.end();
-  return std::find_if(beg, end, detail::MatchPredicate{acc}) != end;
+  return std::ranges::any_of(auto_update_accumulators,
+                             detail::MatchPredicate{acc});
 }
 
 } // namespace Accumulators

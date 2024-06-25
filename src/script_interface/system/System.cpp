@@ -257,6 +257,7 @@ Variant System::do_call_method(std::string const &name,
     auto &box_geo = *m_instance->box_geo;
     auto const coord = get_value<int>(parameters, "coord");
     auto const length = get_value<double>(parameters, "length");
+    assert(coord >= 0);
     assert(coord != 3 or ((box_geo.length()[0] == box_geo.length()[1]) and
                           (box_geo.length()[1] == box_geo.length()[2])));
     auto const scale = (coord == 3) ? length * box_geo.length_inv()[0]
@@ -272,7 +273,7 @@ Variant System::do_call_method(std::string const &name,
       new_value = Utils::Vector3d::broadcast(length);
     } else {
       new_value = box_geo.length();
-      new_value[coord] = length;
+      new_value[static_cast<unsigned>(coord)] = length;
     }
     // when shrinking, rescale the particles first
     if (scale <= 1.) {

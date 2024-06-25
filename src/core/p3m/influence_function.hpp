@@ -16,23 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_P3M_INFLUENCE_FUNCTION_HPP
-#define ESPRESSO_P3M_INFLUENCE_FUNCTION_HPP
+
+#pragma once
 
 #include "p3m/common.hpp"
+#include "p3m/for_each_3d.hpp"
+#include "p3m/math.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
-#include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
-
-#include <boost/range/numeric.hpp>
 
 #include <cmath>
 #include <cstddef>
 #include <functional>
+#include <numbers>
 #include <utility>
 #include <vector>
 
@@ -54,44 +53,43 @@
 template <std::size_t S, std::size_t m>
 double G_opt(int cao, double alpha, Utils::Vector3d const &k,
              Utils::Vector3d const &h) {
-  using namespace detail::FFT_indexing;
-  using Utils::int_pow;
-  using Utils::sinc;
-
-  auto constexpr two_pi = 2. * Utils::pi();
-  auto constexpr two_pi_i = 1. / two_pi;
-  auto constexpr limit = 30.;
 
   auto const k2 = k.norm2();
-  if (k2 == 0.0) {
-    return 0.0;
+  if (k2 == 0.) {
+    return 0.;
   }
 
-  double numerator = 0.0;
-  double denominator = 0.0;
+  auto constexpr limit = 30.;
+  auto constexpr m_start = Utils::Vector3i::broadcast(-m);
+  auto constexpr m_stop = Utils::Vector3i::broadcast(m + 1);
+  auto const exponent_prefactor = Utils::sqr(1. / (2. * alpha));
+  auto const wavevector = (2. * std::numbers::pi) / h;
+  auto const wavevector_i = 1. / wavevector;
+  auto indices = Utils::Vector3i{};
+  auto km = Utils::Vector3d{};
+  auto fnm = Utils::Vector3d{};
+  auto numerator = 0.;
+  auto denominator = 0.;
 
-  for (int mx = -m; mx <= m; mx++) {
-    for (int my = -m; my <= m; my++) {
-      for (int mz = -m; mz <= m; mz++) {
-        auto const km =
-            k + two_pi * Utils::Vector3d{mx / h[RX], my / h[RY], mz / h[RZ]};
-        auto const U2 = std::pow(sinc(km[RX] * h[RX] * two_pi_i) *
-                                     sinc(km[RY] * h[RY] * two_pi_i) *
-                                     sinc(km[RZ] * h[RZ] * two_pi_i),
-                                 2 * cao);
-
+  for_each_3d(
+      m_start, m_stop, indices,
+      [&]() {
+        using namespace detail::FFT_indexing;
+        auto const U2 = std::pow(Utils::product(fnm), 2 * cao);
         auto const km2 = km.norm2();
-        auto const exponent = Utils::sqr(1. / (2. * alpha)) * km2;
+        auto const exponent = exponent_prefactor * km2;
         if (exponent < limit) {
-          auto const f3 = std::exp(-exponent) * (4. * Utils::pi() / km2);
-          numerator += U2 * f3 * int_pow<S>(k * km);
+          auto const f3 = std::exp(-exponent) * (4. * std::numbers::pi / km2);
+          numerator += U2 * f3 * Utils::int_pow<S>(k * km);
         }
         denominator += U2;
-      }
-    }
-  }
+      },
+      [&](unsigned dim, int n) {
+        km[dim] = k[dim] + n * wavevector[dim];
+        fnm[dim] = math::sinc(km[dim] * wavevector_i[dim]);
+      });
 
-  return numerator / (int_pow<S>(k2) * Utils::sqr(denominator));
+  return numerator / (Utils::int_pow<S>(k2) * Utils::sqr(denominator));
 }
 
 /**
@@ -106,24 +104,21 @@ double G_opt(int cao, double alpha, Utils::Vector3d const &k,
  *
  * @param params P3M parameters
  * @param n_start Lower left corner of the grid
- * @param n_end Upper right corner of the grid.
- * @param box_l Box size
+ * @param n_stop Upper right corner of the grid.
+ * @param inv_box_l Inverse box length
  * @return Values of G_opt at regular grid points.
  */
 template <std::size_t S, std::size_t m = 0>
 std::vector<double> grid_influence_function(const P3MParameters &params,
                                             const Utils::Vector3i &n_start,
-                                            const Utils::Vector3i &n_end,
-                                            const Utils::Vector3d &box_l) {
-  using namespace detail::FFT_indexing;
+                                            const Utils::Vector3i &n_stop,
+                                            const Utils::Vector3d &inv_box_l) {
 
   auto const shifts = detail::calc_meshift(params.mesh);
-
-  auto const size = n_end - n_start;
+  auto const size = n_stop - n_start;
 
   /* The influence function grid */
-  auto g =
-      std::vector<double>(boost::accumulate(size, 1, std::multiplies<>()), 0.);
+  auto g = std::vector<double>(Utils::product(size), 0.);
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
@@ -131,31 +126,24 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
     return g;
   }
 
-  auto const h = Utils::Vector3d{params.a};
+  auto const wavevector = (2. * std::numbers::pi) * inv_box_l;
+  auto const half_mesh = params.mesh / 2;
+  auto indices = Utils::Vector3i{};
+  auto index = std::size_t(0u);
 
-  Utils::Vector3i n{};
-  for (n[0] = n_start[0]; n[0] < n_end[0]; n[0]++) {
-    for (n[1] = n_start[1]; n[1] < n_end[1]; n[1]++) {
-      for (n[2] = n_start[2]; n[2] < n_end[2]; n[2]++) {
-        auto const ind = Utils::get_linear_index(n - n_start, size,
-                                                 Utils::MemoryOrder::ROW_MAJOR);
-        if ((n[KX] % (params.mesh[RX] / 2) == 0) &&
-            (n[KY] % (params.mesh[RY] / 2) == 0) &&
-            (n[KZ] % (params.mesh[RZ] / 2) == 0)) {
-          g[ind] = 0.0;
-        } else {
-          auto const k = 2 * Utils::pi() *
-                         Utils::Vector3d{shifts[RX][n[KX]] / box_l[RX],
-                                         shifts[RY][n[KY]] / box_l[RY],
-                                         shifts[RZ][n[KZ]] / box_l[RZ]};
-
-          g[ind] = G_opt<S, m>(params.cao, params.alpha, k, h);
-        }
-      }
+  for_each_3d(n_start, n_stop, indices, [&]() {
+    using namespace detail::FFT_indexing;
+    if ((indices[KX] % half_mesh[RX] != 0) or
+        (indices[KY] % half_mesh[RY] != 0) or
+        (indices[KZ] % half_mesh[RZ] != 0)) {
+      auto const k =
+          Utils::Vector3d{{shifts[RX][indices[KX]] * wavevector[RX],
+                           shifts[RY][indices[KY]] * wavevector[RY],
+                           shifts[RZ][indices[KZ]] * wavevector[RZ]}};
+      g[index] = G_opt<S, m>(params.cao, params.alpha, k, params.a);
     }
-  }
+    ++index;
+  });
 
   return g;
 }
-
-#endif

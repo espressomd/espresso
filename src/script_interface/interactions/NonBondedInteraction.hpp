@@ -86,7 +86,7 @@ private:
       }
     }
     for (auto const &kv : params) {
-      if (std::find(keys.begin(), keys.end(), kv.first) == keys.end()) {
+      if (std::ranges::find(keys, kv.first) == keys.end()) {
         throw std::runtime_error("Parameter '" + kv.first +
                                  "' is not recognized");
       }

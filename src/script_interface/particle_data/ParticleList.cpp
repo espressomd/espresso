@@ -34,8 +34,8 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
@@ -68,7 +68,7 @@ std::string ParticleList::get_internal_state() const {
   auto const p_ids = get_particle_ids();
   std::vector<std::string> object_states(p_ids.size());
 
-  boost::transform(p_ids, object_states.begin(), [this](auto const p_id) {
+  std::ranges::transform(p_ids, object_states.begin(), [this](auto const p_id) {
     auto p_obj =
         context()->make_shared("Particles::ParticleHandle", {{"id", p_id}});
     auto &p_handle = dynamic_cast<ParticleHandle &>(*p_obj);
@@ -139,7 +139,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
     for (auto const bond : p.bonds()) {
-      if (bond.partner_ids().size() == 1) {
+      if (bond.partner_ids().size() == 1u) {
         auto const pid2 = bond.partner_ids()[0];
         if (pid1 != pid2) {
           bonded_pairs.emplace_back(pid1);

@@ -33,15 +33,14 @@
 #include "system/System.hpp"
 #include "tuning.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
-
-#include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <iterator>
 #include <limits>
+#include <span>
 #include <string>
 
 std::shared_ptr<CoulombScafacos>
@@ -76,8 +75,8 @@ void CoulombScafacosImpl::update_particle_forces() const {
   auto it_fields = fields.begin();
   for (auto &p : cell_structure.local_particles()) {
     p.force() += prefactor * p.q() *
-                 Utils::Vector3d(Utils::Span<const double>(&*it_fields, 3));
-    it_fields += 3;
+                 Utils::Vector3d(std::span<const double>(&*it_fields, 3ul));
+    std::advance(it_fields, 3);
   }
 
   /* Check that the particle number did not change */
@@ -97,8 +96,8 @@ void CoulombScafacosImpl::tune_r_cut() {
   auto const &local_geo = *system.local_geo;
   auto const verlet_skin = system.cell_structure->get_verlet_skin();
 
-  auto const min_box_l = *boost::min_element(box_geo.length());
-  auto const min_local_box_l = *boost::min_element(local_geo.length());
+  auto const min_box_l = std::ranges::min(box_geo.length());
+  auto const min_local_box_l = std::ranges::min(local_geo.length());
 
   /* The bisection code breaks down when r_min < 1 for several methods
    * (e.g. p2nfft, p3m, ewald) if the mesh size is not fixed (ScaFaCoS

@@ -23,16 +23,15 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/for_each_pair.hpp>
 #include <utils/math/int_pow.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm/transform.hpp>
 #include <boost/range/combine.hpp>
 
 #include <cmath>
 #include <cstddef>
+#include <numbers>
 #include <vector>
 
 namespace Observables {
@@ -108,7 +107,7 @@ RDF::evaluate(boost::mpi::communicator const &comm,
     auto const r_in = static_cast<double>(i) * bin_width + min_r;
     auto const r_out = r_in + bin_width;
     auto const bin_volume =
-        (4.0 / 3.0) * Utils::pi() *
+        (4. / 3.) * std::numbers::pi *
         (Utils::int_pow<3>(r_out) - Utils::int_pow<3>(r_in));
     res[i] *= volume / (bin_volume * static_cast<double>(cnt));
   }

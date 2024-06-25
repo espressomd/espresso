@@ -168,7 +168,12 @@ public:
 private:
   class CollideSweepVisitor {
   public:
-    void operator()(CollisionModelThermalized &cm, IBlock *b) { cm(b); }
+    using StructuredBlockStorage = LatticeWalberla::Lattice_T;
+
+    void operator()(CollisionModelThermalized &cm, IBlock *b) {
+      cm.configure(m_storage, b);
+      cm(b);
+    }
 
     void operator()(CollisionModelLeesEdwards &cm, IBlock *b) {
       cm.v_s_ = static_cast<decltype(cm.v_s_)>(
@@ -177,11 +182,17 @@ private:
     }
 
     CollideSweepVisitor() = default;
-    explicit CollideSweepVisitor(std::shared_ptr<LeesEdwardsPack> callbacks) {
+    CollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage) {
+      m_storage = std::move(storage);
+    }
+    CollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage,
+                        std::shared_ptr<LeesEdwardsPack> callbacks) {
+      m_storage = std::move(storage);
       m_lees_edwards_callbacks = std::move(callbacks);
     }
 
   private:
+    std::shared_ptr<StructuredBlockStorage> m_storage{};
     std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks{};
   };
   CollideSweepVisitor m_run_collide_sweep{};
@@ -572,21 +583,13 @@ public:
   void set_collision_model(double kT, unsigned int seed) override {
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
+    auto const blocks = get_lattice().get_blocks();
     m_kT = FloatType_c(kT);
-    auto obj = CollisionModelThermalized(
-        m_last_applied_force_field_id, m_pdf_field_id, uint32_t{0u},
-        uint32_t{0u}, uint32_t{0u}, m_kT, omega, omega, omega_odd, omega, seed,
-        uint32_t{0u});
-    obj.block_offset_generator =
-        [this](IBlock *const block, uint32_t &block_offset_0,
-               uint32_t &block_offset_1, uint32_t &block_offset_2) {
-          auto const &blocks = get_lattice().get_blocks();
-          auto const &ci = blocks->getBlockCellBB(*block);
-          block_offset_0 = static_cast<uint32_t>(ci.xMin());
-          block_offset_1 = static_cast<uint32_t>(ci.yMin());
-          block_offset_2 = static_cast<uint32_t>(ci.zMin());
-        };
+    auto obj = CollisionModelThermalized(m_last_applied_force_field_id,
+                                         m_pdf_field_id, m_kT, omega, omega,
+                                         omega_odd, omega, seed, uint32_t{0u});
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+    m_run_collide_sweep = CollideSweepVisitor(blocks);
   }
 
   void set_collision_model(
@@ -614,7 +617,7 @@ public:
         m_last_applied_force_field_id, m_pdf_field_id, agrid, omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
-    m_run_collide_sweep = CollideSweepVisitor{m_lees_edwards_callbacks};
+    m_run_collide_sweep = CollideSweepVisitor(blocks, m_lees_edwards_callbacks);
     m_lees_edwards_pdf_interpol_sweep =
         std::make_shared<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,

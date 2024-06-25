@@ -36,7 +36,9 @@
 #include "p3m/TuningAlgorithm.hpp"
 #include "p3m/TuningLogger.hpp"
 #include "p3m/fft.hpp"
+#include "p3m/for_each_3d.hpp"
 #include "p3m/influence_function.hpp"
+#include "p3m/math.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -54,12 +56,9 @@
 #include "system/System.hpp"
 #include "tuning.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/integral_parameter.hpp>
 #include <utils/math/int_pow.hpp>
-#include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -75,10 +74,14 @@
 #include <complex>
 #include <cstddef>
 #include <functional>
+#include <initializer_list>
+#include <numbers>
 #include <optional>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 
 void CoulombP3M::count_charged_particles() {
@@ -115,7 +118,7 @@ void CoulombP3M::calc_influence_function_force() {
   auto const size = Utils::Vector3i{p3m.fft.plan[3].new_mesh};
 
   p3m.g_force = grid_influence_function<1>(p3m.params, start, start + size,
-                                           get_system().box_geo->length());
+                                           get_system().box_geo->length_inv());
 }
 
 /** Calculate the influence function optimized for the energy and the
@@ -126,41 +129,38 @@ void CoulombP3M::calc_influence_function_energy() {
   auto const size = Utils::Vector3i{p3m.fft.plan[3].new_mesh};
 
   p3m.g_energy = grid_influence_function<0>(p3m.params, start, start + size,
-                                            get_system().box_geo->length());
+                                            get_system().box_geo->length_inv());
 }
 
 /** Aliasing sum used by @ref p3m_k_space_error. */
-static auto p3m_tune_aliasing_sums(int nx, int ny, int nz,
+static auto p3m_tune_aliasing_sums(Utils::Vector3i const &shift,
                                    Utils::Vector3i const &mesh,
                                    Utils::Vector3d const &mesh_i, int cao,
                                    double alpha_L_i) {
-  using Utils::sinc;
 
-  auto const factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
-
+  auto constexpr m_start = Utils::Vector3i::broadcast(-P3M_BRILLOUIN);
+  auto constexpr m_stop = Utils::Vector3i::broadcast(P3M_BRILLOUIN + 1);
+  auto const factor1 = Utils::sqr(std::numbers::pi * alpha_L_i);
   auto alias1 = 0.;
   auto alias2 = 0.;
-  for (int mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    auto const nmx = nx + mx * mesh[0];
-    auto const fnmx = mesh_i[0] * nmx;
-    for (int my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      auto const nmy = ny + my * mesh[1];
-      auto const fnmy = mesh_i[1] * nmy;
-      for (int mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-        auto const nmz = nz + mz * mesh[2];
-        auto const fnmz = mesh_i[2] * nmz;
 
-        auto const nm2 = Utils::sqr(nmx) + Utils::sqr(nmy) + Utils::sqr(nmz);
-        auto const ex = exp(-factor1 * nm2);
-        auto const ex2 = Utils::sqr(ex);
+  Utils::Vector3i indices{};
+  Utils::Vector3i nm{};
+  Utils::Vector3d fnm{};
+  for_each_3d(
+      m_start, m_stop, indices,
+      [&]() {
+        auto const norm_sq = nm.norm2();
+        auto const ex = exp(-factor1 * norm_sq);
+        auto const energy = std::pow(Utils::product(fnm), 2 * cao);
+        alias1 += Utils::sqr(ex) / norm_sq;
+        alias2 += energy * ex * (shift * nm) / norm_sq;
+      },
+      [&](unsigned dim, int n) {
+        nm[dim] = shift[dim] + n * mesh[dim];
+        fnm[dim] = math::sinc(nm[dim] * mesh_i[dim]);
+      });
 
-        auto const U2 = pow(sinc(fnmx) * sinc(fnmy) * sinc(fnmz), 2.0 * cao);
-
-        alias1 += ex2 / nm2;
-        alias2 += U2 * ex * (nx * nmx + ny * nmy + nz * nmz) / nm2;
-      }
-    }
-  }
   return std::make_pair(alias1, alias2);
 }
 
@@ -198,50 +198,39 @@ static double p3m_real_space_error(double pref, double r_cut_iL, int n_c_part,
 static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
                                 int cao, int n_c_part, double sum_q2,
                                 double alpha_L, Utils::Vector3d const &box_l) {
-  auto const mesh_i =
-      Utils::hadamard_division(Utils::Vector3d::broadcast(1.), mesh);
+
+  auto const cotangent_sum = math::get_analytic_cotangent_sum_kernel(cao);
+  auto const mesh_i = 1. / Utils::Vector3d(mesh);
   auto const alpha_L_i = 1. / alpha_L;
+  auto const m_stop = mesh / 2;
+  auto const m_start = -m_stop;
+  auto indices = Utils::Vector3i{};
+  auto values = Utils::Vector3d{};
   auto he_q = 0.;
 
-  for (int nx = -mesh[0] / 2; nx < mesh[0] / 2; nx++) {
-    auto const ctan_x = p3m_analytic_cotangent_sum(nx, mesh_i[0], cao);
-    for (int ny = -mesh[1] / 2; ny < mesh[1] / 2; ny++) {
-      auto const ctan_y =
-          ctan_x * p3m_analytic_cotangent_sum(ny, mesh_i[1], cao);
-      for (int nz = -mesh[2] / 2; nz < mesh[2] / 2; nz++) {
-        if ((nx != 0) || (ny != 0) || (nz != 0)) {
-          auto const n2 = Utils::sqr(nx) + Utils::sqr(ny) + Utils::sqr(nz);
-          auto const cs =
-              p3m_analytic_cotangent_sum(nz, mesh_i[2], cao) * ctan_y;
+  for_each_3d(
+      m_start, m_stop, indices,
+      [&]() {
+        if ((indices[0] != 0) or (indices[1] != 0) or (indices[2] != 0)) {
+          auto const n2 = indices.norm2();
+          auto const cs = Utils::product(values);
           auto const [alias1, alias2] =
-              p3m_tune_aliasing_sums(nx, ny, nz, mesh, mesh_i, cao, alpha_L_i);
+              p3m_tune_aliasing_sums(indices, mesh, mesh_i, cao, alpha_L_i);
           auto const d = alias1 - Utils::sqr(alias2 / cs) / n2;
           /* at high precision, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
-          if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
+          if (d > 0. and std::fabs(d / alias1) > ROUND_ERROR_PREC) {
             he_q += d;
+          }
         }
-      }
-    }
-  }
+      },
+      [&values, &mesh_i, cotangent_sum](unsigned dim, int n) {
+        values[dim] = cotangent_sum(n, mesh_i[dim]);
+      });
+
   return 2. * pref * sum_q2 * sqrt(he_q / static_cast<double>(n_c_part)) /
          (box_l[1] * box_l[2]);
 }
-
-#ifdef CUDA
-static double p3mgpu_k_space_error(double prefactor,
-                                   Utils::Vector3i const &mesh, int cao,
-                                   int npart, double sum_q2, double alpha_L,
-                                   Utils::Vector3d const &box_l) {
-  auto ks_err = 0.;
-  if (this_node == 0) {
-    ks_err = p3m_k_space_error_gpu(prefactor, mesh.data(), cao, npart, sum_q2,
-                                   alpha_L, box_l.data());
-  }
-  boost::mpi::broadcast(comm_cart, ks_err, 0);
-  return ks_err;
-}
-#endif
 
 void CoulombP3M::init() {
   assert(p3m.params.mesh >= Utils::Vector3i::broadcast(1));
@@ -365,9 +354,6 @@ template <int cao> struct AssignForces {
   template <typename combined_ranges>
   void operator()(p3m_data_struct &p3m, double force_prefac,
                   combined_ranges const &p_q_force_range) const {
-    using Utils::make_const_span;
-    using Utils::Span;
-    using Utils::Vector;
 
     assert(cao == p3m.inter_weights.cao());
 
@@ -425,48 +411,44 @@ CoulombP3M::long_range_pressure(ParticleRange const &particles) {
     p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
     fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
 
-    auto diagonal = 0.;
-    int ind = 0;
-    int j[3];
+    auto constexpr m_start = Utils::Vector3i::broadcast(0);
     auto const half_alpha_inv_sq = Utils::sqr(1. / 2. / p3m.params.alpha);
-    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
-      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
-        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          auto const kx = 2. * Utils::pi() *
-                          p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] *
-                          box_geo.length_inv()[RX];
-          auto const ky = 2. * Utils::pi() *
-                          p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] *
-                          box_geo.length_inv()[RY];
-          auto const kz = 2. * Utils::pi() *
-                          p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] *
-                          box_geo.length_inv()[RZ];
-          auto const sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
+    auto const m_stop = std::span(p3m.fft.plan[3].new_mesh);
+    auto const offset = std::span(p3m.fft.plan[3].start);
+    auto const wavevector = (2. * std::numbers::pi) * box_geo.length_inv();
+    auto indices = Utils::Vector3i{};
+    auto index = std::size_t(0u);
+    auto diagonal = 0.;
 
-          if (sqk != 0.) {
-            auto const node_k_space_energy =
-                p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
-                                     Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
-            auto const vterm = -2. * (1. / sqk + half_alpha_inv_sq);
-            auto const pref = node_k_space_energy * vterm;
-            node_k_space_pressure_tensor[0] += pref * kx * kx; /* sigma_xx */
-            node_k_space_pressure_tensor[1] += pref * kx * ky; /* sigma_xy */
-            node_k_space_pressure_tensor[2] += pref * kx * kz; /* sigma_xz */
-            node_k_space_pressure_tensor[3] += pref * ky * kx; /* sigma_yx */
-            node_k_space_pressure_tensor[4] += pref * ky * ky; /* sigma_yy */
-            node_k_space_pressure_tensor[5] += pref * ky * kz; /* sigma_yz */
-            node_k_space_pressure_tensor[6] += pref * kz * kx; /* sigma_zx */
-            node_k_space_pressure_tensor[7] += pref * kz * ky; /* sigma_zy */
-            node_k_space_pressure_tensor[8] += pref * kz * kz; /* sigma_zz */
-            diagonal += node_k_space_energy;
-          }
-          ind++;
-        }
+    for_each_3d(m_start, m_stop, indices, [&]() {
+      auto const kx = p3m.d_op[RX][indices[KX] + offset[KX]] * wavevector[RX];
+      auto const ky = p3m.d_op[RY][indices[KY] + offset[KY]] * wavevector[RY];
+      auto const kz = p3m.d_op[RZ][indices[KZ] + offset[KZ]] * wavevector[RZ];
+      auto const norm_sq = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
+
+      if (norm_sq != 0.) {
+        auto const node_k_space_energy =
+            p3m.g_energy[index] * (Utils::sqr(p3m.rs_mesh[2u * index + 0u]) +
+                                   Utils::sqr(p3m.rs_mesh[2u * index + 1u]));
+        auto const vterm = -2. * (1. / norm_sq + half_alpha_inv_sq);
+        auto const pref = node_k_space_energy * vterm;
+        node_k_space_pressure_tensor[0u] += pref * kx * kx; /* sigma_xx */
+        node_k_space_pressure_tensor[1u] += pref * kx * ky; /* sigma_xy */
+        node_k_space_pressure_tensor[2u] += pref * kx * kz; /* sigma_xz */
+        node_k_space_pressure_tensor[4u] += pref * ky * ky; /* sigma_yy */
+        node_k_space_pressure_tensor[5u] += pref * ky * kz; /* sigma_yz */
+        node_k_space_pressure_tensor[8u] += pref * kz * kz; /* sigma_zz */
+        diagonal += node_k_space_energy;
       }
-    }
-    node_k_space_pressure_tensor[0] += diagonal;
-    node_k_space_pressure_tensor[4] += diagonal;
-    node_k_space_pressure_tensor[8] += diagonal;
+      ++index;
+    });
+
+    node_k_space_pressure_tensor[0u] += diagonal;
+    node_k_space_pressure_tensor[4u] += diagonal;
+    node_k_space_pressure_tensor[8u] += diagonal;
+    node_k_space_pressure_tensor[3u] = node_k_space_pressure_tensor[1u];
+    node_k_space_pressure_tensor[6u] = node_k_space_pressure_tensor[2u];
+    node_k_space_pressure_tensor[7u] = node_k_space_pressure_tensor[5u];
   }
 
   return node_k_space_pressure_tensor * prefactor / (2. * box_geo.volume());
@@ -508,39 +490,40 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
                 comm_cart, boost::combine(p_q_range, p_unfolded_pos_range)))
           : std::nullopt;
   auto const volume = box_geo.volume();
-  auto const pref = 4. * Utils::pi() / volume / (2. * p3m.params.epsilon + 1.);
+  auto const pref =
+      4. * std::numbers::pi / volume / (2. * p3m.params.epsilon + 1.);
 
   /* === k-space force calculation  === */
   if (force_flag) {
-    /* sqrt(-1)*k differentiation */
-    int j[3];
-    int ind = 0;
+    /* i*k differentiation */
+    auto constexpr m_start = Utils::Vector3i::broadcast(0);
+    auto const m_stop = std::span(p3m.fft.plan[3].new_mesh);
+    auto const offset = std::span(p3m.fft.plan[3].start);
+    auto const wavevector = (2. * std::numbers::pi) * box_geo.length_inv();
+    auto indices = Utils::Vector3i{};
+    auto index = std::size_t(0u);
+
     /* compute electric field */
     // Eq. (3.49) @cite deserno00b
-    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
-      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
-        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
-          auto const rho_hat = std::complex<double>(p3m.rs_mesh[2 * ind + 0],
-                                                    p3m.rs_mesh[2 * ind + 1]);
-          auto const phi_hat = p3m.g_force[ind] * rho_hat;
+    for_each_3d(m_start, m_stop, indices, [&]() {
+      auto const rho_hat = std::complex<double>(p3m.rs_mesh[2u * index + 0u],
+                                                p3m.rs_mesh[2u * index + 1u]);
+      auto const phi_hat = p3m.g_force[index] * rho_hat;
 
-          for (int d = 0; d < 3; d++) {
-            /* direction in r-space: */
-            int d_rs = (d + p3m.ks_pnum) % 3;
-            /* directions */
-            auto const k = 2. * Utils::pi() *
-                           p3m.d_op[d_rs][j[d] + p3m.fft.plan[3].start[d]] *
-                           box_geo.length_inv()[d_rs];
+      for (int d = 0; d < 3; d++) {
+        /* direction in r-space: */
+        int d_rs = (d + p3m.ks_pnum) % 3;
+        /* directions */
+        auto const k =
+            p3m.d_op[d_rs][indices[d] + offset[d]] * wavevector[d_rs];
 
-            /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-            p3m.E_mesh[d_rs][2 * ind + 0] = -k * phi_hat.imag();
-            p3m.E_mesh[d_rs][2 * ind + 1] = +k * phi_hat.real();
-          }
-
-          ind++;
-        }
+        /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
+        p3m.E_mesh[d_rs][2u * index + 0u] = -k * phi_hat.imag();
+        p3m.E_mesh[d_rs][2u * index + 1u] = +k * phi_hat.real();
       }
-    }
+
+      ++index;
+    });
 
     /* Back FFT force component mesh */
     auto const check_complex = !p3m.params.tuning and check_complex_residuals;
@@ -551,8 +534,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     /* redistribute force component mesh */
     std::array<double *, 3> E_fields = {
         {p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()}};
-    p3m.sm.spread_grid(Utils::make_span(E_fields), comm_cart,
-                       p3m.local_mesh.dim);
+    p3m.sm.spread_grid(E_fields, comm_cart, p3m.local_mesh.dim);
 
     auto const force_prefac = prefactor / volume;
     Utils::integral_parameter<int, AssignForces, 1, 7>(
@@ -587,10 +569,10 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     if (this_node == 0) {
       /* self energy correction */
       // Eq. (3.8) @cite deserno00b
-      energy -= p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i();
+      energy -= p3m.sum_q2 * p3m.params.alpha * std::numbers::inv_sqrtpi;
       /* net charge correction */
       // Eq. (3.11) @cite deserno00b
-      energy -= p3m.square_sum_q * Utils::pi() /
+      energy -= p3m.square_sum_q * std::numbers::pi /
                 (2. * volume * Utils::sqr(p3m.params.alpha));
       /* dipole correction */
       // Eq. (3.9) @cite deserno00b
@@ -665,10 +647,10 @@ public:
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, 0., box_geo.length());
 
-    if (Utils::sqrt_2() * rs_err > p3m.params.accuracy) {
+    if (std::numbers::sqrt2 * rs_err > p3m.params.accuracy) {
       /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-      alpha_L =
-          sqrt(log(Utils::sqrt_2() * rs_err / p3m.params.accuracy)) / r_cut_iL;
+      alpha_L = sqrt(log(std::numbers::sqrt2 * rs_err / p3m.params.accuracy)) /
+                r_cut_iL;
     } else {
       /* even alpha=0 is ok, however, we cannot choose it since it kills the
          k-space error formula.
@@ -682,8 +664,12 @@ public:
 #ifdef CUDA
     auto const &solver = m_system.coulomb.impl->solver;
     if (has_actor_of_type<CoulombP3MGPU>(solver)) {
-      ks_err = p3mgpu_k_space_error(m_prefactor, mesh, cao, p3m.sum_qpart,
-                                    p3m.sum_q2, alpha_L, box_geo.length());
+      if (this_node == 0) {
+        ks_err =
+            p3m_k_space_error_gpu(m_prefactor, mesh.data(), cao, p3m.sum_qpart,
+                                  p3m.sum_q2, alpha_L, box_geo.length().data());
+      }
+      boost::mpi::broadcast(comm_cart, ks_err, 0);
     } else
 #endif
       ks_err = p3m_k_space_error(m_prefactor, mesh, cao, p3m.sum_qpart,
@@ -714,7 +700,7 @@ public:
       assert(p3m.params.mesh[0] >= 1);
       if (p3m.params.mesh[1] == -1 and p3m.params.mesh[2] == -1) {
         // determine the two missing values by rescaling by the box length
-        for (int i : {1, 2}) {
+        for (auto i : {1, 2}) {
           p3m.params.mesh[i] =
               static_cast<int>(std::round(mesh_density * box_geo.length()[i]));
           // make the mesh even in all directions
@@ -734,7 +720,7 @@ public:
     while (mesh_density <= m_mesh_density_max) {
       auto trial_params = TuningAlgorithm::Parameters{};
       if (m_tune_mesh) {
-        for (int i : {0, 1, 2}) {
+        for (auto i : {0, 1, 2}) {
           trial_params.mesh[i] =
               static_cast<int>(std::round(box_geo.length()[i] * mesh_density));
           // make the mesh even in all directions
@@ -811,7 +797,7 @@ void CoulombP3M::sanity_checks_boxl() const {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const &local_geo = *system.local_geo;
-  for (unsigned int i = 0u; i < 3u; i++) {
+  for (auto i = 0u; i < 3u; i++) {
     /* check k-space cutoff */
     if (p3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;

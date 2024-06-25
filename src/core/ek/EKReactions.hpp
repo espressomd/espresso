@@ -47,7 +47,7 @@ public:
   }
   void remove(std::shared_ptr<EKReaction> const &ek_reaction) {
     assert(contains(ek_reaction));
-    m_ekreactions.erase(std::remove(begin(), end(), ek_reaction), end());
+    std::erase(m_ekreactions, ek_reaction);
   }
 
   iterator begin() { return m_ekreactions.begin(); }

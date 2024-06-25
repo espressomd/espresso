@@ -49,11 +49,11 @@
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
 
 #include <array>
 #include <cmath>
+#include <numbers>
 
 struct p3m_data_struct : public p3m_data_struct_base {
   explicit p3m_data_struct(P3MParameters &&parameters)
@@ -183,10 +183,11 @@ public:
     if ((q1q2 == 0.) || dist >= p3m.params.r_cut || dist <= 0.) {
       return {};
     }
-    auto const adist = p3m.params.alpha * dist;
+    auto const alpha = p3m.params.alpha;
+    auto const adist = alpha * dist;
     auto const exp_adist_sq = exp(-adist * adist);
     auto const dist_sq = dist * dist;
-    auto const two_a_sqrt_pi_i = 2.0 * p3m.params.alpha * Utils::sqrt_pi_i();
+    auto const two_a_sqrt_pi_i = 2. * alpha * std::numbers::inv_sqrtpi;
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     auto const fac = exp_adist_sq * (erfc_part_ri + two_a_sqrt_pi_i) / dist_sq;

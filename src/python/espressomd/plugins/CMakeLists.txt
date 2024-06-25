@@ -17,7 +17,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_file(ase.py ase.py COPYONLY)
-set(cython_AUX ${cython_AUX}
-               "${CMAKE_SOURCE_DIR}/src/python/espressomd/io/__init__.py"
-    CACHE INTERNAL "cython_AUX" FORCE)
+espresso_target_resources(espressomd __init__.py ase.py)

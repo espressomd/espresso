@@ -21,6 +21,7 @@ import argparse
 import packaging.specifiers
 
 import sympy as sp
+import numpy as np
 
 import pystencils as ps
 import pystencils_walberla
@@ -52,7 +53,7 @@ else:
     target = ps.Target.CPU
 
 # Make sure we have the correct versions of the required dependencies
-for module, requirement in [(ps, "==1.2"), (lbmpy, "==1.2")]:
+for module, requirement in [(ps, "==1.3.3"), (lbmpy, "==1.3.3")]:
     assert packaging.specifiers.SpecifierSet(requirement).contains(module.__version__), \
         f"{module.__name__} version {module.__version__} " \
         f"doesn't match requirement {requirement}"
@@ -117,7 +118,7 @@ with code_generation_context.CodeGeneration() as ctx:
 
     # generate initial densities
     for params, target_suffix in paramlist(parameters, (default_key,)):
-        pystencils_walberla.codegen.generate_sweep(
+        pystencils_walberla.generate_sweep(
             ctx,
             f"InitialPDFsSetter{precision_prefix}{target_suffix}",
             pystencils_espresso.generate_setters(ctx, method, params),
@@ -148,38 +149,44 @@ with code_generation_context.CodeGeneration() as ctx:
             params
         )
 
+    block_offsets = tuple(
+        ps.TypedSymbol(f"block_offset_{i}", np.uint32)
+        for i in range(3))
+
     # generate thermalized LB
     collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
         zero_centered=False,
         fluctuating={
             "temperature": kT,
-            "block_offsets": "walberla",
+            "block_offsets": block_offsets,
             "rng_node": precision_rng
         },
         optimization={"cse_global": True,
                       "double_precision": ctx.double_accuracy}
     )
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
+        stem = f"CollideSweep{precision_prefix}Thermalized{target_suffix}"
         pystencils_espresso.generate_collision_sweep(
             ctx,
             method,
             collision_rule_thermalized,
-            f"CollideSweep{precision_prefix}Thermalized{target_suffix}",
-            params
+            stem,
+            params,
+            block_offset=block_offsets,
         )
 
     # generate accessors
     for _, target_suffix in paramlist(parameters, ("GPU", "CPU")):
-        filename = f"FieldAccessors{precision_prefix}{target_suffix}"
+        stem = f"FieldAccessors{precision_prefix}{target_suffix}"
         if target == ps.Target.GPU:
             templates = {
-                f"{filename}.cuh": "templates/FieldAccessors.tmpl.cuh",
-                f"{filename}.cu": "templates/FieldAccessors.tmpl.cu",
+                f"{stem}.cuh": "templates/FieldAccessors.tmpl.cuh",
+                f"{stem}.cu": "templates/FieldAccessors.tmpl.cu",
             }
         else:
             templates = {
-                f"{filename}.h": "templates/FieldAccessors.tmpl.h",
+                f"{stem}.h": "templates/FieldAccessors.tmpl.h",
             }
         walberla_lbm_generation.generate_macroscopic_values_accessors(
             ctx, config, method, templates

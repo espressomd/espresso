@@ -56,7 +56,6 @@ namespace utf = boost::unit_test;
 #include <utils/math/sqr.hpp>
 
 #include <boost/mpi.hpp>
-#include <boost/serialization/optional.hpp>
 
 #include <array>
 #include <cassert>

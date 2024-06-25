@@ -86,11 +86,11 @@ NptIsoParameters::NptIsoParameters(double ext_pressure, double piston,
   p_vel = ::nptiso.p_vel;
 
   /* set the NpT geometry */
-  for (auto const i : {0, 1, 2}) {
+  for (auto const i : {0u, 1u, 2u}) {
     if (rescale[i]) {
       geometry |= ::nptgeom_dir[i];
       dimension += 1;
-      non_const_dim = i;
+      non_const_dim = static_cast<int>(i);
     }
   }
 

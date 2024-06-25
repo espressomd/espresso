@@ -25,7 +25,6 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/range/algorithm/find.hpp>
 
 #include <algorithm>
 #include <array>
@@ -56,7 +55,7 @@ BOOST_AUTO_TEST_CASE(insert_) {
 
     /* The elements are in the bag */
     for (auto e : elements) {
-      BOOST_CHECK(boost::find(bag, e) != bag.end());
+      BOOST_CHECK(std::ranges::find(bag, e) != bag.end());
     }
   }
 
@@ -89,8 +88,8 @@ BOOST_AUTO_TEST_CASE(erase_) {
     /* the begin iterator is returned */
     BOOST_CHECK(it == bag.begin());
     /* and the other elements are still in the bag */
-    BOOST_CHECK(boost::find(bag, elements[1]) != bag.end());
-    BOOST_CHECK(boost::find(bag, elements[2]) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, elements[1]) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, elements[2]) != bag.end());
   }
 
   {
@@ -105,8 +104,8 @@ BOOST_AUTO_TEST_CASE(erase_) {
     /* the correct iterator is returned */
     BOOST_CHECK(it == bag.begin() + 1);
     /* and the other elements are still in the bag */
-    BOOST_CHECK(boost::find(bag, elements[0]) != bag.end());
-    BOOST_CHECK(boost::find(bag, elements[2]) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, elements[0]) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, elements[2]) != bag.end());
   }
 
   {
@@ -121,8 +120,8 @@ BOOST_AUTO_TEST_CASE(erase_) {
     /* the correct iterator is returned */
     BOOST_CHECK(it == bag.end());
     /* and the other elements are still in the bag */
-    BOOST_CHECK(boost::find(bag, elements[0]) != bag.end());
-    BOOST_CHECK(boost::find(bag, elements[1]) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, elements[0]) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, elements[1]) != bag.end());
   }
 }
 
@@ -150,12 +149,12 @@ BOOST_AUTO_TEST_CASE(iterator_range_) {
 
   /* The range of the non-const iterators spans all elements */
   for (auto const &e : elements) {
-    BOOST_CHECK(boost::find(bag, e) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, e) != bag.end());
   }
   /* The range of the const iterators spans all elements */
   for (auto const &e : elements) {
-    BOOST_CHECK(boost::find(const_cast<const Utils::Bag<int> &>(bag), e) !=
-                bag.end());
+    BOOST_CHECK(std::ranges::find(const_cast<const Utils::Bag<int> &>(bag),
+                                  e) != bag.end());
   }
 }
 
@@ -208,7 +207,7 @@ BOOST_AUTO_TEST_CASE(resize_) {
   BOOST_CHECK_EQUAL(bag.size(), size);
   /* All the elements are still in the bag */
   for (auto const &e : bag) {
-    BOOST_CHECK(boost::find(bag, e) != bag.end());
+    BOOST_CHECK(std::ranges::find(bag, e) != bag.end());
   }
 }
 
@@ -233,12 +232,12 @@ BOOST_AUTO_TEST_CASE(swap_) {
   /* The elements are swapped */
   BOOST_CHECK_EQUAL(bag2.size(), elements1.size());
   for (auto const &e : elements1) {
-    BOOST_CHECK(boost::find(bag2, e) != bag2.end());
+    BOOST_CHECK(std::ranges::find(bag2, e) != bag2.end());
   }
 
   BOOST_CHECK_EQUAL(bag1.size(), elements2.size());
   for (auto const &e : elements2) {
-    BOOST_CHECK(boost::find(bag1, e) != bag1.end());
+    BOOST_CHECK(std::ranges::find(bag1, e) != bag1.end());
   }
 }
 
@@ -260,5 +259,5 @@ BOOST_AUTO_TEST_CASE(serialize_) {
   boost::archive::text_iarchive(stream) >> restored_bag;
 
   /* The deserialized object contains the same elements */
-  BOOST_CHECK(boost::equal(bag, restored_bag));
+  BOOST_CHECK(std::ranges::equal(bag, restored_bag));
 }

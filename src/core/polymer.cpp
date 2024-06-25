@@ -39,23 +39,23 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/optional.hpp>
 
 #include <cmath>
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <numbers>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
 template <class RNG>
 static Utils::Vector3d random_position(BoxGeometry const &box_geo, RNG &rng) {
   Utils::Vector3d v;
-  for (int i = 0; i < 3; ++i)
+  for (auto i = 0u; i < 3u; ++i)
     v[i] = box_geo.length()[i] * rng();
   return v;
 }
@@ -63,7 +63,7 @@ static Utils::Vector3d random_position(BoxGeometry const &box_geo, RNG &rng) {
 template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
   Utils::Vector3d v;
   double const phi = acos(1. - 2. * rng());
-  double const theta = 2. * Utils::pi() * rng();
+  double const theta = 2. * std::numbers::pi * rng();
   v[0] = sin(phi) * cos(theta);
   v[1] = sin(phi) * sin(theta);
   v[2] = cos(phi);
@@ -192,7 +192,7 @@ draw_polymer_positions(System::System const &system, int const n_polymers,
 
   /* Try up to max_tries times to draw a valid position */
   auto draw_valid_monomer_position =
-      [&](int p, int m) -> boost::optional<Utils::Vector3d> {
+      [&](int p, int m) -> std::optional<Utils::Vector3d> {
     for (auto i = 0; i < max_tries; i++) {
       auto const trial_pos = draw_monomer_position(p, m);
       if (is_valid_pos(trial_pos)) {
@@ -200,7 +200,7 @@ draw_polymer_positions(System::System const &system, int const n_polymers,
       }
     }
 
-    return {};
+    return std::nullopt;
   };
 
   // create remaining monomers' positions by backtracking.

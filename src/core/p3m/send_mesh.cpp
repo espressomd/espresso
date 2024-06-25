@@ -26,7 +26,6 @@
 #include "p3m/fft.hpp"
 #include "p3m/send_mesh.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
@@ -35,6 +34,7 @@
 #include <mpi.h>
 
 #include <cstddef>
+#include <span>
 #include <utility>
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
@@ -145,7 +145,7 @@ void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
   }
 }
 
-void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
+void p3m_send_mesh::gather_grid(std::span<double *> meshes,
                                 const boost::mpi::communicator &comm,
                                 const Utils::Vector3i &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
@@ -183,7 +183,7 @@ void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
   }
 }
 
-void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
+void p3m_send_mesh::spread_grid(std::span<double *> meshes,
                                 const boost::mpi::communicator &comm,
                                 const Utils::Vector3i &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);

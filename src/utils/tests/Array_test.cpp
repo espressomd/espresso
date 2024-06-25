@@ -65,9 +65,9 @@ BOOST_AUTO_TEST_CASE(element_access) {
   auto a = Array<int, 5>{{{5, 6, 7, 8, 9}}};
   auto const &b = a;
 
-  int c = 5;
-  int j = 0;
-  for (int i : a) {
+  auto c = 5;
+  auto j = 0u;
+  for (auto i : a) {
     BOOST_CHECK_EQUAL(i, c);
     BOOST_CHECK_EQUAL(a[j], c);
     BOOST_CHECK_EQUAL(b[j], c);

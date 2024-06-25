@@ -58,8 +58,7 @@ class Container : public AutoParameters<Container, System::Leaf> {
     system.on_coulomb_change();
   }
 
-  void on_bind_system(::System::System &system) override {
-    static_cast<void>(system);
+  void on_bind_system(::System::System &) override {
     auto const &params = *m_params;
     for (auto const &key : get_parameter_insertion_order()) {
       if (params.count(key)) {

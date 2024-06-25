@@ -30,11 +30,11 @@
 
 #include "script_interface/math/CylindricalTransformationParameters.hpp"
 
-#include <boost/range/algorithm.hpp>
-
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
+#include <numbers>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -114,8 +114,8 @@ public:
             get_value_or<int>(params, "n_z_bins", 1),
             get_value_or<double>(params, "min_r", 0.),
             get_value<double>(params, "max_r"),
-            get_value_or<double>(params, "min_phi", -Utils::pi()),
-            get_value_or<double>(params, "max_phi", Utils::pi()),
+            get_value_or<double>(params, "min_phi", -std::numbers::pi),
+            get_value_or<double>(params, "max_phi", std::numbers::pi),
             get_value<double>(params, "min_z"),
             get_value<double>(params, "max_z"),
             get_value<double>(params, "sampling_density"));
@@ -127,8 +127,8 @@ public:
                          VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
-      boost::copy(cylindrical_profile_observable()->edges(),
-                  std::back_inserter(variant_edges));
+      std::ranges::copy(cylindrical_profile_observable()->edges(),
+                        std::back_inserter(variant_edges));
       return variant_edges;
     }
     return Base::do_call_method(method, parameters);

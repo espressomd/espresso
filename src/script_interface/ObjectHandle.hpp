@@ -21,11 +21,10 @@
 
 #include "Variant.hpp"
 
-#include <utils/Span.hpp>
-
 #include <boost/utility/string_ref.hpp>
 
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -104,7 +103,7 @@ public:
    * @brief Get required and optional parameters for class.
    * @return Expected parameters.
    */
-  virtual Utils::Span<const boost::string_ref> valid_parameters() const {
+  virtual std::span<const boost::string_ref> valid_parameters() const {
     return {};
   }
 

@@ -19,12 +19,10 @@
 #ifndef ESPRESSO_BONDLIST_HPP
 #define ESPRESSO_BONDLIST_HPP
 
-#include <utils/Span.hpp>
 #include <utils/compact_vector.hpp>
 
 #include <boost/container/vector.hpp>
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/version.hpp>
@@ -33,6 +31,7 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <span>
 #include <type_traits>
 
 /**
@@ -45,18 +44,18 @@
 class BondView {
   /* Bond id */
   int m_id = -1;
-  Utils::Span<const int> m_partners;
+  std::span<const int> m_partners;
 
 public:
   BondView() = default;
-  BondView(int id, Utils::Span<const int> partners)
+  BondView(int id, std::span<const int> partners)
       : m_id(id), m_partners(partners) {}
 
   int bond_id() const { return m_id; }
-  Utils::Span<const int> const &partner_ids() const { return m_partners; }
+  auto const &partner_ids() const { return m_partners; }
 
   bool operator==(BondView const &rhs) const {
-    return m_id == rhs.m_id and boost::equal(m_partners, rhs.m_partners);
+    return m_id == rhs.m_id and std::ranges::equal(m_partners, rhs.m_partners);
   }
 
   bool operator!=(BondView const &rhs) const { return not(*this == rhs); }
@@ -140,8 +139,8 @@ public:
       auto const partners_begin = m_it;
       auto const partners_end = id_pos;
       auto const dist = std::distance(partners_begin, partners_end);
-      return {-(*id_pos) - 1, Utils::make_span(std::addressof(*partners_begin),
-                                               static_cast<size_type>(dist))};
+      return {-(*id_pos) - 1, std::span(std::addressof(*partners_begin),
+                                        static_cast<size_type>(dist))};
     }
   };
 
@@ -188,7 +187,7 @@ public:
    * @param bond Bond to add.
    */
   void insert(BondView const &bond) {
-    boost::copy(bond.partner_ids(), std::back_inserter(m_storage));
+    std::ranges::copy(bond.partner_ids(), std::back_inserter(m_storage));
     assert(bond.bond_id() >= 0);
     m_storage.push_back(-(bond.bond_id() + 1));
   }

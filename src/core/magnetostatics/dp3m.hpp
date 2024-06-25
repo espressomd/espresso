@@ -47,11 +47,11 @@
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
 
 #include <array>
 #include <cmath>
+#include <numbers>
 #include <vector>
 
 #ifdef NPT
@@ -209,7 +209,7 @@ struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    auto const coeff = 2. * dp3m.params.alpha * Utils::sqrt_pi_i();
+    auto const coeff = 2. * dp3m.params.alpha * std::numbers::inv_sqrtpi;
     auto const dist2i = 1. / dist2;
     auto const exp_adist2 = exp(-Utils::sqr(adist));
 
@@ -268,7 +268,7 @@ struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    auto const coeff = 2. * dp3m.params.alpha * Utils::sqrt_pi_i();
+    auto const coeff = 2. * dp3m.params.alpha * std::numbers::inv_sqrtpi;
     auto const dist2i = 1. / dist2;
     auto const exp_adist2 = exp(-Utils::sqr(adist));
 

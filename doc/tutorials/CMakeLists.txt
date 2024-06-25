@@ -49,13 +49,13 @@ function(NB_EXPORT)
   if(NOT "${NB_EXPORT_SUFFIX}" STREQUAL "")
     set(NB_EXPORT_TARGET "${NB_EXPORT_TARGET}_${NB_EXPORT_SUFFIX}")
   endif()
-  get_filename_component(NB_FILE_BASE ${NB_FILE} NAME_WE)
-  get_filename_component(NB_FILE_EXT ${NB_FILE} EXT)
-  set(HTML_FILE "${NB_FILE_BASE}.html")
-  set(PY_FILE "${NB_FILE_BASE}.py")
+  cmake_path(GET NB_FILE STEM NB_FILE_STEM)
+  cmake_path(GET NB_FILE EXTENSION NB_FILE_EXT)
+  set(HTML_FILE "${NB_FILE_STEM}.html")
+  set(PY_FILE "${NB_FILE_STEM}.py")
 
-  if(${NB_EXPORT_HTML_RUN})
-    set(NB_FILE_RUN "${NB_FILE_BASE}.run${NB_FILE_EXT}")
+  if(NB_EXPORT_HTML_RUN)
+    set(NB_FILE_RUN "${NB_FILE_STEM}.run${NB_FILE_EXT}")
     add_custom_command(
       OUTPUT ${NB_FILE_RUN}
       DEPENDS

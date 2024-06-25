@@ -20,50 +20,71 @@
 #include "errorhandling.hpp"
 
 #include "utils.cuh"
+#include "utils.hpp"
 
 #include <cuda.h>
 #include <cuda_runtime.h>
 
 #include <cstdio>
+#include <cstdlib>
+#include <sstream>
+#include <string>
+#include <utility>
 
 cudaStream_t stream[1];
+
+static std::basic_ostream<char> &operator<<(std::basic_ostream<char> &os,
+                                            const dim3 &dim) {
+  os << "<" << dim.x << "," << dim.y << "," << dim.z << ">";
+  return os;
+}
+
+static std::basic_ostream<char> &operator<<(std::basic_ostream<char> &os,
+                                            cudaError_t CU_err) {
+  os << "CUDA error: \"" << cudaGetErrorString(CU_err) << "\"";
+  return os;
+}
 
 void cuda_check_errors_exit(const dim3 &block, const dim3 &grid,
                             const char *function, const char *file,
                             unsigned int line) {
   cudaError_t CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
-    fprintf(stderr,
-            "error \"%s\" calling %s with dim %d %d %d, grid %d %d "
-            "%d in %s:%u\n",
-            cudaGetErrorString(CU_err), function, block.x, block.y, block.z,
-            grid.x, grid.y, grid.z, file, line);
-    errexit();
+    std::stringstream message;
+    message << CU_err << " while calling " << function
+            << " with block: " << block << ", grid: " << grid << " in " << file
+            << ":" << line;
+    throw cuda_fatal_error(message.str());
   }
 }
 
 void cuda_safe_mem_exit(cudaError_t CU_err, const char *file,
                         unsigned int line) {
   if (CU_err != cudaSuccess) {
-    fprintf(stderr, "CUDA Memory error at %s:%u.\n", file, line);
-    fprintf(stderr, "CUDA error: %s\n", cudaGetErrorString(CU_err));
+    std::stringstream message;
+    message << CU_err << " during memory operation in " << file << ":" << line;
     if (CU_err == cudaErrorInvalidValue)
-      fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n",
-              file, line);
-    errexit();
-  } else {
+      message << ". You may have tried to allocate zero memory";
+    throw cuda_fatal_error(message.str());
+  }
+  {
     CU_err = cudaGetLastError();
     if (CU_err != cudaSuccess) {
-      fprintf(stderr,
-              "Error found during memory operation. Possibly however "
-              "from a failed operation before. %s:%u.\n",
-              file, line);
-      printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
-      if (CU_err == cudaErrorInvalidValue)
-        fprintf(stderr,
-                "You may have tried to allocate zero memory before %s:%u.\n",
-                file, line);
-      errexit();
+      std::stringstream message;
+      message << CU_err << " in " << file << ":" << line << ". Error found "
+              << "during memory operation. Possibly however from a failed "
+                 "operation before the memory operation";
+      throw cuda_fatal_error(message.str());
     }
   }
+}
+
+cuda_fatal_error::cuda_fatal_error(std::string msg)
+    : m_msg(std::move(msg)), m_terminate_handler(&errexit) {}
+
+void cuda_fatal_error::terminate() noexcept {
+  if (m_terminate_handler == nullptr or m_terminate_handler == errexit) {
+    fprintf(stderr, "%s\n", what());
+  }
+  ((m_terminate_handler == nullptr) ? &std::abort : m_terminate_handler)();
 }

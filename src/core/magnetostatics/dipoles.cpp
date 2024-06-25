@@ -33,8 +33,6 @@
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
-#include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/demangle.hpp>
 
 #include <cassert>

@@ -22,15 +22,6 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-/* This <boost/serialization/version.hpp> include guards against an issue
- * in boost::serialization from boost 1.74.0 that leads to compiler error
- * "explicit specialization of undeclared template struct 'version'" when
- * including <boost/serialization/optional.hpp>. More details in tickets:
- * https://github.com/boostorg/serialization/issues/210
- * https://github.com/boostorg/serialization/issues/217
- */
-#include <boost/serialization/version.hpp>
-
 #include <utils/Array.hpp>
 #include <utils/Vector.hpp>
 #include <utils/compact_vector.hpp>
@@ -281,8 +272,8 @@ BOOST_AUTO_TEST_CASE(mpi_archive_test) {
   BOOST_TEST(buffer_vector == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_storage == buffer_ref, boost::test_tools::per_element());
   BOOST_TEST(buffer_quat == buffer_ref, boost::test_tools::per_element());
-  auto const index_lsb = (is_big_endian()) ? 1 : 0;
-  auto const index_hsb = (is_big_endian()) ? 0 : 1;
+  auto const index_lsb = (is_big_endian()) ? 1u : 0u;
+  auto const index_hsb = (is_big_endian()) ? 0u : 1u;
   BOOST_TEST(buffer_cv[index_lsb] == Testing::N);
   BOOST_TEST(buffer_cv[index_hsb] == 0);
   buffer_cv.erase(buffer_cv.begin());

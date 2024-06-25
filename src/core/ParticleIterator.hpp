@@ -74,7 +74,7 @@ private:
     auto it = std::next(begin.m_cell);
 
     while (it != end.m_cell) {
-      dist += (*it)->particles().size();
+      dist += static_cast<long>((*it)->particles().size());
       ++it;
     }
 

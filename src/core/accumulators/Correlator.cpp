@@ -26,7 +26,6 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -197,10 +196,10 @@ void Correlator::initialize() {
   dim_A = A_obs->n_values();
   dim_B = B_obs->n_values();
 
-  if (dim_A == 0) {
+  if (dim_A == 0u) {
     throw std::runtime_error("dimension of first observable has to be >= 1");
   }
-  if (dim_B == 0) {
+  if (dim_B == 0u) {
     throw std::runtime_error("dimension of second observable has to be >= 1");
   }
 
@@ -212,7 +211,9 @@ void Correlator::initialize() {
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     m_dim_corr = dim_A * dim_B;
-    m_shape = {dim_A, dim_B};
+    m_shape.clear();
+    m_shape.emplace_back(dim_A);
+    m_shape.emplace_back(dim_B);
     corr_operation = &tensor_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
@@ -229,18 +230,19 @@ void Correlator::initialize() {
     }
     m_correlation_args =
         Utils::hadamard_product(m_correlation_args, m_correlation_args);
-    if (dim_A % 3)
+    if (dim_A % 3u)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
-    m_dim_corr = dim_A / 3;
+    m_dim_corr = dim_A / 3u;
     m_shape = A_obs->shape();
-    if (m_shape.back() != 3)
+    if (m_shape.back() != 3u)
       throw std::runtime_error(
           "the last dimension of dimA must be 3 for fcs_acf");
     m_shape.pop_back();
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
-    m_dim_corr = 1;
-    m_shape = {1};
+    m_dim_corr = 1u;
+    m_shape.clear();
+    m_shape.emplace_back(1u);
     corr_operation = &scalar_product;
     m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
@@ -524,8 +526,8 @@ std::vector<double> Correlator::get_correlation() {
 
 std::vector<double> Correlator::get_lag_times() const {
   std::vector<double> res(n_values());
-  boost::transform(tau, res.begin(),
-                   [dt = m_dt](auto const &a) { return a * dt; });
+  std::ranges::transform(tau, res.begin(),
+                         [dt = m_dt](auto const &a) { return a * dt; });
   return res;
 }
 

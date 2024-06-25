@@ -20,7 +20,11 @@
 # unit_test function
 function(UNIT_TEST)
   cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC;DEPENDS" ${ARGN})
-  add_executable(${TEST_NAME} ${TEST_SRC})
+  if(${TEST_SRC} MATCHES ".*\.cu$")
+    espresso_add_gpu_executable(${TEST_NAME} ${TEST_SRC})
+  else()
+    add_executable(${TEST_NAME} ${TEST_SRC})
+  endif()
   # Build tests only when testing
   set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
   set_target_properties(${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
@@ -29,10 +33,14 @@ function(UNIT_TEST)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})
   endif()
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
-  target_link_libraries(${TEST_NAME} PRIVATE espresso::config espresso::cpp_flags)
   if(ESPRESSO_BUILD_WITH_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(
       ${TEST_NAME} PRIVATE -fno-default-inline -fno-elide-constructors)
+  endif()
+  if(${TEST_SRC} MATCHES ".*\.cu$")
+    target_link_libraries(${TEST_NAME} PRIVATE espresso::config CUDA::cuda_driver CUDA::cudart)
+  else()
+    target_link_libraries(${TEST_NAME} PRIVATE espresso::config espresso::cpp_flags)
   endif()
 
   # If NUM_PROC is given, set up MPI parallel test case

@@ -36,7 +36,6 @@
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>

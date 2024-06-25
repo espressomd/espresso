@@ -24,8 +24,7 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
+#include <optional>
 #include <tuple>
 
 enum class tElasticLaw { NeoHookean, Skalak };
@@ -67,7 +66,7 @@ struct IBMTriel {
    *  The equations can be found in Appendix C of @cite kruger12a.
    *  @return the forces on @p p1, @p p2, @p p3
    */
-  boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+  std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
   calc_forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
 
 private:
