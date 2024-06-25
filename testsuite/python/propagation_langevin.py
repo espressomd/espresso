@@ -233,6 +233,7 @@ class LangevinThermostat(ut.TestCase):
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_07__virtual(self):
+        Propagation = espressomd.propagation.Propagation
         system = self.system
         system.time_step = dt = 0.03
 
@@ -240,6 +241,8 @@ class LangevinThermostat(ut.TestCase):
         virtual = system.part.add(pos=[0, 0, 0], v=[1, 0, 0])
         physical = system.part.add(pos=[0, 0, 0], v=v0)
         virtual.vs_relative = (physical.id, 0.01, (1., 0., 0., 0.))
+        virtual.propagation = (Propagation.TRANS_VS_RELATIVE |
+                               Propagation.ROT_VS_RELATIVE)
 
         system.thermostat.set_langevin(
             kT=0, gamma=1, gamma_rotation=1., seed=41)

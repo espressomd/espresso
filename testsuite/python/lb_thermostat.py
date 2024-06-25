@@ -204,6 +204,9 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
     @utx.skipIfMissingFeatures(["PARTICLE_ANISOTROPY",
                                "THERMOSTAT_PER_PARTICLE"])
     def test_exceptions(self):
+        with self.assertRaisesRegex(RuntimeError, r"set_lb\(\) got an unexpected keyword argument 'act_on_virtual'"):
+            self.system.thermostat.set_lb(
+                LB_fluid=self.lbf, act_on_virtual=False)
         self.system.part.add(pos=[0., 0., 0.], gamma=[1., 2., 3.], id=2)
         with self.assertRaisesRegex(Exception, r"ERROR: anisotropic particle \(id 2\) coupled to LB"):
             self.system.integrator.run(1)
