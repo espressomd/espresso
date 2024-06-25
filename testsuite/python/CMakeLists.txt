@@ -407,6 +407,7 @@ python_test(FILE propagation_brownian.py MAX_NUM_PROC 1)
 python_test(FILE propagation_lb.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE propagation_npt.py MAX_NUM_PROC 4 GPU_SLOTS 1)
 python_test(FILE propagation_stokesian.py MAX_NUM_PROC 2)
+python_test(FILE coordinates_folding.py MAX_NUM_PROC 2)
 
 set(ESPRESSO_CTEST_RESOURCE_SPEC_FILE resources.json)
 configure_file(

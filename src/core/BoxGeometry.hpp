@@ -261,11 +261,11 @@ public:
 
   /** @brief Fold coordinates to primary simulation box in-place.
    *  Lees-Edwards offset is ignored.
-   *  @param[in,out] pos        coordinate to fold
+   *  @param[in,out] pos        coordinates to fold
    *  @param[in,out] image_box  image box offset
    */
   void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box) const {
-    for (unsigned int i = 0u; i < 3u; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       if (m_periodic[i]) {
         auto const result =
             Algorithm::periodic_fold(pos[i], image_box[i], m_length[i]);
@@ -281,21 +281,39 @@ public:
     }
   }
 
-  /** @brief Calculate coordinates folded to primary simulation box.
-   *  @param p    coordinate to fold
-   *  @return Folded coordinates.
+  /**
+   * @brief Calculate coordinates folded to primary simulation box.
+   * @param[in] pos    coordinates to fold
+   * @return Folded coordinates.
    */
-  auto folded_position(Utils::Vector3d const &p) const {
-    Utils::Vector3d p_folded;
+  auto folded_position(Utils::Vector3d const &pos) const {
+    auto pos_folded = pos;
     for (unsigned int i = 0u; i < 3u; i++) {
       if (m_periodic[i]) {
-        p_folded[i] = Algorithm::periodic_fold(p[i], m_length[i]);
-      } else {
-        p_folded[i] = p[i];
+        pos_folded[i] = Algorithm::periodic_fold(pos[i], m_length[i]);
       }
     }
 
-    return p_folded;
+    return pos_folded;
+  }
+
+  /**
+   * @brief Calculate image box of coordinates folded to primary simulation box.
+   * @param[in] pos        coordinates
+   * @param[in] image_box  image box to fold
+   * @return Folded image box.
+   */
+  auto folded_image_box(Utils::Vector3d const &pos,
+                        Utils::Vector3i const &image_box) const {
+    auto image_box_folded = image_box;
+    for (auto i = 0u; i < 3u; i++) {
+      if (m_periodic[i]) {
+        image_box_folded[i] =
+            Algorithm::periodic_fold(pos[i], image_box[i], m_length[i]).second;
+      }
+    }
+
+    return image_box_folded;
   }
 
   /** @brief Calculate image box shift vector */

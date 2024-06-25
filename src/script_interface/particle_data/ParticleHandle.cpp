@@ -404,7 +404,11 @@ ParticleHandle::ParticleHandle() {
       {"lees_edwards_flag", AutoParameter::read_only,
        [this]() { return get_particle_data(m_pid).lees_edwards_flag(); }},
       {"image_box", AutoParameter::read_only,
-       [this]() { return get_particle_data(m_pid).image_box(); }},
+       [this]() {
+         auto const &box_geo = *System::get_system().box_geo;
+         auto const p = get_particle_data(m_pid);
+         return box_geo.folded_image_box(p.pos(), p.image_box());
+       }},
       {"node", AutoParameter::read_only,
        [this]() {
          return (context()->is_head_node()) ? get_particle_node(m_pid) : -1;
