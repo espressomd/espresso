@@ -1,4 +1,5 @@
-# Copyright (C) 2021-2022 The ESPResSo project
+#
+# Copyright (C) 2021-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,14 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-include(unit_test)
+include(espresso_unit_test)
 
-unit_test(NAME SingleReaction_test SRC SingleReaction_test.cpp DEPENDS
-          espresso::core)
-unit_test(NAME ReactionAlgorithm_test SRC ReactionAlgorithm_test.cpp DEPENDS
-          espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-unit_test(NAME particle_tracking_test SRC particle_tracking_test.cpp DEPENDS
-          espresso::core Boost::mpi MPI::MPI_CXX)
-unit_test(NAME reaction_methods_utils_test SRC reaction_methods_utils_test.cpp
-          DEPENDS espresso::core)
+espresso_unit_test(SRC SingleReaction_test.cpp DEPENDS espresso::core)
+espresso_unit_test(SRC ReactionAlgorithm_test.cpp DEPENDS espresso::core
+                   Boost::mpi MPI::MPI_CXX NUM_PROC 2)
+espresso_unit_test(SRC particle_tracking_test.cpp DEPENDS espresso::core
+                   Boost::mpi MPI::MPI_CXX)
+espresso_unit_test(SRC reaction_methods_utils_test.cpp DEPENDS espresso::core)

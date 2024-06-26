@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2016-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,9 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# unit_test function
-function(UNIT_TEST)
-  cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC;DEPENDS" ${ARGN})
+function(ESPRESSO_UNIT_TEST)
+  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC" "DEPENDS" ${ARGN})
+  if(NOT DEFINED TEST_NAME)
+    cmake_path(GET TEST_SRC STEM TEST_NAME)
+    set(TEST_NAME ${TEST_NAME} PARENT_SCOPE)
+  endif()
   if(${TEST_SRC} MATCHES ".*\.cu$")
     espresso_add_gpu_executable(${TEST_NAME} ${TEST_SRC})
   else()
@@ -72,4 +75,4 @@ function(UNIT_TEST)
     ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}")
 
   add_dependencies(check_unit_tests ${TEST_NAME})
-endfunction(UNIT_TEST)
+endfunction()
