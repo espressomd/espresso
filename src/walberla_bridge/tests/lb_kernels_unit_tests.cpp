@@ -19,10 +19,6 @@
 #define BOOST_TEST_MODULE waLBerla LB kernels
 #define BOOST_TEST_DYN_LINK
 
-#include "config/config.hpp"
-
-#ifdef WALBERLA
-
 #include <boost/test/unit_test.hpp>
 
 #include "../src/lattice_boltzmann/generated_kernels/Dynamic_UBB_double_precision.h"
@@ -189,5 +185,3 @@ BOOST_AUTO_TEST_CASE(macroscopic_accessor_equilibrium_distribution) {
     }
   }
 }
-
-#endif

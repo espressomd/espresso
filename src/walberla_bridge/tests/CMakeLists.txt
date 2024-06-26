@@ -22,8 +22,13 @@ include(unit_test)
 function(ESPRESSO_WALBERLA_UNIT_TEST)
   cmake_parse_arguments(TEST "" "NAME;NUM_PROC" "SRC;DEPENDS" ${ARGN})
   unit_test(NAME ${TEST_NAME} NUM_PROC ${TEST_NUM_PROC} SRC ${TEST_SRC} DEPENDS
-            ${TEST_DEPENDS} espresso::walberla espresso::walberla::cpp_flags
-            espresso::utils)
+            ${TEST_DEPENDS} espresso::walberla espresso::utils)
+  if(${TEST_SRC} MATCHES ".*\.cu$")
+    target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla::cuda_flags
+                                               espresso::walberla_cuda)
+  else()
+    target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla::cpp_flags)
+  endif()
   set_target_properties(${TEST_NAME} PROPERTIES CXX_CLANG_TIDY "")
   target_include_directories(${TEST_NAME} PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                   ${walberla_BINARY_DIR}/src)
@@ -66,3 +71,10 @@ espresso_walberla_unit_test(NAME LBWalberlaImpl_lees_edwards_test SRC
 espresso_walberla_unit_test(
   NAME EKinWalberlaImpl_unit_tests SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS
   Boost::boost Boost::mpi NUM_PROC 2)
+
+if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  espresso_walberla_unit_test(
+    NAME LBWalberlaImpl_field_accessors_tests SRC
+    LBWalberlaImpl_field_accessors_tests.cu DEPENDS Boost::boost Boost::mpi
+    espresso::walberla_cuda CUDA::cuda_driver CUDA::cudart)
+endif()

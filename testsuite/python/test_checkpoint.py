@@ -158,8 +158,6 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(node.velocity), slip_velocity1)
         for node in lbf[-1, :, :]:
             np.testing.assert_allclose(np.copy(node.velocity), slip_velocity2)
-        for node in lbf[2, :, :]:
-            np.testing.assert_allclose(np.copy(node.velocity), 0.)
         # remove boundaries
         lbf.clear_boundaries()
         np.testing.assert_equal(

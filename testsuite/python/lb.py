@@ -89,13 +89,14 @@ class LBTest:
         self.check_properties(lbf)
 
     def check_properties(self, lbf):
+        density = self.params["density"]
         agrid = self.params["agrid"]
-        tau = self.system.time_step
+        tau = self.params["tau"]
         # check LB object
         self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
         self.assertAlmostEqual(lbf.agrid, agrid, delta=self.atol)
         self.assertAlmostEqual(lbf.kinematic_viscosity, 3., delta=self.atol)
-        self.assertAlmostEqual(lbf.density, 0.85, delta=self.atol)
+        self.assertAlmostEqual(lbf.density, density, delta=self.atol)
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
@@ -136,6 +137,57 @@ class LBTest:
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(TypeError):
             lbf[0, 1].velocity = [1, 2, 3]
+        # check node setters update cached velocities (with precision loss)
+        lbnode = lbf[0, 0, 0]
+        lbnode.last_applied_force = [0., 0., 0.]
+        lbnode.velocity = [0., 0., 0.]
+        old_pop = np.copy(lbnode.population)
+        old_vel = np.copy(lbnode.velocity)
+        old_rho = np.copy(lbnode.density)
+        lbnode.velocity = [1., 2., 3.]
+        new_pop = np.copy(lbnode.population)
+        new_vel = np.copy(lbnode.velocity)
+        lbnode.population = old_pop
+        np.testing.assert_allclose(
+            np.copy(lbnode.velocity), old_vel, atol=self.atol * 20.)
+        lbnode.population = new_pop
+        np.testing.assert_allclose(
+            np.copy(lbnode.velocity), new_vel, atol=self.atol * 20.)
+        lbnode.population = old_pop
+        lbnode.last_applied_force = [0.4, 0.5, 0.6]
+        np.testing.assert_allclose(
+            np.copy(lbnode.velocity),
+            np.copy([0.4, 0.5, 0.6]) / (agrid / tau * old_rho / 2.),
+            atol=self.atol * 20.)
+        lbnode.last_applied_force = [0., 0., 0.]
+        lbnode.population = old_pop
+        # check slice setters update cached velocities (with precision loss)
+        lbslice = lbf[0:5, 0:5, 0:5]
+        lbslice.last_applied_force = [0., 0., 0.]
+        lbslice.velocity = [0., 0., 0.]
+        old_pop = np.copy(lbslice.population)
+        old_vel = np.copy(lbslice.velocity)
+        old_rho = np.copy(lbslice.density)
+        lbslice.velocity = [1., 2., 3.]
+        new_pop = np.copy(lbslice.population)
+        new_vel = np.copy(lbslice.velocity)
+        lbslice.population = old_pop
+        np.testing.assert_allclose(
+            np.copy(lbslice.velocity), old_vel, atol=self.atol * 100.)
+        lbslice.population = new_pop
+        np.testing.assert_allclose(
+            np.copy(lbslice.velocity), new_vel, atol=self.atol * 100.)
+        lbslice.population = old_pop
+        lbslice.last_applied_force = [0.4, 0.5, 0.6]
+        vel2force = 2. * tau / agrid
+        np.testing.assert_allclose(
+            np.copy(lbslice.velocity),
+            np.tile(np.copy([0.4, 0.5, 0.6]), (5, 5, 5, 1)) * vel2force /
+            np.tile(old_rho.reshape((5, 5, 5, 1)), (3,)),
+            atol=self.atol * 20.)
+        lbslice.last_applied_force = [0., 0., 0.]
+        lbslice.population = old_pop
+        # check node boundary conditions
         node = lbf[0, 0, 0]
         self.assertIsNone(node.boundary)
         self.assertIsNone(node.boundary_force)
@@ -373,13 +425,13 @@ class LBTest:
         self.assertAlmostEqual(lbf[0, 0, 0].density, density, delta=1e-4)
 
         self.assertEqual(lbf[3, 2, 1].index, (3, 2, 1))
-        ext_force_density = [0.1, 0.2, 1.2]
-        last_applied_force = [0.2, 0.4, 0.6]
+        ext_force_density = np.array([0.1, 0.2, 1.2])
+        last_applied_force = np.array([0.2, 0.4, 0.6])
         lbf.ext_force_density = ext_force_density
         node = lbf[1, 2, 3]
         node.velocity = v_fluid
-        node.last_applied_force = last_applied_force
         np.testing.assert_allclose(np.copy(node.velocity), v_fluid, atol=1e-4)
+        node.last_applied_force = last_applied_force
         np.testing.assert_allclose(
             np.copy(node.last_applied_force), last_applied_force, atol=1e-4)
         np.testing.assert_allclose(
