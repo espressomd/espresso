@@ -279,8 +279,8 @@ class ParticleHandle(ScriptInterfaceHelper):
             * This needs features ``EXTERNAL_FORCES`` and ``ROTATION``.
 
     gamma: :obj:`float` or (3,) array_like of :obj:`float`
-        The translational frictional coefficient used in the Langevin
-        and Brownian thermostats.
+        The translational frictional coefficient used in the Langevin,
+        Brownian and LB thermostats.
 
         .. note::
             This needs feature ``THERMOSTAT_PER_PARTICLE`` and

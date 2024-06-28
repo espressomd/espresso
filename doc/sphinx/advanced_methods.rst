@@ -1301,8 +1301,7 @@ In |es|, the basic ingredients to simulate such a system are split into three bo
 The system-wide thermostat has to be applied to the centre of mass and not to
 the core particle directly. Therefore, the particles have to be excluded from
 global thermostatting.  With ``THERMOSTAT_PER_PARTICLE`` enabled, we set the
-friction coefficient of the Drude complex to zero, which allows
-to still use a global Langevin thermostat for non-polarizable particles.
+friction coefficient of the Drude complex to zero.
 
 As the Drude charge should not alter the *charge* or *mass* of the Drude
 complex, both properties have to be subtracted from the core when adding the
@@ -1313,9 +1312,11 @@ polarizability :math:`\alpha` (in units of inverse volume) with :math:`q_d =
 
 The following helper method takes into account all the preceding considerations
 and can be used to conveniently add a Drude particle to a given core particle.
-It returns an `espressomd.particle_data.ParticleHandle` to the created Drude
+It returns a :class:`~espressomd.particle_data.ParticleHandle` of the created Drude
 particle. Note that as the function also adds the first two bonds between Drude
-and core, these bonds have to be already available.::
+and core, these bonds have to be already available.
+
+.. code-block::
 
     import espressomd.drude_helpers
     dh = espressomd.drude_helpers.DrudeHelpers()
