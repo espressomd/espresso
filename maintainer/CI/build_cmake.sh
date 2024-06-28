@@ -261,9 +261,8 @@ end "BUILD"
 # library. See details in https://github.com/espressomd/espresso/issues/2249
 # Can't do this check on CUDA though because nvcc creates a host function
 # that just calls exit() for each device function, and can't do this with
-# coverage because gcov 9.0 adds code that calls exit(), and can't do this
 # with walberla because the library calls exit() in assertions.
-if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) && "${with_walberla}" != "true" ]]; then
+if [[ ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) && "${with_walberla}" != "true" ]]; then
     if nm -o -C $(find . -name '*.so') | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
@@ -355,20 +354,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     if [ "${with_coverage}" = true ]; then
         echo "Running lcov and gcov..."
         codecov_opts="${codecov_opts} --gcov"
-        lcov --gcov-tool "${GCOV:-gcov}" \
-             --quiet \
-             --ignore-errors graph,mismatch,mismatch,gcov,unused \
-             --directory . \
-             --filter brace,blank,range,region \
-             --capture \
-             --rc lcov_json_module="JSON::XS" \
-             --exclude "/usr/*" \
-             --exclude "$(realpath .)/_deps/*" \
-             --exclude "$(realpath .)/src/python/espressomd/*" \
-             --exclude "$(realpath "${srcdir}")/src/walberla_bridge/src/*/generated_kernels/*" \
-             --exclude "$(realpath "${srcdir}")/libs/*" \
-             --exclude "*/tmpxft_*cudafe1.stub.*" \
-             --output-file coverage.info
+        "${srcdir}/maintainer/CI/run_lcov.sh" coverage.info
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."

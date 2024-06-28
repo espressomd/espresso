@@ -50,6 +50,8 @@ target_compile_options(
   $<$<CONFIG:Coverage>:-Xptxas=-O3 -Xcompiler=-Og,-g,--coverage,-fprofile-abs-path>
   $<$<CONFIG:RelWithAssert>:-Xptxas=-O3 -Xcompiler=-O3,-g>
   $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
+  # workaround for https://github.com/espressomd/espresso/issues/4943
+  $<$<BOOL:${ESPRESSO_BUILD_WITH_CCACHE}>:$<$<CONFIG:Coverage>:--coverage -fprofile-abs-path>>
 )
 
 function(espresso_add_gpu_library)
