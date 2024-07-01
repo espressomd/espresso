@@ -22,10 +22,15 @@
 /**
  * @file
  * MMM1D algorithm for long-range Coulomb interactions on the CPU.
+ *
  * Implementation of the MMM1D method for the calculation of the electrostatic
  * interaction in one-dimensionally periodic systems. For details on the
  * method see MMM in general. The MMM1D method works only with the N-squared
  * cell system since neither the near nor far formula can be decomposed.
+ *
+ * MMM1D uses polygamma expansions for the near formula.
+ * The expansion of the polygamma functions is fairly easy and follows
+ * directly from @cite abramowitz65a. For details, see @cite arnold02a.
  */
 
 #pragma once
@@ -113,7 +118,11 @@ private:
   static constexpr auto MAXIMAL_B_CUT = 30;
   /** @brief From which distance a certain Bessel cutoff is valid. */
   std::array<double, MAXIMAL_B_CUT> bessel_radii;
+  /** @brief Table of Taylor expansions of the modified polygamma functions. */
+  std::vector<std::vector<double>> modPsi;
 
+  /** @brief Create even and odd polygamma functions up to order `2 * new_n`. */
+  void create_mod_psi_up_to(int new_n);
   void determine_bessel_radii();
   void prepare_polygamma_series();
   void recalc_boxl_parameters();
