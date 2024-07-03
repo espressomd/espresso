@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 The ESPResSo project
+ * Copyright (C) 2019-2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -226,6 +226,13 @@ private:
     }
   }
 
+  void pressure_tensor_correction(std::span<FloatType, 9ul> tensor) const {
+    auto const revert_factor = pressure_tensor_correction_factor();
+    for (auto const i : {1u, 2u, 3u, 5u, 6u, 7u}) {
+      tensor[i] *= revert_factor;
+    }
+  }
+
   class interpolation_illegal_access : public std::runtime_error {
   public:
     explicit interpolation_illegal_access(std::string const &field,
@@ -349,11 +356,11 @@ protected:
     if constexpr (Architecture == lbmpy::Arch::CPU) {
 #ifdef ESPRESSO_BUILD_WITH_AVX_KERNELS
 #if defined(__AVX512F__)
-      constexpr uint_t alignment = 64;
+      constexpr uint_t alignment = 64u;
 #elif defined(__AVX__)
-      constexpr uint_t alignment = 32;
+      constexpr uint_t alignment = 32u;
 #elif defined(__SSE__)
-      constexpr uint_t alignment = 16;
+      constexpr uint_t alignment = 16u;
 #else
 #error "Unsupported arch, check walberla src/field/allocation/FieldAllocator.h"
 #endif
@@ -690,8 +697,8 @@ public:
     auto force_field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
     auto const vel = to_vector3<FloatType>(v);
-    lbm::accessor::Velocity::set(pdf_field, force_field, vel, bc->cell);
-    lbm::accessor::Vector::set(vel_field, vel, bc->cell);
+    lbm::accessor::Velocity::set(pdf_field, vel_field, force_field, vel,
+                                 bc->cell);
 
     return true;
   }
@@ -705,25 +712,31 @@ public:
       auto const &block = *(lattice.get_blocks()->begin());
       auto const field =
           block.template getData<VectorField>(m_velocity_field_id);
+      auto const values = lbm::accessor::Vector::get(field, *ci);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == 3u * ci->numCells());
+      if constexpr (std::is_same_v<typename decltype(values)::value_type,
+                                   double>) {
+        out = std::move(values);
+      } else {
+        out = std::vector<double>(values.begin(), values.end());
+      }
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
-      out.reserve(ci->numCells());
-      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      auto it = out.begin();
       for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
         for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
             if (m_boundary->node_is_boundary(node)) {
-              auto const vec = m_boundary->get_node_value_at_boundary(node);
+              auto const &vec = m_boundary->get_node_value_at_boundary(node);
               for (uint_t f = 0u; f < 3u; ++f) {
-                out.emplace_back(double_c(vec[f]));
+                (*it) = double_c(vec[f]);
+                std::advance(it, 1l);
               }
             } else {
-              auto const vec = lbm::accessor::Vector::get(field, Cell{x, y, z});
-              for (uint_t f = 0u; f < 3u; ++f) {
-                out.emplace_back(double_c(vec[f]));
-              }
+              std::advance(it, 3l);
             }
           }
         }
@@ -738,30 +751,15 @@ public:
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
-      // We have to set both, the pdf and the stored velocity field
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
       auto force_field =
           block.template getData<VectorField>(m_last_applied_force_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto it = velocity.begin();
-      assert(velocity.size() == 3u * ci->numCells());
+      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
       assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            auto const cell = Cell{x, y, z};
-            Vector3<FloatType> vec;
-            for (uint_t f = 0u; f < 3u; ++f) {
-              vec[f] = FloatType_c(*it);
-              ++it;
-            }
-            lbm::accessor::Velocity::set(pdf_field, force_field, vec, cell);
-            lbm::accessor::Vector::set(vel_field, vec, cell);
-          }
-        }
-      }
+      assert(velocity.size() == 3u * ci->numCells());
+      std::vector<FloatType> const values(velocity.begin(), velocity.end());
+      lbm::accessor::Velocity::set(pdf_field, vel_field, force_field, values,
+                                   *ci);
     }
   }
 
@@ -954,10 +952,13 @@ public:
     if (!bc)
       return false;
 
-    auto field =
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto force_field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    auto vel_field =
+        bc->block->template getData<VectorField>(m_velocity_field_id);
     auto const vec = to_vector3<FloatType>(force);
-    lbm::accessor::Vector::set(field, vec, bc->cell);
+    lbm::accessor::Force::set(pdf_field, vel_field, force_field, vec, bc->cell);
 
     return true;
   }
@@ -971,22 +972,15 @@ public:
       auto const &block = *(lattice.get_blocks()->begin());
       auto const field =
           block.template getData<VectorField>(m_last_applied_force_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto const n_values = 3u * ci->numCells();
-      out.reserve(n_values);
+      auto const values = lbm::accessor::Vector::get(field, *ci);
       assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            auto const vec = lbm::accessor::Vector::get(field, Cell{x, y, z});
-            for (uint_t f = 0u; f < 3u; ++f) {
-              out.emplace_back(double_c(vec[f]));
-            }
-          }
-        }
+      assert(values.size() == 3u * ci->numCells());
+      if constexpr (std::is_same_v<typename decltype(values)::value_type,
+                                   double>) {
+        out = std::move(values);
+      } else {
+        out = std::vector<double>(values.begin(), values.end());
       }
-      assert(out.size() == n_values);
     }
     return out;
   }
@@ -997,25 +991,14 @@ public:
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
-      auto field =
+      auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+      auto force_field =
           block.template getData<VectorField>(m_last_applied_force_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto it = force.begin();
-      assert(force.size() == 3u * ci->numCells());
+      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
       assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            Vector3<FloatType> vec;
-            for (uint_t f = 0u; f < 3u; ++f) {
-              vec[f] = FloatType_c(*it);
-              ++it;
-            }
-            lbm::accessor::Vector::set(field, vec, Cell{x, y, z});
-          }
-        }
-      }
+      assert(force.size() == 3u * ci->numCells());
+      std::vector<FloatType> const values(force.begin(), force.end());
+      lbm::accessor::Force::set(pdf_field, vel_field, force_field, values, *ci);
     }
   }
 
@@ -1044,11 +1027,16 @@ public:
       return false;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto force_field =
+        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    auto vel_field =
+        bc->block->template getData<VectorField>(m_velocity_field_id);
     std::array<FloatType, Stencil::Size> pop;
     for (uint_t f = 0u; f < Stencil::Size; ++f) {
       pop[f] = FloatType_c(population[f]);
     }
-    lbm::accessor::Population::set(pdf_field, pop, bc->cell);
+    lbm::accessor::Population::set(pdf_field, vel_field, force_field, pop,
+                                   bc->cell);
 
     return true;
   }
@@ -1063,13 +1051,13 @@ public:
       auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       auto const values = lbm::accessor::Population::get(pdf_field, *ci);
       assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == stencil_size() * ci->numCells());
       if constexpr (std::is_same_v<typename decltype(values)::value_type,
                                    double>) {
         out = std::move(values);
       } else {
         out = std::vector<double>(values.begin(), values.end());
       }
-      assert(out.size() == stencil_size() * ci->numCells());
     }
     return out;
   }
@@ -1081,10 +1069,14 @@ public:
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+      auto force_field =
+          block.template getData<VectorField>(m_last_applied_force_field_id);
+      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
       assert(population.size() == stencil_size() * ci->numCells());
       assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
       std::vector<FloatType> const values(population.begin(), population.end());
-      lbm::accessor::Population::set(pdf_field, values, *ci);
+      lbm::accessor::Population::set(pdf_field, vel_field, force_field, values,
+                                     *ci);
     }
   }
 
@@ -1123,13 +1115,13 @@ public:
       auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       auto const values = lbm::accessor::Density::get(pdf_field, *ci);
       assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == ci->numCells());
       if constexpr (std::is_same_v<typename decltype(values)::value_type,
                                    double>) {
         out = std::move(values);
       } else {
         out = std::vector<double>(values.begin(), values.end());
       }
-      assert(out.size() == ci->numCells());
     }
     return out;
   }
@@ -1316,24 +1308,18 @@ public:
       auto const &lattice = get_lattice();
       auto const &block = *(lattice.get_blocks()->begin());
       auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto const n_values = 9u * ci->numCells();
-      out.reserve(n_values);
+      auto values = lbm::accessor::PressureTensor::get(pdf_field, *ci);
       assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            auto const cell = Cell{x, y, z};
-            auto tensor = lbm::accessor::PressureTensor::get(pdf_field, cell);
-            pressure_tensor_correction(tensor);
-            for (auto i = 0u; i < 9u; ++i) {
-              out.emplace_back(tensor[i]);
-            }
-          }
-        }
+      assert(values.size() == 9u * ci->numCells());
+      for (auto it = values.begin(); it != values.end(); std::advance(it, 9l)) {
+        pressure_tensor_correction(std::span<FloatType, 9ul>(it, 9ul));
       }
-      assert(out.size() == n_values);
+      if constexpr (std::is_same_v<typename decltype(values)::value_type,
+                                   double>) {
+        out = std::move(values);
+      } else {
+        out = std::vector<double>(values.begin(), values.end());
+      }
     }
     return out;
   }
@@ -1444,7 +1430,9 @@ protected:
   template <typename OutputType = float>
   class DensityVTKWriter : public VTKWriter<PdfField, 1u, OutputType> {
   public:
-    using VTKWriter<PdfField, 1u, OutputType>::VTKWriter;
+    using Base = VTKWriter<PdfField, 1u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
@@ -1459,7 +1447,9 @@ protected:
   template <typename OutputType = float>
   class VelocityVTKWriter : public VTKWriter<VectorField, 3u, OutputType> {
   public:
-    using VTKWriter<VectorField, 3u, OutputType>::VTKWriter;
+    using Base = VTKWriter<VectorField, 3u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
@@ -1474,11 +1464,14 @@ protected:
   template <typename OutputType = float>
   class PressureTensorVTKWriter : public VTKWriter<PdfField, 9u, OutputType> {
   public:
+    using Base = VTKWriter<PdfField, 9u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
+
     PressureTensorVTKWriter(ConstBlockDataID const &block_id,
                             std::string const &id, FloatType unit_conversion,
                             FloatType off_diag_factor)
-        : VTKWriter<PdfField, 9u, OutputType>::VTKWriter(block_id, id,
-                                                         unit_conversion),
+        : Base(block_id, id, unit_conversion),
           m_off_diag_factor(off_diag_factor) {}
 
   protected:
@@ -1504,19 +1497,20 @@ public:
     } else {
       if (flag_observables & static_cast<int>(OutputVTK::density)) {
         auto const unit_conversion = FloatType_c(units.at("density"));
-        vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
+        vtk_obj.addCellDataWriter(std::make_shared<DensityVTKWriter<float>>(
             m_pdf_field_id, "density", unit_conversion));
       }
       if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
         auto const unit_conversion = FloatType_c(units.at("velocity"));
-        vtk_obj.addCellDataWriter(make_shared<VelocityVTKWriter<float>>(
+        vtk_obj.addCellDataWriter(std::make_shared<VelocityVTKWriter<float>>(
             m_velocity_field_id, "velocity_vector", unit_conversion));
       }
       if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
         auto const unit_conversion = FloatType_c(units.at("pressure"));
-        vtk_obj.addCellDataWriter(make_shared<PressureTensorVTKWriter<float>>(
-            m_pdf_field_id, "pressure_tensor", unit_conversion,
-            pressure_tensor_correction_factor()));
+        vtk_obj.addCellDataWriter(
+            std::make_shared<PressureTensorVTKWriter<float>>(
+                m_pdf_field_id, "pressure_tensor", unit_conversion,
+                pressure_tensor_correction_factor()));
       }
     }
   }

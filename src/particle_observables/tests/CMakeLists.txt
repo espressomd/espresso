@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 The ESPResSo project
+# Copyright (C) 2020-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-include(unit_test)
+include(espresso_unit_test)
 
-unit_test(NAME properties_test SRC properties.cpp DEPENDS
-          espresso::particle_observables)
-unit_test(NAME algorithms_test SRC algorithms.cpp DEPENDS
-          espresso::particle_observables)
-unit_test(NAME observables_test SRC observables.cpp DEPENDS
-          espresso::particle_observables)
+espresso_unit_test(SRC properties_test.cpp DEPENDS
+                   espresso::particle_observables)
+espresso_unit_test(SRC algorithms_test.cpp DEPENDS
+                   espresso::particle_observables)
+espresso_unit_test(SRC observables_test.cpp DEPENDS
+                   espresso::particle_observables)

@@ -9,7 +9,7 @@ Particle integration and propagation
 ------------------------------------
 
 The main integration scheme of |es| is the velocity Verlet algorithm.
-A steepest descent algorithm is used to minimize the system.
+A steepest descent algorithm is used to minimize forces and torques in the system.
 
 Additional integration schemes are available, which can be coupled to
 thermostats to enable Langevin dynamics, Brownian dynamics, Stokesian dynamics,
@@ -21,7 +21,7 @@ Integrators
 -----------
 
 To run the integrator call the method
-:meth:`system.integrate.run() <espressomd.integrate.Integrator.run>`::
+:meth:`system.integrator.run() <espressomd.integrate.Integrator.run>`::
 
     system.integrator.run(number_of_steps, recalc_forces=False, reuse_forces=False)
 
@@ -29,27 +29,27 @@ where ``number_of_steps`` is the number of time steps the integrator should perf
 
 The following sections detail the different integrators available.
 
-.. _Velocity Verlet Algorithm:
+.. _Velocity Verlet algorithm:
 
 Velocity Verlet algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The velocity verlet integrator is active by default.
+The velocity Verlet integrator is active by default.
 If you used a different integrator and want to switch back, use 
-
-:meth:`espressomd.integrate.IntegratorHandle.set_vv`
+:meth:`system.integrator.set_vv() <espressomd.integrate.IntegratorHandle.set_vv>`.
 
 The Velocity Verlet algorithm is used for equations of motion of the general form
 
-.. math:: 
-    
-    \dot{\vec{x}}_i(t) = \vec{v}_i(t), \\ 
-    \dot{\vec{v}}_i(t) = \frac{\vec{F}_i(\{ \vec{x}_j \} ,\vec{v}_i,t)}{m_i} ,
-    
+.. math::
+
+    \begin{aligned}
+    \dot{\vec{x}}_i(t) &= \vec{v}_i(t), \\
+    \dot{\vec{v}}_i(t) &= \frac{\vec{F}_i(\{ \vec{x}_j \} ,\vec{v}_i,t)}{m_i},
+    \end{aligned}
 
 where :math:`\vec{x}_i`, :math:`\vec{v}_i`, :math:`m_i` are position, velocity and mass of
 particle :math:`i` and :math:`\vec{F}_i(\{\vec{x}_j\},\vec{v}_i,t)` the forces acting on it.
-The force :math:`\vec{F}_i` comprises all interactions of partice :math:`i` with other particles :math:`j` and external fields
+The force :math:`\vec{F}_i` comprises all interactions of particle :math:`i` with other particles :math:`j` and external fields
 as well as contributions from thermostats, see :ref:`Thermostats`.
 
 For numerical integration, the equation of motion is discretized to the following steps (:cite:`rapaport04a` eqs. 3.5.8 - 3.5.10):
@@ -68,7 +68,7 @@ For numerical integration, the equation of motion is discretized to the followin
 
 4. Calculate the new velocity
 
-   .. math:: \vec{v}(t+dt) = \vec{v}(t+dt/2) + \frac{\vec{F}(\vec{x}(t+dt),t+dt)}{m} dt/2
+   .. math:: \vec{v}(t+dt) = \vec{v}(t+dt/2) + \frac{\vec{F}(\vec{x}(t+dt), \vec{v}(t+dt/2), t+dt)}{m} dt/2
 
 Here, for simplicity, we have omitted the particle index :math:`i`.
 Read, e.g., :math:`\vec{x}` as the position of all particles.
@@ -617,10 +617,15 @@ parameter ``gamma``. To enable the LB thermostat, use::
 
     import espressomd
     import espressomd.lb
-    system = espressomd.System(box_l=[1, 1, 1])
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1, kinematic_viscosity=1, tau=0.01)
-    self.system.lb = lbf
+    system = espressomd.System(box_l=[8., 8., 8.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1., tau=0.01, density=1.,
+                                        kinematic_viscosity=1.)
+    system.lb = lbf
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+    system.part.add(pos=[0., 0., 0.], ext_force=[0., 0., 1.])
+    system.integrator.run(10)
 
 Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
 by interpolating as described in :ref:`Interpolating velocities`.

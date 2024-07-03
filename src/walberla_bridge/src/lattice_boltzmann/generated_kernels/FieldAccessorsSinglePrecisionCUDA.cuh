@@ -43,18 +43,6 @@
 #include <tuple>
 #include <vector>
 
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-
 namespace walberla {
 namespace lbm {
 namespace accessor {
@@ -66,6 +54,10 @@ std::array<float, 19u> get(gpu::GPUField<float> const *pdf_field,
 /** @brief Set populations on a single cell. */
 void set(gpu::GPUField<float> *pdf_field, std::array<float, 19u> const &pop,
          Cell const &cell);
+/** @brief Set populations and recalculate velocities on a single cell. */
+void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
+         gpu::GPUField<float> const *force_field,
+         std::array<float, 19u> const &pop, Cell const &cell);
 /** @brief Initialize all cells with the same value. */
 void initialize(gpu::GPUField<float> *pdf_field,
                 std::array<float, 19u> const &pop);
@@ -75,6 +67,10 @@ std::vector<float> get(gpu::GPUField<float> const *pdf_field,
 /** @brief Set populations on a cell interval. */
 void set(gpu::GPUField<float> *pdf_field, std::vector<float> const &values,
          CellInterval const &ci);
+/** @brief Set populations and recalculate velocities on a cell interval. */
+void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
+         gpu::GPUField<float> const *force_field,
+         std::vector<float> const &values, CellInterval const &ci);
 } // namespace Population
 
 namespace Vector {
@@ -116,9 +112,29 @@ void set(gpu::GPUField<float> *pdf_field, std::vector<float> const &values,
 } // namespace Density
 
 namespace Velocity {
-void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *force_field,
-         Vector3<float> const &u, Cell const &cell);
+Vector3<float> get(gpu::GPUField<float> const *pdf_field,
+                   gpu::GPUField<float> const *force_field, Cell const &cell);
+std::vector<float> get(gpu::GPUField<float> const *pdf_field,
+                       gpu::GPUField<float> const *force_field,
+                       CellInterval const &ci);
+void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
+         gpu::GPUField<float> const *force_field, Vector3<float> const &u,
+         Cell const &cell);
+void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
+         gpu::GPUField<float> const *force_field,
+         std::vector<float> const &values, CellInterval const &ci);
 } // namespace Velocity
+
+namespace Force {
+void set(gpu::GPUField<float> const *pdf_field,
+         gpu::GPUField<float> *velocity_field,
+         gpu::GPUField<float> *force_field, Vector3<float> const &u,
+         Cell const &cell);
+void set(gpu::GPUField<float> const *pdf_field,
+         gpu::GPUField<float> *velocity_field,
+         gpu::GPUField<float> *force_field, std::vector<float> const &values,
+         CellInterval const &ci);
+} // namespace Force
 
 namespace DensityAndVelocity {
 std::tuple<float, Vector3<float>> get(gpu::GPUField<float> const *pdf_field,
@@ -141,16 +157,10 @@ Vector3<float> reduce(gpu::GPUField<float> const *pdf_field,
 
 namespace PressureTensor {
 Matrix3<float> get(gpu::GPUField<float> const *pdf_field, Cell const &cell);
+std::vector<float> get(gpu::GPUField<float> const *pdf_field,
+                       CellInterval const &ci);
 } // namespace PressureTensor
 
 } // namespace accessor
 } // namespace lbm
 } // namespace walberla
-
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic pop
-#endif

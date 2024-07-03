@@ -23,6 +23,12 @@ target_link_libraries(
   espresso_walberla_cpp_flags
   INTERFACE espresso::cpp_flags
             $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>)
+add_library(espresso_walberla_cuda_flags INTERFACE)
+add_library(espresso::walberla::cuda_flags ALIAS espresso_walberla_cuda_flags)
+target_link_libraries(
+  espresso_walberla_cuda_flags
+  INTERFACE espresso::cuda_flags
+            $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>)
 
 function(espresso_configure_walberla_target)
   set(TARGET_NAME ${ARGV0})

@@ -39,18 +39,6 @@
 #include <tuple>
 #include <vector>
 
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-
 namespace walberla {
 namespace {{namespace}} {
 namespace accessor {
@@ -65,6 +53,13 @@ namespace Population {
     set( gpu::GPUField< {{dtype}} > * pdf_field,
          std::array< {{dtype}}, {{Q}}u > const & pop,
          Cell const & cell );
+    /** @brief Set populations and recalculate velocities on a single cell. */
+    void
+    set( gpu::GPUField< {{dtype}} > * pdf_field,
+         gpu::GPUField< {{dtype}} > * velocity_field,
+         gpu::GPUField< {{dtype}} > const * force_field,
+         std::array< {{dtype}}, {{Q}}u > const & pop,
+         Cell const & cell );
     /** @brief Initialize all cells with the same value. */
     void initialize(
          gpu::GPUField< {{dtype}} > * pdf_field,
@@ -76,6 +71,13 @@ namespace Population {
     /** @brief Set populations on a cell interval. */
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
+         std::vector< {{dtype}} > const & values,
+         CellInterval const & ci );
+    /** @brief Set populations and recalculate velocities on a cell interval. */
+    void
+    set( gpu::GPUField< {{dtype}} > * pdf_field,
+         gpu::GPUField< {{dtype}} > * velocity_field,
+         gpu::GPUField< {{dtype}} > const * force_field,
          std::vector< {{dtype}} > const & values,
          CellInterval const & ci );
 } // namespace Population
@@ -141,12 +143,42 @@ namespace Density {
 } // namespace Density
 
 namespace Velocity {
+    Vector{{D}}< {{dtype}} >
+    get( gpu::GPUField< {{dtype}} > const * pdf_field,
+         gpu::GPUField< {{dtype}} > const * force_field,
+         Cell const & cell );
+    std::vector< {{dtype}} >
+    get( gpu::GPUField< {{dtype}} > const * pdf_field,
+         gpu::GPUField< {{dtype}} > const * force_field,
+         CellInterval const & ci );
     void
     set( gpu::GPUField< {{dtype}} > * pdf_field,
+         gpu::GPUField< {{dtype}} > * velocity_field,
+         gpu::GPUField< {{dtype}} > const * force_field,
+         Vector{{D}}< {{dtype}} > const & u,
+         Cell const & cell );
+    void
+    set( gpu::GPUField< {{dtype}} > * pdf_field,
+         gpu::GPUField< {{dtype}} > * velocity_field,
+         gpu::GPUField< {{dtype}} > const * force_field,
+         std::vector< {{dtype}} > const & values,
+         CellInterval const & ci );
+} // namespace Velocity
+
+namespace Force {
+    void
+    set( gpu::GPUField< {{dtype}} > const * pdf_field,
+         gpu::GPUField< {{dtype}} > * velocity_field,
          gpu::GPUField< {{dtype}} > * force_field,
          Vector{{D}}< {{dtype}} > const & u,
          Cell const & cell );
-} // namespace Velocity
+    void
+    set( gpu::GPUField< {{dtype}} > const * pdf_field,
+         gpu::GPUField< {{dtype}} > * velocity_field,
+         gpu::GPUField< {{dtype}} > * force_field,
+         std::vector< {{dtype}} > const & values,
+         CellInterval const & ci );
+} // namespace Force
 
 namespace DensityAndVelocity {
     std::tuple< {{dtype}} , Vector{{D}}< {{dtype}} > >
@@ -178,16 +210,11 @@ namespace PressureTensor {
     Matrix{{D}}< {{dtype}} >
     get( gpu::GPUField< {{dtype}} > const * pdf_field,
          Cell const & cell );
+    std::vector< {{dtype}} >
+    get( gpu::GPUField< {{dtype}} > const * pdf_field,
+         CellInterval const & ci );
 } // namespace PressureTensor
 
 } // namespace accessor
 } // namespace {{namespace}}
 } // namespace walberla
-
-#ifdef WALBERLA_CXX_COMPILER_IS_GNU
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef WALBERLA_CXX_COMPILER_IS_CLANG
-#pragma clang diagnostic pop
-#endif

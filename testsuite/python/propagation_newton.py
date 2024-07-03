@@ -94,12 +94,15 @@ class VelocityVerlet(ut.TestCase):
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_07__virtual(self):
+        Propagation = espressomd.propagation.Propagation
         system = self.system
         system.time_step = 0.01
 
         virtual = system.part.add(pos=[0., 0., 0.], v=[-1., 0., 0.])
         physical = system.part.add(pos=[0., 0., 0.], v=[1., 0., 0.])
         virtual.vs_relative = (physical.id, 0.3, (1., 0., 0., 0.))
+        virtual.propagation = (Propagation.TRANS_VS_RELATIVE |
+                               Propagation.ROT_VS_RELATIVE)
 
         system.integrator.set_vv()
         system.integrator.run(1)

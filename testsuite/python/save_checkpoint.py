@@ -253,7 +253,7 @@ if 'LB' not in modes:
             pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']) and not has_ase:
-    p2.vs_auto_relate_to(p1)
+    p2.vs_auto_relate_to(p1, couple_to_lb=lbf_class is not None)
 
 # non-bonded interactions
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:

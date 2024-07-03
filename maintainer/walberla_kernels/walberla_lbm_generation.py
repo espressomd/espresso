@@ -19,6 +19,7 @@
 #
 
 import os
+import re
 import sympy as sp
 import pystencils as ps
 import lbmpy_walberla
@@ -104,6 +105,12 @@ def equations_to_code(equations, variable_prefix="",
     return "\n".join(result)
 
 
+def substitute_force_getter_pattern(code, pattern, subst):
+    re_pat = re.compile(pattern)
+    assert re_pat.search(code) is not None, f"pattern '{pattern} not found in '''\n{code}\n'''"  # nopep8
+    return re_pat.sub(subst, code)
+
+
 def substitute_force_getter_cpp(code):
     field_getter = "force->"
     assert field_getter in code is not None, f"pattern '{field_getter} not found in '''\n{code}\n'''"  # nopep8
@@ -120,6 +127,7 @@ def substitute_force_getter_cu(code):
 def add_espresso_filters_to_jinja_env(jinja_env):
     jinja_env.filters["substitute_force_getter_cpp"] = substitute_force_getter_cpp
     jinja_env.filters["substitute_force_getter_cu"] = substitute_force_getter_cu
+    jinja_env.filters["substitute_force_getter_pattern"] = substitute_force_getter_pattern
 
 
 def generate_macroscopic_values_accessors(ctx, config, lb_method, templates):

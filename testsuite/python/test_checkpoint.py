@@ -158,8 +158,6 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(node.velocity), slip_velocity1)
         for node in lbf[-1, :, :]:
             np.testing.assert_allclose(np.copy(node.velocity), slip_velocity2)
-        for node in lbf[2, :, :]:
-            np.testing.assert_allclose(np.copy(node.velocity), 0.)
         # remove boundaries
         lbf.clear_boundaries()
         np.testing.assert_equal(
@@ -314,6 +312,8 @@ class CheckpointTest(ut.TestCase):
             lb_density = vtk_data["density"]
             self.assertAlmostEqual(
                 lb_density[0, 0, 0], new_density, delta=1e-5)
+        (vtk_root / filename.format(1)).unlink(missing_ok=True)
+        (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
@@ -357,6 +357,8 @@ class CheckpointTest(ut.TestCase):
             ek_density = vtk_data["density"]
             self.assertAlmostEqual(
                 ek_density[0, 0, 0], new_density, delta=1e-5)
+        (vtk_root / filename.format(1)).unlink(missing_ok=True)
+        (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
@@ -749,9 +751,11 @@ class CheckpointTest(ut.TestCase):
         Propagation = espressomd.propagation.Propagation
         p_real = system.part.by_id(0)
         p_virt = system.part.by_id(1)
+        prop_flag = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE
+        if espressomd.has_features("WALBERLA") and system.lb is not None:
+            prop_flag |= Propagation.TRANS_LB_MOMENTUM_EXCHANGE
         self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)
-        self.assertEqual(p_virt.propagation, Propagation.TRANS_VS_RELATIVE |
-                         Propagation.ROT_VS_RELATIVE)
+        self.assertEqual(p_virt.propagation, prop_flag)
         self.assertEqual(p_real.vs_relative[0], -1)
         self.assertEqual(p_virt.vs_relative[0], p_real.id)
         self.assertEqual(p_real.vs_relative[1], 0.)

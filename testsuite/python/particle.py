@@ -198,11 +198,14 @@ class ParticleProperties(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_vs_relative(self):
+        Propagation = espressomd.propagation.Propagation
         self.system.part.add(id=0, pos=(0, 0, 0))
         p1 = self.system.part.add(id=1, pos=(0, 0, 0))
         self.assertFalse(p1.is_virtual())
         p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
         p1.vs_quat = [1, 2, 3, 4]
+        p1.propagation = (Propagation.TRANS_VS_RELATIVE |
+                          Propagation.ROT_VS_RELATIVE)
         self.assertTrue(p1.is_virtual())
         np.testing.assert_array_equal(p1.vs_quat, [1, 2, 3, 4])
         res = p1.vs_relative

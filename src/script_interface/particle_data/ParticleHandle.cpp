@@ -173,6 +173,11 @@ void ParticleHandle::set_particle_property(T &(Particle::*setter)(),
 }
 
 ParticleHandle::ParticleHandle() {
+  /* Warning: the order of particle property setters matters! Some properties
+   * override each other, e.g. quat/director/dip or dip/dipm.
+   * This is revelant during checkpointing: all particle properties are set at
+   * once, in the order specified in the following call to `add_parameters()`.
+   */
   add_parameters({
       {"id", AutoParameter::read_only, [this]() { return m_pid; }},
       {"type",
@@ -240,6 +245,28 @@ ParticleHandle::ParticleHandle() {
        },
 #endif // ELECTROSTATICS
        [this]() { return get_particle_data(m_pid).q(); }},
+#ifdef DIPOLES
+      {"dip",
+       [this](Variant const &value) {
+         set_particle_property([&value](Particle &p) {
+           auto const dip = get_value<Utils::Vector3d>(value);
+           std::tie(p.quat(), p.dipm()) = convert_dip_to_quat(dip);
+         });
+       },
+       [this]() { return get_particle_data(m_pid).calc_dip(); }},
+      {"dipm",
+       [this](Variant const &value) {
+         set_particle_property(&Particle::dipm, value);
+       },
+       [this]() { return get_particle_data(m_pid).dipm(); }},
+#endif // DIPOLES
+#ifdef DIPOLE_FIELD_TRACKING
+      {"dip_fld",
+       [this](Variant const &value) {
+         set_particle_property(&Particle::dip_fld, value);
+       },
+       [this]() { return get_particle_data(m_pid).dip_fld(); }},
+#endif
 #ifdef ROTATION
       {"director",
        [this](Variant const &value) {
@@ -300,28 +327,6 @@ ParticleHandle::ParticleHandle() {
          return convert_vector_body_to_space(p, p.torque());
        }},
 #endif // ROTATION
-#ifdef DIPOLES
-      {"dip",
-       [this](Variant const &value) {
-         set_particle_property([&value](Particle &p) {
-           auto const dip = get_value<Utils::Vector3d>(value);
-           std::tie(p.quat(), p.dipm()) = convert_dip_to_quat(dip);
-         });
-       },
-       [this]() { return get_particle_data(m_pid).calc_dip(); }},
-      {"dipm",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::dipm, value);
-       },
-       [this]() { return get_particle_data(m_pid).dipm(); }},
-#endif // DIPOLES
-#ifdef DIPOLE_FIELD_TRACKING
-      {"dip_fld",
-       [this](Variant const &value) {
-         set_particle_property(&Particle::dip_fld, value);
-       },
-       [this]() { return get_particle_data(m_pid).dip_fld(); }},
-#endif
 #ifdef ROTATIONAL_INERTIA
       {"rinertia",
        [this](Variant const &value) {
@@ -364,17 +369,6 @@ ParticleHandle::ParticleHandle() {
        [this]() { return get_particle_data(m_pid).ext_torque(); }},
 #endif // ROTATION
 #endif // EXTERNAL_FORCES
-      {"propagation",
-       [this](Variant const &value) {
-         auto const propagation = get_value<int>(value);
-         if (!is_valid_propagation_combination(propagation)) {
-           throw std::domain_error(error_msg(
-               "propagation", "propagation combination not accepted: " +
-                                  propagation_bitmask_to_string(propagation)));
-         }
-         set_particle_property(&Particle::propagation, value);
-       },
-       [this]() { return get_particle_data(m_pid).propagation(); }},
 #ifdef THERMOSTAT_PER_PARTICLE
       {"gamma",
        [this](Variant const &value) {
@@ -404,7 +398,11 @@ ParticleHandle::ParticleHandle() {
       {"lees_edwards_flag", AutoParameter::read_only,
        [this]() { return get_particle_data(m_pid).lees_edwards_flag(); }},
       {"image_box", AutoParameter::read_only,
-       [this]() { return get_particle_data(m_pid).image_box(); }},
+       [this]() {
+         auto const &box_geo = *System::get_system().box_geo;
+         auto const p = get_particle_data(m_pid);
+         return box_geo.folded_image_box(p.pos(), p.image_box());
+       }},
       {"node", AutoParameter::read_only,
        [this]() {
          return (context()->is_head_node()) ? get_particle_node(m_pid) : -1;
@@ -445,14 +443,8 @@ ParticleHandle::ParticleHandle() {
            throw std::invalid_argument(error_msg(
                "vs_relative", "must take the form [id, distance, quaternion]"));
          }
-         set_particle_property([&vs_relative](Particle &p) {
-           p.vs_relative() = vs_relative;
-           if (vs_relative.to_particle_id != -1) {
-             p.propagation() = PropagationMode::TRANS_VS_RELATIVE |
-                               PropagationMode::ROT_VS_RELATIVE;
-           }
-           assert(is_valid_propagation_combination(p.propagation()));
-         });
+         set_particle_property(
+             [&vs_relative](Particle &p) { p.vs_relative() = vs_relative; });
        },
        [this]() {
          auto const vs_rel = get_particle_data(m_pid).vs_relative();
@@ -460,6 +452,17 @@ ParticleHandle::ParticleHandle() {
                                       quat2vector(vs_rel.rel_orientation)}};
        }},
 #endif // VIRTUAL_SITES_RELATIVE
+      {"propagation",
+       [this](Variant const &value) {
+         auto const propagation = get_value<int>(value);
+         if (!is_valid_propagation_combination(propagation)) {
+           throw std::domain_error(error_msg(
+               "propagation", "propagation combination not accepted: " +
+                                  propagation_bitmask_to_string(propagation)));
+         }
+         set_particle_property(&Particle::propagation, value);
+       },
+       [this]() { return get_particle_data(m_pid).propagation(); }},
 #ifdef ENGINE
       {"swimming",
        [this](Variant const &value) {
@@ -598,7 +601,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     }
     return get_particle_data(m_pid).is_virtual();
 #ifdef VIRTUAL_SITES_RELATIVE
-  } else if (name == "vs_relate_to") {
+  } else if (name == "vs_auto_relate_to") {
     if (not context()->is_head_node()) {
       return {};
     }
@@ -629,6 +632,9 @@ Variant ParticleHandle::do_call_method(std::string const &name,
         override_cutoff_check);
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
+    set_parameter("propagation",
+                  Variant{static_cast<int>(PropagationMode::TRANS_VS_RELATIVE |
+                                           PropagationMode::ROT_VS_RELATIVE)});
 #endif // VIRTUAL_SITES_RELATIVE
 #ifdef EXCLUSIONS
   } else if (name == "has_exclusion") {
@@ -724,14 +730,11 @@ static auto const contradicting_arguments_quat = std::vector<
 
 void ParticleHandle::do_construct(VariantMap const &params) {
   auto const n_extra_args = params.size() - params.count("id");
-  auto const has_param = [&params](std::string const key) {
-    return params.count(key) == 1;
-  };
-  m_pid = (has_param("id")) ? get_value<int>(params, "id")
-                            : get_maximal_particle_id() + 1;
+  m_pid = (params.contains("id")) ? get_value<int>(params, "id")
+                                  : get_maximal_particle_id() + 1;
 
 #ifndef NDEBUG
-  if (!has_param("id")) {
+  if (not params.contains("id")) {
     auto head_node_reference = m_pid;
     boost::mpi::broadcast(context()->get_comm(), head_node_reference, 0);
     assert(m_pid == head_node_reference && "global max_seen_pid has diverged");
@@ -759,11 +762,11 @@ void ParticleHandle::do_construct(VariantMap const &params) {
   context()->parallel_try_catch([&]() {
     // if we are not constructing a particle from a checkpoint file,
     // check the quaternion is not accidentally set twice by the user
-    if (not has_param("__cpt_sentinel")) {
+    if (not params.contains("__cpt_sentinel")) {
       auto formatter =
           boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
       for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
-        if (has_param(prop1) and has_param(prop2)) {
+        if (params.contains(prop1) and params.contains(prop2)) {
           auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
           throw std::invalid_argument(err_msg);
         }
@@ -780,29 +783,16 @@ void ParticleHandle::do_construct(VariantMap const &params) {
       /* clang-format off */
       // set particle properties (filter out read-only and deferred properties)
       std::set<std::string> const skip = {
-          "pos_folded", "pos", "quat", "director", "id",
-          "exclusions", "dip", "node", "image_box", "bonds",
+          "pos_folded", "pos", "id", "exclusions", "node", "image_box", "bonds",
           "lees_edwards_flag", "__cpt_sentinel",
       };
       /* clang-format on */
-#ifdef ROTATION
-      // multiple parameters can potentially set the quaternion, but only one
-      // can be allowed to; these conditionals are required to handle a reload
-      // from a checkpoint file, where all properties exist (avoids accidentally
-      // overwriting the quaternion by the default-constructed dipole moment)
-      for (std::string name : {"quat", "director", "dip"}) {
-        if (has_param(name)) {
-          do_set_parameter(name, params.at(name));
-          break;
-        }
-      }
-#endif // ROTATION
       for (auto const &name : get_parameter_insertion_order()) {
-        if (params.count(name) != 0ul and skip.count(name) == 0ul) {
+        if (params.contains(name) and not skip.contains(name)) {
           do_set_parameter(name, params.at(name));
         }
       }
-      if (not has_param("type")) {
+      if (not params.contains("type")) {
         do_set_parameter("type", 0);
       }
     });

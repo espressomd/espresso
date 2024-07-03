@@ -121,12 +121,15 @@ class IntegratorNPT(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_07__virtual(self):
+        Propagation = espressomd.propagation.Propagation
         system = self.system
         system.time_step = 0.01
 
         virtual = system.part.add(pos=[0, 0, 0], v=[1, 0, 0])
         physical = system.part.add(pos=[0, 0, 0], v=[2, 0, 0])
         virtual.vs_relative = (physical.id, 0.1, (1., 0., 0., 0.))
+        virtual.propagation = (Propagation.TRANS_VS_RELATIVE |
+                               Propagation.ROT_VS_RELATIVE)
 
         system.thermostat.set_npt(kT=0., gamma0=2., gammav=1e-6, seed=42)
         system.integrator.set_isotropic_npt(ext_pressure=0.01, piston=1e6)

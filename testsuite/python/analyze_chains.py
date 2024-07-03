@@ -25,6 +25,7 @@ import espressomd.analyze
 import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.polymer
+import espressomd.propagation
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
@@ -192,6 +193,7 @@ class AnalyzeChain(ut.TestCase):
                                    atol=1e-8)
 
     def test_exceptions(self):
+        Propagation = espressomd.propagation.Propagation
         num_poly = 2
         num_mono = 5
         self.insert_polymers(num_poly, num_mono)
@@ -217,6 +219,8 @@ class AnalyzeChain(ut.TestCase):
             with self.assertRaisesRegex(RuntimeError, "Center of mass is not well-defined"):
                 p = self.system.part.by_id(0)
                 p.vs_relative = (1, 0.01, (1., 0., 0., 0.))
+                p.propagation = (Propagation.TRANS_VS_RELATIVE |
+                                 Propagation.ROT_VS_RELATIVE)
                 analysis.calc_rg(chain_start=0, number_of_chains=num_poly,
                                  chain_length=num_mono)
         with self.assertRaisesRegex(RuntimeError, "Parameter 'analysis' is read-only"):
