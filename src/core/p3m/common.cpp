@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -21,7 +21,7 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(P3M) or defined(DP3M)
 
 #include "common.hpp"
 
@@ -105,4 +105,4 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
   q_21_off = dim[2] * (dim[1] - params.cao);
 }
 
-#endif /* defined(P3M) || defined(DP3M) */
+#endif // defined(P3M) or defined(DP3M)

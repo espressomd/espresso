@@ -1128,7 +1128,7 @@ void charge_assign(elc_data const &elc, CoulombP3M &solver,
   }
   /* prepare local FFT mesh */
   for (int i = 0; i < solver.p3m.local_mesh.size; i++)
-    solver.p3m.rs_mesh[i] = 0.;
+    solver.p3m.mesh.rs_scalar[i] = 0.;
 
   for (auto zipped : p_q_pos_range) {
     auto const p_q = boost::get<0>(zipped);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -18,12 +18,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(P3M) or defined(DP3M)
 
+#include "fft/fft.hpp"
 #include "p3m/common.hpp"
-#include "p3m/fft.hpp"
 #include "p3m/send_mesh.hpp"
 
 #include <utils/Vector.hpp>
@@ -70,8 +71,8 @@ static void p3m_add_block(double const *in, double *out, int const start[3],
   }
 }
 
-void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
-                           const P3MLocalMesh &local_mesh) {
+void p3m_send_mesh::resize(boost::mpi::communicator const &comm,
+                           P3MLocalMesh const &local_mesh) {
   int done[3] = {0, 0, 0};
   /* send grids */
   for (int i = 0; i < 3; i++) {
@@ -145,9 +146,9 @@ void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
   }
 }
 
-void p3m_send_mesh::gather_grid(std::span<double *> meshes,
-                                const boost::mpi::communicator &comm,
-                                const Utils::Vector3i &dim) {
+void p3m_send_mesh::gather_grid(boost::mpi::communicator const &comm,
+                                std::span<double *> meshes,
+                                Utils::Vector3i const &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   send_grid.resize(max * meshes.size());
   recv_grid.resize(max * meshes.size());
@@ -159,8 +160,8 @@ void p3m_send_mesh::gather_grid(std::span<double *> meshes,
     /* pack send block */
     if (s_size[s_dir] > 0)
       for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
-                       s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
+        fft::fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
+                            s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }
 
     /* communication */
@@ -183,9 +184,9 @@ void p3m_send_mesh::gather_grid(std::span<double *> meshes,
   }
 }
 
-void p3m_send_mesh::spread_grid(std::span<double *> meshes,
-                                const boost::mpi::communicator &comm,
-                                const Utils::Vector3i &dim) {
+void p3m_send_mesh::spread_grid(boost::mpi::communicator const &comm,
+                                std::span<double *> meshes,
+                                Utils::Vector3i const &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
   send_grid.resize(max * meshes.size());
   recv_grid.resize(max * meshes.size());
@@ -197,8 +198,8 @@ void p3m_send_mesh::spread_grid(std::span<double *> meshes,
     /* pack send block */
     if (r_size[r_dir] > 0)
       for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
-                       r_ld[r_dir], r_dim[r_dir], dim.data(), 1);
+        fft::fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
+                            r_ld[r_dir], r_dim[r_dir], dim.data(), 1);
       }
     /* communication */
     if (node_neighbors[r_dir] != comm.rank()) {
@@ -213,11 +214,11 @@ void p3m_send_mesh::spread_grid(std::span<double *> meshes,
     /* un pack recv block */
     if (s_size[s_dir] > 0) {
       for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
-                         s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
+        fft::fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
+                              s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }
     }
   }
 }
 
-#endif
+#endif // defined(P3M) or defined(DP3M)

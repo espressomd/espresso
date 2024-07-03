@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -18,12 +18,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CORE_P3M_SEND_MESH_HPP
-#define ESPRESSO_CORE_P3M_SEND_MESH_HPP
+
+#pragma once
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(P3M) or defined(DP3M)
 
 #include "p3m/common.hpp"
 
@@ -66,22 +66,20 @@ class p3m_send_mesh {
   std::vector<double> recv_grid;
 
 public:
-  void resize(const boost::mpi::communicator &comm,
-              const P3MLocalMesh &local_mesh);
-  void gather_grid(std::span<double *> meshes,
-                   const boost::mpi::communicator &comm,
-                   const Utils::Vector3i &dim);
-  void gather_grid(double *mesh, const boost::mpi::communicator &comm,
-                   const Utils::Vector3i &dim) {
-    gather_grid(std::span(&mesh, 1u), comm, dim);
+  void resize(boost::mpi::communicator const &comm,
+              P3MLocalMesh const &local_mesh);
+  void gather_grid(boost::mpi::communicator const &comm,
+                   std::span<double *> meshes, Utils::Vector3i const &dim);
+  void gather_grid(boost::mpi::communicator const &comm, double *mesh,
+                   Utils::Vector3i const &dim) {
+    gather_grid(comm, std::span(&mesh, 1u), dim);
   }
-  void spread_grid(std::span<double *> meshes,
-                   const boost::mpi::communicator &comm,
-                   const Utils::Vector3i &dim);
-  void spread_grid(double *mesh, const boost::mpi::communicator &comm,
-                   const Utils::Vector3i &dim) {
-    spread_grid(std::span(&mesh, 1u), comm, dim);
+  void spread_grid(boost::mpi::communicator const &comm,
+                   std::span<double *> meshes, Utils::Vector3i const &dim);
+  void spread_grid(boost::mpi::communicator const &comm, double *mesh,
+                   Utils::Vector3i const &dim) {
+    spread_grid(comm, std::span(&mesh, 1u), dim);
   }
 };
-#endif
-#endif
+
+#endif // defined(P3M) or defined(DP3M)

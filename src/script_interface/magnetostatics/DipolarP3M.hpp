@@ -26,6 +26,7 @@
 #include "Actor.hpp"
 
 #include "core/magnetostatics/dp3m.hpp"
+#include "core/p3m/FFTBackendLegacy.hpp"
 
 #include "script_interface/get_value.hpp"
 
@@ -85,6 +86,8 @@ public:
           std::move(p3m), get_value<double>(params, "prefactor"),
           get_value<int>(params, "timings"),
           get_value<bool>(params, "verbose"));
+      m_actor->dp3m.make_fft_instance<FFTBackendLegacy>();
+      m_actor->dp3m.set_dipolar_mode();
     });
   }
 };

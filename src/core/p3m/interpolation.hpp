@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_CORE_P3M_INTERPOLATION_HPP
-#define ESPRESSO_CORE_P3M_INTERPOLATION_HPP
+
+#pragma once
 
 #include <utils/index.hpp>
 #include <utils/math/bspline.hpp>
@@ -206,5 +206,3 @@ void p3m_interpolate(P3MLocalMesh const &local_mesh,
     q_ind += local_mesh.q_21_off;
   }
 }
-
-#endif

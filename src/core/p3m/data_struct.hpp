@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
- * Copyright (C) 2002-2010
+ * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
  * This file is part of ESPResSo.
@@ -23,20 +23,38 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(P3M) or defined(DP3M)
 
 #include "common.hpp"
 
 #include <array>
+#include <cassert>
+#include <memory>
+#include <tuple>
+#include <utility>
 #include <vector>
 
-struct p3m_data_struct_base {
-  explicit p3m_data_struct_base(P3MParameters &&parameters)
-      : params{std::move(parameters)}, ks_pnum{0} {}
+class FFTBackend;
 
+/**
+ * @brief Base class for the electrostatics and magnetostatics P3M algorithms.
+ * Contains a handle to the FFT backend, information about the local mesh,
+ * the differential operator, and various buffers.
+ */
+struct p3m_data_struct {
+  explicit p3m_data_struct(P3MParameters &&parameters)
+      : params{std::move(parameters)} {}
+
+  /** @brief P3M base parameters. */
   P3MParameters params;
+  /** @brief Local mesh properties. */
+  P3MLocalMesh local_mesh;
+  /** @brief Local mesh FFT buffers. */
+  P3MFFTMesh mesh;
 
-  /** Spatial differential operator in k-space. We use an i*k differentiation.
+  /**
+   * @brief Spatial differential operator in k-space.
+   * We use an i*k differentiation.
    */
   std::array<std::vector<int>, 3> d_op;
   /** Force optimised influence function (k-space) */
@@ -44,8 +62,8 @@ struct p3m_data_struct_base {
   /** Energy optimised influence function (k-space) */
   std::vector<double> g_energy;
 
-  /** number of permutations in k_space */
-  int ks_pnum;
+  /** FFT backend. */
+  std::unique_ptr<FFTBackend> fft;
 
   /** Calculate the Fourier transformed differential operator.
    *  Remark: This is done on the level of n-vectors and not k-vectors,
@@ -54,6 +72,50 @@ struct p3m_data_struct_base {
   void calc_differential_operator() {
     d_op = detail::calc_meshift(params.mesh, true);
   }
+
+  template <typename T, class... Args> void make_fft_instance(Args... args) {
+    assert(fft == nullptr);
+    fft = std::make_unique<T>(*this, args...);
+  }
+
+  inline void set_dipolar_mode();
 };
 
-#endif
+/**
+ * @brief API for the FFT backend of the P3M algorithm.
+ * Any FFT backend must implement this interface.
+ * The backend can read some members of @ref p3m_data_struct
+ * but can only modify the FFT buffers in @ref P3MFFTMesh.
+ */
+class FFTBackend {
+protected:
+  P3MParameters const &params;
+  P3MLocalMesh const &local_mesh;
+  P3MFFTMesh &mesh;
+
+public:
+  bool dipolar = false;
+  bool check_complex_residuals = false;
+  explicit FFTBackend(p3m_data_struct &obj)
+      : params{obj.params}, local_mesh{obj.local_mesh}, mesh{obj.mesh} {}
+  virtual ~FFTBackend() = default;
+  /** @brief Initialize the FFT plans and buffers. */
+  virtual void init_fft() = 0;
+  /** @brief Carry out the forward FFT of the scalar or field meshes. */
+  virtual void perform_fwd_fft() = 0;
+  /** @brief Carry out the backward FFT of the scalar mesh. */
+  virtual void perform_field_back_fft() = 0;
+  /** @brief Carry out the backward FFT of the field meshes. */
+  virtual void perform_space_back_fft() = 0;
+  /** @brief Get indices of the k-space data layout. */
+  virtual std::tuple<int, int, int> get_permutations() const = 0;
+};
+
+void p3m_data_struct::set_dipolar_mode() {
+  assert(g_energy.empty() and g_force.empty());
+  assert(d_op[0u].empty() and d_op[1u].empty() and d_op[2u].empty());
+  assert(not fft->dipolar);
+  fft->dipolar = true;
+}
+
+#endif // defined(P3M) or defined(DP3M)

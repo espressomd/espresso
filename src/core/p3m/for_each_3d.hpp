@@ -20,6 +20,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 
 namespace detail {
 

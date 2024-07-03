@@ -26,6 +26,7 @@
 #include "Actor.hpp"
 
 #include "core/electrostatics/p3m.hpp"
+#include "core/p3m/FFTBackendLegacy.hpp"
 
 #include "script_interface/get_value.hpp"
 
@@ -88,6 +89,7 @@ public:
           std::move(p3m), get_value<double>(params, "prefactor"),
           get_value<int>(params, "timings"), get_value<bool>(params, "verbose"),
           get_value<bool>(params, "check_complex_residuals"));
+      m_actor->p3m.make_fft_instance<FFTBackendLegacy>();
     });
     set_charge_neutrality_tolerance(params);
   }
