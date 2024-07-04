@@ -95,6 +95,10 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
             $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:espresso::walberla_cuda>)
 endif()
 
+if(ESPRESSO_BUILD_WITH_FFTW)
+  add_subdirectory(fft)
+endif()
+
 add_subdirectory(accumulators)
 add_subdirectory(analysis)
 add_subdirectory(bond_breakage)

@@ -22,11 +22,12 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(P3M) or defined(DP3M)
 
 #include <boost/test/unit_test.hpp>
 
-#include "p3m/fft.hpp"
+#include "fft/fft.hpp"
+#include "fft/vector.hpp"
 #include "p3m/for_each_3d.hpp"
 
 #include <utils/Vector.hpp>
@@ -39,13 +40,8 @@
 #include <stdexcept>
 #include <vector>
 
-std::optional<std::vector<int>> find_comm_groups(Utils::Vector3i const &,
-                                                 Utils::Vector3i const &,
-                                                 std::span<int const>,
-                                                 std::span<int>, std::span<int>,
-                                                 std::span<int>, int);
-
 BOOST_AUTO_TEST_CASE(fft_find_comm_groups_mismatch) {
+  using fft::find_comm_groups;
   int my_pos[3] = {0};
   int nodelist[4] = {0};
   int nodepos[12] = {0};
@@ -68,6 +64,7 @@ BOOST_AUTO_TEST_CASE(fft_find_comm_groups_mismatch) {
 }
 
 BOOST_AUTO_TEST_CASE(fft_map_grid) {
+  using fft::map_3don2d_grid;
   {
     auto g3d = Utils::Vector3i{{3, 2, 1}};
     auto g2d = Utils::Vector3i{{3, 2, 1}};
@@ -161,7 +158,7 @@ BOOST_AUTO_TEST_CASE(fft_map_grid) {
 BOOST_AUTO_TEST_CASE(fft_exceptions) {
   auto constexpr size_max = std::numeric_limits<std::size_t>::max();
   auto constexpr bad_size = size_max / sizeof(int) + 1ul;
-  fft_allocator<int> allocator{};
+  fft::allocator<int> allocator{};
   BOOST_CHECK_EQUAL(allocator.allocate(0ul), nullptr);
   BOOST_CHECK_THROW(allocator.allocate(bad_size), std::bad_array_new_length);
 }
@@ -203,6 +200,6 @@ BOOST_AUTO_TEST_CASE(for_each_3d_test) {
   }
 }
 
-#else  // defined(P3M) || defined(DP3M)
+#else  // defined(P3M) or defined(DP3M)
 int main(int argc, char **argv) {}
-#endif // defined(P3M) || defined(DP3M)
+#endif // defined(P3M) or defined(DP3M)

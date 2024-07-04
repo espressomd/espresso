@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 The ESPResSo project
+ * Copyright (C) 2019-2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -47,7 +47,7 @@
  *
  * @param cao Charge assignment order.
  * @param alpha Ewald splitting parameter.
- * @param k k Vector to evaluate the function for.
+ * @param k k-vector to evaluate the function for.
  * @param h Grid spacing.
  */
 template <std::size_t S, std::size_t m>
@@ -74,7 +74,6 @@ double G_opt(int cao, double alpha, Utils::Vector3d const &k,
   for_each_3d(
       m_start, m_stop, indices,
       [&]() {
-        using namespace detail::FFT_indexing;
         auto const U2 = std::pow(Utils::product(fnm), 2 * cao);
         auto const km2 = km.norm2();
         auto const exponent = exponent_prefactor * km2;
@@ -102,17 +101,22 @@ double G_opt(int cao, double alpha, Utils::Vector3d const &k,
  *          1 for electric field...
  * @tparam m Number of aliasing terms to take into account.
  *
- * @param params P3M parameters
- * @param n_start Lower left corner of the grid
+ * @param params P3M parameters.
+ * @param n_start Lower left corner of the grid.
  * @param n_stop Upper right corner of the grid.
- * @param inv_box_l Inverse box length
+ * @param KX k-space x-axis index.
+ * @param KY k-space y-axis index.
+ * @param KZ k-space z-axis index.
+ * @param inv_box_l Inverse box length.
  * @return Values of G_opt at regular grid points.
  */
 template <std::size_t S, std::size_t m = 0>
-std::vector<double> grid_influence_function(const P3MParameters &params,
-                                            const Utils::Vector3i &n_start,
-                                            const Utils::Vector3i &n_stop,
-                                            const Utils::Vector3d &inv_box_l) {
+std::vector<double> grid_influence_function(P3MParameters const &params,
+                                            Utils::Vector3i const &n_start,
+                                            Utils::Vector3i const &n_stop,
+                                            int const KX, int const KY,
+                                            int const KZ,
+                                            Utils::Vector3d const &inv_box_l) {
 
   auto const shifts = detail::calc_meshift(params.mesh);
   auto const size = n_stop - n_start;
@@ -132,14 +136,13 @@ std::vector<double> grid_influence_function(const P3MParameters &params,
   auto index = std::size_t(0u);
 
   for_each_3d(n_start, n_stop, indices, [&]() {
-    using namespace detail::FFT_indexing;
-    if ((indices[KX] % half_mesh[RX] != 0) or
-        (indices[KY] % half_mesh[RY] != 0) or
-        (indices[KZ] % half_mesh[RZ] != 0)) {
+    if ((indices[KX] % half_mesh[0u] != 0) or
+        (indices[KY] % half_mesh[1u] != 0) or
+        (indices[KZ] % half_mesh[2u] != 0)) {
       auto const k =
-          Utils::Vector3d{{shifts[RX][indices[KX]] * wavevector[RX],
-                           shifts[RY][indices[KY]] * wavevector[RY],
-                           shifts[RZ][indices[KZ]] * wavevector[RZ]}};
+          Utils::Vector3d{{shifts[0u][indices[KX]] * wavevector[0u],
+                           shifts[1u][indices[KY]] * wavevector[1u],
+                           shifts[2u][indices[KZ]] * wavevector[2u]}};
       g[index] = G_opt<S, m>(params.cao, params.alpha, k, params.a);
     }
     ++index;
