@@ -77,8 +77,6 @@ struct p3m_data_struct {
     assert(fft == nullptr);
     fft = std::make_unique<T>(*this, args...);
   }
-
-  inline void set_dipolar_mode();
 };
 
 /**
@@ -94,7 +92,6 @@ protected:
   P3MFFTMesh &mesh;
 
 public:
-  bool dipolar = false;
   bool check_complex_residuals = false;
   explicit FFTBackend(p3m_data_struct &obj)
       : params{obj.params}, local_mesh{obj.local_mesh}, mesh{obj.mesh} {}
@@ -110,12 +107,5 @@ public:
   /** @brief Get indices of the k-space data layout. */
   virtual std::tuple<int, int, int> get_permutations() const = 0;
 };
-
-void p3m_data_struct::set_dipolar_mode() {
-  assert(g_energy.empty() and g_force.empty());
-  assert(d_op[0u].empty() and d_op[1u].empty() and d_op[2u].empty());
-  assert(not fft->dipolar);
-  fft->dipolar = true;
-}
 
 #endif // defined(P3M) or defined(DP3M)

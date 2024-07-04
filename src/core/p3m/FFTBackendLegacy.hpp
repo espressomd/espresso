@@ -44,6 +44,7 @@ struct fft_data_struct;
  * The 3D FFT is split into three 1D FFTs.
  */
 class FFTBackendLegacy : public FFTBackend {
+  bool dipolar;
   std::unique_ptr<fft::fft_data_struct> fft;
   /** @brief k-space mesh (local) for k-space calculations. */
   std::vector<double> ks_mesh;
@@ -54,7 +55,7 @@ class FFTBackendLegacy : public FFTBackend {
   p3m_send_mesh mesh_comm;
 
 public:
-  explicit FFTBackendLegacy(p3m_data_struct &obj);
+  explicit FFTBackendLegacy(p3m_data_struct &obj, bool dipolar);
   ~FFTBackendLegacy() override;
   void init_fft() override;
   void perform_fwd_fft() override;

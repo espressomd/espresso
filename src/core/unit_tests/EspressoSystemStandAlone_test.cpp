@@ -314,7 +314,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              1e-3};
     auto solver =
         std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
-    solver->p3m.make_fft_instance<FFTBackendLegacy>();
+    solver->p3m.make_fft_instance<FFTBackendLegacy>(false);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
 

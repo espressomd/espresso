@@ -36,8 +36,8 @@
 #include <span>
 #include <utility>
 
-FFTBackendLegacy::FFTBackendLegacy(p3m_data_struct &obj)
-    : FFTBackend(obj),
+FFTBackendLegacy::FFTBackendLegacy(p3m_data_struct &obj, bool dipolar)
+    : FFTBackend(obj), dipolar{dipolar},
       fft{std::make_unique<fft::fft_data_struct>(
           ::Communication::mpiCallbacksHandle()->share_mpi_env())} {}
 
