@@ -126,43 +126,6 @@ Several modes are available for different types of binding.
             part_type_to_be_glued=3,
             part_type_after_glueing=4)
 
-* ``"bind_three_particles"`` allows for the creation of agglomerates which maintain
-  their shape similarly to those create by the mode ``"bind_at_point_of_collision"``.
-  The present approach works without virtual sites. Instead, for each two-particle
-  collision, the surrounding is searched for a third particle. If one is found,
-  angular bonds are placed to maintain the local shape.
-  If all three particles are within the cutoff distance, an angle bond is added
-  on each of the three particles in addition
-  to the distance based bonds between the particle centers.
-  If two particles are within the cutoff of a central particle (e.g., chain of three particles)
-  an angle bond is placed on the central particle.
-  The angular bonds being added are determined from the angle between the particles.
-  This method does not depend on the particles' rotational
-  degrees of freedom being integrated. Virtual sites are not required.
-  The method, along with the corresponding bonds are setup as follows::
-
-        first_angle_bond_id = 0
-        n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
-        for i in range(0, n_angle_bonds, 1):
-            bond_id = first_angle_bond_id + i
-            system.bonded_inter[bond_id] = espressomd.interactions.AngleHarmonic(
-                bend=1., phi0=float(i) / float(n_angle_bonds - 1) * np.pi)
-
-        bond_centers = espressomd.interactions.HarmonicBond(k=1., r_0=0.1, r_cut=0.5)
-        system.bonded_inter.add(bond_centers)
-
-        system.collision_detection.set_params(
-            mode="bind_three_particles",
-            bond_centers=bond_centers,
-            bond_three_particles=first_angle_bond_id,
-            three_particle_binding_angle_resolution=n_angle_bonds,
-            distance=0.1)
-
-  Important: The bonds for the angles are mapped via their numerical bond ids.
-  In this example, ids from 0 to 180 are used. All other bonds required for
-  the simulation need to be added to the system after those bonds. In particular,
-  this applies to the bonded interaction passed via ``bond_centers``
-
 
 The following limitations currently apply for the collision detection:
 

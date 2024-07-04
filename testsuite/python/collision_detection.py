@@ -684,61 +684,6 @@ class CollisionDetection(ut.TestCase):
         # Tidy
         system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
-    def test_bind_three_particles(self):
-        system = self.system
-        # Setup particles
-        system.part.clear()
-        dx = np.array((1, 0, 0))
-        dy = np.array((0, 1, 0))
-        a = np.array((0.499, 0.499, 0.499))
-        b = a + 0.1 * dx
-        c = a + 0.03 * dx + 0.03 * dy
-        d = a + 0.03 * dx - 0.03 * dy
-        e = a - 0.1 * dx
-
-        system.part.add(id=0, pos=a)
-        system.part.add(id=1, pos=b)
-        system.part.add(id=2, pos=c)
-        system.part.add(id=3, pos=d)
-        system.part.add(id=4, pos=e)
-
-        # Setup bonds
-        res = 181
-        for i in range(res):
-            system.bonded_inter[i + 4] = espressomd.interactions.AngleHarmonic(
-                bend=1, phi0=float(i) / (res - 1) * np.pi)
-        cutoff = 0.11
-        system.collision_detection.set_params(
-            mode="bind_three_particles", bond_centers=self.bond_center,
-            bond_three_particles=4, three_particle_binding_angle_resolution=res, distance=cutoff)
-        self.get_state_set_state_consistency()
-
-        system.time_step = 1E-6
-        system.integrator.run(1, recalc_forces=True)
-        self.verify_triangle_binding(cutoff, system.bonded_inter[4], res)
-        # Make sure no extra bonds appear
-        system.integrator.run(1, recalc_forces=True)
-        self.verify_triangle_binding(cutoff, system.bonded_inter[4], res)
-
-        # Place the particles in two steps and make sure, the bonds are the
-        # same
-        system.part.clear()
-        system.part.add(id=0, pos=a)
-        system.part.add(id=2, pos=c)
-        system.part.add(id=3, pos=d)
-        system.integrator.run(1, recalc_forces=True)
-
-        system.part.add(id=4, pos=e)
-        system.part.add(id=1, pos=b)
-        system.cell_system.set_regular_decomposition()
-        system.integrator.run(1, recalc_forces=True)
-        self.verify_triangle_binding(cutoff, system.bonded_inter[4], res)
-        system.cell_system.set_n_square()
-        system.part.all().bonds = ()
-        system.integrator.run(1, recalc_forces=True)
-        self.verify_triangle_binding(cutoff, system.bonded_inter[4], res)
-        system.time_step = self.time_step
-
     def verify_triangle_binding(self, distance, first_bond, angle_res):
         system = self.system
         # Gather pairs
