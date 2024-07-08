@@ -31,16 +31,6 @@
 #include <stdexcept>
 #include <utility>
 
-namespace {
-template <typename T> T python_modulo(T a, T b) {
-  T res = std::fmod(a, b);
-  if (res < 0)
-    return res + b;
-  else
-    return res;
-}
-} // namespace
-
 namespace walberla {
 
 /**
@@ -118,26 +108,22 @@ private:
     // the target
     auto const prefactor =
         ((slab_dir == m_slab_max) ? FloatType{-1} : FloatType{1});
-    auto const offset = get_pos_offset() * prefactor;
-    auto const folded_offset = python_modulo(offset, length);
+    auto const offset = static_cast<FloatType>(get_pos_offset()) * prefactor;
+    auto const folded_offset = modulo(offset, length);
     // 0<=folded_offset<length
-    auto const weight1 = 1 - std::fmod(folded_offset, FloatType{1});
+    auto const weight1 = FloatType{1} - std::fmod(folded_offset, FloatType{1});
     auto const weight2 = std::fmod(folded_offset, FloatType{1});
     for (auto const &&cell : ci) {
       Cell source1 = cell;
       Cell source2 = cell;
-      int target_idx = cell[dir];
-      FloatType const source_pos = FloatType(target_idx) + folded_offset;
-      auto folded_source_pos = python_modulo(source_pos, length);
-      // 0<=folded_source_pos <length
+      auto const source_pos = static_cast<FloatType>(cell[dir]) + folded_offset;
+      auto const folded_source_pos = modulo(source_pos, length);
+      // 0 <= folded_source_pos < length
       source1[dir] = cell_idx_c(std::floor(folded_source_pos));
-      //  0<=source1[dir]<length, i.e. integer value sbetw. 0  and length-1
-      //  inclusive
-      source2[dir] =
-          cell_idx_c(python_modulo(FloatType(source1[dir] + 1), length));
-      // ineger values between 0 and length -1 inclusive
-
-      for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
+      // 0 <= source1[dir] < length, i.e. integer value up to length-1 inclusive
+      source2[dir] = cell_idx_c(modulo(FloatType(source1[dir] + 1), length));
+      // integer value between 0 and length -1 inclusive
+      for (uint_t q = 0u; q < FieldType::F_SIZE; ++q) {
         tmp_field->get(cell, q) =
             field->get(source1, q) * weight1 + field->get(source2, q) * weight2;
       }
@@ -150,6 +136,11 @@ private:
         field->get(cell, f) = tmp_field->get(cell, f);
       }
     }
+  }
+
+  FloatType modulo(FloatType a, FloatType b) const {
+    auto const res = std::fmod(a, b);
+    return (res < FloatType{0}) ? res + b : res;
   }
 
 private:

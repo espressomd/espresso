@@ -123,12 +123,12 @@ static void positions_in_halo_impl(Utils::Vector3d const &pos_folded,
             pos_folded + Utils::hadamard_product(box_geo.length(), shift);
 
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
-          // note: Python-style modulo: 0<=offset <length
-          auto le = box_geo.lees_edwards_bc();
-          auto folded_offset =
-              std::fmod(le.pos_offset, box_geo.length()[le.shear_direction]);
+          // note: modulo convention: 0 <= offset < length
+          auto const &le = box_geo.lees_edwards_bc();
+          auto const length = box_geo.length()[le.shear_direction];
+          auto folded_offset = std::fmod(le.pos_offset, length);
           if (folded_offset < 0.) {
-            folded_offset += box_geo.length()[le.shear_direction];
+            folded_offset += length;
           }
           pos_shifted[le.shear_direction] +=
               shift[le.shear_plane_normal] * folded_offset;
@@ -166,10 +166,9 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
   return res;
 }
 
-Utils::Vector3d
-lees_edwards_vel_shift(const Utils::Vector3d &pos_shifted_by_box_l,
-                       const Utils::Vector3d &orig_pos,
-                       const BoxGeometry &box_geo) {
+static auto lees_edwards_vel_shift(Utils::Vector3d const &pos_shifted_by_box_l,
+                                   Utils::Vector3d const &orig_pos,
+                                   BoxGeometry const &box_geo) {
   Utils::Vector3d vel_shift{{0., 0., 0.}};
   if (box_geo.type() == BoxType::LEES_EDWARDS) {
     auto le = box_geo.lees_edwards_bc();
@@ -291,7 +290,7 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
       auto const random_force = get_noise_term(p);
       force_on_particle = drag_force + random_force;
       ++it_interpolated_velocities;
-      ++it_positions_velocity_coupling++;
+      ++it_positions_velocity_coupling;
     }
 
     auto force_on_fluid = -force_on_particle;

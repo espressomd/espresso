@@ -54,26 +54,12 @@ def coupling_weight(pos_lb_units, node_idx, lb_shape):
     #    minimum image convention, node and coupling position can be
     #    at different sides of a periodic boundary
     dx = np.abs(min_image_dist(pos_lb_units, node_idx, lb_shape))
-    # If the coupling point is >=1 lattice constant away from the node, no coupling.
-    if np.any(dx >= 1): 
-        weight = 0
-    else:
-        # distance pos to node via module with lattice constant 1
-        weight = np.product(1 - dx)
+    # If the coupling point is >=1 lattice constant away from the node,
+    # no coupling. Otherwise, distance pos to node via module with lattice
+    # constant 1
+    weight = 0. if np.any(dx >= 1.) else np.product(1. - dx)
 
     return weight
-
-
-class MockLBF:
-    shape = np.array((10, 10, 10))
-    agrid = 1
-
-    def __getitem__(self, idx):
-        assert within_grid(idx, self.shape)
-        return f"node {idx}"
-
-
-mock_lbf = MockLBF()
 
 
 def le_aware_lb_nodes_around_pos(
@@ -156,13 +142,16 @@ def le_aware_lb_nodes_around_pos(
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
+@ut.skipIf(np.prod(system.cell_system.node_grid) != 1, "Requires 1 MPI rank")
 class LBLeesEdwardsParticleCoupling(ut.TestCase):
+    """Test LB Lees-Edwards corner cases with a random RNG seed (smoke test)"""
+
     def test_viscous_coupling_with_offset(self):
         system.lb = None
         system.time_step = 1
         system.cell_system.skin = 0.1
         system.cell_system.set_n_square()
-        offset = 2 * (np.random.random() - 1) * 3 * system.box_l[1]
+        offset = (np.random.random() - 1.) * 6. * system.box_l[1]
         protocol = lees_edwards.LinearShear(
             shear_velocity=0, initial_pos_offset=offset, time_0=0.)
         system.lees_edwards.set_boundary_conditions(
@@ -244,10 +233,10 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
             if abs(y <= 0.5):
                 pref = -1.
                 dist_to_unshifted_lb_nodes = 0.5 - y
-            elif y >= system.box_l[1] - 0.5:
+            else:
+                assert y >= system.box_l[1] - 0.5
                 pref = 1.
                 dist_to_unshifted_lb_nodes = y - (system.box_l[2] - 0.5)
-            else: raise Exception()
             vel_shift = pref * shear_vel
             xs = 0.5 + np.arange(lbf.shape[0])
             ys = [v_x(x - pref * pos_offset) for x in xs]
