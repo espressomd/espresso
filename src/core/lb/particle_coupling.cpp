@@ -123,12 +123,15 @@ static void positions_in_halo_impl(Utils::Vector3d const &pos_folded,
             pos_folded + Utils::hadamard_product(box_geo.length(), shift);
 
         if (box_geo.type() == BoxType::LEES_EDWARDS) {
-          auto le = box_geo.lees_edwards_bc();
-          auto normal_shift = (pos_shifted - pos_folded)[le.shear_plane_normal];
-          if (normal_shift > std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] += le.pos_offset;
-          if (normal_shift < -std::numeric_limits<double>::epsilon())
-            pos_shifted[le.shear_direction] -= le.pos_offset;
+          // note: modulo convention: 0 <= offset < length
+          auto const &le = box_geo.lees_edwards_bc();
+          auto const length = box_geo.length()[le.shear_direction];
+          auto folded_offset = std::fmod(le.pos_offset, length);
+          if (folded_offset < 0.) {
+            folded_offset += length;
+          }
+          pos_shifted[le.shear_direction] +=
+              shift[le.shear_plane_normal] * folded_offset;
         }
 
         if (in_box(pos_shifted, halo_lower_corner, halo_upper_corner)) {
@@ -161,6 +164,25 @@ std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
   positions_in_halo_impl(pos_folded, halo_lower_corner, halo_upper_corner,
                          box_geo, res);
   return res;
+}
+
+static auto lees_edwards_vel_shift(Utils::Vector3d const &pos_shifted_by_box_l,
+                                   Utils::Vector3d const &orig_pos,
+                                   BoxGeometry const &box_geo) {
+  Utils::Vector3d vel_shift{{0., 0., 0.}};
+  if (box_geo.type() == BoxType::LEES_EDWARDS) {
+    auto le = box_geo.lees_edwards_bc();
+    auto normal_shift =
+        (pos_shifted_by_box_l - orig_pos)[le.shear_plane_normal];
+    // normal_shift is +,- box_l or 0 up to floating point errors
+    if (normal_shift > std::numeric_limits<double>::epsilon()) {
+      vel_shift[le.shear_direction] -= le.shear_velocity;
+    }
+    if (normal_shift < -std::numeric_limits<double>::epsilon()) {
+      vel_shift[le.shear_direction] += le.shear_velocity;
+    }
+  }
+  return vel_shift;
 }
 
 namespace LB {
@@ -242,6 +264,7 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
   auto const &domain_upper_corner = m_local_box.my_right();
   auto it_interpolated_velocities = interpolated_velocities.begin();
   auto it_positions_force_coupling = positions_force_coupling.begin();
+  auto it_positions_velocity_coupling = positions_velocity_coupling.begin();
   auto it_positions_force_coupling_counter =
       positions_force_coupling_counter.begin();
   for (auto ptr : coupled_particles) {
@@ -254,11 +277,20 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
 #endif
     Utils::Vector3d force_on_particle = {};
     if (coupling_mode == particle_force) {
-      auto const &v_fluid = *it_interpolated_velocities;
+      auto &v_fluid = *it_interpolated_velocities;
+      if (m_box_geo.type() == BoxType::LEES_EDWARDS) {
+        // Account for the case where the interpolated velocity has been read
+        // from a ghost of the particle across the LE boundary (or vice verssa)
+        // Then the particle velocity is shifted by +,- the LE shear velocity
+        auto const vel_correction = lees_edwards_vel_shift(
+            *it_positions_velocity_coupling, p.pos(), m_box_geo);
+        v_fluid += vel_correction;
+      }
       auto const drag_force = lb_drag_force(p, m_thermostat.gamma, v_fluid);
       auto const random_force = get_noise_term(p);
       force_on_particle = drag_force + random_force;
       ++it_interpolated_velocities;
+      ++it_positions_velocity_coupling;
     }
 
     auto force_on_fluid = -force_on_particle;
