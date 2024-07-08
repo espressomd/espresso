@@ -535,13 +535,13 @@ private:
 
   void integrate_pull_scheme() {
     auto const &blocks = get_lattice().get_blocks();
-    integrate_reset_force(blocks);
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
     // LB collide
     integrate_collide(blocks);
+    integrate_reset_force(blocks);
     // Refresh ghost layers
     ghost_communication_pdfs();
   }

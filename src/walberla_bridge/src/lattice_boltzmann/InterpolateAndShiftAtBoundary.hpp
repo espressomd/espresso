@@ -31,6 +31,16 @@
 #include <stdexcept>
 #include <utility>
 
+namespace {
+template <typename T> T python_modulo(T a, T b) {
+  T res = std::fmod(a, b);
+  if (res < 0)
+    return res + b;
+  else
+    return res;
+}
+} // namespace
+
 namespace walberla {
 
 /**
@@ -94,8 +104,6 @@ private:
     auto const dir = m_shear_direction;
     auto const dim = cell_idx_c(m_blocks->getNumberOfCells(*block, dir));
     auto const length = numeric_cast<FloatType>(dim);
-    auto const weight =
-        std::abs(std::fmod(get_pos_offset() + length, FloatType{1}));
 
     // setup slab
     auto field = block->template getData<FieldType>(m_field_id);
@@ -111,24 +119,27 @@ private:
     auto const prefactor =
         ((slab_dir == m_slab_max) ? FloatType{-1} : FloatType{1});
     auto const offset = get_pos_offset() * prefactor;
+    auto const folded_offset = python_modulo(offset, length);
+    // 0<=folded_offset<length
+    auto const weight1 = 1 - std::fmod(folded_offset, FloatType{1});
+    auto const weight2 = std::fmod(folded_offset, FloatType{1});
     for (auto const &&cell : ci) {
       Cell source1 = cell;
       Cell source2 = cell;
-      source1[dir] = cell_idx_c(std::floor(
-                         static_cast<FloatType>(source1[dir]) + offset)) %
-                     dim;
-      source1[dir] = cell_idx_c(static_cast<FloatType>(source1[dir]) + length);
-      source1[dir] = cell_idx_c(source1[dir] % dim);
-
+      int target_idx = cell[dir];
+      FloatType const source_pos = FloatType(target_idx) + folded_offset;
+      auto folded_source_pos = python_modulo(source_pos, length);
+      // 0<=folded_source_pos <length
+      source1[dir] = cell_idx_c(std::floor(folded_source_pos));
+      //  0<=source1[dir]<length, i.e. integer value sbetw. 0  and length-1
+      //  inclusive
       source2[dir] =
-          cell_idx_c(std::ceil(static_cast<FloatType>(source2[dir]) + offset)) %
-          dim;
-      source2[dir] = cell_idx_c(static_cast<FloatType>(source2[dir]) + length);
-      source2[dir] = cell_idx_c(source2[dir] % dim);
+          cell_idx_c(python_modulo(FloatType(source1[dir] + 1), length));
+      // ineger values between 0 and length -1 inclusive
 
-      for (uint_t f = 0; f < FieldType::F_SIZE; ++f) {
-        tmp_field->get(cell, f) = field->get(source1, f) * (1 - weight) +
-                                  field->get(source2, f) * weight;
+      for (uint_t q = 0; q < FieldType::F_SIZE; ++q) {
+        tmp_field->get(cell, q) =
+            field->get(source1, q) * weight1 + field->get(source2, q) * weight2;
       }
       tmp_field->get(cell, m_shear_direction) -= prefactor * shift;
     }
