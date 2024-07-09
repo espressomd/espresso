@@ -21,31 +21,52 @@
 
 #include "AccumulatorBase.hpp"
 
-#include "core/accumulators.hpp"
+#include "core/accumulators/AutoUpdateAccumulators.hpp"
+#include "core/system/System.hpp"
+
 #include "script_interface/ObjectList.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
+#include "script_interface/system/System.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Accumulators {
-class AutoUpdateAccumulators : public ObjectList<AccumulatorBase> {
+
+using AutoUpdateAccumulators_t = ObjectList<
+    AccumulatorBase,
+    AutoParameters<ObjectList<AccumulatorBase, System::Leaf>, System::Leaf>>;
+
+class AutoUpdateAccumulators : public AutoUpdateAccumulators_t {
+  using Base = AutoUpdateAccumulators_t;
+  std::shared_ptr<::Accumulators::AutoUpdateAccumulators> m_handle;
+  std::unique_ptr<VariantMap> m_params;
+
   bool
   has_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) const override {
-    return ::Accumulators::auto_update_contains(obj_ptr->accumulator().get());
+    return m_handle->contains(obj_ptr->accumulator().get());
   }
 
   void add_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) override {
-    ::Accumulators::auto_update_add(obj_ptr->accumulator().get());
+    m_handle->add(obj_ptr->accumulator().get());
   }
 
   void
   remove_in_core(std::shared_ptr<AccumulatorBase> const &obj_ptr) override {
-    ::Accumulators::auto_update_remove(obj_ptr->accumulator().get());
+    m_handle->remove(obj_ptr->accumulator().get());
   }
 
-private:
-  // disable serialization: pickling done by the python interface
-  std::string get_internal_state() const override { return {}; }
-  void set_internal_state(std::string const &) override {}
+  void do_construct(VariantMap const &params) override {
+    m_params = std::make_unique<VariantMap>(params);
+  }
+
+  void on_bind_system(::System::System &system) override {
+    m_handle = system.auto_update_accumulators;
+    m_handle->bind_system(m_system.lock());
+    Base::do_construct(*m_params);
+    m_params.reset();
+  }
 };
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */

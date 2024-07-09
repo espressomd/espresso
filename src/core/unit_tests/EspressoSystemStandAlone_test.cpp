@@ -176,7 +176,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   if (n_nodes == 1) {
     auto const pids = std::vector<int>{pid2};
     auto obs = std::make_shared<Observables::ParticleVelocities>(pids);
-    auto acc = Accumulators::TimeSeries(obs, 1);
+    auto acc = Accumulators::TimeSeries(&system, 1, obs);
 
     auto const obs_shape = obs->shape();
     auto const ref_shape = std::vector<std::size_t>{pids.size(), 3u};

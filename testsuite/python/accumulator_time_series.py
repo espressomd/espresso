@@ -26,8 +26,6 @@ import espressomd
 import espressomd.observables
 import espressomd.accumulators
 
-N_PART = 4
-
 
 class TimeSeriesTest(ut.TestCase):
 
@@ -50,12 +48,13 @@ class TimeSeriesTest(ut.TestCase):
         """Check that accumulator results are the same as the respective numpy result.
 
         """
+        n_part = 4
         system = self.system
-        system.part.add(pos=np.zeros((N_PART, 3)))
-        obs = espressomd.observables.ParticlePositions(ids=range(N_PART))
+        system.part.add(pos=np.zeros((n_part, 3)))
+        obs = espressomd.observables.ParticlePositions(ids=range(n_part))
         acc = espressomd.accumulators.TimeSeries(obs=obs)
         system.auto_update_accumulators.add(acc)
-        positions = np.copy(system.box_l) * np.random.random((10, N_PART, 3))
+        positions = np.copy(system.box_l) * np.random.random((10, n_part, 3))
 
         for pos in positions:
             system.part.all().pos = pos
@@ -66,6 +65,8 @@ class TimeSeriesTest(ut.TestCase):
         np.testing.assert_array_equal(acc.time_series(), positions)
 
         # Check pickling
+        from espressomd.script_interface import ScriptInterfaceHelper
+        acc.__reduce__ = lambda: ScriptInterfaceHelper.__reduce__(acc)
         acc_unpickled = pickle.loads(pickle.dumps(acc))
         np.testing.assert_array_equal(acc_unpickled.time_series(), positions)
 

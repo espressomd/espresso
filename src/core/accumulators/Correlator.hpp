@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ACCUMULATORS_CORRELATOR_HPP
-#define CORE_ACCUMULATORS_CORRELATOR_HPP
+
+#pragma once
+
 /** @file
  *
  * This module computes correlations (and other two time averages) on
@@ -128,6 +129,12 @@ namespace Accumulators {
  */
 class Correlator : public AccumulatorBase {
   using obs_ptr = std::shared_ptr<Observables::Observable>;
+  void initialize_operations();
+  void initialize_buffers();
+  void initialize() {
+    initialize_operations();
+    initialize_buffers();
+  }
 
 public:
   /** The initialization procedure for the correlation object. All important
@@ -135,6 +142,7 @@ public:
    *  later, so every instance of the correlation class has to be fed with
    *  correct data from the very beginning.
    *
+   *  @param system The system attached to this correlator
    *  @param delta_N The number of time steps between subsequent updates
    *  @param tau_lin The linear part of the correlation function.
    *  @param tau_max maximal time delay tau to sample
@@ -150,22 +158,20 @@ public:
    *      (currently only used when @p corr_operation is "fcs_acf")
    *
    */
-  Correlator(int tau_lin, double tau_max, int delta_N, std::string compress1_,
-             std::string compress2_, std::string corr_operation, obs_ptr obs1,
-             obs_ptr obs2, Utils::Vector3d correlation_args_ = {})
-      : AccumulatorBase(delta_N), finalized(false), t(0),
+  Correlator(::System::System const *system, int delta_N, int tau_lin,
+             double tau_max, std::string compress1_, std::string compress2_,
+             std::string corr_operation, obs_ptr obs1, obs_ptr obs2,
+             Utils::Vector3d correlation_args_ = {})
+      : AccumulatorBase(system, delta_N), finalized(false), t(0),
+        m_correlation_args_input(correlation_args_),
         m_correlation_args(correlation_args_), m_tau_lin(tau_lin),
-        m_dt(::System::get_system().get_time_step()), m_tau_max(tau_max),
-        compressA_name(std::move(compress1_)),
+        m_dt(system->get_time_step() * static_cast<double>(delta_N)),
+        m_tau_max(tau_max), compressA_name(std::move(compress1_)),
         compressB_name(std::move(compress2_)),
         corr_operation_name(std::move(corr_operation)), A_obs(std::move(obs1)),
         B_obs(std::move(obs2)) {
-    m_dt *= static_cast<double>(delta_N);
     initialize();
   }
-
-private:
-  void initialize();
 
 public:
   /** The function to process a new datapoint of A and B
@@ -215,15 +221,14 @@ public:
     return corr_operation_name;
   }
 
-  /** Partial serialization of state that is not accessible via the interface.
-   */
-  std::string get_internal_state() const;
-  void set_internal_state(std::string const &);
+  std::string get_internal_state() const final;
+  void set_internal_state(std::string const &) final;
 
 private:
   bool finalized; ///< whether the correlation is finalized
   unsigned int t; ///< global time in number of frames
 
+  Utils::Vector3d m_correlation_args_input;
   Utils::Vector3d m_correlation_args; ///< additional arguments, which the
                                       ///< correlation may need (currently
                                       ///< only used by fcs_acf)
@@ -280,4 +285,3 @@ private:
 };
 
 } // namespace Accumulators
-#endif

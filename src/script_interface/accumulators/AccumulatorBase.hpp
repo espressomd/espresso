@@ -19,9 +19,12 @@
 
 #pragma once
 
-#include "core/accumulators/AccumulatorBase.hpp"
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/System.hpp"
+
+#include "core/accumulators/AccumulatorBase.hpp"
+#include "core/system/System.hpp"
 
 #include <memory>
 #include <string>
@@ -39,16 +42,43 @@ public:
                      },
                      [this]() { return accumulator()->delta_N(); }}});
   }
-  Variant call_method(std::string const &method, VariantMap const &parameters) {
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override {
     if (method == "shape") {
       auto const shape = accumulator()->shape();
       return std::vector<int>{shape.begin(), shape.end()};
+    }
+    if (method == "reload_from_checkpoint") {
+      accumulator()->set_internal_state(
+          get_value<std::string>(parameters, "state"));
+      return {};
     }
     return {};
   }
   virtual std::shared_ptr<const ::Accumulators::AccumulatorBase>
   accumulator() const = 0;
   virtual std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() = 0;
+
+protected:
+  auto get_core_system_pointer(VariantMap const &params) const {
+    auto const *system = &::System::get_system();
+    if (params.contains("system")) {
+      system = &(get_value<std::shared_ptr<System::System const>>(
+                     get_value<ObjectRef>(params, "system")
+                         ->do_call_method("get_system_handle", {}))
+                     ->get_system());
+    }
+    return system;
+  }
+
+private:
+  std::string get_internal_state() const override {
+    return accumulator()->get_internal_state();
+  }
+
+  void set_internal_state(std::string const &state) override {
+    call_method("reload_from_checkpoint", {{"state", state}});
+  }
 };
 
 } // namespace Accumulators

@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,12 +15,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from .script_interface import ScriptObjectList, ScriptInterfaceHelper, script_interface_register
 import numpy as np
 
 
+class _AccumulatorBase(ScriptInterfaceHelper):
+
+    def __reduce__(self):
+        raise RuntimeError(
+            "Accumulators can only be checkpointed through an ESPResSo system's auto_update_accumulators property")
+
+
 @script_interface_register
-class MeanVarianceCalculator(ScriptInterfaceHelper):
+class MeanVarianceCalculator(_AccumulatorBase):
 
     """
     Accumulates results from observables.
@@ -65,7 +75,7 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class TimeSeries(ScriptInterfaceHelper):
+class TimeSeries(_AccumulatorBase):
 
     """
     Records results from observables.
@@ -100,7 +110,7 @@ class TimeSeries(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Correlator(ScriptInterfaceHelper):
+class Correlator(_AccumulatorBase):
 
     """
     Calculates the correlation of two observables :math:`A` and :math:`B`,

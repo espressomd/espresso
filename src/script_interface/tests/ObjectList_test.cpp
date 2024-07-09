@@ -52,53 +52,61 @@ private:
   }
 };
 
+static auto factory = []() {
+  Utils::Factory<ObjectHandle> factory;
+  factory.register_new<ObjectHandle>("ObjectHandle");
+  factory.register_new<ObjectListImpl>("ObjectListImpl");
+  return factory;
+}();
+
 BOOST_AUTO_TEST_CASE(default_construction) {
-  // A defaulted ObjectList has no elements.
+  // A default-constructed ObjectList has no elements.
   BOOST_CHECK(ObjectListImpl{}.elements().empty());
 }
 
 BOOST_AUTO_TEST_CASE(adding_elements) {
-  // Added elements are on the back of the list of elements.
-  auto e = ObjectRef{};
-  ObjectListImpl list;
-  list.add(e);
-  BOOST_CHECK(list.elements().back() == e);
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<LocalContext>(factory, comm);
+  auto e = std::make_shared<ObjectHandle>();
+  auto list = std::dynamic_pointer_cast<ObjectListImpl>(
+      ctx->make_shared("ObjectListImpl", {}));
+  list->add(e);
+  BOOST_CHECK(list->elements().back() == e);
   // And is added to the core
-  BOOST_CHECK(std::ranges::count(list.mock_core, e) == 1);
+  BOOST_CHECK(std::ranges::count(list->mock_core, e) == 1);
 }
 
 BOOST_AUTO_TEST_CASE(removing_elements) {
-  // An element that is removed from the list is
-  // no longer an element of the list.
-  auto e = ObjectRef{};
-  ObjectListImpl list;
-  list.add(e);
-  list.remove(e);
-  BOOST_CHECK(std::ranges::count(list.elements(), e) == 0);
-  // And is removed from the core
-  BOOST_CHECK(std::ranges::count(list.mock_core, e) == 0);
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<LocalContext>(factory, comm);
+  auto e = std::make_shared<ObjectHandle>();
+  auto list = std::dynamic_pointer_cast<ObjectListImpl>(
+      ctx->make_shared("ObjectListImpl", {}));
+  list->add(e);
+  list->remove(e);
+  BOOST_CHECK(std::ranges::count(list->elements(), e) == 0);
+  BOOST_CHECK(std::ranges::count(list->mock_core, e) == 0);
 }
 
 BOOST_AUTO_TEST_CASE(clearing_elements) {
+  boost::mpi::communicator comm;
+  auto ctx = std::make_shared<LocalContext>(factory, comm);
   // A cleared list is empty.
-  ObjectListImpl list;
-  list.add(std::make_shared<ObjectListImpl>());
-  list.add(std::make_shared<ObjectListImpl>());
-  list.clear();
-  BOOST_CHECK(list.elements().empty());
-  BOOST_CHECK(list.mock_core.empty());
+  auto list = std::dynamic_pointer_cast<ObjectListImpl>(
+      ctx->make_shared("ObjectListImpl", {}));
+  list->add(std::make_shared<ObjectListImpl>());
+  list->add(std::make_shared<ObjectListImpl>());
+  list->clear();
+  BOOST_CHECK(list->elements().empty());
+  BOOST_CHECK(list->mock_core.empty());
 }
 
 BOOST_AUTO_TEST_CASE(serialization) {
-  // In a context
-  Utils::Factory<ObjectHandle> f;
-  f.register_new<ObjectHandle>("ObjectHandle");
-  f.register_new<ObjectListImpl>("ObjectList");
   boost::mpi::communicator comm;
-  auto ctx = std::make_shared<LocalContext>(f, comm);
+  auto ctx = std::make_shared<LocalContext>(factory, comm);
   // A list of some elements
   auto list = std::dynamic_pointer_cast<ObjectListImpl>(
-      ctx->make_shared("ObjectList", {}));
+      ctx->make_shared("ObjectListImpl", {}));
   // with a bunch of elements
 
   list->add(ctx->make_shared("ObjectHandle", {}));

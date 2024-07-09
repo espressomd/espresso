@@ -36,6 +36,7 @@
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
 
+#include "script_interface/accumulators/AutoUpdateAccumulators.hpp"
 #include "script_interface/analysis/Analysis.hpp"
 #include "script_interface/bond_breakage/BreakageSpecs.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
@@ -79,6 +80,8 @@ struct System::Leaves {
   std::shared_ptr<Galilei::Galilei> galilei;
   std::shared_ptr<BondBreakage::BreakageSpecs> bond_breakage;
   std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
+  std::shared_ptr<Accumulators::AutoUpdateAccumulators>
+      auto_update_accumulators;
 #ifdef ELECTROSTATICS
   std::shared_ptr<Coulomb::Container> electrostatics;
 #endif
@@ -152,6 +155,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   add_parameter("galilei", &Leaves::galilei);
   add_parameter("bond_breakage", &Leaves::bond_breakage);
   add_parameter("lees_edwards", &Leaves::lees_edwards);
+  add_parameter("auto_update_accumulators", &Leaves::auto_update_accumulators);
 #ifdef ELECTROSTATICS
   add_parameter("electrostatics", &Leaves::electrostatics);
 #endif

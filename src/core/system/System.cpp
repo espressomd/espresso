@@ -25,6 +25,7 @@
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "PropagationMode.hpp"
+#include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -74,6 +75,8 @@ System::System(Private) {
   galilei = std::make_shared<Galilei>();
   bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
   lees_edwards = std::make_shared<LeesEdwards::LeesEdwards>();
+  auto_update_accumulators =
+      std::make_shared<Accumulators::AutoUpdateAccumulators>();
   reinit_thermo = true;
   time_step = -1.;
   sim_time = 0.;
@@ -86,6 +89,7 @@ void System::initialize() {
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
   thermostat->bind_system(handle);
+  auto_update_accumulators->bind_system(handle);
 #ifdef CUDA
   gpu.bind_system(handle);
   gpu.initialize();

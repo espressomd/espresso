@@ -53,6 +53,9 @@ class BondBreakage;
 namespace LeesEdwards {
 class LeesEdwards;
 }
+namespace Accumulators {
+class AutoUpdateAccumulators;
+}
 
 namespace System {
 
@@ -272,6 +275,8 @@ public:
   std::shared_ptr<Galilei> galilei;
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
   std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
+  std::shared_ptr<Accumulators::AutoUpdateAccumulators>
+      auto_update_accumulators;
 
 protected:
   /** @brief Whether the thermostat has to be reinitialized before integration.

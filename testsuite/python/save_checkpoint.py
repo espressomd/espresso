@@ -311,9 +311,6 @@ break_spec = espressomd.bond_breakage.BreakageSpec(
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
 
 checkpoint.register("system")
-checkpoint.register("acc_mean_variance")
-checkpoint.register("acc_time_series")
-checkpoint.register("acc_correlator")
 checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")

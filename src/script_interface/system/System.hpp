@@ -46,6 +46,8 @@ public:
   void do_construct(VariantMap const &params) override;
   Variant do_call_method(std::string const &name,
                          VariantMap const &parameters) override;
+
+  auto const &get_system() const { return *m_instance; }
 };
 
 } // namespace System

@@ -21,7 +21,6 @@
 
 add_library(
   espresso_core SHARED
-  accumulators.cpp
   bond_error.cpp
   cells.cpp
   collision.cpp

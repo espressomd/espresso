@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ACCUMULATORS_MEAN_VARIANCE_CALCULATOR_HPP
-#define CORE_ACCUMULATORS_MEAN_VARIANCE_CALCULATOR_HPP
+
+#pragma once
 
 #include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"
+
 #include <utils/Accumulator.hpp>
 
 #include <cstddef>
@@ -34,25 +35,21 @@ class MeanVarianceCalculator : public AccumulatorBase {
 public:
   // The accumulator struct has to be initialized with the correct vector size,
   // therefore the order of init is important.
-  MeanVarianceCalculator(std::shared_ptr<Observables::Observable> obs,
-                         int delta_N)
-      : AccumulatorBase(delta_N), m_obs(obs), m_acc(obs->n_values()) {}
+  MeanVarianceCalculator(::System::System const *system, int delta_N,
+                         std::shared_ptr<Observables::Observable> obs)
+      : AccumulatorBase(system, delta_N), m_obs(obs), m_acc(obs->n_values()) {}
 
   void update(boost::mpi::communicator const &comm) override;
   std::vector<double> mean();
   std::vector<double> variance();
   std::vector<double> std_error();
-  /* Partial serialization of state that is not accessible
-     via the interface. */
-  std::string get_internal_state() const;
-  void set_internal_state(std::string const &);
+  std::string get_internal_state() const final;
+  void set_internal_state(std::string const &) final;
   std::vector<std::size_t> shape() const override { return m_obs->shape(); }
 
 private:
   std::shared_ptr<Observables::Observable> m_obs;
-  ::Utils::Accumulator m_acc;
+  Utils::Accumulator m_acc;
 };
 
 } // namespace Accumulators
-
-#endif

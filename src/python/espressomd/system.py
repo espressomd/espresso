@@ -227,7 +227,7 @@ class System(ScriptInterfaceHelper):
     def __getstate__(self):
         checkpointable_properties = [
             "non_bonded_inter", "bonded_inter",
-            "part", "auto_update_accumulators",
+            "part",
             "constraints",
         ]
         if has_features("COLLISION_DETECTION"):

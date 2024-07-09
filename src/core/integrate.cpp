@@ -37,7 +37,7 @@
 #include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
-#include "accumulators.hpp"
+#include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -735,13 +735,11 @@ int System::System::integrate_with_signal_handler(int n_steps, int reuse_forces,
     return integrate(n_steps, reuse_forces);
   }
 
-  using Accumulators::auto_update;
-  using Accumulators::auto_update_next_update;
-
   for (int i = 0; i < n_steps;) {
     /* Integrate to either the next accumulator update, or the
      * end, depending on what comes first. */
-    auto const steps = std::min((n_steps - i), auto_update_next_update());
+    auto const steps =
+        std::min((n_steps - i), auto_update_accumulators->next_update());
 
     auto const local_retval = integrate(steps, reuse_forces);
 
@@ -755,7 +753,7 @@ int System::System::integrate_with_signal_handler(int n_steps, int reuse_forces,
 
     reuse_forces = INTEG_REUSE_FORCES_ALWAYS;
 
-    auto_update(comm_cart, steps);
+    (*auto_update_accumulators)(comm_cart, steps);
 
     i += steps;
   }
