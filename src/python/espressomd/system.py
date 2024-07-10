@@ -228,7 +228,6 @@ class System(ScriptInterfaceHelper):
         checkpointable_properties = [
             "non_bonded_inter", "bonded_inter",
             "part",
-            "constraints",
         ]
         if has_features("COLLISION_DETECTION"):
             checkpointable_properties.append("collision_detection")

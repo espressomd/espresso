@@ -28,6 +28,7 @@
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "constraints/Constraints.hpp"
 #include "galilei/ComFixed.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrators/Propagation.hpp"

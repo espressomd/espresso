@@ -25,7 +25,6 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "system/System.hpp"
 
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>
@@ -35,14 +34,18 @@
 #include <memory>
 #include <utility>
 
+namespace System {
+class System;
+}
+
 namespace Constraints {
 
 class ShapeBasedConstraint : public Constraint {
 public:
-  ShapeBasedConstraint(System::System const &system)
+  ShapeBasedConstraint()
       : part_rep{}, m_shape{std::make_shared<Shapes::NoWhere>()},
         m_penetrable{false}, m_only_positive{false}, m_local_force{},
-        m_outer_normal_force{}, m_system{system} {}
+        m_outer_normal_force{}, m_system{} {}
 
   void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
                   double time, Observable_stat &energy) const override;
@@ -78,13 +81,13 @@ public:
   int &type() { return part_rep.type(); }
   Utils::Vector3d &velocity() { return part_rep.v(); }
 
-  void set_type(int type) {
-    part_rep.type() = type;
-    m_system.nonbonded_ias->make_particle_type_exist(type);
-  }
+  void set_type(int type);
 
   Utils::Vector3d total_force() const;
   double total_normal_force() const;
+  void bind_system(std::shared_ptr<System::System const> const &system) {
+    m_system = system;
+  }
 
 private:
   Particle part_rep;
@@ -93,11 +96,9 @@ private:
   bool m_only_positive;
   Utils::Vector3d m_local_force;
   double m_outer_normal_force;
-  System::System const &m_system;
+  std::weak_ptr<System::System const> m_system;
 
-  auto const &get_ia_param(int type) const {
-    return m_system.nonbonded_ias->get_ia_param(type, part_rep.type());
-  }
+  IA_parameters const &get_ia_param(int type) const;
 };
 
 } // namespace Constraints

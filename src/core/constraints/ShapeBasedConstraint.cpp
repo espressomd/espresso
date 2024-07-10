@@ -46,6 +46,15 @@ static bool is_active(IA_parameters const &data) {
   return data.max_cut != INACTIVE_CUTOFF;
 }
 
+void ShapeBasedConstraint::set_type(int type) {
+  part_rep.type() = type;
+  m_system.lock()->nonbonded_ias->make_particle_type_exist(type);
+}
+
+IA_parameters const &ShapeBasedConstraint::get_ia_param(int type) const {
+  return m_system.lock()->nonbonded_ias->get_ia_param(type, part_rep.type());
+}
+
 Utils::Vector3d ShapeBasedConstraint::total_force() const {
   return all_reduce(comm_cart, m_local_force, std::plus<>());
 }
@@ -86,7 +95,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     double dist = 0.;
     Utils::Vector3d dist_vec;
     m_shape->calculate_dist(folded_pos, dist, dist_vec);
-    auto const coulomb_kernel = m_system.coulomb.pair_force_kernel();
+    auto &system = *m_system.lock();
+    auto const coulomb_kernel = system.coulomb.pair_force_kernel();
 
 #ifdef DPD
     Utils::Vector3d dpd_force{};
@@ -101,12 +111,12 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
            calc_non_central_force(p, part_rep, ia_params, dist_vec, dist);
 
 #ifdef DPD
-      if (m_system.thermostat->thermo_switch & THERMO_DPD) {
-        dpd_force = dpd_pair_force(p, part_rep, *m_system.thermostat->dpd,
-                                   *m_system.box_geo, ia_params, dist_vec, dist,
+      if (system.thermostat->thermo_switch & THERMO_DPD) {
+        dpd_force = dpd_pair_force(p, part_rep, *system.thermostat->dpd,
+                                   *system.box_geo, ia_params, dist_vec, dist,
                                    dist * dist);
         // Additional use of DPD here requires counter increase
-        m_system.thermostat->dpd->rng_increment();
+        system.thermostat->dpd->rng_increment();
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
@@ -117,12 +127,12 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
              calc_non_central_force(p, part_rep, ia_params, dist_vec, -dist);
 
 #ifdef DPD
-        if (m_system.thermostat->thermo_switch & THERMO_DPD) {
-          dpd_force = dpd_pair_force(p, part_rep, *m_system.thermostat->dpd,
-                                     *m_system.box_geo, ia_params, dist_vec,
-                                     dist, dist * dist);
+        if (system.thermostat->thermo_switch & THERMO_DPD) {
+          dpd_force = dpd_pair_force(p, part_rep, *system.thermostat->dpd,
+                                     *system.box_geo, ia_params, dist_vec, dist,
+                                     dist * dist);
           // Additional use of DPD here requires counter increase
-          m_system.thermostat->dpd->rng_increment();
+          system.thermostat->dpd->rng_increment();
         }
 #endif
       }
@@ -150,7 +160,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
   auto const &ia_params = get_ia_param(p.type());
 
   if (is_active(ia_params)) {
-    auto const coulomb_kernel = m_system.coulomb.pair_energy_kernel();
+    auto const coulomb_kernel = m_system.lock()->coulomb.pair_energy_kernel();
     double dist = 0.0;
     Utils::Vector3d vec;
     m_shape->calculate_dist(folded_pos, dist, vec);

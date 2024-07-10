@@ -25,7 +25,6 @@ add_library(
   cells.cpp
   collision.cpp
   communication.cpp
-  constraints.cpp
   dpd.cpp
   energy.cpp
   errorhandling.cpp

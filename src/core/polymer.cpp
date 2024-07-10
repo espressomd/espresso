@@ -32,7 +32,6 @@
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
 #include "constraints/Constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "random.hpp"
@@ -74,9 +73,9 @@ template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
 /** Determines whether a given position @p pos is valid, i.e., it doesn't
  *  collide with existing or buffered particles, nor with existing constraints
  *  (if @c respect_constraints).
+ *  @param system                the system containing the particles
  *  @param pos                   the trial position in question
  *  @param positions             buffered positions to respect
- *  @param cell_structure        existing particles to respect
  *  @param box_geo               Box geometry
  *  @param min_distance          threshold for the minimum distance between
  *                               trial position and buffered/existing particles
@@ -84,9 +83,8 @@ template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
  *  @return true if valid position, false if not.
  */
 static bool
-is_valid_position(Utils::Vector3d const &pos,
+is_valid_position(System::System const &system, Utils::Vector3d const &pos,
                   std::vector<std::vector<Utils::Vector3d>> const &positions,
-                  CellStructure const &cell_structure,
                   BoxGeometry const &box_geo, double const min_distance,
                   int const respect_constraints) {
 
@@ -100,7 +98,7 @@ is_valid_position(Utils::Vector3d const &pos,
   if (respect_constraints) {
     Utils::Vector3d const folded_pos = box_geo.folded_position(pos);
 
-    for (auto &c : Constraints::constraints) {
+    for (auto &c : *system.constraints) {
       auto cs =
           std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
       if (cs) {
@@ -119,7 +117,7 @@ is_valid_position(Utils::Vector3d const &pos,
   if (min_distance > 0.) {
     // check for collision with existing particles
     auto local_mindist_sq = std::numeric_limits<double>::infinity();
-    for (auto const &p : cell_structure.local_particles()) {
+    for (auto const &p : system.cell_structure->local_particles()) {
       auto const d = box_geo.get_mi_vector(pos, p.pos());
       local_mindist_sq = std::min(local_mindist_sq, d.norm2());
     }
@@ -160,8 +158,8 @@ draw_polymer_positions(System::System const &system, int const n_polymers,
   }
 
   auto is_valid_pos = [&](Utils::Vector3d const &pos) {
-    return is_valid_position(pos, positions, *system.cell_structure, box_geo,
-                             min_distance, respect_constraints);
+    return is_valid_position(system, pos, positions, box_geo, min_distance,
+                             respect_constraints);
   };
 
   for (std::size_t p = 0; p < start_positions.size(); p++) {

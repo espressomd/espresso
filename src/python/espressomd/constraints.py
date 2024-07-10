@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 from .script_interface import ScriptObjectList, ScriptInterfaceHelper, script_interface_register
 import numpy as np
 import itertools
@@ -89,6 +91,10 @@ class Constraint(ScriptInterfaceHelper):
     """
 
     _so_name = "Constraints::Constraint"
+
+    def __reduce__(self):
+        raise RuntimeError(
+            "Constraints can only be checkpointed through an ESPResSo system's constraints property")
 
 
 @script_interface_register
@@ -359,9 +365,6 @@ class ForceField(_Interpolated):
 
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     _codim = 3
     _so_name = "Constraints::ForceField"
 
@@ -390,9 +393,6 @@ class PotentialField(_Interpolated):
         scaled with the default scaling factor.
 
     """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     _codim = 1
     _so_name = "Constraints::PotentialField"
@@ -550,9 +550,6 @@ class FlowField(_Interpolated):
 
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     _codim = 3
     _so_name = "Constraints::FlowField"
 
@@ -612,9 +609,6 @@ class ElectricPotential(_Interpolated):
         Spacing of the grid points.
 
     """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     _codim = 1
     _so_name = "Constraints::ElectricPotential"

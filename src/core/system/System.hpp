@@ -56,6 +56,9 @@ class LeesEdwards;
 namespace Accumulators {
 class AutoUpdateAccumulators;
 }
+namespace Constraints {
+class Constraints;
+}
 
 namespace System {
 
@@ -277,6 +280,7 @@ public:
   std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
   std::shared_ptr<Accumulators::AutoUpdateAccumulators>
       auto_update_accumulators;
+  std::shared_ptr<Constraints::Constraints> constraints;
 
 protected:
   /** @brief Whether the thermostat has to be reinitialized before integration.

@@ -22,7 +22,7 @@
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "constraints.hpp"
+#include "constraints/Constraints.hpp"
 #include "energy_inline.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
@@ -95,8 +95,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   obs_energy.dipolar[1] = dipoles.calc_energy_long_range(local_parts);
 #endif
 
-  Constraints::constraints.add_energy(*box_geo, local_parts, get_sim_time(),
-                                      obs_energy);
+  constraints->add_energy(local_parts, get_sim_time(), obs_energy);
 
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
   auto const energy_host = gpu.copy_energy_to_host();

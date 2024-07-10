@@ -33,7 +33,7 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
+#include "constraints/Constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "electrostatics/p3m_gpu.hpp"
 #include "forces_inline.hpp"
@@ -198,7 +198,7 @@ void System::System::calculate_forces() {
                         get_interaction_range(), coulomb_cutoff, dipole_cutoff,
                         collision_detection_cutoff()});
 
-  Constraints::constraints.add_forces(*box_geo, particles, get_sim_time());
+  constraints->add_forces(particles, get_sim_time());
 
   for (int i = 0; i < max_oif_objects; i++) {
     // There are two global quantities that need to be evaluated:

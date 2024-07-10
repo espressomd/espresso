@@ -33,7 +33,7 @@
 #include "cell_system/HybridDecomposition.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
+#include "constraints/Constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
 #include "immersed_boundaries.hpp"
@@ -77,6 +77,7 @@ System::System(Private) {
   lees_edwards = std::make_shared<LeesEdwards::LeesEdwards>();
   auto_update_accumulators =
       std::make_shared<Accumulators::AutoUpdateAccumulators>();
+  constraints = std::make_shared<Constraints::Constraints>();
   reinit_thermo = true;
   time_step = -1.;
   sim_time = 0.;
@@ -90,6 +91,7 @@ void System::initialize() {
   lees_edwards->bind_system(handle);
   thermostat->bind_system(handle);
   auto_update_accumulators->bind_system(handle);
+  constraints->bind_system(handle);
 #ifdef CUDA
   gpu.bind_system(handle);
   gpu.initialize();
@@ -175,7 +177,7 @@ void System::on_boxl_change(bool skip_method_adaption) {
     dipoles.on_boxl_change();
 #endif
   }
-  Constraints::constraints.on_boxl_change();
+  constraints->on_boxl_change();
 }
 
 void System::veto_boxl_change(bool skip_particle_checks) const {
@@ -187,7 +189,7 @@ void System::veto_boxl_change(bool skip_particle_checks) const {
           "Cannot reset the box length when particles are present");
     }
   }
-  Constraints::constraints.veto_boxl_change();
+  constraints->veto_boxl_change();
   lb.veto_boxl_change();
   ek.veto_boxl_change();
 }
