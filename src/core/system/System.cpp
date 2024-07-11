@@ -90,6 +90,7 @@ void System::initialize() {
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
   thermostat->bind_system(handle);
+  nonbonded_ias->bind_system(handle);
   auto_update_accumulators->bind_system(handle);
   constraints->bind_system(handle);
 #ifdef CUDA

@@ -27,6 +27,7 @@
 
 #include "TabulatedPotential.hpp"
 #include "config/config.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
@@ -353,7 +354,7 @@ struct IA_parameters {
 #endif
 };
 
-class InteractionsNonBonded {
+class InteractionsNonBonded : public System::Leaf<InteractionsNonBonded> {
   /** @brief List of pairwise interactions. */
   std::vector<std::shared_ptr<IA_parameters>> m_nonbonded_ia_params{};
   /** @brief Maximal particle type seen so far. */
@@ -414,15 +415,15 @@ public:
    * @return Reference to interaction parameters for the type pair.
    */
   auto &get_ia_param(int i, int j) {
-    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
+    return *m_nonbonded_ia_params.at(get_ia_param_key(i, j));
   }
 
   auto const &get_ia_param(int i, int j) const {
-    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
+    return *m_nonbonded_ia_params.at(get_ia_param_key(i, j));
   }
 
   auto get_ia_param_ref_counted(int i, int j) const {
-    return m_nonbonded_ia_params[get_ia_param_key(i, j)];
+    return m_nonbonded_ia_params.at(get_ia_param_key(i, j));
   }
 
   void set_ia_param(int i, int j, std::shared_ptr<IA_parameters> const &ia) {
@@ -436,4 +437,7 @@ public:
 
   /** @brief Get maximal cutoff. */
   double maximal_cutoff() const;
+
+  /** @brief Notify system that non-bonded interactions changed. */
+  void on_non_bonded_ia_change() const;
 };

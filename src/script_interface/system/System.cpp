@@ -45,6 +45,7 @@
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
+#include "script_interface/interactions/NonBondedInteractions.hpp"
 #include "script_interface/lees_edwards/LeesEdwards.hpp"
 #include "script_interface/magnetostatics/Container.hpp"
 #include "script_interface/thermostat/thermostat.hpp"
@@ -84,6 +85,7 @@ struct System::Leaves {
   std::shared_ptr<Accumulators::AutoUpdateAccumulators>
       auto_update_accumulators;
   std::shared_ptr<Constraints::Constraints> constraints;
+  std::shared_ptr<Interactions::NonBondedInteractions> non_bonded_inter;
 #ifdef ELECTROSTATICS
   std::shared_ptr<Coulomb::Container> electrostatics;
 #endif
@@ -159,6 +161,7 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
   add_parameter("lees_edwards", &Leaves::lees_edwards);
   add_parameter("auto_update_accumulators", &Leaves::auto_update_accumulators);
   add_parameter("constraints", &Leaves::constraints);
+  add_parameter("non_bonded_inter", &Leaves::non_bonded_inter);
 #ifdef ELECTROSTATICS
   add_parameter("electrostatics", &Leaves::electrostatics);
 #endif

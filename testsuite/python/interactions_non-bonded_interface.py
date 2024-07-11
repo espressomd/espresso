@@ -165,8 +165,11 @@ class Test(ut.TestCase):
         self.assertEqual(
             self.system.non_bonded_inter[0, 0].wca.get_params()["epsilon"], 4.)
         self.assertEqual(wca.get_params()["epsilon"], 4.)
-        with self.assertRaisesRegex(RuntimeError, r"Non-bonded interaction is already bound to interaction pair \[0, 0\]"):
-            self.system.non_bonded_inter[0, 1].wca = wca
+        wca_new = espressomd.interactions.WCAInteraction(epsilon=3., sigma=1.)
+        self.system.non_bonded_inter[0, 0].wca = wca_new
+        wca_cur = self.system.non_bonded_inter[0, 0].wca
+        self.assertEqual(wca_cur.get_params()["epsilon"], 3.)
+        self.assertEqual(wca_cur.get_params()["sigma"], 1.)
 
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_exceptions(self):
@@ -185,6 +188,10 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "LJ parameter 'shift' has to be 'auto' or a float"):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=1., sigma=2., cutoff=3., shift="automatic")
+        with self.assertRaisesRegex(ValueError, r"NonBondedInteractions\[\] expects two particle types as indices"):
+            self.system.non_bonded_inter[0, 0, 1].lennard_jones
+        with self.assertRaisesRegex(ValueError, r"NonBondedInteractions\[\] expects two particle types as indices"):
+            self.system.non_bonded_inter[-1, 0].lennard_jones
 
         skin = self.system.cell_system.skin
         box_l = self.system.box_l
@@ -199,11 +206,10 @@ class Test(ut.TestCase):
         self.assertAlmostEqual(
             lennard_jones.get_params()["cutoff"], wrong_cutoff, delta=1e-10)
         inter_00_obj = self.system.non_bonded_inter[0, 0]
-        self.assertEqual(inter_00_obj.call_method("get_types"), [0, 0])
         self.assertIsNone(inter_00_obj.call_method("unknown"))
         with self.assertRaisesRegex(ValueError, r"NonBondedInteractions\[\] expects two particle types as indices"):
             self.system.non_bonded_inter[0, 0.]
-        with self.assertRaisesRegex(ValueError, r"NonBondedInteractions\[\] expects two particle types as indices"):
+        with self.assertRaisesRegex(TypeError, "'NonBondedInteractions' object does not support item assignment"):
             self.system.non_bonded_inter[0, -1] = None
 
     def test_feature_checks(self):
