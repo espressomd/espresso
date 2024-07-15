@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from ..script_interface import ScriptInterfaceHelper, script_interface_register
 
 
@@ -25,6 +28,7 @@ class Mpiio(ScriptInterfaceHelper):
     Used to output particle data using MPI-IO to binary files.
     """
     _so_name = "ScriptInterface::MPIIO::MPIIOScript"
+    _so_checkpointable = False
     _so_creation_policy = "GLOBAL"
 
     def write(self, prefix=None, positions=False, velocities=False,
