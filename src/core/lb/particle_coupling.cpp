@@ -115,24 +115,38 @@ static void positions_in_halo_impl(Utils::Vector3d const &pos_folded,
                                    Utils::Vector3d const &halo_upper_corner,
                                    BoxGeometry const &box_geo,
                                    std::vector<Utils::Vector3d> &res) {
+
+  // Lees-Edwards: pre-calc positional offset folded into the simulation box
+  double folded_le_offset = 0.;
+  if (box_geo.type() == BoxType::LEES_EDWARDS) {
+    auto const &le = box_geo.lees_edwards_bc();
+    folded_le_offset = Algorithm::periodic_fold(
+        le.pos_offset, box_geo.length()[le.shear_direction]);
+  }
+
   for (int i : {-1, 0, 1}) {
     for (int j : {-1, 0, 1}) {
       for (int k : {-1, 0, 1}) {
         Utils::Vector3d shift{{double(i), double(j), double(k)}};
-        Utils::Vector3d pos_shifted =
-            pos_folded + Utils::hadamard_product(box_geo.length(), shift);
 
-        if (box_geo.type() == BoxType::LEES_EDWARDS) {
-          // note: modulo convention: 0 <= offset < length
+        // Lees Edwards: folded position incl. LE pos offset
+        // This is needed to ensure that the position from which `pos_shifted`
+        // is calculated below, is always in the primary simulation box.
+        auto with_le_offset = [&](auto pos) {
           auto const &le = box_geo.lees_edwards_bc();
-          auto const length = box_geo.length()[le.shear_direction];
-          auto folded_offset = std::fmod(le.pos_offset, length);
-          if (folded_offset < 0.) {
-            folded_offset += length;
-          }
-          pos_shifted[le.shear_direction] +=
-              shift[le.shear_plane_normal] * folded_offset;
-        }
+          pos[le.shear_direction] = Algorithm::periodic_fold(
+              pos[le.shear_direction] +
+                  shift[le.shear_plane_normal] * folded_le_offset,
+              box_geo.length()[le.shear_direction]);
+          return pos;
+        };
+
+        Utils::Vector3d pos_shifted =
+            (box_geo.type() != BoxType::LEES_EDWARDS) ? // no Lees Edwards
+                pos_folded + Utils::hadamard_product(box_geo.length(), shift)
+                                                      : // Lees Edwards
+                with_le_offset(pos_folded) +
+                    Utils::hadamard_product(box_geo.length(), shift);
 
         if (in_box(pos_shifted, halo_lower_corner, halo_upper_corner)) {
           res.emplace_back(pos_shifted);
