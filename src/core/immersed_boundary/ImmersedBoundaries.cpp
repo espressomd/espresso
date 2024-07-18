@@ -48,7 +48,7 @@ void ImmersedBoundaries::volume_conservation(CellStructure &cs) {
 
 /** Initialize volume conservation */
 void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
-  auto const &bonded_ias = *::System::get_system().bonded_ias;
+  auto const &bonded_ias = *get_system().bonded_ias;
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
   if (not BoundariesFound) {
@@ -64,13 +64,13 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
     for (auto &kv : bonded_ias) {
-      if (auto *v = boost::get<IBMVolCons>(&(*kv.second))) {
+      if (auto *v = boost::get<IBMVolCons>(kv.second.get())) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
         // reference
         BoundariesFound = true;
         if (v->volRef == 0.) {
-          v->volRef = VolumesCurrent[static_cast<unsigned int>(v->softID)];
+          v->volRef = VolumesCurrent[v->softID];
         }
       }
     }
@@ -79,8 +79,9 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
   }
 }
 
-static const IBMVolCons *vol_cons_parameters(Particle const &p1) {
-  auto const &bonded_ias = *::System::get_system().bonded_ias;
+static IBMVolCons const *
+vol_cons_parameters(BondedInteractionsMap const &bonded_ias,
+                    Particle const &p1) {
   auto const it = boost::find_if(p1.bonds(), [&](auto const &bond) -> bool {
     return boost::get<IBMVolCons>(bonded_ias.at(bond.bond_id()).get());
   });
@@ -98,8 +99,8 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
   if (!BoundariesFound)
     return;
 
-  auto const &box_geo = *System::get_system().box_geo;
-  auto const &bonded_ias = *::System::get_system().bonded_ias;
+  auto const &box_geo = *get_system().box_geo;
+  auto const &bonded_ias = *get_system().bonded_ias;
 
   // Partial volumes for each soft particle, to be summed up
   std::vector<double> tempVol(VolumesCurrent.size());
@@ -107,7 +108,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
   // Loop over all particles on local node
   cs.bond_loop([&tempVol, &box_geo, &bonded_ias](
                    Particle &p1, int bond_id, std::span<Particle *> partners) {
-    auto const vol_cons_params = vol_cons_parameters(p1);
+    auto const vol_cons_params = vol_cons_parameters(bonded_ias, p1);
 
     if (vol_cons_params &&
         boost::get<IBMTriel>(bonded_ias.at(bond_id).get()) != nullptr) {
@@ -140,7 +141,7 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
       const double v213 = x2[0] * x1[1] * x3[2];
       const double v123 = x1[0] * x2[1] * x3[2];
 
-      tempVol[static_cast<unsigned int>(vol_cons_params->softID)] +=
+      tempVol[vol_cons_params->softID] +=
           1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
     }
     return false;
@@ -157,8 +158,8 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
   if (!BoundariesFound)
     return;
 
-  auto const &box_geo = *System::get_system().box_geo;
-  auto const &bonded_ias = *::System::get_system().bonded_ias;
+  auto const &box_geo = *get_system().box_geo;
+  auto const &bonded_ias = *get_system().bonded_ias;
 
   cs.bond_loop([this, &box_geo, &bonded_ias](Particle &p1, int bond_id,
                                              std::span<Particle *> partners) {
@@ -167,7 +168,7 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
       // IBM VolCons bonded interaction. Basically this loops over all
       // triangles, not all particles. First round to check for volume
       // conservation.
-      auto const vol_cons_params = vol_cons_parameters(p1);
+      auto const vol_cons_params = vol_cons_parameters(bonded_ias, p1);
       if (not vol_cons_params)
         return false;
 
@@ -207,4 +208,12 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
     }
     return false;
   });
+}
+
+void ImmersedBoundaries::register_softID(IBMVolCons &bond) {
+  auto const new_size = bond.softID + 1u;
+  if (new_size > VolumesCurrent.size()) {
+    VolumesCurrent.resize(new_size);
+  }
+  bond.set_volumes_view(VolumesCurrent);
 }

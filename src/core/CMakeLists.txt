@@ -30,7 +30,6 @@ add_library(
   errorhandling.cpp
   forces.cpp
   ghosts.cpp
-  immersed_boundaries.cpp
   integrate.cpp
   npt.cpp
   particle_node.cpp

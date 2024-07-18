@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IBM_TRIBEND_H
-#define IBM_TRIBEND_H
+#pragma once
 
 #include "config/config.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -31,22 +31,39 @@
 
 /** Parameters for IBM tribend */
 struct IBMTribend {
-  /** Interaction data */
+  /**
+   * @brief Bare bending modulus.
+   *
+   * If triangle pairs appear only once, the total bending force should get a
+   * factor 2. For the numerical model, a factor @f$ \sqrt(3) @f$ should be
+   * added, see @cite gompper96a and @cite kruger12a. This is an approximation,
+   * it holds strictly only for a sphere
+   */
   double kb;
 
   /** Reference angle */
   double theta0;
 
+  /** Particle ids */
+  std::tuple<int, int, int, int> p_ids;
+
+  bool flat;
+  bool is_initialized;
+
   double cutoff() const { return 0.; }
 
-  // Krüger always has three partners
   static constexpr int num = 3;
 
   /** Set the IBM Tribend parameters.
    *  Also calculate and store the reference state.
    *  See details in @cite gompper96a and @cite kruger12a.
    */
-  IBMTribend(int ind1, int ind2, int ind3, int ind4, double kb, bool flat);
+  void initialize(BoxGeometry const &box_geo,
+                  CellStructure const &cell_structure);
+
+  IBMTribend(int ind1, int ind2, int ind3, int ind4, double kb, bool flat)
+      : kb{kb}, theta0{0.}, p_ids{ind1, ind2, ind3, ind4}, flat{flat},
+        is_initialized{false} {}
 
   /** Calculate the forces
    *  The equations can be found in Appendix C of @cite kruger12a.
@@ -64,5 +81,3 @@ private:
     ar & theta0;
   }
 };
-
-#endif

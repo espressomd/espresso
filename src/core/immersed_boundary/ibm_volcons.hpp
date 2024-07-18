@@ -17,15 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IBM_VOLCONS_H
-#define IBM_VOLCONS_H
+#pragma once
 
-#include <utils/Vector.hpp>
+#include <boost/serialization/access.hpp>
+
+#include <cassert>
+#include <stdexcept>
+#include <vector>
 
 /** Parameters for IBM volume conservation bond */
 struct IBMVolCons {
   /** ID of the large soft particle to which this node belongs */
-  int softID;
+  unsigned int softID;
   /** Reference volume */
   double volRef;
   /** Spring constant for volume force */
@@ -35,7 +38,33 @@ struct IBMVolCons {
 
   static constexpr int num = 0;
 
-  IBMVolCons(int softID, double kappaV);
+  IBMVolCons(int softID, double kappaV) {
+    if (softID < 0) {
+      throw std::domain_error("IBMVolCons parameter 'softID' has to be >= 0");
+    }
+    this->softID = static_cast<unsigned int>(softID);
+    this->kappaV = kappaV;
+    // NOTE: We cannot compute the reference volume here because not all
+    // interactions are setup and thus we do not know which triangles belong to
+    // this softID. Calculate it later in the init function of
+    // \ref ImmersedBoundaries::init_volume_conservation()
+    volRef = 0.;
+    m_volumes = nullptr;
+  }
+
+  double get_current_volume() const {
+    double volume = 0.;
+    if (m_volumes) {
+      assert(static_cast<std::size_t>(softID) < m_volumes->size());
+      volume = (*m_volumes)[softID];
+    }
+    return volume;
+  }
+
+  void set_volumes_view(std::vector<double> const &volumes) {
+    m_volumes = &volumes;
+  }
+  void unset_volumes_view() { m_volumes = nullptr; }
 
 private:
   friend boost::serialization::access;
@@ -45,6 +74,5 @@ private:
     ar & volRef;
     ar & kappaV;
   }
+  std::vector<double> const *m_volumes;
 };
-
-#endif

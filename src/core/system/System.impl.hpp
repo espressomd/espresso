@@ -33,6 +33,7 @@
 #include "constraints/Constraints.hpp"
 #include "galilei/ComFixed.hpp"
 #include "galilei/Galilei.hpp"
+#include "immersed_boundary/ImmersedBoundaries.hpp"
 #include "integrators/Propagation.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"

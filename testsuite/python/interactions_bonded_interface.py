@@ -249,6 +249,8 @@ class BondedInteractions(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid value for parameter 'elasticLaw': 'Unknown'"):
             espressomd.interactions.IBM_Triel(
                 ind1=0, ind2=1, ind3=2, k1=1.1, k2=1.2, maxDist=1.6, elasticLaw='Unknown')
+        with self.assertRaisesRegex(ValueError, "IBMVolCons parameter 'softID' has to be >= 0"):
+            espressomd.interactions.IBM_VolCons(softID=-1, kappaV=0.)
 
         # sanity checks when removing bonds
         self.system.bonded_inter.clear()

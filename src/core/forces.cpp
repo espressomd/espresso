@@ -38,7 +38,7 @@
 #include "electrostatics/p3m_gpu.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
-#include "immersed_boundaries.hpp"
+#include "immersed_boundary/ImmersedBoundaries.hpp"
 #include "integrators/Propagation.hpp"
 #include "lb/particle_coupling.hpp"
 #include "magnetostatics/dipoles.hpp"
@@ -224,7 +224,7 @@ void System::System::calculate_forces() {
   }
 
   // Must be done here. Forces need to be ghost-communicated
-  immersed_boundaries.volume_conservation(*cell_structure);
+  immersed_boundaries->volume_conservation(*cell_structure);
 
   if (thermostat->lb and (propagation->used_propagations &
                           PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE)) {

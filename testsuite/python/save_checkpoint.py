@@ -307,6 +307,7 @@ ibm_tribend_bond = espressomd.interactions.IBM_Tribend(
 ibm_triel_bond = espressomd.interactions.IBM_Triel(
     ind1=p1.id, ind2=p2.id, ind3=p3.id, k1=1.1, k2=1.2, maxDist=1.6,
     elasticLaw="NeoHookean")
+system.bonded_inter.add(ibm_tribend_bond)
 break_spec = espressomd.bond_breakage.BreakageSpec(
     breakage_length=5., action_type="delete_bond")
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec

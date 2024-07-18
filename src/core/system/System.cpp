@@ -33,10 +33,8 @@
 #include "cell_system/HybridDecomposition.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "constraints/Constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "immersed_boundaries.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "thermostat.hpp"
@@ -74,6 +72,7 @@ System::System(Private) {
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
+  immersed_boundaries = std::make_shared<ImmersedBoundaries>();
 #ifdef COLLISION_DETECTION
   collision_detection = std::make_shared<CollisionDetection>();
 #endif
@@ -93,9 +92,11 @@ void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
+  immersed_boundaries->bind_system(handle);
   bonded_ias->bind_system(handle);
   thermostat->bind_system(handle);
   nonbonded_ias->bind_system(handle);
+  immersed_boundaries->bind_system(handle);
 #ifdef COLLISION_DETECTION
   collision_detection->bind_system(handle);
 #endif
@@ -344,7 +345,7 @@ void System::update_dependent_particles() {
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
-  ::immersed_boundaries.init_volume_conservation(*cell_structure);
+  immersed_boundaries->init_volume_conservation(*cell_structure);
 }
 
 void System::on_observable_calc() {

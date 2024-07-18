@@ -73,14 +73,17 @@ private:
   }
 
   key_type insert_in_core(mapped_type const &obj_ptr) override {
-    auto const key = m_handle->insert(obj_ptr->bonded_ia());
+    key_type key{};
+    context()->parallel_try_catch(
+        [&]() { key = m_handle->insert(obj_ptr->bonded_ia()); });
     m_bonds[key] = std::move(obj_ptr);
     return key;
   }
 
   void insert_in_core(key_type const &key,
                       mapped_type const &obj_ptr) override {
-    m_handle->insert(key, obj_ptr->bonded_ia());
+    context()->parallel_try_catch(
+        [&]() { m_handle->insert(key, obj_ptr->bonded_ia()); });
     m_bonds[key] = std::move(obj_ptr);
   }
 

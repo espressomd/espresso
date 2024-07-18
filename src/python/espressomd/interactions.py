@@ -1201,7 +1201,7 @@ class IBM_Triel(BondedInteraction):
         """Gets default values of optional parameters.
 
         """
-        return {"k2": 0}
+        return {"k2": 0., "is_initialized": False, "_cache": None}
 
 
 @script_interface_register
@@ -1231,7 +1231,7 @@ class IBM_Tribend(BondedInteraction):
         """Gets default values of optional parameters.
 
         """
-        return {"refShape": "Flat"}
+        return {"refShape": "Flat", "theta0": 0., "is_initialized": False}
 
 
 @script_interface_register

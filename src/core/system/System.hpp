@@ -48,6 +48,7 @@ class Thermostat;
 class ComFixed;
 class Galilei;
 class Observable_stat;
+class ImmersedBoundaries;
 class CollisionDetection;
 namespace BondBreakage {
 class BondBreakage;
@@ -279,6 +280,7 @@ public:
   std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<ComFixed> comfixed;
   std::shared_ptr<Galilei> galilei;
+  std::shared_ptr<ImmersedBoundaries> immersed_boundaries;
 #ifdef COLLISION_DETECTION
   std::shared_ptr<CollisionDetection> collision_detection;
 #endif

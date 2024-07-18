@@ -696,10 +696,12 @@ class CheckpointTest(ut.TestCase):
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
         self.assertEqual(
             {**ibm_tribend_bond.params, **{'theta0': 0.}},
-            {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
+            {'kb': 2., 'refShape': 'Initial', 'is_initialized': True,
+             'theta0': 0., 'ind1': 0, 'ind2': 1, 'ind3': 3, 'ind4': 4})
         self.assertEqual(
-            ibm_triel_bond.params,
-            {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
+            {k: v for k, v in ibm_triel_bond.params.items() if k[0] != "_"},
+            {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean',
+             'ind1': 0, 'ind2': 1, 'ind3': 3, 'is_initialized': False})
         # check new bonds can be added
         if not has_lb_mode:
             new_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)

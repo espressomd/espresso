@@ -18,6 +18,10 @@
  */
 
 #include "bonded_interaction_data.hpp"
+
+#include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "immersed_boundary/ImmersedBoundaries.hpp"
 #include "rigid_bond.hpp"
 #include "system/System.hpp"
 #include "thermalized_bond.hpp"
@@ -80,10 +84,22 @@ void BondedInteractionsMap::activate_bond(mapped_type const &ptr) {
   if (auto bond = boost::get<ThermalizedBond>(ptr.get())) {
     bond->set_thermostat_view(system.thermostat);
   }
+  if (auto bond = boost::get<IBMVolCons>(ptr.get())) {
+    system.immersed_boundaries->register_softID(*bond);
+  }
+  if (auto bond = boost::get<IBMTriel>(ptr.get())) {
+    bond->initialize(*system.box_geo, *system.cell_structure);
+  }
+  if (auto bond = boost::get<IBMTribend>(ptr.get())) {
+    bond->initialize(*system.box_geo, *system.cell_structure);
+  }
 }
 
 void BondedInteractionsMap::deactivate_bond(mapped_type const &ptr) {
   if (auto bond = boost::get<ThermalizedBond>(ptr.get())) {
     bond->unset_thermostat_view();
+  }
+  if (auto bond = boost::get<IBMVolCons>(ptr.get())) {
+    bond->unset_volumes_view();
   }
 }
