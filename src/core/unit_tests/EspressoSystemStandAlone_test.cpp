@@ -32,7 +32,7 @@ namespace utf = boost::unit_test;
 #include "PropagationMode.hpp"
 #include "accumulators/TimeSeries.hpp"
 #include "actor/registration.hpp"
-#include "bonded_interactions/bonded_interaction_utils.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/fene.hpp"
 #include "bonded_interactions/harmonic.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -265,18 +265,18 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       // set up a harmonic bond
       auto const bond = HarmonicBond(200.0, 0.3, 1.0);
       auto const bond_ia = std::make_shared<Bonded_IA_Parameters>(bond);
-      bonded_ia_params.insert(harm_bond_id, bond_ia);
+      system.bonded_ias->insert(harm_bond_id, bond_ia);
     }
     {
       // set up a FENE bond
       auto const bond = FeneBond(300.0, 1.0, 0.3);
       auto const bond_ia = std::make_shared<Bonded_IA_Parameters>(bond);
-      bonded_ia_params.insert(fene_bond_id, bond_ia);
+      system.bonded_ias->insert(fene_bond_id, bond_ia);
     }
     auto const &harm_bond =
-        *boost::get<HarmonicBond>(bonded_ia_params.at(harm_bond_id).get());
+        *boost::get<HarmonicBond>(system.bonded_ias->at(harm_bond_id).get());
     auto const &fene_bond =
-        *boost::get<FeneBond>(bonded_ia_params.at(fene_bond_id).get());
+        *boost::get<FeneBond>(system.bonded_ias->at(fene_bond_id).get());
     insert_particle_bond(pid2, harm_bond_id, {pid1});
     insert_particle_bond(pid2, fene_bond_id, {pid3});
 

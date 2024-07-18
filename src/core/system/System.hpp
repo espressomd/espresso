@@ -41,12 +41,14 @@ class LocalBox;
 struct CellStructure;
 class Propagation;
 class InteractionsNonBonded;
+class BondedInteractionsMap;
 namespace Thermostat {
 class Thermostat;
 }
 class ComFixed;
 class Galilei;
 class Observable_stat;
+class CollisionDetection;
 namespace BondBreakage {
 class BondBreakage;
 }
@@ -272,10 +274,14 @@ public:
   std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
   std::shared_ptr<Propagation> propagation;
+  std::shared_ptr<BondedInteractionsMap> bonded_ias;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
   std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<ComFixed> comfixed;
   std::shared_ptr<Galilei> galilei;
+#ifdef COLLISION_DETECTION
+  std::shared_ptr<CollisionDetection> collision_detection;
+#endif
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
   std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
   std::shared_ptr<Accumulators::AutoUpdateAccumulators>
@@ -315,6 +321,5 @@ private:
 System &get_system();
 void set_system(std::shared_ptr<System> new_instance);
 void reset_system();
-bool is_system_set();
 
 } // namespace System

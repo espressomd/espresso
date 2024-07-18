@@ -16,18 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "bonded_interaction_data.hpp"
 #include "rigid_bond.hpp"
 #include "system/System.hpp"
 #include "thermalized_bond.hpp"
+#include "thermostat.hpp"
 
 #include <boost/variant.hpp>
 
 #include <algorithm>
-#include <cstddef>
-#include <vector>
-
-BondedInteractionsMap bonded_ia_params;
+#include <numeric>
 
 /** Visitor to get the bond cutoff from the bond parameter variant */
 class BondCutoff : public boost::static_visitor<double> {
@@ -37,20 +36,18 @@ public:
   }
 };
 
-double maximal_cutoff_bonded() {
+double BondedInteractionsMap::maximal_cutoff() const {
   auto const max_cut_bonded = std::accumulate(
-      bonded_ia_params.begin(), bonded_ia_params.end(), BONDED_INACTIVE_CUTOFF,
-      [](auto max_cut, auto const &kv) {
+      begin(), end(), BONDED_INACTIVE_CUTOFF, [](auto max_cut, auto const &kv) {
         return std::max(max_cut,
                         boost::apply_visitor(BondCutoff(), *kv.second));
       });
 
   /* Check if there are dihedrals */
-  auto const any_dihedrals = std::any_of(
-      bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &kv) {
-        return (boost::get<DihedralBond>(&(*kv.second)) ||
-                boost::get<TabulatedDihedralBond>(&(*kv.second)));
-      });
+  auto const any_dihedrals = std::any_of(begin(), end(), [](auto const &kv) {
+    return (boost::get<DihedralBond>(&(*kv.second)) ||
+            boost::get<TabulatedDihedralBond>(&(*kv.second)));
+  });
 
   /* dihedrals: the central particle is indirectly connected to the fourth
    * particle via the third particle, so we have to double the cutoff */
@@ -72,9 +69,21 @@ void BondedInteractionsMap::on_ia_change() {
     }
 #endif
   }
-  if (System::is_system_set()) {
-    auto &system = System::get_system();
-    system.on_short_range_ia_change();
-    system.on_thermostat_param_change(); // thermalized bonds
+  if (auto system = m_system.lock()) {
+    system->on_short_range_ia_change();
+    system->on_thermostat_param_change(); // thermalized bonds
+  }
+}
+
+void BondedInteractionsMap::activate_bond(mapped_type const &ptr) {
+  auto &system = get_system();
+  if (auto bond = boost::get<ThermalizedBond>(ptr.get())) {
+    bond->set_thermostat_view(system.thermostat);
+  }
+}
+
+void BondedInteractionsMap::deactivate_bond(mapped_type const &ptr) {
+  if (auto bond = boost::get<ThermalizedBond>(ptr.get())) {
+    bond->unset_thermostat_view();
   }
 }

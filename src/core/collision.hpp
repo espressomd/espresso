@@ -21,10 +21,11 @@
 
 #include "config/config.hpp"
 
-#include "cell_system/CellStructure.hpp"
-
 #include "BondList.hpp"
 #include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "system/Leaf.hpp"
 
 /** @brief Protocols for collision handling. */
 enum class CollisionModeType : int {
@@ -43,10 +44,16 @@ enum class CollisionModeType : int {
   GLUE_TO_SURF = 3,
 };
 
-class Collision_parameters {
+/// Data type holding the info about a single collision
+struct CollisionPair {
+  int pp1; // 1st particle id
+  int pp2; // 2nd particle id
+};
+
+class CollisionDetection : public System::Leaf<CollisionDetection> {
 public:
-  Collision_parameters()
-      : mode(CollisionModeType::OFF), distance(0.), distance2(0.),
+  CollisionDetection()
+      : mode(CollisionModeType::OFF), distance(0.), distance_sq(0.),
         bond_centers(-1), bond_vs(-1) {}
 
   /// collision protocol
@@ -54,7 +61,7 @@ public:
   /// distance at which particles are bound
   double distance;
   // Square of distance at which particle are bound
-  double distance2;
+  double distance_sq;
 
   /// bond type used between centers of colliding particles
   int bond_centers;
@@ -82,70 +89,63 @@ public:
 
   /** @brief Validates parameters and creates particle types if needed. */
   void initialize();
-};
 
-/// Parameters for collision detection
-extern Collision_parameters collision_params;
+  auto cutoff() const {
+    if (mode != CollisionModeType::OFF) {
+      return distance;
+    }
+    return INACTIVE_CUTOFF;
+  }
 
-#ifdef COLLISION_DETECTION
+  /// Handle queued collisions
+  void handle_collisions(CellStructure &cell_structure);
 
-void prepare_local_collision_queue();
+  void clear_queue() { local_collision_queue.clear(); }
 
-/// Handle the collisions recorded in the queue
-void handle_collisions(CellStructure &cell_structure);
-
-/** @brief Add the collision between the given particle ids to the collision
- *  queue
- */
-void queue_collision(int part1, int part2);
-
-/** @brief Check additional criteria for the glue_to_surface collision mode */
-inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
-  return (((p1.type() == collision_params.part_type_to_be_glued) &&
-           (p2.type() == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2.type() == collision_params.part_type_to_be_glued) &&
-           (p1.type() == collision_params.part_type_to_attach_vs_to)));
-}
-
-/** @brief Detect (and queue) a collision between the given particles. */
-inline void detect_collision(Particle const &p1, Particle const &p2,
-                             double const dist2) {
-  if (dist2 > collision_params.distance2)
-    return;
-
-  // If we are in the glue to surface mode, check that the particles
-  // are of the right type
-  if (collision_params.mode == CollisionModeType::GLUE_TO_SURF)
-    if (!glue_to_surface_criterion(p1, p2))
+  /** @brief Detect (and queue) a collision between the given particles. */
+  void detect_collision(Particle const &p1, Particle const &p2,
+                        double const dist_sq) {
+    if (dist_sq > distance_sq)
       return;
 
-  // Ignore virtual particles
-  if (p1.is_virtual() or p2.is_virtual())
-    return;
+    // If we are in the glue to surface mode, check that the particles
+    // are of the right type
+    if (mode == CollisionModeType::GLUE_TO_SURF)
+      if (!glue_to_surface_criterion(p1, p2))
+        return;
 
-  // Check, if there's already a bond between the particles
-  if (pair_bond_exists_on(p1.bonds(), p2.id(), collision_params.bond_centers))
-    return;
+    // Ignore virtual particles
+    if (p1.is_virtual() or p2.is_virtual())
+      return;
 
-  if (pair_bond_exists_on(p2.bonds(), p1.id(), collision_params.bond_centers))
-    return;
+    // Check, if there's already a bond between the particles
+    if (pair_bond_exists_on(p1.bonds(), p2.id(), bond_centers))
+      return;
 
-  /* If we're still here, there is no previous bond between the particles,
-     we have a new collision */
+    if (pair_bond_exists_on(p2.bonds(), p1.id(), bond_centers))
+      return;
 
-  // do not create bond between ghost particles
-  if (p1.is_ghost() and p2.is_ghost()) {
-    return;
+    /* If we're still here, there is no previous bond between the particles,
+       we have a new collision */
+
+    // do not create bond between ghost particles
+    if (p1.is_ghost() and p2.is_ghost()) {
+      return;
+    }
+    local_collision_queue.push_back({p1.id(), p2.id()});
   }
-  queue_collision(p1.id(), p2.id());
-}
 
-#endif // COLLISION_DETECTION
+  // private:
+  /// During force calculation, colliding particles are recorded in the queue.
+  /// The queue is processed after force calculation, when it is safe to add
+  /// particles.
+  std::vector<CollisionPair> local_collision_queue;
 
-inline double collision_detection_cutoff() {
-#ifdef COLLISION_DETECTION
-  if (collision_params.mode != CollisionModeType::OFF)
-    return collision_params.distance;
-#endif
-  return -1.;
-}
+  /** @brief Check additional criteria for the glue_to_surface collision mode */
+  bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) const {
+    return (((p1.type() == part_type_to_be_glued) and
+             (p2.type() == part_type_to_attach_vs_to)) or
+            ((p2.type() == part_type_to_be_glued) and
+             (p1.type() == part_type_to_attach_vs_to)));
+  }
+};

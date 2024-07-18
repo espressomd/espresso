@@ -67,14 +67,10 @@ private:
     m_handle->bind_system(m_system.lock());
     m_handle->on_non_bonded_ia_change();
     *m_notify_cutoff_change = [this]() {
-      if (m_handle) {
+      if (m_handle and not m_system.expired()) {
         m_handle->on_non_bonded_ia_change();
       }
     };
-  }
-
-  void on_detach_system(::System::System &) override {
-    *m_notify_cutoff_change = []() {};
   }
 
   std::pair<int, int> get_key(Variant const &key) const {

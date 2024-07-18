@@ -98,14 +98,6 @@ class CellSystem(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("get_state", "tune_skin", "resort")
 
-    def __reduce__(self):
-        so_callback, so_callback_args = super().__reduce__()
-        return (CellSystem._restore_object, (so_callback, so_callback_args))
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args):
-        return so_callback(*so_callback_args)
-
     def set_regular_decomposition(self, **kwargs):
         """
         Activate the regular decomposition cell system.

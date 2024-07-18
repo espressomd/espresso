@@ -18,8 +18,6 @@
 #
 
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .interactions import BondedInteraction, BondedInteractions
-from .code_features import assert_features
 
 
 @script_interface_register
@@ -40,14 +38,7 @@ class CollisionDetection(ScriptInterfaceHelper):
     """
 
     _so_name = "CollisionDetection::CollisionDetection"
-
-    def __init__(self, **kwargs):
-        assert_features("COLLISION_DETECTION")
-        if "sip" in kwargs:
-            super().__init__(**kwargs)
-            return
-        super().__init__()
-        self.set_params(**kwargs)
+    _so_features = ("COLLISION_DETECTION",)
 
     # Do not allow setting of individual attributes
     def __setattr__(self, *args, **kwargs):
@@ -97,22 +88,15 @@ class CollisionDetection(ScriptInterfaceHelper):
         if "mode" not in kwargs:
             raise ValueError(
                 "Collision mode must be specified via the 'mode' argument")
-        # Convert bonds to bond ids
-        for name in ["bond_centers", "bond_vs"]:
-            if name in kwargs:
-                if isinstance(kwargs[name], BondedInteraction):
-                    kwargs[name] = kwargs[name]._bond_id
-        self.call_method('instantiate', **kwargs)
+        self.call_method("set_params", **kwargs)
 
     def get_parameter(self, name):
-        """Gets a single parameter from the collision detection."""
-
         value = super().get_parameter(name)
         if name in ["bond_centers", "bond_vs"]:
             if value == -1:  # Not defined
                 value = None
             else:
-                value = BondedInteractions()[value]
+                value = self.call_method("get_bond_by_id", bond_id=value)
         return value
 
     def get_params(self):
@@ -124,14 +108,3 @@ class CollisionDetection(ScriptInterfaceHelper):
         for name in self.call_method("params_for_mode", mode=mode):
             params[name] = self.get_parameter(name)
         return params
-
-    def __reduce__(self):
-        so_callback, so_callback_args = super().__reduce__()
-        return (CollisionDetection._restore_object,
-                (so_callback, so_callback_args, self.get_params()))
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.set_params(**state)
-        return so

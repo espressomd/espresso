@@ -65,7 +65,7 @@ public:
       auto const system_si = m_system.lock();
       auto &system = system_si->get_system();
       auto &cell_structure = *system.cell_structure;
-      auto &bonded_ias = ::bonded_ia_params;
+      auto &bonded_ias = *system.bonded_ias;
       Mpiio::mpi_mpiio_common_write(prefix, fields, bonded_ias,
                                     cell_structure.local_particles(),
                                     *m_buffers);

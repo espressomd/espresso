@@ -23,7 +23,12 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/interactions/BondedInteractions.hpp"
 
+#include "core/system/System.hpp"
+
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -33,6 +38,9 @@ namespace Particles {
 class ParticleSlice : public AutoParameters<ParticleSlice> {
   std::vector<int> m_id_selection;
   int m_chunk_size;
+  std::weak_ptr<CellSystem::CellSystem> m_cell_structure;
+  std::weak_ptr<Interactions::BondedInteractions> m_bonded_ias;
+  std::weak_ptr<::System::System> m_system;
 
 public:
   ParticleSlice() {
@@ -48,6 +56,11 @@ public:
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
+
+  void attach(std::weak_ptr<::System::System> system) {
+    assert(m_system.expired());
+    m_system = system;
+  }
 };
 
 } // namespace Particles

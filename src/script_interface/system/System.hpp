@@ -48,6 +48,12 @@ public:
                          VariantMap const &parameters) override;
 
   auto const &get_system() const { return *m_instance; }
+
+private:
+  template <typename LeafType>
+  void do_set_default_parameter(std::string const &name);
+  std::string get_internal_state() const override;
+  void set_internal_state(std::string const &state) override;
 };
 
 } // namespace System

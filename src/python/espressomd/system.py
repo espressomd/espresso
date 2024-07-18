@@ -20,6 +20,7 @@
 import numpy as np
 import collections
 
+# pylint: disable=unused-import
 from . import accumulators
 from . import analyze
 from . import bond_breakage
@@ -36,33 +37,10 @@ from . import integrate
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
+# pylint: enable=unused-import
 
 from .code_features import has_features, assert_features
 from .script_interface import script_interface_register, ScriptInterfaceHelper
-
-
-@script_interface_register
-class _System(ScriptInterfaceHelper):
-    """
-    Wrapper class required for technical reasons only.
-
-    When reloading from a checkpoint file, the box length, periodicity, and
-    global cutoff must be set before anything else. Due to how pickling works,
-    this can only be achieved by encapsulating them in a member object of the
-    System class, and adding that object as the first element of the ordered
-    dict that is used during serialization. When the System class is reloaded,
-    the ordered dict is walked through and objects are deserialized in the same
-    order. Since many objects depend on the box length, the `_System` has
-    to be deserialized first. This guarantees the box geometry is already set
-    in the core before e.g. particles and bonds are deserialized.
-
-    """
-    _so_name = "System::System"
-    _so_creation_policy = "GLOBAL"
-    _so_bind_methods = (
-        "setup_type_map",
-        "number_of_particles",
-        "rotate_system")
 
 
 @script_interface_register
@@ -146,60 +124,24 @@ class System(ScriptInterfaceHelper):
             How much to rotate
 
     """
-    _so_name = "System::SystemFacade"
+    _so_name = "System::System"
     _so_creation_policy = "GLOBAL"
-    _so_bind_methods = _System._so_bind_methods
+    _so_bind_methods = (
+        "setup_type_map",
+        "number_of_particles",
+        "rotate_system")
 
     def __init__(self, **kwargs):
         if "sip" in kwargs:
             super().__init__(**kwargs)
             self._setup_atexit()
             return
-        super().__init__()
-
-        if self.call_method("is_system_created"):
-            raise RuntimeError(
-                "You can only have one instance of the system class at a time.")
-        if "box_l" not in kwargs:
-            raise ValueError("Required argument 'box_l' not provided.")
-
-        setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                              "time_step", "force_cap", "max_oif_objects"]
-
-        self.call_method("set_system_handle", obj=_System(**kwargs))
-        self.integrator = integrate.IntegratorHandle()
-        for key in ("box_l", "periodicity", "min_global_cut"):
-            if key in kwargs:
-                del kwargs[key]
-        for arg in kwargs:
-            if arg not in setable_properties:
-                raise ValueError(
-                    f"Property '{arg}' can not be set via argument to System class.")
-            System.__setattr__(self, arg, kwargs.get(arg))
-        self.analysis = analyze.Analysis()
-        self.auto_update_accumulators = accumulators.AutoUpdateAccumulators()
-        self.bonded_inter = interactions.BondedInteractions()
-        self.cell_system = cell_system.CellSystem()
-        self.bond_breakage = bond_breakage.BreakageSpecs()
-        if has_features("COLLISION_DETECTION"):
-            self.collision_detection = collision_detection.CollisionDetection(
-                mode="off")
-        self.comfixed = comfixed.ComFixed()
-        self.constraints = constraints.Constraints()
+        super().__init__(_regular_constructor=True, **kwargs)
         if has_features("CUDA"):
             self.cuda_init_handle = cuda_init.CudaInitHandle()
-        if has_features("ELECTROSTATICS"):
-            self.electrostatics = electrostatics.Container()
-        if has_features("DIPOLES"):
-            self.magnetostatics = magnetostatics.Container()
         if has_features("WALBERLA"):
             self._lb = None
             self._ekcontainer = None
-        self.galilei = galilei.GalileiTransform()
-        self.lees_edwards = lees_edwards.LeesEdwards()
-        self.non_bonded_inter = interactions.NonBondedInteractions()
-        self.part = particle_data.ParticleList()
-        self.thermostat = thermostat.Thermostat()
         self._ase_interface = None
 
         # lock class
@@ -225,17 +167,11 @@ class System(ScriptInterfaceHelper):
         return so
 
     def __getstate__(self):
-        checkpointable_properties = [
-            "bonded_inter",
-            "part",
-        ]
-        if has_features("COLLISION_DETECTION"):
-            checkpointable_properties.append("collision_detection")
+        checkpointable_properties = []
         if has_features("WALBERLA"):
             checkpointable_properties += ["_lb", "_ekcontainer"]
 
         odict = collections.OrderedDict()
-        odict["_system_handle"] = self.call_method("get_system_handle")
         for property_name in checkpointable_properties:
             odict[property_name] = System.__getattribute__(self, property_name)
         if self._ase_interface is not None:
@@ -243,8 +179,6 @@ class System(ScriptInterfaceHelper):
         return odict
 
     def __setstate__(self, params):
-        # note: this class is initialized twice by pickle
-        self.call_method("set_system_handle", obj=params.pop("_system_handle"))
         # initialize Python-only members
         if "_ase_interface" in params:
             from espressomd.plugins.ase import ASEInterface

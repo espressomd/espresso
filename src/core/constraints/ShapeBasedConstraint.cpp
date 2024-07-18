@@ -21,6 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "dpd.hpp"
@@ -106,8 +107,10 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
       pf = calc_central_radial_force(ia_params, dist_vec, dist) +
-           calc_central_radial_charge_force(p, part_rep, ia_params, dist_vec,
-                                            dist, get_ptr(coulomb_kernel)) +
+#ifdef THOLE
+           thole_pair_force(p, part_rep, ia_params, dist_vec, dist,
+                            *system.bonded_ias, get_ptr(coulomb_kernel)) +
+#endif
            calc_non_central_force(p, part_rep, ia_params, dist_vec, dist);
 
 #ifdef DPD
@@ -122,8 +125,10 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
         pf = calc_central_radial_force(ia_params, dist_vec, -dist) +
-             calc_central_radial_charge_force(p, part_rep, ia_params, dist_vec,
-                                              -dist, get_ptr(coulomb_kernel)) +
+#ifdef THOLE
+             thole_pair_force(p, part_rep, ia_params, dist_vec, -dist,
+                              *system.bonded_ias, get_ptr(coulomb_kernel)) +
+#endif
              calc_non_central_force(p, part_rep, ia_params, dist_vec, -dist);
 
 #ifdef DPD
@@ -160,16 +165,19 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
   auto const &ia_params = get_ia_param(p.type());
 
   if (is_active(ia_params)) {
-    auto const coulomb_kernel = m_system.lock()->coulomb.pair_energy_kernel();
+    auto &system = *m_system.lock();
+    auto const coulomb_kernel = system.coulomb.pair_energy_kernel();
     double dist = 0.0;
     Utils::Vector3d vec;
     m_shape->calculate_dist(folded_pos, dist, vec);
-    if (dist > 0) {
+    if (dist > 0.) {
       energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist,
+                                           *system.bonded_ias,
                                            get_ptr(coulomb_kernel));
-    } else if ((dist <= 0) && m_penetrable) {
-      if (!m_only_positive && (dist < 0)) {
+    } else if (dist <= 0. and m_penetrable) {
+      if (!m_only_positive and dist < 0.) {
         energy = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, -dist,
+                                             *system.bonded_ias,
                                              get_ptr(coulomb_kernel));
       }
     } else {

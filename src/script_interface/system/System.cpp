@@ -28,6 +28,7 @@
 #include "core/cell_system/CellStructureType.hpp"
 #include "core/cells.hpp"
 #include "core/communication.hpp"
+#include "core/exclusions.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/object-in-fluid/oif_global_forces.hpp"
 #include "core/particle_node.hpp"
@@ -36,22 +37,29 @@
 #include "core/system/System.hpp"
 #include "core/system/System.impl.hpp"
 
+#include "script_interface/ObjectState.hpp"
 #include "script_interface/accumulators/AutoUpdateAccumulators.hpp"
 #include "script_interface/analysis/Analysis.hpp"
 #include "script_interface/bond_breakage/BreakageSpecs.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
+#include "script_interface/collision_detection/CollisionDetection.hpp"
 #include "script_interface/constraints/Constraints.hpp"
 #include "script_interface/electrostatics/Container.hpp"
 #include "script_interface/galilei/ComFixed.hpp"
 #include "script_interface/galilei/Galilei.hpp"
 #include "script_interface/integrators/IntegratorHandle.hpp"
+#include "script_interface/interactions/BondedInteractions.hpp"
 #include "script_interface/interactions/NonBondedInteractions.hpp"
 #include "script_interface/lees_edwards/LeesEdwards.hpp"
 #include "script_interface/magnetostatics/Container.hpp"
+#include "script_interface/particle_data/ParticleHandle.hpp"
+#include "script_interface/particle_data/ParticleList.hpp"
 #include "script_interface/thermostat/thermostat.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/demangle.hpp>
 #include <utils/math/vec_rotate.hpp>
+#include <utils/serialization/pack.hpp>
 
 #include <boost/mpi/collectives.hpp>
 
@@ -60,6 +68,7 @@
 #include <cassert>
 #include <cmath>
 #include <functional>
+#include <initializer_list>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -71,11 +80,33 @@ namespace System {
 
 static bool system_created = false;
 
+#ifdef EXCLUSIONS
+static void set_exclusions(Particles::ParticleHandle &p,
+                           Variant const &exclusions) {
+  p.call_method("set_exclusions", {{"p_ids", exclusions}});
+}
+#endif // EXCLUSIONS
+
+static void set_bonds(Particles::ParticleHandle &p, Variant const &bonds) {
+  auto const bond_list_flat = get_value<std::vector<std::vector<int>>>(bonds);
+  for (auto const &bond_flat : bond_list_flat) {
+    auto const bond_id = bond_flat[0];
+    auto const part_id =
+        std::vector<int>{bond_flat.begin() + 1, bond_flat.end()};
+    p.call_method("add_bond",
+                  {{"bond_id", bond_id}, {"part_id", std::move(part_id)}});
+  }
+}
+
 /** @brief Container for leaves of the system class. */
 struct System::Leaves {
   Leaves() = default;
   std::shared_ptr<CellSystem::CellSystem> cell_system;
   std::shared_ptr<Integrators::IntegratorHandle> integrator;
+  std::shared_ptr<Interactions::BondedInteractions> bonded_interactions;
+#ifdef COLLISION_DETECTION
+  std::shared_ptr<CollisionDetection::CollisionDetection> collision_detection;
+#endif
   std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<Analysis::Analysis> analysis;
   std::shared_ptr<Galilei::ComFixed> comfixed;
@@ -92,6 +123,7 @@ struct System::Leaves {
 #ifdef DIPOLES
   std::shared_ptr<Dipoles::Container> magnetostatics;
 #endif
+  std::shared_ptr<Particles::ParticleList> part;
 };
 
 System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
@@ -151,12 +183,18 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
        [this]() { return m_instance->get_min_global_cut(); }},
       {"max_oif_objects", ::max_oif_objects},
   });
+  // note: the order of leaves matters! e.g. bonds depend on thermostats,
+  // and thus a thermostat object must be instantiated before the bonds
   add_parameter("cell_system", &Leaves::cell_system);
   add_parameter("integrator", &Leaves::integrator);
   add_parameter("thermostat", &Leaves::thermostat);
   add_parameter("analysis", &Leaves::analysis);
   add_parameter("comfixed", &Leaves::comfixed);
   add_parameter("galilei", &Leaves::galilei);
+  add_parameter("bonded_inter", &Leaves::bonded_interactions);
+#ifdef COLLISION_DETECTION
+  add_parameter("collision_detection", &Leaves::collision_detection);
+#endif
   add_parameter("bond_breakage", &Leaves::bond_breakage);
   add_parameter("lees_edwards", &Leaves::lees_edwards);
   add_parameter("auto_update_accumulators", &Leaves::auto_update_accumulators);
@@ -168,6 +206,14 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
 #ifdef DIPOLES
   add_parameter("magnetostatics", &Leaves::magnetostatics);
 #endif
+  add_parameter("part", &Leaves::part);
+}
+
+template <typename LeafType>
+void System::do_set_default_parameter(std::string const &name) {
+  assert(context()->is_head_node());
+  auto const so_name = Utils::demangle<LeafType>().substr(17);
+  set_parameter(name, Variant{context()->make_shared(so_name, {})});
 }
 
 void System::do_construct(VariantMap const &params) {
@@ -180,6 +226,15 @@ void System::do_construct(VariantMap const &params) {
    * runtime errors about the local geometry being smaller
    * than the interaction range would be raised.
    */
+  context()->parallel_try_catch([&]() {
+    if (not params.contains("box_l")) {
+      throw std::domain_error("Required argument 'box_l' not provided.");
+    }
+    if (params.contains("_regular_constructor") and system_created) {
+      throw std::runtime_error(
+          "You can only have one instance of the system class at a time");
+    }
+  });
   m_instance = ::System::System::create();
   ::System::set_system(m_instance);
 
@@ -191,11 +246,75 @@ void System::do_construct(VariantMap const &params) {
   m_instance->lb.bind_system(m_instance);
   m_instance->ek.bind_system(m_instance);
 
-  for (auto const &key : get_parameter_insertion_order()) {
-    if (key != "box_l" and params.count(key) != 0ul) {
-      do_set_parameter(key, params.at(key));
+  if (params.contains("_regular_constructor")) {
+    std::set<std::string> const setable_properties = {
+        "box_l",           "min_global_cut",
+        "periodicity",     "time",
+        "time_step",       "force_cap",
+        "max_oif_objects", "_regular_constructor"};
+    for (auto const &kv : params) {
+      if (not setable_properties.contains(kv.first)) {
+        context()->parallel_try_catch([&kv]() {
+          throw std::domain_error(
+              "Property '" + kv.first +
+              "' cannot be set via argument to System class");
+        });
+      }
+    }
+    for (std::string attr :
+         {"min_global_cut", "periodicity", "max_oif_objects"}) {
+      if (params.contains(attr)) {
+        do_set_parameter(attr, params.at(attr));
+      }
+    }
+    if (not context()->is_head_node()) {
+      return;
+    }
+    auto integrator = std::dynamic_pointer_cast<Integrators::IntegratorHandle>(
+        context()->make_shared("Integrators::IntegratorHandle", {}));
+    set_parameter("integrator", integrator);
+    for (std::string attr : {"time", "time_step", "force_cap"}) {
+      if (params.contains(attr)) {
+        integrator->set_parameter(attr, params.at(attr));
+      }
+    }
+    // note: the order of leaves matters! e.g. bonds depend on thermostats,
+    // and thus a thermostat object must be instantiated before the bonds
+    do_set_default_parameter<CellSystem::CellSystem>("cell_system");
+    do_set_default_parameter<Thermostat::Thermostat>("thermostat");
+    do_set_default_parameter<Interactions::BondedInteractions>("bonded_inter");
+#ifdef COLLISION_DETECTION
+    do_set_default_parameter<CollisionDetection::CollisionDetection>(
+        "collision_detection");
+#endif
+    do_set_default_parameter<Analysis::Analysis>("analysis");
+    do_set_default_parameter<Galilei::ComFixed>("comfixed");
+    do_set_default_parameter<Galilei::Galilei>("galilei");
+    do_set_default_parameter<BondBreakage::BreakageSpecs>("bond_breakage");
+    do_set_default_parameter<LeesEdwards::LeesEdwards>("lees_edwards");
+    do_set_default_parameter<Accumulators::AutoUpdateAccumulators>(
+        "auto_update_accumulators");
+    do_set_default_parameter<Constraints::Constraints>("constraints");
+    do_set_default_parameter<Interactions::NonBondedInteractions>(
+        "non_bonded_inter");
+#ifdef ELECTROSTATICS
+    do_set_default_parameter<Coulomb::Container>("electrostatics");
+#endif
+#ifdef DIPOLES
+    do_set_default_parameter<Dipoles::Container>("magnetostatics");
+#endif
+    do_set_default_parameter<Particles::ParticleList>("part");
+  } else {
+    for (auto const &key : get_parameter_insertion_order()) {
+      if (key != "box_l" and params.contains(key)) {
+        do_set_parameter(key, params.at(key));
+      }
     }
   }
+  if (not context()->is_head_node()) {
+    return;
+  }
+  call_method("internal_attach_leaves", {});
 }
 
 static void rotate_system(CellStructure &cell_structure, double phi,
@@ -256,9 +375,6 @@ static void rescale_particles(CellStructure &cell_structure, int dir,
 
 Variant System::do_call_method(std::string const &name,
                                VariantMap const &parameters) {
-  if (name == "is_system_created") {
-    return system_created;
-  }
   if (name == "lock_system_creation") {
     system_created = true;
     return {};
@@ -343,7 +459,81 @@ Variant System::do_call_method(std::string const &name,
     }
     return {};
   }
+  if (name == "internal_attach_leaves") {
+    m_leaves->part->attach(m_leaves->cell_system,
+                           m_leaves->bonded_interactions);
+#ifdef COLLISION_DETECTION
+    m_leaves->collision_detection->attach(m_leaves->bonded_interactions);
+#endif
+    return {};
+  }
   return {};
+}
+
+/**
+ * @brief Serialize particles.
+ * Particles need to be serialized here to reduce overhead,
+ * and also to guarantee particles get instantiated after the cell structure
+ * was instantiated (since they store a weak pointer to it).
+ */
+std::string System::get_internal_state() const {
+  auto const p_ids = get_particle_ids();
+  std::vector<std::string> object_states(p_ids.size());
+
+  std::ranges::transform(p_ids, object_states.begin(), [this](auto const p_id) {
+    auto p_obj = context()->make_shared(
+        "Particles::ParticleHandle",
+        {{"id", p_id}, {"__cell_structure", m_leaves->cell_system}});
+    auto &p_handle = dynamic_cast<Particles::ParticleHandle &>(*p_obj);
+    auto const packed_state = p_handle.serialize();
+    // custom particle serialization
+    auto state = Utils::unpack<ObjectState>(packed_state);
+    state.name = "Particles::ParticleHandle";
+    auto const bonds_view = p_handle.call_method("get_bonds_view", {});
+    state.params.emplace_back(std::string{"bonds"}, pack(bonds_view));
+#ifdef EXCLUSIONS
+    auto const exclusions = p_handle.call_method("get_exclusions", {});
+    state.params.emplace_back(std::string{"exclusions"}, pack(exclusions));
+#endif // EXCLUSIONS
+    state.params.emplace_back(std::string{"__cpt_sentinel"}, pack(None{}));
+    return Utils::pack(state);
+  });
+
+  return Utils::pack(object_states);
+}
+
+void System::set_internal_state(std::string const &state) {
+  auto const object_states = Utils::unpack<std::vector<std::string>>(state);
+#ifdef EXCLUSIONS
+  std::unordered_map<int, Variant> exclusions = {};
+#endif // EXCLUSIONS
+  std::unordered_map<int, Variant> bonds = {};
+
+  for (auto const &packed_object : object_states) {
+    auto state = Utils::unpack<ObjectState>(packed_object);
+    VariantMap params = {};
+    for (auto const &kv : state.params) {
+      params[kv.first] = unpack(kv.second, {});
+    }
+    auto const p_id = get_value<int>(params.at("id"));
+    bonds[p_id] = params.extract("bonds").mapped();
+#ifdef EXCLUSIONS
+    exclusions[p_id] = params.extract("exclusions").mapped();
+#endif // EXCLUSIONS
+    params["__cell_structure"] = get_parameter("cell_system");
+    context()->make_shared("Particles::ParticleHandle", params);
+  }
+
+  for (auto const p_id : get_particle_ids()) {
+    auto p_obj = context()->make_shared(
+        "Particles::ParticleHandle",
+        {{"id", p_id}, {"__cell_structure", m_leaves->cell_system}});
+    auto &p_handle = dynamic_cast<Particles::ParticleHandle &>(*p_obj);
+    set_bonds(p_handle, bonds[p_id]);
+#ifdef EXCLUSIONS
+    set_exclusions(p_handle, exclusions[p_id]);
+#endif // EXCLUSIONS
+  }
 }
 
 } // namespace System

@@ -431,6 +431,7 @@ class ScriptInterfaceHelper(PScriptInterface):
     _so_name = None
     _so_features = ()
     _so_bind_methods = ()
+    _so_checkpointable = True
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
@@ -444,6 +445,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         self.define_bound_methods()
 
     def __reduce__(self):
+        assert self._so_checkpointable
         return (_unpickle_so_class, (self._so_name, self._serialize()))
 
     def __dir__(self):

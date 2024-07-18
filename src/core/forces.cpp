@@ -134,7 +134,7 @@ void System::System::calculate_forces() {
 #endif // CUDA
 
 #ifdef COLLISION_DETECTION
-  prepare_local_collision_queue();
+  collision_detection->clear_queue();
 #endif
   bond_breakage->clear_queue();
   auto particles = cell_structure->local_particles();
@@ -170,33 +170,43 @@ void System::System::calculate_forces() {
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
+#ifdef COLLISION_DETECTION
+  auto const collision_detection_cutoff = collision_detection->cutoff();
+#else
+  auto const collision_detection_cutoff = INACTIVE_CUTOFF;
+#endif
 
   short_range_loop(
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
+      [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &bonded_ias = *bonded_ias,
        &bond_breakage = *bond_breakage, &box_geo = *box_geo](
           Particle &p1, int bond_id, std::span<Particle *> partners) {
-        return add_bonded_force(p1, bond_id, partners, bond_breakage, box_geo,
-                                coulomb_kernel_ptr);
+        return add_bonded_force(p1, bond_id, partners, bonded_ias,
+                                bond_breakage, box_geo, coulomb_kernel_ptr);
       },
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
        elc_kernel_ptr = get_ptr(elc_kernel), &nonbonded_ias = *nonbonded_ias,
-       &thermostat = *thermostat,
+       &thermostat = *thermostat, &bonded_ias = *bonded_ias,
+#ifdef COLLISION_DETECTION
+       &collision_detection = *collision_detection,
+#endif
        &box_geo = *box_geo](Particle &p1, Particle &p2, Distance const &d) {
         auto const &ia_params =
             nonbonded_ias.get_ia_param(p1.type(), p2.type());
-        add_non_bonded_pair_force(
-            p1, p2, d.vec21, sqrt(d.dist2), d.dist2, ia_params, thermostat,
-            box_geo, coulomb_kernel_ptr, dipoles_kernel_ptr, elc_kernel_ptr);
+        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
+                                  ia_params, thermostat, box_geo, bonded_ias,
+                                  coulomb_kernel_ptr, dipoles_kernel_ptr,
+                                  elc_kernel_ptr);
 #ifdef COLLISION_DETECTION
-        if (collision_params.mode != CollisionModeType::OFF)
-          detect_collision(p1, p2, d.dist2);
+        if (collision_detection.mode != CollisionModeType::OFF) {
+          collision_detection.detect_collision(p1, p2, d.dist2);
+        }
 #endif
       },
-      *cell_structure, maximal_cutoff(), maximal_cutoff_bonded(),
+      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff(),
       VerletCriterion<>{*this, cell_structure->get_verlet_skin(),
                         get_interaction_range(), coulomb_cutoff, dipole_cutoff,
-                        collision_detection_cutoff()});
+                        collision_detection_cutoff});
 
   constraints->add_forces(particles, get_sim_time());
 

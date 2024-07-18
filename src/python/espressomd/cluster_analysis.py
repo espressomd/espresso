@@ -1,3 +1,4 @@
+#
 # Copyright (C) 2010-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -14,8 +15,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .particle_data import ParticleHandle, ParticleSlice
+from .particle_data import ParticleHandle
 
 
 @script_interface_register
@@ -27,6 +29,9 @@ class Cluster(ScriptInterfaceHelper):
     -------
     particle_ids()
         Returns list of particle ids in the cluster
+
+    particles()
+        Get particles in the cluster
 
     size()
         Returns the number of particles in the cluster
@@ -60,21 +65,11 @@ class Cluster(ScriptInterfaceHelper):
 
     """
     _so_name = "ClusterAnalysis::Cluster"
-    _so_bind_methods = ("particle_ids", "size", "longest_distance",
+    _so_checkpointable = False
+    _so_bind_methods = ("particle_ids", "particles", "size", "longest_distance",
                         "radius_of_gyration", "fractal_dimension", "center_of_mass")
 
     _so_creation_policy = "LOCAL"
-
-    def particles(self):
-        """
-        Get particles in the cluster.
-
-        Returns
-        -------
-        :class:`espressomd.particle_data.ParticleSlice`
-
-        """
-        return ParticleSlice(id_selection=self.particle_ids())
 
 
 @script_interface_register
@@ -86,9 +81,12 @@ class ClusterStructure(ScriptInterfaceHelper):
     ----------
     pair_criterion: :class:`espressomd.pair_criteria._PairCriterion`
         Criterion to decide whether two particles are neighbors.
+    system: :class:`espressomd.system.System`
+        System to run the cluster analysis on.
 
     """
     _so_name = "ClusterAnalysis::ClusterStructure"
+    _so_checkpointable = False
     _so_creation_policy = "LOCAL"
 
     def __init__(self, *args, **kwargs):

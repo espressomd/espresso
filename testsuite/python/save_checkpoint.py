@@ -50,7 +50,7 @@ config = utg.TestGenerator()
 modes = config.get_modes()
 
 # use a box with 3 different dimensions, unless DipolarP3M is used
-system = espressomd.System(box_l=[12.0, 8.0, 16.0])
+system = espressomd.System(box_l=[12.0, 8.0, 16.0], time_step=0.01)
 if 'DP3M' in modes:
     system.box_l = 3 * [float(np.max(system.box_l))]
 system.cell_system.skin = 0.1
@@ -316,7 +316,6 @@ checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
-checkpoint.register("p_slice")
 
 # calculate forces
 system.integrator.run(0)
@@ -504,6 +503,10 @@ class TestCheckpoint(ut.TestCase):
         with self.assertRaisesRegex(KeyError, "The given object 'local_obj' was not found in the current scope"):
             local_obj = "local"  # pylint: disable=unused-variable
             checkpoint.register("local_obj")
+
+        for obj_name in ["p_slice", "p3"]:
+            with self.assertRaisesRegex(TypeError, "cannot be checkpointed"):
+                checkpoint.register(obj_name)
 
     @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
     def test_lb_checkpointing_exceptions(self):

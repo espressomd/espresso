@@ -63,10 +63,9 @@ protected:
   auto get_core_system_pointer(VariantMap const &params) const {
     auto const *system = &::System::get_system();
     if (params.contains("system")) {
-      system = &(get_value<std::shared_ptr<System::System const>>(
-                     get_value<ObjectRef>(params, "system")
-                         ->do_call_method("get_system_handle", {}))
-                     ->get_system());
+      system =
+          &(get_value<std::shared_ptr<System::System const>>(params, "system")
+                ->get_system());
     }
     return system;
   }

@@ -19,14 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
-#define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
+#pragma once
 
+#include "core/BoxGeometry.hpp"
 #include "core/cluster_analysis/ClusterStructure.hpp"
+#include "core/system/System.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/cluster_analysis/Cluster.hpp"
 #include "script_interface/pair_criteria/PairCriterion.hpp"
+#include "script_interface/particle_data/ParticleList.hpp"
+#include "script_interface/system/System.hpp"
 
 #include <memory>
 #include <string>
@@ -49,16 +52,29 @@ public:
           },
           [this]() { return m_pc; }}});
   }
+
+  void do_construct(VariantMap const &params) override {
+    auto local_params = params;
+    local_params.erase("system");
+    ObjectHandle::do_construct(local_params);
+    auto system_si =
+        get_value<std::shared_ptr<System::System>>(params, "system");
+    m_particle_list = get_value<std::shared_ptr<Particles::ParticleList>>(
+        system_si->get_parameter("part"));
+    m_cluster_structure.attach(system_si->get_system().box_geo);
+  }
+
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "get_cluster") {
+      auto const cluster_id = get_value<int>(parameters.at("id"));
       // Note: Cluster objects are generated on the fly, to avoid having to
       // store a script interface object for all clusters (which can be
       // thousands)
       auto c = std::dynamic_pointer_cast<Cluster>(
           context()->make_shared("ClusterAnalysis::Cluster", {}));
-      c->set_cluster(
-          m_cluster_structure.clusters.at(get_value<int>(parameters.at("id"))));
+      c->set_cluster(m_cluster_structure.clusters.at(cluster_id));
+      c->set_particle_list(m_particle_list);
 
       return c;
     }
@@ -91,9 +107,8 @@ public:
 private:
   ::ClusterAnalysis::ClusterStructure m_cluster_structure;
   std::shared_ptr<PairCriteria::PairCriterion> m_pc;
+  std::weak_ptr<Particles::ParticleList> m_particle_list;
 };
 
 } /* namespace ClusterAnalysis */
 } /* namespace ScriptInterface */
-
-#endif

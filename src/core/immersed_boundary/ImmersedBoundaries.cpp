@@ -31,6 +31,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 
+#include <algorithm>
 #include <functional>
 #include <span>
 #include <utility>
@@ -47,13 +48,13 @@ void ImmersedBoundaries::volume_conservation(CellStructure &cs) {
 
 /** Initialize volume conservation */
 void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
+  auto const &bonded_ias = *::System::get_system().bonded_ias;
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
   if (not BoundariesFound) {
-    BoundariesFound = std::any_of(
-        bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &kv) {
-          return (boost::get<IBMVolCons>(&(*kv.second)) != nullptr);
-        });
+    BoundariesFound = std::ranges::any_of(bonded_ias, [](auto const &kv) {
+      return (boost::get<IBMVolCons>(&(*kv.second)) != nullptr);
+    });
   }
 
   if (!VolumeInitDone && BoundariesFound) {
@@ -62,7 +63,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
 
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
-    for (auto &kv : bonded_ia_params) {
+    for (auto &kv : bonded_ias) {
       if (auto *v = boost::get<IBMVolCons>(&(*kv.second))) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
@@ -79,12 +80,13 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
 }
 
 static const IBMVolCons *vol_cons_parameters(Particle const &p1) {
-  auto const it = boost::find_if(p1.bonds(), [](auto const &bond) -> bool {
-    return boost::get<IBMVolCons>(bonded_ia_params.at(bond.bond_id()).get());
+  auto const &bonded_ias = *::System::get_system().bonded_ias;
+  auto const it = boost::find_if(p1.bonds(), [&](auto const &bond) -> bool {
+    return boost::get<IBMVolCons>(bonded_ias.at(bond.bond_id()).get());
   });
 
   return (it != p1.bonds().end())
-             ? boost::get<IBMVolCons>(bonded_ia_params.at(it->bond_id()).get())
+             ? boost::get<IBMVolCons>(bonded_ias.at(it->bond_id()).get())
              : nullptr;
 }
 
@@ -97,17 +99,18 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
     return;
 
   auto const &box_geo = *System::get_system().box_geo;
+  auto const &bonded_ias = *::System::get_system().bonded_ias;
 
   // Partial volumes for each soft particle, to be summed up
   std::vector<double> tempVol(VolumesCurrent.size());
 
   // Loop over all particles on local node
-  cs.bond_loop([&tempVol, &box_geo](Particle &p1, int bond_id,
-                                    std::span<Particle *> partners) {
+  cs.bond_loop([&tempVol, &box_geo, &bonded_ias](
+                   Particle &p1, int bond_id, std::span<Particle *> partners) {
     auto const vol_cons_params = vol_cons_parameters(p1);
 
     if (vol_cons_params &&
-        boost::get<IBMTriel>(bonded_ia_params.at(bond_id).get()) != nullptr) {
+        boost::get<IBMTriel>(bonded_ias.at(bond_id).get()) != nullptr) {
       // Our particle is the leading particle of a triel
       // Get second and third particle of the triangle
       Particle &p2 = *partners[0];
@@ -155,10 +158,11 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
     return;
 
   auto const &box_geo = *System::get_system().box_geo;
+  auto const &bonded_ias = *::System::get_system().bonded_ias;
 
-  cs.bond_loop([this, &box_geo](Particle &p1, int bond_id,
-                                std::span<Particle *> partners) {
-    if (boost::get<IBMTriel>(bonded_ia_params.at(bond_id).get()) != nullptr) {
+  cs.bond_loop([this, &box_geo, &bonded_ias](Particle &p1, int bond_id,
+                                             std::span<Particle *> partners) {
+    if (boost::get<IBMTriel>(bonded_ias.at(bond_id).get()) != nullptr) {
       // Check if particle has an IBM Triel bonded interaction and an
       // IBM VolCons bonded interaction. Basically this loops over all
       // triangles, not all particles. First round to check for volume

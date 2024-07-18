@@ -787,7 +787,7 @@ To obtain the cluster structure of a system, an instance of
 To to create a cluster structure with above criterion::
 
     import espressomd.cluster_analysis
-    cs = espressomd.cluster_analysis.ClusterStructure(distance_criterion=dc)
+    cs = espressomd.cluster_analysis.ClusterStructure(distance_criterion=dc, system=system)
 
 In most cases, the cluster analysis is carried out by calling the
 :any:`espressomd.cluster_analysis.ClusterStructure.run_for_all_pairs` method.

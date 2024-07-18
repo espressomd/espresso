@@ -22,6 +22,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "system/System.hpp"
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
@@ -34,17 +35,18 @@ int max_oif_objects = 0;
 
 Utils::Vector2d calc_oif_global(int molType, BoxGeometry const &box_geo,
                                 CellStructure &cs) {
+  auto const &bonded_ias = *::System::get_system().bonded_ias;
   // first-fold-then-the-same approach
   double partArea = 0.0;
   // z volume
   double VOL_partVol = 0.;
 
-  cs.bond_loop([&partArea, &VOL_partVol, &box_geo, molType](
+  cs.bond_loop([&partArea, &VOL_partVol, &box_geo, &bonded_ias, molType](
                    Particle &p1, int bond_id, std::span<Particle *> partners) {
     if (p1.mol_id() != molType)
       return false;
 
-    if (boost::get<OifGlobalForcesBond>(bonded_ia_params.at(bond_id).get()) !=
+    if (boost::get<OifGlobalForcesBond>(bonded_ias.at(bond_id).get()) !=
         nullptr) {
       // remaining neighbors fetched
       auto const p11 = box_geo.unfolded_position(p1.pos(), p1.image_box());
@@ -69,17 +71,18 @@ Utils::Vector2d calc_oif_global(int molType, BoxGeometry const &box_geo,
 
 void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
                            BoxGeometry const &box_geo, CellStructure &cs) {
+  auto const &bonded_ias = *::System::get_system().bonded_ias;
   // first-fold-then-the-same approach
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
-  cs.bond_loop([&box_geo, area, VOL_volume, molType](
+  cs.bond_loop([&box_geo, &bonded_ias, area, VOL_volume, molType](
                    Particle &p1, int bond_id, std::span<Particle *> partners) {
     if (p1.mol_id() != molType)
       return false;
 
-    if (auto const *iaparams = boost::get<OifGlobalForcesBond>(
-            bonded_ia_params.at(bond_id).get())) {
+    if (auto const *iaparams =
+            boost::get<OifGlobalForcesBond>(bonded_ias.at(bond_id).get())) {
       auto const p11 = box_geo.unfolded_position(p1.pos(), p1.image_box());
       auto const p22 = p11 + box_geo.get_mi_vector(partners[0]->pos(), p11);
       auto const p33 = p11 + box_geo.get_mi_vector(partners[1]->pos(), p11);

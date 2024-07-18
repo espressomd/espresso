@@ -475,11 +475,6 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(q[q_ind], r.as_quat(), atol=1e-10)
             np.testing.assert_allclose(np.copy(p2.vs_quat), [1., 0., 0., 0.])
 
-    def test_part_slice(self):
-        np.testing.assert_allclose(np.copy(p_slice.id), [4, 1])
-        np.testing.assert_allclose(np.copy(p_slice.pos),
-                                   np.copy(system.part.by_ids([4, 1]).pos))
-
     def test_bonded_interactions_serialization(self):
         '''
         Check that particles at the interface between two MPI nodes still

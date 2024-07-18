@@ -739,53 +739,16 @@ class BondedInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
         feature = self.__class__.__dict__.get("_so_feature")
         if feature is not None:
             code_features.assert_features(feature)
-
-        if "sip" not in kwargs:
-            if "bond_id" in kwargs:
-                # create a new script interface object for a bond that already
-                # exists in the core via its id (BondedInteractions getter and
-                # checkpointing constructor #1)
-                bond_id = kwargs["bond_id"]
-                super().__init__(bond_id=bond_id)
-                # Check if the bond type in ESPResSo core matches this class
-                if self.call_method("get_zero_based_type",
-                                    bond_id=bond_id) != self._type_number:
-                    raise RuntimeError(
-                        f"The bond with id {bond_id} is not defined as a "
-                        f"{self._type_number.name} bond in the ESPResSo core.")
-                self._bond_id = bond_id
-                self._ctor_params = self.get_params()
-            else:
-                # create a new script interface object from bond parameters
-                # (normal bond creation and checkpointing constructor #2)
-                params = self.get_default_params()
-                params.update(kwargs)
-                super().__init__(**params)
-                self._ctor_params = params
-                self._bond_id = -1
-        else:
-            # create a new bond based on a bond in the script interface
-            # (checkpointing constructor #3)
+        if "sip" in kwargs:
             super().__init__(**kwargs)
-            self._bond_id = -1
             self._ctor_params = self.get_params()
-
-    def __reduce__(self):
-        if self._bond_id != -1:
-            # checkpointing constructor #1
-            return (BondedInteraction._restore_object,
-                    (self.__class__, {"bond_id": self._bond_id}))
+            self._bond_id = -1
         else:
-            # checkpointing constructor #2
-            return (BondedInteraction._restore_object,
-                    (self.__class__, self._serialize()))
-
-    def _serialize(self):
-        return self._ctor_params.copy()
-
-    @classmethod
-    def _restore_object(cls, derived_class, kwargs):
-        return derived_class(**kwargs)
+            params = self.get_default_params()
+            params.update(kwargs)
+            super().__init__(**params)
+            self._ctor_params = params
+            self._bond_id = -1
 
     def __setattr__(self, attr, value):
         super().__setattr__(attr, value)
@@ -1522,27 +1485,3 @@ class BondedInteractions(ScriptObjectMap):
         for bond_id in self.call_method('get_bond_ids'):
             if self.call_method("get_zero_based_type", bond_id=bond_id):
                 yield self[bond_id]
-
-    def __getstate__(self):
-        params = {}
-        for bond_id in self.call_method('get_bond_ids'):
-            if self.call_method("get_zero_based_type", bond_id=bond_id):
-                obj = self[bond_id]
-                if hasattr(obj, "params"):
-                    params[bond_id] = (obj._type_number, obj._serialize())
-        return params
-
-    def __setstate__(self, params):
-        for bond_id, (type_number, bond_params) in params.items():
-            self[bond_id] = self._bond_classes[type_number](**bond_params)
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (BondedInteractions._restore_object,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.__setstate__(state)
-        return so

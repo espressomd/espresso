@@ -69,10 +69,14 @@ System::System(Private) {
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
   propagation = std::make_shared<Propagation>();
+  bonded_ias = std::make_shared<BondedInteractionsMap>();
   thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
+#ifdef COLLISION_DETECTION
+  collision_detection = std::make_shared<CollisionDetection>();
+#endif
   bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
   lees_edwards = std::make_shared<LeesEdwards::LeesEdwards>();
   auto_update_accumulators =
@@ -89,8 +93,12 @@ void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
+  bonded_ias->bind_system(handle);
   thermostat->bind_system(handle);
   nonbonded_ias->bind_system(handle);
+#ifdef COLLISION_DETECTION
+  collision_detection->bind_system(handle);
+#endif
   auto_update_accumulators->bind_system(handle);
   constraints->bind_system(handle);
 #ifdef CUDA
@@ -100,8 +108,6 @@ void System::initialize() {
   lb.bind_system(handle);
   ek.bind_system(handle);
 }
-
-bool is_system_set() { return instance != nullptr; }
 
 void reset_system() { instance.reset(); }
 
@@ -376,11 +382,13 @@ double System::maximal_cutoff() const {
   if (::communicator.size > 1) {
     // If there is just one node, the bonded cutoff can be omitted
     // because bond partners are always on the local node.
-    max_cut = std::max(max_cut, maximal_cutoff_bonded());
+    max_cut = std::max(max_cut, bonded_ias->maximal_cutoff());
   }
   max_cut = std::max(max_cut, nonbonded_ias->maximal_cutoff());
 
-  max_cut = std::max(max_cut, collision_detection_cutoff());
+#ifdef COLLISION_DETECTION
+  max_cut = std::max(max_cut, collision_detection->cutoff());
+#endif
   return max_cut;
 }
 
@@ -482,7 +490,7 @@ unsigned System::get_global_ghost_flags() const {
   }
 
 #ifdef COLLISION_DETECTION
-  if (::collision_params.mode != CollisionModeType::OFF) {
+  if (collision_detection->mode != CollisionModeType::OFF) {
     data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif

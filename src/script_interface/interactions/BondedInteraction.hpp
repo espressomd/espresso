@@ -78,12 +78,12 @@ private:
   void check_valid_parameters(VariantMap const &params) const {
     auto const valid_keys = get_valid_parameters();
     for (auto const &key : valid_keys) {
-      if (params.count(std::string(key)) == 0) {
+      if (not params.contains(std::string(key))) {
         throw std::runtime_error("Parameter '" + key + "' is missing");
       }
     }
     for (auto const &kv : params) {
-      if (valid_keys.count(kv.first) == 0) {
+      if (not valid_keys.contains(kv.first)) {
         throw std::runtime_error("Parameter '" + kv.first +
                                  "' is not recognized");
       }
@@ -91,23 +91,10 @@ private:
   }
 
   void do_construct(VariantMap const &params) override {
-    // Check if initialization "by id" or "by parameters"
-    if (params.find("bond_id") != params.end()) {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      context()->parallel_try_catch([&]() {
-        if (not ::bonded_ia_params.contains(bond_id)) {
-          throw std::runtime_error("No bond with id " +
-                                   std::to_string(bond_id) +
-                                   " exists in the ESPResSo core");
-        }
-      });
-      m_bonded_ia = ::bonded_ia_params.at(bond_id);
-    } else {
-      context()->parallel_try_catch([&]() {
-        check_valid_parameters(params);
-        construct_bond(params);
-      });
-    }
+    context()->parallel_try_catch([&]() {
+      check_valid_parameters(params);
+      construct_bond(params);
+    });
   }
 
   virtual void construct_bond(VariantMap const &params) = 0;
@@ -127,10 +114,6 @@ public:
     }
     if (name == "get_num_partners") {
       return number_of_partners(*bonded_ia());
-    }
-    if (name == "get_zero_based_type") {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      return ::bonded_ia_params.get_zero_based_type(bond_id);
     }
 
     return {};

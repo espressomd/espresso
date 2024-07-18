@@ -37,7 +37,7 @@ class ClusterAnalysis(ut.TestCase):
     fene = espressomd.interactions.FeneBond(k=1, d_r_max=0.05)
     system.bonded_inter.add(fene)
 
-    cs = espressomd.cluster_analysis.ClusterStructure()
+    cs = espressomd.cluster_analysis.ClusterStructure(system=system)
 
     np.random.seed(1)
 
@@ -66,6 +66,8 @@ class ClusterAnalysis(ut.TestCase):
         self.set_two_clusters()
         with self.assertRaises(Exception):
             self.cs.run_for_all_pairs()
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'system' is missing"):
+            espressomd.cluster_analysis.ClusterStructure()
 
     def test_set_criterion(self):
         self.set_two_clusters()

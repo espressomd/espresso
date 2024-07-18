@@ -37,7 +37,7 @@
 
 void Thermostat::Thermostat::recalc_prefactors(double time_step) {
   if (thermalized_bond) {
-    thermalized_bond->recalc_prefactors(time_step);
+    thermalized_bond->recalc_prefactors(time_step, *(get_system().bonded_ias));
   }
   if (langevin) {
     langevin->recalc_prefactors(kT, time_step);
@@ -97,8 +97,9 @@ void Thermostat::Thermostat::lb_coupling_deactivate() {
   }
 }
 
-void ThermalizedBondThermostat::recalc_prefactors(double time_step) {
-  for (auto &kv : ::bonded_ia_params) {
+void ThermalizedBondThermostat::recalc_prefactors(
+    double time_step, BondedInteractionsMap &bonded_ias) {
+  for (auto &kv : bonded_ias) {
     if (auto *bond = boost::get<ThermalizedBond>(&(*kv.second))) {
       bond->recalc_prefactors(time_step);
     }
