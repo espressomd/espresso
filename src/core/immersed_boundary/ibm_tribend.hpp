@@ -72,12 +72,4 @@ struct IBMTribend {
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   calc_forces(BoxGeometry const &box_geo, Particle const &p1,
               Particle const &p2, Particle const &p3, Particle const &p4) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & kb;
-    ar & theta0;
-  }
 };

@@ -47,8 +47,6 @@
 #include "TabulatedPotential.hpp"
 #include "system/Leaf.hpp"
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/variant.hpp>
 #include <boost/variant.hpp>
 
 #include <algorithm>
@@ -68,20 +66,12 @@ static constexpr double BONDED_INACTIVE_CUTOFF = -1.;
 struct NoneBond {
   static constexpr int num = 0;
   double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive> void serialize(Archive &, long int) {}
 };
 
 /** Interaction type for virtual bonds */
 struct VirtualBond {
   static constexpr int num = 1;
   double cutoff() const { return BONDED_INACTIVE_CUTOFF; }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive> void serialize(Archive &, long int) {}
 };
 
 /** Visitor to get the number of bound partners from the bond parameter

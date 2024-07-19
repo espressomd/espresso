@@ -89,19 +89,4 @@ struct ThermalizedBond {
 
 private:
   std::weak_ptr<Thermostat::Thermostat const> m_thermostat;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & temp_com;
-    ar & gamma_com;
-    ar & temp_distance;
-    ar & gamma_distance;
-    ar & r_cut;
-    ar & pref1_com;
-    ar & pref2_com;
-    ar & pref1_dist;
-    ar & pref2_dist;
-  }
 };

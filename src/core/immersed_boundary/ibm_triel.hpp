@@ -80,23 +80,4 @@ struct IBMTriel {
    */
   std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
   calc_forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & l0;
-    ar & lp0;
-    ar & sinPhi0;
-    ar & cosPhi0;
-    ar & area0;
-    ar & a1;
-    ar & a2;
-    ar & b1;
-    ar & b2;
-    ar & maxDist;
-    ar & elasticLaw;
-    ar & k1;
-    ar & k2;
-  }
 };

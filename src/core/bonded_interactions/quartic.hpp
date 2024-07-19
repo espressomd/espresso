@@ -51,16 +51,6 @@ struct QuarticBond {
 
   std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   std::optional<double> energy(Utils::Vector3d const &dx) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & k0;
-    ar & k1;
-    ar & r;
-    ar & r_cut;
-  }
 };
 
 /** Compute the quartic bond force.

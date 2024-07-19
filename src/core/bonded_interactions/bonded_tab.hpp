@@ -35,8 +35,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/serialization/shared_ptr.hpp>
-
 #include <cassert>
 #include <cmath>
 #include <memory>
@@ -60,13 +58,6 @@ struct TabulatedBond {
   TabulatedBond(double min, double max, std::vector<double> const &energy,
                 std::vector<double> const &force) {
     pot = std::make_shared<TabulatedPotential>(min, max, force, energy);
-  }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & pot;
   }
 };
 

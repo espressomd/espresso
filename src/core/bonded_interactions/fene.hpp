@@ -62,17 +62,6 @@ struct FeneBond {
 
   std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   std::optional<double> energy(Utils::Vector3d const &dx) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & k;
-    ar & drmax;
-    ar & r0;
-    ar & drmax2;
-    ar & drmax2i;
-  }
 };
 
 /** Compute the FENE bond force.

@@ -67,12 +67,5 @@ struct IBMVolCons {
   void unset_volumes_view() { m_volumes = nullptr; }
 
 private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & softID;
-    ar & volRef;
-    ar & kappaV;
-  }
   std::vector<double> const *m_volumes;
 };
