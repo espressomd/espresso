@@ -257,7 +257,8 @@ class IBM(ut.TestCase):
             self.assertEqual(tribend.ind4, p4.id)
         system.bonded_inter.add(tribend_original)
         system.bonded_inter.add(tribend_unpickled)
-        for tribend in [tribend_original, tribend_unpickled]:
+        tribend_skip_init = pickle.loads(pickle.dumps(tribend_original))
+        for tribend in [tribend_original, tribend_unpickled, tribend_skip_init]:
             self.assertTrue(tribend.is_initialized)
             self.assertAlmostEqual(tribend.theta0, theta0, delta=1e-6)
             self.assertEqual(tribend.ind1, p1.id)
@@ -288,7 +289,8 @@ class IBM(ut.TestCase):
             self.assertEqual(triel.maxDist, 2.4)
         system.bonded_inter.add(triel_original)
         system.bonded_inter.add(triel_unpickled)
-        for triel in [triel_original, triel_unpickled]:
+        triel_skip_init = pickle.loads(pickle.dumps(triel_original))
+        for triel in [triel_original, triel_unpickled, triel_skip_init]:
             self.assertTrue(triel.is_initialized)
             np.testing.assert_allclose(np.copy(triel._cache), cache)
             self.assertEqual(triel.ind1, p1.id)
