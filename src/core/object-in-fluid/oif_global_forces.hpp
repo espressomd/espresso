@@ -16,33 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_HPP
-#define CORE_OBJECT_IN_FLUID_OIF_GLOBAL_FORCES_HPP
+
+#pragma once
+
 /** \file
- *  Routines to calculate the OIF global forces energy or/and and force
+ *  Routines to calculate the OIF global forces
  *  for a particle triple (triangle from mesh). See @cite dupin07a.
  */
 
-#include "BoxGeometry.hpp"
-#include "cell_system/CellStructure.hpp"
-#include "oif_global_forces_params.hpp"
+#include "system/Leaf.hpp"
 
-#include <utils/Vector.hpp>
+class OifGlobal : public System::Leaf<OifGlobal> {
+public:
+  int max_oif_objects = 0;
 
-/** Calculate the OIF global force.
- *  Called in force_calc() from within forces.cpp
- *  - calculates the global area and global volume for a cell before the forces
- *    are handled
- *  - MPI synchronization with all reduce
- *  - !!! loop over particles from regular_decomposition !!!
- */
-Utils::Vector2d calc_oif_global(int molType, BoxGeometry const &box_geo,
-                                CellStructure &cs);
+  void calculate_forces() {
+    if (max_oif_objects > 0) {
+      run_force_kernel();
+    }
+  }
 
-/** Distribute the OIF global forces to all particles in the mesh. */
-void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
-                           BoxGeometry const &box_geo, CellStructure &cs);
-
-extern int max_oif_objects;
-
-#endif
+private:
+  void run_force_kernel();
+};

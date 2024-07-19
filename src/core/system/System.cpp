@@ -72,6 +72,7 @@ System::System(Private) {
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
+  oif_global = std::make_shared<OifGlobal>();
   immersed_boundaries = std::make_shared<ImmersedBoundaries>();
 #ifdef COLLISION_DETECTION
   collision_detection = std::make_shared<CollisionDetection>();
@@ -96,6 +97,7 @@ void System::initialize() {
   bonded_ias->bind_system(handle);
   thermostat->bind_system(handle);
   nonbonded_ias->bind_system(handle);
+  oif_global->bind_system(handle);
   immersed_boundaries->bind_system(handle);
 #ifdef COLLISION_DETECTION
   collision_detection->bind_system(handle);

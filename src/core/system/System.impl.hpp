@@ -37,6 +37,7 @@
 #include "integrators/Propagation.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "object-in-fluid/oif_global_forces.hpp"
 #include "thermostat.hpp"
 
 #include "BoxGeometry.hpp"

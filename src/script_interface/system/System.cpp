@@ -181,7 +181,11 @@ System::System() : m_instance{}, m_leaves{std::make_shared<Leaves>()} {
          });
        },
        [this]() { return m_instance->get_min_global_cut(); }},
-      {"max_oif_objects", ::max_oif_objects},
+      {"max_oif_objects",
+       [this](Variant const &v) {
+         m_instance->oif_global->max_oif_objects = get_value<int>(v);
+       },
+       [this]() { return m_instance->oif_global->max_oif_objects; }},
   });
   // note: the order of leaves matters! e.g. bonds depend on thermostats,
   // and thus a thermostat object must be instantiated before the bonds
