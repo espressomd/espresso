@@ -115,6 +115,12 @@ class CellSystem(ScriptInterfaceHelper):
         use_verlet_lists : :obj:`bool`, optional
             Activates or deactivates the usage of Verlet lists.
             Defaults to ``True``.
+        fully_connected_boundary : :obj:`dict`, optional
+            If set, connects all cells on a given boundary along the given direction.
+            Example: ``{"boundary": "z", "direction": "x"}`` connects all
+            cells on the boundary normal to the z-direction along the x-axis.
+            This corresponds to z-axis as shear plane normal and x-axis as
+            shear direction in Lees-Edwards boundary conditions.
 
         """
         self.call_method("initialize", name="regular_decomposition", **kwargs)

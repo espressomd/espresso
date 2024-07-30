@@ -46,6 +46,7 @@
 #include <cassert>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <span>
 #include <stdexcept>
@@ -557,7 +558,9 @@ public:
    *
    * @param range Interaction range.
    */
-  void set_regular_decomposition(double range);
+  void set_regular_decomposition(
+      double range,
+      std::optional<std::pair<int, int>> fully_connected_boundary);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.

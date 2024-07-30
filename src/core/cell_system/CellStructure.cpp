@@ -44,6 +44,7 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -248,12 +249,13 @@ void CellStructure::set_atom_decomposition() {
   system.on_cell_structure_change();
 }
 
-void CellStructure::set_regular_decomposition(double range) {
+void CellStructure::set_regular_decomposition(
+    double range, std::optional<std::pair<int, int>> fully_connected_boundary) {
   auto &system = get_system();
   auto &local_geo = *system.local_geo;
   auto const &box_geo = *system.box_geo;
   set_particle_decomposition(std::make_unique<RegularDecomposition>(
-      ::comm_cart, range, box_geo, local_geo));
+      ::comm_cart, range, box_geo, local_geo, fully_connected_boundary));
   m_type = CellStructureType::REGULAR;
   local_geo.set_cell_structure_type(m_type);
   system.on_cell_structure_change();
