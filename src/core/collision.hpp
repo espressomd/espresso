@@ -141,11 +141,5 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
 }
 
 #endif // COLLISION_DETECTION
-
-inline double collision_detection_cutoff() {
-#ifdef COLLISION_DETECTION
-  if (collision_params.mode != CollisionModeType::OFF)
-    return collision_params.distance;
-#endif
-  return -1.;
-}
+double collision_detection_cutoff();
+double collision_detection_cutoff(std::vector<int> types);

@@ -368,6 +368,12 @@ void System::update_local_geo() {
 }
 
 double System::maximal_cutoff() const {
+  std::vector<int> v(nonbonded_ias->get_max_seen_particle_type() + 1);
+  std::iota(std::begin(v), std::end(v), 0);
+  return System::maximal_cutoff(v);
+}
+
+double System::maximal_cutoff(std::vector<int> &types) const {
   auto max_cut = INACTIVE_CUTOFF;
   max_cut = std::max(max_cut, get_min_global_cut());
 #ifdef ELECTROSTATICS
@@ -381,9 +387,9 @@ double System::maximal_cutoff() const {
     // because bond partners are always on the local node.
     max_cut = std::max(max_cut, maximal_cutoff_bonded());
   }
-  max_cut = std::max(max_cut, nonbonded_ias->maximal_cutoff());
+  max_cut = std::max(max_cut, nonbonded_ias->maximal_cutoff(types));
 
-  max_cut = std::max(max_cut, collision_detection_cutoff());
+  max_cut = std::max(max_cut, collision_detection_cutoff(types));
   return max_cut;
 }
 

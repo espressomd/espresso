@@ -455,6 +455,9 @@ class System(ScriptInterfaceHelper):
         return self.call_method("velocity_difference", pos1=p1.pos_folded,
                                 pos2=p2.pos_folded, v1=p1.v, v2=p2.v)
 
+    def cutoff_by_types(self, types):
+        return self.call_method("cutoff_by_types", types=types)
+
     def auto_exclusions(self, distance):
         """
         Add exclusions between particles that are bonded.

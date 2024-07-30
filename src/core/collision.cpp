@@ -513,3 +513,36 @@ void handle_collisions(CellStructure &cell_structure) {
 }
 
 #endif // COLLISION_DETECTION
+
+double collision_detection_cutoff() {
+#ifdef COLLISION_DETECTION
+  auto &system = System::get_system();
+  auto &nonbonded_ias = *system.nonbonded_ias;
+  std::vector<int> v(nonbonded_ias.get_max_seen_particle_type() + 1);
+  std::iota(std::begin(v), std::end(v), 0);
+  return collision_detection_cutoff(v);
+#else
+  return -1;
+#endif
+}
+
+double collision_detection_cutoff(std::vector<int> types) {
+  double ret = -1;
+#ifdef COLLISION_DETECTION
+  if (collision_params.mode == CollisionModeType::BIND_CENTERS or
+      collision_params.mode == CollisionModeType::BIND_VS or
+      collision_params.mode == CollisionModeType::BIND_THREE_PARTICLES) {
+    ret = collision_params.distance;
+  }
+  if (collision_params.mode == CollisionModeType::GLUE_TO_SURF) {
+    if ((std::find(types.begin(), types.end(),
+                   collision_params.part_type_to_be_glued) != types.end()) and
+        (std::find(types.begin(), types.end(),
+                   collision_params.part_type_to_attach_vs_to) !=
+         types.end())) {
+      ret = collision_params.distance;
+    }
+  }
+#endif
+  return ret;
+}
