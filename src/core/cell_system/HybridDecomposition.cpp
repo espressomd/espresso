@@ -37,6 +37,7 @@
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <optional>
 #include <set>
 #include <utility>
 
@@ -48,7 +49,7 @@ HybridDecomposition::HybridDecomposition(boost::mpi::communicator comm,
                                          std::set<int> n_square_types)
     : m_comm(std::move(comm)), m_box(box_geo), m_cutoff_regular(cutoff_regular),
       m_regular_decomposition(RegularDecomposition(
-          m_comm, cutoff_regular + skin, m_box, local_box)),
+          m_comm, cutoff_regular + skin, m_box, local_box, std::nullopt)),
       m_n_square(AtomDecomposition(m_comm, m_box)),
       m_n_square_types(std::move(n_square_types)),
       m_get_global_ghost_flags(std::move(get_ghost_flags)) {
