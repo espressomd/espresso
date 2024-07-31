@@ -51,7 +51,6 @@ inline bool ClusterStructure::part_of_cluster(const Particle &p) {
 void ClusterStructure::run_for_all_pairs() {
   // clear data structs
   clear();
-  sanity_checks();
 
   // Iterate over pairs
   PartCfg partCfg{*System::get_system().box_geo};
@@ -64,7 +63,6 @@ void ClusterStructure::run_for_all_pairs() {
 
 void ClusterStructure::run_for_bonded_particles() {
   clear();
-  sanity_checks();
   PartCfg partCfg{*System::get_system().box_geo};
   for (const auto &p : partCfg) {
     for (auto const bond : p.bonds()) {
