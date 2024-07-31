@@ -35,6 +35,10 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/range/algorithm.hpp>
 
+#include <cmath>
+#include <functional>
+#include <span>
+
 /**
  * @brief copy current position
  *
@@ -108,20 +112,19 @@ static bool compute_correction_vector(CellStructure &cs,
                                       BoxGeometry const &box_geo,
                                       Kernel kernel) {
   bool correction = false;
-  cs.bond_loop(
-      [&correction, &kernel, &box_geo](Particle &p1, int bond_id,
-                                       Utils::Span<Particle *> partners) {
-        auto const &iaparams = *bonded_ia_params.at(bond_id);
+  cs.bond_loop([&correction, &kernel, &box_geo](
+                   Particle &p1, int bond_id, std::span<Particle *> partners) {
+    auto const &iaparams = *bonded_ia_params.at(bond_id);
 
-        if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
-          auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
-          if (corrected)
-            correction = true;
-        }
+    if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
+      auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
+      if (corrected)
+        correction = true;
+    }
 
-        /* Rigid bonds cannot break */
-        return false;
-      });
+    /* Rigid bonds cannot break */
+    return false;
+  });
 
   return correction;
 }
@@ -209,10 +212,8 @@ static bool calculate_velocity_correction(RigidBond const &ia_params,
  * @brief Apply velocity corrections
  *
  * @param particles particle range
- * @param box_geo Box geometry
  */
-static void apply_velocity_correction(ParticleRange const &particles,
-                                      BoxGeometry const &box_geo) {
+static void apply_velocity_correction(ParticleRange const &particles) {
   boost::for_each(particles,
                   [](Particle &p) { p.v() += p.rattle_params().correction; });
 }
@@ -237,7 +238,7 @@ void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo) {
 
     cs.ghosts_reduce_rattle_correction();
 
-    apply_velocity_correction(particles, box_geo);
+    apply_velocity_correction(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
   }
 

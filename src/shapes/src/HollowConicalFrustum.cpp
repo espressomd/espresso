@@ -20,8 +20,9 @@
 #include <shapes/HollowConicalFrustum.hpp>
 
 #include <utils/Vector.hpp>
-#include <utils/math/abs.hpp>
 #include <utils/math/coordinate_transformation.hpp>
+
+#include <cmath>
 
 namespace Shapes {
 void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
@@ -70,7 +71,7 @@ void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
    */
 
   auto endpoint_angle = pos_phi;
-  if (Utils::abs(pos_phi) < m_central_angle / 2.) {
+  if (std::fabs(pos_phi) < m_central_angle / 2.) {
     // Cannot use Utils::sgn because of pos_phi==0 corner case
     endpoint_angle =
         pos_phi > 0. ? m_central_angle / 2. : -m_central_angle / 2.;
@@ -93,7 +94,7 @@ void HollowConicalFrustum::calculate_dist(const Utils::Vector3d &pos,
   /* It can be that the projection onto the (infinite) line is outside the
    * frustum. In that case, the closest point is actually one of the endpoints.
    */
-  if (Utils::abs(pos_closest_hcf_frame[2]) > m_length / 2.) {
+  if (std::fabs(pos_closest_hcf_frame[2]) > m_length / 2.) {
     pos_closest_hcf_frame =
         pos_closest_hcf_frame[2] > 0. ? r1_endpoint : r2_endpoint;
   }

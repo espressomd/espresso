@@ -53,7 +53,7 @@ namespace Observables {
 class MockObservable : public Observable {
 public:
   std::vector<double>
-  operator()(boost::mpi::communicator const &comm) const override {
+  operator()(boost::mpi::communicator const &) const override {
     return {1., 2., 3., 4.};
   }
   std::vector<std::size_t> shape() const override { return {2u, 2u}; }

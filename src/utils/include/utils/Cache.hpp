@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_UTILS_CACHE_HPP
-#define CORE_UTILS_CACHE_HPP
+#pragma once
 
+#include <cstddef>
 #include <memory>
 #include <random>
 #include <type_traits>
@@ -76,12 +76,12 @@ private:
     }
 
     /* Pick a random element form that bucket. */
-    auto const elem_in_bucket = std::uniform_int_distribution<size_type>{
+    auto const elem_index = std::uniform_int_distribution<size_type>{
         0, m_cache.bucket_size(bucket) - 1}(m_rand);
 
     /* Get the element in the bucket */
     auto const drop_key =
-        std::next(m_cache.cbegin(bucket), elem_in_bucket)->first;
+        std::next(m_cache.cbegin(bucket), static_cast<long>(elem_index))->first;
 
     /* And drop it. */
     m_cache.erase(drop_key);
@@ -149,11 +149,12 @@ public:
   KeyInputIterator put(KeyInputIterator kbegin, KeyInputIterator kend,
                        ValueInputIterator vbegin) {
     auto const range_len = std::distance(kbegin, kend);
-    auto const len = (range_len > max_size()) ? max_size() : range_len;
+    auto const size_max = static_cast<decltype(range_len)>(max_size());
+    auto const len = (range_len > size_max) ? size_max : range_len;
     kend = std::next(kbegin, len);
 
     /* Make some space. */
-    while ((max_size() - size()) < len) {
+    while (static_cast<decltype(len)>(max_size() - size()) < len) {
       drop_random_element();
     }
 
@@ -180,5 +181,3 @@ public:
   }
 };
 } // namespace Utils
-
-#endif

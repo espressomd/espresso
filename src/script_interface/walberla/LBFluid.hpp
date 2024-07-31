@@ -47,6 +47,7 @@ namespace ScriptInterface::walberla {
 class LBVTKHandle;
 
 class LBFluid : public LatticeModel<::LBWalberlaBase, LBVTKHandle> {
+protected:
   using Base = LatticeModel<::LBWalberlaBase, LBVTKHandle>;
   std::shared_ptr<::LB::LBWalberlaParams> m_lb_params;
   bool m_is_active;
@@ -134,6 +135,18 @@ private:
   std::vector<Variant> get_average_pressure_tensor() const;
   Variant get_interpolated_velocity(Utils::Vector3d const &pos) const;
 };
+
+class LBFluidCPU : public LBFluid {
+protected:
+  void make_instance(VariantMap const &params) override;
+};
+
+#ifdef CUDA
+class LBFluidGPU : public LBFluid {
+protected:
+  void make_instance(VariantMap const &params) override;
+};
+#endif // CUDA
 
 class LBVTKHandle : public VTKHandleBase<::LBWalberlaBase> {
   static std::unordered_map<std::string, int> const obs_map;

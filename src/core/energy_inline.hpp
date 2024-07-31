@@ -55,12 +55,13 @@
 #include "errorhandling.hpp"
 #include "exclusions.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-#include <boost/range/algorithm/find_if.hpp>
 #include <boost/variant.hpp>
+
+#include <optional>
+#include <span>
+#include <string>
 
 /** Calculate non-bonded energies between a pair of particles.
  *  @param p1         particle 1.
@@ -200,9 +201,9 @@ inline void add_non_bonded_pair_energy(
 #endif
 }
 
-inline boost::optional<double>
+inline std::optional<double>
 calc_bonded_energy(Bonded_IA_Parameters const &iaparams, Particle const &p1,
-                   Utils::Span<Particle *> partners, BoxGeometry const &box_geo,
+                   std::span<Particle *> partners, BoxGeometry const &box_geo,
                    Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
   auto const n_partners = static_cast<int>(partners.size());
 

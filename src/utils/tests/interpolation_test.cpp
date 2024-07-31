@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(nearest_point) {
 BOOST_AUTO_TEST_CASE(interpolation_points_3) {
   std::vector<std::array<int, 3>> int_points;
 
-  auto save_ind = [&int_points](const std::array<int, 3> &ind, double w) {
+  auto save_ind = [&int_points](const std::array<int, 3> &ind, double) {
     int_points.push_back(ind);
   };
 
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(interpolation_points_3) {
 BOOST_AUTO_TEST_CASE(interpolation_points_2) {
   std::vector<std::array<int, 3>> int_points;
 
-  auto save_ind = [&int_points](const std::array<int, 3> &ind, double w) {
+  auto save_ind = [&int_points](const std::array<int, 3> &ind, double) {
     int_points.push_back(ind);
   };
 

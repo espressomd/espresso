@@ -24,6 +24,7 @@
 #include "script_interface/ScriptInterface.hpp"
 
 #include <memory>
+#include <span>
 #include <string>
 
 namespace ScriptInterface {
@@ -45,14 +46,14 @@ public:
     // create a dummy system to be able to read the list of parameters
     m_instance = std::make_shared<System>();
   }
-  void do_construct(VariantMap const &) override{};
+  void do_construct(VariantMap const &) override {};
   Variant get_parameter(const std::string &name) const override {
     return m_instance->get_parameter(name);
   }
   void do_set_parameter(const std::string &name, const Variant &v) override {
     m_instance->do_set_parameter(name, v);
   }
-  Utils::Span<const boost::string_ref> valid_parameters() const override {
+  std::span<const boost::string_ref> valid_parameters() const override {
     return m_instance->valid_parameters();
   }
   Variant do_call_method(std::string const &name,

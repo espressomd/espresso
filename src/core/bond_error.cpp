@@ -23,9 +23,9 @@
 #include "error_handling/RuntimeErrorStream.hpp"
 #include "errorhandling.hpp"
 
-#include <utils/Span.hpp>
+#include <span>
 
-void bond_broken_error(int id, Utils::Span<const int> partner_ids) {
+void bond_broken_error(int id, std::span<const int> partner_ids) {
   auto error_msg = runtimeErrorMsg();
 
   error_msg << "bond broken between particles " << id;

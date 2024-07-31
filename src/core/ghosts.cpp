@@ -34,7 +34,6 @@
 #include "Particle.hpp"
 #include "system/System.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -51,6 +50,7 @@
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <span>
 #include <vector>
 
 /** Tag for ghosts communications. */
@@ -82,6 +82,8 @@ public:
   auto &bonds() { return bondbuf; }
   const auto &bonds() const { return bondbuf; }
 
+  auto make_span() { return std::span(buf.data(), buf.size()); }
+
 private:
   std::vector<char> buf;     ///< Buffer for everything but bonds
   std::vector<char> bondbuf; ///< Buffer for bond lists
@@ -94,7 +96,7 @@ class SerializationSizeCalculator {
 public:
   auto size() const { return m_size; }
 
-  template <class T> auto &operator<<(T &t) {
+  template <class T> auto &operator<<(T &) {
     m_size += sizeof(T);
     return *this;
   }
@@ -126,43 +128,43 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
                      BoxGeometry const &box_geo,
                      Utils::Vector3d const *ghost_shift) {
   if (data_parts & GHOSTTRANS_PROPRTS) {
-    ar &p.id() & p.mol_id() & p.type() & p.propagation();
+    ar & p.id() & p.mol_id() & p.type() & p.propagation();
 #ifdef ROTATION
-    ar &p.rotation();
+    ar & p.rotation();
 #ifdef ROTATIONAL_INERTIA
-    ar &p.rinertia();
+    ar & p.rinertia();
 #endif
 #endif
 #ifdef MASS
-    ar &p.mass();
+    ar & p.mass();
 #endif
 #ifdef ELECTROSTATICS
-    ar &p.q();
+    ar & p.q();
 #endif
 #ifdef DIPOLES
-    ar &p.dipm();
+    ar & p.dipm();
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-    ar &p.mu_E();
+    ar & p.mu_E();
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-    ar &p.vs_relative();
+    ar & p.vs_relative();
 #endif
 #ifdef THERMOSTAT_PER_PARTICLE
-    ar &p.gamma();
+    ar & p.gamma();
 #ifdef ROTATION
-    ar &p.gamma_rot();
+    ar & p.gamma_rot();
 #endif
 #endif
 #ifdef EXTERNAL_FORCES
-    ar &p.fixed();
-    ar &p.ext_force();
+    ar & p.fixed();
+    ar & p.ext_force();
 #ifdef ROTATION
-    ar &p.ext_torque();
+    ar & p.ext_torque();
 #endif
 #endif
 #ifdef ENGINE
-    ar &p.swimming();
+    ar & p.swimming();
 #endif
   }
   if (data_parts & GHOSTTRANS_POSITION) {
@@ -171,42 +173,42 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
       auto pos = p.pos() + *ghost_shift;
       auto img = p.image_box();
       box_geo.fold_position(pos, img);
-      ar &pos;
-      ar &img;
+      ar & pos;
+      ar & img;
     } else {
-      ar &p.pos();
-      ar &p.image_box();
+      ar & p.pos();
+      ar & p.image_box();
     }
 #ifdef ROTATION
-    ar &p.quat();
+    ar & p.quat();
 #endif
 #ifdef BOND_CONSTRAINT
-    ar &p.pos_last_time_step();
+    ar & p.pos_last_time_step();
 #endif
   }
   if (data_parts & GHOSTTRANS_MOMENTUM) {
-    ar &p.v();
+    ar & p.v();
 #ifdef ROTATION
-    ar &p.omega();
+    ar & p.omega();
 #endif
   }
   if (data_parts & GHOSTTRANS_FORCE) {
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d force;
-      ar &force;
+      ar & force;
       p.force() += force;
     } else {
-      ar &p.force();
+      ar & p.force();
     }
 #ifdef ROTATION
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d torque;
-      ar &torque;
+      ar & torque;
       p.torque() += torque;
     } else {
-      ar &p.torque();
+      ar & p.torque();
     }
 #endif
   }
@@ -215,10 +217,10 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
     if (policy == ReductionPolicy::UPDATE and
         direction == SerializationDirection::LOAD) {
       Utils::Vector3d correction;
-      ar &correction;
+      ar & correction;
       p.rattle_correction() += correction;
     } else {
-      ar &p.rattle_correction();
+      ar & p.rattle_correction();
     }
   }
 #endif
@@ -255,7 +257,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   send_buffer.resize(calc_transmit_size(ghost_comm, box_geo, data_parts));
   send_buffer.bonds().clear();
 
-  auto archiver = Utils::MemcpyOArchive{Utils::make_span(send_buffer)};
+  auto archiver = Utils::MemcpyOArchive{send_buffer.make_span()};
 
   /* Construct archive that pushes back to the bond buffer */
   namespace io = boost::iostreams;
@@ -309,7 +311,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
                             BoxGeometry const &box_geo,
                             unsigned int data_parts) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
 
   if (data_parts & GHOSTTRANS_PARTNUM) {
     for (auto part_list : ghost_comm.part_lists) {
@@ -348,7 +350,7 @@ static void
 add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
                                        const GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : *part_list) {
       ParticleRattle pr;
@@ -362,7 +364,7 @@ add_rattle_correction_from_recv_buffer(CommBuf &recv_buffer,
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
                                         const GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{recv_buffer.make_span()};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : *part_list) {
       ParticleForce pf;
@@ -393,8 +395,8 @@ static void cell_cell_transfer(GhostCommunication const &ghost_comm,
       assert(src_part.size() == dst_part.size());
 
       for (std::size_t i = 0; i < src_part.size(); i++) {
-        auto ar_out = Utils::MemcpyOArchive{Utils::make_span(buffer)};
-        auto ar_in = Utils::MemcpyIArchive{Utils::make_span(buffer)};
+        auto ar_out = Utils::MemcpyOArchive{buffer.make_span()};
+        auto ar_in = Utils::MemcpyIArchive{buffer.make_span()};
         auto &p1 = src_part.begin()[i];
         auto &p2 = dst_part.begin()[i];
         serialize_and_reduce(ar_out, p1, data_parts, ReductionPolicy::UPDATE,

@@ -44,14 +44,14 @@
 #include "integrators/Propagation.hpp"
 #include "system/System.hpp"
 
-#include <utils/constants.hpp>
-
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <limits>
+#include <numbers>
 #include <stdexcept>
 #include <variant>
 #include <vector>
@@ -110,7 +110,7 @@ void ICCStar::iteration(CellStructure &cell_structure,
   auto const &coulomb = system.coulomb;
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
-  auto const pref = 1. / (prefactor * 2. * Utils::pi());
+  auto const pref = 1. / (prefactor * 2. * std::numbers::pi);
   auto const kernel = coulomb.pair_force_kernel();
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
@@ -223,13 +223,13 @@ void icc_data::sanity_checks() const {
     throw std::domain_error("Parameter 'first_id' must be >= 0");
   if (eps_out <= 0.)
     throw std::domain_error("Parameter 'eps_out' must be > 0");
-  if (areas.size() != n_icc)
+  if (areas.size() != static_cast<std::size_t>(n_icc))
     throw std::invalid_argument("Parameter 'areas' has incorrect shape");
-  if (epsilons.size() != n_icc)
+  if (epsilons.size() != static_cast<std::size_t>(n_icc))
     throw std::invalid_argument("Parameter 'epsilons' has incorrect shape");
-  if (sigmas.size() != n_icc)
+  if (sigmas.size() != static_cast<std::size_t>(n_icc))
     throw std::invalid_argument("Parameter 'sigmas' has incorrect shape");
-  if (normals.size() != n_icc)
+  if (normals.size() != static_cast<std::size_t>(n_icc))
     throw std::invalid_argument("Parameter 'normals' has incorrect shape");
 }
 
@@ -245,12 +245,10 @@ void ICCStar::on_activation() const {
 }
 
 struct SanityChecksICC {
-  template <typename T>
-  void operator()(std::shared_ptr<T> const &actor) const {}
+  template <typename T> void operator()(std::shared_ptr<T> const &) const {}
 #ifdef P3M
 #ifdef CUDA
-  [[noreturn]] void
-  operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
+  [[noreturn]] void operator()(std::shared_ptr<CoulombP3MGPU> const &) const {
     throw std::runtime_error("ICC does not work with P3MGPU");
   }
 #endif // CUDA

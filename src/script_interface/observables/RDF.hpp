@@ -27,10 +27,6 @@
 
 #include "core/observables/RDF.hpp"
 
-#include <boost/range/algorithm.hpp>
-
-#include <cstddef>
-#include <iterator>
 #include <memory>
 #include <vector>
 

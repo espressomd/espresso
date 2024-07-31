@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit test for Utils tuple algorithms. */
-
-#define BOOST_TEST_MODULE Utils::tuple_test
+#define BOOST_TEST_MODULE Utils::tuple test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 

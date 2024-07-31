@@ -27,7 +27,6 @@
 #include "PropagationMode.hpp"
 #include "config/config.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/compact_vector.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
@@ -122,7 +121,7 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
   prop.identity = 1234;
 
   {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+    auto oa = Utils::MemcpyOArchive{buf};
 
     oa << prop;
 
@@ -130,7 +129,7 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
   }
 
   {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    auto ia = Utils::MemcpyIArchive{buf};
     ParticleProperties out;
 
     ia >> out;
@@ -158,7 +157,7 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
 #endif
 
   {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+    auto oa = Utils::MemcpyOArchive{buf};
 
     oa << pf;
 
@@ -166,7 +165,7 @@ BOOST_AUTO_TEST_CASE(force_serialization) {
   }
 
   {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    auto ia = Utils::MemcpyIArchive{buf};
     ParticleForce out;
 
     ia >> out;
@@ -216,7 +215,7 @@ BOOST_AUTO_TEST_CASE(rattle_serialization) {
   auto pr = ParticleRattle{{1, 2, 3}};
 
   {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+    auto oa = Utils::MemcpyOArchive{buf};
 
     oa << pr;
 
@@ -224,7 +223,7 @@ BOOST_AUTO_TEST_CASE(rattle_serialization) {
   }
 
   {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    auto ia = Utils::MemcpyIArchive{buf};
     ParticleRattle out;
 
     ia >> out;

@@ -33,8 +33,6 @@
 #include "cuda/init.hpp"
 #include "cuda/utils.cuh"
 
-#include <utils/Span.hpp>
-
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 
@@ -43,6 +41,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <memory>
+#include <span>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -139,11 +138,11 @@ public:
     }
   }
 #endif
-  Utils::Span<float> get_particle_forces_host_span() {
+  std::span<float> get_particle_forces_host_span() {
     return {particle_forces_host.data(), particle_forces_host.size()};
   }
 #ifdef ROTATION
-  Utils::Span<float> get_particle_torques_host_span() {
+  std::span<float> get_particle_torques_host_span() {
     return {particle_torques_host.data(), particle_torques_host.size()};
   }
 #endif
@@ -152,8 +151,6 @@ public:
 void GpuParticleData::initialize() {
   m_data = GpuParticleData::Storage::make_shared(get_system().cleanup_queue);
 }
-
-GpuParticleData::~GpuParticleData() {}
 
 std::size_t GpuParticleData::n_particles() const {
   return m_data->particle_data_device.size();
@@ -199,12 +196,11 @@ void GpuParticleData::enable_property(std::size_t property) {
 }
 
 bool GpuParticleData::has_compatible_device_impl() const {
-  auto result = true;
-  try {
+  auto result = false;
+  invoke_skip_cuda_exceptions([&result]() {
     cuda_check_device();
-  } catch (cuda_runtime_error const &err) {
-    result = false;
-  }
+    result = true;
+  });
   return result;
 }
 
@@ -215,8 +211,7 @@ void GpuParticleData::gpu_init_particle_comm() {
   try {
     cuda_check_device();
   } catch (cuda_runtime_error const &err) {
-    fprintf(stderr, "ERROR: %s\n", err.what());
-    errexit();
+    throw cuda_fatal_error(err.what());
   }
   m_data->realloc_device_memory();
 }
@@ -275,7 +270,7 @@ void GpuParticleData::copy_forces_to_host(ParticleRange const &particles,
 #ifdef ROTATION
     auto torques_buffer = m_data->get_particle_torques_host_span();
 #else
-    auto torques_buffer = Utils::Span<float>{nullptr, std::size_t{0ul}};
+    auto torques_buffer = std::span<float>();
 #endif
 
     // add forces and torques to the particles

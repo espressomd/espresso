@@ -30,9 +30,8 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
+#include <optional>
 #include <tuple>
 
 /** Separately thermalizes the com and distance of a particle pair.
@@ -41,7 +40,7 @@
  *  @param[in]  dx        Distance between the particles.
  *  @return the forces on @p p1 and @p p2
  */
-inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
+inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 ThermalizedBond::forces(Particle const &p1, Particle const &p2,
                         Utils::Vector3d const &dx) const {
   // Bond broke?

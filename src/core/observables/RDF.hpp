@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef OBSERVABLES_RDF_HPP
-#define OBSERVABLES_RDF_HPP
+#pragma once
 
 #include "Observable.hpp"
 
@@ -53,14 +52,15 @@ public:
 
   std::vector<std::size_t> shape() const override { return {n_r_bins}; }
 
-  explicit RDF(std::vector<int> ids1, std::vector<int> ids2, int n_r_bins,
-               double min_r, double max_r)
+  RDF(std::vector<int> ids1, std::vector<int> ids2, int n_r_bins, double min_r,
+      double max_r)
       : m_ids1(std::move(ids1)), m_ids2(std::move(ids2)), min_r(min_r),
-        max_r(max_r), n_r_bins(n_r_bins) {
+        max_r(max_r) {
     if (max_r <= min_r)
       throw std::runtime_error("max_r has to be > min_r");
     if (n_r_bins <= 0)
       throw std::domain_error("n_r_bins has to be >= 1");
+    this->n_r_bins = static_cast<std::size_t>(n_r_bins);
   }
   std::vector<double>
   operator()(boost::mpi::communicator const &comm) const final;
@@ -72,4 +72,3 @@ public:
 };
 
 } // Namespace Observables
-#endif

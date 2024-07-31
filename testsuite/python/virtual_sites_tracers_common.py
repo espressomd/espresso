@@ -29,8 +29,9 @@ import unittest_decorators as utx
 
 
 class VirtualSitesTracersCommon:
-    box_height = 10.
-    box_lw = 8.
+    agrid = 0.5
+    box_height = 10. * agrid
+    box_lw = 8. * agrid
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))
     system.time_step = 0.08
     system.cell_system.skin = 0.1
@@ -46,7 +47,7 @@ class VirtualSitesTracersCommon:
     def set_lb(self, ext_force_density=(0, 0, 0), dir_walls=2):
         self.system.lb = None
         self.lbf = self.LBClass(
-            kT=0.0, agrid=1., density=1., kinematic_viscosity=1.8,
+            kT=0.0, agrid=self.agrid, density=1., kinematic_viscosity=1.8,
             tau=self.system.time_step, ext_force_density=ext_force_density)
         self.system.lb = self.lbf
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.)
@@ -54,11 +55,12 @@ class VirtualSitesTracersCommon:
         # Setup boundaries
         normal = [0, 0, 0]
         normal[dir_walls] = 1
-        wall_shape = espressomd.shapes.Wall(normal=normal, dist=0.5)
+        wall_shape = espressomd.shapes.Wall(
+            normal=normal, dist=0.5 * self.agrid)
         self.lbf.add_boundary_from_shape(wall_shape)
         normal[dir_walls] = -1
         wall_shape = espressomd.shapes.Wall(
-            normal=normal, dist=-(self.system.box_l[dir_walls] - 0.5))
+            normal=normal, dist=-(self.system.box_l[dir_walls] - 0.5 * self.agrid))
         self.lbf.add_boundary_from_shape(wall_shape)
 
         espressomd.utils.handle_errors("setup")
@@ -72,7 +74,7 @@ class VirtualSitesTracersCommon:
         self.lbf[:, :, :].velocity = np.random.random((*self.lbf.shape, 3))
         force = [1, -2, 3]
         # Test several particle positions
-        for pos in [[3, 2, 1], [0, 0, 0],
+        for pos in [[3 * self.agrid, 2 * self.agrid, 1 * self.agrid], [0, 0, 0],
                     self.system.box_l * 0.49,
                     self.system.box_l,
                     self.system.box_l * 0.99]:
@@ -133,8 +135,8 @@ class VirtualSitesTracersCommon:
             system.integrator.run(400)
 
             # Add tracer in the fluid domain
-            pos_initial = [3.5, 3.5, 3.5]
-            pos_initial[direction] = 0.5
+            pos_initial = 3 * [3.5 * self.agrid]
+            pos_initial[direction] = 0.5 * self.agrid
             p = system.part.add(
                 pos=pos_initial,
                 propagation=espressomd.propagation.Propagation.TRANS_LB_TRACER)
@@ -150,6 +152,7 @@ class VirtualSitesTracersCommon:
                 self.assertAlmostEqual(tracer_dist / ref_dist, 1., delta=0.01)
 
             system.lb = None
+            system.part.clear()
 
     def test_zz_exceptions_without_lb(self):
         """

@@ -42,9 +42,9 @@ void check_vector(const boost::mpi::communicator &comm, int root) {
 
   if (comm.rank() == root) {
     auto const n = comm.size();
-    const int total_size = n * (n + 1) / 2;
+    auto const total_size = n * (n + 1) / 2;
 
-    BOOST_CHECK(buf.size() == total_size);
+    BOOST_CHECK_EQUAL(static_cast<int>(buf.size()), total_size);
 
     /* Check order in result */
     BOOST_CHECK(std::is_sorted(buf.begin(), buf.end()));
@@ -57,9 +57,9 @@ void check_vector(const boost::mpi::communicator &comm, int root) {
     }
   } else {
     /* Check that buffer is unchanged */
-    BOOST_CHECK(buf.size() == comm.rank() + 1);
+    BOOST_CHECK_EQUAL(static_cast<int>(buf.size()), comm.rank() + 1);
     for (auto const &i : buf) {
-      BOOST_CHECK(i == comm.rank() + 1);
+      BOOST_CHECK_EQUAL(i, comm.rank() + 1);
     }
   }
 }
@@ -71,14 +71,14 @@ void check_vector_out_of_bounds(const boost::mpi::communicator &comm) {
   if (comm.rank() == 1) {
     std::vector<int> buf = {2, 2};
     gather_buffer(buf, comm, root);
-    BOOST_CHECK(buf.size() == 3);
+    BOOST_CHECK(buf.size() == 3u);
     BOOST_CHECK(buf[0] == 1);
     BOOST_CHECK(buf[1] == 2);
     BOOST_CHECK(buf[2] == 2);
   } else if (comm.rank() == 0) {
     std::vector<int> buf = {1};
     gather_buffer(buf, comm, root);
-    BOOST_CHECK(buf.size() == 1);
+    BOOST_CHECK(buf.size() == 1u);
     BOOST_CHECK(buf[0] == 1);
   } else {
     std::vector<int> buf = {};
@@ -92,7 +92,7 @@ void check_vector_empty(const boost::mpi::communicator &comm, int empty) {
   gather_buffer(buf, comm);
 
   if (comm.rank() == 0) {
-    BOOST_CHECK(buf.size() == (comm.size() - 1) * 11);
+    BOOST_CHECK_EQUAL(static_cast<int>(buf.size()), (comm.size() - 1) * 11);
 
     for (int i = 0; i < comm.size(); i++) {
       auto const [lower, upper] = std::equal_range(buf.begin(), buf.end(), i);
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(non_trivial_type) {
 
   if (world.rank() == 0) {
     auto const n = world.size();
-    BOOST_CHECK(buf.size() == (n * (n + 1) / 2));
+    BOOST_CHECK_EQUAL(static_cast<int>(buf.size()), (n * (n + 1) / 2));
 
     for (auto const &e : buf) {
       BOOST_CHECK(e == s);

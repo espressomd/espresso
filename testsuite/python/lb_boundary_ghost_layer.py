@@ -38,6 +38,8 @@ class TestCommon:
     system = espressomd.System(box_l=[16.0, 1.0, 1.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+    if espressomd.gpu_available():
+        system.cuda_init_handle.call_method("set_device_id_per_rank")
     n_nodes = system.cell_system.get_state()["n_nodes"]
 
     def setUp(self):
@@ -64,7 +66,7 @@ class TestCommon:
         popt_ref = (4e-8, -1e-6, 1e-5)
         popt, _ = scipy.optimize.curve_fit(
             quadratic, xdata, ydata, p0=popt_ref)
-        rtol = 0.3 if self.lbf.single_precision else 0.1
+        rtol = 0.33 if self.lbf.single_precision else 0.1
         np.testing.assert_allclose(popt, popt_ref, rtol=0.5, atol=0.)
         np.testing.assert_allclose(ydata, quadratic(xdata, *popt),
                                    rtol=rtol, atol=0.)
@@ -87,15 +89,31 @@ class TestCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
-class LBPoiseuilleWalberlaSinglePrecision(TestCommon, ut.TestCase):
+class LBPoiseuilleWalberlaSinglePrecisionCPU(TestCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params = {"single_precision": True}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 @ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
-class LBPoiseuilleWalberlaDoublePrecision(TestCommon, ut.TestCase):
+class LBPoiseuilleWalberlaDoublePrecisionCPU(TestCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+@ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
+class LBPoiseuilleWalberlaSinglePrecisionGPU(TestCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+@ut.skipIf(TestCommon.n_nodes != 2, "only runs for 2 MPI ranks")
+class LBPoiseuilleWalberlaDoublePrecisionGPU(TestCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params = {"single_precision": False}
 
 

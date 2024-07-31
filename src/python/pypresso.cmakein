@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2024 The ESPResSo project
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -14,8 +14,30 @@ else
 fi
 export PYTHONPATH
 
+espresso_parse_cmake_boolean_value() {
+  local varname="${2}"
+  local value=""
+  if [ "${3}" = "1" ]; then
+    value="ON"
+  elif [ "${3}" = "0" ]; then
+    value="OFF"
+  fi
+  if [ "${1}" != "#define" ] || [ "${value}" = "" ]; then
+    echo "error: failed to parse CMake variable ${varname} (using '$(ps -hp $$ | awk '{print $5}')' and CMake @CMAKE_VERSION@)" >&2
+    exit 2
+  fi
+  eval "${varname}='${value}'"
+}
+
+espresso_parse_cmake_boolean_value \#cmakedefine01 ESPRESSO_WARNINGS_ARE_ERRORS
+espresso_parse_cmake_boolean_value \#cmakedefine01 ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA
+espresso_parse_cmake_boolean_value \#cmakedefine01 ESPRESSO_ADD_OMPI_SINGLETON_WARNING
+espresso_parse_cmake_boolean_value \#cmakedefine01 ESPRESSO_BUILD_WITH_UBSAN
+espresso_parse_cmake_boolean_value \#cmakedefine01 ESPRESSO_BUILD_WITH_ASAN
+espresso_parse_cmake_boolean_value \#cmakedefine01 ESPRESSO_BUILD_WITH_MSAN
+
 # Open MPI 4.x cannot run in singleton mode on some NUMA systems
-if [ "@ESPRESSO_ADD_OMPI_SINGLETON_WARNING@" = "ON" ] && [ "@ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA@" = "ON" ]; then
+if [ "${ESPRESSO_ADD_OMPI_SINGLETON_WARNING}" = "ON" ] && [ "${ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA}" = "ON" ]; then
   if [ -z "${OMPI_COMM_WORLD_SIZE}" ] && [ "${OMPI_MCA_hwloc_base_binding_policy}" = "numa" ]; then
     if test -f /proc/cpuinfo && grep --quiet -P "^[Mm]odel name[ \t]*:[ \t]+@ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN@( |$)" /proc/cpuinfo; then
       echo "warning: if Open MPI fails to set processor affinity, set environment variable OMPI_MCA_hwloc_base_binding_policy to \"none\" or \"l3cache\""
@@ -23,29 +45,29 @@ if [ "@ESPRESSO_ADD_OMPI_SINGLETON_WARNING@" = "ON" ] && [ "@ESPRESSO_MPIEXEC_GU
   fi
 fi
 
-if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@ESPRESSO_BUILD_WITH_ASAN@" = "ON" ]; then
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "${ESPRESSO_BUILD_WITH_ASAN}" = "ON" ]; then
   asan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=address 2>&1 | grep -o '[" ][^" ]*libclang_rt.asan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
   export DYLD_INSERT_LIBRARIES="$asan_lib"
   for lib in $asan_lib; do
       test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
   done
 fi
-if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@ESPRESSO_BUILD_WITH_UBSAN@" = "ON" ] && [ "@ESPRESSO_BUILD_WITH_ASAN@" != "ON" ]; then
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "${ESPRESSO_BUILD_WITH_UBSAN}" = "ON" ] && [ "${ESPRESSO_BUILD_WITH_ASAN}" != "ON" ]; then
   ubsan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=undefined 2>&1 | grep -o '[" ][^" ]*libclang_rt.ubsan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
   for lib in $ubsan_lib; do
     test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
   done
 fi
 export LD_PRELOAD
-if [ "@ESPRESSO_BUILD_WITH_UBSAN@" = "ON" ]; then
+if [ "${ESPRESSO_BUILD_WITH_UBSAN}" = "ON" ]; then
   export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/maintainer/CI/ubsan.supp\" $UBSAN_OPTIONS"
-  if [ "@ESPRESSO_WARNINGS_ARE_ERRORS@" = "ON" ]; then
+  if [ "${ESPRESSO_WARNINGS_ARE_ERRORS}" = "ON" ]; then
     export UBSAN_OPTIONS="halt_on_error=1 $UBSAN_OPTIONS"
   fi
 fi
-if [ "@ESPRESSO_BUILD_WITH_ASAN@" = "ON" ]; then
+if [ "${ESPRESSO_BUILD_WITH_ASAN}" = "ON" ]; then
   ASAN_OPTIONS="protect_shadow_gap=0 allocator_may_return_null=1 $ASAN_OPTIONS"
-  if [ "@ESPRESSO_WARNINGS_ARE_ERRORS@" = "ON" ]; then
+  if [ "${ESPRESSO_WARNINGS_ARE_ERRORS}" = "ON" ]; then
     ASAN_OPTIONS="halt_on_error=1 $ASAN_OPTIONS"
   fi
   if [ "$1" = "--leaks" ]; then
@@ -55,7 +77,7 @@ if [ "@ESPRESSO_BUILD_WITH_ASAN@" = "ON" ]; then
   fi
   export ASAN_OPTIONS
 fi
-if [ "@ESPRESSO_BUILD_WITH_MSAN@" = "ON" ] && [ "@ESPRESSO_WARNINGS_ARE_ERRORS@" = "ON" ]; then
+if [ "${ESPRESSO_BUILD_WITH_MSAN}" = "ON" ] && [ "${ESPRESSO_WARNINGS_ARE_ERRORS}" = "ON" ]; then
   export MSAN_OPTIONS="halt_on_error=1 $MSAN_OPTIONS"
 fi
 

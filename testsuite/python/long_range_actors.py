@@ -216,7 +216,6 @@ class Test(ut.TestCase):
         np.testing.assert_allclose(pressure_scalar_far_field, 0., atol=1e-12)
 
     @utx.skipIfMissingFeatures(["DIPOLES"])
-    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_mdds_cpu_no_magnetic_particles(self):
         self.system.part.add(pos=2 * [[1., 1., 1.]], dip=2 * [[0., 0., 0.]])
         mdds = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=2.)
@@ -293,8 +292,10 @@ class Test(ut.TestCase):
             prefactor=1., accuracy=1e-3)
         self.check_p3m_tuning_errors(dp3m)
 
-    def check_mmm1d_exceptions(self, mmm1d_class):
-        mmm1d = mmm1d_class(prefactor=1., maxPWerror=1e-2)
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+    def test_mmm1d_cpu_exceptions(self):
+        self.system.periodicity = (False, False, True)
+        mmm1d = espressomd.electrostatics.MMM1D(prefactor=1., maxPWerror=1e-2)
 
         # check cell system exceptions
         with self.assertRaisesRegex(Exception, "MMM1D requires the N-square cellsystem"):
@@ -310,31 +311,12 @@ class Test(ut.TestCase):
                 continue
             self.system.periodicity = periodicity
             with self.assertRaisesRegex(Exception, r"MMM1D requires periodicity \(False, False, True\)"):
-                mmm1d = mmm1d_class(prefactor=1., maxPWerror=1e-2)
+                mmm1d = espressomd.electrostatics.MMM1D(
+                    prefactor=1., maxPWerror=1e-2)
                 self.system.electrostatics.solver = mmm1d
             self.assertIsNone(self.system.electrostatics.solver)
             self.assertFalse(mmm1d.is_tuned)
         self.system.periodicity = (False, False, True)
-
-    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
-    def test_mmm1d_cpu_exceptions(self):
-        self.system.periodicity = (False, False, True)
-        self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1D)
-
-    @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["MMM1D_GPU"])
-    @ut.skipIf(n_nodes > 3, "only runs for 3 or less MPI ranks")
-    def test_mmm1d_gpu_exceptions(self):
-        # VRAM peak memory usage: 700 MiB on 4 MPI cores, 500 on 3 MPI cores
-        self.system.periodicity = (False, False, True)
-        self.check_mmm1d_exceptions(espressomd.electrostatics.MMM1DGPU)
-
-        self.system.electrostatics.solver = None
-        with self.assertRaisesRegex(ValueError, "Parameter 'far_switch_radius' must not be larger than box length"):
-            self.system.electrostatics.solver = espressomd.electrostatics.MMM1DGPU(
-                prefactor=1., maxPWerror=1e-2,
-                far_switch_radius=2. * self.system.box_l[2])
-        self.assertIsNone(self.system.electrostatics.solver)
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_elc_tuning_exceptions(self):

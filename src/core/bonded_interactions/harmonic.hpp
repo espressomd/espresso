@@ -31,7 +31,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 /** Parameters for harmonic bond Potential */
 struct HarmonicBond {
@@ -52,23 +52,23 @@ struct HarmonicBond {
     this->r_cut = r_cut;
   }
 
-  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(Utils::Vector3d const &dx) const;
+  std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  std::optional<double> energy(Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &k;
-    ar &r;
-    ar &r_cut;
+    ar & k;
+    ar & r;
+    ar & r_cut;
   }
 };
 
 /** Compute the harmonic bond force.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 HarmonicBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -92,7 +92,7 @@ HarmonicBond::force(Utils::Vector3d const &dx) const {
 /** Compute the harmonic bond energy.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
+inline std::optional<double>
 HarmonicBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 

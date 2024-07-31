@@ -23,12 +23,45 @@
 
 #ifdef CUDA
 
+#include <exception>
 #include <stdexcept>
 #include <string>
 
+/**
+ * @brief Wrapper for CUDA runtime exceptions.
+ * When the exception cannot be recovered from,
+ * prefer using @ref cuda_fatal_error instead.
+ */
 class cuda_runtime_error : public std::runtime_error {
 public:
   cuda_runtime_error(std::string const &msg) : std::runtime_error(msg) {}
+};
+
+/**
+ * @brief Fatal CUDA exception.
+ * Best course of action is to terminate the program immediately.
+ */
+
+class cuda_fatal_error {
+  std::string m_msg;
+  std::terminate_handler m_terminate_handler;
+
+public:
+  explicit cuda_fatal_error(std::string msg);
+
+  ~cuda_fatal_error() { terminate(); }
+
+  auto get_terminate() noexcept { return m_terminate_handler; }
+
+  auto set_terminate(std::terminate_handler callback) noexcept {
+    auto old_handler = m_terminate_handler;
+    m_terminate_handler = callback;
+    return old_handler;
+  }
+
+  void terminate() noexcept;
+
+  char const *what() const noexcept { return m_msg.c_str(); }
 };
 
 /**
@@ -42,7 +75,7 @@ template <class F, class... Args>
 void invoke_skip_cuda_exceptions(F &&f, Args &&...args) {
   try {
     return f(args...);
-  } catch (cuda_runtime_error const &) {
+  } catch (cuda_runtime_error const &) { // NOLINT(bugprone-empty-catch)
     // pass
   }
 }

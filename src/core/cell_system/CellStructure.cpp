@@ -37,13 +37,14 @@
 #include <utils/contains.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/range/algorithm/min_element.hpp>
 #include <boost/variant.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -69,7 +70,7 @@ void CellStructure::check_particle_index() const {
   }
 
   /* checks: local particle id */
-  int local_part_cnt = 0;
+  std::size_t local_part_cnt = 0u;
   for (int n = 0; n < get_max_local_particle_id() + 1; n++) {
     if (get_local_particle(n) != nullptr) {
       local_part_cnt++;
@@ -248,12 +249,13 @@ void CellStructure::set_atom_decomposition() {
   system.on_cell_structure_change();
 }
 
-void CellStructure::set_regular_decomposition(double range) {
+void CellStructure::set_regular_decomposition(
+    double range, std::optional<std::pair<int, int>> fully_connected_boundary) {
   auto &system = get_system();
   auto &local_geo = *system.local_geo;
   auto const &box_geo = *system.box_geo;
   set_particle_decomposition(std::make_unique<RegularDecomposition>(
-      ::comm_cart, range, box_geo, local_geo));
+      ::comm_cart, range, box_geo, local_geo, fully_connected_boundary));
   m_type = CellStructureType::REGULAR;
   local_geo.set_cell_structure_type(m_type);
   system.on_cell_structure_change();
@@ -289,7 +291,7 @@ void CellStructure::set_verlet_skin_heuristic() {
   }
   /* maximal skin that can be used without resorting is the maximal
    * range of the cell system minus what is needed for interactions. */
-  auto const max_range = *boost::min_element(max_cutoff());
+  auto const max_range = std::ranges::min(max_cutoff());
   auto const new_skin = std::min(0.4 * max_cut, max_range - max_cut);
   set_verlet_skin(new_skin);
 }

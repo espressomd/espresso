@@ -26,6 +26,7 @@
 #include "utils.hpp"
 
 #include <cuda.h>
+#include <cuda_runtime.h>
 
 #include <string>
 
@@ -46,6 +47,7 @@ private:
   {                                                                            \
     cudaError_t const error_code = (statement);                                \
     if (error_code != cudaSuccess) {                                           \
+      static_cast<void>(cudaGetLastError()); /* clear non-sticky errors */     \
       throw cuda_runtime_error_cuda(error_code);                               \
     }                                                                          \
   }

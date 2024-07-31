@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPTINTERFACE_ACCUMULATORS_ACCUMULATORBASE_HPP
-#define SCRIPTINTERFACE_ACCUMULATORS_ACCUMULATORBASE_HPP
+
+#pragma once
 
 #include "core/accumulators/AccumulatorBase.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -53,5 +53,3 @@ public:
 
 } // namespace Accumulators
 } // namespace ScriptInterface
-
-#endif

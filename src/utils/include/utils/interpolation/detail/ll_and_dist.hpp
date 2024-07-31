@@ -16,51 +16,44 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_INTERPOLATION_DETAIL_LL_AND_DIST_HPP
-#define UTILS_INTERPOLATION_DETAIL_LL_AND_DIST_HPP
+
+#pragma once
 
 #include "utils/Vector.hpp"
 
 #include <array>
 #include <cmath>
 
-namespace Utils {
-namespace Interpolation {
-namespace detail {
+namespace Utils::Interpolation::detail {
 
 struct Block {
-  /* Index of the lower left corner of the assignment cube */
-  const std::array<int, 3> corner;
-  /* Distance to the nearest mesh point in units of h \in [-0.5, 0.5) */
-  const Vector3d distance;
+  /** Index of the lower left corner of the assignment cube */
+  std::array<int, 3> corner;
+  /** Distance to the nearest mesh point in units of agrid in [-0.5, 0.5) */
+  std::array<double, 3> distance;
 };
 
 /**
  * @brief Calculate the lower left index of a block
- *        stencil with order points side length.
+ *        stencil with @c order points side length.
  */
 template <int order>
-Block ll_and_dist(const Vector3d &pos, const Vector3d &grid_spacing,
-                  const Vector3d &offset) {
-  Vector3d dist;
-  std::array<int, 3> ll;
-
-  for (unsigned int dim = 0; dim < 3; ++dim) {
+auto ll_and_dist(Vector3d const &pos, Vector3d const &grid_spacing,
+                 Vector3d const &offset) {
+  Block block{};
+  for (unsigned int dim = 0u; dim < 3u; ++dim) {
     auto const fractional_index = (pos[dim] - offset[dim]) / grid_spacing[dim];
     int nmp;
     if constexpr (order % 2 == 0) {
       nmp = static_cast<int>(std::floor(fractional_index));
-      dist[dim] = fractional_index - nmp - 0.5;
+      block.distance[dim] = fractional_index - nmp - 0.5;
     } else {
       nmp = static_cast<int>(std::floor(fractional_index + 0.5));
-      dist[dim] = fractional_index - nmp;
+      block.distance[dim] = fractional_index - nmp;
     }
-    ll[dim] = nmp - (order - 1) / 2;
+    block.corner[dim] = nmp - (order - 1) / 2;
   }
-  return {ll, dist};
+  return block;
 }
-} // namespace detail
-} // namespace Interpolation
-} // namespace Utils
 
-#endif
+} // namespace Utils::Interpolation::detail

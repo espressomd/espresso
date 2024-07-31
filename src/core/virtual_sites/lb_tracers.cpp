@@ -39,12 +39,11 @@ static bool lb_sanity_checks(LB::Solver const &lb) {
 void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
                                             BoxGeometry const &box_geo,
                                             LocalBox const &local_box,
-                                            LB::Solver &lb, double time_step) {
+                                            LB::Solver &lb) {
   if (lb_sanity_checks(lb)) {
     return;
   }
   auto const agrid = lb.get_agrid();
-  auto const to_lb_units = 1. / agrid;
 
   // Distribute summed-up forces from physical particles to ghosts
   init_forces_ghosts(cell_structure.ghost_particles());
@@ -62,7 +61,7 @@ void lb_tracers_add_particle_force_to_fluid(CellStructure &cell_structure,
       if (bookkeeping.should_be_coupled(p)) {
         for (auto const &pos :
              positions_in_halo(p.pos(), box_geo, local_box, agrid)) {
-          add_md_force(lb, pos * to_lb_units, p.force(), time_step);
+          lb.add_force_density(pos, p.force());
         }
       }
     }
@@ -85,7 +84,7 @@ void lb_tracers_propagate(CellStructure &cell_structure, LB::Solver const &lb,
     if (!LB::is_tracer(p))
       continue;
     p.v() = lb.get_coupling_interpolated_velocity(p.pos());
-    for (unsigned int i = 0u; i < 3u; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       if (!p.is_fixed_along(i)) {
         p.pos()[i] += p.v()[i] * time_step;
       }

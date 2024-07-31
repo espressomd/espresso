@@ -36,7 +36,7 @@ struct EspressoGpuDevice {
   /** Local CUDA device id */
   int id;
   /** Local CUDA device name */
-  char name[64];
+  char name[256];
   /** Node identification */
   char proc_name[64];
   /** MPI process identification */
@@ -66,16 +66,16 @@ int cuda_get_n_gpus();
  *  \ref computeCapabilityMinMajor . \ref computeCapabilityMinMinor .
  *
  *  @param dev CUDA device number
- *  @return \ref ES_OK if the GPU meets the requirements, else \ref ES_ERROR.
+ *  @return @c false if the GPU meets the requirements, else @c true.
  */
-int cuda_check_gpu_compute_capability(int dev);
+bool cuda_check_gpu_compute_capability(int dev);
 
 /** Get the name of a CUDA device.
  *
  *  @param[in]  dev the CUDA device number to ask the name for
- *  @param[out] name a buffer to write the name to, at least 64 characters
+ *  @param[out] name a buffer to write the name to, at least 256 characters
  */
-void cuda_get_gpu_name(int dev, char name[64]);
+void cuda_get_gpu_name(int dev, char *name);
 
 /** Choose a device for future CUDA computations.
  *
@@ -89,10 +89,10 @@ void cuda_set_device(int dev);
  */
 int cuda_get_device();
 
-/** Test if actual CUDA device works.
- *  @return \ref ES_OK on success, \ref ES_ERROR else.
+/** Test if communication to the CUDA device works.
+ *  @return @c false on success, else @c true.
  */
-int cuda_test_device_access();
+bool cuda_test_device_access();
 
 /**
  * Check that a device is available, that its compute capability

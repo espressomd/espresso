@@ -30,9 +30,7 @@
 #include "script_interface/system/Leaf.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include <string>
-#include <vector>
 
 namespace ScriptInterface {
 namespace Coulomb {

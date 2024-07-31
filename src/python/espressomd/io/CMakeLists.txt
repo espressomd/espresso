@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2016-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-configure_file(mpiio.py mpiio.py COPYONLY)
-configure_file(vtk.py vtk.py COPYONLY)
+espresso_target_resources(espressomd __init__.py vtk.py mpiio.py)
+
 add_subdirectory(writer)
-set(cython_AUX ${cython_AUX}
-               "${CMAKE_SOURCE_DIR}/src/python/espressomd/io/__init__.py"
-    CACHE INTERNAL "cython_AUX" FORCE)

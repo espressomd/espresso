@@ -44,7 +44,14 @@
 #include <utils/Vector.hpp>
 #include <utils/mpi/all_compare.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+
+#include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <stdexcept>
+#include <utility>
 
 namespace System {
 
@@ -131,7 +138,17 @@ void System::set_min_global_cut(double value) {
 
 void System::set_cell_structure_topology(CellStructureType topology) {
   if (topology == CellStructureType::REGULAR) {
-    cell_structure->set_regular_decomposition(get_interaction_range());
+    if (cell_structure->decomposition_type() == CellStructureType::REGULAR) {
+      // get fully connected info from exising regular decomposition
+      auto &old_regular_decomposition =
+          dynamic_cast<RegularDecomposition const &>(
+              std::as_const(*cell_structure).decomposition());
+      cell_structure->set_regular_decomposition(
+          get_interaction_range(),
+          old_regular_decomposition.fully_connected_boundary());
+    } else { // prev. decomposition is not a regular decomposition
+      cell_structure->set_regular_decomposition(get_interaction_range(), {});
+    }
   } else if (topology == CellStructureType::NSQUARE) {
     cell_structure->set_atom_decomposition();
   } else {
@@ -165,6 +182,20 @@ void System::on_boxl_change(bool skip_method_adaption) {
 #endif
   }
   Constraints::constraints.on_boxl_change();
+}
+
+void System::veto_boxl_change(bool skip_particle_checks) const {
+  if (not skip_particle_checks) {
+    auto const n_part = boost::mpi::all_reduce(
+        ::comm_cart, cell_structure->local_particles().size(), std::plus<>());
+    if (n_part > 0ul) {
+      throw std::runtime_error(
+          "Cannot reset the box length when particles are present");
+    }
+  }
+  Constraints::constraints.veto_boxl_change();
+  lb.veto_boxl_change();
+  ek.veto_boxl_change();
 }
 
 void System::on_node_grid_change() {

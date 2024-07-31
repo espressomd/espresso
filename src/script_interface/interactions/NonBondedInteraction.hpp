@@ -86,7 +86,7 @@ private:
       }
     }
     for (auto const &kv : params) {
-      if (std::find(keys.begin(), keys.end(), kv.first) == keys.end()) {
+      if (std::ranges::find(keys, kv.first) == keys.end()) {
         throw std::runtime_error("Parameter '" + kv.first +
                                  "' is not recognized");
       }
@@ -878,6 +878,7 @@ private:
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
+    assert(params.empty());
     if (name == "get_types") {
       return std::vector<int>{{m_types[0], m_types[1]}};
     }

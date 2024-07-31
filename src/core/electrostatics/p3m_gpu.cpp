@@ -37,18 +37,6 @@
 
 #include "communication.hpp"
 
-#include <cassert>
-#include <limits>
-
-static auto get_n_part_safe(GpuParticleData const &gpu) {
-  auto const n_part = gpu.n_particles();
-#ifndef NDEBUG
-  auto constexpr n_part_max = std::numeric_limits<unsigned int>::max();
-  assert(n_part < static_cast<std::size_t>(n_part_max));
-#endif
-  return static_cast<unsigned int>(n_part);
-}
-
 void CoulombP3MGPU::add_long_range_forces(ParticleRange const &particles) {
 #ifdef NPT
   if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -60,8 +48,7 @@ void CoulombP3MGPU::add_long_range_forces(ParticleRange const &particles) {
 #endif
   if (this_node == 0) {
     auto &gpu = get_system().gpu;
-    p3m_gpu_add_farfield_force(*m_gpu_data, gpu, prefactor,
-                               get_n_part_safe(gpu));
+    p3m_gpu_add_farfield_force(*m_gpu_data, gpu, prefactor, gpu.n_particles());
   }
 }
 
@@ -71,9 +58,8 @@ void CoulombP3MGPU::init() {
           system.coulomb.impl->solver)) {
     init_cpu_kernels();
   }
-  p3m_gpu_init(m_gpu_data, p3m.params.cao, p3m.params.mesh.data(),
-               p3m.params.alpha, system.box_geo->length(),
-               get_n_part_safe(system.gpu));
+  p3m_gpu_init(m_gpu_data, p3m.params.cao, p3m.params.mesh, p3m.params.alpha,
+               system.box_geo->length(), system.gpu.n_particles());
 }
 
 void CoulombP3MGPU::init_cpu_kernels() { CoulombP3M::init(); }

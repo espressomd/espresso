@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2022 The ESPResSo project
+# Copyright (C) 2015-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-include(unit_test)
 
 if(ESPRESSO_BUILD_WITH_COVERAGE_PYTHON)
   set(PYPRESSO_OPTIONS --coverage)

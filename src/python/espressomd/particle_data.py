@@ -279,8 +279,8 @@ class ParticleHandle(ScriptInterfaceHelper):
             * This needs features ``EXTERNAL_FORCES`` and ``ROTATION``.
 
     gamma: :obj:`float` or (3,) array_like of :obj:`float`
-        The translational frictional coefficient used in the Langevin
-        and Brownian thermostats.
+        The translational frictional coefficient used in the Langevin,
+        Brownian and LB thermostats.
 
         .. note::
             This needs feature ``THERMOSTAT_PER_PARTICLE`` and
@@ -594,10 +594,8 @@ class ParticleHandle(ScriptInterfaceHelper):
         else:
             check_type_or_throw_except(
                 rel_to, 1, int, "Argument of 'vs_auto_relate_to' has to be of type ParticleHandle or int")
-        self.call_method(
-            "vs_relate_to",
-            pid=rel_to,
-            override_cutoff_check=override_cutoff_check)
+        self.call_method("vs_auto_relate_to", pid=rel_to,
+                         override_cutoff_check=override_cutoff_check)
         if self.propagation != Propagation.NONE:
             if couple_to_lb:
                 self.propagation |= Propagation.TRANS_LB_MOMENTUM_EXCHANGE

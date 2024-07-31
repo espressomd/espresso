@@ -54,7 +54,6 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
-MMM1D_GPU                       requires CUDA and ELECTROSTATICS
 MMM1D_MACHINE_PREC              requires ELECTROSTATICS
 
 /* Magnetostatics */
@@ -63,8 +62,6 @@ DP3M                            equals DIPOLES and FFTW
 DIPOLAR_DIRECT_SUM              requires CUDA
 DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
 DIPOLE_FIELD_TRACKING           implies DIPOLES
-DIPOLAR_BARNES_HUT              requires CUDA
-DIPOLAR_BARNES_HUT              equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
 VIRTUAL_SITES

@@ -28,8 +28,8 @@ private:
   T m_initial;
   friend class boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, const unsigned int) {
-    ar &m_val;
-    ar &m_initial;
+    ar & m_val;
+    ar & m_initial;
   }
 
 public:

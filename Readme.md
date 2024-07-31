@@ -1,3 +1,9 @@
+# Invitation to the ESPResSo Summer School 2024
+
+[![CECAM Flagship School registration link](https://img.shields.io/badge/CECAM%20Flagship%20School-Register%20Now-blue?style=for-the-badge)](https://www.cecam.org/workshop-details/1324)
+
+The summer school "Simulating soft matter across scales" will take place on October 7-11, 2024, in Stuttgart. Registration is now open on [CECAM](https://www.cecam.org/workshop-details/1324).
+
 # ESPResSo
 
 [![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/commits/python)
@@ -70,7 +76,7 @@ For most users, we recommend downloading the latest release version of ESPResSo.
 can find it in the [release page](https://github.com/espressomd/espresso/releases),
 together with past releases until 4.0. When choosing a release, we recommend that
 you get the latest bugfix release in that line. For example, for 4.2 you would like
-to use 4.2.1.
+to use 4.2.2.
 
 ### Join the community
 

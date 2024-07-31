@@ -64,7 +64,7 @@ public:
   void remove(std::shared_ptr<Constraint> const &constraint) {
     auto &system = System::get_system();
     assert(contains(constraint));
-    m_constraints.erase(std::remove(begin(), end(), constraint), end());
+    std::erase(m_constraints, constraint);
     system.on_constraint_change();
   }
 
@@ -105,12 +105,14 @@ public:
     }
   }
 
-  void on_boxl_change() const {
+  void veto_boxl_change() const {
     if (not m_constraints.empty()) {
       throw std::runtime_error("The box size can not be changed because there "
                                "are active constraints.");
     }
   }
+
+  void on_boxl_change() const { veto_boxl_change(); }
 };
 } // namespace Constraints
 

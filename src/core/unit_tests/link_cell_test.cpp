@@ -30,9 +30,9 @@
 #include <vector>
 
 BOOST_AUTO_TEST_CASE(link_cell) {
-  const unsigned n_cells = 10;
-  const auto n_part_per_cell = 10;
-  const auto n_part = n_cells * n_part_per_cell;
+  auto const n_cells = 10u;
+  auto const n_part_per_cell = 10u;
+  auto const n_part = n_cells * n_part_per_cell;
 
   std::vector<Cell> cells(n_cells);
 
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(link_cell) {
   }
 
   std::vector<std::pair<int, int>> lc_pairs;
-  lc_pairs.reserve((n_part * (n_part - 1)) / 2);
+  lc_pairs.reserve((n_part * (n_part - 1u)) / 2u);
 
   Algorithm::link_cell(cells.begin(), cells.end(),
                        [&lc_pairs](Particle const &p1, Particle const &p2) {
@@ -63,11 +63,11 @@ BOOST_AUTO_TEST_CASE(link_cell) {
                            lc_pairs.emplace_back(p1.id(), p2.id());
                        });
 
-  BOOST_CHECK(lc_pairs.size() == (n_part * (n_part - 1) / 2));
+  BOOST_CHECK(lc_pairs.size() == (n_part * (n_part - 1u) / 2u));
 
   auto it = lc_pairs.begin();
-  for (int i = 0; i < n_part; i++)
-    for (int j = i + 1; j < n_part; j++) {
+  for (auto i = 0; i < static_cast<int>(n_part); i++)
+    for (auto j = i + 1; j < static_cast<int>(n_part); j++) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }

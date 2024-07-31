@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# pylint: disable=cyclic-import
 import unittest as ut
 import numpy as np
 import espressomd

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -42,49 +42,37 @@
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
-#include "p3m/fft.hpp"
 #include "p3m/interpolation.hpp"
 #include "p3m/send_mesh.hpp"
 
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
 
 #include <array>
 #include <cmath>
-
-struct p3m_data_struct : public p3m_data_struct_base {
-  explicit p3m_data_struct(P3MParameters &&parameters)
-      : p3m_data_struct_base{std::move(parameters)} {}
-
-  /** local mesh. */
-  P3MLocalMesh local_mesh;
-  /** real space mesh (local) for CA/FFT. */
-  fft_vector<double> rs_mesh;
-  /** mesh (local) for the electric field. */
-  std::array<fft_vector<double>, 3> E_mesh;
-
-  /** number of charged particles (only on head node). */
-  int sum_qpart = 0;
-  /** Sum of square of charges (only on head node). */
-  double sum_q2 = 0.;
-  /** square of sum of charges (only on head node). */
-  double square_sum_q = 0.;
-
-  p3m_interpolation_cache inter_weights;
-
-  /** send/recv mesh sizes */
-  p3m_send_mesh sm;
-
-  fft_data_struct fft;
-};
+#include <numbers>
+#include <utility>
 
 /** @brief P3M solver. */
 struct CoulombP3M : public Coulomb::Actor<CoulombP3M> {
+  struct p3m_data_struct_impl : public p3m_data_struct {
+    explicit p3m_data_struct_impl(P3MParameters &&parameters)
+        : p3m_data_struct{std::move(parameters)} {}
+
+    /** number of charged particles (only on head node). */
+    int sum_qpart = 0;
+    /** Sum of square of charges (only on head node). */
+    double sum_q2 = 0.;
+    /** square of sum of charges (only on head node). */
+    double square_sum_q = 0.;
+
+    p3m_interpolation_cache inter_weights;
+  };
+
   /** P3M parameters. */
-  p3m_data_struct p3m;
+  p3m_data_struct_impl p3m;
 
   int tune_timings;
   bool tune_verbose;
@@ -183,10 +171,11 @@ public:
     if ((q1q2 == 0.) || dist >= p3m.params.r_cut || dist <= 0.) {
       return {};
     }
-    auto const adist = p3m.params.alpha * dist;
+    auto const alpha = p3m.params.alpha;
+    auto const adist = alpha * dist;
     auto const exp_adist_sq = exp(-adist * adist);
     auto const dist_sq = dist * dist;
-    auto const two_a_sqrt_pi_i = 2.0 * p3m.params.alpha * Utils::sqrt_pi_i();
+    auto const two_a_sqrt_pi_i = 2. * alpha * std::numbers::inv_sqrtpi;
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     auto const fac = exp_adist_sq * (erfc_part_ri + two_a_sqrt_pi_i) / dist_sq;

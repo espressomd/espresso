@@ -55,9 +55,9 @@ struct LBFieldSerializer {
       vec.reserve(values.size());
       for (auto const &opt : values) {
         if (opt) {
-          vec.emplace_back(Variant{*opt});
+          vec.emplace_back(*opt);
         } else {
-          vec.emplace_back(Variant{None{}});
+          vec.emplace_back(None{});
         }
       }
       return {vec};

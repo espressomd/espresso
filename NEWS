@@ -2,6 +2,129 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.2.2
+==============
+
+This release provides a number of corrections for the ESPResSo 4.2 line.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between ESPResSo 4.2.1 and 4.2.2.
+However, some bugs were discovered which can affect simulation results.
+Please find the list of changes below. The numbers in brackets refer to
+ticket numbers on https://github.com/espressomd/espresso
+
+Improved documentation
+----------------------
+
+* Installation instructions now mention the FFTW3 MPI dependency
+  of long-range solvers and provide recommended version numbers
+  for Jupyter Notebook dependencies (#4790).
+
+* Installation instructions now mention Python environments (#4922).
+
+* Observables not properly document return values, array shapes,
+  and use a more consistent mathematical notation (#4898).
+
+Bug fixes
+---------
+
+* Fatal runtime errors due to MPI global variables lifetime
+  were addressed (#4858). Older ESPResSo releases built with
+  Boost 1.84 or later might randomly crash when exiting
+  the Python interpreter.
+
+* Virtual sites no longer contribute to the kinetic energy
+  of the system (#4839). The regression was introduced
+  in April 2021 and affected the 4.2 branch of ESPResSo.
+
+* Inertialess tracers are now integrated along the z-axis (#4714).
+  The regression was introduced in February 2022 and affected
+  the 4.2 branch of ESPResSo.
+
+* Inertialess tracers now throw an exception when attempting to use
+  LB GPU with 2 or more MPI ranks (#4714). Before, tracers on non-root
+  MPI ranks would be silently ignored by the CUDA kernels,
+  and would have a constant velocity, either 0 if the particle never
+  visited the fluid domain on the root rank, or the last known velocity
+  if the particle was once on the root rank. This bug affected all
+  ESPResSo versions.
+
+* Particles close to the faces of the simulation box are now properly
+  coupled to the LB fluid (#4827). Due to numerical instability, it was
+  previously possible for particles to be outside the box simulation by
+  a tiny amount and skip LB particle coupling. The probability of this
+  bug occurring was low, but could be enhanced in simulations that
+  purposefully placed particle near the faces of the simulation box:
+  polymers sheared by Lees-Edwards boundary conditions, raspberry
+  particles (colloids, bacteria, etc.) when crossing a periodic
+  boundary, or cell membranes placed close to a periodic boundary.
+
+* Resizing the box now throws a runtime error if there are constraints
+  present (#4778), since constraint preconditions might no longer be
+  fulfilled. For example, a wall constraint might end up outside the
+  box boundaries when the box shrinks.
+
+* Resizing the box via `system.box_l = new_box_l` now throws
+  a runtime error if there are particles present, because particle
+  position folding cannot be guaranteed to be correct (#4901);
+  use `system.change_volume_and_rescale_particles()` instead,
+  which properly rescales particle positions.
+
+* The velocity Verlet NpT propagator doesn't apply friction and noise
+  on angular velocities. ESPResSo now throws an error when NpT
+  encounters a rotating particle (#4843). This bug affected all
+  ESPResSo versions.
+
+* The Brownian thermostat can no longer be configured with
+  `act_on_virtual=True` due to an unresolved bug (#4295)
+  that will be addressed in the next minor release.
+
+* Restrictions on the number of MPI ranks have been lifted from the
+  checkpointing mechanism (#4724). It is now possible to use
+  checkpointing again in MPI-parallel simulations when the system
+  contains LB boundaries or `Union` shape-based constraints.
+  These restrictions had been introduced in 4.2.0 for technical
+  reasons that have since been resolved.
+
+* When passing an invalid value to a function that expects an input
+  parameter of type `list` of size 3, an exception is now raised (#4911).
+  Previously, some functions would print an error message and continue
+  their execution with uninitialized data.
+
+* The per-`type` and per-`mol_id` contributions from
+  `system.analysis.energy()`, `system.analysis.pressure()`
+  and `system.analysis.pressure_tensor()` now return the correct
+  values (#4788). Older version of ESPResSo were confusing the
+  particle `mol_id` with the particle `type`. The total pressure
+  was unreliable when `mol_id` properties were set to non-zero values.
+
+* The OpenGL visualizer now extracts the correct non-bonded potential
+  parameter `sigma` when feature `WCA` is compiled in but `LENNARD_JONES`
+  isn't (#4720). The regression was introduced in 4.2.1.
+
+* Method `OifCell.elastic_forces()` no longer throws a `TypeError` (#4813).
+
+* Benchmark scripts were adjusted to support large particle numbers (#4753).
+
+Under the hood changes
+----------------------
+
+* Several Clang 16 and GCC 13 compiler diagnostics have been addressed
+  (#4715).
+
+* A non-critical GCC C++20 deprecation warning in Cython-generated code
+  was disabled (#4725).
+
+* Several deprecation warnings emitted by CMake 3.27 have been silenced
+  (#4792).
+
+* Add support for setuptools version 67.3.0 and above (#4709).
+
+* Add support for Python 3.12 in testsuites run by CTest (#4852).
+
+* Python requirements have been updated (#4924).
+
+* CI pipeline URLs have been fixed (#4736).
+
 ESPResSo 4.2.1
 ==============
 

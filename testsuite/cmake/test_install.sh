@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Copyright (C) 2018-2022 The ESPResSo project
+#
+# Copyright (C) 2018-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,6 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 # load bash unit testing library
 source BashUnitTests.sh
@@ -25,14 +27,18 @@ function test_install() {
   local -r filepaths=("@ESPRESSO_INSTALL_BINDIR@/pypresso" \
                       "@ESPRESSO_INSTALL_PYTHON@/espressomd/espresso_core.so" \
                       "@ESPRESSO_INSTALL_PYTHON@/espressomd/_init.so" \
-                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/__init__.py"
+                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/__init__.py" \
+                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/io/__init__.py" \
+                      "@ESPRESSO_INSTALL_PYTHON@/espressomd/io/writer/__init__.py" \
+                      "@ESPRESSO_INSTALL_PYTHON@/object_in_fluid/__init__.py" \
+                      "@ESPRESSO_INSTALL_PYTHON@/object_in_fluid/oif_classes.py" \
                      )
   for filepath in "${filepaths[@]}"; do
     assert_file_exists "${filepath}"
   done
 
   # check no Python file was installed outside espressomd
-  paths=$(find "@CMAKE_INSTALL_PREFIX@" -path "@ESPRESSO_INSTALL_PYTHON@/espressomd" -prune -o \( -name '*.py' -o -name '*.so' \) -print)
+  paths=$(find "@CMAKE_INSTALL_PREFIX@" -path "@ESPRESSO_INSTALL_PYTHON@/espressomd" -prune -o -path "@ESPRESSO_INSTALL_PYTHON@/object_in_fluid" -prune -o \( -name '*.py' -o -name '*.so' \) -print)
   count=$(echo "${paths}" | wc -l)
   assert_string_equal "${paths}" "" "${count} files were installed in the wrong directories:"$'\n'"${paths}"
 

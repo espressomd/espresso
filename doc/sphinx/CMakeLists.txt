@@ -72,11 +72,11 @@ if(SPHINX_FOUND)
       "${CMAKE_CURRENT_SOURCE_DIR}/bibliography.rst")
 
   foreach(file ${FILE_LIST})
-    get_filename_component(basename ${file} NAME)
+    cmake_path(GET file FILENAME basename)
     configure_file(${file} ${CMAKE_CURRENT_BINARY_DIR}/${basename} COPYONLY)
   endforeach()
-  configure_file(${CMAKE_SOURCE_DIR}/doc/bibliography.bib
-                 ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib COPYONLY)
+  configure_file("${CMAKE_SOURCE_DIR}/doc/bibliography.bib"
+                 "${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib" COPYONLY)
 
   # Place files to be excluded from SPHINX documentation
   set(EXCLUDE "${SPHINX_PYTHON_DIR}/gen_code_info.py"

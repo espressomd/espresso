@@ -485,8 +485,6 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 | MMM1D                          | Single                 | Good             | No         |
 +--------------------------------+------------------------+------------------+------------+
-| MMM1D on GPU                   | Single                 | Single           | No         |
-+--------------------------------+------------------------+------------------+------------+
 | ELC                            | Good                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | ICC*                           | Group                  | Group            | Yes        |
@@ -644,7 +642,7 @@ You may also provide the patch level, when relevant. If you developed code
 for |es| and made it available in a publicly accessible repository, you
 should consider providing the corresponding URL, for example in a footnote:
 
-    The method was implemented for ESPResSo 4.2.1[24] and the source code is
+    The method was implemented for ESPResSo 4.2.2[24] and the source code is
     available online\ :superscript:`note 1`.
 
     | ____________

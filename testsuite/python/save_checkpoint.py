@@ -20,8 +20,10 @@
 import unittest as ut
 import unittest_generator as utg
 import numpy as np
+import contextlib
 import pathlib
 import tempfile
+import sys
 
 import espressomd
 import espressomd.checkpointing
@@ -40,6 +42,9 @@ import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
 import espressomd.reaction_methods
+
+with contextlib.suppress(ImportError):
+    import espressomd.plugins.ase
 
 config = utg.TestGenerator()
 modes = config.get_modes()
@@ -66,16 +71,21 @@ for filepath in path_cpt_root.iterdir():
     filepath.unlink(missing_ok=True)
 
 # Lees-Edwards boundary conditions
-if 'INT.NPT' not in modes:
+if 'INT.NPT' not in modes and 'LB.GPU' not in modes:
     protocol = espressomd.lees_edwards.LinearShear(
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
         shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
+has_ase = "ASE" in modes
+
 lbf_class = None
 lb_lattice = None
 if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
-    lbf_class = espressomd.lb.LBFluidWalberla
+    if 'LB.GPU' in modes and espressomd.gpu_available():
+        lbf_class = espressomd.lb.LBFluidWalberlaGPU
+    elif 'LB.CPU' in modes:
+        lbf_class = espressomd.lb.LBFluidWalberla
     lb_lattice = espressomd.lb.LatticeWalberla(agrid=2.0, n_ghost_layers=1)
 if lbf_class:
     lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
@@ -158,6 +168,11 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         system.electrostatics.solver = p3m
         p3m.charge_neutrality_tolerance = 5e-12
 
+if "ase" in sys.modules:
+    system.ase = espressomd.plugins.ase.ASEInterface(
+        type_mapping={0: "H", 1: "O", 10: "Cl"},
+    )
+
 # accumulators
 obs = espressomd.observables.ParticlePositions(ids=[0, 1])
 acc_mean_variance = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
@@ -237,8 +252,8 @@ if 'LB' not in modes:
             approximation_method='ft', viscosity=0.5, radii={0: 1.5},
             pair_mobility=False, self_mobility=True)
 
-if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
-    p2.vs_auto_relate_to(p1)
+if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']) and not has_ase:
+    p2.vs_auto_relate_to(p1, couple_to_lb=lbf_class is not None)
 
 # non-bonded interactions
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
@@ -385,20 +400,21 @@ if lbf_class:
     vtk_suffix = config.test_name
     vtk_root = pathlib.Path("vtk_out")
     # create LB VTK callbacks
-    lb_vtk_auto_id = f"auto_lb_{vtk_suffix}"
-    lb_vtk_manual_id = f"manual_lb_{vtk_suffix}"
-    config.recursive_unlink(vtk_root / lb_vtk_auto_id)
-    config.recursive_unlink(vtk_root / lb_vtk_manual_id)
-    lb_vtk_auto = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_auto_id, delta_N=1,
-        observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
-    lbf.add_vtk_writer(vtk=lb_vtk_auto)
-    lb_vtk_auto.disable()
-    lb_vtk_manual = espressomd.lb.VTKOutput(
-        identifier=lb_vtk_manual_id, delta_N=0,
-        observables=('density',), base_folder=str(vtk_root))
-    lbf.add_vtk_writer(vtk=lb_vtk_manual)
-    lb_vtk_manual.write()
+    if 'LB.GPU' not in modes:  # TODO WALBERLA
+        lb_vtk_auto_id = f"auto_lb_{vtk_suffix}"
+        lb_vtk_manual_id = f"manual_lb_{vtk_suffix}"
+        config.recursive_unlink(vtk_root / lb_vtk_auto_id)
+        config.recursive_unlink(vtk_root / lb_vtk_manual_id)
+        lb_vtk_auto = espressomd.lb.VTKOutput(
+            identifier=lb_vtk_auto_id, delta_N=1,
+            observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
+        lbf.add_vtk_writer(vtk=lb_vtk_auto)
+        lb_vtk_auto.disable()
+        lb_vtk_manual = espressomd.lb.VTKOutput(
+            identifier=lb_vtk_manual_id, delta_N=0,
+            observables=('density',), base_folder=str(vtk_root))
+        lbf.add_vtk_writer(vtk=lb_vtk_manual)
+        lb_vtk_manual.write()
     # create EK VTK callbacks
     ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
     ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
@@ -447,6 +463,7 @@ if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
 if espressomd.has_features(["ENGINE"]):
     p3.swimming = {"f_swim": 0.03}
 if espressomd.has_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"]) and lbf_class:
+    assert not has_ase
     p4.swimming = {"v_swim": 0.02, "is_engine_force_on_fluid": True}
 if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]

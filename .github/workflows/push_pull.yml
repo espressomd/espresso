@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   macos:
-    runs-on: macos-12
+    runs-on: macos-13
     if: ${{ github.repository == 'espressomd/espresso' }}
     steps:
       - name: Checkout
@@ -20,22 +20,22 @@ jobs:
           key: macos
           save: ${{ github.ref == 'refs/heads/python' }}
       - name: Setup Python environment
-        uses: actions/setup-python@v4.3.1
+        uses: actions/setup-python@v5.1.0
         with:
-          python-version: '3.9'
+          python-version: '3.12'
       - name: Get runner specifications
         run: system_profiler SPHardwareDataType
       - name: Build and check
         uses: ./.github/actions/build_and_check
         env:
-          build_procs: 3
-          check_procs: 3
+          build_procs: 4
+          check_procs: 4
           with_ccache: 'true'
 
   debian:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/espressomd/docker/debian:339903979196fd7e72127f2cb5bfb27759d129f9-base-layer
+      image: ghcr.io/espressomd/docker/debian:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.repository == 'espressomd/espresso' }}
     container:
-      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:339903979196fd7e72127f2cb5bfb27759d129f9-base-layer
+      image: ghcr.io/espressomd/docker/ubuntu-wo-dependencies:f7f8ef2c0ca93c67aa16b9f91785492fb04ecc1b-base-layer
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}

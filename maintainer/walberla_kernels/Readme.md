@@ -20,7 +20,7 @@ The kernels can be regenerated with this shell script:
 
 ```sh
 # adapt these paths to the build environment
-export VERSION=1.2
+export VERSION=1.3.3
 export DEPS="${HOME}/walberla_deps"
 export PYTHONPATH="${DEPS}/${VERSION}/lbmpy:${DEPS}/${VERSION}/pystencils:${DEPS}/devel/walberla/python/"
 
@@ -34,6 +34,8 @@ function generate_ek_kernels {
 function format_lb_kernels {
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cu  -style "{Language: Cpp, ColumnLimit: 0}"
+  $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cuh -style "{Language: Cpp}"
 }
 function format_ek_kernels {
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
@@ -44,7 +46,10 @@ function format_ek_kernels {
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
 generate_lb_kernels
 generate_lb_kernels --single-precision
+generate_lb_kernels --gpu
+generate_lb_kernels --gpu --single-precision
 format_lb_kernels
+git diff src/walberla_bridge/src/lattice_boltzmann/generated_kernels/Dynamic_UBB_*CUDA*.cu # verify pragmas
 
 # EK kernels
 cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
@@ -53,6 +58,10 @@ generate_ek_kernels --single-precision
 format_ek_kernels
 mv ReactionKernel*.{cpp,h} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
 ```
+
+The code generation is not deterministic, therefore the list of changes might
+be quite large. If you only adapted a few lines in a specific template file,
+then you only need to commit the corresponding output files.
 
 WARNING: The code generation sorts the arguments alphabetically by symbol name.
 If you rename something, you may have to adapt the order of arguments in the

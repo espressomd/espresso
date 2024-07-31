@@ -19,7 +19,7 @@ repos:
         always_run: false
         files: '.*\.(py|pyx|pxd)'
         exclude: '\.pylintrc|.*.\.py\.in|^libs/'
-        args: ["--ignore=E266,E402,E701,W291,W293", "--in-place", "--aggressive"]
+        args: ["--ignore=E266,E402,E701,W291,W293", "--in-place"]
 
     -   id: cmake-format
         name: cmake-format

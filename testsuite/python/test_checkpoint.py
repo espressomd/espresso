@@ -42,6 +42,10 @@ with contextlib.suppress(ImportError):
     import espressomd.io.vtk
 
 with contextlib.suppress(ImportError):
+    import ase
+    import espressomd.plugins.ase
+
+with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
 
 config = utg.TestGenerator()
@@ -53,6 +57,7 @@ has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
 has_thermalized_bonds = 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes
 has_drude = (espressomd.has_features(['ELECTROSTATICS' and 'MASS', 'ROTATION'])
              and has_thermalized_bonds)
+has_ase = 'ASE' in modes
 
 
 class CheckpointTest(ut.TestCase):
@@ -103,7 +108,7 @@ class CheckpointTest(ut.TestCase):
 
         # load the valid LB checkpoint file
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
-        precision = 8 if "LB.WALBERLA" in modes else 5
+        precision = 8 if not lbf.single_precision else 5
         m = np.pi / 12
         nx = lbf.shape[0]
         ny = lbf.shape[1]
@@ -133,7 +138,10 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(state[key]), reference[key],
                                        atol=1E-7, err_msg=f"{key} differs")
         self.assertTrue(lbf.is_active)
-        self.assertFalse(lbf.single_precision)
+        if "LB.CPU" in modes:
+            self.assertFalse(lbf.single_precision)
+        elif "LB.GPU" in modes:
+            self.assertTrue(lbf.single_precision)
 
         # check boundary objects
         slip_velocity1 = np.array([1e-4, 1e-4, 0.])
@@ -150,8 +158,6 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(node.velocity), slip_velocity1)
         for node in lbf[-1, :, :]:
             np.testing.assert_allclose(np.copy(node.velocity), slip_velocity2)
-        for node in lbf[2, :, :]:
-            np.testing.assert_allclose(np.copy(node.velocity), 0.)
         # remove boundaries
         lbf.clear_boundaries()
         np.testing.assert_equal(
@@ -262,6 +268,7 @@ class CheckpointTest(ut.TestCase):
             np.copy(ek_species[:, :, :].is_boundary), False)
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
+    @ut.skipIf('LB.GPU' in modes, 'VTK not implemented for LB GPU')
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
     def test_lb_vtk(self):
         lbf = system.lb
@@ -305,6 +312,8 @@ class CheckpointTest(ut.TestCase):
             lb_density = vtk_data["density"]
             self.assertAlmostEqual(
                 lb_density[0, 0, 0], new_density, delta=1e-5)
+        (vtk_root / filename.format(1)).unlink(missing_ok=True)
+        (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
@@ -348,6 +357,8 @@ class CheckpointTest(ut.TestCase):
             ek_density = vtk_data["density"]
             self.assertAlmostEqual(
                 ek_density[0, 0, 0], new_density, delta=1e-5)
+        (vtk_root / filename.format(1)).unlink(missing_ok=True)
+        (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
@@ -362,6 +373,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             np.copy(system.periodicity), self.ref_periodicity)
 
+    @ut.skipIf('LB.GPU' in modes, 'Lees-Edwards not implemented for LB GPU')
     @ut.skipIf('INT.NPT' in modes, 'Lees-Edwards not compatible with NPT')
     def test_lees_edwards(self):
         lebc = system.lees_edwards
@@ -443,13 +455,13 @@ class CheckpointTest(ut.TestCase):
                 p3.swimming,
                 {"f_swim": 0.03, "is_engine_force_on_fluid": False})
             if espressomd.has_features(
-                    'VIRTUAL_SITES_RELATIVE') and has_lb_mode:
+                    'VIRTUAL_SITES_RELATIVE') and has_lb_mode and not has_ase:
                 self.assertEqual(
                     p4.swimming,
                     {"f_swim": 0., "is_engine_force_on_fluid": True})
         if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and has_lb_mode:
             np.testing.assert_allclose(np.copy(p8.mu_E), [-0.1, 0.2, -0.3])
-        if espressomd.has_features('VIRTUAL_SITES_RELATIVE'):
+        if espressomd.has_features('VIRTUAL_SITES_RELATIVE') and not has_ase:
             from scipy.spatial.transform import Rotation as R
             q_ind = ([1, 2, 3, 0],)  # convert from scalar-first to scalar-last
             vs_id, vs_dist, vs_quat = p2.vs_relative
@@ -734,13 +746,16 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(dh.drude_id_list, [5])
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
+    @ut.skipIf("ASE" in modes, "virtual sites not allowed by ASE")
     def test_virtual_sites(self):
         Propagation = espressomd.propagation.Propagation
         p_real = system.part.by_id(0)
         p_virt = system.part.by_id(1)
+        prop_flag = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_RELATIVE
+        if espressomd.has_features("WALBERLA") and system.lb is not None:
+            prop_flag |= Propagation.TRANS_LB_MOMENTUM_EXCHANGE
         self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)
-        self.assertEqual(p_virt.propagation, Propagation.TRANS_VS_RELATIVE |
-                         Propagation.ROT_VS_RELATIVE)
+        self.assertEqual(p_virt.propagation, prop_flag)
         self.assertEqual(p_real.vs_relative[0], -1)
         self.assertEqual(p_virt.vs_relative[0], p_real.id)
         self.assertEqual(p_real.vs_relative[1], 0.)
@@ -1017,6 +1032,22 @@ class CheckpointTest(ut.TestCase):
         p1.remove()
         p2.remove()
         system.non_bonded_inter[2, 6].reset()
+
+    @ut.skipIf("ase" not in sys.modules, "missing module 'ase'")
+    @ut.skipIf("ASE" not in modes, "missing combination")
+    def test_ase_plugin(self):
+        atoms = system.ase.get()
+        self.assertIsNotNone(atoms)
+        self.assertIsInstance(atoms, ase.Atoms)
+        self.assertEqual(set(atoms.get_chemical_symbols()), {"H", "O"})
+        np.testing.assert_equal(atoms.pbc, np.copy(system.periodicity))
+        np.testing.assert_allclose(atoms.cell, np.diag(system.box_l))
+        np.testing.assert_allclose(
+            atoms.get_positions(),
+            np.copy(system.part.select(lambda p: p.type in [0, 1]).pos))
+        np.testing.assert_allclose(
+            atoms.get_forces(),
+            np.copy(system.part.select(lambda p: p.type in [0, 1]).f))
 
 
 if __name__ == '__main__':

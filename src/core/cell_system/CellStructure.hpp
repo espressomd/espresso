@@ -46,7 +46,9 @@
 #include <cassert>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -84,11 +86,10 @@ enum DataPart : unsigned {
 unsigned map_data_parts(unsigned data_parts);
 
 namespace Cells {
-inline ParticleRange particles(Utils::Span<Cell *const> cells) {
+inline ParticleRange particles(std::span<Cell *const> cells) {
   /* Find first non-empty cell */
-  auto first_non_empty =
-      std::find_if(cells.begin(), cells.end(),
-                   [](const Cell *c) { return not c->particles().empty(); });
+  auto first_non_empty = std::ranges::find_if(
+      cells, [](const Cell *c) { return not c->particles().empty(); });
 
   return {CellParticleIterator(first_non_empty, cells.end()),
           CellParticleIterator(cells.end())};
@@ -254,8 +255,8 @@ public:
 
   template <class InputRange, class OutputIterator>
   void get_local_particles(InputRange ids, OutputIterator out) {
-    boost::transform(ids, out,
-                     [this](int id) { return get_local_particle(id); });
+    std::ranges::transform(ids, out,
+                           [this](int id) { return get_local_particle(id); });
   }
 
   CellStructureType decomposition_type() const { return m_type; }
@@ -479,13 +480,12 @@ private:
    * @param partner_ids Ids to resolve.
    * @return Vector of Particle pointers.
    */
-  auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
+  auto resolve_bond_partners(std::span<const int> partner_ids) {
     boost::container::static_vector<Particle *, 4> partners;
     get_local_particles(partner_ids, std::back_inserter(partners));
 
     /* Check if id resolution failed for any partner */
-    if (std::any_of(partners.begin(), partners.end(),
-                    [](Particle const *const p) { return p == nullptr; })) {
+    if (std::ranges::find(partners, nullptr) != partners.end()) {
       throw BondResolutionError{};
     }
 
@@ -495,7 +495,7 @@ private:
   /**
    * @brief Execute kernel for every bond on particle.
    * @tparam Handler Callable, which can be invoked with
-   *                 (Particle, int, Utils::Span<Particle *>),
+   *                 (Particle, int, std::span<Particle *>),
    *                 returning a bool.
    * @param p Particles for whom the bonds are evaluated.
    * @param handler is called for every bond, and handed
@@ -510,10 +510,8 @@ private:
 
       try {
         auto partners = resolve_bond_partners(partner_ids);
-
-        auto const bond_broken =
-            handler(p, bond.bond_id(), Utils::make_span(partners));
-
+        auto const partners_span = std::span(partners.data(), partners.size());
+        auto const bond_broken = handler(p, bond.bond_id(), partners_span);
         if (bond_broken) {
           bond_broken_error(p.id(), partner_ids);
         }
@@ -560,7 +558,9 @@ public:
    *
    * @param range Interaction range.
    */
-  void set_regular_decomposition(double range);
+  void set_regular_decomposition(
+      double range,
+      std::optional<std::pair<int, int>> fully_connected_boundary);
 
   /**
    * @brief Set the particle decomposition to @ref HybridDecomposition.

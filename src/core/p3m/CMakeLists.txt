@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,13 +17,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if(FFTW3_FOUND)
-  target_link_libraries(espresso_core PUBLIC FFTW3::FFTW3)
-endif()
-
-target_sources(
-  espresso_core
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/TuningAlgorithm.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/send_mesh.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/fft.cpp)
+target_sources(espresso_core PRIVATE common.cpp send_mesh.cpp
+                                     TuningAlgorithm.cpp FFTBackendLegacy.cpp)

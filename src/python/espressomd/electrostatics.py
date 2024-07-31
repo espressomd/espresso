@@ -394,40 +394,6 @@ class MMM1D(ElectrostaticInteraction):
 
 
 @script_interface_register
-class MMM1DGPU(ElectrostaticInteraction):
-    """
-    Electrostatics solver with GPU support for systems with one periodic
-    direction. See :ref:`MMM1D on GPU` for more details.
-
-    Parameters
-    ----------
-    prefactor : :obj:`float`
-        Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-    maxWPerror : :obj:`float`
-        Maximal pairwise error.
-    far_switch_radius : :obj:`float`, optional
-        Radius where near-field and far-field calculation are switched
-    bessel_cutoff : :obj:`int`, optional
-    timings : :obj:`int`, optional
-        Number of force calculations during tuning.
-    check_neutrality : :obj:`bool`, optional
-        Raise a warning if the system is not electrically neutral when
-        set to ``True`` (default).
-    """
-    _so_name = "Coulomb::CoulombMMM1DGpu"
-    _so_creation_policy = "GLOBAL"
-    _so_features = ("MMM1D_GPU",)
-
-    def default_params(self):
-        return {"far_switch_radius": -1.,
-                "bessel_cutoff": -1,
-                "check_neutrality": True}
-
-    def required_keys(self):
-        return {"prefactor", "maxPWerror"}
-
-
-@script_interface_register
 class Scafacos(ElectrostaticInteraction):
 
     """

@@ -26,8 +26,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
-
+#include <optional>
 #include <tuple>
 
 namespace {
@@ -71,7 +70,7 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 }
 } // namespace
 
-boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 IBMTriel::calc_forces(Utils::Vector3d const &vec1,
                       Utils::Vector3d const &vec2) const {
 

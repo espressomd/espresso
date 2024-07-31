@@ -30,9 +30,8 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
+#include <optional>
 
 /** Parameters for Coulomb bond Potential */
 struct BondedCoulomb {
@@ -45,15 +44,15 @@ struct BondedCoulomb {
 
   BondedCoulomb(double prefactor) { this->prefactor = prefactor; }
 
-  boost::optional<Utils::Vector3d> force(double q1q2,
-                                         Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(double q1q2, Utils::Vector3d const &dx) const;
+  std::optional<Utils::Vector3d> force(double q1q2,
+                                       Utils::Vector3d const &dx) const;
+  std::optional<double> energy(double q1q2, Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &prefactor;
+    ar & prefactor;
   }
 };
 
@@ -61,7 +60,7 @@ private:
  *  @param[in]  q1q2      Product of the particle charges.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 BondedCoulomb::force(double const q1q2, Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist2 = dx.norm2();
@@ -77,7 +76,7 @@ BondedCoulomb::force(double const q1q2, Utils::Vector3d const &dx) const {
  *  @param[in]  q1q2      Product of the particle charges.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
+inline std::optional<double>
 BondedCoulomb::energy(double const q1q2, Utils::Vector3d const &dx) const {
 #ifdef ELECTROSTATICS
   auto const dist = dx.norm();

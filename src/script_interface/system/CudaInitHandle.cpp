@@ -24,6 +24,10 @@
 #include "core/cuda/init.hpp"
 #include "core/cuda/utils.hpp"
 
+#if defined(CUDA) && defined(WALBERLA)
+#include "walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp"
+#endif
+
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -59,7 +63,7 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
       invoke_skip_cuda_exceptions([&n_gpus]() { n_gpus = cuda_get_n_gpus(); });
       for (int i = 0; i < n_gpus; ++i) {
         invoke_skip_cuda_exceptions([&devices, i]() {
-          char gpu_name_buffer[4 + 64];
+          char gpu_name_buffer[256] = {'\0'};
           cuda_get_gpu_name(i, gpu_name_buffer);
           devices[i] = std::string{gpu_name_buffer};
         });
@@ -100,6 +104,14 @@ Variant CudaInitHandle::do_call_method(std::string const &name,
 #endif // CUDA
     return n_gpus;
   }
+#if defined(CUDA) && defined(WALBERLA)
+  if (name == "set_device_id_per_rank") {
+    if (cuda_get_n_gpus()) {
+      set_device_id_per_rank();
+    }
+    return {};
+  }
+#endif
   return {};
 }
 

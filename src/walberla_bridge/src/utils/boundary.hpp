@@ -87,9 +87,10 @@ void set_boundary_from_grid(BoundaryModel &boundary,
   auto const grid_size = lattice.get_grid_dimensions();
   auto const offset = lattice.get_local_grid_range().first;
   auto const gl = static_cast<int>(lattice.get_ghost_layers());
-  assert(raster_flat.size() == Utils::product(grid_size));
-  auto const n_y = grid_size[1];
-  auto const n_z = grid_size[2];
+  assert(raster_flat.size() ==
+         static_cast<std::size_t>(Utils::product(grid_size)));
+  auto const n_y = static_cast<std::size_t>(grid_size[1]);
+  auto const n_z = static_cast<std::size_t>(grid_size[2]);
 
   for (auto const &block : *lattice.get_blocks()) {
     auto const [size_i, size_j, size_k] = boundary.block_dims(block);
@@ -100,7 +101,9 @@ void set_boundary_from_grid(BoundaryModel &boundary,
         for (int k = -gl; k < size_k + gl; ++k) {
           auto const node = offset + Utils::Vector3i{{i, j, k}};
           auto const idx = (node + grid_size) % grid_size;
-          auto const index = idx[0] * n_y * n_z + idx[1] * n_z + idx[2];
+          auto const index = static_cast<std::size_t>(idx[0]) * n_y * n_z +
+                             static_cast<std::size_t>(idx[1]) * n_z +
+                             static_cast<std::size_t>(idx[2]);
           if (raster_flat[index]) {
             auto const &value = data_flat[index];
             auto const bc = get_block_and_cell(lattice, node, true);

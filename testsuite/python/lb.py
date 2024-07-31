@@ -52,7 +52,10 @@ class LBTest:
     system.periodicity = [True, True, True]
     system.time_step = params['tau']
     system.cell_system.skin = 1.0
+    if espressomd.gpu_available():
+        system.cuda_init_handle.call_method("set_device_id_per_rank")
     interpolation = False
+    n_nodes = system.cell_system.get_state()["n_nodes"]
 
     def setUp(self):
         self.system.box_l = 3 * [6.0]
@@ -86,13 +89,14 @@ class LBTest:
         self.check_properties(lbf)
 
     def check_properties(self, lbf):
+        density = self.params["density"]
         agrid = self.params["agrid"]
-        tau = self.system.time_step
+        tau = self.params["tau"]
         # check LB object
         self.assertAlmostEqual(lbf.tau, tau, delta=self.atol)
         self.assertAlmostEqual(lbf.agrid, agrid, delta=self.atol)
         self.assertAlmostEqual(lbf.kinematic_viscosity, 3., delta=self.atol)
-        self.assertAlmostEqual(lbf.density, 0.85, delta=self.atol)
+        self.assertAlmostEqual(lbf.density, density, delta=self.atol)
         self.assertAlmostEqual(lbf.kT, 1.0, delta=self.atol)
         self.assertEqual(lbf.seed, 42)
         self.assertEqual(
@@ -133,6 +137,57 @@ class LBTest:
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(TypeError):
             lbf[0, 1].velocity = [1, 2, 3]
+        # check node setters update cached velocities (with precision loss)
+        lbnode = lbf[0, 0, 0]
+        lbnode.last_applied_force = [0., 0., 0.]
+        lbnode.velocity = [0., 0., 0.]
+        old_pop = np.copy(lbnode.population)
+        old_vel = np.copy(lbnode.velocity)
+        old_rho = np.copy(lbnode.density)
+        lbnode.velocity = [1., 2., 3.]
+        new_pop = np.copy(lbnode.population)
+        new_vel = np.copy(lbnode.velocity)
+        lbnode.population = old_pop
+        np.testing.assert_allclose(
+            np.copy(lbnode.velocity), old_vel, atol=self.atol * 20.)
+        lbnode.population = new_pop
+        np.testing.assert_allclose(
+            np.copy(lbnode.velocity), new_vel, atol=self.atol * 20.)
+        lbnode.population = old_pop
+        lbnode.last_applied_force = [0.4, 0.5, 0.6]
+        np.testing.assert_allclose(
+            np.copy(lbnode.velocity),
+            np.copy([0.4, 0.5, 0.6]) / (agrid / tau * old_rho / 2.),
+            atol=self.atol * 20.)
+        lbnode.last_applied_force = [0., 0., 0.]
+        lbnode.population = old_pop
+        # check slice setters update cached velocities (with precision loss)
+        lbslice = lbf[0:5, 0:5, 0:5]
+        lbslice.last_applied_force = [0., 0., 0.]
+        lbslice.velocity = [0., 0., 0.]
+        old_pop = np.copy(lbslice.population)
+        old_vel = np.copy(lbslice.velocity)
+        old_rho = np.copy(lbslice.density)
+        lbslice.velocity = [1., 2., 3.]
+        new_pop = np.copy(lbslice.population)
+        new_vel = np.copy(lbslice.velocity)
+        lbslice.population = old_pop
+        np.testing.assert_allclose(
+            np.copy(lbslice.velocity), old_vel, atol=self.atol * 100.)
+        lbslice.population = new_pop
+        np.testing.assert_allclose(
+            np.copy(lbslice.velocity), new_vel, atol=self.atol * 100.)
+        lbslice.population = old_pop
+        lbslice.last_applied_force = [0.4, 0.5, 0.6]
+        vel2force = 2. * tau / agrid
+        np.testing.assert_allclose(
+            np.copy(lbslice.velocity),
+            np.tile(np.copy([0.4, 0.5, 0.6]), (5, 5, 5, 1)) * vel2force /
+            np.tile(old_rho.reshape((5, 5, 5, 1)), (3,)),
+            atol=self.atol * 20.)
+        lbslice.last_applied_force = [0., 0., 0.]
+        lbslice.population = old_pop
+        # check node boundary conditions
         node = lbf[0, 0, 0]
         self.assertIsNone(node.boundary)
         self.assertIsNone(node.boundary_force)
@@ -167,6 +222,9 @@ class LBTest:
         node.velocity = velocity_old
         # check slice matches node
         lbslice = lbf[0:5, 0:5, 0:5]
+        np.testing.assert_allclose(
+            np.copy(lbslice.population)[1, 2, 3, :],
+            np.copy(node.population), atol=self.atol)
         np.testing.assert_allclose(
             np.copy(lbslice.velocity)[1, 2, 3, :],
             np.copy(node.velocity), atol=self.atol)
@@ -367,13 +425,13 @@ class LBTest:
         self.assertAlmostEqual(lbf[0, 0, 0].density, density, delta=1e-4)
 
         self.assertEqual(lbf[3, 2, 1].index, (3, 2, 1))
-        ext_force_density = [0.1, 0.2, 1.2]
-        last_applied_force = [0.2, 0.4, 0.6]
+        ext_force_density = np.array([0.1, 0.2, 1.2])
+        last_applied_force = np.array([0.2, 0.4, 0.6])
         lbf.ext_force_density = ext_force_density
         node = lbf[1, 2, 3]
         node.velocity = v_fluid
-        node.last_applied_force = last_applied_force
         np.testing.assert_allclose(np.copy(node.velocity), v_fluid, atol=1e-4)
+        node.last_applied_force = last_applied_force
         np.testing.assert_allclose(
             np.copy(node.last_applied_force), last_applied_force, atol=1e-4)
         np.testing.assert_allclose(
@@ -414,8 +472,7 @@ class LBTest:
             self.system.electrostatics.clear()
         with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by LB"):
             self.system.box_l = [1., 2., 3.]
-        np.testing.assert_allclose(
-            np.copy(self.system.box_l), [1., 2., 3.], atol=1e-7)
+        np.testing.assert_allclose(np.copy(self.system.box_l), 6., atol=1e-7)
         with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by LB"):
             self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -432,7 +489,7 @@ class LBTest:
             for offset in (shape[i] + 1, -(shape[i] + 1)):
                 n = [0, 0, 0]
                 n[i] += offset
-                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"
+                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"  # nopep8
                 with self.assertRaisesRegex(IndexError, err_msg):
                     lbf[tuple(n)].velocity
         # node index
@@ -494,6 +551,12 @@ class LBTest:
         self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
 
+        particle_rtol = 1e-10
+        fluid_rtol = 1e-10
+        if self.lb_params["single_precision"]:
+            particle_rtol = 4e-6
+            fluid_rtol = 4e-6
+
         # Random velocities
         lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
         # Test several particle positions
@@ -512,12 +575,14 @@ class LBTest:
             self.system.integrator.run(1)
             # Check friction force
             np.testing.assert_allclose(
-                np.copy(p.f), -self.gamma * (v_part - v_fluid), atol=1E-10)
+                np.copy(p.f), -self.gamma * (v_part - v_fluid),
+                rtol=particle_rtol, atol=0.)
 
             # check particle/fluid force balance
             applied_forces = np.array([n.last_applied_force for n in lb_nodes])
             np.testing.assert_allclose(
-                np.sum(applied_forces, axis=0), -np.copy(p.f), atol=1E-10)
+                np.sum(applied_forces, axis=0), -np.copy(p.f),
+                rtol=fluid_rtol, atol=0.)
 
             # Check that last_applied_force gets cleared
             p.remove()
@@ -530,6 +595,12 @@ class LBTest:
         lbf = self.lb_class(**self.params, **self.lb_params)
         self.system.lb = lbf
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
+
+        particle_rtol = 1e-10
+        fluid_rtol = 1e-10
+        if self.lb_params["single_precision"]:
+            particle_rtol = 4e-6
+            fluid_rtol = 4e-6
 
         # Random velocities
         lbf[:, :, :].velocity = np.random.random((*lbf.shape, 3))
@@ -561,15 +632,18 @@ class LBTest:
             self.system.integrator.run(1)
             # Check friction force
             np.testing.assert_allclose(
-                np.copy(p1.f), -self.gamma * (v_part1 - v_fluid1), atol=1E-10)
+                np.copy(p1.f), -self.gamma * (v_part1 - v_fluid1),
+                rtol=particle_rtol, atol=0.)
             np.testing.assert_allclose(
-                np.copy(p2.f), -self.gamma * (v_part2 - v_fluid2), atol=1E-10)
+                np.copy(p2.f), -self.gamma * (v_part2 - v_fluid2),
+                rtol=particle_rtol, atol=0.)
 
             # check particle/fluid force balance
             applied_forces = np.array(
                 [n.last_applied_force for n in all_coupling_nodes])
             np.testing.assert_allclose(
-                np.sum(applied_forces, axis=0), -np.copy(p1.f) - np.copy(p2.f), atol=1E-10)
+                np.sum(applied_forces, axis=0), -np.copy(p1.f) - np.copy(p2.f),
+                rtol=fluid_rtol, atol=0.)
 
             # Check that last_applied_force gets cleared
             self.system.part.clear()
@@ -588,6 +662,36 @@ class LBTest:
         for _ in range(20):
             self.system.integrator.run(1)
             self.assertTrue(np.all(p.f != 0.0))
+
+    def test_tracers_coupling_rounding(self):
+        import espressomd.propagation
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf
+        ext_f = np.array([0.01, 0.02, 0.03])
+        lbf.ext_force_density = ext_f
+        self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
+        rtol = self.rtol
+        if lbf.single_precision:
+            rtol *= 100.
+        mode_tracer = espressomd.propagation.Propagation.TRANS_LB_TRACER
+        self.system.time = 0.
+        p = self.system.part.add(pos=[-1E-30] * 3, propagation=mode_tracer)
+        for _ in range(10):
+            self.system.integrator.run(1)
+            vel = np.copy(p.v) * self.params["density"]
+            vel_ref = (self.system.time + lbf.tau * 0.5) * ext_f
+            np.testing.assert_allclose(vel, vel_ref, rtol=rtol, atol=0.)
+
+    @ut.skipIf(n_nodes != 2, "test is designed to run on 2 MPI ranks")
+    def test_rng(self):
+        system = self.system
+        system.lb = self.lb_class(kT=15., **self.params, **self.lb_params)
+        system.integrator.run(1)
+        diff = system.lb[0, :, :].population - system.lb[6, :, :].population
+        # if the RNG uses the local cell index instead of the global cell index,
+        # the noise will be identical in all blocks, and the RMS is zero
+        rms = np.sqrt(np.mean(np.square(diff)))
+        self.assertGreater(rms, 0.01, msg="thermal noise might be correlated!")
 
     def test_thermalization_force_balance(self):
         system = self.system
@@ -724,10 +828,7 @@ class LBTest:
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBTestWalberlaDoublePrecision(LBTest, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
+class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": False}
@@ -736,15 +837,32 @@ class LBTestWalberlaDoublePrecision(LBTest, ut.TestCase):
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
-class LBTestWalberlaSinglePrecision(LBTest, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
     lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": True}
     atol = 1e-7
     rtol = 5e-5
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_lattice_class = espressomd.lb.LatticeWalberla
+    lb_params = {"single_precision": False}
+    atol = 1e-10
+    rtol = 1e-7
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_lattice_class = espressomd.lb.LatticeWalberla
+    lb_params = {"single_precision": True}
+    atol = 1e-6
+    rtol = 2e-4
 
 
 if __name__ == "__main__":

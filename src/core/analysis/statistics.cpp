@@ -34,7 +34,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/contains.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -47,6 +46,7 @@
 #include <cstdlib>
 #include <functional>
 #include <limits>
+#include <numbers>
 #include <stdexcept>
 #include <tuple>
 #include <utility>
@@ -366,7 +366,7 @@ structure_factor(System::System const &system, std::vector<int> const &p_types,
   };
   auto const buf_pos = gather_traits_for_types(system, p_types, trait_pos);
   auto const order_sq = Utils::sqr(static_cast<std::size_t>(order));
-  auto const twoPI_L = 2. * Utils::pi() * system.box_geo->length_inv()[0];
+  auto const twoPI_L = 2. * std::numbers::pi * system.box_geo->length_inv()[0];
   std::vector<double> ff(2ul * order_sq + 1ul);
   std::vector<double> wavevectors;
   std::vector<double> intensities;

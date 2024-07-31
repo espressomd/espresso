@@ -25,10 +25,10 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/triangle_functions.hpp>
+
+#include <span>
 
 int max_oif_objects = 0;
 
@@ -39,9 +39,8 @@ Utils::Vector2d calc_oif_global(int molType, BoxGeometry const &box_geo,
   // z volume
   double VOL_partVol = 0.;
 
-  cs.bond_loop([&partArea, &VOL_partVol, &box_geo,
-                molType](Particle &p1, int bond_id,
-                         Utils::Span<Particle *> partners) {
+  cs.bond_loop([&partArea, &VOL_partVol, &box_geo, molType](
+                   Particle &p1, int bond_id, std::span<Particle *> partners) {
     if (p1.mol_id() != molType)
       return false;
 
@@ -74,9 +73,8 @@ void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
-  cs.bond_loop([&box_geo, area, VOL_volume,
-                molType](Particle &p1, int bond_id,
-                         Utils::Span<Particle *> partners) {
+  cs.bond_loop([&box_geo, area, VOL_volume, molType](
+                   Particle &p1, int bond_id, std::span<Particle *> partners) {
     if (p1.mol_id() != molType)
       return false;
 

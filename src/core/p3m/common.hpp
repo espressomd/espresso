@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -38,32 +38,22 @@
 
 #include <utils/Vector.hpp>
 
+#include <algorithm>
 #include <array>
 #include <vector>
 
 /** This value indicates metallic boundary conditions. */
 auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
-#if defined(P3M) || defined(DP3M)
+#if defined(P3M) or defined(DP3M)
 
 #include "LocalBox.hpp"
 
-#include <array>
+#include <cstddef>
+#include <span>
 #include <stdexcept>
-#include <vector>
 
-namespace detail {
-/** @brief Index helpers for direct and reciprocal space.
- *  After the FFT the data is in order YZX, which
- *  means that Y is the slowest changing index.
- */
-namespace FFT_indexing {
-enum FFT_REAL_VECTOR : int { RX = 0, RY = 1, RZ = 2 };
-enum FFT_WAVE_VECTOR : int { KY = 0, KZ = 1, KX = 2 };
-} // namespace FFT_indexing
-} // namespace detail
-
-/** Structure to hold P3M parameters and some dependent variables. */
+/** @brief Structure to hold P3M parameters and some dependent variables. */
 struct P3MParameters {
   /** tuning or production? */
   bool tuning;
@@ -179,9 +169,8 @@ struct P3MParameters {
   }
 };
 
-/** Structure for local mesh parameters. */
+/** @brief Properties of the local mesh. */
 struct P3MLocalMesh {
-  /* local mesh characterization. */
   /** dimension (size) of local mesh. */
   Utils::Vector3i dim;
   /** number of local mesh points. */
@@ -212,7 +201,7 @@ struct P3MLocalMesh {
    */
   void recalc_ld_pos(P3MParameters const &params) {
     // spatial position of left down mesh point
-    for (unsigned int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; i++) {
       ld_pos[i] = (ld_ind[i] + params.mesh_off[i]) * params.a[i];
     }
   }
@@ -226,17 +215,27 @@ struct P3MLocalMesh {
                           double space_layer);
 };
 
-/** One of the aliasing sums used to compute k-space errors.
- *  Fortunately the one which is most important (because it converges
- *  most slowly, since it is not damped exponentially) can be
- *  calculated analytically. The result (which depends on the order of
- *  the spline interpolation) can be written as an even trigonometric
- *  polynomial. The results are tabulated here (the employed formula
- *  is eq. (7.66) in @cite hockney88a).
- */
-double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
+/** @brief Local mesh FFT buffers. */
+struct P3MFFTMesh {
+  /** @brief k-space scalar mesh for k-space calculations. */
+  std::span<double> ks_scalar;
+  /** @brief real-space scalar mesh for charge assignment and FFT. */
+  std::span<double> rs_scalar;
+  /** @brief real-space 3D meshes for the electric or dipolar field. */
+  std::array<std::span<double>, 3> rs_fields;
 
-#endif /* P3M || DP3M */
+  /** @brief Indices of the lower left corner of the local mesh grid. */
+  Utils::Vector3i start;
+  /** @brief Indices of the upper right corner of the local mesh grid. */
+  Utils::Vector3i stop;
+  /** @brief Extents of the local mesh grid. */
+  Utils::Vector3i size;
+
+  /** @brief number of permutations in k_space */
+  int ks_pnum = 0;
+};
+
+#endif // defined(P3M) or defined(DP3M)
 
 namespace detail {
 /** Calculate indices that shift @ref P3MParameters::mesh "mesh" by `mesh/2`.
@@ -250,8 +249,8 @@ std::array<std::vector<int>, 3> inline calc_meshift(
     Utils::Vector3i const &mesh_size, bool zero_out_midpoint = false) {
   std::array<std::vector<int>, 3> ret{};
 
-  for (unsigned int i = 0; i < 3; i++) {
-    ret[i] = std::vector<int>(mesh_size[i]);
+  for (auto i = 0u; i < 3u; ++i) {
+    ret[i] = std::vector<int>(static_cast<std::size_t>(mesh_size[i]));
 
     for (int j = 1; j <= mesh_size[i] / 2; j++) {
       ret[i][j] = j;

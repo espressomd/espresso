@@ -166,7 +166,9 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'P3M: non-metallic epsilon requires cubic box'):
             self.system.electrostatics.solver = solver
 
+        self.system.part.clear()
         self.system.box_l = [10., 10., 10.]
+        self.add_charged_particles()
         solver = espressomd.electrostatics.P3M(
             prefactor=2, accuracy=1e-2, epsilon=1, mesh=[4, 8, 8])
         with self.assertRaisesRegex(RuntimeError, 'P3M: non-metallic epsilon requires cubic box'):
@@ -326,11 +328,11 @@ class Test(ut.TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "ELC tuning failed: maxPWerror too small"):
             # reduce box size to make tuning converge in at most 50 steps
-            self.system.box_l = [1., 1., 1.]
+            self.system.change_volume_and_rescale_particles(1., "xyz")
             elc = ELC(actor=solver_p3m, gap_size=0.5, maxPWerror=1e-90)
             self.system.electrostatics.solver = elc
         self.assertIsNone(self.system.electrostatics.solver)
-        self.system.box_l = [10., 10., 10.]
+        self.system.change_volume_and_rescale_particles(10., "xyz")
 
         # r_cut > gap isn't allowed with dielectric contrasts
         p3m = espressomd.electrostatics.P3M(
@@ -453,7 +455,7 @@ class Test(ut.TestCase):
         np.testing.assert_equal(np.copy(solver.mesh), [8, 12, 16])
 
         # check MD cell reset event
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(10., "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -471,7 +473,7 @@ class Test(ut.TestCase):
         np.testing.assert_equal(np.copy(solver.mesh), [20, 20, 40])
 
         # check MD cell reset event
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(10., "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -487,7 +489,7 @@ class Test(ut.TestCase):
         self.system.magnetostatics.solver = solver
 
         # check MD cell reset event
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(10., "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
@@ -495,9 +497,13 @@ class Test(ut.TestCase):
             self, container, class_p3m, class_lc, params):
         if class_p3m is espressomd.magnetostatics.DipolarP3M:
             mesh_a = np.array([2., 2., 2.])
+            self.system.change_volume_and_rescale_particles(
+                mesh_a[0] * params["mesh"][0], "xyz")
         else:
             mesh_a = np.array([2., 4., 8.])
-        self.system.box_l = mesh_a * params["mesh"]
+            for i in range(3):
+                self.system.change_volume_and_rescale_particles(
+                    mesh_a[i] * params["mesh"][i], "xyz"[i])
         self.system.time_step = 0.01
         non_metallic_epsilon = 20.
         p3m = class_p3m(epsilon=non_metallic_epsilon, **params)
@@ -520,7 +526,13 @@ class Test(ut.TestCase):
         np.testing.assert_allclose(p3m.r_cut_iL, r_cut_iL, atol=1e-12)
         np.testing.assert_allclose(p3m.alpha_L, alpha_L, atol=1e-12)
         mesh_a = np.array([4., 4., 4.])
-        self.system.box_l = mesh_a * params["mesh"]
+        if class_p3m is espressomd.magnetostatics.DipolarP3M:
+            self.system.change_volume_and_rescale_particles(
+                mesh_a[0] * params["mesh"][0], "xyz")
+        else:
+            for i in range(3):
+                self.system.change_volume_and_rescale_particles(
+                    mesh_a[i] * params["mesh"][i], "xyz"[i])
         np.testing.assert_allclose(np.copy(p3m.a), mesh_a, atol=1e-12)
         np.testing.assert_allclose(p3m.r_cut, r_cut * 2., atol=1e-12)
         np.testing.assert_allclose(p3m.r_cut_iL, r_cut_iL, atol=1e-12)

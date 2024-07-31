@@ -122,25 +122,6 @@ class Test(ut.TestCase):
         self.assertAlmostEqual(
             self.system.analysis.energy()["coulomb"], ref_energy, delta=1e-7)
 
-    @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["CUDA", "MMM1D_GPU"])
-    def test_mmm1d_gpu(self):
-        self.system.periodicity = [False, False, True]
-        self.system.cell_system.set_n_square()
-        valid_params = dict(
-            prefactor=1., maxPWerror=1e-3, far_switch_radius=1.,
-            check_neutrality=True, charge_neutrality_tolerance=7e-12,
-            bessel_cutoff=1)
-        tests_common.generate_test_for_actor_class(
-            self.system.electrostatics, espressomd.electrostatics.MMM1DGPU, valid_params)(self)
-
-        for key in ["prefactor", "maxPWerror",
-                    "far_switch_radius", "bessel_cutoff"]:
-            invalid_params = valid_params.copy()
-            invalid_params[key] = -2
-            with self.assertRaisesRegex(ValueError, f"Parameter '{key}' must be > 0"):
-                espressomd.electrostatics.MMM1DGPU(**invalid_params)
-
     def test_charge_neutrality_check(self):
         self.system.part.add(pos=(0.0, 0.0, 0.0), q=1.)
         self.system.periodicity = [False, False, True]
@@ -170,18 +151,6 @@ class Test(ut.TestCase):
         actor = espressomd.electrostatics.MMM1D(
             prefactor=1., maxPWerror=1e-3, far_switch_radius=0.1)
         with self.assertRaisesRegex(RuntimeError, "MMM1D could not find a reasonable Bessel cutoff"):
-            self.system.electrostatics.solver = actor
-        self.assertIsNone(self.system.electrostatics.solver)
-        self.assertFalse(actor.is_tuned)
-
-    @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["CUDA", "MMM1D_GPU"])
-    def test_mmm1d_gpu_tuning_exceptions(self):
-        self.system.periodicity = [False, False, True]
-        self.system.cell_system.set_n_square()
-        actor = espressomd.electrostatics.MMM1DGPU(
-            prefactor=1., maxPWerror=1e-3, far_switch_radius=0.1)
-        with self.assertRaisesRegex(RuntimeError, "No reasonable Bessel cutoff could be determined"):
             self.system.electrostatics.solver = actor
         self.assertIsNone(self.system.electrostatics.solver)
         self.assertFalse(actor.is_tuned)
@@ -253,12 +222,12 @@ class Test(ut.TestCase):
             self.assertEqual(
                 list(self.system.cell_system.node_grid),
                 list(self.original_node_grid))
-        with self.assertRaisesRegex(Exception, "while setting parameter 'box_l': ERROR: ELC gap size .+ larger than box length in z-direction"):
-            self.system.box_l = [10., 10., 2.5]
-        self.system.box_l = [10., 10., 10.]
+        with self.assertRaisesRegex(Exception, "ERROR: ELC gap size .+ larger than box length in z-direction"):
+            self.system.change_volume_and_rescale_particles(2.5, "z")
+        self.system.change_volume_and_rescale_particles(10., "z")
         self.system.electrostatics.solver = None
         with self.assertRaisesRegex(RuntimeError, "P3M real-space cutoff too large for ELC w/ dielectric contrast"):
-            self.system.box_l = [10., 10., 5.]
+            self.system.change_volume_and_rescale_particles(5., "z")
             elc = espressomd.electrostatics.ELC(
                 actor=p3m,
                 gap_size=1.,
@@ -271,7 +240,7 @@ class Test(ut.TestCase):
             )
             self.system.electrostatics.solver = elc
         self.assertIsNone(self.system.electrostatics.solver)
-        self.system.box_l = [10., 10., 10.]
+        self.system.change_volume_and_rescale_particles(10., "z")
         self.system.periodicity = [True, True, False]
         with self.assertRaisesRegex(RuntimeError, periodicity_err_msg):
             elc = espressomd.electrostatics.ELC(

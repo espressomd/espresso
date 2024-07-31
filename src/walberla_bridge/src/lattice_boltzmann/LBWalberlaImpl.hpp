@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 The ESPResSo project
+ * Copyright (C) 2019-2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -38,6 +38,11 @@
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q19.h>
 #include <stencil/D3Q27.h>
+#if defined(__CUDACC__)
+#include <gpu/AddGPUFieldToStorage.h>
+#include <gpu/communication/MemcpyPackInfo.h>
+#include <gpu/communication/UniformGPUScheme.h>
+#endif
 
 #include "../BoundaryHandling.hpp"
 #include "../BoundaryPackInfo.hpp"
@@ -46,6 +51,9 @@
 #include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
 #include "lb_kernels.hpp"
+#if defined(__CUDACC__)
+#include "lb_kernels.cuh"
+#endif
 
 #include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/BlockAndCell.hpp>
@@ -60,6 +68,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <memory>
@@ -96,8 +105,11 @@ protected:
       std::variant<CollisionModelThermalized, CollisionModelLeesEdwards>;
 
 public:
-  // Type definitions
+  /** @brief Stencil for collision and streaming operations. */
   using Stencil = stencil::D3Q19;
+  /** @brief Stencil for ghost communication (includes domain corners). */
+  using StencilFull = stencil::D3Q27;
+  /** @brief Lattice model (e.g. blockforest). */
   using Lattice_T = LatticeWalberla::Lattice_T;
 
 protected:
@@ -106,12 +118,39 @@ protected:
     using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
+    template <class Stencil>
+    using RegularCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
+    template <class Stencil>
+    using BoundaryCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
   };
+
+#if defined(__CUDACC__)
+  template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
+    using PdfField = gpu::GPUField<FT>;
+    using VectorField = gpu::GPUField<FT>;
+    template <class Field>
+    using PackInfo = gpu::communication::MemcpyPackInfo<Field>;
+    template <class Stencil>
+    using RegularCommScheme = gpu::communication::UniformGPUScheme<Stencil>;
+    template <class Stencil>
+    using BoundaryCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
+  };
+#endif
+
+  // "underlying" field types (`GPUField` has no f-size info at compile time)
+  using _PdfField = typename FieldTrait<FloatType>::PdfField;
+  using _VectorField = typename FieldTrait<FloatType>::VectorField;
 
 public:
   using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
   using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
   using FlagField = typename BoundaryModel::FlagField;
+#if defined(__CUDACC__)
+  using GPUField = gpu::GPUField<FloatType>;
+#endif
 
 public:
   template <typename T> FloatType FloatType_c(T t) const {
@@ -123,13 +162,18 @@ public:
   }
 
   [[nodiscard]] virtual bool is_double_precision() const noexcept override {
-    return std::is_same<FloatType, double>::value;
+    return std::is_same_v<FloatType, double>;
   }
 
 private:
   class CollideSweepVisitor {
   public:
-    void operator()(CollisionModelThermalized &cm, IBlock *b) { cm(b); }
+    using StructuredBlockStorage = LatticeWalberla::Lattice_T;
+
+    void operator()(CollisionModelThermalized &cm, IBlock *b) {
+      cm.configure(m_storage, b);
+      cm(b);
+    }
 
     void operator()(CollisionModelLeesEdwards &cm, IBlock *b) {
       cm.v_s_ = static_cast<decltype(cm.v_s_)>(
@@ -138,11 +182,17 @@ private:
     }
 
     CollideSweepVisitor() = default;
-    explicit CollideSweepVisitor(std::shared_ptr<LeesEdwardsPack> callbacks) {
+    CollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage) {
+      m_storage = std::move(storage);
+    }
+    CollideSweepVisitor(std::shared_ptr<StructuredBlockStorage> storage,
+                        std::shared_ptr<LeesEdwardsPack> callbacks) {
+      m_storage = std::move(storage);
       m_lees_edwards_callbacks = std::move(callbacks);
     }
 
   private:
+    std::shared_ptr<StructuredBlockStorage> m_storage{};
     std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks{};
   };
   CollideSweepVisitor m_run_collide_sweep{};
@@ -176,6 +226,13 @@ private:
     }
   }
 
+  void pressure_tensor_correction(std::span<FloatType, 9ul> tensor) const {
+    auto const revert_factor = pressure_tensor_correction_factor();
+    for (auto const i : {1u, 2u, 3u, 5u, 6u, 7u}) {
+      tensor[i] *= revert_factor;
+    }
+  }
+
   class interpolation_illegal_access : public std::runtime_error {
   public:
     explicit interpolation_illegal_access(std::string const &field,
@@ -183,9 +240,8 @@ private:
                                           std::array<int, 3> const &node,
                                           double weight)
         : std::runtime_error("Access to LB " + field + " field failed") {
-      std::cerr << "pos [" << pos << "], "
-                << "node [" << Utils::Vector3i(node) << "], "
-                << "weight " << weight << "\n";
+      std::cerr << "pos [" << pos << "], node [" << Utils::Vector3i(node)
+                << "], weight " << weight << "\n";
     }
   };
 
@@ -222,21 +278,26 @@ protected:
    * a full ghost communication. This is needed to properly update the corners
    * of the ghost layer when setting cell velocities or populations.
    */
-  using FullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
+  using RegularFullCommunicator =
+      typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
+          typename stencil::D3Q27>;
+  using BoundaryFullCommunicator =
+      typename FieldTrait<FloatType, Architecture>::template BoundaryCommScheme<
+          typename stencil::D3Q27>;
   /**
    * @brief Regular communicator.
    * We use the same directions as the stencil during integration.
    */
   using PDFStreamingCommunicator =
-      blockforest::communication::UniformBufferedScheme<Stencil>;
+      typename FieldTrait<FloatType,
+                          Architecture>::template RegularCommScheme<Stencil>;
   template <class Field>
   using PackInfo =
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
 
   // communicators
-  std::shared_ptr<FullCommunicator> m_boundary_communicator;
-  std::shared_ptr<FullCommunicator> m_pdf_full_communicator;
+  std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
+  std::shared_ptr<RegularFullCommunicator> m_pdf_full_communicator;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communicator;
 
   // ResetForce sweep + external force handling
@@ -247,11 +308,11 @@ protected:
 
   // Lees Edwards boundary interpolation
   std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<PdfField, FloatType>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>
       m_lees_edwards_pdf_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<_VectorField, FloatType>>
       m_lees_edwards_vel_interpol_sweep;
-  std::shared_ptr<InterpolateAndShiftAtBoundary<VectorField, FloatType>>
+  std::shared_ptr<InterpolateAndShiftAtBoundary<_VectorField, FloatType>>
       m_lees_edwards_last_applied_force_interpol_sweep;
 
   // Collision sweep
@@ -295,11 +356,11 @@ protected:
     if constexpr (Architecture == lbmpy::Arch::CPU) {
 #ifdef ESPRESSO_BUILD_WITH_AVX_KERNELS
 #if defined(__AVX512F__)
-      constexpr uint_t alignment = 64;
+      constexpr uint_t alignment = 64u;
 #elif defined(__AVX__)
-      constexpr uint_t alignment = 32;
+      constexpr uint_t alignment = 32u;
 #elif defined(__SSE__)
-      constexpr uint_t alignment = 16;
+      constexpr uint_t alignment = 16u;
 #else
 #error "Unsupported arch, check walberla src/field/allocation/FieldAllocator.h"
 #endif
@@ -315,6 +376,25 @@ protected:
                                         n_ghost_layers);
 #endif // ESPRESSO_BUILD_WITH_AVX_KERNELS
     }
+#if defined(__CUDACC__)
+    else {
+      auto field_id = gpu::addGPUFieldToStorage<GPUField>(
+          blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
+      if constexpr (std::is_same_v<Field, _VectorField>) {
+        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+          auto field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Vector::initialize(field, Vector3<FloatType>{0});
+        }
+      } else if constexpr (std::is_same_v<Field, _PdfField>) {
+        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+          auto field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Population::initialize(
+              field, std::array<FloatType, Stencil::Size>{});
+        }
+      }
+      return field_id;
+    }
+#endif
   }
 
 public:
@@ -328,13 +408,13 @@ public:
     if (n_ghost_layers == 0u)
       throw std::runtime_error("At least one ghost layer must be used");
 
-    // Initialize and register fields
-    m_pdf_field_id = add_to_storage<PdfField>("pdfs");
-    m_pdf_tmp_field_id = add_to_storage<PdfField>("pdfs_tmp");
-    m_last_applied_force_field_id = add_to_storage<VectorField>("force field");
-    m_force_to_be_applied_id = add_to_storage<VectorField>("force field");
-    m_velocity_field_id = add_to_storage<VectorField>("velocity field");
-    m_vec_tmp_field_id = add_to_storage<VectorField>("velocity_tmp field");
+    // Initialize and register fields (must use the "underlying" types)
+    m_pdf_field_id = add_to_storage<_PdfField>("pdfs");
+    m_pdf_tmp_field_id = add_to_storage<_PdfField>("pdfs_tmp");
+    m_last_applied_force_field_id = add_to_storage<_VectorField>("force last");
+    m_force_to_be_applied_id = add_to_storage<_VectorField>("force next");
+    m_velocity_field_id = add_to_storage<_VectorField>("velocity");
+    m_vec_tmp_field_id = add_to_storage<_VectorField>("velocity_tmp");
 
     // Initialize and register pdf field
     auto pdf_setter =
@@ -354,28 +434,26 @@ public:
     m_pdf_streaming_communicator =
         std::make_shared<PDFStreamingCommunicator>(blocks);
     m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
+        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
     m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
-                                                n_ghost_layers));
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
 
-    m_pdf_full_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_pdf_full_communicator = std::make_shared<RegularFullCommunicator>(blocks);
     m_pdf_full_communicator->addPackInfo(
-        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id, n_ghost_layers));
+        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
     m_pdf_full_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id,
-                                                n_ghost_layers));
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
     m_pdf_full_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_velocity_field_id,
-                                                n_ghost_layers));
+        std::make_shared<PackInfo<VectorField>>(m_velocity_field_id));
 
-    m_boundary_communicator = std::make_shared<FullCommunicator>(blocks);
+    m_boundary_communicator =
+        std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
-            m_flag_field_id, n_ghost_layers));
+            m_flag_field_id));
     auto boundary_packinfo = std::make_shared<
         field::communication::BoundaryPackInfo<FlagField, BoundaryModel>>(
-        m_flag_field_id, n_ghost_layers);
+        m_flag_field_id);
     boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary);
     m_boundary_communicator->addPackInfo(boundary_packinfo);
 
@@ -457,13 +535,13 @@ private:
 
   void integrate_pull_scheme() {
     auto const &blocks = get_lattice().get_blocks();
-    integrate_reset_force(blocks);
     // Handle boundaries
     integrate_boundaries(blocks);
     // LB stream
     integrate_stream(blocks);
     // LB collide
     integrate_collide(blocks);
+    integrate_reset_force(blocks);
     // Refresh ghost layers
     ghost_communication_pdfs();
   }
@@ -512,26 +590,23 @@ public:
   void set_collision_model(double kT, unsigned int seed) override {
     auto const omega = shear_mode_relaxation_rate();
     auto const omega_odd = odd_mode_relaxation_rate(omega);
+    auto const blocks = get_lattice().get_blocks();
     m_kT = FloatType_c(kT);
-    auto obj = CollisionModelThermalized(
-        m_last_applied_force_field_id, m_pdf_field_id, uint32_t{0u},
-        uint32_t{0u}, uint32_t{0u}, m_kT, omega, omega, omega_odd, omega, seed,
-        uint32_t{0u});
-    obj.block_offset_generator =
-        [this](IBlock *const block, uint32_t &block_offset_0,
-               uint32_t &block_offset_1, uint32_t &block_offset_2) {
-          auto const &blocks = get_lattice().get_blocks();
-          auto const &ci = blocks->getBlockCellBB(*block);
-          block_offset_0 = static_cast<uint32_t>(ci.xMin());
-          block_offset_1 = static_cast<uint32_t>(ci.yMin());
-          block_offset_2 = static_cast<uint32_t>(ci.zMin());
-        };
+    auto obj = CollisionModelThermalized(m_last_applied_force_field_id,
+                                         m_pdf_field_id, m_kT, omega, omega,
+                                         omega_odd, omega, seed, uint32_t{0u});
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
+    m_run_collide_sweep = CollideSweepVisitor(blocks);
   }
 
   void set_collision_model(
       std::unique_ptr<LeesEdwardsPack> &&lees_edwards_pack) override {
     assert(m_kT == 0.);
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      throw std::runtime_error("Lees-Edwards LB doesn't support GPU yet");
+    }
+#endif
     auto const shear_direction = lees_edwards_pack->shear_direction;
     auto const shear_plane_normal = lees_edwards_pack->shear_plane_normal;
     auto const shear_vel = FloatType_c(lees_edwards_pack->get_shear_velocity());
@@ -549,23 +624,23 @@ public:
         m_last_applied_force_field_id, m_pdf_field_id, agrid, omega, shear_vel);
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_lees_edwards_callbacks = std::move(lees_edwards_pack);
-    m_run_collide_sweep = CollideSweepVisitor{m_lees_edwards_callbacks};
+    m_run_collide_sweep = CollideSweepVisitor(blocks, m_lees_edwards_callbacks);
     m_lees_edwards_pdf_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<PdfField, FloatType>>(
+        std::make_shared<InterpolateAndShiftAtBoundary<_PdfField, FloatType>>(
             blocks, m_pdf_field_id, m_pdf_tmp_field_id, n_ghost_layers,
             shear_direction, shear_plane_normal,
             m_lees_edwards_callbacks->get_pos_offset);
-    m_lees_edwards_vel_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            blocks, m_velocity_field_id, m_vec_tmp_field_id, n_ghost_layers,
-            shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset,
-            m_lees_edwards_callbacks->get_shear_velocity);
-    m_lees_edwards_last_applied_force_interpol_sweep =
-        std::make_shared<InterpolateAndShiftAtBoundary<VectorField, FloatType>>(
-            blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
-            n_ghost_layers, shear_direction, shear_plane_normal,
-            m_lees_edwards_callbacks->get_pos_offset);
+    m_lees_edwards_vel_interpol_sweep = std::make_shared<
+        InterpolateAndShiftAtBoundary<_VectorField, FloatType>>(
+        blocks, m_velocity_field_id, m_vec_tmp_field_id, n_ghost_layers,
+        shear_direction, shear_plane_normal,
+        m_lees_edwards_callbacks->get_pos_offset,
+        m_lees_edwards_callbacks->get_shear_velocity);
+    m_lees_edwards_last_applied_force_interpol_sweep = std::make_shared<
+        InterpolateAndShiftAtBoundary<_VectorField, FloatType>>(
+        blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
+        n_ghost_layers, shear_direction, shear_plane_normal,
+        m_lees_edwards_callbacks->get_pos_offset);
   }
 
   void check_lebc(unsigned int shear_direction,
@@ -622,8 +697,8 @@ public:
     auto force_field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
     auto const vel = to_vector3<FloatType>(v);
-    lbm::accessor::Velocity::set(pdf_field, force_field, vel, bc->cell);
-    lbm::accessor::Vector::set(vel_field, vel, bc->cell);
+    lbm::accessor::Velocity::set(pdf_field, vel_field, force_field, vel,
+                                 bc->cell);
 
     return true;
   }
@@ -637,24 +712,31 @@ public:
       auto const &block = *(lattice.get_blocks()->begin());
       auto const field =
           block.template getData<VectorField>(m_velocity_field_id);
+      auto const values = lbm::accessor::Vector::get(field, *ci);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == 3u * ci->numCells());
+      if constexpr (std::is_same_v<typename decltype(values)::value_type,
+                                   double>) {
+        out = std::move(values);
+      } else {
+        out = std::vector<double>(values.begin(), values.end());
+      }
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
-      out.reserve(ci->numCells());
+      auto it = out.begin();
       for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
         for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
           for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
             auto const node = local_offset + Utils::Vector3i{{x, y, z}};
             if (m_boundary->node_is_boundary(node)) {
-              auto const vec = m_boundary->get_node_value_at_boundary(node);
+              auto const &vec = m_boundary->get_node_value_at_boundary(node);
               for (uint_t f = 0u; f < 3u; ++f) {
-                out.emplace_back(double_c(vec[f]));
+                (*it) = double_c(vec[f]);
+                std::advance(it, 1l);
               }
             } else {
-              auto const vec = lbm::accessor::Vector::get(field, Cell{x, y, z});
-              for (uint_t f = 0u; f < 3u; ++f) {
-                out.emplace_back(double_c(vec[f]));
-              }
+              std::advance(it, 3l);
             }
           }
         }
@@ -669,30 +751,107 @@ public:
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
-      // We have to set both, the pdf and the stored velocity field
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
       auto force_field =
           block.template getData<VectorField>(m_last_applied_force_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto it = velocity.begin();
+      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
       assert(velocity.size() == 3u * ci->numCells());
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            auto const cell = Cell{x, y, z};
-            Vector3<FloatType> vec;
-            for (uint_t f = 0u; f < 3u; ++f) {
-              vec[f] = FloatType_c(*it);
-              ++it;
-            }
-            lbm::accessor::Velocity::set(pdf_field, force_field, vec, cell);
-            lbm::accessor::Vector::set(vel_field, vec, cell);
-          }
-        }
+      std::vector<FloatType> const values(velocity.begin(), velocity.end());
+      lbm::accessor::Velocity::set(pdf_field, vel_field, force_field, values,
+                                   *ci);
+    }
+  }
+
+  [[nodiscard]] bool is_gpu() const noexcept override {
+    return Architecture == lbmpy::Arch::GPU;
+  }
+
+  void add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
+                         std::vector<Utils::Vector3d> const &forces) override {
+    assert(pos.size() == forces.size());
+    if (pos.empty()) {
+      return;
+    }
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      for (std::size_t i = 0ul; i < pos.size(); ++i) {
+        add_force_at_pos(pos[i], forces[i]);
       }
     }
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      auto const &lattice = get_lattice();
+      auto const &block = *(lattice.get_blocks()->begin());
+      auto const origin = block.getAABB().min();
+      std::vector<FloatType> host_pos;
+      std::vector<FloatType> host_force;
+      host_pos.reserve(3ul * pos.size());
+      host_force.reserve(3ul * forces.size());
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      for (auto const &vec : pos) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_pos.emplace_back(static_cast<FloatType>(vec[i] - origin[i]));
+        }
+      }
+      for (auto const &vec : forces) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_force.emplace_back(static_cast<FloatType>(vec[i]));
+        }
+      }
+      auto const gl = lattice.get_ghost_layers();
+      auto field = block.template uncheckedFastGetData<VectorField>(
+          m_force_to_be_applied_id);
+      lbm::accessor::Interpolation::set(field, host_pos, host_force, gl);
+    }
+#endif
+  }
+
+  std::vector<Utils::Vector3d>
+  get_velocities_at_pos(std::vector<Utils::Vector3d> const &pos) override {
+    if (pos.empty()) {
+      return {};
+    }
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      std::vector<Utils::Vector3d> vel{};
+      vel.reserve(pos.size());
+      for (auto const &vec : pos) {
+        auto res = get_velocity_at_pos(vec, true);
+        assert(res.has_value());
+        vel.emplace_back(*res);
+      }
+      return vel;
+    }
+#if defined(__CUDACC__)
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      auto const &lattice = get_lattice();
+      auto const &block = *(lattice.get_blocks()->begin());
+      auto const origin = block.getAABB().min();
+      std::vector<FloatType> host_pos;
+      host_pos.reserve(3ul * pos.size());
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      for (auto const &vec : pos) {
+#pragma unroll
+        for (std::size_t i : {0ul, 1ul, 2ul}) {
+          host_pos.emplace_back(static_cast<FloatType>(vec[i] - origin[i]));
+        }
+      }
+      auto const gl = lattice.get_ghost_layers();
+      auto field =
+          block.template uncheckedFastGetData<VectorField>(m_velocity_field_id);
+      auto const res = lbm::accessor::Interpolation::get(field, host_pos, gl);
+      std::vector<Utils::Vector3d> vel{};
+      vel.reserve(res.size() / 3ul);
+      for (auto it = res.begin(); it != res.end(); it += 3) {
+        vel.emplace_back(Utils::Vector3d{static_cast<double>(*(it + 0)),
+                                         static_cast<double>(*(it + 1)),
+                                         static_cast<double>(*(it + 2))});
+      }
+      return vel;
+    }
+#endif
+    return {};
   }
 
   std::optional<Utils::Vector3d>
@@ -793,10 +952,13 @@ public:
     if (!bc)
       return false;
 
-    auto field =
+    auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto force_field =
         bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    auto vel_field =
+        bc->block->template getData<VectorField>(m_velocity_field_id);
     auto const vec = to_vector3<FloatType>(force);
-    lbm::accessor::Vector::set(field, vec, bc->cell);
+    lbm::accessor::Force::set(pdf_field, vel_field, force_field, vec, bc->cell);
 
     return true;
   }
@@ -810,21 +972,15 @@ public:
       auto const &block = *(lattice.get_blocks()->begin());
       auto const field =
           block.template getData<VectorField>(m_last_applied_force_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto const n_values = 3u * ci->numCells();
-      out.reserve(n_values);
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            auto const vec = lbm::accessor::Vector::get(field, Cell{x, y, z});
-            for (uint_t f = 0u; f < 3u; ++f) {
-              out.emplace_back(double_c(vec[f]));
-            }
-          }
-        }
+      auto const values = lbm::accessor::Vector::get(field, *ci);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == 3u * ci->numCells());
+      if constexpr (std::is_same_v<typename decltype(values)::value_type,
+                                   double>) {
+        out = std::move(values);
+      } else {
+        out = std::vector<double>(values.begin(), values.end());
       }
-      assert(out.size() == n_values);
     }
     return out;
   }
@@ -835,24 +991,14 @@ public:
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
-      auto field =
+      auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+      auto force_field =
           block.template getData<VectorField>(m_last_applied_force_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto it = force.begin();
+      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
       assert(force.size() == 3u * ci->numCells());
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            Vector3<FloatType> vec;
-            for (uint_t f = 0u; f < 3u; ++f) {
-              vec[f] = FloatType_c(*it);
-              ++it;
-            }
-            lbm::accessor::Vector::set(field, vec, Cell{x, y, z});
-          }
-        }
-      }
+      std::vector<FloatType> const values(force.begin(), force.end());
+      lbm::accessor::Force::set(pdf_field, vel_field, force_field, values, *ci);
     }
   }
 
@@ -881,11 +1027,16 @@ public:
       return false;
 
     auto pdf_field = bc->block->template getData<PdfField>(m_pdf_field_id);
+    auto force_field =
+        bc->block->template getData<VectorField>(m_last_applied_force_field_id);
+    auto vel_field =
+        bc->block->template getData<VectorField>(m_velocity_field_id);
     std::array<FloatType, Stencil::Size> pop;
     for (uint_t f = 0u; f < Stencil::Size; ++f) {
       pop[f] = FloatType_c(population[f]);
     }
-    lbm::accessor::Population::set(pdf_field, pop, bc->cell);
+    lbm::accessor::Population::set(pdf_field, vel_field, force_field, pop,
+                                   bc->cell);
 
     return true;
   }
@@ -899,13 +1050,14 @@ public:
       auto const &block = *(lattice.get_blocks()->begin());
       auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       auto const values = lbm::accessor::Population::get(pdf_field, *ci);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == stencil_size() * ci->numCells());
       if constexpr (std::is_same_v<typename decltype(values)::value_type,
                                    double>) {
         out = std::move(values);
       } else {
         out = std::vector<double>(values.begin(), values.end());
       }
-      assert(out.size() == stencil_size() * ci->numCells());
     }
     return out;
   }
@@ -917,9 +1069,14 @@ public:
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+      auto force_field =
+          block.template getData<VectorField>(m_last_applied_force_field_id);
+      auto vel_field = block.template getData<VectorField>(m_velocity_field_id);
       assert(population.size() == stencil_size() * ci->numCells());
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
       std::vector<FloatType> const values(population.begin(), population.end());
-      lbm::accessor::Population::set(pdf_field, values, *ci);
+      lbm::accessor::Population::set(pdf_field, vel_field, force_field, values,
+                                     *ci);
     }
   }
 
@@ -957,13 +1114,14 @@ public:
       auto const &block = *(lattice.get_blocks()->begin());
       auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       auto const values = lbm::accessor::Density::get(pdf_field, *ci);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == ci->numCells());
       if constexpr (std::is_same_v<typename decltype(values)::value_type,
                                    double>) {
         out = std::move(values);
       } else {
         out = std::vector<double>(values.begin(), values.end());
       }
-      assert(out.size() == ci->numCells());
     }
     return out;
   }
@@ -976,6 +1134,7 @@ public:
       auto &block = *(lattice.get_blocks()->begin());
       auto pdf_field = block.template getData<PdfField>(m_pdf_field_id);
       assert(density.size() == ci->numCells());
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
       std::vector<FloatType> const values(density.begin(), density.end());
       lbm::accessor::Density::set(pdf_field, values, *ci);
     }
@@ -1149,23 +1308,18 @@ public:
       auto const &lattice = get_lattice();
       auto const &block = *(lattice.get_blocks()->begin());
       auto const pdf_field = block.template getData<PdfField>(m_pdf_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto const n_values = 9u * ci->numCells();
-      out.reserve(n_values);
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            auto const cell = Cell{x, y, z};
-            auto tensor = lbm::accessor::PressureTensor::get(pdf_field, cell);
-            pressure_tensor_correction(tensor);
-            for (auto i = 0u; i < 9u; ++i) {
-              out.emplace_back(tensor[i]);
-            }
-          }
-        }
+      auto values = lbm::accessor::PressureTensor::get(pdf_field, *ci);
+      assert(++(lattice.get_blocks()->begin()) == lattice.get_blocks()->end());
+      assert(values.size() == 9u * ci->numCells());
+      for (auto it = values.begin(); it != values.end(); std::advance(it, 9l)) {
+        pressure_tensor_correction(std::span<FloatType, 9ul>(it, 9ul));
       }
-      assert(out.size() == n_values);
+      if constexpr (std::is_same_v<typename decltype(values)::value_type,
+                                   double>) {
+        out = std::move(values);
+      } else {
+        out = std::vector<double>(values.begin(), values.end());
+      }
     }
     return out;
   }
@@ -1243,9 +1397,13 @@ public:
   }
 
   void register_vtk_field_filters(walberla::vtk::VTKOutput &vtk_obj) override {
-    field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
-    fluid_filter.addFlag(Boundary_flag);
-    vtk_obj.addCellExclusionFilter(fluid_filter);
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      throw std::runtime_error("VTK output not supported for GPU");
+    } else {
+      field::FlagFieldCellFilter<FlagField> fluid_filter(m_flag_field_id);
+      fluid_filter.addFlag(Boundary_flag);
+      vtk_obj.addCellExclusionFilter(fluid_filter);
+    }
   }
 
 protected:
@@ -1272,7 +1430,9 @@ protected:
   template <typename OutputType = float>
   class DensityVTKWriter : public VTKWriter<PdfField, 1u, OutputType> {
   public:
-    using VTKWriter<PdfField, 1u, OutputType>::VTKWriter;
+    using Base = VTKWriter<PdfField, 1u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
@@ -1287,7 +1447,9 @@ protected:
   template <typename OutputType = float>
   class VelocityVTKWriter : public VTKWriter<VectorField, 3u, OutputType> {
   public:
-    using VTKWriter<VectorField, 3u, OutputType>::VTKWriter;
+    using Base = VTKWriter<VectorField, 3u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
@@ -1302,11 +1464,14 @@ protected:
   template <typename OutputType = float>
   class PressureTensorVTKWriter : public VTKWriter<PdfField, 9u, OutputType> {
   public:
+    using Base = VTKWriter<PdfField, 9u, OutputType>;
+    using Base::Base;
+    using Base::evaluate;
+
     PressureTensorVTKWriter(ConstBlockDataID const &block_id,
                             std::string const &id, FloatType unit_conversion,
                             FloatType off_diag_factor)
-        : VTKWriter<PdfField, 9u, OutputType>::VTKWriter(block_id, id,
-                                                         unit_conversion),
+        : Base(block_id, id, unit_conversion),
           m_off_diag_factor(off_diag_factor) {}
 
   protected:
@@ -1327,21 +1492,26 @@ public:
   void register_vtk_field_writers(walberla::vtk::VTKOutput &vtk_obj,
                                   LatticeModel::units_map const &units,
                                   int flag_observables) override {
-    if (flag_observables & static_cast<int>(OutputVTK::density)) {
-      auto const unit_conversion = FloatType_c(units.at("density"));
-      vtk_obj.addCellDataWriter(make_shared<DensityVTKWriter<float>>(
-          m_pdf_field_id, "density", unit_conversion));
-    }
-    if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
-      auto const unit_conversion = FloatType_c(units.at("velocity"));
-      vtk_obj.addCellDataWriter(make_shared<VelocityVTKWriter<float>>(
-          m_velocity_field_id, "velocity_vector", unit_conversion));
-    }
-    if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
-      auto const unit_conversion = FloatType_c(units.at("pressure"));
-      vtk_obj.addCellDataWriter(make_shared<PressureTensorVTKWriter<float>>(
-          m_pdf_field_id, "pressure_tensor", unit_conversion,
-          pressure_tensor_correction_factor()));
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      throw std::runtime_error("VTK output not supported for GPU");
+    } else {
+      if (flag_observables & static_cast<int>(OutputVTK::density)) {
+        auto const unit_conversion = FloatType_c(units.at("density"));
+        vtk_obj.addCellDataWriter(std::make_shared<DensityVTKWriter<float>>(
+            m_pdf_field_id, "density", unit_conversion));
+      }
+      if (flag_observables & static_cast<int>(OutputVTK::velocity_vector)) {
+        auto const unit_conversion = FloatType_c(units.at("velocity"));
+        vtk_obj.addCellDataWriter(std::make_shared<VelocityVTKWriter<float>>(
+            m_velocity_field_id, "velocity_vector", unit_conversion));
+      }
+      if (flag_observables & static_cast<int>(OutputVTK::pressure_tensor)) {
+        auto const unit_conversion = FloatType_c(units.at("pressure"));
+        vtk_obj.addCellDataWriter(
+            std::make_shared<PressureTensorVTKWriter<float>>(
+                m_pdf_field_id, "pressure_tensor", unit_conversion,
+                pressure_tensor_correction_factor()));
+      }
     }
   }
 

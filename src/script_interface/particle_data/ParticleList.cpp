@@ -34,8 +34,9 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
-#include <boost/range/algorithm.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -67,7 +68,7 @@ std::string ParticleList::get_internal_state() const {
   auto const p_ids = get_particle_ids();
   std::vector<std::string> object_states(p_ids.size());
 
-  boost::transform(p_ids, object_states.begin(), [this](auto const p_id) {
+  std::ranges::transform(p_ids, object_states.begin(), [this](auto const p_id) {
     auto p_obj =
         context()->make_shared("Particles::ParticleHandle", {{"id", p_id}});
     auto &p_handle = dynamic_cast<ParticleHandle &>(*p_obj);
@@ -138,7 +139,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
     for (auto const bond : p.bonds()) {
-      if (bond.partner_ids().size() == 1) {
+      if (bond.partner_ids().size() == 1u) {
         auto const pid2 = bond.partner_ids()[0];
         if (pid1 != pid2) {
           bonded_pairs.emplace_back(pid1);
@@ -174,13 +175,13 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
       for (auto const pid1 : pids) {
         // loop over partners (counter-based loops due to iterator invalidation)
         // NOLINTNEXTLINE(modernize-loop-convert)
-        for (int i = 0; i < partners[pid1].size(); ++i) {
+        for (std::size_t i = 0u; i < partners[pid1].size(); ++i) {
           auto const [pid2, dist21] = partners[pid1][i];
           if (dist21 > n_bonds_max)
             continue;
           // loop over all partners of the partner
           // NOLINTNEXTLINE(modernize-loop-convert)
-          for (int j = 0; j < partners[pid2].size(); ++j) {
+          for (std::size_t j = 0u; j < partners[pid2].size(); ++j) {
             auto const [pid3, dist32] = partners[pid2][j];
             auto const dist31 = dist32 + dist21;
             if (dist31 > n_bonds_max)

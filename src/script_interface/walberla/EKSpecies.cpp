@@ -88,17 +88,31 @@ Variant EKSpecies::do_call_method(std::string const &method,
   return Base::do_call_method(method, parameters);
 }
 
-void EKSpecies::do_construct(VariantMap const &args) {
-  m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(args, "lattice");
+void EKSpecies::make_instance(VariantMap const &params) {
+  auto const diffusion = get_value<double>(params, "diffusion");
+  auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
+  auto const density = get_value<double>(params, "density");
+  auto const kT = get_value<double>(params, "kT");
+  auto const precision = get_value<bool>(params, "single_precision");
+  auto const ek_diffusion = diffusion * m_conv_diffusion;
+  auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
+  auto const ek_density = density * m_conv_density;
+  auto const ek_kT = kT * m_conv_energy;
+  m_instance = ::walberla::new_ek_walberla(
+      m_lattice->lattice(), ek_diffusion, ek_kT,
+      get_value<double>(params, "valency"), ek_ext_efield, ek_density,
+      get_value<bool>(params, "advection"),
+      get_value<bool>(params, "friction_coupling"), precision);
+}
+
+void EKSpecies::do_construct(VariantMap const &params) {
+  m_lattice = get_value<std::shared_ptr<LatticeWalberla>>(params, "lattice");
   m_vtk_writers =
-      get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
-  auto const single_precision = get_value<bool>(args, "single_precision");
+      get_value_or<decltype(m_vtk_writers)>(params, "vtk_writers", {});
   auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
-  auto const diffusion = get_value<double>(args, "diffusion");
-  auto const ext_efield = get_value<Utils::Vector3d>(args, "ext_efield");
-  auto const density = get_value<double>(args, "density");
-  auto const kT = get_value<double>(args, "kT");
-  auto const tau = m_tau = get_value<double>(args, "tau");
+  auto const density = get_value<double>(params, "density");
+  auto const kT = get_value<double>(params, "kT");
+  auto const tau = m_tau = get_value<double>(params, "tau");
   context()->parallel_try_catch([&]() {
     if (tau <= 0.) {
       throw std::domain_error("Parameter 'tau' must be > 0");
@@ -114,15 +128,8 @@ void EKSpecies::do_construct(VariantMap const &args) {
     m_conv_ext_efield = Utils::int_pow<2>(tau) / agrid;
     m_conv_density = Utils::int_pow<3>(agrid);
     m_conv_flux = tau * Utils::int_pow<2>(agrid);
-    auto const ek_diffusion = diffusion * m_conv_diffusion;
-    auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
-    auto const ek_density = m_density = density * m_conv_density;
-    auto const ek_kT = kT * m_conv_energy;
-    m_instance = ::walberla::new_ek_walberla(
-        m_lattice->lattice(), ek_diffusion, ek_kT,
-        get_value<double>(args, "valency"), ek_ext_efield, ek_density,
-        get_value<bool>(args, "advection"),
-        get_value<bool>(args, "friction_coupling"), single_precision);
+    m_density = density * m_conv_density;
+    make_instance(params);
     for (auto &vtk : m_vtk_writers) {
       vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
     }
@@ -138,8 +145,7 @@ void EKSpecies::load_checkpoint(std::string const &filename, int mode) {
     cpfile.read(read_grid_size);
     if (read_grid_size != expected_grid_size) {
       std::stringstream message;
-      message << "grid dimensions mismatch, "
-              << "read [" << read_grid_size << "], "
+      message << "grid dimensions mismatch, read [" << read_grid_size << "], "
               << "expected [" << expected_grid_size << "].";
       throw std::runtime_error(message.str());
     }

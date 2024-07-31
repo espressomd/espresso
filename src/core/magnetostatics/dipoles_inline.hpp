@@ -99,23 +99,23 @@ struct ShortRangeEnergyKernel {
 inline std::optional<Solver::ShortRangeForceKernel>
 Solver::pair_force_kernel() const {
 #ifdef DIPOLES
-  if (impl->solver) {
+  if (auto &solver = impl->solver; solver.has_value()) {
     auto const visitor = Dipoles::ShortRangeForceKernel();
-    return std::visit(visitor, *impl->solver);
+    return std::visit(visitor, *solver);
   }
 #endif // DIPOLES
-  return {};
+  return std::nullopt;
 }
 
 inline std::optional<Solver::ShortRangeEnergyKernel>
 Solver::pair_energy_kernel() const {
 #ifdef DIPOLES
-  if (impl->solver) {
+  if (auto &solver = impl->solver; solver.has_value()) {
     auto const visitor = Dipoles::ShortRangeEnergyKernel();
-    return std::visit(visitor, *impl->solver);
+    return std::visit(visitor, *solver);
   }
 #endif // DIPOLES
-  return {};
+  return std::nullopt;
 }
 
 } // namespace Dipoles

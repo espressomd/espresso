@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2016-2022 The ESPResSo project
+# Copyright (C) 2016-2024 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
@@ -120,7 +120,6 @@ set_default_value make_check_benchmarks false
 set_default_value with_fast_math false
 set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
-set_default_value with_cxx_standard 17
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_hdf5 true
@@ -130,7 +129,7 @@ set_default_value with_scafacos false
 set_default_value with_walberla false
 set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
-set_default_value test_timeout 300
+set_default_value test_timeout 500
 set_default_value hide_gpu false
 set_default_value mpiexec_preflags ""
 
@@ -148,54 +147,22 @@ if [ "${with_fast_math}" = true ]; then
     cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math"
 fi
 
-cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D CMAKE_CXX_STANDARD=${with_cxx_standard} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
+cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
 cmake_params="${cmake_params} -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -D ESPRESSO_INSIDE_DOCKER=ON"
 cmake_params="${cmake_params} -D ESPRESSO_CTEST_ARGS:STRING=-j${check_procs} -D ESPRESSO_TEST_TIMEOUT=${test_timeout}"
 
-if [ "${make_check_benchmarks}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=ON"
-fi
-
-if [ "${with_ccache}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=ON"
-fi
-
-if [ "${with_caliper}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CALIPER=ON"
-fi
-
-if [ "${with_hdf5}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=ON"
-else
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=OFF"
-fi
-
-if [ "${with_fftw}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=ON"
-else
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=OFF"
-fi
-
-if [ "${with_gsl}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=ON"
-else
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=OFF"
-fi
-
-if [ "${with_scafacos}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=ON"
-else
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=OFF"
-fi
-
-if [ "${with_stokesian_dynamics}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=ON"
-else
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=OFF"
-fi
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=${make_check_benchmarks}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=${with_ccache}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CALIPER=${with_caliper}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=${with_hdf5}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=${with_fftw}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=${with_gsl}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=${with_scafacos}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=${with_stokesian_dynamics}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=${with_walberla}"
 
 if [ "${with_walberla}" = true ]; then
-  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=ON -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON"
+  cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_FFT=ON"
   if [ "${with_walberla_avx}" = true ]; then
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
   fi
@@ -204,39 +171,18 @@ if [ "${with_walberla}" = true ]; then
   mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
 fi
 
-if [ "${with_coverage}" = true ]; then
-    cmake_params="-D ESPRESSO_BUILD_WITH_COVERAGE=ON ${cmake_params}"
-fi
-
-if [ "${with_coverage_python}" = true ]; then
-    cmake_params="-D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON=ON ${cmake_params}"
-fi
-
-if [ "${with_asan}" = true ]; then
-    cmake_params="-D ESPRESSO_BUILD_WITH_ASAN=ON ${cmake_params}"
-fi
-
-if [ "${with_ubsan}" = true ]; then
-    cmake_params="-D ESPRESSO_BUILD_WITH_UBSAN=ON ${cmake_params}"
-fi
-
-if [ "${with_static_analysis}" = true ]; then
-    cmake_params="-D ESPRESSO_BUILD_WITH_CLANG_TIDY=ON ${cmake_params}"
-fi
-
-if [ "${run_checks}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_TESTS=ON"
-else
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_TESTS=OFF"
-fi
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_COVERAGE=${with_coverage}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON=${with_coverage_python}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_ASAN=${with_asan}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_UBSAN=${with_ubsan}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CLANG_TIDY=${with_static_analysis}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CUDA=${with_cuda}"
 
 if [ "${with_cuda}" = true ]; then
-    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=ON -D CUDAToolkit_ROOT=/usr/lib/cuda ${cmake_params}"
-    if [ "${CUDACXX}" = "" ]; then
-        cmake_params="-D CMAKE_CUDA_FLAGS='--compiler-bindir=/usr/bin/g++-10' ${cmake_params}"
+    cmake_params="${cmake_params} -D CUDAToolkit_ROOT=/usr/lib/cuda"
+    if [ "${CUDACXX}" = "" ] && [ "${CXX}" != "" ]; then
+        cmake_params="${cmake_params} -D CMAKE_CUDA_FLAGS='--compiler-bindir=$(which "${CXX}")'"
     fi
-else
-    cmake_params="-D ESPRESSO_BUILD_WITH_CUDA=OFF ${cmake_params}"
 fi
 
 command -v nvidia-smi && nvidia-smi || true
@@ -264,19 +210,28 @@ cd "${builddir}"
 
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
-    grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
-    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
-    grep -q "Ubuntu 22.04" /etc/os-release && export MPIEXEC_PREFLAGS="--mca;btl_vader_single_copy_mechanism;none${mpiexec_preflags:+;$mpiexec_preflags}"
+    grep -q "suse" /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
+    grep -q "rhel\|fedora" /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
+fi
+
+# setup environment
+if grep -q "Ubuntu" /etc/os-release; then
+    default_gcov="$(which "gcov")"
+    custom_gcov="$(which "${GCOV:-gcov}")"
+    if [ ! "${custom_gcov}" = "${default_gcov}" ] && [ -d "${HOME}/.local/var/lib/alternatives" ]; then
+        update-alternatives --altdir "${HOME}/.local/etc/alternatives" \
+                            --admindir "${HOME}/.local/var/lib/alternatives" \
+                            --install "${HOME}/.local/bin/gcov" "gcov" "${custom_gcov}" 10
+    fi
 fi
 
 # CONFIGURE
 start "CONFIGURE"
 
-MYCONFIG_DIR="${srcdir}/maintainer/configs"
 if [ "${myconfig}" = "default" ]; then
     echo "Using default myconfig."
 else
-    myconfig_file="${MYCONFIG_DIR}/${myconfig}.hpp"
+    myconfig_file="${srcdir}/maintainer/configs/${myconfig}.hpp"
     if [ ! -e "${myconfig_file}" ]; then
         echo "${myconfig_file} does not exist!"
         exit 1
@@ -306,9 +261,8 @@ end "BUILD"
 # library. See details in https://github.com/espressomd/espresso/issues/2249
 # Can't do this check on CUDA though because nvcc creates a host function
 # that just calls exit() for each device function, and can't do this with
-# coverage because gcov 9.0 adds code that calls exit(), and can't do this
 # with walberla because the library calls exit() in assertions.
-if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) && "${with_walberla}" != "true" ]]; then
+if [[ ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) && "${with_walberla}" != "true" ]]; then
     if nm -o -C $(find . -name '*.so') | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
@@ -400,12 +354,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     if [ "${with_coverage}" = true ]; then
         echo "Running lcov and gcov..."
         codecov_opts="${codecov_opts} --gcov"
-        lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
-        lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-        lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
-        if [ -d _deps/ ]; then
-          lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info $(realpath _deps/)'/*' --output-file coverage.info # filter out external projects
-        fi
+        "${srcdir}/maintainer/CI/run_lcov.sh" coverage.info
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."

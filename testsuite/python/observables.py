@@ -121,7 +121,7 @@ class Observables(ut.TestCase):
             np.testing.assert_array_almost_equal(
                 obs_data,
                 part_data,
-                err_msg=f"Data did not agree for observable {obs_class.__name__} and particle property {pprop_name}",
+                err_msg=f"Data did not agree for observable {obs_class.__name__} and particle property {pprop_name}",  # nopep8
                 decimal=11)
 
             # Test setters and getters

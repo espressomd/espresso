@@ -29,11 +29,10 @@
 #include <field/communication/PackInfo.h>
 #include <stencil/D3Q27.h>
 
-#include <utils/constants.hpp>
-
 #include <cmath>
 #include <cstddef>
 #include <memory>
+#include <numbers>
 #include <utility>
 
 namespace walberla {
@@ -67,9 +66,10 @@ public:
       if (x == 0u && y == 0u && z == 0u)
         return 0.;
       return -0.5 /
-             (std::cos(2. * Utils::pi() * real_c(x) / real_c(dim[0])) +
-              std::cos(2. * Utils::pi() * real_c(y) / real_c(dim[1])) +
-              std::cos(2. * Utils::pi() * real_c(z) / real_c(dim[2])) - 3.) /
+             (std::cos(2. * std::numbers::pi * real_c(x) / real_c(dim[0])) +
+              std::cos(2. * std::numbers::pi * real_c(y) / real_c(dim[1])) +
+              std::cos(2. * std::numbers::pi * real_c(z) / real_c(dim[2])) -
+              3.) /
              real_c(dim[0] * dim[1] * dim[2]);
     };
 

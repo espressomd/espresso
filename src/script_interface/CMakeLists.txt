@@ -64,10 +64,14 @@ target_link_libraries(
 
 set_source_files_properties(
   ${CMAKE_CURRENT_SOURCE_DIR}/particle_data/ParticleHandle.cpp
-  PROPERTIES COMPILE_FLAGS -fno-finite-math-only)
+  PROPERTIES COMPILE_OPTIONS -fno-finite-math-only)
 
 target_include_directories(espresso_script_interface
                            PUBLIC ${CMAKE_SOURCE_DIR}/src)
+if(ESPRESSO_BUILD_WITH_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(espresso_script_interface
+                         PRIVATE -fno-default-inline -fno-elide-constructors)
+endif()
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)

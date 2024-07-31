@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_INTERPOLATION_HPP
-#define UTILS_INTERPOLATION_HPP
+
+#pragma once
 
 #include "utils/Vector.hpp"
 
@@ -42,12 +42,12 @@ namespace Interpolation {
  * @param offset Shift of the grid relative to the origin.
  */
 template <int order, typename Kernel>
-void bspline_3d(const Vector3d &pos, const Kernel &kernel,
-                const Vector3d &grid_spacing, const Vector3d &offset) {
+void bspline_3d(Vector3d const &pos, Kernel const &kernel,
+                Vector3d const &grid_spacing, Vector3d const &offset) {
   using Utils::bspline;
 
   /* The coordinates and relative distance of the assignment cube. */
-  const auto block = detail::ll_and_dist<order>(pos, grid_spacing, offset);
+  auto const block = detail::ll_and_dist<order>(pos, grid_spacing, offset);
 
   /* Precalc weights that are used multiple times. */
   std::array<double, order> w_y{};
@@ -60,10 +60,10 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
   std::array<int, 3> ind;
   for (int i = 0; i < order; i++) {
     ind[0] = block.corner[0] + i;
-    const auto wx = bspline<order>(i, block.distance[0]);
+    auto const wx = bspline<order>(i, block.distance[0]);
     for (int j = 0; j < order; j++) {
       ind[1] = block.corner[1] + j;
-      const auto wxy = wx * w_y[static_cast<unsigned>(j)];
+      auto const wxy = wx * w_y[static_cast<unsigned>(j)];
       for (int k = 0; k < order; k++) {
         ind[2] = block.corner[2] + k;
         kernel(ind, wxy * w_z[static_cast<unsigned>(k)]);
@@ -76,13 +76,13 @@ void bspline_3d(const Vector3d &pos, const Kernel &kernel,
  * @brief cardinal B-spline weighted sum.
  */
 template <int order, typename T, typename Kernel>
-T bspline_3d_accumulate(const Vector3d &pos, const Kernel &kernel,
-                        const Vector3d &grid_spacing, const Vector3d &offset,
+T bspline_3d_accumulate(Vector3d const &pos, Kernel const &kernel,
+                        Vector3d const &grid_spacing, Vector3d const &offset,
                         T const &init) {
   T value = init;
   bspline_3d<order>(
       pos,
-      [&value, &kernel](const std::array<int, 3> &ind, double w) {
+      [&value, &kernel](std::array<int, 3> const &ind, double w) {
         value += w * kernel(ind);
       },
       grid_spacing, offset);
@@ -92,5 +92,3 @@ T bspline_3d_accumulate(const Vector3d &pos, const Kernel &kernel,
 
 } // namespace Interpolation
 } // namespace Utils
-
-#endif

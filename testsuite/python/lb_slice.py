@@ -172,9 +172,6 @@ class LBTest:
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
     lb_class = espressomd.lb.LBFluidWalberla
     lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": False}
@@ -182,10 +179,23 @@ class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_lattice_class = espressomd.lb.LatticeWalberla
+    lb_params = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_lattice_class = espressomd.lb.LatticeWalberla
+    lb_params = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_lattice_class = espressomd.lb.LatticeWalberla
     lb_params = {"single_precision": True}
 

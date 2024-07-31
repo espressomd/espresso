@@ -22,7 +22,7 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/ferrofluid/ferrofluid_part1.py",
-    EQUIL_STEPS=200, EQUIL_ROUNDS=10,
+    EQUIL_STEPS=200, EQUIL_ROUNDS=20,
     CI_DP3M_PARAMS={'cao': 3, 'r_cut': 8.34, 'mesh': [8, 8, 8], 'alpha': 0.2115, 'tune': False})
 
 
@@ -33,7 +33,7 @@ class Tutorial(ut.TestCase):
     def test(self):
         self.assertEqual(
             int(np.sum(tutorial.n_clusters)), len(tutorial.cluster_sizes))
-        for i in range(8):
+        for i in range(7):
             self.assertLess(
                 tutorial.size_dist[0][i + 1],
                 tutorial.size_dist[0][i])

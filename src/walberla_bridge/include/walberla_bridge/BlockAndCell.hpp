@@ -56,7 +56,7 @@ inline std::optional<BlockAndCell>
 get_block_and_cell(::LatticeWalberla const &lattice,
                    Utils::Vector3i const &node, bool consider_ghost_layers) {
   auto const &blocks = lattice.get_blocks();
-  int n_ghost_layers = 0;
+  auto n_ghost_layers = 0u;
   if (consider_ghost_layers) {
     n_ghost_layers = lattice.get_ghost_layers();
   }

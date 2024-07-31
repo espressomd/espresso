@@ -28,7 +28,6 @@
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
@@ -55,10 +54,10 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     // rebuilding a EKSpeciesNode for each node in the slice
     auto const index = get_value<Utils::Vector3i>(params, "index");
     if (not is_index_valid(index, m_grid_size)) {
-      return ES_ERROR;
+      return 1;
     }
     m_index = index;
-    return ES_OK;
+    return 0;
   }
   if (name == "set_density") {
     auto const dens = get_value<double>(params, "value");

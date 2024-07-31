@@ -31,7 +31,6 @@
 #include "electrostatics/elc.hpp"
 #include "electrostatics/icc.hpp"
 #include "electrostatics/mmm1d.hpp"
-#include "electrostatics/mmm1d_gpu.hpp"
 #include "electrostatics/p3m.hpp"
 #include "electrostatics/p3m_gpu.hpp"
 #include "electrostatics/reaction_field.hpp"
@@ -56,9 +55,6 @@ using ElectrostaticsActor =
                  std::shared_ptr<ElectrostaticLayerCorrection>,
 #endif // P3M
                  std::shared_ptr<CoulombMMM1D>,
-#ifdef MMM1D_GPU
-                 std::shared_ptr<CoulombMMM1DGpu>,
-#endif // MMM1D_GPU
 #ifdef SCAFACOS
                  std::shared_ptr<CoulombScafacos>,
 #endif // SCAFACOS
@@ -98,9 +94,6 @@ template <class T> struct has_pressure : std::true_type {};
 template <>
 struct has_pressure<ElectrostaticLayerCorrection> : std::false_type {};
 #endif // P3M
-#ifdef MMM1D_GPU
-template <> struct has_pressure<CoulombMMM1DGpu> : std::false_type {};
-#endif // MMM1D_GPU
 #ifdef SCAFACOS
 template <> struct has_pressure<CoulombScafacos> : std::false_type {};
 #endif // SCAFACOS

@@ -92,7 +92,8 @@ class MagnetostaticsP3M(ut.TestCase):
         ref_mdlc_torque_metallic = np.copy(partcls.torque_lab)
 
         # solvers should remain in a valid state after a cell system reset
-        self.system.box_l = self.system.box_l
+        self.system.change_volume_and_rescale_particles(
+            self.system.box_l[0], "x")
         self.system.periodicity = self.system.periodicity
         self.system.cell_system.node_grid = self.system.cell_system.node_grid
         self.system.integrator.run(0, recalc_forces=True)

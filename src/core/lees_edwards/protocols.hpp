@@ -30,8 +30,8 @@ namespace LeesEdwards {
 
 /** Lees-Edwards protocol for un-altered periodic boundary conditions */
 struct Off {
-  double shear_velocity(double time) const { return 0.; }
-  double pos_offset(double time) const { return 0.; }
+  double shear_velocity(double) const { return 0.; }
+  double pos_offset(double) const { return 0.; }
 };
 
 /** Lees-Edwards protocol for linear shearing */
@@ -39,9 +39,9 @@ struct LinearShear {
   LinearShear()
       : m_initial_pos_offset{0.}, m_shear_velocity{0.}, m_time_0{0.} {}
   LinearShear(double initial_offset, double shear_velocity, double time_0)
-      : m_initial_pos_offset{initial_offset},
-        m_shear_velocity{shear_velocity}, m_time_0{time_0} {}
-  double shear_velocity(double time) const { return m_shear_velocity; }
+      : m_initial_pos_offset{initial_offset}, m_shear_velocity{shear_velocity},
+        m_time_0{time_0} {}
+  double shear_velocity(double) const { return m_shear_velocity; }
   double pos_offset(double time) const {
     return m_initial_pos_offset + (time - m_time_0) * m_shear_velocity;
   }
@@ -53,18 +53,22 @@ struct LinearShear {
 /** Lees-Edwards protocol for oscillatory shearing */
 struct OscillatoryShear {
   OscillatoryShear()
-      : m_initial_pos_offset{0.}, m_amplitude{0.}, m_omega{0.}, m_time_0{0.}, m_decay_rate{0.} {}
+      : m_initial_pos_offset{0.}, m_amplitude{0.}, m_omega{0.}, m_time_0{0.},
+        m_decay_rate{0.} {}
   OscillatoryShear(double initial_offset, double amplitude, double omega,
-                   double time_0, double decay_rate)
-      : m_initial_pos_offset{initial_offset},
-        m_amplitude{amplitude}, m_omega{omega}, m_time_0{time_0}, m_decay_rate{decay_rate} {}
+                   double time_0)
+      : m_initial_pos_offset{initial_offset}, m_amplitude{amplitude},
+        m_omega{omega}, m_time_0{time_0} {}
   double pos_offset(double time) const {
-    return m_initial_pos_offset +
-           m_amplitude *exp(-(time-m_time_0)*m_decay_rate) * std::sin(m_omega * (time - m_time_0));
+    return m_initial_pos_offset + m_amplitude *
+                                      exp(-(time - m_time_0) * m_decay_rate) *
+                                      std::sin(m_omega * (time - m_time_0));
   }
   double shear_velocity(double time) const {
-    return -m_decay_rate*exp(-(time-m_time_0)*m_decay_rate) * m_amplitude * std::sin(m_omega * (time - m_time_0)) +\
-           exp(-(time-m_time_0)*m_decay_rate)* m_omega *m_amplitude *std::cos(m_omega*(time-m_time_0));
+    return -m_decay_rate * exp(-(time - m_time_0) * m_decay_rate) *
+               m_amplitude * std::sin(m_omega * (time - m_time_0)) +
+           exp(-(time - m_time_0) * m_decay_rate) * m_omega * m_amplitude *
+               std::cos(m_omega * (time - m_time_0));
   }
   double m_initial_pos_offset;
   double m_amplitude;

@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cuda.h>
-
 #include "init.hpp"
 #include "utils.cuh"
 
-#include <utils/constants.hpp>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #include <cstring>
 #include <string>
@@ -47,22 +46,28 @@ int cuda_get_n_gpus() {
   return deviceCount;
 }
 
-int cuda_check_gpu_compute_capability(int dev) {
+bool cuda_check_gpu_compute_capability(int dev) {
   cudaDeviceProp deviceProp;
   CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
-  if (deviceProp.major < computeCapabilityMinMajor ||
-      (deviceProp.major == computeCapabilityMinMajor &&
-       deviceProp.minor < computeCapabilityMinMinor)) {
-    return ES_ERROR;
-  }
-  return ES_OK;
+  return (deviceProp.major < computeCapabilityMinMajor or
+          (deviceProp.major == computeCapabilityMinMajor and
+           deviceProp.minor < computeCapabilityMinMinor));
 }
 
-void cuda_get_gpu_name(int dev, char name[64]) {
+/**
+ * @brief Safely copy the device name and pad the string with null characters.
+ */
+static void cuda_copy_gpu_name(char *const name, cudaDeviceProp const &prop) {
+  char buffer[256] = {'\0'};
+  std::strncpy(buffer, prop.name, 256);
+  name[255] = '\0';
+  std::strncpy(name, buffer, 256);
+}
+
+void cuda_get_gpu_name(int dev, char *const name) {
   cudaDeviceProp deviceProp;
   CUDA_CHECK(cudaGetDeviceProperties(&deviceProp, dev))
-  std::strncpy(name, deviceProp.name, 63);
-  name[63] = 0;
+  cuda_copy_gpu_name(name, deviceProp);
 }
 
 EspressoGpuDevice cuda_get_device_props(const int dev) {
@@ -76,8 +81,7 @@ EspressoGpuDevice cuda_get_device_props(const int dev) {
                            deviceProp.minor,
                            deviceProp.totalGlobalMem,
                            deviceProp.multiProcessorCount};
-  std::strncpy(device.name, deviceProp.name, 64);
-  device.name[63] = '\0';
+  cuda_copy_gpu_name(device.name, deviceProp);
   return device;
 }
 
@@ -93,7 +97,7 @@ int cuda_get_device() {
   return dev;
 }
 
-int cuda_test_device_access() {
+bool cuda_test_device_access() {
   int *d = nullptr;
   int h = 42;
   cudaError_t err;
@@ -113,10 +117,7 @@ int cuda_test_device_access() {
   if (err != cudaSuccess) {
     throw cuda_runtime_error_cuda(err);
   }
-  if (h != 42) {
-    return ES_ERROR;
-  }
-  return ES_OK;
+  return h != 42;
 }
 
 void cuda_check_device() {
@@ -124,9 +125,9 @@ void cuda_check_device() {
     throw cuda_runtime_error("No GPU was found.");
   }
   auto const devID = cuda_get_device();
-  auto const compute_capability = cuda_check_gpu_compute_capability(devID);
-  auto const communication_test = cuda_test_device_access();
-  if (compute_capability != ES_OK or communication_test != ES_OK) {
+  auto const incompatible = cuda_check_gpu_compute_capability(devID);
+  auto const communication_failure = cuda_test_device_access();
+  if (incompatible or communication_failure) {
     throw cuda_runtime_error("CUDA device " + std::to_string(devID) +
                              " is not capable of running ESPResSo.");
   }

@@ -294,7 +294,8 @@ void walberla_agrid_sanity_checks(std::string method,
                       << "left waLBerla: [" << lattice_left << "]"
                       << "\nMPI rank " << ::this_node << ": "
                       << "right ESPResSo: [" << geo_right << "], "
-                      << "right waLBerla: [" << lattice_right << "]";
+                      << "right waLBerla: [" << lattice_right << "]"
+                      << "\nfor method: " << method;
     throw std::runtime_error(
         "waLBerla and ESPResSo disagree about domain decomposition.");
   }
@@ -588,7 +589,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     if (thermostat->lb and
         (propagation.used_propagations & PropagationMode::TRANS_LB_TRACER)) {
       lb_tracers_add_particle_force_to_fluid(*cell_structure, *box_geo,
-                                             *local_geo, lb, time_step);
+                                             *local_geo, lb);
     }
 #endif
     integrator_step_2(particles, propagation, *thermostat, time_step);

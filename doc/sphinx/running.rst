@@ -770,16 +770,16 @@ and long-range forces (FFT summation) contribute equally to the runtime:
 
 .. code-block:: none
 
-    $ CALI_CONFIG_PROFILE=runtime-report ./pypresso ../samples/p3m.py --cpu
-    Path                         Inclusive time Exclusive time    Time %
-    integrate                             14.18           0.01      0.08
-      Integration loop                    13.84           0.43      2.88
-        force_calc                        13.41           0.20      1.35
-          copy_forces_from_GPU             0.01           0.01      0.07
-          short_range_loop                 6.55           6.55     44.02
-          calc_long_range_forces           6.40           6.40     43.00
-          init_forces                      0.24           0.24      1.58
-          copy_particles_to_GPU            0.01           0.01      0.07
+    $ CALI_CONFIG=runtime-report ./pypresso ../samples/p3m.py --cpu
+    Path                          Min time/rank Max time/rank Avg time/rank   Time %
+    integrate                         0.13          0.13          0.13          0.52
+      Integration loop                1.49          1.49          1.49          6.03
+        calculate_forces              1.14          1.14          1.14          4.62
+          copy_particles_to_GPU       0.01          0.01          0.01          0.03
+          init_forces                 0.14          0.14          0.14          0.56
+          calc_long_range_forces      8.78          8.78          8.78         35.66
+          short_range_loop           10.77         10.77         10.77         43.76
+          copy_forces_from_GPU        0.02          0.02          0.02          0.08
 
 For the GPU implementation of the P3M algorithm, the long-range force
 calculation is cheaper, however the transfer of particle data to and from
@@ -787,16 +787,16 @@ the GPU incur additional costs that are not negligible:
 
 .. code-block:: none
 
-    $ CALI_CONFIG_PROFILE=runtime-report ./pypresso ../samples/p3m.py --gpu
-    Path                         Inclusive time Exclusive time    Time %
-    integrate                             14.30           0.03      0.14
-      Integration loop                    13.87           1.76      7.90
-        force_calc                        12.12           0.82      3.68
-          copy_forces_from_GPU             2.09           2.09      9.42
-          short_range_loop                 3.20           3.20     14.38
-          calc_long_range_forces           3.75           3.75     16.87
-          init_forces                      1.25           1.25      5.61
-          copy_particles_to_GPU            1.01           1.01      4.56
+    $ CALI_CONFIG=runtime-report ./pypresso ../samples/p3m.py --gpu
+    Path                          Min time/rank Max time/rank Avg time/rank   Time %
+    integrate                         0.42          0.42          0.42          1.03
+      Integration loop                0.50          0.50          0.50          1.22
+        calculate_forces              0.62          0.62          0.62          1.51
+          copy_particles_to_GPU       0.27          0.27          0.27          0.66
+          init_forces                 0.09          0.09          0.09          0.22
+          calc_long_range_forces      0.60          0.60          0.60          1.46
+          short_range_loop            0.85          0.85          0.85          2.06
+          copy_forces_from_GPU        1.06          1.06          1.06          2.58
 
 For a more fine-grained report on GPU kernels:
 

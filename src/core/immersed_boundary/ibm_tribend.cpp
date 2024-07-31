@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <tuple>
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
@@ -99,7 +100,7 @@ IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
 
   // Compute theta0
   if (flat) {
-    theta0 = 0;
+    theta0 = 0.;
   } else {
     // Get particles
     auto const pos1 = get_ibm_particle_position(ind1);
@@ -121,13 +122,13 @@ IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
     auto const n2 = n2l / n2l.norm();
 
     // calculate theta0 by taking the acos of the scalar n1*n2
-    auto const sc = std::min(1.0, n1 * n2);
+    auto const sc = std::min(1., n1 * n2);
 
     theta0 = acos(sc);
 
     auto const desc = dx1 * vector_product(n1, n2);
-    if (desc < 0)
-      theta0 = 2.0 * Utils::pi() - theta0;
+    if (desc < 0.)
+      theta0 = 2. * std::numbers::pi - theta0;
   }
 
   // NOTE: This is the bare bending modulus used by the program.

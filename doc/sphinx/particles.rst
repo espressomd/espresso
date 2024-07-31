@@ -289,7 +289,6 @@ and :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE`.
    particles you create::
 
        import espressomd
-
        system = espressomd.System(box_l=[10., 10., 10.])
        p1 = system.part.add(pos=[1., 2., 3.])
 
@@ -301,7 +300,9 @@ and :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE`.
        p2.vs_auto_relate_to(p1)
 
    The :meth:`~espressomd.particle_data.ParticleHandle.is_virtual`
-   method on particle ``p2`` will now return ``True``.
+   method of particle ``p2`` will now return ``True``, and its
+   :attr:`~espressomd.particle_data.ParticleHandle.propagation`
+   attribute will return the correct combination of flags.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -317,7 +318,8 @@ Please note:
    virtual site in the non-virtual particles body-fixed frame. This
    information is saved in the virtual site's
    :attr:`~espressomd.particle_data.ParticleHandle.vs_relative` attribute.
-   Take care, not to overwrite it after using ``vs_auto_relate``.
+   Take care, not to overwrite it after using
+   :meth:`~espressomd.particle_data.ParticleHandle.vs_auto_relate_to`.
 
 -  Virtual sites can not be placed relative to other virtual sites, as
    the order in which the positions of virtual sites are updated is not
@@ -326,7 +328,7 @@ Please note:
 
 -  In case you know the correct quaternions, you can also setup a virtual
    site using its :attr:`~espressomd.particle_data.ParticleHandle.vs_relative`
-   and :attr:`~espressomd.particle_data.ParticleHandle.virtual` attributes.
+   and :attr:`~espressomd.particle_data.ParticleHandle.propagation` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
@@ -346,6 +348,14 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the scalar pressure and pressure tensor.
 
+-  The :meth:`~espressomd.particle_data.ParticleHandle.vs_auto_relate_to`
+   has additional keyword arguments for controlling whether the virtual site
+   should be coupled to a lattice-Boltzmann fluid (``couple_to_lb=True``) or
+   to the Langevin thermostat (``couple_to_langevin=True``), or both
+   (in that case LB is used for translation and Langevin for rotation);
+   this is achieved internally by adding extra propagation flags.
+
+
 .. _Inertialess lattice-Boltzmann tracers:
 
 Inertialess lattice-Boltzmann tracers
@@ -354,12 +364,91 @@ Inertialess lattice-Boltzmann tracers
 Using the propagation mode :attr:`~espressomd.propagation.Propagation.TRANS_LB_TRACER`,
 the virtual sites follow the motion of a LB fluid. This is achieved by integrating
 their position using the fluid velocity at the virtual sites' position.
-Forces acting on the virtual sites are directly transferred as force density
+Forces acting on the virtual sites are directly transferred as a force density
 onto the lattice-Boltzmann fluid, making the coupling free of inertia.
 Please note that the velocity attribute of the virtual particles
 does not carry valid information for this virtual sites scheme.
 The feature stems from the implementation of the
 :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
+
+In the following example, a particle is advected by a fluid flowing along the x-axis::
+
+    import espressomd
+    import espressomd.lb
+    import espressomd.propagation
+    Propagation = espressomd.propagation.Propagation
+    system = espressomd.System(box_l=[8., 8., 8.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1., tau=0.01, density=1.,
+                                        kinematic_viscosity=1.)
+    system.lb = lbf
+    system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+    lbf[:, :, :].velocity = [0.1, 0., 0.]
+    p = system.part.add(pos=[0., 0., 0.], propagation=Propagation.TRANS_LB_TRACER)
+    system.integrator.run(10)
+    print(p.pos.round(3))
+
+
+.. _Per-particle propagation:
+
+Per-particle propagation
+------------------------
+
+Particle positions, quaternions, velocities and angular velocities are integrated
+according to the main integrator, which may be coupled to a thermostat and a barostat
+(see :ref:`Particle integration and propagation` for more details).
+The default integrator is the :ref:`Velocity Verlet algorithm`.
+
+Which equations of motion are being used can be controlled on a per-particle level.
+This is achieved by setting the particle
+:attr:`~espressomd.particle_data.ParticleHandle.propagation` attribute with a
+combination of propagation flags from :class:`~espressomd.propagation.Propagation`.
+
+Depending on which main integrator is selected, different "secondary" integrators
+become available. The velocity Verlet integrator is available as a secondary
+integrator, using flags :class:`~espressomd.propagation.Propagation.TRANS_NEWTON`
+for translation following Newton's equations of motion and
+:class:`~espressomd.propagation.Propagation.ROT_EULER` for rotation
+following Euler's equations of rotation; in this way, selected particles
+can be decoupled from a thermostat.
+:ref:`Virtual sites` also rely on secondary integrators, such as
+:class:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE` and
+:class:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE` for
+:ref:`Rigid arrangements of particles` or
+:class:`~espressomd.propagation.Propagation.TRANS_LB_TRACER` for
+:ref:`Inertialess lattice-Boltzmann tracers`.
+
+In the following example, particle 1 follows Langevin dynamics (NVT ensemble),
+while particle 2 follows Newtonian dynamics (NVE ensemble)::
+
+    import espressomd
+    import espressomd.propagation
+    Propagation = espressomd.propagation.Propagation
+    system = espressomd.System(box_l=[8., 8., 8.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.
+    system.thermostat.set_langevin(kT=0.001, gamma=2., seed=42)
+    p1 = system.part.add(pos=[0., 0., 0.], v=[1., 0., 0.],
+                         omega_lab=[1., 0., 0.], rotation=[True, True, True])
+    p2 = system.part.add(pos=[0., 0., 0.], v=[1., 0., 0.],
+                         omega_lab=[1., 0., 0.], rotation=[True, True, True])
+    p1.propagation = Propagation.TRANS_LANGEVIN | Propagation.ROT_LANGEVIN
+    p2.propagation = Propagation.TRANS_NEWTON | Propagation.ROT_EULER
+    system.integrator.run(1)
+
+Not all combinations of propagation flags are allowed!
+
+The friction coefficient of thermostats can be controlled on a per-particle level too.
+Values stored in particle attributes :attr:`~espressomd.particle_data.ParticleHandle.gamma`
+and :attr:`~espressomd.particle_data.ParticleHandle.gamma_rot` will override
+the friction coefficients of most thermostats.
+Requires feature ``THERMOSTAT_PER_PARTICLE``.
+This is used for example to model
+:ref:`particle polarizability with thermalized cold Drude oscillators`.
+These attributes can also be defined as 3D vectors to model particle anisotropy.
+Requires feature ``PARTICLE_ANISOTROPY``.
+
 
 .. _Interacting with groups of particles:
 

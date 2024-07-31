@@ -17,12 +17,13 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2,
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 4d10e7f2358fc4a4f7e99195d0f67f0b759ecb6f
+// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 #pragma once
 #include "core/DataTypes.h"
+#include "core/logging/Logging.h"
 
 #include "domain_decomposition/BlockDataID.h"
 #include "domain_decomposition/IBlock.h"
@@ -51,16 +52,16 @@ namespace pystencils {
 
 class CollideSweepDoublePrecisionThermalizedAVX {
 public:
-  CollideSweepDoublePrecisionThermalizedAVX(
-      BlockDataID forceID_, BlockDataID pdfsID_, uint32_t block_offset_0,
-      uint32_t block_offset_1, uint32_t block_offset_2, double kT,
-      double omega_bulk, double omega_even, double omega_odd,
-      double omega_shear, uint32_t seed, uint32_t time_step)
-      : forceID(forceID_), pdfsID(pdfsID_), block_offset_0_(block_offset_0),
-        block_offset_1_(block_offset_1), block_offset_2_(block_offset_2),
-        kT_(kT), omega_bulk_(omega_bulk), omega_even_(omega_even),
-        omega_odd_(omega_odd), omega_shear_(omega_shear), seed_(seed),
-        time_step_(time_step){};
+  CollideSweepDoublePrecisionThermalizedAVX(BlockDataID forceID_,
+                                            BlockDataID pdfsID_, double kT,
+                                            double omega_bulk,
+                                            double omega_even, double omega_odd,
+                                            double omega_shear, uint32_t seed,
+                                            uint32_t time_step)
+      : forceID(forceID_), pdfsID(pdfsID_), kT_(kT), omega_bulk_(omega_bulk),
+        omega_even_(omega_even), omega_odd_(omega_odd),
+        omega_shear_(omega_shear), seed_(seed), time_step_(time_step),
+        configured_(false){};
 
   void run(IBlock *block);
 
@@ -97,6 +98,15 @@ public:
     };
   }
 
+  void configure(const shared_ptr<StructuredBlockStorage> &blocks,
+                 IBlock *block) {
+    Cell BlockCellBB = blocks->getBlockCellBB(*block).min();
+    block_offset_0_ = uint32_t(BlockCellBB[0]);
+    block_offset_1_ = uint32_t(BlockCellBB[1]);
+    block_offset_2_ = uint32_t(BlockCellBB[2]);
+    configured_ = true;
+  }
+
   BlockDataID forceID;
   BlockDataID pdfsID;
   uint32_t block_offset_0_;
@@ -109,9 +119,7 @@ public:
   double omega_shear_;
   uint32_t seed_;
   uint32_t time_step_;
-  std::function<void(IBlock *, uint32_t &, uint32_t &, uint32_t &)>
-      block_offset_generator =
-          [](IBlock *const, uint32_t &, uint32_t &, uint32_t &) {};
+  bool configured_;
 };
 
 } // namespace pystencils

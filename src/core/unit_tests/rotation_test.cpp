@@ -30,11 +30,11 @@
 #include "rotation.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/quaternion.hpp>
 
 #include <initializer_list>
 #include <limits>
+#include <numbers>
 #include <stdexcept>
 #include <tuple>
 
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(rotate_particle_body_test) {
   {
     // an angle of pi around the z-axis flips the quaternion sequence
     p.set_can_rotate_all_axes();
-    auto const phi = Utils::pi<double>();
+    auto const phi = std::numbers::pi;
     auto const quat = local_rotate_particle_body(p, {0., 0., 1.}, phi);
     auto const quat_ref = Utils::Vector4d{{-4., 3., -2., 1.}};
     for (unsigned int i : {0u, 1u, 2u, 3u}) {
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(rotate_particle_body_test) {
   {
     // an angle of 2 pi around the z-axis flips the quaternion sign
     p.set_can_rotate_all_axes();
-    auto const phi = 2. * Utils::pi<double>();
+    auto const phi = 2. * std::numbers::pi;
     auto const quat = local_rotate_particle_body(p, {0., 0., 1.}, phi);
     auto const quat_ref = Utils::Vector4d{{-1., -2., -3., -4.}};
     for (unsigned int i : {0u, 1u, 2u, 3u}) {
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(propagate_omega_quat_particle_test) {
 }
 
 BOOST_AUTO_TEST_CASE(convert_operator_body_to_space_test) {
-  auto constexpr sqrt_2_half = Utils::sqrt_2() / 2.0;
+  auto constexpr sqrt_2_half = std::numbers::sqrt2 / 2.0;
   // rotation around y-axis by pi/2
   Utils::Quaternion<double> const quat = {sqrt_2_half, 0.0, sqrt_2_half, 0.0};
   // rotation around z-axis by pi/4

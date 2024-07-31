@@ -117,7 +117,7 @@ struct elc_data {
 
   /// pairwise contributions from the lowest and top layers
   template <typename Kernel>
-  void dielectric_layers_contribution(CoulombP3M const &p3m,
+  void dielectric_layers_contribution(CoulombP3M const &,
                                       BoxGeometry const &box_geo,
                                       Utils::Vector3d const &pos1,
                                       Utils::Vector3d const &pos2, double q1q2,

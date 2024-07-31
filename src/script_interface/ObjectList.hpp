@@ -98,8 +98,7 @@ public:
       throw Exception("");
     }
     remove_in_core(element);
-    m_elements.erase(std::remove(m_elements.begin(), m_elements.end(), element),
-                     m_elements.end());
+    std::erase(m_elements, element);
   }
 
   /**

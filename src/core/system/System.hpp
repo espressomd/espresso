@@ -196,7 +196,7 @@ public:
   /** @brief Calculate initial particle forces from active thermostats. */
   void thermostat_force_init();
   /** @brief Calculate particle-lattice interactions. */
-  void lb_couple_particles(double time_step);
+  void lb_couple_particles();
 
   /** \name Hook procedures
    *  These procedures are called if several significant changes to
@@ -241,6 +241,7 @@ public:
    *  initialized immediately (P3M etc.).
    */
   void on_observable_calc();
+  void veto_boxl_change(bool skip_particle_checks = false) const;
   /**@}*/
 
   /**

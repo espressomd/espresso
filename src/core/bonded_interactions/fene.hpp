@@ -31,9 +31,8 @@
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cmath>
+#include <optional>
 
 /** Parameters for FENE bond Potential. */
 struct FeneBond {
@@ -61,25 +60,25 @@ struct FeneBond {
     this->drmax2i = 1. / this->drmax2;
   }
 
-  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(Utils::Vector3d const &dx) const;
+  std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  std::optional<double> energy(Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &k;
-    ar &drmax;
-    ar &r0;
-    ar &drmax2;
-    ar &drmax2i;
+    ar & k;
+    ar & drmax;
+    ar & r0;
+    ar & drmax2;
+    ar & drmax2i;
   }
 };
 
 /** Compute the FENE bond force.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 FeneBond::force(Utils::Vector3d const &dx) const {
   auto const len = dx.norm();
   auto const dr = len - r0;
@@ -104,8 +103,7 @@ FeneBond::force(Utils::Vector3d const &dx) const {
 /** Compute the FENE bond energy.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
-FeneBond::energy(Utils::Vector3d const &dx) const {
+inline std::optional<double> FeneBond::energy(Utils::Vector3d const &dx) const {
   /* compute bond stretching (r-r0) */
   double const dr = dx.norm() - r0;
 

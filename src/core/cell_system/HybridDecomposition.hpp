@@ -32,15 +32,15 @@
 #include "Particle.hpp"
 #include "ghosts.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
-#include <boost/optional.hpp>
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <set>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -100,13 +100,8 @@ public:
     return m_collect_ghost_force_comm;
   }
 
-  Utils::Span<Cell *const> local_cells() const override {
-    return Utils::make_span(m_local_cells);
-  }
-
-  Utils::Span<Cell *const> ghost_cells() const override {
-    return Utils::make_span(m_ghost_cells);
-  }
+  std::span<Cell *const> local_cells() const override { return m_local_cells; }
+  std::span<Cell *const> ghost_cells() const override { return m_ghost_cells; }
 
   Cell *particle_to_cell(Particle const &p) override {
     if (is_n_square_type(p.type())) {
@@ -125,9 +120,10 @@ public:
   Utils::Vector3d max_cutoff() const override {
     return m_n_square.max_cutoff();
   }
+
   Utils::Vector3d max_range() const override { return m_n_square.max_range(); }
 
-  boost::optional<BoxGeometry> minimum_image_distance() const override {
+  std::optional<BoxGeometry> minimum_image_distance() const override {
     return m_box;
   }
 

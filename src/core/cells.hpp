@@ -59,8 +59,7 @@
 
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
-
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -85,7 +84,7 @@ get_pairs_of_types(System::System const &system, double distance,
  * @brief Get ids of particles that are within a certain distance
  * of another particle.
  */
-boost::optional<std::vector<int>>
+std::optional<std::vector<int>>
 get_short_range_neighbors(System::System const &system, int pid,
                           double distance);
 
@@ -102,8 +101,8 @@ namespace boost {
 namespace serialization {
 template <class Archive>
 void serialize(Archive &ar, NeighborPIDs &n, unsigned int const /* version */) {
-  ar &n.pid;
-  ar &n.neighbor_pids;
+  ar & n.pid;
+  ar & n.neighbor_pids;
 }
 } // namespace serialization
 } // namespace boost
@@ -132,12 +131,12 @@ namespace boost {
 namespace serialization {
 template <class Archive>
 void serialize(Archive &ar, PairInfo &p, unsigned int const /* version */) {
-  ar &p.id1;
-  ar &p.id2;
-  ar &p.pos1;
-  ar &p.pos2;
-  ar &p.vec21;
-  ar &p.node;
+  ar & p.id1;
+  ar & p.id2;
+  ar & p.pos1;
+  ar & p.pos2;
+  ar & p.vec21;
+  ar & p.node;
 }
 } // namespace serialization
 } // namespace boost

@@ -62,10 +62,10 @@ BOOST_AUTO_TEST_CASE(rasterize_function) {
     auto const agrid = 1.0;
 
     auto const raster = shape.rasterize({5, 5, 5}, agrid, 0.5);
-    for (int i = 0; i < 25; ++i) {
+    for (auto i = 0u; i < 25u; ++i) {
       BOOST_REQUIRE_EQUAL(raster[i], 1);
     }
-    for (int i = 25; i < 125; ++i) {
+    for (auto i = 25u; i < 125u; ++i) {
       BOOST_REQUIRE_EQUAL(raster[i], 0);
     }
   }
@@ -77,10 +77,10 @@ BOOST_AUTO_TEST_CASE(rasterize_function) {
     auto const agrid = 1.0;
 
     auto const raster = shape.rasterize({5, 5, 5}, agrid, 0.5);
-    for (int i = 0; i < 25; ++i) {
+    for (auto i = 0u; i < 25u; ++i) {
       BOOST_REQUIRE_EQUAL(raster[i], 1);
     }
-    for (int i = 25; i < 125; ++i) {
+    for (auto i = 25u; i < 125u; ++i) {
       BOOST_REQUIRE_EQUAL(raster[i], 0);
     }
   }
@@ -92,10 +92,10 @@ BOOST_AUTO_TEST_CASE(rasterize_function) {
     auto const agrid = 1.0;
 
     auto const raster = shape.rasterize({5, 5, 5}, agrid, 0.5);
-    for (int i = 0; i < 2 * 25; ++i) {
+    for (auto i = 0u; i < 2u * 25u; ++i) {
       BOOST_REQUIRE_EQUAL(raster[i], 1);
     }
-    for (int i = 2 * 25; i < 125; ++i) {
+    for (auto i = 2u * 25u; i < 125u; ++i) {
       BOOST_REQUIRE_EQUAL(raster[i], 0);
     }
   }

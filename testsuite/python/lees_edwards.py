@@ -27,16 +27,18 @@ import tests_common
 import numpy as np
 import itertools
 
-def deriv(f,x,h=1E-5):
-   # central difference quotient
-   return 1/(2*h) *(f(x+h) -f(x-h))
+
+def deriv(f, x, h=1E-5):
+    # central difference quotient
+    return 1 / (2 * h) * (f(x + h) - f(x - h))
+
 
 np.random.seed(42)
 params_lin = {'initial_pos_offset': 0.1, 'time_0': 0.1, 'shear_velocity': 1.2}
 params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
-              'omega': 2.51,"decay_rate":0}
+              'omega': 2.51, "decay_rate": 0}
 params_osc_decay = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
-              'omega': 2.51,"decay_rate":0.1}
+                    'omega': 2.51, "decay_rate": 0.1}
 
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
 
@@ -47,8 +49,11 @@ def get_lin_pos_offset(time, initial_pos_offset=None,
 
 
 osc_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc)
-osc_decay_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc_decay)
+osc_decay_protocol = espressomd.lees_edwards.OscillatoryShear(
+    **params_osc_decay)
 off_protocol = espressomd.lees_edwards.Off()
+const_offset_protocol = espressomd.lees_edwards.LinearShear(
+    initial_pos_offset=2.2, shear_velocity=0)
 
 
 def axis(coord):
@@ -60,21 +65,27 @@ def axis(coord):
 
 
 class LeesEdwards(ut.TestCase):
+    box_l = [5, 5, 5]
+    system = espressomd.System(box_l=box_l)
+    node_grid = np.copy(system.cell_system.node_grid)
+    n_nodes = np.prod(node_grid)
 
-    system = espressomd.System(box_l=[5.0, 5.0, 5.0])
-    system.cell_system.skin = 0.0
-    system.cell_system.set_n_square(use_verlet_lists=True)
-
-    time_step = 0.5
-    system.time_step = time_step
     direction_permutations = list(itertools.permutations(["x", "y", "z"], 2))
 
     def setUp(self):
-        self.system.time = 0.0
+        system = self.system
+        system.box_l = self.box_l
+        system.cell_system.skin = 0.
+        system.cell_system.set_n_square(use_verlet_lists=True)
+        system.time = 0.0
+        system.time_step = 0.5
+        system.min_global_cut = 0.
+        system.cell_system.node_grid = self.node_grid
 
     def tearDown(self):
         system = self.system
         system.part.clear()
+        system.bonded_inter.clear()
         system.lees_edwards.protocol = None
         if espressomd.has_features("COLLISION_DETECTION"):
             system.collision_detection.set_params(mode="off")
@@ -134,7 +145,6 @@ class LeesEdwards(ut.TestCase):
             self.assertAlmostEqual(
                 system.lees_edwards.pos_offset, expected_pos)
 
-
         system.time = 0.0
 
         # Check that time change during integration updates offsets
@@ -157,31 +167,30 @@ class LeesEdwards(ut.TestCase):
             shear_direction="y", shear_plane_normal="z", protocol=lin_protocol)
         self.assertEqual(system.lees_edwards.shear_direction, "y")
         self.assertEqual(system.lees_edwards.shear_plane_normal, "z")
-        
+
         # Oscillatory shear
         # Oscillatory shear with exponential decay
         system.lees_edwards.protocol = osc_decay_protocol
 
         # check parameter setter/getter consistency
-        self.assertEqual(system.lees_edwards.protocol.get_params(), params_osc_decay)
-        osc_decay_pos = lambda t: params_osc_decay["initial_pos_offset"] +\
-            params_osc_decay["amplitude"]*np.exp(-(t-params_osc_decay["time_0"]) *params_osc_decay["decay_rate"]) *\
-                np.sin(params_osc_decay["omega"]*(t-params_osc_decay["time_0"]))
+        self.assertEqual(
+            system.lees_edwards.protocol.get_params(), params_osc_decay)
 
+        def osc_decay_pos(t): return params_osc_decay["initial_pos_offset"] +\
+            params_osc_decay["amplitude"] * np.exp(-(t - params_osc_decay["time_0"]) * params_osc_decay["decay_rate"]) *\
+            np.sin(params_osc_decay["omega"] *
+                   (t - params_osc_decay["time_0"]))
 
         # check pos offset and shear velocity at different times,
         # check that LE offsets are recalculated on simulation time change
         for time in [0., 2.3]:
             system.time = time
             expected_pos = osc_decay_pos(time)
-            expected_vel = deriv(osc_decay_pos,time)
+            expected_vel = deriv(osc_decay_pos, time)
             self.assertAlmostEqual(
                 system.lees_edwards.pos_offset, expected_pos)
             self.assertAlmostEqual(
                 system.lees_edwards.shear_velocity, expected_vel)
-
-
-
 
         # Check that LE is disabled correctly via parameter
         system.lees_edwards.protocol = None
@@ -221,6 +230,21 @@ class LeesEdwards(ut.TestCase):
                 system.lees_edwards.set_boundary_conditions(
                     shear_direction=valid, shear_plane_normal=valid,
                     protocol=lin_protocol)
+
+        with self.assertRaisesRegex(ValueError, "fully_connected_boundary normal and connection coordinates need to differ"):
+            system.cell_system.set_regular_decomposition(
+                fully_connected_boundary={"boundary": "z", "direction": "z"})
+        self.assertEqual(system.cell_system.decomposition_type, "n_square")
+        with self.assertRaisesRegex(ValueError, "Invalid Cartesian coordinate: 't'"):
+            system.cell_system.set_regular_decomposition(
+                fully_connected_boundary={"boundary": "z", "direction": "t"})
+        self.assertEqual(system.cell_system.decomposition_type, "n_square")
+        if self.n_nodes > 1:
+            with self.assertRaisesRegex(RuntimeError, "The MPI nodegrid must be 1 in the fully connected direction"):
+                system.cell_system.node_grid = [1, self.n_nodes, 1]
+                system.cell_system.set_regular_decomposition(
+                    fully_connected_boundary={"boundary": "z", "direction": "y"})
+            self.assertEqual(system.cell_system.decomposition_type, "n_square")
 
     def test_boundary_crossing_lin(self):
         """
@@ -331,13 +355,13 @@ class LeesEdwards(ut.TestCase):
         crossing_time = system.time
         system.integrator.run(1)
         np.testing.assert_almost_equal(
-            p.lees_edwards_offset, 
+            p.lees_edwards_offset,
             get_lin_pos_offset(crossing_time, **params_lin))
         np.testing.assert_almost_equal(p.lees_edwards_flag, -1)
 
         system.integrator.run(1)  # no boundary crossing
         np.testing.assert_almost_equal(
-            p.lees_edwards_offset, 
+            p.lees_edwards_offset,
             get_lin_pos_offset(crossing_time, **params_lin))
 
         np.testing.assert_almost_equal(p.lees_edwards_flag, 0)
@@ -516,6 +540,7 @@ class LeesEdwards(ut.TestCase):
             shear_velocity=2.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
+        system.min_global_cut = 2.5
         p1 = system.part.add(pos=[2.5, 2.5, 2.5], type=10,
                              rotation=3 * (True,), v=(0.0, -0.1, -0.25))
         p2 = system.part.add(pos=(2.5, 3.5, 2.5), type=11)
@@ -565,6 +590,42 @@ class LeesEdwards(ut.TestCase):
         system.non_bonded_inter[11, 11].dpd.set_params(
             weight_function=0, gamma=0, r_cut=0,
             trans_weight_function=0, trans_gamma=0, trans_r_cut=0)
+
+    @utx.skipIfMissingFeatures(
+        ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE"])
+    def test__virt_sites_rotation(self):
+        """
+        A particle with virtual sites is placed on the boundary. We check if
+        the forces yield the correct torque and if a rotation frequency is
+        transmitted back to the virtual sites.
+        """
+
+        system = self.system
+        system.part.clear()
+        system.min_global_cut = 2.5
+
+        system.lees_edwards.set_boundary_conditions(
+            shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
+
+        p1 = system.part.add(
+            id=0, pos=[2.5, 5.0, 2.5], rotation=[True] * 3)
+
+        p2 = system.part.add(pos=(2.5, 6.0, 2.5), ext_force=(1.0, 0., 0.))
+        p2.vs_auto_relate_to(0)
+        p3 = system.part.add(pos=(2.5, 4.0, 2.5), ext_force=(-1.0, 0., 0.))
+        p3.vs_auto_relate_to(0)
+
+        system.integrator.run(0, recalc_forces=True)
+
+        np.testing.assert_array_almost_equal(
+            np.copy(p1.torque_lab), [0.0, 0.0, -2.0])
+
+        p1.omega_lab = (0., 0., 2.5)
+        system.integrator.run(0, recalc_forces=True)
+        for vs in p2, p3:
+            np.testing.assert_array_almost_equal(
+                system.velocity_difference(p1, vs),
+                np.cross(p1.omega_lab, system.distance_vec(p1, vs)))
 
     @utx.skipIfMissingFeatures(
         ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
@@ -716,64 +777,93 @@ class LeesEdwards(ut.TestCase):
             bond_list += p.bonds
         np.testing.assert_array_equal(len(bond_list), 0)
 
-    def setup_lj_liquid(self):
-        system = self.system
-        system.cell_system.set_n_square(use_verlet_lists=False)
-        # Parameters
-        n = 100
-        phi = 0.4
-        sigma = 1.
-        eps = 1
-        cut = sigma * 2**(1 / 6)
+    const_offset_params = {
+        'shear_velocity': 0.0,
+        'shear_direction': 0,
+        'shear_plane_normal': 1,
+        'initial_pos_offset': 17.2}
 
-        # box
-        l = (n / 6. * np.pi * sigma**3 / phi)**(1. / 3.)
-
-        # Setup
-        system.box_l = [l, l, l]
-        system.lees_edwards.protocol = None
-
-        system.time_step = 0.01
-        system.thermostat.turn_off()
-
-        np.random.seed(42)
-        system.part.add(pos=np.random.random((n, 3)) * l)
-
-        # interactions
-        system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=eps, sigma=sigma, cutoff=cut, shift="auto")
-        # Remove overlap
-        system.integrator.set_steepest_descent(
-            f_max=0, gamma=0.05, max_displacement=0.05)
-        while system.analysis.energy()["total"] > 0.5 * n:
-            system.integrator.run(5)
-
-        system.integrator.set_vv()
+    shear_params = {
+        'shear_velocity': 0.1,
+        'shear_direction': 0,
+        'shear_plane_normal': 2,
+        'initial_pos_offset': -np.sqrt(0.1)}
 
     @utx.skipIfMissingFeatures("LENNARD_JONES")
-    def test_zz_lj(self):
+    def run_lj_pair_visibility(self, shear_direction, shear_plane_normal):
         """
-        Simulate an LJ liquid under linear shear and verify forces.
+        Simulate LJ particles coming into contact under linear shear and verify forces.
         This is to make sure that no pairs get lost or are outdated
-        in the short range loop. To have deterministic forces, velocity
-        capping is used rather than a thermostat.
+        in the short range loop.
         """
+        shear_axis, normal_axis = axis(
+            shear_direction), axis(shear_plane_normal)
         system = self.system
-        self.setup_lj_liquid()
+        system.part.clear()
+        system.time = 0
+        system.time_step = 0.1
         protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=0.3, initial_pos_offset=0.01)
+            shear_velocity=3, initial_pos_offset=5)
         system.lees_edwards.set_boundary_conditions(
-            shear_direction="z", shear_plane_normal="x", protocol=protocol)
-        system.integrator.run(1, recalc_forces=True)
-        tests_common.check_non_bonded_loop_trace(self, system)
+            shear_direction=shear_direction, shear_plane_normal=shear_plane_normal, protocol=protocol)
+        system.cell_system.skin = 0.2
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1E-6, sigma=1, cutoff=1.2, shift="auto")
+        system.part.add(
+            pos=(0.1 * normal_axis, -0.8 * normal_axis),
+            v=(1.0 * shear_axis, -0.3 * shear_axis))
+        assert np.all(system.part.all().f == 0.)
+        tests_common.check_non_bonded_loop_trace(
+            self, system, cutoff=system.non_bonded_inter[0, 0].lennard_jones.get_params()["cutoff"] + system.cell_system.skin)
 
         # Rewind the clock to get back the LE offset applied during force calc
         system.time = system.time - system.time_step
         tests_common.verify_lj_forces(system, 1E-7)
+        have_interacted = False
+        for _ in range(50):
+            system.integrator.run(3)
+            if np.any(np.abs(system.part.all().f) > 0):
+                have_interacted = True
+            tests_common.check_non_bonded_loop_trace(
+                self, system, cutoff=system.non_bonded_inter[0, 0].lennard_jones.get_params()["cutoff"] + system.cell_system.skin)
+            system.time = system.time - system.time_step
+            tests_common.verify_lj_forces(system, 1E-7)
+        assert have_interacted
 
-        system.thermostat.set_langevin(kT=.1, gamma=5, seed=2)
-        system.integrator.run(50)
-        tests_common.check_non_bonded_loop_trace(self, system)
+    def test_zz_lj_pair_visibility(self):
+        # check that regular decomposition without fully connected doesn't
+        # catch the particle
+        system = self.system
+        system.box_l = [10, 10, 10]
+        with self.assertRaises(AssertionError):
+            system.cell_system.set_regular_decomposition(
+                fully_connected_boundary=None)
+            self.assertIsNone(system.cell_system.fully_connected_boundary)
+            system.cell_system.node_grid = [1, self.n_nodes, 1]
+            self.run_lj_pair_visibility("x", "y")
+
+        for verlet in (False, True):
+            for shear_direction, shear_plane_normal in self.direction_permutations:
+                system.cell_system.set_n_square(use_verlet_lists=verlet)
+                self.run_lj_pair_visibility(
+                    shear_direction, shear_plane_normal)
+
+        for verlet in (False, True):
+            for shear_direction, shear_plane_normal in self.direction_permutations:
+                system.cell_system.set_regular_decomposition(
+                    fully_connected_boundary=None)
+                normal_axis = axis(shear_plane_normal)
+                system.cell_system.node_grid = [
+                    self.n_nodes if normal_axis[i] == 1 else 1 for i in range(3)]
+                fully_connected_boundary = {"boundary": shear_plane_normal,
+                                            "direction": shear_direction}
+                system.cell_system.set_regular_decomposition(
+                    use_verlet_lists=verlet,
+                    fully_connected_boundary=fully_connected_boundary)
+                self.assertEqual(system.cell_system.fully_connected_boundary,
+                                 fully_connected_boundary)
+                self.run_lj_pair_visibility(
+                    shear_direction, shear_plane_normal)
 
 
 if __name__ == "__main__":

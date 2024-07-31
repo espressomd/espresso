@@ -415,9 +415,11 @@ void File::write(const ParticleRange &particles, double time, int step,
         [&](auto const &p) { return box_geo.folded_position(p.pos()); });
   }
   if (m_fields & H5MD_OUT_IMG) {
-    write_td_particle_property<3>(prefix, n_part_global, particles,
-                                  datasets["particles/atoms/image/value"],
-                                  [](auto const &p) { return p.image_box(); });
+    write_td_particle_property<3>(
+        prefix, n_part_global, particles,
+        datasets["particles/atoms/image/value"], [&](auto const &p) {
+          return box_geo.folded_image_box(p.pos(), p.image_box());
+        });
   }
   if (m_fields & H5MD_OUT_VEL) {
     write_td_particle_property<3>(prefix, n_part_global, particles,
@@ -446,7 +448,7 @@ void File::write_connectivity(const ParticleRange &particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     for (auto const b : p.bonds()) {
       auto const partner_ids = b.partner_ids();
-      if (partner_ids.size() == 1) {
+      if (partner_ids.size() == 1u) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
         bond[0][nbonds_local][0] = p.id();
         bond[0][nbonds_local][1] = partner_ids[0];

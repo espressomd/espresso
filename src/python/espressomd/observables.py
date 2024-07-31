@@ -28,7 +28,7 @@ class Observable(ScriptInterfaceHelper):
     Methods
     -------
     shape()
-        Return the shape of the observable.
+        Get the shape of the numpy array returned by the observable.
     """
     _so_name = "Observables::Observable"
     _so_bind_methods = ("shape",)
@@ -96,9 +96,14 @@ class ComPosition(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (3,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ComPosition"
@@ -118,9 +123,14 @@ class ComVelocity(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (3,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ComVelocity"
@@ -154,9 +164,14 @@ class DensityProfile(ProfileObservable):
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (3,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_x_bins``, ``n_y_bins``, ``n_z_bins``) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::DensityProfile"
@@ -165,7 +180,7 @@ class DensityProfile(ProfileObservable):
 @script_interface_register
 class DipoleMoment(Observable):
 
-    """Calculates the dipole moment for particles with given ids.
+    """Calculates the electric dipole moment for particles with given ids.
 
     Output format: :math:`\\left(\\sum_i q_i r^x_i, \\sum_i q_i r^y_i, \\sum_i q_i r^z_i\\right)`
 
@@ -174,9 +189,14 @@ class DipoleMoment(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (3,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::DipoleMoment"
@@ -210,11 +230,16 @@ class FluxDensityProfile(ProfileObservable):
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the x, y and z
-        components of the flux density.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the x,
+            y and z components of the flux density, respectively.
 
     """
     _so_name = "Observables::FluxDensityProfile"
@@ -248,11 +273,16 @@ class ForceDensityProfile(ProfileObservable):
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the x, y and z
-        components of the force.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the x,
+            y and z components of the force, respectively.
 
     """
     _so_name = "Observables::ForceDensityProfile"
@@ -302,11 +332,16 @@ class LBVelocityProfile(ProfileObservable):
     allow_empty_bins : :obj:`bool`, default=False
         Whether or not to allow bins that will not be sampled at all.
 
-    Returns
+    Methods
     -------
-    (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the x, y and z
-        components of the LB velocity.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the x,
+            y and z components of the LB velocity, respectively.
 
     """
     _so_name = "Observables::LBVelocityProfile"
@@ -321,9 +356,14 @@ class LBFluidPressureTensor(Observable):
     ----------
     None
 
-    Returns
+    Methods
     -------
-    (3, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::LBFluidPressureTensor"
@@ -341,9 +381,14 @@ class MagneticDipoleMoment(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (3,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::MagneticDipoleMoment"
@@ -363,9 +408,14 @@ class ParticleAngularVelocities(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleAngularVelocities"
@@ -388,9 +438,14 @@ class ParticleBodyAngularVelocities(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleBodyAngularVelocities"
@@ -413,9 +468,14 @@ class ParticleBodyVelocities(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleBodyVelocities"
@@ -435,9 +495,14 @@ class ParticleForces(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleForces"
@@ -457,9 +522,14 @@ class ParticlePositions(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticlePositions"
@@ -479,9 +549,14 @@ class ParticleVelocities(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleVelocities"
@@ -492,7 +567,7 @@ class ParticleDirectors(Observable):
 
     """Calculates the particle directors for particles with given ids.
 
-    Output format: :math:`(d1_x,\\ d1_y,\\ d1_z),\\ (d2_x,\\ d2_y,\\ d2_z),\\ \\dots,\\ (dn_x,\\ dn_y,\\ dn_z)`.
+    Output format: :math:`(d^x_1,\\ d^y_1,\\ d^z_1),\\ (d^x_2,\\ d^y_2,\\ d^z_2),\\ \\dots,\\ (d^x_n,\\ d^y_n,\\ d^z_n)`.
 
     The particles are ordered according to the list of ids passed to the observable.
 
@@ -501,9 +576,14 @@ class ParticleDirectors(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleDirectors"
@@ -514,7 +594,7 @@ class ParticleDipoleFields(Observable):
 
     """Calculates the particle dipole fields for particles with given ids.
 
-    Output format: :math:`(h_d1_x,\\ h_d1_y,\\ h_d1_z),\\ (h_d2_x,\\ h_d2_y,\\ h_d2_z),\\ \\dots,\\ (h_dn_x,\\ h_dn_y,\\ h_dn_z)`.
+    Output format: :math:`(h^x_1,\\ h^y_1,\\ h^z_1),\\ (h^x_2,\\ h^y_2,\\ h^z_2),\\ \\dots,\\ (h^x_n,\\ h^y_n,\\ h^z_n)`.
 
     The particles are ordered according to the list of ids passed to the observable.
 
@@ -523,9 +603,14 @@ class ParticleDipoleFields(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleDipoleFields"
@@ -542,9 +627,14 @@ class ParticleDistances(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N - 1,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N - 1,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleDistances"
@@ -564,9 +654,14 @@ class TotalForce(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (3,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::TotalForce"
@@ -583,9 +678,14 @@ class BondAngles(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N - 2,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N - 2,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::BondAngles"
@@ -604,9 +704,14 @@ class CosPersistenceAngles(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N - 2,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N - 2,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::CosPersistenceAngles"
@@ -623,9 +728,14 @@ class BondDihedrals(Observable):
     ids : array_like of :obj:`int`
         The ids of (existing) particles to take into account.
 
-    Returns
+    Methods
     -------
-    (N - 3,) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (N - 3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::BondDihedrals"
@@ -636,9 +746,14 @@ class Energy(Observable):
 
     """Calculates the total energy.
 
-    Returns
+    Methods
     -------
-    :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        :obj:`float`
 
     """
     _so_name = "Observables::Energy"
@@ -649,9 +764,14 @@ class Pressure(Observable):
 
     """Calculates the total scalar pressure.
 
-    Returns
+    Methods
     -------
-    :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        :obj:`float`
 
     """
     _so_name = "Observables::Pressure"
@@ -662,9 +782,14 @@ class PressureTensor(Observable):
 
     """Calculates the total pressure tensor.
 
-    Returns
+    Methods
     -------
-    (3, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::PressureTensor"
@@ -680,9 +805,14 @@ class DPDStress(Observable):
     ----------
     None
 
-    Returns
+    Methods
     -------
-    (3, 3) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::DPDStress"
@@ -707,20 +837,25 @@ class CylindricalDensityProfile(CylindricalProfileObservable):
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`, default = -pi
-        Minimum ``phi`` to consider. Must be in [-pi,pi).
+    min_phi : :obj:`float`, default = :math:`-\\pi`
+        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`, default = pi
-        Maximum ``phi`` to consider. Must be in (-pi,pi].
+    max_phi : :obj:`float`, default = :math:`\\pi`
+        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``) :obj:`ndarray` of :obj:`float`
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::CylindricalDensityProfile"
@@ -745,22 +880,28 @@ class CylindricalFluxDensityProfile(CylindricalProfileObservable):
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`, default = -pi
-        Minimum ``phi`` to consider. Must be in [-pi,pi).
+    min_phi : :obj:`float`, default = :math:`-\\pi`
+        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`, default = pi
-        Maximum ``phi`` to consider. Must be in (-pi,pi].
+    max_phi : :obj:`float`, default = :math:`\\pi`
+        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the radial distance,
-        azimuth and axial coordinate of the particle flux density field.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the
+            radial distance, azimuth and axial coordinate of the particle
+            flux density field, respectively.
 
     """
     _so_name = "Observables::CylindricalFluxDensityProfile"
@@ -787,22 +928,28 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`, default = -pi
-        Minimum ``phi`` to consider. Must be in [-pi,pi).
+    min_phi : :obj:`float`, default = :math:`-\\pi`
+        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`, default = pi
-        Maximum ``phi`` to consider. Must be in (-pi,pi].
+    max_phi : :obj:`float`, default = :math:`\\pi`
+        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the radial distance,
-        azimuth and axial coordinate of the LB flux density field.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the
+            radial distance, azimuth and axial coordinate of the LB flux
+            density field, respectively.
 
     """
     _so_name = "Observables::CylindricalLBFluxDensityProfileAtParticlePositions"
@@ -829,22 +976,28 @@ class CylindricalLBVelocityProfileAtParticlePositions(
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`, default = -pi
-        Minimum ``phi`` to consider. Must be in [-pi,pi).
+    min_phi : :obj:`float`, default = :math:`-\\pi`
+        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`, default = pi
-        Maximum ``phi`` to consider. Must be in (-pi,pi].
+    max_phi : :obj:`float`, default = :math:`\\pi`
+        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the radial distance,
-        azimuth and axial coordinate of the LB velocity field.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the
+            radial distance, azimuth and axial coordinate of the LB velocity
+            field, respectively.
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfileAtParticlePositions"
@@ -869,22 +1022,28 @@ class CylindricalVelocityProfile(CylindricalProfileObservable):
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`, default = -pi
-        Minimum ``phi`` to consider. Must be in [-pi,pi).
+    min_phi : :obj:`float`, default = :math:`-\\pi`
+        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`, default = pi
-        Maximum ``phi`` to consider. Must be in (-pi,pi].
+    max_phi : :obj:`float`, default = :math:`\\pi`
+        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
         Maximum ``z`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the radial distance,
-        azimuth and axial coordinate of the particle velocity field.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the
+            radial distance, azimuth and axial coordinate of the particle
+            velocity field, respectively.
 
     """
     _so_name = "Observables::CylindricalVelocityProfile"
@@ -911,24 +1070,30 @@ class CylindricalLBVelocityProfile(CylindricalProfileObservable):
         Number of bins in ``z`` direction.
     min_r : :obj:`float`, default = 0
         Minimum ``r`` to consider.
-    min_phi : :obj:`float`, default = -pi
-        Minimum ``phi`` to consider. Must be in [-pi,pi).
+    min_phi : :obj:`float`, default = :math:`-\\pi`
+        Minimum ``phi`` to consider. Must be in :math:`[-\\pi,\\pi)`.
     min_z : :obj:`float`
         Minimum ``z`` to consider.
     max_r : :obj:`float`
         Maximum ``r`` to consider.
-    max_phi : :obj:`float`, default = pi
-        Maximum ``phi`` to consider. Must be in (-pi,pi].
+    max_phi : :obj:`float`, default = :math:`\\pi`
+        Maximum ``phi`` to consider. Must be in :math:`(-\\pi,\\pi]`.
     max_z : :obj:`float`
         Maximum ``z`` to consider.
     sampling_density : :obj:`float`
         Samples per unit volume for the LB velocity interpolation.
 
-    Returns
+    Methods
     -------
-    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
-        The fourth component contains the histogram for the radial distance,
-        azimuth and axial coordinate of the LB velocity field.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+            The fourth dimension of the array stores the histogram for the
+            radial distance, azimuth and axial coordinate of the LB velocity
+            field, respectively.
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfile"
@@ -954,10 +1119,15 @@ class RDF(Observable):
     max_r : :obj:`float`
         Maximum ``r`` to consider.
 
-    Returns
+    Methods
     -------
-    (``n_r_bins``,) :obj:`ndarray` of :obj:`float`
-        The RDF.
+    calculate()
+        Run the observable.
+
+        Returns
+        -------
+        (``n_r_bins``,) :obj:`ndarray` of :obj:`float`
+            The RDF.
 
     """
     _so_name = "Observables::RDF"

@@ -27,7 +27,7 @@ configure_file(test_importlib_wrapper.py
 macro(PYTHON_SCRIPTS_TEST)
   cmake_parse_arguments(TEST "" "FILE;SUFFIX;TYPE" "DEPENDENCIES;LABELS"
                         ${ARGN})
-  get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+  cmake_path(GET TEST_FILE STEM TEST_NAME)
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_with_${TEST_SUFFIX}")
   endif()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2024 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -21,59 +21,15 @@
 
 #include "config/config.hpp"
 
-#if defined(P3M) || defined(DP3M)
+#if defined(P3M) or defined(DP3M)
 
 #include "common.hpp"
 
 #include "LocalBox.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
-#include <utils/math/sqr.hpp>
 
 #include <cmath>
-#include <stdexcept>
-
-double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
-  auto const c =
-      Utils::sqr(std::cos(Utils::pi() * mesh_i * static_cast<double>(n)));
-
-  switch (cao) {
-  case 1: {
-    return 1.0;
-  }
-  case 2: {
-    return (1.0 + c * 2.0) / 3.0;
-  }
-  case 3: {
-    return (2.0 + c * (11.0 + c * 2.0)) / 15.0;
-  }
-  case 4: {
-    return (17.0 + c * (180.0 + c * (114.0 + c * 4.0))) / 315.0;
-  }
-  case 5: {
-    return (62.0 + c * (1072.0 + c * (1452.0 + c * (247.0 + c * 2.0)))) /
-           2835.0;
-  }
-  case 6: {
-    return (1382.0 +
-            c * (35396.0 +
-                 c * (83021.0 + c * (34096.0 + c * (2026.0 + c * 4.0))))) /
-           155925.0;
-  }
-  case 7: {
-    return (21844.0 +
-            c * (776661.0 +
-                 c * (2801040.0 +
-                      c * (2123860.0 +
-                           c * (349500.0 + c * (8166.0 + c * 4.0)))))) /
-           6081075.0;
-  }
-  default: {
-    throw std::logic_error("Invalid value cao=" + std::to_string(cao));
-  }
-  }
-}
 
 void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
                                       LocalBox const &local_geo, double skin,
@@ -149,4 +105,4 @@ void P3MLocalMesh::calc_local_ca_mesh(P3MParameters const &params,
   q_21_off = dim[2] * (dim[1] - params.cao);
 }
 
-#endif /* defined(P3M) || defined(DP3M) */
+#endif // defined(P3M) or defined(DP3M)

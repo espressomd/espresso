@@ -102,14 +102,15 @@ class ArrayPropertyTest(ArrayCommon):
     system.box_l = [12.0, 12.0, 12.0]
     system.time_step = 0.01
     system.cell_system.skin = 0.01
-    partcl = system.part.add(pos=[0, 0, 0])
 
     def setUp(self):
         self.system.box_l = [12.0, 12.0, 12.0]
+        self.partcl = self.system.part.add(pos=[0, 0, 0])
 
     def tearDown(self):
         if espressomd.has_features("WALBERLA"):
             self.system.lb = None
+        self.system.part.clear()
 
     def assert_copy_is_writable(self, array):
         cpy = np.copy(array)

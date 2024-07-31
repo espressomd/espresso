@@ -19,8 +19,8 @@
 
 import pystencils as ps
 
-import lbmpy.advanced_streaming.indexing
 import lbmpy.boundaries
+import lbmpy.custom_code_nodes
 
 import lbmpy_walberla.additional_data_handler
 
@@ -39,15 +39,20 @@ class BounceBackSlipVelocityUBB(
         This way, the dynamic UBB can be used to implement a LB boundary.
         '''
         code = super().data_initialisation(direction)
-        dirVec = self.stencil_info[direction][1]
-        token = ' = elementInitaliser(Cell(it.x(){}, it.y(){}, it.z(){}),'
-        old_initialiser = token.format('', '', '')
-        assert old_initialiser in code
-        new_initialiser = token.format(
-            '+' + str(dirVec[0]),
-            '+' + str(dirVec[1]),
-            '+' + str(dirVec[2])).replace('+-', '-')
-        return code.replace(old_initialiser, new_initialiser)
+        assert "InitialisationAdditionalData" in code
+        assert "elementInitialiser" in code
+        assert "element.vel_0" in code
+        bb_vec = self.stencil_info[direction][1]
+        cell_args = [f"it.{direction}() + {bb_vec[i]}".replace('+ -', '-')
+                     for i, direction in enumerate("xyz")]
+        code = [
+            "auto const InitialisationAdditionalData = elementInitialiser(",
+            f"Cell({', '.join(cell_args)}), blocks, *block);",
+            "element.vel_0 = InitialisationAdditionalData[0];",
+            "element.vel_1 = InitialisationAdditionalData[1];",
+            "element.vel_2 = InitialisationAdditionalData[2];",
+        ]
+        return "\n".join(code)
 
 
 class UBB(lbmpy.boundaries.UBB):
@@ -71,7 +76,7 @@ class UBB(lbmpy.boundaries.UBB):
         if len(assignments) > 1:
             out.extend(assignments[:-1])
 
-        neighbor_offset = lbmpy.advanced_streaming.indexing.NeighbourOffsetArrays.neighbour_offset(
+        neighbor_offset = lbmpy.custom_code_nodes.NeighbourOffsetArrays.neighbour_offset(
             dir_symbol, lb_method.stencil)
 
         assignment = assignments[-1]

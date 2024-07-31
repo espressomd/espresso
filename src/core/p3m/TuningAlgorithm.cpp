@@ -34,8 +34,6 @@
 #include "communication.hpp"
 #include "system/System.hpp"
 
-#include <boost/range/algorithm/min_element.hpp>
-
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -62,8 +60,8 @@ void TuningAlgorithm::determine_r_cut_limits() {
   auto const verlet_skin = m_system.cell_structure->get_verlet_skin();
   auto const r_cut_iL = get_params().r_cut_iL;
   if (r_cut_iL == 0.) {
-    auto const min_box_l = *boost::min_element(box_geo.length());
-    auto const min_local_box_l = *boost::min_element(local_geo.length());
+    auto const min_box_l = std::ranges::min(box_geo.length());
+    auto const min_local_box_l = std::ranges::min(local_geo.length());
     m_r_cut_iL_min = 0.;
     m_r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.) - verlet_skin;
     m_r_cut_iL_min *= box_geo.length_inv()[0];
@@ -130,12 +128,12 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
   /* initial checks. */
   auto const k_cut_per_dir = (static_cast<double>(cao) / 2.) *
                              Utils::hadamard_division(box_geo.length(), mesh);
-  auto const k_cut = *boost::min_element(k_cut_per_dir);
-  auto const min_box_l = *boost::min_element(box_geo.length());
-  auto const min_local_box_l = *boost::min_element(local_geo.length());
+  auto const k_cut = std::ranges::min(k_cut_per_dir);
+  auto const min_box_l = std::ranges::min(box_geo.length());
+  auto const min_local_box_l = std::ranges::min(local_geo.length());
   auto const k_cut_max = std::min(min_box_l, min_local_box_l) - verlet_skin;
 
-  if (cao >= *boost::min_element(mesh) or k_cut >= k_cut_max) {
+  if (cao >= std::ranges::min(mesh) or k_cut >= k_cut_max) {
     m_logger->log_cao_too_large(mesh[0], cao);
     return -P3M_TUNE_CAO_TOO_LARGE;
   }

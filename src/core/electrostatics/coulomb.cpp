@@ -35,8 +35,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/checks/charge_neutrality.hpp>
-#include <utils/constants.hpp>
 #include <utils/demangle.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
@@ -116,11 +114,11 @@ struct LongRangePressure {
   }
 #endif // P3M
 
-  auto operator()(std::shared_ptr<DebyeHueckel> const &actor) const {
+  auto operator()(std::shared_ptr<DebyeHueckel> const &) const {
     return Utils::Vector9d{};
   }
 
-  auto operator()(std::shared_ptr<ReactionField> const &actor) const {
+  auto operator()(std::shared_ptr<ReactionField> const &) const {
     return Utils::Vector9d{};
   }
 
@@ -155,12 +153,7 @@ struct ShortRangeCutoff {
                     std::visit(*this, actor->base_solver));
   }
 #endif // P3M
-#ifdef MMM1D_GPU
-  auto operator()(std::shared_ptr<CoulombMMM1DGpu> const &actor) const {
-    return std::numeric_limits<double>::infinity();
-  }
-#endif // MMM1D_GPU
-  auto operator()(std::shared_ptr<CoulombMMM1D> const &actor) const {
+  auto operator()(std::shared_ptr<CoulombMMM1D> const &) const {
     return std::numeric_limits<double>::infinity();
   }
 #ifdef SCAFACOS
@@ -224,11 +217,6 @@ struct LongRangeForce {
     actor->add_long_range_forces(m_particles);
   }
 #endif // P3M
-#ifdef MMM1D_GPU
-  void operator()(std::shared_ptr<CoulombMMM1DGpu> const &actor) const {
-    actor->add_long_range_forces();
-  }
-#endif
 #ifdef SCAFACOS
   void operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     actor->add_long_range_forces();
@@ -256,12 +244,6 @@ struct LongRangeEnergy {
     return actor->long_range_energy(m_particles);
   }
 #endif // P3M
-#ifdef MMM1D_GPU
-  auto operator()(std::shared_ptr<CoulombMMM1DGpu> const &actor) const {
-    actor->add_long_range_energy();
-    return 0.;
-  }
-#endif // MMM1D_GPU
 #ifdef SCAFACOS
   auto operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     return actor->long_range_energy();

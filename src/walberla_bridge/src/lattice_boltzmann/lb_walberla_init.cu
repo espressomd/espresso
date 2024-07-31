@@ -16,3 +16,47 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <walberla_bridge/lattice_boltzmann/lb_walberla_init.hpp>
+
+#if defined(__NVCC__)
+#define RESTRICT __restrict__
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 554 // no implicit or explicit cast
+#else
+#pragma push
+#pragma diag_suppress 554 // no implicit or explicit cast
+#endif
+#endif
+
+#include "LBWalberlaImpl.hpp"
+
+#if defined(__NVCC__)
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic pop
+#else
+#pragma pop
+#endif
+#endif
+
+#include <walberla_bridge/Architecture.hpp>
+#include <walberla_bridge/LatticeWalberla.hpp>
+#include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
+
+#include <gpu/DeviceSelectMPI.h>
+
+#include <memory>
+
+std::shared_ptr<LBWalberlaBase>
+new_lb_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
+                    double viscosity, double density, bool single_precision) {
+  if (single_precision) {
+    return std::make_shared<walberla::LBWalberlaImpl<float, lbmpy::Arch::GPU>>(
+        lattice, viscosity, density);
+  }
+  return std::make_shared<walberla::LBWalberlaImpl<double, lbmpy::Arch::GPU>>(
+      lattice, viscosity, density);
+}
+
+void set_device_id_per_rank() { walberla::gpu::selectDeviceBasedOnMpiRank(); }

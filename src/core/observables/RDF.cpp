@@ -23,14 +23,15 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/for_each_pair.hpp>
 #include <utils/math/int_pow.hpp>
 
-#include <boost/range/algorithm/transform.hpp>
+#include <boost/mpi/communicator.hpp>
 #include <boost/range/combine.hpp>
 
 #include <cmath>
+#include <cstddef>
+#include <numbers>
 #include <vector>
 
 namespace Observables {
@@ -64,7 +65,7 @@ RDF::evaluate(boost::mpi::communicator const &comm,
   auto const &box_geo = *System::get_system().box_geo;
   auto const bin_width = (max_r - min_r) / static_cast<double>(n_r_bins);
   auto const inv_bin_width = 1.0 / bin_width;
-  std::vector<double> res(n_values(), 0.0);
+  std::vector<double> res(n_r_bins, 0.0);
   long int cnt = 0;
   auto op = [this, inv_bin_width, &cnt, &res, &box_geo](auto const &pos1,
                                                         auto const &pos2) {
@@ -102,11 +103,11 @@ RDF::evaluate(boost::mpi::communicator const &comm,
     return res;
   // normalization
   auto const volume = box_geo.volume();
-  for (int i = 0; i < n_r_bins; ++i) {
-    auto const r_in = i * bin_width + min_r;
+  for (std::size_t i = 0u; i < res.size(); ++i) {
+    auto const r_in = static_cast<double>(i) * bin_width + min_r;
     auto const r_out = r_in + bin_width;
     auto const bin_volume =
-        (4.0 / 3.0) * Utils::pi() *
+        (4. / 3.) * std::numbers::pi *
         (Utils::int_pow<3>(r_out) - Utils::int_pow<3>(r_in));
     res[i] *= volume / (bin_volume * static_cast<double>(cnt));
   }

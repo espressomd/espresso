@@ -28,9 +28,6 @@
 #define DPD
 
 #define ELECTROSTATICS
-#ifdef CUDA
-#define MMM1D_GPU
-#endif
 #define DIPOLES
 #ifdef SCAFACOS
 #define SCAFACOS_DIPOLES

@@ -30,7 +30,6 @@
 #include "system/System.hpp"
 
 #include <utils/Cache.hpp>
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/keys.hpp>
 #include <utils/mpi/gatherv.hpp>
@@ -40,14 +39,12 @@
 #include <boost/mpi/collectives/gather.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/collectives/scatter.hpp>
-#include <boost/optional.hpp>
-#include <boost/range/algorithm/sort.hpp>
-#include <boost/range/numeric.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <functional>
 #include <iterator>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -221,7 +218,7 @@ REGISTER_CALLBACK(mpi_get_particles_local)
  *
  * @returns The particle list.
  */
-static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
+static std::vector<Particle> mpi_get_particles(std::span<const int> ids) {
   mpi_call(mpi_get_particles_local);
   /* Return value */
   std::vector<Particle> parts(ids.size());
@@ -264,7 +261,7 @@ static std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
   return parts;
 }
 
-void prefetch_particle_data(Utils::Span<const int> in_ids) {
+void prefetch_particle_data(std::span<const int> in_ids) {
   /* Nothing to do on a single node. */
   // NOLINTNEXTLINE(clang-analyzer-core.NonNullParamChecker)
   if (comm_cart.size() == 1)
@@ -422,10 +419,9 @@ static void clear_particle_type_map() {
  * largest id.
  */
 static int calculate_max_seen_id() {
-  return boost::accumulate(particle_node, -1,
-                           [](int max, const std::pair<int, int> &kv) {
-                             return std::max(max, kv.first);
-                           });
+  return std::accumulate(
+      particle_node.begin(), particle_node.end(), -1,
+      [](int max, auto const &kv) { return std::max(max, kv.first); });
 }
 
 /**
@@ -586,7 +582,7 @@ std::vector<int> get_particle_ids() {
     build_particle_node();
 
   auto ids = Utils::keys(particle_node);
-  boost::sort(ids);
+  std::ranges::sort(ids);
 
   return ids;
 }

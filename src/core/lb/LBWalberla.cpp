@@ -39,6 +39,8 @@
 
 namespace LB {
 
+bool LBWalberla::is_gpu() const { return lb_fluid->is_gpu(); }
+
 double LBWalberla::get_kT() const { return lb_fluid->get_kT(); }
 
 Utils::VectorXd<9> LBWalberla::get_pressure_tensor() const {
@@ -71,6 +73,16 @@ Utils::Vector3d LBWalberla::get_momentum() const {
 bool LBWalberla::add_force_at_pos(Utils::Vector3d const &pos,
                                   Utils::Vector3d const &force) {
   return lb_fluid->add_force_at_pos(pos, force);
+}
+
+void LBWalberla::add_forces_at_pos(std::vector<Utils::Vector3d> const &pos,
+                                   std::vector<Utils::Vector3d> const &forces) {
+  lb_fluid->add_forces_at_pos(pos, forces);
+}
+
+std::vector<Utils::Vector3d>
+LBWalberla::get_velocities_at_pos(std::vector<Utils::Vector3d> const &pos) {
+  return lb_fluid->get_velocities_at_pos(pos);
 }
 
 void LBWalberla::veto_time_step(double time_step) const {

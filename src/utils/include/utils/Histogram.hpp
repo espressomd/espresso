@@ -16,10 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_HISTOGRAM_HPP
-#define UTILS_HISTOGRAM_HPP
 
-#include "utils/Span.hpp"
+#pragma once
 
 #include <boost/multi_array.hpp>
 
@@ -30,6 +28,7 @@
 #include <cstddef>
 #include <functional>
 #include <numeric>
+#include <span>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -47,6 +46,8 @@ template <typename T, std::size_t N, std::size_t M = 3, typename U = double>
 class Histogram {
   using array_type = boost::multi_array<T, M + 1>;
   using count_type = boost::multi_array<std::size_t, M + 1>;
+
+protected:
   using array_index = typename array_type::index;
 
 public:
@@ -89,14 +90,14 @@ public:
    * \brief Add data to the histogram.
    * \param pos    Position to update.
    */
-  void update(Span<const U> pos) { update(pos, m_ones); }
+  void update(std::span<const U> pos) { update(pos, m_ones); }
 
   /**
    * \brief Add data to the histogram.
    * \param pos    Position to update.
    * \param value  Value to add.
    */
-  void update(Span<const U> pos, Span<const T> value) {
+  void update(std::span<const U> pos, std::span<const T> value) {
     if (pos.size() != M) {
       throw std::invalid_argument("Wrong dimensions for the coordinates");
     }
@@ -108,9 +109,9 @@ public:
       for (std::size_t i = 0; i < M; ++i) {
         index[i] = calc_bin_index(pos[i], m_limits[i].first, m_bin_sizes[i]);
       }
-      for (array_index i = 0; i < N; ++i) {
+      for (array_index i = 0; i < static_cast<array_index>(N); ++i) {
         index.back() = i;
-        m_array(index) += value[i];
+        m_array(index) += value[static_cast<std::size_t>(i)];
         m_count(index)++;
       }
     }
@@ -152,7 +153,7 @@ private:
    * \brief Check if the position lies within the histogram limits.
    * \param pos     Position to check.
    */
-  bool check_limits(Span<const U> pos) const {
+  bool check_limits(std::span<const U> pos) const {
     assert(pos.size() == M);
     bool within_range = true;
     for (std::size_t i = 0; i < M; ++i) {
@@ -196,6 +197,7 @@ class CylindricalHistogram : public Histogram<T, N, M, U> {
   using Histogram<T, N, M, U>::m_limits;
   using Histogram<T, N, M, U>::m_bin_sizes;
   using Histogram<T, N, M, U>::m_array;
+  using typename Histogram<T, N, M, U>::array_index;
 
 public:
   using Histogram<T, N, M, U>::Histogram;
@@ -205,12 +207,12 @@ public:
     auto const r_bin_size = m_bin_sizes[0];
     auto const phi_bin_size = m_bin_sizes[1];
     auto const z_bin_size = m_bin_sizes[2];
-    auto const n_bins_r = m_n_bins[0];
-    for (std::size_t i = 0; i < n_bins_r; i++) {
+    auto const n_bins_r = static_cast<array_index>(m_n_bins[0]);
+    for (array_index i = 0; i < n_bins_r; i++) {
       auto const r_left = min_r + static_cast<U>(i) * r_bin_size;
       auto const r_right = r_left + r_bin_size;
-      auto const bin_volume =
-          (r_right * r_right - r_left * r_left) * z_bin_size * phi_bin_size / 2;
+      auto const bin_volume = (r_right * r_right - r_left * r_left) *
+                              z_bin_size * phi_bin_size / U(2);
       auto *begin = m_array[i].origin();
       std::transform(
           begin, begin + m_array[i].num_elements(), begin,
@@ -220,5 +222,3 @@ public:
 };
 
 } // Namespace Utils
-
-#endif

@@ -262,7 +262,7 @@ class ReactionMethods(ut.TestCase):
         for i in [-2, -1, 1, 2, 3]:
             with self.assertRaisesRegex(IndexError, f"No reaction with id {i}"):
                 method.delete_reaction(reaction_id=i)
-            with self.assertRaisesRegex(IndexError, f"No reaction with id {2*i}"):
+            with self.assertRaisesRegex(IndexError, f"No reaction with id {2 * i}"):
                 method.get_acceptance_rate_reaction(reaction_id=2 * i)
         with self.assertRaisesRegex(ValueError, "Only forward reactions can be selected"):
             method.change_reaction_constant(reaction_id=1, gamma=1.)

@@ -612,6 +612,12 @@ public:
 
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
+    if (params.contains("act_on_virtual")) {
+      context()->parallel_try_catch([&]() {
+        throw std::runtime_error(
+            name + "() got an unexpected keyword argument 'act_on_virtual'");
+      });
+    }
     if (name == "set_langevin") {
       setup_thermostat(langevin, params);
       return {};
@@ -701,7 +707,7 @@ private:
   }
 
   /**
-   * @brief Instantiate default-contructed thermostats.
+   * @brief Instantiate default-constructed thermostats.
    * Can only be run on the head node!
    */
   void make_default_constructed_thermostats() {

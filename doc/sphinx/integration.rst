@@ -9,7 +9,7 @@ Particle integration and propagation
 ------------------------------------
 
 The main integration scheme of |es| is the velocity Verlet algorithm.
-A steepest descent algorithm is used to minimize the system.
+A steepest descent algorithm is used to minimize forces and torques in the system.
 
 Additional integration schemes are available, which can be coupled to
 thermostats to enable Langevin dynamics, Brownian dynamics, Stokesian dynamics,
@@ -21,100 +21,84 @@ Integrators
 -----------
 
 To run the integrator call the method
-:meth:`system.integrate.run() <espressomd.integrate.Integrator.run>`::
+:meth:`system.integrator.run() <espressomd.integrate.Integrator.run>`::
 
     system.integrator.run(number_of_steps, recalc_forces=False, reuse_forces=False)
 
 where ``number_of_steps`` is the number of time steps the integrator should perform.
 
-.. _Velocity Verlet Algorithm:
+The following sections detail the different integrators available.
+
+.. _Velocity Verlet algorithm:
 
 Velocity Verlet algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`espressomd.integrate.IntegratorHandle.set_vv`
+The velocity Verlet integrator is active by default.
+If you used a different integrator and want to switch back, use 
+:meth:`system.integrator.set_vv() <espressomd.integrate.IntegratorHandle.set_vv>`.
 
-The equations of motion for the trajectory of point-like particles read
+The Velocity Verlet algorithm is used for equations of motion of the general form
 
-.. math:: \dot v_i(t) = F_i(\{x_j\},v_i,t)/m_i \\ \dot x_i(t) = v_i(t),
+.. math::
 
-where :math:`x_i`, :math:`v_i`, :math:`m_i` are position, velocity and mass of
-particle :math:`i` and :math:`F_i(\{x_j\},v_i,t)` the forces acting on it.
-These forces comprise all interactions with other particles and external fields
-as well as non-deterministic contributions described in :ref:`Thermostats`.
+    \begin{aligned}
+    \dot{\vec{x}}_i(t) &= \vec{v}_i(t), \\
+    \dot{\vec{v}}_i(t) &= \frac{\vec{F}_i(\{ \vec{x}_j \} ,\vec{v}_i,t)}{m_i},
+    \end{aligned}
 
-For numerical integration, this equation is discretized to the following steps (:cite:`rapaport04a` eqs. 3.5.8 - 3.5.10):
+where :math:`\vec{x}_i`, :math:`\vec{v}_i`, :math:`m_i` are position, velocity and mass of
+particle :math:`i` and :math:`\vec{F}_i(\{\vec{x}_j\},\vec{v}_i,t)` the forces acting on it.
+The force :math:`\vec{F}_i` comprises all interactions of particle :math:`i` with other particles :math:`j` and external fields
+as well as contributions from thermostats, see :ref:`Thermostats`.
+
+For numerical integration, the equation of motion is discretized to the following steps (:cite:`rapaport04a` eqs. 3.5.8 - 3.5.10):
 
 1. Calculate the velocity at the half step
 
-   .. math:: v(t+dt/2) = v(t) + \frac{F(x(t),v(t-dt/2),t)}{m} dt/2
+   .. math:: \vec{v}(t+dt/2) = \vec{v}(t) + \frac{\vec{F}(\vec{x}(t),\vec{v}(t-dt/2),t)}{m} dt/2
 
 2. Calculate the new position
 
-   .. math:: x(t+dt) = x(t) + v(t+dt/2) dt
+   .. math:: \vec{x}(t+dt) = \vec{x}(t) + \vec{v}(t+dt/2) dt
 
 3. Calculate the force based on the new position
 
-   .. math:: F = F(x(t+dt), v(t+dt/2), t+dt)
+   .. math:: \vec{F} = \vec{F}(\vec{x}(t+dt), \vec{v}(t+dt/2), t+dt)
 
 4. Calculate the new velocity
 
-   .. math:: v(t+dt) = v(t+dt/2) + \frac{F(x(t+dt),t+dt)}{m} dt/2
+   .. math:: \vec{v}(t+dt) = \vec{v}(t+dt/2) + \frac{\vec{F}(\vec{x}(t+dt), \vec{v}(t+dt/2), t+dt)}{m} dt/2
+
+Here, for simplicity, we have omitted the particle index :math:`i`.
+Read, e.g., :math:`\vec{x}` as the position of all particles.
 
 Note that this implementation of the velocity Verlet algorithm reuses
 forces in step 1. That is, they are computed once in step 3,
-but used twice, in step 4 and in step 1 of the next iteration. In the first time
-step after setting up, there are no forces present yet. Therefore, |es| has
+but used twice, in step 4 and in step 1 of the next iteration. 
+The first time the integrator is called, there are no forces present yet. 
+Therefore, |es| has
 to compute them before the first time step. That has two consequences:
-first, random forces are redrawn, resulting in a narrower distribution
-of the random forces, which we compensate by stretching. Second,
-coupling forces of e.g. the lattice-Boltzmann fluid cannot be computed
+first, if thermostats are active, random forces are computed twice during 
+the first time step, resulting in a narrower distribution of the random forces.
+Second,
+coupling forces of, e.g., the lattice-Boltzmann fluid cannot be computed
 and are therefore lacking in the first half time step. In order to
 minimize these effects, |es| has a quite conservative heuristics to decide
-whether a change makes it necessary to recompute forces before the first
-time step. Therefore, calling 100 times
-:meth:`espressomd.integrate.Integrator.run` with ``steps=1`` does the
-same as with ``steps=100``, apart from some small calling overhead.
+whether a change makes it necessary to recompute forces before the first time step. 
+Therefore, calling 
+:meth:`espressomd.integrate.Integrator.run` 100 times with ``steps=1`` is equivalent to calling it once with ``steps=100``.
 
-However, for checkpointing, there is no way for |es| to tell that the forces
-that you read back in actually match the parameters that are set.
-Therefore, |es| would recompute the forces before the first time step, which
-makes it essentially impossible to checkpoint LB simulations, where it
-is vital to keep the coupling forces. To work around this, there is
-an additional parameter ``reuse_forces``, which tells integrate to not recalculate
-the forces for the first time step, but use that the values still stored
-with the particles. Use this only if you are absolutely sure that the
-forces stored match your current setup!
-
-The opposite problem occurs when timing interactions: In this case, one
-would like to recompute the forces, despite the fact that they are
-already correctly calculated. To this aim, the option ``recalc_forces`` can be used to
-enforce force recalculation.
+When resuming a simulation, you can either use the forces that are stored on the particles by using the additional parameter ``reuse_forces = True``, or recalculate the forces again from the current configuration ``reuse_forces = False``.
+Setting ``reuse_forces = True`` is useful when restarting a simulation from a checkpoint to obtain exactlty the same result as if the integration had continued without interruption.
+You can also use ``recalc_forces = True`` to recalculate forces even if they are already correctly computed.
 
 .. _Isotropic NpT integrator:
 
 Isotropic NpT integrator
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`espressomd.integrate.IntegratorHandle.set_isotropic_npt`
-
-As the NpT thermostat alters the way the equations of motion are integrated, it is
-discussed here and only a brief summary is given in :ref:`Thermostats`.
-
-To activate the NpT integrator, use :meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`
-with parameters:
-
-* ``ext_pressure``: The external pressure
-* ``piston``: The mass of the applied piston
-* ``direction``: Flags to enable/disable box dimensions to be subject to fluctuations. By default, all directions are enabled.
-
-Additionally, a NpT thermostat has to be set by :meth:`~espressomd.thermostat.Thermostat.set_npt()`
-with parameters:
-
-* ``kT``: Thermal energy of the heat bath
-* ``gamma0``: Friction coefficient of the bath
-* ``gammav``: Artificial friction coefficient for the volume fluctuations.
-
+Simuations in the NpT ensemble are performed with the isotropic NpT integrator :meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`.
 A code snippet would look like::
 
     import espressomd
@@ -123,7 +107,21 @@ A code snippet would look like::
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=42)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
-The physical meaning of these parameters is described below:
+The parameters of the integrator are
+
+* ``ext_pressure``: The external pressure
+* ``piston``: The mass of the applied piston
+* ``direction``: Flags to enable/disable box dimensions to be subject to fluctuations. By default, all directions are enabled.
+
+Additionally, an NpT thermostat has to be set by :meth:`~espressomd.thermostat.Thermostat.set_npt()`
+with parameters:
+
+* ``kT``: Thermal energy of the heat bath
+* ``gamma0``: Friction coefficient of the bath
+* ``gammav``: Artificial friction coefficient for the volume fluctuations.
+
+The physical meaning of these parameters and the equations of motion are described below. 
+We recommend reading :ref:`Langevin thermostat` before continuing.
 
 The relaxation towards a desired pressure :math:`P` (parameter ``ext_pressure``)
 is enabled by treating the box
@@ -138,12 +136,12 @@ associated with the volume is postulated. This results in a "force" on the box s
 
 where
 
-.. math:: \mathcal{P} = \frac{1}{Vd} \sum_{i,j} f_{ij}x_{ij} + \frac{1}{Vd} \sum_i m_i v_i^2
+.. math:: \mathcal{P} = \frac{1}{Vd} \sum_{i,j} \vec{f}_{ij}\vec{x}_{ij} + \frac{1}{Vd} \sum_i m_i v_i^2 , 
 
-Here :math:`\mathcal{P}` is the instantaneous pressure, :math:`d` the dimension
-of the system (number of flags set by ``direction``), :math:`f_{ij}` the
+is the instantaneous pressure, with :math:`d` the dimension
+of the system (number of flags set by ``direction``), :math:`\vec{f}_{ij}` the
 short range interaction force between particles :math:`i` and :math:`j` and
-:math:`x_{ij}= x_j - x_i`.
+:math:`\vec{x}_{ij}= \vec{x}_j - \vec{x}_i`.
 
 In addition to this deterministic force, a friction :math:`-\frac{\gamma^V}{Q}\Pi(t)`
 and noise :math:`\sqrt{k_B T \gamma^V} \eta(t)` are added for the box
@@ -160,12 +158,12 @@ The discretisation consists of the following steps (see :cite:`kolb99a` for a fu
 
 1. Calculate the particle velocities at the half step
 
-   .. math:: v'(t+dt/2) = v(t) + \frac{F(x(t),v(t-dt/2),t)}{m} dt/2
+   .. math:: \vec{v}'(t+dt/2) = \vec{v}(t) + \frac{\vec{F}(\vec{x}(t),\vec{v}(t-dt/2),t)}{m} dt/2
 
 2. Calculate the instantaneous pressure and "volume momentum"
 
-   .. math:: \mathcal{P} = \mathcal{P}(x(t),V(t),f(x(t)), v'(t+dt/2))
-   .. math:: \Pi(t+dt/2) = \Pi(t) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t) dt/2  +  \sqrt{k_B T \gamma^V dt} \overline{\eta}
+   .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t),V(t),\vec{f}(\vec{x}(t)), \vec{v}'(t+dt/2))
+   .. math:: \Pi(t+dt/2) = \Pi(t) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t) dt/2  +  \sqrt{k_B T \gamma^V dt} {\eta_*}
 
 3. Calculate box volume and scaling parameter :math:`L` at half step and full step, scale the simulation box accordingly
 
@@ -176,27 +174,27 @@ The discretisation consists of the following steps (see :cite:`kolb99a` for a fu
 
 4. Update particle positions and scale velocities
 
-   .. math:: x(t+dt) = \frac{L(t+dt)}{L(t)} \left[ x(t) + \frac{L^2(t)}{L^2(t+dt/2)} v(t+dt/2) dt \right]
-   .. math:: v(t+dt/2) = \frac{L(t)}{L(t+dt)} v'(t+dt/2)
+   .. math:: \vec{x}(t+dt) = \frac{L(t+dt)}{L(t)} \left[ \vec{x}(t) + \frac{L^2(t)}{L^2(t+dt/2)} \vec{v}(t+dt/2) dt \right]
+   .. math:: \vec{v}(t+dt/2) = \frac{L(t)}{L(t+dt)} \vec{v}'(t+dt/2)
 
 5. Calculate forces, instantaneous pressure and "volume momentum"
 
-   .. math:: F = F(x(t+dt),v(t+dt/2),t)
-   .. math:: \mathcal{P} = \mathcal{P}(x(t+dt),V(t+dt),f(x(t+dt)), v(t+dt/2))
-   .. math:: \Pi(t+dt) = \Pi(t+dt/2) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t+dt/2) dt/2  +  \sqrt{k_B T \gamma^V dt} \overline{\eta}
+   .. math:: \vec{F} = \vec{F}(\vec{x}(t+dt),\vec{v}(t+dt/2),t)
+   .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t+dt),V(t+dt),\vec{f}(\vec{x}(t+dt)), \vec{v}(t+dt/2))
+   .. math:: \Pi(t+dt) = \Pi(t+dt/2) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t+dt/2) dt/2  +  \sqrt{k_B T \gamma^V dt} {\eta_*}
 
-   with uncorrelated numbers :math:`\overline{\eta}` drawn from a random uniform process :math:`\eta(t)`
+   with uncorrelated numbers :math:`{\eta_*}` drawn from a random uniform process.
 
 6. Update the velocities
 
-   .. math:: v(t+dt) = v(t+dt/2) + \frac{F(t+dt)}{m} dt/2
+   .. math:: \vec{v}(t+dt) = \vec{v}(t+dt/2) + \frac{\vec{F}(t+dt)}{m} dt/2
 
 Notes:
 
-* The NpT algorithm is only tested for all 3 directions enabled for scaling. Usage of ``direction`` is considered an experimental feature.
+* The NpT algorithm is only tested for ``direction = 3 * [True]``. Usage of other ``direction`` is considered an experimental feature.
 * In step 4, only those coordinates are scaled for which ``direction`` is set.
 * For the instantaneous pressure, the same limitations of applicability hold as described in :ref:`Pressure`.
-* The particle forces :math:`F` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sqrt{k_B T \gamma^0 dt} \overline{\eta}`) analogous to the terms in the :ref:`Langevin thermostat`.
+* The particle forces :math:`\vec{F}` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sqrt{k_B T \gamma^0 dt} {\eta_*}`) analogous to the terms in the :ref:`Langevin thermostat`.
 * The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 * The NpT algorithm doesn't support :ref:`Lees-Edwards boundary conditions`.
 * The NpT algorithm doesn't support propagation of angular velocities.
@@ -205,35 +203,39 @@ Notes:
 
 Steepest descent
 ^^^^^^^^^^^^^^^^
+To activate steepest descent, use :meth:`espressomd.integrate.IntegratorHandle.set_steepest_descent`.
+A code snippet could look like::
 
-:meth:`espressomd.integrate.IntegratorHandle.set_steepest_descent`
+    max_steps = 20 # maximal number of steps
+    system.integrator.set_steepest_descent(
+        f_max=0, gamma=0.1, max_displacement=0.1)
+    system.integrator.run(max_steps)   
+    system.integrator.set_vv()  # to switch back to velocity Verlet
+
+The 'equation of motion' in discretised form reads
+
+.. math:: \vec{x}(t + \Delta t) = \vec{x}(t) + \min\left(|\gamma\vec{F}(t)\Delta t|, \vec{r}_{\text{max}}\right) \cdot \vec{F}(t)/|\vec{F}(t)|
+
+with :math:`\vec{r}_{\text{max}}` the maximal displacement, :math:`\gamma`
+the friction coefficient, :math:`\vec{x}` the particle position,
+:math:`\vec{F}` the force on the particle, and :math:`\Delta t` the time step.
 
 This feature is used to propagate each particle by a small distance parallel to the force acting on it.
 When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
 A common application is removing overlap between randomly placed particles.
-
 Please note that the behavior is undefined if a thermostat is activated,
-in which case the integrator will generate an error. The integrator runs
-the following steepest descent algorithm:
+in which case the integrator will generate an error. 
 
-.. math:: \vec{r}_{i+1} = \vec{r}_i + \min(\gamma \vec{F}_i, \vec{r}_{\text{max_displacement}}),
-
-while the maximal force/torque is bigger than ``f_max`` or for at most ``steps`` times. The energy
+Steepest descent is applied
+while the maximal force/torque is bigger than ``f_max``, or for at most ``max_steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
 The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man's adaptive update.
 Rotational degrees of freedom are treated similarly: each particle is
 rotated around an axis parallel to the torque acting on the particle,
-with ``max_displacement`` interpreted as the maximal rotation angle.
+with ``max_displacement`` interpreted as the maximal rotation angle in radians.
 Please be aware of the fact that this needs not to converge to a local
 minimum in periodic boundary conditions. Translational and rotational
 coordinates that are fixed using the ``fix`` and ``rotation`` attribute of particles are not altered.
-
-Usage example::
-
-    system.integrator.set_steepest_descent(
-        f_max=0, gamma=0.1, max_displacement=0.1)
-    system.integrator.run(20)   # maximal number of steps
-    system.integrator.set_vv()  # to switch back to velocity Verlet
 
 .. _Using a custom convergence criterion:
 
@@ -244,23 +246,23 @@ The ``f_max`` parameter can be set to zero to prevent the integrator from
 halting when a specific force/torque is reached. The integration can then
 be carried out in a loop with a custom convergence criterion::
 
-    min_sigma = 1  # size of the smallest particle
-    max_sigma = 5  # size of the largest particle
-    min_dist = 0.0
+    min_dist_target = 1 # minimum distance that all particles should have
+    
     system.integrator.set_steepest_descent(f_max=0, gamma=10,
-                                           max_displacement=min_sigma * 0.01)
-    # gradient descent until particles are separated by at least max_sigma
-    while min_dist < max_sigma:
+                                           max_displacement= 0.01)
+    # gradient descent until particles are separated by at least min_dist_target
+    min_dist = 0.0
+    while min_dist < min_dist_target:
         min_dist = system.analysis.min_dist()
         system.integrator.run(10)
     system.integrator.set_vv()
 
 When writing a custom convergence criterion based on forces or torques, keep
 in mind that particles whose motion and rotation are fixed in space along
-some or all axes with ``fix`` or ``rotation`` need to be filtered from the
-force/torque observable used in the custom convergence criterion. Since these
-two properties can be cast to boolean values, they can be used as masks to
-remove forces/torques that are ignored by the integrator::
+some or all axes with ``fix`` or ``rotation`` still experience forces and torques.
+Therefore, they need to be filtered from the
+force/torque observable used in the custom convergence criterion. A code snippet
+that achieves this filtering could look like::
 
     particles = system.part.all()
     max_force = np.max(np.linalg.norm(particles.f * np.logical_not(particles.fix), axis=1))
@@ -313,8 +315,44 @@ mesh surface deformation.
 Brownian Dynamics
 ^^^^^^^^^^^^^^^^^
 
-Brownian Dynamics integrator :cite:`schlick10a`.
-See details in :ref:`Brownian thermostat`.
+To activate Brownian dynamics, use :meth:`espressomd.integrate.IntegratorHandle.set_brownian_dynamics`.
+A code snippet would look like::
+
+    import espressomd
+    system = espressomd.System(box_l=[1, 1, 1])
+    system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=41)
+    system.integrator.set_brownian_dynamics()
+
+In addition to the integrator, the corresponding thermostat has to be set.
+The thermostat holds the parameters used in the Brownian equation of motion.
+
+The particle trajectories are governed by
+
+.. math:: \dot{\vec{x}}_i(t) = \gamma^{-1} \vec{F}_i(\{\vec{x}_j\}, \{\vec{v}_j\}, t) + \sqrt{2 k_B T \gamma^{-1}} \vec{\eta}_i(t),
+
+where :math:`\vec{F}_i` are all deterministic forces from interactions and :math:`\vec{\eta}_i` 
+are random forces with zero mean and unit variance.
+This equation of motion follows from Langevin's equation of motion (see :ref:`Langevin thermostat`)
+by setting the mass of the particle to zero.
+
+|es|'s discretisation is based on :cite:`schlick10a`, :cite:`ermak78a`
+and reads
+
+.. math:: \vec{x}(t+ dt) = \gamma^{-1} \vec{F}(\vec{x}(t), \vec{v}(t), t) dt + \sqrt{2 k_B T \gamma^{-1} dt} \vec{\eta}_*(t)
+
+where :math:`\vec{\eta_*}` are pseudo-random numbers with zero mean and unit variance (particle indices are omitted for clarity).
+Velocities are obtained directly from 
+
+.. math:: \vec{v}(t) = \gamma^{-1} \vec{F} + \sqrt{2 k_B T \gamma^{-1} dt^{-1}} \vec{\eta}_{*}(t)
+
+Be aware that the velocity contains random terms and is therefore not continuous in time.
+
+Rotational motion is implemented analogously.
+Note: the rotational Brownian dynamics implementation is only compatible with particles which have
+the isotropic moment of inertia tensor. 
+Otherwise, the viscous terminal angular velocity
+is not defined, i.e., it has no constant direction.
+
 
 .. _Stokesian Dynamics:
 
@@ -368,10 +406,7 @@ Note that this setup represents a system at zero temperature. In order to
 thermalize the system, the SD thermostat needs to be activated (see
 :ref:`Stokesian thermostat`).
 
-.. _Important_SD:
-
-Important
-"""""""""
+**Note:**
 
 The particles must be prevented from overlapping. It is mathematically allowed
 for the particles to overlap to a certain degree. However, once the distance
@@ -394,7 +429,7 @@ sphere diameters.
 Thermostats
 -----------
 
-To add a thermostat, call the appropriate setter::
+To add a thermostat, call the appropriate setter, e.g., ::
 
     system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=41)
 
@@ -403,18 +438,17 @@ subsections.
 
 You may combine different thermostats by turning them on sequentially.
 Not all combinations of thermostats are sensible, though, and some
-integrators only work with a specific thermostat. The list of possible
-combinations of integrators and thermostats is hardcoded and automatically
-check against at the start of integration.
+thermostats only work with specific integrators. 
+The list of possible combinations of integrators and thermostats is hardcoded and automatically
+checked against at the start of integration.
 Note that there is only one temperature for all thermostats.
 The list of active thermostats can be cleared at any time with
 :py:meth:`system.thermostat.turn_off() <espressomd.thermostat.Thermostat.turn_off>`.
 
 Since |es| does not enforce a particular unit system, it cannot know about
-the current value of the Boltzmann constant. Therefore, when specifying
-the temperature of a thermostat, you actually do not define the
-temperature, but the value of the thermal energy :math:`k_B T` in the
-current unit system (see the discussion on units, Section :ref:`On units`).
+the current value of the Boltzmann constant. Therefore, instead of specifying
+the temperature, you have to provide a value for the thermal energy :math:`k_B T` in the
+current unit system (see the discussion on units, Section (:ref:`On units`)).
 
 All thermostats have a ``seed`` argument that controls the state of the random
 number generator (Philox Counter-based RNG). This seed is required on first
@@ -437,46 +471,51 @@ Best explained in an example::
     system = espressomd.System(box_l=[1, 1, 1])
     system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=41)
 
-As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
+The temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 
 The Langevin thermostat is based on an extension of Newton's equation of motion to
 account for drag and collisions with a fluid:
 
-.. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma v_i(t) + \sqrt{2\gamma k_B T} \eta_i(t).
+.. math::  m_i \dot{\vec{v}}_i(t) = \vec{f}_i(\{\vec{x}_j\}, \, \vec{v}_i,t) - \gamma \vec{v}_i(t) + \sqrt{2\gamma k_B T} \vec{\eta}_i(t).
 
-Here, :math:`f_i` are all deterministic forces from interactions,
-:math:`\gamma` the bare friction coefficient and :math:`\eta` a random, "thermal" force.
+Here, :math:`\vec{f}_i` are all deterministic forces from interactions,
+:math:`\gamma` the friction coefficient and :math:`\vec{\eta}` a random, "thermal" force.
 The friction term accounts for dissipation in a surrounding fluid whereas
 the random force  mimics collisions of the particle with solvent molecules
 at temperature :math:`T` and satisfies
 
-.. math:: <\eta(t)> = 0 , <\eta^\alpha_i(t)\eta^\beta_j(t')> = \delta_{\alpha\beta} \delta_{ij}\delta(t-t')
+.. math:: <\vec{\eta}(t)> = \vec{0} , <\eta^\alpha_i(t)\eta^\beta_j(t')> = \delta_{\alpha\beta} \delta_{ij}\delta(t-t')
 
 (:math:`<\cdot>` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates).
 
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
-This reduces the accuracy of the velocity Verlet integrator
-by one order in :math:`dt` because forces are now velocity-dependent.
+The general form of the equation of motion is still the same as
+for Newton's equations, therefore the velocity Verlet integrator is 
+used.
+The accuracy of the velocity Verlet integrator is reduced by
+one order in :math:`dt` because forces are now velocity-dependent.
 
-The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
-:math:`\overline{\eta}` for each component of all the particle forces.
-The distribution of :math:`\overline{\eta}` is uniform and satisfies
+The random process :math:`\vec{\eta}(t)` is discretized by drawing an uncorrelated random numbers
+:math:`\vec{\eta_*}` for each particle.
+The distribution of :math:`{\vec{\eta}_*}` is uniform and satisfies
 
-.. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
+.. math:: <\vec{\eta}_*> = \vec{0} ,\, <\eta_*^\alpha \eta_*^\beta> =  \frac{\delta_{\alpha,\beta}}{dt},
+
+approximating the delta-correlation of the continuous equation.
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
 also coupled to the thermostat. If only the first two arguments are
 specified then the friction coefficient for the rotation is set to the
 same value as that for the translation.
 A separate rotational friction coefficient can be set by inputting
-``gamma_rotate``. The two options allow one to switch the translational and rotational
+``gamma_rotation``. The two options allow one to switch the translational and rotational
 thermalization on or off separately, maintaining the frictional behavior. This
 can be useful, for instance, in high Péclet number active matter systems, where
 one wants to thermalize only the rotational degrees of freedom while
 translational degrees of freedom are affected by the self-propulsion.
 
-The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar,
+The keywords ``gamma`` and ``gamma_rotation`` can be specified as a scalar,
 or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues
 of the respective friction coefficient tensor. This is enables the simulation of
 the anisotropic diffusion of anisotropic colloids (rods, etc.).
@@ -491,74 +530,11 @@ friction coefficient for every particle individually via the feature
 Brownian thermostat
 ^^^^^^^^^^^^^^^^^^^
 
-Brownian thermostat is a formal name of a thermostat enabling the
-Brownian Dynamics feature (see :cite:`schlick10a`) which implies
-a propagation scheme involving systematic and thermal parts of the
-classical Ermak-McCammom's (see :cite:`ermak78a`)
-Brownian Dynamics. Currently it is implemented without
-hydrodynamic interactions, i.e.
-with a diagonal diffusion tensor.
-The hydrodynamic interactions feature will be available later
-as a part of the present Brownian Dynamics or
-implemented separately within the Stokesian Dynamics.
-
 In order to activate the Brownian thermostat, the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_brownian` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
-The system integrator should be also changed.
-Best explained in an example::
-
-    import espressomd
-    system = espressomd.System(box_l=[1, 1, 1])
-    system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=41)
-    system.integrator.set_brownian_dynamics()
-
-where ``gamma`` (hereinafter :math:`\gamma`) is a viscous friction coefficient.
-In terms of the Python interface and setup, the Brownian thermostat is very
-similar to the :ref:`Langevin thermostat`. The feature
-``THERMOSTAT_PER_PARTICLE`` is used to control the per-particle
-temperature and the friction coefficient setup. The major differences are
-its internal integrator implementation and other temporal constraints.
-The integrator is still a symplectic velocity Verlet-like one.
-It is implemented via a viscous drag part and a random walk of both the position and
-velocity. Due to a nature of the Brownian Dynamics method, its time step :math:`\Delta t`
-should be large enough compared to the relaxation time
-:math:`m/\gamma` where :math:`m` is the particle mass.
-This requirement is just a conceptual one
-without specific implementation technical restrictions.
-Note that with all similarities of
-Langevin and Brownian Dynamics, the Langevin thermostat temporal constraint
-is opposite. A velocity is restarting from zero at every step.
-Formally, the previous step velocity at the beginning of the the :math:`\Delta t` interval
-is dissipated further
-and does not contribute to the end one as well as to the positional random walk.
-Another temporal constraint
-which is valid for both Langevin and Brownian Dynamics: conservative forces
-should not change significantly over the :math:`\Delta t` interval.
-
-The viscous terminal velocity :math:`\Delta v` and corresponding positional
-step :math:`\Delta r` are fully driven by conservative forces :math:`F`:
-
-.. math:: \Delta r = \frac{F \cdot \Delta t}{\gamma}
-
-.. math:: \Delta v = \frac{F}{\gamma}
-
-A positional random walk variance of each coordinate :math:`\sigma_p^2`
-corresponds to a diffusion within the Wiener process:
-
-.. math:: \sigma_p^2 = 2 \frac{kT}{\gamma} \cdot \Delta t
-
-Each velocity component random walk variance :math:`\sigma_v^2` is defined by the heat
-component:
-
-.. math:: \sigma_v^2 = \frac{kT}{m}
-
-Note: the velocity random walk is propagated from zero at each step.
-
-A rotational motion is implemented similarly.
-Note: the rotational Brownian dynamics implementation is compatible with particles which have
-the isotropic moment of inertia tensor only. Otherwise, the viscous terminal angular velocity
-is not defined, i.e. it has no constant direction over the time.
+The system integrator must be also changed.
+For details, see :ref:`Brownian Dynamics`.
 
 .. _Isotropic NpT thermostat:
 
@@ -569,16 +545,7 @@ This feature allows to simulate an (on average) homogeneous and isotropic system
 In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
 Activate the NpT thermostat with the command :py:meth:`~espressomd.thermostat.Thermostat.set_npt`
 and setup the integrator for the NpT ensemble with :py:meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`.
-
-For example::
-
-    import espressomd
-
-    system = espressomd.System(box_l=[1, 1, 1])
-    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=41)
-    system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
-
-For an explanation of the algorithm involved, see :ref:`Isotropic NpT integrator`.
+For details, see :ref:`Isotropic NpT integrator`.
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
@@ -595,7 +562,7 @@ are not applied to every particle individually but instead
 encoded in a dissipative interaction between particles :cite:`soddemann03a`.
 
 To realize a complete DPD fluid model in |es|, three parts are needed:
-the DPD thermostat, which controls the temperate, a dissipative interaction
+the DPD thermostat, which controls the temperature, a dissipative interaction
 between the particles that make up the fluid, see :ref:`DPD interaction`,
 and a repulsive conservative force, see :ref:`Hat interaction`.
 
@@ -608,9 +575,7 @@ The friction coefficients and cutoff are controlled via the
 
 The friction (dissipative) and noise (random) term are coupled via the
 fluctuation-dissipation theorem. The friction term is a function of the
-relative velocity of particle pairs. The DPD thermostat is better for
-dynamics than the Langevin thermostat, since it mimics hydrodynamics in
-the system.
+relative velocity of particle pairs. In addition to the physics covered by the Langevin thermostat, the DPD thermostat mimics hydrodynamics in the system.
 
 As a conservative force any interaction potential can be used,
 see :ref:`Isotropic non-bonded interactions`. A common choice is
@@ -638,17 +603,12 @@ Lattice-Boltzmann thermostat
 
 The :ref:`Lattice-Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
 
-.. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma (v_i(t)-u(x_i(t),t)) + \sqrt{2\gamma k_B T} \eta_i(t).
+.. math::  m_i \dot{\vec{v}}_i(t) = \vec{f}_i(\{\vec{x}_j\},\vec{v}_i,t) - \gamma (\vec{v}_i(t)-\vec{u}(\vec{x}_i(t),t)) + \sqrt{2\gamma k_B T} \vec{\eta}_i(t).
 
-where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`.
-To preserve momentum, an equal and opposite friction force and random force act on the fluid.
+where :math:`\vec{u}(\vec{x},t)` is the fluid velocity at position :math:`\vec{x}` and time :math:`t`.
+Different from the Langevin thermostat, here, the friction is calculated with respect to a moving fluid. 
 
-Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
-by interpolating as described in :ref:`Interpolating velocities`.
-The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes.
-Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99a` and :cite:`dunweg09a`.
-
-The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
+An LB fluid must be used to provide the fluid velocity, while also including hydrodynamic interactions between particles.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluidWalberla` or :class:`espressomd.lb.LBFluidWalberlaGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid.
 
@@ -657,21 +617,33 @@ parameter ``gamma``. To enable the LB thermostat, use::
 
     import espressomd
     import espressomd.lb
-    system = espressomd.System(box_l=[1, 1, 1])
-    lbf = espressomd.lb.LBFluidWalberla(agrid=1, density=1, kinematic_viscosity=1, tau=0.01)
-    self.system.lb = lbf
+    system = espressomd.System(box_l=[8., 8., 8.])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    lbf = espressomd.lb.LBFluidWalberla(agrid=1., tau=0.01, density=1.,
+                                        kinematic_viscosity=1.)
+    system.lb = lbf
     system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+    system.part.add(pos=[0., 0., 0.], ext_force=[0., 0., 1.])
+    system.integrator.run(10)
 
-No other thermostatting mechanism is necessary
-then. Please switch off any other thermostat before starting the LB
-thermostatting mechanism.
+Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
+by interpolating as described in :ref:`Interpolating velocities`.
+To preserve momentum, friction and random forces are also applied to the fluid, with equal magnitude and opposite sign.
+This backcoupling of forces on the fluid is done by distributing the forces amongst the nearest LB nodes.
+Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99a` and :cite:`dunweg09a`.
 
 The LBM implementation provides a fully thermalized LB fluid, all
 nonconserved modes, including the pressure tensor, fluctuate correctly
 according to the given temperature and the relaxation parameters. All
-fluctuations can be switched off by setting the temperature to 0.
+fluctuations can be switched off by setting the temperature to zero.
+The deterministic part of the hydrodynamic interaction is then still active.
 
-.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma \ge 0.0`.
+If the LB thermostat is active, no other thermostatting mechanism is necessary. 
+Please switch off any other thermostat before starting the LB
+thermostatting mechanism.
+
+.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma > 0.0`.
 
 .. _Stokesian thermostat:
 
@@ -697,4 +669,4 @@ needs to be activated via::
     system.integrator.run(100)
 
 where ``kT`` denotes the desired temperature of the system, and ``seed`` the
-seed for the random number generator.
+seed for the random number generator. For details, see :ref:`Stokesian Dynamics`.

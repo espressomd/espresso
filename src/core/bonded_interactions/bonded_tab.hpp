@@ -33,15 +33,15 @@
 #include "bonded_interactions/dihedral.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <numbers>
+#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -66,7 +66,7 @@ private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &pot;
+    ar & pot;
   }
 };
 
@@ -84,8 +84,8 @@ struct TabulatedDistanceBond : public TabulatedBond {
     this->pot->maxval = max;
   }
 
-  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(Utils::Vector3d const &dx) const;
+  std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  std::optional<double> energy(Utils::Vector3d const &dx) const;
 };
 
 /** Parameters for 3-body tabulated potential. */
@@ -98,7 +98,7 @@ struct TabulatedAngleBond : public TabulatedBond {
                      std::vector<double> const &force)
       : TabulatedBond(min, max, energy, force) {
     this->pot->minval = 0.;
-    this->pot->maxval = Utils::pi() + ROUND_ERROR_PREC;
+    this->pot->maxval = std::numbers::pi + ROUND_ERROR_PREC;
   }
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
@@ -117,16 +117,16 @@ struct TabulatedDihedralBond : public TabulatedBond {
                         std::vector<double> const &force)
       : TabulatedBond(min, max, energy, force) {
     this->pot->minval = 0.;
-    this->pot->maxval = 2. * Utils::pi() + ROUND_ERROR_PREC;
+    this->pot->maxval = 2. * std::numbers::pi + ROUND_ERROR_PREC;
   }
 
-  boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
-                             Utils::Vector3d>>
+  std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
+                           Utils::Vector3d>>
   forces(Utils::Vector3d const &v12, Utils::Vector3d const &v23,
          Utils::Vector3d const &v34) const;
-  boost::optional<double> energy(Utils::Vector3d const &v12,
-                                 Utils::Vector3d const &v23,
-                                 Utils::Vector3d const &v34) const;
+  std::optional<double> energy(Utils::Vector3d const &v12,
+                               Utils::Vector3d const &v23,
+                               Utils::Vector3d const &v34) const;
 };
 
 /** Compute a tabulated bond length force.
@@ -137,7 +137,7 @@ struct TabulatedDihedralBond : public TabulatedBond {
  *
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 TabulatedDistanceBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -156,7 +156,7 @@ TabulatedDistanceBond::force(Utils::Vector3d const &dx) const {
  *
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
+inline std::optional<double>
 TabulatedDistanceBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -218,8 +218,8 @@ inline double TabulatedAngleBond::energy(Utils::Vector3d const &vec1,
  *  @param[in] v34  Vector from @p p3 to @p p4
  *  @return the forces on @p p2, @p p1, @p p3
  */
-inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
-                                  Utils::Vector3d, Utils::Vector3d>>
+inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                Utils::Vector3d, Utils::Vector3d>>
 TabulatedDihedralBond::forces(Utils::Vector3d const &v12,
                               Utils::Vector3d const &v23,
                               Utils::Vector3d const &v34) const {
@@ -263,7 +263,7 @@ TabulatedDihedralBond::forces(Utils::Vector3d const &v12,
  *  @param[in] v23  Vector from @p p2 to @p p3
  *  @param[in] v34  Vector from @p p3 to @p p4
  */
-inline boost::optional<double>
+inline std::optional<double>
 TabulatedDihedralBond::energy(Utils::Vector3d const &v12,
                               Utils::Vector3d const &v23,
                               Utils::Vector3d const &v34) const {

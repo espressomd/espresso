@@ -31,12 +31,13 @@
 #include "communication.hpp"
 #include "system/System.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 
 #include <cassert>
+#include <iterator>
 #include <memory>
+#include <span>
 #include <string>
 
 std::shared_ptr<DipolarScafacos>
@@ -72,13 +73,13 @@ void DipolarScafacosImpl::update_particle_forces() const {
   auto const &cell_structure = *get_system().cell_structure;
 
   auto it_potentials = potentials.begin();
-  auto it_f = std::size_t{0ul};
+  auto index = std::size_t{0ul};
   for (auto &p : cell_structure.local_particles()) {
     // The scafacos term "potential" here in fact refers to the magnetic
     // field. So, the torques are given by m \times B
     auto const dip = p.calc_dip();
     auto const t = vector_product(
-        dip, Utils::Vector3d(Utils::Span<const double>(&*it_potentials, 3)));
+        dip, Utils::Vector3d(std::span<const double>(&*it_potentials, 3ul)));
     // The force is given by G m, where G is a matrix
     // which comes from the "fields" output of scafacos like this
     // 0 1 2
@@ -86,16 +87,16 @@ void DipolarScafacosImpl::update_particle_forces() const {
     // 2 4 5
     // where the numbers refer to indices in the "field" output from scafacos
     auto const G = Utils::Matrix<double, 3, 3>{
-        {fields[it_f + 0ul], fields[it_f + 1ul], fields[it_f + 2ul]},
-        {fields[it_f + 1ul], fields[it_f + 3ul], fields[it_f + 4ul]},
-        {fields[it_f + 2ul], fields[it_f + 4ul], fields[it_f + 5ul]}};
+        {fields[index + 0ul], fields[index + 1ul], fields[index + 2ul]},
+        {fields[index + 1ul], fields[index + 3ul], fields[index + 4ul]},
+        {fields[index + 2ul], fields[index + 4ul], fields[index + 5ul]}};
     auto const f = G * dip;
 
     // Add to particles
     p.force() += prefactor * f;
     p.torque() += prefactor * t;
-    it_f += 6ul;
-    it_potentials += 3;
+    index += 6ul;
+    std::advance(it_potentials, 3);
   }
 
   /* Check that the particle number did not change */

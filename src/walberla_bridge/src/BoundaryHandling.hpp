@@ -39,6 +39,16 @@
 
 namespace walberla {
 
+/**
+ * @brief Boundary class optimized for sparse data.
+ *
+ * Instead of storing the boundary data on a vector field,
+ * store individual vectors in a map.
+ * The global cell is used as key.
+ *
+ * Requires a custom communicator:
+ * @ref walberla::field::communication::BoundaryPackInfo.
+ */
 template <typename T, typename BoundaryClass> class BoundaryHandling {
 private:
   /** Flag for domain cells, i.e. all cells. */
@@ -73,7 +83,7 @@ private:
       m_value_boundary->erase(global);
     }
 
-    [[nodiscard]] auto
+    [[nodiscard]] auto &
     get_node_boundary_value(Utils::Vector3i const &node) const {
       auto const global = Cell(node[0], node[1], node[2]);
       return get_value(global);
@@ -88,7 +98,7 @@ private:
     std::shared_ptr<std::unordered_map<Cell, T>> m_value_boundary;
     static constexpr T default_value{};
 
-    [[nodiscard]] T get_value(Cell const &cell) const {
+    [[nodiscard]] T const &get_value(Cell const &cell) const {
       if (m_value_boundary->count(cell) == 0) {
         return default_value;
       }
@@ -112,8 +122,8 @@ public:
       : m_blocks(std::move(blocks)), m_flag_field_id(flag_field_id),
         m_callback(DynamicValueCallback()), m_pending_changes(false) {
     // reinitialize the flag field
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      flag_reset_kernel(&*b);
+    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+      flag_reset_kernel(block->template getData<FlagField>(m_flag_field_id));
     }
     // instantiate the boundary sweep
     std::function callback = m_callback;
@@ -127,7 +137,7 @@ public:
     return m_callback.node_is_boundary(node);
   }
 
-  [[nodiscard]] auto
+  [[nodiscard]] auto &
   get_node_value_at_boundary(Utils::Vector3i const &node) const {
     return m_callback.get_node_boundary_value(node);
   }
@@ -175,8 +185,7 @@ private:
   bool m_pending_changes;
 
   /** Register flags and reset all cells. */
-  void flag_reset_kernel(IBlock *const block) {
-    auto flag_field = block->template getData<FlagField>(m_flag_field_id);
+  void flag_reset_kernel(FlagField *flag_field) {
     // register flags
     if (!flag_field->flagExists(Domain_flag))
       flag_field->registerFlag(Domain_flag);

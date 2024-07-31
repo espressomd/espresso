@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_MATH_BSPLINE_HPP
-#define UTILS_MATH_BSPLINE_HPP
+
+#pragma once
 
 #include "sqr.hpp"
 #include "utils/device_qualifier.hpp"
@@ -28,8 +28,8 @@
 namespace Utils {
 /** @brief Formula of the B-spline. */
 template <int order, typename T>
-DEVICE_QUALIFIER auto bspline(int i, T x)
-    -> std::enable_if_t<(order > 0) && (order <= 7), T> {
+DEVICE_QUALIFIER auto
+bspline(int i, T x) -> std::enable_if_t<(order > 0) && (order <= 7), T> {
   DEVICE_ASSERT(i < order);
   DEVICE_ASSERT(x >= T(-0.5));
   DEVICE_ASSERT(x <= T(0.5));
@@ -206,8 +206,8 @@ template <class T> auto bspline(int i, T x, int k) {
 
 /** @brief Derivative of the B-spline. */
 template <int order, typename T = double>
-DEVICE_QUALIFIER auto bspline_d(int i, T x)
-    -> std::enable_if_t<(order > 0) && (order <= 7), T> {
+DEVICE_QUALIFIER auto
+bspline_d(int i, T x) -> std::enable_if_t<(order > 0) && (order <= 7), T> {
   DEVICE_ASSERT(i < order);
   DEVICE_ASSERT(x >= T(-0.5));
   DEVICE_ASSERT(x <= T(0.5));
@@ -323,5 +323,3 @@ DEVICE_QUALIFIER auto bspline_d(int i, T x)
   return T{};
 }
 } // namespace Utils
-
-#endif

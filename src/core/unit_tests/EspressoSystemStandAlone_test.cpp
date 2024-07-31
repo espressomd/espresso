@@ -49,6 +49,7 @@ namespace utf = boost::unit_test;
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "observables/ParticleVelocities.hpp"
 #include "observables/PidObservable.hpp"
+#include "p3m/FFTBackendLegacy.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
@@ -59,8 +60,7 @@ namespace utf = boost::unit_test;
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/optional.hpp>
-#include <boost/range/numeric.hpp>
+#include <boost/variant.hpp>
 
 #include <cassert>
 #include <cmath>
@@ -314,6 +314,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              1e-3};
     auto solver =
         std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
+    solver->p3m.make_fft_instance<FFTBackendLegacy>(false);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
 

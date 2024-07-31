@@ -34,13 +34,13 @@
 #include "system/System.hpp"
 #include "virtual_sites/relative.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/flatten.hpp>
 
-#include <boost/range/algorithm/copy.hpp>
-
+#include <algorithm>
+#include <cstddef>
 #include <memory>
+#include <span>
 
 namespace System {
 std::shared_ptr<Observable_stat> System::calculate_pressure() {
@@ -70,16 +70,16 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   short_range_loop(
       [this, coulomb_force_kernel_ptr = get_ptr(coulomb_force_kernel),
        &obs_pressure](Particle const &p1, int bond_id,
-                      Utils::Span<Particle *> partners) {
+                      std::span<Particle *> partners) {
         auto const &iaparams = *bonded_ia_params.at(bond_id);
         auto const result = calc_bonded_pressure_tensor(
             iaparams, p1, partners, *box_geo, coulomb_force_kernel_ptr);
         if (result) {
-          auto const &tensor = result.get();
+          auto const &tensor = result.value();
           /* pressure tensor part */
-          for (int k = 0; k < 3; k++)
-            for (int l = 0; l < 3; l++)
-              obs_pressure.bonded_contribution(bond_id)[k * 3 + l] +=
+          for (std::size_t k = 0u; k < 3u; k++)
+            for (std::size_t l = 0u; l < 3u; l++)
+              obs_pressure.bonded_contribution(bond_id)[k * 3u + l] +=
                   tensor(k, l);
 
           return false;
@@ -101,7 +101,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   auto const coulomb_pressure = coulomb.calc_pressure_long_range(local_parts);
-  boost::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9);
+  std::ranges::copy(coulomb_pressure, obs_pressure.coulomb.begin() + 9u);
 #endif
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
@@ -111,8 +111,8 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
 #ifdef VIRTUAL_SITES_RELATIVE
   if (!obs_pressure.virtual_sites.empty()) {
     auto const vs_pressure = vs_relative_pressure_tensor(*cell_structure);
-    boost::copy(Utils::flatten(vs_pressure),
-                obs_pressure.virtual_sites.begin());
+    std::ranges::copy(Utils::flatten(vs_pressure),
+                      obs_pressure.virtual_sites.begin());
   }
 #endif
 

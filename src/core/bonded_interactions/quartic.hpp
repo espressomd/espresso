@@ -30,7 +30,7 @@
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <boost/optional.hpp>
+#include <optional>
 
 /** Parameters for quartic bond Potential */
 struct QuarticBond {
@@ -49,24 +49,24 @@ struct QuarticBond {
     this->r_cut = r_cut;
   }
 
-  boost::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
-  boost::optional<double> energy(Utils::Vector3d const &dx) const;
+  std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
+  std::optional<double> energy(Utils::Vector3d const &dx) const;
 
 private:
   friend boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar, long int /* version */) {
-    ar &k0;
-    ar &k1;
-    ar &r;
-    ar &r_cut;
+    ar & k0;
+    ar & k1;
+    ar & r;
+    ar & r_cut;
   }
 };
 
 /** Compute the quartic bond force.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<Utils::Vector3d>
+inline std::optional<Utils::Vector3d>
 QuarticBond::force(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 
@@ -91,7 +91,7 @@ QuarticBond::force(Utils::Vector3d const &dx) const {
 /** Compute the quartic bond energy.
  *  @param[in]  dx        Distance between the particles.
  */
-inline boost::optional<double>
+inline std::optional<double>
 QuarticBond::energy(Utils::Vector3d const &dx) const {
   auto const dist = dx.norm();
 

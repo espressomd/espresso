@@ -26,7 +26,6 @@
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "lb/Solver.hpp"
-#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -44,39 +43,26 @@
 bool in_local_halo(LocalBox const &local_box, Utils::Vector3d const &pos,
                    double agrid);
 
-/**
- * @brief Add a force to the lattice force density.
- * @param lb Hydrodynamics solver
- * @param pos Position of the force in LB units.
- * @param force Force in MD units.
- * @param time_step MD time step.
- */
-void add_md_force(LB::Solver &lb, Utils::Vector3d const &pos,
-                  Utils::Vector3d const &force, double time_step);
-
 // internal function exposed for unit testing
 std::vector<Utils::Vector3d> positions_in_halo(Utils::Vector3d const &pos,
-                                               BoxGeometry const &box,
-                                               LocalBox const &local_geo,
+                                               BoxGeometry const &box_geo,
+                                               LocalBox const &local_box,
                                                double agrid);
 
 /** @brief Calculate drag force on a single particle.
  *
- *  See section II.C. @cite ahlrichs99a
+ *  See section II.C. and eq. 9 in @cite ahlrichs99a.
  *
  *  @param[in] lb          The coupled fluid
  *  @param[in] lb_gamma    The friction coefficient
  *  @param[in] p           The coupled particle
- *  @param[in] shifted_pos The particle position in LB units with optional shift
- *  @param[in] vel_offset  Velocity offset in MD units to be added to
- *                         interpolated LB velocity before calculating the force
+ *  @param[in] shifted_pos The particle position in MD units with optional shift
  *
  *  @return The viscous coupling force
  */
 Utils::Vector3d lb_drag_force(LB::Solver const &lb, double lb_gamma,
                               Particle const &p,
-                              Utils::Vector3d const &shifted_pos,
-                              Utils::Vector3d const &vel_offset);
+                              Utils::Vector3d const &shifted_pos);
 
 namespace LB {
 
@@ -85,16 +71,14 @@ class ParticleCoupling {
   LB::Solver &m_lb;
   BoxGeometry const &m_box_geo;
   LocalBox const &m_local_box;
-  double m_time_step;
   double m_noise_pref_wo_gamma;
   bool m_thermalized;
 
 public:
   ParticleCoupling(LBThermostat const &thermostat, LB::Solver &lb,
-                   BoxGeometry const &box_geo, LocalBox const &local_box,
-                   double time_step)
+                   BoxGeometry const &box_geo, LocalBox const &local_box)
       : m_thermostat{thermostat}, m_lb{lb}, m_box_geo{box_geo},
-        m_local_box{local_box}, m_time_step{time_step} {
+        m_local_box{local_box} {
     /* Eq. (16) @cite ahlrichs99a, without the gamma term.
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
@@ -103,23 +87,11 @@ public:
     auto constexpr variance_inv = 12.;
     auto const kT = lb.get_kT() * Utils::sqr(lb.get_lattice_speed());
     m_thermalized = (kT != 0.);
-    m_noise_pref_wo_gamma = std::sqrt(variance_inv * 2. * kT / time_step);
+    m_noise_pref_wo_gamma = std::sqrt(variance_inv * 2. * kT / lb.get_tau());
   }
 
   Utils::Vector3d get_noise_term(Particle const &p) const;
-  void kernel(Particle &p);
-
-  /**
-   * @brief Calculate particle drift velocity offset due to ENGINE and
-   * ELECTROHYDRODYNAMICS.
-   */
-  auto lb_drift_velocity_offset(Particle const &p) const {
-    Utils::Vector3d vel_offset{};
-#ifdef LB_ELECTROHYDRODYNAMICS
-    vel_offset += p.mu_E();
-#endif
-    return vel_offset;
-  }
+  void kernel(std::vector<Particle *> const &particles);
 };
 
 /**

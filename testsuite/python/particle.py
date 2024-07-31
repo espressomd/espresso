@@ -198,18 +198,21 @@ class ParticleProperties(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE"])
     def test_vs_relative(self):
+        Propagation = espressomd.propagation.Propagation
         self.system.part.add(id=0, pos=(0, 0, 0))
         p1 = self.system.part.add(id=1, pos=(0, 0, 0))
         self.assertFalse(p1.is_virtual())
         p1.vs_relative = (0, 5.0, (0.5, -0.5, -0.5, -0.5))
         p1.vs_quat = [1, 2, 3, 4]
+        p1.propagation = (Propagation.TRANS_VS_RELATIVE |
+                          Propagation.ROT_VS_RELATIVE)
         self.assertTrue(p1.is_virtual())
         np.testing.assert_array_equal(p1.vs_quat, [1, 2, 3, 4])
         res = p1.vs_relative
         self.assertEqual(res[0], 0, f"vs_relative: {res}")
         self.assertEqual(res[1], 5.0, f"vs_relative: {res}")
         np.testing.assert_allclose(
-            res[2], np.array((0.5, -0.5, -0.5, -0.5)),
+            np.copy(res[2]), np.array([0.5, -0.5, -0.5, -0.5]),
             err_msg=f"vs_relative: {res}", atol=self.tol)
         # check exceptions
         error_msg = r"attribute 'vs_relative' of 'ParticleHandle' must take the form \[id, distance, quaternion\]"
@@ -543,7 +546,7 @@ class ParticleProperties(ut.TestCase):
         np.testing.assert_equal(system.part.by_ids(range(3, 6)).id,
                                 [i for i in sorted(ids) if i >= 3 and i < 6])
         np.testing.assert_equal(system.part.by_ids(range(6, 3, -1)).id,
-                                [i for i in sorted(ids, key=lambda i:-i) if i > 3 and i <= 6])
+                                [i for i in sorted(ids, key=lambda i: -i) if i > 3 and i <= 6])
 
         # Setting particle properties on a slice
         system.part.by_ids(range(9, 10)).pos = (0, 0, 0)

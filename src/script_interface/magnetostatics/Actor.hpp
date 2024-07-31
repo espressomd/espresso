@@ -30,7 +30,6 @@
 #include "script_interface/system/Leaf.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include <string>
 
 namespace ScriptInterface {

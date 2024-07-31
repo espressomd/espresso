@@ -27,10 +27,10 @@
 #include <shapes/Shape.hpp>
 
 #include <utils/Vector.hpp>
-#include <utils/constants.hpp>
 
 #include <cmath>
 #include <limits>
+#include <numbers>
 
 BOOST_AUTO_TEST_CASE(dist_function) {
   // multiply by 100 because BOOST_REQUIRE_CLOSE takes a percentage tolerance
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   int N = 100;
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
-      double theta = 2. * i / N * Utils::pi();
+      double theta = 2. * i / N * std::numbers::pi;
       double v = j / (N - 1.);
 
       Utils::Vector3d dist;

@@ -34,13 +34,13 @@
 #include "exclusions.hpp"
 #include "forces_inline.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 #include <utils/math/tensor_product.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
+#include <optional>
+#include <span>
 #include <string>
 #include <tuple>
 
@@ -64,7 +64,7 @@ inline void add_non_bonded_pair_virials(
   if (do_nonbonded(p1, p2))
 #endif
   {
-    auto const force = calc_central_radial_force(p1, p2, ia_params, d, dist).f +
+    auto const force = calc_central_radial_force(ia_params, d, dist).f +
                        calc_central_radial_charge_force(p1, p2, ia_params, d,
                                                         dist, kernel_forces)
                            .f +
@@ -79,9 +79,9 @@ inline void add_non_bonded_pair_virials(
     /* real space Coulomb */
     auto const p_coulomb = (*kernel_pressure)(p1.q() * p2.q(), d, dist);
 
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        obs_pressure.coulomb[i * 3 + j] += p_coulomb(i, j);
+    for (std::size_t i = 0u; i < 3u; i++) {
+      for (std::size_t j = 0u; j < 3u; j++) {
+        obs_pressure.coulomb[i * 3u + j] += p_coulomb(i, j);
       }
     }
   }
@@ -96,7 +96,7 @@ inline void add_non_bonded_pair_virials(
 #endif // DIPOLES
 }
 
-inline boost::optional<Utils::Matrix<double, 3, 3>>
+inline std::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_virial_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
     Particle const &p2, BoxGeometry const &box_geo,
@@ -104,7 +104,7 @@ calc_bonded_virial_pressure_tensor(
   auto const dx = box_geo.get_mi_vector(p1.pos(), p2.pos());
   auto const result = calc_bond_pair_force(p1, p2, iaparams, dx, kernel);
   if (result) {
-    auto const &force = result.get();
+    auto const &force = result.value();
 
     return Utils::tensor_product(force, dx);
   }
@@ -112,7 +112,7 @@ calc_bonded_virial_pressure_tensor(
   return {};
 }
 
-inline boost::optional<Utils::Matrix<double, 3, 3>>
+inline std::optional<Utils::Matrix<double, 3, 3>>
 calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
                                        Particle const &p1, Particle const &p2,
                                        Particle const &p3,
@@ -130,7 +130,7 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
         calc_bonded_three_body_force(iaparams, box_geo, p1, p2, p3);
     if (result) {
       Utils::Vector3d force2, force3;
-      std::tie(std::ignore, force2, force3) = result.get();
+      std::tie(std::ignore, force2, force3) = result.value();
 
       return Utils::tensor_product(force2, dx21) +
              Utils::tensor_product(force3, dx31);
@@ -145,9 +145,9 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
   return {};
 }
 
-inline boost::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
+inline std::optional<Utils::Matrix<double, 3, 3>> calc_bonded_pressure_tensor(
     Bonded_IA_Parameters const &iaparams, Particle const &p1,
-    Utils::Span<Particle *> partners, BoxGeometry const &box_geo,
+    std::span<Particle *> partners, BoxGeometry const &box_geo,
     Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   switch (number_of_partners(iaparams)) {
   case 1:
@@ -174,7 +174,7 @@ inline void add_kinetic_virials(Particle const &p1,
     return;
 
   /* kinetic pressure */
-  for (int k = 0; k < 3; k++)
-    for (int l = 0; l < 3; l++)
-      obs_pressure.kinetic[k * 3 + l] += p1.v()[k] * p1.v()[l] * p1.mass();
+  for (std::size_t k = 0u; k < 3u; k++)
+    for (std::size_t l = 0u; l < 3u; l++)
+      obs_pressure.kinetic[k * 3u + l] += p1.v()[k] * p1.v()[l] * p1.mass();
 }

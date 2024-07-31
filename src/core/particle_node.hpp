@@ -30,10 +30,10 @@
 
 #include "Particle.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <span>
 #include <vector>
 
 namespace type_tracking {
@@ -60,7 +60,7 @@ const Particle &get_particle_data(int p_id);
  *
  * @param ids Ids of the particles that should be fetched.
  */
-void prefetch_particle_data(Utils::Span<const int> ids);
+void prefetch_particle_data(std::span<const int> ids);
 
 /** @brief Invalidate the fetch cache for get_particle_data. */
 void invalidate_fetch_cache();

@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_COORDINATE_TRANSFORMATION_HPP
-#define UTILS_COORDINATE_TRANSFORMATION_HPP
+
+#pragma once
 
 /**
  * @file
@@ -31,10 +31,8 @@
  */
 
 #include "utils/Vector.hpp"
-#include "utils/constants.hpp"
 #include "utils/math/vec_rotate.hpp"
 #include "utils/matrix.hpp"
-#include "utils/quaternion.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -166,4 +164,3 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
 }
 
 } // namespace Utils
-#endif

@@ -211,7 +211,7 @@ class LBFluidWalberla(HydrodynamicInteraction,
 
     """
 
-    _so_name = "walberla::LBFluid"
+    _so_name = "walberla::LBFluidCPU"
     _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
@@ -306,18 +306,22 @@ class LBFluidWalberla(HydrodynamicInteraction,
             values=array_variant(velocity.flatten()))
 
 
-class LBFluidWalberlaGPU(HydrodynamicInteraction):
+@script_interface_register
+class LBFluidWalberlaGPU(LBFluidWalberla):
     """
     Initialize the lattice-Boltzmann method for hydrodynamic flow using
     waLBerla for the GPU. See :class:`HydrodynamicInteraction` for the
     list of parameters.
 
     """
+    _so_name = "walberla::LBFluidGPU"
+    _so_creation_policy = "GLOBAL"
     _so_features = ("WALBERLA", "CUDA")
 
-    # pylint: disable=unused-argument
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError("Not implemented yet")
+    def default_params(self):
+        params = super().default_params()
+        params["single_precision"] = True
+        return params
 
 
 @script_interface_register

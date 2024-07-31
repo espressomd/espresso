@@ -24,12 +24,12 @@
 #include "BoxGeometry.hpp"
 #include "ghosts.hpp"
 
-#include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
+#include <optional>
+#include <span>
 #include <vector>
 
 struct RemovedParticle {
@@ -91,7 +91,7 @@ public:
    *
    * @return List of local cells.
    */
-  virtual Utils::Span<Cell *const> local_cells() const = 0;
+  virtual std::span<Cell *const> local_cells() const = 0;
 
   /**
    * @brief Get pointer to local cells.
@@ -102,7 +102,7 @@ public:
    *
    * @return List of ghost cells.
    */
-  virtual Utils::Span<Cell *const> ghost_cells() const = 0;
+  virtual std::span<Cell *const> ghost_cells() const = 0;
 
   /**
    * @brief Determine which cell a particle id belongs to.
@@ -128,7 +128,7 @@ public:
    *        if minimum image convention should be used needed for
    *        distance calculation.
    */
-  virtual boost::optional<BoxGeometry> minimum_image_distance() const = 0;
+  virtual std::optional<BoxGeometry> minimum_image_distance() const = 0;
 
   virtual BoxGeometry const &box() const = 0;
 

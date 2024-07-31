@@ -20,8 +20,17 @@
 #define CORE_ALGORITHM_PERIODIC_FOLD_HPP
 
 #include <cmath>
+#include <concepts>
 #include <limits>
+#include <type_traits>
 #include <utility>
+
+// Define a concept that checks if a type T is an integer or a reference to an
+// integer
+template <typename T>
+concept IntegralOrRef = std::integral<std::remove_reference_t<T>>;
+template <typename T>
+concept FloatingPointOrRef = std::floating_point<std::remove_reference_t<T>>;
 
 namespace Algorithm {
 /**
@@ -32,7 +41,7 @@ namespace Algorithm {
  * @param l Length of primary interval
  * @return x folded into [0, l) and number of folds.
  */
-template <typename T, typename I>
+template <FloatingPointOrRef T, IntegralOrRef I>
 std::pair<T, I> periodic_fold(T x, I i, T const l) {
   using limits = std::numeric_limits<I>;
 
@@ -56,7 +65,7 @@ std::pair<T, I> periodic_fold(T x, I i, T const l) {
  * @param l Length of primary interval
  * @return x folded into [0, l).
  */
-template <typename T> T periodic_fold(T x, T const l) {
+template <FloatingPointOrRef T> T periodic_fold(T x, T const l) {
 #ifndef __FAST_MATH__
   /* Can't fold if either x or l is nan or inf. */
   if (std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == 0)) {

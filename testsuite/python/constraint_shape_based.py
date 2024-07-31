@@ -868,7 +868,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     dist_vec = np.array([0.0, 0.0, 0.0])
 
                     # check if outside or inside
-                    if(pos[0] < (self.box_l + length[0] - abs(length[0])) / 2.0 or
+                    if (pos[0] < (self.box_l + length[0] - abs(length[0])) / 2.0 or
                        pos[0] > (self.box_l + length[0] + abs(length[0])) / 2.0 or
                        pos[1] < (self.box_l + length[1] - abs(length[1])) / 2.0 or
                        pos[1] > (self.box_l + length[1] + abs(length[1])) / 2.0 or
@@ -1072,14 +1072,26 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
     def test_exceptions(self):
         system = self.system
+        box_l = self.box_l
         wall = espressomd.shapes.Wall(normal=[0., 1., 0.], dist=0.)
         constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=wall, particle_type=1)
         system.constraints.add(constraint)
         with self.assertRaisesRegex(RuntimeError, "there are active constraints"):
             system.box_l = 0.5 * system.box_l
+        np.testing.assert_allclose(np.copy(system.box_l), box_l, atol=1e-7)
+        with self.assertRaisesRegex(RuntimeError, "there are active constraints"):
+            system.change_volume_and_rescale_particles(
+                0.5 * system.box_l[0], "xyz")
+        np.testing.assert_allclose(np.copy(system.box_l), box_l, atol=1e-7)
         system.constraints.remove(constraint)
         system.box_l = 0.75 * system.box_l
+        np.testing.assert_allclose(
+            np.copy(system.box_l), 0.75 * box_l, atol=1e-7)
+        system.change_volume_and_rescale_particles(
+            0.5 * system.box_l[0], "xyz")
+        np.testing.assert_allclose(
+            np.copy(system.box_l), 0.75 * 0.5 * box_l, atol=1e-7)
 
 
 if __name__ == "__main__":

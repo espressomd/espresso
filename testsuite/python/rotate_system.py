@@ -24,6 +24,7 @@ Testmodule for System.rotate_system()
 import unittest as ut
 import numpy as np
 import espressomd
+import espressomd.propagation
 
 
 class RotateSystemTest(ut.TestCase):
@@ -71,9 +72,12 @@ class RotateSystemTest(ut.TestCase):
         # Check that virtual sites do not influence the center of mass
         # calculation
         if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+            Propagation = espressomd.propagation.Propagation
             vs_dist = 0.01
             p2 = system.part.add(pos=p1.pos)
             p2.vs_relative = (p1.id, vs_dist, (1., 0., 0., 0.))
+            p2.propagation = (Propagation.TRANS_VS_RELATIVE |
+                              Propagation.ROT_VS_RELATIVE)
             system.rotate_system(phi=pi / 2., theta=pi / 2., alpha=-pi / 2.)
             np.testing.assert_allclose(np.copy(p0.pos), [6, 4, 4])
             np.testing.assert_allclose(np.copy(p1.pos), [4, 6, 6])

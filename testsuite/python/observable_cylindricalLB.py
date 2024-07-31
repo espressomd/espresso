@@ -134,12 +134,8 @@ class CylindricalLBObservableCommon:
                 self.align_with_observable_frame(pos) +
                 self.cyl_transform_params.center)
             vel_aligned.append(self.align_with_observable_frame(vel))
-        node_aligned = np.array(
-            np.rint(
-                np.array(pos_aligned) -
-                3 *
-                [0.5]),
-            dtype=int)
+        node_aligned = np.array(np.rint(np.array(pos_aligned) - 3 * [0.5]),
+                                dtype=int)
         self.system.part.add(pos=pos_aligned, v=vel_aligned)
         self.params['ids'] = self.system.part.all().id
 
@@ -277,22 +273,32 @@ class CylindricalLBObservableCommon:
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class CylindricalLBObservableWalberla(
+class CylindricalLBObservableWalberlaDoubePrecisionCPU(
         CylindricalLBObservableCommon, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in double-precision."""
-
     lb_class = espressomd.lb.LBFluidWalberla
     lb_params_extra = {"single_precision": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class CylindricalLBObservableWalberlaSinglePrecision(
-        CylindricalLBObservableWalberla, ut.TestCase):
-
-    """Test for the Walberla implementation of the LB in single-precision."""
-
+class CylindricalLBObservableWalberlaSinglePrecisionCPU(
+        CylindricalLBObservableCommon, ut.TestCase):
     lb_class = espressomd.lb.LBFluidWalberla
+    lb_params_extra = {"single_precision": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class CylindricalLBObservableWalberlaDoubePrecisionGPU(
+        CylindricalLBObservableCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params_extra = {"single_precision": False}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class CylindricalLBObservableWalberlaSinglePrecisionGPU(
+        CylindricalLBObservableCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
     lb_params_extra = {"single_precision": True}
 
 

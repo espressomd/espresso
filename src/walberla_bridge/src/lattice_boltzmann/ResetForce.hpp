@@ -21,6 +21,10 @@
 
 #include "generated_kernels/FieldAccessorsDoublePrecision.h"
 #include "generated_kernels/FieldAccessorsSinglePrecision.h"
+#if defined(__CUDACC__)
+#include "generated_kernels/FieldAccessorsDoublePrecisionCUDA.cuh"
+#include "generated_kernels/FieldAccessorsSinglePrecisionCUDA.cuh"
+#endif
 
 #include "../utils/types_conversion.hpp"
 
@@ -60,8 +64,8 @@ public:
     force_field->swapDataPointers(force_to_be_applied);
 
     lbm::accessor::Vector::add_to_all(force_field, m_ext_force);
-    lbm::accessor::Vector::broadcast(force_to_be_applied,
-                                     Vector3<FloatType>{0});
+    lbm::accessor::Vector::initialize(force_to_be_applied,
+                                      Vector3<FloatType>{0});
   }
 
 private:

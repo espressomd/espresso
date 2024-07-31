@@ -58,10 +58,9 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(espresso_core PRIVATE cuda/init.cpp)
   espresso_add_gpu_library(
     espresso_cuda SHARED cuda/common_cuda.cu cuda/init_cuda.cu
-    cuda/CudaHostAllocator.cu magnetostatics/barnes_hut_gpu_cuda.cu
-    magnetostatics/dipolar_direct_sum_gpu_cuda.cu
-    electrostatics/mmm1d_gpu_cuda.cu electrostatics/p3m_gpu_cuda.cu
-    electrostatics/p3m_gpu_error_cuda.cu system/GpuParticleData_cuda.cu)
+    cuda/CudaHostAllocator.cu magnetostatics/dipolar_direct_sum_gpu_cuda.cu
+    electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
+    system/GpuParticleData_cuda.cu)
   add_library(espresso::cuda ALIAS espresso_cuda)
   target_link_libraries(
     espresso_cuda PRIVATE CUDA::cuda_driver CUDA::cudart CUDA::cufft
@@ -83,15 +82,21 @@ install(TARGETS espresso_core
 
 target_link_libraries(
   espresso_core PRIVATE espresso::config espresso::utils::mpi espresso::shapes
-                        espresso::profiler espresso::cpp_flags
+                        espresso::cpp_flags
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
-         Boost::serialization Boost::mpi)
+         Boost::serialization Boost::mpi espresso::profiler)
 
 target_include_directories(espresso_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  target_link_libraries(espresso_core PRIVATE espresso::walberla
-                                              ${WALBERLA_LIBS})
+  target_link_libraries(
+    espresso_core
+    PRIVATE espresso::walberla
+            $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:espresso::walberla_cuda>)
+endif()
+
+if(ESPRESSO_BUILD_WITH_FFTW)
+  add_subdirectory(fft)
 endif()
 
 add_subdirectory(accumulators)
@@ -121,4 +126,11 @@ add_subdirectory(virtual_sites)
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(unit_tests)
+endif()
+
+if(ESPRESSO_BUILD_WITH_HDF5 AND ESPRESSO_BUILD_WITH_COVERAGE
+   AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set_source_files_properties(
+    io/writer/h5md_core.cpp PROPERTIES COMPILE_OPTIONS -felide-constructors
+                                       DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
