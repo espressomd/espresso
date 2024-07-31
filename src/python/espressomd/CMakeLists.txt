@@ -49,6 +49,7 @@ target_compile_options(
   espresso_pyx_flags
   INTERFACE
     $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-pedantic>
+    $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-cast-qual>
     $<$<NOT:$<CXX_COMPILER_ID:Intel,IntelLLVM>>:-Wno-deprecated-declarations>
     $<$<CXX_COMPILER_ID:Intel,IntelLLVM>:-diag-disable=1224>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>

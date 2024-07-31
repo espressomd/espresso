@@ -35,7 +35,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -397,7 +396,7 @@ public:
   auto get_ia_param_key(int i, int j) const {
     assert(i >= 0 and i <= max_seen_particle_type);
     assert(j >= 0 and j <= max_seen_particle_type);
-    auto const key = static_cast<std::size_t>(
+    auto const key = static_cast<unsigned int>(
         Utils::lower_triangular(std::max(i, j), std::min(i, j)));
     assert(key < m_nonbonded_ia_params.size());
     return key;
@@ -415,15 +414,15 @@ public:
    * @return Reference to interaction parameters for the type pair.
    */
   auto &get_ia_param(int i, int j) {
-    return *m_nonbonded_ia_params.at(get_ia_param_key(i, j));
+    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
   }
 
   auto const &get_ia_param(int i, int j) const {
-    return *m_nonbonded_ia_params.at(get_ia_param_key(i, j));
+    return *m_nonbonded_ia_params[get_ia_param_key(i, j)];
   }
 
   auto get_ia_param_ref_counted(int i, int j) const {
-    return m_nonbonded_ia_params.at(get_ia_param_key(i, j));
+    return m_nonbonded_ia_params[get_ia_param_key(i, j)];
   }
 
   void set_ia_param(int i, int j, std::shared_ptr<IA_parameters> const &ia) {
