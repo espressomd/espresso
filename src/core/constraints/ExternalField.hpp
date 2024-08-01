@@ -16,10 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CONSTRAINTS_EXTERNAL_FIELD_HPP
-#define CONSTRAINTS_EXTERNAL_FIELD_HPP
+
+#pragma once
 
 #include "Constraint.hpp"
+#include "Particle.hpp"
 #include "field_coupling/ForceField.hpp"
 
 namespace Constraints {
@@ -49,6 +50,4 @@ public:
     return impl.field().fits_in_box(box);
   }
 };
-} /* namespace Constraints */
-
-#endif
+} // namespace Constraints

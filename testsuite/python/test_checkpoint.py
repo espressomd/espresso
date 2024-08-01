@@ -475,11 +475,6 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(q[q_ind], r.as_quat(), atol=1e-10)
             np.testing.assert_allclose(np.copy(p2.vs_quat), [1., 0., 0., 0.])
 
-    def test_part_slice(self):
-        np.testing.assert_allclose(np.copy(p_slice.id), [4, 1])
-        np.testing.assert_allclose(np.copy(p_slice.pos),
-                                   np.copy(system.part.by_ids([4, 1]).pos))
-
     def test_bonded_interactions_serialization(self):
         '''
         Check that particles at the interface between two MPI nodes still
@@ -667,8 +662,6 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
     def test_non_bonded_inter_lj(self):
-        self.assertTrue(
-            system.non_bonded_inter[0, 0].lennard_jones.call_method("is_registered"))
         params1 = system.non_bonded_inter[0, 0].lennard_jones.get_params()
         params2 = system.non_bonded_inter[3, 0].lennard_jones.get_params()
         reference1 = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
@@ -677,13 +670,11 @@ class CheckpointTest(ut.TestCase):
                       'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         self.assertEqual(params1, reference1)
         self.assertEqual(params2, reference2)
-        self.assertTrue(handle_ia.lennard_jones.call_method("is_registered"))
         self.assertEqual(handle_ia.lennard_jones.get_params(), reference1)
 
     @utx.skipIfMissingFeatures('DPD')
     def test_non_bonded_inter_dpd(self):
         self.assertEqual(dpd_ia.get_params(), dpd_params)
-        self.assertFalse(dpd_ia.call_method("is_registered"))
 
     def test_bonded_inter(self):
         # check the ObjectHandle was correctly initialized (including MPI)
@@ -705,10 +696,12 @@ class CheckpointTest(ut.TestCase):
             ibm_volcons_bond.params, {'softID': 15, 'kappaV': 0.01})
         self.assertEqual(
             {**ibm_tribend_bond.params, **{'theta0': 0.}},
-            {'kb': 2., 'theta0': 0., 'refShape': 'Initial'})
+            {'kb': 2., 'refShape': 'Initial', 'is_initialized': True,
+             'theta0': 0., 'ind1': 0, 'ind2': 1, 'ind3': 3, 'ind4': 4})
         self.assertEqual(
-            ibm_triel_bond.params,
-            {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean'})
+            {k: v for k, v in ibm_triel_bond.params.items() if k[0] != "_"},
+            {'k1': 1.1, 'k2': 1.2, 'maxDist': 1.6, 'elasticLaw': 'NeoHookean',
+             'ind1': 0, 'ind2': 1, 'ind3': 3, 'is_initialized': False})
         # check new bonds can be added
         if not has_lb_mode:
             new_bond = espressomd.interactions.HarmonicBond(r_0=0.2, k=1.)
@@ -764,30 +757,24 @@ class CheckpointTest(ut.TestCase):
             p_real.vs_relative[2], [1., 0., 0., 0.], atol=1e-10)
 
     def test_mean_variance_calculator(self):
+        acc_mean_variance = system.auto_update_accumulators[0]
         np.testing.assert_array_equal(
             acc_mean_variance.mean(),
             np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
         np.testing.assert_array_equal(
             acc_mean_variance.variance(),
             np.array([[0., 0.5, 2.], [0., 0., 0.]]))
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[0].variance(),
-            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
 
     def test_time_series(self):
+        acc_time_series = system.auto_update_accumulators[1]
         expected = [[[1, 1, 1], [1, 1, 2]], [[1, 2, 3], [1, 1, 2]]]
         np.testing.assert_array_equal(acc_time_series.time_series(), expected)
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[1].time_series(),
-            expected)
 
     def test_correlator(self):
+        acc_correlator = system.auto_update_accumulators[2]
         expected = np.zeros((36, 2, 3))
         expected[0:2] = [[[1, 2.5, 5], [1, 1, 4]], [[1, 2, 3], [1, 1, 4]]]
         np.testing.assert_array_equal(acc_correlator.result(), expected)
-        np.testing.assert_array_equal(
-            system.auto_update_accumulators[2].result(),
-            expected)
 
     @utx.skipIfMissingFeatures('H5MD')
     @utx.skipIfMissingModules("h5py")

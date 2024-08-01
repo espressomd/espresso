@@ -29,9 +29,15 @@
 
 #include <utils/Vector.hpp>
 
+#include <cassert>
 #include <cmath>
+#include <memory>
 #include <optional>
 #include <tuple>
+
+namespace Thermostat {
+class Thermostat;
+}
 
 /** Parameters for Thermalized bond */
 struct ThermalizedBond {
@@ -70,22 +76,17 @@ struct ThermalizedBond {
     pref2_dist = std::sqrt(24. * gamma_distance / time_step * temp_distance);
   }
 
+  void set_thermostat_view(
+      std::weak_ptr<Thermostat::Thermostat const> const &thermostat) {
+    m_thermostat = thermostat;
+  }
+
+  void unset_thermostat_view() { m_thermostat.reset(); }
+
   std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
   forces(Particle const &p1, Particle const &p2,
          Utils::Vector3d const &dx) const;
 
 private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & temp_com;
-    ar & gamma_com;
-    ar & temp_distance;
-    ar & gamma_distance;
-    ar & r_cut;
-    ar & pref1_com;
-    ar & pref2_com;
-    ar & pref1_dist;
-    ar & pref2_dist;
-  }
+  std::weak_ptr<Thermostat::Thermostat const> m_thermostat;
 };

@@ -95,24 +95,6 @@
  *    @endcode
  *    All values the bond needs to function properly should be passed as
  *    arguments to this constructor.
- *  * A template function for serialization called @c serialize. This is for
- *    communication between nodes in parallel computations.
- *    The following function can serve as a starting point.
- *    @code{.cpp}
- *    private:
- *    friend boost::serialization::access;
- *    template <typename Archive>
- *    void serialize(Archive &ar, long int) {
- *      ar &k;
- *      ar &drmax;
- *      ar &r0;
- *      ar &drmax2;
- *      ar &drmax2i;
- *    }
- *    @endcode
- *    Replace all the <tt>ar&</tt> commands with the new bond's parameters.
- *    Every data member of your struct needs to be transmitted. This template
- *    function is private.
  *
  *  @subsection bondedIA_new_integration Integrating the new bond type into the C++ core
  *

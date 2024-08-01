@@ -29,7 +29,6 @@
 #include "Particle.hpp"
 #include "errorhandling.hpp"
 #include "particle_node.hpp"
-#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -52,7 +51,8 @@ Utils::Vector3d Cluster::center_of_mass() {
 Utils::Vector3d
 Cluster::center_of_mass_subcluster(std::vector<int> const &particle_ids) {
   sanity_checks();
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   Utils::Vector3d com{};
 
   // The distances between the particles are "folded", such that all distances
@@ -83,7 +83,8 @@ Cluster::center_of_mass_subcluster(std::vector<int> const &particle_ids) {
 
 double Cluster::longest_distance() {
   sanity_checks();
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   double ld = 0.;
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
@@ -107,7 +108,8 @@ double Cluster::radius_of_gyration() {
 double
 Cluster::radius_of_gyration_subcluster(std::vector<int> const &particle_ids) {
   sanity_checks();
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   // Center of mass
   Utils::Vector3d com = center_of_mass_subcluster(particle_ids);
   double sum_sq_dist = 0.;
@@ -136,7 +138,8 @@ std::vector<std::size_t> sort_indices(const std::vector<T> &v) {
 std::pair<double, double> Cluster::fractal_dimension(double dr) {
 #ifdef GSL
   sanity_checks();
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   Utils::Vector3d com = center_of_mass();
   // calculate Df using linear regression on the logarithms of the radii of
   // gyration against the number of particles in sub-clusters. Particles are
@@ -186,7 +189,8 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
 }
 
 void Cluster::sanity_checks() const {
-  auto const &box_geo = *System::get_system().box_geo;
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
   if (box_geo.type() != BoxType::CUBOID) {
     throw std::runtime_error(
         "Cluster analysis is not compatible with non-cuboid box types");

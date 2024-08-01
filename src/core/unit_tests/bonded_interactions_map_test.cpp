@@ -24,15 +24,20 @@
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/fene.hpp"
-#include "system/System.hpp"
 
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
 
+class BondedInteractionsMapTest : public BondedInteractionsMap {
+public:
+  ~BondedInteractionsMapTest() override = default;
+  void activate_bond(mapped_type const &ptr) override {}
+  void deactivate_bond(mapped_type const &ptr) override {}
+};
+
 BOOST_AUTO_TEST_CASE(insert_bond_types) {
-  System::reset_system();
-  BondedInteractionsMap bond_map{};
+  BondedInteractionsMapTest bond_map{};
   std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>> mock_core{};
   // check defaulted maps are empty
   BOOST_TEST(bond_map.empty());

@@ -23,7 +23,6 @@
 #include "PartCfg.hpp"
 #include "errorhandling.hpp"
 #include "particle_node.hpp"
-#include "system/System.hpp"
 
 #include <utils/for_each_pair.hpp>
 
@@ -54,7 +53,9 @@ void ClusterStructure::run_for_all_pairs() {
   sanity_checks();
 
   // Iterate over pairs
-  PartCfg partCfg{*System::get_system().box_geo};
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
+  PartCfg partCfg{box_geo};
   Utils::for_each_pair(partCfg.begin(), partCfg.end(),
                        [this](const Particle &p1, const Particle &p2) {
                          this->add_pair(p1, p2);
@@ -65,7 +66,9 @@ void ClusterStructure::run_for_all_pairs() {
 void ClusterStructure::run_for_bonded_particles() {
   clear();
   sanity_checks();
-  PartCfg partCfg{*System::get_system().box_geo};
+  auto const box_geo_handle = get_box_geo();
+  auto const &box_geo = *box_geo_handle;
+  PartCfg partCfg{box_geo};
   for (const auto &p : partCfg) {
     for (auto const bond : p.bonds()) {
       if (bond.partner_ids().size() == 1) {
@@ -148,7 +151,7 @@ void ClusterStructure::merge_clusters() {
     to_be_changed.emplace_back(it.first, cid);
     // Empty cluster object
     if (clusters.find(cid) == clusters.end()) {
-      clusters[cid] = std::make_shared<Cluster>();
+      clusters[cid] = std::make_shared<Cluster>(m_box_geo);
     }
   }
 
@@ -164,7 +167,7 @@ void ClusterStructure::merge_clusters() {
     // If this is the first particle in this cluster, instance a new cluster
     // object
     if (clusters.find(it.second) == clusters.end()) {
-      clusters[it.second] = std::make_shared<Cluster>();
+      clusters[it.second] = std::make_shared<Cluster>(m_box_geo);
     }
     clusters[it.second]->particles.push_back(it.first);
   }
@@ -196,7 +199,7 @@ int ClusterStructure::get_next_free_cluster_id() {
 }
 
 void ClusterStructure::sanity_checks() const {
-  if (System::get_system().box_geo->type() != BoxType::CUBOID) {
+  if (get_box_geo()->type() != BoxType::CUBOID) {
     throw std::runtime_error(
         "Cluster analysis is not compatible with non-cuboid box types");
   }

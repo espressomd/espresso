@@ -45,6 +45,7 @@ class ObjectList : public ObjectContainer<ObjectList, ManagedType, BaseType> {
 public:
   using Base = ObjectContainer<ObjectList, ManagedType, BaseType>;
   using Base::add_parameters;
+  using Base::context;
 
 private:
   std::vector<std::shared_ptr<ManagedType>> m_elements;
@@ -81,7 +82,7 @@ public:
       }
       throw Exception("");
     }
-    add_in_core(element);
+    context()->parallel_try_catch([&]() { add_in_core(element); });
     m_elements.push_back(element);
   }
 

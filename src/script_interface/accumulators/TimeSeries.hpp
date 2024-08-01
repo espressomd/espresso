@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SCRIPT_INTERFACE_ACCUMULATORS_TIME_SERIES_HPP
-#define SCRIPT_INTERFACE_ACCUMULATORS_TIME_SERIES_HPP
+
+#pragma once
 
 #include "AccumulatorBase.hpp"
 #include "script_interface/observables/Observable.hpp"
 
 #include "core/accumulators/TimeSeries.hpp"
+#include "core/system/System.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -42,7 +43,8 @@ public:
 
     if (m_obs)
       m_accumulator = std::make_shared<::Accumulators::TimeSeries>(
-          m_obs->observable(), get_value_or<int>(params, "delta_N", 1));
+          get_core_system_pointer(params),
+          get_value_or<int>(params, "delta_N", 1), m_obs->observable());
   }
 
   Variant do_call_method(std::string const &method,
@@ -50,6 +52,7 @@ public:
     if (method == "update") {
       ObjectHandle::context()->parallel_try_catch(
           [&]() { m_accumulator->update(context()->get_comm()); });
+      return {};
     }
     if (method == "time_series") {
       auto const &series = m_accumulator->time_series();
@@ -65,7 +68,7 @@ public:
       m_accumulator->clear();
     }
 
-    return AccumulatorBase::call_method(method, parameters);
+    return AccumulatorBase::do_call_method(method, parameters);
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
@@ -82,17 +85,7 @@ private:
   /* The actual accumulator */
   std::shared_ptr<::Accumulators::TimeSeries> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
-
-  std::string get_internal_state() const override {
-    return m_accumulator->get_internal_state();
-  }
-
-  void set_internal_state(std::string const &state) override {
-    m_accumulator->set_internal_state(state);
-  }
 };
 
 } // namespace Accumulators
-} /* namespace ScriptInterface */
-
-#endif // SCRIPT_INTERFACE_ACCUMULATORS_TIMESERIES_HPP
+} // namespace ScriptInterface

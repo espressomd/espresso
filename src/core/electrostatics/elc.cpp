@@ -26,7 +26,6 @@
 #include "electrostatics/elc.hpp"
 
 #include "electrostatics/coulomb.hpp"
-#include "electrostatics/mmm-common.hpp"
 #include "electrostatics/p3m.hpp"
 #include "electrostatics/p3m_gpu.hpp"
 

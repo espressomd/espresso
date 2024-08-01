@@ -50,7 +50,7 @@ config = utg.TestGenerator()
 modes = config.get_modes()
 
 # use a box with 3 different dimensions, unless DipolarP3M is used
-system = espressomd.System(box_l=[12.0, 8.0, 16.0])
+system = espressomd.System(box_l=[12.0, 8.0, 16.0], time_step=0.01)
 if 'DP3M' in modes:
     system.box_l = 3 * [float(np.max(system.box_l))]
 system.cell_system.skin = 0.1
@@ -263,8 +263,9 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
         epsilon=1.2, sigma=1.7, cutoff=2.0, shift=0.1)
     system.non_bonded_inter[1, 7].lennard_jones.set_params(
         epsilon=1.2e5, sigma=1.7, cutoff=2.0, shift=0.1)
-    handle_ia = espressomd.interactions.NonBondedInteractionHandle(
-        _types=(0, 0))
+    handle_ia = espressomd.interactions.NonBondedInteractionHandle()
+    handle_ia.lennard_jones.set_params(
+        epsilon=1.2, sigma=1.3, cutoff=2.0, shift=0.1)
     checkpoint.register("handle_ia")
 if espressomd.has_features(['DPD']):
     dpd_params = {"weight_function": 1, "gamma": 2., "trans_r_cut": 2., "k": 2.,
@@ -306,19 +307,16 @@ ibm_tribend_bond = espressomd.interactions.IBM_Tribend(
 ibm_triel_bond = espressomd.interactions.IBM_Triel(
     ind1=p1.id, ind2=p2.id, ind3=p3.id, k1=1.1, k2=1.2, maxDist=1.6,
     elasticLaw="NeoHookean")
+system.bonded_inter.add(ibm_tribend_bond)
 break_spec = espressomd.bond_breakage.BreakageSpec(
     breakage_length=5., action_type="delete_bond")
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
 
 checkpoint.register("system")
-checkpoint.register("acc_mean_variance")
-checkpoint.register("acc_time_series")
-checkpoint.register("acc_correlator")
 checkpoint.register("ibm_volcons_bond")
 checkpoint.register("ibm_tribend_bond")
 checkpoint.register("ibm_triel_bond")
 checkpoint.register("break_spec")
-checkpoint.register("p_slice")
 
 # calculate forces
 system.integrator.run(0)
@@ -506,6 +504,10 @@ class TestCheckpoint(ut.TestCase):
         with self.assertRaisesRegex(KeyError, "The given object 'local_obj' was not found in the current scope"):
             local_obj = "local"  # pylint: disable=unused-variable
             checkpoint.register("local_obj")
+
+        for obj_name in ["p_slice", "p3"]:
+            with self.assertRaisesRegex(TypeError, "cannot be checkpointed"):
+                checkpoint.register(obj_name)
 
     @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
     def test_lb_checkpointing_exceptions(self):

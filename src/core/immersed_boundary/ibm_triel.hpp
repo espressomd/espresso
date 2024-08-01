@@ -17,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IBM_TRIEL_H
-#define IBM_TRIEL_H
+#pragma once
 
 #include "config/config.hpp"
+
+#include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -52,6 +54,10 @@ struct IBMTriel {
   double k1;
   double k2;
 
+  /** Particle ids */
+  std::tuple<int, int, int> p_ids;
+  bool is_initialized;
+
   double cutoff() const { return maxDist; }
 
   static constexpr int num = 2;
@@ -59,8 +65,14 @@ struct IBMTriel {
   /** Set the IBM Triel parameters.
    *  Also calculate and store the reference state.
    */
+  void initialize(BoxGeometry const &box_geo,
+                  CellStructure const &cell_structure);
+
   IBMTriel(int ind1, int ind2, int ind3, double maxDist, tElasticLaw elasticLaw,
-           double k1, double k2);
+           double k1, double k2)
+      : l0{0.}, lp0{0.}, sinPhi0{0.}, cosPhi0{0.}, area0{0.}, a1{0.}, a2{0.},
+        b1{0.}, b2{0.}, maxDist{maxDist}, elasticLaw{elasticLaw}, k1{k1},
+        k2{k2}, p_ids{ind1, ind2, ind3}, is_initialized{false} {}
 
   /** Calculate the forces.
    *  The equations can be found in Appendix C of @cite kruger12a.
@@ -68,25 +80,4 @@ struct IBMTriel {
    */
   std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
   calc_forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & l0;
-    ar & lp0;
-    ar & sinPhi0;
-    ar & cosPhi0;
-    ar & area0;
-    ar & a1;
-    ar & a2;
-    ar & b1;
-    ar & b2;
-    ar & maxDist;
-    ar & elasticLaw;
-    ar & k1;
-    ar & k2;
-  }
 };
-
-#endif

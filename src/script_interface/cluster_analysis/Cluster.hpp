@@ -19,12 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_HPP
-#define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_HPP
+#pragma once
 
+#include "core/BoxGeometry.hpp"
 #include "core/cluster_analysis/Cluster.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/particle_data/ParticleList.hpp"
 
 #include <memory>
 #include <string>
@@ -40,6 +41,10 @@ public:
                          VariantMap const &parameters) override {
     if (method == "particle_ids") {
       return m_cluster->particles;
+    }
+    if (method == "particles") {
+      return m_particle_list.lock()->call_method(
+          "by_ids", {{"id_selection", m_cluster->particles}});
     }
     if (method == "size") {
       return (int)m_cluster->particles.size();
@@ -60,15 +65,17 @@ public:
     }
     return {};
   }
-  void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> &c) {
+  void set_cluster(std::shared_ptr<::ClusterAnalysis::Cluster> const &c) {
     m_cluster = c;
+  }
+  void set_particle_list(std::weak_ptr<Particles::ParticleList> const &handle) {
+    m_particle_list = handle;
   }
 
 private:
   std::shared_ptr<::ClusterAnalysis::Cluster> m_cluster;
+  std::weak_ptr<Particles::ParticleList> m_particle_list;
 };
 
 } /* namespace ClusterAnalysis */
 } /* namespace ScriptInterface */
-
-#endif

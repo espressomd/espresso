@@ -96,7 +96,7 @@ IntegratorHandle::IntegratorHandle() {
 void IntegratorHandle::on_bind_system(::System::System &system) {
   auto const &params = *m_params;
   for (auto const &key : get_parameter_insertion_order()) {
-    if (params.count(key) != 0ul) {
+    if (params.contains(key)) {
       // NOLINTNEXTLINE(readability-simplify-boolean-expr)
       if (not(key == "time_step" and
               system.propagation->integ_switch == INTEG_METHOD_NVT and
@@ -107,7 +107,15 @@ void IntegratorHandle::on_bind_system(::System::System &system) {
       }
     }
   }
+  auto use_default_integrator = not params.contains("integrator");
   m_params.reset();
+  if (use_default_integrator) {
+    if (not context()->is_head_node()) {
+      return;
+    }
+    set_parameter("integrator",
+                  context()->make_shared("Integrators::VelocityVerlet", {}));
+  }
 }
 
 } // namespace Integrators

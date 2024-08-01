@@ -57,15 +57,6 @@ struct AngleCossquareBond {
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   forces(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
   double energy(Utils::Vector3d const &vec1, Utils::Vector3d const &vec2) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & bend;
-    ar & phi0;
-    ar & cos_phi0;
-  }
 };
 
 /** Compute the three-body angle interaction force.

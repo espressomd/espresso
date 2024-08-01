@@ -17,17 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IMMERSED_BOUNDARY_IBM_COMMON_HPP
-#define IMMERSED_BOUNDARY_IBM_COMMON_HPP
+#pragma once
+
+#include "cell_system/CellStructure.hpp"
 
 #include <utils/Vector.hpp>
 
 /**
  * @brief Returns the position of a given particle.
  *
+ * @param cell_structure Cell structure to search.
  * @param pid Particle id.
  * @return position of the particle.
  */
-Utils::Vector3d get_ibm_particle_position(int pid);
-
-#endif
+Utils::Vector3d get_ibm_particle_position(CellStructure const &cell_structure,
+                                          int pid);

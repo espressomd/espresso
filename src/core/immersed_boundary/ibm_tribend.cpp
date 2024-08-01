@@ -20,8 +20,8 @@
 #include "immersed_boundary/ibm_tribend.hpp"
 
 #include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "ibm_common.hpp"
-#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -93,20 +93,21 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
   return std::make_tuple(force1, force2, force3, force4);
 }
 
-IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
-                       const int ind4, const double kb, const bool flat) {
-
-  auto const &box_geo = *System::get_system().box_geo;
-
+void IBMTribend::initialize(BoxGeometry const &box_geo,
+                            CellStructure const &cell_structure) {
+  if (is_initialized) {
+    return;
+  }
   // Compute theta0
   if (flat) {
     theta0 = 0.;
   } else {
     // Get particles
-    auto const pos1 = get_ibm_particle_position(ind1);
-    auto const pos2 = get_ibm_particle_position(ind2);
-    auto const pos3 = get_ibm_particle_position(ind3);
-    auto const pos4 = get_ibm_particle_position(ind4);
+    auto const [ind1, ind2, ind3, ind4] = p_ids;
+    auto const pos1 = get_ibm_particle_position(cell_structure, ind1);
+    auto const pos2 = get_ibm_particle_position(cell_structure, ind2);
+    auto const pos3 = get_ibm_particle_position(cell_structure, ind3);
+    auto const pos4 = get_ibm_particle_position(cell_structure, ind4);
 
     // Get vectors of triangles
     auto const dx1 = box_geo.get_mi_vector(pos1, pos3);
@@ -130,11 +131,5 @@ IBMTribend::IBMTribend(const int ind1, const int ind2, const int ind3,
     if (desc < 0.)
       theta0 = 2. * std::numbers::pi - theta0;
   }
-
-  // NOTE: This is the bare bending modulus used by the program.
-  // If triangle pairs appear only once, the total bending force should get a
-  // factor 2. For the numerical model, a factor sqrt(3) should be added, see
-  // @cite gompper96a and @cite kruger12a. This is an approximation,
-  // it holds strictly only for a sphere
-  this->kb = kb;
+  is_initialized = true;
 }

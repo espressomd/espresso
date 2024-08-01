@@ -16,10 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OIF_GLOBAL_FORCES_PARAMS_HPP
-#define OIF_GLOBAL_FORCES_PARAMS_HPP
 
-#include <utils/Vector.hpp>
+#pragma once
 
 /** Parameters for OIF global forces
  *
@@ -46,16 +44,4 @@ struct OifGlobalForcesBond {
     this->V0 = V0;
     this->kv = kv;
   }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & A0_g;
-    ar & ka_g;
-    ar & V0;
-    ar & kv;
-  }
 };
-
-#endif

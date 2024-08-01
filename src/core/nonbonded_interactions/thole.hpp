@@ -18,8 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_NB_IA_THOLE_HPP
-#define CORE_NB_IA_THOLE_HPP
+
+#pragma once
+
 /** \file
  *  Routines to calculate the Thole damping potential between particle pairs.
  *  See @cite thole81a.
@@ -30,7 +31,6 @@
 #ifdef THOLE
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonded_interactions/bonded_interaction_utils.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -43,13 +43,13 @@
 inline Utils::Vector3d
 thole_pair_force(Particle const &p1, Particle const &p2,
                  IA_parameters const &ia_params, Utils::Vector3d const &d,
-                 double dist,
+                 double dist, BondedInteractionsMap const &bonded_ias,
                  Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {
   auto const thole_q1q2 = ia_params.thole.q1q2;
   auto const thole_s = ia_params.thole.scaling_coeff;
 
   if (thole_s != 0. and thole_q1q2 != 0. and kernel != nullptr and
-      !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
+      not bonded_ias.pair_bond_exists_between<ThermalizedBond>(p1, p2)) {
     // Calc damping function (see @cite thole81a)
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r);
     // Calc F = - d/dr ( S(r)*q1q2/r) =
@@ -66,7 +66,7 @@ thole_pair_force(Particle const &p1, Particle const &p2,
 inline double
 thole_pair_energy(Particle const &p1, Particle const &p2,
                   IA_parameters const &ia_params, Utils::Vector3d const &d,
-                  double dist,
+                  double dist, BondedInteractionsMap const &bonded_ias,
                   Coulomb::ShortRangeEnergyKernel::kernel_type const *kernel) {
 
   auto const thole_s = ia_params.thole.scaling_coeff;
@@ -74,7 +74,7 @@ thole_pair_energy(Particle const &p1, Particle const &p2,
 
   if (thole_s != 0. and thole_q1q2 != 0. and kernel != nullptr and
       dist < Coulomb::get_coulomb().cutoff() and
-      !(pair_bond_enum_exists_between<ThermalizedBond>(p1, p2))) {
+      not bonded_ias.pair_bond_exists_between<ThermalizedBond>(p1, p2)) {
     auto const sd = thole_s * dist;
     auto const S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
     // Subtract p3m short-range energy and add thole energy
@@ -83,4 +83,3 @@ thole_pair_energy(Particle const &p1, Particle const &p2,
   return 0.0;
 }
 #endif // THOLE
-#endif

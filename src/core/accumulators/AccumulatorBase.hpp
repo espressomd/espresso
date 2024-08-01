@@ -16,34 +16,50 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ACCUMULATORS_ACCUMULATOR_BASE_HPP
-#define CORE_ACCUMULATORS_ACCUMULATOR_BASE_HPP
 
+#pragma once
+
+#include <cassert>
 #include <cstddef>
+#include <string>
 #include <vector>
 
-// Forward declaration
+// Forward declarations
 namespace boost::mpi {
 class communicator;
+}
+namespace System {
+class System;
 }
 
 namespace Accumulators {
 
 class AccumulatorBase {
 public:
-  explicit AccumulatorBase(int delta_N = 1) : m_delta_N(delta_N) {}
+  AccumulatorBase(::System::System const *system, int delta_N)
+      : m_system(reinterpret_cast<void const *>(system)), m_delta_N(delta_N) {}
   virtual ~AccumulatorBase() = default;
 
   int &delta_N() { return m_delta_N; }
+  bool has_same_system_handle(::System::System const *system) const {
+    return reinterpret_cast<void const *>(system) == m_system;
+  }
+  void override_system_handle(::System::System const *system) {
+    assert(m_system == nullptr);
+    m_system = reinterpret_cast<void const *>(system);
+  }
 
   virtual void update(boost::mpi::communicator const &comm) = 0;
   /** Dimensions needed to reshape the flat array returned by the accumulator */
   virtual std::vector<std::size_t> shape() const = 0;
+  /** Serialization of private members. */
+  virtual std::string get_internal_state() const = 0;
+  virtual void set_internal_state(std::string const &) = 0;
 
+protected:
+  void const *m_system; ///< for bookkeeping purposes
 private:
-  // Number of timesteps between automatic updates.
+  /// Number of time steps between automatic updates.
   int m_delta_N;
 };
 } // namespace Accumulators
-
-#endif
