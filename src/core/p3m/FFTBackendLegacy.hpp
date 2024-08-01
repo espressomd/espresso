@@ -55,12 +55,13 @@ class FFTBackendLegacy : public FFTBackend {
   p3m_send_mesh mesh_comm;
 
 public:
-  explicit FFTBackendLegacy(p3m_data_struct &obj, bool dipolar);
+  FFTBackendLegacy(p3m_data_struct &obj, bool dipolar);
   ~FFTBackendLegacy() override;
   void init_fft() override;
-  void perform_fwd_fft() override;
-  void perform_field_back_fft() override;
-  void perform_space_back_fft() override;
+  void perform_scalar_fwd_fft() override;
+  void perform_vector_fwd_fft() override;
+  void perform_scalar_back_fft() override;
+  void perform_vector_back_fft() override;
   void update_mesh_data();
 
   /**

@@ -395,7 +395,7 @@ CoulombP3M::long_range_pressure(ParticleRange const &particles) {
 
   if (p3m.sum_q2 > 0.) {
     charge_assign(particles);
-    p3m.fft->perform_fwd_fft();
+    p3m.fft->perform_scalar_fwd_fft();
 
     auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
     auto const &mesh_stop = p3m.mesh.size;
@@ -459,7 +459,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
             system.coulomb.impl->solver)) {
       charge_assign(particles);
     }
-    p3m.fft->perform_fwd_fft();
+    p3m.fft->perform_scalar_fwd_fft();
   }
 
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
@@ -515,7 +515,7 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     auto const check_residuals =
         not p3m.params.tuning and check_complex_residuals;
     p3m.fft->check_complex_residuals = check_residuals;
-    p3m.fft->perform_field_back_fft();
+    p3m.fft->perform_vector_back_fft();
     p3m.fft->check_complex_residuals = false;
 
     auto const force_prefac = prefactor / volume;

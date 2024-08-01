@@ -98,12 +98,14 @@ public:
   virtual ~FFTBackend() = default;
   /** @brief Initialize the FFT plans and buffers. */
   virtual void init_fft() = 0;
-  /** @brief Carry out the forward FFT of the scalar or field meshes. */
-  virtual void perform_fwd_fft() = 0;
+  /** @brief Carry out the forward FFT of the scalar mesh. */
+  virtual void perform_scalar_fwd_fft() = 0;
+  /** @brief Carry out the forward FFT of the vector meshes. */
+  virtual void perform_vector_fwd_fft() = 0;
   /** @brief Carry out the backward FFT of the scalar mesh. */
-  virtual void perform_field_back_fft() = 0;
-  /** @brief Carry out the backward FFT of the field meshes. */
-  virtual void perform_space_back_fft() = 0;
+  virtual void perform_scalar_back_fft() = 0;
+  /** @brief Carry out the backward FFT of the vector meshes. */
+  virtual void perform_vector_back_fft() = 0;
   /** @brief Get indices of the k-space data layout. */
   virtual std::tuple<int, int, int> get_permutations() const = 0;
 };

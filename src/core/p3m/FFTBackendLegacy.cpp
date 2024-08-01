@@ -73,7 +73,7 @@ void FFTBackendLegacy::init_fft() {
   update_mesh_data();
 }
 
-void FFTBackendLegacy::perform_field_back_fft() {
+void FFTBackendLegacy::perform_vector_back_fft() {
   /* Back FFT force component mesh */
   for (auto &rs_mesh_field : rs_mesh_fields) {
     fft->backward_fft(::comm_cart, rs_mesh_field.data(),
@@ -86,23 +86,24 @@ void FFTBackendLegacy::perform_field_back_fft() {
   mesh_comm.spread_grid(::comm_cart, meshes, local_mesh.dim);
 }
 
-void FFTBackendLegacy::perform_fwd_fft() {
-  if (dipolar) {
-    std::array<double *, 3u> meshes = {{rs_mesh_fields[0u].data(),
-                                        rs_mesh_fields[1u].data(),
-                                        rs_mesh_fields[2u].data()}};
-    mesh_comm.gather_grid(::comm_cart, meshes, local_mesh.dim);
-    for (auto &rs_mesh_field : rs_mesh_fields) {
-      fft->forward_fft(::comm_cart, rs_mesh_field.data());
-    }
-  } else {
-    mesh_comm.gather_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
-    fft->forward_fft(::comm_cart, rs_mesh.data());
+void FFTBackendLegacy::perform_scalar_fwd_fft() {
+  mesh_comm.gather_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
+  fft->forward_fft(::comm_cart, rs_mesh.data());
+  update_mesh_data();
+}
+
+void FFTBackendLegacy::perform_vector_fwd_fft() {
+  std::array<double *, 3u> meshes = {{rs_mesh_fields[0u].data(),
+                                      rs_mesh_fields[1u].data(),
+                                      rs_mesh_fields[2u].data()}};
+  mesh_comm.gather_grid(::comm_cart, meshes, local_mesh.dim);
+  for (auto &rs_mesh_field : rs_mesh_fields) {
+    fft->forward_fft(::comm_cart, rs_mesh_field.data());
   }
   update_mesh_data();
 }
 
-void FFTBackendLegacy::perform_space_back_fft() {
+void FFTBackendLegacy::perform_scalar_back_fft() {
   /* Back FFT force component mesh */
   fft->backward_fft(::comm_cart, rs_mesh.data(), check_complex_residuals);
   /* redistribute force component mesh */

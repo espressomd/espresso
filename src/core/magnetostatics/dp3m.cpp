@@ -260,7 +260,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
 
   if (dp3m.sum_mu2 > 0.) {
     dipole_assign(particles);
-    dp3m.fft->perform_fwd_fft();
+    dp3m.fft->perform_vector_fwd_fft();
   }
 
   /* === k-space energy calculation  === */
@@ -360,7 +360,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
           dp3m.mesh.rs_scalar[index] = d_op[pos] * dp3m.mesh.ks_scalar[index];
           ++index;
         });
-        dp3m.fft->perform_space_back_fft();
+        dp3m.fft->perform_scalar_back_fft();
         /* Assign force component from mesh to particle */
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
         Utils::integral_parameter<int, AssignTorques, 1, 7>(
@@ -412,7 +412,7 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
           mesh_dip[2u][index] = d_op[shift[KZ]] * f2;
           ++index;
         });
-        dp3m.fft->perform_field_back_fft();
+        dp3m.fft->perform_vector_back_fft();
         /* Assign force component from mesh to particle */
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
         Utils::integral_parameter<int, AssignForces, 1, 7>(
