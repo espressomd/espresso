@@ -30,6 +30,7 @@
 #ifdef DP3M
 
 #include "magnetostatics/dp3m.hpp"
+#include "magnetostatics/dp3m.impl.hpp"
 
 #include "fft/fft.hpp"
 #include "p3m/TuningAlgorithm.hpp"
@@ -38,7 +39,6 @@
 #include "p3m/influence_function_dipolar.hpp"
 #include "p3m/interpolation.hpp"
 #include "p3m/math.hpp"
-#include "p3m/send_mesh.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -76,7 +76,8 @@
 #include <tuple>
 #include <vector>
 
-void DipolarP3M::count_magnetic_particles() {
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::count_magnetic_particles() {
   int local_n = 0;
   double local_mu2 = 0.;
 
@@ -105,7 +106,10 @@ double dp3m_rtbisection(double box_size, double r_cut_iL, int n_c_part,
                         double sum_q2, double x1, double x2, double xacc,
                         double tuned_accuracy);
 
-double DipolarP3M::calc_average_self_energy_k_space() const {
+template <typename FloatType, Arch Architecture>
+double
+DipolarP3MImpl<FloatType, Architecture>::calc_average_self_energy_k_space()
+    const {
   auto const &box_geo = *get_system().box_geo;
   auto const node_phi = grid_influence_function_self_energy(
       dp3m.params, dp3m.mesh.start, dp3m.mesh.stop, dp3m.g_energy);
@@ -116,7 +120,8 @@ double DipolarP3M::calc_average_self_energy_k_space() const {
   return phi * std::numbers::pi;
 }
 
-void DipolarP3M::init() {
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
   assert(dp3m.params.mesh >= Utils::Vector3i::broadcast(1));
   assert(dp3m.params.cao >= 1 and dp3m.params.cao <= 7);
   assert(dp3m.params.alpha > 0.);
@@ -140,44 +145,29 @@ void DipolarP3M::init() {
   count_magnetic_particles();
 }
 
-DipolarP3M::DipolarP3M(P3MParameters &&parameters, double prefactor,
-                       int tune_timings, bool tune_verbose)
-    : dp3m{std::move(parameters)}, tune_timings{tune_timings},
-      tune_verbose{tune_verbose} {
-
-  set_prefactor(prefactor);
-  m_is_tuned = !dp3m.params.tuning;
-  dp3m.params.tuning = false;
-
-  if (tune_timings <= 0) {
-    throw std::domain_error("Parameter 'timings' must be > 0");
-  }
-
-  if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
-    throw std::domain_error("DipolarP3M requires a cubic mesh");
-  }
-}
-
 namespace {
 template <int cao> struct AssignDipole {
-  void operator()(decltype(DipolarP3M::dp3m) &dp3m,
-                  Utils::Vector3d const &real_pos,
+  void operator()(auto &dp3m, Utils::Vector3d const &real_pos,
                   Utils::Vector3d const &dip) const {
+    using value_type =
+        typename std::remove_reference_t<decltype(dp3m)>::value_type;
     auto const weights = p3m_calculate_interpolation_weights<cao>(
         real_pos, dp3m.params.ai, dp3m.local_mesh);
-    p3m_interpolate<cao>(dp3m.local_mesh, weights,
-                         [&dip, &dp3m](int ind, double w) {
-                           dp3m.mesh.rs_fields[0][ind] += w * dip[0];
-                           dp3m.mesh.rs_fields[1][ind] += w * dip[1];
-                           dp3m.mesh.rs_fields[2][ind] += w * dip[2];
-                         });
+    p3m_interpolate<cao>(
+        dp3m.local_mesh, weights, [&dip, &dp3m](int ind, double w) {
+          dp3m.mesh.rs_fields[0u][ind] += value_type(w * dip[0u]);
+          dp3m.mesh.rs_fields[1u][ind] += value_type(w * dip[1u]);
+          dp3m.mesh.rs_fields[2u][ind] += value_type(w * dip[2u]);
+        });
 
-    dp3m.inter_weights.store<cao>(weights);
+    dp3m.inter_weights.template store<cao>(weights);
   }
 };
 } // namespace
 
-void DipolarP3M::dipole_assign(ParticleRange const &particles) {
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::dipole_assign(
+    ParticleRange const &particles) {
   dp3m.inter_weights.reset(dp3m.params.cao);
 
   /* prepare local FFT mesh */
@@ -195,7 +185,7 @@ void DipolarP3M::dipole_assign(ParticleRange const &particles) {
 
 namespace {
 template <int cao> struct AssignTorques {
-  void operator()(decltype(DipolarP3M::dp3m) &dp3m, double prefac, int d_rs,
+  void operator()(auto &dp3m, double prefac, int d_rs,
                   ParticleRange const &particles) const {
 
     /* magnetic particle index */
@@ -203,12 +193,12 @@ template <int cao> struct AssignTorques {
 
     for (auto &p : particles) {
       if (p.dipm() != 0.) {
-        auto const w = dp3m.inter_weights.load<cao>(p_index);
+        auto const weights = dp3m.inter_weights.template load<cao>(p_index);
 
         Utils::Vector3d E{};
-        p3m_interpolate(dp3m.local_mesh, w,
+        p3m_interpolate(dp3m.local_mesh, weights,
                         [&E, &dp3m, d_rs](int ind, double w) {
-                          E[d_rs] += w * dp3m.mesh.rs_scalar[ind];
+                          E[d_rs] += w * double(dp3m.mesh.rs_scalar[ind]);
                         });
 
         p.torque() -= vector_product(p.calc_dip(), prefac * E);
@@ -219,7 +209,7 @@ template <int cao> struct AssignTorques {
 };
 
 template <int cao> struct AssignForces {
-  void operator()(decltype(DipolarP3M::dp3m) &dp3m, double prefac, int d_rs,
+  void operator()(auto &dp3m, double prefac, int d_rs,
                   ParticleRange const &particles) const {
 
     /* magnetic particle index */
@@ -227,14 +217,15 @@ template <int cao> struct AssignForces {
 
     for (auto &p : particles) {
       if (p.dipm() != 0.) {
-        auto const w = dp3m.inter_weights.load<cao>(p_index);
+        auto const weights = dp3m.inter_weights.template load<cao>(p_index);
 
         Utils::Vector3d E{};
-        p3m_interpolate(dp3m.local_mesh, w, [&E, &dp3m](int ind, double w) {
-          E[0] += w * dp3m.mesh.rs_fields[0][ind];
-          E[1] += w * dp3m.mesh.rs_fields[1][ind];
-          E[2] += w * dp3m.mesh.rs_fields[2][ind];
-        });
+        p3m_interpolate(dp3m.local_mesh, weights,
+                        [&E, &dp3m](int ind, double w) {
+                          E[0u] += w * double(dp3m.mesh.rs_fields[0u][ind]);
+                          E[1u] += w * double(dp3m.mesh.rs_fields[1u][ind]);
+                          E[2u] += w * double(dp3m.mesh.rs_fields[2u][ind]);
+                        });
 
         p.force()[d_rs] += p.calc_dip() * prefac * E;
         ++p_index;
@@ -244,8 +235,9 @@ template <int cao> struct AssignForces {
 };
 } // namespace
 
-double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
-                                     ParticleRange const &particles) {
+template <typename FloatType, Arch Architecture>
+double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
+    bool force_flag, bool energy_flag, ParticleRange const &particles) {
   /* k-space energy */
   double energy = 0.;
   auto const &system = get_system();
@@ -284,14 +276,14 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
       for_each_3d(mesh_start, dp3m.mesh.size, indices, [&]() {
         auto const shift = indices + offset;
         // Re(mu)*k
-        auto const re = mesh_dip[0u][index] * d_op[shift[KX]] +
-                        mesh_dip[1u][index] * d_op[shift[KY]] +
-                        mesh_dip[2u][index] * d_op[shift[KZ]];
+        auto const re = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
+                        mesh_dip[1u][index] * FloatType(d_op[shift[KY]]) +
+                        mesh_dip[2u][index] * FloatType(d_op[shift[KZ]]);
         ++index;
         // Im(mu)*k
-        auto const im = mesh_dip[0u][index] * d_op[shift[KX]] +
-                        mesh_dip[1u][index] * d_op[shift[KY]] +
-                        mesh_dip[2u][index] * d_op[shift[KZ]];
+        auto const im = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
+                        mesh_dip[1u][index] * FloatType(d_op[shift[KY]]) +
+                        mesh_dip[2u][index] * FloatType(d_op[shift[KZ]]);
         ++index;
         node_energy += *it_energy * (Utils::sqr(re) + Utils::sqr(im));
         std::advance(it_energy, 1);
@@ -336,15 +328,15 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
       for_each_3d(mesh_start, mesh_stop, indices, [&]() {
         auto const shift = indices + offset;
         // Re(mu)*k
-        auto const re = mesh_dip[0u][index] * d_op[shift[KX]] +
-                        mesh_dip[1u][index] * d_op[shift[KY]] +
-                        mesh_dip[2u][index] * d_op[shift[KZ]];
+        auto const re = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
+                        mesh_dip[1u][index] * FloatType(d_op[shift[KY]]) +
+                        mesh_dip[2u][index] * FloatType(d_op[shift[KZ]]);
         dp3m.mesh.ks_scalar[index] = *it_energy * re;
         ++index;
         // Im(mu)*k
-        auto const im = mesh_dip[0u][index] * d_op[shift[KX]] +
-                        mesh_dip[1u][index] * d_op[shift[KY]] +
-                        mesh_dip[2u][index] * d_op[shift[KZ]];
+        auto const im = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
+                        mesh_dip[1u][index] * FloatType(d_op[shift[KY]]) +
+                        mesh_dip[2u][index] * FloatType(d_op[shift[KZ]]);
         dp3m.mesh.ks_scalar[index] = *it_energy * im;
         ++index;
         std::advance(it_energy, 1);
@@ -354,10 +346,10 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
       for (int d = 0; d < 3; d++) {
         index = 0u;
         for_each_3d(mesh_start, mesh_stop, indices, [&]() {
-          auto const pos = indices[d] + offset[d];
-          dp3m.mesh.rs_scalar[index] = d_op[pos] * dp3m.mesh.ks_scalar[index];
+          auto const d_op_val = FloatType(d_op[indices[d] + offset[d]]);
+          dp3m.mesh.rs_scalar[index] = d_op_val * dp3m.mesh.ks_scalar[index];
           ++index;
-          dp3m.mesh.rs_scalar[index] = d_op[pos] * dp3m.mesh.ks_scalar[index];
+          dp3m.mesh.rs_scalar[index] = d_op_val * dp3m.mesh.ks_scalar[index];
           ++index;
         });
         dp3m.fft->perform_scalar_back_fft();
@@ -380,14 +372,14 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
       for_each_3d(mesh_start, mesh_stop, indices, [&]() {
         auto const shift = indices + offset;
         // Re(mu)*k
-        auto const re = mesh_dip[0u][index] * d_op[shift[KX]] +
-                        mesh_dip[1u][index] * d_op[shift[KY]] +
-                        mesh_dip[2u][index] * d_op[shift[KZ]];
+        auto const re = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
+                        mesh_dip[1u][index] * FloatType(d_op[shift[KY]]) +
+                        mesh_dip[2u][index] * FloatType(d_op[shift[KZ]]);
         ++index;
         // Im(mu)*k
-        auto const im = mesh_dip[0u][index] * d_op[shift[KX]] +
-                        mesh_dip[1u][index] * d_op[shift[KY]] +
-                        mesh_dip[2u][index] * d_op[shift[KZ]];
+        auto const im = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
+                        mesh_dip[1u][index] * FloatType(d_op[shift[KY]]) +
+                        mesh_dip[2u][index] * FloatType(d_op[shift[KZ]]);
         ++index;
         dp3m.mesh.ks_scalar[index - 2] = *it_force * im;
         dp3m.mesh.ks_scalar[index - 1] = *it_force * (-re);
@@ -398,18 +390,17 @@ double DipolarP3M::long_range_kernel(bool force_flag, bool energy_flag,
       for (int d = 0; d < 3; d++) {
         index = 0u;
         for_each_3d(mesh_start, mesh_stop, indices, [&]() {
+          auto const d_op_val = FloatType(d_op[indices[d] + offset[d]]);
           auto const shift = indices + offset;
-          auto const f1 =
-              d_op[indices[d] + offset[d]] * dp3m.mesh.ks_scalar[index];
-          mesh_dip[0u][index] = d_op[shift[KX]] * f1;
-          mesh_dip[1u][index] = d_op[shift[KY]] * f1;
-          mesh_dip[2u][index] = d_op[shift[KZ]] * f1;
+          auto const f1 = d_op_val * dp3m.mesh.ks_scalar[index];
+          mesh_dip[0u][index] = FloatType(d_op[shift[KX]]) * f1;
+          mesh_dip[1u][index] = FloatType(d_op[shift[KY]]) * f1;
+          mesh_dip[2u][index] = FloatType(d_op[shift[KZ]]) * f1;
           ++index;
-          auto const f2 =
-              d_op[indices[d] + offset[d]] * dp3m.mesh.ks_scalar[index];
-          mesh_dip[0u][index] = d_op[shift[KX]] * f2;
-          mesh_dip[1u][index] = d_op[shift[KY]] * f2;
-          mesh_dip[2u][index] = d_op[shift[KZ]] * f2;
+          auto const f2 = d_op_val * dp3m.mesh.ks_scalar[index];
+          mesh_dip[0u][index] = FloatType(d_op[shift[KX]]) * f2;
+          mesh_dip[1u][index] = FloatType(d_op[shift[KY]]) * f2;
+          mesh_dip[2u][index] = FloatType(d_op[shift[KZ]]) * f2;
           ++index;
         });
         dp3m.fft->perform_vector_back_fft();
@@ -507,20 +498,23 @@ double DipolarP3M::calc_surface_term(bool force_flag, bool energy_flag,
   return energy;
 }
 
-void DipolarP3M::calc_influence_function_force() {
-  dp3m.g_force =
-      grid_influence_function<3>(dp3m.params, dp3m.mesh.start, dp3m.mesh.stop,
-                                 get_system().box_geo->length_inv());
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::calc_influence_function_force() {
+  dp3m.g_force = grid_influence_function<FloatType, 3>(
+      dp3m.params, dp3m.mesh.start, dp3m.mesh.stop,
+      get_system().box_geo->length_inv());
 }
 
-void DipolarP3M::calc_influence_function_energy() {
-  dp3m.g_energy =
-      grid_influence_function<2>(dp3m.params, dp3m.mesh.start, dp3m.mesh.stop,
-                                 get_system().box_geo->length_inv());
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::calc_influence_function_energy() {
+  dp3m.g_energy = grid_influence_function<FloatType, 2>(
+      dp3m.params, dp3m.mesh.start, dp3m.mesh.stop,
+      get_system().box_geo->length_inv());
 }
 
+template <typename FloatType, Arch Architecture>
 class DipolarTuningAlgorithm : public TuningAlgorithm {
-  decltype(DipolarP3M::dp3m) &dp3m;
+  p3m_data_struct_dipoles<FloatType> &dp3m;
   int m_mesh_max = -1, m_mesh_min = -1;
 
 public:
@@ -632,7 +626,8 @@ public:
   }
 };
 
-void DipolarP3M::tune() {
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::tune() {
   auto &system = get_system();
   auto const &box_geo = *system.box_geo;
   if (dp3m.params.alpha_L == 0. and dp3m.params.alpha != 0.) {
@@ -648,7 +643,8 @@ void DipolarP3M::tune() {
           "DipolarP3M: no dipolar particles in the system");
     }
     try {
-      DipolarTuningAlgorithm parameters(system, dp3m, prefactor, tune_timings);
+      DipolarTuningAlgorithm<FloatType, Architecture> parameters(
+          system, dp3m, prefactor, tune_timings);
       parameters.setup_logger(tune_verbose);
       // parameter ranges
       parameters.determine_mesh_limits();
@@ -871,10 +867,10 @@ void DipolarP3M::scaleby_box_l() {
   sanity_checks_boxl();
   calc_influence_function_force();
   calc_influence_function_energy();
-  dp3m.energy_correction = 0.0;
 }
 
-void DipolarP3M::calc_energy_correction() {
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::calc_energy_correction() {
   auto const &box_geo = *get_system().box_geo;
   auto const Ukp3m = calc_average_self_energy_k_space() * box_geo.volume();
   auto const Ewald_volume = Utils::int_pow<3>(dp3m.params.alpha_L);
@@ -888,5 +884,8 @@ void npt_add_virial_magnetic_contribution(double energy) {
   npt_add_virial_contribution(energy);
 }
 #endif // NPT
+
+template struct DipolarP3MImpl<float, Arch::CPU>;
+template struct DipolarP3MImpl<double, Arch::CPU>;
 
 #endif // DP3M

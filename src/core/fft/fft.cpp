@@ -31,11 +31,12 @@
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/math/permute_ifield.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <fftw3.h>
-#include <mpi.h>
 
 #include <algorithm>
 #include <cmath>
@@ -48,7 +49,6 @@
 #include <utility>
 #include <vector>
 
-using Utils::get_linear_index;
 using Utils::permute_ifield;
 
 /** @name MPI tags for FFT communication */
@@ -59,7 +59,34 @@ using Utils::permute_ifield;
 #define REQ_FFT_BACK 302
 /**@}*/
 
+template <typename T>
+static void fft_sendrecv(T const *const sendbuf, int scount, int dest,
+                         T *const recvbuf, int rcount, int source,
+                         boost::mpi::communicator const &comm, int tag) {
+  auto const type = boost::mpi::get_mpi_datatype<T>(*sendbuf);
+  MPI_Sendrecv(reinterpret_cast<void const *>(sendbuf), scount, type, dest, tag,
+               reinterpret_cast<void *>(recvbuf), rcount, type, source, tag,
+               comm, MPI_STATUS_IGNORE);
+}
+
 namespace fft {
+
+template <typename FloatType = double> struct fftw {
+  using complex = fftw_complex;
+  static auto constexpr plan_many_dft = fftw_plan_many_dft;
+  static auto constexpr destroy_plan = fftw_destroy_plan;
+  static auto constexpr execute_dft = fftw_execute_dft;
+  static auto constexpr malloc = fftw_malloc;
+  static auto constexpr free = fftw_free;
+};
+template <> struct fftw<float> {
+  using complex = fftwf_complex;
+  static auto constexpr plan_many_dft = fftwf_plan_many_dft;
+  static auto constexpr destroy_plan = fftwf_destroy_plan;
+  static auto constexpr execute_dft = fftwf_execute_dft;
+  static auto constexpr malloc = fftwf_malloc;
+  static auto constexpr free = fftwf_free;
+};
 
 /** This ugly function does the bookkeeping: which nodes have to
  *  communicate to each other, when you change the node grid.
@@ -99,7 +126,7 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
   /* comm. group cell index */
   int gi[3];
   /* position of a node in a grid */
-  int p1[3], p2[3];
+  Utils::Vector3i p1, p2;
   /* node identity */
   int n;
   /* comm.rank() position in the communication group. */
@@ -144,8 +171,8 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
           p2[1] = (gi[1] * s2[1]) + ((i / s2[0]) % s2[1]);
           p2[2] = (gi[2] * s2[2]) + (i / (s2[0] * s2[1]));
 
-          n = node_list1[get_linear_index(p1[0], p1[1], p1[2], grid1)];
-          node_list2[get_linear_index(p2[0], p2[1], p2[2], grid2)] = n;
+          n = node_list1[Utils::get_linear_index(p1, grid1)];
+          node_list2[Utils::get_linear_index(p2, grid2)] = n;
 
           pos[3 * n + 0] = p2[0];
           pos[3 * n + 1] = p2[1];
@@ -275,7 +302,8 @@ int calc_send_block(const int *pos1, const int *grid1, const int *pos2,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void pack_block_permute1(double const *const in, double *const out,
+template <typename FloatType>
+void pack_block_permute1(FloatType const *const in, FloatType *const out,
                          const int *start, const int *size, const int *dim,
                          int element) {
 
@@ -323,7 +351,8 @@ void pack_block_permute1(double const *const in, double *const out,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void pack_block_permute2(double const *const in, double *const out,
+template <typename FloatType>
+void pack_block_permute2(FloatType const *const in, FloatType *const out,
                          const int *start, const int *size, const int *dim,
                          int element) {
 
@@ -359,19 +388,19 @@ void pack_block_permute2(double const *const in, double *const out,
  *  \param in     input mesh.
  *  \param out    output mesh.
  */
-void fft_data_struct::forw_grid_comm(boost::mpi::communicator const &comm,
-                                     fft_forw_plan const &plan,
-                                     double const *in, double *out) {
+template <typename FloatType>
+void fft_data_struct<FloatType>::forw_grid_comm(
+    boost::mpi::communicator const &comm, fft_forw_plan<FloatType> const &plan,
+    FloatType const *in, FloatType *out) {
   for (std::size_t i = 0ul; i < plan.group.size(); i++) {
     plan.pack_function(in, send_buf.data(), &(plan.send_block[6ul * i]),
                        &(plan.send_block[6ul * i + 3ul]), plan.old_mesh,
                        plan.element);
 
     if (plan.group[i] != comm.rank()) {
-      MPI_Sendrecv(send_buf.data(), plan.send_size[i], MPI_DOUBLE,
-                   plan.group[i], REQ_FFT_FORW, recv_buf.data(),
-                   plan.recv_size[i], MPI_DOUBLE, plan.group[i], REQ_FFT_FORW,
-                   comm, MPI_STATUS_IGNORE);
+      fft_sendrecv(send_buf.data(), plan.send_size[i], plan.group[i],
+                   recv_buf.data(), plan.recv_size[i], plan.group[i], comm,
+                   REQ_FFT_FORW);
     } else { /* Self communication... */
       std::swap(send_buf, recv_buf);
     }
@@ -388,10 +417,12 @@ void fft_data_struct::forw_grid_comm(boost::mpi::communicator const &comm,
  *  \param in     input mesh.
  *  \param out    output mesh.
  */
-void fft_data_struct::back_grid_comm(boost::mpi::communicator const &comm,
-                                     fft_forw_plan const &plan_f,
-                                     fft_back_plan const &plan_b,
-                                     double const *in, double *out) {
+template <typename FloatType>
+void fft_data_struct<FloatType>::back_grid_comm(
+    boost::mpi::communicator const &comm,
+    fft_forw_plan<FloatType> const &plan_f,
+    fft_back_plan<FloatType> const &plan_b, FloatType const *in,
+    FloatType *out) {
   /* Back means: Use the send/receive stuff from the forward plan but
      replace the receive blocks by the send blocks and vice
      versa. Attention then also new_mesh and old_mesh are exchanged */
@@ -402,10 +433,9 @@ void fft_data_struct::back_grid_comm(boost::mpi::communicator const &comm,
                          plan_f.element);
 
     if (plan_f.group[i] != comm.rank()) { /* send first, receive second */
-      MPI_Sendrecv(send_buf.data(), plan_f.recv_size[i], MPI_DOUBLE,
-                   plan_f.group[i], REQ_FFT_BACK, recv_buf.data(),
-                   plan_f.send_size[i], MPI_DOUBLE, plan_f.group[i],
-                   REQ_FFT_BACK, comm, MPI_STATUS_IGNORE);
+      fft_sendrecv(send_buf.data(), plan_f.recv_size[i], plan_f.group[i],
+                   recv_buf.data(), plan_f.send_size[i], plan_f.group[i], comm,
+                   REQ_FFT_BACK);
     } else { /* Self communication... */
       std::swap(send_buf, recv_buf);
     }
@@ -466,7 +496,7 @@ int map_3don2d_grid(int const g3d[3], int g2d[3]) {
 }
 
 /** Calculate most square 2D grid. */
-static void calc_2d_grid(int n, int grid[3]) {
+inline void calc_2d_grid(int n, int grid[3]) {
   grid[0] = n;
   grid[1] = 1;
   grid[2] = 1;
@@ -480,21 +510,20 @@ static void calc_2d_grid(int n, int grid[3]) {
   }
 }
 
-int fft_data_struct::initialize_fft(boost::mpi::communicator const &comm,
-                                    Utils::Vector3i const &ca_mesh_dim,
-                                    int const *ca_mesh_margin,
-                                    Utils::Vector3i const &global_mesh_dim,
-                                    Utils::Vector3d const &global_mesh_off,
-                                    int &ks_pnum, Utils::Vector3i const &grid) {
+template <typename FloatType>
+int fft_data_struct<FloatType>::initialize_fft(
+    boost::mpi::communicator const &comm, Utils::Vector3i const &ca_mesh_dim,
+    int const *ca_mesh_margin, Utils::Vector3i const &global_mesh_dim,
+    Utils::Vector3d const &global_mesh_off, int &ks_pnum,
+    Utils::Vector3i const &grid) {
 
   int n_grid[4][3];         /* The four node grids. */
   int my_pos[4][3];         /* The position of comm.rank() in the node grids. */
   std::vector<int> n_id[4]; /* linear node identity lists for the node grids. */
   std::vector<int> n_pos[4]; /* positions of nodes in the node grids. */
 
-  int const rank = comm.rank();
-  int node_pos[3];
-  MPI_Cart_coords(comm, rank, 3, node_pos);
+  auto const rank = comm.rank();
+  auto const node_pos = Utils::Mpi::cart_coords<3>(comm, rank);
 
   max_comm_size = 0;
   max_mesh_size = 0;
@@ -510,10 +539,12 @@ int fft_data_struct::initialize_fft(boost::mpi::communicator const &comm,
     my_pos[0][i] = node_pos[i];
   }
   for (int i = 0; i < comm.size(); i++) {
-    MPI_Cart_coords(comm, i, 3, &(n_pos[0][3 * i + 0]));
-    auto const lin_ind = get_linear_index(
-        n_pos[0][3 * i + 0], n_pos[0][3 * i + 1], n_pos[0][3 * i + 2],
-        {n_grid[0][0], n_grid[0][1], n_grid[0][2]});
+    auto const n_pos_i = Utils::Mpi::cart_coords<3>(comm, i);
+    for (int j = 0; j < 3; ++j) {
+      n_pos[0][3 * i + j] = n_pos_i[j];
+    }
+    auto const lin_ind = Utils::get_linear_index(
+        n_pos_i, {n_grid[0][0], n_grid[0][1], n_grid[0][2]});
     n_id[0][lin_ind] = i;
   }
 
@@ -639,7 +670,7 @@ int fft_data_struct::initialize_fft(boost::mpi::communicator const &comm,
   send_buf.resize(max_comm_size);
   recv_buf.resize(max_comm_size);
   data_buf.resize(max_mesh_size);
-  auto *c_data = (fftw_complex *)(data_buf.data());
+  auto *c_data = (typename fftw<FloatType>::complex *)(data_buf.data());
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for (int i = 1; i < 4; i++) {
@@ -647,10 +678,10 @@ int fft_data_struct::initialize_fft(boost::mpi::communicator const &comm,
       forw[i].destroy_plan();
     }
     forw[i].dir = FFTW_FORWARD;
-    forw[i].plan_handle =
-        fftw_plan_many_dft(1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data,
-                           nullptr, 1, forw[i].new_mesh[2], c_data, nullptr, 1,
-                           forw[i].new_mesh[2], forw[i].dir, FFTW_PATIENT);
+    forw[i].plan_handle = fftw<FloatType>::plan_many_dft(
+        1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data, nullptr, 1,
+        forw[i].new_mesh[2], c_data, nullptr, 1, forw[i].new_mesh[2],
+        forw[i].dir, FFTW_PATIENT);
     assert(forw[i].plan_handle);
   }
 
@@ -661,10 +692,10 @@ int fft_data_struct::initialize_fft(boost::mpi::communicator const &comm,
       back[i].destroy_plan();
     }
     back[i].dir = FFTW_BACKWARD;
-    back[i].plan_handle =
-        fftw_plan_many_dft(1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data,
-                           nullptr, 1, forw[i].new_mesh[2], c_data, nullptr, 1,
-                           forw[i].new_mesh[2], back[i].dir, FFTW_PATIENT);
+    back[i].plan_handle = fftw<FloatType>::plan_many_dft(
+        1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data, nullptr, 1,
+        forw[i].new_mesh[2], c_data, nullptr, 1, forw[i].new_mesh[2],
+        back[i].dir, FFTW_PATIENT);
     back[i].pack_function = pack_block_permute1;
     assert(back[i].plan_handle);
   }
@@ -679,59 +710,61 @@ int fft_data_struct::initialize_fft(boost::mpi::communicator const &comm,
   return max_mesh_size;
 }
 
-void fft_data_struct::forward_fft(boost::mpi::communicator const &comm,
-                                  double *data) {
+template <typename FloatType>
+void fft_data_struct<FloatType>::forward_fft(
+    boost::mpi::communicator const &comm, FloatType *data) {
   /* ===== first direction  ===== */
 
-  auto *c_data = (fftw_complex *)data;
-  auto *c_data_buf = (fftw_complex *)data_buf.data();
+  auto *c_data = (typename fftw<FloatType>::complex *)data;
+  auto *c_data_buf = (typename fftw<FloatType>::complex *)data_buf.data();
 
   /* communication to current dir row format (in is data) */
   forw_grid_comm(comm, forw[1], data, data_buf.data());
 
   /* complexify the real data array (in is data_buf) */
   for (int i = 0; i < forw[1].new_size; i++) {
-    data[2 * i + 0] = data_buf[i]; /* real value */
-    data[2 * i + 1] = 0;           /* complex value */
+    data[2 * i + 0] = data_buf[i];  /* real value */
+    data[2 * i + 1] = FloatType(0); /* complex value */
   }
   /* perform FFT (in/out is data)*/
-  fftw_execute_dft(forw[1].plan_handle, c_data, c_data);
+  fftw<FloatType>::execute_dft(forw[1].plan_handle, c_data, c_data);
   /* ===== second direction ===== */
   /* communication to current dir row format (in is data) */
   forw_grid_comm(comm, forw[2], data, data_buf.data());
   /* perform FFT (in/out is data_buf) */
-  fftw_execute_dft(forw[2].plan_handle, c_data_buf, c_data_buf);
+  fftw<FloatType>::execute_dft(forw[2].plan_handle, c_data_buf, c_data_buf);
   /* ===== third direction  ===== */
   /* communication to current dir row format (in is data_buf) */
   forw_grid_comm(comm, forw[3], data_buf.data(), data);
   /* perform FFT (in/out is data)*/
-  fftw_execute_dft(forw[3].plan_handle, c_data, c_data);
+  fftw<FloatType>::execute_dft(forw[3].plan_handle, c_data, c_data);
 
   /* REMARK: Result has to be in data. */
 }
 
-void fft_data_struct::backward_fft(boost::mpi::communicator const &comm,
-                                   double *data, bool check_complex) {
+template <typename FloatType>
+void fft_data_struct<FloatType>::backward_fft(
+    boost::mpi::communicator const &comm, FloatType *data, bool check_complex) {
 
-  auto *c_data = (fftw_complex *)data;
-  auto *c_data_buf = (fftw_complex *)data_buf.data();
+  auto *c_data = (typename fftw<FloatType>::complex *)data;
+  auto *c_data_buf = (typename fftw<FloatType>::complex *)data_buf.data();
 
   /* ===== third direction  ===== */
 
   /* perform FFT (in is data) */
-  fftw_execute_dft(back[3].plan_handle, c_data, c_data);
+  fftw<FloatType>::execute_dft(back[3].plan_handle, c_data, c_data);
   /* communicate (in is data)*/
   back_grid_comm(comm, forw[3], back[3], data, data_buf.data());
 
   /* ===== second direction ===== */
   /* perform FFT (in is data_buf) */
-  fftw_execute_dft(back[2].plan_handle, c_data_buf, c_data_buf);
+  fftw<FloatType>::execute_dft(back[2].plan_handle, c_data_buf, c_data_buf);
   /* communicate (in is data_buf) */
   back_grid_comm(comm, forw[2], back[2], data_buf.data(), data);
 
   /* ===== first direction  ===== */
   /* perform FFT (in is data) */
-  fftw_execute_dft(back[1].plan_handle, c_data, c_data);
+  fftw<FloatType>::execute_dft(back[1].plan_handle, c_data, c_data);
   /* throw away the (hopefully) empty complex component (in is data) */
   for (int i = 0; i < forw[1].new_size; i++) {
     data_buf[i] = data[2 * i]; /* real value */
@@ -749,17 +782,19 @@ void fft_data_struct::backward_fft(boost::mpi::communicator const &comm,
   /* REMARK: Result has to be in data. */
 }
 
-void fft_pack_block(double const *const in, double *const out,
+template <typename FloatType>
+void fft_pack_block(FloatType const *const in, FloatType *const out,
                     int const start[3], int const size[3], int const dim[3],
                     int element) {
 
-  auto const copy_size = element * size[2] * static_cast<int>(sizeof(double));
+  auto const copy_size =
+      static_cast<std::size_t>(element * size[2]) * sizeof(FloatType);
   /* offsets for indices in input grid */
   auto const m_in_offset = element * dim[2];
   auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
   /* offsets for indices in output grid */
   auto const m_out_offset = element * size[2];
-  /* linear index of in grid, linear index of out grid */
+  /* linear index of input grid, linear index of output grid */
   int li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
   int li_out = 0;
 
@@ -773,11 +808,13 @@ void fft_pack_block(double const *const in, double *const out,
   }
 }
 
-void fft_unpack_block(double const *const in, double *const out,
+template <typename FloatType>
+void fft_unpack_block(FloatType const *const in, FloatType *const out,
                       int const start[3], int const size[3], int const dim[3],
                       int element) {
 
-  auto const copy_size = element * size[2] * static_cast<int>(sizeof(double));
+  auto const copy_size =
+      static_cast<std::size_t>(element * size[2]) * sizeof(FloatType);
   /* offsets for indices in output grid */
   auto const m_out_offset = element * dim[2];
   auto const s_out_offset = element * (dim[2] * (dim[1] - size[1]));
@@ -797,15 +834,60 @@ void fft_unpack_block(double const *const in, double *const out,
   }
 }
 
-void fft_plan::destroy_plan() {
+template <typename FloatType> void fft_plan<FloatType>::destroy_plan() {
   if (plan_handle) {
-    fftw_destroy_plan(plan_handle);
+    fftw<FloatType>::destroy_plan(plan_handle);
     plan_handle = nullptr;
   }
 }
 
-namespace detail {
-void fft_free(void *const p) { ::fftw_free(p); }
-void *fft_malloc(std::size_t length) { return ::fftw_malloc(length); }
-} // namespace detail
+template <class FloatType>
+FloatType *allocator<FloatType>::allocate(const std::size_t n) const {
+  if (n == 0) {
+    return nullptr;
+  }
+  if (n > std::numeric_limits<std::size_t>::max() / sizeof(FloatType)) {
+    throw std::bad_array_new_length();
+  }
+  void *const pv = fftw<FloatType>::malloc(n * sizeof(FloatType));
+  if (!pv) {
+    throw std::bad_alloc();
+  }
+  return static_cast<FloatType *>(pv);
+}
+
+template <class FloatType>
+void allocator<FloatType>::deallocate(FloatType *const p,
+                                      std::size_t) const noexcept {
+  fftw<FloatType>::free(static_cast<void *>(p));
+}
+
+template struct allocator<float>;
+template struct allocator<double>;
+
+template struct fft_plan<float>;
+template struct fft_plan<double>;
+
+template struct fft_forw_plan<float>;
+template struct fft_forw_plan<double>;
+
+template struct fft_back_plan<float>;
+template struct fft_back_plan<double>;
+
+template struct fft_data_struct<float>;
+template struct fft_data_struct<double>;
+
+template void fft_pack_block<float>(float const *in, float *out,
+                                    int const start[3], int const size[3],
+                                    int const dim[3], int element);
+template void fft_pack_block<double>(double const *in, double *out,
+                                     int const start[3], int const size[3],
+                                     int const dim[3], int element);
+template void fft_unpack_block<float>(float const *in, float *out,
+                                      int const start[3], int const size[3],
+                                      int const dim[3], int element);
+template void fft_unpack_block<double>(double const *in, double *out,
+                                       int const start[3], int const size[3],
+                                       int const dim[3], int element);
+
 } // namespace fft

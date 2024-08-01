@@ -34,28 +34,37 @@
 #include <array>
 #include <memory>
 #include <tuple>
+#include <type_traits>
 
 namespace fft {
-struct fft_data_struct;
+template <typename FloatType> struct fft_data_struct;
 } // namespace fft
 
 /**
  * @brief Historic FFT backend based on FFTW3.
  * The 3D FFT is split into three 1D FFTs.
  */
-class FFTBackendLegacy : public FFTBackend {
+template <typename FloatType>
+class FFTBackendLegacy : public FFTBackend<FloatType> {
+  static_assert(std::is_same_v<FloatType, float> or
+                    std::is_same_v<FloatType, double>,
+                "FFTW only implements float and double");
   bool dipolar;
-  std::unique_ptr<fft::fft_data_struct> fft;
+  std::unique_ptr<fft::fft_data_struct<FloatType>> fft;
   /** @brief k-space mesh (local) for k-space calculations. */
-  std::vector<double> ks_mesh;
+  std::vector<FloatType> ks_mesh;
   /** @brief real-space mesh (local) for CA/FFT. */
-  fft::vector<double> rs_mesh;
+  fft::vector<FloatType> rs_mesh;
   /** @brief real-space mesh (local) for the electric or dipolar field. */
-  std::array<fft::vector<double>, 3> rs_mesh_fields;
-  p3m_send_mesh mesh_comm;
+  std::array<fft::vector<FloatType>, 3> rs_mesh_fields;
+  p3m_send_mesh<FloatType> mesh_comm;
+  using FFTBackend<FloatType>::params;
+  using FFTBackend<FloatType>::mesh;
+  using FFTBackend<FloatType>::local_mesh;
+  using FFTBackend<FloatType>::check_complex_residuals;
 
 public:
-  FFTBackendLegacy(p3m_data_struct &obj, bool dipolar);
+  FFTBackendLegacy(p3m_data_struct_fft<FloatType> &obj, bool dipolar);
   ~FFTBackendLegacy() override;
   void init_fft() override;
   void perform_scalar_fwd_fft() override;

@@ -26,6 +26,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <optional>
 #include <vector>
 
 /** Fixture to create particles during a test and remove them at the end. */
@@ -61,13 +62,24 @@ struct ParticleFactory {
   }
 
   template <typename T>
-  void set_particle_property(int p_id, T &(Particle::*setter)(),
+  void set_particle_property(int p_id, T &(Particle::*getter)(),
                              T const &value) const {
     auto &system = System::get_system();
     auto p = system.cell_structure->get_local_particle(p_id);
     if (p != nullptr) {
-      (p->*setter)() = value;
+      (p->*getter)() = value;
     }
+  }
+
+  template <typename T>
+  auto get_particle_property(int p_id, T &(Particle::*getter)()) const {
+    auto &system = System::get_system();
+    auto p = system.cell_structure->get_local_particle(p_id);
+    std::optional<T> opt = std::nullopt;
+    if (p != nullptr) {
+      opt = (p->*getter)();
+    }
+    return opt;
   }
 
   void clear_particles() {

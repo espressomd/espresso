@@ -32,7 +32,6 @@
 #include "electrostatics/icc.hpp"
 #include "electrostatics/mmm1d.hpp"
 #include "electrostatics/p3m.hpp"
-#include "electrostatics/p3m_gpu.hpp"
 #include "electrostatics/reaction_field.hpp"
 #include "electrostatics/scafacos.hpp"
 
@@ -49,9 +48,6 @@ using ElectrostaticsActor =
     std::variant<std::shared_ptr<DebyeHueckel>,
 #ifdef P3M
                  std::shared_ptr<CoulombP3M>,
-#ifdef CUDA
-                 std::shared_ptr<CoulombP3MGPU>,
-#endif // CUDA
                  std::shared_ptr<ElectrostaticLayerCorrection>,
 #endif // P3M
                  std::shared_ptr<CoulombMMM1D>,

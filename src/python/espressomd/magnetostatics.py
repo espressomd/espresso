@@ -106,6 +106,8 @@ class DipolarP3M(MagnetostaticInteraction):
         (default is ``True``, i.e., activated).
     timings : :obj:`int`
         Number of force calculations during tuning.
+    single_precision : :obj:`bool`
+        Use single-precision floating-point arithmetic.
 
     """
     _so_name = "Dipoles::DipolarP3M"
@@ -152,6 +154,7 @@ class DipolarP3M(MagnetostaticInteraction):
                 "epsilon": 0.0,
                 "mesh_off": [0.5, 0.5, 0.5],
                 "prefactor": 0.,
+                "single_precision": False,
                 "tune": True,
                 "timings": 10,
                 "verbose": True}

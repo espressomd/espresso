@@ -41,10 +41,13 @@ namespace utf = boost::unit_test;
 #include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/p3m.hpp"
+#include "electrostatics/p3m.impl.hpp"
 #include "galilei/Galilei.hpp"
 #include "integrate.hpp"
 #include "integrators/Propagation.hpp"
 #include "magnetostatics/dipoles.hpp"
+#include "magnetostatics/dp3m.hpp"
+#include "magnetostatics/dp3m.impl.hpp"
 #include "nonbonded_interactions/lj.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "observables/ParticleVelocities.hpp"
@@ -214,6 +217,140 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     }
   }
 
+  // check electrostatics
+#ifdef P3M
+  {
+    // add charges
+    set_particle_property(pid1, &Particle::q, +0.5);
+    set_particle_property(pid2, &Particle::q, -0.5);
+
+    // set up P3M
+    auto const prefactor = 2.;
+    auto p3m = P3MParameters{false,
+                             0.0,
+                             3.5,
+                             Utils::Vector3i::broadcast(12),
+                             Utils::Vector3d::broadcast(0.5),
+                             5,
+                             0.615,
+                             1e-3};
+    auto solver = new_p3m_handle<double, Arch::CPU, FFTBackendLegacy>(
+        std::move(p3m), prefactor, 1, false, true);
+    add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
+              [&system]() { system.on_coulomb_change(); });
+    BOOST_CHECK(not solver->is_gpu());
+
+    // measure energies and forces
+    auto const step = 0.02;
+    auto const pos1 = start_positions.at(pid1);
+    Utils::Vector3d pos2{box_center, box_center - 0.1, 1.0};
+    for (int i = 0; i < 10; ++i) {
+      // move particle
+      pos2[0] += step;
+      set_particle_pos(pid2, pos2);
+      auto const r = (pos2 - pos1).norm();
+      // at very short distances, the real-space contribution to
+      // the energy is much larger than the k-space contribution
+      auto const energy_ref = -prefactor * 0.25 / r;
+      auto const obs_energy = system.calculate_energy();
+      if (rank == 0) {
+        auto const energy_p3m = obs_energy->coulomb[0] + obs_energy->coulomb[1];
+        BOOST_CHECK_CLOSE(energy_p3m, energy_ref, 0.002);
+      }
+      if (n_nodes != 3) {
+        system.integrate(0, INTEG_REUSE_FORCES_NEVER);
+        if (rank == 0) {
+          auto pf = get_particle_property(pid1, &Particle::force_and_torque);
+          BOOST_REQUIRE(pf.has_value());
+          BOOST_CHECK_CLOSE(pf->f[0u], -energy_ref / r, 0.02);
+          BOOST_CHECK_LE(std::abs(pf->f[1u]), 1e-12);
+          BOOST_CHECK_LE(std::abs(pf->f[2u]), 1e-12);
+#ifdef ROTATION
+          BOOST_CHECK_EQUAL(pf->torque.norm(), 0.);
+#endif // ROTATION
+        }
+      }
+    }
+    set_particle_pos(pid2, start_positions.at(pid2));
+
+    // deactivate actor
+    solver->detach_system(espresso::system);
+    system.coulomb.impl->solver = std::nullopt;
+    system.on_coulomb_change();
+    auto const obs_energy = system.calculate_energy();
+    if (rank == 0) {
+      auto const energy_p3m = obs_energy->coulomb[0] + obs_energy->coulomb[1];
+      BOOST_CHECK_EQUAL(energy_p3m, 0.);
+    }
+  }
+#endif // P3M
+
+  // check magnetostatics
+#ifdef DP3M
+  {
+    // add charges
+    set_particle_property(pid1, &Particle::dipm, +0.5);
+    set_particle_property(pid2, &Particle::dipm, -0.5);
+
+    // set up P3M
+    auto const prefactor = 2.;
+    auto p3m = P3MParameters{false,
+                             0.0,
+                             3.5,
+                             Utils::Vector3i::broadcast(12),
+                             Utils::Vector3d::broadcast(0.5),
+                             5,
+                             0.615,
+                             1e-3};
+    auto solver = new_dp3m_handle<double, Arch::CPU, FFTBackendLegacy>(
+        std::move(p3m), prefactor, 1, false);
+    add_actor(comm, espresso::system, system.dipoles.impl->solver, solver,
+              [&system]() { system.on_dipoles_change(); });
+    BOOST_CHECK(not solver->is_gpu());
+
+    // measure energies and forces
+    auto const step = 0.02;
+    auto const pos1 = start_positions.at(pid1);
+    Utils::Vector3d pos2{box_center, box_center - 0.1, 1.0};
+    for (int i = 0; i < 10; ++i) {
+      // move particle
+      pos2[0] += step;
+      set_particle_pos(pid2, pos2);
+      auto const r = (pos2 - pos1).norm();
+      // at very short distances, the real-space contribution to
+      // the energy is much larger than the k-space contribution
+      auto const energy_ref = -prefactor * 0.25 / Utils::int_pow<3>(r);
+      auto const obs_energy = system.calculate_energy();
+      if (rank == 0) {
+        auto const energy_p3m = obs_energy->dipolar[0] + obs_energy->dipolar[1];
+        BOOST_CHECK_CLOSE(energy_p3m, energy_ref, 0.002);
+      }
+      if (n_nodes != 3) {
+        system.integrate(0, INTEG_REUSE_FORCES_NEVER);
+        if (rank == 0) {
+          auto pf = get_particle_property(pid1, &Particle::force_and_torque);
+          BOOST_REQUIRE(pf.has_value());
+          BOOST_CHECK_CLOSE(pf->f[0u], -3. * energy_ref / r, 0.002);
+          BOOST_CHECK_LE(std::abs(pf->f[1u]), 1e-12);
+          BOOST_CHECK_LE(std::abs(pf->f[2u]), 1e-12);
+          BOOST_CHECK_LE(pf->torque.norm(), 1e-12);
+        }
+      }
+    }
+    set_particle_pos(pid2, start_positions.at(pid2));
+
+    // deactivate actor
+    solver->detach_system(espresso::system);
+    system.dipoles.impl->solver = std::nullopt;
+    system.on_dipoles_change();
+    auto const obs_energy = system.calculate_energy();
+    if (rank == 0) {
+      auto const energy_p3m = obs_energy->dipolar[0] + obs_energy->dipolar[1];
+      BOOST_CHECK_EQUAL(energy_p3m, 0.);
+    }
+  }
+#endif // DP3M
+
   // check non-bonded energies
 #ifdef LENNARD_JONES
   {
@@ -294,51 +431,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       BOOST_CHECK_CLOSE(obs_energy->bonded[fene_bond_id], fene_energy, 1e-10);
     }
   }
-
-  // check electrostatics
-#ifdef P3M
-  {
-    // add charges
-    set_particle_property(pid1, &Particle::q, +1.);
-    set_particle_property(pid2, &Particle::q, -1.);
-
-    // set up P3M
-    auto const prefactor = 2.;
-    auto p3m = P3MParameters{false,
-                             0.0,
-                             3.5,
-                             Utils::Vector3i::broadcast(12),
-                             Utils::Vector3d::broadcast(0.5),
-                             5,
-                             0.615,
-                             1e-3};
-    auto solver =
-        std::make_shared<CoulombP3M>(std::move(p3m), prefactor, 1, false, true);
-    solver->p3m.make_fft_instance<FFTBackendLegacy>(false);
-    add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
-              [&system]() { system.on_coulomb_change(); });
-
-    // measure energies
-    auto const step = 0.02;
-    auto const pos1 = start_positions.at(pid1);
-    Utils::Vector3d pos2{box_center, box_center - 0.1, 1.0};
-    for (int i = 0; i < 10; ++i) {
-      // move particle
-      pos2[0] += step;
-      set_particle_pos(pid2, pos2);
-      auto const r = (pos2 - pos1).norm();
-      // check P3M energy
-      auto const obs_energy = system.calculate_energy();
-      if (rank == 0) {
-        // at very short distances, the real-space contribution to
-        // the energy is much larger than the k-space contribution
-        auto const energy_ref = -prefactor / r;
-        auto const energy_p3m = obs_energy->coulomb[0] + obs_energy->coulomb[1];
-        BOOST_CHECK_CLOSE(energy_p3m, energy_ref, 0.002);
-      }
-    }
-  }
-#endif // P3M
 
   // check integration
   {

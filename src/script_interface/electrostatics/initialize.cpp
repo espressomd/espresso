@@ -23,12 +23,11 @@
 
 #ifdef ELECTROSTATICS
 
-#include "Actor_impl.hpp"
+#include "Actor.impl.hpp"
 
 #include "Container.hpp"
 #include "CoulombMMM1D.hpp"
 #include "CoulombP3M.hpp"
-#include "CoulombP3MGPU.hpp"
 #include "CoulombScafacos.hpp"
 #include "DebyeHueckel.hpp"
 #include "ElectrostaticLayerCorrection.hpp"
@@ -50,9 +49,9 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef ELECTROSTATICS
   om->register_new<DebyeHueckel>("Coulomb::DebyeHueckel");
 #ifdef P3M
-  om->register_new<CoulombP3M>("Coulomb::CoulombP3M");
+  om->register_new<CoulombP3M<Arch::CPU>>("Coulomb::CoulombP3M");
 #ifdef CUDA
-  om->register_new<CoulombP3MGPU>("Coulomb::CoulombP3MGPU");
+  om->register_new<CoulombP3M<Arch::GPU>>("Coulomb::CoulombP3MGPU");
 #endif
   om->register_new<ElectrostaticLayerCorrection>(
       "Coulomb::ElectrostaticLayerCorrection");
