@@ -104,6 +104,8 @@ public:
   virtual ~FFTBackend() = default;
   /** @brief Initialize the FFT plans and buffers. */
   virtual void init_fft() = 0;
+  /** @brief Initialize the halo buffers. */
+  virtual void init_halo() = 0;
   /** @brief Carry out the forward FFT of the scalar mesh. */
   virtual void perform_scalar_fwd_fft() = 0;
   /** @brief Carry out the forward FFT of the vector meshes. */
@@ -112,6 +114,14 @@ public:
   virtual void perform_scalar_back_fft() = 0;
   /** @brief Carry out the backward FFT of the vector meshes. */
   virtual void perform_vector_back_fft() = 0;
+  /** @brief Update scalar mesh halo with data from neighbors (accumulation). */
+  virtual void perform_scalar_halo_gather() = 0;
+  /** @brief Update vector mesh halo with data from neighbors (accumulation). */
+  virtual void perform_vector_halo_gather() = 0;
+  /** @brief Update scalar mesh halo of all neighbors. */
+  virtual void perform_scalar_halo_spread() = 0;
+  /** @brief Update vector mesh halo of all neighbors. */
+  virtual void perform_vector_halo_spread() = 0;
   /** @brief Get indices of the k-space data layout. */
   virtual std::tuple<int, int, int> get_permutations() const = 0;
 };

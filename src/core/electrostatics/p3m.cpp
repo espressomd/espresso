@@ -262,6 +262,7 @@ void CoulombP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
 
   assert(p3m.fft);
   p3m.local_mesh.calc_local_ca_mesh(p3m.params, local_geo, skin, elc_layer);
+  p3m.fft->init_halo();
   p3m.fft->init_fft();
   p3m.calc_differential_operator();
 
@@ -390,6 +391,7 @@ Utils::Vector9d CoulombP3MImpl<FloatType, Architecture>::long_range_pressure(
 
   if (p3m.sum_q2 > 0.) {
     charge_assign(particles);
+    p3m.fft->perform_scalar_halo_gather();
     p3m.fft->perform_scalar_fwd_fft();
 
     auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
@@ -455,6 +457,7 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
             system.coulomb.impl->solver)) {
       charge_assign(particles);
     }
+    p3m.fft->perform_scalar_halo_gather();
     p3m.fft->perform_scalar_fwd_fft();
   }
 
@@ -513,6 +516,7 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
         not p3m.params.tuning and check_complex_residuals;
     p3m.fft->check_complex_residuals = check_residuals;
     p3m.fft->perform_vector_back_fft();
+    p3m.fft->perform_vector_halo_spread();
     p3m.fft->check_complex_residuals = false;
 
     auto const force_prefac = prefactor / volume;

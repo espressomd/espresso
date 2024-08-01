@@ -136,6 +136,7 @@ void DipolarP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
 
   assert(dp3m.fft);
   dp3m.local_mesh.calc_local_ca_mesh(dp3m.params, local_geo, verlet_skin, 0.);
+  dp3m.fft->init_halo();
   dp3m.fft->init_fft();
   dp3m.calc_differential_operator();
 
@@ -252,6 +253,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
 
   if (dp3m.sum_mu2 > 0.) {
     dipole_assign(particles);
+    dp3m.fft->perform_vector_halo_gather();
     dp3m.fft->perform_vector_fwd_fft();
   }
 
@@ -353,6 +355,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
           ++index;
         });
         dp3m.fft->perform_scalar_back_fft();
+        dp3m.fft->perform_scalar_halo_spread();
         /* Assign force component from mesh to particle */
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
         Utils::integral_parameter<int, AssignTorques, 1, 7>(
@@ -404,6 +407,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
           ++index;
         });
         dp3m.fft->perform_vector_back_fft();
+        dp3m.fft->perform_vector_halo_spread();
         /* Assign force component from mesh to particle */
         auto const d_rs = (d + dp3m.mesh.ks_pnum) % 3;
         Utils::integral_parameter<int, AssignForces, 1, 7>(

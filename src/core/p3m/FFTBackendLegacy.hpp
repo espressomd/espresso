@@ -67,10 +67,15 @@ public:
   FFTBackendLegacy(p3m_data_struct_fft<FloatType> &obj, bool dipolar);
   ~FFTBackendLegacy() override;
   void init_fft() override;
+  void init_halo() override;
   void perform_scalar_fwd_fft() override;
   void perform_vector_fwd_fft() override;
   void perform_scalar_back_fft() override;
   void perform_vector_back_fft() override;
+  void perform_scalar_halo_gather() override;
+  void perform_vector_halo_gather() override;
+  void perform_scalar_halo_spread() override;
+  void perform_vector_halo_spread() override;
   void update_mesh_data();
 
   /**

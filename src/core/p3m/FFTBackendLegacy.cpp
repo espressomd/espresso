@@ -62,8 +62,11 @@ void FFTBackendLegacy<FloatType>::update_mesh_data() {
   }
 }
 
-template <typename FloatType> void FFTBackendLegacy<FloatType>::init_fft() {
+template <typename FloatType> void FFTBackendLegacy<FloatType>::init_halo() {
   mesh_comm.resize(::comm_cart, local_mesh);
+}
+
+template <typename FloatType> void FFTBackendLegacy<FloatType>::init_fft() {
   auto ca_mesh_size = fft->initialize_fft(
       ::comm_cart, local_mesh.dim, local_mesh.margin, params.mesh,
       params.mesh_off, mesh.ks_pnum, ::communicator.node_grid);
@@ -79,12 +82,14 @@ template <typename FloatType> void FFTBackendLegacy<FloatType>::init_fft() {
 
 template <typename FloatType>
 void FFTBackendLegacy<FloatType>::perform_vector_back_fft() {
-  /* Back FFT force component mesh */
   for (auto &rs_mesh_field : rs_mesh_fields) {
     fft->backward_fft(::comm_cart, rs_mesh_field.data(),
                       check_complex_residuals);
   }
-  /* redistribute force component mesh */
+}
+
+template <typename FloatType>
+void FFTBackendLegacy<FloatType>::perform_vector_halo_spread() {
   std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
                                          rs_mesh_fields[1u].data(),
                                          rs_mesh_fields[2u].data()}};
@@ -92,18 +97,26 @@ void FFTBackendLegacy<FloatType>::perform_vector_back_fft() {
 }
 
 template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_scalar_fwd_fft() {
+void FFTBackendLegacy<FloatType>::perform_scalar_halo_gather() {
   mesh_comm.gather_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
+}
+
+template <typename FloatType>
+void FFTBackendLegacy<FloatType>::perform_scalar_fwd_fft() {
   fft->forward_fft(::comm_cart, rs_mesh.data());
   update_mesh_data();
 }
 
 template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_vector_fwd_fft() {
+void FFTBackendLegacy<FloatType>::perform_vector_halo_gather() {
   std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
                                          rs_mesh_fields[1u].data(),
                                          rs_mesh_fields[2u].data()}};
   mesh_comm.gather_grid(::comm_cart, meshes, local_mesh.dim);
+}
+
+template <typename FloatType>
+void FFTBackendLegacy<FloatType>::perform_vector_fwd_fft() {
   for (auto &rs_mesh_field : rs_mesh_fields) {
     fft->forward_fft(::comm_cart, rs_mesh_field.data());
   }
@@ -112,9 +125,11 @@ void FFTBackendLegacy<FloatType>::perform_vector_fwd_fft() {
 
 template <typename FloatType>
 void FFTBackendLegacy<FloatType>::perform_scalar_back_fft() {
-  /* Back FFT force component mesh */
   fft->backward_fft(::comm_cart, rs_mesh.data(), check_complex_residuals);
-  /* redistribute force component mesh */
+}
+
+template <typename FloatType>
+void FFTBackendLegacy<FloatType>::perform_scalar_halo_spread() {
   mesh_comm.spread_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
 }
 
