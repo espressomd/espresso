@@ -42,7 +42,9 @@
 #include <boost/variant.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -50,6 +52,25 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+static int coord(std::string const &s) {
+  if (s == "x")
+    return 0;
+  if (s == "y")
+    return 1;
+  if (s == "z")
+    return 2;
+  throw std::invalid_argument("Invalid Cartesian coordinate: '" + s + "'");
+}
+
+static std::string coord_letter(int c) {
+  if (c == 0)
+    return "x";
+  if (c == 1)
+    return "y";
+  assert(c == 2);
+  return "z";
+}
 
 namespace ScriptInterface {
 namespace CellSystem {
@@ -111,6 +132,20 @@ CellSystem::CellSystem() {
          auto const hd = get_hybrid_decomposition();
          auto const ns_types = hd.get_n_square_types();
          return Variant{std::vector<int>(ns_types.begin(), ns_types.end())};
+       }},
+      {"fully_connected_boundary", AutoParameter::read_only,
+       [this]() {
+         if (get_cell_structure().decomposition_type() !=
+             CellStructureType::REGULAR) {
+           return Variant{none};
+         }
+         auto const rd = get_regular_decomposition();
+         auto const fcb = rd.fully_connected_boundary();
+         if (not fcb)
+           return Variant{none};
+         return Variant{std::unordered_map<std::string, Variant>{
+             {{"boundary", Variant{coord_letter((*fcb).first)}},
+              {"direction", Variant{coord_letter((*fcb).second)}}}}};
        }},
       {"cutoff_regular", AutoParameter::read_only,
        [this]() {
@@ -264,6 +299,21 @@ void CellSystem::initialize(CellStructureType const &cs_type,
         get_value_or<std::vector<int>>(params, "n_square_types", {});
     auto n_square_types = std::set<int>{ns_types.begin(), ns_types.end()};
     m_cell_structure->set_hybrid_decomposition(cutoff_regular, n_square_types);
+  } else if (cs_type == CellStructureType::REGULAR) {
+    std::optional<std::pair<int, int>> fcb_pair = std::nullopt;
+    if (params.contains("fully_connected_boundary") and
+        not is_none(params.at("fully_connected_boundary"))) {
+      auto const variant =
+          get_value<VariantMap>(params, "fully_connected_boundary");
+      context()->parallel_try_catch([&fcb_pair, &variant]() {
+        fcb_pair = {{coord(boost::get<std::string>(variant.at("boundary"))),
+                     coord(boost::get<std::string>(variant.at("direction")))}};
+      });
+    }
+    context()->parallel_try_catch([this, &fcb_pair]() {
+      m_cell_structure->set_regular_decomposition(
+          get_system().get_interaction_range(), fcb_pair);
+    });
   } else {
     system.set_cell_structure_topology(cs_type);
   }
