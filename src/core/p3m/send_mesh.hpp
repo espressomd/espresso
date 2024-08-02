@@ -34,8 +34,8 @@
 #include <span>
 #include <vector>
 
-/** Structure for send/recv meshes. */
-class p3m_send_mesh {
+/** @brief P3M halo communicator. */
+template <typename FloatType> class p3m_send_mesh {
   enum Requests {
     REQ_P3M_INIT = 200,
     REQ_P3M_GATHER = 201,
@@ -43,17 +43,17 @@ class p3m_send_mesh {
   };
   /** dimension of sub meshes to send. */
   int s_dim[6][3];
-  /** left down corners of sub meshes to send. */
+  /** lower left corners of sub meshes to send. */
   int s_ld[6][3];
-  /** up right corners of sub meshes to send. */
+  /** upper right corners of sub meshes to send. */
   int s_ur[6][3];
   /** sizes for send buffers. */
   int s_size[6];
   /** dimension of sub meshes to recv. */
   int r_dim[6][3];
-  /** left down corners of sub meshes to recv. */
+  /** lower left corners of sub meshes to recv. */
   int r_ld[6][3];
-  /** up right corners of sub meshes to recv. */
+  /** upper right corners of sub meshes to recv. */
   int r_ur[6][3];
   /** sizes for recv buffers. */
   int r_size[6];
@@ -61,22 +61,22 @@ class p3m_send_mesh {
   int max;
 
   /** vector to store grid points to send. */
-  std::vector<double> send_grid;
+  std::vector<FloatType> send_grid;
   /** vector to store grid points to recv */
-  std::vector<double> recv_grid;
+  std::vector<FloatType> recv_grid;
 
 public:
   void resize(boost::mpi::communicator const &comm,
               P3MLocalMesh const &local_mesh);
   void gather_grid(boost::mpi::communicator const &comm,
-                   std::span<double *> meshes, Utils::Vector3i const &dim);
-  void gather_grid(boost::mpi::communicator const &comm, double *mesh,
+                   std::span<FloatType *> meshes, Utils::Vector3i const &dim);
+  void gather_grid(boost::mpi::communicator const &comm, FloatType *mesh,
                    Utils::Vector3i const &dim) {
     gather_grid(comm, std::span(&mesh, 1u), dim);
   }
   void spread_grid(boost::mpi::communicator const &comm,
-                   std::span<double *> meshes, Utils::Vector3i const &dim);
-  void spread_grid(boost::mpi::communicator const &comm, double *mesh,
+                   std::span<FloatType *> meshes, Utils::Vector3i const &dim);
+  void spread_grid(boost::mpi::communicator const &comm, FloatType *mesh,
                    Utils::Vector3i const &dim) {
     spread_grid(comm, std::span(&mesh, 1u), dim);
   }

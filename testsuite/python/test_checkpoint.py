@@ -827,7 +827,8 @@ class CheckpointTest(ut.TestCase):
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.01, 'mesh': 3 * [8],
                      'cao': 1, 'alpha': 12.0, 'r_cut': 2.4, 'tune': False,
-                     'mesh_off': [0.5, 0.5, 0.5], 'epsilon': 2.0, 'timings': 15}
+                     'mesh_off': [0.5, 0.5, 0.5], 'epsilon': 2.0,
+                     'timings': 15, 'single_precision': True}
         for key in reference:
             self.assertIn(key, state)
             np.testing.assert_almost_equal(state[key], reference[key],
@@ -838,10 +839,12 @@ class CheckpointTest(ut.TestCase):
     def test_p3m(self):
         actor = system.electrostatics.solver
         self.assertIsInstance(actor, espressomd.electrostatics._P3MBase)
+        single_precision = isinstance(actor, espressomd.electrostatics.P3MGPU)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                      'timings': 15, 'check_neutrality': True,
+                     'single_precision': single_precision,
                      'check_complex_residuals': False,
                      'charge_neutrality_tolerance': 1e-12}
         for key in reference:

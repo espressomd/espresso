@@ -219,11 +219,16 @@ class P3M(_P3MBase):
     check_complex_residuals: :obj:`bool`, optional
         Raise a warning if the backward Fourier transform has non-zero
         complex residuals when set to ``True`` (default).
+    single_precision : :obj:`bool`
+        Use single-precision floating-point arithmetic.
 
     """
     _so_name = "Coulomb::CoulombP3M"
     _so_creation_policy = "GLOBAL"
     _so_features = ("P3M",)
+
+    def default_params(self):
+        return {"single_precision": False, **super().default_params()}
 
 
 @script_interface_register
@@ -274,6 +279,9 @@ class P3MGPU(_P3MBase):
     _so_name = "Coulomb::CoulombP3MGPU"
     _so_creation_policy = "GLOBAL"
     _so_features = ("P3M", "CUDA")
+
+    def default_params(self):
+        return {"single_precision": True, **super().default_params()}
 
 
 @script_interface_register

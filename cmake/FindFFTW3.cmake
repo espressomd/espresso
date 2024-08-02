@@ -31,25 +31,27 @@ if(FFTW3_INCLUDE_DIR)
 endif(FFTW3_INCLUDE_DIR)
 
 find_path(FFTW3_INCLUDE_DIR fftw3.h)
-find_library(FFTW3_LIBRARIES NAMES fftw3)
+find_library(FFTW3_LIBRARIES fftw3)
+find_library(FFTW3F_LIBRARIES fftw3f)
 find_path(FFTW3_MPI_INCLUDE_DIR fftw3-mpi.h)
-find_library(FFTW3_MPI_LIBRARIES NAMES fftw3_mpi)
+find_library(FFTW3_MPI_LIBRARIES fftw3_mpi)
+find_library(FFTW3F_MPI_LIBRARIES fftw3f_mpi)
 
 # handle the QUIETLY and REQUIRED arguments and set FFTW3_FOUND to TRUE if all
 # listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_LIBRARIES
+find_package_handle_standard_args(FFTW3 DEFAULT_MSG FFTW3_LIBRARIES FFTW3F_LIBRARIES
                                   FFTW3_INCLUDE_DIR)
 set(FPHSA_NAME_MISMATCHED 1)
-find_package_handle_standard_args(FFTW3_MPI DEFAULT_MSG FFTW3_MPI_LIBRARIES
+find_package_handle_standard_args(FFTW3_MPI DEFAULT_MSG FFTW3_MPI_LIBRARIES FFTW3F_MPI_LIBRARIES
                                   FFTW3_MPI_INCLUDE_DIR)
 unset(FPHSA_NAME_MISMATCHED)
 
-mark_as_advanced(FFTW3_LIBRARIES FFTW3_INCLUDE_DIR FFTW3_MPI_LIBRARIES FFTW3_MPI_INCLUDE_DIR)
+mark_as_advanced(FFTW3_LIBRARIES FFTW3F_LIBRARIES FFTW3_INCLUDE_DIR FFTW3_MPI_LIBRARIES FFTW3F_MPI_LIBRARIES FFTW3_MPI_INCLUDE_DIR)
 
 
 if(FFTW3_FOUND AND NOT TARGET FFTW3::FFTW3)
   add_library(FFTW3::FFTW3 INTERFACE IMPORTED)
   target_include_directories(FFTW3::FFTW3 INTERFACE "${FFTW3_INCLUDE_DIR}")
-  target_link_libraries(FFTW3::FFTW3 INTERFACE "${FFTW3_LIBRARIES}")
+  target_link_libraries(FFTW3::FFTW3 INTERFACE "${FFTW3_LIBRARIES}" "${FFTW3F_LIBRARIES}")
 endif()

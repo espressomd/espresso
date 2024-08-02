@@ -40,6 +40,7 @@
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
+#include "electrostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
 #include "system/System.hpp"
@@ -248,8 +249,10 @@ struct SanityChecksICC {
   template <typename T> void operator()(std::shared_ptr<T> const &) const {}
 #ifdef P3M
 #ifdef CUDA
-  [[noreturn]] void operator()(std::shared_ptr<CoulombP3MGPU> const &) const {
-    throw std::runtime_error("ICC does not work with P3MGPU");
+  void operator()(std::shared_ptr<CoulombP3M> const &p) const {
+    if (p->is_gpu()) {
+      throw std::runtime_error("ICC does not work with P3MGPU");
+    }
   }
 #endif // CUDA
   void

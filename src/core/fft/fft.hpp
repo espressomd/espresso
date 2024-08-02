@@ -45,10 +45,12 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 struct fftw_plan_s;
+struct fftwf_plan_s;
 namespace boost::mpi {
 class environment;
 class communicator;
@@ -56,8 +58,12 @@ class communicator;
 
 namespace fft {
 
-struct fft_plan {
-  using fftw_plan = fftw_plan_s *;
+template <typename FloatType> struct fft_plan {
+  static_assert(std::is_same_v<FloatType, float> or
+                    std::is_same_v<FloatType, double>,
+                "FFTW only implements float and double");
+  using fftw_plan = std::conditional_t<std::is_same_v<FloatType, double>,
+                                       fftw_plan_s *, fftwf_plan_s *>;
 
   ~fft_plan() { destroy_plan(); }
 
@@ -66,13 +72,14 @@ struct fft_plan {
   /** plan for the FFT. */
   fftw_plan plan_handle = nullptr;
   /** packing function for send blocks. */
-  void (*pack_function)(double const *const, double *const, int const *,
+  void (*pack_function)(FloatType const *const, FloatType *const, int const *,
                         int const *, int const *, int);
   void destroy_plan();
 };
 
 /** @brief Plan for a forward 1D FFT of a flattened 3D array. */
-struct fft_forw_plan : public fft_plan {
+template <typename FloatType>
+struct fft_forw_plan : public fft_plan<FloatType> {
   /** row direction of that FFT. */
   int row_dir;
   /** permutations from normal coordinate system. */
@@ -100,12 +107,13 @@ struct fft_forw_plan : public fft_plan {
   std::vector<int> recv_block;
   /** Recv block communication sizes. */
   std::vector<int> recv_size;
-  /** size of send block elements. */
+  /** size of send block elements, i.e. 1 for real, 2 for complex. */
   int element;
 };
 
 /** @brief Plan for a backward 1D FFT of a flattened 3D array. */
-struct fft_back_plan : public fft_plan {};
+template <typename FloatType>
+struct fft_back_plan : public fft_plan<FloatType> {};
 
 /**
  * @brief Information about the three one dimensional FFTs and how the nodes
@@ -114,7 +122,7 @@ struct fft_back_plan : public fft_plan {};
  * @note FFT numbering starts with 1 for technical reasons (because we have 4
  * node grids, the index 0 is used for the real space charge assignment grid).
  */
-struct fft_data_struct {
+template <typename FloatType> struct fft_data_struct {
 private:
   /**
    * @brief Handle to the MPI environment.
@@ -125,9 +133,9 @@ private:
   std::shared_ptr<boost::mpi::environment> m_mpi_env;
 
   /** Information for forward FFTs. */
-  std::array<fft_forw_plan, 4u> forw;
+  std::array<fft_forw_plan<FloatType>, 4u> forw;
   /** Information for backward FFTs. */
-  std::array<fft_back_plan, 4u> back;
+  std::array<fft_back_plan<FloatType>, 4u> back;
 
   /** Whether FFT is initialized or not. */
   bool init_tag = false;
@@ -139,11 +147,11 @@ private:
   int max_mesh_size = 0;
 
   /** send buffer. */
-  std::vector<double> send_buf;
+  std::vector<FloatType> send_buf;
   /** receive buffer. */
-  std::vector<double> recv_buf;
+  std::vector<FloatType> recv_buf;
   /** Buffer for receive data. */
-  fft::vector<double> data_buf;
+  fft::vector<FloatType> data_buf;
 
 public:
   explicit fft_data_struct(decltype(m_mpi_env) mpi_env)
@@ -151,8 +159,8 @@ public:
 
   // disable copy construction: unsafe because we store raw pointers
   // to FFT plans (avoids double-free and use-after-free)
-  fft_data_struct &operator=(fft_data_struct const &) = delete;
-  fft_data_struct(fft_data_struct const &) = delete;
+  fft_data_struct &operator=(fft_data_struct<FloatType> const &) = delete;
+  fft_data_struct(fft_data_struct<FloatType> const &) = delete;
 
   /** Initialize everything connected to the 3D-FFT.
    *
@@ -177,7 +185,7 @@ public:
    *  \param[in,out] data  Mesh.
    *  \param[in]     comm  MPI communicator
    */
-  void forward_fft(boost::mpi::communicator const &comm, double *data);
+  void forward_fft(boost::mpi::communicator const &comm, FloatType *data);
 
   /** Perform an in-place backward 3D FFT.
    *  \warning The content of \a data is overwritten.
@@ -186,7 +194,7 @@ public:
    *                                non-zero.
    *  \param[in]     comm           MPI communicator.
    */
-  void backward_fft(boost::mpi::communicator const &comm, double *data,
+  void backward_fft(boost::mpi::communicator const &comm, FloatType *data,
                     bool check_complex);
 
   auto get_mesh_size() const { return forw[3u].new_mesh; }
@@ -195,10 +203,12 @@ public:
 
 private:
   void forw_grid_comm(boost::mpi::communicator const &comm,
-                      fft_forw_plan const &plan, double const *in, double *out);
+                      fft_forw_plan<FloatType> const &plan, FloatType const *in,
+                      FloatType *out);
   void back_grid_comm(boost::mpi::communicator const &comm,
-                      fft_forw_plan const &plan_f, fft_back_plan const &plan_b,
-                      double const *in, double *out);
+                      fft_forw_plan<FloatType> const &plan_f,
+                      fft_back_plan<FloatType> const &plan_b,
+                      FloatType const *in, FloatType *out);
 };
 
 /** Pack a block (<tt>size[3]</tt> starting at <tt>start[3]</tt>) of an input
@@ -218,7 +228,8 @@ private:
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block(double const *in, double *out, int const start[3],
+template <typename FloatType>
+void fft_pack_block(FloatType const *in, FloatType *out, int const start[3],
                     int const size[3], int const dim[3], int element);
 
 /** Unpack a 3d-grid input block (<tt>size[3]</tt>) into an output 3d-grid
@@ -233,7 +244,8 @@ void fft_pack_block(double const *in, double *out, int const start[3],
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_unpack_block(double const *in, double *out, int const start[3],
+template <typename FloatType>
+void fft_unpack_block(FloatType const *in, FloatType *out, int const start[3],
                       int const size[3], int const dim[3], int element);
 
 int map_3don2d_grid(int const g3d[3], int g2d[3]);

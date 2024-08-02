@@ -34,7 +34,7 @@
 #include <utility>
 #include <vector>
 
-class FFTBackend;
+template <typename FloatType> class FFTBackend;
 
 /**
  * @brief Base class for the electrostatics and magnetostatics P3M algorithms.
@@ -49,21 +49,12 @@ struct p3m_data_struct {
   P3MParameters params;
   /** @brief Local mesh properties. */
   P3MLocalMesh local_mesh;
-  /** @brief Local mesh FFT buffers. */
-  P3MFFTMesh mesh;
 
   /**
    * @brief Spatial differential operator in k-space.
    * We use an i*k differentiation.
    */
   std::array<std::vector<int>, 3> d_op;
-  /** Force optimised influence function (k-space) */
-  std::vector<double> g_force;
-  /** Energy optimised influence function (k-space) */
-  std::vector<double> g_energy;
-
-  /** FFT backend. */
-  std::unique_ptr<FFTBackend> fft;
 
   /** Calculate the Fourier transformed differential operator.
    *  Remark: This is done on the level of n-vectors and not k-vectors,
@@ -72,6 +63,21 @@ struct p3m_data_struct {
   void calc_differential_operator() {
     d_op = detail::calc_meshift(params.mesh, true);
   }
+};
+
+template <typename FloatType>
+struct p3m_data_struct_fft : public p3m_data_struct {
+  using p3m_data_struct::p3m_data_struct;
+  using value_type = FloatType;
+  /** @brief Local mesh FFT buffers. */
+  P3MFFTMesh<FloatType> mesh;
+
+  /** Force optimised influence function (k-space) */
+  std::vector<FloatType> g_force;
+  /** Energy optimised influence function (k-space) */
+  std::vector<FloatType> g_energy;
+  /** FFT backend. */
+  std::unique_ptr<FFTBackend<FloatType>> fft;
 
   template <typename T, class... Args> void make_fft_instance(Args... args) {
     assert(fft == nullptr);
@@ -85,25 +91,37 @@ struct p3m_data_struct {
  * The backend can read some members of @ref p3m_data_struct
  * but can only modify the FFT buffers in @ref P3MFFTMesh.
  */
-class FFTBackend {
+template <typename FloatType> class FFTBackend {
 protected:
   P3MParameters const &params;
   P3MLocalMesh const &local_mesh;
-  P3MFFTMesh &mesh;
+  P3MFFTMesh<FloatType> &mesh;
 
 public:
   bool check_complex_residuals = false;
-  explicit FFTBackend(p3m_data_struct &obj)
+  explicit FFTBackend(p3m_data_struct_fft<FloatType> &obj)
       : params{obj.params}, local_mesh{obj.local_mesh}, mesh{obj.mesh} {}
   virtual ~FFTBackend() = default;
   /** @brief Initialize the FFT plans and buffers. */
   virtual void init_fft() = 0;
-  /** @brief Carry out the forward FFT of the scalar or field meshes. */
-  virtual void perform_fwd_fft() = 0;
+  /** @brief Initialize the halo buffers. */
+  virtual void init_halo() = 0;
+  /** @brief Carry out the forward FFT of the scalar mesh. */
+  virtual void perform_scalar_fwd_fft() = 0;
+  /** @brief Carry out the forward FFT of the vector meshes. */
+  virtual void perform_vector_fwd_fft() = 0;
   /** @brief Carry out the backward FFT of the scalar mesh. */
-  virtual void perform_field_back_fft() = 0;
-  /** @brief Carry out the backward FFT of the field meshes. */
-  virtual void perform_space_back_fft() = 0;
+  virtual void perform_scalar_back_fft() = 0;
+  /** @brief Carry out the backward FFT of the vector meshes. */
+  virtual void perform_vector_back_fft() = 0;
+  /** @brief Update scalar mesh halo with data from neighbors (accumulation). */
+  virtual void perform_scalar_halo_gather() = 0;
+  /** @brief Update vector mesh halo with data from neighbors (accumulation). */
+  virtual void perform_vector_halo_gather() = 0;
+  /** @brief Update scalar mesh halo of all neighbors. */
+  virtual void perform_scalar_halo_spread() = 0;
+  /** @brief Update vector mesh halo of all neighbors. */
+  virtual void perform_vector_halo_spread() = 0;
   /** @brief Get indices of the k-space data layout. */
   virtual std::tuple<int, int, int> get_permutations() const = 0;
 };

@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "initialize.hpp"
 
 #include "config/config.hpp"
 
 #ifdef DIPOLES
 
-#include "Actor_impl.hpp"
+#include "Actor.impl.hpp"
 
 #include "Container.hpp"
 #include "DipolarDirectSum.hpp"
@@ -49,7 +50,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<DipolarDirectSumGpu>("Dipoles::DipolarDirectSumGpu");
 #endif
 #ifdef DP3M
-  om->register_new<DipolarP3M>("Dipoles::DipolarP3M");
+  om->register_new<DipolarP3M<Arch::CPU>>("Dipoles::DipolarP3M");
 #endif
 #ifdef SCAFACOS_DIPOLES
   om->register_new<DipolarScafacos>("Dipoles::DipolarScafacos");

@@ -35,7 +35,6 @@
 #include "communication.hpp"
 #include "constraints/Constraints.hpp"
 #include "electrostatics/icc.hpp"
-#include "electrostatics/p3m_gpu.hpp"
 #include "forces_inline.hpp"
 #include "galilei/ComFixed.hpp"
 #include "immersed_boundary/ImmersedBoundaries.hpp"

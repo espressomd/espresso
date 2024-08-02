@@ -53,6 +53,8 @@ auto constexpr P3M_EPSILON_METALLIC = 0.0;
 #include <span>
 #include <stdexcept>
 
+enum class Arch { CPU, GPU };
+
 /** @brief Structure to hold P3M parameters and some dependent variables. */
 struct P3MParameters {
   /** tuning or production? */
@@ -216,13 +218,13 @@ struct P3MLocalMesh {
 };
 
 /** @brief Local mesh FFT buffers. */
-struct P3MFFTMesh {
+template <typename FloatType> struct P3MFFTMesh {
   /** @brief k-space scalar mesh for k-space calculations. */
-  std::span<double> ks_scalar;
+  std::span<FloatType> ks_scalar;
   /** @brief real-space scalar mesh for charge assignment and FFT. */
-  std::span<double> rs_scalar;
+  std::span<FloatType> rs_scalar;
   /** @brief real-space 3D meshes for the electric or dipolar field. */
-  std::array<std::span<double>, 3> rs_fields;
+  std::array<std::span<FloatType>, 3> rs_fields;
 
   /** @brief Indices of the lower left corner of the local mesh grid. */
   Utils::Vector3i start;

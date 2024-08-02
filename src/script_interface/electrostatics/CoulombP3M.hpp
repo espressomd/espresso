@@ -26,6 +26,7 @@
 #include "Actor.hpp"
 
 #include "core/electrostatics/p3m.hpp"
+#include "core/electrostatics/p3m.impl.hpp"
 #include "core/p3m/FFTBackendLegacy.hpp"
 
 #include "script_interface/get_value.hpp"
@@ -36,12 +37,26 @@
 namespace ScriptInterface {
 namespace Coulomb {
 
-class CoulombP3M : public Actor<CoulombP3M, ::CoulombP3M> {
+template <Arch Architecture>
+class CoulombP3M : public Actor<CoulombP3M<Architecture>, ::CoulombP3M> {
   bool m_tune;
+  bool m_single_precision;
+
+public:
+  using Base = Actor<CoulombP3M<Architecture>, ::CoulombP3M>;
+  using Base::actor;
+  using Base::add_parameters;
+  using Base::context;
+
+protected:
+  using Base::m_actor;
+  using Base::set_charge_neutrality_tolerance;
 
 public:
   CoulombP3M() {
     add_parameters({
+        {"single_precision", AutoParameter::read_only,
+         [this]() { return m_single_precision; }},
         {"alpha_L", AutoParameter::read_only,
          [this]() { return actor()->p3m.params.alpha_L; }},
         {"r_cut_iL", AutoParameter::read_only,
@@ -76,7 +91,12 @@ public:
 
   void do_construct(VariantMap const &params) override {
     m_tune = get_value<bool>(params, "tune");
+    m_single_precision = get_value<bool>(params, "single_precision");
     context()->parallel_try_catch([&]() {
+      if (Architecture == Arch::GPU and not m_single_precision) {
+        throw std::invalid_argument(
+            "P3M GPU only implemented in single-precision mode");
+      }
       auto p3m = P3MParameters{!get_value_or<bool>(params, "is_tuned", !m_tune),
                                get_value<double>(params, "epsilon"),
                                get_value<double>(params, "r_cut"),
@@ -85,13 +105,25 @@ public:
                                get_value<int>(params, "cao"),
                                get_value<double>(params, "alpha"),
                                get_value<double>(params, "accuracy")};
-      m_actor = std::make_shared<CoreActorClass>(
-          std::move(p3m), get_value<double>(params, "prefactor"),
-          get_value<int>(params, "timings"), get_value<bool>(params, "verbose"),
-          get_value<bool>(params, "check_complex_residuals"));
-      m_actor->p3m.make_fft_instance<FFTBackendLegacy>(false);
+      make_handle(m_single_precision, std::move(p3m),
+                  get_value<double>(params, "prefactor"),
+                  get_value<int>(params, "timings"),
+                  get_value<bool>(params, "verbose"),
+                  get_value<bool>(params, "check_complex_residuals"));
     });
     set_charge_neutrality_tolerance(params);
+  }
+
+private:
+  template <class... Args>
+  void make_handle(bool single_precision, Args &&...args) {
+    if (single_precision) {
+      m_actor = new_p3m_handle<float, Architecture, FFTBackendLegacy>(
+          std::forward<Args>(args)...);
+    } else {
+      m_actor = new_p3m_handle<double, Architecture, FFTBackendLegacy>(
+          std::forward<Args>(args)...);
+    }
   }
 };
 

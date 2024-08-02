@@ -39,20 +39,17 @@
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
-#include "p3m/interpolation.hpp"
-#include "p3m/send_mesh.hpp"
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+#include <utils/math/sqr.hpp>
 
-#include <array>
 #include <cmath>
 #include <numbers>
-#include <utility>
-#include <vector>
+#include <stdexcept>
 
 #ifdef NPT
 /** Update the NpT virial */
@@ -61,38 +58,38 @@ void npt_add_virial_magnetic_contribution(double energy);
 
 /** @brief Dipolar P3M solver. */
 struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
-  struct p3m_data_struct_impl : public p3m_data_struct {
-    explicit p3m_data_struct_impl(P3MParameters &&parameters)
-        : p3m_data_struct{std::move(parameters)} {}
+  /** @brief Dipolar P3M parameters. */
+  p3m_data_struct &dp3m;
 
-    /** number of dipolar particles (only on head node). */
-    int sum_dip_part = 0;
-    /** Sum of square of magnetic dipoles (only on head node). */
-    double sum_mu2 = 0.;
-
-    /** position shift for calculation of first assignment mesh point. */
-    double pos_shift = 0.;
-
-    p3m_interpolation_cache inter_weights;
-
-    /** cached k-space self-energy correction */
-    double energy_correction = 0.;
-  };
-
-  /** Dipolar P3M parameters. */
-  p3m_data_struct_impl dp3m;
-
-  /** Magnetostatics prefactor. */
   int tune_timings;
   bool tune_verbose;
 
-  DipolarP3M(P3MParameters &&parameters, double prefactor, int tune_timings,
-             bool tune_verbose);
+protected:
+  bool m_is_tuned;
 
-  void on_activation() {
-    sanity_checks();
-    tune();
+public:
+  DipolarP3M(p3m_data_struct &dp3m_data, double prefactor, int tune_timings,
+             bool tune_verbose)
+      : dp3m{dp3m_data}, tune_timings{tune_timings},
+        tune_verbose{tune_verbose} {
+
+    if (tune_timings <= 0) {
+      throw std::domain_error("Parameter 'timings' must be > 0");
+    }
+    if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
+      throw std::domain_error("DipolarP3M requires a cubic mesh");
+    }
+    m_is_tuned = not dp3m.params.tuning;
+    dp3m.params.tuning = false;
+    set_prefactor(prefactor);
   }
+
+  virtual ~DipolarP3M() = default;
+
+  [[nodiscard]] bool is_tuned() const { return m_is_tuned; }
+  [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
+
+  virtual void on_activation() = 0;
   /** @brief Recalculate all box-length-dependent parameters. */
   void on_boxl_change() { scaleby_box_l(); }
   void on_node_grid_change() const { sanity_checks_node_grid(); }
@@ -102,7 +99,7 @@ struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
     init();
   }
   /** @brief Recalculate all derived parameters. */
-  void init();
+  virtual void init() = 0;
 
   void sanity_checks() const {
     sanity_checks_boxl();
@@ -115,10 +112,10 @@ struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
    * @brief Count the number of magnetic particles and calculate
    * the sum of the squared dipole moments.
    */
-  void count_magnetic_particles();
+  virtual void count_magnetic_particles() = 0;
 
   /** Assign the physical dipoles using the tabulated assignment function. */
-  void dipole_assign(ParticleRange const &particles);
+  virtual void dipole_assign(ParticleRange const &particles) = 0;
 
   /**
    * @brief Tune dipolar P3M parameters to desired accuracy.
@@ -152,22 +149,13 @@ struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
    * The function is based on routines of the program HE_Q.cpp for charges
    * written by M. Deserno.
    */
-  void tune();
-  bool is_tuned() const { return m_is_tuned; }
+  virtual void tune() = 0;
 
   /** Compute the k-space part of energies. */
-  double long_range_energy(ParticleRange const &particles) {
-    return long_range_kernel(false, true, particles);
-  }
+  virtual double long_range_energy(ParticleRange const &particles) = 0;
 
   /** Compute the k-space part of forces. */
-  void add_long_range_forces(ParticleRange const &particles) {
-    long_range_kernel(true, false, particles);
-  }
-
-  /** Compute the k-space part of forces and energies. */
-  double long_range_kernel(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles);
+  virtual void add_long_range_forces(ParticleRange const &particles) = 0;
 
   /** Calculate real-space contribution of p3m dipolar pair forces and torques.
    *  If NPT is compiled in, update the NpT virial.
@@ -266,22 +254,20 @@ struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
     return prefactor * (mimj * B_r - mir * mjr * C_r);
   }
 
-private:
-  bool m_is_tuned;
-
+protected:
   /** Calculate self-energy in k-space. */
-  double calc_average_self_energy_k_space() const;
+  virtual double calc_average_self_energy_k_space() const = 0;
 
   /** Calculate energy correction that minimizes the error.
    *  This quantity is only calculated once and is cached.
    */
-  void calc_energy_correction();
+  virtual void calc_energy_correction() = 0;
 
   /** Calculate the influence function for the dipolar forces and torques. */
-  void calc_influence_function_force();
+  virtual void calc_influence_function_force() = 0;
 
   /** Calculate the influence function for the dipolar energy. */
-  void calc_influence_function_energy();
+  virtual void calc_influence_function_energy() = 0;
 
   /** Compute the dipolar surface terms */
   double calc_surface_term(bool force_flag, bool energy_flag,
@@ -293,7 +279,7 @@ private:
   void sanity_checks_periodicity() const;
   void sanity_checks_cell_structure() const;
 
-  void scaleby_box_l();
+  virtual void scaleby_box_l();
 };
 
 #endif // DP3M

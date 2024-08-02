@@ -342,6 +342,7 @@ if espressomd.has_features('DP3M') and 'DP3M' in modes:
         mesh=[8, 8, 8],
         alpha=12,
         accuracy=0.01,
+        single_precision=True,
         timings=15,
         tune=False)
     system.magnetostatics.solver = dp3m
