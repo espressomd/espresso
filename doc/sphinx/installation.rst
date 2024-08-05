@@ -128,6 +128,12 @@ Optionally the ccmake utility can be installed for easier configuration:
 
     sudo apt install cmake-curses-gui
 
+To install the ZnDraw visualizer:
+
+.. code-block:: bash
+
+    python3 -m pip install --user -c requirements.txt 'zndraw==0.4.5'
+
 .. _Nvidia GPU acceleration:
 
 Nvidia GPU acceleration
