@@ -45,3 +45,21 @@ std::vector<NeighborListRequest> get_requested_neighbor_lists(ModelPtr& model) {
     }
    return res;
 }
+
+
+torch_metatensor::ModelEvaluationOptions
+init_evaluation_optoins(std::string length_unit, std::string energy_unit, torch_metatensor::ModelCapabilities& capabilities) {
+    torch_metatensor::ModelEvaluationOptoins evaluaoitn_optoins = torch::make_intrusive<metatensor_torch::ModelEvaluationOptionsHolder>();
+    this->evaluation_options->set_length_unit(std::move(length_unit));
+
+    auto output = torch::make_intrusive<metatensor_torch::ModelOutputHolder>();
+    output->explicit_gradients = {};
+    output->set_quantity("energy");
+    output->set_unit(std::move(energy_unit));
+    output->per_atom = capabilities->outputs.at("energy").per_atom;
+
+    evaluation_options->outputs.insert("energy", output);
+    return evaluation_options;
+}
+
+
