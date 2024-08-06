@@ -258,7 +258,7 @@ napoleon_use_param = False
 
 # Suppress warnings for features not compiled in
 # https://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk']
+autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk', 'zndraw', 'znsocket', 'znjson']
 
 # Add custom stylesheets
 def setup(app):

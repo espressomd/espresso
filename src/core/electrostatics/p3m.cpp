@@ -24,14 +24,19 @@
  *  The corresponding header file is @ref p3m.hpp.
  */
 
-#include "electrostatics/p3m.hpp"
+#include "config/config.hpp"
 
 #ifdef P3M
 
+#include "electrostatics/p3m.hpp"
+#include "electrostatics/p3m.impl.hpp"
+
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/elc.hpp"
-#include "electrostatics/p3m_gpu.hpp"
+#ifdef CUDA
+#include "electrostatics/p3m_gpu_cuda.cuh"
 #include "electrostatics/p3m_gpu_error.hpp"
+#endif // CUDA
 
 #include "fft/fft.hpp"
 #include "p3m/TuningAlgorithm.hpp"
@@ -53,6 +58,7 @@
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
 #include "npt.hpp"
+#include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
 
@@ -84,7 +90,8 @@
 #include <tuple>
 #include <utility>
 
-void CoulombP3M::count_charged_particles() {
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::count_charged_particles() {
   auto local_n = 0;
   auto local_q2 = 0.0;
   auto local_q = 0.0;
@@ -112,21 +119,23 @@ void CoulombP3M::count_charged_particles() {
  *  different convention for the prefactors, which is described in
  *  @cite deserno98a @cite deserno98b.
  */
-void CoulombP3M::calc_influence_function_force() {
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::calc_influence_function_force() {
   auto const [KX, KY, KZ] = p3m.fft->get_permutations();
-  p3m.g_force =
-      grid_influence_function<1>(p3m.params, p3m.mesh.start, p3m.mesh.stop, KX,
-                                 KY, KZ, get_system().box_geo->length_inv());
+  p3m.g_force = grid_influence_function<FloatType, 1>(
+      p3m.params, p3m.mesh.start, p3m.mesh.stop, KX, KY, KZ,
+      get_system().box_geo->length_inv());
 }
 
 /** Calculate the influence function optimized for the energy and the
  *  self energy correction.
  */
-void CoulombP3M::calc_influence_function_energy() {
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::calc_influence_function_energy() {
   auto const [KX, KY, KZ] = p3m.fft->get_permutations();
-  p3m.g_energy =
-      grid_influence_function<0>(p3m.params, p3m.mesh.start, p3m.mesh.stop, KX,
-                                 KY, KZ, get_system().box_geo->length_inv());
+  p3m.g_energy = grid_influence_function<FloatType, 0>(
+      p3m.params, p3m.mesh.start, p3m.mesh.stop, KX, KY, KZ,
+      get_system().box_geo->length_inv());
 }
 
 /** Aliasing sum used by @ref p3m_k_space_error. */
@@ -229,7 +238,8 @@ static double p3m_k_space_error(double pref, Utils::Vector3i const &mesh,
          (box_l[1] * box_l[2]);
 }
 
-void CoulombP3M::init() {
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
   assert(p3m.params.mesh >= Utils::Vector3i::broadcast(1));
   assert(p3m.params.cao >= 1 and p3m.params.cao <= 7);
   assert(p3m.params.alpha > 0.);
@@ -252,6 +262,7 @@ void CoulombP3M::init() {
 
   assert(p3m.fft);
   p3m.local_mesh.calc_local_ca_mesh(p3m.params, local_geo, skin, elc_layer);
+  p3m.fft->init_halo();
   p3m.fft->init_fft();
   p3m.calc_differential_operator();
 
@@ -261,48 +272,33 @@ void CoulombP3M::init() {
   count_charged_particles();
 }
 
-CoulombP3M::CoulombP3M(P3MParameters &&parameters, double prefactor,
-                       int tune_timings, bool tune_verbose,
-                       bool check_complex_residuals)
-    : p3m{std::move(parameters)}, tune_timings{tune_timings},
-      tune_verbose{tune_verbose},
-      check_complex_residuals{check_complex_residuals} {
-
-  if (tune_timings <= 0) {
-    throw std::domain_error("Parameter 'timings' must be > 0");
-  }
-  m_is_tuned = !p3m.params.tuning;
-  p3m.params.tuning = false;
-  set_prefactor(prefactor);
-}
-
 namespace {
 template <int cao> struct AssignCharge {
-  void operator()(decltype(CoulombP3M::p3m) &p3m, double q,
-                  Utils::Vector3d const &real_pos,
-                  p3m_interpolation_cache &inter_weights) {
-    auto const w = p3m_calculate_interpolation_weights<cao>(
-        real_pos, p3m.params.ai, p3m.local_mesh);
-
-    inter_weights.store(w);
-
+  void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos,
+                  InterpolationWeights<cao> const &w) {
+    using value_type =
+        typename std::remove_reference_t<decltype(p3m)>::value_type;
     p3m_interpolate(p3m.local_mesh, w, [q, &p3m](int ind, double w) {
-      p3m.mesh.rs_scalar[ind] += w * q;
+      p3m.mesh.rs_scalar[ind] += value_type(w * q);
     });
   }
 
-  void operator()(decltype(CoulombP3M::p3m) &p3m, double q,
-                  Utils::Vector3d const &real_pos) {
-    p3m_interpolate(
-        p3m.local_mesh,
-        p3m_calculate_interpolation_weights<cao>(real_pos, p3m.params.ai,
-                                                 p3m.local_mesh),
-        [q, &p3m](int ind, double w) { p3m.mesh.rs_scalar[ind] += w * q; });
+  void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos,
+                  p3m_interpolation_cache &inter_weights) {
+    auto const w = p3m_calculate_interpolation_weights<cao>(
+        real_pos, p3m.params.ai, p3m.local_mesh);
+    inter_weights.store(w);
+    this->operator()(p3m, q, real_pos, w);
+  }
+
+  void operator()(auto &p3m, double q, Utils::Vector3d const &real_pos) {
+    auto const w = p3m_calculate_interpolation_weights<cao>(
+        real_pos, p3m.params.ai, p3m.local_mesh);
+    this->operator()(p3m, q, real_pos, w);
   }
 
   template <typename combined_ranges>
-  void operator()(decltype(CoulombP3M::p3m) &p3m,
-                  combined_ranges const &p_q_pos_range) {
+  void operator()(auto &p3m, combined_ranges const &p_q_pos_range) {
     for (auto zipped : p_q_pos_range) {
       auto const p_q = boost::get<0>(zipped);
       auto const &p_pos = boost::get<1>(zipped);
@@ -314,12 +310,10 @@ template <int cao> struct AssignCharge {
 };
 } // namespace
 
-void CoulombP3M::charge_assign(ParticleRange const &particles) {
-  p3m.inter_weights.reset(p3m.params.cao);
-
-  /* prepare local FFT mesh */
-  for (int i = 0; i < p3m.local_mesh.size; i++)
-    p3m.mesh.rs_scalar[i] = 0.0;
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::charge_assign(
+    ParticleRange const &particles) {
+  prepare_fft_mesh(true);
 
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
   auto p_pos_range = ParticlePropertyRange::pos_range(particles);
@@ -328,20 +322,21 @@ void CoulombP3M::charge_assign(ParticleRange const &particles) {
       p3m.params.cao, p3m, boost::combine(p_q_range, p_pos_range));
 }
 
-void CoulombP3M::assign_charge(double q, Utils::Vector3d const &real_pos,
-                               p3m_interpolation_cache &inter_weights) {
-  Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
-                                                     real_pos, inter_weights);
-}
-
-void CoulombP3M::assign_charge(double q, Utils::Vector3d const &real_pos) {
-  Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
-                                                     real_pos);
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::assign_charge(
+    double q, Utils::Vector3d const &real_pos, bool skip_cache) {
+  if (skip_cache) {
+    Utils::integral_parameter<int, AssignCharge, 1, 7>(p3m.params.cao, p3m, q,
+                                                       real_pos);
+  } else {
+    Utils::integral_parameter<int, AssignCharge, 1, 7>(
+        p3m.params.cao, p3m, q, real_pos, p3m.inter_weights);
+  }
 }
 
 template <int cao> struct AssignForces {
   template <typename combined_ranges>
-  void operator()(decltype(CoulombP3M::p3m) &p3m, double force_prefac,
+  void operator()(auto &p3m, double force_prefac,
                   combined_ranges const &p_q_force_range) const {
 
     assert(cao == p3m.inter_weights.cao());
@@ -354,13 +349,13 @@ template <int cao> struct AssignForces {
       auto &p_force = boost::get<1>(zipped);
       if (p_q != 0.0) {
         auto const pref = p_q * force_prefac;
-        auto const w = p3m.inter_weights.load<cao>(p_index);
+        auto const w = p3m.inter_weights.template load<cao>(p_index);
 
         Utils::Vector3d force{};
         p3m_interpolate(p3m.local_mesh, w, [&force, &p3m](int ind, double w) {
-          force += w * Utils::Vector3d{p3m.mesh.rs_fields[0u][ind],
-                                       p3m.mesh.rs_fields[1u][ind],
-                                       p3m.mesh.rs_fields[2u][ind]};
+          force[0u] += w * double(p3m.mesh.rs_fields[0u][ind]);
+          force[1u] += w * double(p3m.mesh.rs_fields[1u][ind]);
+          force[2u] += w * double(p3m.mesh.rs_fields[2u][ind]);
         });
 
         p_force -= pref * force;
@@ -388,14 +383,16 @@ static auto calc_dipole_moment(boost::mpi::communicator const &comm,
  *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */
-Utils::Vector9d
-CoulombP3M::long_range_pressure(ParticleRange const &particles) {
+template <typename FloatType, Arch Architecture>
+Utils::Vector9d CoulombP3MImpl<FloatType, Architecture>::long_range_pressure(
+    ParticleRange const &particles) {
   auto const &box_geo = *get_system().box_geo;
   Utils::Vector9d node_k_space_pressure_tensor{};
 
   if (p3m.sum_q2 > 0.) {
     charge_assign(particles);
-    p3m.fft->perform_fwd_fft();
+    p3m.fft->perform_scalar_halo_gather();
+    p3m.fft->perform_scalar_fwd_fft();
 
     auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
     auto const &mesh_stop = p3m.mesh.size;
@@ -416,9 +413,9 @@ CoulombP3M::long_range_pressure(ParticleRange const &particles) {
 
       if (norm_sq != 0.) {
         auto const node_k_space_energy =
-            p3m.g_energy[index] *
-            (Utils::sqr(p3m.mesh.rs_scalar[2u * index + 0u]) +
-             Utils::sqr(p3m.mesh.rs_scalar[2u * index + 1u]));
+            double(p3m.g_energy[index] *
+                   (Utils::sqr(p3m.mesh.rs_scalar[2u * index + 0u]) +
+                    Utils::sqr(p3m.mesh.rs_scalar[2u * index + 1u])));
         auto const vterm = -2. * (1. / norm_sq + half_alpha_inv_sq);
         auto const pref = node_k_space_energy * vterm;
         node_k_space_pressure_tensor[0u] += pref * kx * kx; /* sigma_xx */
@@ -443,8 +440,9 @@ CoulombP3M::long_range_pressure(ParticleRange const &particles) {
   return node_k_space_pressure_tensor * prefactor / (2. * box_geo.volume());
 }
 
-double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
-                                     ParticleRange const &particles) {
+template <typename FloatType, Arch Architecture>
+double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
+    bool force_flag, bool energy_flag, ParticleRange const &particles) {
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
 #ifdef NPT
@@ -459,7 +457,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
             system.coulomb.impl->solver)) {
       charge_assign(particles);
     }
-    p3m.fft->perform_fwd_fft();
+    p3m.fft->perform_scalar_halo_gather();
+    p3m.fft->perform_scalar_fwd_fft();
   }
 
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
@@ -485,7 +484,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
     auto const &mesh_stop = p3m.mesh.size;
     auto const &offset = p3m.mesh.start;
-    auto const wavevector = (2. * std::numbers::pi) * box_geo.length_inv();
+    auto const wavevector = Utils::Vector3<FloatType>((2. * std::numbers::pi) *
+                                                      box_geo.length_inv());
     auto indices = Utils::Vector3i{};
     auto index = std::size_t(0u);
 
@@ -493,16 +493,16 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     // Eq. (3.49) @cite deserno00b
     for_each_3d(mesh_start, mesh_stop, indices, [&]() {
       auto const rho_hat =
-          std::complex<double>(p3m.mesh.rs_scalar[2u * index + 0u],
-                               p3m.mesh.rs_scalar[2u * index + 1u]);
+          std::complex<FloatType>(p3m.mesh.rs_scalar[2u * index + 0u],
+                                  p3m.mesh.rs_scalar[2u * index + 1u]);
       auto const phi_hat = p3m.g_force[index] * rho_hat;
 
       for (int d = 0; d < 3; d++) {
         /* direction in r-space: */
         int d_rs = (d + p3m.mesh.ks_pnum) % 3;
         /* directions */
-        auto const k =
-            p3m.d_op[d_rs][indices[d] + offset[d]] * wavevector[d_rs];
+        auto const k = FloatType(p3m.d_op[d_rs][indices[d] + offset[d]]) *
+                       wavevector[d_rs];
 
         /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
         p3m.mesh.rs_fields[d_rs][2u * index + 0u] = -k * phi_hat.imag();
@@ -515,7 +515,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
     auto const check_residuals =
         not p3m.params.tuning and check_complex_residuals;
     p3m.fft->check_complex_residuals = check_residuals;
-    p3m.fft->perform_field_back_fft();
+    p3m.fft->perform_vector_back_fft();
+    p3m.fft->perform_vector_halo_spread();
     p3m.fft->check_complex_residuals = false;
 
     auto const force_prefac = prefactor / volume;
@@ -543,8 +544,8 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
       // Use the energy optimized influence function for energy!
       // Eq. (3.40) @cite deserno00b
       node_energy +=
-          p3m.g_energy[i] * (Utils::sqr(p3m.mesh.rs_scalar[2 * i]) +
-                             Utils::sqr(p3m.mesh.rs_scalar[2 * i + 1]));
+          double(p3m.g_energy[i] * (Utils::sqr(p3m.mesh.rs_scalar[2 * i + 0]) +
+                                    Utils::sqr(p3m.mesh.rs_scalar[2 * i + 1])));
     }
     node_energy /= 2. * volume;
 
@@ -579,8 +580,9 @@ double CoulombP3M::long_range_kernel(bool force_flag, bool energy_flag,
   return 0.;
 }
 
+template <typename FloatType, Arch Architecture>
 class CoulombTuningAlgorithm : public TuningAlgorithm {
-  decltype(CoulombP3M::p3m) &p3m;
+  p3m_data_struct_coulomb<FloatType> &p3m;
   double m_mesh_density_min = -1., m_mesh_density_max = -1.;
   // indicates if mesh should be tuned
   bool m_tune_mesh = false;
@@ -589,7 +591,7 @@ protected:
   P3MParameters &get_params() override { return p3m.params; }
 
 public:
-  CoulombTuningAlgorithm(System::System &system, decltype(p3m) &input_p3m,
+  CoulombTuningAlgorithm(System::System &system, auto &input_p3m,
                          double prefactor, int timings)
       : TuningAlgorithm(system, prefactor, timings), p3m{input_p3m} {}
 
@@ -598,8 +600,7 @@ public:
   void setup_logger(bool verbose) override {
     auto const &box_geo = *m_system.box_geo;
 #ifdef CUDA
-    auto const &solver = m_system.coulomb.impl->solver;
-    auto const on_gpu = has_actor_of_type<CoulombP3MGPU>(solver);
+    auto const on_gpu = Architecture == Arch::GPU;
 #else
     auto const on_gpu = false;
 #endif
@@ -646,8 +647,7 @@ public:
     rs_err = p3m_real_space_error(m_prefactor, r_cut_iL, p3m.sum_qpart,
                                   p3m.sum_q2, alpha_L, box_geo.length());
 #ifdef CUDA
-    auto const &solver = m_system.coulomb.impl->solver;
-    if (has_actor_of_type<CoulombP3MGPU>(solver)) {
+    if constexpr (Architecture == Arch::GPU) {
       if (this_node == 0) {
         ks_err =
             p3m_k_space_error_gpu(m_prefactor, mesh.data(), cao, p3m.sum_qpart,
@@ -743,7 +743,8 @@ public:
   }
 };
 
-void CoulombP3M::tune() {
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::tune() {
   auto &system = get_system();
   auto const &box_geo = *system.box_geo;
   if (p3m.params.alpha_L == 0. and p3m.params.alpha != 0.) {
@@ -759,7 +760,8 @@ void CoulombP3M::tune() {
           "CoulombP3M: no charged particles in the system");
     }
     try {
-      CoulombTuningAlgorithm parameters(system, p3m, prefactor, tune_timings);
+      CoulombTuningAlgorithm<FloatType, Architecture> parameters(
+          system, p3m, prefactor, tune_timings);
       parameters.setup_logger(tune_verbose);
       // parameter ranges
       parameters.determine_mesh_limits();
@@ -849,5 +851,60 @@ void CoulombP3M::scaleby_box_l() {
   calc_influence_function_force();
   calc_influence_function_energy();
 }
+
+#ifdef CUDA
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
+    ParticleRange const &particles) {
+  if constexpr (Architecture == Arch::GPU) {
+#ifdef NPT
+    if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+      auto const energy = long_range_energy(particles);
+      npt_add_virial_contribution(energy);
+    }
+#else
+    static_cast<void>(particles);
+#endif
+    if (this_node == 0) {
+      auto &gpu = get_system().gpu;
+      p3m_gpu_add_farfield_force(*m_gpu_data, gpu, prefactor,
+                                 gpu.n_particles());
+    }
+  }
+}
+
+/* Initialize the CPU kernels.
+ * This operation is time-consuming and sets up data members
+ * that are only relevant for ELC force corrections, since the
+ * GPU implementation uses CPU kernels to compute energies.
+ */
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::init_gpu_kernels() {
+  if constexpr (Architecture == Arch::GPU) {
+    auto &system = get_system();
+    if (has_actor_of_type<ElectrostaticLayerCorrection>(
+            system.coulomb.impl->solver)) {
+      init_cpu_kernels();
+    }
+    p3m_gpu_init(m_gpu_data, p3m.params.cao, p3m.params.mesh, p3m.params.alpha,
+                 system.box_geo->length(), system.gpu.n_particles());
+  }
+}
+
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::request_gpu() const {
+  if constexpr (Architecture == Arch::GPU) {
+    auto &gpu_particle_data = get_system().gpu;
+    gpu_particle_data.enable_property(GpuParticleData::prop::force);
+    gpu_particle_data.enable_property(GpuParticleData::prop::q);
+    gpu_particle_data.enable_property(GpuParticleData::prop::pos);
+  }
+}
+#endif // CUDA
+
+template struct CoulombP3MImpl<float, Arch::CPU>;
+template struct CoulombP3MImpl<float, Arch::GPU>;
+template struct CoulombP3MImpl<double, Arch::CPU>;
+template struct CoulombP3MImpl<double, Arch::GPU>;
 
 #endif // P3M

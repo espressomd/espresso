@@ -28,9 +28,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include "script_interface/electrostatics/Actor.hpp"
-#include "script_interface/electrostatics/Actor_impl.hpp"
+#include "script_interface/electrostatics/Actor.impl.hpp"
 #include "script_interface/magnetostatics/Actor.hpp"
-#include "script_interface/magnetostatics/Actor_impl.hpp"
+#include "script_interface/magnetostatics/Actor.impl.hpp"
 #include "script_interface/scafacos/scafacos.hpp"
 
 #include "core/actor/visitors.hpp"

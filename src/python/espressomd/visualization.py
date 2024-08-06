@@ -2887,6 +2887,6 @@ class Camera:
 
         self.modelview = trans.dot(rotate_cam.dot(trans_cam))
 
-        c_xyz = -1 * np.mat(self.modelview[:3, :3]) * \
-            np.mat(self.modelview[3, :3]).T
+        c_xyz = -1 * np.asmatrix(self.modelview[:3, :3]) * \
+            np.asmatrix(self.modelview[3, :3]).T
         self.cam_pos = np.array([c_xyz[0, 0], c_xyz[1, 0], c_xyz[2, 0]])

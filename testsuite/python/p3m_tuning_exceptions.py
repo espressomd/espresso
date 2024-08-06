@@ -239,7 +239,6 @@ class Test(ut.TestCase):
         # check cell system exceptions
         with self.assertRaisesRegex(Exception, "P3M: requires the regular or hybrid decomposition cell system"):
             self.system.cell_system.set_n_square()
-            self.system.analysis.energy()
         self.system.cell_system.set_regular_decomposition()
 
     @utx.skipIfMissingFeatures("P3M")

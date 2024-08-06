@@ -24,6 +24,5 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/mmm1d.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/mmm-modpsi.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/p3m.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/p3m_gpu.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/scafacos_impl.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/specfunc.cpp)
