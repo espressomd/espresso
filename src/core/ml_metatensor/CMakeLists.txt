@@ -17,4 +17,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#target_sources(espresso_core PRIVATE bonded_interaction_data.cpp)
+target_sources(espresso_core PRIVATE stub.cpp)
+target_sources(espresso_core PRIVATE load_model.cpp)

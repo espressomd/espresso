@@ -12,6 +12,4 @@
 
 #include <metatensor/torch.hpp>
 #include <metatensor/torch/atomistic.hpp>
-torch::Tensor test_tensor{};
-
 #endif
