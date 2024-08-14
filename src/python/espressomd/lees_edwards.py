@@ -96,6 +96,8 @@ class OscillatoryShear(ScriptInterfaceHelper):
        Radian frequency of the oscillation.
     time_0 : :obj:`float`
        Time offset of the oscillation.
+    decay_rate : :obj:`float`
+      Apply an exponential decay with the given rate to the oscillation's amplitude. Defaults to 0, i.e., no decay.
 
     """
     _so_name = "LeesEdwards::OscillatoryShear"
