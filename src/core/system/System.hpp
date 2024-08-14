@@ -41,17 +41,27 @@ class LocalBox;
 struct CellStructure;
 class Propagation;
 class InteractionsNonBonded;
+class BondedInteractionsMap;
 namespace Thermostat {
 class Thermostat;
 }
 class ComFixed;
 class Galilei;
 class Observable_stat;
+class OifGlobal;
+class ImmersedBoundaries;
+class CollisionDetection;
 namespace BondBreakage {
 class BondBreakage;
 }
 namespace LeesEdwards {
 class LeesEdwards;
+}
+namespace Accumulators {
+class AutoUpdateAccumulators;
+}
+namespace Constraints {
+class Constraints;
 }
 
 namespace System {
@@ -266,12 +276,21 @@ public:
   std::shared_ptr<LocalBox> local_geo;
   std::shared_ptr<CellStructure> cell_structure;
   std::shared_ptr<Propagation> propagation;
+  std::shared_ptr<BondedInteractionsMap> bonded_ias;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
   std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<ComFixed> comfixed;
   std::shared_ptr<Galilei> galilei;
+  std::shared_ptr<OifGlobal> oif_global;
+  std::shared_ptr<ImmersedBoundaries> immersed_boundaries;
+#ifdef COLLISION_DETECTION
+  std::shared_ptr<CollisionDetection> collision_detection;
+#endif
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
   std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;
+  std::shared_ptr<Accumulators::AutoUpdateAccumulators>
+      auto_update_accumulators;
+  std::shared_ptr<Constraints::Constraints> constraints;
 
 protected:
   /** @brief Whether the thermostat has to be reinitialized before integration.
@@ -306,6 +325,5 @@ private:
 System &get_system();
 void set_system(std::shared_ptr<System> new_instance);
 void reset_system();
-bool is_system_set();
 
 } // namespace System

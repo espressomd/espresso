@@ -57,14 +57,6 @@ class NonBondedInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
         err_msg = f"setting {self.__class__.__name__} raised an error"
         self.call_method("set_params", handle_errors_message=err_msg, **params)
 
-    def __reduce__(self):
-        return (NonBondedInteraction._restore_object,
-                (self.__class__, self.get_params()))
-
-    @classmethod
-    def _restore_object(cls, derived_class, kwargs):
-        return derived_class(**kwargs)
-
     @abc.abstractmethod
     def default_params(self):
         pass
@@ -681,31 +673,8 @@ class NonBondedInteractionHandle(ScriptInterfaceHelper):
     """
     _so_name = "Interactions::NonBondedInteractionHandle"
 
-    def __getattr__(self, key):
-        obj = super().__getattr__(key)
-        return globals()[obj.__class__.__name__](
-            _types=self.call_method("get_types"), **obj.get_params())
-
-    def _serialize(self):
-        serialized = []
-        for name, obj in self.get_params().items():
-            serialized.append((name, obj.__reduce__()[1]))
-        return serialized
-
     def reset(self):
-        for key in self._valid_parameters():
-            getattr(self, key).deactivate()
-
-    @classmethod
-    def _restore_object(cls, types, kwargs):
-        objects = {}
-        for name, (obj_class, obj_params) in kwargs:
-            objects[name] = obj_class(**obj_params)
-        return NonBondedInteractionHandle(_types=types, **objects)
-
-    def __reduce__(self):
-        return (NonBondedInteractionHandle._restore_object,
-                (self.call_method("get_types"), self._serialize()))
+        self.call_method("reset")
 
 
 @script_interface_register
@@ -724,40 +693,8 @@ class NonBondedInteractions(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("reset",)
 
-    def keys(self):
-        return [tuple(x) for x in self.call_method("keys")]
-
     def __getitem__(self, key):
-        self.call_method("check_key", key=key)
-        return NonBondedInteractionHandle(_types=key)
-
-    def __setitem__(self, key, value):
-        self.call_method("insert", key=key, object=value)
-
-    def __getstate__(self):
-        n_types = self.call_method("get_n_types")
-        state = []
-        for i in range(n_types):
-            for j in range(i, n_types):
-                handle = NonBondedInteractionHandle(_types=(i, j))
-                state.append(((i, j), handle._serialize()))
-        return {"state": state}
-
-    def __setstate__(self, params):
-        for types, kwargs in params["state"]:
-            obj = NonBondedInteractionHandle._restore_object(types, kwargs)
-            self.call_method("insert", key=types, object=obj)
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.__setstate__(state)
-        return so
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (NonBondedInteractions._restore_object,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
+        return self.call_method("get_handle", key=key)
 
 
 class BONDED_IA(enum.IntEnum):
@@ -802,53 +739,16 @@ class BondedInteraction(ScriptInterfaceHelper, metaclass=abc.ABCMeta):
         feature = self.__class__.__dict__.get("_so_feature")
         if feature is not None:
             code_features.assert_features(feature)
-
-        if "sip" not in kwargs:
-            if "bond_id" in kwargs:
-                # create a new script interface object for a bond that already
-                # exists in the core via its id (BondedInteractions getter and
-                # checkpointing constructor #1)
-                bond_id = kwargs["bond_id"]
-                super().__init__(bond_id=bond_id)
-                # Check if the bond type in ESPResSo core matches this class
-                if self.call_method("get_zero_based_type",
-                                    bond_id=bond_id) != self._type_number:
-                    raise RuntimeError(
-                        f"The bond with id {bond_id} is not defined as a "
-                        f"{self._type_number.name} bond in the ESPResSo core.")
-                self._bond_id = bond_id
-                self._ctor_params = self.get_params()
-            else:
-                # create a new script interface object from bond parameters
-                # (normal bond creation and checkpointing constructor #2)
-                params = self.get_default_params()
-                params.update(kwargs)
-                super().__init__(**params)
-                self._ctor_params = params
-                self._bond_id = -1
-        else:
-            # create a new bond based on a bond in the script interface
-            # (checkpointing constructor #3)
+        if "sip" in kwargs:
             super().__init__(**kwargs)
-            self._bond_id = -1
             self._ctor_params = self.get_params()
-
-    def __reduce__(self):
-        if self._bond_id != -1:
-            # checkpointing constructor #1
-            return (BondedInteraction._restore_object,
-                    (self.__class__, {"bond_id": self._bond_id}))
+            self._bond_id = -1
         else:
-            # checkpointing constructor #2
-            return (BondedInteraction._restore_object,
-                    (self.__class__, self._serialize()))
-
-    def _serialize(self):
-        return self._ctor_params.copy()
-
-    @classmethod
-    def _restore_object(cls, derived_class, kwargs):
-        return derived_class(**kwargs)
+            params = self.get_default_params()
+            params.update(kwargs)
+            super().__init__(**params)
+            self._ctor_params = params
+            self._bond_id = -1
 
     def __setattr__(self, attr, value):
         super().__setattr__(attr, value)
@@ -1301,7 +1201,7 @@ class IBM_Triel(BondedInteraction):
         """Gets default values of optional parameters.
 
         """
-        return {"k2": 0}
+        return {"k2": 0., "is_initialized": False, "_cache": None}
 
 
 @script_interface_register
@@ -1331,7 +1231,7 @@ class IBM_Tribend(BondedInteraction):
         """Gets default values of optional parameters.
 
         """
-        return {"refShape": "Flat"}
+        return {"refShape": "Flat", "theta0": 0., "is_initialized": False}
 
 
 @script_interface_register
@@ -1585,27 +1485,3 @@ class BondedInteractions(ScriptObjectMap):
         for bond_id in self.call_method('get_bond_ids'):
             if self.call_method("get_zero_based_type", bond_id=bond_id):
                 yield self[bond_id]
-
-    def __getstate__(self):
-        params = {}
-        for bond_id in self.call_method('get_bond_ids'):
-            if self.call_method("get_zero_based_type", bond_id=bond_id):
-                obj = self[bond_id]
-                if hasattr(obj, "params"):
-                    params[bond_id] = (obj._type_number, obj._serialize())
-        return params
-
-    def __setstate__(self, params):
-        for bond_id, (type_number, bond_params) in params.items():
-            self[bond_id] = self._bond_classes[type_number](**bond_params)
-
-    def __reduce__(self):
-        so_callback, (so_name, so_bytestring) = super().__reduce__()
-        return (BondedInteractions._restore_object,
-                (so_callback, (so_name, so_bytestring), self.__getstate__()))
-
-    @classmethod
-    def _restore_object(cls, so_callback, so_callback_args, state):
-        so = so_callback(*so_callback_args)
-        so.__setstate__(state)
-        return so

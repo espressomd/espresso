@@ -37,13 +37,13 @@
 #include "actor/traits.hpp"
 
 #include "electrostatics/p3m.hpp"
-#include "electrostatics/p3m_gpu.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <memory>
 #include <optional>
@@ -166,11 +166,7 @@ struct elc_data {
 
 struct ElectrostaticLayerCorrection
     : public Coulomb::Actor<ElectrostaticLayerCorrection> {
-  using BaseSolver = std::variant<
-#ifdef CUDA
-      std::shared_ptr<CoulombP3MGPU>,
-#endif // CUDA
-      std::shared_ptr<CoulombP3M>>;
+  using BaseSolver = std::variant<std::shared_ptr<CoulombP3M>>;
 
   elc_data elc;
   BoxGeometry *m_box_geo;

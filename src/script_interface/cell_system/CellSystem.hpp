@@ -36,6 +36,10 @@
 #include <vector>
 
 namespace ScriptInterface {
+namespace Particles {
+class ParticleHandle;
+class ParticleSlice;
+} // namespace Particles
 namespace CellSystem {
 
 class CellSystem : public AutoParameters<CellSystem, System::Leaf> {
@@ -78,6 +82,11 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override;
 
+  auto &get_cell_structure() const { return *m_cell_structure; }
+
+  void configure(Particles::ParticleHandle &);
+  void configure(Particles::ParticleSlice &);
+
 private:
   /**
    * @brief Resort the particles.
@@ -91,8 +100,6 @@ private:
   std::vector<int> mpi_resort_particles(bool global_flag) const;
 
   void initialize(CellStructureType const &cs_type, VariantMap const &params);
-
-  auto &get_cell_structure() const { return *m_cell_structure; }
 
   auto const &get_regular_decomposition() const {
     return dynamic_cast<RegularDecomposition const &>(

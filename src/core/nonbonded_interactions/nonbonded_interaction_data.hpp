@@ -27,6 +27,7 @@
 
 #include "TabulatedPotential.hpp"
 #include "config/config.hpp"
+#include "system/Leaf.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/int_pow.hpp>
@@ -34,7 +35,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -353,7 +353,7 @@ struct IA_parameters {
 #endif
 };
 
-class InteractionsNonBonded {
+class InteractionsNonBonded : public System::Leaf<InteractionsNonBonded> {
   /** @brief List of pairwise interactions. */
   std::vector<std::shared_ptr<IA_parameters>> m_nonbonded_ia_params{};
   /** @brief Maximal particle type seen so far. */
@@ -396,7 +396,7 @@ public:
   auto get_ia_param_key(int i, int j) const {
     assert(i >= 0 and i <= max_seen_particle_type);
     assert(j >= 0 and j <= max_seen_particle_type);
-    auto const key = static_cast<std::size_t>(
+    auto const key = static_cast<unsigned int>(
         Utils::lower_triangular(std::max(i, j), std::min(i, j)));
     assert(key < m_nonbonded_ia_params.size());
     return key;
@@ -436,4 +436,7 @@ public:
 
   /** @brief Get maximal cutoff. */
   double maximal_cutoff() const;
+
+  /** @brief Notify system that non-bonded interactions changed. */
+  void on_non_bonded_ia_change() const;
 };

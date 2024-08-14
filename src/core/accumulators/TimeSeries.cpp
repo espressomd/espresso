@@ -52,5 +52,6 @@ void TimeSeries::set_internal_state(std::string const &state) {
   boost::archive::binary_iarchive ia(ss);
 
   ia >> m_data;
+  m_system = nullptr;
 }
 } // namespace Accumulators

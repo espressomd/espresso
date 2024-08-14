@@ -24,6 +24,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "electrostatics/coulomb.hpp"
+#include "system/System.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -121,4 +122,8 @@ double InteractionsNonBonded::maximal_cutoff() const {
     max_cut_nonbonded = std::max(max_cut_nonbonded, data->max_cut);
   }
   return max_cut_nonbonded;
+}
+
+void InteractionsNonBonded::on_non_bonded_ia_change() const {
+  get_system().on_non_bonded_ia_change();
 }

@@ -21,7 +21,6 @@ import numpy as np
 import collections
 import functools
 from .interactions import BondedInteraction
-from .interactions import BondedInteractions
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
@@ -375,6 +374,7 @@ class ParticleHandle(ScriptInterfaceHelper):
     """
 
     _so_name = "Particles::ParticleHandle"
+    _so_checkpointable = False
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "delete_all_bonds", "is_virtual",
@@ -515,10 +515,9 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         """
         bonds = []
-        for bond_view in self.call_method("get_bonds_view"):
-            bond_id = bond_view[0]
-            partner_ids = bond_view[1:]
-            bonds.append((BondedInteractions()[bond_id], *partner_ids))
+        for bond_id, *partner_ids in self.call_method("get_bonds_view"):
+            bond = self.call_method("get_bond_by_id", bond_id=bond_id)
+            bonds.append((bond, *partner_ids))
 
         return tuple(bonds)
 
@@ -667,7 +666,9 @@ class ParticleHandle(ScriptInterfaceHelper):
         bond = list(bond)
         # Bond type or numerical bond id
         if is_valid_type(bond[0], int):
-            bond[0] = BondedInteractions()[bond[0]]
+            bond_id = bond[0]
+            bond[0] = self.call_method("get_bond_by_id", bond_id=bond_id)
+            bond[0]._bond_id = bond_id
         elif not isinstance(bond[0], BondedInteraction):
             raise Exception(
                 f"1st element of Bond has to be of type BondedInteraction or int, got {type(bond[0])}")
@@ -857,14 +858,8 @@ class ParticleSlice(ScriptInterfaceHelper):
 
     """
     _so_name = "Particles::ParticleSlice"
-    _so_creation_policy = "LOCAL"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        if "sip" not in kwargs:
-            for p_id in self.id_selection:
-                if not self.call_method("particle_exists", p_id=p_id):
-                    raise IndexError(f"Particle does not exist: {p_id}")
+    _so_checkpointable = False
+    _so_creation_policy = "GLOBAL"
 
     def __iter__(self):
         return self._id_gen()
@@ -875,8 +870,8 @@ class ParticleSlice(ScriptInterfaceHelper):
         """
         for chunk in self.chunks(self.id_selection, self.chunk_size):
             self.call_method("prefetch_particle_data", chunk=chunk)
-            for i in chunk:
-                yield ParticleHandle(id=i)
+            for p_id in chunk:
+                yield self.call_method("get_particle", p_id=p_id)
 
     def chunks(self, l, n):
         """
@@ -896,8 +891,8 @@ class ParticleSlice(ScriptInterfaceHelper):
         """
         pos_array = np.zeros((len(self.id_selection), 3))
         for i in range(len(self.id_selection)):
-            pos_array[i, :] = ParticleHandle(
-                id=self.id_selection[i]).pos_folded
+            pos_array[i, :] = self.call_method(
+                "get_particle", p_id=self.id_selection[i]).pos_folded
         return pos_array
 
     @pos_folded.setter
@@ -907,17 +902,18 @@ class ParticleSlice(ScriptInterfaceHelper):
     def add_exclusion(self, _partner):
         assert_features(["EXCLUSIONS"])
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).add_exclusion(_partner)
+            self.call_method("get_particle", p_id=p_id).add_exclusion(_partner)
 
     def delete_exclusion(self, _partner):
         assert_features(["EXCLUSIONS"])
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).delete_exclusion(_partner)
+            p = self.call_method("get_particle", p_id=p_id)
+            p.delete_exclusion(_partner)
 
     def __str__(self):
         return "ParticleSlice([" + \
-            ", ".join(str(ParticleHandle(id=i))
-                      for i in self.id_selection) + "])"
+            ", ".join(str(self.call_method("get_particle", p_id=p_id))
+                      for p_id in self.id_selection) + "])"
 
     def update(self, new_properties):
         if "id" in new_properties:
@@ -933,7 +929,7 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         """
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).add_bond(_bond)
+            self.call_method("get_particle", p_id=p_id).add_bond(_bond)
 
     def delete_bond(self, _bond):
         """
@@ -941,11 +937,11 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         """
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).delete_bond(_bond)
+            self.call_method("get_particle", p_id=p_id).delete_bond(_bond)
 
     def delete_all_bonds(self):
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).delete_all_bonds()
+            self.call_method("get_particle", p_id=p_id).delete_all_bonds()
 
     def remove(self):
         """
@@ -957,7 +953,7 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         """
         for p_id in self.id_selection:
-            ParticleHandle(id=p_id).remove()
+            self.call_method("get_particle", p_id=p_id).remove()
 
     def __setattr__(self, name, value):
         if name != "chunk_size" and name != "id_selection" and name not in particle_attributes:
@@ -987,7 +983,7 @@ class ParticleSlice(ScriptInterfaceHelper):
 
         odict = {}
         for p in self:
-            pdict = ParticleHandle(id=p.id).to_dict()
+            pdict = self.call_method("get_particle", p_id=p.id).to_dict()
             for p_key, p_value in pdict.items():
                 if p_key in odict:
                     odict[p_key].append(p_value)
@@ -1033,6 +1029,7 @@ class ParticleList(ScriptInterfaceHelper):
 
     """
     _so_name = "Particles::ParticleList"
+    _so_checkpointable = False
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "clear", "auto_exclusions"
@@ -1042,13 +1039,13 @@ class ParticleList(ScriptInterfaceHelper):
         """
         Access a particle by its integer id.
         """
-        return ParticleHandle(id=p_id)
+        return self.call_method("by_id", p_id=p_id)
 
     def by_ids(self, ids):
         """
         Get a slice of particles by their integer ids.
         """
-        return ParticleSlice(id_selection=ids)
+        return self.call_method("by_ids", id_selection=ids)
 
     def all(self):
         """
@@ -1275,7 +1272,7 @@ class ParticleList(ScriptInterfaceHelper):
             for p in self:
                 if args[0](p):
                     ids.append(p.id)
-            return ParticleSlice(id_selection=ids)
+            return self.call_method("by_ids", id_selection=ids)
 
         # Did we get a set of keyword args?
         elif len(args) == 0:
@@ -1296,20 +1293,20 @@ class ParticleList(ScriptInterfaceHelper):
                         break
                 if select:
                     ids.append(p.id)
-            return ParticleSlice(id_selection=ids)
+            return self.call_method("by_ids", id_selection=ids)
         else:
             raise Exception(
                 "select() takes either selection function as positional argument or a set of keyword arguments.")
 
 
-def set_slice_one_for_all(particle_slice, attribute, values):
-    for i in particle_slice.id_selection:
-        setattr(ParticleHandle(id=i), attribute, values)
+def set_slice_one_for_all(p_slice, attribute, values):
+    for i in p_slice.id_selection:
+        setattr(p_slice.call_method("get_particle", p_id=i), attribute, values)
 
 
-def set_slice_one_for_each(particle_slice, attribute, values):
-    for i, v in zip(particle_slice.id_selection, values):
-        setattr(ParticleHandle(id=i), attribute, v)
+def set_slice_one_for_each(p_slice, attribute, values):
+    for i, v in zip(p_slice.id_selection, values):
+        setattr(p_slice.call_method("get_particle", p_id=i), attribute, v)
 
 
 def _add_particle_slice_properties():
@@ -1371,7 +1368,7 @@ def _add_particle_slice_properties():
 
         else:
             target = getattr(
-                ParticleHandle(id=particle_slice.id_selection[0]), attribute)
+                particle_slice.call_method("get_particle", p_id=particle_slice.id_selection[0]), attribute)
             target_shape = np.shape(target)
 
             if not target_shape:  # scalar quantity
@@ -1409,8 +1406,9 @@ def _add_particle_slice_properties():
             return np.empty(0, dtype=type(None))
 
         # get first slice member to determine its type
-        target = getattr(ParticleHandle(
-            id=particle_slice.id_selection[0]), attribute)
+        p_id = particle_slice.id_selection[0]
+        target = getattr(
+            particle_slice.call_method("get_particle", p_id=p_id), attribute)
         if isinstance(target, array_locked):  # vectorial quantity
             target_type = target.dtype
         else:  # scalar quantity

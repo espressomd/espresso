@@ -22,8 +22,7 @@
  *  structs from the core are defined here.
  */
 
-#ifndef SCRIPT_INTERFACE_INTERACTIONS_NONBONDED_INTERACTION_HPP
-#define SCRIPT_INTERFACE_INTERACTIONS_NONBONDED_INTERACTION_HPP
+#pragma once
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
@@ -46,12 +45,11 @@
 namespace ScriptInterface {
 namespace Interactions {
 
+class NonBondedInteractionHandle;
+
 template <class CoreIA>
 class InteractionPotentialInterface
     : public AutoParameters<InteractionPotentialInterface<CoreIA>> {
-  /** @brief Particle type pair. */
-  std::array<int, 2> m_types = {-1, -1};
-
 public:
   using CoreInteraction = CoreIA;
 
@@ -61,7 +59,13 @@ protected:
   using BaseClass::get_valid_parameters;
 
   /** @brief Managed object. */
-  std::shared_ptr<CoreInteraction> m_ia_si;
+  std::shared_ptr<CoreInteraction> m_handle;
+  /** @brief Handle to the container whose members have to be synchronized. */
+  std::weak_ptr<::IA_parameters> m_core_struct;
+  /** @brief Handle to the interface used to synchronize data members. */
+  std::weak_ptr<NonBondedInteractionHandle *> m_si_struct;
+  /** @brief Callback to notify changes to the interaction range. */
+  std::weak_ptr<std::function<void()>> m_notify_non_bonded_ia_change;
   /** @brief Pointer to the corresponding member in a handle. */
   virtual CoreInteraction IA_parameters::*get_ptr_offset() const = 0;
   /** @brief Create a new instance using the constructor with range checks. */
@@ -74,7 +78,7 @@ protected:
   template <typename T>
   auto make_autoparameter(T CoreInteraction::*ptr, char const *name) {
     return AutoParameter{name, AutoParameter::read_only,
-                         [this, ptr]() { return m_ia_si.get()->*ptr; }};
+                         [this, ptr]() { return m_handle.get()->*ptr; }};
   }
 
 private:
@@ -101,54 +105,26 @@ public:
         check_valid_parameters(params);
         make_new_instance(params);
       });
-      if (m_types[0] != -1) {
-        copy_si_to_core();
-        System::get_system().on_non_bonded_ia_change();
-      }
+      // copying the new value to the core may queue a runtime error message,
+      // but we can't detect it to roll back to the last valid state
+      update_core();
       return {};
     }
     if (name == "deactivate") {
-      m_ia_si = std::make_shared<CoreInteraction>();
-      if (m_types[0] != -1) {
-        copy_si_to_core();
-        System::get_system().on_non_bonded_ia_change();
-      }
-      return {};
-    }
-    if (name == "is_registered") {
-      return m_types[0] != -1;
-    }
-    if (name == "bind_types") {
-      auto types = get_value<std::vector<int>>(params, "_types");
-      if (types[0] > types[1]) {
-        std::swap(types[0], types[1]);
-      }
-      if (m_types[0] == -1 or
-          (m_types[0] == types[0] and m_types[1] == types[1])) {
-        m_types[0] = types[0];
-        m_types[1] = types[1];
-      } else {
-        context()->parallel_try_catch([this]() {
-          throw std::runtime_error(
-              "Non-bonded interaction is already bound to interaction pair [" +
-              std::to_string(m_types[0]) + ", " + std::to_string(m_types[1]) +
-              "]");
-        });
-      }
+      m_handle = std::make_shared<CoreInteraction>();
+      update_core(get_value_or<bool>(params, "notify", true));
       return {};
     }
     return {};
   }
 
   void do_construct(VariantMap const &params) final {
-    if (params.count("_types") != 0) {
-      do_call_method("bind_types", params);
-      m_ia_si = std::make_shared<CoreInteraction>();
-      copy_core_to_si();
+    if (params.empty()) {
+      m_handle = std::make_shared<CoreInteraction>();
     } else {
       if (std::abs(get_value<double>(params, inactive_parameter()) -
                    inactive_cutoff()) < 1e-9) {
-        m_ia_si = std::make_shared<CoreInteraction>();
+        m_handle = std::make_shared<CoreInteraction>();
       } else {
         context()->parallel_try_catch([this, &params]() {
           check_valid_parameters(params);
@@ -158,17 +134,13 @@ public:
     }
   }
 
-  void copy_si_to_core() {
-    assert(m_ia_si != nullptr);
-    auto &core_ias = *System::get_system().nonbonded_ias;
-    core_ias.get_ia_param(m_types[0], m_types[1]).*get_ptr_offset() = *m_ia_si;
+  void attach(std::weak_ptr<NonBondedInteractionHandle *> si_struct,
+              std::weak_ptr<::IA_parameters> core_struct) {
+    m_si_struct = si_struct;
+    m_core_struct = core_struct;
   }
 
-  void copy_core_to_si() {
-    assert(m_ia_si != nullptr);
-    auto const &core_ias = *System::get_system().nonbonded_ias;
-    *m_ia_si = core_ias.get_ia_param(m_types[0], m_types[1]).*get_ptr_offset();
-  }
+  void update_core(bool notify = true);
 };
 
 #ifdef WCA
@@ -191,7 +163,7 @@ private:
   double inactive_cutoff() const override { return 0.; }
 
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double>(
         params, "epsilon", "sigma");
   }
 
@@ -199,7 +171,7 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_cutoff") {
-      return m_ia_si.get()->cut;
+      return m_handle.get()->cut;
     }
     return InteractionPotentialInterface<CoreInteraction>::do_call_method(
         name, params);
@@ -237,11 +209,11 @@ private:
       }
       new_params["shift"] = 0.;
     }
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                    double, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double, double>(
         new_params, "epsilon", "sigma", "cutoff", "offset", "min", "shift");
     if (shift_string != nullptr) {
-      m_ia_si->shift = m_ia_si->get_auto_shift();
+      m_handle->shift = m_handle->get_auto_shift();
     }
   }
 };
@@ -285,19 +257,19 @@ private:
       }
       new_params["shift"] = 0.;
     }
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                    double, double,
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double,
 #ifdef LJGEN_SOFTCORE
-                                    double, double,
+                                     double, double,
 #endif
-                                    double, double, double, double>(
+                                     double, double, double, double>(
         new_params, "epsilon", "sigma", "cutoff", "shift", "offset",
 #ifdef LJGEN_SOFTCORE
         "lam", "delta",
 #endif
         "e1", "e2", "b1", "b2");
     if (shift_string != nullptr) {
-      m_ia_si->shift = m_ia_si->get_auto_shift();
+      m_handle->shift = m_handle->get_auto_shift();
     }
   }
 };
@@ -323,7 +295,7 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si =
+    m_handle =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
             params, "epsilon", "sigma", "cutoff", "offset");
   }
@@ -353,7 +325,7 @@ private:
   double inactive_cutoff() const override { return 0.; }
 
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si =
+    m_handle =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
             params, "epsilon", "sigma", "offset", "width");
   }
@@ -362,7 +334,7 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_cutoff") {
-      return m_ia_si.get()->cut;
+      return m_handle.get()->cut;
     }
     return InteractionPotentialInterface<CoreInteraction>::do_call_method(
         name, params);
@@ -390,7 +362,7 @@ private:
   std::string inactive_parameter() const override { return "sig"; }
 
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double>(
         params, "eps", "sig");
   }
 };
@@ -415,7 +387,7 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double>(
         params, "eps", "sig", "cutoff");
   }
 };
@@ -443,8 +415,8 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                    double, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double, double>(
         params, "a", "b", "c", "d", "sig", "cutoff");
   }
 };
@@ -470,7 +442,7 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si =
+    m_handle =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
             params, "eps", "alpha", "rmin", "cutoff");
   }
@@ -500,8 +472,8 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                    double, double, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double, double, double>(
         params, "a", "b", "c", "d", "cutoff", "discont", "shift");
   }
 };
@@ -527,7 +499,7 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si =
+    m_handle =
         make_shared_from_args<CoreInteraction, double, double, double, double>(
             params, "a", "n", "cutoff", "offset");
   }
@@ -551,7 +523,7 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double>(
         params, "F_max", "cutoff");
   }
 };
@@ -582,8 +554,8 @@ private:
   std::string inactive_parameter() const override { return "cut"; }
 
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                    double, double, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double, double, double>(
         params, "eps", "sig", "cut", "k1", "k2", "mu", "nu");
   }
 };
@@ -611,8 +583,8 @@ private:
   std::string inactive_parameter() const override { return "max"; }
 
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double,
-                                    std::vector<double>, std::vector<double>>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double,
+                                     std::vector<double>, std::vector<double>>(
         params, "min", "max", "force", "energy");
   }
 
@@ -620,7 +592,7 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_cutoff") {
-      return m_ia_si.get()->cutoff();
+      return m_handle.get()->cutoff();
     }
     return InteractionPotentialInterface<CoreInteraction>::do_call_method(
         name, params);
@@ -639,19 +611,19 @@ public:
   InteractionDPD() {
     add_parameters({
         {"weight_function", AutoParameter::read_only,
-         [this]() { return m_ia_si.get()->radial.wf; }},
+         [this]() { return m_handle.get()->radial.wf; }},
         {"gamma", AutoParameter::read_only,
-         [this]() { return m_ia_si.get()->radial.gamma; }},
+         [this]() { return m_handle.get()->radial.gamma; }},
         {"k", AutoParameter::read_only,
-         [this]() { return m_ia_si.get()->radial.k; }},
+         [this]() { return m_handle.get()->radial.k; }},
         {"r_cut", AutoParameter::read_only,
-         [this]() { return m_ia_si.get()->radial.cutoff; }},
+         [this]() { return m_handle.get()->radial.cutoff; }},
         {"trans_weight_function", AutoParameter::read_only,
-         [this]() { return m_ia_si.get()->trans.wf; }},
+         [this]() { return m_handle.get()->trans.wf; }},
         {"trans_gamma", AutoParameter::read_only,
-         [this]() { return m_ia_si.get()->trans.gamma; }},
+         [this]() { return m_handle.get()->trans.gamma; }},
         {"trans_r_cut", AutoParameter::read_only,
-         [this]() { return m_ia_si.get()->trans.cutoff; }},
+         [this]() { return m_handle.get()->trans.cutoff; }},
     });
     std::ignore = get_ptr_offset(); // for code coverage
   }
@@ -660,15 +632,15 @@ private:
   std::string inactive_parameter() const override { return "r_cut"; }
 
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                    double, double, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, double, double, double>(
         params, "gamma", "k", "r_cut", "weight_function", "trans_gamma",
         "trans_r_cut", "trans_weight_function");
-    if (m_ia_si->radial.wf != 0 and m_ia_si->radial.wf != 1) {
+    if (m_handle->radial.wf != 0 and m_handle->radial.wf != 1) {
       throw std::domain_error(
           "DPDInteraction parameter 'weight_function' must be 0 or 1");
     }
-    if (m_ia_si->trans.wf != 0 and m_ia_si->trans.wf != 1) {
+    if (m_handle->trans.wf != 0 and m_handle->trans.wf != 1) {
       throw std::domain_error(
           "DPDInteraction parameter 'trans_weight_function' must be 0 or 1");
     }
@@ -697,7 +669,7 @@ private:
   double inactive_cutoff() const override { return 0.; }
 
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double>(
         params, "scaling_coeff", "q1q2");
   }
 };
@@ -725,8 +697,8 @@ public:
 
 private:
   void make_new_instance(VariantMap const &params) override {
-    m_ia_si = make_shared_from_args<CoreInteraction, double, double, double,
-                                    double, int, double>(
+    m_handle = make_shared_from_args<CoreInteraction, double, double, double,
+                                     double, int, double>(
         params, "eps", "sig", "cutoff", "d", "n", "k0");
   }
 };
@@ -734,8 +706,9 @@ private:
 
 class NonBondedInteractionHandle
     : public AutoParameters<NonBondedInteractionHandle> {
-  std::array<int, 2> m_types = {-1, -1};
-  std::shared_ptr<::IA_parameters> m_interaction;
+  std::shared_ptr<::IA_parameters> m_handle;
+  std::shared_ptr<NonBondedInteractionHandle *> m_self;
+  std::weak_ptr<std::function<void()>> m_notify_cutoff_change;
 #ifdef WCA
   std::shared_ptr<InteractionWCA> m_wca;
 #endif
@@ -788,180 +761,146 @@ class NonBondedInteractionHandle
   std::shared_ptr<InteractionSmoothStep> m_smooth_step;
 #endif
 
-  template <class T>
-  auto make_autoparameter(std::shared_ptr<T> &member, const char *key) const {
-    auto const setter = [this, &member](Variant const &v) {
-      member = get_value<std::shared_ptr<T>>(v);
-      if (m_types[0] != -1) {
-        auto const types = Variant{std::vector<int>{{m_types[0], m_types[1]}}};
-        member->do_call_method("bind_types", VariantMap{{"_types", types}});
-        member->copy_si_to_core();
-        System::get_system().on_non_bonded_ia_change();
-      }
-    };
-    return AutoParameter{key, setter, [&member]() { return member; }};
-  }
-
 public:
   NonBondedInteractionHandle() {
-    add_parameters({
-#ifdef WCA
-        make_autoparameter(m_wca, "wca"),
-#endif
-#ifdef LENNARD_JONES
-        make_autoparameter(m_lj, "lennard_jones"),
-#endif
-#ifdef LENNARD_JONES_GENERIC
-        make_autoparameter(m_ljgen, "generic_lennard_jones"),
-#endif
-#ifdef LJCOS
-        make_autoparameter(m_ljcos, "lennard_jones_cos"),
-#endif
-#ifdef LJCOS2
-        make_autoparameter(m_ljcos2, "lennard_jones_cos2"),
-#endif
-#ifdef HERTZIAN
-        make_autoparameter(m_hertzian, "hertzian"),
-#endif
-#ifdef GAUSSIAN
-        make_autoparameter(m_gaussian, "gaussian"),
-#endif
-#ifdef BMHTF_NACL
-        make_autoparameter(m_bmhtf, "bmhtf"),
-#endif
-#ifdef MORSE
-        make_autoparameter(m_morse, "morse"),
-#endif
-#ifdef BUCKINGHAM
-        make_autoparameter(m_buckingham, "buckingham"),
-#endif
-#ifdef SOFT_SPHERE
-        make_autoparameter(m_soft_sphere, "soft_sphere"),
-#endif
-#ifdef HAT
-        make_autoparameter(m_hat, "hat"),
-#endif
-#ifdef GAY_BERNE
-        make_autoparameter(m_gay_berne, "gay_berne"),
-#endif
-#ifdef TABULATED
-        make_autoparameter(m_tabulated, "tabulated"),
-#endif
-#ifdef DPD
-        make_autoparameter(m_dpd, "dpd"),
-#endif
-#ifdef THOLE
-        make_autoparameter(m_thole, "thole"),
-#endif
-#ifdef SMOOTH_STEP
-        make_autoparameter(m_smooth_step, "smooth_step"),
-#endif
+    m_self = std::make_shared<NonBondedInteractionHandle *>(this);
+    std::vector<AutoParameter> params;
+    apply([this, &params]<typename T>(std::shared_ptr<T> &member,
+                                      std::string const &name,
+                                      std::string const &) {
+      auto const setter = [this, &member](Variant const &v) {
+        member = get_value<std::shared_ptr<T>>(v);
+        member->attach(m_self, m_handle);
+        // copying the new value to the core may queue a runtime error message,
+        // but we can't detect it to roll back to the last valid state
+        member->update_core();
+      };
+      params.emplace_back(name.c_str(), setter, [&member]() { return member; });
     });
-  }
-
-private:
-  template <class T>
-  void set_member(std::shared_ptr<T> &member, std::string key,
-                  std::string so_name, VariantMap const &params) {
-    auto const ia_types = VariantMap{{"_types", params.at("_types")}};
-    if (params.count(key) != 0) {
-      member = get_value<std::shared_ptr<T>>(params.at(key));
-      member->do_call_method("bind_types", ia_types);
-      member->copy_si_to_core();
-    } else {
-      auto so_object = context()->make_shared_local(so_name, ia_types);
-      member = std::dynamic_pointer_cast<T>(so_object);
-      member->copy_core_to_si();
-    }
+    add_parameters(std::move(params));
   }
 
 public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
-    assert(params.empty());
-    if (name == "get_types") {
-      return std::vector<int>{{m_types[0], m_types[1]}};
+    if (name == "reset") {
+      if (not context()->is_head_node()) {
+        return {};
+      }
+      auto const new_params = VariantMap{{"notify", false}};
+      apply([&new_params](auto &so, std::string const &, std::string const &) {
+        so->call_method("deactivate", new_params);
+      });
+      if (get_value_or<bool>(params, "notify", true)) {
+        call_method("on_non_bonded_ia_change", {});
+      }
+      return {};
+    }
+    if (name == "on_non_bonded_ia_change") {
+      on_non_bonded_ia_change();
+      return {};
     }
     return {};
   }
 
   void do_construct(VariantMap const &params) override {
-    assert(params.count("_types") != 0);
-    auto &nonbonded_ias = *System::get_system().nonbonded_ias;
-    auto const types = get_value<std::vector<int>>(params.at("_types"));
-    m_types[0] = std::min(types[0], types[1]);
-    m_types[1] = std::max(types[0], types[1]);
-    nonbonded_ias.make_particle_type_exist(m_types[1]);
-    // create interface objects
-    m_interaction =
-        nonbonded_ias.get_ia_param_ref_counted(m_types[0], m_types[1]);
+    m_handle = std::make_shared<::IA_parameters>();
+    if (not context()->is_head_node()) {
+      return;
+    }
+    apply([this, &params]<typename T>(std::shared_ptr<T> &member,
+                                      std::string const &name,
+                                      std::string const &so_name) {
+      auto so = (params.contains(name))
+                    ? get_value<std::shared_ptr<T>>(params.at(name))
+                    : std::dynamic_pointer_cast<T>(
+                          context()->make_shared(so_name, {}));
+      set_parameter(name, so);
+    });
+  }
+
+  void attach(
+      std::function<void(std::shared_ptr<::IA_parameters> const &)> cb_register,
+      std::weak_ptr<std::function<void()>> cb_notify_cutoff_change) {
+    cb_register(m_handle);
+    m_notify_cutoff_change = cb_notify_cutoff_change;
+  }
+
+private:
+  void apply(auto const &&fun) {
 #ifdef WCA
-    set_member(m_wca, "wca", "Interactions::InteractionWCA", params);
+    fun(m_wca, "wca", "Interactions::InteractionWCA");
 #endif
 #ifdef LENNARD_JONES
-    set_member(m_lj, "lennard_jones", "Interactions::InteractionLJ", params);
+    fun(m_lj, "lennard_jones", "Interactions::InteractionLJ");
 #endif
 #ifdef LENNARD_JONES_GENERIC
-    set_member(m_ljgen, "generic_lennard_jones",
-               "Interactions::InteractionLJGen", params);
+    fun(m_ljgen, "generic_lennard_jones", "Interactions::InteractionLJGen");
 #endif
 #ifdef LJCOS
-    set_member(m_ljcos, "lennard_jones_cos", "Interactions::InteractionLJcos",
-               params);
+    fun(m_ljcos, "lennard_jones_cos", "Interactions::InteractionLJcos");
 #endif
 #ifdef LJCOS2
-    set_member(m_ljcos2, "lennard_jones_cos2",
-               "Interactions::InteractionLJcos2", params);
+    fun(m_ljcos2, "lennard_jones_cos2", "Interactions::InteractionLJcos2");
 #endif
 #ifdef HERTZIAN
-    set_member(m_hertzian, "hertzian", "Interactions::InteractionHertzian",
-               params);
+    fun(m_hertzian, "hertzian", "Interactions::InteractionHertzian");
 #endif
 #ifdef GAUSSIAN
-    set_member(m_gaussian, "gaussian", "Interactions::InteractionGaussian",
-               params);
+    fun(m_gaussian, "gaussian", "Interactions::InteractionGaussian");
 #endif
 #ifdef BMHTF_NACL
-    set_member(m_bmhtf, "bmhtf", "Interactions::InteractionBMHTF", params);
+    fun(m_bmhtf, "bmhtf", "Interactions::InteractionBMHTF");
 #endif
 #ifdef MORSE
-    set_member(m_morse, "morse", "Interactions::InteractionMorse", params);
+    fun(m_morse, "morse", "Interactions::InteractionMorse");
 #endif
 #ifdef BUCKINGHAM
-    set_member(m_buckingham, "buckingham",
-               "Interactions::InteractionBuckingham", params);
+    fun(m_buckingham, "buckingham", "Interactions::InteractionBuckingham");
 #endif
 #ifdef SOFT_SPHERE
-    set_member(m_soft_sphere, "soft_sphere",
-               "Interactions::InteractionSoftSphere", params);
+    fun(m_soft_sphere, "soft_sphere", "Interactions::InteractionSoftSphere");
 #endif
 #ifdef HAT
-    set_member(m_hat, "hat", "Interactions::InteractionHat", params);
+    fun(m_hat, "hat", "Interactions::InteractionHat");
 #endif
 #ifdef GAY_BERNE
-    set_member(m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne",
-               params);
+    fun(m_gay_berne, "gay_berne", "Interactions::InteractionGayBerne");
 #endif
 #ifdef TABULATED
-    set_member(m_tabulated, "tabulated", "Interactions::InteractionTabulated",
-               params);
+    fun(m_tabulated, "tabulated", "Interactions::InteractionTabulated");
 #endif
 #ifdef DPD
-    set_member(m_dpd, "dpd", "Interactions::InteractionDPD", params);
+    fun(m_dpd, "dpd", "Interactions::InteractionDPD");
 #endif
 #ifdef THOLE
-    set_member(m_thole, "thole", "Interactions::InteractionThole", params);
+    fun(m_thole, "thole", "Interactions::InteractionThole");
 #endif
 #ifdef SMOOTH_STEP
-    set_member(m_smooth_step, "smooth_step",
-               "Interactions::InteractionSmoothStep", params);
+    fun(m_smooth_step, "smooth_step", "Interactions::InteractionSmoothStep");
 #endif
   }
 
-  auto get_ia() const { return m_interaction; }
+public:
+  void on_non_bonded_ia_change() {
+    if (auto callback = m_notify_cutoff_change.lock()) {
+      (*callback)();
+    }
+  }
 };
+
+template <class CoreIA>
+void InteractionPotentialInterface<CoreIA>::update_core(bool notify) {
+  assert(m_handle);
+  if (auto core_struct = m_core_struct.lock()) {
+    core_struct.get()->*get_ptr_offset() = *m_handle;
+    if (notify) {
+      if (auto si_struct = m_si_struct.lock()) {
+        (**si_struct).on_non_bonded_ia_change();
+      }
+    }
+  }
+}
 
 } // namespace Interactions
 } // namespace ScriptInterface
-
-#endif

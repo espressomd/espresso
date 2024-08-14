@@ -30,11 +30,6 @@ class IntegratorHandle(ScriptInterfaceHelper):
     _so_name = "Integrators::IntegratorHandle"
     _so_creation_policy = "GLOBAL"
 
-    def __init__(self, **kwargs):
-        if "sip" not in kwargs and "integrator" not in kwargs:
-            kwargs["integrator"] = VelocityVerlet()
-        super().__init__(**kwargs)
-
     def __str__(self):
         return f'{self.__class__.__name__}({self.integrator.__class__.__name__})'  # nopep8
 

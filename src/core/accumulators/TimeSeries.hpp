@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ACCUMULATORS_TIMESERIES_HPP
-#define CORE_ACCUMULATORS_TIMESERIES_HPP
+
+#pragma once
 
 #include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"
@@ -40,12 +40,13 @@ namespace Accumulators {
  */
 class TimeSeries : public AccumulatorBase {
 public:
-  TimeSeries(std::shared_ptr<Observables::Observable> obs, int delta_N)
-      : AccumulatorBase(delta_N), m_obs(std::move(obs)) {}
+  TimeSeries(::System::System const *system, int delta_N,
+             std::shared_ptr<Observables::Observable> obs)
+      : AccumulatorBase(system, delta_N), m_obs(std::move(obs)) {}
 
   void update(boost::mpi::communicator const &comm) override;
-  std::string get_internal_state() const;
-  void set_internal_state(std::string const &);
+  std::string get_internal_state() const final;
+  void set_internal_state(std::string const &) final;
 
   const std::vector<std::vector<double>> &time_series() const { return m_data; }
   std::vector<std::size_t> shape() const override {
@@ -62,5 +63,3 @@ private:
 };
 
 } // namespace Accumulators
-
-#endif

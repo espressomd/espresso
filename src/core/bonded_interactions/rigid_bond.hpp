@@ -51,13 +51,4 @@ struct RigidBond {
     this->p_tol = 2.0 * p_tol;
     this->v_tol = v_tol;
   }
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & d2;
-    ar & p_tol;
-    ar & v_tol;
-  }
 };

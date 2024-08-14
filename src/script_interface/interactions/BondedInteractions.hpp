@@ -25,6 +25,8 @@
 
 #include "script_interface/ObjectMap.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include <cassert>
 #include <memory>
@@ -36,7 +38,13 @@
 
 namespace ScriptInterface {
 namespace Interactions {
-class BondedInteractions : public ObjectMap<BondedInteraction> {
+
+using BondedInteractionsBase_t = ObjectMap<
+    BondedInteraction,
+    AutoParameters<ObjectMap<BondedInteraction, System::Leaf>, System::Leaf>>;
+
+class BondedInteractions : public BondedInteractionsBase_t {
+  using Base = BondedInteractionsBase_t;
   using container_type =
       std::unordered_map<int, std::shared_ptr<BondedInteraction>>;
 
@@ -44,35 +52,43 @@ public:
   using key_type = typename container_type::key_type;
   using mapped_type = typename container_type::mapped_type;
 
-  BondedInteractions() : ObjectMap<BondedInteraction>::ObjectMap() {
-    add_parameters({
-        {"_objects", AutoParameter::read_only,
-         []() {
-           // deactivate serialization (done at the Python level)
-           return make_unordered_map_of_variants(container_type{});
-         }},
-    });
-  }
-
 private:
   container_type m_bonds;
+  std::shared_ptr<::BondedInteractionsMap> m_handle;
+  std::unique_ptr<VariantMap> m_params;
 
-  void before_do_construct() override {}
+  void do_construct(VariantMap const &params) override {
+    m_handle = std::make_shared<::BondedInteractionsMap>();
+    m_params = std::make_unique<VariantMap>(params);
+  }
+
+  void on_bind_system(::System::System &system) override {
+    system.bonded_ias = m_handle;
+    m_handle->bind_system(m_system.lock());
+    m_handle->on_ia_change();
+    if (m_params and not m_params->empty()) {
+      restore_from_checkpoint(*m_params);
+    }
+    m_params.reset();
+  }
 
   key_type insert_in_core(mapped_type const &obj_ptr) override {
-    auto const key = ::bonded_ia_params.insert(obj_ptr->bonded_ia());
+    key_type key{};
+    context()->parallel_try_catch(
+        [&]() { key = m_handle->insert(obj_ptr->bonded_ia()); });
     m_bonds[key] = std::move(obj_ptr);
     return key;
   }
 
   void insert_in_core(key_type const &key,
                       mapped_type const &obj_ptr) override {
-    ::bonded_ia_params.insert(key, obj_ptr->bonded_ia());
+    context()->parallel_try_catch(
+        [&]() { m_handle->insert(key, obj_ptr->bonded_ia()); });
     m_bonds[key] = std::move(obj_ptr);
   }
 
   void erase_in_core(key_type const &key) override {
-    ::bonded_ia_params.erase(key);
+    m_handle->erase(key);
     m_bonds.erase(key);
   }
 
@@ -80,29 +96,29 @@ protected:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_size") {
-      return {static_cast<int>(::bonded_ia_params.size())};
+      return {static_cast<int>(m_handle->size())};
     }
 
     if (name == "get_bond_ids") {
       std::vector<int> bond_ids;
-      for (auto const &kv : ::bonded_ia_params)
+      for (auto const &kv : *m_handle)
         bond_ids.push_back(kv.first);
       return bond_ids;
     }
 
     if (name == "has_bond") {
       auto const bond_id = get_key(params.at("bond_id"));
-      return {m_bonds.count(bond_id) != 0};
+      return {m_bonds.contains(bond_id)};
     }
 
     if (name == "get_bond") {
       auto const bond_id = get_key(params.at("bond_id"));
       // core and script interface must agree
-      assert(m_bonds.count(bond_id) == ::bonded_ia_params.count(bond_id));
+      assert(m_bonds.count(bond_id) == m_handle->count(bond_id));
       if (not context()->is_head_node())
         return {};
       // bond must exist
-      if (m_bonds.count(bond_id) == 0) {
+      if (not m_bonds.contains(bond_id)) {
         throw std::out_of_range("The bond with id " + std::to_string(bond_id) +
                                 " is not yet defined.");
       }
@@ -111,11 +127,12 @@ protected:
 
     if (name == "get_zero_based_type") {
       auto const bond_id = get_key(params.at("bond_id"));
-      return ::bonded_ia_params.get_zero_based_type(bond_id);
+      return m_handle->get_zero_based_type(bond_id);
     }
 
-    return ObjectMap<BondedInteraction>::do_call_method(name, params);
+    return Base::do_call_method(name, params);
   }
 };
+
 } // namespace Interactions
 } // namespace ScriptInterface

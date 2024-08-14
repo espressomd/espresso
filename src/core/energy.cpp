@@ -22,7 +22,7 @@
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "constraints.hpp"
+#include "constraints/Constraints.hpp"
 #include "energy_inline.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
@@ -39,7 +39,7 @@ namespace System {
 std::shared_ptr<Observable_stat> System::calculate_energy() {
 
   auto obs_energy_ptr = std::make_shared<Observable_stat>(
-      1ul, static_cast<std::size_t>(::bonded_ia_params.get_next_key()),
+      1ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
       nonbonded_ias->get_max_seen_particle_type());
 
   if (long_range_interactions_sanity_checks()) {
@@ -65,7 +65,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   short_range_loop(
       [this, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy](
           Particle const &p1, int bond_id, std::span<Particle *> partners) {
-        auto const &iaparams = *bonded_ia_params.at(bond_id);
+        auto const &iaparams = *bonded_ias->at(bond_id);
         auto const result = calc_bonded_energy(iaparams, p1, partners, *box_geo,
                                                coulomb_kernel_ptr);
         if (result) {
@@ -80,10 +80,10 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
         auto const &ia_params =
             nonbonded_ias->get_ia_param(p1.type(), p2.type());
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                   ia_params, coulomb_kernel_ptr,
+                                   ia_params, *bonded_ias, coulomb_kernel_ptr,
                                    dipoles_kernel_ptr, obs_energy);
       },
-      *cell_structure, maximal_cutoff(), maximal_cutoff_bonded());
+      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
 
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
@@ -95,8 +95,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   obs_energy.dipolar[1] = dipoles.calc_energy_long_range(local_parts);
 #endif
 
-  Constraints::constraints.add_energy(*box_geo, local_parts, get_sim_time(),
-                                      obs_energy);
+  constraints->add_energy(local_parts, get_sim_time(), obs_energy);
 
 #if defined(CUDA) and (defined(ELECTROSTATICS) or defined(DIPOLES))
   auto const energy_host = gpu.copy_energy_to_host();
@@ -129,7 +128,7 @@ double System::particle_short_range_energy_contribution(int pid) {
       auto const &ia_params = nonbonded_ias->get_ia_param(p.type(), p1.type());
       // Add energy for current particle pair to result
       ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
-                                         coulomb_kernel_ptr);
+                                         *bonded_ias, coulomb_kernel_ptr);
     };
     cell_structure->run_on_particle_short_range_neighbors(*p, kernel);
   }

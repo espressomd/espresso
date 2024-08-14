@@ -207,11 +207,6 @@ struct LongRangeForce {
   void operator()(std::shared_ptr<CoulombP3M> const &actor) const {
     actor->add_long_range_forces(m_particles);
   }
-#ifdef CUDA
-  void operator()(std::shared_ptr<CoulombP3MGPU> const &actor) const {
-    actor->add_long_range_forces(m_particles);
-  }
-#endif // CUDA
   void
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
     actor->add_long_range_forces(m_particles);

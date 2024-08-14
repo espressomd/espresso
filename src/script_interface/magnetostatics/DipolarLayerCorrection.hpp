@@ -45,7 +45,7 @@ class DipolarLayerCorrection
   using DipolarDSR = DipolarDirectSum;
   using BaseSolver = boost::variant<
 #ifdef DP3M
-      std::shared_ptr<DipolarP3M>,
+      std::shared_ptr<DipolarP3M<Arch::CPU>>,
 #endif
       std::shared_ptr<DipolarDSR>>;
   BaseSolver m_solver;
@@ -78,19 +78,20 @@ public:
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
 #ifdef DP3M
-      if (auto so_solver = std::dynamic_pointer_cast<DipolarP3M>(so_ptr)) {
-        solver = so_solver->actor();
-        m_solver = so_solver;
-      } else
+      if (auto so = std::dynamic_pointer_cast<DipolarP3M<Arch::CPU>>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
 #endif // DP3M
-        if (auto so_solver = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
-          solver = so_solver->actor();
-          m_solver = so_solver;
-        } else {
-          throw std::invalid_argument("Parameter 'actor' of type " +
-                                      so_ptr->name().to_string() +
-                                      " isn't supported by DLC");
-        }
+      if (auto so = std::dynamic_pointer_cast<DipolarDSR>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
+      throw std::invalid_argument("Parameter 'actor' of type " +
+                                  so_ptr->name().to_string() +
+                                  " isn't supported by DLC");
     });
     context()->parallel_try_catch([&]() {
       auto dlc = dlc_data(get_value<double>(params, "maxPWerror"),

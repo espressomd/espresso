@@ -26,8 +26,6 @@
 #include "electrostatics/mmm1d.hpp"
 
 #include "electrostatics/coulomb.hpp"
-#include "electrostatics/mmm-common.hpp"
-#include "electrostatics/mmm-modpsi.hpp"
 
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
@@ -95,6 +93,16 @@ static auto determine_minrad(double maxPWerror, int P,
   return 0.5 * (rmin + rmax);
 }
 
+/** Modified polygamma for even order <tt>2*n, n >= 0</tt> */
+static double mod_psi_even(auto const &modPsi, int n, double x) {
+  return evaluateAsTaylorSeriesAt(modPsi[2 * n], x * x);
+}
+
+/** Modified polygamma for odd order <tt>2*n+1, n>= 0</tt> */
+static double mod_psi_odd(auto const &modPsi, int n, double x) {
+  return x * evaluateAsTaylorSeriesAt(modPsi[2 * n + 1], x * x);
+}
+
 void CoulombMMM1D::determine_bessel_radii() {
   auto const &box_geo = *get_system().box_geo;
   auto const &box_l = box_geo.length();
@@ -115,7 +123,8 @@ void CoulombMMM1D::prepare_polygamma_series() {
     create_mod_psi_up_to(n + 1);
 
     /* |uz*z| <= 0.5 */
-    err = 2. * static_cast<double>(n) * fabs(mod_psi_even(n, 0.5)) * rhomax2nm2;
+    err = 2. * static_cast<double>(n) * fabs(mod_psi_even(modPsi, n, 0.5)) *
+          rhomax2nm2;
     rhomax2nm2 *= rhomax2;
     n++;
   } while (err > 0.1 * maxPWerror);
@@ -183,12 +192,12 @@ Utils::Vector3d CoulombMMM1D::pair_force(double q1q2, Utils::Vector3d const &d,
   if (rxy2 <= far_switch_radius_sq) {
     /* polygamma summation */
     auto sr = 0.;
-    auto sz = mod_psi_odd(0, z_d);
+    auto sz = mod_psi_odd(modPsi, 0, z_d);
     auto r2nm1 = 1.;
     for (int n = 1; n < n_modPsi; n++) {
       auto const deriv = static_cast<double>(2 * n);
-      auto const mpe = mod_psi_even(n, z_d);
-      auto const mpo = mod_psi_odd(n, z_d);
+      auto const mpe = mod_psi_even(modPsi, n, z_d);
+      auto const mpo = mod_psi_odd(modPsi, n, z_d);
       auto const r2n = r2nm1 * rxy2_d;
 
       sz += r2n * mpo;
@@ -281,7 +290,7 @@ double CoulombMMM1D::pair_energy(double const q1q2, Utils::Vector3d const &d,
     /* polygamma summation */
     double r2n = 1.;
     for (int n = 0; n < n_modPsi; n++) {
-      auto const add = mod_psi_even(n, z_d) * r2n;
+      auto const add = mod_psi_even(modPsi, n, z_d) * r2n;
       energy -= add;
 
       if (fabs(add) < maxPWerror)

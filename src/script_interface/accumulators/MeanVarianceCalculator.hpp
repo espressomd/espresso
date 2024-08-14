@@ -19,13 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
-#define SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
+#pragma once
 
 #include "AccumulatorBase.hpp"
-#include "core/accumulators/MeanVarianceCalculator.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/observables/Observable.hpp"
+
+#include "core/accumulators/MeanVarianceCalculator.hpp"
+#include "core/system/System.hpp"
 
 #include <memory>
 #include <string>
@@ -43,7 +45,8 @@ public:
 
     if (m_obs)
       m_accumulator = std::make_shared<::Accumulators::MeanVarianceCalculator>(
-          m_obs->observable(), get_value_or<int>(params, "delta_N", 1));
+          get_core_system_pointer(params),
+          get_value_or<int>(params, "delta_N", 1), m_obs->observable());
   }
 
   std::shared_ptr<::Accumulators::MeanVarianceCalculator>
@@ -61,6 +64,7 @@ public:
     if (method == "update") {
       ObjectHandle::context()->parallel_try_catch(
           [&]() { mean_variance_calculator()->update(context()->get_comm()); });
+      return {};
     }
     if (method == "mean")
       return mean_variance_calculator()->mean();
@@ -68,7 +72,7 @@ public:
       return mean_variance_calculator()->variance();
     if (method == "std_error")
       return mean_variance_calculator()->std_error();
-    return AccumulatorBase::call_method(method, parameters);
+    return AccumulatorBase::do_call_method(method, parameters);
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
@@ -85,17 +89,7 @@ private:
   /* The actual accumulator */
   std::shared_ptr<::Accumulators::MeanVarianceCalculator> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
-
-  std::string get_internal_state() const override {
-    return m_accumulator->get_internal_state();
-  }
-
-  void set_internal_state(std::string const &state) override {
-    m_accumulator->set_internal_state(state);
-  }
 };
 
 } // namespace Accumulators
-} /* namespace ScriptInterface */
-
-#endif
+} // namespace ScriptInterface

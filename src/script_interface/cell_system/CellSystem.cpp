@@ -20,6 +20,8 @@
 #include "CellSystem.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/particle_data/ParticleHandle.hpp"
+#include "script_interface/particle_data/ParticleSlice.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
@@ -156,7 +158,8 @@ CellSystem::CellSystem() {
        }},
       {"max_cut_nonbonded", AutoParameter::read_only,
        [this]() { return get_system().nonbonded_ias->maximal_cutoff(); }},
-      {"max_cut_bonded", AutoParameter::read_only, maximal_cutoff_bonded},
+      {"max_cut_bonded", AutoParameter::read_only,
+       [this]() { return get_system().bonded_ias->maximal_cutoff(); }},
       {"interaction_range", AutoParameter::read_only,
        [this]() { return get_system().get_interaction_range(); }},
   });
@@ -314,6 +317,14 @@ void CellSystem::initialize(CellStructureType const &cs_type,
   } else {
     system.set_cell_structure_topology(cs_type);
   }
+}
+
+void CellSystem::configure(Particles::ParticleHandle &particle) {
+  particle.attach(m_system);
+}
+
+void CellSystem::configure(Particles::ParticleSlice &slice) {
+  slice.attach(m_system);
 }
 
 } // namespace CellSystem

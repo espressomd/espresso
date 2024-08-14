@@ -19,9 +19,11 @@
 
 #include "ParticleList.hpp"
 #include "ParticleHandle.hpp"
+#include "ParticleSlice.hpp"
 
 #include "script_interface/ObjectState.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/system/Leaf.hpp"
 
 #include "core/cell_system/CellStructure.hpp"
 #include "core/exclusions.hpp"
@@ -46,80 +48,6 @@
 
 namespace ScriptInterface {
 namespace Particles {
-
-#ifdef EXCLUSIONS
-static void set_exclusions(ParticleHandle &p, Variant const &exclusions) {
-  p.call_method("set_exclusions", {{"p_ids", exclusions}});
-}
-#endif // EXCLUSIONS
-
-static void set_bonds(ParticleHandle &p, Variant const &bonds) {
-  auto const bond_list_flat = get_value<std::vector<std::vector<int>>>(bonds);
-  for (auto const &bond_flat : bond_list_flat) {
-    auto const bond_id = bond_flat[0];
-    auto const part_id =
-        std::vector<int>{bond_flat.begin() + 1, bond_flat.end()};
-    p.call_method("add_bond",
-                  {{"bond_id", bond_id}, {"part_id", std::move(part_id)}});
-  }
-}
-
-std::string ParticleList::get_internal_state() const {
-  auto const p_ids = get_particle_ids();
-  std::vector<std::string> object_states(p_ids.size());
-
-  std::ranges::transform(p_ids, object_states.begin(), [this](auto const p_id) {
-    auto p_obj =
-        context()->make_shared("Particles::ParticleHandle", {{"id", p_id}});
-    auto &p_handle = dynamic_cast<ParticleHandle &>(*p_obj);
-    auto const packed_state = p_handle.serialize();
-    // custom particle serialization
-    auto state = Utils::unpack<ObjectState>(packed_state);
-    state.name = "Particles::ParticleHandle";
-    auto const bonds_view = p_handle.call_method("get_bonds_view", {});
-    state.params.emplace_back(std::string{"bonds"}, pack(bonds_view));
-#ifdef EXCLUSIONS
-    auto const exclusions = p_handle.call_method("get_exclusions", {});
-    state.params.emplace_back(std::string{"exclusions"}, pack(exclusions));
-#endif // EXCLUSIONS
-    state.params.emplace_back(std::string{"__cpt_sentinel"}, pack(None{}));
-    return Utils::pack(state);
-  });
-
-  return Utils::pack(object_states);
-}
-
-void ParticleList::set_internal_state(std::string const &state) {
-  auto const object_states = Utils::unpack<std::vector<std::string>>(state);
-#ifdef EXCLUSIONS
-  std::unordered_map<int, Variant> exclusions = {};
-#endif // EXCLUSIONS
-  std::unordered_map<int, Variant> bonds = {};
-
-  for (auto const &packed_object : object_states) {
-    auto state = Utils::unpack<ObjectState>(packed_object);
-    VariantMap params = {};
-    for (auto const &kv : state.params) {
-      params[kv.first] = unpack(kv.second, {});
-    }
-    auto const p_id = get_value<int>(params.at("id"));
-    bonds[p_id] = params.extract("bonds").mapped();
-#ifdef EXCLUSIONS
-    exclusions[p_id] = params.extract("exclusions").mapped();
-#endif // EXCLUSIONS
-    context()->make_shared("Particles::ParticleHandle", params);
-  }
-
-  for (auto const p_id : get_particle_ids()) {
-    auto p_obj =
-        context()->make_shared("Particles::ParticleHandle", {{"id", p_id}});
-    auto &p_handle = dynamic_cast<ParticleHandle &>(*p_obj);
-    set_bonds(p_handle, bonds[p_id]);
-#ifdef EXCLUSIONS
-    set_exclusions(p_handle, exclusions[p_id]);
-#endif // EXCLUSIONS
-  }
-}
 
 #ifdef EXCLUSIONS
 /**
@@ -231,6 +159,20 @@ Variant ParticleList::do_call_method(std::string const &name,
   if (not context()->is_head_node()) {
     return {};
   }
+  if (name == "by_id") {
+    return std::dynamic_pointer_cast<ParticleHandle>(
+        context()->make_shared("Particles::ParticleHandle",
+                               {{"id", get_value<int>(params, "p_id")},
+                                {"__cell_structure", m_cell_structure.lock()},
+                                {"__bonded_ias", m_bonded_ias.lock()}}));
+  }
+  if (name == "by_ids") {
+    return context()->make_shared(
+        "Particles::ParticleSlice",
+        {{"id_selection", get_value<std::vector<int>>(params, "id_selection")},
+         {"__cell_structure", m_cell_structure.lock()},
+         {"__bonded_ias", m_bonded_ias.lock()}});
+  }
   if (name == "get_n_part") {
     return get_n_part();
   }
@@ -241,15 +183,18 @@ Variant ParticleList::do_call_method(std::string const &name,
     return particle_exists(get_value<int>(params, "p_id"));
   }
   if (name == "add_particle") {
-    assert(params.count("bonds") == 0);
-    auto obj = context()->make_shared("Particles::ParticleHandle", params);
-    auto &p_handle = dynamic_cast<ParticleHandle &>(*obj);
+    assert(not params.contains("bonds"));
+    VariantMap local_params = params;
+    local_params["__cell_structure"] = m_cell_structure.lock();
+    local_params["__bonded_ias"] = m_bonded_ias.lock();
+    auto so = std::dynamic_pointer_cast<ParticleHandle>(
+        context()->make_shared("Particles::ParticleHandle", local_params));
 #ifdef EXCLUSIONS
     if (params.count("exclusions")) {
-      set_exclusions(p_handle, params.at("exclusions"));
+      so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
     }
 #endif // EXCLUSIONS
-    return p_handle.get_parameter("id");
+    return so->get_parameter("id");
   }
   return {};
 }

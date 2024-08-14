@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_OBJECT_IN_FLUID_OIF_LOCAL_FORCES_HPP
-#define CORE_OBJECT_IN_FLUID_OIF_LOCAL_FORCES_HPP
+
+#pragma once
 
 /** \file
  *  Routines to calculate the OIF local forces for a particle quadruple
@@ -80,21 +80,6 @@ struct OifLocalForcesBond {
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
   calc_forces(BoxGeometry const &box_geo, Particle const &p2,
               Particle const &p1, Particle const &p3, Particle const &p4) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & r0;
-    ar & ks;
-    ar & kslin;
-    ar & phi0;
-    ar & kb;
-    ar & A01;
-    ar & A02;
-    ar & kal;
-    ar & kvisc;
-  }
 };
 
 /** Compute the OIF local forces.
@@ -252,5 +237,3 @@ OifLocalForcesBond::calc_forces(BoxGeometry const &box_geo, Particle const &p2,
   }
   return std::make_tuple(force2, force1, force3, force4);
 }
-
-#endif

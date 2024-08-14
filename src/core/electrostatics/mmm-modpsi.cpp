@@ -21,14 +21,14 @@
 
 #include "config/config.hpp"
 
-#include "mmm-modpsi.hpp"
+#ifdef ELECTROSTATICS
+
+#include "mmm1d.hpp"
 #include "specfunc.hpp"
 
 #include <cmath>
 #include <numbers>
 #include <vector>
-
-std::vector<std::vector<double>> modPsi;
 
 static void preparePolygammaEven(int n, double binom,
                                  std::vector<double> &series) {
@@ -92,7 +92,7 @@ static void preparePolygammaOdd(int n, double binom,
   }
 }
 
-void create_mod_psi_up_to(int new_n) {
+void CoulombMMM1D::create_mod_psi_up_to(int new_n) {
   auto const old_n = static_cast<int>(modPsi.size() >> 1);
   if (new_n > old_n) {
     modPsi.resize(2 * new_n);
@@ -108,3 +108,5 @@ void create_mod_psi_up_to(int new_n) {
     }
   }
 }
+
+#endif // ELECTROSTATICS

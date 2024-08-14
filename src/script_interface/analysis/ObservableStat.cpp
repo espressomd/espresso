@@ -82,9 +82,9 @@ static auto get_summary(::System::System const &system,
     dict["total"] = get_obs_contrib({values.data(), obs_dim});
   }
 
-  auto const n_bonds = static_cast<int>(::bonded_ia_params.get_next_key());
+  auto const n_bonds = static_cast<int>(system.bonded_ias->get_next_key());
   for (int bond_id = 0; bond_id < n_bonds; ++bond_id) {
-    if (::bonded_ia_params.get_zero_based_type(bond_id) != 0) {
+    if (system.bonded_ias->get_zero_based_type(bond_id) != 0) {
       dict["bonded," + std::to_string(bond_id)] =
           get_obs_contrib(obs.bonded_contribution(bond_id));
     }

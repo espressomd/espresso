@@ -51,7 +51,7 @@ if [ "${?}" = "0" ]; then
         # skip if broken link refers to a standard Python type or to a
         # class/function from an imported module other than espressomd
         is_standard_type_or_module="false"
-        grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
+        grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|ConverterBase|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
         [ "${?}" = "0" ] && is_standard_type_or_module="true"
         # private objects are not documented and cannot be linked
         is_private="false"

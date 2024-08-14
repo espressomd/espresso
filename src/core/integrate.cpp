@@ -37,7 +37,7 @@
 #include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
-#include "accumulators.hpp"
+#include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -237,7 +237,7 @@ void System::System::integrator_sanity_checks() const {
       runtimeErrorMsg() << "The LB integrator requires the LB thermostat";
     }
   }
-  if (::bonded_ia_params.get_n_thermalized_bonds() >= 1 and
+  if (bonded_ias->get_n_thermalized_bonds() >= 1 and
       (thermostat->thermalized_bond == nullptr or
        (thermo_switch & THERMO_BOND) == 0)) {
     runtimeErrorMsg()
@@ -445,7 +445,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   };
 #endif
 #ifdef BOND_CONSTRAINT
-  auto const n_rigid_bonds = ::bonded_ia_params.get_n_rigid_bonds();
+  auto const n_rigid_bonds = bonded_ias->get_n_rigid_bonds();
 #endif
 
   // Prepare particle structure and run sanity checks of all active algorithms
@@ -559,7 +559,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     // Correct particle positions that participate in a rigid/constrained bond
     if (n_rigid_bonds) {
-      correct_position_shake(*cell_structure, *box_geo);
+      correct_position_shake(*cell_structure, *box_geo, *bonded_ias);
     }
 #endif
 
@@ -603,9 +603,8 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       }
     }
 #ifdef BOND_CONSTRAINT
-    // SHAKE velocity updates
     if (n_rigid_bonds) {
-      correct_velocity_shake(*cell_structure, *box_geo);
+      correct_velocity_shake(*cell_structure, *box_geo, *bonded_ias);
     }
 #endif
 
@@ -660,7 +659,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef COLLISION_DETECTION
-      handle_collisions(*cell_structure);
+      collision_detection->handle_collisions(*cell_structure);
 #endif
       bond_breakage->process_queue(*this);
     }
@@ -735,13 +734,11 @@ int System::System::integrate_with_signal_handler(int n_steps, int reuse_forces,
     return integrate(n_steps, reuse_forces);
   }
 
-  using Accumulators::auto_update;
-  using Accumulators::auto_update_next_update;
-
   for (int i = 0; i < n_steps;) {
     /* Integrate to either the next accumulator update, or the
      * end, depending on what comes first. */
-    auto const steps = std::min((n_steps - i), auto_update_next_update());
+    auto const steps =
+        std::min((n_steps - i), auto_update_accumulators->next_update());
 
     auto const local_retval = integrate(steps, reuse_forces);
 
@@ -755,7 +752,7 @@ int System::System::integrate_with_signal_handler(int n_steps, int reuse_forces,
 
     reuse_forces = INTEG_REUSE_FORCES_ALWAYS;
 
-    auto_update(comm_cart, steps);
+    (*auto_update_accumulators)(comm_cart, steps);
 
     i += steps;
   }

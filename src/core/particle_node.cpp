@@ -574,7 +574,7 @@ int number_of_particles_with_type(int type) {
 bool particle_exists(int p_id) {
   if (particle_node.empty())
     build_particle_node();
-  return particle_node.count(p_id);
+  return particle_node.contains(p_id);
 }
 
 std::vector<int> get_particle_ids() {

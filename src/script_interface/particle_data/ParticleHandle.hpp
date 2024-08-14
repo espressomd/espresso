@@ -21,16 +21,43 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/interactions/BondedInteractions.hpp"
 
 #include "core/Particle.hpp"
+#include "core/system/System.hpp"
 
+#include <cassert>
+#include <functional>
+#include <memory>
 #include <string>
 
 namespace ScriptInterface {
+namespace CellSystem {
+class CellSystem;
+}
 namespace Particles {
 
 class ParticleHandle : public AutoParameters<ParticleHandle> {
+  std::function<Variant(VariantMap const &)> cb_get_bond;
   int m_pid;
+  mutable std::weak_ptr<CellSystem::CellSystem> m_cell_structure;
+  mutable std::weak_ptr<Interactions::BondedInteractions> m_bonded_ias;
+  mutable std::weak_ptr<::System::System> m_system;
+  auto get_cell_structure() const {
+    auto ptr = m_cell_structure.lock();
+    assert(ptr != nullptr);
+    return ptr;
+  }
+  auto get_bonded_ias() const {
+    auto ptr = m_bonded_ias.lock();
+    assert(ptr != nullptr);
+    return ptr;
+  }
+  auto get_system() const {
+    auto ptr = m_system.lock();
+    assert(ptr != nullptr);
+    return ptr;
+  }
 
   template <typename T>
   T get_particle_property(T const &(Particle::*getter)() const) const;
@@ -52,6 +79,11 @@ public:
                          VariantMap const &params) override;
 
   void do_construct(VariantMap const &params) override;
+
+  void attach(std::weak_ptr<::System::System> system) {
+    assert(m_system.expired());
+    m_system = system;
+  }
 };
 
 } // namespace Particles

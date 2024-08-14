@@ -54,15 +54,6 @@ struct HarmonicBond {
 
   std::optional<Utils::Vector3d> force(Utils::Vector3d const &dx) const;
   std::optional<double> energy(Utils::Vector3d const &dx) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & k;
-    ar & r;
-    ar & r_cut;
-  }
 };
 
 /** Compute the harmonic bond force.

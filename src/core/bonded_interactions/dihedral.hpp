@@ -61,15 +61,6 @@ struct DihedralBond {
   std::optional<double> energy(Utils::Vector3d const &v12,
                                Utils::Vector3d const &v23,
                                Utils::Vector3d const &v34) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & mult;
-    ar & bend;
-    ar & phase;
-  }
 };
 
 /**
