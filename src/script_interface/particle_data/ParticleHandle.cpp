@@ -22,7 +22,10 @@
 #include "ParticleHandle.hpp"
 
 #include "script_interface/Variant.hpp"
+#include "script_interface/cell_system/CellSystem.hpp"
 #include "script_interface/get_value.hpp"
+#include "script_interface/interactions/BondedInteractions.hpp"
+#include "script_interface/system/System.hpp"
 
 #include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
@@ -116,12 +119,11 @@ static auto get_gamma_safe(Variant const &value) {
 }
 #endif // THERMOSTAT_PER_PARTICLE
 
-static auto get_real_particle(boost::mpi::communicator const &comm, int p_id) {
+static auto get_real_particle(boost::mpi::communicator const &comm, int p_id,
+                              ::CellStructure &cell_structure) {
   if (p_id < 0) {
     throw std::domain_error("Invalid particle id: " + std::to_string(p_id));
   }
-  auto const &system = ::System::get_system();
-  auto &cell_structure = *system.cell_structure;
   auto ptr = cell_structure.get_local_particle(p_id);
   if (ptr != nullptr and ptr->is_ghost()) {
     ptr = nullptr;
@@ -137,8 +139,11 @@ static auto get_real_particle(boost::mpi::communicator const &comm, int p_id) {
 
 template <typename T, class F>
 T ParticleHandle::get_particle_property(F const &fun) const {
+  auto cell_structure_si = get_cell_structure();
+  auto &cell_structure = cell_structure_si->get_cell_structure();
   auto const &comm = context()->get_comm();
-  auto const ptr = const_cast<Particle const *>(get_real_particle(comm, m_pid));
+  auto const ptr = const_cast<Particle const *>(
+      get_real_particle(comm, m_pid, cell_structure));
   std::optional<T> ret;
   if (ptr == nullptr) {
     ret = {};
@@ -157,12 +162,14 @@ T ParticleHandle::get_particle_property(T const &(Particle::*getter)()
 
 template <class F>
 void ParticleHandle::set_particle_property(F const &fun) const {
+  auto cell_structure_si = get_cell_structure();
+  auto &cell_structure = cell_structure_si->get_cell_structure();
   auto const &comm = context()->get_comm();
-  auto const ptr = get_real_particle(comm, m_pid);
+  auto const ptr = get_real_particle(comm, m_pid, cell_structure);
   if (ptr != nullptr) {
     fun(*ptr);
   }
-  System::get_system().on_particle_change();
+  get_system()->on_particle_change();
 }
 
 template <typename T>
@@ -188,7 +195,7 @@ ParticleHandle::ParticleHandle() {
            throw std::domain_error(
                error_msg("type", "must be an integer >= 0"));
          }
-         System::get_system().nonbonded_ias->make_particle_type_exist(new_type);
+         get_system()->nonbonded_ias->make_particle_type_exist(new_type);
          on_particle_type_change(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },
@@ -203,7 +210,7 @@ ParticleHandle::ParticleHandle() {
          auto const p = get_particle_data(m_pid);
          auto const pos = p.pos();
          auto const image_box = p.image_box();
-         return System::get_system().box_geo->unfolded_position(pos, image_box);
+         return get_system()->box_geo->unfolded_position(pos, image_box);
        }},
       {"v",
        [this](Variant const &value) {
@@ -387,7 +394,7 @@ ParticleHandle::ParticleHandle() {
 #endif // THERMOSTAT_PER_PARTICLE
       {"pos_folded", AutoParameter::read_only,
        [this]() {
-         auto const &box_geo = *System::get_system().box_geo;
+         auto const &box_geo = *get_system()->box_geo;
          return box_geo.folded_position(get_particle_data(m_pid).pos());
        }},
       {"lees_edwards_offset",
@@ -399,7 +406,7 @@ ParticleHandle::ParticleHandle() {
        [this]() { return get_particle_data(m_pid).lees_edwards_flag(); }},
       {"image_box", AutoParameter::read_only,
        [this]() {
-         auto const &box_geo = *System::get_system().box_geo;
+         auto const &box_geo = *get_system()->box_geo;
          auto const p = get_particle_data(m_pid);
          return box_geo.folded_image_box(p.pos(), p.image_box());
        }},
@@ -497,10 +504,10 @@ ParticleHandle::ParticleHandle() {
  * @brief Locally add an exclusion to a particle.
  * @param pid1 the identity of the first exclusion partner
  * @param pid2 the identity of the second exclusion partner
+ * @param cell_structure the cell structure
  */
-static void local_add_exclusion(int pid1, int pid2) {
-  auto const &system = ::System::get_system();
-  auto &cell_structure = *system.cell_structure;
+static void local_add_exclusion(int pid1, int pid2,
+                                ::CellStructure &cell_structure) {
   if (auto p1 = cell_structure.get_local_particle(pid1)) {
     add_exclusion(*p1, pid2);
   }
@@ -513,10 +520,10 @@ static void local_add_exclusion(int pid1, int pid2) {
  * @brief Locally remove an exclusion to a particle.
  * @param pid1 the identity of the first exclusion partner
  * @param pid2 the identity of the second exclusion partner
+ * @param cell_structure the cell structure
  */
-static void local_remove_exclusion(int pid1, int pid2) {
-  auto const &system = ::System::get_system();
-  auto &cell_structure = *system.cell_structure;
+static void local_remove_exclusion(int pid1, int pid2,
+                                   ::CellStructure &cell_structure) {
   if (auto p1 = cell_structure.get_local_particle(pid1)) {
     delete_exclusion(*p1, pid2);
   }
@@ -531,8 +538,10 @@ void ParticleHandle::particle_exclusion_sanity_checks(int pid1,
     throw std::runtime_error("Particles cannot exclude themselves (id " +
                              std::to_string(pid1) + ")");
   }
-  std::ignore = get_real_particle(context()->get_comm(), pid1);
-  std::ignore = get_real_particle(context()->get_comm(), pid2);
+  auto cell_structure_si = get_cell_structure();
+  auto &cell_structure = cell_structure_si->get_cell_structure();
+  std::ignore = get_real_particle(context()->get_comm(), pid1, cell_structure);
+  std::ignore = get_real_particle(context()->get_comm(), pid2, cell_structure);
 }
 #endif // EXCLUSIONS
 
@@ -548,14 +557,20 @@ Variant ParticleHandle::do_call_method(std::string const &name,
         [&]() { do_set_parameter(param_name, value); });
     return {};
   }
+  if (name == "get_bond_by_id") {
+    if (not context()->is_head_node()) {
+      return {};
+    }
+    return get_bonded_ias()->call_method("get_bond", params);
+  }
   if (name == "get_bonds_view") {
     if (not context()->is_head_node()) {
       return {};
     }
     auto const bond_list = get_particle_data(m_pid).bonds();
-    std::vector<std::vector<int>> bonds_flat;
+    std::vector<std::vector<Variant>> bonds_flat;
     for (auto const &&bond_view : bond_list) {
-      std::vector<int> bond_flat;
+      std::vector<Variant> bond_flat;
       bond_flat.emplace_back(bond_view.bond_id());
       for (auto const pid : bond_view.partner_ids()) {
         bond_flat.emplace_back(pid);
@@ -588,11 +603,14 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     set_particle_property([&](Particle &p) { p.bonds().clear(); });
   } else if (name == "is_valid_bond_id") {
     auto const bond_id = get_value<int>(params, "bond_id");
-    return ::bonded_ia_params.get_zero_based_type(bond_id) != 0;
+    return get_system()->bonded_ias->get_zero_based_type(bond_id) != 0;
   }
   if (name == "remove_particle") {
     context()->parallel_try_catch([&]() {
-      std::ignore = get_real_particle(context()->get_comm(), m_pid);
+      auto cell_structure_si = get_cell_structure();
+      auto &cell_structure = cell_structure_si->get_cell_structure();
+      std::ignore =
+          get_real_particle(context()->get_comm(), m_pid, cell_structure);
       remove_particle(m_pid);
     });
   } else if (name == "is_virtual") {
@@ -615,7 +633,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       throw std::domain_error("Invalid particle id: " +
                               std::to_string(other_pid));
     }
-    auto const &system = ::System::get_system();
+    auto const system = get_system();
     /* note: this code can be rewritten as parallel code, but only with a call
      * to `cells_update_ghosts(DATA_PART_POSITION | DATA_PART_PROPERTIES)`, as
      * there is no guarantee the virtual site has visibility of the relative
@@ -628,7 +646,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const &p_current = get_particle_data(m_pid);
     auto const &p_relate_to = get_particle_data(other_pid);
     auto const [quat, dist] = calculate_vs_relate_to_params(
-        p_current, p_relate_to, *system.box_geo, system.get_min_global_cut(),
+        p_current, p_relate_to, *system->box_geo, system->get_min_global_cut(),
         override_cutoff_check);
     set_parameter("vs_relative", Variant{std::vector<Variant>{
                                      {other_pid, dist, quat2vector(quat)}}});
@@ -639,23 +657,30 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 #ifdef EXCLUSIONS
   } else if (name == "has_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
-    auto const p = get_real_particle(context()->get_comm(), m_pid);
+    auto cell_structure_si = get_cell_structure();
+    auto &cell_structure = cell_structure_si->get_cell_structure();
+    auto const p =
+        get_real_particle(context()->get_comm(), m_pid, cell_structure);
     if (p != nullptr) {
       return p->has_exclusion(other_pid);
     }
   }
   if (name == "add_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
+    auto cell_structure_si = get_cell_structure();
+    auto &cell_structure = cell_structure_si->get_cell_structure();
     context()->parallel_try_catch(
         [&]() { particle_exclusion_sanity_checks(m_pid, other_pid); });
-    local_add_exclusion(m_pid, other_pid);
-    System::get_system().on_particle_change();
+    local_add_exclusion(m_pid, other_pid, cell_structure);
+    get_system()->on_particle_change();
   } else if (name == "del_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
+    auto cell_structure_si = get_cell_structure();
+    auto &cell_structure = cell_structure_si->get_cell_structure();
     context()->parallel_try_catch(
         [&]() { particle_exclusion_sanity_checks(m_pid, other_pid); });
-    local_remove_exclusion(m_pid, other_pid);
-    System::get_system().on_particle_change();
+    local_remove_exclusion(m_pid, other_pid, cell_structure);
+    get_system()->on_particle_change();
   } else if (name == "set_exclusions") {
     std::vector<int> exclusion_list;
     try {
@@ -670,12 +695,14 @@ Variant ParticleHandle::do_call_method(std::string const &name,
       }
     });
     set_particle_property([this, &exclusion_list](Particle &p) {
+      auto cell_structure_si = get_cell_structure();
+      auto &cell_structure = cell_structure_si->get_cell_structure();
       for (auto const pid : p.exclusions()) {
-        local_remove_exclusion(m_pid, pid);
+        local_remove_exclusion(m_pid, pid, cell_structure);
       }
       for (auto const pid : exclusion_list) {
         if (!p.has_exclusion(pid)) {
-          local_add_exclusion(m_pid, pid);
+          local_add_exclusion(m_pid, pid, cell_structure);
         }
       }
     });
@@ -729,7 +756,9 @@ static auto const contradicting_arguments_quat = std::vector<
 #endif // ROTATION
 
 void ParticleHandle::do_construct(VariantMap const &params) {
-  auto const n_extra_args = params.size() - params.count("id");
+  auto const n_extra_args = params.size() - params.count("id") -
+                            params.count("__cell_structure") -
+                            params.count("__bonded_ias");
   m_pid = (params.contains("id")) ? get_value<int>(params, "id")
                                   : get_maximal_particle_id() + 1;
 
@@ -741,6 +770,17 @@ void ParticleHandle::do_construct(VariantMap const &params) {
   }
 #endif
 
+  if (params.contains("__cell_structure")) {
+    auto so = get_value<std::shared_ptr<CellSystem::CellSystem>>(
+        params, "__cell_structure");
+    so->configure(*this);
+    m_cell_structure = so;
+  }
+  if (params.contains("__bonded_ias")) {
+    m_bonded_ias = get_value<std::shared_ptr<Interactions::BondedInteractions>>(
+        params, "__bonded_ias");
+  }
+
   // create a new particle if extra arguments were passed
   if (n_extra_args == 0) {
     return;
@@ -749,8 +789,8 @@ void ParticleHandle::do_construct(VariantMap const &params) {
   auto const pos = get_value<Utils::Vector3d>(params, "pos");
   context()->parallel_try_catch([&]() {
     particle_checks(m_pid, pos);
-    auto const &system = ::System::get_system();
-    auto const &cell_structure = *system.cell_structure;
+    auto cell_structure_si = get_cell_structure();
+    auto &cell_structure = cell_structure_si->get_cell_structure();
     auto ptr = cell_structure.get_local_particle(m_pid);
     if (ptr != nullptr) {
       throw std::invalid_argument("Particle " + std::to_string(m_pid) +

@@ -24,6 +24,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/system/Leaf.hpp"
 
+#include <memory>
 #include <string>
 
 namespace ScriptInterface {

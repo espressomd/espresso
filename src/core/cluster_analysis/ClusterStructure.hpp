@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
-#define CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
+#pragma once
 
+#include "BoxGeometry.hpp"
 #include "pair_criteria/PairCriterion.hpp"
 
 #include "Cluster.hpp"
@@ -58,6 +58,10 @@ public:
     return *m_pair_criterion;
   }
 
+  void attach(std::weak_ptr<BoxGeometry const> const &box_geo) {
+    m_box_geo = box_geo;
+  }
+
 private:
   /** @brief Clusters that turn out to be the same during the analysis process
    * (i.e., if two particles are neighbors that already belong to different
@@ -77,7 +81,12 @@ private:
   /** @brief Get next free cluster id */
   inline int get_next_free_cluster_id();
   void sanity_checks() const;
+  auto get_box_geo() const {
+    auto ptr = m_box_geo.lock();
+    assert(ptr);
+    return ptr;
+  }
+  mutable std::weak_ptr<BoxGeometry const> m_box_geo;
 };
 
 } // namespace ClusterAnalysis
-#endif

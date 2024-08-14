@@ -260,10 +260,8 @@ class ParticleProperties(ut.TestCase):
             ]
         # check all methods that can instantiate particles
         for kwargs in invalid_combinations:
-            for make_new_particle in (
-                    self.system.part.add, espressomd.particle_data.ParticleHandle):
-                with self.assertRaises(ValueError):
-                    make_new_particle(pos=[0., 0., 0.], **kwargs)
+            with self.assertRaises(ValueError):
+                self.system.part.add(pos=[0., 0., 0.], **kwargs)
 
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_invalid_quat(self):
@@ -358,11 +356,6 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Particle node for id 42 not found"):
             handle_to_non_existing_particle.type
         for i in range(1, 10):
-            p = espressomd.particle_data.ParticleHandle(id=-i)
-            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
-                p.node
-            with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
-                p.remove()
             with self.assertRaisesRegex(ValueError, f"Invalid particle id: {-i}"):
                 self.system.part.add(pos=[0., 0., 0.], id=-i)
 

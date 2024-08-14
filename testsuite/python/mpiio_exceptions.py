@@ -75,7 +75,7 @@ class MPIIOTest(ut.TestCase):
     @ut.skipIf(n_nodes != 1, "only works on 1 MPI rank")
     def test_exceptions(self):
         generator = MPIIOMockGenerator(self.temp_dir.name)
-        mpiio = espressomd.io.mpiio.Mpiio()
+        mpiio = espressomd.io.mpiio.Mpiio(system=self.system)
 
         # generate reference data
         self.system.part.add(pos=[0, 0, 0])
@@ -86,6 +86,9 @@ class MPIIOTest(ut.TestCase):
         # check reference data is valid
         mpiio.read(path_ref, types=True)
         self.system.part.clear()
+
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'system' is missing"):
+            espressomd.io.mpiio.Mpiio()
 
         # exception when the metadata cannot be written
         path, fn = generator.create('head', read_only=True)

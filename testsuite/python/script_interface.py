@@ -104,8 +104,7 @@ class ScriptInterface(ut.TestCase):
 
     def test_objectlist_exceptions(self):
         """Check ObjectList framework"""
-        wall = espressomd.shapes.Wall(normal=[-1, 0, 0])
-        constraint = espressomd.constraints.ShapeBasedConstraint(shape=wall)
+        constraint = espressomd.constraints.Gravity(g=[0., 0., 1.])
         constraints = espressomd.constraints.Constraints()
         self.assertEqual(len(constraints), 0)
         constraints.add(constraint)

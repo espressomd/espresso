@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_PAIR_CRITERIA_ENERGY_CRITERION_HPP
-#define ESPRESSO_SRC_CORE_PAIR_CRITERIA_ENERGY_CRITERION_HPP
+
+#pragma once
 
 #include "pair_criteria/PairCriterion.hpp"
 
@@ -44,7 +44,8 @@ public:
     auto const coulomb_kernel = m_system.coulomb.pair_energy_kernel();
 
     auto const energy = calc_non_bonded_pair_energy(
-        p1, p2, ia_params, d, d.norm(), get_ptr(coulomb_kernel));
+        p1, p2, ia_params, d, d.norm(), *m_system.bonded_ias,
+        get_ptr(coulomb_kernel));
 
     return energy >= m_cut_off;
   }
@@ -56,5 +57,3 @@ private:
   System::System const &m_system;
 };
 } // namespace PairCriteria
-
-#endif

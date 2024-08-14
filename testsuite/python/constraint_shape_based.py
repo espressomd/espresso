@@ -22,6 +22,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import math
+import pickle
 
 import espressomd
 import espressomd.math
@@ -1092,6 +1093,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
             0.5 * system.box_l[0], "xyz")
         np.testing.assert_allclose(
             np.copy(system.box_l), 0.75 * 0.5 * box_l, atol=1e-7)
+        with self.assertRaisesRegex(RuntimeError, "constraints property"):
+            pickle.dumps(constraint)
 
 
 if __name__ == "__main__":

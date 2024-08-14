@@ -21,8 +21,13 @@
 
 #pragma once
 
-#include "core/constraints/Constraint.hpp"
 #include "script_interface/ScriptInterface.hpp"
+
+#include "core/constraints/Constraint.hpp"
+
+namespace System {
+class System;
+}
 
 namespace ScriptInterface {
 namespace Constraints {
@@ -32,7 +37,8 @@ public:
   virtual std::shared_ptr<const ::Constraints::Constraint>
   constraint() const = 0;
   virtual std::shared_ptr<::Constraints::Constraint> constraint() = 0;
+  virtual void bind_system(std::shared_ptr<::System::System const> const &) {}
 };
 
-} /* namespace Constraints */
-} /* namespace ScriptInterface */
+} // namespace Constraints
+} // namespace ScriptInterface

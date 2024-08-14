@@ -30,8 +30,7 @@
  *  formula, the Bessel functions are evaluated using several different
  *  Chebychev expansions. Both achieve a precision of nearly machine precision,
  *  which is no problem for the Hurwitz zeta function, which is only used when
- *  determining the coefficients for the modified polygamma functions (see @ref
- *  mmm-common.hpp).
+ *  determining the coefficients for the modified polygamma functions.
  */
 
 #pragma once

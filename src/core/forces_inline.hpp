@@ -142,20 +142,6 @@ inline ParticleForce calc_central_radial_force(IA_parameters const &ia_params,
   return pf;
 }
 
-inline ParticleForce calc_central_radial_charge_force(
-    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
-    Utils::Vector3d const &d, double const dist,
-    Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel) {
-
-  ParticleForce pf{};
-/* Thole damping */
-#ifdef THOLE
-  pf.f += thole_pair_force(p1, p2, ia_params, d, dist, coulomb_kernel);
-#endif
-
-  return pf;
-}
-
 inline ParticleForce calc_non_central_force(Particle const &p1,
                                             Particle const &p2,
                                             IA_parameters const &ia_params,
@@ -194,6 +180,7 @@ inline ParticleForce calc_opposing_force(ParticleForce const &pf,
  *  @param[in] ia_params       non-bonded interaction kernels.
  *  @param[in] thermostat      thermostat.
  *  @param[in] box_geo         box geometry.
+ *  @param[in] bonded_ias      bonded interaction kernels.
  *  @param[in] coulomb_kernel  Coulomb force kernel.
  *  @param[in] dipoles_kernel  Dipolar force kernel.
  *  @param[in] elc_kernel      ELC force correction kernel.
@@ -202,6 +189,7 @@ inline void add_non_bonded_pair_force(
     Particle &p1, Particle &p2, Utils::Vector3d const &d, double dist,
     double dist2, IA_parameters const &ia_params,
     Thermostat::Thermostat const &thermostat, BoxGeometry const &box_geo,
+    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
     Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeForceKernel::kernel_type const *dipoles_kernel,
     Coulomb::ShortRangeForceCorrectionsKernel::kernel_type const *elc_kernel) {
@@ -217,8 +205,10 @@ inline void add_non_bonded_pair_force(
     if (do_nonbonded(p1, p2)) {
 #endif
       pf += calc_central_radial_force(ia_params, d, dist);
-      pf += calc_central_radial_charge_force(p1, p2, ia_params, d, dist,
-                                             coulomb_kernel);
+#ifdef THOLE
+      pf.f += thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias,
+                               coulomb_kernel);
+#endif
       pf += calc_non_central_force(p1, p2, ia_params, d, dist);
 #ifdef EXCLUSIONS
     }
@@ -455,6 +445,7 @@ inline bool add_bonded_four_body_force(Bonded_IA_Parameters const &iaparams,
 
 inline bool
 add_bonded_force(Particle &p1, int bond_id, std::span<Particle *> partners,
+                 BondedInteractionsMap const &bonded_ia_params,
                  BondBreakage::BondBreakage &bond_breakage,
                  BoxGeometry const &box_geo,
                  Coulomb::ShortRangeForceKernel::kernel_type const *kernel) {

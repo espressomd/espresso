@@ -45,9 +45,9 @@ class ElectrostaticLayerCorrection
 
   using BaseSolver = boost::variant<
 #ifdef CUDA
-      std::shared_ptr<CoulombP3MGPU>,
+      std::shared_ptr<CoulombP3M<Arch::GPU>>,
 #endif // CUDA
-      std::shared_ptr<CoulombP3M>>;
+      std::shared_ptr<CoulombP3M<Arch::CPU>>>;
   BaseSolver m_solver;
 
   void on_bind_system(::System::System &system) override {
@@ -88,19 +88,20 @@ public:
     auto so_ptr = get_value<ObjectRef>(params, "actor");
     context()->parallel_try_catch([&]() {
 #ifdef CUDA
-      if (auto so_solver = std::dynamic_pointer_cast<CoulombP3MGPU>(so_ptr)) {
-        solver = so_solver->actor();
-        m_solver = so_solver;
-      } else
+      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::GPU>>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
 #endif // CUDA
-        if (auto so_solver = std::dynamic_pointer_cast<CoulombP3M>(so_ptr)) {
-          solver = so_solver->actor();
-          m_solver = so_solver;
-        } else {
-          throw std::invalid_argument("Parameter 'actor' of type " +
-                                      so_ptr->name().to_string() +
-                                      " isn't supported by ELC");
-        }
+      if (auto so = std::dynamic_pointer_cast<CoulombP3M<Arch::CPU>>(so_ptr)) {
+        solver = so->actor();
+        m_solver = so;
+        return;
+      }
+      throw std::invalid_argument("Parameter 'actor' of type " +
+                                  so_ptr->name().to_string() +
+                                  " isn't supported by ELC");
     });
     context()->parallel_try_catch([&]() {
       auto elc = elc_data{get_value<double>(params, "maxPWerror"),

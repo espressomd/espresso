@@ -137,7 +137,6 @@ public:
    *  Needs to be called every time the parameters are changed.
    */
   void recalc_prefactors(double kT, double time_step) {
-    // get_system().get_time_step()
     pref_friction = -gamma;
     pref_noise = sigma(kT, time_step, gamma);
 #ifdef ROTATION
@@ -336,9 +335,11 @@ struct LBThermostat : public BaseThermostat {
   /**@}*/
 };
 
+class BondedInteractionsMap;
+
 /** Thermostat for thermalized bonds. */
 struct ThermalizedBondThermostat : public BaseThermostat {
-  void recalc_prefactors(double time_step);
+  void recalc_prefactors(double time_step, BondedInteractionsMap &bonded_ias);
 };
 
 #ifdef DPD

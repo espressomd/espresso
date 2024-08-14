@@ -104,7 +104,7 @@ class CollisionDetection(ut.TestCase):
             self.set_coldet("bind_centers", distance=-2.)
         with self.assertRaisesRegex(ValueError, "Parameter 'distance' must be > 0"):
             self.set_coldet("bind_centers", distance=0.)
-        with self.assertRaisesRegex(RuntimeError, "Bond in parameter 'bond_centers' was not added to the system"):
+        with self.assertRaisesRegex(ValueError, "Bond in parameter 'bond_centers' was not added to the system"):
             bond = espressomd.interactions.HarmonicBond(k=1., r_0=0.1)
             self.set_coldet("bind_centers", bond_centers=bond)
         with self.assertRaisesRegex(RuntimeError, "The bond type to be used for binding particle centers needs to be a pair bond"):
@@ -128,7 +128,7 @@ class CollisionDetection(ut.TestCase):
             self.set_coldet("bind_at_point_of_collision", vs_placement=-0.01)
         with self.assertRaisesRegex(ValueError, "Parameter 'vs_placement' must be between 0 and 1"):
             self.set_coldet("bind_at_point_of_collision", vs_placement=1.01)
-        with self.assertRaisesRegex(RuntimeError, "Bond in parameter 'bond_vs' was not added to the system"):
+        with self.assertRaisesRegex(ValueError, "Bond in parameter 'bond_vs' was not added to the system"):
             bond = espressomd.interactions.HarmonicBond(k=1., r_0=0.1)
             self.set_coldet("bind_at_point_of_collision", bond_vs=bond)
         with self.assertRaisesRegex(RuntimeError, "bond type to be used for binding virtual sites needs to be a pair bond"):

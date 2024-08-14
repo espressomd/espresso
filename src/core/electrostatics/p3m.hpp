@@ -42,57 +42,51 @@
 
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
-#include "p3m/interpolation.hpp"
-#include "p3m/send_mesh.hpp"
 
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/AS_erfc_part.hpp>
 
-#include <array>
 #include <cmath>
 #include <numbers>
-#include <utility>
+#include <stdexcept>
 
 /** @brief P3M solver. */
 struct CoulombP3M : public Coulomb::Actor<CoulombP3M> {
-  struct p3m_data_struct_impl : public p3m_data_struct {
-    explicit p3m_data_struct_impl(P3MParameters &&parameters)
-        : p3m_data_struct{std::move(parameters)} {}
-
-    /** number of charged particles (only on head node). */
-    int sum_qpart = 0;
-    /** Sum of square of charges (only on head node). */
-    double sum_q2 = 0.;
-    /** square of sum of charges (only on head node). */
-    double square_sum_q = 0.;
-
-    p3m_interpolation_cache inter_weights;
-  };
-
-  /** P3M parameters. */
-  p3m_data_struct_impl p3m;
+  /** @brief Coulomb P3M parameters. */
+  p3m_data_struct &p3m;
 
   int tune_timings;
   bool tune_verbose;
   bool check_complex_residuals;
 
-private:
+protected:
   bool m_is_tuned;
 
 public:
-  CoulombP3M(P3MParameters &&parameters, double prefactor, int tune_timings,
-             bool tune_verbose, bool check_complex_residuals);
+  CoulombP3M(p3m_data_struct &p3m_data, double prefactor, int tune_timings,
+             bool tune_verbose, bool check_complex_residuals)
+      : p3m{p3m_data}, tune_timings{tune_timings}, tune_verbose{tune_verbose},
+        check_complex_residuals{check_complex_residuals} {
 
-  bool is_tuned() const { return m_is_tuned; }
+    if (tune_timings <= 0) {
+      throw std::domain_error("Parameter 'timings' must be > 0");
+    }
+    m_is_tuned = not p3m.params.tuning;
+    p3m.params.tuning = false;
+    set_prefactor(prefactor);
+  }
+
+  virtual ~CoulombP3M() = default;
+
+  [[nodiscard]] bool is_tuned() const { return m_is_tuned; }
+  [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
 
   /** @brief Recalculate all derived parameters. */
-  void init();
-  void on_activation() {
-    sanity_checks();
-    tune();
-  }
+  virtual void init() = 0;
+  virtual void on_activation() = 0;
+
   /** @brief Recalculate all box-length-dependent parameters. */
   void on_boxl_change() { scaleby_box_l(); }
   void on_node_grid_change() const { sanity_checks_node_grid(); }
@@ -113,7 +107,8 @@ public:
    * Count the number of charged particles and calculate
    * the sum of the squared charges.
    */
-  void count_charged_particles();
+  virtual void count_charged_particles() = 0;
+  virtual void count_charged_particles_elc(int, double, double) = 0;
 
   /**
    * @brief Tune P3M parameters to desired accuracy.
@@ -146,24 +141,24 @@ public:
    * The function is based on routines of the program HE_Q.cpp written by M.
    * Deserno.
    */
-  void tune();
+  virtual void tune() = 0;
 
   /** Assign the physical charges using the tabulated charge assignment
    * function.
    */
-  void charge_assign(ParticleRange const &particles);
+  virtual void charge_assign(ParticleRange const &particles) = 0;
 
   /**
    * @brief Assign a single charge into the current charge grid.
    *
    * @param[in] q          Particle charge
    * @param[in] real_pos   Particle position in real space
-   * @param[out] inter_weights Cached interpolation weights to be used.
+   * @param[in] skip_cache Skip interpolation weights caching.
    */
-  void assign_charge(double q, Utils::Vector3d const &real_pos,
-                     p3m_interpolation_cache &inter_weights);
-  /** @overload */
-  void assign_charge(double q, Utils::Vector3d const &real_pos);
+  virtual void assign_charge(double q, Utils::Vector3d const &real_pos,
+                             bool skip_cache) = 0;
+
+  virtual void prepare_fft_mesh(bool reset_weights) = 0;
 
   /** Calculate real-space contribution of p3m Coulomb pair forces. */
   Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,
@@ -203,25 +198,17 @@ public:
   }
 
   /** Compute the k-space part of the pressure tensor */
-  Utils::Vector9d long_range_pressure(ParticleRange const &particles);
+  virtual Utils::Vector9d long_range_pressure(ParticleRange const &) = 0;
 
   /** Compute the k-space part of energies. */
-  double long_range_energy(ParticleRange const &particles) {
-    return long_range_kernel(false, true, particles);
-  }
+  virtual double long_range_energy(ParticleRange const &) = 0;
 
   /** Compute the k-space part of forces. */
-  void add_long_range_forces(ParticleRange const &particles) {
-    long_range_kernel(true, false, particles);
-  }
+  virtual void add_long_range_forces(ParticleRange const &) = 0;
 
-  /** Compute the k-space part of forces and energies. */
-  double long_range_kernel(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles);
-
-private:
-  void calc_influence_function_force();
-  void calc_influence_function_energy();
+protected:
+  virtual void calc_influence_function_force() = 0;
+  virtual void calc_influence_function_energy() = 0;
 
   /** Checks for correctness of the k-space cutoff. */
   void sanity_checks_boxl() const;
@@ -229,7 +216,7 @@ private:
   void sanity_checks_periodicity() const;
   void sanity_checks_cell_structure() const;
 
-  void scaleby_box_l();
+  virtual void scaleby_box_l();
 };
 
 #endif // P3M

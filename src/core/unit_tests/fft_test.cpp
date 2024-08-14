@@ -35,6 +35,7 @@
 #include <array>
 #include <cstddef>
 #include <limits>
+#include <new>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -157,10 +158,16 @@ BOOST_AUTO_TEST_CASE(fft_map_grid) {
 
 BOOST_AUTO_TEST_CASE(fft_exceptions) {
   auto constexpr size_max = std::numeric_limits<std::size_t>::max();
-  auto constexpr bad_size = size_max / sizeof(int) + 1ul;
-  fft::allocator<int> allocator{};
+  auto constexpr bad_size = size_max / sizeof(float) + 1ul;
+  fft::allocator<float> allocator{};
   BOOST_CHECK_EQUAL(allocator.allocate(0ul), nullptr);
   BOOST_CHECK_THROW(allocator.allocate(bad_size), std::bad_array_new_length);
+}
+
+BOOST_AUTO_TEST_CASE(fft_plan_without_mpi) {
+  auto *plan = new fft::fft_plan<float>();
+  plan->destroy_plan(); // no-op since handle is null
+  delete plan;
 }
 
 BOOST_AUTO_TEST_CASE(for_each_3d_test) {

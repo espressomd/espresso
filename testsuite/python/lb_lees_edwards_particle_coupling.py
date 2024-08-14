@@ -57,7 +57,7 @@ def coupling_weight(pos_lb_units, node_idx, lb_shape):
     # If the coupling point is >=1 lattice constant away from the node,
     # no coupling. Otherwise, distance pos to node via module with lattice
     # constant 1
-    weight = 0. if np.any(dx >= 1.) else np.product(1. - dx)
+    weight = 0. if np.any(dx >= 1.) else np.prod(1. - dx)
 
     return weight
 

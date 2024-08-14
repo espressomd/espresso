@@ -105,16 +105,15 @@ double G_opt_dipolar(P3MParameters const &params, Utils::Vector3i const &shift,
  * @param inv_box_l Inverse box length
  * @return Values of the influence function at regular grid points.
  */
-template <std::size_t S>
-std::vector<double> grid_influence_function(P3MParameters const &params,
-                                            Utils::Vector3i const &n_start,
-                                            Utils::Vector3i const &n_stop,
-                                            Utils::Vector3d const &inv_box_l) {
+template <typename FloatType, std::size_t S>
+std::vector<FloatType> grid_influence_function(
+    P3MParameters const &params, Utils::Vector3i const &n_start,
+    Utils::Vector3i const &n_stop, Utils::Vector3d const &inv_box_l) {
 
   auto const size = n_stop - n_start;
 
   /* The influence function grid */
-  auto g = std::vector<double>(Utils::product(size), 0.);
+  auto g = std::vector<FloatType>(Utils::product(size), FloatType(0));
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
@@ -138,7 +137,8 @@ std::vector<double> grid_influence_function(P3MParameters const &params,
       [&]() {
         if (((indices[0] % half_mesh != 0) or (indices[1] % half_mesh != 0) or
              (indices[2] % half_mesh != 0))) {
-          g[index] = prefactor * G_opt_dipolar<S>(params, shift_off, d_op_off);
+          g[index] = FloatType(prefactor *
+                               G_opt_dipolar<S>(params, shift_off, d_op_off));
         }
         ++index;
       },
@@ -183,9 +183,10 @@ inline double G_opt_dipolar_self_energy(P3MParameters const &params,
  * @param g Energies on the grid.
  * @return Total self-energy.
  */
+template <typename FloatType>
 inline double grid_influence_function_self_energy(
     P3MParameters const &params, Utils::Vector3i const &n_start,
-    Utils::Vector3i const &n_stop, std::vector<double> const &g) {
+    Utils::Vector3i const &n_stop, std::vector<FloatType> const &g) {
 
   auto const offset = detail::calc_meshift(params.mesh, false)[0];
   auto const d_op = detail::calc_meshift(params.mesh, true)[0];
@@ -202,7 +203,7 @@ inline double grid_influence_function_self_energy(
         if (((indices[0] % half_mesh != 0) or (indices[1] % half_mesh != 0) or
              (indices[2] % half_mesh != 0))) {
           auto const U2 = G_opt_dipolar_self_energy(params, shift_off);
-          energy += g[index] * U2 * d_op_off.norm2();
+          energy += double(g[index]) * U2 * d_op_off.norm2();
         }
         ++index;
       },

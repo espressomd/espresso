@@ -110,19 +110,17 @@ double G_opt(int cao, double alpha, Utils::Vector3d const &k,
  * @param inv_box_l Inverse box length.
  * @return Values of G_opt at regular grid points.
  */
-template <std::size_t S, std::size_t m = 0>
-std::vector<double> grid_influence_function(P3MParameters const &params,
-                                            Utils::Vector3i const &n_start,
-                                            Utils::Vector3i const &n_stop,
-                                            int const KX, int const KY,
-                                            int const KZ,
-                                            Utils::Vector3d const &inv_box_l) {
+template <typename FloatType, std::size_t S, std::size_t m = 0>
+std::vector<FloatType> grid_influence_function(
+    P3MParameters const &params, Utils::Vector3i const &n_start,
+    Utils::Vector3i const &n_stop, int const KX, int const KY, int const KZ,
+    Utils::Vector3d const &inv_box_l) {
 
   auto const shifts = detail::calc_meshift(params.mesh);
   auto const size = n_stop - n_start;
 
   /* The influence function grid */
-  auto g = std::vector<double>(Utils::product(size), 0.);
+  auto g = std::vector<FloatType>(Utils::product(size), FloatType(0));
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
@@ -143,7 +141,7 @@ std::vector<double> grid_influence_function(P3MParameters const &params,
           Utils::Vector3d{{shifts[0u][indices[KX]] * wavevector[0u],
                            shifts[1u][indices[KY]] * wavevector[1u],
                            shifts[2u][indices[KZ]] * wavevector[2u]}};
-      g[index] = G_opt<S, m>(params.cao, params.alpha, k, params.a);
+      g[index] = FloatType(G_opt<S, m>(params.cao, params.alpha, k, params.a));
     }
     ++index;
   });

@@ -28,7 +28,7 @@
 
 struct P3MGpuParams;
 
-void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &p3m_gpu_data_ptr, int cao,
+void p3m_gpu_init(std::shared_ptr<P3MGpuParams> &data, int cao,
                   Utils::Vector3i const &mesh, double alpha,
                   Utils::Vector3d const &box_l, std::size_t n_part);
 void p3m_gpu_add_farfield_force(P3MGpuParams &data, GpuParticleData &gpu,

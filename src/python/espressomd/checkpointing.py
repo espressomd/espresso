@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,18 +18,14 @@
 #
 import collections
 import inspect
+import pickle
 import os
 import re
 import signal
 from . import utils
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+from . import script_interface
 
 
-# Convenient Checkpointing for ESPResSo
 class Checkpoint:
 
     """Checkpoint handling (reading and writing).
@@ -128,21 +124,27 @@ class Checkpoint:
             Names of python objects to be registered for checkpointing.
 
         """
-        for a in args:
-            if not isinstance(a, str):
+        for varname in args:
+            if not isinstance(varname, str):
                 raise ValueError(
                     "The object that should be checkpointed is identified with its name given as a string.")
 
             # if not a in dir(self.calling_module):
-            if not self.__hasattr_submodule(self.calling_module, a):
+            if not self.__hasattr_submodule(self.calling_module, varname):
                 raise KeyError(
-                    f"The given object '{a}' was not found in the current scope.")
+                    f"The given object '{varname}' was not found in the current scope.")
 
-            if a in self.checkpoint_objects:
+            if varname in self.checkpoint_objects:
                 raise KeyError(
-                    f"The given object '{a}' is already registered for checkpointing.")
+                    f"The given object '{varname}' is already registered for checkpointing.")
 
-            self.checkpoint_objects.append(a)
+            obj = self.__getattr_submodule(self.calling_module, varname, None)
+            if isinstance(
+                    obj, script_interface.ScriptInterfaceHelper) and not obj._so_checkpointable:
+                raise TypeError(
+                    f"Objects of type {type(obj)} cannot be checkpointed.")
+
+            self.checkpoint_objects.append(varname)
 
     def unregister(self, *args):
         """Unregister python objects for checkpointing.
@@ -153,12 +155,15 @@ class Checkpoint:
             Names of python objects to be unregistered for checkpointing.
 
         """
-        for a in args:
-            if not isinstance(a, str) or a not in self.checkpoint_objects:
+        for varname in args:
+            if not isinstance(varname, str):
+                raise ValueError(
+                    "The object that should be checkpointed is identified with its name given as a string.")
+            if varname not in self.checkpoint_objects:
                 raise KeyError(
-                    f"The given object '{a}' was not registered for checkpointing yet.")
+                    f"The given object '{varname}' was not registered for checkpointing yet.")
 
-            self.checkpoint_objects.remove(a)
+            self.checkpoint_objects.remove(varname)
 
     def get_registered_objects(self):
         """

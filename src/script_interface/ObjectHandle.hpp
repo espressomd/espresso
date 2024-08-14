@@ -77,7 +77,6 @@ public:
    */
   void construct(VariantMap const &params) { do_construct(params); }
 
-private:
   virtual void do_construct(VariantMap const &params) {
     for (auto const &p : params) {
       do_set_parameter(p.first, p.second);

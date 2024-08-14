@@ -159,6 +159,7 @@ class Test(ut.TestCase):
     def test_elc_p3m_exceptions(self):
         P3M = espressomd.electrostatics.P3M
         ELC = espressomd.electrostatics.ELC
+        P3MGPU = espressomd.electrostatics.P3MGPU
         # create valid solvers
         dh = espressomd.electrostatics.DH(prefactor=1.2, kappa=0.8, r_cut=2.0)
         p3m_params = dict(prefactor=1., epsilon=0.1, accuracy=1e-2,
@@ -173,6 +174,9 @@ class Test(ut.TestCase):
             P3M(**{**p3m_params, 'timings': -2})
         with self.assertRaisesRegex(ValueError, "Parameter 'mesh' has to be an integer or integer list of length 3"):
             P3M(**{**p3m_params, 'mesh': [8, 8]})
+        if espressomd.has_features(["CUDA"]) and espressomd.gpu_available():
+            with self.assertRaisesRegex(ValueError, "P3M GPU only implemented in single-precision mode"):
+                P3MGPU(single_precision=False, **p3m_params)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::ElectrostaticLayerCorrection isn't supported by ELC"):
             ELC(gap_size=2., maxPWerror=1., actor=elc)
         with self.assertRaisesRegex(ValueError, "Parameter 'actor' of type Coulomb::DebyeHueckel isn't supported by ELC"):

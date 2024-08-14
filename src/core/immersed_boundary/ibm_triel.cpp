@@ -20,8 +20,8 @@
 #include "immersed_boundary/ibm_triel.hpp"
 
 #include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "ibm_common.hpp"
-#include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -191,16 +191,16 @@ IBMTriel::calc_forces(Utils::Vector3d const &vec1,
   return {forces};
 }
 
-IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
-                   const double maxDist, const tElasticLaw elasticLaw,
-                   const double k1, const double k2) {
-
-  auto const &box_geo = *System::get_system().box_geo;
-
+void IBMTriel::initialize(BoxGeometry const &box_geo,
+                          CellStructure const &cell_structure) {
+  if (is_initialized) {
+    return;
+  }
   // collect particles from nodes
-  auto const pos1 = get_ibm_particle_position(ind1);
-  auto const pos2 = get_ibm_particle_position(ind2);
-  auto const pos3 = get_ibm_particle_position(ind3);
+  auto const [ind1, ind2, ind3] = p_ids;
+  auto const pos1 = get_ibm_particle_position(cell_structure, ind1);
+  auto const pos2 = get_ibm_particle_position(cell_structure, ind2);
+  auto const pos3 = get_ibm_particle_position(cell_structure, ind3);
 
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
   // l0 = length between 1 and 3
@@ -224,9 +224,5 @@ IBMTriel::IBMTriel(const int ind1, const int ind2, const int ind3,
   b1 = (l0 * cosPhi0 - lp0) / area2;
   b2 = -(l0 * cosPhi0) / area2;
   area0 = 0.5 * area2;
-  this->maxDist = maxDist;
-  this->elasticLaw = elasticLaw;
-  // Always store two constants, for NeoHookean only k1 is used
-  this->k1 = k1;
-  this->k2 = k2;
+  is_initialized = true;
 }

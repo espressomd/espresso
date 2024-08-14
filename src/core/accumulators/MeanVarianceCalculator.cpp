@@ -66,5 +66,6 @@ void MeanVarianceCalculator::set_internal_state(std::string const &state) {
   boost::archive::binary_iarchive ia(ss);
 
   ia >> m_acc;
+  m_system = nullptr;
 }
 } // namespace Accumulators

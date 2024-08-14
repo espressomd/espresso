@@ -19,16 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
-#define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
+#pragma once
 
 #include "AccumulatorBase.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/observables/Observable.hpp"
+#include "script_interface/system/System.hpp"
 
 #include "core/accumulators/Correlator.hpp"
+#include "core/system/System.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -59,7 +60,7 @@ public:
 
   void do_construct(VariantMap const &args) override {
     set_from_args(m_obs1, args, "obs1");
-    if (args.count("obs2"))
+    if (args.contains("obs2"))
       set_from_args(m_obs2, args, "obs2");
     else
       m_obs2 = m_obs1;
@@ -69,10 +70,10 @@ public:
 
     ObjectHandle::context()->parallel_try_catch([&]() {
       m_correlator = std::make_shared<CoreCorr>(
+          get_core_system_pointer(args), get_value<int>(args, "delta_N"),
           get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"),
-          get_value<int>(args, "delta_N"), comp1, comp2,
-          get_value<std::string>(args, "corr_operation"), m_obs1->observable(),
-          m_obs2->observable(),
+          comp1, comp2, get_value<std::string>(args, "corr_operation"),
+          m_obs1->observable(), m_obs2->observable(),
           get_value_or<Utils::Vector3d>(args, "args", {}));
     });
   }
@@ -86,10 +87,12 @@ public:
     if (method == "update") {
       ObjectHandle::context()->parallel_try_catch(
           [&]() { correlator()->update(context()->get_comm()); });
+      return {};
     }
     if (method == "finalize") {
       ObjectHandle::context()->parallel_try_catch(
           [&]() { correlator()->finalize(context()->get_comm()); });
+      return {};
     }
     if (method == "get_correlation") {
       if (ObjectHandle::context()->is_head_node()) {
@@ -110,7 +113,7 @@ public:
       return {};
     }
 
-    return AccumulatorBase::call_method(method, parameters);
+    return AccumulatorBase::do_call_method(method, parameters);
   }
 
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
@@ -129,17 +132,7 @@ private:
 
   std::shared_ptr<Observables::Observable> m_obs1;
   std::shared_ptr<Observables::Observable> m_obs2;
-
-  std::string get_internal_state() const override {
-    return m_correlator->get_internal_state();
-  }
-
-  void set_internal_state(std::string const &state) override {
-    m_correlator->set_internal_state(state);
-  }
 };
 
 } // namespace Accumulators
-} /* namespace ScriptInterface */
-
-#endif
+} // namespace ScriptInterface

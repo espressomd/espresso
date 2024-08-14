@@ -22,30 +22,22 @@
 #include "config/config.hpp"
 
 #include "cell_system/CellStructure.hpp"
+#include "system/Leaf.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <vector>
 
-class ImmersedBoundaries {
+struct IBMVolCons;
+
+class ImmersedBoundaries : public System::Leaf<ImmersedBoundaries> {
 public:
   ImmersedBoundaries() : VolumeInitDone(false), BoundariesFound(false) {
     VolumesCurrent.resize(10);
   }
   void init_volume_conservation(CellStructure &cs);
   void volume_conservation(CellStructure &cs);
-  void register_softID(int softID) {
-    assert(softID >= 0);
-    auto const new_size = static_cast<std::size_t>(softID) + 1;
-    if (new_size > VolumesCurrent.size()) {
-      VolumesCurrent.resize(new_size);
-    }
-  }
-  double get_current_volume(int softID) const {
-    assert(softID >= 0);
-    assert(static_cast<std::size_t>(softID) < VolumesCurrent.size());
-    return VolumesCurrent[static_cast<unsigned int>(softID)];
-  }
+  void register_softID(IBMVolCons &bond);
 
 private:
   void calc_volumes(CellStructure &cs);

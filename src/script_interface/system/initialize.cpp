@@ -21,14 +21,12 @@
 
 #include "CudaInitHandle.hpp"
 #include "System.hpp"
-#include "SystemFacade.hpp"
 
 namespace ScriptInterface {
 namespace System {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<CudaInitHandle>("System::CudaInitHandle");
-  om->register_new<SystemFacade>("System::SystemFacade");
   om->register_new<System>("System::System");
 }
 

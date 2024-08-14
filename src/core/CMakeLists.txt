@@ -21,18 +21,15 @@
 
 add_library(
   espresso_core SHARED
-  accumulators.cpp
   bond_error.cpp
   cells.cpp
   collision.cpp
   communication.cpp
-  constraints.cpp
   dpd.cpp
   energy.cpp
   errorhandling.cpp
   forces.cpp
   ghosts.cpp
-  immersed_boundaries.cpp
   integrate.cpp
   npt.cpp
   particle_node.cpp

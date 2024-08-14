@@ -12,13 +12,18 @@ to user input. It requires the Python module *PyOpenGL*.
 It is not meant to produce high quality renderings, but rather to
 debug the simulation setup and equilibration process.
 
+.. _OpenGL visualizer:
+
+OpenGL visualizer
+-----------------
+
 .. _General usage:
 
 General usage
--------------
+~~~~~~~~~~~~~
 
 The recommended usage is to instantiate the visualizer and pass it the
-:class:`espressomd.System() <espressomd.system.System>` object. Then write
+:class:`~espressomd.system.System` object. Then write
 your integration loop in a separate function, which is started in a
 non-blocking thread. Whenever needed, call ``update()`` to synchronize
 the renderer with your system. Finally start the blocking visualization
@@ -50,7 +55,7 @@ window with ``start()``. See the following minimal code example::
 .. _Setting up the visualizer:
 
 Setting up the visualizer
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`espressomd.visualization.openGLLive()`
 
@@ -80,7 +85,6 @@ live plotting (see sample script :file:`/samples/visualization_ljliquid.py`).
   `OpenGL Extrusion library` on your system. Typically, the library will be available through the
   default package manager of your operating system. On Ubuntu the required package is called ``libgle3-dev``,
   on Fedora ``libgle`` -- just to name two examples.
-
 
 .. _Running the visualizer:
 
@@ -292,6 +296,79 @@ With the keyword ``drag_enabled`` set to ``True``, the mouse can be used to
 exert a force on particles in drag direction (scaled by ``drag_force`` and the
 distance of particle and mouse cursor).
 
+.. _ZnDraw:
+
+ZnDraw visualizer
+-----------------
+
+|es| supports the ZnDraw visualizer :cite:`elijosius24a` in Jupyter Notebooks.
+With ZnDraw [1]_, you can visualize your simulation live in a notebook or
+web browser. The visualizer is based on ``THREE.js``.
+
+.. _ZnDraw General usage:
+
+General usage
+~~~~~~~~~~~~~
+
+The recommended usage is to instantiate the visualizer :class:`espressomd.zn.Visualizer` and pass it the :class:`~espressomd.system.System` object.
+With the initialization you can also assign all particle types a color and radii through a type mapping. There are standard
+colors like ``red``, ``black`` etc., but one can also use hex colors like ``#ff0000``. The radii can be set to a float value.
+Then write your integration loop in a separate function, and call the update function of the visualizer to capture
+the current state of the system and visualize it. Note that the visualizer needs to be started by pressing space.
+
+Example code::
+
+    import espressomd
+    import espressomd.zn
+
+    system = espressomd.System(box_l=[10, 10, 10])
+    system.cell_system.skin = 0.4
+    system.time_step = 0.001
+
+    system.part.add(pos=[1, 1, 1], v=[1, 0, 0])
+    system.part.add(pos=[9, 9, 9], v=[0, 1, 0])
+
+    vis = espressomd.zn.Visualizer(system, colors={0: "red"}, radii={0: 0.5})
+
+    for i in range(1000):
+        system.integrator.run(25)
+        vis.update()
+
+The visualizer supports further features like bonds, constraints, folding and lattice-Boltzmann solvers. The particle coordinates
+can be folded by initalizing the visualizer with the keyword ``folded=True``. The display of bonds can be enabled by setting
+``bonds=True``.
+
+Constraints can be drawn using the :meth:`~espressomd.zn.Visualizer.draw_constraints` method.
+The method takes a list of all ESPResSo shapes that should be drawn as an argument.
+
+Furthermore the visualizer supports the visualization of the lattice-Boltzmann solver. The lattice-Boltzmann solver can be visualized
+by setting the keyword ``vector_field`` to a lattice-Boltzmann solver :class:`~espressomd.zn.LBField` object, which has to be created
+before initializing the visualizer and takes in several parameters like the node spacing, node offset and scale. One can also apply a
+color map to the vector field by setting the keyword ``arrow_config`` to a dictionary containing the arrow settings.
+
+The arrow config contains a ``colormap`` using a list of 2 HSL-color values from which vector colors are interpolated using their length
+as a criterium. The ``normalize`` boolean which normalizes the color to the largest vector. The ``colorrange`` list which is only used when
+``normalize`` is false and describes the range to what the colorrange is applied to. ``scale_vector_thickness`` is a boolean and changes
+the thickness scaling of the vectors and ``opacity`` is a float value that sets the opacity of the vectors.
+
+An example code snippet containing the :class:`~espressomd.zn.LBField` object::
+
+    import espressomd.zn
+
+    color = {0: "#00f0f0"}
+    radii = {0: 0.5}
+    arrows_config = {'colormap': [[-0.5, 0.9, 0.5], [-0.0, 0.9, 0.5]],
+                     'normalize': True,
+                     'colorrange': [0, 1],
+                     'scale_vector_thickness': True,
+                     'opacity': 1.0}
+
+    lbfield = espressomd.zn.LBField(system, step_x=2, step_y=2, step_z=5, scale=1)
+    vis = espressomd.zn.Visualizer(system, colors=color, radii=radii, folded=True,
+                                   vector_field=lbfield)
+
+    vis.draw_constraints([wall1, wall2])
+
 .. _Visualization example scripts:
 
 Visualization example scripts
@@ -299,3 +376,8 @@ Visualization example scripts
 
 Various :ref:`Sample Scripts` can be found in :file:`/samples/visualization_*.py`
 or in the :ref:`Tutorials` "Visualization" and "Charged Systems".
+
+____
+
+.. [1]
+    https://github.com/zincware/ZnDraw

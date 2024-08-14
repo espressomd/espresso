@@ -248,19 +248,6 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
   }
 }
 
-#ifdef P3M_GPU_REAL_DOUBLE
-__device__ double atomicAdd(double *address, double val) {
-  unsigned long long int *address_as_ull = (unsigned long long int *)address;
-  unsigned long long int old = *address_as_ull, assumed;
-  do {
-    assumed = old;
-    old = atomicCAS(address_as_ull, assumed,
-                    __double_as_longlong(val + __longlong_as_double(assumed)));
-  } while (assumed != old);
-  return __longlong_as_double(old);
-}
-#endif
-
 namespace {
 __device__ inline auto linear_index_r(P3MGpuData const &p, int i, int j,
                                       int k) {
@@ -376,14 +363,14 @@ __global__ void assign_charge_kernel(P3MGpuData const params,
     auto const c = weights[3u * offset + 3u * cao_id_x] *
                    weights[3u * offset + 3u * threadIdx.y + 1u] *
                    weights[3u * offset + 3u * threadIdx.z + 2u] * part_q[id];
-    atomicAdd(&(charge_mesh[index]), c);
+    atomicAdd(&(charge_mesh[index]), REAL_TYPE(c));
 
   } else {
     auto const c =
         Utils::bspline<cao>(static_cast<int>(cao_id_x), m_pos[0]) * part_q[id] *
         Utils::bspline<cao>(static_cast<int>(threadIdx.y), m_pos[1]) *
         Utils::bspline<cao>(static_cast<int>(threadIdx.z), m_pos[2]);
-    atomicAdd(&(charge_mesh[index]), c);
+    atomicAdd(&(charge_mesh[index]), REAL_TYPE(c));
   }
 }
 
@@ -473,7 +460,7 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
 
   extern __shared__ float weights[];
 
-  REAL_TYPE c;
+  REAL_TYPE c = -prefactor * part_q[id];
   if (shared) {
     auto const offset = static_cast<unsigned int>(cao) * part_in_block;
     if ((threadIdx.y < 3u) && (threadIdx.z == 0u)) {
@@ -483,23 +470,23 @@ __global__ void assign_forces_kernel(P3MGpuData const params,
 
     __syncthreads();
 
-    c = -prefactor * weights[3u * offset + 3u * cao_id_x] *
-        weights[3u * offset + 3u * threadIdx.y + 1u] *
-        weights[3u * offset + 3u * threadIdx.z + 2u] * part_q[id];
+    c *= REAL_TYPE(weights[3u * offset + 3u * cao_id_x] *
+                   weights[3u * offset + 3u * threadIdx.y + 1u] *
+                   weights[3u * offset + 3u * threadIdx.z + 2u]);
   } else {
-    c = -prefactor * part_q[id] *
-        Utils::bspline<cao>(static_cast<int>(cao_id_x), m_pos[0]) *
-        Utils::bspline<cao>(static_cast<int>(threadIdx.y), m_pos[1]) *
-        Utils::bspline<cao>(static_cast<int>(threadIdx.z), m_pos[2]);
+    c *=
+        REAL_TYPE(Utils::bspline<cao>(static_cast<int>(cao_id_x), m_pos[0]) *
+                  Utils::bspline<cao>(static_cast<int>(threadIdx.y), m_pos[1]) *
+                  Utils::bspline<cao>(static_cast<int>(threadIdx.z), m_pos[2]));
   }
 
   const REAL_TYPE *force_mesh_x = (REAL_TYPE *)params.force_mesh_x;
   const REAL_TYPE *force_mesh_y = (REAL_TYPE *)params.force_mesh_y;
   const REAL_TYPE *force_mesh_z = (REAL_TYPE *)params.force_mesh_z;
 
-  atomicAdd(&(part_f[3u * id + 0u]), c * force_mesh_x[index]);
-  atomicAdd(&(part_f[3u * id + 1u]), c * force_mesh_y[index]);
-  atomicAdd(&(part_f[3u * id + 2u]), c * force_mesh_z[index]);
+  atomicAdd(&(part_f[3u * id + 0u]), float(c * force_mesh_x[index]));
+  atomicAdd(&(part_f[3u * id + 1u]), float(c * force_mesh_y[index]));
+  atomicAdd(&(part_f[3u * id + 2u]), float(c * force_mesh_z[index]));
 }
 
 void assign_forces(P3MGpuData const &params,

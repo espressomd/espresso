@@ -26,9 +26,7 @@
 #include "electrostatics/elc.hpp"
 
 #include "electrostatics/coulomb.hpp"
-#include "electrostatics/mmm-common.hpp"
 #include "electrostatics/p3m.hpp"
-#include "electrostatics/p3m_gpu.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
@@ -1108,39 +1106,34 @@ ElectrostaticLayerCorrection::ElectrostaticLayerCorrection(
   adapt_solver();
 }
 
-static void p3m_assign_image_charge(elc_data const &elc, CoulombP3M &p3m,
-                                    double q, Utils::Vector3d const &pos) {
-  if (pos[2] < elc.space_layer) {
-    auto const q_eff = elc.delta_mid_bot * q;
-    p3m.assign_charge(q_eff, {pos[0], pos[1], -pos[2]});
-  }
-  if (pos[2] > (elc.box_h - elc.space_layer)) {
-    auto const q_eff = elc.delta_mid_top * q;
-    p3m.assign_charge(q_eff, {pos[0], pos[1], 2. * elc.box_h - pos[2]});
-  }
-}
-
 template <ChargeProtocol protocol, typename combined_ranges>
 void charge_assign(elc_data const &elc, CoulombP3M &solver,
                    combined_ranges const &p_q_pos_range) {
-  if (protocol == ChargeProtocol::BOTH or protocol == ChargeProtocol::IMAGE) {
-    solver.p3m.inter_weights.reset(solver.p3m.params.cao);
-  }
-  /* prepare local FFT mesh */
-  for (int i = 0; i < solver.p3m.local_mesh.size; i++)
-    solver.p3m.mesh.rs_scalar[i] = 0.;
+
+  solver.prepare_fft_mesh(protocol == ChargeProtocol::BOTH or
+                          protocol == ChargeProtocol::IMAGE);
 
   for (auto zipped : p_q_pos_range) {
     auto const p_q = boost::get<0>(zipped);
     auto const &p_pos = boost::get<1>(zipped);
     if (p_q != 0.) {
+      // assign real charges
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {
-        solver.assign_charge(p_q, p_pos, solver.p3m.inter_weights);
+        solver.assign_charge(p_q, p_pos, false);
       }
+      // assign image charges
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::IMAGE) {
-        p3m_assign_image_charge(elc, solver, p_q, p_pos);
+        if (p_pos[2] < elc.space_layer) {
+          auto const q_eff = elc.delta_mid_bot * p_q;
+          solver.assign_charge(q_eff, {p_pos[0], p_pos[1], -p_pos[2]}, true);
+        }
+        if (p_pos[2] > (elc.box_h - elc.space_layer)) {
+          auto const q_eff = elc.delta_mid_top * p_q;
+          solver.assign_charge(
+              q_eff, {p_pos[0], p_pos[1], 2. * elc.box_h - p_pos[2]}, true);
+        }
       }
     }
   }
@@ -1150,7 +1143,9 @@ template <ChargeProtocol protocol, typename combined_range>
 void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver,
                      combined_range const &p_q_pos_range) {
 
-  Utils::Vector3d node_sums{};
+  auto local_n = 0;
+  auto local_q2 = 0.0;
+  auto local_q = 0.0;
   for (auto zipped : p_q_pos_range) {
     auto const p_q = boost::get<0>(zipped);
     auto const &p_pos = boost::get<1>(zipped);
@@ -1159,33 +1154,35 @@ void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver,
 
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::REAL) {
-        node_sums[0] += 1.;
-        node_sums[1] += Utils::sqr(p_q);
-        node_sums[2] += p_q;
+        local_n++;
+        local_q2 += Utils::sqr(p_q);
+        local_q += p_q;
       }
 
       if (protocol == ChargeProtocol::BOTH or
           protocol == ChargeProtocol::IMAGE) {
         if (p_z < elc.space_layer) {
-          node_sums[0] += 1.;
-          node_sums[1] += Utils::sqr(elc.delta_mid_bot * p_q);
-          node_sums[2] += elc.delta_mid_bot * p_q;
+          local_n++;
+          local_q2 += Utils::sqr(elc.delta_mid_bot * p_q);
+          local_q += elc.delta_mid_bot * p_q;
         }
 
         if (p_z > (elc.box_h - elc.space_layer)) {
-          node_sums[0] += 1.;
-          node_sums[1] += Utils::sqr(elc.delta_mid_top * p_q);
-          node_sums[2] += elc.delta_mid_top * p_q;
+          local_n++;
+          local_q2 += Utils::sqr(elc.delta_mid_top * p_q);
+          local_q += elc.delta_mid_top * p_q;
         }
       }
     }
   }
 
-  auto const tot_sums =
-      boost::mpi::all_reduce(comm_cart, node_sums, std::plus<>());
-  solver.p3m.sum_qpart = static_cast<int>(tot_sums[0] + 0.1);
-  solver.p3m.sum_q2 = tot_sums[1];
-  solver.p3m.square_sum_q = Utils::sqr(tot_sums[2]);
+  auto global_n = 0;
+  auto global_q2 = 0.;
+  auto global_q = 0.;
+  boost::mpi::all_reduce(comm_cart, local_n, global_n, std::plus<>());
+  boost::mpi::all_reduce(comm_cart, local_q2, global_q2, std::plus<>());
+  boost::mpi::all_reduce(comm_cart, local_q, global_q, std::plus<>());
+  solver.count_charged_particles_elc(global_n, global_q2, Utils::sqr(global_q));
 }
 
 double ElectrostaticLayerCorrection::long_range_energy(

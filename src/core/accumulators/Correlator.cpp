@@ -163,13 +163,12 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
   return C;
 }
 
-void Correlator::initialize() {
+void Correlator::initialize_operations() {
   // Class members are assigned via the initializer list
 
   if (m_tau_lin == 1) { // use the default
-    m_tau_lin = static_cast<int>(ceil(m_tau_max / m_dt));
-    if (m_tau_lin % 2)
-      m_tau_lin += 1;
+    m_tau_lin = static_cast<int>(std::ceil(m_tau_max / m_dt));
+    m_tau_lin += m_tau_lin % 2;
   }
 
   if (m_tau_lin < 2) {
@@ -187,8 +186,9 @@ void Correlator::initialize() {
   if ((m_tau_max / m_dt) < m_tau_lin) {
     m_hierarchy_depth = 1;
   } else {
-    m_hierarchy_depth = static_cast<int>(
-        ceil(1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0)));
+    auto const operand = (m_tau_max / m_dt) / double(m_tau_lin - 1);
+    assert(operand > 0.);
+    m_hierarchy_depth = static_cast<int>(std::ceil(1. + std::log2(operand)));
   }
 
   assert(A_obs);
@@ -224,12 +224,11 @@ void Correlator::initialize() {
   } else if (corr_operation_name == "fcs_acf") {
     // note: user provides w=(wx,wy,wz) but we want to use
     // wsquare=(wx^2,wy^2,wz^2)
-    if (m_correlation_args[0] <= 0 || m_correlation_args[1] <= 0 ||
-        m_correlation_args[2] <= 0) {
+    if (not(m_correlation_args_input > Utils::Vector3d::broadcast(0.))) {
       throw std::runtime_error("missing parameter for fcs_acf: w_x w_y w_z");
     }
-    m_correlation_args =
-        Utils::hadamard_product(m_correlation_args, m_correlation_args);
+    m_correlation_args = Utils::hadamard_product(m_correlation_args_input,
+                                                 m_correlation_args_input);
     if (dim_A % 3u)
       throw std::runtime_error("dimA must be divisible by 3 for fcs_acf");
     m_dim_corr = dim_A / 3u;
@@ -272,7 +271,9 @@ void Correlator::initialize() {
     throw std::invalid_argument("unknown compression method '" +
                                 compressB_name + "' for second observable");
   }
+}
 
+void Correlator::initialize_buffers() {
   using index_type = decltype(result)::index;
 
   A.resize(std::array<int, 2>{{m_hierarchy_depth, m_tau_lin + 1}});
@@ -536,7 +537,9 @@ std::string Correlator::get_internal_state() const {
   boost::archive::binary_oarchive oa(ss);
 
   oa << t;
+  oa << m_dt;
   oa << m_shape;
+  oa << m_correlation_args_input;
   oa << A;
   oa << B;
   oa << result;
@@ -557,7 +560,9 @@ void Correlator::set_internal_state(std::string const &state) {
   boost::archive::binary_iarchive ia(ss);
 
   ia >> t;
+  ia >> m_dt;
   ia >> m_shape;
+  ia >> m_correlation_args_input;
   ia >> A;
   ia >> B;
   ia >> result;
@@ -567,6 +572,8 @@ void Correlator::set_internal_state(std::string const &state) {
   ia >> A_accumulated_average;
   ia >> B_accumulated_average;
   ia >> n_data;
+  initialize_operations();
+  m_system = nullptr;
 }
 
 } // namespace Accumulators

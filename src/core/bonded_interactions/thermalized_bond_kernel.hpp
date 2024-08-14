@@ -25,7 +25,6 @@
 
 #include "Particle.hpp"
 #include "random.hpp"
-#include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
@@ -54,8 +53,9 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
   auto const sqrt_mass_red = sqrt(p1.mass() * p2.mass() / mass_tot);
   auto const com_vel = mass_tot_inv * (p1.mass() * p1.v() + p2.mass() * p2.v());
   auto const dist_vel = p2.v() - p1.v();
-  auto const &thermalized_bond =
-      *::System::get_system().thermostat->thermalized_bond;
+  auto const thermostat_view = m_thermostat.lock();
+  assert(thermostat_view);
+  auto const &thermalized_bond = *thermostat_view->thermalized_bond;
 
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};

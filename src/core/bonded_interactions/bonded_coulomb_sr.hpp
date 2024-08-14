@@ -57,13 +57,6 @@ struct BondedCoulombSR {
          std::function<double(Particle const &, Particle const &, double,
                               Utils::Vector3d const &, double)> const &kernel)
       const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & q1q2;
-  }
 };
 
 /** Compute the short-range bonded Coulomb pair force.

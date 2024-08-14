@@ -104,17 +104,19 @@ static bool calculate_positional_correction(RigidBond const &ia_params,
  *
  * @param cs cell structure
  * @param box_geo Box geometry
+ * @param bonded_ias Bonded interactions
  * @param kernel kernel function
  * @return True if correction is necessary
  */
 template <typename Kernel>
 static bool compute_correction_vector(CellStructure &cs,
                                       BoxGeometry const &box_geo,
+                                      BondedInteractionsMap const &bonded_ias,
                                       Kernel kernel) {
   bool correction = false;
-  cs.bond_loop([&correction, &kernel, &box_geo](
+  cs.bond_loop([&correction, &kernel, &box_geo, &bonded_ias](
                    Particle &p1, int bond_id, std::span<Particle *> partners) {
-    auto const &iaparams = *bonded_ia_params.at(bond_id);
+    auto const &iaparams = *bonded_ias.at(bond_id);
 
     if (auto const *bond = boost::get<RigidBond>(&iaparams)) {
       auto const corrected = kernel(*bond, box_geo, p1, *partners[0]);
@@ -141,7 +143,8 @@ static void apply_positional_correction(const ParticleRange &particles) {
   });
 }
 
-void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo) {
+void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
+                            BondedInteractionsMap const &bonded_ias) {
   unsigned const flag = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
   cs.update_ghosts_and_resort_particle(flag);
 
@@ -151,8 +154,8 @@ void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo) {
   int cnt;
   for (cnt = 0; cnt < SHAKE_MAX_ITERATIONS; ++cnt) {
     init_correction_vector(particles, ghost_particles);
-    bool const repeat_ =
-        compute_correction_vector(cs, box_geo, calculate_positional_correction);
+    bool const repeat_ = compute_correction_vector(
+        cs, box_geo, bonded_ias, calculate_positional_correction);
     bool const repeat =
         boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
 
@@ -218,7 +221,8 @@ static void apply_velocity_correction(ParticleRange const &particles) {
                   [](Particle &p) { p.v() += p.rattle_params().correction; });
 }
 
-void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo) {
+void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo,
+                            BondedInteractionsMap const &bonded_ias) {
   cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
   auto particles = cs.local_particles();
@@ -227,8 +231,8 @@ void correct_velocity_shake(CellStructure &cs, BoxGeometry const &box_geo) {
   int cnt;
   for (cnt = 0; cnt < SHAKE_MAX_ITERATIONS; ++cnt) {
     init_correction_vector(particles, ghost_particles);
-    bool const repeat_ =
-        compute_correction_vector(cs, box_geo, calculate_velocity_correction);
+    bool const repeat_ = compute_correction_vector(
+        cs, box_geo, bonded_ias, calculate_velocity_correction);
     bool const repeat =
         boost::mpi::all_reduce(comm_cart, repeat_, std::logical_or<bool>());
 

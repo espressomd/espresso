@@ -47,8 +47,9 @@ public:
 private:
   std::shared_ptr<::BondBreakage::BondBreakage> m_bond_breakage;
 
-  void before_do_construct() override {
+  void do_construct(VariantMap const &params) override {
     m_bond_breakage = std::make_shared<::BondBreakage::BondBreakage>();
+    restore_from_checkpoint(params);
   }
 
   void on_bind_system(::System::System &system) override {

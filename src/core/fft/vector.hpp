@@ -24,43 +24,29 @@
 #include <cstddef>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 namespace fft {
-namespace detail {
-void fft_free(void *p);
-void *fft_malloc(std::size_t length);
-} // namespace detail
 
 /** @brief Aligned allocator for FFT data. */
-template <class T> struct allocator {
-  typedef T value_type;
+template <class FloatType> struct allocator {
+  static_assert(std::is_same_v<FloatType, float> or
+                    std::is_same_v<FloatType, double>,
+                "FFTW only implements float and double");
+  typedef FloatType value_type;
   allocator() noexcept = default; // default ctor not required
-  template <class U> explicit allocator(const allocator<U> &) {}
-  template <class U> bool operator==(const allocator<U> &) const {
+  template <class U> explicit allocator(allocator<U> const &) {}
+  template <class U> bool operator==(allocator<U> const &) const {
     return true;
   }
-  template <class U> bool operator!=(const allocator<U> &) const {
+  template <class U> bool operator!=(allocator<U> const &) const {
     return false;
   }
 
-  T *allocate(const std::size_t n) const {
-    if (n == 0) {
-      return nullptr;
-    }
-    if (n > std::numeric_limits<std::size_t>::max() / sizeof(T)) {
-      throw std::bad_array_new_length();
-    }
-    void *const pv = detail::fft_malloc(n * sizeof(T));
-    if (!pv) {
-      throw std::bad_alloc();
-    }
-    return static_cast<T *>(pv);
-  }
+  FloatType *allocate(std::size_t n) const;
 
-  void deallocate(T *const p, std::size_t) const noexcept {
-    detail::fft_free(static_cast<void *>(p));
-  }
+  void deallocate(FloatType *p, std::size_t) const noexcept;
 };
 
 template <class T> using vector = std::vector<T, allocator<T>>;

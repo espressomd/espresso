@@ -47,13 +47,6 @@ struct BondedCoulomb {
   std::optional<Utils::Vector3d> force(double q1q2,
                                        Utils::Vector3d const &dx) const;
   std::optional<double> energy(double q1q2, Utils::Vector3d const &dx) const;
-
-private:
-  friend boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar, long int /* version */) {
-    ar & prefactor;
-  }
 };
 
 /** Compute the bonded Coulomb pair force.

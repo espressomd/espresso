@@ -69,12 +69,14 @@
  *  @param ia_params  the interaction parameters between the two particles
  *  @param d          vector between p1 and p2.
  *  @param dist       distance between p1 and p2.
+ *  @param bonded_ias       bonded interaction kernels.
  *  @param coulomb_kernel   Coulomb energy kernel.
  *  @return the short-range interaction energy between the two particles
  */
 inline double calc_non_bonded_pair_energy(
     Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
     Utils::Vector3d const &d, double const dist,
+    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
     Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel) {
 
   double ret = 0;
@@ -83,6 +85,7 @@ inline double calc_non_bonded_pair_energy(
   /* Lennard-Jones */
   ret += lj_pair_energy(ia_params, dist);
 #endif
+
 #ifdef WCA
   /* WCA */
   ret += wca_pair_energy(ia_params, dist);
@@ -140,7 +143,8 @@ inline double calc_non_bonded_pair_energy(
 
 #ifdef THOLE
   /* Thole damping */
-  ret += thole_pair_energy(p1, p2, ia_params, d, dist, coulomb_kernel);
+  ret +=
+      thole_pair_energy(p1, p2, ia_params, d, dist, bonded_ias, coulomb_kernel);
 #endif
 
 #ifdef TABULATED
@@ -163,12 +167,13 @@ inline double calc_non_bonded_pair_energy(
 
 /** Add non-bonded and short-range Coulomb energies between a pair of particles
  *  to the energy observable.
- *  @param p1        particle 1.
- *  @param p2        particle 2.
- *  @param d         vector between p1 and p2.
- *  @param dist      distance between p1 and p2.
- *  @param dist2     distance squared between p1 and p2.
+ *  @param[in] p1        particle 1.
+ *  @param[in] p2        particle 2.
+ *  @param[in] d         vector between p1 and p2.
+ *  @param[in] dist      distance between p1 and p2.
+ *  @param[in] dist2     distance squared between p1 and p2.
  *  @param[in] ia_params        non-bonded interaction kernels.
+ *  @param[in] bonded_ias       bonded interaction kernels.
  *  @param[in] coulomb_kernel   Coulomb energy kernel.
  *  @param[in] dipoles_kernel   Dipolar energy kernel.
  *  @param[in,out] obs_energy   energy observable.
@@ -176,6 +181,7 @@ inline double calc_non_bonded_pair_energy(
 inline void add_non_bonded_pair_energy(
     Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
     double const dist, double const dist2, IA_parameters const &ia_params,
+    [[maybe_unused]] BondedInteractionsMap const &bonded_ias,
     Coulomb::ShortRangeEnergyKernel::kernel_type const *coulomb_kernel,
     Dipoles::ShortRangeEnergyKernel::kernel_type const *dipoles_kernel,
     Observable_stat &obs_energy) {
@@ -185,7 +191,7 @@ inline void add_non_bonded_pair_energy(
 #endif
     obs_energy.add_non_bonded_contribution(
         p1.type(), p2.type(), p1.mol_id(), p2.mol_id(),
-        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist,
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, bonded_ias,
                                     coulomb_kernel));
 
 #ifdef ELECTROSTATICS

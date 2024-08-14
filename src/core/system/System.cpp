@@ -25,6 +25,7 @@
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "PropagationMode.hpp"
+#include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -32,10 +33,8 @@
 #include "cell_system/HybridDecomposition.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
-#include "immersed_boundaries.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "thermostat.hpp"
@@ -68,12 +67,21 @@ System::System(Private) {
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
   propagation = std::make_shared<Propagation>();
+  bonded_ias = std::make_shared<BondedInteractionsMap>();
   thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
   galilei = std::make_shared<Galilei>();
+  oif_global = std::make_shared<OifGlobal>();
+  immersed_boundaries = std::make_shared<ImmersedBoundaries>();
+#ifdef COLLISION_DETECTION
+  collision_detection = std::make_shared<CollisionDetection>();
+#endif
   bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
   lees_edwards = std::make_shared<LeesEdwards::LeesEdwards>();
+  auto_update_accumulators =
+      std::make_shared<Accumulators::AutoUpdateAccumulators>();
+  constraints = std::make_shared<Constraints::Constraints>();
   reinit_thermo = true;
   time_step = -1.;
   sim_time = 0.;
@@ -85,7 +93,17 @@ void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
+  immersed_boundaries->bind_system(handle);
+  bonded_ias->bind_system(handle);
   thermostat->bind_system(handle);
+  nonbonded_ias->bind_system(handle);
+  oif_global->bind_system(handle);
+  immersed_boundaries->bind_system(handle);
+#ifdef COLLISION_DETECTION
+  collision_detection->bind_system(handle);
+#endif
+  auto_update_accumulators->bind_system(handle);
+  constraints->bind_system(handle);
 #ifdef CUDA
   gpu.bind_system(handle);
   gpu.initialize();
@@ -93,8 +111,6 @@ void System::initialize() {
   lb.bind_system(handle);
   ek.bind_system(handle);
 }
-
-bool is_system_set() { return instance != nullptr; }
 
 void reset_system() { instance.reset(); }
 
@@ -181,7 +197,7 @@ void System::on_boxl_change(bool skip_method_adaption) {
     dipoles.on_boxl_change();
 #endif
   }
-  Constraints::constraints.on_boxl_change();
+  constraints->on_boxl_change();
 }
 
 void System::veto_boxl_change(bool skip_particle_checks) const {
@@ -193,7 +209,7 @@ void System::veto_boxl_change(bool skip_particle_checks) const {
           "Cannot reset the box length when particles are present");
     }
   }
-  Constraints::constraints.veto_boxl_change();
+  constraints->veto_boxl_change();
   lb.veto_boxl_change();
   ek.veto_boxl_change();
 }
@@ -341,7 +357,7 @@ void System::update_dependent_particles() {
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
-  ::immersed_boundaries.init_volume_conservation(*cell_structure);
+  immersed_boundaries->init_volume_conservation(*cell_structure);
 }
 
 void System::on_observable_calc() {
@@ -379,11 +395,13 @@ double System::maximal_cutoff() const {
   if (::communicator.size > 1) {
     // If there is just one node, the bonded cutoff can be omitted
     // because bond partners are always on the local node.
-    max_cut = std::max(max_cut, maximal_cutoff_bonded());
+    max_cut = std::max(max_cut, bonded_ias->maximal_cutoff());
   }
   max_cut = std::max(max_cut, nonbonded_ias->maximal_cutoff());
 
-  max_cut = std::max(max_cut, collision_detection_cutoff());
+#ifdef COLLISION_DETECTION
+  max_cut = std::max(max_cut, collision_detection->cutoff());
+#endif
   return max_cut;
 }
 
@@ -485,7 +503,7 @@ unsigned System::get_global_ghost_flags() const {
   }
 
 #ifdef COLLISION_DETECTION
-  if (::collision_params.mode != CollisionModeType::OFF) {
+  if (collision_detection->mode != CollisionModeType::OFF) {
     data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif
