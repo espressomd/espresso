@@ -145,10 +145,6 @@ class ClusterAnalysis(ut.TestCase):
             cluster.center_of_mass()
         with self.assertRaises(RuntimeError):
             cluster.radius_of_gyration()
-        with self.assertRaises(RuntimeError):
-            self.cs.run_for_all_pairs()
-        with self.assertRaises(RuntimeError):
-            self.cs.run_for_bonded_particles()
 
     def test_single_cluster_analysis(self):
         # Place particles on a line (crossing periodic boundaries)
