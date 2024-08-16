@@ -303,7 +303,7 @@ ZnDraw visualizer
 
 |es| supports the ZnDraw visualizer :cite:`elijosius24a` in Jupyter Notebooks.
 With ZnDraw [1]_, you can visualize your simulation live in a notebook or
-web browser. The visualizer is based on ``THREE.js``.
+web browser.
 
 .. _ZnDraw General usage:
 
@@ -315,6 +315,9 @@ With the initialization you can also assign all particle types a color and radii
 colors like ``red``, ``black`` etc., but one can also use hex colors like ``#ff0000``. The radii can be set to a float value.
 Then write your integration loop in a separate function, and call the update function of the visualizer to capture
 the current state of the system and visualize it. Note that the visualizer needs to be started by pressing space.
+
+Note that due to the need of a server running in the background, the visualizer is currently not able to run in multiple notebooks at once.
+Make sure only one kernel is running the visualizer at a time.
 
 Example code::
 
@@ -350,6 +353,10 @@ The arrow config contains a ``colormap`` using a list of 2 HSL-color values from
 as a criterium. The ``normalize`` boolean which normalizes the color to the largest vector. The ``colorrange`` list which is only used when
 ``normalize`` is false and describes the range to what the colorrange is applied to. ``scale_vector_thickness`` is a boolean and changes
 the thickness scaling of the vectors and ``opacity`` is a float value that sets the opacity of the vectors.
+
+The ``ZnDraw``-object used for visualization is wrapped inside the visualizer object and is exposed by the attribute ``vis.zndraw``.
+
+When the ``jupyter`` visualization-window comes up as a blank page, make sure to allow third party cookies in your browser settings.
 
 An example code snippet containing the :class:`~espressomd.zn.LBField` object::
 

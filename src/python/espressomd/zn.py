@@ -29,6 +29,7 @@ import secrets
 import time
 import urllib.parse
 import typing as t
+import scipy.spatial.transform
 
 
 # Standard colors
@@ -417,10 +418,13 @@ class Visualizer():
 
     """
 
+    SERVER_PORT = None
+    SOCKET_PORT = None
+
     def __init__(self,
                  system: espressomd.system.System = None,
                  port: int = 1234,
-                 token: str = secrets.token_hex(4),
+                 token: str = None,
                  folded: bool = True,
                  colors: dict = None,
                  radii: dict = None,
@@ -440,13 +444,18 @@ class Visualizer():
 
         self.url = "http://127.0.0.1"
         self.frame_count = 0
-        self.port = port
-        self.token = token
+        if token is None:
+            self.token = secrets.token_hex(4)
+        else:
+            self.token = token
 
         # A server is started in a subprocess, and we have to wait for it
-        print("Starting ZnDraw server, this may take a few seconds")
-        self._start_server()
-        time.sleep(10)
+        if self.SERVER_PORT is None:
+            print("Starting ZnDraw server, this may take a few seconds")
+            self.port = port
+            self._start_server()
+            time.sleep(10)
+
         self._start_zndraw()
         time.sleep(1)
 
@@ -470,15 +479,17 @@ class Visualizer():
         if jupyter:
             self._show_jupyter()
         else:
-            # Problems with server being terminated at the end of the script
-            raise NotImplementedError("Only Jupyter is supported for now")
-            # webbrowser.open_new_tab(self.address)
+            raise NotImplementedError(
+                "Only Jupyter notebook is supported at the moment")
 
     def _start_server(self):
         """
         Start the ZnDraw server through a subprocess
         """
         self.socket_port = zndraw.utils.get_port(default=6374)
+
+        Visualizer.SERVER_PORT = self.port
+        Visualizer.SOCKET_PORT = self.socket_port
 
         self.server = subprocess.Popen(["zndraw", "--no-browser", f"--port={self.port}", f"--storage-port={self.socket_port}"],
                                        stdout=subprocess.DEVNULL,
@@ -500,12 +511,12 @@ class Visualizer():
         while True:
             try:
                 self.r = znsocket.Client(
-                    address=f"{self.url}:{self.socket_port}")
+                    address=f"{self.url}:{self.SOCKET_PORT}")
                 break
             except BaseException:
                 time.sleep(0.5)
 
-        url = f"{self.url}:{self.port}"
+        url = f"{self.url}:{self.SERVER_PORT}"
         self.zndraw = zndraw.zndraw.ZnDrawLocal(
             r=self.r, url=url, token=self.token, timeout=config)
         parsed_url = urllib.parse.urlparse(
@@ -532,16 +543,28 @@ class Visualizer():
         )
 
         # Catch when the server is initializing an empty frame
-        if self.frame_count == 0 and len(self.zndraw) > 0:
-            self.zndraw.__setitem__(0, data)
-        else:
+        # len(self.zndraw) is a expensive socket call, so we try to avoid it
+        if self.frame_count != 0 or len(self.zndraw) == 0:
             self.zndraw.append(data)
+        else:
+            self.zndraw.__setitem__(0, data)
 
-        if self.params["vector_field"] is not None and self.frame_count == 0:
+        if self.frame_count == 0:
             self.zndraw.socket.sleep(1)
 
-            for key, value in self.arrow_config.items():
-                setattr(self.zndraw.config.arrows, key, value)
+            x = self.system.box_l[0] / 2
+            y = self.system.box_l[1] / 2
+            z = self.system.box_l[2] / 2
+
+            z_dist = max([1.5 * y, 1.5 * x, 1.5 * z])
+
+            self.zndraw.camera = {'position': [
+                x, y, z_dist], 'target': [x, y, z]}
+            self.zndraw.config.scene.frame_update = False
+
+            if self.params["vector_field"] is not None:
+                for key, value in self.arrow_config.items():
+                    setattr(self.zndraw.config.arrows, key, value)
 
         self.frame_count += 1
 
@@ -580,18 +603,40 @@ class Visualizer():
                 dist = shape.dist
                 normal = np.array(shape.normal)
 
-                rotation_angles = zndraw.utils.direction_to_euler(normal)
+                position = dist * normal
+                helper = WallIntersection(
+                    plane_normal=normal, plane_point=position, box_l=self.system.box_l)
+                corners = helper.get_intersections()
 
-                position = (dist * normal).tolist()
-                # Not optimal, but ensures its always larger than the box.
-                wall_width = wall_height = 2 * max(self.system.box_l)
+                base_position = np.copy(corners[0])
+                corners -= base_position
 
-                objects.append(zndraw.draw.Plane(
-                    position=position,
-                    rotation=rotation_angles,
-                    width=wall_width,
-                    height=wall_height,
-                    material=mat))
+                # Rotate plane to align with z-axis, Custom2DShape only works
+                # in the xy-plane
+                unit_z = np.array([0, 0, 1])
+                r, _ = scipy.spatial.transform.Rotation.align_vectors(
+                    [unit_z], [normal])
+                rotated_corners = r.apply(corners)
+
+                # Sort corners in a clockwise order, except the first corner
+                angles = np.arctan2(
+                    rotated_corners[1:, 1], rotated_corners[1:, 0])
+                sorted_indices = np.argsort(angles)
+                sorted_corners = rotated_corners[1:][sorted_indices]
+                sorted_corners = np.vstack(
+                    [rotated_corners[0], sorted_corners])[:, :2]
+
+                r, _ = scipy.spatial.transform.Rotation.align_vectors(
+                    [normal], [unit_z])
+                euler_angles = r.as_euler("xyz")
+
+                # invert the z-axis, unsure why this is needed, maybe
+                # different coordinate systems
+                euler_angles[2] *= -1.
+
+                objects.append(zndraw.draw.Custom2DShape(
+                    position=base_position, rotation=euler_angles,
+                    points=sorted_corners, material=mat))
 
             elif shape_type == "Sphere":
                 center = shape.center
@@ -621,4 +666,64 @@ class Visualizer():
                 raise NotImplementedError(
                     f"Shape of type {shape_type} isn't available in ZnDraw")
 
-        self.zndraw.geometries = objects
+            self.zndraw.geometries = objects
+
+
+class WallIntersection:
+    """
+    Simple helper to calculate all Box edges that intersect with a plane.
+    """
+
+    def __init__(self, plane_point, plane_normal, box_l):
+        self.plane_point = plane_point
+        self.plane_normal = plane_normal / np.linalg.norm(plane_normal)
+        self.box_l = box_l
+
+        # Create 8 vertices of the bounding box
+        self.vertices = np.array([
+            [0, 0, 0],
+            [0, 0, box_l[2]],
+            [0, box_l[1], 0],
+            [0, box_l[1], box_l[2]],
+            [box_l[0], 0, 0],
+            [box_l[0], 0, box_l[2]],
+            [box_l[0], box_l[1], 0],
+            [box_l[0], box_l[1], box_l[2]]
+        ])
+
+        self.edges = [
+            (self.vertices[0], self.vertices[1]),
+            (self.vertices[0], self.vertices[2]),
+            (self.vertices[0], self.vertices[4]),
+            (self.vertices[1], self.vertices[3]),
+            (self.vertices[1], self.vertices[5]),
+            (self.vertices[2], self.vertices[3]),
+            (self.vertices[2], self.vertices[6]),
+            (self.vertices[3], self.vertices[7]),
+            (self.vertices[4], self.vertices[5]),
+            (self.vertices[4], self.vertices[6]),
+            (self.vertices[5], self.vertices[7]),
+            (self.vertices[6], self.vertices[7])
+        ]
+
+    def plane_intersection_with_line(self, line_point1, line_point2):
+        # Calculate the intersection point of a line and a plane
+        line_dir = line_point2 - line_point1
+        denom = np.dot(self.plane_normal, line_dir)
+
+        if np.abs(denom) > 1e-6:  # Avoid division by zero
+            t = np.dot(self.plane_normal,
+                       (self.plane_point - line_point1)) / denom
+            if 0 <= t <= 1:
+                return line_point1 + t * line_dir
+        return None
+
+    def get_intersections(self):
+        intersections = []
+
+        for edge in self.edges:
+            intersection = self.plane_intersection_with_line(edge[0], edge[1])
+            if intersection is not None:
+                intersections.append(intersection)
+
+        return np.array(intersections)
