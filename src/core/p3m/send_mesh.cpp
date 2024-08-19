@@ -25,6 +25,7 @@
 
 #include "fft/fft.hpp"
 #include "p3m/common.hpp"
+#include "p3m/packing.hpp"
 #include "p3m/send_mesh.hpp"
 
 #include <utils/Vector.hpp>
@@ -174,8 +175,8 @@ void p3m_send_mesh<FloatType>::gather_grid(boost::mpi::communicator const &comm,
     /* pack send block */
     if (s_size[s_dir] > 0) {
       for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft::fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
-                            s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
+        fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
+                       s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }
     }
 
@@ -214,8 +215,8 @@ void p3m_send_mesh<FloatType>::spread_grid(boost::mpi::communicator const &comm,
     /* pack send block */
     if (r_size[r_dir] > 0) {
       for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft::fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
-                            r_ld[r_dir], r_dim[r_dir], dim.data(), 1);
+        fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
+                       r_ld[r_dir], r_dim[r_dir], dim.data(), 1);
       }
     }
     /* communication */
@@ -231,8 +232,8 @@ void p3m_send_mesh<FloatType>::spread_grid(boost::mpi::communicator const &comm,
     /* unpack recv block */
     if (s_size[s_dir] > 0) {
       for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft::fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
-                              s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
+        fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
+                         s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
       }
     }
   }

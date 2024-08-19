@@ -211,43 +211,6 @@ private:
                       FloatType const *in, FloatType *out);
 };
 
-/** Pack a block (<tt>size[3]</tt> starting at <tt>start[3]</tt>) of an input
- *  3d-grid with dimension <tt>dim[3]</tt> into an output 3d-block with
- *  dimension <tt>size[3]</tt>.
- *
- *  The block with dimensions <tt>(size[0], size[1], size[2])</tt> is stored
- *  in 'row-major-order' or 'C-order', that means the first index is
- *  changing slowest when running through the linear array. The
- *  element (@c i0 (slow), @c i1 (mid), @c i2 (fast)) has the linear index
- *  <tt>li = i2 + size[2] * (i1 + (size[1] * i0))</tt>.
- *
- *  \param[in]  in      pointer to input 3d-grid.
- *  \param[out] out     pointer to output 3d-grid (block).
- *  \param[in]  start   start index of the block in the in-grid.
- *  \param[in]  size    size of the block (=dimension of the out-grid).
- *  \param[in]  dim     size of the in-grid.
- *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
- */
-template <typename FloatType>
-void fft_pack_block(FloatType const *in, FloatType *out, int const start[3],
-                    int const size[3], int const dim[3], int element);
-
-/** Unpack a 3d-grid input block (<tt>size[3]</tt>) into an output 3d-grid
- *  with dimension <tt>dim[3]</tt> at start position <tt>start[3]</tt>.
- *
- *  see also \ref fft_pack_block.
- *
- *  \param[in]  in      pointer to input 3d-grid.
- *  \param[out] out     pointer to output 3d-grid (block).
- *  \param[in]  start   start index of the block in the in-grid.
- *  \param[in]  size    size of the block (=dimension of the out-grid).
- *  \param[in]  dim     size of the in-grid.
- *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
- */
-template <typename FloatType>
-void fft_unpack_block(FloatType const *in, FloatType *out, int const start[3],
-                      int const size[3], int const dim[3], int element);
-
 int map_3don2d_grid(int const g3d[3], int g2d[3]);
 
 std::optional<std::vector<int>> find_comm_groups(Utils::Vector3i const &,

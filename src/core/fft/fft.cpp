@@ -28,6 +28,8 @@
 #include "fft.hpp"
 #include "vector.hpp"
 
+#include "p3m/packing.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/math/permute_ifield.hpp>
@@ -782,58 +784,6 @@ void fft_data_struct<FloatType>::backward_fft(
   /* REMARK: Result has to be in data. */
 }
 
-template <typename FloatType>
-void fft_pack_block(FloatType const *const in, FloatType *const out,
-                    int const start[3], int const size[3], int const dim[3],
-                    int element) {
-
-  auto const copy_size =
-      static_cast<std::size_t>(element * size[2]) * sizeof(FloatType);
-  /* offsets for indices in input grid */
-  auto const m_in_offset = element * dim[2];
-  auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
-  /* offsets for indices in output grid */
-  auto const m_out_offset = element * size[2];
-  /* linear index of input grid, linear index of output grid */
-  int li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-  int li_out = 0;
-
-  for (int s = 0; s < size[0]; s++) {
-    for (int m = 0; m < size[1]; m++) {
-      memmove(&(out[li_out]), &(in[li_in]), copy_size);
-      li_in += m_in_offset;
-      li_out += m_out_offset;
-    }
-    li_in += s_in_offset;
-  }
-}
-
-template <typename FloatType>
-void fft_unpack_block(FloatType const *const in, FloatType *const out,
-                      int const start[3], int const size[3], int const dim[3],
-                      int element) {
-
-  auto const copy_size =
-      static_cast<std::size_t>(element * size[2]) * sizeof(FloatType);
-  /* offsets for indices in output grid */
-  auto const m_out_offset = element * dim[2];
-  auto const s_out_offset = element * (dim[2] * (dim[1] - size[1]));
-  /* offset for indices in input grid */
-  auto const m_in_offset = element * size[2];
-  /* linear index of in grid, linear index of out grid */
-  int li_in = 0;
-  int li_out = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-
-  for (int s = 0; s < size[0]; s++) {
-    for (int m = 0; m < size[1]; m++) {
-      memmove(&(out[li_out]), &(in[li_in]), copy_size);
-      li_in += m_in_offset;
-      li_out += m_out_offset;
-    }
-    li_out += s_out_offset;
-  }
-}
-
 template <typename FloatType> void fft_plan<FloatType>::destroy_plan() {
   if (plan_handle) {
     fftw<FloatType>::destroy_plan(plan_handle);
@@ -876,18 +826,5 @@ template struct fft_back_plan<double>;
 
 template struct fft_data_struct<float>;
 template struct fft_data_struct<double>;
-
-template void fft_pack_block<float>(float const *in, float *out,
-                                    int const start[3], int const size[3],
-                                    int const dim[3], int element);
-template void fft_pack_block<double>(double const *in, double *out,
-                                     int const start[3], int const size[3],
-                                     int const dim[3], int element);
-template void fft_unpack_block<float>(float const *in, float *out,
-                                      int const start[3], int const size[3],
-                                      int const dim[3], int element);
-template void fft_unpack_block<double>(double const *in, double *out,
-                                       int const start[3], int const size[3],
-                                       int const dim[3], int element);
 
 } // namespace fft
