@@ -19,16 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file
- *  P3M algorithm for long-range magnetic dipole-dipole interaction.
- *
- *  We use here a P3M (Particle-Particle Particle-Mesh) method based
- *  on the dipolar Ewald summation. Details of the used method can be
- *  found in @cite hockney88a and @cite deserno98a @cite deserno98b.
- *
- *  Further reading: @cite cerda08d
- */
-
 #pragma once
 
 #include "config/config.hpp"
@@ -41,19 +31,19 @@
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
 
-#include "Particle.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/math/AS_erfc_part.hpp>
 
 #include <memory>
+#include <stdexcept>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 template <typename FloatType>
-struct p3m_data_struct_dipoles : public p3m_data_struct_fft<FloatType> {
-  using p3m_data_struct_fft<FloatType>::p3m_data_struct_fft;
+struct p3m_data_struct_dipoles : public p3m_data_struct<FloatType> {
+  using p3m_data_struct<FloatType>::p3m_data_struct;
 
   /** number of dipolar particles (only on head node). */
   int sum_dip_part = 0;
@@ -75,17 +65,34 @@ template <typename FloatType, Arch Architecture>
 struct DipolarP3MImpl : public DipolarP3M {
   ~DipolarP3MImpl() override = default;
 
-  /** @brief Coulomb P3M meshes and FFT algorithm. */
-  std::unique_ptr<p3m_data_struct_dipoles<FloatType>> dp3m_impl;
   /** @brief Dipolar P3M parameters. */
   p3m_data_struct_dipoles<FloatType> &dp3m;
 
-  template <typename... Args>
+private:
+  /** @brief Coulomb P3M meshes and FFT algorithm. */
+  std::unique_ptr<p3m_data_struct_dipoles<FloatType>> dp3m_impl;
+  int tune_timings;
+  bool tune_verbose;
+  bool m_is_tuned;
+
+public:
   DipolarP3MImpl(
       std::unique_ptr<p3m_data_struct_dipoles<FloatType>> &&dp3m_handle,
-      Args &&...args)
-      : DipolarP3M(*dp3m_handle, std::forward<Args>(args)...),
-        dp3m_impl{std::move(dp3m_handle)}, dp3m{*dp3m_impl} {}
+      double prefactor, int tune_timings, bool tune_verbose)
+      : DipolarP3M(dp3m_handle->params), dp3m{*dp3m_handle},
+        dp3m_impl{std::move(dp3m_handle)}, tune_timings{tune_timings},
+        tune_verbose{tune_verbose} {
+
+    if (tune_timings <= 0) {
+      throw std::domain_error("Parameter 'timings' must be > 0");
+    }
+    if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
+      throw std::domain_error("DipolarP3M requires a cubic mesh");
+    }
+    m_is_tuned = not dp3m.params.tuning;
+    dp3m.params.tuning = false;
+    set_prefactor(prefactor);
+  }
 
   void init() override {
     if constexpr (Architecture == Arch::CPU) {
@@ -95,8 +102,12 @@ struct DipolarP3MImpl : public DipolarP3M {
   void tune() override;
   void count_magnetic_particles() override;
 
+  [[nodiscard]] bool is_tuned() const noexcept override { return m_is_tuned; }
   [[nodiscard]] bool is_gpu() const noexcept override {
     return Architecture == Arch::GPU;
+  }
+  [[nodiscard]] bool is_double_precision() const noexcept override {
+    return std::is_same_v<FloatType, double>;
   }
 
   void on_activation() override {
@@ -131,12 +142,14 @@ protected:
 };
 
 template <typename FloatType, Arch Architecture,
-          template <typename> class FFTBackendImpl, class... Args>
+          template <typename> class FFTBackendImpl,
+          template <typename> class P3MFFTMeshImpl, class... Args>
 std::shared_ptr<DipolarP3M> new_dp3m_handle(P3MParameters &&p3m,
                                             Args &&...args) {
   auto obj = std::make_shared<DipolarP3MImpl<FloatType, Architecture>>(
       std::make_unique<p3m_data_struct_dipoles<FloatType>>(std::move(p3m)),
       std::forward<Args>(args)...);
+  obj->dp3m.template make_mesh_instance<P3MFFTMeshImpl<FloatType>>();
   obj->dp3m.template make_fft_instance<FFTBackendImpl<FloatType>>();
   return obj;
 }

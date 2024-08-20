@@ -29,17 +29,11 @@
 
 #include "fft/fft.hpp"
 
-#include <utils/Vector.hpp>
-
-#include <array>
 #include <memory>
-#include <span>
-#include <utility>
 
 template <typename FloatType>
-FFTBackendLegacy<FloatType>::FFTBackendLegacy(
-    p3m_data_struct_fft<FloatType> &obj)
-    : FFTBackend<FloatType>(obj),
+FFTBackendLegacy<FloatType>::FFTBackendLegacy(P3MLocalMesh const &local_mesh)
+    : FFTBackend<FloatType>(local_mesh),
       fft{std::make_unique<fft::fft_data_struct<FloatType>>(
           ::Communication::mpiCallbacksHandle()->share_mpi_env())} {}
 
@@ -47,86 +41,20 @@ template <typename FloatType>
 FFTBackendLegacy<FloatType>::~FFTBackendLegacy() = default;
 
 template <typename FloatType>
-void FFTBackendLegacy<FloatType>::update_mesh_data() {
-  auto const mesh_size_ptr = fft->get_mesh_size();
-  auto const mesh_start_ptr = fft->get_mesh_start();
-  for (auto i = 0u; i < 3u; ++i) {
-    mesh.size[i] = mesh_size_ptr[i];
-    mesh.start[i] = mesh_start_ptr[i];
-  }
-  mesh.stop = mesh.start + mesh.size;
-  mesh.rs_scalar = std::span(rs_mesh);
-  for (auto i = 0u; i < 3u; ++i) {
-    mesh.rs_fields[i] = std::span(rs_mesh_fields[i]);
-  }
-}
-
-template <typename FloatType> void FFTBackendLegacy<FloatType>::init_halo() {
-  mesh_comm.resize(::comm_cart, local_mesh);
-}
-
-template <typename FloatType> void FFTBackendLegacy<FloatType>::init_fft() {
-  auto ca_mesh_size = fft->initialize_fft(
+void FFTBackendLegacy<FloatType>::init(P3MParameters const &params) {
+  ca_mesh_size = fft->initialize_fft(
       ::comm_cart, local_mesh.dim, local_mesh.margin, params.mesh,
-      params.mesh_off, mesh.ks_pnum, ::communicator.node_grid);
-  rs_mesh.resize(ca_mesh_size);
-  for (auto &rs_mesh_field : rs_mesh_fields) {
-    rs_mesh_field.resize(ca_mesh_size);
-  }
-  update_mesh_data();
+      params.mesh_off, ks_pnum, ::communicator.node_grid);
 }
 
 template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_vector_back_fft() {
-  for (auto &rs_mesh_field : rs_mesh_fields) {
-    fft->backward_fft(::comm_cart, rs_mesh_field.data(),
-                      check_complex_residuals);
-  }
+void FFTBackendLegacy<FloatType>::forward_fft(FloatType *rs_mesh) {
+  fft->forward_fft(::comm_cart, rs_mesh);
 }
 
 template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_vector_halo_spread() {
-  std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
-                                         rs_mesh_fields[1u].data(),
-                                         rs_mesh_fields[2u].data()}};
-  mesh_comm.spread_grid(::comm_cart, meshes, local_mesh.dim);
-}
-
-template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_scalar_halo_gather() {
-  mesh_comm.gather_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
-}
-
-template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_scalar_fwd_fft() {
-  fft->forward_fft(::comm_cart, rs_mesh.data());
-  update_mesh_data();
-}
-
-template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_vector_halo_gather() {
-  std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
-                                         rs_mesh_fields[1u].data(),
-                                         rs_mesh_fields[2u].data()}};
-  mesh_comm.gather_grid(::comm_cart, meshes, local_mesh.dim);
-}
-
-template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_vector_fwd_fft() {
-  for (auto &rs_mesh_field : rs_mesh_fields) {
-    fft->forward_fft(::comm_cart, rs_mesh_field.data());
-  }
-  update_mesh_data();
-}
-
-template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_scalar_back_fft() {
-  fft->backward_fft(::comm_cart, rs_mesh.data(), check_complex_residuals);
-}
-
-template <typename FloatType>
-void FFTBackendLegacy<FloatType>::perform_scalar_halo_spread() {
-  mesh_comm.spread_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
+void FFTBackendLegacy<FloatType>::backward_fft(FloatType *rs_mesh) {
+  fft->backward_fft(::comm_cart, rs_mesh, check_complex_residuals);
 }
 
 template class FFTBackendLegacy<float>;

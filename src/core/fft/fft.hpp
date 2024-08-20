@@ -88,11 +88,11 @@ struct fft_forw_plan : public fft_plan<FloatType> {
   int n_ffts;
 
   /** size of local mesh before communication. */
-  int old_mesh[3];
+  std::array<int, 3u> old_mesh;
   /** size of local mesh after communication, also used for actual FFT. */
-  int new_mesh[3];
+  std::array<int, 3u> new_mesh;
   /** lower left point of local FFT mesh in global FFT mesh coordinates. */
-  int start[3];
+  std::array<int, 3u> start;
   /** size of new mesh (number of mesh points). */
   int new_size;
 
@@ -197,9 +197,9 @@ public:
   void backward_fft(boost::mpi::communicator const &comm, FloatType *data,
                     bool check_complex);
 
-  auto get_mesh_size() const { return forw[3u].new_mesh; }
+  auto const &get_mesh_size() const { return forw[3u].new_mesh; }
 
-  auto get_mesh_start() const { return forw[3u].start; }
+  auto const &get_mesh_start() const { return forw[3u].start; }
 
 private:
   void forw_grid_comm(boost::mpi::communicator const &comm,

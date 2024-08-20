@@ -396,7 +396,7 @@ void fft_data_struct<FloatType>::forw_grid_comm(
     FloatType const *in, FloatType *out) {
   for (std::size_t i = 0ul; i < plan.group.size(); i++) {
     plan.pack_function(in, send_buf.data(), &(plan.send_block[6ul * i]),
-                       &(plan.send_block[6ul * i + 3ul]), plan.old_mesh,
+                       &(plan.send_block[6ul * i + 3ul]), plan.old_mesh.data(),
                        plan.element);
 
     if (plan.group[i] != comm.rank()) {
@@ -407,7 +407,7 @@ void fft_data_struct<FloatType>::forw_grid_comm(
       std::swap(send_buf, recv_buf);
     }
     fft_unpack_block(recv_buf.data(), out, &(plan.recv_block[6ul * i]),
-                     &(plan.recv_block[6ul * i + 3ul]), plan.new_mesh,
+                     &(plan.recv_block[6ul * i + 3ul]), plan.new_mesh.data(),
                      plan.element);
   }
 }
@@ -431,8 +431,8 @@ void fft_data_struct<FloatType>::back_grid_comm(
 
   for (std::size_t i = 0ul; i < plan_f.group.size(); i++) {
     plan_b.pack_function(in, send_buf.data(), &(plan_f.recv_block[6ul * i]),
-                         &(plan_f.recv_block[6ul * i + 3ul]), plan_f.new_mesh,
-                         plan_f.element);
+                         &(plan_f.recv_block[6ul * i + 3ul]),
+                         plan_f.new_mesh.data(), plan_f.element);
 
     if (plan_f.group[i] != comm.rank()) { /* send first, receive second */
       fft_sendrecv(send_buf.data(), plan_f.recv_size[i], plan_f.group[i],
@@ -442,8 +442,8 @@ void fft_data_struct<FloatType>::back_grid_comm(
       std::swap(send_buf, recv_buf);
     }
     fft_unpack_block(recv_buf.data(), out, &(plan_f.send_block[6ul * i]),
-                     &(plan_f.send_block[6ul * i + 3ul]), plan_f.old_mesh,
-                     plan_f.element);
+                     &(plan_f.send_block[6ul * i + 3ul]),
+                     plan_f.old_mesh.data(), plan_f.element);
   }
 }
 
@@ -598,9 +598,9 @@ int fft_data_struct<FloatType>::initialize_fft(
 
     forw[i].new_size = calc_local_mesh(
         my_pos[i], n_grid[i], global_mesh_dim.data(), global_mesh_off.data(),
-        forw[i].new_mesh, forw[i].start);
-    permute_ifield(forw[i].new_mesh, 3, -(forw[i].n_permute));
-    permute_ifield(forw[i].start, 3, -(forw[i].n_permute));
+        forw[i].new_mesh.data(), forw[i].start.data());
+    permute_ifield(forw[i].new_mesh.data(), 3, -(forw[i].n_permute));
+    permute_ifield(forw[i].start.data(), 3, -(forw[i].n_permute));
     forw[i].n_ffts = forw[i].new_mesh[0] * forw[i].new_mesh[1];
 
     /* === send/recv block specifications === */

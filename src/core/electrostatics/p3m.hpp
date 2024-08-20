@@ -50,38 +50,19 @@
 
 #include <cmath>
 #include <numbers>
-#include <stdexcept>
 
 /** @brief P3M solver. */
 struct CoulombP3M : public Coulomb::Actor<CoulombP3M> {
   P3MParameters const &p3m_params;
 
-  int tune_timings;
-  bool tune_verbose;
-  bool check_complex_residuals;
-
-protected:
-  bool m_is_tuned;
-
 public:
-  CoulombP3M(p3m_data_struct &p3m_data, double prefactor, int tune_timings,
-             bool tune_verbose, bool check_complex_residuals)
-      : p3m_params{p3m_data.params}, tune_timings{tune_timings},
-        tune_verbose{tune_verbose},
-        check_complex_residuals{check_complex_residuals} {
-
-    if (tune_timings <= 0) {
-      throw std::domain_error("Parameter 'timings' must be > 0");
-    }
-    m_is_tuned = not p3m_data.params.tuning;
-    p3m_data.params.tuning = false;
-    set_prefactor(prefactor);
-  }
+  CoulombP3M(P3MParameters const &p3m_params) : p3m_params{p3m_params} {}
 
   virtual ~CoulombP3M() = default;
 
-  [[nodiscard]] bool is_tuned() const { return m_is_tuned; }
+  [[nodiscard]] virtual bool is_tuned() const noexcept = 0;
   [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
+  [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
   /** @brief Recalculate all derived parameters. */
   virtual void init() = 0;

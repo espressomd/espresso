@@ -27,9 +27,6 @@
 
 #include "common.hpp"
 #include "data_struct.hpp"
-#include "send_mesh.hpp"
-
-#include "fft/vector.hpp"
 
 #include <array>
 #include <memory>
@@ -50,30 +47,25 @@ class FFTBackendLegacy : public FFTBackend<FloatType> {
                     std::is_same_v<FloatType, double>,
                 "FFTW only implements float and double");
   std::unique_ptr<fft::fft_data_struct<FloatType>> fft;
-  /** @brief real-space mesh (local) for CA/FFT. */
-  fft::vector<FloatType> rs_mesh;
-  /** @brief real-space mesh (local) for the electric or dipolar field. */
-  std::array<fft::vector<FloatType>, 3> rs_mesh_fields;
-  p3m_send_mesh<FloatType> mesh_comm;
-  using FFTBackend<FloatType>::params;
-  using FFTBackend<FloatType>::mesh;
   using FFTBackend<FloatType>::local_mesh;
   using FFTBackend<FloatType>::check_complex_residuals;
+  int ca_mesh_size = -1;
+  int ks_pnum = -1;
 
 public:
-  FFTBackendLegacy(p3m_data_struct_fft<FloatType> &obj);
+  FFTBackendLegacy(P3MLocalMesh const &local_mesh);
   ~FFTBackendLegacy() override;
-  void init_fft() override;
-  void init_halo() override;
-  void perform_scalar_fwd_fft() override;
-  void perform_vector_fwd_fft() override;
-  void perform_scalar_back_fft() override;
-  void perform_vector_back_fft() override;
-  void perform_scalar_halo_gather() override;
-  void perform_vector_halo_gather() override;
-  void perform_scalar_halo_spread() override;
-  void perform_vector_halo_spread() override;
-  void update_mesh_data();
+  void init(P3MParameters const &params) override;
+  void forward_fft(FloatType *rs_mesh) override;
+  void backward_fft(FloatType *rs_mesh) override;
+  int get_ca_mesh_size() const noexcept override { return ca_mesh_size; }
+  int get_ks_pnum() const noexcept override { return ks_pnum; }
+  std::array<int, 3u> const &get_mesh_size() const override {
+    return fft->get_mesh_size();
+  }
+  std::array<int, 3u> const &get_mesh_start() const override {
+    return fft->get_mesh_start();
+  }
 
   /**
    * @brief Index helpers for reciprocal space.

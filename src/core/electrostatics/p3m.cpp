@@ -90,6 +90,10 @@
 #include <tuple>
 #include <utility>
 
+#ifdef FFTW3_H
+#error "The FFTW3 library shouldn't be visible in this translation unit"
+#endif
+
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::count_charged_particles() {
   auto local_n = 0;
@@ -262,8 +266,11 @@ void CoulombP3MImpl<FloatType, Architecture>::init_cpu_kernels() {
 
   assert(p3m.fft);
   p3m.local_mesh.calc_local_ca_mesh(p3m.params, local_geo, skin, elc_layer);
-  p3m.fft->init_halo();
-  p3m.fft->init_fft();
+  p3m.fft_buffers->init_halo();
+  p3m.fft->init(p3m.params);
+  p3m.mesh.ks_pnum = p3m.fft->get_ks_pnum();
+  p3m.fft_buffers->init_meshes(p3m.fft->get_ca_mesh_size());
+  p3m.update_mesh_views();
   p3m.calc_differential_operator();
 
   /* fix box length dependent constants */
@@ -391,8 +398,9 @@ Utils::Vector9d CoulombP3MImpl<FloatType, Architecture>::long_range_pressure(
 
   if (p3m.sum_q2 > 0.) {
     charge_assign(particles);
-    p3m.fft->perform_scalar_halo_gather();
-    p3m.fft->perform_scalar_fwd_fft();
+    p3m.fft_buffers->perform_scalar_halo_gather();
+    p3m.fft->forward_fft(p3m.fft_buffers->get_scalar_mesh());
+    p3m.update_mesh_views();
 
     auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
     auto const &mesh_stop = p3m.mesh.size;
@@ -457,8 +465,9 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
             system.coulomb.impl->solver)) {
       charge_assign(particles);
     }
-    p3m.fft->perform_scalar_halo_gather();
-    p3m.fft->perform_scalar_fwd_fft();
+    p3m.fft_buffers->perform_scalar_halo_gather();
+    p3m.fft->forward_fft(p3m.fft_buffers->get_scalar_mesh());
+    p3m.update_mesh_views();
   }
 
   auto p_q_range = ParticlePropertyRange::charge_range(particles);
@@ -515,8 +524,10 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
     auto const check_residuals =
         not p3m.params.tuning and check_complex_residuals;
     p3m.fft->check_complex_residuals = check_residuals;
-    p3m.fft->perform_vector_back_fft();
-    p3m.fft->perform_vector_halo_spread();
+    for (auto &rs_mesh : p3m.fft_buffers->get_vector_mesh()) {
+      p3m.fft->backward_fft(rs_mesh);
+    }
+    p3m.fft_buffers->perform_vector_halo_spread();
     p3m.fft->check_complex_residuals = false;
 
     auto const force_prefac = prefactor / volume;

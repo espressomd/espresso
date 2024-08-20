@@ -49,7 +49,6 @@
 
 #include <cmath>
 #include <numbers>
-#include <stdexcept>
 
 #ifdef NPT
 /** Update the NpT virial */
@@ -59,33 +58,15 @@ void npt_add_virial_magnetic_contribution(double energy);
 /** @brief Dipolar P3M solver. */
 struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
   P3MParameters const &dp3m_params;
-  int tune_timings;
-  bool tune_verbose;
-
-protected:
-  bool m_is_tuned;
 
 public:
-  DipolarP3M(p3m_data_struct &dp3m_data, double prefactor, int tune_timings,
-             bool tune_verbose)
-      : dp3m_params{dp3m_data.params}, tune_timings{tune_timings},
-        tune_verbose{tune_verbose} {
-
-    if (tune_timings <= 0) {
-      throw std::domain_error("Parameter 'timings' must be > 0");
-    }
-    if (dp3m_params.mesh != Utils::Vector3i::broadcast(dp3m_params.mesh[0])) {
-      throw std::domain_error("DipolarP3M requires a cubic mesh");
-    }
-    m_is_tuned = not dp3m_data.params.tuning;
-    dp3m_data.params.tuning = false;
-    set_prefactor(prefactor);
-  }
+  DipolarP3M(P3MParameters const &dp3m_params) : dp3m_params{dp3m_params} {}
 
   virtual ~DipolarP3M() = default;
 
-  [[nodiscard]] bool is_tuned() const { return m_is_tuned; }
+  [[nodiscard]] virtual bool is_tuned() const noexcept = 0;
   [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
+  [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
   virtual void on_activation() = 0;
   /** @brief Recalculate all box-length-dependent parameters. */

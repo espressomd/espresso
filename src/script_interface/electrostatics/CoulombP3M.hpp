@@ -28,18 +28,28 @@
 #include "core/electrostatics/p3m.hpp"
 #include "core/electrostatics/p3m.impl.hpp"
 #include "core/p3m/FFTBackendLegacy.hpp"
+#include "core/p3m/FFTBuffersLegacy.hpp"
 
 #include "script_interface/get_value.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <utility>
+
+#ifdef FFTW3_H
+#error "The FFTW3 library shouldn't be visible in this translation unit"
+#endif
 
 namespace ScriptInterface {
 namespace Coulomb {
 
 template <Arch Architecture>
 class CoulombP3M : public Actor<CoulombP3M<Architecture>, ::CoulombP3M> {
+  int m_tune_timings;
   bool m_tune;
+  bool m_tune_verbose;
+  bool m_check_complex_residuals;
   bool m_single_precision;
 
 public:
@@ -56,7 +66,7 @@ public:
   CoulombP3M() {
     add_parameters({
         {"single_precision", AutoParameter::read_only,
-         [this]() { return m_single_precision; }},
+         [this]() { return not actor()->is_double_precision(); }},
         {"alpha_L", AutoParameter::read_only,
          [this]() { return actor()->p3m_params.alpha_L; }},
         {"r_cut_iL", AutoParameter::read_only,
@@ -80,20 +90,24 @@ public:
         {"is_tuned", AutoParameter::read_only,
          [this]() { return actor()->is_tuned(); }},
         {"verbose", AutoParameter::read_only,
-         [this]() { return actor()->tune_verbose; }},
+         [this]() { return m_tune_verbose; }},
         {"timings", AutoParameter::read_only,
-         [this]() { return actor()->tune_timings; }},
+         [this]() { return m_tune_timings; }},
         {"tune", AutoParameter::read_only, [this]() { return m_tune; }},
         {"check_complex_residuals", AutoParameter::read_only,
-         [this]() { return actor()->check_complex_residuals; }},
+         [this]() { return m_check_complex_residuals; }},
     });
   }
 
   void do_construct(VariantMap const &params) override {
     m_tune = get_value<bool>(params, "tune");
-    m_single_precision = get_value<bool>(params, "single_precision");
+    m_tune_timings = get_value<int>(params, "timings");
+    m_tune_verbose = get_value<bool>(params, "verbose");
+    m_check_complex_residuals =
+        get_value<bool>(params, "check_complex_residuals");
+    auto const single_precision = get_value<bool>(params, "single_precision");
     context()->parallel_try_catch([&]() {
-      if (Architecture == Arch::GPU and not m_single_precision) {
+      if (Architecture == Arch::GPU and not single_precision) {
         throw std::invalid_argument(
             "P3M GPU only implemented in single-precision mode");
       }
@@ -105,24 +119,25 @@ public:
                                get_value<int>(params, "cao"),
                                get_value<double>(params, "alpha"),
                                get_value<double>(params, "accuracy")};
-      make_handle(m_single_precision, std::move(p3m),
-                  get_value<double>(params, "prefactor"),
-                  get_value<int>(params, "timings"),
-                  get_value<bool>(params, "verbose"),
-                  get_value<bool>(params, "check_complex_residuals"));
+      make_handle(single_precision, std::move(p3m),
+                  get_value<double>(params, "prefactor"), m_tune_timings,
+                  m_tune_verbose, m_check_complex_residuals);
     });
     set_charge_neutrality_tolerance(params);
   }
 
 private:
+  template <typename FloatType, class... Args>
+  void make_handle_impl(Args &&...args) {
+    m_actor = new_p3m_handle<FloatType, Architecture, FFTBackendLegacy,
+                             FFTBuffersLegacy>(std::forward<Args>(args)...);
+  }
   template <class... Args>
   void make_handle(bool single_precision, Args &&...args) {
     if (single_precision) {
-      m_actor = new_p3m_handle<float, Architecture, FFTBackendLegacy>(
-          std::forward<Args>(args)...);
+      make_handle_impl<float, Args...>(std::forward<Args>(args)...);
     } else {
-      m_actor = new_p3m_handle<double, Architecture, FFTBackendLegacy>(
-          std::forward<Args>(args)...);
+      make_handle_impl<double, Args...>(std::forward<Args>(args)...);
     }
   }
 };

@@ -28,18 +28,27 @@
 #include "core/magnetostatics/dp3m.hpp"
 #include "core/magnetostatics/dp3m.impl.hpp"
 #include "core/p3m/FFTBackendLegacy.hpp"
+#include "core/p3m/FFTBuffersLegacy.hpp"
 
 #include "script_interface/get_value.hpp"
 
 #include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+#ifdef FFTW3_H
+#error "The FFTW3 library shouldn't be visible in this translation unit"
+#endif
 
 namespace ScriptInterface {
 namespace Dipoles {
 
 template <Arch Architecture>
 class DipolarP3M : public Actor<DipolarP3M<Architecture>, ::DipolarP3M> {
+  int m_tune_timings;
   bool m_tune;
-  bool m_single_precision;
+  bool m_tune_verbose;
 
 public:
   using Base = Actor<DipolarP3M<Architecture>, ::DipolarP3M>;
@@ -54,7 +63,7 @@ public:
   DipolarP3M() {
     add_parameters({
         {"single_precision", AutoParameter::read_only,
-         [this]() { return m_single_precision; }},
+         [this]() { return not actor()->is_double_precision(); }},
         {"alpha_L", AutoParameter::read_only,
          [this]() { return actor()->dp3m_params.alpha_L; }},
         {"r_cut_iL", AutoParameter::read_only,
@@ -78,16 +87,18 @@ public:
         {"is_tuned", AutoParameter::read_only,
          [this]() { return actor()->is_tuned(); }},
         {"verbose", AutoParameter::read_only,
-         [this]() { return actor()->tune_verbose; }},
+         [this]() { return m_tune_verbose; }},
         {"timings", AutoParameter::read_only,
-         [this]() { return actor()->tune_timings; }},
+         [this]() { return m_tune_timings; }},
         {"tune", AutoParameter::read_only, [this]() { return m_tune; }},
     });
   }
 
   void do_construct(VariantMap const &params) override {
     m_tune = get_value<bool>(params, "tune");
-    m_single_precision = get_value<bool>(params, "single_precision");
+    m_tune_timings = get_value<int>(params, "timings");
+    m_tune_verbose = get_value<bool>(params, "verbose");
+    auto const single_precision = get_value<bool>(params, "single_precision");
     static_assert(Architecture == Arch::CPU, "GPU not implemented");
     context()->parallel_try_catch([&]() {
       auto p3m = P3MParameters{!get_value_or<bool>(params, "is_tuned", !m_tune),
@@ -98,22 +109,24 @@ public:
                                get_value<int>(params, "cao"),
                                get_value<double>(params, "alpha"),
                                get_value<double>(params, "accuracy")};
-      make_handle(m_single_precision, std::move(p3m),
-                  get_value<double>(params, "prefactor"),
-                  get_value<int>(params, "timings"),
-                  get_value<bool>(params, "verbose"));
+      make_handle(single_precision, std::move(p3m),
+                  get_value<double>(params, "prefactor"), m_tune_timings,
+                  m_tune_verbose);
     });
   }
 
 private:
+  template <typename FloatType, class... Args>
+  void make_handle_impl(Args &&...args) {
+    m_actor = new_dp3m_handle<FloatType, Architecture, FFTBackendLegacy,
+                              FFTBuffersLegacy>(std::forward<Args>(args)...);
+  }
   template <class... Args>
   void make_handle(bool single_precision, Args &&...args) {
     if (single_precision) {
-      m_actor = new_dp3m_handle<float, Architecture, FFTBackendLegacy>(
-          std::forward<Args>(args)...);
+      make_handle_impl<float, Args...>(std::forward<Args>(args)...);
     } else {
-      m_actor = new_dp3m_handle<double, Architecture, FFTBackendLegacy>(
-          std::forward<Args>(args)...);
+      make_handle_impl<double, Args...>(std::forward<Args>(args)...);
     }
   }
 };
