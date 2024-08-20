@@ -49,6 +49,7 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
 
 template <typename FloatType>
 struct p3m_data_struct_dipoles : public p3m_data_struct_fft<FloatType> {
@@ -64,6 +65,8 @@ struct p3m_data_struct_dipoles : public p3m_data_struct_fft<FloatType> {
 
   /** cached k-space self-energy correction */
   double energy_correction = 0.;
+  /** k-space scalar mesh for k-space calculations. */
+  std::vector<FloatType> ks_scalar;
 
   p3m_interpolation_cache inter_weights;
 };
@@ -74,7 +77,7 @@ struct DipolarP3MImpl : public DipolarP3M {
 
   /** @brief Coulomb P3M meshes and FFT algorithm. */
   std::unique_ptr<p3m_data_struct_dipoles<FloatType>> dp3m_impl;
-  // this member overshadows its own base class pointer in the parent class
+  /** @brief Dipolar P3M parameters. */
   p3m_data_struct_dipoles<FloatType> &dp3m;
 
   template <typename... Args>
@@ -121,11 +124,10 @@ protected:
   void calc_energy_correction() override;
   void calc_influence_function_force() override;
   void calc_influence_function_energy() override;
+  double calc_surface_term(bool force_flag, bool energy_flag,
+                           ParticleRange const &particles) override;
   void init_cpu_kernels();
-  void scaleby_box_l() override {
-    DipolarP3M::scaleby_box_l();
-    dp3m.energy_correction = 0.;
-  }
+  void scaleby_box_l() override;
 };
 
 template <typename FloatType, Arch Architecture,
@@ -135,7 +137,7 @@ std::shared_ptr<DipolarP3M> new_dp3m_handle(P3MParameters &&p3m,
   auto obj = std::make_shared<DipolarP3MImpl<FloatType, Architecture>>(
       std::make_unique<p3m_data_struct_dipoles<FloatType>>(std::move(p3m)),
       std::forward<Args>(args)...);
-  obj->dp3m.template make_fft_instance<FFTBackendImpl<FloatType>>(true);
+  obj->dp3m.template make_fft_instance<FFTBackendImpl<FloatType>>();
   return obj;
 }
 

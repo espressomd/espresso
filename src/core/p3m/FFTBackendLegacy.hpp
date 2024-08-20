@@ -49,10 +49,7 @@ class FFTBackendLegacy : public FFTBackend<FloatType> {
   static_assert(std::is_same_v<FloatType, float> or
                     std::is_same_v<FloatType, double>,
                 "FFTW only implements float and double");
-  bool dipolar;
   std::unique_ptr<fft::fft_data_struct<FloatType>> fft;
-  /** @brief k-space mesh (local) for k-space calculations. */
-  std::vector<FloatType> ks_mesh;
   /** @brief real-space mesh (local) for CA/FFT. */
   fft::vector<FloatType> rs_mesh;
   /** @brief real-space mesh (local) for the electric or dipolar field. */
@@ -64,7 +61,7 @@ class FFTBackendLegacy : public FFTBackend<FloatType> {
   using FFTBackend<FloatType>::check_complex_residuals;
 
 public:
-  FFTBackendLegacy(p3m_data_struct_fft<FloatType> &obj, bool dipolar);
+  FFTBackendLegacy(p3m_data_struct_fft<FloatType> &obj);
   ~FFTBackendLegacy() override;
   void init_fft() override;
   void init_halo() override;

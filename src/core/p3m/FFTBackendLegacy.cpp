@@ -38,8 +38,8 @@
 
 template <typename FloatType>
 FFTBackendLegacy<FloatType>::FFTBackendLegacy(
-    p3m_data_struct_fft<FloatType> &obj, bool dipolar)
-    : FFTBackend<FloatType>(obj), dipolar{dipolar},
+    p3m_data_struct_fft<FloatType> &obj)
+    : FFTBackend<FloatType>(obj),
       fft{std::make_unique<fft::fft_data_struct<FloatType>>(
           ::Communication::mpiCallbacksHandle()->share_mpi_env())} {}
 
@@ -55,7 +55,6 @@ void FFTBackendLegacy<FloatType>::update_mesh_data() {
     mesh.start[i] = mesh_start_ptr[i];
   }
   mesh.stop = mesh.start + mesh.size;
-  mesh.ks_scalar = std::span(ks_mesh);
   mesh.rs_scalar = std::span(rs_mesh);
   for (auto i = 0u; i < 3u; ++i) {
     mesh.rs_fields[i] = std::span(rs_mesh_fields[i]);
@@ -71,9 +70,6 @@ template <typename FloatType> void FFTBackendLegacy<FloatType>::init_fft() {
       ::comm_cart, local_mesh.dim, local_mesh.margin, params.mesh,
       params.mesh_off, mesh.ks_pnum, ::communicator.node_grid);
   rs_mesh.resize(ca_mesh_size);
-  if (dipolar) {
-    ks_mesh.resize(ca_mesh_size);
-  }
   for (auto &rs_mesh_field : rs_mesh_fields) {
     rs_mesh_field.resize(ca_mesh_size);
   }

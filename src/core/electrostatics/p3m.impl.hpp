@@ -75,7 +75,7 @@ struct CoulombP3MImpl : public CoulombP3M {
 
   /** @brief Coulomb P3M meshes and FFT algorithm. */
   std::unique_ptr<p3m_data_struct_coulomb<FloatType>> p3m_impl;
-  // this member overshadows its own base class pointer in the parent class
+  /** @brief Coulomb P3M parameters. */
   p3m_data_struct_coulomb<FloatType> &p3m;
 
   template <typename... Args>
@@ -102,6 +102,9 @@ struct CoulombP3MImpl : public CoulombP3M {
     p3m.sum_qpart = n;
     p3m.sum_q2 = sum_q2;
     p3m.square_sum_q = square_sum_q;
+  }
+  void adapt_epsilon_elc() override {
+    p3m.params.epsilon = P3M_EPSILON_METALLIC;
   }
 
   [[nodiscard]] bool is_gpu() const noexcept override {
@@ -160,6 +163,7 @@ protected:
                            ParticleRange const &particles);
   void calc_influence_function_force() override;
   void calc_influence_function_energy() override;
+  void scaleby_box_l() override;
   void init_cpu_kernels();
 #ifdef CUDA
   void init_gpu_kernels();
@@ -176,7 +180,7 @@ std::shared_ptr<CoulombP3M> new_p3m_handle(P3MParameters &&p3m,
   auto obj = std::make_shared<CoulombP3MImpl<FloatType, Architecture>>(
       std::make_unique<p3m_data_struct_coulomb<FloatType>>(std::move(p3m)),
       std::forward<Args>(args)...);
-  obj->p3m.template make_fft_instance<FFTBackendImpl<FloatType>>(false);
+  obj->p3m.template make_fft_instance<FFTBackendImpl<FloatType>>();
   return obj;
 }
 

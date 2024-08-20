@@ -785,25 +785,25 @@ void CoulombP3M::sanity_checks_boxl() const {
   auto const &local_geo = *system.local_geo;
   for (auto i = 0u; i < 3u; i++) {
     /* check k-space cutoff */
-    if (p3m.params.cao_cut[i] >= box_geo.length_half()[i]) {
+    if (p3m_params.cao_cut[i] >= box_geo.length_half()[i]) {
       std::stringstream msg;
-      msg << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
+      msg << "P3M_init: k-space cutoff " << p3m_params.cao_cut[i]
           << " is larger than half of box dimension " << box_geo.length()[i];
       throw std::runtime_error(msg.str());
     }
-    if (p3m.params.cao_cut[i] >= local_geo.length()[i]) {
+    if (p3m_params.cao_cut[i] >= local_geo.length()[i]) {
       std::stringstream msg;
-      msg << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
+      msg << "P3M_init: k-space cutoff " << p3m_params.cao_cut[i]
           << " is larger than local box dimension " << local_geo.length()[i];
       throw std::runtime_error(msg.str());
     }
   }
 
-  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+  if (p3m_params.epsilon != P3M_EPSILON_METALLIC) {
     if ((box_geo.length()[0] != box_geo.length()[1]) or
         (box_geo.length()[1] != box_geo.length()[2]) or
-        (p3m.params.mesh[0] != p3m.params.mesh[1]) or
-        (p3m.params.mesh[1] != p3m.params.mesh[2])) {
+        (p3m_params.mesh[0] != p3m_params.mesh[1]) or
+        (p3m_params.mesh[1] != p3m_params.mesh[2])) {
       throw std::runtime_error(
           "CoulombP3M: non-metallic epsilon requires cubic box");
     }
@@ -841,7 +841,8 @@ void CoulombP3M::sanity_checks_node_grid() const {
   }
 }
 
-void CoulombP3M::scaleby_box_l() {
+template <typename FloatType, Arch Architecture>
+void CoulombP3MImpl<FloatType, Architecture>::scaleby_box_l() {
   auto const &box_geo = *get_system().box_geo;
   p3m.params.r_cut = p3m.params.r_cut_iL * box_geo.length()[0];
   p3m.params.alpha = p3m.params.alpha_L * box_geo.length_inv()[0];

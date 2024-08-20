@@ -219,11 +219,9 @@ struct P3MLocalMesh {
 
 /** @brief Local mesh FFT buffers. */
 template <typename FloatType> struct P3MFFTMesh {
-  /** @brief k-space scalar mesh for k-space calculations. */
-  std::span<FloatType> ks_scalar;
   /** @brief real-space scalar mesh for charge assignment and FFT. */
   std::span<FloatType> rs_scalar;
-  /** @brief real-space 3D meshes for the electric or dipolar field. */
+  /** @brief real-space vector meshes for the electric or dipolar field. */
   std::array<std::span<FloatType>, 3> rs_fields;
 
   /** @brief Indices of the lower left corner of the local mesh grid. */
