@@ -17,5 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(espresso_core PRIVATE common.cpp send_mesh.cpp
-                                     TuningAlgorithm.cpp FFTBackendLegacy.cpp)
+target_sources(
+  espresso_core PRIVATE common.cpp send_mesh.cpp TuningAlgorithm.cpp
+                        FFTBackendLegacy.cpp FFTBuffersLegacy.cpp)

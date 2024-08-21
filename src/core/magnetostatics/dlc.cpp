@@ -465,7 +465,7 @@ struct AdaptSolver {
 #ifdef DP3M
   void operator()(std::shared_ptr<DipolarP3M> const &solver) {
     m_actor->prefactor = solver->prefactor;
-    m_actor->epsilon = solver->dp3m.params.epsilon;
+    m_actor->epsilon = solver->dp3m_params.epsilon;
   }
 #endif
 

@@ -49,7 +49,6 @@
 
 #include <cmath>
 #include <numbers>
-#include <stdexcept>
 
 #ifdef NPT
 /** Update the NpT virial */
@@ -58,36 +57,16 @@ void npt_add_virial_magnetic_contribution(double energy);
 
 /** @brief Dipolar P3M solver. */
 struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
-  /** @brief Dipolar P3M parameters. */
-  p3m_data_struct &dp3m;
-
-  int tune_timings;
-  bool tune_verbose;
-
-protected:
-  bool m_is_tuned;
+  P3MParameters const &dp3m_params;
 
 public:
-  DipolarP3M(p3m_data_struct &dp3m_data, double prefactor, int tune_timings,
-             bool tune_verbose)
-      : dp3m{dp3m_data}, tune_timings{tune_timings},
-        tune_verbose{tune_verbose} {
-
-    if (tune_timings <= 0) {
-      throw std::domain_error("Parameter 'timings' must be > 0");
-    }
-    if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
-      throw std::domain_error("DipolarP3M requires a cubic mesh");
-    }
-    m_is_tuned = not dp3m.params.tuning;
-    dp3m.params.tuning = false;
-    set_prefactor(prefactor);
-  }
+  DipolarP3M(P3MParameters const &dp3m_params) : dp3m_params{dp3m_params} {}
 
   virtual ~DipolarP3M() = default;
 
-  [[nodiscard]] bool is_tuned() const { return m_is_tuned; }
+  [[nodiscard]] virtual bool is_tuned() const noexcept = 0;
   [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
+  [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
   virtual void on_activation() = 0;
   /** @brief Recalculate all box-length-dependent parameters. */
@@ -126,7 +105,7 @@ public:
    * @ref P3MParameters::r_cut_iL "r_cut_iL" and
    * @ref P3MParameters::alpha_L "alpha_L" are tuned to obtain the target
    * @ref P3MParameters::accuracy "accuracy" in optimal time.
-   * These parameters are stored in the @ref dp3m object.
+   * These parameters are stored in the @ref dp3m_params object.
    *
    * The function utilizes the analytic expression of the error estimate
    * for the dipolar P3M method in the paper of @cite cerda08d in
@@ -163,14 +142,14 @@ public:
   inline ParticleForce pair_force(Particle const &p1, Particle const &p2,
                                   Utils::Vector3d const &d, double dist2,
                                   double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m.params.r_cut ||
+    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m_params.r_cut ||
         dist <= 0.)
       return {};
 
     auto const dip1 = p1.calc_dip();
     auto const dip2 = p2.calc_dip();
-    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
-    auto const adist = dp3m.params.alpha * dist;
+    auto const alpsq = dp3m_params.alpha * dp3m_params.alpha;
+    auto const adist = dp3m_params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
 #else
@@ -183,11 +162,11 @@ public:
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    auto const coeff = 2. * dp3m.params.alpha * std::numbers::inv_sqrtpi;
+    auto const coeff = 2. * dp3m_params.alpha * std::numbers::inv_sqrtpi;
     auto const dist2i = 1. / dist2;
     auto const exp_adist2 = exp(-Utils::sqr(adist));
 
-    auto const B_r = (dp3m.params.accuracy > 5e-06)
+    auto const B_r = (dp3m_params.accuracy > 5e-06)
                          ? (erfc_part_ri + coeff) * exp_adist2 * dist2i
                          : (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
 
@@ -221,15 +200,15 @@ public:
   inline double pair_energy(Particle const &p1, Particle const &p2,
                             Utils::Vector3d const &d, double dist2,
                             double dist) const {
-    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m.params.r_cut ||
+    if ((p1.dipm() == 0.) || (p2.dipm() == 0.) || dist >= dp3m_params.r_cut ||
         dist <= 0.)
       return {};
 
     auto const dip1 = p1.calc_dip();
     auto const dip2 = p2.calc_dip();
 
-    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
-    auto const adist = dp3m.params.alpha * dist;
+    auto const alpsq = dp3m_params.alpha * dp3m_params.alpha;
+    auto const adist = dp3m_params.alpha * dist;
 
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
@@ -242,11 +221,11 @@ public:
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    auto const coeff = 2. * dp3m.params.alpha * std::numbers::inv_sqrtpi;
+    auto const coeff = 2. * dp3m_params.alpha * std::numbers::inv_sqrtpi;
     auto const dist2i = 1. / dist2;
     auto const exp_adist2 = exp(-Utils::sqr(adist));
 
-    auto const B_r = (dp3m.params.accuracy > 5e-06)
+    auto const B_r = (dp3m_params.accuracy > 5e-06)
                          ? dist2i * (erfc_part_ri + coeff) * exp_adist2
                          : dist2i * (erfc(adist) / dist + coeff * exp_adist2);
     auto const C_r = (3. * B_r + 2. * alpsq * coeff * exp_adist2) * dist2i;
@@ -270,8 +249,8 @@ protected:
   virtual void calc_influence_function_energy() = 0;
 
   /** Compute the dipolar surface terms */
-  double calc_surface_term(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles);
+  virtual double calc_surface_term(bool force_flag, bool energy_flag,
+                                   ParticleRange const &particles) = 0;
 
   /** Checks for correctness of the k-space cutoff. */
   void sanity_checks_boxl() const;
@@ -279,7 +258,7 @@ protected:
   void sanity_checks_periodicity() const;
   void sanity_checks_cell_structure() const;
 
-  virtual void scaleby_box_l();
+  virtual void scaleby_box_l() = 0;
 };
 
 #endif // DP3M
