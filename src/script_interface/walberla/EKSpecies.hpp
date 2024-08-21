@@ -36,7 +36,9 @@
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 namespace ScriptInterface::walberla {
 
@@ -66,7 +68,13 @@ public:
           [this]() { return m_instance->get_diffusion() / m_conv_diffusion; }},
          {"kT",
           [this](Variant const &v) {
-            m_instance->set_kT(get_value<double>(v) * m_conv_energy);
+            context()->parallel_try_catch([&]() {
+              auto const kT = get_value<double>(v);
+              if (kT < 0.) {
+                throw std::domain_error("Parameter 'kT' must be >= 0");
+              }
+              m_instance->set_kT(kT * m_conv_energy);
+            });
           },
           [this]() { return m_instance->get_kT() / m_conv_energy; }},
          {"valency",

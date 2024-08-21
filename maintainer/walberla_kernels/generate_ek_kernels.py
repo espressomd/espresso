@@ -56,7 +56,7 @@ def replace_macros(filename: str) -> None:
         content = f.read()
         f.seek(0)
         f.truncate(0)
-        # replace replace_getData_with_uncheckedFastGetData
+        # replace getData with uncheckedFastGetData
         content = content.replace("block->getData<IndexVectors>(indexVectorID);",
                                   "block->uncheckedFastGetData<IndexVectors>(indexVectorID);")
         # remove dummy assignment
@@ -154,7 +154,8 @@ with code_generation_context.CodeGeneration() as ctx:
             block_offset=block_offsets if fluctuation else None,
             **params)
 
-    # the subsitution for field reads is necessary, because otherwise there are "ResolvedFieldAccess" nodes that fail in the code generation
+    # the substitution for field reads is necessary, because otherwise there are
+    # "ResolvedFieldAccess" nodes that fail in the code generation
     flux_advection = ps.AssignmentCollection(ek.flux_advection())
     flux_advection = ps.simp.add_subexpressions_for_field_reads(flux_advection)
 

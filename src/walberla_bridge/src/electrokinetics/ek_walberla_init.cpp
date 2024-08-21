@@ -37,7 +37,7 @@ new_ek_walberla(std::shared_ptr<LatticeWalberla> const &lattice,
                 double diffusion, double kT, double valency,
                 Utils::Vector3d ext_efield, double density, bool advection,
                 bool friction_coupling, bool single_precision, bool thermalized,
-                uint seed) {
+                unsigned int seed) {
   if (single_precision) {
     return std::make_shared<EKinWalberlaImpl<13, float>>(
         lattice, diffusion, kT, valency, ext_efield, density, advection,

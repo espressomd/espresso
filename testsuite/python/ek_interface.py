@@ -100,6 +100,9 @@ class EKTest:
         ek_species = self.make_default_ek_species(thermalized=True, seed=42)
         self.assertTrue(ek_species.thermalized)
         self.assertEqual(ek_species.seed, 42)
+        self.assertEqual(ek_species.rng_state, 0)
+        ek_species.rng_state = 5
+        self.assertEqual(ek_species.rng_state, 5)
 
     def check_ek_species_properties(self, species):
         agrid = self.params["agrid"]
@@ -198,6 +201,15 @@ class EKTest:
         self.system.ekcontainer.solver = ek_solver
         self.assertIsInstance(self.system.ekcontainer.solver,
                               espressomd.electrokinetics.EKNone)
+
+    def test_ek_species_exceptions(self):
+        ek_species = self.make_default_ek_species()
+        with self.assertRaisesRegex(ValueError, "Parameter 'kT' must be >= 0"):
+            ek_species.kT = -0.4
+        with self.assertRaisesRegex(ValueError, "Parameter 'rng_state' must be >= 0"):
+            ek_species.rng_state = -2
+        with self.assertRaisesRegex(RuntimeError, "This EK instance is unthermalized"):
+            ek_species.rng_state = 5
 
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver

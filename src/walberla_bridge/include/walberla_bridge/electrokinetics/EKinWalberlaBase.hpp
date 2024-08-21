@@ -140,7 +140,7 @@ public:
   [[nodiscard]] virtual Utils::Vector3d get_ext_efield() const noexcept = 0;
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
   [[nodiscard]] virtual bool is_thermalized() const noexcept = 0;
-  [[nodiscard]] virtual uint get_seed() const noexcept = 0;
+  [[nodiscard]] virtual unsigned int get_seed() const noexcept = 0;
   [[nodiscard]] virtual std::optional<uint64_t> get_rng_state() const = 0;
 
   virtual void set_diffusion(double diffusion) = 0;

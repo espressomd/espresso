@@ -109,7 +109,7 @@ private:
   Utils::Vector3d m_ext_efield;
   bool m_advection;
   bool m_friction_coupling;
-  uint m_seed;
+  unsigned int m_seed;
 
 protected:
   // Block data access handles
@@ -177,7 +177,7 @@ public:
   EKinWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double diffusion,
                    double kT, double valency, Utils::Vector3d const &ext_efield,
                    double density, bool advection, bool friction_coupling,
-                   bool thermalized, uint seed)
+                   bool thermalized, unsigned int seed)
       : m_diffusion(FloatType_c(diffusion)), m_kT(FloatType_c(kT)),
         m_valency(FloatType_c(valency)), m_ext_efield(ext_efield),
         m_advection(advection), m_friction_coupling(friction_coupling),
@@ -247,7 +247,9 @@ public:
     return static_cast<bool>(
         std::get_if<DiffusiveFluxKernelThermalized>(&*m_diffusive_flux));
   }
-  [[nodiscard]] uint get_seed() const noexcept override { return m_seed; }
+  [[nodiscard]] unsigned int get_seed() const noexcept override {
+    return m_seed;
+  }
   [[nodiscard]] std::optional<uint64_t> get_rng_state() const override {
     auto const kernel =
         std::get_if<DiffusiveFluxKernelThermalized>(&*m_diffusive_flux);
@@ -259,30 +261,31 @@ public:
 
   void set_diffusion(double diffusion) override {
     m_diffusion = FloatType_c(diffusion);
-
-    auto lambda = [m_diffusion = m_diffusion](auto &kernel) {
+    auto visitor = [m_diffusion = m_diffusion](auto &kernel) {
       kernel.D_ = m_diffusion;
     };
-
-    std::visit(lambda, *m_diffusive_flux);
-    std::visit(lambda, *m_diffusive_flux_electrostatic);
+    std::visit(visitor, *m_diffusive_flux);
+    std::visit(visitor, *m_diffusive_flux_electrostatic);
   }
+
   void set_kT(double kT) override {
     m_kT = FloatType_c(kT);
-
     std::visit([m_kT = m_kT](auto &kernel) { kernel.kT_ = m_kT; },
                *m_diffusive_flux_electrostatic);
   }
+
   void set_valency(double valency) override {
     m_valency = FloatType_c(valency);
-
     std::visit([m_valency = m_valency](auto &kernel) { kernel.z_ = m_valency; },
                *m_diffusive_flux_electrostatic);
   }
+
   void set_advection(bool advection) override { m_advection = advection; }
+
   void set_friction_coupling(bool friction_coupling) override {
     m_friction_coupling = friction_coupling;
   }
+
   void set_rng_state(uint64_t counter) override {
     auto const kernel =
         std::get_if<DiffusiveFluxKernelThermalized>(&*m_diffusive_flux);
@@ -298,6 +301,7 @@ public:
     kernel->time_step_ = static_cast<uint32_t>(counter);
     kernel_electrostatic->time_step_ = static_cast<uint32_t>(counter);
   }
+
   void set_ext_efield(Utils::Vector3d const &field) override {
     m_ext_efield = field;
 
@@ -330,7 +334,7 @@ private:
             std::move(kernel_electrostatic));
   }
 
-  void set_diffusion_kernels(uint seed) {
+  void set_diffusion_kernels(unsigned int seed) {
     auto const grid_dim = get_lattice().get_grid_dimensions();
 
     auto kernel = DiffusiveFluxKernelThermalized(
@@ -412,9 +416,8 @@ private:
   }
 
   void kernel_diffusion_electrostatic(const std::size_t &potential_id) {
-    auto const potential_id_blockdata = BlockDataID(potential_id);
-    std::visit([phiID = potential_id_blockdata](
-                   auto &kernel) { kernel.phiID = phiID; },
+    auto const phiID = BlockDataID(potential_id);
+    std::visit([phiID](auto &kernel) { kernel.phiID = phiID; },
                *m_diffusive_flux_electrostatic);
 
     for (auto &block : *m_lattice->get_blocks()) {
