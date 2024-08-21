@@ -13,7 +13,7 @@
 //  You should have received a copy of the GNU General Public License along
 //  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
 //
-//! \\file ReactionKernelBulk_3_single_precision.h
+//! \\file DiffusiveFluxKernelWithElectrostaticThermalized_single_precision.h
 //! \\author pystencils
 //======================================================================================================================
 
@@ -50,18 +50,17 @@
 namespace walberla {
 namespace pystencils {
 
-class ReactionKernelBulk_3_single_precision {
+class DiffusiveFluxKernelWithElectrostaticThermalized_single_precision {
 public:
-  ReactionKernelBulk_3_single_precision(BlockDataID rho_0ID_,
-                                        BlockDataID rho_1ID_,
-                                        BlockDataID rho_2ID_, float order_0,
-                                        float order_1, float order_2,
-                                        float rate_coefficient, float stoech_0,
-                                        float stoech_1, float stoech_2)
-      : rho_0ID(rho_0ID_), rho_1ID(rho_1ID_), rho_2ID(rho_2ID_),
-        order_0_(order_0), order_1_(order_1), order_2_(order_2),
-        rate_coefficient_(rate_coefficient), stoech_0_(stoech_0),
-        stoech_1_(stoech_1), stoech_2_(stoech_2){};
+  DiffusiveFluxKernelWithElectrostaticThermalized_single_precision(
+      BlockDataID jID_, BlockDataID phiID_, BlockDataID rhoID_, float D,
+      float f_ext_0, float f_ext_1, float f_ext_2, uint32_t field_size_0,
+      uint32_t field_size_1, uint32_t field_size_2, float kT, uint32_t seed,
+      uint32_t time_step, float z)
+      : jID(jID_), phiID(phiID_), rhoID(rhoID_), D_(D), f_ext_0_(f_ext_0),
+        f_ext_1_(f_ext_1), f_ext_2_(f_ext_2), field_size_0_(field_size_0),
+        field_size_1_(field_size_1), field_size_2_(field_size_2), kT_(kT),
+        seed_(seed), time_step_(time_step), z_(z), configured_(false){};
 
   void run(IBlock *block);
 
@@ -72,12 +71,16 @@ public:
   void operator()(IBlock *block) { run(block); }
 
   static std::function<void(IBlock *)>
-  getSweep(const shared_ptr<ReactionKernelBulk_3_single_precision> &kernel) {
+  getSweep(const shared_ptr<
+           DiffusiveFluxKernelWithElectrostaticThermalized_single_precision>
+               &kernel) {
     return [kernel](IBlock *b) { kernel->run(b); };
   }
 
   static std::function<void(IBlock *)> getSweepOnCellInterval(
-      const shared_ptr<ReactionKernelBulk_3_single_precision> &kernel,
+      const shared_ptr<
+          DiffusiveFluxKernelWithElectrostaticThermalized_single_precision>
+          &kernel,
       const shared_ptr<StructuredBlockStorage> &blocks,
       const CellInterval &globalCellInterval, cell_idx_t ghostLayers = 1) {
     return [kernel, blocks, globalCellInterval, ghostLayers](IBlock *b) {
@@ -99,18 +102,32 @@ public:
   }
 
   void configure(const shared_ptr<StructuredBlockStorage> &blocks,
-                 IBlock *block) {}
+                 IBlock *block) {
+    Cell BlockCellBB = blocks->getBlockCellBB(*block).min();
+    block_offset_0_ = uint32_t(BlockCellBB[0]);
+    block_offset_1_ = uint32_t(BlockCellBB[1]);
+    block_offset_2_ = uint32_t(BlockCellBB[2]);
+    configured_ = true;
+  }
 
-  BlockDataID rho_0ID;
-  BlockDataID rho_1ID;
-  BlockDataID rho_2ID;
-  float order_0_;
-  float order_1_;
-  float order_2_;
-  float rate_coefficient_;
-  float stoech_0_;
-  float stoech_1_;
-  float stoech_2_;
+  BlockDataID jID;
+  BlockDataID phiID;
+  BlockDataID rhoID;
+  float D_;
+  uint32_t block_offset_0_;
+  uint32_t block_offset_1_;
+  uint32_t block_offset_2_;
+  float f_ext_0_;
+  float f_ext_1_;
+  float f_ext_2_;
+  uint32_t field_size_0_;
+  uint32_t field_size_1_;
+  uint32_t field_size_2_;
+  float kT_;
+  uint32_t seed_;
+  uint32_t time_step_;
+  float z_;
+  bool configured_;
 };
 
 } // namespace pystencils

@@ -260,7 +260,7 @@ python_test(FILE canonical_ensemble.py MAX_NUM_PROC 2)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)
 # python_test(FILE lb_stokes_sphere.py MAX_NUM_PROC 4 GPU_SLOTS 1 LABELS long)
 python_test(FILE lb_pressure_tensor.py MAX_NUM_PROC 1 GPU_SLOTS 3 LABELS long)
-# python_test(FILE ek_fluctuations.py MAX_NUM_PROC 1) # TODO
+python_test(FILE ek_fluctuations.py MAX_NUM_PROC 2)
 python_test(FILE exclusions.py MAX_NUM_PROC 2)
 python_test(FILE integrator_langevin_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE integrator_brownian_stats.py MAX_NUM_PROC 1 LABELS long)

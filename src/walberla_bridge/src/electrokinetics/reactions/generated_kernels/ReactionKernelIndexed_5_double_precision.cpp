@@ -17,9 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
-
-#include <cmath>
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 #include "ReactionKernelIndexed_5_double_precision.h"
 #include "core/DataTypes.h"
@@ -47,13 +45,19 @@ namespace pystencils {
 #pragma diag_suppress 177
 #endif
 #endif
-
+// NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_714956d26e6eb81c5dec60e7ab7da8ab {
-static FUNC_PREFIX void reactionkernelindexed_5_double_precision_boundary_ReactionKernelIndexed_5_double_precision(uint8_t *RESTRICT _data_indexVector, double *RESTRICT _data_rho_0, double *RESTRICT _data_rho_1, double *RESTRICT _data_rho_2, double *RESTRICT _data_rho_3, double *RESTRICT _data_rho_4, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int64_t const _stride_rho_2_0, int64_t const _stride_rho_2_1, int64_t const _stride_rho_2_2, int64_t const _stride_rho_3_0, int64_t const _stride_rho_3_1, int64_t const _stride_rho_3_2, int64_t const _stride_rho_4_0, int64_t const _stride_rho_4_1, int64_t const _stride_rho_4_2, int32_t indexVectorSize, double order_0, double order_1, double order_2, double order_3, double order_4, double rate_coefficient, double stoech_0, double stoech_1, double stoech_2, double stoech_3, double stoech_4) {
+static FUNC_PREFIX void reactionkernelindexed_5_double_precision_boundary_ReactionKernelIndexed_5_double_precision(uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_rho_0, double *RESTRICT _data_rho_1, double *RESTRICT _data_rho_2, double *RESTRICT _data_rho_3, double *RESTRICT _data_rho_4, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int64_t const _stride_rho_2_0, int64_t const _stride_rho_2_1, int64_t const _stride_rho_2_2, int64_t const _stride_rho_3_0, int64_t const _stride_rho_3_1, int64_t const _stride_rho_3_2, int64_t const _stride_rho_4_0, int64_t const _stride_rho_4_1, int64_t const _stride_rho_4_2, int32_t indexVectorSize, double order_0, double order_1, double order_2, double order_3, double order_4, double rate_coefficient, double stoech_0, double stoech_1, double stoech_2, double stoech_3, double stoech_4) {
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
     const int32_t x = *((int32_t *)(&_data_indexVector[12 * ctr_0]));
     const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
     const int32_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
+
+    const int32_t cx[] = {0};
+    const int32_t cy[] = {0};
+    const int32_t cz[] = {0};
+    const int32_t invdir[] = {0};
+
     const double local_rho_0 = _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z];
     const double local_rho_1 = _data_rho_1[_stride_rho_1_0 * x + _stride_rho_1_1 * y + _stride_rho_1_2 * z];
     const double local_rho_2 = _data_rho_2[_stride_rho_2_0 * x + _stride_rho_2_1 * y + _stride_rho_2_2 * z];
@@ -69,6 +73,7 @@ static FUNC_PREFIX void reactionkernelindexed_5_double_precision_boundary_Reacti
 }
 } // namespace internal_714956d26e6eb81c5dec60e7ab7da8ab
 
+// NOLINTEND(readability-non-const-parameter*)
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -88,31 +93,31 @@ void ReactionKernelIndexed_5_double_precision::run_impl(IBlock *block, IndexVect
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
   auto rho_3 = block->getData<field::GhostLayerField<double, 1>>(rho_3ID);
-  auto rho_4 = block->getData<field::GhostLayerField<double, 1>>(rho_4ID);
   auto rho_1 = block->getData<field::GhostLayerField<double, 1>>(rho_1ID);
-  auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
   auto rho_2 = block->getData<field::GhostLayerField<double, 1>>(rho_2ID);
+  auto rho_4 = block->getData<field::GhostLayerField<double, 1>>(rho_4ID);
+  auto rho_0 = block->getData<field::GhostLayerField<double, 1>>(rho_0ID);
 
+  auto &rate_coefficient = rate_coefficient_;
+  auto &stoech_1 = stoech_1_;
+  auto &stoech_3 = stoech_3_;
+  auto &order_3 = order_3_;
+  auto &order_1 = order_1_;
+  auto &order_4 = order_4_;
+  auto &stoech_2 = stoech_2_;
+  auto &stoech_4 = stoech_4_;
+  auto &order_0 = order_0_;
   auto &stoech_0 = stoech_0_;
   auto &order_2 = order_2_;
-  auto &stoech_1 = stoech_1_;
-  auto &stoech_4 = stoech_4_;
-  auto &order_1 = order_1_;
-  auto &stoech_2 = stoech_2_;
-  auto &order_0 = order_0_;
-  auto &order_4 = order_4_;
-  auto &stoech_3 = stoech_3_;
-  auto &rate_coefficient = rate_coefficient_;
-  auto &order_3 = order_3_;
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))
   double *RESTRICT _data_rho_1 = rho_1->dataAt(0, 0, 0, 0);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_2->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_2->nrOfGhostLayers()))
   double *RESTRICT _data_rho_2 = rho_2->dataAt(0, 0, 0, 0);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_3->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_3->nrOfGhostLayers()))
   double *RESTRICT _data_rho_3 = rho_3->dataAt(0, 0, 0, 0);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_4->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_4->nrOfGhostLayers()))
   double *RESTRICT _data_rho_4 = rho_4->dataAt(0, 0, 0, 0);
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());
   const int64_t _stride_rho_0_1 = int64_t(rho_0->yStride());

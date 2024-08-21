@@ -93,7 +93,6 @@ void EKSpecies::make_instance(VariantMap const &params) {
   auto const ext_efield = get_value<Utils::Vector3d>(params, "ext_efield");
   auto const density = get_value<double>(params, "density");
   auto const kT = get_value<double>(params, "kT");
-  auto const precision = get_value<bool>(params, "single_precision");
   auto const ek_diffusion = diffusion * m_conv_diffusion;
   auto const ek_ext_efield = ext_efield * m_conv_ext_efield;
   auto const ek_density = density * m_conv_density;
@@ -102,7 +101,10 @@ void EKSpecies::make_instance(VariantMap const &params) {
       m_lattice->lattice(), ek_diffusion, ek_kT,
       get_value<double>(params, "valency"), ek_ext_efield, ek_density,
       get_value<bool>(params, "advection"),
-      get_value<bool>(params, "friction_coupling"), precision);
+      get_value<bool>(params, "friction_coupling"),
+      get_value<bool>(params, "single_precision"),
+      get_value_or<bool>(params, "thermalized", false),
+      static_cast<uint>(get_value_or<int>(params, "seed", 0)));
 }
 
 void EKSpecies::do_construct(VariantMap const &params) {
@@ -113,7 +115,16 @@ void EKSpecies::do_construct(VariantMap const &params) {
   auto const density = get_value<double>(params, "density");
   auto const kT = get_value<double>(params, "kT");
   auto const tau = m_tau = get_value<double>(params, "tau");
+  auto const seed = get_value_or<int>(params, "seed", 0);
   context()->parallel_try_catch([&]() {
+    if (get_value<bool>(params, "thermalized") and
+        not params.contains("seed")) {
+      throw std::invalid_argument(
+          "Parameter 'seed' is required for thermalized EKSpecies");
+    }
+    if (seed < 0) {
+      throw std::domain_error("Parameter 'seed' must be >= 0");
+    }
     if (tau <= 0.) {
       throw std::domain_error("Parameter 'tau' must be > 0");
     }

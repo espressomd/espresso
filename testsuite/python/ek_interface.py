@@ -65,9 +65,9 @@ class EKTest:
         self.system.thermostat.turn_off()
         self.system.time_step = self.params["tau"]
 
-    def make_default_ek_species(self):
+    def make_default_ek_species(self, **kwargs):
         return self.ek_species_class(
-            lattice=self.lattice, **self.ek_params, **self.ek_species_params)
+            lattice=self.lattice, **self.ek_params, **self.ek_species_params, **kwargs)
 
     def test_ek_species(self):
         # inactive species
@@ -95,6 +95,11 @@ class EKTest:
         espressomd.electrokinetics.EKReactant(
             ekspecies=ek_species, stoech_coeff=-2.0, order=2.0)
         self.check_ek_species_properties(ek_species)
+
+        # thermalized species
+        ek_species = self.make_default_ek_species(thermalized=True, seed=42)
+        self.assertTrue(ek_species.thermalized)
+        self.assertEqual(ek_species.seed, 42)
 
     def check_ek_species_properties(self, species):
         agrid = self.params["agrid"]
@@ -354,7 +359,7 @@ class EKTest:
 
     def test_raise_if_read_only(self):
         ek_species = self.make_default_ek_species()
-        for key in {"lattice", "shape", "single_precision"}:
+        for key in {"lattice", "shape", "single_precision", "seed", "thermalized"}:
             with self.assertRaisesRegex(RuntimeError, f"(Parameter|Property) '{key}' is read-only"):
                 setattr(ek_species, key, 0)
 
@@ -375,6 +380,12 @@ class EKTest:
         with self.assertRaisesRegex(ValueError, "Parameter 'tau' must be > 0"):
             espressomd.electrokinetics.EKContainer(
                 tau=0., solver=self.system.ekcontainer.solver)
+        for thermalized in (True, False):
+            with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
+                self.ek_species_class(
+                    **make_kwargs(thermalized=thermalized, seed=-1))
+        with self.assertRaisesRegex(ValueError, "Parameter 'seed' is required for thermalized EKSpecies"):
+            self.ek_species_class(**make_kwargs(thermalized=True))
 
     def test_bool_operations_on_node(self):
         ekspecies = self.make_default_ek_species()

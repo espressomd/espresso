@@ -17,9 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.2, lbmpy v1.2,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
-// a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit
+// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 #pragma once
 

@@ -17,9 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
-
-#include <cmath>
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 #include "ReactionKernelIndexed_2_single_precision.h"
 #include "core/DataTypes.h"
@@ -47,13 +45,19 @@ namespace pystencils {
 #pragma diag_suppress 177
 #endif
 #endif
-
+// NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_65f3f69877a34020919311605a374bf2 {
-static FUNC_PREFIX void reactionkernelindexed_2_single_precision_boundary_ReactionKernelIndexed_2_single_precision(uint8_t *RESTRICT _data_indexVector, float *RESTRICT _data_rho_0, float *RESTRICT _data_rho_1, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int32_t indexVectorSize, float order_0, float order_1, float rate_coefficient, float stoech_0, float stoech_1) {
+static FUNC_PREFIX void reactionkernelindexed_2_single_precision_boundary_ReactionKernelIndexed_2_single_precision(uint8_t *RESTRICT const _data_indexVector, float *RESTRICT _data_rho_0, float *RESTRICT _data_rho_1, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int32_t indexVectorSize, float order_0, float order_1, float rate_coefficient, float stoech_0, float stoech_1) {
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
     const int32_t x = *((int32_t *)(&_data_indexVector[12 * ctr_0]));
     const int32_t y = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 4]));
     const int32_t z = *((int32_t *)(&_data_indexVector[12 * ctr_0 + 8]));
+
+    const int32_t cx[] = {0};
+    const int32_t cy[] = {0};
+    const int32_t cz[] = {0};
+    const int32_t invdir[] = {0};
+
     const float local_rho_0 = _data_rho_0[_stride_rho_0_0 * x + _stride_rho_0_1 * y + _stride_rho_0_2 * z];
     const float local_rho_1 = _data_rho_1[_stride_rho_1_0 * x + _stride_rho_1_1 * y + _stride_rho_1_2 * z];
     const float rate_factor = rate_coefficient * powf(local_rho_0, order_0) * powf(local_rho_1, order_1);
@@ -63,6 +67,7 @@ static FUNC_PREFIX void reactionkernelindexed_2_single_precision_boundary_Reacti
 }
 } // namespace internal_65f3f69877a34020919311605a374bf2
 
+// NOLINTEND(readability-non-const-parameter*)
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -85,13 +90,13 @@ void ReactionKernelIndexed_2_single_precision::run_impl(IBlock *block, IndexVect
   auto rho_0 = block->getData<field::GhostLayerField<float, 1>>(rho_0ID);
 
   auto &order_1 = order_1_;
-  auto &order_0 = order_0_;
   auto &stoech_0 = stoech_0_;
+  auto &order_0 = order_0_;
   auto &stoech_1 = stoech_1_;
   auto &rate_coefficient = rate_coefficient_;
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))
   float *RESTRICT _data_rho_1 = rho_1->dataAt(0, 0, 0, 0);
   const int64_t _stride_rho_0_0 = int64_t(rho_0->xStride());
   const int64_t _stride_rho_0_1 = int64_t(rho_0->yStride());
