@@ -17,9 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.2, lbmpy v1.2, lbmpy_walberla/pystencils_walberla from waLBerla commit ref: a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
-
-#include <cmath>
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 #include "Dirichlet_single_precision.h"
 #include "core/DataTypes.h"
@@ -47,7 +45,7 @@ namespace pystencils {
 #pragma diag_suppress 177
 #endif
 #endif
-
+// NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_43f4eae176e72ad2d9db0f0468064c30 {
 static FUNC_PREFIX void dirichlet_single_precision_boundary_Dirichlet_single_precision(float *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int32_t indexVectorSize) {
   for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
@@ -66,6 +64,7 @@ static FUNC_PREFIX void dirichlet_single_precision_boundary_Dirichlet_single_pre
 }
 } // namespace internal_43f4eae176e72ad2d9db0f0468064c30
 
+// NOLINTEND(readability-non-const-parameter*)
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -86,7 +85,7 @@ void Dirichlet_single_precision::run_impl(IBlock *block, IndexVectors::Type type
 
   auto field = block->getData<field::GhostLayerField<float, 1>>(fieldID);
 
-  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(field->nrOfGhostLayers()));
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(field->nrOfGhostLayers()))
   float *RESTRICT _data_field = field->dataAt(0, 0, 0, 0);
   const int64_t _stride_field_0 = int64_t(field->xStride());
   const int64_t _stride_field_1 = int64_t(field->yStride());

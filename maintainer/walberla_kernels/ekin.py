@@ -139,6 +139,9 @@ class EK:
             stencil_offsets = list(
                 map(lambda d: ps.stencil.direction_string_to_offset(d), stencil))
 
+            A0 = sum([sp.Matrix(ps.stencil.direction_string_to_offset(d)).norm()
+                      for d in self.flux_field.staggered_stencil]) / self.dim
+
             for i, (val, d, rng_symb) in enumerate(
                     zip(stencil, stencil_offsets, rng_symbol_gen)):
                 assert _flux_collection.main_assignments[i].lhs == self.flux_field.staggered_access(
@@ -146,9 +149,8 @@ class EK:
                 _flux_collection.main_assignments[i] = ps.Assignment(
                     self.flux_field.staggered_access(val),
                     _flux_collection.main_assignments[i].rhs + sp.sqrt(
-                        2 * self.diffusion * discretize(self.density_field.center, d)) / sp.Matrix(
-                        d).norm() * rng_symb * sp.sqrt(
-                        3) / 4)
+                        2 * self.diffusion * discretize(self.density_field.center, d) / sp.Matrix(
+                            d).norm() / A0) * (rng_symb - 0.5) * sp.sqrt(12))
 
         if include_vof:
             assert self.velocity_field is not None, "velocity field is not provided!"

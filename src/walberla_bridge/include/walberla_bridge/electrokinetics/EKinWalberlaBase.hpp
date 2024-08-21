@@ -139,12 +139,16 @@ public:
   [[nodiscard]] virtual bool get_friction_coupling() const noexcept = 0;
   [[nodiscard]] virtual Utils::Vector3d get_ext_efield() const noexcept = 0;
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
+  [[nodiscard]] virtual bool is_thermalized() const noexcept = 0;
+  [[nodiscard]] virtual unsigned int get_seed() const noexcept = 0;
+  [[nodiscard]] virtual std::optional<uint64_t> get_rng_state() const = 0;
 
   virtual void set_diffusion(double diffusion) = 0;
   virtual void set_kT(double kT) = 0;
   virtual void set_valency(double valency) = 0;
   virtual void set_advection(bool advection) = 0;
   virtual void set_friction_coupling(bool friction_coupling) = 0;
+  virtual void set_rng_state(uint64_t counter) = 0;
   virtual void set_ext_efield(Utils::Vector3d const &field) = 0;
 
   [[nodiscard]] virtual std::size_t get_density_id() const noexcept = 0;
