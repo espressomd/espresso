@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2022 The ESPResSo project
+# Copyright (C) 2015-2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,25 +28,23 @@ if(DOXYGEN_FOUND)
   set(DOXYGEN_BIB_IN ${CMAKE_SOURCE_DIR}/doc/bibliography.bib)
   set(DOXYGEN_BIB_OUT ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib)
 
-  # transform BibTeX DOI fields into URL fields (bibliographic styles available
-  # to Doxygen do not process the DOI field)
   add_custom_command(
     OUTPUT ${DOXYGEN_BIB_OUT}
     COMMAND
-      sed -r "'s_^ *doi *= *([^0-9]+)(10\\.[0-9]+)_url=\\1https://doi.org/\\2_'"
-      ${DOXYGEN_BIB_IN} > ${DOXYGEN_BIB_OUT}
+      ${CMAKE_COMMAND} -DINPUT=${DOXYGEN_BIB_IN} -DOUTPUT=${DOXYGEN_BIB_OUT} -P
+      ${CMAKE_CURRENT_SOURCE_DIR}/bibtex_preprocess.cmake
     DEPENDS ${DOXYGEN_BIB_IN})
 
   set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
   set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-  set(CITELIST ${CMAKE_CURRENT_BINARY_DIR}/html/citelist.html)
+  set(DOXYGEN_CITELIST ${CMAKE_CURRENT_BINARY_DIR}/html/citelist.html)
 
   configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
   add_custom_target(
     doxygen COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-    COMMAND sed -ri "s/ textsuperscript (\\S+) /<sup>\\1<\\/sup> /" ${CITELIST}
-    COMMAND sed -ri "s/ textsubscript (\\S+) /<sub>\\1<\\/sub> /" ${CITELIST}
+    COMMAND ${CMAKE_COMMAND} -DBIBLIOGRAPHY=${DOXYGEN_CITELIST} -P
+            ${CMAKE_CURRENT_SOURCE_DIR}/bibtex_postprocess.cmake
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating API documentation with Doxygen"
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doxy-features ${DOXYGEN_BIB_OUT}
