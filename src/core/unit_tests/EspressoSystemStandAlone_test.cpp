@@ -53,6 +53,7 @@ namespace utf = boost::unit_test;
 #include "observables/ParticleVelocities.hpp"
 #include "observables/PidObservable.hpp"
 #include "p3m/FFTBackendLegacy.hpp"
+#include "p3m/FFTBuffersLegacy.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
@@ -234,8 +235,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              5,
                              0.615,
                              1e-3};
-    auto solver = new_p3m_handle<double, Arch::CPU, FFTBackendLegacy>(
-        std::move(p3m), prefactor, 1, false, true);
+    auto solver =
+        new_p3m_handle<double, Arch::CPU, FFTBackendLegacy, FFTBuffersLegacy>(
+            std::move(p3m), prefactor, 1, false, true);
     add_actor(comm, espresso::system, system.coulomb.impl->solver, solver,
               [&system]() { system.on_coulomb_change(); });
     BOOST_CHECK(not solver->is_gpu());
@@ -302,8 +304,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
                              5,
                              0.615,
                              1e-3};
-    auto solver = new_dp3m_handle<double, Arch::CPU, FFTBackendLegacy>(
-        std::move(p3m), prefactor, 1, false);
+    auto solver =
+        new_dp3m_handle<double, Arch::CPU, FFTBackendLegacy, FFTBuffersLegacy>(
+            std::move(p3m), prefactor, 1, false);
     add_actor(comm, espresso::system, system.dipoles.impl->solver, solver,
               [&system]() { system.on_dipoles_change(); });
     BOOST_CHECK(not solver->is_gpu());

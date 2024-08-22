@@ -24,6 +24,7 @@ import numpy as np
 import pystencils as ps
 import pystencils_walberla
 import sympy as sp
+import pystencils_walberla.utility
 
 
 class Dirichlet_Custom(ps.boundaries.Dirichlet):
@@ -221,7 +222,7 @@ def generate_boundary(
 ):
     struct_name = "IndexInfo"
 
-    config = pystencils_walberla.codegen.config_from_context(
+    config = pystencils_walberla.utility.config_from_context(
         generation_context,
         target=target,
         data_type=data_type,
@@ -231,6 +232,8 @@ def generate_boundary(
     create_kernel_params = config.__dict__
     del create_kernel_params["target"]
     del create_kernel_params["index_fields"]
+    del create_kernel_params["default_number_int"]
+    del create_kernel_params["skip_independence_check"]
 
     coordinate_names = ("x", "y", "z")[:dim]
 
@@ -255,7 +258,13 @@ def generate_boundary(
         index_fields=[index_field], target=target, **create_kernel_params
     )
 
-    kernel = ps.kernelcreation.create_kernel(assignment, config=kernel_config)
+    elements = [ps.boundaries.boundaryhandling.BoundaryOffsetInfo(stencil)]
+    # dummy read, such that it recognizes the field....
+    elements += [ps.astnodes.SympyAssignment(
+        ps.TypedSymbol("dummy", np.int32), index_field[0]("x"))]
+    elements += assignment
+
+    kernel = ps.kernelcreation.create_kernel(elements, config=kernel_config)
 
     if isinstance(kernel, ps.astnodes.KernelFunction):
         kernel.function_name = f"boundary_{class_name}"

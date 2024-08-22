@@ -145,7 +145,7 @@ Solver::calc_pressure_long_range(ParticleRange const &particles) const {
 struct ShortRangeCutoff {
 #ifdef P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
-    return actor->p3m.params.r_cut;
+    return actor->p3m_params.r_cut;
   }
   auto
   operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {

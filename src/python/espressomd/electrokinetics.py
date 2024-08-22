@@ -94,6 +94,10 @@ class EKSpecies(ScriptInterfaceHelper,
         Set it to 0 for an unthermalized species.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
+    thermalized : :obj:`bool`, optional
+        Whether the species is thermalized.
+    seed : :obj:`int`, optional
+        Seed for the random number generator.
 
     Methods
     -------
@@ -169,7 +173,8 @@ class EKSpecies(ScriptInterfaceHelper,
 
     def default_params(self):
         return {"single_precision": False,
-                "kT": 0., "ext_efield": [0., 0., 0.]}
+                "kT": 0., "ext_efield": [0., 0., 0.],
+                "thermalized": False}
 
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:

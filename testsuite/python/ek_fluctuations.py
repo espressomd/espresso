@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2022 The ESPResSo project
+# Copyright (C) 2024 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,83 +25,78 @@ import numpy as np
 import math
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ELECTROKINETICS"])
-class ek_fluctuations(ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKFluctuations(ut.TestCase):
+    BOX_L = 8
+    TAU = 0.1
+    DENSITY = 27.0
+    DIFFUSION_COEFFICIENT = 0.01
+    AGRID = 1.0
 
-    def test(self):
-        # Set parameters
-        box_x = 16
-        box_y = 16
-        box_z = 16
-        time_step = 0.001
-        rho0 = 27.0
-        diff = 1.0
-        agrid = 1.0
+    system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
+    system.time_step = TAU
+    system.cell_system.skin = 0.4
 
-        system = espressomd.System(box_l=[box_x, box_y, box_z])
-        system.time_step = time_step
-        system.cell_system.skin = 0.2
-        system.thermostat.turn_off()
+    def tearDown(self) -> None:
+        self.system.ekcontainer.clear()
 
-        # Setup the fluid
-        ek = espressomd.electrokinetics.Electrokinetics(
-            agrid=agrid,
-            lb_density=1.0,
-            viscosity=1.0,
-            friction=0.0,
-            T=1.0,
-            prefactor=1.0,
-            stencil='linkcentered',
-            advection=False,
-            fluctuations=True,
-            fluctuation_amplitude=1.0)
+    def test_diffusion_single(self):
+        self.detail_test_fluctuation(single_precision=True)
 
-        species = espressomd.electrokinetics.Species(
-            density=rho0,
-            D=diff,
-            valency=0.0)
+    def test_diffusion_double(self):
+        self.detail_test_fluctuation(single_precision=False)
 
-        ek.add_species(species)
-        system.actors.add(ek)
+    def detail_test_fluctuation(self, single_precision: bool):
+        decimal_precision: int = 2 if single_precision else 10
 
-        # Warmup
-        system.integrator.run(1000)
+        lattice = espressomd.electrokinetics.LatticeWalberla(
+            n_ghost_layers=1, agrid=self.AGRID)
+
+        target_density = self.DENSITY * self.system.volume()
+
+        species = espressomd.electrokinetics.EKSpecies(
+            lattice=lattice, density=self.DENSITY, valency=0.0, advection=False,
+            diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
+            single_precision=single_precision, tau=self.TAU, thermalized=True, seed=42)
+
+        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
+
+        self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
+            tau=self.TAU, solver=eksolver)
+        self.system.ekcontainer.add(species)
+
+        self.system.integrator.run(100)
 
         # Set integration and binning parameters
         n_min = 10.0
         n_max = 44.0
         bin_size = 0.25
-        bins = np.zeros(int((n_max - n_min) / bin_size))
         x_range = np.linspace(n_min, n_max, int((n_max - n_min) / bin_size))
-        sample_steps = 100
-        integration_steps = 200
-        count = 0
+        sample_steps = 150
+        integration_steps = 100
+
+        bins = int((n_max - n_min) / bin_size)
+        hist, _ = np.histogram(
+            [], bins=bins, range=(n_min, n_max), density=False)
 
         # Integrate
         for _ in range(sample_steps):
-            system.integrator.run(integration_steps)
-            for i in range(box_x):
-                for j in range(box_y):
-                    for k in range(box_z):
-                        dens = species[i, j, k].density
-                        if dens < n_max and dens > n_min:
-                            x = int((dens - n_min) / bin_size)
-                            bins[x] += 1
-                            count += 1
+            self.system.integrator.run(integration_steps)
 
-        bins = bins / count / bin_size
+            density = species[:, :, :].density
 
-        # Analysis
-        p = []
-        for i in x_range:
-            p.append(1.0 / (math.sqrt(2.0 * math.pi * i))
-                     * math.pow(rho0 / i, i) * math.exp(i - rho0))
+            np.testing.assert_almost_equal(
+                np.sum(density), target_density, decimal=decimal_precision)
 
-        max_diff = 0.0
-        for i in range(len(x_range)):
-            max_diff = max(math.fabs(p[i] - bins[i]), max_diff)
+            hist += np.histogram(density, bins=bins,
+                                 range=(n_min, n_max), density=False)[0]
 
+        hist = hist / np.sum(hist) / bin_size
+
+        analytic_distribution = 1.0 / np.sqrt(2.0 * math.pi * x_range) * np.power(
+            self.DENSITY / x_range, x_range) * np.exp(x_range - self.DENSITY)
+
+        max_diff = np.max(np.abs(analytic_distribution - hist))
         self.assertLess(max_diff, 5.0e-03,
                         f"Density distribution accuracy not achieved, allowed "
                         f"deviation: 5.0e-03, measured: {max_diff}")

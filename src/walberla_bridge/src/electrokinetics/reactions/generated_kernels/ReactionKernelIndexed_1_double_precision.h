@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.2, lbmpy v1.2,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit ref:
-// a839fac6ef7d0c58e7710e4d50490e9dd7146b4a
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit
+// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
 
 /*
  * Boundary class.
@@ -39,9 +39,20 @@
 #include <field/FlagField.h>
 #include <field/GhostLayerField.h>
 
+#include <cassert>
 #include <functional>
-#include <set>
+#include <memory>
 #include <vector>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 
 #ifdef __GNUC__
 #define RESTRICT __restrict__
@@ -49,6 +60,7 @@
 #define RESTRICT __restrict
 #else
 #define RESTRICT
+
 #endif
 
 namespace walberla {
@@ -87,8 +99,9 @@ public:
   };
 
   ReactionKernelIndexed_1_double_precision(
-      const shared_ptr<StructuredBlockForest> &blocks, BlockDataID rho_0ID_,
-      double order_0, double rate_coefficient, double stoech_0)
+      const std::shared_ptr<StructuredBlockForest> &blocks,
+      BlockDataID rho_0ID_, double order_0, double rate_coefficient,
+      double stoech_0)
       : rho_0ID(rho_0ID_), order_0_(order_0),
         rate_coefficient_(rate_coefficient), stoech_0_(stoech_0) {
     auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
@@ -126,7 +139,7 @@ public:
   }
 
   template <typename FlagField_T>
-  void fillFromFlagField(const shared_ptr<StructuredBlockForest> &blocks,
+  void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          ConstBlockDataID flagFieldID, FlagUID boundaryFlagUID,
                          FlagUID domainFlagUID) {
     for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)
@@ -144,9 +157,8 @@ public:
 
     auto *flagField = block->getData<FlagField_T>(flagFieldID);
 
-    if (!(flagField->flagExists(boundaryFlagUID) &&
-          flagField->flagExists(domainFlagUID)))
-      return;
+    assert(flagField->flagExists(boundaryFlagUID) and
+           flagField->flagExists(domainFlagUID));
 
     auto boundaryFlag = flagField->getFlag(boundaryFlagUID);
     auto domainFlag = flagField->getFlag(domainFlagUID);

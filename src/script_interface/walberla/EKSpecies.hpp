@@ -36,7 +36,9 @@
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 namespace ScriptInterface::walberla {
 
@@ -57,49 +59,74 @@ protected:
 
 public:
   EKSpecies() {
-    add_parameters({
-        {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
-        {"diffusion",
-         [this](Variant const &v) {
-           m_instance->set_diffusion(get_value<double>(v) * m_conv_diffusion);
-         },
-         [this]() { return m_instance->get_diffusion() / m_conv_diffusion; }},
-        {"kT",
-         [this](Variant const &v) {
-           m_instance->set_kT(get_value<double>(v) * m_conv_energy);
-         },
-         [this]() { return m_instance->get_kT() / m_conv_energy; }},
-        {"valency",
-         [this](Variant const &v) {
-           m_instance->set_valency(get_value<double>(v));
-         },
-         [this]() { return m_instance->get_valency(); }},
-        {"ext_efield",
-         [this](Variant const &v) {
-           m_instance->set_ext_efield(get_value<Utils::Vector3d>(v) *
-                                      m_conv_ext_efield);
-         },
-         [this]() { return m_instance->get_ext_efield() / m_conv_ext_efield; }},
-        {"advection",
-         [this](Variant const &v) {
-           m_instance->set_advection(get_value<bool>(v));
-         },
-         [this]() { return m_instance->get_advection(); }},
-        {"friction_coupling",
-         [this](Variant const &v) {
-           m_instance->set_friction_coupling(get_value<bool>(v));
-         },
-         [this]() { return m_instance->get_friction_coupling(); }},
-        {"single_precision", AutoParameter::read_only,
-         [this]() { return not m_instance->is_double_precision(); }},
-        {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
-        {"density", AutoParameter::read_only,
-         [this]() { return m_density / m_conv_density; }},
-        {"shape", AutoParameter::read_only,
-         [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
-        {"vtk_writers", AutoParameter::read_only,
-         [this]() { return serialize_vtk_writers(); }},
-    });
+    add_parameters(
+        {{"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
+         {"diffusion",
+          [this](Variant const &v) {
+            m_instance->set_diffusion(get_value<double>(v) * m_conv_diffusion);
+          },
+          [this]() { return m_instance->get_diffusion() / m_conv_diffusion; }},
+         {"kT",
+          [this](Variant const &v) {
+            context()->parallel_try_catch([&]() {
+              auto const kT = get_value<double>(v);
+              if (kT < 0.) {
+                throw std::domain_error("Parameter 'kT' must be >= 0");
+              }
+              m_instance->set_kT(kT * m_conv_energy);
+            });
+          },
+          [this]() { return m_instance->get_kT() / m_conv_energy; }},
+         {"valency",
+          [this](Variant const &v) {
+            m_instance->set_valency(get_value<double>(v));
+          },
+          [this]() { return m_instance->get_valency(); }},
+         {"ext_efield",
+          [this](Variant const &v) {
+            m_instance->set_ext_efield(get_value<Utils::Vector3d>(v) *
+                                       m_conv_ext_efield);
+          },
+          [this]() {
+            return m_instance->get_ext_efield() / m_conv_ext_efield;
+          }},
+         {"advection",
+          [this](Variant const &v) {
+            m_instance->set_advection(get_value<bool>(v));
+          },
+          [this]() { return m_instance->get_advection(); }},
+         {"friction_coupling",
+          [this](Variant const &v) {
+            m_instance->set_friction_coupling(get_value<bool>(v));
+          },
+          [this]() { return m_instance->get_friction_coupling(); }},
+         {"single_precision", AutoParameter::read_only,
+          [this]() { return not m_instance->is_double_precision(); }},
+         {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
+         {"density", AutoParameter::read_only,
+          [this]() { return m_density / m_conv_density; }},
+         {"thermalized", AutoParameter::read_only,
+          [this]() { return m_instance->is_thermalized(); }},
+         {"seed", AutoParameter::read_only,
+          [this]() { return static_cast<int>(m_instance->get_seed()); }},
+         {"rng_state",
+          [this](Variant const &v) {
+            auto const rng_state = get_value<int>(v);
+            context()->parallel_try_catch([&]() {
+              if (rng_state < 0) {
+                throw std::domain_error("Parameter 'rng_state' must be >= 0");
+              }
+              m_instance->set_rng_state(static_cast<uint64_t>(rng_state));
+            });
+          },
+          [this]() {
+            auto const opt = m_instance->get_rng_state();
+            return (opt) ? Variant{static_cast<int>(*opt)} : Variant{None{}};
+          }},
+         {"shape", AutoParameter::read_only,
+          [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
+         {"vtk_writers", AutoParameter::read_only,
+          [this]() { return serialize_vtk_writers(); }}});
   }
 
   void do_construct(VariantMap const &params) override;

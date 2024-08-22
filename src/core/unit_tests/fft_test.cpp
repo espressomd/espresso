@@ -20,15 +20,14 @@
 #define BOOST_TEST_MODULE "FFT utility functions"
 #define BOOST_TEST_DYN_LINK
 
-#include "config/config.hpp"
-
-#if defined(P3M) or defined(DP3M)
-
 #include <boost/test/unit_test.hpp>
+
+#include "config/config.hpp"
 
 #include "fft/fft.hpp"
 #include "fft/vector.hpp"
 #include "p3m/for_each_3d.hpp"
+#include "p3m/packing.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -40,6 +39,8 @@
 #include <span>
 #include <stdexcept>
 #include <vector>
+
+#if defined(P3M) or defined(DP3M)
 
 BOOST_AUTO_TEST_CASE(fft_find_comm_groups_mismatch) {
   using fft::find_comm_groups;
@@ -170,6 +171,8 @@ BOOST_AUTO_TEST_CASE(fft_plan_without_mpi) {
   delete plan;
 }
 
+#endif // defined(P3M) or defined(DP3M)
+
 BOOST_AUTO_TEST_CASE(for_each_3d_test) {
   auto const m_start = Utils::Vector3i{{0, -1, 3}};
   auto const m_stop = Utils::Vector3i{{2, 2, 5}};
@@ -207,6 +210,90 @@ BOOST_AUTO_TEST_CASE(for_each_3d_test) {
   }
 }
 
-#else  // defined(P3M) or defined(DP3M)
-int main(int argc, char **argv) {}
-#endif // defined(P3M) or defined(DP3M)
+template <typename T, int dim1, int dim2, int dim3, typename F>
+void run_on_grid(T (&grid)[dim1][dim2][dim3], F fun) {
+  for (auto i = 0; i < dim1; ++i) {
+    for (auto j = 0; j < dim2; ++j) {
+      for (auto k = 0; k < dim3; ++k) {
+        fun(grid, i, j, k);
+      }
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(packing_unpacking) {
+  // packing into block
+  {
+    int const dim[3] = {4, 6, 8};
+    int mesh[4][6][8] = {};
+    run_on_grid(mesh, [](auto &mesh, int i, int j, int k) {
+      mesh[i][j][k] = (i + 1) * (j + 1) * (k + 1);
+    });
+    int const start[3] = {1, 2, 3};
+    int const size[3] = {2, 3, 4};
+    int block[2][3][4] = {};
+    run_on_grid(block, [](auto &gd, int i, int j, int k) { gd[i][j][k] = -1; });
+    fft_pack_block(&(mesh[0][0][0]), &(block[0][0][0]), start, size, dim, 1);
+    run_on_grid(block, [&start](auto &block, int i, int j, int k) {
+      auto const ref =
+          (i + 1 + start[0u]) * (j + 1 + start[1u]) * (k + 1 + start[2u]);
+      BOOST_REQUIRE_EQUAL(block[i][j][k], ref);
+    });
+  }
+
+  // packing into self
+  {
+    int const dim[3] = {1, 1, 8};
+    int mesh[1][1][8] = {};
+    run_on_grid(mesh, [](auto &gd, int i, int j, int k) { gd[i][j][k] = k; });
+    int const start[3] = {0, 0, 0};
+    int const size[3] = {1, 1, 4};
+    fft_pack_block(&(mesh[0][0][0]), &(mesh[0][0][3]), start, size, dim, 1);
+    run_on_grid(mesh, [&size](auto &mesh, int i, int j, int k) {
+      auto ref = k;
+      if (k >= 3 and k < 3 + size[2u]) {
+        ref = k - 3;
+      }
+      BOOST_REQUIRE_EQUAL(mesh[i][j][k], ref);
+    });
+  }
+
+  // unpacking into grid
+  {
+    int const dim[3] = {4, 6, 8};
+    int mesh[4][6][8] = {};
+    run_on_grid(mesh, [](auto &mesh, int i, int j, int k) {
+      mesh[i][j][k] = (i + 1) * (j + 1) * (k + 1);
+    });
+    int const start[3] = {1, 2, 3};
+    int const size[3] = {2, 3, 4};
+    int block[2][3][4] = {};
+    run_on_grid(block, [](auto &block, int i, int j, int k) {
+      block[i][j][k] = -(i + 1) * (j + 1) * (k + 1);
+    });
+    fft_unpack_block(&(block[0][0][0]), &(mesh[0][0][0]), start, size, dim, 1);
+    run_on_grid(mesh, [&start, &size](auto &mesh, int i, int j, int k) {
+      auto ref = (i + 1) * (j + 1) * (k + 1);
+      if ((i >= start[0] and i < (start[0] + size[0])) and
+          (j >= start[1] and j < (start[1] + size[1])) and
+          (k >= start[2] and k < (start[2] + size[2]))) {
+        ref = -(i + 1 - start[0]) * (j + 1 - start[1]) * (k + 1 - start[2]);
+      }
+      BOOST_REQUIRE_EQUAL(mesh[i][j][k], ref);
+    });
+  }
+
+  // unpacking into self
+  {
+    int const dim[3] = {1, 1, 8};
+    int mesh[1][1][8] = {};
+    run_on_grid(mesh, [](auto &gd, int i, int j, int k) { gd[i][j][k] = k; });
+    int const start[3] = {0, 0, 0};
+    int const size[3] = {1, 1, 4};
+    fft_unpack_block(&(mesh[0][0][3]), &(mesh[0][0][0]), start, size, dim, 1);
+    run_on_grid(mesh, [&size](auto &mesh, int i, int j, int k) {
+      auto const ref = (k < size[2u]) ? k + 3 : k;
+      BOOST_REQUIRE_EQUAL(mesh[i][j][k], ref);
+    });
+  }
+}

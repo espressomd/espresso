@@ -50,38 +50,19 @@
 
 #include <cmath>
 #include <numbers>
-#include <stdexcept>
 
 /** @brief P3M solver. */
 struct CoulombP3M : public Coulomb::Actor<CoulombP3M> {
-  /** @brief Coulomb P3M parameters. */
-  p3m_data_struct &p3m;
-
-  int tune_timings;
-  bool tune_verbose;
-  bool check_complex_residuals;
-
-protected:
-  bool m_is_tuned;
+  P3MParameters const &p3m_params;
 
 public:
-  CoulombP3M(p3m_data_struct &p3m_data, double prefactor, int tune_timings,
-             bool tune_verbose, bool check_complex_residuals)
-      : p3m{p3m_data}, tune_timings{tune_timings}, tune_verbose{tune_verbose},
-        check_complex_residuals{check_complex_residuals} {
-
-    if (tune_timings <= 0) {
-      throw std::domain_error("Parameter 'timings' must be > 0");
-    }
-    m_is_tuned = not p3m.params.tuning;
-    p3m.params.tuning = false;
-    set_prefactor(prefactor);
-  }
+  CoulombP3M(P3MParameters const &p3m_params) : p3m_params{p3m_params} {}
 
   virtual ~CoulombP3M() = default;
 
-  [[nodiscard]] bool is_tuned() const { return m_is_tuned; }
+  [[nodiscard]] virtual bool is_tuned() const noexcept = 0;
   [[nodiscard]] virtual bool is_gpu() const noexcept = 0;
+  [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
   /** @brief Recalculate all derived parameters. */
   virtual void init() = 0;
@@ -109,6 +90,7 @@ public:
    */
   virtual void count_charged_particles() = 0;
   virtual void count_charged_particles_elc(int, double, double) = 0;
+  virtual void adapt_epsilon_elc() = 0;
 
   /**
    * @brief Tune P3M parameters to desired accuracy.
@@ -119,7 +101,7 @@ public:
    * @ref P3MParameters::r_cut_iL "r_cut_iL" and
    * @ref P3MParameters::alpha_L "alpha_L" are tuned to obtain the target
    * @ref P3MParameters::accuracy "accuracy" in optimal time.
-   * These parameters are stored in the @ref p3m object.
+   * These parameters are stored in the @ref p3m_params object.
    *
    * The function utilizes the analytic expression of the error estimate
    * for the P3M method in @cite hockney88a (eq. (8.23)) in
@@ -163,10 +145,10 @@ public:
   /** Calculate real-space contribution of p3m Coulomb pair forces. */
   Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,
                              double dist) const {
-    if ((q1q2 == 0.) || dist >= p3m.params.r_cut || dist <= 0.) {
+    if ((q1q2 == 0.) || dist >= p3m_params.r_cut || dist <= 0.) {
       return {};
     }
-    auto const alpha = p3m.params.alpha;
+    auto const alpha = p3m_params.alpha;
     auto const adist = alpha * dist;
     auto const exp_adist_sq = exp(-adist * adist);
     auto const dist_sq = dist * dist;
@@ -184,10 +166,10 @@ public:
   /** Calculate real-space contribution of Coulomb pair energy. */
   // Eq. (3.6) @cite deserno00b
   double pair_energy(double q1q2, double dist) const {
-    if ((q1q2 == 0.) || dist >= p3m.params.r_cut || dist <= 0.) {
+    if ((q1q2 == 0.) || dist >= p3m_params.r_cut || dist <= 0.) {
       return {};
     }
-    auto const adist = p3m.params.alpha * dist;
+    auto const adist = p3m_params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     return prefactor * q1q2 * erfc_part_ri * exp(-adist * adist);
@@ -216,7 +198,7 @@ protected:
   void sanity_checks_periodicity() const;
   void sanity_checks_cell_structure() const;
 
-  virtual void scaleby_box_l();
+  virtual void scaleby_box_l() = 0;
 };
 
 #endif // P3M

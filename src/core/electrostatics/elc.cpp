@@ -1011,7 +1011,8 @@ void ElectrostaticLayerCorrection::adapt_solver() {
   std::visit(
       [this](auto &solver) {
         set_prefactor(solver->prefactor);
-        solver->p3m.params.epsilon = P3M_EPSILON_METALLIC;
+        solver->adapt_epsilon_elc();
+        assert(solver->p3m_params.epsilon == P3M_EPSILON_METALLIC);
       },
       base_solver);
 }
@@ -1031,7 +1032,7 @@ void ElectrostaticLayerCorrection::recalc_box_h() {
 void ElectrostaticLayerCorrection::recalc_space_layer() {
   if (elc.dielectric_contrast_on) {
     auto const p3m_r_cut = std::visit(
-        [](auto &solver) { return solver->p3m.params.r_cut; }, base_solver);
+        [](auto &solver) { return solver->p3m_params.r_cut; }, base_solver);
     // recalculate the space layer size:
     // 1. set the space_layer to be 1/3 of the gap size, so that box = layer
     elc.space_layer = (1. / 3.) * elc.gap_size;

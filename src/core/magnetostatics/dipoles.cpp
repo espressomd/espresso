@@ -91,7 +91,7 @@ double Solver::cutoff() const {
 #ifdef DP3M
   if (impl->solver) {
     if (auto dp3m = get_actor_by_type<DipolarP3M>(impl->solver)) {
-      return dp3m->dp3m.params.r_cut;
+      return dp3m->dp3m_params.r_cut;
     }
   }
 #endif
