@@ -55,7 +55,7 @@ has_lb_mode = ('LB.WALBERLA' in modes and espressomd.has_features('WALBERLA')
                and ('LB.CPU' in modes or 'LB.GPU' in modes and is_gpu_available))
 has_p3m_mode = 'P3M.CPU' in modes or 'P3M.GPU' in modes and is_gpu_available
 has_thermalized_bonds = 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes
-has_drude = (espressomd.has_features(['ELECTROSTATICS' and 'MASS', 'ROTATION'])
+has_drude = (espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION'])
              and has_thermalized_bonds)
 has_ase = 'ASE' in modes
 

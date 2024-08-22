@@ -97,6 +97,7 @@ class HybridDecomposition(ut.TestCase):
          initial velocities; cutoff of small particles is 2.5.
 
         """
+        assert espressomd.has_features(["LENNARD_JONES"])
         box_l = self.system.box_l[0]
         if n_part_small > 0:
             self.system.part.add(
@@ -249,7 +250,7 @@ class HybridDecomposition(ut.TestCase):
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 1,
                "Skipping test: only runs for n_nodes == 1")
-    @utx.skipIfMissingFeatures(["P3M"])
+    @utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
     def test_against_regular_p3m(self):
         import espressomd.electrostatics
 
@@ -264,7 +265,7 @@ class HybridDecomposition(ut.TestCase):
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 1,
                "Skipping test: only runs for n_nodes == 1")
-    @utx.skipIfMissingFeatures(["DP3M"])
+    @utx.skipIfMissingFeatures(["DP3M", "LENNARD_JONES"])
     def test_against_regular_dp3m(self):
         import espressomd.magnetostatics
 

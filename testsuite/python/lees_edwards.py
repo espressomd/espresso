@@ -75,6 +75,7 @@ class LeesEdwards(ut.TestCase):
     def tearDown(self):
         system = self.system
         system.part.clear()
+        system.non_bonded_inter.reset()
         system.bonded_inter.clear()
         system.lees_edwards.protocol = None
         if espressomd.has_features("COLLISION_DETECTION"):
@@ -745,44 +746,33 @@ class LeesEdwards(ut.TestCase):
             bond_list += p.bonds
         np.testing.assert_array_equal(len(bond_list), 0)
 
-    const_offset_params = {
-        'shear_velocity': 0.0,
-        'shear_direction': 0,
-        'shear_plane_normal': 1,
-        'initial_pos_offset': 17.2}
-
-    shear_params = {
-        'shear_velocity': 0.1,
-        'shear_direction': 0,
-        'shear_plane_normal': 2,
-        'initial_pos_offset': -np.sqrt(0.1)}
-
-    @utx.skipIfMissingFeatures("LENNARD_JONES")
     def run_lj_pair_visibility(self, shear_direction, shear_plane_normal):
         """
         Simulate LJ particles coming into contact under linear shear and verify forces.
         This is to make sure that no pairs get lost or are outdated
         in the short range loop.
         """
+        assert espressomd.has_features(["LENNARD_JONES"])
         shear_axis, normal_axis = axis(
             shear_direction), axis(shear_plane_normal)
         system = self.system
         system.part.clear()
         system.time = 0
         system.time_step = 0.1
+        cutoff = 1.5
         protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=3, initial_pos_offset=5)
         system.lees_edwards.set_boundary_conditions(
             shear_direction=shear_direction, shear_plane_normal=shear_plane_normal, protocol=protocol)
         system.cell_system.skin = 0.2
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1E-6, sigma=1, cutoff=1.2, shift="auto")
+            epsilon=1E-6, sigma=1, cutoff=cutoff, shift="auto")
         system.part.add(
             pos=(0.1 * normal_axis, -0.8 * normal_axis),
             v=(1.0 * shear_axis, -0.3 * shear_axis))
         assert np.all(system.part.all().f == 0.)
         tests_common.check_non_bonded_loop_trace(
-            self, system, cutoff=system.non_bonded_inter[0, 0].lennard_jones.get_params()["cutoff"] + system.cell_system.skin)
+            self, system, cutoff=cutoff + system.cell_system.skin)
 
         # Rewind the clock to get back the LE offset applied during force calc
         system.time = system.time - system.time_step
@@ -793,11 +783,12 @@ class LeesEdwards(ut.TestCase):
             if np.any(np.abs(system.part.all().f) > 0):
                 have_interacted = True
             tests_common.check_non_bonded_loop_trace(
-                self, system, cutoff=system.non_bonded_inter[0, 0].lennard_jones.get_params()["cutoff"] + system.cell_system.skin)
+                self, system, cutoff=cutoff + system.cell_system.skin)
             system.time = system.time - system.time_step
             tests_common.verify_lj_forces(system, 1E-7)
         assert have_interacted
 
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_zz_lj_pair_visibility(self):
         # check that regular decomposition without fully connected doesn't
         # catch the particle
