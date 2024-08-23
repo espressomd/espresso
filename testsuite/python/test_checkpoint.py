@@ -65,6 +65,7 @@ class CheckpointTest(ut.TestCase):
     checkpoint = espressomd.checkpointing.Checkpoint(
         **config.get_checkpoint_params())
     checkpoint.load(0)
+    checkpoint.save(1)
     path_cpt_root = pathlib.Path(checkpoint.checkpoint_dir)
 
     @classmethod
@@ -78,7 +79,7 @@ class CheckpointTest(ut.TestCase):
             cls.ref_periodicity = np.array([False, False, False])
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB mode.")
     def test_lb_fluid(self):
         lbf = system.lb
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
@@ -164,7 +165,7 @@ class CheckpointTest(ut.TestCase):
             np.copy(lbf[:, :, :].is_boundary.astype(int)), 0)
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_species(self):
         cpt_mode = 0 if 'LB.ASCII' in modes else 1
         cpt_root = pathlib.Path(self.checkpoint.checkpoint_dir)
@@ -269,7 +270,7 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf('LB.GPU' in modes, 'VTK not implemented for LB GPU')
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB mode.")
     def test_lb_vtk(self):
         lbf = system.lb
         self.assertEqual(len(lbf.vtk_writers), 2)
@@ -316,7 +317,7 @@ class CheckpointTest(ut.TestCase):
         (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK feature.")
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_vtk(self):
         ek_species = system.ekcontainer[0]
         vtk_suffix = config.test_name
@@ -507,7 +508,7 @@ class CheckpointTest(ut.TestCase):
         self.assertGreater(np.linalg.norm(np.copy(p3.f) - old_force), 1e6)
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
-    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB feature.")
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing LB mode.")
     @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         thmst = system.thermostat.lb
@@ -916,7 +917,7 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(state[key], reference[key], msg=f'for {key}')
 
     def test_comfixed(self):
-        self.assertEqual(list(system.comfixed.types), [0, 2])
+        self.assertEqual(set(system.comfixed.types), {0, 2})
 
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):

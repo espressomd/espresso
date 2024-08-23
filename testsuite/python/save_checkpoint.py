@@ -168,7 +168,7 @@ if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
         system.electrostatics.solver = p3m
         p3m.charge_neutrality_tolerance = 5e-12
 
-if "ase" in sys.modules:
+if has_ase and "ase" in sys.modules:
     system.ase = espressomd.plugins.ase.ASEInterface(
         type_mapping={0: "H", 1: "O", 10: "Cl"},
     )

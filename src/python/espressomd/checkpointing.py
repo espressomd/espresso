@@ -199,7 +199,7 @@ class Checkpoint:
     def save(self, checkpoint_index=None):
         """
         Saves all registered python objects in the given checkpoint directory
-        using cPickle.
+        using pickle.
 
         """
         # get attributes of registered objects
