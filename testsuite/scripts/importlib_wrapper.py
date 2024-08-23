@@ -394,7 +394,7 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
     """
 
     def __init__(self):
-        self.visualizers = {"visualization"}
+        self.visualizers = {"visualization", "zn"}
         self.namespace_visualizers = {
             "espressomd." + x for x in self.visualizers}
         self.visu_items = {}
