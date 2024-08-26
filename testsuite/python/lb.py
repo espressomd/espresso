@@ -663,6 +663,7 @@ class LBTest:
             self.system.integrator.run(1)
             self.assertTrue(np.all(p.f != 0.0))
 
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_INERTIALESS_TRACERS")
     def test_tracers_coupling_rounding(self):
         import espressomd.propagation
         lbf = self.lb_class(**self.params, **self.lb_params)

@@ -223,6 +223,7 @@ cuda12-coverage:
      with_stokesian_dynamics: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
+  timeout: 90m
   tags:
     - espresso
     - cuda
@@ -252,6 +253,7 @@ cuda12-maxset:
     paths:
     - build/
     expire_in: 1 week
+  timeout: 90m
   tags:
     - espresso
     - cuda

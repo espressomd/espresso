@@ -135,18 +135,19 @@ class System(ScriptInterfaceHelper):
         if "sip" in kwargs:
             super().__init__(**kwargs)
             self._setup_atexit()
-            return
-        super().__init__(_regular_constructor=True, **kwargs)
-        if has_features("CUDA"):
-            self.cuda_init_handle = cuda_init.CudaInitHandle()
-        if has_features("WALBERLA"):
-            self._lb = None
-            self._ekcontainer = None
-        self._ase_interface = None
+        else:
+            super().__init__(_regular_constructor=True, **kwargs)
+            if has_features("CUDA"):
+                self.cuda_init_handle = cuda_init.CudaInitHandle()
+            if has_features("WALBERLA"):
+                self._lb = None
+                self._ekcontainer = None
 
-        # lock class
-        self.call_method("lock_system_creation")
-        self._setup_atexit()
+            # lock class
+            self.call_method("lock_system_creation")
+            self._setup_atexit()
+
+        self._ase_interface = None
 
     def _setup_atexit(self):
         import atexit

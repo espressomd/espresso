@@ -132,7 +132,7 @@ To install the ZnDraw visualizer:
 
 .. code-block:: bash
 
-    python3 -m pip install --user -c requirements.txt 'zndraw==0.4.5'
+    python3 -m pip install --user -c requirements.txt 'zndraw==0.4.6'
 
 .. _Nvidia GPU acceleration:
 
