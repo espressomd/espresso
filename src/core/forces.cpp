@@ -31,7 +31,7 @@
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "collision.hpp"
+#include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
 #include "constraints/Constraints.hpp"
 #include "electrostatics/icc.hpp"
@@ -197,7 +197,7 @@ void System::System::calculate_forces() {
                                   coulomb_kernel_ptr, dipoles_kernel_ptr,
                                   elc_kernel_ptr);
 #ifdef COLLISION_DETECTION
-        if (collision_detection.mode != CollisionModeType::OFF) {
+        if (not collision_detection.is_off()) {
           collision_detection.detect_collision(p1, p2, d.dist2);
         }
 #endif

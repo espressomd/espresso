@@ -37,6 +37,7 @@ namespace utf = boost::unit_test;
 #include "bonded_interactions/harmonic.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "collision_detection/utils.hpp"
 #include "communication.hpp"
 #include "cuda/utils.hpp"
 #include "electrostatics/coulomb.hpp"
@@ -559,6 +560,10 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     BOOST_CHECK_THROW(throw BondUnknownTypeError(), std::exception);
     BOOST_CHECK_THROW(throw BondInvalidSizeError(2), std::exception);
     BOOST_CHECK_EQUAL(BondInvalidSizeError(2).size, 2);
+#ifdef COLLISION_DETECTION
+    BOOST_CHECK_THROW(CollisionDetection::get_part(*system.cell_structure, 777),
+                      std::runtime_error);
+#endif
   }
 
   // check exceptions

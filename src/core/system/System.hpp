@@ -50,7 +50,9 @@ class Galilei;
 class Observable_stat;
 class OifGlobal;
 class ImmersedBoundaries;
+namespace CollisionDetection {
 class CollisionDetection;
+}
 namespace BondBreakage {
 class BondBreakage;
 }
@@ -284,7 +286,7 @@ public:
   std::shared_ptr<OifGlobal> oif_global;
   std::shared_ptr<ImmersedBoundaries> immersed_boundaries;
 #ifdef COLLISION_DETECTION
-  std::shared_ptr<CollisionDetection> collision_detection;
+  std::shared_ptr<CollisionDetection::CollisionDetection> collision_detection;
 #endif
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
   std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;

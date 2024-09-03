@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2024 The ESPResSo project
+ * Copyright (C) 2021-2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,10 +19,36 @@
 
 #pragma once
 
-#include <script_interface/ObjectHandle.hpp>
+#include <config/config.hpp>
 
-#include <utils/Factory.hpp>
+#ifdef COLLISION_DETECTION
+
+#include "Protocol.hpp"
+
+#include "core/collision_detection/Off.hpp"
+
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <memory>
 
 namespace ScriptInterface::CollisionDetection {
-void initialize(Utils::Factory<ObjectHandle> *om);
+
+class Off : public Protocol {
+public:
+  Off()
+      : m_protocol{std::make_shared<::CollisionDetection::ActiveProtocol>(
+            ::CollisionDetection::Off())} {}
+  std::shared_ptr<::CollisionDetection::ActiveProtocol> protocol() override {
+    return m_protocol;
+  }
+
+protected:
+  void do_initialize(VariantMap const &) override {}
+
+private:
+  std::shared_ptr<::CollisionDetection::ActiveProtocol> m_protocol;
+};
+
 } // namespace ScriptInterface::CollisionDetection
+#endif // COLLISION_DETECTION

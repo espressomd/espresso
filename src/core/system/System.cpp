@@ -31,7 +31,7 @@
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "cell_system/HybridDecomposition.hpp"
-#include "collision.hpp"
+#include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
@@ -75,7 +75,8 @@ System::System(Private) {
   oif_global = std::make_shared<OifGlobal>();
   immersed_boundaries = std::make_shared<ImmersedBoundaries>();
 #ifdef COLLISION_DETECTION
-  collision_detection = std::make_shared<CollisionDetection>();
+  collision_detection =
+      std::make_shared<CollisionDetection::CollisionDetection>();
 #endif
   bond_breakage = std::make_shared<BondBreakage::BondBreakage>();
   lees_edwards = std::make_shared<LeesEdwards::LeesEdwards>();
@@ -503,7 +504,7 @@ unsigned System::get_global_ghost_flags() const {
   }
 
 #ifdef COLLISION_DETECTION
-  if (collision_detection->mode != CollisionModeType::OFF) {
+  if (not collision_detection->is_off()) {
     data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif

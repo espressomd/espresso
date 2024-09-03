@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2024 The ESPResSo project
+ * Copyright (C) 2011-2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,10 +19,13 @@
 
 #pragma once
 
-#include <script_interface/ObjectHandle.hpp>
+#include <config/config.hpp>
 
-#include <utils/Factory.hpp>
+#ifdef COLLISION_DETECTION
 
-namespace ScriptInterface::CollisionDetection {
-void initialize(Utils::Factory<ObjectHandle> *om);
-} // namespace ScriptInterface::CollisionDetection
+#include <utility>
+
+namespace CollisionDetection {
+using CollisionPair = std::pair<int, int>;
+} // namespace CollisionDetection
+#endif // COLLISION_DETECTION
