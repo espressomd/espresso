@@ -928,17 +928,19 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
         protocol = system.collision_detection.protocol
-        self.assertAlmostEqual(protocol.distance, 0.11, delta=1E-9)
-        self.assertEqual(protocol.bond_centers, system.bonded_inter[0])
         if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
             self.assertIsInstance(
                 protocol, espressomd.collision_detection.BindAtPointOfCollision)
+            self.assertAlmostEqual(protocol.distance, 0.12, delta=1E-9)
+            self.assertEqual(protocol.bond_centers, system.bonded_inter[0])
             self.assertEqual(protocol.bond_vs, system.bonded_inter[1])
             self.assertEqual(protocol.part_type_vs, 2)
             self.assertAlmostEqual(protocol.vs_placement, 1. / 3., delta=1e-6)
         else:
             self.assertIsInstance(
                 protocol, espressomd.collision_detection.BindCenters)
+            self.assertAlmostEqual(protocol.distance, 0.11, delta=1E-9)
+            self.assertEqual(protocol.bond_centers, system.bonded_inter[0])
 
     @utx.skipIfMissingFeatures('EXCLUSIONS')
     def test_exclusions(self):

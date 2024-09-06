@@ -35,10 +35,8 @@ inline auto detect_collision_common(Particle const &p1, Particle const &p2,
     return false;
 
   // Check, if there's already a bond between the particles
-  if (pair_bond_exists_on(p1.bonds(), p2.id(), bond_centers))
-    return false;
-
-  if (pair_bond_exists_on(p2.bonds(), p1.id(), bond_centers))
+  if (pair_bond_exists_on(p1.bonds(), p2.id(), bond_centers) or
+      pair_bond_exists_on(p2.bonds(), p1.id(), bond_centers))
     return false;
 
   /* If we're still here, there is no previous bond between the particles,

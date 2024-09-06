@@ -36,8 +36,9 @@ namespace CollisionDetection {
 
 class GlueToSurface {
 public:
+  /// Distance at which particle are bound
   double distance;
-  // Square of distance at which particle are bound
+  /// Square of distance at which particle are bound
   double distance_sq;
   /// bond type used between centers of colliding particles
   int bond_centers;
@@ -45,13 +46,11 @@ public:
   int bond_vs;
   /// particle type for virtual sites created on collision
   int part_type_vs;
-  /// For mode "glue to surface": The distance from the particle which is to be
-  /// glued to the new virtual site
+  /// Distance from the particle which is to be glued to the new virtual site
   double dist_glued_part_to_vs;
-  /// For mode "glue to surface": The particle type being glued
+  /// The particle type being glued (the small particle)
   int part_type_to_be_glued;
-  /// For mode "glue to surface": The particle type to which the virtual site is
-  /// attached
+  /// The particle type to which virtuals site are attached (the large particle)
   int part_type_to_attach_vs_to;
   /// Particle type to which the newly glued particle is converted
   int part_type_after_glueing;
@@ -74,10 +73,10 @@ public:
 
   /** @brief Check additional criteria for the glue_to_surface collision mode */
   bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) const {
-    return (((p1.type() == part_type_to_be_glued) and
-             (p2.type() == part_type_to_attach_vs_to)) or
-            ((p2.type() == part_type_to_be_glued) and
-             (p1.type() == part_type_to_attach_vs_to)));
+    return ((p1.type() == part_type_to_be_glued and
+             p2.type() == part_type_to_attach_vs_to) or
+            (p2.type() == part_type_to_be_glued and
+             p1.type() == part_type_to_attach_vs_to));
   }
 
   void handle_collisions(System::System &system,

@@ -35,10 +35,10 @@ namespace CollisionDetection {
 
 class BindCenters {
 public:
+  /// Distance at which particle are bound
   double distance;
-  // Square of distance at which particle are bound
+  /// Square of distance at which particle are bound
   double distance_sq;
-
   /// bond type used between centers of colliding particles
   int bond_centers;
 

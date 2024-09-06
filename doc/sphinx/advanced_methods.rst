@@ -54,7 +54,7 @@ This protocol is set up with :class:`~espressomd.collision_detection.BindCenters
 The parameters are as follows:
 
 * ``distance`` is the distance between two particles at which the binding is triggered.
-  This cutoff distance, ``1.5`` in the example above, is typically chosen slightly larger
+  This cutoff distance, ``0.1`` in the example above, is typically chosen slightly larger
   than the particle diameter. It is also a good choice for the equilibrium length of the bond.
 * ``bond_centers`` is the bonded interaction to be created between the particles
   (an instance of :class:`~espressomd.interactions.HarmonicBond` in the example above).
@@ -82,7 +82,7 @@ is added between the two colliding particles and the virtual particles.
 In the latter case, the virtual particles are the centers of the angle potentials
 (particle 2 in the description of the angle potential, see :ref:`Bond-angle interactions`).
 Due to the rigid connection between each of the colliding particles and their
-respective virtual sites, a sliding at the contact point is no longer possible.
+respective virtual sites, sliding at the contact point is no longer possible.
 See :ref:`Rigid arrangements of particles` for details. This protocol affects all particle types.
 
 In addition to the bond between the virtual sites, a bond between the colliding
@@ -105,7 +105,7 @@ This protocol is set up with :class:`~espressomd.collision_detection.BindAtPoint
         bond_centers=bond_centers,
         bond_vs=bond_vs,
         part_type_vs=1,
-        vs_placement=0.2)
+        vs_placement=0.5)
 
 The parameters ``distance`` and ``bond_centers`` have the same meaning
 as in the :ref:`Bind centers` protocol. The remaining parameters are as follows:
@@ -135,6 +135,7 @@ Glue to surface
 ~~~~~~~~~~~~~~~
 
 Attach small particles to the surface of a large particle.
+The bond can be made irreversible.
 
 Several small particles can be bound to a large particle but not vice versa.
 The small particles can change type after collision to become *inert*.

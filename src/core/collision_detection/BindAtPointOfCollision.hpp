@@ -36,18 +36,19 @@ namespace CollisionDetection {
 
 class BindAtPointOfCollision {
 public:
+  /// Distance at which particle are bound
   double distance;
-  // Square of distance at which particle are bound
+  /// Square of distance at which particle are bound
   double distance_sq;
-
   /// bond type used between centers of colliding particles
   int bond_centers;
   /// bond type used between virtual sites
   int bond_vs;
-  /** Placement of virtual sites for MODE_VS.
-   *  0=on same particle as related to,
-   *  1=on collision partner,
-   *  0.5=in the middle between
+  /**
+   * @brief Barycenter of the virtual site.
+   * 0=on same particle as related to,
+   * 1=on collision partner,
+   * 0.5=in the middle between the two particles
    */
   double vs_placement;
   /// particle type for virtual sites created on collision

@@ -39,6 +39,7 @@ public:
   Off()
       : m_protocol{std::make_shared<::CollisionDetection::ActiveProtocol>(
             ::CollisionDetection::Off())} {}
+
   std::shared_ptr<::CollisionDetection::ActiveProtocol> protocol() override {
     return m_protocol;
   }

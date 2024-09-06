@@ -29,7 +29,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "system/System.hpp"
 
-#include <utility>
 #include <vector>
 
 namespace CollisionDetection {
@@ -43,6 +42,7 @@ public:
   void initialize(System::System &) {}
 
   void handle_collisions(System::System &, std::vector<CollisionPair> &) {}
+
   bool detect_collision(Particle const &, Particle const &,
                         double const) const {
     return false;

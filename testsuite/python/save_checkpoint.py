@@ -327,7 +327,7 @@ checkpoint.register("particle_force1")
 if espressomd.has_features("COLLISION_DETECTION"):
     if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
         protocol = espressomd.collision_detection.BindAtPointOfCollision(
-            distance=0.11, bond_centers=harmonic_bond,
+            distance=0.12, bond_centers=harmonic_bond,
             bond_vs=strong_harmonic_bond, part_type_vs=2, vs_placement=1. / 3.)
     else:
         protocol = espressomd.collision_detection.BindCenters(
