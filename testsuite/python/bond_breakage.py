@@ -265,6 +265,7 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         self.system.part.clear()
         self.system.bonded_inter.clear()
         self.system.thermostat.turn_off()
+        self.system.min_global_cut = 0.6
 
     @utx.skipIfMissingFeatures(["COLLISION_DETECTION"])
     def test_center_bonds(self):
@@ -274,16 +275,17 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
 
         crit = 2**(1 / 6) * 2.
 
-        self.system.collision_detection.set_params(mode="bind_centers",
-                                                   distance=2**(1 / 6) * 2.2, bond_centers=harm)
+        self.system.collision_detection.protocol = espressomd.collision_detection.BindCenters(
+            distance=2**(1 / 6) * 2.2, bond_centers=harm)
         self.system.integrator.run(1)
 
-        self.system.collision_detection.set_params(mode="off")
+        self.system.collision_detection.protocol = espressomd.collision_detection.Off()
         self.system.bond_breakage[harm] = BreakageSpec(
             breakage_length=crit, action_type="delete_bond")
         self.system.integrator.run(1)
 
         bonds_dist = 0
+        self.system.min_global_cut = crit
         pairs = self.system.cell_system.get_pairs(crit, types=[0])
         for pair in pairs:
             dist = self.system.distance(
@@ -307,12 +309,11 @@ class NetworkBreakage(BondBreakageCommon, ut.TestCase):
         crit = 2**(1 / 6) * 1.5
         crit_vs = 2**(1 / 6) * 1 / 3 * 1.2
 
-        self.system.collision_detection.set_params(mode="bind_at_point_of_collision",
-                                                   distance=crit, bond_centers=virt, bond_vs=harm,
-                                                   part_type_vs=1, vs_placement=1 / 3)
+        self.system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
+            distance=crit, bond_centers=virt, bond_vs=harm, part_type_vs=1, vs_placement=1 / 3)
         self.system.integrator.run(1)
 
-        self.system.collision_detection.set_params(mode="off")
+        self.system.collision_detection.protocol = espressomd.collision_detection.Off()
         self.system.bond_breakage[harm] = BreakageSpec(
             breakage_length=crit_vs, action_type="revert_bind_at_point_of_collision")
         self.system.integrator.run(1)

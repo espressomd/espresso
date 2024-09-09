@@ -277,6 +277,8 @@ if espressomd.has_features(['DPD']):
 # bonded interactions
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
+strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
+system.bonded_inter.add(strong_harmonic_bond)
 p2.add_bond((harmonic_bond, p1))
 if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
     # create Drude particles
@@ -298,8 +300,6 @@ if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
             thermalized_bond=therm_bond1, p_core=p2, type_drude=10,
             alpha=1., mass_drude=0.6, coulomb_prefactor=0.8, thole_damping=2.)
         checkpoint.register("dh")
-strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
-system.bonded_inter.add(strong_harmonic_bond)
 p4.add_bond((strong_harmonic_bond, p3))
 ibm_volcons_bond = espressomd.interactions.IBM_VolCons(softID=15, kappaV=0.01)
 ibm_tribend_bond = espressomd.interactions.IBM_Tribend(
@@ -325,8 +325,14 @@ particle_force1 = np.copy(p2.f)
 checkpoint.register("particle_force0")
 checkpoint.register("particle_force1")
 if espressomd.has_features("COLLISION_DETECTION"):
-    system.collision_detection.set_params(
-        mode="bind_centers", distance=0.11, bond_centers=harmonic_bond)
+    if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+        protocol = espressomd.collision_detection.BindAtPointOfCollision(
+            distance=0.12, bond_centers=harmonic_bond,
+            bond_vs=strong_harmonic_bond, part_type_vs=2, vs_placement=1. / 3.)
+    else:
+        protocol = espressomd.collision_detection.BindCenters(
+            distance=0.11, bond_centers=harmonic_bond)
+    system.collision_detection.protocol = protocol
 
 particle_propagation0 = p1.propagation
 particle_propagation1 = p2.propagation

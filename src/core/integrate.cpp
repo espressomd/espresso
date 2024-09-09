@@ -42,7 +42,7 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "collision.hpp"
+#include "collision_detection/CollisionDetection.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -659,7 +659,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef COLLISION_DETECTION
-      collision_detection->handle_collisions(*cell_structure);
+      collision_detection->handle_collisions();
 #endif
       bond_breakage->process_queue(*this);
     }

@@ -682,15 +682,21 @@ class CheckpointTest(ut.TestCase):
         bond_ids = system.bonded_inter.call_method('get_bond_ids')
         self.assertEqual(len(bond_ids), len(system.bonded_inter))
         # check bonded interactions
-        partcl_1 = system.part.by_id(1)
+        p1 = system.part.by_id(1)
+        p4 = system.part.by_id(4)
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
-        self.assertEqual(partcl_1.bonds[0][0].params, reference)
-        self.assertEqual(system.bonded_inter[0].params, reference)
+        self.assertEqual(p1.bonds[0][0].params, reference)
+        self.assertAlmostEqual(
+            system.bonded_inter[0].params, reference, delta=1e-6)
+        reference = {'r_0': 0.0, 'k': 5e5, 'r_cut': 0.0}
+        self.assertEqual(p4.bonds[0][0].params, reference)
+        self.assertAlmostEqual(
+            system.bonded_inter[1].params, reference, delta=1e-1)
         # all thermalized bonds should be identical
         if has_drude:
             reference = therm_params
-            self.assertEqual(partcl_1.bonds[1][0].params, reference)
-            self.assertEqual(system.bonded_inter[1].params, reference)
+            self.assertEqual(p1.bonds[1][0].params, reference)
+            self.assertEqual(system.bonded_inter[2].params, reference)
             self.assertEqual(therm_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
@@ -921,10 +927,20 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
-        coldet = system.collision_detection
-        self.assertEqual(coldet.mode, "bind_centers")
-        self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
-        self.assertEqual(coldet.bond_centers, system.bonded_inter[0])
+        protocol = system.collision_detection.protocol
+        if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+            self.assertIsInstance(
+                protocol, espressomd.collision_detection.BindAtPointOfCollision)
+            self.assertAlmostEqual(protocol.distance, 0.12, delta=1E-9)
+            self.assertEqual(protocol.bond_centers, system.bonded_inter[0])
+            self.assertEqual(protocol.bond_vs, system.bonded_inter[1])
+            self.assertEqual(protocol.part_type_vs, 2)
+            self.assertAlmostEqual(protocol.vs_placement, 1. / 3., delta=1e-6)
+        else:
+            self.assertIsInstance(
+                protocol, espressomd.collision_detection.BindCenters)
+            self.assertAlmostEqual(protocol.distance, 0.11, delta=1E-9)
+            self.assertEqual(protocol.bond_centers, system.bonded_inter[0])
 
     @utx.skipIfMissingFeatures('EXCLUSIONS')
     def test_exclusions(self):

@@ -64,7 +64,7 @@ class CollisionDetection(ut.TestCase):
     def test_bind_centers(self):
         system = self.system
         # Check that it leaves particles alone, when off
-        system.collision_detection.set_params(mode="off")
+        system.collision_detection.protocol = espressomd.collision_detection.Off()
 
         system.part.clear()
         p0 = system.part.add(pos=(0, 0, 0), id=0)
@@ -74,10 +74,9 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(p0.bonds, ())
         self.assertEqual(p1.bonds, ())
         self.assertEqual(p2.bonds, ())
-
         # Check that it cannot be activated
-        system.collision_detection.set_params(
-            mode="bind_centers", distance=0.11, bond_centers=self.bond_center)
+        system.collision_detection.protocol = espressomd.collision_detection.BindCenters(
+            distance=0.11, bond_centers=self.bond_center)
         self.get_state_set_state_consistency()
         system.integrator.run(1, recalc_forces=True)
         bond0 = ((system.bonded_inter[0], 1),)
@@ -93,9 +92,10 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(p2.bonds, ())
 
         # Check turning it off
-        system.collision_detection.set_params(mode="off")
+        system.collision_detection.protocol = espressomd.collision_detection.Off()
         self.get_state_set_state_consistency()
-        self.assertEqual(system.collision_detection.mode, "off")
+        self.assertIsInstance(
+            self.system.collision_detection.protocol, espressomd.collision_detection.Off)
 
     def run_test_bind_at_point_of_collision_for_pos(self, *positions):
         system = self.system
@@ -113,9 +113,8 @@ class CollisionDetection(ut.TestCase):
         # 2 non-virtual + 2 virtual + one that doesn't take part
         expected_np = 4 * len(positions) + 1
 
-        system.collision_detection.set_params(
-            mode="bind_at_point_of_collision", bond_centers=self.bond_center,
-            bond_vs=self.bond_vs, part_type_vs=1, vs_placement=0.4, distance=0.11)
+        system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
+            bond_centers=self.bond_center, bond_vs=self.bond_vs, part_type_vs=1, vs_placement=0.4, distance=0.11)
         self.get_state_set_state_consistency()
         system.integrator.run(1, recalc_forces=True)
         self.verify_state_after_bind_at_poc(expected_np)
@@ -132,7 +131,7 @@ class CollisionDetection(ut.TestCase):
         self.verify_state_after_bind_at_poc(expected_np)
 
     def verify_state_after_bind_at_poc(self, expected_np):
-        if self.system.collision_detection.bond_vs == self.bond_angle_vs:
+        if self.system.collision_detection.protocol.bond_vs == self.bond_angle_vs:
             self.verify_state_after_bind_at_poc_triplet(expected_np)
         else:
             self.verify_state_after_bind_at_poc_pair(expected_np)
@@ -227,7 +226,7 @@ class CollisionDetection(ut.TestCase):
         system = self.system
         # Check for presence of vs
         # Check for bond between vs
-        if self.system.collision_detection.bond_vs == self.bond_angle_vs:
+        if self.system.collision_detection.protocol.bond_vs == self.bond_angle_vs:
             bond_p1 = ((self.bond_pair, p2.id), (self.bond_center, p2.id),)
             bond_p2 = ((self.bond_pair, p1.id), (self.bond_center, p1.id),)
             self.assertTrue(p1.bonds == bond_p1 or p2.bonds == bond_p2)
@@ -265,7 +264,7 @@ class CollisionDetection(ut.TestCase):
             else:
                 dist_centers = p1.pos - p2.pos
             expected_pos = system.part.by_id(rel_to).pos_folded + \
-                system.collision_detection.vs_placement * dist_centers
+                system.collision_detection.protocol.vs_placement * dist_centers
             dist = expected_pos - p.pos_folded
             dist -= np.round(dist / system.box_l) * system.box_l
             self.assertLess(np.linalg.norm(dist), 1E-12)
@@ -311,8 +310,8 @@ class CollisionDetection(ut.TestCase):
         # 2 non-virtual + 2 virtual + one that doesn't take part
         expected_np = 4 * len(positions) + 1
 
-        system.collision_detection.set_params(
-            mode="bind_at_point_of_collision", bond_centers=self.bond_center,
+        system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
+            bond_centers=self.bond_center,
             bond_vs=self.bond_angle_vs, part_type_vs=1, vs_placement=0.4, distance=0.11)
         self.get_state_set_state_consistency()
         system.integrator.run(1, recalc_forces=True)
@@ -355,13 +354,8 @@ class CollisionDetection(ut.TestCase):
             system.integrator.run(10)
 
         # Collision detection
-        system.collision_detection.set_params(
-            mode="bind_at_point_of_collision",
-            distance=0.11,
-            bond_centers=self.bond_center,
-            bond_vs=self.bond_vs,
-            part_type_vs=1,
-            vs_placement=0.4)
+        system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
+            bond_centers=self.bond_center, bond_vs=self.bond_vs, part_type_vs=1, vs_placement=0.4, distance=0.11)
         self.get_state_set_state_consistency()
 
         # Integrate lj liquid
@@ -436,8 +430,8 @@ class CollisionDetection(ut.TestCase):
         # 2 non-virtual + 1 virtual + one that doesn't take part
         expected_np = 3 * len(positions) + 1
 
-        system.collision_detection.set_params(
-            mode="glue_to_surface", distance=0.11,
+        system.collision_detection.protocol = espressomd.collision_detection.GlueToSurface(
+            distance=0.11,
             distance_glued_particle_to_vs=0.02, bond_centers=self.bond_center,
             bond_vs=self.bond_vs, part_type_vs=self.part_type_vs,
             part_type_to_attach_vs_to=self.part_type_to_attach_vs_to,
@@ -595,8 +589,8 @@ class CollisionDetection(ut.TestCase):
             system.integrator.run(10)
 
         # Collision detection
-        system.collision_detection.set_params(
-            mode="glue_to_surface", distance=0.11,
+        system.collision_detection.protocol = espressomd.collision_detection.GlueToSurface(
+            distance=0.11,
             distance_glued_particle_to_vs=0.02, bond_centers=self.bond_center,
             bond_vs=self.bond_vs, part_type_vs=self.part_type_vs,
             part_type_to_attach_vs_to=self.part_type_to_attach_vs_to,
