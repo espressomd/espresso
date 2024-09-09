@@ -27,8 +27,9 @@ namespace detail {
 template <class Container, class OutputIterator, class = void>
 struct flatten_impl {
   static OutputIterator apply(Container const &c, OutputIterator out) {
+    using ValueType = typename Container::value_type;
     for (auto const &e : c) {
-      out = flatten_impl<decltype(e), OutputIterator>::apply(e, out);
+      out = flatten_impl<ValueType, OutputIterator>::apply(e, out);
     }
 
     return out;
