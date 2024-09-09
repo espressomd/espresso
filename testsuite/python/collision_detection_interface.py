@@ -61,7 +61,7 @@ class CollisionDetection(ut.TestCase):
         self.system.collision_detection.protocol = None
 
     def test_00_interface_and_defaults(self):
-        self.assertIsNone(self.system.collision_detection.protocol, None)
+        self.assertIsNone(self.system.collision_detection.protocol)
         self.assertIsNone(self.system.collision_detection.call_method("none"))
 
     def check_stored_parameters(self, mode, **kwargs):
