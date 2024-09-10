@@ -41,9 +41,13 @@ class LBContextManager:
 
     def __enter__(self):
         self.lbf = espressomd.lb.LBFluidWalberla(
-            agrid=1., density=1., kinematic_viscosity=1., tau=system.time_step, **self.kwargs)
+            agrid=1., density=1., kinematic_viscosity=1.,
+            tau=system.time_step, **self.kwargs)
         system.lb = self.lbf
-        system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0)
+        thmst_kwargs = {}
+        if "seed" in self.kwargs:
+            thmst_kwargs["seed"] = self.kwargs["seed"]
+        system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1.0, **thmst_kwargs)
         return self.lbf
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
@@ -299,15 +303,17 @@ class LBLeesEdwards(ut.TestCase):
         """
         Check that MD LEbc and LB LEbc always agree.
         """
-        err_msg = "MD and LB Lees-Edwards boundary conditions disagree"
+        err_msg = "Lees-Edwards LB only supports shear_plane_normal=\"y\""
         # MD and LB LEbc must match
-        with self.assertRaisesRegex(RuntimeError, err_msg):
+        with self.assertRaisesRegex(ValueError, err_msg):
             with LBContextManager() as lbf:
                 LEContextManager('y', 'x', 1.).initialize()
+        system.lees_edwards.protocol = None
         with LBContextManager() as lbf:
             LEContextManager('x', 'y', 1.).initialize()
         # when a LB actor with LEbc is active, the MD LEbc shear directions
         # are immutable
+        err_msg = "MD and LB Lees-Edwards boundary conditions disagree"
         with LEContextManager('x', 'y', 1.):
             with LBContextManager() as lbf:
                 with self.assertRaisesRegex(RuntimeError, err_msg):
@@ -320,7 +326,7 @@ class LBLeesEdwards(ut.TestCase):
                 self.assertEqual(system.lees_edwards.shear_plane_normal, "y")
         # when de-activating and later re-activating a LB actor with LEbc,
         # the MD LEbc must have the same shear directions
-        with self.assertRaisesRegex(Exception, err_msg):
+        with self.assertRaisesRegex(RuntimeError, err_msg):
             with LEContextManager('z', 'y', 1.):
                 system.lb = lbf
         self.assertIsNone(system.lb)
@@ -340,15 +346,26 @@ class LBLeesEdwards(ut.TestCase):
             system.lb = lbf
             system.lb = None
         # no thermalization
+        system.lees_edwards.protocol = None
         with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
             with LEContextManager('x', 'y', 1.):
                 system.lb = espressomd.lb.LBFluidWalberla(
                     agrid=1., density=1., kinematic_viscosity=1., kT=1., seed=42,
                     tau=system.time_step)
         self.assertIsNone(system.lb)
+        system.lees_edwards.protocol = None
         with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
             with LBContextManager(kT=1., seed=42) as lbf:
-                LEContextManager('x', 'y', 1.)
+                LEContextManager('x', 'y', 1.).initialize()
+        self.assertIsNone(system.lb)
+        system.lees_edwards.protocol = None
+        with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
+            with LBContextManager(kT=1., seed=42) as lbf:
+                system.lees_edwards.set_boundary_conditions(
+                    shear_direction='x', shear_plane_normal='y',
+                    protocol=espressomd.lees_edwards.Off())
+                system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
+                    shear_velocity=0., initial_pos_offset=0., time_0=0.)
         self.assertIsNone(system.lb)
 
         with self.assertRaisesRegex(ValueError, "Lees-Edwards sweep is implemented for a ghost layer of thickness 1"):

@@ -38,6 +38,7 @@
 #include <utils/math/int_pow.hpp>
 
 #include <optional>
+#include <variant>
 
 namespace LB {
 
@@ -128,7 +129,9 @@ void LBWalberla::update_collision_model(LBWalberlaBase &lb,
                                         LBWalberlaParams &params, double kT,
                                         unsigned int seed) {
   auto const &system = ::System::get_system();
-  if (auto le_protocol = system.lees_edwards->get_protocol()) {
+  auto le_protocol = system.lees_edwards->get_protocol();
+  if (le_protocol and
+      not std::holds_alternative<LeesEdwards::Off>(*le_protocol)) {
     if (kT != 0.) {
       throw std::runtime_error(
           "Lees-Edwards LB doesn't support thermalization");
