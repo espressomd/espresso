@@ -140,6 +140,18 @@ void Solver::on_temperature_change() {
   }
 }
 
+void Solver::on_lees_edwards_change() {
+  if (impl->solver) {
+    std::visit([](auto &ptr) { ptr->on_lees_edwards_change(); }, *impl->solver);
+  }
+}
+
+void Solver::update_collision_model() {
+  if (impl->solver) {
+    std::visit([](auto &ptr) { ptr->update_collision_model(); }, *impl->solver);
+  }
+}
+
 bool Solver::is_gpu() const {
   check_solver(impl);
   return std::visit([](auto &ptr) { return ptr->is_gpu(); }, *impl->solver);

@@ -191,8 +191,6 @@ class LBLeesEdwards(ut.TestCase):
             with LBContextManager() as lbf:
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil_D2Q8, '', 'SNWE', tol)
-
-        # order of instantiation doesn't matter
         with LBContextManager() as lbf:
             with LEContextManager('x', 'y', 0):
                 for profile in self.sample_lb_velocities(lbf):
@@ -206,6 +204,13 @@ class LBLeesEdwards(ut.TestCase):
                        'S~': (8 + le_offset, 16),
                        **stencil_D2Q8}
             with LBContextManager() as lbf:
+                for profile in self.sample_lb_velocities(lbf):
+                    self.check_profile(profile, stencil, 'SN', 'WE', tol)
+        with LBContextManager() as lbf:
+            with LEContextManager('x', 'y', le_offset):
+                stencil = {'N~': (8 - le_offset, 0),
+                           'S~': (8 + le_offset, 16),
+                           **stencil_D2Q8}
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
 
@@ -253,8 +258,6 @@ class LBLeesEdwards(ut.TestCase):
                 create_impulse(lbf, stencil_D2Q8)
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil_D2Q8, '', 'SNWE', tol)
-
-        # order of instantiation doesn't matter
         with LBContextManager() as lbf:
             with LEContextManager('x', 'y', 0):
                 create_impulse(lbf, stencil_D2Q8)
@@ -269,6 +272,14 @@ class LBLeesEdwards(ut.TestCase):
                        'S~': (8 + le_offset, 15),
                        **stencil_D2Q8}
             with LBContextManager() as lbf:
+                create_impulse(lbf, stencil_D2Q8)
+                for profile in self.sample_lb_velocities(lbf):
+                    self.check_profile(profile, stencil, 'SN', 'WE', tol)
+        with LBContextManager() as lbf:
+            with LEContextManager('x', 'y', le_offset):
+                stencil = {'N~': (8 - le_offset, 1),
+                           'S~': (8 + le_offset, 15),
+                           **stencil_D2Q8}
                 create_impulse(lbf, stencil_D2Q8)
                 for profile in self.sample_lb_velocities(lbf):
                     self.check_profile(profile, stencil, 'SN', 'WE', tol)
@@ -334,6 +345,10 @@ class LBLeesEdwards(ut.TestCase):
                 system.lb = espressomd.lb.LBFluidWalberla(
                     agrid=1., density=1., kinematic_viscosity=1., kT=1., seed=42,
                     tau=system.time_step)
+        self.assertIsNone(system.lb)
+        with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
+            with LBContextManager(kT=1., seed=42) as lbf:
+                LEContextManager('x', 'y', 1.)
         self.assertIsNone(system.lb)
 
         with self.assertRaisesRegex(ValueError, "Lees-Edwards sweep is implemented for a ghost layer of thickness 1"):

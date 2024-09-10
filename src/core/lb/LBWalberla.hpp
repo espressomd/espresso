@@ -88,6 +88,11 @@ struct LBWalberla {
   }
   void on_timestep_change() const {}
   void on_temperature_change() const {}
+  void on_lees_edwards_change();
+  void update_collision_model();
+  static void update_collision_model(LBWalberlaBase &instance,
+                                     LBWalberlaParams &params, double kT,
+                                     unsigned int seed);
 };
 
 } // namespace LB

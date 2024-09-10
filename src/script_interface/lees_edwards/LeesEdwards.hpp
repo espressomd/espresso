@@ -103,12 +103,13 @@ public:
           throw std::invalid_argument("Parameters 'shear_direction' and "
                                       "'shear_plane_normal' must differ");
         }
-        auto const &system = get_system();
+        auto &system = get_system();
         system.lb.lebc_sanity_checks(shear_direction, shear_plane_normal);
         // update box geometry and cell structure
         system.box_geo->set_lees_edwards_bc(
             LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});
         m_lees_edwards->set_protocol(m_protocol->protocol());
+        system.on_lees_edwards_change();
       });
     }
     return {};
