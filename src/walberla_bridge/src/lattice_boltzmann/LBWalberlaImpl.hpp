@@ -257,6 +257,7 @@ protected:
   FloatType m_viscosity; /// kinematic viscosity
   FloatType m_density;
   FloatType m_kT;
+  unsigned int m_seed;
 
   // Block data access handles
   BlockDataID m_pdf_field_id;
@@ -401,7 +402,7 @@ public:
   LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
                  double density)
       : m_viscosity(FloatType_c(viscosity)), m_density(FloatType_c(density)),
-        m_kT(FloatType{0}), m_lattice(std::move(lattice)) {
+        m_kT(FloatType{0}), m_seed(0u), m_lattice(std::move(lattice)) {
 
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
@@ -592,6 +593,7 @@ public:
     auto const omega_odd = odd_mode_relaxation_rate(omega);
     auto const blocks = get_lattice().get_blocks();
     m_kT = FloatType_c(kT);
+    m_seed = seed;
     auto obj = CollisionModelThermalized(m_last_applied_force_field_id,
                                          m_pdf_field_id, m_kT, omega, omega,
                                          omega_odd, omega, seed, uint32_t{0u});
@@ -1364,6 +1366,10 @@ public:
 
   [[nodiscard]] double get_kT() const noexcept override {
     return numeric_cast<double>(m_kT);
+  }
+
+  [[nodiscard]] unsigned int get_seed() const noexcept override {
+    return m_seed;
   }
 
   [[nodiscard]] std::optional<uint64_t> get_rng_state() const override {

@@ -67,6 +67,8 @@ struct LBNone {
   void on_node_grid_change() const { throw NoLBActive{}; }
   void on_timestep_change() const { throw NoLBActive{}; }
   void on_temperature_change() const { throw NoLBActive{}; }
+  void on_lees_edwards_change() const { throw NoLBActive{}; }
+  void update_collision_model() const { throw NoLBActive{}; }
 };
 
 } // namespace LB

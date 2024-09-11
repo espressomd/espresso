@@ -378,6 +378,8 @@ void System::on_observable_calc() {
   clear_particle_node();
 }
 
+void System::on_lees_edwards_change() { lb.on_lees_edwards_change(); }
+
 void System::update_local_geo() {
   *local_geo = LocalBox::make_regular_decomposition(
       box_geo->length(), ::communicator.calc_node_index(),

@@ -158,7 +158,7 @@ void LBFluid::do_construct(VariantMap const &params) {
   auto const ext_f = get_value<Utils::Vector3d>(params, "ext_force_density");
   m_lb_params = std::make_shared<::LB::LBWalberlaParams>(agrid, tau);
   m_is_active = false;
-  m_seed = get_value<int>(params, "seed");
+  auto const seed = get_value<int>(params, "seed");
   context()->parallel_try_catch([&]() {
     if (tau <= 0.) {
       throw std::domain_error("Parameter 'tau' must be > 0");
@@ -175,7 +175,7 @@ void LBFluid::do_construct(VariantMap const &params) {
     auto const lb_dens = m_conv_dens * dens;
     auto const lb_kT = m_conv_energy * kT;
     auto const lb_ext_f = m_conv_force_dens * ext_f;
-    if (m_seed < 0) {
+    if (seed < 0) {
       throw std::domain_error("Parameter 'seed' must be >= 0");
     }
     if (lb_kT < 0.) {
@@ -188,28 +188,8 @@ void LBFluid::do_construct(VariantMap const &params) {
       throw std::domain_error("Parameter 'kinematic_viscosity' must be >= 0");
     }
     make_instance(params);
-    auto const &system = ::System::get_system();
-    if (auto le_protocol = system.lees_edwards->get_protocol()) {
-      if (lb_kT != 0.) {
-        throw std::runtime_error(
-            "Lees-Edwards LB doesn't support thermalization");
-      }
-      auto const &le_bc = system.box_geo->lees_edwards_bc();
-      auto lees_edwards_object = std::make_unique<LeesEdwardsPack>(
-          le_bc.shear_direction, le_bc.shear_plane_normal,
-          [this, le_protocol, &system]() {
-            return get_pos_offset(system.get_sim_time(), *le_protocol) /
-                   m_lb_params->get_agrid();
-          },
-          [this, le_protocol, &system]() {
-            return get_shear_velocity(system.get_sim_time(), *le_protocol) *
-                   (m_lb_params->get_tau() / m_lb_params->get_agrid());
-          });
-      m_instance->set_collision_model(std::move(lees_edwards_object));
-    } else {
-      m_instance->set_collision_model(lb_kT, m_seed);
-    }
-    m_instance->ghost_communication(); // synchronize ghost layers
+    ::LB::LBWalberla::update_collision_model(*m_instance, *m_lb_params, lb_kT,
+                                             static_cast<unsigned int>(seed));
     m_instance->set_external_force(lb_ext_f);
     for (auto &vtk : m_vtk_writers) {
       vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
