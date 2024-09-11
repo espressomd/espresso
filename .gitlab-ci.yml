@@ -435,7 +435,8 @@ check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
   needs:
-    - cuda12-maxset
+    - job: cuda12-maxset
+      artifacts: true
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -458,7 +459,8 @@ run_tutorials:
   <<: *global_job_definition
   stage: additional_checks
   needs:
-    - cuda12-maxset
+    - job: cuda12-maxset
+      artifacts: true
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
@@ -486,7 +488,8 @@ run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
   needs:
-    - cuda12-maxset
+    - job: cuda12-maxset
+      artifacts: true
   when: on_success
   only:
     - python
@@ -508,7 +511,8 @@ maxset_no_gpu:
   stage: additional_checks
   when: on_success
   needs:
-    - cuda12-maxset
+    - job: cuda12-maxset
+      artifacts: true
   script:
     - export CUDA_VISIBLE_DEVICES=""
     - cd ${CI_PROJECT_DIR}/build
@@ -524,15 +528,32 @@ maxset_3_cores:
   stage: additional_checks
   when: on_success
   needs:
-    - cuda12-maxset
+    - job: cuda12-maxset
+      artifacts: false
+  variables:
+     CC: 'gcc-12'
+     CXX: 'g++-12'
+     GCOV: 'gcov-12'
+     myconfig: 'maxset'
+     with_cuda: 'true'
+     with_coverage: 'false'
+     with_coverage_python: 'false'
+     srcdir: '${CI_PROJECT_DIR}'
+     with_scafacos: 'true'
+     with_walberla: 'true'
+     with_walberla_avx: 'true'
+     with_stokesian_dynamics: 'true'
+     with_caliper: 'true'
+     check_odd_only: 'true'
+     cmake_params: '-D ESPRESSO_TEST_NP=3'
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - cmake -D ESPRESSO_TEST_NP=3 .
-    - make -t && make check_unit_tests && make check_python_parallel_odd
+    - bash maintainer/CI/build_cmake.sh
+  timeout: 90m
   tags:
     - espresso
     - cuda
     - numa
+    - avx2
     - reuse-artifacts-same-arch
 
 status_success:
