@@ -66,7 +66,7 @@ class TestLBMomentumConservation:
         self.system.lb = self.lbf
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
         np.testing.assert_allclose(
-            self.lbf.ext_force_density,
+            np.copy(self.lbf.ext_force_density),
             LB_PARAMS["ext_force_density"])
 
         # Initial momentum before integration = 0

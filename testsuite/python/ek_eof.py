@@ -152,7 +152,7 @@ class EKEOF:
             x_sim < -self.system.box_l[0] / 2 + offset,
             x_sim > self.system.box_l[0] / 2 - offset)] = 0.
         np.testing.assert_allclose(
-            simulated_density, analytic_density, rtol=2e-2)
+            np.copy(simulated_density), analytic_density, rtol=2e-2)
 
         analytic_velocity = calc_analytic_velocity(
             x=x_sim,
@@ -168,7 +168,7 @@ class EKEOF:
             x_sim < -self.system.box_l[0] / 2 + offset,
             x_sim > self.system.box_l[0] / 2 - offset)] = 0.
         np.testing.assert_allclose(
-            simulated_velocity,
+            np.copy(simulated_velocity),
             analytic_velocity,
             rtol=2e-2)
 

@@ -447,6 +447,7 @@ class EKSpeciesSlice(ScriptInterfaceHelper):
             return tuple(x for x in shape if x != 1)
 
         if shape_squeeze(values.shape) != shape_squeeze(target_shape):
+            target_shape = tuple([int(x) for x in target_shape])
             raise ValueError(
                 f"Input-dimensions of '{attr}' array {values.shape} does not match slice dimensions {target_shape}")
 

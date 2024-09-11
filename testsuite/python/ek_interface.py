@@ -288,6 +288,7 @@ class EKTest:
             reactants=[ek_reactant], coefficient=1.5, lattice=self.lattice, tau=self.params["tau"])
         # check ranges and out-of-bounds access
         shape = np.around(self.system.box_l / self.params["agrid"]).astype(int)
+        int_shape = [int(x) for x in shape]  # cast away numpy integer types
         for i in range(3):
             n = [0, 0, 0]
             n[i] -= shape[i]
@@ -295,10 +296,10 @@ class EKTest:
             self.assertTrue(ek_reaction[0, 0, 0])
             self.assertEqual(ek_reaction[tuple(n)], ek_reaction[0, 0, 0])
             self.assertEqual(ek_species[tuple(n)], ek_species[0, 0, 0])
-            for offset in (shape[i] + 1, -(shape[i] + 1)):
+            for offset in (int_shape[i] + 1, -(int_shape[i] + 1)):
                 n = [0, 0, 0]
                 n[i] += offset
-                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"  # nopep8
+                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(int_shape)[1:-1]}\]"  # nopep8
                 with self.assertRaisesRegex(IndexError, err_msg):
                     ek_reaction[tuple(n)]
                 with self.assertRaisesRegex(IndexError, err_msg):

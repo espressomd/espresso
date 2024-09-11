@@ -163,14 +163,14 @@ class BrownianThermostat(ut.TestCase):
         system.integrator.set_brownian_dynamics()
         system.integrator.run(3)
         np.testing.assert_allclose(
-            part.omega_lab, [0, 0, 1.3 / 1.5], atol=1e-14)
+            np.copy(part.omega_lab), [0, 0, 1.3 / 1.5], atol=1e-14)
 
         # noise only
         part.ext_torque = 3 * [0.]
         system.thermostat.set_brownian(
             kT=1, gamma=1, gamma_rotation=1.5, seed=41)
         system.integrator.run(3)
-        self.assertGreater(np.linalg.norm(part.omega_lab), 0.)
+        self.assertGreater(np.linalg.norm(np.copy(part.omega_lab)), 0.)
 
     @utx.skipIfMissingFeatures(["MASS",
                                 "ROTATIONAL_INERTIA",
