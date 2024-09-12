@@ -91,7 +91,8 @@ FetchContent_Declare(
 FetchContent_Declare(
   stokesian_dynamics
   GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-  GIT_TAG        862a7537a366f0c32f0c25e46bd107bea590faea)
+  GIT_TAG        862a7537a366f0c32f0c25e46bd107bea590faea
+)
 FetchContent_Declare(
   caliper
   GIT_REPOSITORY https://github.com/LLNL/Caliper.git
