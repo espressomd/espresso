@@ -29,7 +29,7 @@
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "collision.hpp"
+#include "collision_detection/CollisionDetection.hpp"
 #include "constraints/Constraints.hpp"
 #include "galilei/ComFixed.hpp"
 #include "galilei/Galilei.hpp"

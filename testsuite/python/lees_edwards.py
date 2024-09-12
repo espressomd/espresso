@@ -79,7 +79,7 @@ class LeesEdwards(ut.TestCase):
         system.bonded_inter.clear()
         system.lees_edwards.protocol = None
         if espressomd.has_features("COLLISION_DETECTION"):
-            system.collision_detection.set_params(mode="off")
+            system.collision_detection.protocol = espressomd.collision_detection.Off()
 
     def test_00_is_none_by_default(self):
 
@@ -416,7 +416,7 @@ class LeesEdwards(ut.TestCase):
             system.non_bonded_inter[0, 0].soft_sphere.set_params(
                 a=k_non_bonded / 2, n=-2, cutoff=r_cut)
             system.integrator.run(0)
-            r_12 = system.distance_vec(p1, p2)
+            r_12 = np.copy(system.distance_vec(p1, p2))
 
             np.testing.assert_allclose(
                 k_non_bonded * r_12, np.copy(p1.f))
@@ -424,7 +424,7 @@ class LeesEdwards(ut.TestCase):
 
             np.testing.assert_allclose(
                 np.copy(system.analysis.pressure_tensor()["non_bonded"]),
-                np.outer(r_12, p2.f) / system.volume())
+                np.outer(r_12, np.copy(p2.f)) / system.volume())
 
             np.testing.assert_almost_equal(
                 system.analysis.energy()["non_bonded"],
@@ -456,13 +456,13 @@ class LeesEdwards(ut.TestCase):
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
         # Test position and velocity of VS with Le shift
-        old_p3_pos = p3.pos
+        old_p3_pos = np.copy(p3.pos)
         expected_p3_pos = old_p3_pos - \
             np.array((get_lin_pos_offset(system.time, **params_lin), 0, 0))
         system.integrator.run(0, recalc_forces=True)
         np.testing.assert_allclose(np.copy(p3.pos_folded), expected_p3_pos)
         np.testing.assert_allclose(
-            p3.v, p1.v + np.array((params_lin["shear_velocity"], 0, 0)))
+            np.copy(p3.v), np.copy(p1.v) + np.array((params_lin["shear_velocity"], 0, 0)))
 
         # Check distances
         np.testing.assert_allclose(
@@ -617,8 +617,8 @@ class LeesEdwards(ut.TestCase):
         virt = espressomd.interactions.Virtual()
         system.bonded_inter.add(virt)
 
-        system.collision_detection.set_params(
-            mode="bind_centers", distance=1., bond_centers=harm)
+        system.collision_detection.protocol = espressomd.collision_detection.BindCenters(
+            distance=1., bond_centers=harm)
 
         # After two integration steps we should not have a bond,
         # as the collision detection uses the distant calculation
@@ -635,15 +635,15 @@ class LeesEdwards(ut.TestCase):
         np.testing.assert_array_equal(len(bond_list), 1)
 
         system.part.clear()
-        system.collision_detection.set_params(mode="off")
+        system.collision_detection.protocol = espressomd.collision_detection.Off()
 
         system.time = 0
         system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
             shear_velocity=-1.0, initial_pos_offset=0.0)
 
-        system.collision_detection.set_params(
-            mode="bind_at_point_of_collision", distance=1., bond_centers=virt,
-            bond_vs=harm, part_type_vs=31, vs_placement=1 / 3)
+        system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
+            distance=1., bond_centers=virt, bond_vs=harm, part_type_vs=31,
+            vs_placement=1. / 3.)
 
         col_part1 = system.part.add(
             pos=(2.5, 4.5, 2.5), type=30, fix=[True, True, True])

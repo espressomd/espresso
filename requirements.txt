@@ -3,7 +3,7 @@ cython>=0.29.21,<3.0.10
 setuptools>=68.1.2
 packaging>=24.0
 # required scientific packages
-numpy>=1.26.4,<2.0
+numpy>=1.26.4,<2.2
 h5py>=3.10.0
 # optional scientific packages
 scipy>=1.11.4

@@ -23,7 +23,6 @@ add_library(
   espresso_core SHARED
   bond_error.cpp
   cells.cpp
-  collision.cpp
   communication.cpp
   dpd.cpp
   energy.cpp
@@ -102,6 +101,7 @@ add_subdirectory(bond_breakage)
 add_subdirectory(bonded_interactions)
 add_subdirectory(cell_system)
 add_subdirectory(cluster_analysis)
+add_subdirectory(collision_detection)
 add_subdirectory(constraints)
 add_subdirectory(ek)
 add_subdirectory(electrostatics)

@@ -45,15 +45,16 @@ public:
     add_parameters(
         {{"protocol",
           [this](Variant const &value) {
+            auto &system = get_system();
             if (is_none(value)) {
-              auto const &system = get_system();
-              context()->parallel_try_catch([&system]() {
+              context()->parallel_try_catch([&]() {
                 auto constexpr invalid_dir = LeesEdwardsBC::invalid_dir;
                 system.lb.lebc_sanity_checks(invalid_dir, invalid_dir);
               });
               m_protocol = nullptr;
               system.box_geo->set_lees_edwards_bc(LeesEdwardsBC{});
               m_lees_edwards->unset_protocol();
+              system.on_lees_edwards_change();
               return;
             }
             context()->parallel_try_catch([this]() {
@@ -67,8 +68,15 @@ public:
                     "activation via set_boundary_conditions()");
               }
             });
-            m_protocol = get_value<std::shared_ptr<Protocol>>(value);
-            m_lees_edwards->set_protocol(m_protocol->protocol());
+            auto const protocol = get_value<std::shared_ptr<Protocol>>(value);
+            context()->parallel_try_catch([&]() {
+              try {
+                set_protocol(protocol);
+              } catch (...) {
+                set_protocol(m_protocol);
+                throw;
+              }
+            });
           },
           [this]() {
             if (m_protocol)
@@ -89,13 +97,13 @@ public:
                          VariantMap const &params) override {
     if (name == "set_boundary_conditions") {
       context()->parallel_try_catch([this, &params]() {
-        auto const protocol = params.at("protocol");
-        if (is_none(protocol)) {
-          do_set_parameter("protocol", protocol);
+        auto const variant = params.at("protocol");
+        if (is_none(variant)) {
+          do_set_parameter("protocol", variant);
           return;
         }
         // check input arguments
-        m_protocol = get_value<std::shared_ptr<Protocol>>(protocol);
+        auto const protocol = get_value<std::shared_ptr<Protocol>>(variant);
         auto const shear_direction = get_shear_axis(params, "shear_direction");
         auto const shear_plane_normal =
             get_shear_axis(params, "shear_plane_normal");
@@ -103,12 +111,21 @@ public:
           throw std::invalid_argument("Parameters 'shear_direction' and "
                                       "'shear_plane_normal' must differ");
         }
-        auto const &system = get_system();
+        auto &system = get_system();
         system.lb.lebc_sanity_checks(shear_direction, shear_plane_normal);
         // update box geometry and cell structure
-        system.box_geo->set_lees_edwards_bc(
-            LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});
-        m_lees_edwards->set_protocol(m_protocol->protocol());
+        auto const old_shear_direction = get_lebc().shear_direction;
+        auto const old_shear_plane_normal = get_lebc().shear_plane_normal;
+        try {
+          system.box_geo->set_lees_edwards_bc(
+              LeesEdwardsBC{0., 0., shear_direction, shear_plane_normal});
+          set_protocol(protocol);
+        } catch (...) {
+          system.box_geo->set_lees_edwards_bc(LeesEdwardsBC{
+              0., 0., old_shear_direction, old_shear_plane_normal});
+          set_protocol(m_protocol);
+          throw;
+        }
       });
     }
     return {};
@@ -157,6 +174,18 @@ private:
       do_call_method("set_boundary_conditions", params);
     }
     m_params.reset();
+  }
+
+  void set_protocol(std::shared_ptr<Protocol> const &protocol) {
+    auto &system = get_system();
+    if (protocol) {
+      m_lees_edwards->set_protocol(protocol->protocol());
+    } else {
+      system.box_geo->set_lees_edwards_bc(LeesEdwardsBC{});
+      m_lees_edwards->unset_protocol();
+    }
+    system.on_lees_edwards_change();
+    m_protocol = protocol;
   }
 };
 

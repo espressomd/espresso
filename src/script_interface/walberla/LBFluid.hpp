@@ -51,7 +51,6 @@ protected:
   using Base = LatticeModel<::LBWalberlaBase, LBVTKHandle>;
   std::shared_ptr<::LB::LBWalberlaParams> m_lb_params;
   bool m_is_active;
-  int m_seed;
   double m_conv_dist;
   double m_conv_visc;
   double m_conv_dens;
@@ -77,7 +76,8 @@ public:
          [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
         {"kT", AutoParameter::read_only,
          [this]() { return m_instance->get_kT() / m_conv_energy; }},
-        {"seed", AutoParameter::read_only, [this]() { return m_seed; }},
+        {"seed", AutoParameter::read_only,
+         [this]() { return static_cast<int>(m_instance->get_seed()); }},
         {"rng_state",
          [this](Variant const &v) {
            auto const rng_state = get_value<int>(v);

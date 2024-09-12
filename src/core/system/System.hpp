@@ -50,7 +50,9 @@ class Galilei;
 class Observable_stat;
 class OifGlobal;
 class ImmersedBoundaries;
+namespace CollisionDetection {
 class CollisionDetection;
+}
 namespace BondBreakage {
 class BondBreakage;
 }
@@ -251,6 +253,7 @@ public:
    *  initialized immediately (P3M etc.).
    */
   void on_observable_calc();
+  void on_lees_edwards_change();
   void veto_boxl_change(bool skip_particle_checks = false) const;
   /**@}*/
 
@@ -284,7 +287,7 @@ public:
   std::shared_ptr<OifGlobal> oif_global;
   std::shared_ptr<ImmersedBoundaries> immersed_boundaries;
 #ifdef COLLISION_DETECTION
-  std::shared_ptr<CollisionDetection> collision_detection;
+  std::shared_ptr<CollisionDetection::CollisionDetection> collision_detection;
 #endif
   std::shared_ptr<BondBreakage::BondBreakage> bond_breakage;
   std::shared_ptr<LeesEdwards::LeesEdwards> lees_edwards;

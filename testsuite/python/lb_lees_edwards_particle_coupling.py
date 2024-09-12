@@ -292,10 +292,11 @@ class LBLeesEdwardsParticleCoupling(ut.TestCase):
         system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1)
         system.integrator.run(5000)
         for n in lbf[:, :, :]:
-            np.testing.assert_allclose(n.velocity[1:], [0, 0], atol=1E-8)
+            np.testing.assert_allclose(
+                np.copy(n.velocity[1:]), [0, 0], atol=1E-8)
         pos = np.random.random(3) * box_l
         p = system.part.add(pos=pos, v=lbf.get_interpolated_velocity(pos=pos))
-        np.testing.assert_allclose(p.v[1:], [0, 0], atol=1E-8)
+        np.testing.assert_allclose(np.copy(p.v)[1:], [0, 0], atol=1E-8)
         for _ in range(1000):
             system.integrator.run(1, reuse_forces=True)
             np.testing.assert_allclose(np.copy(p.f), np.zeros(3), atol=2E-6)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2024 The ESPResSo project
+ * Copyright (C) 2011-2024 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,10 +19,22 @@
 
 #pragma once
 
-#include <script_interface/ObjectHandle.hpp>
+#include <config/config.hpp>
 
-#include <utils/Factory.hpp>
+#ifdef COLLISION_DETECTION
 
-namespace ScriptInterface::CollisionDetection {
-void initialize(Utils::Factory<ObjectHandle> *om);
-} // namespace ScriptInterface::CollisionDetection
+#include "BindAtPointOfCollision.hpp"
+#include "BindCenters.hpp"
+#include "GlueToSurface.hpp"
+#include "Off.hpp"
+
+#include <variant>
+
+namespace CollisionDetection {
+using ActiveProtocol = std::variant<Off,
+#ifdef VIRTUAL_SITES_RELATIVE
+                                    BindAtPointOfCollision, GlueToSurface,
+#endif // VIRTUAL_SITES_RELATIVE
+                                    BindCenters>;
+} // namespace CollisionDetection
+#endif // COLLISION_DETECTION

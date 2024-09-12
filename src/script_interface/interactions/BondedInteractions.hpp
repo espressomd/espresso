@@ -92,7 +92,7 @@ private:
     m_bonds.erase(key);
   }
 
-protected:
+public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "get_size") {

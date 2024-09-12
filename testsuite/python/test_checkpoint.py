@@ -440,7 +440,7 @@ class CheckpointTest(ut.TestCase):
         if espressomd.has_features(['EXTERNAL_FORCES', 'ROTATION']):
             np.testing.assert_allclose(np.copy(p3.ext_torque), [0.3, 0.5, 0.7])
         if espressomd.has_features('ROTATIONAL_INERTIA'):
-            np.testing.assert_allclose(p3.rinertia, [2., 3., 4.])
+            np.testing.assert_allclose(np.copy(p3.rinertia), [2., 3., 4.])
         if espressomd.has_features('THERMOSTAT_PER_PARTICLE'):
             gamma = 2.
             if espressomd.has_features('PARTICLE_ANISOTROPY'):
@@ -448,9 +448,9 @@ class CheckpointTest(ut.TestCase):
                     gamma = np.array([2., 2., 2.])
                 else:
                     gamma = np.array([2., 3., 4.])
-            np.testing.assert_allclose(p4.gamma, gamma)
+            np.testing.assert_allclose(np.copy(p4.gamma), gamma)
             if espressomd.has_features('ROTATION'):
-                np.testing.assert_allclose(p3.gamma_rot, 2. * gamma)
+                np.testing.assert_allclose(np.copy(p3.gamma_rot), 2. * gamma)
         if espressomd.has_features('ENGINE'):
             self.assertEqual(
                 p3.swimming,
@@ -466,11 +466,13 @@ class CheckpointTest(ut.TestCase):
             from scipy.spatial.transform import Rotation as R
             q_ind = ([1, 2, 3, 0],)  # convert from scalar-first to scalar-last
             vs_id, vs_dist, vs_quat = p2.vs_relative
-            d = p2.pos - p1.pos
+            d = np.copy(p2.pos - p1.pos)
+            vs_quat = np.copy(vs_quat)
+            p_quat = np.copy(p1.quat)
             theta = np.arccos(d[2] / np.linalg.norm(d))
             assert abs(theta - 3. * np.pi / 4.) < 1e-8
             q = np.array([0., 0., np.sin(theta / 2.), -np.cos(theta / 2.)])
-            r = R.from_quat(p1.quat[q_ind]) * R.from_quat(vs_quat[q_ind])
+            r = R.from_quat(p_quat[q_ind]) * R.from_quat(vs_quat[q_ind])
             self.assertEqual(vs_id, p1.id)
             np.testing.assert_allclose(vs_dist, np.sqrt(2.))
             np.testing.assert_allclose(q[q_ind], r.as_quat(), atol=1e-10)
@@ -682,15 +684,21 @@ class CheckpointTest(ut.TestCase):
         bond_ids = system.bonded_inter.call_method('get_bond_ids')
         self.assertEqual(len(bond_ids), len(system.bonded_inter))
         # check bonded interactions
-        partcl_1 = system.part.by_id(1)
+        p1 = system.part.by_id(1)
+        p4 = system.part.by_id(4)
         reference = {'r_0': 0.0, 'k': 1.0, 'r_cut': 0.0}
-        self.assertEqual(partcl_1.bonds[0][0].params, reference)
-        self.assertEqual(system.bonded_inter[0].params, reference)
+        self.assertEqual(p1.bonds[0][0].params, reference)
+        self.assertAlmostEqual(
+            system.bonded_inter[0].params, reference, delta=1e-6)
+        reference = {'r_0': 0.0, 'k': 5e5, 'r_cut': 0.0}
+        self.assertEqual(p4.bonds[0][0].params, reference)
+        self.assertAlmostEqual(
+            system.bonded_inter[1].params, reference, delta=1e-1)
         # all thermalized bonds should be identical
         if has_drude:
             reference = therm_params
-            self.assertEqual(partcl_1.bonds[1][0].params, reference)
-            self.assertEqual(system.bonded_inter[1].params, reference)
+            self.assertEqual(p1.bonds[1][0].params, reference)
+            self.assertEqual(system.bonded_inter[2].params, reference)
             self.assertEqual(therm_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
@@ -755,7 +763,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(p_real.vs_relative[1], 0.)
         self.assertEqual(p_virt.vs_relative[1], np.sqrt(2.))
         np.testing.assert_allclose(
-            p_real.vs_relative[2], [1., 0., 0., 0.], atol=1e-10)
+            np.copy(p_real.vs_relative[2]), [1., 0., 0., 0.], atol=1e-10)
 
     def test_mean_variance_calculator(self):
         acc_mean_variance = system.auto_update_accumulators[0]
@@ -921,10 +929,20 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
-        coldet = system.collision_detection
-        self.assertEqual(coldet.mode, "bind_centers")
-        self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
-        self.assertEqual(coldet.bond_centers, system.bonded_inter[0])
+        protocol = system.collision_detection.protocol
+        if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+            self.assertIsInstance(
+                protocol, espressomd.collision_detection.BindAtPointOfCollision)
+            self.assertAlmostEqual(protocol.distance, 0.12, delta=1E-9)
+            self.assertEqual(protocol.bond_centers, system.bonded_inter[0])
+            self.assertEqual(protocol.bond_vs, system.bonded_inter[1])
+            self.assertEqual(protocol.part_type_vs, 2)
+            self.assertAlmostEqual(protocol.vs_placement, 1. / 3., delta=1e-6)
+        else:
+            self.assertIsInstance(
+                protocol, espressomd.collision_detection.BindCenters)
+            self.assertAlmostEqual(protocol.distance, 0.11, delta=1E-9)
+            self.assertEqual(protocol.bond_centers, system.bonded_inter[0])
 
     @utx.skipIfMissingFeatures('EXCLUSIONS')
     def test_exclusions(self):
@@ -1018,8 +1036,8 @@ class CheckpointTest(ut.TestCase):
         p1 = system.part.add(pos=[1., 1.6, 0.], type=6)
         p2 = system.part.add(pos=[system.box_l[0] - 1., 1.6, 0.], type=6)
         system.integrator.run(0, recalc_forces=True)
-        np.testing.assert_allclose(p1.f, [0., 1e8, 0.], atol=1e-3)
-        np.testing.assert_allclose(p2.f, [0., 1e8, 0.], atol=1e-3)
+        np.testing.assert_allclose(np.copy(p1.f), [0., 1e8, 0.], atol=1e-3)
+        np.testing.assert_allclose(np.copy(p2.f), [0., 1e8, 0.], atol=1e-3)
         p1.remove()
         p2.remove()
         system.non_bonded_inter[2, 6].reset()

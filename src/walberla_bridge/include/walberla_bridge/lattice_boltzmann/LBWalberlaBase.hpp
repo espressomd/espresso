@@ -257,10 +257,13 @@ public:
   /** @brief Get the fluid temperature (if thermalized). */
   virtual double get_kT() const noexcept = 0;
 
+  /** @brief Get the RNG seed (if thermalized). */
+  virtual unsigned int get_seed() const noexcept = 0;
+
   /** @brief Set the RNG counter (if thermalized). */
   [[nodiscard]] virtual std::optional<uint64_t> get_rng_state() const = 0;
 
-  /** @brief Set the rng state of thermalized LBs */
+  /** @brief Set the RNG counter (if thermalized). */
   virtual void set_rng_state(uint64_t counter) = 0;
 
   /** @brief get the velocity field id */
