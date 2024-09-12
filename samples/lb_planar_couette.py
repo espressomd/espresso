@@ -92,10 +92,9 @@ for steps in time_breakpoints:
     velocity_ref = analytical(position_ref, time, nu, v, h, k_max)
     velocity_lbf = np.copy(lbf[5, :, 0].velocity[:, 0].reshape([-1]))
     ax = plt.gca()
-    color = next(ax._get_lines.prop_cycler)['color']
-    plt.plot(velocity_ref, position_ref, '-', color=color,
-             label=f"Analytical solution at t={time:.0f}")
-    plt.plot(velocity_lbf, position_lbf, 'o', color=color,
+    line, = plt.plot(velocity_ref, position_ref, '-',
+                     label=f"Analytical solution at t={time:.0f}")
+    plt.plot(velocity_lbf, position_lbf, 'o', color=line.get_color(),
              label=f"Simulated profile at t={time:.0f}")
 
 plt.xlabel('shear velocity')

@@ -481,15 +481,16 @@ class LBTest:
         self.system.lb = lbf
         # check ranges and out-of-bounds access
         shape = lbf.shape
+        int_shape = [int(x) for x in shape]  # cast away numpy integer types
         for i in range(3):
             n = [0, 0, 0]
             n[i] -= shape[i]
             lbf[n[0], n[1], n[2]].velocity
             self.assertEqual(lbf[tuple(n)], lbf[0, 0, 0])
-            for offset in (shape[i] + 1, -(shape[i] + 1)):
+            for offset in (int_shape[i] + 1, -(int_shape[i] + 1)):
                 n = [0, 0, 0]
                 n[i] += offset
-                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(list(shape))[1:-1]}\]"  # nopep8
+                err_msg = rf"provided index \[{str(n)[1:-1]}\] is out of range for shape \[{str(int_shape)[1:-1]}\]"  # nopep8
                 with self.assertRaisesRegex(IndexError, err_msg):
                     lbf[tuple(n)].velocity
         # node index
@@ -760,7 +761,7 @@ class LBTest:
         # Check node velocities
         for node_velocity in lbf[:, :, :].velocity.reshape((-1, 3)):
             np.testing.assert_allclose(
-                node_velocity, fluid_velocity, atol=1E-6)
+                np.copy(node_velocity), fluid_velocity, atol=1E-6)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):

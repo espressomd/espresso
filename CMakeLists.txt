@@ -20,17 +20,18 @@
 #
 
 cmake_minimum_required(VERSION 3.25.1)
+cmake_policy(VERSION 3.25.1)
+if(POLICY CMP0167)
+  # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
+  cmake_policy(SET CMP0167 NEW)
+endif()
 message(STATUS "CMake version: ${CMAKE_VERSION}")
-if(POLICY CMP0076)
-  # make target_sources() convert relative paths to absolute
-  cmake_policy(SET CMP0076 NEW)
-endif()
-if(POLICY CMP0025)
-  # make CXX_COMPILER_ID return "AppleClang" instead of "Clang" for Apple Clang
-  cmake_policy(SET CMP0025 NEW)
-endif()
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# project info
+project(ESPResSo)
+set(PROJECT_VERSION "4.3-dev")
 
 # C++ standard
 enable_language(CXX)
@@ -54,16 +55,10 @@ espresso_minimal_compiler_version("Intel" 2021.9)
 espresso_minimal_compiler_version("IntelLLVM" 2023.1)
 
 include(FeatureSummary)
-project(ESPResSo)
 include(GNUInstallDirs)
+include(FetchContent)
 include(espresso_option_enum)
 include(espresso_enable_avx2_support)
-if(POLICY CMP0074)
-  # make find_package() use <PackageName>_ROOT variables
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-set(PROJECT_VERSION "4.3-dev")
 
 #
 # CMake internal vars
@@ -79,6 +74,31 @@ set(CMAKE_CXX_FLAGS_RELWITHASSERT "${CMAKE_CXX_FLAGS_RELWITHASSERT} -O3 -g")
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
+
+# avoid applying patches twice with FetchContent
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+
+#
+# External dependencies declarations
+#
+
+# cmake-format: off
+FetchContent_Declare(
+  walberla
+  GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+  GIT_TAG        b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+)
+FetchContent_Declare(
+  stokesian_dynamics
+  GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
+  GIT_TAG        862a7537a366f0c32f0c25e46bd107bea590faea
+)
+FetchContent_Declare(
+  caliper
+  GIT_REPOSITORY https://github.com/LLNL/Caliper.git
+  GIT_TAG        v2.10.0
+)
+# cmake-format: on
 
 # ##############################################################################
 # User input options
@@ -316,17 +336,10 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
-  include(FetchContent)
-  FetchContent_Declare(
-    stokesian_dynamics
-    GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-    GIT_TAG 862a7537a366f0c32f0c25e46bd107bea590faea)
   FetchContent_GetProperties(stokesian_dynamics)
   set(STOKESIAN_DYNAMICS 1)
   if(NOT stokesian_dynamics_POPULATED)
-    FetchContent_Populate(stokesian_dynamics)
-    add_subdirectory(${stokesian_dynamics_SOURCE_DIR}
-                     ${stokesian_dynamics_BINARY_DIR})
+    FetchContent_MakeAvailable(stokesian_dynamics)
   endif()
 endif()
 
@@ -600,18 +613,7 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  # cmake-format: off
-  include(FetchContent)
-  FetchContent_Declare(
-    walberla
-    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
-  )
-  # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
-  if(NOT DEFINED walberla_SOURCE_DIR OR NOT EXISTS "${walberla_SOURCE_DIR}")
-    FetchContent_Populate(walberla)
-  endif()
-  # cmake-format: on
+  FetchContent_GetProperties(walberla)
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
                        "${walberla_SOURCE_DIR}")
   set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
@@ -637,7 +639,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
   endif()
   set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
-  add_subdirectory("${walberla_SOURCE_DIR}" "${walberla_BINARY_DIR}")
+  if(NOT walberla_POPULATED)
+    FetchContent_MakeAvailable(walberla)
+  endif()
   set(WALBERLA_LIBS
       walberla::core walberla::domain_decomposition walberla::blockforest
       walberla::boundary walberla::field walberla::lbm walberla::timeloop
@@ -664,23 +668,15 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CALIPER)
-  # cmake-format: off
-  include(FetchContent)
-  FetchContent_Declare(
-    caliper
-    GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-    GIT_TAG        v2.10.0
-  )
-  if(NOT DEFINED caliper_SOURCE_DIR OR NOT EXISTS "${caliper_SOURCE_DIR}")
-    FetchContent_Populate(caliper)
-  endif()
-  # cmake-format: on
+  FetchContent_GetProperties(caliper)
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
   set(CALIPER_WITH_MPI on CACHE BOOL "")
   set(CALIPER_WITH_NVTX off CACHE BOOL "")
   set(CALIPER_WITH_CUPTI off CACHE BOOL "")
   set(CALIPER_BUILD_SHARED_LIBS on CACHE BOOL "")
-  add_subdirectory("${caliper_SOURCE_DIR}")
+  if(NOT caliper_POPULATED)
+    FetchContent_MakeAvailable(caliper)
+  endif()
   target_compile_options(
     caliper-services
     PRIVATE
