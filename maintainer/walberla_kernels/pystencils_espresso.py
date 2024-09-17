@@ -164,9 +164,8 @@ precision_rng_modulo = {
 data_type_np = {'double': 'float64', 'float': 'float32'}
 
 
-def generate_fields(config, stencil):
+def generate_fields(config, stencil, field_layout='fzyx'):
     dtype = data_type_np[config.data_type.default_factory().c_name]
-    field_layout = 'fzyx'
     q = len(stencil)
     dim = len(stencil[0])
 

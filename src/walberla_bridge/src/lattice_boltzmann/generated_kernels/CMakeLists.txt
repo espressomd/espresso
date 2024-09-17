@@ -29,7 +29,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     PRIVATE CollideSweepSinglePrecisionLeesEdwardsAVX.cpp
             CollideSweepDoublePrecisionLeesEdwardsAVX.cpp
             CollideSweepSinglePrecisionThermalizedAVX.cpp
-            CollideSweepDoublePrecisionThermalizedAVX.cpp)
+            CollideSweepDoublePrecisionThermalizedAVX.cpp
+            StreamSweepSinglePrecisionAVX.cpp StreamSweepDoublePrecisionAVX.cpp)
 else()
   target_sources(
     espresso_walberla

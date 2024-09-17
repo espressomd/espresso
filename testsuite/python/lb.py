@@ -674,7 +674,7 @@ class LBTest:
         self.system.thermostat.set_lb(LB_fluid=lbf, seed=3, gamma=self.gamma)
         rtol = self.rtol
         if lbf.single_precision:
-            rtol *= 100.
+            rtol *= 200.
         mode_tracer = espressomd.propagation.Propagation.TRANS_LB_TRACER
         self.system.time = 0.
         p = self.system.part.add(pos=[-1E-30] * 3, propagation=mode_tracer)

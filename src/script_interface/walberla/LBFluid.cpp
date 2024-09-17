@@ -191,6 +191,7 @@ void LBFluid::do_construct(VariantMap const &params) {
     ::LB::LBWalberla::update_collision_model(*m_instance, *m_lb_params, lb_kT,
                                              static_cast<unsigned int>(seed));
     m_instance->set_external_force(lb_ext_f);
+    m_instance->ghost_communication();
     for (auto &vtk : m_vtk_writers) {
       vtk->attach_to_lattice(m_instance, get_latice_to_md_units_conversion());
     }

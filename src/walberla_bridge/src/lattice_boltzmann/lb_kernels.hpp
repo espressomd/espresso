@@ -27,19 +27,21 @@
 #include "generated_kernels/FieldAccessorsSinglePrecision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
-#include "generated_kernels/StreamSweepDoublePrecision.h"
-#include "generated_kernels/StreamSweepSinglePrecision.h"
 
 #ifdef __AVX2__
 #include "generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.h"
 #include "generated_kernels/CollideSweepDoublePrecisionThermalizedAVX.h"
 #include "generated_kernels/CollideSweepSinglePrecisionLeesEdwardsAVX.h"
 #include "generated_kernels/CollideSweepSinglePrecisionThermalizedAVX.h"
+#include "generated_kernels/StreamSweepDoublePrecisionAVX.h"
+#include "generated_kernels/StreamSweepSinglePrecisionAVX.h"
 #else
 #include "generated_kernels/CollideSweepDoublePrecisionLeesEdwards.h"
 #include "generated_kernels/CollideSweepDoublePrecisionThermalized.h"
 #include "generated_kernels/CollideSweepSinglePrecisionLeesEdwards.h"
 #include "generated_kernels/CollideSweepSinglePrecisionThermalized.h"
+#include "generated_kernels/StreamSweepDoublePrecision.h"
+#include "generated_kernels/StreamSweepSinglePrecision.h"
 #endif
 
 namespace walberla {
@@ -53,13 +55,14 @@ template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
       pystencils::CollideSweepDoublePrecisionThermalizedAVX;
   using CollisionModelLeesEdwards =
       pystencils::CollideSweepDoublePrecisionLeesEdwardsAVX;
+  using StreamSweep = pystencils::StreamSweepDoublePrecisionAVX;
 #else
   using CollisionModelThermalized =
       pystencils::CollideSweepDoublePrecisionThermalized;
   using CollisionModelLeesEdwards =
       pystencils::CollideSweepDoublePrecisionLeesEdwards;
-#endif
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
+#endif
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
 };
 
@@ -69,13 +72,14 @@ template <> struct KernelTrait<float, Arch::CPU> {
       pystencils::CollideSweepSinglePrecisionThermalizedAVX;
   using CollisionModelLeesEdwards =
       pystencils::CollideSweepSinglePrecisionLeesEdwardsAVX;
+  using StreamSweep = pystencils::StreamSweepSinglePrecisionAVX;
 #else
   using CollisionModelThermalized =
       pystencils::CollideSweepSinglePrecisionThermalized;
   using CollisionModelLeesEdwards =
       pystencils::CollideSweepSinglePrecisionLeesEdwards;
-#endif
   using StreamSweep = pystencils::StreamSweepSinglePrecision;
+#endif
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
 };
 
