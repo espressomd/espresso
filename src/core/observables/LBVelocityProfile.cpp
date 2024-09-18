@@ -36,8 +36,9 @@ LBVelocityProfile::operator()(boost::mpi::communicator const &comm) const {
   decltype(sampling_positions) local_positions{};
   std::vector<vel_type> local_velocities{};
 
-  auto const &lb = System::get_system().lb;
+  auto &lb = System::get_system().lb;
   auto const vel_conv = lb.get_lattice_speed();
+  lb.ghost_communication_vel();
 
   for (auto const &pos : sampling_positions) {
     if (auto const vel = lb.get_interpolated_velocity(pos)) {

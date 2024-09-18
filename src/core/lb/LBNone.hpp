@@ -29,6 +29,9 @@ namespace LB {
 
 struct LBNone {
   void propagate() { throw NoLBActive{}; }
+  void ghost_communication() { throw NoLBActive{}; }
+  void ghost_communication_pdf() { throw NoLBActive{}; }
+  void ghost_communication_vel() { throw NoLBActive{}; }
   double get_agrid() const { throw NoLBActive{}; }
   double get_tau() const { throw NoLBActive{}; }
   double get_kT() const { throw NoLBActive{}; }

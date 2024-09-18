@@ -135,6 +135,7 @@ BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
       }
       {
         BOOST_CHECK(lb->set_node_velocity_at_boundary(node, vel));
+        lb->ghost_communication();
         auto const res = lb->get_node_is_boundary(node, true);
         // Did we get a value?
         BOOST_REQUIRE(res);
@@ -159,6 +160,7 @@ BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
     } else {
       // Not in the local halo.
       BOOST_CHECK(!lb->set_node_velocity_at_boundary(node, vel));
+      lb->ghost_communication();
       BOOST_CHECK(!lb->get_node_velocity_at_boundary(node));
       BOOST_CHECK(!lb->remove_node_from_boundary(node));
       BOOST_CHECK(!lb->get_node_is_boundary(node));
@@ -420,6 +422,7 @@ BOOST_DATA_TEST_CASE(total_momentum, bdata::make(all_lbs()), lb_generator) {
   if (lb->get_lattice().node_in_local_domain(n2)) {
     lb->set_node_velocity(n2, v2);
   }
+  lb->ghost_communication();
 
   boost::mpi::communicator world;
   auto const mom_local = lb->get_momentum();
@@ -441,6 +444,7 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
       auto const pos = 1. * n; // Mid point between nodes
       auto const f = Vector3d{{1., 2., -3.5}};
       lb->add_force_at_pos(pos, f);
+      lb->ghost_communication();
       // Check neighboring nodes for force to be applied
       for (int x : {0, 1})
         for (int y : {0, 1})
@@ -453,6 +457,8 @@ BOOST_DATA_TEST_CASE(forces_interpolation, bdata::make(all_lbs()),
           }
       // Apply counter force to clear force field
       lb->add_force_at_pos(pos, -f);
+    } else {
+      lb->ghost_communication();
     }
   }
 }
@@ -474,10 +480,14 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
     // Add force to node position
     if (lb->get_lattice().node_in_local_domain(n)) {
       lb->add_force_at_pos(n + Vector3d::broadcast(.5), f);
+      lb->ghost_communication();
       BOOST_CHECK_SMALL((*(lb->get_node_force_to_be_applied(n)) - f).norm(),
                         1E-10);
+    } else {
+      lb->ghost_communication();
     }
     lb->integrate();
+    lb->ghost_communication();
     // Check nodes incl some of the ghosts
     for (auto cn : {n, n + params.grid_dimensions, n - params.grid_dimensions,
                     n + Vector3i{{params.grid_dimensions[0], 0, 0}}}) {
@@ -489,6 +499,7 @@ BOOST_DATA_TEST_CASE(forces_book_keeping, bdata::make(all_lbs()),
       }
     }
     lb->integrate();
+    lb->ghost_communication();
     for (auto cn : {n, n + params.grid_dimensions, n - params.grid_dimensions,
                     n + Vector3i{{params.grid_dimensions[0], 0, 0}}}) {
       if (lb->get_lattice().node_in_local_halo(cn)) {
@@ -518,6 +529,7 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
       }
     }
   }
+  lb->ghost_communication();
 
   // check forces to be applied
   // Each corner node should have 1/8 of the force
@@ -535,6 +547,7 @@ BOOST_DATA_TEST_CASE(force_in_corner, bdata::make(all_lbs()), lb_generator) {
   BOOST_CHECK_EQUAL(count, 8);
 
   lb->integrate();
+  lb->ghost_communication();
 
   // check applied forces from last integration step
   count_local = 0;
