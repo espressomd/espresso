@@ -119,6 +119,11 @@ protected:
     using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
+    template <class Field>
+    using PackInfoStreaming =
+        std::conditional_t<std::is_same_v<Field, PdfField>,
+                           typename detail::KernelTrait<FT, AT>::PackInfoPdf,
+                           typename detail::KernelTrait<FT, AT>::PackInfoVec>;
     template <class Stencil>
     using RegularCommScheme =
         blockforest::communication::UniformBufferedScheme<Stencil>;
@@ -133,6 +138,8 @@ protected:
     using VectorField = gpu::GPUField<FT>;
     template <class Field>
     using PackInfo = gpu::communication::MemcpyPackInfo<Field>;
+    template <class Field>
+    using PackInfoStreaming = gpu::communication::MemcpyPackInfo<Field>;
     template <class Stencil>
     using RegularCommScheme = gpu::communication::UniformGPUScheme<Stencil>;
     template <class Stencil>
@@ -284,6 +291,7 @@ protected:
 
   /** Flag for boundary cells. */
   FlagUID const Boundary_flag{"boundary"};
+  bool m_has_boundaries{false};
 
   /**
    * @brief Full communicator.
@@ -307,6 +315,10 @@ protected:
   template <class Field>
   using PackInfo =
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
+  template <class Field>
+  using PackInfoStreaming =
+      typename FieldTrait<FloatType,
+                          Architecture>::template PackInfoStreaming<Field>;
 
   // communicators
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
@@ -414,6 +426,24 @@ protected:
 #endif
   }
 
+  void setup_streaming_communicator() {
+    auto const setup = [this]<typename PdfPackInfo>() {
+      auto const &blocks = m_lattice->get_blocks();
+      m_pdf_streaming_communicator =
+          std::make_shared<PDFStreamingCommunicator>(blocks);
+      m_pdf_streaming_communicator->addPackInfo(
+          std::make_shared<PdfPackInfo>(m_pdf_field_id));
+      m_pdf_streaming_communicator->addPackInfo(
+          std::make_shared<PackInfoStreaming<VectorField>>(
+              m_last_applied_force_field_id));
+    };
+    if (m_has_boundaries or (m_collision_model and has_lees_edwards_bc())) {
+      setup.template operator()<PackInfo<PdfField>>();
+    } else {
+      setup.template operator()<PackInfoStreaming<PdfField>>();
+    }
+  }
+
 public:
   LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
                  double density)
@@ -448,12 +478,7 @@ public:
     reset_boundary_handling();
 
     // Set up the communication and register fields
-    m_pdf_streaming_communicator =
-        std::make_shared<PDFStreamingCommunicator>(blocks);
-    m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
-    m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
+    setup_streaming_communicator();
 
     m_full_communicator = std::make_shared<RegularFullCommunicator>(blocks);
     m_full_communicator->addPackInfo(
@@ -555,7 +580,9 @@ private:
     integrate_collide(blocks);
     m_pdf_streaming_communicator->communicate();
     // Handle boundaries
-    integrate_boundaries(blocks);
+    if (m_has_boundaries) {
+      integrate_boundaries(blocks);
+    }
     // LB stream
     integrate_stream(blocks);
     // Mark pending ghost layer updates
@@ -569,7 +596,9 @@ private:
   void integrate_pull_scheme() {
     auto const &blocks = get_lattice().get_blocks();
     // Handle boundaries
-    integrate_boundaries(blocks);
+    if (m_has_boundaries) {
+      integrate_boundaries(blocks);
+    }
     // LB stream
     integrate_stream(blocks);
     // LB collide
@@ -690,6 +719,7 @@ public:
                                          omega_odd, omega, seed, uint32_t{0u});
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_run_collide_sweep = CollideSweepVisitor(blocks);
+    setup_streaming_communicator();
   }
 
   void set_collision_model(
@@ -734,6 +764,7 @@ public:
         blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
         n_ghost_layers, shear_direction, shear_plane_normal,
         m_lees_edwards_callbacks->get_pos_offset);
+    setup_streaming_communicator();
   }
 
   void check_lebc(unsigned int shear_direction,
@@ -765,10 +796,12 @@ public:
                     bool consider_ghosts = false) const override {
     assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::VEL)));
     assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::UBB)));
-    auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
-    if (is_boundary)    // is info available locally
-      if (*is_boundary) // is the node a boundary
+    if (m_has_boundaries) {
+      auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
+      if (is_boundary and *is_boundary) {
         return get_node_velocity_at_boundary(node, consider_ghosts);
+      }
+    }
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return std::nullopt;
@@ -1266,6 +1299,7 @@ public:
 
   bool set_node_velocity_at_boundary(Utils::Vector3i const &node,
                                      Utils::Vector3d const &velocity) override {
+    on_boundary_add();
     m_pending_ghost_comm.set(GhostComm::UBB);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (bc) {
@@ -1307,6 +1341,7 @@ public:
   void set_slice_velocity_at_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<std::optional<Utils::Vector3d>> const &velocity) override {
+    on_boundary_add();
     m_pending_ghost_comm.set(GhostComm::UBB);
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
@@ -1388,19 +1423,30 @@ public:
 
   void reallocate_ubb_field() override { m_boundary->boundary_update(); }
 
+  void on_boundary_add() {
+    if (not m_has_boundaries) {
+      m_has_boundaries = true;
+      setup_streaming_communicator();
+    }
+    m_has_boundaries = true;
+  }
+
   void clear_boundaries() override {
     reset_boundary_handling();
     m_pending_ghost_comm.set(GhostComm::UBB);
     ghost_communication();
+    m_has_boundaries = false;
+    setup_streaming_communicator();
   }
 
   void
   update_boundary_from_shape(std::vector<int> const &raster_flat,
                              std::vector<double> const &data_flat) override {
+    on_boundary_add();
+    m_pending_ghost_comm.set(GhostComm::UBB);
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
-    m_pending_ghost_comm.set(GhostComm::UBB);
     ghost_communication();
     reallocate_ubb_field();
   }

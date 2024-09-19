@@ -193,6 +193,30 @@ with code_generation_context.CodeGeneration() as ctx:
             ctx, config, method, templates
         )
 
+    # generate PackInfo
+    assignments = pystencils_espresso.generate_pack_info_pdfs_field_assignments(
+        fields, streaming_pattern="pull")
+    spec = pystencils_espresso.generate_pack_info_vector_field_specifications(
+        config, stencil, force_field.layout)
+    for params, target_suffix in paramlist(parameters, ["CPU"]):
+        pystencils_walberla.generate_pack_info_from_kernel(
+            ctx, f"PackInfoPdf{precision_prefix}{target_suffix}", assignments,
+            kind="pull", **params)
+        pystencils_walberla.generate_pack_info(
+            ctx, f"PackInfoVec{precision_prefix}{target_suffix}", spec, **params)
+        if target_suffix == "CUDA":
+            continue
+        token = "\n       //TODO: optimize by generating kernel for this case\n"
+        for field_suffix in ["Pdf", "Vec"]:
+            class_name = f"PackInfo{field_suffix}{precision_prefix}{target_suffix}"  # nopep8
+            with open(f"{class_name}.h", "r+") as f:
+                content = f.read()
+                assert token in content
+                content = content.replace(token, "\n")
+                f.seek(0)
+                f.truncate()
+                f.write(content)
+
     # boundary conditions
     ubb_dynamic = lbmpy_espresso.UBB(
         lambda *args: None, dim=3, data_type=config.data_type.default_factory())

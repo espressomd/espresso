@@ -20,6 +20,8 @@
 target_sources(
   espresso_walberla
   PRIVATE StreamSweepSinglePrecision.cpp StreamSweepDoublePrecision.cpp
+          PackInfoPdfSinglePrecision.cpp PackInfoPdfDoublePrecision.cpp
+          PackInfoVecSinglePrecision.cpp PackInfoVecDoublePrecision.cpp
           InitialPDFsSetterSinglePrecision.cpp
           InitialPDFsSetterDoublePrecision.cpp Dynamic_UBB_single_precision.cpp
           Dynamic_UBB_double_precision.cpp)

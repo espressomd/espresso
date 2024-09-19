@@ -27,6 +27,10 @@
 #include "generated_kernels/FieldAccessorsSinglePrecision.h"
 #include "generated_kernels/InitialPDFsSetterDoublePrecision.h"
 #include "generated_kernels/InitialPDFsSetterSinglePrecision.h"
+#include "generated_kernels/PackInfoPdfDoublePrecision.h"
+#include "generated_kernels/PackInfoPdfSinglePrecision.h"
+#include "generated_kernels/PackInfoVecDoublePrecision.h"
+#include "generated_kernels/PackInfoVecSinglePrecision.h"
 
 #ifdef __AVX2__
 #include "generated_kernels/CollideSweepDoublePrecisionLeesEdwardsAVX.h"
@@ -64,6 +68,8 @@ template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
   using StreamSweep = pystencils::StreamSweepDoublePrecision;
 #endif
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecision;
+  using PackInfoPdf = pystencils::PackInfoPdfDoublePrecision;
+  using PackInfoVec = pystencils::PackInfoVecDoublePrecision;
 };
 
 template <> struct KernelTrait<float, Arch::CPU> {
@@ -81,6 +87,8 @@ template <> struct KernelTrait<float, Arch::CPU> {
   using StreamSweep = pystencils::StreamSweepSinglePrecision;
 #endif
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecision;
+  using PackInfoPdf = pystencils::PackInfoPdfSinglePrecision;
+  using PackInfoVec = pystencils::PackInfoVecSinglePrecision;
 };
 
 template <typename FT = double, Arch AT = Arch::CPU>
