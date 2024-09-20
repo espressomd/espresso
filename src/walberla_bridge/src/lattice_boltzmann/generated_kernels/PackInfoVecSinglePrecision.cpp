@@ -24,6 +24,8 @@
 #include "core/cell/CellInterval.h"
 #include "stencil/Directions.h"
 
+#include <cstddef>
+
 #if (defined WALBERLA_CXX_COMPILER_IS_GNU) || (defined WALBERLA_CXX_COMPILER_IS_CLANG)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -67,6 +69,7 @@ static FUNC_PREFIX void unpack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE
 } // namespace internal_1ccccad4ca561e07a0934cadb07d0fc1
 
 void PackInfoVecSinglePrecision::pack(Direction dir, unsigned char *byte_buffer, IBlock *block) const {
+  byte_buffer += sizeof(float) - (reinterpret_cast<std::size_t>(byte_buffer) - (reinterpret_cast<std::size_t>(byte_buffer) / sizeof(float)) * sizeof(float));
   float *buffer = reinterpret_cast<float *>(byte_buffer);
 
   auto field = block->getData<field::GhostLayerField<float, 3>>(fieldID);
@@ -119,6 +122,7 @@ void PackInfoVecSinglePrecision::pack(Direction dir, unsigned char *byte_buffer,
 }
 
 void PackInfoVecSinglePrecision::unpack(Direction dir, unsigned char *byte_buffer, IBlock *block) const {
+  byte_buffer += sizeof(float) - (reinterpret_cast<std::size_t>(byte_buffer) - (reinterpret_cast<std::size_t>(byte_buffer) / sizeof(float)) * sizeof(float));
   float *buffer = reinterpret_cast<float *>(byte_buffer);
 
   auto field = block->getData<field::GhostLayerField<float, 3>>(fieldID);

@@ -24,6 +24,8 @@
 #include "core/cell/CellInterval.h"
 #include "stencil/Directions.h"
 
+#include <cstddef>
+
 #if (defined WALBERLA_CXX_COMPILER_IS_GNU) || (defined WALBERLA_CXX_COMPILER_IS_CLANG)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -519,6 +521,7 @@ static FUNC_PREFIX void unpack_NE(double *RESTRICT const _data_buffer, double *R
 } // namespace internal_unpack_NE
 
 void PackInfoPdfDoublePrecision::pack(Direction dir, unsigned char *byte_buffer, IBlock *block) const {
+  byte_buffer += sizeof(double) - (reinterpret_cast<std::size_t>(byte_buffer) - (reinterpret_cast<std::size_t>(byte_buffer) / sizeof(double)) * sizeof(double));
   double *buffer = reinterpret_cast<double *>(byte_buffer);
 
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
@@ -893,6 +896,7 @@ void PackInfoPdfDoublePrecision::pack(Direction dir, unsigned char *byte_buffer,
 }
 
 void PackInfoPdfDoublePrecision::unpack(Direction dir, unsigned char *byte_buffer, IBlock *block) const {
+  byte_buffer += sizeof(double) - (reinterpret_cast<std::size_t>(byte_buffer) - (reinterpret_cast<std::size_t>(byte_buffer) / sizeof(double)) * sizeof(double));
   double *buffer = reinterpret_cast<double *>(byte_buffer);
 
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);

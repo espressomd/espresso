@@ -54,7 +54,7 @@ public:
   void unpackData(IBlock *receiver, stencil::Direction dir,
                   mpi::RecvBuffer &buffer) {
     const auto dataSize = size(dir, receiver);
-    unpack(dir, buffer.skip(dataSize), receiver);
+    unpack(dir, buffer.skip(dataSize + sizeof(double)), receiver);
   }
 
   void communicateLocal(const IBlock *sender, IBlock *receiver,
@@ -68,7 +68,8 @@ public:
   void packDataImpl(const IBlock *sender, stencil::Direction dir,
                     mpi::SendBuffer &outBuffer) const {
     const auto dataSize = size(dir, sender);
-    pack(dir, outBuffer.forward(dataSize), const_cast<IBlock *>(sender));
+    pack(dir, outBuffer.forward(dataSize + sizeof(double)),
+         const_cast<IBlock *>(sender));
   }
 
   void pack(stencil::Direction dir, unsigned char *buffer, IBlock *block) const;
