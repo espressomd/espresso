@@ -55,3 +55,83 @@ class BreakageSpecs(ScriptObjectMap):
 
     def __setitem__(self, key, value):
         return super().__setitem__(self._get_key(key), value)
+
+@script_interface_register
+class BondBreakage(ScriptInterfaceHelper):
+    """Bond breakage interface.
+
+    This class provides methods to manage and manipulate bond breakage.
+
+    Methods
+    -------
+    execute(parameters)
+        Executes the bond breakage with the given parameters.
+    """
+
+    _so_name = "BondBreakage::BondBreakage"
+    _so_bind_methods = ("execute",)
+
+    def execute(self, parameters):
+        """
+        Execute the bond breakage process.
+
+        Parameters
+        ----------
+        parameters : dict
+            Dictionary containing parameters for the bond breakage process.
+
+        Returns
+        -------
+        result : any
+            Result of the bond breakage execution.
+        """
+        return self.call_method("execute", parameters=parameters)
+
+@script_interface_register
+class BondBreakageInterface(ScriptObjectMap):
+    """Interface for managing multiple BondBreakage instances."""
+
+    _so_name = "BondBreakage::BondBreakageInterface"
+    _so_bind_methods = BondBreakage._so_bind_methods + ("size", "clear")
+
+    def add(self, bond_breakage):
+        """
+        Add a BondBreakage instance to the interface.
+
+        Parameters
+        ----------
+        bond_breakage : BondBreakage
+            An instance of BondBreakage to add.
+        """
+        def _add(self, bond_breakage):
+            if isinstance(bond_breakage, BondBreakage):
+                self.call_method("add", object=bond_breakage)
+            else:
+                raise ValueError("Only BondBreakage instances can be added.")
+
+        if isinstance(bond_breakage, collections.abc.Iterable):
+            for bb in bond_breakage:
+                _add(self, bb)
+        else:
+            _add(self, bond_breakage)
+
+    def remove(self, bond_breakage):
+        """
+        Remove a BondBreakage instance from the interface.
+
+        Parameters
+        ----------
+        bond_breakage : BondBreakage
+            An instance of BondBreakage to remove.
+        """
+        def _remove(self, bond_breakage):
+            if isinstance(bond_breakage, BondBreakage):
+                self.call_method("remove", object=bond_breakage)
+            else:
+                raise ValueError("Only BondBreakage instances can be removed.")
+
+        if isinstance(bond_breakage, collections.abc.Iterable):
+            for bb in bond_breakage:
+                _remove(self, bb)
+        else:
+            _remove(bond_breakage)
