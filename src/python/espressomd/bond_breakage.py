@@ -56,6 +56,7 @@ class BreakageSpecs(ScriptObjectMap):
     def __setitem__(self, key, value):
         return super().__setitem__(self._get_key(key), value)
 
+
 @script_interface_register
 class BondBreakage(ScriptInterfaceHelper):
     """Bond breakage interface.
@@ -87,6 +88,7 @@ class BondBreakage(ScriptInterfaceHelper):
         """
         return self.call_method("execute", parameters=parameters)
 
+
 @script_interface_register
 class BondBreakageInterface(ScriptObjectMap):
     """Interface for managing multiple BondBreakage instances."""
@@ -103,6 +105,7 @@ class BondBreakageInterface(ScriptObjectMap):
         bond_breakage : BondBreakage
             An instance of BondBreakage to add.
         """
+
         def _add(self, bond_breakage):
             if isinstance(bond_breakage, BondBreakage):
                 self.call_method("add", object=bond_breakage)
@@ -124,6 +127,7 @@ class BondBreakageInterface(ScriptObjectMap):
         bond_breakage : BondBreakage
             An instance of BondBreakage to remove.
         """
+
         def _remove(self, bond_breakage):
             if isinstance(bond_breakage, BondBreakage):
                 self.call_method("remove", object=bond_breakage)

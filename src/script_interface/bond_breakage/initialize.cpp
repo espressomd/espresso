@@ -20,14 +20,14 @@
 #include "initialize.hpp"
 #include "BreakageSpec.hpp"
 #include "BreakageSpecs.hpp"
-//#include "BondBreakage.hpp"
+#include "BondBreakage.hpp"
 
 namespace ScriptInterface {
 namespace BondBreakage {
 void initialize(Utils::Factory<ObjectHandle> *f) {
   f->register_new<BreakageSpec>("BondBreakage::BreakageSpec");
   f->register_new<BreakageSpecs>("BondBreakage::BreakageSpecs");
-  //f->register_new<BondBreakage>("BondBreakage::BondBreakage");
+  f->register_new<BondBreakage>("BondBreakage::BondBreakage");
 }
 } // namespace BondBreakage
 } // namespace ScriptInterface

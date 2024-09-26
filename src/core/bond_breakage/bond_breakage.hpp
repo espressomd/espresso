@@ -108,7 +108,6 @@ private:
   /** Add a particle+bond combination to the breakage queue */
   void queue_breakage(int particle_id, BondPartners const &bond_partners,
                       int bond_type);
-
 };
 
 void execute_bond_breakage(System::System &system, BondBreakage &bond_breakage);

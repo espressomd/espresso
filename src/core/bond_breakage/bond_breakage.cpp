@@ -204,7 +204,9 @@ void BondBreakage::process_queue_impl(System::System &system) {
   }
 }
 
-bool bond_handler(BondBreakage &bond_breakage, Particle &p, std::span<Particle *> partners, int bond_id, BoxGeometry const &box_geo){
+bool bond_handler(BondBreakage &bond_breakage, Particle &p,
+                  std::span<Particle *> partners, int bond_id,
+                  BoxGeometry const &box_geo) {
 
   if (partners.size() == 1u) { // pair bonds
     auto d = box_geo.get_mi_vector(p.pos(), partners[0]->pos()).norm();
@@ -226,20 +228,22 @@ bool bond_handler(BondBreakage &bond_breakage, Particle &p, std::span<Particle *
   return false;
 }
 
-void execute_bond_breakage(System::System &system, BondBreakage &bond_breakage) {
-    // Clear the bond breakage queue
-    bond_breakage.clear_queue();
+void execute_bond_breakage(System::System &system,
+                           BondBreakage &bond_breakage) {
+  // Clear the bond breakage queue
+  bond_breakage.clear_queue();
 
-    // Create the bond kernel function (the bond handler)
-    auto bond_kernel = [&](Particle &p, int bond_id, std::span<Particle *> partners) {
-        return bond_handler(bond_breakage, p, partners, bond_id, *system.box_geo);
-    };
+  // Create the bond kernel function (the bond handler)
+  auto bond_kernel = [&](Particle &p, int bond_id,
+                         std::span<Particle *> partners) {
+    return bond_handler(bond_breakage, p, partners, bond_id, *system.box_geo);
+  };
 
-    // Use the CellStructure::bond_loop to process bonds
-    system.cell_structure->bond_loop(bond_kernel);
+  // Use the CellStructure::bond_loop to process bonds
+  system.cell_structure->bond_loop(bond_kernel);
 
-    // Process the bond breakage queue
-    bond_breakage.process_queue(system);
+  // Process the bond breakage queue
+  bond_breakage.process_queue(system);
 }
 
 } // namespace BondBreakage
