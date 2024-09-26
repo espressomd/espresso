@@ -18,9 +18,9 @@
  */
 
 #include "initialize.hpp"
+#include "BondBreakage.hpp"
 #include "BreakageSpec.hpp"
 #include "BreakageSpecs.hpp"
-#include "BondBreakage.hpp"
 
 namespace ScriptInterface {
 namespace BondBreakage {

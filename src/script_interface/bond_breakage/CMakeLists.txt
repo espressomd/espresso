@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-target_sources(espresso_script_interface
-               PRIVATE 
-	       ${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp
-	       ${CMAKE_CURRENT_SOURCE_DIR}/BondBreakage.cpp)
+target_sources(
+  espresso_script_interface
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/BondBreakage.cpp)
