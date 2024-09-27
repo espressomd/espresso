@@ -98,6 +98,8 @@ with code_generation_context.CodeGeneration() as ctx:
     stencil = lbmpy.stencils.LBStencil(lbmpy.enums.Stencil.D3Q19)
     fields = pystencils_espresso.generate_fields(config, stencil)
     force_field = fields["force"]
+    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
+    streaming_pattern = "push"
 
     # LB Method definition
     method = lbmpy.creationfunctions.create_mrt_orthogonal(
@@ -133,12 +135,11 @@ with code_generation_context.CodeGeneration() as ctx:
                                 force_model=lbmpy.ForceModel.GUO,
                                 force=force_field.center_vector,
                                 kernel_type="collide_only")
-    lbm_opt = lbmpy.LBMOptimisation(symbolic_field=fields["pdfs"])
-    le_collision_rule_unthermalized = lbmpy.create_lb_update_rule(
+    le_update_rule_unthermalized = lbmpy.create_lb_update_rule(
         lbm_config=le_config,
         lbm_optimisation=lbm_opt)
     le_collision_rule_unthermalized = lees_edwards.add_lees_edwards_to_collision(
-        config, le_collision_rule_unthermalized,
+        config, le_update_rule_unthermalized,
         fields["pdfs"], stencil, 1)  # shear_dir_normal y
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
         pystencils_espresso.generate_collision_sweep(
@@ -153,8 +154,8 @@ with code_generation_context.CodeGeneration() as ctx:
         ps.TypedSymbol(f"block_offset_{i}", np.uint32)
         for i in range(3))
 
-    # generate thermalized LB
-    collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
+    # generate thermalized LB collision rule
+    lb_collision_rule_thermalized = lbmpy.creationfunctions.create_lb_collision_rule(
         method,
         zero_centered=False,
         fluctuating={
@@ -170,7 +171,7 @@ with code_generation_context.CodeGeneration() as ctx:
         pystencils_espresso.generate_collision_sweep(
             ctx,
             method,
-            collision_rule_thermalized,
+            lb_collision_rule_thermalized,
             stem,
             params,
             block_offset=block_offsets,
@@ -192,6 +193,30 @@ with code_generation_context.CodeGeneration() as ctx:
             ctx, config, method, templates
         )
 
+    # generate PackInfo
+    assignments = pystencils_espresso.generate_pack_info_pdfs_field_assignments(
+        fields, streaming_pattern="pull")
+    spec = pystencils_espresso.generate_pack_info_vector_field_specifications(
+        config, stencil, force_field.layout)
+    for params, target_suffix in paramlist(parameters, ["CPU"]):
+        pystencils_walberla.generate_pack_info_from_kernel(
+            ctx, f"PackInfoPdf{precision_prefix}{target_suffix}", assignments,
+            kind="pull", **params)
+        pystencils_walberla.generate_pack_info(
+            ctx, f"PackInfoVec{precision_prefix}{target_suffix}", spec, **params)
+        if target_suffix == "CUDA":
+            continue
+        token = "\n       //TODO: optimize by generating kernel for this case\n"
+        for field_suffix in ["Pdf", "Vec"]:
+            class_name = f"PackInfo{field_suffix}{precision_prefix}{target_suffix}"  # nopep8
+            with open(f"{class_name}.h", "r+") as f:
+                content = f.read()
+                assert token in content
+                content = content.replace(token, "\n")
+                f.seek(0)
+                f.truncate()
+                f.write(content)
+
     # boundary conditions
     ubb_dynamic = lbmpy_espresso.UBB(
         lambda *args: None, dim=3, data_type=config.data_type.default_factory())
@@ -202,7 +227,7 @@ with code_generation_context.CodeGeneration() as ctx:
         lbmpy_walberla.generate_boundary(
             ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb_dynamic,
             method, additional_data_handler=ubb_data_handler,
-            streaming_pattern="push", target=target)
+            streaming_pattern=streaming_pattern, target=target)
 
         with open(f"Dynamic_UBB_{precision_suffix}{target_suffix}.h", "r+") as f:
             content = f.read()

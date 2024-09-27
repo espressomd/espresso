@@ -66,6 +66,7 @@
 #include <utils/math/make_lin_space.hpp>
 
 #include <array>
+#include <bitset>
 #include <cmath>
 #include <cstddef>
 #include <functional>
@@ -118,6 +119,11 @@ protected:
     using VectorField = field::GhostLayerField<FT, uint_t{3u}>;
     template <class Field>
     using PackInfo = field::communication::PackInfo<Field>;
+    template <class Field>
+    using PackInfoStreaming =
+        std::conditional_t<std::is_same_v<Field, PdfField>,
+                           typename detail::KernelTrait<FT, AT>::PackInfoPdf,
+                           typename detail::KernelTrait<FT, AT>::PackInfoVec>;
     template <class Stencil>
     using RegularCommScheme =
         blockforest::communication::UniformBufferedScheme<Stencil>;
@@ -132,6 +138,8 @@ protected:
     using VectorField = gpu::GPUField<FT>;
     template <class Field>
     using PackInfo = gpu::communication::MemcpyPackInfo<Field>;
+    template <class Field>
+    using PackInfoStreaming = gpu::communication::MemcpyPackInfo<Field>;
     template <class Stencil>
     using RegularCommScheme = gpu::communication::UniformGPUScheme<Stencil>;
     template <class Stencil>
@@ -151,6 +159,17 @@ public:
 #if defined(__CUDACC__)
   using GPUField = gpu::GPUField<FloatType>;
 #endif
+
+  struct GhostComm {
+    /** @brief Ghost communication operations. */
+    enum GhostCommFlags : unsigned {
+      PDF, ///< PDFs communication
+      VEL, ///< velocities communication
+      LAF, ///< last applied forces communication
+      UBB, ///< boundaries communication
+      SIZE
+    };
+  };
 
 public:
   template <typename T> FloatType FloatType_c(T t) const {
@@ -272,6 +291,7 @@ protected:
 
   /** Flag for boundary cells. */
   FlagUID const Boundary_flag{"boundary"};
+  bool m_has_boundaries{false};
 
   /**
    * @brief Full communicator.
@@ -295,11 +315,19 @@ protected:
   template <class Field>
   using PackInfo =
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
+  template <class Field>
+  using PackInfoStreaming =
+      typename FieldTrait<FloatType,
+                          Architecture>::template PackInfoStreaming<Field>;
 
   // communicators
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
-  std::shared_ptr<RegularFullCommunicator> m_pdf_full_communicator;
+  std::shared_ptr<RegularFullCommunicator> m_full_communicator;
+  std::shared_ptr<RegularFullCommunicator> m_pdf_communicator;
+  std::shared_ptr<RegularFullCommunicator> m_vel_communicator;
+  std::shared_ptr<RegularFullCommunicator> m_laf_communicator;
   std::shared_ptr<PDFStreamingCommunicator> m_pdf_streaming_communicator;
+  std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
 
   // ResetForce sweep + external force handling
   std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
@@ -398,6 +426,24 @@ protected:
 #endif
   }
 
+  void setup_streaming_communicator() {
+    auto const setup = [this]<typename PdfPackInfo>() {
+      auto const &blocks = m_lattice->get_blocks();
+      m_pdf_streaming_communicator =
+          std::make_shared<PDFStreamingCommunicator>(blocks);
+      m_pdf_streaming_communicator->addPackInfo(
+          std::make_shared<PdfPackInfo>(m_pdf_field_id));
+      m_pdf_streaming_communicator->addPackInfo(
+          std::make_shared<PackInfoStreaming<VectorField>>(
+              m_last_applied_force_field_id));
+    };
+    if (m_has_boundaries or (m_collision_model and has_lees_edwards_bc())) {
+      setup.template operator()<PackInfo<PdfField>>();
+    } else {
+      setup.template operator()<PackInfoStreaming<PdfField>>();
+    }
+  }
+
 public:
   LBWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double viscosity,
                  double density)
@@ -432,20 +478,25 @@ public:
     reset_boundary_handling();
 
     // Set up the communication and register fields
-    m_pdf_streaming_communicator =
-        std::make_shared<PDFStreamingCommunicator>(blocks);
-    m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
-    m_pdf_streaming_communicator->addPackInfo(
-        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
+    setup_streaming_communicator();
 
-    m_pdf_full_communicator = std::make_shared<RegularFullCommunicator>(blocks);
-    m_pdf_full_communicator->addPackInfo(
+    m_full_communicator = std::make_shared<RegularFullCommunicator>(blocks);
+    m_full_communicator->addPackInfo(
         std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
-    m_pdf_full_communicator->addPackInfo(
+    m_full_communicator->addPackInfo(
         std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
-    m_pdf_full_communicator->addPackInfo(
+    m_full_communicator->addPackInfo(
         std::make_shared<PackInfo<VectorField>>(m_velocity_field_id));
+
+    m_pdf_communicator = std::make_shared<RegularFullCommunicator>(blocks);
+    m_vel_communicator = std::make_shared<RegularFullCommunicator>(blocks);
+    m_laf_communicator = std::make_shared<RegularFullCommunicator>(blocks);
+    m_pdf_communicator->addPackInfo(
+        std::make_shared<PackInfo<PdfField>>(m_pdf_field_id));
+    m_vel_communicator->addPackInfo(
+        std::make_shared<PackInfo<VectorField>>(m_velocity_field_id));
+    m_laf_communicator->addPackInfo(
+        std::make_shared<PackInfo<VectorField>>(m_last_applied_force_field_id));
 
     m_boundary_communicator =
         std::make_shared<BoundaryFullCommunicator>(blocks);
@@ -457,6 +508,8 @@ public:
         m_flag_field_id);
     boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary);
     m_boundary_communicator->addPackInfo(boundary_packinfo);
+
+    m_pending_ghost_comm.set();
 
     // Instantiate the sweep responsible for force double buffering and
     // external forces
@@ -527,22 +580,35 @@ private:
     integrate_collide(blocks);
     m_pdf_streaming_communicator->communicate();
     // Handle boundaries
-    integrate_boundaries(blocks);
+    if (m_has_boundaries) {
+      integrate_boundaries(blocks);
+    }
     // LB stream
     integrate_stream(blocks);
+    // Mark pending ghost layer updates
+    m_pending_ghost_comm.set(GhostComm::PDF);
+    m_pending_ghost_comm.set(GhostComm::VEL);
+    m_pending_ghost_comm.set(GhostComm::LAF);
     // Refresh ghost layers
-    ghost_communication_pdfs();
+    ghost_communication_push_scheme();
   }
 
   void integrate_pull_scheme() {
     auto const &blocks = get_lattice().get_blocks();
     // Handle boundaries
-    integrate_boundaries(blocks);
+    if (m_has_boundaries) {
+      integrate_boundaries(blocks);
+    }
     // LB stream
     integrate_stream(blocks);
     // LB collide
     integrate_collide(blocks);
+    // Reset force fields
     integrate_reset_force(blocks);
+    // Mark pending ghost layer updates
+    m_pending_ghost_comm.set(GhostComm::PDF);
+    m_pending_ghost_comm.set(GhostComm::VEL);
+    m_pending_ghost_comm.set(GhostComm::LAF);
     // Refresh ghost layers
     ghost_communication_pdfs();
   }
@@ -570,21 +636,75 @@ public:
   }
 
   void ghost_communication() override {
-    ghost_communication_boundary();
-    ghost_communication_pdfs();
+    if (m_pending_ghost_comm.any()) {
+      ghost_communication_boundary();
+      ghost_communication_pdfs();
+    }
+  }
+
+  void ghost_communication_pdf() override {
+    if (m_pending_ghost_comm.test(GhostComm::PDF)) {
+      m_pdf_communicator->communicate();
+      if (has_lees_edwards_bc()) {
+        auto const &blocks = get_lattice().get_blocks();
+        apply_lees_edwards_pdf_interpolation(blocks);
+      }
+      m_pending_ghost_comm.reset(GhostComm::PDF);
+    }
+  }
+
+  void ghost_communication_vel() override {
+    if (m_pending_ghost_comm.test(GhostComm::VEL)) {
+      m_vel_communicator->communicate();
+      if (has_lees_edwards_bc()) {
+        auto const &blocks = get_lattice().get_blocks();
+        apply_lees_edwards_vel_interpolation_and_shift(blocks);
+      }
+      m_pending_ghost_comm.reset(GhostComm::VEL);
+    }
+  }
+
+  void ghost_communication_laf() {
+    if (m_pending_ghost_comm.test(GhostComm::LAF)) {
+      m_laf_communicator->communicate();
+      if (has_lees_edwards_bc()) {
+        auto const &blocks = get_lattice().get_blocks();
+        apply_lees_edwards_last_applied_force_interpolation(blocks);
+      }
+      m_pending_ghost_comm.reset(GhostComm::LAF);
+    }
   }
 
   void ghost_communication_boundary() {
-    m_boundary_communicator->communicate();
+    if (m_pending_ghost_comm.test(GhostComm::UBB)) {
+      m_boundary_communicator->communicate();
+      m_pending_ghost_comm.reset(GhostComm::UBB);
+    }
   }
 
   void ghost_communication_pdfs() {
-    m_pdf_full_communicator->communicate();
+    m_full_communicator->communicate();
     if (has_lees_edwards_bc()) {
       auto const &blocks = get_lattice().get_blocks();
       apply_lees_edwards_pdf_interpolation(blocks);
       apply_lees_edwards_vel_interpolation_and_shift(blocks);
       apply_lees_edwards_last_applied_force_interpolation(blocks);
+    }
+    m_pending_ghost_comm.reset(GhostComm::PDF);
+    m_pending_ghost_comm.reset(GhostComm::VEL);
+    m_pending_ghost_comm.reset(GhostComm::LAF);
+  }
+
+  void ghost_communication_push_scheme() {
+    if (has_lees_edwards_bc()) {
+      m_full_communicator->communicate();
+      auto const &blocks = get_lattice().get_blocks();
+      apply_lees_edwards_pdf_interpolation(blocks);
+      apply_lees_edwards_vel_interpolation_and_shift(blocks);
+      apply_lees_edwards_last_applied_force_interpolation(blocks);
+      m_pending_ghost_comm.reset(GhostComm::PDF);
+      m_pending_ghost_comm.reset(GhostComm::VEL);
+      m_pending_ghost_comm.reset(GhostComm::LAF);
     }
   }
 
@@ -599,6 +719,7 @@ public:
                                          omega_odd, omega, seed, uint32_t{0u});
     m_collision_model = std::make_shared<CollisionModel>(std::move(obj));
     m_run_collide_sweep = CollideSweepVisitor(blocks);
+    setup_streaming_communicator();
   }
 
   void set_collision_model(
@@ -643,6 +764,7 @@ public:
         blocks, m_last_applied_force_field_id, m_vec_tmp_field_id,
         n_ghost_layers, shear_direction, shear_plane_normal,
         m_lees_edwards_callbacks->get_pos_offset);
+    setup_streaming_communicator();
   }
 
   void check_lebc(unsigned int shear_direction,
@@ -672,10 +794,14 @@ public:
   std::optional<Utils::Vector3d>
   get_node_velocity(Utils::Vector3i const &node,
                     bool consider_ghosts = false) const override {
-    auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
-    if (is_boundary)    // is info available locally
-      if (*is_boundary) // is the node a boundary
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::VEL)));
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::UBB)));
+    if (m_has_boundaries) {
+      auto const is_boundary = get_node_is_boundary(node, consider_ghosts);
+      if (is_boundary and *is_boundary) {
         return get_node_velocity_at_boundary(node, consider_ghosts);
+      }
+    }
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return std::nullopt;
@@ -688,6 +814,8 @@ public:
 
   bool set_node_velocity(Utils::Vector3i const &node,
                          Utils::Vector3d const &v) override {
+    m_pending_ghost_comm.set(GhostComm::PDF);
+    m_pending_ghost_comm.set(GhostComm::VEL);
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
@@ -750,6 +878,8 @@ public:
   void set_slice_velocity(Utils::Vector3i const &lower_corner,
                           Utils::Vector3i const &upper_corner,
                           std::vector<double> const &velocity) override {
+    m_pending_ghost_comm.set(GhostComm::PDF);
+    m_pending_ghost_comm.set(GhostComm::VEL);
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
@@ -859,6 +989,8 @@ public:
   std::optional<Utils::Vector3d>
   get_velocity_at_pos(Utils::Vector3d const &pos,
                       bool consider_points_in_halo = false) const override {
+    assert(not m_pending_ghost_comm.test(GhostComm::VEL));
+    assert(not m_pending_ghost_comm.test(GhostComm::UBB));
     if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
       return std::nullopt;
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
@@ -882,6 +1014,7 @@ public:
   std::optional<double>
   get_density_at_pos(Utils::Vector3d const &pos,
                      bool consider_points_in_halo = false) const override {
+    assert(not m_pending_ghost_comm.test(GhostComm::PDF));
     if (!consider_points_in_halo and !m_lattice->pos_in_local_domain(pos))
       return std::nullopt;
     if (consider_points_in_halo and !m_lattice->pos_in_local_halo(pos))
@@ -938,6 +1071,7 @@ public:
   std::optional<Utils::Vector3d>
   get_node_last_applied_force(Utils::Vector3i const &node,
                               bool consider_ghosts = false) const override {
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::LAF)));
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return std::nullopt;
@@ -950,6 +1084,8 @@ public:
 
   bool set_node_last_applied_force(Utils::Vector3i const &node,
                                    Utils::Vector3d const &force) override {
+    m_pending_ghost_comm.set(GhostComm::VEL);
+    m_pending_ghost_comm.set(GhostComm::LAF);
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
@@ -990,6 +1126,8 @@ public:
   void set_slice_last_applied_force(Utils::Vector3i const &lower_corner,
                                     Utils::Vector3i const &upper_corner,
                                     std::vector<double> const &force) override {
+    m_pending_ghost_comm.set(GhostComm::VEL);
+    m_pending_ghost_comm.set(GhostComm::LAF);
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
@@ -1008,6 +1146,7 @@ public:
   std::optional<std::vector<double>>
   get_node_population(Utils::Vector3i const &node,
                       bool consider_ghosts = false) const override {
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::PDF)));
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return std::nullopt;
@@ -1024,6 +1163,8 @@ public:
 
   bool set_node_population(Utils::Vector3i const &node,
                            std::vector<double> const &population) override {
+    m_pending_ghost_comm.set(GhostComm::PDF);
+    m_pending_ghost_comm.set(GhostComm::VEL);
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
@@ -1086,6 +1227,7 @@ public:
   std::optional<double>
   get_node_density(Utils::Vector3i const &node,
                    bool consider_ghosts = false) const override {
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::PDF)));
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return std::nullopt;
@@ -1097,6 +1239,7 @@ public:
   }
 
   bool set_node_density(Utils::Vector3i const &node, double density) override {
+    m_pending_ghost_comm.set(GhostComm::PDF);
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
@@ -1131,6 +1274,7 @@ public:
   void set_slice_density(Utils::Vector3i const &lower_corner,
                          Utils::Vector3i const &upper_corner,
                          std::vector<double> const &density) override {
+    m_pending_ghost_comm.set(GhostComm::PDF);
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
@@ -1145,6 +1289,7 @@ public:
   std::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(Utils::Vector3i const &node,
                                 bool consider_ghosts = false) const override {
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::UBB)));
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary->node_is_boundary(node))
       return std::nullopt;
@@ -1154,6 +1299,8 @@ public:
 
   bool set_node_velocity_at_boundary(Utils::Vector3i const &node,
                                      Utils::Vector3d const &velocity) override {
+    on_boundary_add();
+    m_pending_ghost_comm.set(GhostComm::UBB);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (bc) {
       m_boundary->set_node_value_at_boundary(
@@ -1194,6 +1341,8 @@ public:
   void set_slice_velocity_at_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<std::optional<Utils::Vector3d>> const &velocity) override {
+    on_boundary_add();
+    m_pending_ghost_comm.set(GhostComm::UBB);
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -1240,6 +1389,7 @@ public:
   std::optional<bool>
   get_node_is_boundary(Utils::Vector3i const &node,
                        bool consider_ghosts = false) const override {
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::UBB)));
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return std::nullopt;
@@ -1273,14 +1423,27 @@ public:
 
   void reallocate_ubb_field() override { m_boundary->boundary_update(); }
 
+  void on_boundary_add() {
+    if (not m_has_boundaries) {
+      m_has_boundaries = true;
+      setup_streaming_communicator();
+    }
+    m_has_boundaries = true;
+  }
+
   void clear_boundaries() override {
     reset_boundary_handling();
+    m_pending_ghost_comm.set(GhostComm::UBB);
     ghost_communication();
+    m_has_boundaries = false;
+    setup_streaming_communicator();
   }
 
   void
   update_boundary_from_shape(std::vector<int> const &raster_flat,
                              std::vector<double> const &data_flat) override {
+    on_boundary_add();
+    m_pending_ghost_comm.set(GhostComm::UBB);
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);

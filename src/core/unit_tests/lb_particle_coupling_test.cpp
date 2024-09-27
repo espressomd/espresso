@@ -609,6 +609,9 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
     BOOST_CHECK_THROW(lb.lebc_sanity_checks(0u, 1u), NoLBActive);
     BOOST_CHECK_THROW(lb.propagate(), NoLBActive);
     BOOST_CHECK_THROW(lb.update_collision_model(), NoLBActive);
+    BOOST_CHECK_THROW(lb.ghost_communication(), NoLBActive);
+    BOOST_CHECK_THROW(lb.ghost_communication_pdf(), NoLBActive);
+    BOOST_CHECK_THROW(lb.ghost_communication_vel(), NoLBActive);
     BOOST_CHECK_THROW(lb.on_cell_structure_change(), NoLBActive);
     BOOST_CHECK_THROW(lb.on_boxl_change(), NoLBActive);
     BOOST_CHECK_THROW(lb.on_node_grid_change(), NoLBActive);

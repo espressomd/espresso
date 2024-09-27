@@ -20,6 +20,8 @@
 target_sources(
   espresso_walberla
   PRIVATE StreamSweepSinglePrecision.cpp StreamSweepDoublePrecision.cpp
+          PackInfoPdfSinglePrecision.cpp PackInfoPdfDoublePrecision.cpp
+          PackInfoVecSinglePrecision.cpp PackInfoVecDoublePrecision.cpp
           InitialPDFsSetterSinglePrecision.cpp
           InitialPDFsSetterDoublePrecision.cpp Dynamic_UBB_single_precision.cpp
           Dynamic_UBB_double_precision.cpp)
@@ -29,7 +31,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     PRIVATE CollideSweepSinglePrecisionLeesEdwardsAVX.cpp
             CollideSweepDoublePrecisionLeesEdwardsAVX.cpp
             CollideSweepSinglePrecisionThermalizedAVX.cpp
-            CollideSweepDoublePrecisionThermalizedAVX.cpp)
+            CollideSweepDoublePrecisionThermalizedAVX.cpp
+            StreamSweepSinglePrecisionAVX.cpp StreamSweepDoublePrecisionAVX.cpp)
 else()
   target_sources(
     espresso_walberla

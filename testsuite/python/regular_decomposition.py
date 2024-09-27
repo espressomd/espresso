@@ -91,7 +91,7 @@ class RegularDecomposition(ut.TestCase):
         self.check_resort()
 
     @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 4,
-               "Skipping test: only runs for n_nodes >= 4")
+               "Skipping test: only runs for n_nodes == 4")
     def test_resort_alternating(self):
         # check particle resorting when the left and right cells are different
         self.system.cell_system.node_grid = [4, 1, 1]

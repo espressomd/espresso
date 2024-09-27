@@ -84,7 +84,7 @@ def get_timings(system, n_steps, n_iterations, verbose=True):
             energy = system.analysis.energy()["total"]
             verlet = system.cell_system.get_state()["verlet_reuse"]
             print(
-                f"step {i}, time: {1000 * t:.1f} ms, verlet: {verlet:.2f}, energy: {energy:.2e}")
+                f"step {i}, time: {1000 * t:.2f} ms, verlet: {verlet:.2f}, energy: {energy:.2e}")
     return np.array(timings)
 
 

@@ -45,10 +45,12 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
   local_folded_positions.reserve(local_particles.size());
   local_flux_densities.reserve(local_particles.size());
 
-  auto const &system = System::get_system();
+  auto &system = System::get_system();
   auto const &box_geo = *system.box_geo;
-  auto const &lb = system.lb;
+  auto &lb = system.lb;
   auto const vel_conv = lb.get_lattice_speed();
+  lb.ghost_communication_pdf();
+  lb.ghost_communication_vel();
 
   for (auto const &p : local_particles) {
     auto const pos = box_geo.folded_position(traits.position(p));
