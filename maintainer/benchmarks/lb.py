@@ -149,7 +149,7 @@ timings = benchmarks.get_timings(system, measurement_steps, n_iterations)
 
 # average time
 avg, ci = benchmarks.get_average_time(timings)
-print(f"average: {1000 * avg:.1f} +/- {1000 * ci:.1f} ms (95% C.I.)")
+print(f"average: {1000 * avg:.2f} +/- {1000 * ci:.2f} ms (95% C.I.)")
 
 # write report
 benchmarks.write_report(args.output, n_proc, timings, measurement_steps)

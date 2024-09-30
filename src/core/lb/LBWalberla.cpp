@@ -52,6 +52,16 @@ Utils::VectorXd<9> LBWalberla::get_pressure_tensor() const {
 
 void LBWalberla::propagate() { lb_fluid->integrate(); }
 
+void LBWalberla::ghost_communication() { lb_fluid->ghost_communication(); }
+
+void LBWalberla::ghost_communication_pdf() {
+  lb_fluid->ghost_communication_vel();
+}
+
+void LBWalberla::ghost_communication_vel() {
+  lb_fluid->ghost_communication_vel();
+}
+
 void LBWalberla::lebc_sanity_checks(unsigned int shear_direction,
                                     unsigned int shear_plane_normal) const {
   lb_fluid->check_lebc(shear_direction, shear_plane_normal);

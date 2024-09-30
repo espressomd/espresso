@@ -360,6 +360,7 @@ void System::System::lb_couple_particles() {
     auto const ghost_particles = cell_structure->ghost_particles();
     LB::ParticleCoupling coupling{*thermostat->lb, lb, *box_geo, *local_geo};
     LB::CouplingBookkeeping bookkeeping{*cell_structure};
+    lb.ghost_communication_vel();
     std::vector<Particle *> particles{};
     for (auto const *particle_range : {&real_particles, &ghost_particles}) {
       for (auto &p : *particle_range) {

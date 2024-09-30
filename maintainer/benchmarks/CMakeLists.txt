@@ -150,4 +150,5 @@ add_custom_target(
   COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
           ${ESPRESSO_CTEST_ARGS} --output-on-failure)
 
-add_dependencies(benchmark benchmark_python benchmarks_data)
+add_dependencies(benchmark_python pypresso benchmarks_data)
+add_dependencies(benchmark benchmark_python)

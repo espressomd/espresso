@@ -42,11 +42,22 @@ class LBWalberlaBase : public LatticeModel {
 public:
   ~LBWalberlaBase() override = default;
 
-  /** @brief Integrate LB for one time step. */
+  /**
+   * @brief Integrate LB for one time step.
+   * The ghost layer may be out-of-date after integration.
+   * Call @ref ghost_communication() to refresh them before
+   * calling any getter function that reads from the halo region.
+   */
   virtual void integrate() = 0;
 
-  /** @brief Perform ghost communication of PDF and applied forces. */
+  /** @brief Perform a full ghost communication. */
   virtual void ghost_communication() = 0;
+
+  /** @brief Perform a ghost communication of the PDF field. */
+  virtual void ghost_communication_pdf() = 0;
+
+  /** @brief Perform a ghost communication of the velocity field. */
+  virtual void ghost_communication_vel() = 0;
 
   /** @brief Number of discretized velocities in the PDF. */
   virtual std::size_t stencil_size() const noexcept = 0;

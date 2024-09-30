@@ -73,6 +73,21 @@ void Solver::propagate() {
   std::visit([](auto &ptr) { ptr->propagate(); }, *impl->solver);
 }
 
+void Solver::ghost_communication() {
+  check_solver(impl);
+  std::visit([](auto &ptr) { ptr->ghost_communication(); }, *impl->solver);
+}
+
+void Solver::ghost_communication_pdf() {
+  check_solver(impl);
+  std::visit([](auto &ptr) { ptr->ghost_communication_pdf(); }, *impl->solver);
+}
+
+void Solver::ghost_communication_vel() {
+  check_solver(impl);
+  std::visit([](auto &ptr) { ptr->ghost_communication_vel(); }, *impl->solver);
+}
+
 void Solver::sanity_checks() const {
   if (impl->solver) {
     auto const &system = get_system();
