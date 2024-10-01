@@ -87,5 +87,3 @@ class BondBreakage(ScriptInterfaceHelper):
             Result of the bond breakage execution.
         """
         return self.call_method("execute", parameters=parameters)
-
-
