@@ -1,13 +1,13 @@
-#include  "config/config.hpp"
+#include "config/config.hpp"
 
 #ifdef METATENSOR
 #undef CUDA
-#include <torch/version.h>
-#include <torch/script.h>
 #include <torch/cuda.h>
+#include <torch/script.h>
+#include <torch/version.h>
 
 #if TORCH_VERSION_MAJOR >= 2
-    #include <torch/mps.h>
+#include <torch/mps.h>
 #endif
 
 #include <metatensor/torch.hpp>
