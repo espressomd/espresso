@@ -17,10 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pystencils as ps
-
-import lbmpy.boundaries
-import lbmpy.custom_code_nodes
 
 import lbmpy_walberla.additional_data_handler
 
@@ -53,34 +49,3 @@ class BounceBackSlipVelocityUBB(
             "element.vel_2 = InitialisationAdditionalData[2];",
         ]
         return "\n".join(code)
-
-
-class UBB(lbmpy.boundaries.UBB):
-    '''
-    Velocity bounce back boundary condition, enforcing specified velocity at
-    obstacle. This is a patched version of ``lbmpy.boundaries.UBB``, which
-    currently doesn't support the bounce back scheme we need.
-    '''
-
-    def __call__(self, f_out, f_in, dir_symbol,
-                 inv_dir, lb_method, index_field):
-        '''
-        Modify the assignments such that the source and target pdfs are swapped.
-        '''
-        assignments = super().__call__(
-            f_out, f_in, dir_symbol, inv_dir, lb_method, index_field)
-
-        assert len(assignments) > 0
-
-        out = []
-        if len(assignments) > 1:
-            out.extend(assignments[:-1])
-
-        neighbor_offset = lbmpy.custom_code_nodes.NeighbourOffsetArrays.neighbour_offset(
-            dir_symbol, lb_method.stencil)
-
-        assignment = assignments[-1]
-        assert assignment.lhs.field == f_in
-        out.append(ps.Assignment(assignment.lhs.get_shifted(*neighbor_offset),
-                                 assignment.rhs - f_out(dir_symbol) + f_in(dir_symbol)))
-        return out
