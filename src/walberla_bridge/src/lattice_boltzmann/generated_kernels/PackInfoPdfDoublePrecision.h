@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #pragma once
 #include "communication/UniformPackInfo.h"
@@ -45,7 +45,7 @@ namespace pystencils {
 class PackInfoPdfDoublePrecision
     : public ::walberla::communication::UniformPackInfo {
 public:
-  PackInfoPdfDoublePrecision(BlockDataID pdfsID_) : pdfsID(pdfsID_){};
+  PackInfoPdfDoublePrecision(BlockDataID pdfsID_) : pdfsID(pdfsID_) {};
   virtual ~PackInfoPdfDoublePrecision() {}
 
   bool constantDataExchange() const { return true; }
@@ -54,7 +54,7 @@ public:
   void unpackData(IBlock *receiver, stencil::Direction dir,
                   mpi::RecvBuffer &buffer) {
     const auto dataSize = size(dir, receiver);
-    unpack(dir, buffer.skip(dataSize + sizeof(double)), receiver);
+    unpack(dir, buffer.skip(dataSize), receiver);
   }
 
   void communicateLocal(const IBlock *sender, IBlock *receiver,
@@ -68,8 +68,7 @@ public:
   void packDataImpl(const IBlock *sender, stencil::Direction dir,
                     mpi::SendBuffer &outBuffer) const {
     const auto dataSize = size(dir, sender);
-    pack(dir, outBuffer.forward(dataSize + sizeof(double)),
-         const_cast<IBlock *>(sender));
+    pack(dir, outBuffer.forward(dataSize), const_cast<IBlock *>(sender));
   }
 
   void pack(stencil::Direction dir, unsigned char *buffer, IBlock *block) const;

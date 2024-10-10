@@ -17,16 +17,17 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
+// lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #include "PackInfoVecDoublePrecision.h"
 #include "core/DataTypes.h"
 #include "core/cell/CellInterval.h"
 #include "stencil/Directions.h"
 
-#include <cstddef>
-
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) || (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
+    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic ignored "-Wshadow"
@@ -41,13 +42,27 @@ using walberla::cell::CellInterval;
 using walberla::stencil::Direction;
 
 namespace internal_05a1eb9a7382e5e7047cdb22e28b6556 {
-static FUNC_PREFIX void pack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(double *RESTRICT _data_buffer, double *RESTRICT const _data_field, int64_t const _size_field_0, int64_t const _size_field_1, int64_t const _size_field_2, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int64_t const _stride_field_3) {
+static FUNC_PREFIX void pack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(
+    double *RESTRICT _data_buffer, double *RESTRICT const _data_field,
+    int64_t const _size_field_0, int64_t const _size_field_1,
+    int64_t const _size_field_2, int64_t const _stride_field_0,
+    int64_t const _stride_field_1, int64_t const _stride_field_2,
+    int64_t const _stride_field_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_field_2; ctr_2 += 1) {
     for (int64_t ctr_1 = 0; ctr_1 < _size_field_1; ctr_1 += 1) {
       for (int64_t ctr_0 = 0; ctr_0 < _size_field_0; ctr_0 += 1) {
-        _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 + 3 * _size_field_0 * ctr_1 + 3 * ctr_0] = _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 + _stride_field_2 * ctr_2];
-        _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 + 3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 1] = _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 + _stride_field_2 * ctr_2 + _stride_field_3];
-        _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 + 3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 2] = _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 + _stride_field_2 * ctr_2 + 2 * _stride_field_3];
+        _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 +
+                     3 * _size_field_0 * ctr_1 + 3 * ctr_0] =
+            _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 +
+                        _stride_field_2 * ctr_2];
+        _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 +
+                     3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 1] =
+            _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 +
+                        _stride_field_2 * ctr_2 + _stride_field_3];
+        _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 +
+                     3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 2] =
+            _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 +
+                        _stride_field_2 * ctr_2 + 2 * _stride_field_3];
       }
     }
   }
@@ -55,21 +70,36 @@ static FUNC_PREFIX void pack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(d
 } // namespace internal_05a1eb9a7382e5e7047cdb22e28b6556
 
 namespace internal_1ccccad4ca561e07a0934cadb07d0fc1 {
-static FUNC_PREFIX void unpack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(double *RESTRICT const _data_buffer, double *RESTRICT _data_field, int64_t const _size_field_0, int64_t const _size_field_1, int64_t const _size_field_2, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int64_t const _stride_field_3) {
+static FUNC_PREFIX void
+unpack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(
+    double *RESTRICT const _data_buffer, double *RESTRICT _data_field,
+    int64_t const _size_field_0, int64_t const _size_field_1,
+    int64_t const _size_field_2, int64_t const _stride_field_0,
+    int64_t const _stride_field_1, int64_t const _stride_field_2,
+    int64_t const _stride_field_3) {
   for (int64_t ctr_2 = 0; ctr_2 < _size_field_2; ctr_2 += 1) {
     for (int64_t ctr_1 = 0; ctr_1 < _size_field_1; ctr_1 += 1) {
       for (int64_t ctr_0 = 0; ctr_0 < _size_field_0; ctr_0 += 1) {
-        _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 + _stride_field_2 * ctr_2] = _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 + 3 * _size_field_0 * ctr_1 + 3 * ctr_0];
-        _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 + _stride_field_2 * ctr_2 + _stride_field_3] = _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 + 3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 1];
-        _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 + _stride_field_2 * ctr_2 + 2 * _stride_field_3] = _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 + 3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 2];
+        _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 +
+                    _stride_field_2 * ctr_2] =
+            _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 +
+                         3 * _size_field_0 * ctr_1 + 3 * ctr_0];
+        _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 +
+                    _stride_field_2 * ctr_2 + _stride_field_3] =
+            _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 +
+                         3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 1];
+        _data_field[_stride_field_0 * ctr_0 + _stride_field_1 * ctr_1 +
+                    _stride_field_2 * ctr_2 + 2 * _stride_field_3] =
+            _data_buffer[3 * _size_field_0 * _size_field_1 * ctr_2 +
+                         3 * _size_field_0 * ctr_1 + 3 * ctr_0 + 2];
       }
     }
   }
 }
 } // namespace internal_1ccccad4ca561e07a0934cadb07d0fc1
 
-void PackInfoVecDoublePrecision::pack(Direction dir, unsigned char *byte_buffer, IBlock *block) const {
-  byte_buffer += sizeof(double) - (reinterpret_cast<std::size_t>(byte_buffer) - (reinterpret_cast<std::size_t>(byte_buffer) / sizeof(double)) * sizeof(double));
+void PackInfoVecDoublePrecision::pack(Direction dir, unsigned char *byte_buffer,
+                                      IBlock *block) const {
   double *buffer = reinterpret_cast<double *>(byte_buffer);
 
   auto field = block->getData<field::GhostLayerField<double, 3>>(fieldID);
@@ -101,18 +131,26 @@ void PackInfoVecDoublePrecision::pack(Direction dir, unsigned char *byte_buffer,
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(field->nrOfGhostLayers()))
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(field->nrOfGhostLayers()))
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(field->nrOfGhostLayers()))
-    double *RESTRICT const _data_field = field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_GREATER_EQUAL(field->xSizeWithGhostLayer(), int64_t(int64_c(ci.xSize()) + 0))
+    double *RESTRICT const _data_field =
+        field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
+    WALBERLA_ASSERT_GREATER_EQUAL(field->xSizeWithGhostLayer(),
+                                  int64_t(int64_c(ci.xSize()) + 0))
     const int64_t _size_field_0 = int64_t(int64_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_GREATER_EQUAL(field->ySizeWithGhostLayer(), int64_t(int64_c(ci.ySize()) + 0))
+    WALBERLA_ASSERT_GREATER_EQUAL(field->ySizeWithGhostLayer(),
+                                  int64_t(int64_c(ci.ySize()) + 0))
     const int64_t _size_field_1 = int64_t(int64_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_GREATER_EQUAL(field->zSizeWithGhostLayer(), int64_t(int64_c(ci.zSize()) + 0))
+    WALBERLA_ASSERT_GREATER_EQUAL(field->zSizeWithGhostLayer(),
+                                  int64_t(int64_c(ci.zSize()) + 0))
     const int64_t _size_field_2 = int64_t(int64_c(ci.zSize()) + 0);
     const int64_t _stride_field_0 = int64_t(field->xStride());
     const int64_t _stride_field_1 = int64_t(field->yStride());
     const int64_t _stride_field_2 = int64_t(field->zStride());
     const int64_t _stride_field_3 = int64_t(1 * int64_t(field->fStride()));
-    internal_05a1eb9a7382e5e7047cdb22e28b6556::pack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(_data_buffer, _data_field, _size_field_0, _size_field_1, _size_field_2, _stride_field_0, _stride_field_1, _stride_field_2, _stride_field_3);
+    internal_05a1eb9a7382e5e7047cdb22e28b6556::
+        pack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(
+            _data_buffer, _data_field, _size_field_0, _size_field_1,
+            _size_field_2, _stride_field_0, _stride_field_1, _stride_field_2,
+            _stride_field_3);
     break;
   }
 
@@ -121,8 +159,9 @@ void PackInfoVecDoublePrecision::pack(Direction dir, unsigned char *byte_buffer,
   }
 }
 
-void PackInfoVecDoublePrecision::unpack(Direction dir, unsigned char *byte_buffer, IBlock *block) const {
-  byte_buffer += sizeof(double) - (reinterpret_cast<std::size_t>(byte_buffer) - (reinterpret_cast<std::size_t>(byte_buffer) / sizeof(double)) * sizeof(double));
+void PackInfoVecDoublePrecision::unpack(Direction dir,
+                                        unsigned char *byte_buffer,
+                                        IBlock *block) const {
   double *buffer = reinterpret_cast<double *>(byte_buffer);
 
   auto field = block->getData<field::GhostLayerField<double, 3>>(fieldID);
@@ -155,18 +194,26 @@ void PackInfoVecDoublePrecision::unpack(Direction dir, unsigned char *byte_buffe
     WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(field->nrOfGhostLayers()))
     WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(field->nrOfGhostLayers()))
     WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(field->nrOfGhostLayers()))
-    double *RESTRICT _data_field = field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
-    WALBERLA_ASSERT_GREATER_EQUAL(field->xSizeWithGhostLayer(), int64_t(int64_c(ci.xSize()) + 0))
+    double *RESTRICT _data_field =
+        field->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
+    WALBERLA_ASSERT_GREATER_EQUAL(field->xSizeWithGhostLayer(),
+                                  int64_t(int64_c(ci.xSize()) + 0))
     const int64_t _size_field_0 = int64_t(int64_c(ci.xSize()) + 0);
-    WALBERLA_ASSERT_GREATER_EQUAL(field->ySizeWithGhostLayer(), int64_t(int64_c(ci.ySize()) + 0))
+    WALBERLA_ASSERT_GREATER_EQUAL(field->ySizeWithGhostLayer(),
+                                  int64_t(int64_c(ci.ySize()) + 0))
     const int64_t _size_field_1 = int64_t(int64_c(ci.ySize()) + 0);
-    WALBERLA_ASSERT_GREATER_EQUAL(field->zSizeWithGhostLayer(), int64_t(int64_c(ci.zSize()) + 0))
+    WALBERLA_ASSERT_GREATER_EQUAL(field->zSizeWithGhostLayer(),
+                                  int64_t(int64_c(ci.zSize()) + 0))
     const int64_t _size_field_2 = int64_t(int64_c(ci.zSize()) + 0);
     const int64_t _stride_field_0 = int64_t(field->xStride());
     const int64_t _stride_field_1 = int64_t(field->yStride());
     const int64_t _stride_field_2 = int64_t(field->zStride());
     const int64_t _stride_field_3 = int64_t(1 * int64_t(field->fStride()));
-    internal_1ccccad4ca561e07a0934cadb07d0fc1::unpack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(_data_buffer, _data_field, _size_field_0, _size_field_1, _size_field_2, _stride_field_0, _stride_field_1, _stride_field_2, _stride_field_3);
+    internal_1ccccad4ca561e07a0934cadb07d0fc1::
+        unpack_SW_BW_W_TW_NW_BS_S_TS_B_C_T_BN_N_TN_SE_BE_E_TE_NE(
+            _data_buffer, _data_field, _size_field_0, _size_field_1,
+            _size_field_2, _stride_field_0, _stride_field_1, _stride_field_2,
+            _stride_field_3);
     break;
   }
 
@@ -175,7 +222,8 @@ void PackInfoVecDoublePrecision::unpack(Direction dir, unsigned char *byte_buffe
   }
 }
 
-uint_t PackInfoVecDoublePrecision::size(stencil::Direction dir, const IBlock *block) const {
+uint_t PackInfoVecDoublePrecision::size(stencil::Direction dir,
+                                        const IBlock *block) const {
   auto field = block->getData<field::GhostLayerField<double, 3>>(fieldID);
 
   CellInterval ci;

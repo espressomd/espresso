@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #pragma once
 #include "core/DataTypes.h"
@@ -60,7 +60,7 @@ public:
       : forceID(forceID_), pdfsID(pdfsID_), kT_(kT), omega_bulk_(omega_bulk),
         omega_even_(omega_even), omega_odd_(omega_odd),
         omega_shear_(omega_shear), seed_(seed), time_step_(time_step),
-        configured_(false){};
+        configured_(false) {};
 
   void run(IBlock *block);
 

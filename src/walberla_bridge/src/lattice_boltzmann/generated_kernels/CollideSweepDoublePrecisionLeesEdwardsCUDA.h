@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #pragma once
 #include "core/DataTypes.h"
@@ -59,7 +59,7 @@ public:
                                              double grid_size,
                                              double omega_shear, double v_s)
       : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size),
-        omega_shear_(omega_shear), v_s_(v_s){};
+        omega_shear_(omega_shear), v_s_(v_s) {};
 
   void run(IBlock *block, gpuStream_t stream = nullptr);
 

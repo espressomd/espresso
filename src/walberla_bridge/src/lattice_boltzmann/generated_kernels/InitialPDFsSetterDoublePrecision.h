@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #pragma once
 #include "core/DataTypes.h"
@@ -55,7 +55,7 @@ public:
   InitialPDFsSetterDoublePrecision(BlockDataID forceID_, BlockDataID pdfsID_,
                                    BlockDataID velocityID_, double rho_0)
       : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_),
-        rho_0_(rho_0){};
+        rho_0_(rho_0) {};
 
   void run(IBlock *block);
 

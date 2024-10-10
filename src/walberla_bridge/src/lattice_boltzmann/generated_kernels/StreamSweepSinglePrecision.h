@@ -19,7 +19,7 @@
 
 // kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #pragma once
 #include "core/DataTypes.h"
@@ -54,7 +54,7 @@ class StreamSweepSinglePrecision {
 public:
   StreamSweepSinglePrecision(BlockDataID forceID_, BlockDataID pdfsID_,
                              BlockDataID velocityID_)
-      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_){};
+      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_) {};
 
   ~StreamSweepSinglePrecision() {
     for (auto p : cache_pdfs_) {
