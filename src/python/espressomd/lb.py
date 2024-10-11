@@ -75,7 +75,7 @@ class HydrodynamicInteraction(ScriptInterfaceHelper):
 
         The relative error in the fluid density between a compressible fluid
         and an incompressible fluid at Mach 0.30 is less than 5% (see
-        *constant density assumption* in :cite:`kundu01a` chapter 16, page
+        *constant density assumption* in :cite:`kundu02a` chapter 16, page
         663). Since the speed of sound is :math:`c_s = 1 / \\sqrt{3}` in LB
         velocity units in a D3Q19 lattice, the velocity limit at Mach 0.30
         is :math:`v_{\\mathrm{max}} = 0.30 / \\sqrt{3} \\approx 0.17`.
