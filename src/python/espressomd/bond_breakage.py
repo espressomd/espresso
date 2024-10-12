@@ -71,19 +71,3 @@ class BondBreakage(ScriptInterfaceHelper):
 
     _so_name = "BondBreakage::BondBreakage"
     _so_bind_methods = ("execute",)
-
-    def execute(self, parameters):
-        """
-        Execute the bond breakage process.
-
-        Parameters
-        ----------
-        parameters : dict
-            Dictionary containing parameters for the bond breakage process.
-
-        Returns
-        -------
-        result : any
-            Result of the bond breakage execution.
-        """
-        return self.call_method("execute", parameters=parameters)
