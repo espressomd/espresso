@@ -55,7 +55,7 @@ public:
   InitialPDFsSetterSinglePrecision(BlockDataID forceID_, BlockDataID pdfsID_,
                                    BlockDataID velocityID_, float rho_0)
       : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_),
-        rho_0_(rho_0) {};
+        rho_0_(rho_0){};
 
   void run(IBlock *block);
 

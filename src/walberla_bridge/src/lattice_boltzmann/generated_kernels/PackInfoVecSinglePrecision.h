@@ -45,7 +45,7 @@ namespace pystencils {
 class PackInfoVecSinglePrecision
     : public ::walberla::communication::UniformPackInfo {
 public:
-  PackInfoVecSinglePrecision(BlockDataID fieldID_) : fieldID(fieldID_) {};
+  PackInfoVecSinglePrecision(BlockDataID fieldID_) : fieldID(fieldID_){};
   virtual ~PackInfoVecSinglePrecision() {}
 
   bool constantDataExchange() const { return true; }
