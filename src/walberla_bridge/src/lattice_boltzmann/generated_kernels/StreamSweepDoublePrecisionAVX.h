@@ -54,7 +54,7 @@ class StreamSweepDoublePrecisionAVX {
 public:
   StreamSweepDoublePrecisionAVX(BlockDataID forceID_, BlockDataID pdfsID_,
                                 BlockDataID velocityID_)
-      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_) {};
+      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_){};
 
   ~StreamSweepDoublePrecisionAVX() {
     for (auto p : cache_pdfs_) {

@@ -45,7 +45,7 @@ namespace pystencils {
 class PackInfoPdfDoublePrecision
     : public ::walberla::communication::UniformPackInfo {
 public:
-  PackInfoPdfDoublePrecision(BlockDataID pdfsID_) : pdfsID(pdfsID_) {};
+  PackInfoPdfDoublePrecision(BlockDataID pdfsID_) : pdfsID(pdfsID_){};
   virtual ~PackInfoPdfDoublePrecision() {}
 
   bool constantDataExchange() const { return true; }
