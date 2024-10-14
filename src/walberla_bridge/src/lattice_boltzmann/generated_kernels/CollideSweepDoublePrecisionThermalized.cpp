@@ -17,9 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 04f4adbdfc0af983e2d9b72e244d775f37d77034
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #include <cmath>
 
@@ -31,8 +29,7 @@
 
 #define FUNC_PREFIX
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) || (defined WALBERLA_CXX_COMPILER_IS_CLANG)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic ignored "-Wshadow"
@@ -51,18 +48,7 @@ namespace walberla {
 namespace pystencils {
 
 namespace internal_0d943397135d13b4628c5752888935d7 {
-static FUNC_PREFIX void
-collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
-    double *RESTRICT const _data_force, double *RESTRICT _data_pdfs,
-    int64_t const _size_force_0, int64_t const _size_force_1,
-    int64_t const _size_force_2, int64_t const _stride_force_0,
-    int64_t const _stride_force_1, int64_t const _stride_force_2,
-    int64_t const _stride_force_3, int64_t const _stride_pdfs_0,
-    int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2,
-    int64_t const _stride_pdfs_3, uint32_t block_offset_0,
-    uint32_t block_offset_1, uint32_t block_offset_2, double kT,
-    double omega_bulk, double omega_even, double omega_odd, double omega_shear,
-    uint32_t seed, uint32_t time_step) {
+static FUNC_PREFIX void collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(double *RESTRICT const _data_force, double *RESTRICT _data_pdfs, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step) {
   const double xi_28 = omega_bulk * 0.5;
   const double xi_55 = omega_shear * 0.041666666666666664;
   const double xi_60 = omega_bulk * 0.041666666666666664;
@@ -78,197 +64,136 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
   for (int64_t ctr_2 = 0; ctr_2 < _size_force_2; ctr_2 += 1) {
     for (int64_t ctr_1 = 0; ctr_1 < _size_force_1; ctr_1 += 1) {
       for (int64_t ctr_0 = 0; ctr_0 < _size_force_0; ctr_0 += 1) {
-        const double xi_244 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3];
-        const double xi_245 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3];
-        const double xi_246 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3];
-        const double xi_247 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3];
-        const double xi_248 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3];
-        const double xi_249 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3];
-        const double xi_250 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3];
-        const double xi_251 =
-            _data_force[_stride_force_0 * ctr_0 + _stride_force_1 * ctr_1 +
-                        _stride_force_2 * ctr_2 + _stride_force_3];
-        const double xi_252 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3];
-        const double xi_253 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + _stride_pdfs_3];
-        const double xi_254 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3];
-        const double xi_255 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3];
-        const double xi_256 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3];
-        const double xi_257 =
-            _data_force[_stride_force_0 * ctr_0 + _stride_force_1 * ctr_1 +
-                        _stride_force_2 * ctr_2];
-        const double xi_258 =
-            _data_force[_stride_force_0 * ctr_0 + _stride_force_1 * ctr_1 +
-                        _stride_force_2 * ctr_2 + 2 * _stride_force_3];
-        const double xi_259 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3];
-        const double xi_260 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3];
-        const double xi_261 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3];
-        const double xi_262 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3];
-        const double xi_263 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3];
-        const double xi_264 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3];
-        const double xi_265 =
-            _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                       _stride_pdfs_2 * ctr_2];
+        const double xi_244 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3];
+        const double xi_245 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3];
+        const double xi_246 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3];
+        const double xi_247 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3];
+        const double xi_248 = _data_force[_stride_force_0 * ctr_0 + _stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + 2 * _stride_force_3];
+        const double xi_249 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3];
+        const double xi_250 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3];
+        const double xi_251 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3];
+        const double xi_252 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3];
+        const double xi_253 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3];
+        const double xi_254 = _data_force[_stride_force_0 * ctr_0 + _stride_force_1 * ctr_1 + _stride_force_2 * ctr_2];
+        const double xi_255 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3];
+        const double xi_256 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3];
+        const double xi_257 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2];
+        const double xi_258 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3];
+        const double xi_259 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3];
+        const double xi_260 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3];
+        const double xi_261 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3];
+        const double xi_262 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3];
+        const double xi_263 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3];
+        const double xi_264 = _data_force[_stride_force_0 * ctr_0 + _stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + _stride_force_3];
+        const double xi_265 = _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3];
 
         double random_7_0{};
         double random_7_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 7,
-                         seed, random_7_0, random_7_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 7, seed, random_7_0, random_7_1);
         }
 
         double random_6_0{};
         double random_6_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 6,
-                         seed, random_6_0, random_6_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 6, seed, random_6_0, random_6_1);
         }
 
         double random_5_0{};
         double random_5_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 5,
-                         seed, random_5_0, random_5_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 5, seed, random_5_0, random_5_1);
         }
 
         double random_4_0{};
         double random_4_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 4,
-                         seed, random_4_0, random_4_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 4, seed, random_4_0, random_4_1);
         }
 
         double random_3_0{};
         double random_3_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 3,
-                         seed, random_3_0, random_3_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 3, seed, random_3_0, random_3_1);
         }
 
         double random_2_0{};
         double random_2_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 2,
-                         seed, random_2_0, random_2_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 2, seed, random_2_0, random_2_1);
         }
 
         double random_1_0{};
         double random_1_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 1,
-                         seed, random_1_0, random_1_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 1, seed, random_1_0, random_1_1);
         }
 
         double random_0_0{};
         double random_0_1{};
         if (kT > 0.) {
-          philox_double2(time_step, block_offset_0 + ctr_0,
-                         block_offset_1 + ctr_1, block_offset_2 + ctr_2, 0,
-                         seed, random_0_0, random_0_1);
+          philox_double2(time_step, block_offset_0 + ctr_0, block_offset_1 + ctr_1, block_offset_2 + ctr_2, 0, seed, random_0_0, random_0_1);
         }
-        const double xi_2 = xi_245 + xi_256;
-        const double xi_3 = xi_2 + xi_254;
-        const double xi_4 = xi_246 + xi_248 + xi_253;
-        const double xi_5 = xi_247 + xi_263;
-        const double xi_6 = xi_249 + xi_262;
+        const double xi_2 = xi_261 + xi_262;
+        const double xi_3 = xi_2 + xi_255;
+        const double xi_4 = xi_244 + xi_249 + xi_253;
+        const double xi_5 = xi_245 + xi_260;
+        const double xi_6 = xi_246 + xi_247;
         const double xi_8 = -xi_259;
-        const double xi_9 = -xi_260;
-        const double xi_10 = -xi_262;
-        const double xi_11 = -xi_244;
-        const double xi_12 = -xi_252;
+        const double xi_9 = -xi_250;
+        const double xi_10 = -xi_247;
+        const double xi_11 = -xi_256;
+        const double xi_12 = -xi_263;
         const double xi_13 = xi_10 + xi_11 + xi_12;
-        const double xi_14 = -xi_261;
-        const double xi_15 = -xi_250;
+        const double xi_14 = -xi_265;
+        const double xi_15 = -xi_252;
         const double xi_16 = xi_14 + xi_15;
-        const double xi_17 = -xi_255;
-        const double xi_18 = -xi_263;
+        const double xi_17 = -xi_258;
+        const double xi_18 = -xi_245;
         const double xi_19 = xi_17 + xi_18;
-        const double xi_20 = -xi_245;
+        const double xi_20 = -xi_261;
         const double xi_21 = xi_10 + xi_20;
-        const double xi_22 = -xi_248;
-        const double xi_23 = -xi_249;
-        const double xi_24 = xi_17 + xi_22 + xi_23 + xi_246;
-        const double xi_29 = xi_251 * 0.16666666666666666;
-        const double xi_30 = xi_251 * 0.083333333333333329;
-        const double xi_42 = xi_257 * 0.16666666666666666;
-        const double xi_43 = xi_257 * 0.083333333333333329;
-        const double xi_49 = xi_258 * 0.16666666666666666;
-        const double xi_50 = xi_258 * 0.083333333333333329;
-        const double xi_67 = xi_251 * 0.25;
-        const double xi_72 = xi_251 * xi_71;
-        const double xi_114 = -xi_265;
-        const double xi_118 = -xi_246;
+        const double xi_22 = -xi_253;
+        const double xi_23 = -xi_246;
+        const double xi_24 = xi_17 + xi_22 + xi_23 + xi_244;
+        const double xi_29 = xi_264 * 0.16666666666666666;
+        const double xi_30 = xi_264 * 0.083333333333333329;
+        const double xi_42 = xi_254 * 0.16666666666666666;
+        const double xi_43 = xi_254 * 0.083333333333333329;
+        const double xi_49 = xi_248 * 0.16666666666666666;
+        const double xi_50 = xi_248 * 0.083333333333333329;
+        const double xi_67 = xi_264 * 0.25;
+        const double xi_72 = xi_264 * xi_71;
+        const double xi_114 = -xi_257;
+        const double xi_118 = -xi_244;
         const double xi_119 = xi_118 + xi_18;
-        const double xi_120 = -xi_264 + xi_8;
-        const double xi_122 = -xi_256;
+        const double xi_120 = -xi_251 + xi_8;
+        const double xi_122 = -xi_262;
         const double xi_123 = xi_11 + xi_122 + xi_15 + xi_21;
-        const double xi_125 =
-            xi_246 * 2.0 + xi_248 * 2.0 + xi_255 * 2.0 + xi_263 * 2.0;
-        const double xi_126 = xi_125 + xi_252 * 5.0 + xi_254 * 5.0;
-        const double xi_128 = xi_244 * 2.0;
-        const double xi_129 = xi_256 * 2.0;
-        const double xi_130 = xi_245 * 2.0 + xi_262 * 2.0;
-        const double xi_132 = xi_118 + xi_263;
-        const double xi_133 = xi_132 + xi_14 + xi_22 + xi_253 + xi_255;
+        const double xi_125 = xi_244 * 2.0 + xi_245 * 2.0 + xi_253 * 2.0 + xi_258 * 2.0;
+        const double xi_126 = xi_125 + xi_255 * 5.0 + xi_263 * 5.0;
+        const double xi_128 = xi_256 * 2.0;
+        const double xi_129 = xi_262 * 2.0;
+        const double xi_130 = xi_247 * 2.0 + xi_261 * 2.0;
+        const double xi_132 = xi_118 + xi_245;
+        const double xi_133 = xi_132 + xi_14 + xi_22 + xi_249 + xi_258;
         const double xi_135 = xi_133 * xi_134;
         const double xi_136 = random_5_1 - 0.5;
-        const double xi_141 = xi_260 * 2.0;
-        const double xi_142 = xi_250 * 2.0;
-        const double xi_143 = xi_259 * 2.0 + xi_264 * -2.0;
+        const double xi_141 = xi_250 * 2.0;
+        const double xi_142 = xi_252 * 2.0;
+        const double xi_143 = xi_251 * -2.0 + xi_259 * 2.0;
         const double xi_144 = xi_14 - xi_141 + xi_142 + xi_143 + xi_19 + xi_4;
         const double xi_146 = xi_144 * xi_145;
         const double xi_147 = random_3_0 - 0.5;
         const double xi_152 = random_0_1 - 0.5;
-        const double xi_166 = xi_122 + xi_244;
-        const double xi_167 = xi_12 + xi_166 + xi_20 + xi_254 + xi_262;
+        const double xi_166 = xi_122 + xi_256;
+        const double xi_167 = xi_12 + xi_166 + xi_20 + xi_247 + xi_255;
         const double xi_168 = xi_134 * xi_167;
         const double xi_169 = random_4_1 - 0.5;
         const double xi_171 = xi_13 + xi_141 - xi_142 + xi_143 + xi_3;
         const double xi_172 = xi_145 * xi_171;
         const double xi_173 = random_4_0 - 0.5;
-        const double xi_178 = xi_119 + xi_23 + xi_247 + xi_248 + xi_255;
+        const double xi_178 = xi_119 + xi_23 + xi_253 + xi_258 + xi_260;
         const double xi_179 = xi_134 * xi_178;
         const double xi_180 = random_5_0 - 0.5;
         const double xi_182 = -xi_128 - xi_129 + xi_130 + xi_24 + xi_5;
@@ -283,26 +208,20 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_31 = rr_0 * xi_30;
         const double xi_44 = rr_0 * xi_43;
         const double xi_51 = rr_0 * xi_50;
-        const double xi_54 = xi_257 * xi_53;
-        const double xi_59 = xi_251 * xi_53;
-        const double xi_81 = xi_258 * xi_53;
-        const double vel0Term = xi_250 + xi_264 + xi_3;
-        const double vel1Term = xi_260 + xi_4;
-        const double vel2Term = xi_244 + xi_5;
-        const double rho = vel0Term + vel1Term + vel2Term + xi_252 + xi_255 +
-                           xi_259 + xi_261 + xi_265 + xi_6;
+        const double xi_54 = xi_254 * xi_53;
+        const double xi_59 = xi_264 * xi_53;
+        const double xi_81 = xi_248 * xi_53;
+        const double vel0Term = xi_251 + xi_252 + xi_3;
+        const double vel1Term = xi_250 + xi_4;
+        const double vel2Term = xi_256 + xi_5;
+        const double rho = vel0Term + vel1Term + vel2Term + xi_257 + xi_258 + xi_259 + xi_263 + xi_265 + xi_6;
         const double xi_105 = kT * rho;
-        const double xi_106 = pow(
-            xi_105 * (1.0 - (-omega_even + 1.0) * (-omega_even + 1.0)), 0.5);
+        const double xi_106 = pow(xi_105 * (1.0 - (-omega_even + 1.0) * (-omega_even + 1.0)), 0.5);
         const double xi_107 = xi_106 * (random_6_0 - 0.5) * 3.7416573867739413;
         const double xi_108 = xi_106 * (random_7_0 - 0.5) * 5.4772255750516612;
-        const double xi_110 =
-            xi_109 * (random_2_1 - 0.5) *
-            pow(xi_105 * (1.0 - (-omega_bulk + 1.0) * (-omega_bulk + 1.0)),
-                0.5);
+        const double xi_110 = xi_109 * (random_2_1 - 0.5) * pow(xi_105 * (1.0 - (-omega_bulk + 1.0) * (-omega_bulk + 1.0)), 0.5);
         const double xi_111 = xi_106 * (random_6_1 - 0.5) * 8.3666002653407556;
-        const double xi_137 =
-            pow(xi_105 * (1.0 - (-omega_odd + 1.0) * (-omega_odd + 1.0)), 0.5);
+        const double xi_137 = pow(xi_105 * (1.0 - (-omega_odd + 1.0) * (-omega_odd + 1.0)), 0.5);
         const double xi_138 = xi_137 * 1.4142135623730951;
         const double xi_139 = xi_138 * 0.5;
         const double xi_140 = xi_136 * xi_139;
@@ -310,8 +229,7 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_149 = xi_148 * 0.16666666666666666;
         const double xi_150 = xi_147 * xi_149;
         const double xi_151 = -xi_146 - xi_150;
-        const double xi_153 = pow(
-            xi_105 * (1.0 - (-omega_shear + 1.0) * (-omega_shear + 1.0)), 0.5);
+        const double xi_153 = pow(xi_105 * (1.0 - (-omega_shear + 1.0) * (-omega_shear + 1.0)), 0.5);
         const double xi_154 = xi_153 * 0.5;
         const double xi_155 = xi_152 * xi_154;
         const double xi_161 = xi_153 * (random_0_0 - 0.5) * 1.7320508075688772;
@@ -349,9 +267,8 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_242 = xi_212 - xi_214 + xi_216 - xi_218;
         const double xi_0 = ((1.0) / (rho));
         const double xi_7 = xi_0 * 0.5;
-        const double u_0 =
-            xi_0 * (vel0Term + xi_13 + xi_8 + xi_9) + xi_257 * xi_7;
-        const double xi_25 = u_0 * xi_257;
+        const double u_0 = xi_0 * (vel0Term + xi_13 + xi_8 + xi_9) + xi_254 * xi_7;
+        const double xi_25 = u_0 * xi_254;
         const double xi_37 = xi_25 * 0.16666666666666666;
         const double xi_38 = xi_25 * 0.083333333333333329;
         const double xi_39 = omega_shear * xi_38;
@@ -363,47 +280,41 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_73 = u_0 * xi_72;
         const double xi_77 = xi_43 - xi_54 + xi_56;
         const double xi_84 = -xi_38;
-        const double xi_95 = u_0 * xi_258;
+        const double xi_95 = u_0 * xi_248;
         const double xi_96 = xi_95 * 0.25;
         const double xi_99 = xi_71 * xi_95;
         const double xi_113 = rho * (u_0 * u_0);
-        const double u_1 =
-            xi_0 * (vel1Term + xi_16 + xi_19 + xi_264 + xi_8) + xi_251 * xi_7;
-        const double xi_26 = u_1 * xi_251;
+        const double u_1 = xi_0 * (vel1Term + xi_16 + xi_19 + xi_251 + xi_8) + xi_264 * xi_7;
+        const double xi_26 = u_1 * xi_264;
         const double xi_32 = xi_26 * 0.16666666666666666;
         const double xi_45 = xi_26 * 0.083333333333333329;
         const double xi_46 = omega_shear * xi_45;
         const double xi_47 = -xi_32 + xi_46;
         const double xi_62 = -xi_26 * xi_60;
         const double xi_69 = u_1 * 0.25;
-        const double xi_70 = xi_257 * xi_69;
+        const double xi_70 = xi_254 * xi_69;
         const double xi_74 = u_1 * xi_71;
-        const double xi_75 = xi_257 * xi_74;
+        const double xi_75 = xi_254 * xi_74;
         const double xi_76 = -xi_68 - xi_70 + xi_73 + xi_75;
         const double xi_78 = xi_68 + xi_70 - xi_73 - xi_75;
-        const double xi_86 = xi_258 * xi_69;
-        const double xi_88 = xi_258 * xi_74;
+        const double xi_86 = xi_248 * xi_69;
+        const double xi_88 = xi_248 * xi_74;
         const double xi_93 = -xi_45;
         const double xi_112 = rho * (u_1 * u_1);
         const double xi_121 = xi_112 + xi_120 + xi_9;
         const double xi_197 = rho * u_1;
-        const double xi_199 =
-            xi_198 * (u_0 * xi_197 + xi_120 + xi_250 + xi_260);
+        const double xi_199 = xi_198 * (u_0 * xi_197 + xi_120 + xi_250 + xi_252);
         const double xi_200 = -xi_196 - xi_199;
         const double xi_201 = xi_196 + xi_199;
-        const double u_2 =
-            xi_0 * (vel2Term + xi_21 + xi_24 + xi_256) + xi_258 * xi_7;
-        const double xi_27 = u_2 * xi_258;
+        const double u_2 = xi_0 * (vel2Term + xi_21 + xi_24 + xi_262) + xi_248 * xi_7;
+        const double xi_27 = u_2 * xi_248;
         const double xi_33 = xi_27 * 0.16666666666666666;
         const double xi_34 = xi_27 * 0.083333333333333329;
         const double xi_35 = omega_shear * xi_34;
         const double xi_36 = -xi_33 + xi_35;
-        const double xi_41 =
-            -omega_shear * xi_32 + xi_26 * 0.33333333333333331 + xi_36 + xi_40;
-        const double xi_48 =
-            -omega_shear * xi_37 + xi_25 * 0.33333333333333331 + xi_36 + xi_47;
-        const double xi_52 =
-            -omega_shear * xi_33 + xi_27 * 0.33333333333333331 + xi_40 + xi_47;
+        const double xi_41 = -omega_shear * xi_32 + xi_26 * 0.33333333333333331 + xi_36 + xi_40;
+        const double xi_48 = -omega_shear * xi_37 + xi_25 * 0.33333333333333331 + xi_36 + xi_47;
+        const double xi_52 = -omega_shear * xi_33 + xi_27 * 0.33333333333333331 + xi_40 + xi_47;
         const double xi_58 = -xi_34;
         const double xi_63 = -xi_27 * xi_60;
         const double xi_64 = -xi_26 * xi_55 + xi_32 + xi_61 + xi_62 + xi_63;
@@ -420,7 +331,7 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_91 = xi_39 + xi_79 + xi_84;
         const double xi_92 = -xi_86 - xi_87 + xi_88 + xi_89;
         const double xi_94 = xi_46 + xi_61 + xi_62 + xi_63 + xi_83 + xi_93;
-        const double xi_97 = u_2 * xi_257;
+        const double xi_97 = u_2 * xi_254;
         const double xi_98 = xi_97 * 0.25;
         const double xi_100 = xi_71 * xi_97;
         const double xi_101 = xi_100 - xi_96 - xi_98 + xi_99;
@@ -428,80 +339,41 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double xi_103 = -xi_50 + xi_81 + xi_82;
         const double xi_104 = xi_103 + xi_46 + xi_61 + xi_62 + xi_63 + xi_93;
         const double xi_115 = rho * (u_2 * u_2);
-        const double xi_116 =
-            xi_114 + xi_115 * 0.66666666666666663 + xi_247 * 3.0 + xi_249 * 3.0;
-        const double xi_117 =
-            omega_even *
-            (xi_112 * 0.66666666666666663 + xi_113 * 1.6666666666666667 +
-             xi_116 + xi_246 * -3.0 + xi_248 * -3.0 + xi_253 * 3.0 +
-             xi_255 * -3.0 + xi_261 * 3.0 + xi_263 * -3.0);
-        const double xi_124 = omega_bulk * (xi_113 + xi_115 + xi_119 + xi_121 +
-                                            xi_123 + xi_17 + xi_22 + xi_265);
-        const double xi_127 =
-            omega_even * (xi_112 * 2.3333333333333335 + xi_116 + xi_126 +
-                          xi_244 * -5.0 + xi_245 * -5.0 + xi_253 * -2.0 +
-                          xi_256 * -5.0 + xi_261 * -2.0 + xi_262 * -5.0);
-        const double xi_131 =
-            omega_even *
-            (xi_114 + xi_115 * 3.0 + xi_126 + xi_128 + xi_129 + xi_130 +
-             xi_247 * -4.0 + xi_249 * -4.0 + xi_250 * -7.0 + xi_253 * 5.0 +
-             xi_259 * -7.0 + xi_260 * -7.0 + xi_261 * 5.0 + xi_264 * -7.0);
-        const double xi_156 = -xi_115 + xi_247;
-        const double xi_157 = omega_shear * (xi_121 + xi_156 + xi_16 + xi_2 +
-                                             xi_244 - xi_253 + xi_6);
+        const double xi_116 = xi_114 + xi_115 * 0.66666666666666663 + xi_246 * 3.0 + xi_260 * 3.0;
+        const double xi_117 = omega_even * (xi_112 * 0.66666666666666663 + xi_113 * 1.6666666666666667 + xi_116 + xi_244 * -3.0 + xi_245 * -3.0 + xi_249 * 3.0 + xi_253 * -3.0 + xi_258 * -3.0 + xi_265 * 3.0);
+        const double xi_124 = omega_bulk * (xi_113 + xi_115 + xi_119 + xi_121 + xi_123 + xi_17 + xi_22 + xi_257);
+        const double xi_127 = omega_even * (xi_112 * 2.3333333333333335 + xi_116 + xi_126 + xi_247 * -5.0 + xi_249 * -2.0 + xi_256 * -5.0 + xi_261 * -5.0 + xi_262 * -5.0 + xi_265 * -2.0);
+        const double xi_131 = omega_even * (xi_114 + xi_115 * 3.0 + xi_126 + xi_128 + xi_129 + xi_130 + xi_246 * -4.0 + xi_249 * 5.0 + xi_250 * -7.0 + xi_251 * -7.0 + xi_252 * -7.0 + xi_259 * -7.0 + xi_260 * -4.0 + xi_265 * 5.0);
+        const double xi_156 = -xi_115 + xi_260;
+        const double xi_157 = omega_shear * (xi_121 + xi_156 + xi_16 + xi_2 - xi_249 + xi_256 + xi_6);
         const double xi_158 = xi_157 * 0.125;
-        const double xi_159 =
-            xi_107 * -0.11904761904761904 + xi_131 * -0.01984126984126984;
-        const double xi_160 =
-            omega_shear *
-            (-xi_112 + xi_113 * 2.0 + xi_120 + xi_123 + xi_125 + xi_156 +
-             xi_249 + xi_252 * -2.0 + xi_253 + xi_254 * -2.0 + xi_261 + xi_9);
-        const double xi_162 =
-            xi_160 * -0.041666666666666664 + xi_161 * -0.16666666666666666;
-        const double xi_163 = xi_108 * -0.10000000000000001 +
-                              xi_117 * -0.050000000000000003 + xi_162;
-        const double xi_164 = xi_111 * 0.028571428571428571 +
-                              xi_127 * 0.014285714285714285 + xi_155 + xi_158 +
-                              xi_159 + xi_163;
-        const double xi_176 = xi_111 * -0.071428571428571425 +
-                              xi_127 * -0.035714285714285712 + xi_159 +
-                              xi_160 * 0.083333333333333329 +
-                              xi_161 * 0.33333333333333331;
-        const double xi_187 =
-            xi_107 * 0.095238095238095233 + xi_111 * -0.042857142857142858 +
-            xi_127 * -0.021428571428571429 + xi_131 * 0.015873015873015872 -
-            xi_155 - xi_158 + xi_163;
+        const double xi_159 = xi_107 * -0.11904761904761904 + xi_131 * -0.01984126984126984;
+        const double xi_160 = omega_shear * (-xi_112 + xi_113 * 2.0 + xi_120 + xi_123 + xi_125 + xi_156 + xi_246 + xi_249 + xi_255 * -2.0 + xi_263 * -2.0 + xi_265 + xi_9);
+        const double xi_162 = xi_160 * -0.041666666666666664 + xi_161 * -0.16666666666666666;
+        const double xi_163 = xi_108 * -0.10000000000000001 + xi_117 * -0.050000000000000003 + xi_162;
+        const double xi_164 = xi_111 * 0.028571428571428571 + xi_127 * 0.014285714285714285 + xi_155 + xi_158 + xi_159 + xi_163;
+        const double xi_176 = xi_111 * -0.071428571428571425 + xi_127 * -0.035714285714285712 + xi_159 + xi_160 * 0.083333333333333329 + xi_161 * 0.33333333333333331;
+        const double xi_187 = xi_107 * 0.095238095238095233 + xi_111 * -0.042857142857142858 + xi_127 * -0.021428571428571429 + xi_131 * 0.015873015873015872 - xi_155 - xi_158 + xi_163;
         const double xi_190 = xi_157 * 0.0625;
         const double xi_191 = xi_131 * 0.013888888888888888;
-        const double xi_193 =
-            xi_110 * 0.083333333333333329 + xi_124 * 0.041666666666666664;
-        const double xi_194 = xi_160 * 0.020833333333333332 +
-                              xi_161 * 0.083333333333333329 + xi_193;
-        const double xi_195 =
-            xi_165 + xi_189 + xi_190 + xi_191 + xi_192 + xi_194;
-        const double xi_202 =
-            xi_151 + xi_189 + xi_190 + xi_191 + xi_192 + xi_194;
+        const double xi_193 = xi_110 * 0.083333333333333329 + xi_124 * 0.041666666666666664;
+        const double xi_194 = xi_160 * 0.020833333333333332 + xi_161 * 0.083333333333333329 + xi_193;
+        const double xi_195 = xi_165 + xi_189 + xi_190 + xi_191 + xi_192 + xi_194;
+        const double xi_202 = xi_151 + xi_189 + xi_190 + xi_191 + xi_192 + xi_194;
         const double xi_204 = xi_127 * -0.0071428571428571426;
-        const double xi_205 = xi_198 * (u_2 * xi_197 + xi_132 + xi_17 + xi_248);
+        const double xi_205 = xi_198 * (u_2 * xi_197 + xi_132 + xi_17 + xi_253);
         const double xi_206 = xi_117 * 0.025000000000000001;
-        const double xi_209 =
-            xi_107 * -0.023809523809523808 + xi_131 * -0.003968253968253968;
-        const double xi_210 = xi_162 + xi_193 + xi_203 + xi_204 + xi_205 +
-                              xi_206 + xi_207 + xi_208 + xi_209;
-        const double xi_226 = xi_162 + xi_193 - xi_203 + xi_204 - xi_205 +
-                              xi_206 + xi_207 + xi_208 + xi_209;
+        const double xi_209 = xi_107 * -0.023809523809523808 + xi_131 * -0.003968253968253968;
+        const double xi_210 = xi_162 + xi_193 + xi_203 + xi_204 + xi_205 + xi_206 + xi_207 + xi_208 + xi_209;
+        const double xi_226 = xi_162 + xi_193 - xi_203 + xi_204 - xi_205 + xi_206 + xi_207 + xi_208 + xi_209;
         const double xi_228 = -xi_190;
         const double xi_229 = xi_127 * 0.017857142857142856;
-        const double xi_231 =
-            xi_188 + xi_194 + xi_209 + xi_227 + xi_228 + xi_229 + xi_230;
-        const double xi_233 =
-            xi_198 * (rho * u_0 * u_2 + xi_10 + xi_166 + xi_245);
+        const double xi_231 = xi_188 + xi_194 + xi_209 + xi_227 + xi_228 + xi_229 + xi_230;
+        const double xi_233 = xi_198 * (rho * u_0 * u_2 + xi_10 + xi_166 + xi_261);
         const double xi_234 = -xi_232 - xi_233;
         const double xi_240 = xi_232 + xi_233;
-        const double xi_243 =
-            xi_186 + xi_194 + xi_209 + xi_227 + xi_228 + xi_229 + xi_230;
-        const double forceTerm_0 = xi_25 * xi_28 - xi_25 + xi_26 * xi_28 -
-                                   xi_26 + xi_27 * xi_28 - xi_27;
+        const double xi_243 = xi_186 + xi_194 + xi_209 + xi_227 + xi_228 + xi_229 + xi_230;
+        const double forceTerm_0 = xi_25 * xi_28 - xi_25 + xi_26 * xi_28 - xi_26 + xi_27 * xi_28 - xi_27;
         const double forceTerm_1 = xi_29 - xi_31 + xi_41;
         const double forceTerm_2 = -xi_29 + xi_31 + xi_41;
         const double forceTerm_3 = -xi_42 + xi_44 + xi_48;
@@ -520,67 +392,25 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
         const double forceTerm_16 = xi_103 + xi_90 + xi_91;
         const double forceTerm_17 = xi_102 + xi_104 + xi_57;
         const double forceTerm_18 = xi_101 + xi_104 + xi_77;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2] =
-            forceTerm_0 + xi_107 * 0.14285714285714285 +
-            xi_108 * 0.20000000000000001 - xi_110 +
-            xi_111 * 0.085714285714285715 + xi_117 * 0.10000000000000001 +
-            xi_124 * -0.5 + xi_127 * 0.042857142857142858 +
-            xi_131 * 0.023809523809523808 + xi_265;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + _stride_pdfs_3] =
-            forceTerm_1 - xi_135 - xi_140 + xi_151 + xi_164 + xi_253;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3] =
-            forceTerm_2 + xi_135 + xi_140 + xi_164 + xi_165 + xi_261;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3] =
-            forceTerm_3 + xi_168 + xi_170 + xi_175 + xi_176 + xi_252;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3] =
-            forceTerm_4 - xi_168 - xi_170 + xi_176 + xi_177 + xi_254;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3] =
-            forceTerm_5 - xi_179 - xi_181 + xi_186 + xi_187 + xi_247;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3] =
-            forceTerm_6 + xi_179 + xi_181 + xi_187 + xi_188 + xi_249;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3] =
-            forceTerm_7 + xi_177 + xi_195 + xi_200 + xi_260;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3] =
-            forceTerm_8 + xi_175 + xi_195 + xi_201 + xi_264;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3] =
-            forceTerm_9 + xi_177 + xi_201 + xi_202 + xi_259;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3] =
-            forceTerm_10 + xi_175 + xi_200 + xi_202 + xi_250;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3] =
-            forceTerm_11 + xi_210 + xi_219 + xi_224 + xi_246;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3] =
-            forceTerm_12 + xi_219 + xi_225 + xi_226 + xi_263;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3] =
-            forceTerm_13 + xi_231 + xi_234 + xi_239 + xi_244;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3] =
-            forceTerm_14 + xi_231 + xi_240 + xi_241 + xi_256;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3] =
-            forceTerm_15 + xi_224 + xi_226 + xi_242 + xi_248;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3] =
-            forceTerm_16 + xi_210 + xi_225 + xi_242 + xi_255;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3] =
-            forceTerm_17 + xi_239 + xi_240 + xi_243 + xi_262;
-        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 +
-                   _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3] =
-            forceTerm_18 + xi_234 + xi_241 + xi_243 + xi_245;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2] = forceTerm_0 + xi_107 * 0.14285714285714285 + xi_108 * 0.20000000000000001 - xi_110 + xi_111 * 0.085714285714285715 + xi_117 * 0.10000000000000001 + xi_124 * -0.5 + xi_127 * 0.042857142857142858 + xi_131 * 0.023809523809523808 + xi_257;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3] = forceTerm_1 - xi_135 - xi_140 + xi_151 + xi_164 + xi_249;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3] = forceTerm_2 + xi_135 + xi_140 + xi_164 + xi_165 + xi_265;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3] = forceTerm_3 + xi_168 + xi_170 + xi_175 + xi_176 + xi_263;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3] = forceTerm_4 - xi_168 - xi_170 + xi_176 + xi_177 + xi_255;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 5 * _stride_pdfs_3] = forceTerm_5 - xi_179 - xi_181 + xi_186 + xi_187 + xi_260;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 6 * _stride_pdfs_3] = forceTerm_6 + xi_179 + xi_181 + xi_187 + xi_188 + xi_246;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3] = forceTerm_7 + xi_177 + xi_195 + xi_200 + xi_250;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3] = forceTerm_8 + xi_175 + xi_195 + xi_201 + xi_251;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3] = forceTerm_9 + xi_177 + xi_201 + xi_202 + xi_259;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3] = forceTerm_10 + xi_175 + xi_200 + xi_202 + xi_252;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 11 * _stride_pdfs_3] = forceTerm_11 + xi_210 + xi_219 + xi_224 + xi_244;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 12 * _stride_pdfs_3] = forceTerm_12 + xi_219 + xi_225 + xi_226 + xi_245;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 13 * _stride_pdfs_3] = forceTerm_13 + xi_231 + xi_234 + xi_239 + xi_256;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 14 * _stride_pdfs_3] = forceTerm_14 + xi_231 + xi_240 + xi_241 + xi_262;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 15 * _stride_pdfs_3] = forceTerm_15 + xi_224 + xi_226 + xi_242 + xi_253;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 16 * _stride_pdfs_3] = forceTerm_16 + xi_210 + xi_225 + xi_242 + xi_258;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 17 * _stride_pdfs_3] = forceTerm_17 + xi_239 + xi_240 + xi_243 + xi_247;
+        _data_pdfs[_stride_pdfs_0 * ctr_0 + _stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 18 * _stride_pdfs_3] = forceTerm_18 + xi_234 + xi_241 + xi_243 + xi_261;
       }
     }
   }
@@ -589,38 +419,34 @@ collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
 
 void CollideSweepDoublePrecisionThermalized::run(IBlock *block) {
   if (!this->configured_)
-    WALBERLA_ABORT("This Sweep contains a configure function that needs to be "
-                   "called manually")
+    WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
-  auto &time_step = this->time_step_;
-  auto &omega_bulk = this->omega_bulk_;
-  auto &omega_odd = this->omega_odd_;
-  auto &kT = this->kT_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &seed = this->seed_;
   auto &omega_shear = this->omega_shear_;
   auto &block_offset_2 = this->block_offset_2_;
   auto &block_offset_1 = this->block_offset_1_;
+  auto &omega_odd = this->omega_odd_;
+  auto &time_step = this->time_step_;
+  auto &seed = this->seed_;
+  auto &block_offset_0 = this->block_offset_0_;
   auto &omega_even = this->omega_even_;
+  auto &omega_bulk = this->omega_bulk_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(force->nrOfGhostLayers()))
   double *RESTRICT const _data_force = force->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(pdfs->nrOfGhostLayers()))
   double *RESTRICT _data_pdfs = pdfs->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx)
-  WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
-                                int64_t(int64_c(force->xSize()) + 0))
+  WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(), int64_t(int64_c(force->xSize()) + 0))
   const int64_t _size_force_0 = int64_t(int64_c(force->xSize()) + 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
-  WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
-                                int64_t(int64_c(force->ySize()) + 0))
+  WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(), int64_t(int64_c(force->ySize()) + 0))
   const int64_t _size_force_1 = int64_t(int64_c(force->ySize()) + 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
-  WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
-                                int64_t(int64_c(force->zSize()) + 0))
+  WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(), int64_t(int64_c(force->zSize()) + 0))
   const int64_t _size_force_2 = int64_t(int64_c(force->zSize()) + 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
   const int64_t _stride_force_0 = int64_t(force->xStride());
@@ -631,22 +457,12 @@ void CollideSweepDoublePrecisionThermalized::run(IBlock *block) {
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_0d943397135d13b4628c5752888935d7::
-      collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
-          _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
-          _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,
-          _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
-          block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk,
-          omega_even, omega_odd, omega_shear, seed, time_step);
+  internal_0d943397135d13b4628c5752888935d7::collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(_data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
 }
 
-void CollideSweepDoublePrecisionThermalized::runOnCellInterval(
-    const shared_ptr<StructuredBlockStorage> &blocks,
-    const CellInterval &globalCellInterval, cell_idx_t ghostLayers,
-    IBlock *block) {
+void CollideSweepDoublePrecisionThermalized::runOnCellInterval(const shared_ptr<StructuredBlockStorage> &blocks, const CellInterval &globalCellInterval, cell_idx_t ghostLayers, IBlock *block) {
   if (!this->configured_)
-    WALBERLA_ABORT("This Sweep contains a configure function that needs to be "
-                   "called manually")
+    WALBERLA_ABORT("This Sweep contains a configure function that needs to be called manually")
 
   CellInterval ci = globalCellInterval;
   CellInterval blockBB = blocks->getBlockCellBB(*block);
@@ -656,41 +472,36 @@ void CollideSweepDoublePrecisionThermalized::runOnCellInterval(
   if (ci.empty())
     return;
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
 
-  auto &time_step = this->time_step_;
-  auto &omega_bulk = this->omega_bulk_;
-  auto &omega_odd = this->omega_odd_;
-  auto &kT = this->kT_;
-  auto &block_offset_0 = this->block_offset_0_;
-  auto &seed = this->seed_;
   auto &omega_shear = this->omega_shear_;
   auto &block_offset_2 = this->block_offset_2_;
   auto &block_offset_1 = this->block_offset_1_;
+  auto &omega_odd = this->omega_odd_;
+  auto &time_step = this->time_step_;
+  auto &seed = this->seed_;
+  auto &block_offset_0 = this->block_offset_0_;
   auto &omega_even = this->omega_even_;
+  auto &omega_bulk = this->omega_bulk_;
+  auto &kT = this->kT_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(force->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(force->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(force->nrOfGhostLayers()))
-  double *RESTRICT const _data_force =
-      force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
+  double *RESTRICT const _data_force = force->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(pdfs->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(pdfs->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(pdfs->nrOfGhostLayers()))
-  double *RESTRICT _data_pdfs =
-      pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
+  double *RESTRICT _data_pdfs = pdfs->dataAt(ci.xMin(), ci.yMin(), ci.zMin(), 0);
   WALBERLA_ASSERT_EQUAL(pdfs->layout(), field::fzyx)
-  WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(),
-                                int64_t(int64_c(ci.xSize()) + 0))
+  WALBERLA_ASSERT_GREATER_EQUAL(force->xSizeWithGhostLayer(), int64_t(int64_c(ci.xSize()) + 0))
   const int64_t _size_force_0 = int64_t(int64_c(ci.xSize()) + 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
-  WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(),
-                                int64_t(int64_c(ci.ySize()) + 0))
+  WALBERLA_ASSERT_GREATER_EQUAL(force->ySizeWithGhostLayer(), int64_t(int64_c(ci.ySize()) + 0))
   const int64_t _size_force_1 = int64_t(int64_c(ci.ySize()) + 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
-  WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(),
-                                int64_t(int64_c(ci.zSize()) + 0))
+  WALBERLA_ASSERT_GREATER_EQUAL(force->zSizeWithGhostLayer(), int64_t(int64_c(ci.zSize()) + 0))
   const int64_t _size_force_2 = int64_t(int64_c(ci.zSize()) + 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
   const int64_t _stride_force_0 = int64_t(force->xStride());
@@ -701,20 +512,13 @@ void CollideSweepDoublePrecisionThermalized::runOnCellInterval(
   const int64_t _stride_pdfs_1 = int64_t(pdfs->yStride());
   const int64_t _stride_pdfs_2 = int64_t(pdfs->zStride());
   const int64_t _stride_pdfs_3 = int64_t(1 * int64_t(pdfs->fStride()));
-  internal_0d943397135d13b4628c5752888935d7::
-      collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(
-          _data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2,
-          _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3,
-          _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3,
-          block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk,
-          omega_even, omega_odd, omega_shear, seed, time_step);
+  internal_0d943397135d13b4628c5752888935d7::collidesweepdoubleprecisionthermalized_collidesweepdoubleprecisionthermalized(_data_force, _data_pdfs, _size_force_0, _size_force_1, _size_force_2, _stride_force_0, _stride_force_1, _stride_force_2, _stride_force_3, _stride_pdfs_0, _stride_pdfs_1, _stride_pdfs_2, _stride_pdfs_3, block_offset_0, block_offset_1, block_offset_2, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed, time_step);
 }
 
 } // namespace pystencils
 } // namespace walberla
 
-#if (defined WALBERLA_CXX_COMPILER_IS_GNU) ||                                  \
-    (defined WALBERLA_CXX_COMPILER_IS_CLANG)
+#if (defined WALBERLA_CXX_COMPILER_IS_GNU) || (defined WALBERLA_CXX_COMPILER_IS_CLANG)
 #pragma GCC diagnostic pop
 #endif
 

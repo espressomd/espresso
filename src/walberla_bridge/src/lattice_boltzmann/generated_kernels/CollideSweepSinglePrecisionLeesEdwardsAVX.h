@@ -57,7 +57,7 @@ public:
                                             float grid_size, float omega_shear,
                                             float v_s)
       : forceID(forceID_), pdfsID(pdfsID_), grid_size_(grid_size),
-        omega_shear_(omega_shear), v_s_(v_s){};
+        omega_shear_(omega_shear), v_s_(v_s) {};
 
   void run(IBlock *block);
 

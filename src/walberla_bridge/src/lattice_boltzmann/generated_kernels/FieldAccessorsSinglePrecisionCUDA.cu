@@ -18,9 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.3, lbmpy v1.3.3,
-// lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 04f4adbdfc0af983e2d9b72e244d775f37d77034
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 /**
  * @file
@@ -77,11 +75,7 @@
 #endif
 
 /** @brief Get linear index of flattened data with original layout @c fzyx. */
-static __forceinline__ __device__ uint getLinearIndex(uint3 blockIdx,
-                                                      uint3 threadIdx,
-                                                      uint3 gridDim,
-                                                      uint3 blockDim,
-                                                      uint fOffset) {
+static __forceinline__ __device__ uint getLinearIndex(uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset) {
   auto const x = threadIdx.x;
   auto const y = blockIdx.x;
   auto const z = blockIdx.y;
@@ -89,7 +83,10 @@ static __forceinline__ __device__ uint getLinearIndex(uint3 blockIdx,
   auto const ySize = gridDim.x;
   auto const zSize = gridDim.y;
   auto const fSize = fOffset;
-  return f + z * fSize + y * fSize * zSize + x * fSize * zSize * ySize;
+  return f +
+         z * fSize +
+         y * fSize * zSize +
+         x * fSize * zSize * ySize;
 }
 
 namespace walberla {
@@ -98,9 +95,10 @@ namespace accessor {
 
 namespace Population {
 // LCOV_EXCL_START
-__global__ void kernel_get(gpu::FieldAccessor<float> pdf, float *RESTRICT pop) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
+__global__ void kernel_get(
+    gpu::FieldAccessor<float> pdf,
+    float *RESTRICT pop) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
   pdf.set(blockIdx, threadIdx);
   pop += offset;
   if (pdf.isValidPosition()) {
@@ -126,10 +124,10 @@ __global__ void kernel_get(gpu::FieldAccessor<float> pdf, float *RESTRICT pop) {
   }
 }
 
-__global__ void kernel_set(gpu::FieldAccessor<float> pdf,
-                           float const *RESTRICT pop) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
+__global__ void kernel_set(
+    gpu::FieldAccessor<float> pdf,
+    float const *RESTRICT pop) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
   pdf.set(blockIdx, threadIdx);
   pop += offset;
   if (pdf.isValidPosition()) {
@@ -155,8 +153,9 @@ __global__ void kernel_set(gpu::FieldAccessor<float> pdf,
   }
 }
 
-__global__ void kernel_broadcast(gpu::FieldAccessor<float> pdf,
-                                 float const *RESTRICT pop) {
+__global__ void kernel_broadcast(
+    gpu::FieldAccessor<float> pdf,
+    float const *RESTRICT pop) {
   pdf.set(blockIdx, threadIdx);
   if (pdf.isValidPosition()) {
     pdf.get(0u) = pop[0u];
@@ -181,12 +180,12 @@ __global__ void kernel_broadcast(gpu::FieldAccessor<float> pdf,
   }
 }
 
-__global__ void kernel_set_vel(gpu::FieldAccessor<float> pdf,
-                               gpu::FieldAccessor<float> velocity,
-                               gpu::FieldAccessor<float> force,
-                               float const *RESTRICT pop) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
+__global__ void kernel_set_vel(
+    gpu::FieldAccessor<float> pdf,
+    gpu::FieldAccessor<float> velocity,
+    gpu::FieldAccessor<float> force,
+    float const *RESTRICT pop) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
   pdf.set(blockIdx, threadIdx);
   velocity.set(blockIdx, threadIdx);
   force.set(blockIdx, threadIdx);
@@ -216,10 +215,8 @@ __global__ void kernel_set_vel(gpu::FieldAccessor<float> pdf,
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const float vel2Term = f_12 + f_13 + f_5;
-    const float momdensity_2 =
-        f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                      vel1Term + vel2Term;
+    const float momdensity_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     const float md_0 = force.get(0) * 0.50000000000000000f + momdensity_0;
     const float md_1 = force.get(1) * 0.50000000000000000f + momdensity_1;
     const float md_2 = force.get(2) * 0.50000000000000000f + momdensity_2;
@@ -231,14 +228,14 @@ __global__ void kernel_set_vel(gpu::FieldAccessor<float> pdf,
 }
 // LCOV_EXCL_STOP
 
-std::array<float, 19u> get(gpu::GPUField<float> const *pdf_field,
-                           Cell const &cell) {
+std::array<float, 19u> get(
+    gpu::GPUField<float> const *pdf_field,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(19u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   std::array<float, 19u> pop;
@@ -246,54 +243,55 @@ std::array<float, 19u> get(gpu::GPUField<float> const *pdf_field,
   return pop;
 }
 
-void set(gpu::GPUField<float> *pdf_field, std::array<float, 19u> const &pop,
-         Cell const &cell) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    std::array<float, 19u> const &pop,
+    Cell const &cell) {
   thrust::device_vector<float> dev_data(pop.begin(), pop.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   CellInterval ci(cell, cell);
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
-         gpu::GPUField<float> const *force_field,
-         std::array<float, 19u> const &pop, Cell const &cell) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    gpu::GPUField<float> *velocity_field,
+    gpu::GPUField<float> const *force_field,
+    std::array<float, 19u> const &pop,
+    Cell const &cell) {
   thrust::device_vector<float> dev_data(pop.begin(), pop.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   CellInterval ci(cell, cell);
   auto kernel = gpu::make_kernel(kernel_set_vel);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*velocity_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*velocity_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void initialize(gpu::GPUField<float> *pdf_field,
-                std::array<float, 19u> const &pop) {
+void initialize(
+    gpu::GPUField<float> *pdf_field,
+    std::array<float, 19u> const &pop) {
   CellInterval ci = pdf_field->xyzSizeWithGhostLayer();
   thrust::device_vector<float> dev_data(pop.begin(), pop.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_broadcast);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-std::vector<float> get(gpu::GPUField<float> const *pdf_field,
-                       CellInterval const &ci) {
+std::vector<float> get(
+    gpu::GPUField<float> const *pdf_field,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(ci.numCells() * 19u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   std::vector<float> out(ci.numCells() * 19u);
@@ -301,29 +299,30 @@ std::vector<float> get(gpu::GPUField<float> const *pdf_field,
   return out;
 }
 
-void set(gpu::GPUField<float> *pdf_field, std::vector<float> const &values,
-         CellInterval const &ci) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    std::vector<float> const &values,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
-         gpu::GPUField<float> const *force_field,
-         std::vector<float> const &values, CellInterval const &ci) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    gpu::GPUField<float> *velocity_field,
+    gpu::GPUField<float> const *force_field,
+    std::vector<float> const &values,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set_vel);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*velocity_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*velocity_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
@@ -331,9 +330,10 @@ void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
 
 namespace Vector {
 // LCOV_EXCL_START
-__global__ void kernel_get(gpu::FieldAccessor<float> vec, float *u_out) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
+__global__ void kernel_get(
+    gpu::FieldAccessor<float> vec,
+    float *u_out) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
   vec.set(blockIdx, threadIdx);
   u_out += offset;
   if (vec.isValidPosition()) {
@@ -343,10 +343,10 @@ __global__ void kernel_get(gpu::FieldAccessor<float> vec, float *u_out) {
   }
 }
 
-__global__ void kernel_set(gpu::FieldAccessor<float> vec,
-                           float const *RESTRICT u_in) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
+__global__ void kernel_set(
+    gpu::FieldAccessor<float> vec,
+    float const *RESTRICT u_in) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
   vec.set(blockIdx, threadIdx);
   u_in += offset;
   if (vec.isValidPosition()) {
@@ -356,8 +356,9 @@ __global__ void kernel_set(gpu::FieldAccessor<float> vec,
   }
 }
 
-__global__ void kernel_broadcast(gpu::FieldAccessor<float> vec,
-                                 float const *RESTRICT u_in) {
+__global__ void kernel_broadcast(
+    gpu::FieldAccessor<float> vec,
+    float const *RESTRICT u_in) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
     vec.get(0u) = u_in[0u];
@@ -366,10 +367,10 @@ __global__ void kernel_broadcast(gpu::FieldAccessor<float> vec,
   }
 }
 
-__global__ void kernel_add(gpu::FieldAccessor<float> vec,
-                           float const *RESTRICT u_in) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
+__global__ void kernel_add(
+    gpu::FieldAccessor<float> vec,
+    float const *RESTRICT u_in) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
   vec.set(blockIdx, threadIdx);
   u_in += offset;
   if (vec.isValidPosition()) {
@@ -379,8 +380,9 @@ __global__ void kernel_add(gpu::FieldAccessor<float> vec,
   }
 }
 
-__global__ void kernel_broadcast_add(gpu::FieldAccessor<float> vec,
-                                     float const *RESTRICT u_in) {
+__global__ void kernel_broadcast_add(
+    gpu::FieldAccessor<float> vec,
+    float const *RESTRICT u_in) {
   vec.set(blockIdx, threadIdx);
   if (vec.isValidPosition()) {
     vec.get(0u) += u_in[0u];
@@ -390,13 +392,14 @@ __global__ void kernel_broadcast_add(gpu::FieldAccessor<float> vec,
 }
 // LCOV_EXCL_STOP
 
-Vector3<float> get(gpu::GPUField<float> const *vec_field, Cell const &cell) {
+Vector3<float> get(
+    gpu::GPUField<float> const *vec_field,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*vec_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   Vector3<float> vec;
@@ -404,59 +407,63 @@ Vector3<float> get(gpu::GPUField<float> const *vec_field, Cell const &cell) {
   return vec;
 }
 
-void set(gpu::GPUField<float> *vec_field, Vector3<float> const &vec,
-         Cell const &cell) {
+void set(
+    gpu::GPUField<float> *vec_field,
+    Vector3<float> const &vec,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(vec.data(), vec.data() + 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*vec_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void add(gpu::GPUField<float> *vec_field, Vector3<float> const &vec,
-         Cell const &cell) {
+void add(
+    gpu::GPUField<float> *vec_field,
+    Vector3<float> const &vec,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(vec.data(), vec.data() + 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_add);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*vec_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void initialize(gpu::GPUField<float> *vec_field, Vector3<float> const &vec) {
+void initialize(
+    gpu::GPUField<float> *vec_field,
+    Vector3<float> const &vec) {
   CellInterval ci = vec_field->xyzSizeWithGhostLayer();
   thrust::device_vector<float> dev_data(vec.data(), vec.data() + 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_broadcast);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*vec_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void add_to_all(gpu::GPUField<float> *vec_field, Vector3<float> const &vec) {
+void add_to_all(
+    gpu::GPUField<float> *vec_field,
+    Vector3<float> const &vec) {
   CellInterval ci = vec_field->xyzSizeWithGhostLayer();
   thrust::device_vector<float> dev_data(vec.data(), vec.data() + 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_broadcast_add);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*vec_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-std::vector<float> get(gpu::GPUField<float> const *vec_field,
-                       CellInterval const &ci) {
+std::vector<float> get(
+    gpu::GPUField<float> const *vec_field,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(ci.numCells() * 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*vec_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   std::vector<float> out(ci.numCells() * 3u);
@@ -464,13 +471,14 @@ std::vector<float> get(gpu::GPUField<float> const *vec_field,
   return out;
 }
 
-void set(gpu::GPUField<float> *vec_field, std::vector<float> const &values,
-         CellInterval const &ci) {
+void set(
+    gpu::GPUField<float> *vec_field,
+    std::vector<float> const &values,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*vec_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*vec_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
@@ -479,9 +487,11 @@ void set(gpu::GPUField<float> *vec_field, std::vector<float> const &values,
 namespace Interpolation {
 // LCOV_EXCL_START
 /** @brief Calculate interpolation weights. */
-static __forceinline__ __device__ void
-calculate_weights(float const *RESTRICT const pos, int *RESTRICT const corner,
-                  float *RESTRICT const weights, uint gl) {
+static __forceinline__ __device__ void calculate_weights(
+    float const *RESTRICT const pos,
+    int *RESTRICT const corner,
+    float *RESTRICT const weights,
+    uint gl) {
 #pragma unroll
   for (int dim = 0; dim < 3; ++dim) {
     auto const fractional_index = pos[dim] - float{0.5};
@@ -493,9 +503,12 @@ calculate_weights(float const *RESTRICT const pos, int *RESTRICT const corner,
   }
 }
 
-__global__ void kernel_get(gpu::FieldAccessor<float> vec,
-                           float const *RESTRICT const pos,
-                           float *RESTRICT const vel, uint n_pos, uint gl) {
+__global__ void kernel_get(
+    gpu::FieldAccessor<float> vec,
+    float const *RESTRICT const pos,
+    float *RESTRICT const vel,
+    uint n_pos,
+    uint gl) {
 
   uint pos_index = blockIdx.y * gridDim.x * blockDim.x +
                    blockDim.x * blockIdx.x + threadIdx.x;
@@ -527,10 +540,12 @@ __global__ void kernel_get(gpu::FieldAccessor<float> vec,
   }
 }
 
-__global__ void kernel_set(gpu::FieldAccessor<float> vec,
-                           float const *RESTRICT const pos,
-                           float const *RESTRICT const forces, uint n_pos,
-                           uint gl) {
+__global__ void kernel_set(
+    gpu::FieldAccessor<float> vec,
+    float const *RESTRICT const pos,
+    float const *RESTRICT const forces,
+    uint n_pos,
+    uint gl) {
 
   uint pos_index = blockIdx.y * gridDim.x * blockDim.x +
                    blockDim.x * blockIdx.x + threadIdx.x;
@@ -577,8 +592,11 @@ static dim3 calculate_dim_grid(uint const threads_x,
   return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 }
 
-std::vector<float> get(gpu::GPUField<float> const *vec_field,
-                       std::vector<float> const &pos, uint gl) {
+std::vector<float>
+get(
+    gpu::GPUField<float> const *vec_field,
+    std::vector<float> const &pos,
+    uint gl) {
   thrust::device_vector<float> dev_pos(pos.begin(), pos.end());
   thrust::device_vector<float> dev_vel(pos.size());
   auto const dev_pos_ptr = thrust::raw_pointer_cast(dev_pos.data());
@@ -596,8 +614,11 @@ std::vector<float> get(gpu::GPUField<float> const *vec_field,
   return out;
 }
 
-void set(gpu::GPUField<float> const *vec_field, std::vector<float> const &pos,
-         std::vector<float> const &forces, uint gl) {
+void set(
+    gpu::GPUField<float> const *vec_field,
+    std::vector<float> const &pos,
+    std::vector<float> const &forces,
+    uint gl) {
   thrust::device_vector<float> dev_pos(pos.begin(), pos.end());
   thrust::device_vector<float> dev_for(forces.begin(), forces.end());
   auto const dev_pos_ptr = thrust::raw_pointer_cast(dev_pos.data());
@@ -614,113 +635,40 @@ void set(gpu::GPUField<float> const *vec_field, std::vector<float> const &pos,
 
 namespace Equilibrium {
 // LCOV_EXCL_START
-__device__ void kernel_set_device(gpu::FieldAccessor<float> pdf,
-                                  float const *RESTRICT const u, float rho) {
+__device__ void kernel_set_device(
+    gpu::FieldAccessor<float> pdf,
+    float const *RESTRICT const u,
+    float rho) {
 
-  pdf.get(0u) = rho * -0.33333333333333331f * (u[0] * u[0]) +
-                rho * -0.33333333333333331f * (u[1] * u[1]) +
-                rho * -0.33333333333333331f * (u[2] * u[2]) +
-                rho * 0.33333333333333331f;
-  pdf.get(1u) = rho * -0.16666666666666666f * (u[0] * u[0]) +
-                rho * -0.16666666666666666f * (u[2] * u[2]) +
-                rho * 0.055555555555555552f +
-                rho * 0.16666666666666666f * u[1] +
-                rho * 0.16666666666666666f * (u[1] * u[1]);
-  pdf.get(2u) = rho * -0.16666666666666666f * u[1] +
-                rho * -0.16666666666666666f * (u[0] * u[0]) +
-                rho * -0.16666666666666666f * (u[2] * u[2]) +
-                rho * 0.055555555555555552f +
-                rho * 0.16666666666666666f * (u[1] * u[1]);
-  pdf.get(3u) = rho * -0.16666666666666666f * u[0] +
-                rho * -0.16666666666666666f * (u[1] * u[1]) +
-                rho * -0.16666666666666666f * (u[2] * u[2]) +
-                rho * 0.055555555555555552f +
-                rho * 0.16666666666666666f * (u[0] * u[0]);
-  pdf.get(4u) = rho * -0.16666666666666666f * (u[1] * u[1]) +
-                rho * -0.16666666666666666f * (u[2] * u[2]) +
-                rho * 0.055555555555555552f +
-                rho * 0.16666666666666666f * u[0] +
-                rho * 0.16666666666666666f * (u[0] * u[0]);
-  pdf.get(5u) = rho * -0.16666666666666666f * (u[0] * u[0]) +
-                rho * -0.16666666666666666f * (u[1] * u[1]) +
-                rho * 0.055555555555555552f +
-                rho * 0.16666666666666666f * u[2] +
-                rho * 0.16666666666666666f * (u[2] * u[2]);
-  pdf.get(6u) = rho * -0.16666666666666666f * u[2] +
-                rho * -0.16666666666666666f * (u[0] * u[0]) +
-                rho * -0.16666666666666666f * (u[1] * u[1]) +
-                rho * 0.055555555555555552f +
-                rho * 0.16666666666666666f * (u[2] * u[2]);
-  pdf.get(7u) = rho * -0.083333333333333329f * u[0] +
-                rho * -0.25f * u[0] * u[1] + rho * 0.027777777777777776f +
-                rho * 0.083333333333333329f * u[1] +
-                rho * 0.083333333333333329f * (u[0] * u[0]) +
-                rho * 0.083333333333333329f * (u[1] * u[1]);
-  pdf.get(8u) =
-      rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] +
-      rho * 0.083333333333333329f * u[1] +
-      rho * 0.083333333333333329f * (u[0] * u[0]) +
-      rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.25f * u[0] * u[1];
-  pdf.get(9u) =
-      rho * -0.083333333333333329f * u[0] +
-      rho * -0.083333333333333329f * u[1] + rho * 0.027777777777777776f +
-      rho * 0.083333333333333329f * (u[0] * u[0]) +
-      rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.25f * u[0] * u[1];
-  pdf.get(10u) = rho * -0.083333333333333329f * u[1] +
-                 rho * -0.25f * u[0] * u[1] + rho * 0.027777777777777776f +
-                 rho * 0.083333333333333329f * u[0] +
-                 rho * 0.083333333333333329f * (u[0] * u[0]) +
-                 rho * 0.083333333333333329f * (u[1] * u[1]);
-  pdf.get(11u) =
-      rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[1] +
-      rho * 0.083333333333333329f * u[2] +
-      rho * 0.083333333333333329f * (u[1] * u[1]) +
-      rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[1] * u[2];
-  pdf.get(12u) = rho * -0.083333333333333329f * u[1] +
-                 rho * -0.25f * u[1] * u[2] + rho * 0.027777777777777776f +
-                 rho * 0.083333333333333329f * u[2] +
-                 rho * 0.083333333333333329f * (u[1] * u[1]) +
-                 rho * 0.083333333333333329f * (u[2] * u[2]);
-  pdf.get(13u) = rho * -0.083333333333333329f * u[0] +
-                 rho * -0.25f * u[0] * u[2] + rho * 0.027777777777777776f +
-                 rho * 0.083333333333333329f * u[2] +
-                 rho * 0.083333333333333329f * (u[0] * u[0]) +
-                 rho * 0.083333333333333329f * (u[2] * u[2]);
-  pdf.get(14u) =
-      rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] +
-      rho * 0.083333333333333329f * u[2] +
-      rho * 0.083333333333333329f * (u[0] * u[0]) +
-      rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[0] * u[2];
-  pdf.get(15u) = rho * -0.083333333333333329f * u[2] +
-                 rho * -0.25f * u[1] * u[2] + rho * 0.027777777777777776f +
-                 rho * 0.083333333333333329f * u[1] +
-                 rho * 0.083333333333333329f * (u[1] * u[1]) +
-                 rho * 0.083333333333333329f * (u[2] * u[2]);
-  pdf.get(16u) =
-      rho * -0.083333333333333329f * u[1] +
-      rho * -0.083333333333333329f * u[2] + rho * 0.027777777777777776f +
-      rho * 0.083333333333333329f * (u[1] * u[1]) +
-      rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[1] * u[2];
-  pdf.get(17u) =
-      rho * -0.083333333333333329f * u[0] +
-      rho * -0.083333333333333329f * u[2] + rho * 0.027777777777777776f +
-      rho * 0.083333333333333329f * (u[0] * u[0]) +
-      rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[0] * u[2];
-  pdf.get(18u) = rho * -0.083333333333333329f * u[2] +
-                 rho * -0.25f * u[0] * u[2] + rho * 0.027777777777777776f +
-                 rho * 0.083333333333333329f * u[0] +
-                 rho * 0.083333333333333329f * (u[0] * u[0]) +
-                 rho * 0.083333333333333329f * (u[2] * u[2]);
+  pdf.get(0u) = rho * -0.33333333333333331f * (u[0] * u[0]) + rho * -0.33333333333333331f * (u[1] * u[1]) + rho * -0.33333333333333331f * (u[2] * u[2]) + rho * 0.33333333333333331f;
+  pdf.get(1u) = rho * -0.16666666666666666f * (u[0] * u[0]) + rho * -0.16666666666666666f * (u[2] * u[2]) + rho * 0.055555555555555552f + rho * 0.16666666666666666f * u[1] + rho * 0.16666666666666666f * (u[1] * u[1]);
+  pdf.get(2u) = rho * -0.16666666666666666f * u[1] + rho * -0.16666666666666666f * (u[0] * u[0]) + rho * -0.16666666666666666f * (u[2] * u[2]) + rho * 0.055555555555555552f + rho * 0.16666666666666666f * (u[1] * u[1]);
+  pdf.get(3u) = rho * -0.16666666666666666f * u[0] + rho * -0.16666666666666666f * (u[1] * u[1]) + rho * -0.16666666666666666f * (u[2] * u[2]) + rho * 0.055555555555555552f + rho * 0.16666666666666666f * (u[0] * u[0]);
+  pdf.get(4u) = rho * -0.16666666666666666f * (u[1] * u[1]) + rho * -0.16666666666666666f * (u[2] * u[2]) + rho * 0.055555555555555552f + rho * 0.16666666666666666f * u[0] + rho * 0.16666666666666666f * (u[0] * u[0]);
+  pdf.get(5u) = rho * -0.16666666666666666f * (u[0] * u[0]) + rho * -0.16666666666666666f * (u[1] * u[1]) + rho * 0.055555555555555552f + rho * 0.16666666666666666f * u[2] + rho * 0.16666666666666666f * (u[2] * u[2]);
+  pdf.get(6u) = rho * -0.16666666666666666f * u[2] + rho * -0.16666666666666666f * (u[0] * u[0]) + rho * -0.16666666666666666f * (u[1] * u[1]) + rho * 0.055555555555555552f + rho * 0.16666666666666666f * (u[2] * u[2]);
+  pdf.get(7u) = rho * -0.083333333333333329f * u[0] + rho * -0.25f * u[0] * u[1] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[1] + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[1] * u[1]);
+  pdf.get(8u) = rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] + rho * 0.083333333333333329f * u[1] + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.25f * u[0] * u[1];
+  pdf.get(9u) = rho * -0.083333333333333329f * u[0] + rho * -0.083333333333333329f * u[1] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.25f * u[0] * u[1];
+  pdf.get(10u) = rho * -0.083333333333333329f * u[1] + rho * -0.25f * u[0] * u[1] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[1] * u[1]);
+  pdf.get(11u) = rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[1] + rho * 0.083333333333333329f * u[2] + rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[1] * u[2];
+  pdf.get(12u) = rho * -0.083333333333333329f * u[1] + rho * -0.25f * u[1] * u[2] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[2] + rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.083333333333333329f * (u[2] * u[2]);
+  pdf.get(13u) = rho * -0.083333333333333329f * u[0] + rho * -0.25f * u[0] * u[2] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[2] + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[2] * u[2]);
+  pdf.get(14u) = rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] + rho * 0.083333333333333329f * u[2] + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[0] * u[2];
+  pdf.get(15u) = rho * -0.083333333333333329f * u[2] + rho * -0.25f * u[1] * u[2] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[1] + rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.083333333333333329f * (u[2] * u[2]);
+  pdf.get(16u) = rho * -0.083333333333333329f * u[1] + rho * -0.083333333333333329f * u[2] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * (u[1] * u[1]) + rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[1] * u[2];
+  pdf.get(17u) = rho * -0.083333333333333329f * u[0] + rho * -0.083333333333333329f * u[2] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[2] * u[2]) + rho * 0.25f * u[0] * u[2];
+  pdf.get(18u) = rho * -0.083333333333333329f * u[2] + rho * -0.25f * u[0] * u[2] + rho * 0.027777777777777776f + rho * 0.083333333333333329f * u[0] + rho * 0.083333333333333329f * (u[0] * u[0]) + rho * 0.083333333333333329f * (u[2] * u[2]);
 }
 // LCOV_EXCL_STOP
 } // namespace Equilibrium
 
 namespace Density {
 // LCOV_EXCL_START
-__global__ void kernel_get(gpu::FieldAccessor<float> pdf,
-                           float *RESTRICT rho_out) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
+__global__ void kernel_get(
+    gpu::FieldAccessor<float> pdf,
+    float *RESTRICT rho_out) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
   pdf.set(blockIdx, threadIdx);
   rho_out += offset;
   if (pdf.isValidPosition()) {
@@ -746,16 +694,15 @@ __global__ void kernel_get(gpu::FieldAccessor<float> pdf,
     const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float vel2Term = f_12 + f_13 + f_5;
-    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                      vel1Term + vel2Term;
+    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     rho_out[0u] = rho;
   }
 }
 
-__global__ void kernel_set(gpu::FieldAccessor<float> pdf,
-                           float const *RESTRICT rho_in) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
+__global__ void kernel_set(
+    gpu::FieldAccessor<float> pdf,
+    float const *RESTRICT rho_in) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
   pdf.set(blockIdx, threadIdx);
   rho_in += offset;
   if (pdf.isValidPosition()) {
@@ -783,41 +730,39 @@ __global__ void kernel_set(gpu::FieldAccessor<float> pdf,
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const float vel2Term = f_12 + f_13 + f_5;
-    const float momdensity_2 =
-        f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                      vel1Term + vel2Term;
+    const float momdensity_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
 
     // calculate current velocity (before density change)
     float const rho_inv = float{1} / rho;
-    float const u_old[3] = {momdensity_0 * rho_inv, momdensity_1 * rho_inv,
-                            momdensity_2 * rho_inv};
+    float const u_old[3] = {momdensity_0 * rho_inv, momdensity_1 * rho_inv, momdensity_2 * rho_inv};
 
     Equilibrium::kernel_set_device(pdf, u_old, rho_in[0u]);
   }
 }
 // LCOV_EXCL_STOP
 
-float get(gpu::GPUField<float> const *pdf_field, Cell const &cell) {
+float get(
+    gpu::GPUField<float> const *pdf_field,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(1u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   float rho = dev_data[0u];
   return rho;
 }
 
-std::vector<float> get(gpu::GPUField<float> const *pdf_field,
-                       CellInterval const &ci) {
+std::vector<float> get(
+    gpu::GPUField<float> const *pdf_field,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(ci.numCells());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   std::vector<float> out(dev_data.size());
@@ -825,24 +770,27 @@ std::vector<float> get(gpu::GPUField<float> const *pdf_field,
   return out;
 }
 
-void set(gpu::GPUField<float> *pdf_field, const float rho, Cell const &cell) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    const float rho,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(1u, rho);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void set(gpu::GPUField<float> *pdf_field, std::vector<float> const &values,
-         CellInterval const &ci) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    std::vector<float> const &values,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
@@ -850,11 +798,11 @@ void set(gpu::GPUField<float> *pdf_field, std::vector<float> const &values,
 
 namespace Velocity {
 // LCOV_EXCL_START
-__global__ void kernel_get(gpu::FieldAccessor<float> pdf,
-                           gpu::FieldAccessor<float> force,
-                           float *RESTRICT u_out) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
+__global__ void kernel_get(
+    gpu::FieldAccessor<float> pdf,
+    gpu::FieldAccessor<float> force,
+    float *RESTRICT u_out) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
   pdf.set(blockIdx, threadIdx);
   force.set(blockIdx, threadIdx);
   u_out += offset;
@@ -883,10 +831,8 @@ __global__ void kernel_get(gpu::FieldAccessor<float> pdf,
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const float vel2Term = f_12 + f_13 + f_5;
-    const float momdensity_2 =
-        f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                      vel1Term + vel2Term;
+    const float momdensity_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     const float md_0 = force.get(0) * 0.50000000000000000f + momdensity_0;
     const float md_1 = force.get(1) * 0.50000000000000000f + momdensity_1;
     const float md_2 = force.get(2) * 0.50000000000000000f + momdensity_2;
@@ -897,12 +843,12 @@ __global__ void kernel_get(gpu::FieldAccessor<float> pdf,
   }
 }
 
-__global__ void kernel_set(gpu::FieldAccessor<float> pdf,
-                           gpu::FieldAccessor<float> velocity,
-                           gpu::FieldAccessor<float> force,
-                           float const *RESTRICT u_in) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
+__global__ void kernel_set(
+    gpu::FieldAccessor<float> pdf,
+    gpu::FieldAccessor<float> velocity,
+    gpu::FieldAccessor<float> force,
+    float const *RESTRICT u_in) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
   pdf.set(blockIdx, threadIdx);
   velocity.set(blockIdx, threadIdx);
   force.set(blockIdx, threadIdx);
@@ -931,8 +877,7 @@ __global__ void kernel_set(gpu::FieldAccessor<float> pdf,
     const float vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float vel2Term = f_12 + f_13 + f_5;
-    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                      vel1Term + vel2Term;
+    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     const float u_0 = -force.get(0) * 0.50000000000000000f / rho + u[0];
     const float u_1 = -force.get(1) * 0.50000000000000000f / rho + u[1];
     const float u_2 = -force.get(2) * 0.50000000000000000f / rho + u[2];
@@ -947,16 +892,16 @@ __global__ void kernel_set(gpu::FieldAccessor<float> pdf,
 }
 // LCOV_EXCL_STOP
 
-Vector3<float> get(gpu::GPUField<float> const *pdf_field,
-                   gpu::GPUField<float> const *force_field, Cell const &cell) {
+Vector3<float> get(
+    gpu::GPUField<float> const *pdf_field,
+    gpu::GPUField<float> const *force_field,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   Vector3<float> vec;
@@ -964,16 +909,15 @@ Vector3<float> get(gpu::GPUField<float> const *pdf_field,
   return vec;
 }
 
-std::vector<float> get(gpu::GPUField<float> const *pdf_field,
-                       gpu::GPUField<float> const *force_field,
-                       CellInterval const &ci) {
+std::vector<float> get(
+    gpu::GPUField<float> const *pdf_field,
+    gpu::GPUField<float> const *force_field,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   std::vector<float> out(dev_data.size());
@@ -981,35 +925,35 @@ std::vector<float> get(gpu::GPUField<float> const *pdf_field,
   return out;
 }
 
-void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
-         gpu::GPUField<float> const *force_field, Vector3<float> const &u,
-         Cell const &cell) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    gpu::GPUField<float> *velocity_field,
+    gpu::GPUField<float> const *force_field,
+    Vector3<float> const &u,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(u.data(), u.data() + 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*velocity_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*velocity_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
-void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
-         gpu::GPUField<float> const *force_field,
-         std::vector<float> const &values, CellInterval const &ci) {
+void set(
+    gpu::GPUField<float> *pdf_field,
+    gpu::GPUField<float> *velocity_field,
+    gpu::GPUField<float> const *force_field,
+    std::vector<float> const &values,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*velocity_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*velocity_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
@@ -1017,12 +961,12 @@ void set(gpu::GPUField<float> *pdf_field, gpu::GPUField<float> *velocity_field,
 
 namespace Force {
 // LCOV_EXCL_START
-__global__ void kernel_set(gpu::FieldAccessor<float> pdf,
-                           gpu::FieldAccessor<float> velocity,
-                           gpu::FieldAccessor<float> force,
-                           float const *RESTRICT f_in) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
+__global__ void kernel_set(
+    gpu::FieldAccessor<float> pdf,
+    gpu::FieldAccessor<float> velocity,
+    gpu::FieldAccessor<float> force,
+    float const *RESTRICT f_in) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
   pdf.set(blockIdx, threadIdx);
   velocity.set(blockIdx, threadIdx);
   force.set(blockIdx, threadIdx);
@@ -1052,10 +996,8 @@ __global__ void kernel_set(gpu::FieldAccessor<float> pdf,
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const float vel2Term = f_12 + f_13 + f_5;
-    const float momdensity_2 =
-        f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                      vel1Term + vel2Term;
+    const float momdensity_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     const float md_0 = f_in[0u] * 0.50000000000000000f + momdensity_0;
     const float md_1 = f_in[1u] * 0.50000000000000000f + momdensity_1;
     const float md_2 = f_in[2u] * 0.50000000000000000f + momdensity_2;
@@ -1074,35 +1016,31 @@ __global__ void kernel_set(gpu::FieldAccessor<float> pdf,
 
 void set(gpu::GPUField<float> const *pdf_field,
          gpu::GPUField<float> *velocity_field,
-         gpu::GPUField<float> *force_field, Vector3<float> const &u,
+         gpu::GPUField<float> *force_field,
+         Vector3<float> const &u,
          Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(u.data(), u.data() + 3u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*velocity_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*velocity_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
 
 void set(gpu::GPUField<float> const *pdf_field,
          gpu::GPUField<float> *velocity_field,
-         gpu::GPUField<float> *force_field, std::vector<float> const &values,
+         gpu::GPUField<float> *force_field,
+         std::vector<float> const &values,
          CellInterval const &ci) {
   thrust::device_vector<float> dev_data(values.begin(), values.end());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*velocity_field, ci));
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*force_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*velocity_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
   kernel.addParam(const_cast<const float *>(dev_data_ptr));
   kernel();
 }
@@ -1110,11 +1048,11 @@ void set(gpu::GPUField<float> const *pdf_field,
 
 namespace MomentumDensity {
 // LCOV_EXCL_START
-__global__ void kernel_sum(gpu::FieldAccessor<float> pdf,
-                           gpu::FieldAccessor<float> force,
-                           float *RESTRICT out) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
+__global__ void kernel_sum(
+    gpu::FieldAccessor<float> pdf,
+    gpu::FieldAccessor<float> force,
+    float *RESTRICT out) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
   pdf.set(blockIdx, threadIdx);
   force.set(blockIdx, threadIdx);
   out += offset;
@@ -1143,10 +1081,8 @@ __global__ void kernel_sum(gpu::FieldAccessor<float> pdf,
     const float vel1Term = f_1 + f_11 + f_15 + f_7;
     const float momdensity_1 = -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
     const float vel2Term = f_12 + f_13 + f_5;
-    const float momdensity_2 =
-        f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                      vel1Term + vel2Term;
+    const float momdensity_2 = f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+    const float rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term + vel1Term + vel2Term;
     const float md_0 = force.get(0) * 0.50000000000000000f + momdensity_0;
     const float md_1 = force.get(1) * 0.50000000000000000f + momdensity_1;
     const float md_2 = force.get(2) * 0.50000000000000000f + momdensity_2;
@@ -1157,18 +1093,17 @@ __global__ void kernel_sum(gpu::FieldAccessor<float> pdf,
 }
 // LCOV_EXCL_STOP
 
-Vector3<float> reduce(gpu::GPUField<float> const *pdf_field,
-                      gpu::GPUField<float> const *force_field) {
+Vector3<float> reduce(
+    gpu::GPUField<float> const *pdf_field,
+    gpu::GPUField<float> const *force_field) {
   thrust::device_vector<float> dev_data(3u, float{0});
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
     Cell cell(x, y, z);
     CellInterval ci(cell, cell);
     auto kernel = gpu::make_kernel(kernel_sum);
-    kernel.addFieldIndexingParam(
-        gpu::FieldIndexing<float>::interval(*pdf_field, ci));
-    kernel.addFieldIndexingParam(
-        gpu::FieldIndexing<float>::interval(*force_field, ci));
+    kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+    kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*force_field, ci));
     kernel.addParam(dev_data_ptr);
     kernel();
   });
@@ -1180,10 +1115,10 @@ Vector3<float> reduce(gpu::GPUField<float> const *pdf_field,
 
 namespace PressureTensor {
 // LCOV_EXCL_START
-__global__ void kernel_get(gpu::FieldAccessor<float> pdf,
-                           float *RESTRICT p_out) {
-  auto const offset =
-      getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 9u);
+__global__ void kernel_get(
+    gpu::FieldAccessor<float> pdf,
+    float *RESTRICT p_out) {
+  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 9u);
   pdf.set(blockIdx, threadIdx);
   p_out += offset;
   if (pdf.isValidPosition()) {
@@ -1206,18 +1141,15 @@ __global__ void kernel_get(gpu::FieldAccessor<float> pdf,
     float const f_16 = pdf.get(16u);
     float const f_17 = pdf.get(17u);
     float const f_18 = pdf.get(18u);
-    const float p_0 =
-        f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
+    const float p_0 = f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
     const float p_1 = -f_10 - f_7 + f_8 + f_9;
     const float p_2 = -f_13 + f_14 + f_17 - f_18;
     const float p_3 = -f_10 - f_7 + f_8 + f_9;
-    const float p_4 =
-        f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
+    const float p_4 = f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
     const float p_5 = f_11 - f_12 - f_15 + f_16;
     const float p_6 = -f_13 + f_14 + f_17 - f_18;
     const float p_7 = f_11 - f_12 - f_15 + f_16;
-    const float p_8 =
-        f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
+    const float p_8 = f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
     p_out[0u] = p_0;
     p_out[1u] = p_1;
     p_out[2u] = p_2;
@@ -1231,13 +1163,14 @@ __global__ void kernel_get(gpu::FieldAccessor<float> pdf,
 }
 // LCOV_EXCL_STOP
 
-Matrix3<float> get(gpu::GPUField<float> const *pdf_field, Cell const &cell) {
+Matrix3<float> get(
+    gpu::GPUField<float> const *pdf_field,
+    Cell const &cell) {
   CellInterval ci(cell, cell);
   thrust::device_vector<float> dev_data(9u);
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   Matrix3<float> out;
@@ -1245,13 +1178,13 @@ Matrix3<float> get(gpu::GPUField<float> const *pdf_field, Cell const &cell) {
   return out;
 }
 
-std::vector<float> get(gpu::GPUField<float> const *pdf_field,
-                       CellInterval const &ci) {
+std::vector<float> get(
+    gpu::GPUField<float> const *pdf_field,
+    CellInterval const &ci) {
   thrust::device_vector<float> dev_data(9u * ci.numCells());
   auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
   auto kernel = gpu::make_kernel(kernel_get);
-  kernel.addFieldIndexingParam(
-      gpu::FieldIndexing<float>::interval(*pdf_field, ci));
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<float>::interval(*pdf_field, ci));
   kernel.addParam(dev_data_ptr);
   kernel();
   std::vector<float> out(dev_data.size());

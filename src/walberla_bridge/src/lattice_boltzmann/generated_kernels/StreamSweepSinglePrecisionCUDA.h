@@ -56,7 +56,7 @@ class StreamSweepSinglePrecisionCUDA {
 public:
   StreamSweepSinglePrecisionCUDA(BlockDataID forceID_, BlockDataID pdfsID_,
                                  BlockDataID velocityID_)
-      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_){};
+      : forceID(forceID_), pdfsID(pdfsID_), velocityID(velocityID_) {};
 
   ~StreamSweepSinglePrecisionCUDA() {
     for (auto p : cache_pdfs_) {

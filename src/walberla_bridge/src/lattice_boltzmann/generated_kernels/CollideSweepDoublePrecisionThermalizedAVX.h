@@ -61,7 +61,7 @@ public:
       : forceID(forceID_), pdfsID(pdfsID_), kT_(kT), omega_bulk_(omega_bulk),
         omega_even_(omega_even), omega_odd_(omega_odd),
         omega_shear_(omega_shear), seed_(seed), time_step_(time_step),
-        configured_(false){};
+        configured_(false) {};
 
   void run(IBlock *block);
 
