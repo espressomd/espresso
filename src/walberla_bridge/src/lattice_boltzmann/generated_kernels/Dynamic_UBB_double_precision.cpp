@@ -38,7 +38,7 @@ namespace lbm {
 #endif
 
 #ifdef __CUDACC__
-#pragma push
+
 #ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
 #pragma nv_diag_suppress 177
 #else
@@ -80,7 +80,7 @@ static FUNC_PREFIX void dynamic_ubb_double_precision_boundary_Dynamic_UBB_double
 #endif
 
 #ifdef __CUDACC__
-#pragma pop
+
 #endif
 
 void Dynamic_UBB_double_precision::run_impl(IBlock *block, IndexVectors::Type type) {
