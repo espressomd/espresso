@@ -43,7 +43,7 @@ namespace lbm {
 #ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
 #pragma nv_diag_suppress 177
 #else
-#pragma diag_suppress 177
+
 #endif
 #endif
 // NOLINTBEGIN(readability-non-const-parameter*)
