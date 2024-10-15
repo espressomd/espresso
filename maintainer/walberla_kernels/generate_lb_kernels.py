@@ -218,7 +218,7 @@ with code_generation_context.CodeGeneration() as ctx:
                 f.write(content)
 
     # boundary conditions
-    ubb_dynamic = lbmpy_espresso.UBB(
+    ubb_dynamic = lbmpy.boundaries.UBB(
         lambda *args: None, dim=3, data_type=config.data_type.default_factory())
     ubb_data_handler = lbmpy_espresso.BounceBackSlipVelocityUBB(
         method.stencil, ubb_dynamic)
@@ -227,7 +227,7 @@ with code_generation_context.CodeGeneration() as ctx:
         lbmpy_walberla.generate_boundary(
             ctx, f"Dynamic_UBB_{precision_suffix}{target_suffix}", ubb_dynamic,
             method, additional_data_handler=ubb_data_handler,
-            streaming_pattern=streaming_pattern, target=target)
+            streaming_pattern="pull", target=target)
 
         with open(f"Dynamic_UBB_{precision_suffix}{target_suffix}.h", "r+") as f:
             content = f.read()

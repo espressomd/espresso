@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 /**
  * @file
@@ -756,19 +756,6 @@ double get(
   return rho;
 }
 
-void set(
-    gpu::GPUField<double> *pdf_field,
-    const double rho,
-    Cell const &cell) {
-  CellInterval ci(cell, cell);
-  thrust::device_vector<double> dev_data(1u, rho);
-  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
-  auto kernel = gpu::make_kernel(kernel_set);
-  kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*pdf_field, ci));
-  kernel.addParam(const_cast<const double *>(dev_data_ptr));
-  kernel();
-}
-
 std::vector<double> get(
     gpu::GPUField<double> const *pdf_field,
     CellInterval const &ci) {
@@ -781,6 +768,19 @@ std::vector<double> get(
   std::vector<double> out(dev_data.size());
   thrust::copy(dev_data.begin(), dev_data.end(), out.begin());
   return out;
+}
+
+void set(
+    gpu::GPUField<double> *pdf_field,
+    const double rho,
+    Cell const &cell) {
+  CellInterval ci(cell, cell);
+  thrust::device_vector<double> dev_data(1u, rho);
+  auto const dev_data_ptr = thrust::raw_pointer_cast(dev_data.data());
+  auto kernel = gpu::make_kernel(kernel_set);
+  kernel.addFieldIndexingParam(gpu::FieldIndexing<double>::interval(*pdf_field, ci));
+  kernel.addParam(const_cast<const double *>(dev_data_ptr));
+  kernel();
 }
 
 void set(

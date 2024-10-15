@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #include <cmath>
 
@@ -166,8 +166,8 @@ static FUNC_PREFIX void streamsweepdoubleprecisionavx_streamsweepdoubleprecision
 
 void StreamSweepDoublePrecisionAVX::run(IBlock *block) {
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {
@@ -235,8 +235,8 @@ void StreamSweepDoublePrecisionAVX::runOnCellInterval(const shared_ptr<Structure
   if (ci.empty())
     return;
 
-  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto pdfs = block->getData<field::GhostLayerField<double, 19>>(pdfsID);
+  auto force = block->getData<field::GhostLayerField<double, 3>>(forceID);
   auto velocity = block->getData<field::GhostLayerField<double, 3>>(velocityID);
   field::GhostLayerField<double, 19> *pdfs_tmp;
   {

@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #include "PackInfoPdfDoublePrecision.h"
 #include "core/DataTypes.h"

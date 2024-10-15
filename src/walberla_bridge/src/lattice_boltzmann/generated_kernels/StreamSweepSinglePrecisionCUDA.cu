@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit b0842e1a493ce19ef1bbb8d2cf382fc343970a7f
+// kernel generated with pystencils v1.3.3, lbmpy v1.3.3, lbmpy_walberla/pystencils_walberla from waLBerla commit 04f4adbdfc0af983e2d9b72e244d775f37d77034
 
 #include <cmath>
 
@@ -108,9 +108,9 @@ static FUNC_PREFIX __launch_bounds__(256) void streamsweepsingleprecisioncuda_st
 
 void StreamSweepSinglePrecisionCUDA::run(IBlock *block, gpuStream_t stream) {
 
+  auto force = block->getData<gpu::GPUField<float>>(forceID);
   auto velocity = block->getData<gpu::GPUField<float>>(velocityID);
   auto pdfs = block->getData<gpu::GPUField<float>>(pdfsID);
-  auto force = block->getData<gpu::GPUField<float>>(forceID);
   gpu::GPUField<float> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
@@ -176,9 +176,9 @@ void StreamSweepSinglePrecisionCUDA::runOnCellInterval(const shared_ptr<Structur
   if (ci.empty())
     return;
 
+  auto force = block->getData<gpu::GPUField<float>>(forceID);
   auto velocity = block->getData<gpu::GPUField<float>>(velocityID);
   auto pdfs = block->getData<gpu::GPUField<float>>(pdfsID);
-  auto force = block->getData<gpu::GPUField<float>>(forceID);
   gpu::GPUField<float> *pdfs_tmp;
   {
     // Getting temporary field pdfs_tmp
