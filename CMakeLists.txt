@@ -372,13 +372,16 @@ else()
 endif()
 
 # OpenMPI checks the number of processes against the number of CPUs
-set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "")
+set(ESPRESSO_MPIEXEC_PREFLAGS "")
 # Open MPI 4.x has a bug on NUMA archs that prevents running in singleton mode
 set(ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA OFF)
 set(ESPRESSO_CPU_MODEL_NAME_OMPI_SINGLETON_NUMA_PATTERN "AMD (EPYC|Ryzen)")
 
 if("${ESPRESSO_MPIEXEC_VENDOR}" STREQUAL "OpenMPI")
-  set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+  list(APPEND ESPRESSO_MPIEXEC_PREFLAGS "--oversubscribe")
+  if(ESPRESSO_INSIDE_DOCKER)
+    list(APPEND ESPRESSO_MPIEXEC_PREFLAGS "--bind-to" "none")
+  endif()
   if(${ESPRESSO_MPIEXEC_VERSION} VERSION_LESS 5.0)
     if(NOT DEFINED ESPRESSO_CPU_MODEL_NAME)
       if(CMAKE_SYSTEM_NAME STREQUAL Linux)

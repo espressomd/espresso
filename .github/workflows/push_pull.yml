@@ -39,7 +39,7 @@ jobs:
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
-      options: --cpus 2
+      options: --cpus 4
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -55,8 +55,8 @@ jobs:
       - name: Build and check
         uses: ./.github/actions/build_and_check
         env:
-          build_procs: 2
-          check_procs: 2
+          build_procs: 4
+          check_procs: 4
           myconfig: 'maxset'
           with_ccache: 'true'
           with_cuda: 'false'
@@ -78,7 +78,7 @@ jobs:
       credentials:
          username: ${{ github.actor }}
          password: ${{ secrets.github_token }}
-      options: --cpus 2
+      options: --cpus 4
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -94,8 +94,8 @@ jobs:
       - name: Build and check
         uses: ./.github/actions/build_and_check
         env:
-          build_procs: 2
-          check_procs: 2
+          build_procs: 4
+          check_procs: 4
           myconfig: 'maxset'
           with_ccache: 'true'
           with_cuda: 'false'

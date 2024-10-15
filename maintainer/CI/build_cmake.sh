@@ -79,20 +79,14 @@ ci_procs=2
 if [ "${GITLAB_CI}" = "true" ]; then
     if [[ "${OSTYPE}" == "linux-gnu"* ]]; then
         # Linux runner
-        if grep -q "i7-3820" /proc/cpuinfo; then
-            # communication bottleneck for more than 2 cores on Intel i7-3820
-            ci_procs=2
-        else
-            ci_procs=4
-        fi
+        ci_procs=4
     elif [[ "${OSTYPE}" == "darwin"* ]]; then
         # macOS runner
-        ci_procs=2
+        ci_procs=4
     fi
 elif [ "${GITHUB_ACTIONS}" = "true" ]; then
-    # GitHub Actions only provide 1 core; request 2 cores to run tests
-    # in parallel (OpenMPI allows oversubscription)
-    ci_procs=2
+    # GitHub Actions provide 4 cores
+    ci_procs=4
 else
     ci_procs=$(nproc)
 fi
@@ -131,7 +125,6 @@ set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 500
 set_default_value hide_gpu false
-set_default_value mpiexec_preflags ""
 
 if [ "${make_check_unit_tests}" = true ] || [ "${make_check_python}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
@@ -166,9 +159,6 @@ if [ "${with_walberla}" = true ]; then
   if [ "${with_walberla_avx}" = true ]; then
     cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
   fi
-  # disable default OpenMPI CPU binding mechanism to avoid stale references to
-  # waLBerla objects when multiple LB python tests run in parallel on NUMA archs
-  mpiexec_preflags="${mpiexec_preflags:+$mpiexec_preflags;}--bind-to;none"
 fi
 
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_COVERAGE=${with_coverage}"
@@ -328,7 +318,7 @@ else
     if [ "${check_proc_particle_test}" -gt 4 ]; then
       check_proc_particle_test=4
     fi
-    mpiexec -n ${check_proc_particle_test} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
+    mpiexec -n ${check_proc_particle_test} $(mpiexec --version | grep -Pq "\\(Open(RTE| MPI)\\)" && echo "--oversubscribe --bind-to none") ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
 
     end "TEST"
 fi
