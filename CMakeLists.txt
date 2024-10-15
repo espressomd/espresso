@@ -421,6 +421,15 @@ else()
   endfunction()
 endif()
 
+# mpiexec argument to disable pinning of processes to cores. Used in test suite
+# as several tests are run at the same time.
+if(NOT APPLE)
+  set(ESPRESSO_MPIEXEC_DONT_PIN --bind-to none)
+else()
+  # not supported on Apple
+  set(ESPRESSO_MPIEXEC_DONT_PIN "")
+endif()
+
 #
 # Boost
 #
