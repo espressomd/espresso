@@ -110,4 +110,6 @@ private:
                       int bond_type);
 };
 
+void execute_bond_breakage(System::System &system, BondBreakage &bond_breakage);
+
 } // namespace BondBreakage

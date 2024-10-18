@@ -55,3 +55,19 @@ class BreakageSpecs(ScriptObjectMap):
 
     def __setitem__(self, key, value):
         return super().__setitem__(self._get_key(key), value)
+
+
+@script_interface_register
+class BondBreakage(ScriptInterfaceHelper):
+    """Bond breakage interface.
+
+    This class provides methods to manage and manipulate bond breakage.
+
+    Methods
+    -------
+    execute(parameters)
+        Executes the bond breakage with the given parameters.
+    """
+
+    _so_name = "BondBreakage::BondBreakage"
+    _so_bind_methods = ("execute",)

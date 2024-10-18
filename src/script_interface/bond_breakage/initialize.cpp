@@ -18,6 +18,7 @@
  */
 
 #include "initialize.hpp"
+#include "BondBreakage.hpp"
 #include "BreakageSpec.hpp"
 #include "BreakageSpecs.hpp"
 
@@ -26,6 +27,7 @@ namespace BondBreakage {
 void initialize(Utils::Factory<ObjectHandle> *f) {
   f->register_new<BreakageSpec>("BondBreakage::BreakageSpec");
   f->register_new<BreakageSpecs>("BondBreakage::BreakageSpecs");
+  f->register_new<BondBreakage>("BondBreakage::BondBreakage");
 }
 } // namespace BondBreakage
 } // namespace ScriptInterface
