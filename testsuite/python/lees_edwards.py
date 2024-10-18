@@ -28,10 +28,18 @@ import numpy as np
 import itertools
 
 
+def deriv(f, x, h=1E-5):
+    # central difference quotient
+    return 1 / (2 * h) * (f(x + h) - f(x - h))
+
+
 np.random.seed(42)
 params_lin = {'initial_pos_offset': 0.1, 'time_0': 0.1, 'shear_velocity': 1.2}
 params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
-              'omega': 2.51}
+              'omega': 2.51, "decay_rate": 0}
+params_osc_decay = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
+                    'omega': 2.51, "decay_rate": 0.1}
+
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
 
 
@@ -41,6 +49,8 @@ def get_lin_pos_offset(time, initial_pos_offset=None,
 
 
 osc_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc)
+osc_decay_protocol = espressomd.lees_edwards.OscillatoryShear(
+    **params_osc_decay)
 off_protocol = espressomd.lees_edwards.Off()
 const_offset_protocol = espressomd.lees_edwards.LinearShear(
     initial_pos_offset=2.2, shear_velocity=0)
@@ -118,10 +128,6 @@ class LeesEdwards(ut.TestCase):
             system.lees_edwards.pos_offset, expected_pos)
 
         # Check if the offset is determined correctly
-
-        system.time = 0.0
-
-        # Oscillatory shear
         system.lees_edwards.protocol = osc_protocol
 
         # check parameter setter/getter consistency
@@ -139,6 +145,8 @@ class LeesEdwards(ut.TestCase):
                 system.lees_edwards.shear_velocity, expected_vel)
             self.assertAlmostEqual(
                 system.lees_edwards.pos_offset, expected_pos)
+
+        system.time = 0.0
 
         # Check that time change during integration updates offsets
         system.integrator.run(1)
@@ -160,6 +168,30 @@ class LeesEdwards(ut.TestCase):
             shear_direction="y", shear_plane_normal="z", protocol=lin_protocol)
         self.assertEqual(system.lees_edwards.shear_direction, "y")
         self.assertEqual(system.lees_edwards.shear_plane_normal, "z")
+
+        # Oscillatory shear
+        # Oscillatory shear with exponential decay
+        system.lees_edwards.protocol = osc_decay_protocol
+
+        # check parameter setter/getter consistency
+        self.assertEqual(
+            system.lees_edwards.protocol.get_params(), params_osc_decay)
+
+        def osc_decay_pos(t): return params_osc_decay["initial_pos_offset"] +\
+            params_osc_decay["amplitude"] * np.exp(-(t - params_osc_decay["time_0"]) * params_osc_decay["decay_rate"]) *\
+            np.sin(params_osc_decay["omega"] *
+                   (t - params_osc_decay["time_0"]))
+
+        # check pos offset and shear velocity at different times,
+        # check that LE offsets are recalculated on simulation time change
+        for time in [0., 2.3]:
+            system.time = time
+            expected_pos = osc_decay_pos(time)
+            expected_vel = deriv(osc_decay_pos, time)
+            self.assertAlmostEqual(
+                system.lees_edwards.pos_offset, expected_pos)
+            self.assertAlmostEqual(
+                system.lees_edwards.shear_velocity, expected_vel)
 
         # Check that LE is disabled correctly via parameter
         system.lees_edwards.protocol = None
