@@ -111,6 +111,7 @@ HDF5 external
 SCAFACOS external
 GSL external
 STOKESIAN_DYNAMICS external
+METATENSOR external
 WALBERLA external
 WALBERLA_FFT external
 VALGRIND external

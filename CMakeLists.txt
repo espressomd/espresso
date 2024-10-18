@@ -113,6 +113,7 @@ option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
+option(ESPRESSO_BUILD_WITH_METATENSOR "Build with Metatensor support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA
        "Build with waLBerla lattice-Boltzmann support" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
@@ -609,6 +610,47 @@ endif()
 if(ESPRESSO_BUILD_BENCHMARKS)
   add_custom_target(benchmark)
   add_subdirectory(maintainer/benchmarks)
+endif()
+
+#
+# Metatensor
+#
+
+if(ESPRESSO_BUILD_WITH_METATENSOR)
+  # Bring the `torch` target in scope to allow evaluation of cmake generator
+  # expression from `metatensor_torch`
+  find_package(Torch REQUIRED)
+
+  # # cmake-format: off set(METATENSOR_URL_BASE
+  # "https://github.com/lab-cosmo/metatensor/releases/download")
+  # set(METATENSOR_CORE_VERSION "0.1.8") set(METATENSOR_TORCH_VERSION "0.5.3")
+  #
+  # include(FetchContent) set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  # FetchContent_Declare( metatensor URL
+  # "${METATENSOR_URL_BASE}/metatensor-core-v${METATENSOR_CORE_VERSION}/metatensor-core-cxx-${METATENSOR_CORE_VERSION}.tar.gz"
+  # URL_HASH SHA1=3ed389770e5ec6dbb8cbc9ed88f84d6809b552ef )
+  # set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  #
+  # # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21146
+  # if(NOT DEFINED metatensor_SOURCE_DIR OR NOT EXISTS
+  # "${metatensor_SOURCE_DIR}") message(STATUS "Fetching metatensor
+  # v${METATENSOR_CORE_VERSION} from github") FetchContent_Populate(metatensor)
+  # endif() set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  #
+  # FetchContent_Declare( metatensor_torch URL
+  # "${METATENSOR_URL_BASE}/metatensor-torch-v${METATENSOR_TORCH_VERSION}/metatensor-torch-cxx-${METATENSOR_TORCH_VERSION}.tar.gz"
+  # ) set(BUILD_SHARED_LIBS on CACHE BOOL "") if(NOT DEFINED
+  # metatensor_torch_SOURCE_DIR OR NOT EXISTS "${metatensor_torch_SOURCE_DIR}")
+  # message(STATUS "Fetching metatensor torch v${METATENSOR_CORE_VERSION} from
+  # github") FetchContent_Populate(metatensor_torch) endif() # cmake-format: on
+  # set(BUILD_SHARED_LIBS on CACHE BOOL "")
+  #
+  # set(METATENSOR_INSTALL_BOTH_STATIC_SHARED on CACHE BOOL "")
+  # add_subdirectory("${metatensor_SOURCE_DIR}")
+  # add_subdirectory("${metatensor_torch_SOURCE_DIR}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+  find_package(metatensor)
+  find_package(metatensor_torch)
 endif()
 
 #
