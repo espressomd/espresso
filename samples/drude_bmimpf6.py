@@ -107,7 +107,7 @@ if not os.path.exists(args.path):
 
 # TIMESTEP
 fs_to_md_time = 1.0e-2
-time_step_fs = 1.0
+time_step_fs = 0.5
 time_step_ns = time_step_fs * 1e-6
 dt = time_step_fs * fs_to_md_time
 system.time_step = dt
@@ -229,7 +229,7 @@ for i in range(n_ionpairs):
 # ENERGY MINIMIZATION
 print("\n-->E minimization")
 print(f"Before: {system.analysis.energy()['total']:.2e}")
-n_max_steps = 100000
+n_max_steps = 10000
 system.integrator.set_steepest_descent(f_max=5.0, gamma=0.01,
                                        max_displacement=0.01)
 system.integrator.run(n_max_steps)

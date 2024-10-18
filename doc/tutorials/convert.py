@@ -75,7 +75,7 @@ def add_cell_from_script(nb, filepath):
 
 
 def remove_empty_cells(nb):
-    for i in range(len(nb['cells']) - 1, 0, -1):
+    for i in range(len(nb["cells"]))[::-1]:
         cell = nb['cells'][i]
         if cell['source'].strip() == '':
             nb['cells'].pop(i)
@@ -90,11 +90,19 @@ def parse_solution_cell(cell):
 
 
 def convert_exercise2_to_code(nb):
-    for i in range(len(nb["cells"]) - 1, 0, -1):
+    for i in range(len(nb["cells"]))[::-1]:
         cell = nb["cells"][i]
-        solution = parse_solution_cell(cell)
-        if solution is not None:
-            cell["source"] = solution
+        if cell["cell_type"] != "markdown":
+            continue
+        source = cell["source"]
+        if source.startswith("<details") and source.endswith("</details>"):
+            m = re.search("```python\n(.+)\n```", source, flags=re.DOTALL)
+            solution = "# SOLUTION CELL\n" + m.group(1)
+            nb["cells"][i] = nbformat.v4.new_code_cell(source=solution)
+            if (i + 1) != len(nb["cells"]) and \
+                    nb["cells"][i + 1]["cell_type"] == "code" and \
+                    not nb["cells"][i + 1]["source"]:
+                del nb["cells"][i + 1]
 
 
 def disable_plot_interactivity(nb):

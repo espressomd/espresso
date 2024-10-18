@@ -188,7 +188,7 @@ plt.show()
         self.assertEqual(cell['source'], 'Question 1')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
-        self.assertEqual(cell['source'], '1')
+        self.assertEqual(cell['source'], '# SOLUTION CELL\n1')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'markdown')
         self.assertEqual(cell['source'], '1b')
@@ -199,7 +199,7 @@ plt.show()
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(
             cell['source'],
-            '2\nimport matplotlib.pyplot\nglobal_var = 20')
+            '# SOLUTION CELL\n2\nimport matplotlib.pyplot\nglobal_var = 20')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '3')
@@ -231,7 +231,7 @@ plt.show()
         self.assertEqual(cell['source'], 'Question 1')
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
-        self.assertEqual(cell['source'], '1')
+        self.assertEqual(cell['source'], '# SOLUTION CELL\n1')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
         with open(f_input, 'w', encoding='utf-8') as f:
@@ -253,6 +253,22 @@ plt.show()
         cell = next(cells)
         self.assertEqual(cell['cell_type'], 'code')
         self.assertEqual(cell['source'], '')
+        self.assertEqual(next(cells, 'EOF'), 'EOF')
+
+        # check operation is reversible
+        cmd = ['cells', '--to-py', str(f_input)]
+        self.run_command(cmd, f_input)
+        # read processed notebook
+        with open(f_input, encoding='utf-8') as f:
+            nb_output = nbformat.read(f, as_version=4)
+        # check cells
+        cells = iter(nb_output['cells'])
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'markdown')
+        self.assertEqual(cell['source'], 'Question 1')
+        cell = next(cells)
+        self.assertEqual(cell['cell_type'], 'code')
+        self.assertEqual(cell['source'], '# SOLUTION CELL\n1')
         self.assertEqual(next(cells, 'EOF'), 'EOF')
 
     @skipIfMissingModules

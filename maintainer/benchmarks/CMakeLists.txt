@@ -28,9 +28,9 @@ if(EXISTS ${MPIEXEC})
     OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
   if(mpi_version_result EQUAL 0 AND mpi_version_output MATCHES
                                     "\\(Open(RTE| MPI)\\) ([3-9]\\.|1[0-9])")
-    set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
+    set(ESPRESSO_MPIEXEC_PREFLAGS "--oversubscribe")
   else()
-    set(ESPRESSO_MPIEXEC_OVERSUBSCRIBE "")
+    set(ESPRESSO_MPIEXEC_PREFLAGS "")
   endif()
 endif()
 
@@ -86,7 +86,7 @@ function(PYTHON_BENCHMARK)
       add_test(
         NAME ${BENCHMARK_TEST_NAME}
         COMMAND
-          ${MPIEXEC} ${ESPRESSO_MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
+          ${MPIEXEC} ${ESPRESSO_MPIEXEC_PREFLAGS} ${MPIEXEC_NUMPROC_FLAG}
           ${BENCHMARK_NUM_PROC} ${MPIEXEC_PREFLAGS}
           ${CMAKE_BINARY_DIR}/pypresso ${BENCHMARK_FILE} ${BENCHMARK_ARGUMENTS}
           ${MPIEXEC_POSTFLAGS})
