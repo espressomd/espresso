@@ -47,13 +47,16 @@ public:
         p1, p2, ia_params, d, d.norm(), *m_system.bonded_ias,
         get_ptr(coulomb_kernel));
 
-    return energy >= m_cut_off;
+    return energy >= e_cut_off && d.norm() <= m_cut_off;
   }
   double get_cut_off() { return m_cut_off; }
   void set_cut_off(double c) { m_cut_off = c; }
 
+  double get_e_cut_off() { return e_cut_off; }
+  void set_e_cut_off(double e) { e_cut_off = e; }
+
 private:
-  double m_cut_off;
+  double m_cut_off, e_cut_off;
   System::System const &m_system;
 };
 } // namespace PairCriteria
