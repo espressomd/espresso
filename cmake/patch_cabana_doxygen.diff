@@ -1,0 +1,17 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c228d50a..00693256 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -216,12 +216,6 @@ if(Cabana_ENABLE_TESTING)
+   enable_testing()
+ endif()
+ 
+-# enable doxygen
+-find_package(Doxygen)
+-if(Doxygen_FOUND)
+-  doxygen_add_docs(doxygen core/src grid/src)
+-endif()
+-
+ ##---------------------------------------------------------------------------##
+ ## Libraries and Examples
+ ##---------------------------------------------------------------------------##

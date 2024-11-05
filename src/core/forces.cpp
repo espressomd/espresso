@@ -59,6 +59,10 @@
 #include <caliper/cali.h>
 #endif
 
+#ifdef CABANA
+#include <Cabana_Core.hpp>
+#endif
+
 #include <cassert>
 #include <cmath>
 #include <memory>

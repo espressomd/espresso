@@ -21,7 +21,11 @@
 
 #cmakedefine ESPRESSO_BUILD_WITH_CALIPER
 
+<<<<<<< HEAD
 #cmakedefine ESPRESSO_BUILD_WITH_FPE
+=======
+#cmakedefine ESPRESSO_BUILD_WITH_CABANA
+>>>>>>> 08d2a11ee (cabana setup)
 
 #define PACKAGE_NAME "${PROJECT_NAME}"
 

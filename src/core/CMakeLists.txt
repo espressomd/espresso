@@ -95,6 +95,13 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   add_subdirectory(fft)
 endif()
 
+if(ESPRESSO_BUILD_WITH_CABANA)
+  target_link_libraries(
+    espresso_core PRIVATE Cabana::Core
+  )
+  #target_link_libraries(espresso_core PRIVATE Kokkos::kokkos)
+endif()
+
 add_subdirectory(accumulators)
 add_subdirectory(analysis)
 add_subdirectory(bond_breakage)
