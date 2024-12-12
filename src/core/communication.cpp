@@ -98,6 +98,8 @@ void deinit() {
   Communication::m_callbacks.reset(); 
   
 #ifdef CABANA
+  std::cout << "Finalize" << std::endl;
+  
   Kokkos::finalize();
 #endif
   }

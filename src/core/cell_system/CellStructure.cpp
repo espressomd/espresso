@@ -50,6 +50,40 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
+
+#ifdef CABANA
+#include <Cabana_Core.hpp>
+#include "custom_verlet_list.hpp"
+#include "cabana_data.hpp"
+#endif
+
+#ifdef CABANA
+
+using data_types = Cabana::MemberTypes<double[3], double[3], int, int, int>;
+using memory_space = Kokkos::SharedSpace;
+using execution_space = Kokkos::DefaultExecutionSpace;
+
+using ListAlgorithm = Cabana::HalfNeighborTag;
+using ListType = Cabana::CustomVerletList<memory_space, ListAlgorithm, Cabana::VerletLayout2D>;
+
+
+CellStructure::~CellStructure() {
+  
+  std::cout << "Destroying CellStructure" << std::endl;
+  m_cabana_data.reset();
+};
+
+void CellStructure::set_cabana_data(std::unique_ptr<CabanaData> data) {
+  m_cabana_data = std::move(data);
+}
+
+CabanaData& CellStructure::get_cabana_data() {
+  return *m_cabana_data;
+}
+
+#endif
+
 
 CellStructure::CellStructure(BoxGeometry const &box)
     : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}

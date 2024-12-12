@@ -96,10 +96,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CABANA)
-  target_link_libraries(
-    espresso_core PRIVATE Cabana::Core
-  )
-  #target_link_libraries(espresso_core PRIVATE Kokkos::kokkos)
+  target_link_libraries(espresso_core PRIVATE Cabana::Core)
 endif()
 
 add_subdirectory(accumulators)

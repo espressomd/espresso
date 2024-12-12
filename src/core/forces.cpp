@@ -61,6 +61,7 @@
 
 #ifdef CABANA
 #include <Cabana_Core.hpp>
+#include "short_range_cabana.cpp"
 #endif
 
 #include <cassert>
@@ -179,6 +180,33 @@ void System::System::calculate_forces() {
   auto const collision_detection_cutoff = INACTIVE_CUTOFF;
 #endif
 
+  // TODO: Use #ifdef CABANA here
+  // but at the moments its faster for rebuilding to just change this to false
+#ifdef CABANA
+  cabana_short_range(
+    [
+      coulomb_kernel_ptr = get_ptr(coulomb_kernel), &bonded_ias = *bonded_ias,
+      &bond_breakage = *bond_breakage, &box_geo = *box_geo
+    ]
+    (
+      Particle &p1, int bond_id, std::span<Particle *> partners
+    ) 
+    {
+      return add_bonded_force(p1, bond_id, partners, bonded_ias,
+                              bond_breakage, box_geo, coulomb_kernel_ptr);
+    },
+    *cell_structure,
+    maximal_cutoff(),
+    bonded_ias->maximal_cutoff(),
+    *box_geo,
+    *nonbonded_ias,
+    particles,
+    ghost_particles,
+    VerletCriterion<>{*this, cell_structure->get_verlet_skin(),
+                      get_interaction_range(), coulomb_cutoff, dipole_cutoff,
+                      collision_detection_cutoff}
+  );
+#else
   short_range_loop(
       [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &bonded_ias = *bonded_ias,
        &bond_breakage = *bond_breakage, &box_geo = *box_geo](
@@ -210,7 +238,8 @@ void System::System::calculate_forces() {
       VerletCriterion<>{*this, cell_structure->get_verlet_skin(),
                         get_interaction_range(), coulomb_cutoff, dipole_cutoff,
                         collision_detection_cutoff});
-
+  
+#endif
   constraints->add_forces(particles, get_sim_time());
   oif_global->calculate_forces();
 
