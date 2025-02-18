@@ -162,6 +162,15 @@ CellSystem::CellSystem() {
        [this]() { return get_system().bonded_ias->maximal_cutoff(); }},
       {"interaction_range", AutoParameter::read_only,
        [this]() { return get_system().get_interaction_range(); }},
+      {"without_ghost_force_reduction", AutoParameter::read_only,
+       [this]() {
+         if (get_cell_structure().decomposition_type() !=
+             CellStructureType::REGULAR) {
+           return Variant{none};
+         }
+         auto const rd = get_regular_decomposition();
+         return Variant{rd.get_without_ghost_force_reduction()};
+       }},
   });
 }
 
@@ -299,6 +308,10 @@ void CellSystem::initialize(CellStructureType const &cs_type,
     m_cell_structure->set_hybrid_decomposition(cutoff_regular, n_square_types);
   } else if (cs_type == CellStructureType::REGULAR) {
     std::optional<std::pair<int, int>> fcb_pair = std::nullopt;
+    if (get_value_or(params, "without_ghost_force_reduction", false)) {
+      throw std::invalid_argument("Parameter 'without_ghost_force_reduction' "
+                                  "is not allowed for hybrid decomposition");
+    }
     if (params.contains("fully_connected_boundary") and
         not is_none(params.at("fully_connected_boundary"))) {
       auto const variant =
@@ -308,10 +321,14 @@ void CellSystem::initialize(CellStructureType const &cs_type,
                      coord(boost::get<std::string>(variant.at("direction")))}};
       });
     }
-    context()->parallel_try_catch([this, &fcb_pair]() {
-      m_cell_structure->set_regular_decomposition(
-          get_system().get_interaction_range(), fcb_pair);
-    });
+    auto const without_ghost_force_reduction =
+        get_value_or<bool>(params, "without_ghost_force_reduction", false);
+    context()->parallel_try_catch(
+        [this, &fcb_pair, without_ghost_force_reduction]() {
+          m_cell_structure->set_regular_decomposition(
+              get_system().get_interaction_range(), fcb_pair,
+              without_ghost_force_reduction);
+        });
   } else {
     system.set_cell_structure_topology(cs_type);
   }

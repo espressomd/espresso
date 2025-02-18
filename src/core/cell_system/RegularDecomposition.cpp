@@ -520,6 +520,7 @@ void RegularDecomposition::init_cell_interactions() {
 
           auto cell = &cells.at(
               get_linear_index(local_index(neighbor), ghost_cell_grid));
+
           if (ind2 > ind1) {
             red_neighbors.push_back(cell);
           } else {
@@ -670,10 +671,11 @@ GhostCommunicator RegularDecomposition::prepare_comm() {
 RegularDecomposition::RegularDecomposition(
     boost::mpi::communicator comm, double range, BoxGeometry const &box_geo,
     LocalBox const &local_geo,
-    std::optional<std::pair<int, int>> fully_connected)
+    std::optional<std::pair<int, int>> fully_connected,
+    bool without_ghost_force_reduction)
     : m_comm(std::move(comm)), m_box(box_geo), m_local_box(local_geo),
-      m_fully_connected_boundary(std::move(fully_connected)) {
-
+      m_fully_connected_boundary(std::move(fully_connected)),
+      m_without_ghost_force_reduction(without_ghost_force_reduction) {
   /* set up new regular decomposition cell structure */
   create_cell_grid(range);
 

@@ -162,9 +162,11 @@ void System::set_cell_structure_topology(CellStructureType topology) {
               std::as_const(*cell_structure).decomposition());
       cell_structure->set_regular_decomposition(
           get_interaction_range(),
-          old_regular_decomposition.fully_connected_boundary());
+          old_regular_decomposition.fully_connected_boundary(),
+          old_regular_decomposition.get_without_ghost_force_reduction());
     } else { // prev. decomposition is not a regular decomposition
-      cell_structure->set_regular_decomposition(get_interaction_range(), {});
+      cell_structure->set_regular_decomposition(get_interaction_range(), {},
+                                                false);
     }
   } else if (topology == CellStructureType::NSQUARE) {
     cell_structure->set_atom_decomposition();
