@@ -115,8 +115,6 @@ WALBERLA external
 WALBERLA_FFT external
 VALGRIND external
 CALIPER external
-<<<<<<< HEAD
 FPE external
-=======
 CABANA external
->>>>>>> 08d2a11ee (cabana setup)
+
