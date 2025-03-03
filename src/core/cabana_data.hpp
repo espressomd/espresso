@@ -49,9 +49,7 @@ public:
     ListType get_verlet_list() const { return verlet_list; }
     std::unordered_map<int, int> get_id_to_index() const { return id_to_index; }
 
-    ~CabanaData() {
-      //std::cout << "Destroying CabanaData" << std::endl;
-    };
+    ~CabanaData() {};
 
 
 };

@@ -97,9 +97,7 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 void deinit() {
   Communication::m_callbacks.reset(); 
   
-#ifdef CABANA
-  std::cout << "Finalize" << std::endl;
-  
+#ifdef CABANA 
   Kokkos::finalize();
 #endif
   }
