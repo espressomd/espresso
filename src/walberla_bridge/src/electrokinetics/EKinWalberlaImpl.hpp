@@ -93,8 +93,8 @@ protected:
   using BlockStorage = LatticeWalberla::Lattice_T;
 
   template <class Stencil>
-    using BoundaryCommScheme =
-        blockforest::communication::UniformBufferedScheme<Stencil>;
+  using BoundaryCommScheme =
+      blockforest::communication::UniformBufferedScheme<Stencil>;
   struct GhostComm {
     /** @brief Ghost communication operations. */
     enum GhostCommFlags : unsigned {
@@ -119,14 +119,16 @@ public:
   }
 
 private:
-  void reset_boundary_handling_density(std::shared_ptr<BlockStorage> const &blocks) {
-    m_boundary_density = std::make_shared<BoundaryModelDensity>(blocks, m_density_field_id,
-                                                m_flag_field_density_id);
+  void
+  reset_boundary_handling_density(std::shared_ptr<BlockStorage> const &blocks) {
+    m_boundary_density = std::make_shared<BoundaryModelDensity>(
+        blocks, m_density_field_id, m_flag_field_density_id);
   }
 
-  void reset_boundary_handling_flux(std::shared_ptr<BlockStorage> const &blocks) {
-    m_boundary_flux = std::make_shared<BoundaryModelFlux>(blocks, m_flux_field_id,
-                                             m_flag_field_flux_id);
+  void
+  reset_boundary_handling_flux(std::shared_ptr<BlockStorage> const &blocks) {
+    m_boundary_flux = std::make_shared<BoundaryModelFlux>(
+        blocks, m_flux_field_id, m_flag_field_flux_id);
   }
 
   FloatType m_diffusion;
@@ -155,12 +157,14 @@ protected:
 
   /** Block forest */
   std::shared_ptr<LatticeWalberla> m_lattice;
-  using RegularFullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
-  
-  using BoundaryFullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
-  
+  using RegularFullCommunicator =
+      blockforest::communication::UniformBufferedScheme<
+          typename stencil::D3Q27>;
+
+  using BoundaryFullCommunicator =
+      blockforest::communication::UniformBufferedScheme<
+          typename stencil::D3Q27>;
+
   // communicators
   std::unique_ptr<BoundaryFullCommunicator> m_boundary_density_communicator;
   std::unique_ptr<BoundaryFullCommunicator> m_boundary_flux_communicator;
@@ -254,26 +258,27 @@ public:
     m_density_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<DensityField>>(
             m_density_field_id));
-    
+
     m_boundary_density_communicator =
         std::make_unique<BoundaryFullCommunicator>(blocks);
     m_boundary_density_communicator->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_density_id));
-    auto boundary_density_packinfo = std::make_shared<
-          field::communication::BoundaryPackInfo<FlagField, BoundaryModelDensity>>(
-            m_flag_field_density_id);
-    boundary_density_packinfo->setup_boundary_handle(m_lattice, m_boundary_density);
+    auto boundary_density_packinfo =
+        std::make_shared<field::communication::BoundaryPackInfo<
+            FlagField, BoundaryModelDensity>>(m_flag_field_density_id);
+    boundary_density_packinfo->setup_boundary_handle(m_lattice,
+                                                     m_boundary_density);
     m_boundary_density_communicator->addPackInfo(boundary_density_packinfo);
-    
+
     m_boundary_flux_communicator =
         std::make_unique<BoundaryFullCommunicator>(blocks);
     m_boundary_flux_communicator->addPackInfo(
         std::make_shared<field::communication::PackInfo<FlagField>>(
             m_flag_field_flux_id));
     auto boundary_flux_packinfo = std::make_shared<
-          field::communication::BoundaryPackInfo<FlagField, BoundaryModelFlux>>(
-            m_flag_field_flux_id);
+        field::communication::BoundaryPackInfo<FlagField, BoundaryModelFlux>>(
+        m_flag_field_flux_id);
     boundary_flux_packinfo->setup_boundary_handle(m_lattice, m_boundary_flux);
     m_boundary_flux_communicator->addPackInfo(boundary_flux_packinfo);
 
@@ -369,10 +374,10 @@ public:
         *m_diffusive_flux_electrostatic);
   }
 
-  void ghost_communication() override { 
+  void ghost_communication() override {
     ghost_communication_density();
     ghost_communication_boundary();
-   }
+  }
 
   void ghost_communication_density() {
     if (m_pending_ghost_comm.test(GhostComm::DENSITY)) {
