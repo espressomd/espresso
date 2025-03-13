@@ -30,6 +30,7 @@
 #include <stencil/D3Q27.h>
 
 #include "../BoundaryHandling.hpp"
+#include "../BoundaryPackInfo.hpp"
 #include "../utils/boundary.hpp"
 #include "../utils/types_conversion.hpp"
 #include "ek_kernels.hpp"
@@ -91,8 +92,21 @@ protected:
 
   using BlockStorage = LatticeWalberla::Lattice_T;
 
+  template <class Stencil>
+    using BoundaryCommScheme =
+        blockforest::communication::UniformBufferedScheme<Stencil>;
+  struct GhostComm {
+    /** @brief Ghost communication operations. */
+    enum GhostCommFlags : unsigned {
+      DENSITY,
+      BOUNDARY_DENSITY,
+      BOUNDARY_FLUX,
+      SIZE
+    };
+  };
+
 public:
-  template <typename T> FloatType FloatType_c(T t) {
+  template <typename T> FloatType FloatType_c(T t) const {
     return numeric_cast<FloatType>(t);
   }
 
@@ -101,10 +115,20 @@ public:
   }
 
   [[nodiscard]] bool is_double_precision() const noexcept override {
-    return std::is_same<FloatType, double>::value;
+    return std::is_same_v<FloatType, double>;
   }
 
 private:
+  void reset_boundary_handling_density(std::shared_ptr<BlockStorage> const &blocks) {
+    m_boundary_density = std::make_shared<BoundaryModelDensity>(blocks, m_density_field_id,
+                                                m_flag_field_density_id);
+  }
+
+  void reset_boundary_handling_flux(std::shared_ptr<BlockStorage> const &blocks) {
+    m_boundary_flux = std::make_shared<BoundaryModelFlux>(blocks, m_flux_field_id,
+                                             m_flag_field_flux_id);
+  }
+
   FloatType m_diffusion;
   FloatType m_kT;
   FloatType m_valency;
@@ -131,18 +155,26 @@ protected:
 
   /** Block forest */
   std::shared_ptr<LatticeWalberla> m_lattice;
+  using RegularFullCommunicator = blockforest::communication::UniformBufferedScheme<
+      typename stencil::D3Q27>;
+  
+  using BoundaryFullCommunicator = blockforest::communication::UniformBufferedScheme<
+      typename stencil::D3Q27>;
+  
+  // communicators
+  std::unique_ptr<BoundaryFullCommunicator> m_boundary_density_communicator;
+  std::unique_ptr<BoundaryFullCommunicator> m_boundary_flux_communicator;
+  std::unique_ptr<RegularFullCommunicator> m_density_communication;
 
-  std::unique_ptr<BoundaryModelDensity> m_boundary_density;
-  std::unique_ptr<BoundaryModelFlux> m_boundary_flux;
+  std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
 
   std::unique_ptr<DiffusiveFluxKernel> m_diffusive_flux;
   std::unique_ptr<DiffusiveFluxKernelElectrostatic>
       m_diffusive_flux_electrostatic;
   std::unique_ptr<ContinuityKernel> m_continuity;
-
-  // ResetFlux + external force
-  // TODO: kernel for that
-  // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
+  // boundaries
+  std::shared_ptr<BoundaryModelDensity> m_boundary_density;
+  std::shared_ptr<BoundaryModelFlux> m_boundary_flux;
 
   [[nodiscard]] std::optional<CellInterval>
   get_interval(Utils::Vector3i const &lower_corner,
@@ -155,25 +187,25 @@ protected:
     if (not lower_bc or not upper_bc) {
       return std::nullopt;
     }
-    assert(&(*(lower_bc->block)) == &(*(upper_bc->block)));
-    return {CellInterval(lower_bc->cell, upper_bc->cell)};
+
+    auto const block_extent =
+        get_min_corner(*upper_bc->block) - get_min_corner(*lower_bc->block);
+    auto const global_lower_cell = lower_bc->cell;
+    auto const global_upper_cell = upper_bc->cell + to_cell(block_extent);
+    return {CellInterval(global_lower_cell, global_upper_cell)};
   }
 
   void
   reset_density_boundary_handling(std::shared_ptr<BlockStorage> const &blocks) {
-    m_boundary_density = std::make_unique<BoundaryModelDensity>(
+    m_boundary_density = std::make_shared<BoundaryModelDensity>(
         blocks, m_density_field_id, m_flag_field_density_id);
   }
 
   void
   reset_flux_boundary_handling(std::shared_ptr<BlockStorage> const &blocks) {
-    m_boundary_flux = std::make_unique<BoundaryModelFlux>(
+    m_boundary_flux = std::make_shared<BoundaryModelFlux>(
         blocks, m_flux_field_id, m_flag_field_flux_id);
   }
-
-  using FullCommunicator = blockforest::communication::UniformBufferedScheme<
-      typename stencil::D3Q27>;
-  std::shared_ptr<FullCommunicator> m_full_communication;
 
 public:
   EKinWalberlaImpl(std::shared_ptr<LatticeWalberla> lattice, double diffusion,
@@ -218,10 +250,34 @@ public:
         blocks, "flag field flux", n_ghost_layers);
     reset_flux_boundary_handling(blocks);
 
-    m_full_communication = std::make_shared<FullCommunicator>(blocks);
-    m_full_communication->addPackInfo(
+    m_density_communication = std::make_unique<RegularFullCommunicator>(blocks);
+    m_density_communication->addPackInfo(
         std::make_shared<field::communication::PackInfo<DensityField>>(
             m_density_field_id));
+    
+    m_boundary_density_communicator =
+        std::make_unique<BoundaryFullCommunicator>(blocks);
+    m_boundary_density_communicator->addPackInfo(
+        std::make_shared<field::communication::PackInfo<FlagField>>(
+            m_flag_field_density_id));
+    auto boundary_density_packinfo = std::make_shared<
+          field::communication::BoundaryPackInfo<FlagField, BoundaryModelDensity>>(
+            m_flag_field_density_id);
+    boundary_density_packinfo->setup_boundary_handle(m_lattice, m_boundary_density);
+    m_boundary_density_communicator->addPackInfo(boundary_density_packinfo);
+    
+    m_boundary_flux_communicator =
+        std::make_unique<BoundaryFullCommunicator>(blocks);
+    m_boundary_flux_communicator->addPackInfo(
+        std::make_shared<field::communication::PackInfo<FlagField>>(
+            m_flag_field_flux_id));
+    auto boundary_flux_packinfo = std::make_shared<
+          field::communication::BoundaryPackInfo<FlagField, BoundaryModelFlux>>(
+            m_flag_field_flux_id);
+    boundary_flux_packinfo->setup_boundary_handle(m_lattice, m_boundary_flux);
+    m_boundary_flux_communicator->addPackInfo(boundary_flux_packinfo);
+
+    m_pending_ghost_comm.set(GhostComm::DENSITY);
   }
 
   // Global parameters
@@ -313,7 +369,29 @@ public:
         *m_diffusive_flux_electrostatic);
   }
 
-  void ghost_communication() override { (*m_full_communication)(); }
+  void ghost_communication() override { 
+    ghost_communication_density();
+    ghost_communication_boundary();
+   }
+
+  void ghost_communication_density() {
+    if (m_pending_ghost_comm.test(GhostComm::DENSITY)) {
+      m_density_communication->communicate();
+      m_pending_ghost_comm.reset(GhostComm::DENSITY);
+    }
+  }
+
+  void ghost_communication_boundary() {
+    if (m_pending_ghost_comm.test(GhostComm::BOUNDARY_DENSITY)) {
+      m_boundary_density_communicator->communicate();
+      m_pending_ghost_comm.reset(GhostComm::BOUNDARY_DENSITY);
+    }
+
+    if (m_pending_ghost_comm.test(GhostComm::BOUNDARY_FLUX)) {
+      m_boundary_flux_communicator->communicate();
+      m_pending_ghost_comm.reset(GhostComm::BOUNDARY_FLUX);
+    }
+  }
 
 private:
   void set_diffusion_kernels() {
@@ -499,6 +577,8 @@ public:
       kernel_advection(velocity_id);
     }
     kernel_continuity();
+    m_pending_ghost_comm.set(GhostComm::DENSITY);
+    ghost_communication_density();
 
     // is this the expected behavior when reactions are included?
     kernel_boundary_density();
@@ -513,6 +593,7 @@ public:
   }
 
   bool set_node_density(Utils::Vector3i const &node, double density) override {
+    m_pending_ghost_comm.set(GhostComm::DENSITY);
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
@@ -596,6 +677,7 @@ public:
 
   bool set_node_flux_boundary(Utils::Vector3i const &node,
                               Utils::Vector3d const &flux) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_FLUX);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -617,6 +699,7 @@ public:
   }
 
   bool remove_node_from_flux_boundary(Utils::Vector3i const &node) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_FLUX);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -628,6 +711,7 @@ public:
 
   bool set_node_density_boundary(Utils::Vector3i const &node,
                                  double density) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_DENSITY);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -651,6 +735,7 @@ public:
   void set_slice_density_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<std::optional<double>> const &density) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_DENSITY);
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -710,6 +795,7 @@ public:
   void set_slice_flux_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<std::optional<Utils::Vector3d>> const &flux) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_FLUX);
     if (auto const ci = get_interval(lower_corner, upper_corner)) {
       auto const &lattice = get_lattice();
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -792,6 +878,7 @@ public:
   }
 
   bool remove_node_from_density_boundary(Utils::Vector3i const &node) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_DENSITY);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
@@ -835,19 +922,23 @@ public:
   void update_flux_boundary_from_shape(
       const std::vector<int> &raster_flat,
       const std::vector<double> &data_flat) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_FLUX);
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary_flux, get_lattice(), raster_flat, data);
+    ghost_communication_boundary();
     reallocate_flux_boundary_field();
   }
 
   void update_density_boundary_from_shape(
       const std::vector<int> &raster_flat,
       const std::vector<double> &data_flat) override {
+    m_pending_ghost_comm.set(GhostComm::BOUNDARY_DENSITY);
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_scalar_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary_density, get_lattice(), raster_flat,
                            data);
+    ghost_communication_boundary();
     reallocate_density_boundary_field();
   }
 
