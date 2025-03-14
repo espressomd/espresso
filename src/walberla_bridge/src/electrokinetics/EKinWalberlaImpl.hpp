@@ -36,6 +36,7 @@
 #endif
 
 #include "../BoundaryHandling.hpp"
+#include "../BoundaryPackInfo.hpp"
 #include "../utils/boundary.hpp"
 #include "../utils/types_conversion.hpp"
 #include "ek_kernels.hpp"
@@ -204,7 +205,7 @@ protected:
   std::shared_ptr<LatticeWalberla> m_lattice;
 
   std::unique_ptr<BoundaryModelDensity> m_boundary_density;
-  std::unique_ptr<BoundaryModelFlux> m_boundary_flux;
+  std::shared_ptr<BoundaryModelFlux> m_boundary_flux;
 
   std::unique_ptr<DiffusiveFluxKernel> m_diffusive_flux;
   std::unique_ptr<DiffusiveFluxKernelElectrostatic>
@@ -270,7 +271,7 @@ protected:
   void
   reset_flux_boundary_handling(std::shared_ptr<BlockStorage> const &blocks) {
     auto const [lc, uc] = m_lattice->get_local_grid_range(true);
-    m_boundary_flux = std::make_unique<BoundaryModelFlux>(
+    m_boundary_flux = std::make_shared<BoundaryModelFlux>(
         blocks, m_flux_field_id, m_flag_field_flux_id,
         CellInterval{to_cell(lc), to_cell(uc)});
   }
@@ -279,6 +280,7 @@ protected:
       typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
           typename stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
+  std::shared_ptr<FullCommunicator> m_boundary_communicator;
   template <class Field>
   using PackInfo =
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
@@ -327,6 +329,16 @@ public:
     m_full_communication = std::make_shared<FullCommunicator>(blocks);
     m_full_communication->addPackInfo(
         std::make_shared<PackInfo<DensityField>>(m_density_field_id));
+    m_boundary_communicator =
+        std::make_shared<FullCommunicator>(blocks);
+    m_boundary_communicator->addPackInfo(
+        std::make_shared<PackInfo<FlagField>>(
+            m_flag_field_flux_id));
+    auto flux_boundary_packinfo = std::make_shared<
+    field::communication::BoundaryPackInfo<FlagField, BoundaryModelFlux>>(
+       m_flag_field_flux_id);
+    flux_boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary_flux);
+    m_boundary_communicator->addPackInfo(flux_boundary_packinfo);
   }
 
   // Global parameters
@@ -419,6 +431,10 @@ public:
   }
 
   void ghost_communication() override { (*m_full_communication)(); }
+
+  void ghost_communication_boundary() {
+    m_boundary_communicator->communicate();
+  }
 
 private:
   void set_diffusion_kernels() {
@@ -756,6 +772,7 @@ public:
 
   void clear_flux_boundaries() override {
     reset_flux_boundary_handling(get_lattice().get_blocks());
+   ghost_communication_boundary();
   }
 
   void clear_density_boundaries() override {
@@ -770,7 +787,7 @@ public:
 
     m_boundary_flux->set_node_value_at_boundary(
         node, to_vector3<FloatType>(flux), *bc);
-
+    ghost_communication_boundary();
     return true;
   }
 
@@ -790,7 +807,7 @@ public:
       return false;
 
     m_boundary_flux->remove_node_from_boundary(node, *bc);
-
+    ghost_communication_boundary();
     return true;
   }
 
@@ -901,6 +918,7 @@ public:
           }
         }
       }
+      ghost_communication_boundary();
     }
   }
 
@@ -1007,6 +1025,7 @@ public:
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary_flux, get_lattice(), raster_flat, data);
     reallocate_flux_boundary_field();
+    ghost_communication_boundary();
   }
 
   void update_density_boundary_from_shape(
