@@ -72,6 +72,18 @@ class LennardJonesTest(ut.TestCase):
         self.system.integrator.run(recalc_forces=True, steps=0)
         self.check()
 
+    def test_dd_with_ghost_force_reduction(self):
+        self.system.cell_system.set_regular_decomposition(
+            without_ghost_force_reduction=False)
+        self.system.integrator.run(recalc_forces=True, steps=0)
+        self.check()
+
+    def test_dd_without_ghost_force_reduction(self):
+        self.system.cell_system.set_regular_decomposition(
+            without_ghost_force_reduction=True)
+        self.system.integrator.run(recalc_forces=True, steps=0)
+        self.check()
+
 
 if __name__ == '__main__':
     ut.main()

@@ -301,6 +301,14 @@ void CellSystem::initialize(CellStructureType const &cs_type,
   auto &system = get_system();
   m_cell_structure->use_verlet_list = verlet;
   if (cs_type == CellStructureType::HYBRID) {
+    auto without_ghost_force_reduction =
+        get_value_or<bool>(params, "without_ghost_force_reduction", false);
+    context()->parallel_try_catch([without_ghost_force_reduction]() {
+      if (without_ghost_force_reduction) {
+        throw std::invalid_argument("Parameter 'without_ghost_force_reduction' "
+                                    "is not allowed for hybrid decomposition");
+      }
+    });
     auto const cutoff_regular = get_value<double>(params, "cutoff_regular");
     auto const ns_types =
         get_value_or<std::vector<int>>(params, "n_square_types", {});
@@ -308,10 +316,6 @@ void CellSystem::initialize(CellStructureType const &cs_type,
     m_cell_structure->set_hybrid_decomposition(cutoff_regular, n_square_types);
   } else if (cs_type == CellStructureType::REGULAR) {
     std::optional<std::pair<int, int>> fcb_pair = std::nullopt;
-    if (get_value_or(params, "without_ghost_force_reduction", false)) {
-      throw std::invalid_argument("Parameter 'without_ghost_force_reduction' "
-                                  "is not allowed for hybrid decomposition");
-    }
     if (params.contains("fully_connected_boundary") and
         not is_none(params.at("fully_connected_boundary"))) {
       auto const variant =

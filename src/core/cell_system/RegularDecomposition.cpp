@@ -524,7 +524,14 @@ void RegularDecomposition::init_cell_interactions() {
           if (ind2 > ind1) {
             red_neighbors.push_back(cell);
           } else {
-            black_neighbors.push_back(cell);
+            if (m_without_ghost_force_reduction and
+                (neighbor[2] == start[2] - 1 or neighbor[2] == end[2] or
+                 neighbor[1] == start[1] - 1 or neighbor[1] == end[1] or
+                 neighbor[0] == start[0] - 1 or neighbor[0] == end[0])) {
+              red_neighbors.push_back(cell);
+            } else {
+              black_neighbors.push_back(cell);
+            }
           }
         }
 
@@ -571,6 +578,7 @@ void assign_prefetches(GhostCommunicator &comm) {
 } // namespace
 
 GhostCommunicator RegularDecomposition::prepare_comm() {
+
   int dir, lr, i, cnt, n_comm_cells[3];
   Utils::Vector3i lc{}, hc{}, done{};
 
@@ -687,11 +695,13 @@ RegularDecomposition::RegularDecomposition(
 
   /* create communicators */
   m_exchange_ghosts_comm = prepare_comm();
-  m_collect_ghost_force_comm = prepare_comm();
-
-  /* collect forces has to be done in reverted order! */
-  revert_comm_order(m_collect_ghost_force_comm);
-
   assign_prefetches(m_exchange_ghosts_comm);
-  assign_prefetches(m_collect_ghost_force_comm);
+  if (m_without_ghost_force_reduction) {
+    m_collect_ghost_force_comm = GhostCommunicator{};
+  } else {
+    m_collect_ghost_force_comm = prepare_comm();
+    /* collect forces has to be done in reverted order! */
+    revert_comm_order(m_collect_ghost_force_comm);
+    assign_prefetches(m_collect_ghost_force_comm);
+  }
 }
