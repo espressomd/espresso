@@ -335,8 +335,8 @@ public:
         std::make_shared<PackInfo<FlagField>>(
             m_flag_field_flux_id));
     auto flux_boundary_packinfo = std::make_shared<
-    field::communication::BoundaryPackInfo<FlagField, BoundaryModelFlux>>(
-       m_flag_field_flux_id);
+        field::communication::BoundaryPackInfo<FlagField, BoundaryModelFlux>>(
+        m_flag_field_flux_id);
     flux_boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary_flux);
     m_boundary_communicator->addPackInfo(flux_boundary_packinfo);
   }
@@ -772,7 +772,7 @@ public:
 
   void clear_flux_boundaries() override {
     reset_flux_boundary_handling(get_lattice().get_blocks());
-   ghost_communication_boundary();
+    ghost_communication_boundary();
   }
 
   void clear_density_boundaries() override {
