@@ -55,7 +55,7 @@ class EKTest:
         decimal_precision: int = 7 if single_precision else 10
 
         lattice = espressomd.electrokinetics.LatticeWalberla(
-            n_ghost_layers=1, agrid=self.AGRID)
+            n_ghost_layers=2, agrid=self.AGRID)
 
         ekspecies = self.ek_species_class(
             lattice=lattice, density=0.0, diffusion=self.DIFFUSION_COEFFICIENT,

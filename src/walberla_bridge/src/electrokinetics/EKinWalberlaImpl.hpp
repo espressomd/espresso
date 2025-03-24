@@ -1024,8 +1024,8 @@ public:
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary_flux, get_lattice(), raster_flat, data);
-    reallocate_flux_boundary_field();
     ghost_communication_boundary();
+    reallocate_flux_boundary_field();
   }
 
   void update_density_boundary_from_shape(
