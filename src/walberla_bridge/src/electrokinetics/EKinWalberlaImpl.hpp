@@ -150,7 +150,7 @@ protected:
   struct GhostComm {
     /** @brief Ghost communication operations. */
     enum GhostCommFlags : unsigned {
-      FLB, ///< flux boundary communication
+      FLB,  ///< flux boundary communication
       DENS, ///< density communication
       SIZE
     };
@@ -289,7 +289,8 @@ protected:
       typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
           typename stencil::D3Q27>;
   using BoundaryFullCommunicator =
-      blockforest::communication::UniformBufferedScheme<typename stencil::D3Q27>;
+      blockforest::communication::UniformBufferedScheme<
+          typename stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
   std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
   std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
@@ -445,7 +446,7 @@ public:
   }
 
   void ghost_communication() override {
-    if(m_pending_ghost_comm.test(GhostComm::DENS)){
+    if (m_pending_ghost_comm.test(GhostComm::DENS)) {
       (*m_full_communication)();
       m_pending_ghost_comm.reset(GhostComm::DENS);
     }
@@ -453,7 +454,7 @@ public:
   }
 
   void ghost_communication_boundary() {
-    if(m_pending_ghost_comm.test(GhostComm::FLB)){
+    if (m_pending_ghost_comm.test(GhostComm::FLB)) {
       m_boundary_communicator->communicate();
       m_pending_ghost_comm.reset(GhostComm::FLB);
     }
