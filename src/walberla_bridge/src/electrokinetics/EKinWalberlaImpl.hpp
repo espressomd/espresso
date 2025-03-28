@@ -147,6 +147,15 @@ protected:
   using GPUField = gpu::GPUField<FloatType>;
 #endif
 
+  struct GhostComm {
+    /** @brief Ghost communication operations. */
+    enum GhostCommFlags : unsigned {
+      FLB, ///< flux boundary communication
+      DENS, ///< density communication
+      SIZE
+    };
+  };
+
   // "underlying" field types (`GPUField` has no f-size info at compile time)
   using _FluxField = typename FieldTrait<FloatType>::FluxField;
   using _DensityField = typename FieldTrait<FloatType>::DensityField;
@@ -279,8 +288,11 @@ protected:
   using FullCommunicator =
       typename FieldTrait<FloatType, Architecture>::template RegularCommScheme<
           typename stencil::D3Q27>;
+  using BoundaryFullCommunicator =
+      blockforest::communication::UniformBufferedScheme<typename stencil::D3Q27>;
   std::shared_ptr<FullCommunicator> m_full_communication;
-  std::shared_ptr<FullCommunicator> m_boundary_communicator;
+  std::shared_ptr<BoundaryFullCommunicator> m_boundary_communicator;
+  std::bitset<GhostComm::SIZE> m_pending_ghost_comm;
   template <class Field>
   using PackInfo =
       typename FieldTrait<FloatType, Architecture>::template PackInfo<Field>;
@@ -330,7 +342,7 @@ public:
     m_full_communication->addPackInfo(
         std::make_shared<PackInfo<DensityField>>(m_density_field_id));
     m_boundary_communicator =
-        std::make_shared<FullCommunicator>(blocks);
+        std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
         std::make_shared<PackInfo<FlagField>>(
             m_flag_field_flux_id));
@@ -339,6 +351,8 @@ public:
         m_flag_field_flux_id);
     flux_boundary_packinfo->setup_boundary_handle(m_lattice, m_boundary_flux);
     m_boundary_communicator->addPackInfo(flux_boundary_packinfo);
+
+    m_pending_ghost_comm.set();
   }
 
   // Global parameters
@@ -430,10 +444,19 @@ public:
         *m_diffusive_flux_electrostatic);
   }
 
-  void ghost_communication() override { (*m_full_communication)(); }
+  void ghost_communication() override {
+    if(m_pending_ghost_comm.test(GhostComm::DENS)){
+      (*m_full_communication)();
+      m_pending_ghost_comm.reset(GhostComm::DENS);
+    }
+    ghost_communication_boundary();
+  }
 
   void ghost_communication_boundary() {
-    m_boundary_communicator->communicate();
+    if(m_pending_ghost_comm.test(GhostComm::FLB)){
+      m_boundary_communicator->communicate();
+      m_pending_ghost_comm.reset(GhostComm::FLB);
+    }
   }
 
 private:
@@ -622,6 +645,7 @@ public:
 
     // is this the expected behavior when reactions are included?
     kernel_boundary_density();
+    m_pending_ghost_comm.set(GhostComm::DENS);
 
     // Handle VTK writers
     integrate_vtk_writers();
@@ -633,6 +657,7 @@ public:
   }
 
   bool set_node_density(Utils::Vector3i const &node, double density) override {
+    m_pending_ghost_comm.set(GhostComm::DENS);
     auto bc = get_block_and_cell(get_lattice(), node, false);
     if (!bc)
       return false;
@@ -690,6 +715,7 @@ public:
   void set_slice_density(Utils::Vector3i const &lower_corner,
                          Utils::Vector3i const &upper_corner,
                          std::vector<double> const &density) override {
+    m_pending_ghost_comm.set(GhostComm::DENS);
     auto const &lattice = get_lattice();
     if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       assert(density.size() == ci->numCells());
@@ -771,8 +797,8 @@ public:
   }
 
   void clear_flux_boundaries() override {
+    m_pending_ghost_comm.set(GhostComm::FLB);
     reset_flux_boundary_handling(get_lattice().get_blocks());
-    ghost_communication_boundary();
   }
 
   void clear_density_boundaries() override {
@@ -781,19 +807,20 @@ public:
 
   bool set_node_flux_boundary(Utils::Vector3i const &node,
                               Utils::Vector3d const &flux) override {
+    m_pending_ghost_comm.set(GhostComm::FLB);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
     m_boundary_flux->set_node_value_at_boundary(
         node, to_vector3<FloatType>(flux), *bc);
-    ghost_communication_boundary();
     return true;
   }
 
   [[nodiscard]] std::optional<Utils::Vector3d>
   get_node_flux_at_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts = false) const override {
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::FLB)));
     auto const bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc or !m_boundary_flux->node_is_boundary(node))
       return std::nullopt;
@@ -802,12 +829,12 @@ public:
   }
 
   bool remove_node_from_flux_boundary(Utils::Vector3i const &node) override {
+    m_pending_ghost_comm.set(GhostComm::FLB);
     auto bc = get_block_and_cell(get_lattice(), node, true);
     if (!bc)
       return false;
 
     m_boundary_flux->remove_node_from_boundary(node, *bc);
-    ghost_communication_boundary();
     return true;
   }
 
@@ -895,6 +922,7 @@ public:
   void set_slice_flux_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<std::optional<Utils::Vector3d>> const &flux) override {
+    m_pending_ghost_comm.set(GhostComm::FLB);
     auto const &lattice = get_lattice();
     if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
@@ -918,7 +946,6 @@ public:
           }
         }
       }
-      ghost_communication_boundary();
     }
   }
 
@@ -990,6 +1017,7 @@ public:
   [[nodiscard]] std::optional<bool>
   get_node_is_flux_boundary(Utils::Vector3i const &node,
                             bool consider_ghosts) const override {
+    assert(not(consider_ghosts and m_pending_ghost_comm.test(GhostComm::FLB)));
     auto bc = get_block_and_cell(get_lattice(), node, consider_ghosts);
     if (!bc)
       return std::nullopt;
@@ -1021,10 +1049,10 @@ public:
   void update_flux_boundary_from_shape(
       const std::vector<int> &raster_flat,
       const std::vector<double> &data_flat) override {
+    m_pending_ghost_comm.set(GhostComm::FLB);
     auto const grid_size = get_lattice().get_grid_dimensions();
     auto const data = fill_3D_vector_array(data_flat, grid_size);
     set_boundary_from_grid(*m_boundary_flux, get_lattice(), raster_flat, data);
-    ghost_communication_boundary();
     reallocate_flux_boundary_field();
   }
 
