@@ -96,13 +96,13 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 }
 
 void deinit() {
-  Communication::m_callbacks.reset(); 
+  Communication::m_callbacks.reset();
 
-#ifdef CABANA 
+#ifdef CABANA
   Kokkos::finalize();
 #endif
-  }
 }
+} // namespace Communication
 
 Communicator::Communicator()
     : comm{::comm_cart}, node_grid{}, this_node{::this_node}, size{-1} {}

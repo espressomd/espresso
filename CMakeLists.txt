@@ -117,6 +117,12 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
   GIT_TAG        v2.4.1
 )
+FetchContent_Declare(
+  cabana
+  GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+  GIT_TAG        7914d28708b1c67b40d5743c1fbc09e221144dd3
+  PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_cabana_doxygen.diff
+)
 # cmake-format: on
 
 # ##############################################################################
@@ -478,26 +484,17 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_CABANA)
   # Find kokkos
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../kokkos")
-    set(Kokkos_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../kokkos/build")
+  if(NOT EXISTS Kokkos_DIR)
+    message(
+      FATAL_ERROR
+        "Kokkos_DIR not set. Please set it to the directory containing KokkosConfig.cmake (typically the Kokkos build folder)"
+    )
   endif()
 
-  # Fetch Cabana 0.7.0
-  # Cabana already uses find_package(Kokkos) internally
-  include(FetchContent)
-  if(EXISTS "${CMAKE_BINARY_DIR}/_deps/cabana-build")
-    FetchContent_Declare(cabana
-      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG 7914d28708b1c67b40d5743c1fbc09e221144dd3
-    )
-  else() # Fix Cabana/Doxygen with Espresso/Doxygen conflict
-    FetchContent_Declare(cabana
-      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG 7914d28708b1c67b40d5743c1fbc09e221144dd3
-      PATCH_COMMAND patch -N --reject-file=- -i "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_cabana_doxygen.diff" 
-    )
+  # Fetch Cabana 0.7.0 Cabana already uses find_package(Kokkos) internally
+  if(NOT cabana_POPULATED)
+    FetchContent_MakeAvailable(cabana)
   endif()
-  FetchContent_MakeAvailable(cabana)
 endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
