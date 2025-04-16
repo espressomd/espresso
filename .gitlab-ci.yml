@@ -219,6 +219,7 @@ cuda12-coverage:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
+     with_cabana: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   timeout: 90m
@@ -245,6 +246,7 @@ cuda12-maxset:
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
      with_caliper: 'true'
+     with_cabana: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:

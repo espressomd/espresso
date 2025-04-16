@@ -137,7 +137,7 @@ option(ESPRESSO_BUILD_WITH_WALBERLA
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
        "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" OFF)
-option(ESPRESSO_BUILD_WITH_CABANA "Build with Cabana and Kokkos packages" ON)
+option(ESPRESSO_BUILD_WITH_CABANA "Build with Cabana and Kokkos packages" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND "Build with Valgrind instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CALIPER "Build with Caliper instrumentation" OFF)
