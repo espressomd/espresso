@@ -137,6 +137,7 @@ option(ESPRESSO_BUILD_WITH_WALBERLA
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
        "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" OFF)
+option(ESPRESSO_BUILD_WITH_CABANA "Build with Cabana and Kokkos packages" ON)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND "Build with Valgrind instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CALIPER "Build with Caliper instrumentation" OFF)
@@ -474,6 +475,30 @@ endif()
 #
 # Libraries
 #
+
+if(ESPRESSO_BUILD_WITH_CABANA)
+  # Find kokkos
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../kokkos")
+    set(Kokkos_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../kokkos/build")
+    find_package(Kokkos REQUIRED) 
+  endif()
+
+  # Fetch Cabana
+  include(FetchContent)
+  if(EXISTS "${CMAKE_BINARY_DIR}/_deps/cabana-build")
+    FetchContent_Declare(cabana
+      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+      GIT_TAG 07573782590e223edc6e5f83ec0807be5941df14
+    )
+  else() # Fix Cabana/Doxygen with Espresso/Doxygen conflict
+    FetchContent_Declare(cabana
+      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+      GIT_TAG 07573782590e223edc6e5f83ec0807be5941df14
+      PATCH_COMMAND patch -N --reject-file=- -i "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_cabana_doxygen.diff" 
+    )
+  endif()
+  FetchContent_MakeAvailable(cabana)
+endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
   find_package(FFTW3 REQUIRED)

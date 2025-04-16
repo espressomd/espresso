@@ -23,6 +23,8 @@
 
 #cmakedefine ESPRESSO_BUILD_WITH_FPE
 
+#cmakedefine ESPRESSO_BUILD_WITH_CABANA
+
 #define PACKAGE_NAME "${PROJECT_NAME}"
 
 /**
