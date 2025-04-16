@@ -32,6 +32,7 @@
 
 #ifdef CABANA
 #include <Cabana_Core.hpp>
+#include <Kokkos_Core.hpp>
 #endif
 
 #include <utils/Vector.hpp>

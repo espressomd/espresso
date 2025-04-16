@@ -480,20 +480,20 @@ if(ESPRESSO_BUILD_WITH_CABANA)
   # Find kokkos
   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../kokkos")
     set(Kokkos_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../kokkos/build")
-    find_package(Kokkos REQUIRED) 
   endif()
 
-  # Fetch Cabana
+  # Fetch Cabana 0.7.0
+  # Cabana already uses find_package(Kokkos) internally
   include(FetchContent)
   if(EXISTS "${CMAKE_BINARY_DIR}/_deps/cabana-build")
     FetchContent_Declare(cabana
       GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG 07573782590e223edc6e5f83ec0807be5941df14
+      GIT_TAG 7914d28708b1c67b40d5743c1fbc09e221144dd3
     )
   else() # Fix Cabana/Doxygen with Espresso/Doxygen conflict
     FetchContent_Declare(cabana
       GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG 07573782590e223edc6e5f83ec0807be5941df14
+      GIT_TAG 7914d28708b1c67b40d5743c1fbc09e221144dd3
       PATCH_COMMAND patch -N --reject-file=- -i "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_cabana_doxygen.diff" 
     )
   endif()
