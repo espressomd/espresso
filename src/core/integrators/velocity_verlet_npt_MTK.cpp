@@ -121,7 +121,6 @@ static void velocity_verlet_npt_propagate_AVOVA_MTK(
   auto &box_geo = *system.box_geo;
   auto &cell_structure = *system.cell_structure;
   auto &nptiso = *system.nptiso;
-  Utils::Vector3d scal{};
   double L_new = 0.0;
 
   /* 1st propagation pos_MTK and pos*/
