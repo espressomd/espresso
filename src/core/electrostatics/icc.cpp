@@ -274,7 +274,8 @@ struct SanityChecksICC {
 void ICCStar::sanity_check() const {
   sanity_checks_active_solver();
 #ifdef NPT
-  if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+  if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND ||
+      get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
     throw std::runtime_error("ICC does not work in the NPT ensemble");
   }
 #endif

@@ -39,6 +39,7 @@ namespace Integrators {
 class VelocityVerletIsoNPT
     : public AutoParameters<VelocityVerletIsoNPT, Integrator> {
   std::shared_ptr<::NptIsoParameters> m_instance;
+  std::string m_barostat;
 
 public:
   VelocityVerletIsoNPT();

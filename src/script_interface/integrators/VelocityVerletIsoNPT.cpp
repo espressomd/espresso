@@ -33,6 +33,7 @@
 
 #include <memory>
 #include <string>
+#include <iostream>
 
 namespace ScriptInterface {
 namespace Integrators {
@@ -56,6 +57,7 @@ void VelocityVerletIsoNPT::do_construct(VariantMap const &params) {
   auto const cubic_box = get_value_or<bool>(params, "cubic_box", false);
   auto const direction = get_value_or<Utils::Vector3b>(
       params, "direction", Utils::Vector3b::broadcast(true));
+  m_barostat = get_value_or<std::string>(params, "barostat", "Andersen");
 
   context()->parallel_try_catch([&]() {
     m_instance = std::make_shared<::NptIsoParameters>(ext_pressure, piston,
@@ -67,7 +69,13 @@ void VelocityVerletIsoNPT::activate() {
   context()->parallel_try_catch(
       [this]() { m_instance->coulomb_dipole_sanity_checks(get_system()); });
   get_system().nptiso = m_instance;
-  get_system().propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
+  if (m_barostat == "Andersen") {
+    get_system().propagation->set_integ_switch(INTEG_METHOD_NPT_ISO_AND);
+  } else if (m_barostat == "MTK") {
+    get_system().propagation->set_integ_switch(INTEG_METHOD_NPT_ISO_MTK);
+  } else {
+    throw std::invalid_argument("Parameter 'barostat' must be 'Andersen' or 'MTK'.");
+  }
   get_system().on_thermostat_param_change();
 }
 

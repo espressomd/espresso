@@ -105,6 +105,25 @@ void System::System::npt_ensemble_init(bool recalc_forces) {
     npt_inst_pressure->p_vel = Utils::Vector3d{};
   }
 
+  unsigned int particle_number =
+      ::System::get_system().cell_structure->local_particles().size();
+  unsigned int n_sum;
+  boost::mpi::reduce(::comm_cart, particle_number, n_sum,
+                     std::plus<unsigned int>(), 0);
+  if (::this_node == 0) {
+    particle_number = n_sum;
+  }
+  boost::mpi::broadcast(::comm_cart, particle_number, 0);
+  nptiso->particle_number = particle_number;
+
+  auto dt = ::System::get_system().get_time_step();
+  if (particle_number > 1) {
+    nptiso->half_dt_inv_piston_and_Nf = -0.5 * dt * nptiso->inv_piston * (1. + 1./(particle_number - 1));
+  } else {
+    nptiso->half_dt_inv_piston_and_Nf = -0.5 * dt * nptiso->inv_piston;
+  }
+  nptiso->half_dt_inv_piston = 0.5 * dt * nptiso->inv_piston;
+
   auto &mass_list = nptiso->mass_list;
   mass_list.clear();
   for (auto &p : cell_structure->local_particles()) {
@@ -120,14 +139,16 @@ void System::System::npt_ensemble_init(bool recalc_forces) {
 }
 
 void System::System::npt_add_virial_contribution(double energy) {
-  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+  if ((propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
+      (propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
     npt_inst_pressure->p_vir[0] += energy;
   }
 }
 
 void System::System::npt_add_virial_contribution(Utils::Vector3d const &force,
                                                  Utils::Vector3d const &d) {
-  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+  if ((propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
+      (propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
     npt_inst_pressure->p_vir += hadamard_product(force, d);
   }
 }

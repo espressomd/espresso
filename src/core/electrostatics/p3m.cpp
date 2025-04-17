@@ -592,7 +592,8 @@ double CoulombP3MImpl<FloatType, Architecture>::long_range_kernel(
   auto const &box_geo = *system.box_geo;
 #ifdef NPT
   auto const npt_flag =
-      force_flag and (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO);
+      force_flag and ((system.propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
+      		      (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK));
 #else
   auto constexpr npt_flag = false;
 #endif
@@ -1018,7 +1019,8 @@ void CoulombP3MImpl<FloatType, Architecture>::add_long_range_forces_gpu(
     ParticleRange const &particles) {
   if constexpr (Architecture == Arch::GPU) {
 #ifdef NPT
-    if (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    if ((get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
+        (get_system().propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
       get_system().npt_add_virial_contribution(long_range_energy(particles));
     }
 #else

@@ -116,7 +116,7 @@ struct : public IntegratorHelper {
     auto &npt_iso = espresso::system->thermostat->npt_iso;
     espresso::system->nptiso = std::make_shared<NptIsoParameters>(
         1., 1e16, Utils::Vector<bool, 3>{true, true, true}, true);
-    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
+    espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO_AND);
     espresso::system->thermostat->thermo_switch = THERMO_NPT_ISO;
     espresso::system->thermostat->kT = 1.;
     npt_iso = std::make_shared<IsotropicNptThermostat>();
