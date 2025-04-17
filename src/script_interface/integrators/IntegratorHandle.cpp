@@ -73,8 +73,6 @@ IntegratorHandle::IntegratorHandle() {
                std::dynamic_pointer_cast<SteepestDescent>(m_instance)};
 #ifdef NPT
          case INTEG_METHOD_NPT_ISO_AND:
-           return Variant{
-               std::dynamic_pointer_cast<VelocityVerletIsoNPT>(m_instance)};
          case INTEG_METHOD_NPT_ISO_MTK:
            return Variant{
                std::dynamic_pointer_cast<VelocityVerletIsoNPT>(m_instance)};
