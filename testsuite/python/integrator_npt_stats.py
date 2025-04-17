@@ -63,7 +63,8 @@ class IntegratorNPT:
             system.integrator.set_isotropic_npt(
                 ext_pressure=p_ext, piston=0.0001)
         else:
-            system.thermostat.set_npt(kT=1.0, gamma0=0.5, gammav=0.001, seed=42)
+            system.thermostat.set_npt(
+                kT=1.0, gamma0=0.5, gammav=0.001, seed=42)
             system.integrator.set_isotropic_npt(
                 ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
 
