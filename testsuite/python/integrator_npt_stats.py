@@ -59,7 +59,7 @@ class IntegratorNPT:
             epsilon=1, sigma=1, cutoff=1.12246, shift=0.25)
 
         if self.barostat == "Andersen":
-            system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
+            system.thermostat.set_npt(kT=1.0, gamma0=1, gammav=0.004, seed=42)
             system.integrator.set_isotropic_npt(
                 ext_pressure=p_ext, piston=0.0001)
         else:
