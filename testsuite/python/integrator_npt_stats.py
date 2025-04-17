@@ -60,10 +60,12 @@ class IntegratorNPT:
 
         if self.barostat == "Andersen":
             system.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
-            system.integrator.set_isotropic_npt(ext_pressure=p_ext, piston=0.0001)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=0.0001)
         else:
             system.thermostat.set_npt(kT=1.0, gamma0=1, gammav=0.001, seed=42)
-            system.integrator.set_isotropic_npt(ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=p_ext, piston=4.0, barostat=self.barostat)
 
         system.integrator.run(800)
         # averaged pressure by system.analysis.pressure()
@@ -151,9 +153,11 @@ class IntegratorNPT:
             # Volume cannot be negative within NPT ensemble based on MTK equation
             self.assertTrue(float(np.prod(system.box_l)) > 0.)
 
+
 @utx.skipIfMissingFeatures("NPT")
 class IntegratorNPT_Andersen(IntegratorNPT, ut.TestCase):
     barostat = "Andersen"
+
 
 @utx.skipIfMissingFeatures("NPT")
 class IntegratorNPT_MTK(IntegratorNPT, ut.TestCase):

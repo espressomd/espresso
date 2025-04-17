@@ -28,9 +28,9 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "npt.hpp" //
+#include "npt.hpp"           //
 #include "system/System.hpp" //
-#include "thermostat.hpp" //
+#include "thermostat.hpp"    //
 #include "thermostats/npt_inline.hpp"
 
 #include <utils/Vector.hpp>
@@ -73,10 +73,9 @@ velocity_verlet_npt_finalize_p_inst(NptIsoParameters &nptiso,
   }
 }
 
-static void
-velocity_verlet_npt_propagate_AVOVA_And(ParticleRangeNPT const &particles,
-                                        IsotropicNptThermostat const &npt_iso,
-                                        double time_step, System::System &system) {
+static void velocity_verlet_npt_propagate_AVOVA_And(
+    ParticleRangeNPT const &particles, IsotropicNptThermostat const &npt_iso,
+    double time_step, System::System &system) {
 
   auto &box_geo = *system.box_geo;
   auto &cell_structure = *system.cell_structure;
@@ -209,15 +208,19 @@ velocity_verlet_npt_propagate_AVOVA_And(ParticleRangeNPT const &particles,
 
 void velocity_verlet_npt_Andersen_step_1(ParticleRangeNPT const &particles,
                                          IsotropicNptThermostat const &npt_iso,
-                                         double time_step, System::System &system) {
+                                         double time_step,
+                                         System::System &system) {
   auto &nptiso = *system.nptiso;
   auto &npt_inst_pressure = *system.npt_inst_pressure;
-  velocity_verlet_npt_propagate_vel(nptiso, npt_inst_pressure, particles, time_step);
-  velocity_verlet_npt_propagate_AVOVA_And(particles, npt_iso, time_step, system);
+  velocity_verlet_npt_propagate_vel(nptiso, npt_inst_pressure, particles,
+                                    time_step);
+  velocity_verlet_npt_propagate_AVOVA_And(particles, npt_iso, time_step,
+                                          system);
 }
 
 void velocity_verlet_npt_Andersen_step_2(ParticleRangeNPT const &particles,
-                                         double time_step, System::System &system) {
+                                         double time_step,
+                                         System::System &system) {
   auto &nptiso = *system.nptiso;
   auto &npt_inst_pressure = *system.npt_inst_pressure;
   velocity_verlet_npt_propagate_vel_final(nptiso, npt_inst_pressure, particles,

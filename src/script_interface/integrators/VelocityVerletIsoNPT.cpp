@@ -31,9 +31,9 @@
 
 #include <utils/Vector.hpp>
 
+#include <iostream>
 #include <memory>
 #include <string>
-#include <iostream>
 
 namespace ScriptInterface {
 namespace Integrators {
@@ -74,7 +74,8 @@ void VelocityVerletIsoNPT::activate() {
   } else if (m_barostat == "MTK") {
     get_system().propagation->set_integ_switch(INTEG_METHOD_NPT_ISO_MTK);
   } else {
-    throw std::invalid_argument("Parameter 'barostat' must be 'Andersen' or 'MTK'.");
+    throw std::invalid_argument(
+        "Parameter 'barostat' must be 'Andersen' or 'MTK'.");
   }
   get_system().on_thermostat_param_change();
 }

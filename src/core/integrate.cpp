@@ -385,11 +385,13 @@ static bool integrator_step_1(CellStructure &cell_structure,
       (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
     auto pred = PropagationPredicateNPT(propagation.default_propagation);
     if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) {
-      velocity_verlet_npt_Andersen_step_1(cell_structure.local_particles().filter(pred),
-                                          *thermostat.npt_iso, time_step, system);
+      velocity_verlet_npt_Andersen_step_1(
+          cell_structure.local_particles().filter(pred), *thermostat.npt_iso,
+          time_step, system);
     } else if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
-      velocity_verlet_npt_MTK_step_1(cell_structure.local_particles().filter(pred),
-                                     *thermostat.npt_iso, time_step, system);
+      velocity_verlet_npt_MTK_step_1(
+          cell_structure.local_particles().filter(pred), *thermostat.npt_iso,
+          time_step, system);
     }
   }
 #endif
@@ -441,11 +443,11 @@ static void integrator_step_2(CellStructure &cell_structure,
       (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
     auto pred = PropagationPredicateNPT(propagation.default_propagation);
     if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) {
-      velocity_verlet_npt_Andersen_step_2(cell_structure.local_particles().filter(pred),
-                                          time_step, system);
+      velocity_verlet_npt_Andersen_step_2(
+          cell_structure.local_particles().filter(pred), time_step, system);
     } else if (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK) {
-      velocity_verlet_npt_MTK_step_2(cell_structure.local_particles().filter(pred),
-                                     time_step, system);
+      velocity_verlet_npt_MTK_step_2(
+          cell_structure.local_particles().filter(pred), time_step, system);
     }
   }
 #endif
@@ -564,7 +566,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 
 #ifdef NPT
     if ((propagation.integ_switch != INTEG_METHOD_NPT_ISO_AND) &&
-    	(propagation.integ_switch != INTEG_METHOD_NPT_ISO_MTK))
+        (propagation.integ_switch != INTEG_METHOD_NPT_ISO_MTK))
 #endif
     {
       resort_particles_if_needed(*this);
@@ -584,7 +586,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     if (has_vs_rel()) {
 #ifdef NPT
       if ((propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
-    	  (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
+          (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
         cell_structure->update_ghosts_and_resort_particle(
             Cells::DATA_PART_PROPERTIES);
       }

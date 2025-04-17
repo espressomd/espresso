@@ -296,7 +296,8 @@ class PressureLJ(ut.TestCase):
         system.cell_system.skin = skin
         system.periodicity = [True, True, True]
         system.thermostat.set_npt(kT=1., gamma0=0.01, gammav=0.01, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=1., piston=piston, barostat=barostat)
+        system.integrator.set_isotropic_npt(
+            ext_pressure=1., piston=piston, barostat=barostat)
 
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift="auto")

@@ -118,7 +118,8 @@ void System::System::npt_ensemble_init(bool recalc_forces) {
 
   auto dt = ::System::get_system().get_time_step();
   if (particle_number > 1) {
-    nptiso->half_dt_inv_piston_and_Nf = -0.5 * dt * nptiso->inv_piston * (1. + 1./(particle_number - 1));
+    nptiso->half_dt_inv_piston_and_Nf =
+        -0.5 * dt * nptiso->inv_piston * (1. + 1. / (particle_number - 1));
   } else {
     nptiso->half_dt_inv_piston_and_Nf = -0.5 * dt * nptiso->inv_piston;
   }

@@ -235,7 +235,8 @@ class Test(ut.TestCase):
 
         self.system.electrostatics.solver = p3m
         self.system.thermostat.set_npt(kT=1., gamma0=2., gammav=0.004, seed=42)
-        self.system.integrator.set_isotropic_npt(ext_pressure=2., piston=0.001, barostat=barostat)
+        self.system.integrator.set_isotropic_npt(
+            ext_pressure=2., piston=0.001, barostat=barostat)
         with self.assertRaisesRegex(RuntimeError, "ICC does not work in the NPT ensemble"):
             self.system.electrostatics.extension = icc
         self.assertIsNone(self.system.electrostatics.extension)
@@ -248,6 +249,7 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures(["NPT", "P3M"])
     def test_exceptions_npt_MTK(self):
         self.run_exceptions_npt("MTK")
+
 
 if __name__ == "__main__":
     ut.main()

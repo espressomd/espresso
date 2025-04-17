@@ -68,10 +68,12 @@ class NPTThermostat:
 
         # Negative seed should throw exception
         with self.assertRaises(ValueError):
-            system.thermostat.set_npt(kT=kT, gamma0=gamma0, gammav=gammav, seed=-1)
+            system.thermostat.set_npt(
+                kT=kT, gamma0=gamma0, gammav=gammav, seed=-1)
 
         system.thermostat.set_npt(kT=kT, gamma0=gamma0, gammav=gammav, seed=41)
-        system.integrator.set_isotropic_npt(ext_pressure=p_ext, piston=piston, barostat=self.barostat)
+        system.integrator.set_isotropic_npt(
+            ext_pressure=p_ext, piston=piston, barostat=self.barostat)
 
         # run(0) does not increase the philox counter and should give the same
         # force and box volume
@@ -135,12 +137,12 @@ class NPTThermostat:
             gamma0 = 2.0
             gammav = 0.004
             piston = 0.0001
-            ext_pressure=2.0
+            ext_pressure = 2.0
         else:
             gamma0 = 1.0
             gammav = 0.004
             piston = 4.0
-            ext_pressure=2.0
+            ext_pressure = 2.0
 
         for n in range(3):
             direction = np.roll([True, False, False], n)
@@ -148,7 +150,8 @@ class NPTThermostat:
             system.part.add(pos=data[:, 0:3], type=len(data) * [2])
             system.part.all().pos = data[:, 0:3]
             system.part.all().v = data[:, 3:6]
-            system.thermostat.set_npt(kT=1.0, gamma0=gamma0, gammav=gammav, seed=42)
+            system.thermostat.set_npt(
+                kT=1.0, gamma0=gamma0, gammav=gammav, seed=42)
             system.integrator.set_isotropic_npt(ext_pressure=ext_pressure, piston=piston,
                                                 direction=direction, barostat=self.barostat)
             system.integrator.run(20)
@@ -172,7 +175,8 @@ class NPTThermostat:
         physical = system.part.add(pos=[0, 0, 0], v=[1, 0, 0])
 
         system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.04, seed=42)
-        system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=piston, barostart=self.barostat)
+        system.integrator.set_isotropic_npt(
+            ext_pressure=2.0, piston=piston, barostart=self.barostat)
 
         system.integrator.run(1)
 
@@ -184,19 +188,24 @@ class NPTThermostat:
 
         # invalid parameters should throw exceptions
         with self.assertRaises(Exception):
-            system.integrator.set_isotropic_npt(ext_pressure=-1., piston=1., barostat=self.barostat)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=-1., piston=1., barostat=self.barostat)
         with self.assertRaises(Exception):
-            system.integrator.set_isotropic_npt(ext_pressure=1., piston=-1., barostat=self.barostat)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=1., piston=-1., barostat=self.barostat)
         with self.assertRaises(Exception):
-            system.integrator.set_isotropic_npt(ext_pressure=1., piston=0., barostat=self.barostat)
+            system.integrator.set_isotropic_npt(
+                ext_pressure=1., piston=0., barostat=self.barostat)
         with self.assertRaises(Exception):
             system.integrator.set_isotropic_npt(ext_pressure=1., piston=1.,
                                                 direction=[0, 0, 0], barostat=self.barostat)
+
 
 @utx.skipIfMissingFeatures("NPT")
 class NPTThermostat_Andersen(NPTThermostat, ut.TestCase):
     barostat = "Andersen"
     no_seed = True
+
 
 @utx.skipIfMissingFeatures("NPT")
 class NPTThermostat_MTK(NPTThermostat, ut.TestCase):
