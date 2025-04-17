@@ -28,13 +28,9 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "npt.hpp"           //
-#include "system/System.hpp" //
-#include "thermostat.hpp"    //
 #include "thermostats/npt_inline.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/math/sqr.hpp> //
 
 #include <boost/mpi/collectives.hpp>
 

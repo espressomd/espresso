@@ -243,7 +243,7 @@ The discretisation consists of the following steps (see :cite:`de2025correct` fo
 
    .. math:: \vec{v}'(t+dt/2) = \exp\left[ -\left(1 + \frac{d}{N_{f}} \right) \frac{p_{\epsilon}(t)}{W} dt/2 \right] \vec{v}(t)
 
-   where :math:`N_{f}=d(N-1)` is particle's degree of freedom, :math:`N` is the number of particles and :math:`d` is a dimension.
+   where :math:`N_{f}=d(N-1)` is particle's degree of freedom and :math:`N` is the number of particles.
 
 #. Calculate the instantaneous pressure and "volume momentum"
 
