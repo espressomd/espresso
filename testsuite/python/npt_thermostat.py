@@ -44,7 +44,7 @@ class NPTThermostat:
         """Test for RNG consistency."""
         def reset_particle_and_box():
             self.system.part.clear()
-            self.system.box_l = [3, 3, 3]
+            self.system.box_l = [4, 4, 4]
             p = self.system.part.add(pos=[0, 0, 0])
             return p
 
@@ -84,7 +84,7 @@ class NPTThermostat:
         force1 = np.copy(p.v) / vel2force
         boxl1 = np.copy(system.box_l)
         np.testing.assert_almost_equal(force0, force1)
-        np.testing.assert_almost_equal(boxl1, [3, 3, 3])
+        np.testing.assert_almost_equal(boxl1, [4, 4, 4])
 
         # run(1) should give a different force and box volume
         p = reset_particle_and_box()
@@ -92,7 +92,7 @@ class NPTThermostat:
         force2 = np.copy(p.v) / vel2force
         boxl2 = np.copy(system.box_l)
         self.assertTrue(np.all(np.not_equal(force1, force2)))
-        self.assertTrue(np.all(np.not_equal(boxl2, [3, 3, 3])))
+        self.assertTrue(np.all(np.not_equal(boxl2, [4, 4, 4])))
 
         # Same seed should not give the same force and box volume with a
         # different counter state
