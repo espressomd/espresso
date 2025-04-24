@@ -188,8 +188,8 @@ void System::System::calculate_forces() {
        dipoles_kernel_ptr = get_ptr(dipoles_kernel),
        elc_kernel_ptr = get_ptr(elc_kernel),
        coulomb_u_kernel_ptr = get_ptr(coulomb_u_kernel),
-       &nonbonded_ias = *nonbonded_ias,
-       &thermostat = *thermostat, &bonded_ias = *bonded_ias,
+       &nonbonded_ias = *nonbonded_ias, &thermostat = *thermostat,
+       &bonded_ias = *bonded_ias,
 #ifdef COLLISION_DETECTION
        &collision_detection = *collision_detection,
 #endif

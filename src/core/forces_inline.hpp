@@ -236,7 +236,8 @@ inline void add_non_bonded_pair_force(
   if (q1q2 != 0. and coulomb_kernel != nullptr) {
     pf.f += (*coulomb_kernel)(q1q2, d, dist);
 #ifdef NPT
-    npt_add_virial_energy_contribution((*coulomb_u_kernel)(p1, p2, q1q2, d, dist));
+    npt_add_virial_energy_contribution(
+        (*coulomb_u_kernel)(p1, p2, q1q2, d, dist));
 #endif
 #ifdef P3M
     if (elc_kernel)
