@@ -229,6 +229,8 @@ Notes:
 * The particle forces are only calculated in step 8 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 * The NpT algorithm doesn't support :ref:`Lees-Edwards boundary conditions`.
 * The NpT algorithm doesn't support propagation of angular velocities.
+* The NpT algorithm doesn't support :ref:`Rigid bonds`.
+* The NpT algorithm doesn't support :ref:`Magnetostatics`.
 
 .. _MTK scheme:
 
@@ -305,6 +307,8 @@ Notes:
 * The particle forces are only calculated in step 8 and then reused in step 3 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 * The NpT algorithm doesn't support :ref:`Lees-Edwards boundary conditions`.
 * The NpT algorithm doesn't support propagation of angular velocities.
+* The NpT algorithm doesn't support :ref:`Rigid bonds`.
+* The NpT algorithm doesn't support :ref:`Magnetostatics`.
 
 .. _Steepest descent:
 
