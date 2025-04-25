@@ -219,7 +219,7 @@ inline void add_non_bonded_pair_force(
 
   /*********************************************************************/
   /* everything before this contributes to the virial pressure in NpT, */
-  /* but nothing afterwards, since the contribution to pressure form   */
+  /* but nothing afterwards, since the contribution to pressure from   */
   /* electrostatic is calculated by energy                             */
   /*********************************************************************/
 #ifdef NPT
