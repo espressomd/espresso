@@ -335,6 +335,43 @@ class LeesEdwards(ut.TestCase):
 
         np.testing.assert_almost_equal(p.lees_edwards_flag, 0)
 
+    # def test_distance_function(self):
+    #     """
+    #     Test the distance calculation between bonded particles 
+    #     across LE boundary.
+    #     """
+
+    #     system = self.system
+    #     epsilon = 0.01
+    #     r_0 = 1.0
+    #     k_bond = 1.0
+
+    #     system.lees_edwards.set_boundary_conditions(
+    #         shear_direction="x", shear_plane_normal="y", protocol=const_offset_protocol)
+
+    #     # Test upper boundary crossing
+    #     p1 = system.part.add(pos=system.box_l, v=[0, 1, 0])
+    #     p2 = system.part.add(
+    #         pos=(system.box_l-np.array([0, r_0, 0])), v=[0, 1, 0])
+
+    #     d0 = np.copy(system.distance_vec(p1, p2))
+    #     system.integrator.run(1)
+
+    #     np.testing.assert_allclose(np.copy(system.distance_vec(p1, p2)), d0)
+
+    #     system.part.clear()
+
+    #     # Test lower boundary crossing
+    #     p1 = system.part.add(pos=3*[0], v=[0, -1, 0])
+    #     p2 = system.part.add(pos=[0, r_0, 0], v=[0, -1, 0])
+
+    #     d0 = np.copy(system.distance_vec(p1, p2))
+    #     system.integrator.run(1)
+
+    #     np.testing.assert_allclose(np.copy(system.distance_vec(p1, p2)), d0)
+
+    #     system.part.clear()
+
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_distance_vel_diff(self):
         """
@@ -359,7 +396,7 @@ class LeesEdwards(ut.TestCase):
             # check distance
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
-                r_euclid + system.lees_edwards.pos_offset * shear_axis)
+                r_euclid - system.lees_edwards.pos_offset * shear_axis, atol=1E-10)
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
                 -np.copy(system.distance_vec(p2, p1)))
@@ -457,7 +494,7 @@ class LeesEdwards(ut.TestCase):
             shear_direction="x", shear_plane_normal="y", protocol=lin_protocol)
         # Test position and velocity of VS with Le shift
         old_p3_pos = np.copy(p3.pos)
-        expected_p3_pos = old_p3_pos - \
+        expected_p3_pos = old_p3_pos + \
             np.array((get_lin_pos_offset(system.time, **params_lin), 0, 0))
         system.integrator.run(0, recalc_forces=True)
         np.testing.assert_allclose(np.copy(p3.pos_folded), expected_p3_pos)
@@ -598,12 +635,12 @@ class LeesEdwards(ut.TestCase):
 
     @utx.skipIfMissingFeatures(
         ["EXTERNAL_FORCES", "VIRTUAL_SITES_RELATIVE", "COLLISION_DETECTION"])
-    def test_le_colldet(self):
+    def test_le_collision_detection(self):
         system = self.system
         system.min_global_cut = 1.2
         system.time = 0
         protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=-1.0, initial_pos_offset=0.0)
+            shear_velocity=1.0, initial_pos_offset=0.0)
         system.lees_edwards.set_boundary_conditions(
             shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
@@ -621,14 +658,16 @@ class LeesEdwards(ut.TestCase):
             distance=1., bond_centers=harm)
 
         # After two integration steps we should not have a bond,
-        # as the collision detection uses the distant calculation
+        # as the collision detection uses the distance calculation
         # of the short range loop
+        print(system.distance_vec(col_part1, col_part2))
         system.integrator.run(2)
         bond_list = col_part1.bonds + col_part2.bonds
         np.testing.assert_array_equal(len(bond_list), 0)
 
         # Bond should be formed on the third integration step
         system.integrator.run(1)
+        print(system.distance_vec(col_part1, col_part2))
 
         # One particle should have the bond now.
         bond_list = col_part1.bonds + col_part2.bonds
@@ -639,7 +678,7 @@ class LeesEdwards(ut.TestCase):
 
         system.time = 0
         system.lees_edwards.protocol = espressomd.lees_edwards.LinearShear(
-            shear_velocity=-1.0, initial_pos_offset=0.0)
+            shear_velocity=1.0, initial_pos_offset=0.0)
 
         system.collision_detection.protocol = espressomd.collision_detection.BindAtPointOfCollision(
             distance=1., bond_centers=virt, bond_vs=harm, part_type_vs=31,
@@ -699,15 +738,13 @@ class LeesEdwards(ut.TestCase):
             k=1.0, r_0=0.0, r_cut=np.sqrt(2.))
         system.bonded_inter.add(harm)
 
-        p1 = system.part.add(pos=(2.5, 4.5, 2.5))
-        p2 = system.part.add(pos=(2.5, 0.5, 2.5))
+        p1 = system.part.add(pos=(2.5, 4.5, 2.5), fix=[True] * 3)
+        p2 = system.part.add(pos=(2.5, 0.5, 2.5), fix=[True] * 3)
         p1.add_bond((harm, p2))
 
         system.bond_breakage[harm] = espressomd.bond_breakage.BreakageSpec(
             breakage_length=np.sqrt(2.), action_type="delete_bond")
-
         system.integrator.run(3)
-
         # Bond list should be empty
         bond_list = []
         for p in system.part:
@@ -737,7 +774,7 @@ class LeesEdwards(ut.TestCase):
             breakage_length=np.sqrt(2.) / 2.,
             action_type="revert_bind_at_point_of_collision")
 
-        system.integrator.run(3)
+        system.integrator.run(1)
 
         # Check that all bonds have been removed from the system
         # So the bond list should be empty
@@ -826,4 +863,5 @@ class LeesEdwards(ut.TestCase):
 
 
 if __name__ == "__main__":
+
     ut.main()

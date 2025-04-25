@@ -143,7 +143,7 @@ void vs_relative_update_particles(CellStructure &cell_structure,
 
       if (box_geo.type() == BoxType::LEES_EDWARDS) {
         auto push = LeesEdwards::Push(box_geo);
-        push(p, -1); // includes a position fold
+        push(p, 1); // includes a position fold
       } else {
         box_geo.fold_position(p.pos(), p.image_box());
       }
