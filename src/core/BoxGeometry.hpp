@@ -252,7 +252,7 @@ public:
       auto const shear_plane_normal = le.shear_plane_normal;
       auto const shear_direction = le.shear_direction;
       auto const dy = x[shear_plane_normal] - y[shear_plane_normal];
-      if (fabs(dy) > 0.5 * length_half()[shear_plane_normal]) {
+      if (fabs(dy) > length_half()[shear_plane_normal]) {
         ret[shear_direction] -= Utils::sgn(dy) * le.shear_velocity;
       }
     }

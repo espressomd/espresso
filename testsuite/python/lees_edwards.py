@@ -335,43 +335,6 @@ class LeesEdwards(ut.TestCase):
 
         np.testing.assert_almost_equal(p.lees_edwards_flag, 0)
 
-    # def test_distance_function(self):
-    #     """
-    #     Test the distance calculation between bonded particles 
-    #     across LE boundary.
-    #     """
-
-    #     system = self.system
-    #     epsilon = 0.01
-    #     r_0 = 1.0
-    #     k_bond = 1.0
-
-    #     system.lees_edwards.set_boundary_conditions(
-    #         shear_direction="x", shear_plane_normal="y", protocol=const_offset_protocol)
-
-    #     # Test upper boundary crossing
-    #     p1 = system.part.add(pos=system.box_l, v=[0, 1, 0])
-    #     p2 = system.part.add(
-    #         pos=(system.box_l-np.array([0, r_0, 0])), v=[0, 1, 0])
-
-    #     d0 = np.copy(system.distance_vec(p1, p2))
-    #     system.integrator.run(1)
-
-    #     np.testing.assert_allclose(np.copy(system.distance_vec(p1, p2)), d0)
-
-    #     system.part.clear()
-
-    #     # Test lower boundary crossing
-    #     p1 = system.part.add(pos=3*[0], v=[0, -1, 0])
-    #     p2 = system.part.add(pos=[0, r_0, 0], v=[0, -1, 0])
-
-    #     d0 = np.copy(system.distance_vec(p1, p2))
-    #     system.integrator.run(1)
-
-    #     np.testing.assert_allclose(np.copy(system.distance_vec(p1, p2)), d0)
-
-    #     system.part.clear()
-
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_distance_vel_diff(self):
         """
@@ -393,6 +356,13 @@ class LeesEdwards(ut.TestCase):
                 pos=system.box_l - epsilon, v=np.random.random(3), fix=[True] * 3)
             r_euclid = -2 * np.array([epsilon] * 3)
 
+            p3 = system.part.add(
+                pos=[epsilon] * 3, v=np.random.random(3), fix=[True] * 3)
+            p4 = system.part.add(
+                pos=0.5 * system.box_l + 2 * epsilon, v=np.random.random(3), fix=[True] * 3)
+            p5 = system.part.add(
+                pos=0.5 * system.box_l, v=np.random.random(3), fix=[True] * 3)
+
             # check distance
             np.testing.assert_allclose(
                 np.copy(system.distance_vec(p1, p2)),
@@ -401,10 +371,14 @@ class LeesEdwards(ut.TestCase):
                 np.copy(system.distance_vec(p1, p2)),
                 -np.copy(system.distance_vec(p2, p1)))
 
-            # Check velocity difference
+            # Check velocity difference for bond across the domain boundary
             np.testing.assert_allclose(
-                np.copy(system.velocity_difference(p1, p2)),
-                np.copy(p2.v - p1.v) - system.lees_edwards.shear_velocity * shear_axis)
+                np.copy(system.velocity_difference(p3, p4)),
+                np.copy(p4.v - p3.v) - system.lees_edwards.shear_velocity * shear_axis)
+            # Check velocity difference for bond within the domain boundary
+            np.testing.assert_allclose(
+                np.copy(system.velocity_difference(p3, p5)),
+                np.copy(p5.v - p3.v))
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "SOFT_SPHERE"])
     def test_interactions(self):
@@ -660,14 +634,12 @@ class LeesEdwards(ut.TestCase):
         # After two integration steps we should not have a bond,
         # as the collision detection uses the distance calculation
         # of the short range loop
-        print(system.distance_vec(col_part1, col_part2))
         system.integrator.run(2)
         bond_list = col_part1.bonds + col_part2.bonds
         np.testing.assert_array_equal(len(bond_list), 0)
 
         # Bond should be formed on the third integration step
         system.integrator.run(1)
-        print(system.distance_vec(col_part1, col_part2))
 
         # One particle should have the bond now.
         bond_list = col_part1.bonds + col_part2.bonds
