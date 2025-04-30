@@ -30,6 +30,13 @@
 
 #include <utils/Vector.hpp>
 
+#include <array>
+#include <vector>
+
+namespace System {
+class System;
+} // namespace System
+
 /** Parameters of the isotropic NpT-integration scheme. */
 struct NptIsoParameters {
   NptIsoParameters() = default;
@@ -43,16 +50,12 @@ struct NptIsoParameters {
    *  although for a 2d or 1d system we mean Area and Length respectively
    */
   double volume = 0.;
+  /** list of particle mass */
+  std::vector<double> mass_list;
   /** desired pressure to which the algorithm strives to */
   double p_ext = 0.;
-  /** instantaneous pressure the system currently has */
-  double p_inst = 0.;
-  /** difference between \ref p_ext and \ref p_inst */
-  double p_diff = 0.;
-  /** virial (short-range) components of \ref p_inst */
-  Utils::Vector3d p_vir = {0., 0., 0.};
-  /** ideal gas components of \ref p_inst, derived from the velocities */
-  Utils::Vector3d p_vel = {0., 0., 0.};
+  /** conjugate momentum of volume */
+  double p_epsilon = 0.;
   /** geometry information for the NpT integrator. Holds the vector
    *  \< dir, dir, dir \> where a positive value for dir indicates that
    *  box movement is allowed in that direction. To check whether a
@@ -73,20 +76,20 @@ struct NptIsoParameters {
    *  the variable box_l
    */
   int non_const_dim = -1;
-  void coulomb_dipole_sanity_checks() const;
+  void coulomb_dipole_sanity_checks(System::System const &system) const;
   Utils::Vector<bool, 3> get_direction() const;
+  static constexpr std::array<int, 3> nptgeom_dir = {1, 2, 4};
 };
 
-extern NptIsoParameters nptiso;
-
-/** @brief Synchronizes NpT state such as instantaneous and average pressure
- */
-void synchronize_npt_state();
-void npt_ensemble_init(Utils::Vector3d const &box_l, bool recalc_forces);
-void integrator_npt_sanity_checks();
-void npt_reset_instantaneous_virials();
-void npt_add_virial_contribution(double energy);
-void npt_add_virial_contribution(const Utils::Vector3d &force,
-                                 const Utils::Vector3d &d);
+/** Instantaneous pressure during force calculation for NPT integration*/
+struct InstantaneousPressure {
+  /** instantaneous pressure for p_inst[0] and virial pressure for p_inst[1]
+   * the system currently has */
+  Utils::Vector2d p_inst = {0., 0.};
+  /** virial (short-range) components of \ref p_inst */
+  Utils::Vector3d p_vir = {0., 0., 0.};
+  /** ideal gas components of \ref p_inst, derived from the velocities */
+  Utils::Vector3d p_vel = {0., 0., 0.};
+};
 
 #endif // NPT

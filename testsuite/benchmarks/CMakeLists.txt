@@ -18,20 +18,13 @@
 #
 
 function(BENCHMARK_TEST)
-  python_scripts_test(${ARGV} TYPE benchmark) # forward arguments
-  set(benchmarks_tests ${benchmarks_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
+  espresso_importlib_based_test(${ARGV} TYPE benchmark)
 endfunction(BENCHMARK_TEST)
 
-# configure Python module importlib_wrapper.py
-add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-         ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
-set_tests_properties(
-  importlib_wrapper PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER
-                               SKIP_RETURN_CODE 5)
-set(benchmarks_tests ${benchmarks_tests}
-                     ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER} PARENT_SCOPE)
-configure_file(../importlib_wrapper.py
-               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
+configure_file(${ESPRESSO_IMPORTLIB_WRAPPER}
+               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py COPYONLY)
+espresso_importlib_based_fixture(SRC ${ESPRESSO_IMPORTLIB_WRAPPER_TEST} TYPE
+                                 benchmark)
 
 # create a local copy of the benchmarks
 set(BENCHMARKS_DIR "${CMAKE_CURRENT_BINARY_DIR}/local_benchmarks")

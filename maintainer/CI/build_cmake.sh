@@ -101,6 +101,7 @@ set_default_value with_asan false
 set_default_value with_static_analysis false
 set_default_value with_caliper false
 set_default_value with_fpe false
+set_default_value with_shared_memory_parallelism false
 set_default_value myconfig "default"
 set_default_value build_procs ${ci_procs}
 set_default_value check_procs ${build_procs}
@@ -149,6 +150,7 @@ cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=${make_check_benchmar
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=${with_ccache}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CALIPER=${with_caliper}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FPE=${with_fpe}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=${with_shared_memory_parallelism}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=${with_hdf5}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=${with_fftw}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=${with_gsl}"
@@ -177,12 +179,19 @@ if [ "${with_cuda}" = true ]; then
     fi
 fi
 
-command -v nvidia-smi && nvidia-smi || true
-command -v nvidia-smi && nvidia-smi -L || true
+# show system characteristics
+if test -x "$(command -v nvidia-smi)"; then
+  nvidia-smi || echo "nvidia-smi returned an error"
+  nvidia-smi -L || true
+else
+  echo "nvidia-smi not available"
+fi
 if [ "${hide_gpu}" = true ]; then
     echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
     export CUDA_VISIBLE_DEVICES=""
 fi
+command -v lscpu && lscpu || true
+echo ""
 
 builddir="${srcdir}/build"
 
@@ -313,6 +322,9 @@ if [ "${run_checks}" = true ]; then
         make -j${build_procs} check_benchmarks ${make_params} || exit 1
     fi
 
+    # maintainer scripts tests
+    make check_scripts || exit 1
+
     # installation tests
     make check_cmake_install ${make_params} || exit 1
 
@@ -354,7 +366,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."
-        python3 -m coverage combine testsuite/python testsuite/scripts/tutorials testsuite/scripts/samples testsuite/scripts/benchmarks
+        python3 -m coverage combine testsuite/python testsuite/tutorials testsuite/samples testsuite/benchmarks testsuite/scripts
         python3 -m coverage xml
     fi
     echo "Uploading to Codecov..."

@@ -447,6 +447,16 @@ class Analysis(ScriptInterfaceHelper):
         observable = self.call_method("calculate_pressure_tensor")
         return self._generate_summary(observable, 9, False)
 
+    def get_instantaneous_pressure(self):
+        assert_features("NPT")
+        observable = self.call_method("get_instantaneous_pressure")
+        return observable
+
+    def get_instantaneous_pressure_virial(self):
+        assert_features("NPT")
+        observable = self.call_method("get_instantaneous_pressure_virial")
+        return observable
+
     def energy(self):
         """
         Calculate the system energy in parallel.
@@ -652,6 +662,8 @@ class Analysis(ScriptInterfaceHelper):
             reduction(out, "dipolar")
         if has_features("VIRTUAL_SITES"):
             reduction(out, "virtual_sites")
+        if has_features("DPD"):
+            reduction(out, "dpd")
 
         if dim == 1 or calc_sp:
             return out

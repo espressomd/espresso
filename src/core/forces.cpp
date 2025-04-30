@@ -59,7 +59,7 @@
 #include <caliper/cali.h>
 #endif
 
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
 #include <Cabana_Core.hpp>
 #include "short_range_cabana.cpp"
 #endif
@@ -92,34 +92,32 @@ static ParticleForce external_force(Particle const &p) {
   return f;
 }
 
-static void init_forces(ParticleRange const &particles,
-                        ParticleRange const &ghost_particles) {
+void init_forces(const CellStructure &cell_structure) {
 #ifdef CALIPER
   CALI_CXX_MARK_FUNCTION;
 #endif
 
-  for (auto &p : particles) {
-    p.force_and_torque() = external_force(p);
-  }
+  cell_structure.for_each_local_particle(
+      [](Particle &p) { p.force_and_torque() = external_force(p); });
 
-  init_forces_ghosts(ghost_particles);
+  init_forces_ghosts(cell_structure);
 }
 
-void init_forces_ghosts(ParticleRange const &particles) {
-  for (auto &p : particles) {
-    p.force_and_torque() = {};
-  }
+void init_forces_ghosts(const CellStructure &cell_structure) {
+  cell_structure.for_each_ghost_particle(
+      [](Particle &p) { p.force_and_torque() = {}; });
 }
 
-static void force_capping(ParticleRange const &particles, double force_cap) {
+static void force_capping(CellStructure &cell_structure, double force_cap) {
   if (force_cap > 0.) {
     auto const force_cap_sq = Utils::sqr(force_cap);
-    for (auto &p : particles) {
-      auto const force_sq = p.force().norm2();
-      if (force_sq > force_cap_sq) {
-        p.force() *= force_cap / std::sqrt(force_sq);
-      }
-    }
+    cell_structure.for_each_local_particle(
+        [&force_cap, &force_cap_sq](Particle &p) {
+          auto const force_sq = p.force().norm2();
+          if (force_sq > force_cap_sq) {
+            p.force() *= force_cap / std::sqrt(force_sq);
+          }
+        });
   }
 }
 
@@ -142,19 +140,22 @@ void System::System::calculate_forces() {
 #endif
   bond_breakage->clear_queue();
   auto particles = cell_structure->local_particles();
-  auto ghost_particles = cell_structure->ghost_particles();
 #ifdef ELECTROSTATICS
   if (coulomb.impl->extension) {
     if (auto icc = std::get_if<std::shared_ptr<ICCStar>>(
             get_ptr(coulomb.impl->extension))) {
+      auto ghost_particles = cell_structure->ghost_particles();
       (**icc).iteration(*cell_structure, particles, ghost_particles);
     }
   }
 #endif // ELECTROSTATICS
 #ifdef NPT
-  npt_reset_instantaneous_virials();
+  if (propagation->used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) {
+    // reset virial part of instantaneous pressure
+    npt_inst_pressure->p_vir = Utils::Vector3d{};
+  }
 #endif
-  init_forces(particles, ghost_particles);
+  init_forces(*cell_structure);
   thermostat_force_init();
 
   calc_long_range_forces(particles);
@@ -180,9 +181,7 @@ void System::System::calculate_forces() {
   auto const collision_detection_cutoff = INACTIVE_CUTOFF;
 #endif
 
-  // TODO: Use #ifdef CABANA here
-  // but at the moments its faster for rebuilding to just change this to false
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
   cabana_short_range(
     [
       coulomb_kernel_ptr = get_ptr(coulomb_kernel), &bonded_ias = *bonded_ias,
@@ -201,7 +200,7 @@ void System::System::calculate_forces() {
     *box_geo,
     *nonbonded_ias,
     particles,
-    ghost_particles,
+    cell_structure->ghost_particles(),
     VerletCriterion<>{*this, cell_structure->get_verlet_skin(),
                       get_interaction_range(), coulomb_cutoff, dipole_cutoff,
                       collision_detection_cutoff}
@@ -275,7 +274,7 @@ void System::System::calculate_forces() {
   comfixed->apply(particles);
 
   // Needs to be the last one to be effective
-  force_capping(particles, force_cap);
+  force_capping(*cell_structure, force_cap);
 
   // mark that forces are now up-to-date
   propagation->recalc_forces = false;
@@ -300,6 +299,6 @@ void calc_long_range_forces(const ParticleRange &particles) {
 #ifdef NPT
 void npt_add_virial_force_contribution(const Utils::Vector3d &force,
                                        const Utils::Vector3d &d) {
-  npt_add_virial_contribution(force, d);
+  ::System::get_system().npt_add_virial_contribution(force, d);
 }
 #endif

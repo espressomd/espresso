@@ -71,7 +71,7 @@ public:
 
   /** @brief Recalculate all box-length-dependent parameters. */
   void on_boxl_change() { scaleby_box_l(); }
-  void on_node_grid_change() const { sanity_checks_node_grid(); }
+  void on_node_grid_change() const {}
   void on_periodicity_change() const { sanity_checks_periodicity(); }
   void on_cell_structure_change() {
     sanity_checks_cell_structure();
@@ -79,7 +79,6 @@ public:
   }
   void sanity_checks() const {
     sanity_checks_boxl();
-    sanity_checks_node_grid();
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
@@ -195,7 +194,6 @@ protected:
 
   /** Checks for correctness of the k-space cutoff. */
   void sanity_checks_boxl() const;
-  void sanity_checks_node_grid() const;
   void sanity_checks_periodicity() const;
   void sanity_checks_cell_structure() const;
 

@@ -52,7 +52,6 @@ public:
   ~FFTBuffersLegacy() override;
   void init_halo() override;
   void init_meshes(int ca_mesh_size) override;
-  void perform_scalar_halo_gather() override;
   void perform_vector_halo_gather() override;
   void perform_scalar_halo_spread() override;
   void perform_vector_halo_spread() override;

@@ -144,9 +144,13 @@ short range interaction force between particles :math:`i` and :math:`j` and
 :math:`\vec{x}_{ij}= \vec{x}_j - \vec{x}_i`.
 
 In addition to this deterministic force, a friction :math:`-\frac{\gamma^V}{Q}\Pi(t)`
-and noise :math:`\sqrt{k_B T \gamma^V} \eta(t)` are added for the box
-volume dynamics and the particle dynamics. This introduces three new parameters:
-The friction coefficient for the box :math:`\gamma^V` (parameter ``gammav``),
+and noise :math:`\sigma^V \mathcal{N}(0,1)` are added for the box
+volume dynamics and the particle dynamics,
+where :math:`\mathcal{N}(0,1)` are uncorrelated
+random numbers drawn from a standard normal distribution,
+and :math:`\sigma^V = \sqrt{k_B T Q (1 - \exp(-2\frac{\gamma^V}{Q}dt))}`.
+This introduces three new parameters:
+the friction coefficient for the box :math:`\gamma^V` (parameter ``gammav``),
 the friction coefficient of the particles :math:`\gamma^0` (parameter ``gamma0``)
 and the thermal energy :math:`k_BT` (parameter ``kT``).
 For a discussion of these terms and their discretisation, see :ref:`Langevin thermostat`,
@@ -154,7 +158,7 @@ which uses the same approach, but only for particles.
 As a result of box geometry changes, the particle positions and velocities have to be rescaled
 during integration.
 
-The discretisation consists of the following steps (see :cite:`kolb99a` for a full derivation of the algorithm):
+The discretisation consists of the following steps (see :cite:`kolb99a` for a derivation of the algorithm and :cite:`leimkuhler13a` for implementation of stochastic process):
 
 1. Calculate the particle velocities at the half step
 
@@ -163,29 +167,50 @@ The discretisation consists of the following steps (see :cite:`kolb99a` for a fu
 2. Calculate the instantaneous pressure and "volume momentum"
 
    .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t),V(t),\vec{f}(\vec{x}(t)), \vec{v}'(t+dt/2))
-   .. math:: \Pi(t+dt/2) = \Pi(t) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t) dt/2  +  \sqrt{k_B T \gamma^V dt} {\eta_*}
+   .. math:: \Pi(t+dt/2) = \Pi(t) + (\mathcal{P}-P) dt/2
 
 3. Calculate box volume and scaling parameter :math:`L` at half step and full step, scale the simulation box accordingly
 
    .. math:: V(t+dt/2) = V(t) + \frac{\Pi(t+dt/2)}{Q} dt/2
    .. math:: L(t+dt/2) = V(t+dt/2)^{1/d}
+
+4. Update particle positions at the half step and scale velocities
+
+   .. math:: \vec{x}(t+dt/2) = \frac{L(t+dt/2)}{L(t)} \left[ \vec{x}(t) + \frac{L^2(t)}{L^2(t+dt/2)} \vec{v}(t+dt/2) dt \right]
+   .. math:: \vec{v}(t+dt/2) = \frac{L(t)}{L(t+dt/2)} \vec{v}'(t+dt/2)
+
+5. Add friction and thermal fluctuations to velocity and "volume momentum"
+
+   .. math:: \vec{v}(t+dt/2) = \Gamma^0 \vec{v}(t+dt/2) + \sigma^0 \vec{\mathcal{N}}(0,1)
+   .. math:: \Pi(t+dt/2) = \Gamma^V \Pi(t+dt/2) + \sigma^V \mathcal{N}(0,1)
+
+   where
+
+   .. math:: \Gamma^0 = \exp\left(-\frac{\gamma^0}{m} dt \right), \sigma^0 = \sqrt{k_B T \left(1 - \exp\left(- 2 \frac{\gamma^0}{m} dt \right) \right) / m},
+   .. math:: \Gamma^V = \exp\left(-\frac{\gamma^V}{Q} dt \right), \sigma^V = \sqrt{k_B T Q \left(1 - \exp\left(- 2 \frac{\gamma^C}{W} dt \right) \right)}
+
+
+6. Update particle positions and volume at the half step
+
+   .. math:: \vec{x}'(t+dt) = \left[ \vec{x}(t+dt/2) + \vec{v}(t+dt/2) dt \right]
    .. math:: V(t+dt) = V(t+dt/2) + \frac{\Pi(t+dt/2)}{Q} dt/2
    .. math:: L(t+dt) = V(t+dt)^{1/d}
 
-4. Update particle positions and scale velocities
+   Here, :math:`{\vec{v}(t+dt/2)}` is rewritten as :math:`\vec{v}'(t+dt/2)`
+   since velocities should be rescaled due to volume change
 
-   .. math:: \vec{x}(t+dt) = \frac{L(t+dt)}{L(t)} \left[ \vec{x}(t) + \frac{L^2(t)}{L^2(t+dt/2)} \vec{v}(t+dt/2) dt \right]
-   .. math:: \vec{v}(t+dt/2) = \frac{L(t)}{L(t+dt)} \vec{v}'(t+dt/2)
+7. Scale positions and velocities
 
-5. Calculate forces, instantaneous pressure and "volume momentum"
+   .. math:: \vec{x}(t+dt) = \frac{L(t)}{L(t+dt/2)} \vec{x}'(t+dt)
+   .. math:: \vec{v}(t+dt/2) = \frac{L(t+dt/2)}{L(t+dt)} \vec{v}'(t+dt/2)
+
+8. Calculate forces, instantaneous pressure and "volume momentum"
 
    .. math:: \vec{F} = \vec{F}(\vec{x}(t+dt),\vec{v}(t+dt/2),t)
    .. math:: \mathcal{P} = \mathcal{P}(\vec{x}(t+dt),V(t+dt),\vec{f}(\vec{x}(t+dt)), \vec{v}(t+dt/2))
-   .. math:: \Pi(t+dt) = \Pi(t+dt/2) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t+dt/2) dt/2  +  \sqrt{k_B T \gamma^V dt} {\eta_*}
+   .. math:: \Pi(t+dt) = \Pi(t+dt/2) + (\mathcal{P}-P) dt/2
 
-   with uncorrelated numbers :math:`{\eta_*}` drawn from a random uniform process.
-
-6. Update the velocities
+9. Update velocities
 
    .. math:: \vec{v}(t+dt) = \vec{v}(t+dt/2) + \frac{\vec{F}(t+dt)}{m} dt/2
 
@@ -194,7 +219,7 @@ Notes:
 * The NpT algorithm is only tested for ``direction = 3 * [True]``. Usage of other ``direction`` is considered an experimental feature.
 * In step 4, only those coordinates are scaled for which ``direction`` is set.
 * For the instantaneous pressure, the same limitations of applicability hold as described in :ref:`Pressure`.
-* The particle forces :math:`\vec{F}` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sqrt{k_B T \gamma^0 dt} {\eta_*}`) analogous to the terms in the :ref:`Langevin thermostat`.
+* The particle forces :math:`\vec{F}` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sigma^0 \mathcal{N}(0,1)`) analogous to the terms in the :ref:`Langevin thermostat`.
 * The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 * The NpT algorithm doesn't support :ref:`Lees-Edwards boundary conditions`.
 * The NpT algorithm doesn't support propagation of angular velocities.

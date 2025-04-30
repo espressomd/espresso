@@ -38,6 +38,9 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace Thermostat {
 #ifdef PARTICLE_ANISOTROPY
@@ -279,13 +282,18 @@ public:
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
-  void recalc_prefactors(double kT, double piston, double time_step) {
+  void recalc_prefactors(double kT, double piston,
+                         std::vector<double> const &mass_list,
+                         double time_step) {
     assert(piston > 0.0);
-    auto const half_time_step = time_step / 2.0;
-    pref_rescale_0 = -gamma0 * half_time_step;
-    pref_noise_0 = sigma(kT, gamma0, time_step);
-    pref_rescale_V = -gammav * half_time_step / piston;
-    pref_noise_V = sigma(kT, gammav, time_step);
+
+    for (const auto &mass : mass_list) {
+      pref_rescale_0[mass] = std::exp(-gamma0 * time_step / mass);
+      pref_noise_0[mass] =
+          sigma_OU(kT, gamma0 / mass, time_step) / std::sqrt(mass);
+    }
+    pref_rescale_V = std::exp(-gammav * time_step / piston);
+    pref_noise_V = sigma_OU(kT, gammav / piston, time_step) * std::sqrt(piston);
   }
   /** Calculate the noise prefactor.
    *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma dt / 2} / \sigma_\eta @f$
@@ -298,6 +306,13 @@ public:
     constexpr auto const temp_coeff = 12.0;
     return sqrt(temp_coeff * kT * gamma * time_step);
   }
+  /** Calculate the noise prefactor for the exact solution
+   *  of Orstein-Uhlenbeck equation.
+   *  Evaluates the quantity @f$ \sqrt{k_B T (1 - \exp(-2 \gamma dt)} @f$
+   */
+  static double sigma_OU(double kT, double gamma, double time_step) {
+    return std::sqrt(kT * (1.0 - std::exp(-2. * gamma * time_step)));
+  }
   /** @name Parameters */
   /**@{*/
   /** Friction coefficient of the particles @f$ \gamma^0 @f$ */
@@ -307,20 +322,23 @@ public:
   /**@}*/
   /** @name Prefactors */
   /**@{*/
-  /** Particle velocity rescaling at half the time step.
-   *  Stores @f$ \gamma^{0}\cdot\frac{dt}{2} @f$.
+  /** Particle velocity rescaling at the time step for
+   *  Orstein-Uhlenbeck equation.
+   *  Stores @f$ \exp(-\frac{\gamma^{0}}{m} \cdot dt) @f$.
    */
-  double pref_rescale_0 = 0.;
-  /** Particle velocity rescaling noise standard deviation.
-   *  Stores @f$ \sqrt{k_B T \gamma^{0} dt} / \sigma_\eta @f$.
+  std::unordered_map<double, double> pref_rescale_0;
+  /** Particle velocity rescaling noise standard deviation for
+   *  Orstein-Uhlenbeck equation.
+   *  Stores @f$ \sqrt{k_B T ( 1 - \exp( -2 \frac{\gamma^{0}}{m} dt}) @f$
    */
-  double pref_noise_0 = 0.;
+  std::unordered_map<double, double> pref_noise_0;
   /** Volume rescaling at half the time step.
-   *  Stores @f$ \frac{\gamma^{V}}{Q}\cdot\frac{dt}{2} @f$.
+   *  Stores @f$ \exp(-\frac{\gamma^{V}}{W} \cdot dt) @f$.
    */
   double pref_rescale_V = 0.;
-  /** Volume rescaling noise standard deviation.
-   *  Stores @f$ \sqrt{k_B T \gamma^{V} dt} / \sigma_\eta @f$.
+  /** Volume rescaling noise standard deviation for
+   *  Orstein-Uhlenbeck equation
+   *  Stores @f$ \sqrt{k_B T ( 1 - \exp( -2 \frac{\gamma^{0}}{W} dt}) @f$
    */
   double pref_noise_V = 0.;
   /**@}*/

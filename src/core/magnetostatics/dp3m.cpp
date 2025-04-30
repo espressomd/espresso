@@ -161,7 +161,8 @@ template <int cao> struct AssignDipole {
                   Utils::Vector3d const &dip) const {
     using value_type =
         typename std::remove_reference_t<decltype(dp3m)>::value_type;
-    auto const weights = p3m_calculate_interpolation_weights<cao>(
+    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
+    auto const weights = p3m_calculate_interpolation_weights<cao, memory_order>(
         real_pos, dp3m.params.ai, dp3m.local_mesh);
     p3m_interpolate<cao>(
         dp3m.local_mesh, weights, [&dip, &dp3m](int ind, double w) {
@@ -282,12 +283,13 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
       auto const &offset = dp3m.mesh.start;
       auto const &d_op = dp3m.d_op[0u];
       auto const &mesh_dip = dp3m.mesh.rs_fields;
-      auto const [KX, KY, KZ] = dp3m.fft->get_permutations();
+      auto const permutations = dp3m.fft->get_permutations();
       auto indices = Utils::Vector3i{};
       auto index = std::size_t(0u);
       auto it_energy = dp3m.g_energy.begin();
       auto node_energy = 0.;
       for_each_3d(mesh_start, dp3m.mesh.size, indices, [&]() {
+        auto const [KX, KY, KZ] = permutations;
         auto const shift = indices + offset;
         // Re(mu)*k
         auto const re = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
@@ -331,7 +333,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
       auto const &mesh_stop = dp3m.mesh.size;
       auto const offset = dp3m.mesh.start;
       auto const &d_op = dp3m.d_op[0u];
-      auto const [KX, KY, KZ] = dp3m.fft->get_permutations();
+      auto const permutations = dp3m.fft->get_permutations();
       auto &mesh_dip = dp3m.mesh.rs_fields;
       auto indices = Utils::Vector3i{};
       auto index = std::size_t(0u);
@@ -341,6 +343,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
       auto it_energy = dp3m.g_energy.begin();
       index = 0u;
       for_each_3d(mesh_start, mesh_stop, indices, [&]() {
+        auto const [KX, KY, KZ] = permutations;
         auto const shift = indices + offset;
         // Re(mu)*k
         auto const re = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
@@ -386,6 +389,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
       auto it_force = dp3m.g_force.begin();
       index = 0u;
       for_each_3d(mesh_start, mesh_stop, indices, [&]() {
+        auto const [KX, KY, KZ] = permutations;
         auto const shift = indices + offset;
         // Re(mu)*k
         auto const re = mesh_dip[0u][index] * FloatType(d_op[shift[KX]]) +
@@ -406,6 +410,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
       for (int d = 0; d < 3; d++) {
         index = 0u;
         for_each_3d(mesh_start, mesh_stop, indices, [&]() {
+          auto const [KX, KY, KZ] = permutations;
           auto const d_op_val = FloatType(d_op[indices[d] + offset[d]]);
           auto const shift = indices + offset;
           auto const f1 = d_op_val * dp3m.ks_scalar[index];
@@ -439,10 +444,11 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
       energy += surface_term;
     }
   }
+#ifdef NPT
   if (npt_flag) {
-    npt_add_virial_contribution(energy);
-    fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
+    get_system().npt_add_virial_contribution(energy);
   }
+#endif
   if (not energy_flag) {
     energy = 0.;
   }
@@ -913,8 +919,10 @@ void DipolarP3MImpl<FloatType, Architecture>::calc_energy_correction() {
 }
 
 #ifdef NPT
-void npt_add_virial_magnetic_contribution(double energy) {
-  npt_add_virial_contribution(energy);
+template <typename FloatType, Arch Architecture>
+void DipolarP3MImpl<FloatType, Architecture>::npt_add_virial_contribution(
+    double energy) const {
+  get_system().npt_add_virial_contribution(energy);
 }
 #endif // NPT
 

@@ -65,7 +65,6 @@ void velocity_verlet_npt_step_1(ParticleRangeNPT const &particles,
  *      + 0.5 \Delta t \cdot F(t+\Delta t)/m \f]
  */
 void velocity_verlet_npt_step_2(ParticleRangeNPT const &particles,
-                                IsotropicNptThermostat const &npt_iso,
-                                double time_step);
+                                double time_step, System::System &system);
 
 #endif // NPT

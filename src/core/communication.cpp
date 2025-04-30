@@ -30,8 +30,9 @@
 #include <walberla_bridge/walberla_init.hpp>
 #endif
 
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
 #include <Cabana_Core.hpp>
+#include <Kokkos_Core.hpp>
 #endif
 
 #include <utils/Vector.hpp>
@@ -89,19 +90,20 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
   cuda_on_program_start();
 #endif
 
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
   Kokkos::initialize();
 #endif
-  }
+}
 
 void deinit() {
-  Communication::m_callbacks.reset(); 
-  
-#ifdef CABANA 
+  Communication::m_callbacks.reset();
+
+#ifdef SHARED_MEMORY_PARALLELISM
   Kokkos::finalize();
 #endif
-  }
 }
+} // namespace Communication
+
 
 Communicator::Communicator()
     : comm{::comm_cart}, node_grid{}, this_node{::this_node}, size{-1} {}

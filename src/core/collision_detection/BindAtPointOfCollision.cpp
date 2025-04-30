@@ -86,7 +86,7 @@ void BindAtPointOfCollision::handle_collisions(
   auto const min_global_cut = system.get_min_global_cut();
   auto const &box_geo = *system.box_geo;
 
-  add_bind_centers(local_collision_queue, cell_structure, bond_centers);
+  add_bind_centers(local_collision_queue, system, bond_centers);
 
   // Gather the global collision queue, because only one node has a collision
   // across node boundaries in its queue.

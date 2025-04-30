@@ -124,15 +124,14 @@ void vs_relative_update_particles(CellStructure &cell_structure,
   cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
                                Cells::DATA_PART_MOMENTUM);
 
-  auto const particles = cell_structure.local_particles();
-  for (auto &p : particles) {
+  cell_structure.for_each_local_particle([&](Particle &p) {
     if (!is_vs_relative(p)) {
-      continue;
+      return;
     }
 
     auto const *p_ref_ptr = get_reference_particle(cell_structure, p);
     if (!p_ref_ptr)
-      continue;
+      return;
 
     auto const &p_ref = *p_ref_ptr;
 
@@ -154,7 +153,7 @@ void vs_relative_update_particles(CellStructure &cell_structure,
     if (is_vs_relative_rot(p)) {
       p.quat() = p_ref.quat() * p.vs_relative().quat;
     }
-  }
+  });
 
   if (cell_structure.check_resort_required()) {
     cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
@@ -167,12 +166,12 @@ void vs_relative_back_transfer_forces_and_torques(
     CellStructure &cell_structure) {
   cell_structure.ghosts_reduce_forces();
 
-  init_forces_ghosts(cell_structure.ghost_particles());
+  init_forces_ghosts(cell_structure);
 
   // Iterate over all the particles in the local cells
-  for (auto &p : cell_structure.local_particles()) {
+  cell_structure.for_each_local_particle([&](Particle &p) {
     if (!is_vs_relative(p))
-      continue;
+      return;
 
     auto *p_ref_ptr = get_reference_particle(cell_structure, p);
     assert(p_ref_ptr != nullptr);
@@ -186,7 +185,7 @@ void vs_relative_back_transfer_forces_and_torques(
     if (is_vs_relative_rot(p)) {
       p_ref.torque() += p.torque();
     }
-  }
+  });
 }
 
 // Rigid body contribution to scalar pressure and pressure tensor

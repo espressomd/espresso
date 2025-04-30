@@ -135,7 +135,7 @@ public:
  * As described in from @cite hockney88a 5-189 (or 8-61).
  * The weights are also tabulated in @cite deserno98a @cite deserno98b.
  */
-template <int cao>
+template <int cao, Utils::MemoryOrder memory_order>
 InterpolationWeights<cao>
 p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
                                     const Utils::Vector3d &ai,
@@ -162,8 +162,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   InterpolationWeights<cao> ret;
 
   /* 3d-array index of nearest mesh point */
-  ret.ind = Utils::get_linear_index(nmp, local_mesh.dim,
-                                    Utils::MemoryOrder::ROW_MAJOR);
+  ret.ind = Utils::get_linear_index(nmp, local_mesh.dim, memory_order);
 
   assert((nmp + Utils::Vector3i::broadcast(cao)) <= local_mesh.dim);
   for (int i = 0; i < cao; i++) {
@@ -193,12 +192,12 @@ void p3m_interpolate(P3MLocalMesh const &local_mesh,
                      InterpolationWeights<cao> const &weights, Kernel kernel) {
   auto q_ind = weights.ind;
   for (int i0 = 0; i0 < cao; i0++) {
-    auto const tmp0 = weights.w_x[i0];
+    auto const w_x = weights.w_x[i0];
     for (int i1 = 0; i1 < cao; i1++) {
-      auto const tmp1 = tmp0 * weights.w_y[i1];
+      auto const w_xy = w_x * weights.w_y[i1];
       for (int i2 = 0; i2 < cao; i2++) {
-        kernel(q_ind, tmp1 * weights.w_z[i2]);
-
+        auto const w_xyz = w_xy * weights.w_z[i2];
+        kernel(q_ind, w_xyz);
         q_ind++;
       }
       q_ind += local_mesh.q_2_off;

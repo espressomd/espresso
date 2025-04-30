@@ -114,7 +114,8 @@ struct : public IntegratorHelper {
 struct : public IntegratorHelper {
   void set_integrator() const override {
     auto &npt_iso = espresso::system->thermostat->npt_iso;
-    ::nptiso = NptIsoParameters(1., 1e9, {true, true, true}, true);
+    espresso::system->nptiso = std::make_shared<NptIsoParameters>(
+        1., 1e16, Utils::Vector<bool, 3>{true, true, true}, true);
     espresso::system->propagation->set_integ_switch(INTEG_METHOD_NPT_ISO);
     espresso::system->thermostat->thermo_switch = THERMO_NPT_ISO;
     espresso::system->thermostat->kT = 1.;

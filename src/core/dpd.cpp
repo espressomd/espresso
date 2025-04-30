@@ -156,6 +156,11 @@ static auto dpd_viscous_stress_local() {
   return stress;
 }
 
+Utils::Vector9d dpd_pressure_local() {
+  auto const local_stress = dpd_viscous_stress_local();
+  return -Utils::flatten(local_stress);
+}
+
 /**
  * @brief Viscous stress tensor of the DPD interaction.
  *
@@ -174,7 +179,7 @@ static auto dpd_viscous_stress_local() {
 Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm) {
   auto const &box_geo = *System::get_system().box_geo;
   auto const local_stress = dpd_viscous_stress_local();
-  std::remove_const_t<decltype(local_stress)> global_stress;
+  std::remove_const_t<decltype(local_stress)> global_stress{};
 
   boost::mpi::reduce(comm, local_stress, global_stress, std::plus<>(), 0);
 

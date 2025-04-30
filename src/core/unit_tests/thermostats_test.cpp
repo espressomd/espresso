@@ -323,16 +323,15 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   thermostat.rng_initialize(0);
   thermostat.gamma0 = 2.0;
   thermostat.gammav = 0.1;
-  thermostat.recalc_prefactors(kT, 1.0, time_step);
+  thermostat.recalc_prefactors(kT, 1.0, std::vector{1.0}, time_step);
   auto p = particle_factory();
 
   auto const correlation = std::get<3>(noise_statistics(
-      [&p, &thermostat]() -> std::array<VariantVectorXd, 3> {
+      [&p, &thermostat]() -> std::array<VariantVectorXd, 2> {
         thermostat.rng_increment();
         return {{
-            friction_therm0_nptiso<1>(thermostat, p.v(), 0),
-            friction_therm0_nptiso<2>(thermostat, p.v(), 0),
-            friction_thermV_nptiso(thermostat, 1.5),
+            propagate_therm0_nptiso(thermostat, p.v(), 1.0, 0),
+            propagate_thermV_nptiso(thermostat, 1.0, 1.5),
         }};
       },
       sample_size));

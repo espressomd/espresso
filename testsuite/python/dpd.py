@@ -44,6 +44,7 @@ class DPDThermostat(ut.TestCase):
         self.system.constraints.clear()
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
+        self.system.non_bonded_inter.reset()
 
     def test_01__rng(self):
         """Test for RNG consistency."""
@@ -168,6 +169,31 @@ class DPDThermostat(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(p0.f), gamma * v, rtol=0, atol=1e-11)
         np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
+
+        # check prefactors are recalculated when non-bonded IAs are modified
+        # *before* a particle of the matching type exists in the system
+        system.non_bonded_inter[2, 0].dpd.set_params(
+            weight_function=0, gamma=1.5 * gamma, r_cut=1.2,
+            trans_weight_function=0, trans_gamma=1.5 * gamma, trans_r_cut=1.4)
+        p1.type = 2
+        p1.pos = [5. - 1.1, 5, 5]
+
+        system.integrator.run(0)
+
+        np.testing.assert_allclose(
+            np.copy(p0.f), 1.5 * gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(np.copy(p0.f), -np.copy(p1.f))
+
+        # check prefactors are recalculated when time step changes
+        force_without_noise = np.copy(p0.f)
+        system.thermostat.set_dpd(kT=1, seed=42)
+        system.integrator.run(0)
+        old_noise = np.copy(p0.f) - force_without_noise
+        system.time_step = 2. * system.time_step
+        system.integrator.run(0)
+        new_noise = np.copy(p0.f) - force_without_noise
+        np.testing.assert_array_almost_equal(
+            new_noise, old_noise / np.sqrt(2.))
 
     def test_linear_weight_function(self):
         system = self.system
@@ -394,9 +420,11 @@ class DPDThermostat(ut.TestCase):
 
             dpd_obs = espressomd.observables.DPDStress()
             obs_stress = dpd_obs.calculate()
+            pressure = system.analysis.pressure_tensor()["dpd"]
 
             np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
             np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
+            np.testing.assert_array_almost_equal(np.copy(pressure), -stress)
 
     def test_momentum_conservation(self):
         r_cut = 1.0

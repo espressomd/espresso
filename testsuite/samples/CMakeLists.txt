@@ -18,20 +18,13 @@
 #
 
 function(SAMPLE_TEST)
-  python_scripts_test(${ARGV} TYPE sample) # forward arguments
-  set(samples_tests ${samples_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
+  espresso_importlib_based_test(${ARGV} TYPE sample)
 endfunction(SAMPLE_TEST)
 
-# configure Python module importlib_wrapper.py
-add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-         ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
-set_tests_properties(
-  importlib_wrapper PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER
-                               SKIP_RETURN_CODE 5)
-set(samples_tests ${samples_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER}
-    PARENT_SCOPE)
-configure_file(../importlib_wrapper.py
-               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
+configure_file(${ESPRESSO_IMPORTLIB_WRAPPER}
+               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py COPYONLY)
+espresso_importlib_based_fixture(SRC ${ESPRESSO_IMPORTLIB_WRAPPER_TEST} TYPE
+                                 sample)
 
 # create a local copy of the samples
 set(SAMPLES_DIR "${CMAKE_CURRENT_BINARY_DIR}/local_samples")

@@ -52,7 +52,7 @@ class TestThole(ut.TestCase):
             pos=[2, 0, 0], type=0, fix=3 * [True], q=self.q2)
 
         p3m = espressomd.electrostatics.P3M(
-            prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=3 * [52], cao=4)
+            prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=3 * [54], cao=4)
         self.system.electrostatics.solver = p3m
 
         self.system.non_bonded_inter[0, 0].thole.set_params(
@@ -63,9 +63,17 @@ class TestThole(ut.TestCase):
         self.system.part.clear()
 
     def test(self):
+        import scipy.optimize
+        import scipy.special
         ns = 100
+        erfc_coef_a = -0.258
+        erfc_coef_b = 0.726
+        xdata = []
+        ydata = []
+        zdata = []
         for i in range(1, ns):
             x = 20.0 * i / ns
+            xdata.append(x)
             self.p1.pos = [x, 0, 0]
             self.system.integrator.run(0)
 
@@ -76,12 +84,22 @@ class TestThole(ut.TestCase):
             # Energy is slightly off due to self-energy.
             # Error is approximated with erfc for given system parameters
             E_calc = COULOMB_PREFACTOR * self.q1 * self.q2 / x * \
-                (1.0 - np.exp(-sd) * (1.0 + sd / 2.0)) - \
-                0.250088 * math.erfc(0.741426 * x)
+                (1.0 - np.exp(-sd) * (1.0 + sd / 2.0))
+            E_erfc = erfc_coef_a * math.erfc(erfc_coef_b * x)
+            zdata.append(E_calc)
+            E_calc += E_erfc
 
             E = self.system.analysis.energy()
+            ydata.append(E["total"])
             self.assertAlmostEqual(self.p1.f[0], F_calc, delta=1e-3)
             self.assertAlmostEqual(E["total"], E_calc, delta=1.2e-2)
+
+        # verify energy deviation follows erfc
+        (coef_a, coef_b), _ = scipy.optimize.curve_fit(
+            lambda x, a, b: a * scipy.special.erfc(b * x),
+            xdata, ydata - np.array(zdata), p0=[-0.1, 0.5])
+        self.assertAlmostEqual(coef_a, erfc_coef_a, delta=1e-2)
+        self.assertAlmostEqual(coef_b, erfc_coef_b, delta=1e-2)
 
 
 if __name__ == "__main__":

@@ -46,6 +46,11 @@ Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
 #else
   constexpr std::size_t n_vs = 0;
 #endif
+#ifdef DPD
+  constexpr std::size_t n_dpd = 1;
+#else
+  constexpr std::size_t n_dpd = 0;
+#endif
   auto const n_non_bonded = get_non_bonded_offset(max_type, max_type) + 1ul;
   constexpr std::size_t n_ext_fields = 1;  // reduction over all fields
   constexpr std::size_t n_kinetic_lin = 1; // linear kinetic contribution
@@ -53,7 +58,7 @@ Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
 
   auto const n_elements = n_kinetic_lin + n_kinetic_rot + n_bonded +
                           2ul * n_non_bonded + n_coulomb + n_dipolar + n_vs +
-                          n_ext_fields;
+                          n_ext_fields + n_dpd;
   m_data = std::vector<double>(m_chunk_size * n_elements);
 
   // spans for the different contributions
@@ -63,8 +68,8 @@ Observable_stat::Observable_stat(std::size_t chunk_size, std::size_t n_bonded,
   coulomb = std::span<double>(bonded.end(), n_coulomb * m_chunk_size);
   dipolar = std::span<double>(coulomb.end(), n_dipolar * m_chunk_size);
   virtual_sites = std::span<double>(dipolar.end(), n_vs * m_chunk_size);
-  external_fields =
-      std::span<double>(virtual_sites.end(), n_ext_fields * m_chunk_size);
+  dpd = std::span<double>(virtual_sites.end(), n_dpd * m_chunk_size);
+  external_fields = std::span<double>(dpd.end(), n_ext_fields * m_chunk_size);
   non_bonded_intra =
       std::span<double>(external_fields.end(), n_non_bonded * m_chunk_size);
   non_bonded_inter =

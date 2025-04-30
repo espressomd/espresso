@@ -18,7 +18,7 @@
  */
 #pragma once
 
-#ifdef CABANA 
+#ifdef SHARED_MEMORY_PARALLELISM 
 
 #include <Cabana_VerletList.hpp>
 

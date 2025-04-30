@@ -51,5 +51,10 @@ dpd_pair_force(Particle const &p1, Particle const &p2, DPDThermostat const &dpd,
                BoxGeometry const &box_geo, IA_parameters const &ia_params,
                Utils::Vector3d const &d, double dist, double dist2);
 Utils::Vector9d dpd_stress(boost::mpi::communicator const &comm);
+/**
+ * @brief Local contribution to the pressure tensor.
+ * Needs to be rescaled by the box volume.
+ */
+Utils::Vector9d dpd_pressure_local();
 
 #endif // DPD

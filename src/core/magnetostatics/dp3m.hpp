@@ -50,11 +50,6 @@
 #include <cmath>
 #include <numbers>
 
-#ifdef NPT
-/** Update the NpT virial */
-void npt_add_virial_magnetic_contribution(double energy);
-#endif
-
 /** @brief Dipolar P3M solver. */
 struct DipolarP3M : public Dipoles::Actor<DipolarP3M> {
   P3MParameters const &dp3m_params;
@@ -191,7 +186,7 @@ public:
     auto const fac = prefactor * p1.dipm() * p2.dipm();
 #endif
     auto const energy = fac * (mimj * B_r - mir * mjr * C_r);
-    npt_add_virial_magnetic_contribution(energy);
+    npt_add_virial_contribution(energy);
 #endif // NPT
     return ParticleForce{force, torque};
   }
@@ -259,6 +254,11 @@ protected:
   void sanity_checks_cell_structure() const;
 
   virtual void scaleby_box_l() = 0;
+
+#ifdef NPT
+  /** Update the NpT virial */
+  virtual void npt_add_virial_contribution(double energy) const = 0;
+#endif
 };
 
 #endif // DP3M

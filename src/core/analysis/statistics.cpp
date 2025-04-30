@@ -31,6 +31,7 @@
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "npt.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>

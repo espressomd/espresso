@@ -50,6 +50,8 @@ espresso_unit_test(SRC field_coupling_couplings_test.cpp DEPENDS
 espresso_unit_test(SRC field_coupling_fields_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC field_coupling_force_field_test.cpp DEPENDS
                    espresso::utils)
+espresso_unit_test(SRC field_layout_helpers_test.cpp DEPENDS espresso::utils
+                   espresso::core)
 espresso_unit_test(SRC periodic_fold_test.cpp)
 espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core)

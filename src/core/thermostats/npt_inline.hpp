@@ -34,42 +34,47 @@
 #include <cstddef>
 
 /** Add velocity-dependent noise and friction for NpT-sims to the particle's
- *  velocity
- *  @tparam step       Which half time step to integrate (1 or 2)
+ *  velocity;
+ *  @f$ p(t) = p(t) \exp(- \gamma_0 dt / m)
+ *                      + \sqrt{k_B T (1 - \exp(-2 \gamma_0 dt)}N(0,1) @f$
+ *
  *  @param npt_iso     Parameters
  *  @param vel         particle velocity
+ *  @param mass        particle mass
  *  @param p_identity  particle identity
- *  @return noise added to the velocity, already rescaled by
- *          dt/2 (contained in prefactors)
+ *  @return velocity added noise
  */
-template <std::size_t step>
 inline Utils::Vector3d
-friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
-                       Utils::Vector3d const &vel, int p_identity) {
-  static_assert(step == 1 or step == 2, "NPT only has 2 integration steps");
-  constexpr auto const salt =
-      (step == 1) ? RNGSalt::NPTISO0_HALF_STEP1 : RNGSalt::NPTISO0_HALF_STEP2;
-  if (npt_iso.pref_noise_0 > 0.0) {
-    return npt_iso.pref_rescale_0 * vel +
-           npt_iso.pref_noise_0 *
-               Random::noise_uniform<salt>(npt_iso.rng_counter(),
-                                           npt_iso.rng_seed(), p_identity);
+propagate_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
+                        Utils::Vector3d const &vel, double mass,
+                        int p_identity) {
+  if (npt_iso.gamma0 > 0.0) {
+    return npt_iso.pref_rescale_0.at(mass) * vel +
+           npt_iso.pref_noise_0.at(mass) *
+               Random::noise_gaussian<RNGSalt::NPTISO_PARTICLE>(
+                   npt_iso.rng_counter(), npt_iso.rng_seed(), p_identity);
   }
-  return npt_iso.pref_rescale_0 * vel;
+  return npt_iso.pref_rescale_0.at(mass) * vel;
 }
 
-/** Add p_diff-dependent noise and friction for NpT-sims to \ref
- *  NptIsoParameters::p_diff
+/** Added noise and friction for NpT-sims to \ref NptIsoParameters::p_epsilon;
+ *  @f$ p_{\epsilon} = p_{epsilon}(t) \exp(- \gamma_V dt / W)
+ *                     + \sqrt{k_B T (1 - \exp(-2 \gamma_V dt / W)}N(0,1) @f$
+ *
+ *  @param npt_iso     Parameters
+ *  @param p_epsilon    conjugate momentum of volume
+ *  @param piston      piston mass
+ *  @return conjugate momentum of volume added noise
  */
-inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
-                                     double p_diff) {
-  if (npt_iso.pref_noise_V > 0.0) {
-    return npt_iso.pref_rescale_V * p_diff +
+inline double propagate_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
+                                      double p_epsilon, double piston) {
+  if (npt_iso.gammav > 0.0) {
+    return npt_iso.pref_rescale_V * p_epsilon +
            npt_iso.pref_noise_V *
-               Random::noise_uniform<RNGSalt::NPTISOV, 1>(
-                   npt_iso.rng_counter(), npt_iso.rng_seed(), 0);
+               Random::noise_gaussian<RNGSalt::NPTISO_VOLUME, 1>(
+                   npt_iso.rng_counter(), npt_iso.rng_seed(), 0)[0];
   }
-  return npt_iso.pref_rescale_V * p_diff;
+  return npt_iso.pref_rescale_V * p_epsilon;
 }
 
 #endif // NPT

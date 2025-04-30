@@ -26,6 +26,7 @@
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "dpd.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -114,6 +115,10 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
     std::ranges::copy(Utils::flatten(vs_pressure),
                       obs_pressure.virtual_sites.begin());
   }
+#endif
+
+#ifdef DPD
+  std::ranges::copy(dpd_pressure_local(), obs_pressure.dpd.begin());
 #endif
 
   obs_pressure.rescale(volume);

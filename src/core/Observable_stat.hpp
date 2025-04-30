@@ -82,6 +82,8 @@ public:
   std::span<double> dipolar;
   /** Contribution from virtual sites (accumulated). */
   std::span<double> virtual_sites;
+  /** Contribution from DPD. */
+  std::span<double> dpd;
   /** Contribution from external fields (accumulated). */
   std::span<double> external_fields;
   /** Contribution(s) from non-bonded intramolecular interactions. */

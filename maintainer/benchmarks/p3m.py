@@ -153,6 +153,9 @@ system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {:.3f}".format(system.cell_system.tune_skin(
     min_skin=min_skin, max_skin=max_skin, tol=0.05, int_steps=100,
     adjust_max_skin=True)))
+print("Re-tune p3m")
+p3m = p3m_class(**p3m_params)
+system.electrostatics.solver = p3m
 
 
 if args.visualizer:

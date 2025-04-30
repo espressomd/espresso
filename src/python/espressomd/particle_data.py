@@ -1129,8 +1129,7 @@ class ParticleList(ScriptInterfaceHelper):
             bonds = p_dict.pop("bonds")
             if nesting_level(bonds) == 1:
                 bonds = [bonds]
-        p_id = self.call_method("add_particle", **p_dict)
-        p = self.by_id(p_id)
+        p = self.call_method("add_particle", **p_dict)
         for bond in bonds:
             if len(bond):
                 bond = p.normalize_and_check_bond_or_throw_exception(bond)

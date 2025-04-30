@@ -22,6 +22,7 @@
 add_library(
   espresso_core SHARED
   bond_error.cpp
+  bonds.cpp
   cells.cpp
   communication.cpp
   dpd.cpp
@@ -49,6 +50,10 @@ add_library(
 add_library(espresso::core ALIAS espresso_core)
 set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
                                                "${ESPRESSO_CXX_CLANG_TIDY}")
+if(ESPRESSO_BUILD_WITH_FFTW AND ESPRESSO_BUILD_WITH_CLANG_TIDY)
+  set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
+                                                 "${HEFFTE_CXX_CLANG_TIDY}")
+endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(espresso_core PRIVATE cuda/init.cpp)
@@ -77,8 +82,11 @@ install(TARGETS espresso_core
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
-  espresso_core PRIVATE espresso::config espresso::utils::mpi espresso::shapes
-                        espresso::cpp_flags
+  espresso_core
+  PRIVATE
+    espresso::config espresso::utils::mpi espresso::shapes espresso::cpp_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
          Boost::serialization Boost::mpi espresso::instrumentation)
 
@@ -93,9 +101,10 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
   add_subdirectory(fft)
+  add_subdirectory(p3m)
 endif()
 
-if(ESPRESSO_BUILD_WITH_CABANA)
+if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
   target_link_libraries(espresso_core PRIVATE Cabana::Core)
 endif()
 
@@ -119,7 +128,6 @@ add_subdirectory(magnetostatics)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
-add_subdirectory(p3m)
 add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
 add_subdirectory(stokesian_dynamics)

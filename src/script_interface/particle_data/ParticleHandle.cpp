@@ -30,6 +30,7 @@
 #include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "core/bonds.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/exclusions.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -580,13 +581,12 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     return make_vector_of_variants(bonds_flat);
   }
   if (name == "add_bond") {
-    set_particle_property([&params](Particle &p) {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      auto const part_id = get_value<std::vector<int>>(params, "part_id");
-      auto const bond_view =
-          BondView(bond_id, {part_id.data(), part_id.size()});
-      p.bonds().insert(bond_view);
-    });
+    auto const bond_id = get_value<int>(params, "bond_id");
+    auto const partner_ids = get_value<std::vector<int>>(params, "part_id");
+    std::vector<int> particle_ids = {m_pid};
+    std::ranges::copy(partner_ids, std::back_inserter(particle_ids));
+    ::add_bond(*get_system(), bond_id, particle_ids);
+    get_system()->on_particle_change();
   } else if (name == "del_bond") {
     set_particle_property([&params](Particle &p) {
       auto const bond_id = get_value<int>(params, "bond_id");

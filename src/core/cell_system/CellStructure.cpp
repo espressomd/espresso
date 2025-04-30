@@ -52,13 +52,13 @@
 #include <vector>
 #include <iostream>
 
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
 #include <Cabana_Core.hpp>
 #include "custom_verlet_list.hpp"
 #include "cabana_data.hpp"
 #endif
 
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
 
 using data_types = Cabana::MemberTypes<double[3], double[3], int, int, int>;
 using memory_space = Kokkos::SharedSpace;

@@ -58,7 +58,7 @@ void BindCenters::initialize(System::System &system) {
 
 void BindCenters::handle_collisions(
     System::System &system, std::vector<CollisionPair> &local_collision_queue) {
-  add_bind_centers(local_collision_queue, *system.cell_structure, bond_centers);
+  add_bind_centers(local_collision_queue, system, bond_centers);
 }
 
 } // namespace CollisionDetection

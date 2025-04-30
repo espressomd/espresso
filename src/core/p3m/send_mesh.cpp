@@ -37,6 +37,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <complex>
 #include <cstddef>
 #include <span>
 #include <utility>

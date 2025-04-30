@@ -30,46 +30,41 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
-#include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/mpi/collectives.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
-static constexpr Utils::Vector3i nptgeom_dir{{1, 2, 4}};
-
-NptIsoParameters nptiso = {};
-
-void synchronize_npt_state() {
-  boost::mpi::broadcast(comm_cart, nptiso.p_inst, 0);
-  boost::mpi::broadcast(comm_cart, nptiso.p_diff, 0);
-  boost::mpi::broadcast(comm_cart, nptiso.volume, 0);
+void System::System::synchronize_npt_state() {
+  boost::mpi::broadcast(comm_cart, nptiso->p_epsilon, 0);
+  boost::mpi::broadcast(comm_cart, nptiso->volume, 0);
+  boost::mpi::broadcast(comm_cart, npt_inst_pressure->p_inst, 0);
 }
 
-void NptIsoParameters::coulomb_dipole_sanity_checks() const {
-#if defined(ELECTROSTATICS) or defined(DIPOLES)
-  auto &system = System::get_system();
+void NptIsoParameters::coulomb_dipole_sanity_checks(
+    System::System const &system) const {
 #ifdef ELECTROSTATICS
   if (dimension < 3 and not cubic_box and system.coulomb.impl->solver) {
     throw std::runtime_error("If electrostatics is being used you must "
                              "use the cubic box NpT.");
   }
 #endif
-
 #ifdef DIPOLES
   if (dimension < 3 and not cubic_box and system.dipoles.impl->solver) {
     throw std::runtime_error("If magnetostatics is being used you must "
                              "use the cubic box NpT.");
   }
 #endif
-#endif
 }
 
 NptIsoParameters::NptIsoParameters(double ext_pressure, double piston,
                                    Utils::Vector<bool, 3> const &rescale,
                                    bool cubic_box)
-    : piston{piston}, p_ext{ext_pressure}, cubic_box{cubic_box} {
+    : piston{piston}, inv_piston{piston}, p_ext{ext_pressure},
+      cubic_box{cubic_box} {
 
   if (ext_pressure < 0.0) {
     throw std::runtime_error("The external pressure must be positive");
@@ -78,17 +73,10 @@ NptIsoParameters::NptIsoParameters(double ext_pressure, double piston,
     throw std::runtime_error("The piston mass must be positive");
   }
 
-  inv_piston = ::nptiso.inv_piston;
-  volume = ::nptiso.volume;
-  p_inst = ::nptiso.p_inst;
-  p_diff = ::nptiso.p_diff;
-  p_vir = ::nptiso.p_vir;
-  p_vel = ::nptiso.p_vel;
-
   /* set the NpT geometry */
   for (auto const i : {0u, 1u, 2u}) {
     if (rescale[i]) {
-      geometry |= ::nptgeom_dir[i];
+      geometry |= nptgeom_dir[i];
       dimension += 1;
       non_const_dim = static_cast<int>(i);
     }
@@ -99,57 +87,48 @@ NptIsoParameters::NptIsoParameters(double ext_pressure, double piston,
         "You must enable at least one of the x y z components "
         "as fluctuating dimension(s) for box length motion");
   }
-
-  coulomb_dipole_sanity_checks();
 }
 
 Utils::Vector<bool, 3> NptIsoParameters::get_direction() const {
-  return {static_cast<bool>(geometry & ::nptgeom_dir[0]),
-          static_cast<bool>(geometry & ::nptgeom_dir[1]),
-          static_cast<bool>(geometry & ::nptgeom_dir[2])};
+  return {static_cast<bool>(geometry & nptgeom_dir[0]),
+          static_cast<bool>(geometry & nptgeom_dir[1]),
+          static_cast<bool>(geometry & nptgeom_dir[2])};
 }
 
-void npt_ensemble_init(Utils::Vector3d const &box_l, bool recalc_forces) {
-  nptiso.inv_piston = 1. / nptiso.piston;
-  nptiso.volume = std::pow(box_l[nptiso.non_const_dim], nptiso.dimension);
+void System::System::npt_ensemble_init(bool recalc_forces) {
+  nptiso->inv_piston = 1. / nptiso->piston;
+  nptiso->volume =
+      std::pow(box_geo->length()[nptiso->non_const_dim], nptiso->dimension);
   if (recalc_forces) {
-    nptiso.p_inst = 0.0;
-    nptiso.p_vir = Utils::Vector3d{};
-    nptiso.p_vel = Utils::Vector3d{};
+    npt_inst_pressure->p_inst = Utils::Vector2d{};
+    npt_inst_pressure->p_vir = Utils::Vector3d{};
+    npt_inst_pressure->p_vel = Utils::Vector3d{};
+  }
+
+  auto &mass_list = nptiso->mass_list;
+  mass_list.clear();
+  for (auto &p : cell_structure->local_particles()) {
+    mass_list.emplace_back(p.mass());
+  }
+  mass_list.erase(std::ranges::unique(mass_list).begin(), mass_list.end());
+  Utils::Mpi::gather_buffer(mass_list, ::comm_cart);
+  if (::this_node == 0) {
+    mass_list.erase(std::ranges::unique(mass_list).begin(), mass_list.end());
+    std::ranges::sort(mass_list);
+  }
+  boost::mpi::broadcast(::comm_cart, mass_list, 0);
+}
+
+void System::System::npt_add_virial_contribution(double energy) {
+  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    npt_inst_pressure->p_vir[0] += energy;
   }
 }
 
-void integrator_npt_sanity_checks() {
-  if (::System::get_system().propagation->used_propagations &
-      PropagationMode::TRANS_LANGEVIN_NPT) {
-    try {
-      nptiso.coulomb_dipole_sanity_checks();
-    } catch (std::runtime_error const &err) {
-      runtimeErrorMsg() << err.what();
-    }
-  }
-}
-
-/** reset virial part of instantaneous pressure */
-void npt_reset_instantaneous_virials() {
-  if (::System::get_system().propagation->used_propagations &
-      PropagationMode::TRANS_LANGEVIN_NPT) {
-    nptiso.p_vir = Utils::Vector3d{};
-  }
-}
-
-void npt_add_virial_contribution(double energy) {
-  if (::System::get_system().propagation->used_propagations &
-      PropagationMode::TRANS_LANGEVIN_NPT) {
-    nptiso.p_vir[0] += energy;
-  }
-}
-
-void npt_add_virial_contribution(const Utils::Vector3d &force,
-                                 const Utils::Vector3d &d) {
-  if (::System::get_system().propagation->used_propagations &
-      PropagationMode::TRANS_LANGEVIN_NPT) {
-    nptiso.p_vir += hadamard_product(force, d);
+void System::System::npt_add_virial_contribution(Utils::Vector3d const &force,
+                                                 Utils::Vector3d const &d) {
+  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    npt_inst_pressure->p_vir += hadamard_product(force, d);
   }
 }
 #endif // NPT

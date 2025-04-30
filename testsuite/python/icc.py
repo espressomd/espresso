@@ -108,8 +108,8 @@ class TestICC(ut.TestCase):
                              q=-DIPOLE_CHARGE, fix=[True, True, True])
 
         p3m = espressomd.electrostatics.P3M(
-            prefactor=1., mesh=32, cao=7, accuracy=1e-5)
-        p3m.charge_neutrality_tolerance = 1e-11
+            prefactor=1., mesh=[24, 24, 26], cao=6, accuracy=1e-5)
+        p3m.charge_neutrality_tolerance = 1e-10
 
         self.system.electrostatics.solver = p3m
         self.system.electrostatics.extension = icc

@@ -24,6 +24,7 @@
 
 #include <boost/mpi/communicator.hpp>
 
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -85,6 +86,7 @@ public:
   const boost::mpi::communicator &comm() const { return m_comm; }
 
 private:
+  mutable std::mutex mutex;
   std::vector<RuntimeError> m_errors;
   boost::mpi::communicator m_comm;
 };

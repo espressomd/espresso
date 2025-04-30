@@ -16,12 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import importlib_wrapper as iw
 import sys
 import ast
 import pathlib
 import tempfile
 import espressomd
+
+sys.path.insert(0, "@CMAKE_SOURCE_DIR@/maintainer/parsing")
+import importlib_wrapper as iw
 
 
 class importlib_wrapper(ut.TestCase):
@@ -49,6 +51,11 @@ class importlib_wrapper(ut.TestCase):
         str_inp = "var, other_var = 5, 6\n"
         self.assertRaises(AssertionError, iw.substitute_variable_values,
                           str_inp, var=10)
+        # test visitor
+        node_visitor = iw.GetVariableAssignments([])
+        self.assertIsNone(node_visitor.visit_ClassDef(None))
+        self.assertIsNone(node_visitor.visit_FunctionDef(None))
+        self.assertIsNone(node_visitor.visit_AsyncFunctionDef(None))
 
     def test_set_cmd(self):
         original_sys_argv = list(sys.argv)

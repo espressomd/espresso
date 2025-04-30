@@ -194,7 +194,7 @@ Variant ParticleList::do_call_method(std::string const &name,
       so->call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
     }
 #endif // EXCLUSIONS
-    return so->get_parameter("id");
+    return so;
   }
   return {};
 }

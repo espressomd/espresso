@@ -28,6 +28,7 @@
 #include "core/communication.hpp"
 #include "core/dpd.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "core/npt.hpp"
 
 #include "script_interface/communication.hpp"
 
@@ -295,6 +296,14 @@ Variant Analysis::do_call_method(std::string const &name,
   if (name == "calculate_pressure_tensor") {
     return m_obs_stat->do_call_method("calculate_pressure_tensor", {});
   }
+#ifdef NPT
+  if (name == "get_instantaneous_pressure") {
+    return get_system().npt_inst_pressure->p_inst[0];
+  }
+  if (name == "get_instantaneous_pressure_virial") {
+    return get_system().npt_inst_pressure->p_inst[1];
+  }
+#endif // NPT
   return {};
 }
 

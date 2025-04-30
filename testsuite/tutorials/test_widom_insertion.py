@@ -1,4 +1,5 @@
-# Copyright (C) 2019-2022 The ESPResSo project
+#
+# Copyright (C) 2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,28 +15,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import unittest as ut
-import importlib_wrapper
+import importlib_wrapper 
+import numpy as np
 
-try:
-    import pint  # pylint: disable=unused-import
-except ImportError:
-    tutorial = importlib_wrapper.MagicMock()
-    skipIfMissingFeatures = ut.skip(
-        "Python module pint not available, skipping test!")
-else:
-    tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-        "@TUTORIALS_DIR@/constant_pH/constant_pH.py", script_suffix="interactions",
-        USE_WCA=True, USE_ELECTROSTATICS=True, NUM_PHS=8, NUM_SAMPLES=10)
+tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+    "@TUTORIALS_DIR@/widom_insertion/widom_insertion.py", sample_size=50,
+    ci_params={"mesh": (14, 14, 14), "cao": 7, "tune": True}
+)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
-    system = tutorial.system
 
     def test(self):
-        pass
+        # simulation data points must be close to the Davies curve
+        sim = tutorial.excess_chemical_potentials[:, 0]
+        ref = tutorial.davies_equation(tutorial.salt_concentrations)
+        self.assertLess(np.std(sim - ref), 0.05)
 
 
 if __name__ == "__main__":

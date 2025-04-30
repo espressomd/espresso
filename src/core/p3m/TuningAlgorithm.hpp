@@ -79,13 +79,13 @@ protected:
    * @brief Granularity of the time measurement (milliseconds).
    * Tuning halts when the runtime is larger than the best time plus this value.
    */
-  static auto constexpr time_granularity = 2.;
+  static auto constexpr time_granularity = 5.;
 
   /**
    * @brief Maximal number of consecutive trials that don't improve runtime.
    * Tuning halts when this threshold is reached.
    */
-  static auto constexpr max_n_consecutive_trials = 20;
+  static auto constexpr max_n_consecutive_trials = 40;
 
   /** @brief Value for invalid time measurements. */
   static auto constexpr time_sentinel = std::numeric_limits<double>::max();

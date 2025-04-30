@@ -52,12 +52,12 @@ function(ESPRESSO_UNIT_TEST)
       set(TEST_NUM_PROC ${ESPRESSO_TEST_NP})
     endif()
     espresso_set_mpiexec_tmpdir(${TEST_NAME})
-    add_test(${TEST_NAME} ${MPIEXEC} ${ESPRESSO_MPIEXEC_PREFLAGS}
+    add_test(NAME ${TEST_NAME} COMMAND ${MPIEXEC} ${ESPRESSO_MPIEXEC_PREFLAGS}
              ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS}
              ${ESPRESSO_MPIEXEC_TMPDIR} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}
              ${MPIEXEC_POSTFLAGS})
   else()
-    add_test(${TEST_NAME} ${TEST_NAME})
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
   endif()
 
   if(ESPRESSO_WARNINGS_ARE_ERRORS)
@@ -71,6 +71,7 @@ function(ESPRESSO_UNIT_TEST)
   if(NOT TEST_NUM_PROC AND ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA AND "${TEST_DEPENDS}" MATCHES "(^|;)([Bb]oost::mpi|MPI::MPI_CXX)($|;)")
     list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
   endif()
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
   set_tests_properties(
     ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}")
 

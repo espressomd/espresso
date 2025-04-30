@@ -174,6 +174,8 @@ class AnalyzeEnergy(ut.TestCase):
         self.assertAlmostEqual(energy["non_bonded"], 1., delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0.5 * sum(
             [self.system.analysis.particle_energy(p) for p in self.system.part.all()]), delta=1e-7)
+        self.assertAlmostEqual(energy["virtual_sites"], 0., delta=1e-7)
+        self.assertAlmostEqual(energy["dpd"], 0., delta=1e-7)
         # two bonds
         p1.add_bond((self.harmonic, p0))
         energy = self.system.analysis.energy()

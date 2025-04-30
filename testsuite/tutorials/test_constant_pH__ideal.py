@@ -18,14 +18,10 @@
 import unittest as ut
 import importlib_wrapper
 import numpy as np
+import contextlib
 
-try:
-    import pint  # pylint: disable=unused-import
-except ImportError:
-    tutorial = importlib_wrapper.MagicMock()
-    skipIfMissingFeatures = ut.skip(
-        "Python module pint not available, skipping test!")
-else:
+skipIfMissingFeatures = ut.skip("missing Python packages")
+with contextlib.suppress(ImportError):
     tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
         "@TUTORIALS_DIR@/constant_pH/constant_pH.py", script_suffix="ideal",
         USE_WCA=False, USE_ELECTROSTATICS=False, NUM_PHS=10)
@@ -33,7 +29,6 @@ else:
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
-    system = tutorial.system
 
     def test(self):
         ref_values = 1. / (1 + 10**(tutorial.pKa - tutorial.pHs))

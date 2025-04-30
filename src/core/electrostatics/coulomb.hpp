@@ -42,6 +42,10 @@
 #include <type_traits>
 #include <variant>
 
+#ifdef FFTW3_H
+#error "The FFTW3 library shouldn't be visible in this translation unit"
+#endif
+
 namespace Coulomb {
 
 using ElectrostaticsActor =

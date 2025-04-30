@@ -143,6 +143,9 @@ protected:
                            ParticleRange const &particles) override;
   void init_cpu_kernels();
   void scaleby_box_l() override;
+#ifdef NPT
+  void npt_add_virial_contribution(double energy) const override;
+#endif
 };
 
 template <typename FloatType, Arch Architecture,

@@ -19,21 +19,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Verify the NVCC compiler matches the NVIDIA toolkit,
 # include the toolkit libraries and declare a custom
 # `add_library()` wrapper function named `espresso_add_gpu_library()`.
-
-file(REAL_PATH "${CUDAToolkit_ROOT}/bin/nvcc" ESPRESO_CUDAToolkit_ROOT_RESOLVED)
-file(REAL_PATH "${CMAKE_CUDA_COMPILER}" ESPRESO_CMAKE_CUDA_COMPILER_RESOLVED)
-if(NOT "${ESPRESO_CUDAToolkit_ROOT_RESOLVED}" STREQUAL "${ESPRESO_CMAKE_CUDA_COMPILER_RESOLVED}"
-   AND NOT ESPRESSO_INSIDE_DOCKER)
-  cmake_path(GET CMAKE_CUDA_COMPILER PARENT_PATH ESPRESSO_NVCC_EXECUTABLE_DIRNAME)
-  cmake_path(GET ESPRESSO_NVCC_EXECUTABLE_DIRNAME PARENT_PATH ESPRESSO_NVCC_EXECUTABLE_DIRNAME)
-  message(
-    WARNING
-      "Your nvcc compiler (${CMAKE_CUDA_COMPILER}) does not appear to match your CUDA toolkit installation (${CUDAToolkit_ROOT}). While ESPResSo will still compile, you might get unexpected crashes. Try hinting it with '-D CUDAToolkit_ROOT=\"${ESPRESSO_NVCC_EXECUTABLE_DIRNAME}\"'."
-  )
-endif()
 
 set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)

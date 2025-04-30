@@ -58,12 +58,13 @@ IntegratorHandle::IntegratorHandle() {
       {"integrator",
        [this](Variant const &v) {
          auto const old_instance = m_instance;
-         m_instance = get_value<std::shared_ptr<Integrator>>(v);
+         auto const new_instance = get_value<std::shared_ptr<Integrator>>(v);
+         new_instance->bind_system(m_system.lock());
+         new_instance->activate();
          if (old_instance) {
            old_instance->deactivate();
          }
-         m_instance->bind_system(m_system.lock());
-         m_instance->activate();
+         m_instance = new_instance;
        },
        [this]() {
          switch (get_system().propagation->integ_switch) {

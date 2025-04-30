@@ -18,15 +18,23 @@
 #
 
 import sys
-import nbformat
-import nbconvert
+import time
+import pathlib
+import tempfile
 import importlib
+import contextlib
 import unittest as ut
 
-sys.path.insert(0, '@CMAKE_SOURCE_DIR@/maintainer/CI')
-module = importlib.import_module('jupyter_warnings')
+missing_modules = True
+with contextlib.suppress(ImportError):
+    import nbformat
+    import nbconvert
+    sys.path.insert(0, '@CMAKE_SOURCE_DIR@/maintainer/parsing')
+    module = importlib.import_module('notebook_links')
+    missing_modules = False
 
 
+@ut.skipIf(missing_modules, "Jupyter-related dependencies are unavailable")
 class Test(ut.TestCase):
 
     cell_md_src = '''
@@ -41,8 +49,25 @@ invalid: https://espressomd.github.io/doc/unknown_file.html
 invalid: [footnote 1](#unknown-footnote-1)
 invalid: [resource](file:///home/espresso/image.png)
 '''
+    html_src = '''\
+<!DOCTYPE html>
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <section id="python-modules">
+    <h2>Python modules</h2>
+  </body>
+</html>
+'''
 
     def test_detect_invalid_urls(self):
+        temp_dir = tempfile.TemporaryDirectory()
+        temp_root = pathlib.Path(temp_dir.name).resolve()
+        temp_file = temp_root / 'doc' / 'sphinx' / 'html' / 'index.html'
+        temp_file.parent.mkdir(parents=True, exist_ok=False)
+        temp_file.write_text(self.html_src, encoding="utf-8")
         nbconvert.HTMLExporter.mathjax_url = "file:///usr/share/javascript/mathjax/MathJax.js?config=Safe"
         nbconvert.HTMLExporter.require_js_url = "file:///usr/share/javascript/requirejs/require.min.js"
         html_exporter = nbconvert.HTMLExporter()
@@ -57,8 +82,17 @@ invalid: [resource](file:///home/espresso/image.png)
             '"file:///usr/share/javascript/requirejs/require.min.js" is an absolute path to a local file',
             '"file:///usr/share/javascript/mathjax/MathJax.js?config=Safe" is an absolute path to a local file',
         ]
-        issues = module.detect_invalid_urls(
-            nb, build_root='@CMAKE_BINARY_DIR@', html_exporter=html_exporter)
+        # absorb file system latency
+        for _ in range(10):
+            time.sleep(0.01)
+            if temp_file.exists():
+                break
+        assert temp_file.exists(), f"excessive write latency to '{temp_file}'"
+        # check validation
+        validator = module.NotebookLinksValidator(
+            build_root=str(temp_root), html_exporter=html_exporter)
+        issues = validator.validate(nb)
+        temp_dir.cleanup()
         self.assertEqual(issues, ref_issues)
 
 

@@ -492,7 +492,7 @@ void DipolarLayerCorrection::adapt_solver() {
       (epsilon == P3M_EPSILON_METALLIC) ? 0. : 1. / (2. * epsilon + 1.);
 }
 
-void DipolarLayerCorrection::sanity_checks_node_grid() const {
+void DipolarLayerCorrection::sanity_checks_periodicity() const {
   auto const &box_geo = *get_system().box_geo;
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("DLC: requires periodicity (True, True, True)");

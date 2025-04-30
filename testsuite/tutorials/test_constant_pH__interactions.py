@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2020-2022 The ESPResSo project
+# Copyright (C) 2019-2022 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,17 +14,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-function(UTILS_TEST)
-  python_scripts_test(${ARGV} TYPE utils) # forward arguments
-  set(utils_tests ${utils_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
-endfunction(UTILS_TEST)
+import unittest as ut
+import importlib_wrapper
+import contextlib
 
-utils_test(FILE test_maintainer_CI_jupyter_warnings.py)
-utils_test(FILE test_check_myconfig.py)
+skipIfMissingFeatures = ut.skip("missing Python packages")
+with contextlib.suppress(ImportError):
+    tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+        "@TUTORIALS_DIR@/constant_pH/constant_pH.py", script_suffix="interactions",
+        USE_WCA=True, USE_ELECTROSTATICS=True, NUM_PHS=8, NUM_SAMPLES=10)
 
-add_custom_target(
-  check_utils
-  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${ESPRESSO_TEST_TIMEOUT}
-          -j${ESPRESSO_TEST_NP} ${ESPRESSO_CTEST_ARGS} --output-on-failure)
+
+@skipIfMissingFeatures
+class Tutorial(ut.TestCase):
+
+    def test(self):
+        pass
+
+
+if __name__ == "__main__":
+    ut.main()

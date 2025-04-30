@@ -21,6 +21,51 @@ if(ESPRESSO_BUILD_WITH_COVERAGE_PYTHON)
   set(PYPRESSO_OPTIONS --coverage)
 endif()
 
+set(ESPRESSO_IMPORTLIB_WRAPPER
+    ${CMAKE_SOURCE_DIR}/maintainer/parsing/importlib_wrapper.py)
+set(ESPRESSO_IMPORTLIB_WRAPPER_TEST
+    ${CMAKE_CURRENT_BINARY_DIR}/test_importlib_wrapper.py)
+configure_file(test_importlib_wrapper.py test_importlib_wrapper.py)
+
+# setup fixtures for testsuites that dynamically load simulation scripts
+macro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
+  cmake_parse_arguments(TEST "" "SRC;TYPE" "" ${ARGN})
+  cmake_path(GET TEST_SRC STEM TEST_NAME)
+  add_test(NAME ${TEST_NAME} COMMAND ${CMAKE_BINARY_DIR}/pypresso
+                                     ${PYPRESSO_OPTIONS} ${TEST_SRC})
+  set_tests_properties(
+    ${TEST_NAME} PROPERTIES FIXTURES_SETUP "FIXTURE_${TEST_TYPE}"
+                            SKIP_RETURN_CODE 5)
+endmacro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
+
+# setup tests for testsuites that dynamically load simulation scripts
+macro(ESPRESSO_IMPORTLIB_BASED_TEST)
+  cmake_parse_arguments(TEST "" "FILE;SUFFIX;TYPE" "DEPENDENCIES;LABELS"
+                        ${ARGN})
+  cmake_path(GET TEST_FILE STEM TEST_NAME)
+  if(TEST_SUFFIX)
+    set(TEST_NAME "${TEST_NAME}_with_${TEST_SUFFIX}")
+  endif()
+  set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
+  configure_file(${TEST_FILE} ${TEST_FILE_CONFIGURED})
+  foreach(dependency IN LISTS TEST_DEPENDENCIES)
+    configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
+  endforeach(dependency)
+  string(REGEX REPLACE "^test_" "${TEST_TYPE}_" TEST_NAME ${TEST_NAME})
+  add_test(NAME ${TEST_NAME}
+           COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
+                   ${TEST_FILE_CONFIGURED})
+  set_tests_properties(
+    ${TEST_NAME} PROPERTIES FIXTURES_REQUIRED "FIXTURE_${TEST_TYPE}"
+                            SKIP_RETURN_CODE 5 LABELS "${TEST_LABELS}")
+  if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
+    set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
+  endif()
+endmacro(ESPRESSO_IMPORTLIB_BASED_TEST)
+
 add_subdirectory(python)
+add_subdirectory(samples)
+add_subdirectory(tutorials)
+add_subdirectory(benchmarks)
 add_subdirectory(cmake)
 add_subdirectory(scripts)

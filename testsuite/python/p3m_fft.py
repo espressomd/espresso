@@ -22,6 +22,7 @@ import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
+import itertools
 
 P3M_PARAMS = [
     {'cao': 7, 'r_cut': 3.103065490722656, 'alpha': 1.228153768561588, 'mesh': 48},
@@ -93,27 +94,16 @@ class FFT_test(ut.TestCase):
         import espressomd.electrostatics
         self.system.time_step = 0.01
         self.add_charged_particles()
-        for node_grid, p3m_params in FFT_PLANS[self.n_nodes]:
-            self.system.cell_system.node_grid = node_grid
-            solver = espressomd.electrostatics.P3M(
-                prefactor=2, accuracy=1e-6, tune=False, **p3m_params)
-            self.system.electrostatics.solver = solver
-            ref_energy = -75.871906
-            p3m_energy = self.system.analysis.energy()['coulomb']
-            self.system.electrostatics.clear()
-            np.testing.assert_allclose(p3m_energy, ref_energy, rtol=1e-4)
-
-    @utx.skipIfMissingFeatures("P3M")
-    @ut.skipIf(n_nodes < 2 or n_nodes >= 8, "only runs for 2 <= n_nodes <= 7")
-    def test_unsorted_node_grid_exception_p3m(self):
-        import espressomd.electrostatics
-        self.system.time_step = 0.01
-        self.add_charged_particles()
-        unsorted_node_grid = self.system.cell_system.node_grid[::-1]
-        self.system.cell_system.node_grid = unsorted_node_grid
-        solver = espressomd.electrostatics.P3M(prefactor=2, accuracy=1e-2)
-        with self.assertRaisesRegex(Exception, 'node grid must be sorted, largest first'):
-            self.system.electrostatics.solver = solver
+        for node_grid_base, p3m_params in FFT_PLANS[self.n_nodes]:
+            for node_grid in set(list(itertools.permutations(node_grid_base))):
+                self.system.cell_system.node_grid = node_grid
+                solver = espressomd.electrostatics.P3M(
+                    prefactor=2, accuracy=1e-6, tune=False, **p3m_params)
+                self.system.electrostatics.solver = solver
+                ref_energy = -75.871906
+                p3m_energy = self.system.analysis.energy()['coulomb']
+                self.system.electrostatics.clear()
+                np.testing.assert_allclose(p3m_energy, ref_energy, rtol=1e-4)
 
     @utx.skipIfMissingFeatures("DP3M")
     @ut.skipIf(n_nodes < 2 or n_nodes >= 8, "only runs for 2 <= n_nodes <= 7")

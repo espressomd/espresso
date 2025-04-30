@@ -21,14 +21,6 @@
 
 cmake_minimum_required(VERSION 3.25.1)
 cmake_policy(VERSION 3.25.1)
-if(POLICY CMP0167)
-  # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
-  cmake_policy(SET CMP0167 NEW)
-endif()
-if(POLICY CMP0169)
-  # use deprecated FetchContent_Populate function for h5xx dependency
-  cmake_policy(SET CMP0169 OLD)
-endif()
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -64,6 +56,7 @@ endif()
 
 include(FeatureSummary)
 include(GNUInstallDirs)
+include(ExternalProject)
 include(FetchContent)
 include(espresso_option_enum)
 include(espresso_enable_avx2_support)
@@ -106,23 +99,30 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 FetchContent_Declare(
   walberla
   GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-  GIT_TAG        f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+  GIT_TAG        0aab9c0af2335b1f6fec75deae06e514ccb233ab
   PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/walberla.patch
 )
 FetchContent_Declare(
   stokesian_dynamics
   GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-  GIT_TAG        862a7537a366f0c32f0c25e46bd107bea590faea
-)
-FetchContent_Declare(
-  h5xx
-  GIT_REPOSITORY https://github.com/h5md/h5xx.git
-  GIT_TAG        0.9.1
+  GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
 )
 FetchContent_Declare(
   caliper
   GIT_REPOSITORY https://github.com/LLNL/Caliper.git
   GIT_TAG        v2.12.1
+)
+FetchContent_Declare(
+  heffte
+  GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
+  GIT_TAG        v2.4.1
+  PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
+)
+FetchContent_Declare(
+  cabana
+  GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+  GIT_TAG        7914d28708b1c67b40d5743c1fbc09e221144dd3
+  PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
 )
 # cmake-format: on
 
@@ -146,6 +146,8 @@ option(ESPRESSO_BUILD_WITH_WALBERLA
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
        "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
 option(ESPRESSO_BUILD_WITH_WALBERLA_FFT "Build waLBerla with FFT support" OFF)
+option(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM
+       "Build with shared memory parallelism support" OFF)
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND "Build with Valgrind instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CALIPER "Build with Caliper instrumentation" OFF)
@@ -484,29 +486,46 @@ endif()
 # Libraries
 #
 
-if(ESPRESSO_BUILD_WITH_CABANA)
-  # TODO Kokkos_DIR needs to be set here
-
-  find_package(Kokkos REQUIRED)
-
-  include(FetchContent)
-  if(EXISTS "${CMAKE_BINARY_DIR}/_deps/cabana-build")
-    FetchContent_Declare(cabana
-      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG 07573782590e223edc6e5f83ec0807be5941df14
-    )
-  else()# Fix cabana doxygen conflict until it is fixed upstream
-    FetchContent_Declare(cabana
-      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG 07573782590e223edc6e5f83ec0807be5941df14
-      PATCH_COMMAND patch -N --reject-file=- -i "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_cabana_doxygen.diff" 
-    )
+if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+  FetchContent_GetProperties(cabana)
+  set(Cabana_REQUIRE_HEFFTE OFF CACHE BOOL "")
+  if(NOT cabana_POPULATED)
+    FetchContent_MakeAvailable(cabana)
   endif()
-  FetchContent_MakeAvailable(cabana)
+  find_package(Kokkos REQUIRED)
 endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
   find_package(FFTW3 REQUIRED)
+  FetchContent_GetProperties(heffte)
+  set(Heffte_ENABLE_FFTW on CACHE BOOL "")
+  if(ESPRESSO_BUILD_WITH_CUDA)
+    set(Heffte_ENABLE_CUDA "on" CACHE BOOL "")
+  endif()
+  if(NOT heffte_POPULATED)
+    set(BUILD_SHARED_LIBS ON)
+    FetchContent_MakeAvailable(heffte)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  endif()
+  install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
+    set(HEFFTE_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+    set(SKIP_CLANG_TIDY_CHECKS "")
+    set(SKIP_CLANG_TIDY_CHECKS_CXX "")
+    # silence heFFTe diagnostics
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-exception-escape")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-branch-clone")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-loop-convert")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-override")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-else-after-return")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS
+         "-readability-avoid-const-params-in-decls")
+    espresso_override_clang_tidy_checks(
+      HEFFTE_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+      "${SKIP_CLANG_TIDY_CHECKS_CXX}")
+  endif()
 endif()
 
 # We need the parallel hdf5 version!
@@ -532,19 +551,27 @@ if(ESPRESSO_BUILD_WITH_HDF5)
       )
     endif()
   endif()
-  # We need to define our own h5xx target, since the project version we depend
-  # on is not fully compatible with modern CMake.
-  FetchContent_GetProperties(h5xx)
-  if(NOT h5xx_POPULATED)
-    FetchContent_Populate(h5xx)
-  endif()
-  add_library(h5xx INTERFACE)
   add_library(hdf5 INTERFACE)
   target_link_libraries(hdf5 INTERFACE $<BUILD_INTERFACE:${HDF5_LIBRARIES}>)
   target_include_directories(hdf5
                              INTERFACE $<BUILD_INTERFACE:${HDF5_INCLUDE_DIRS}>)
-  target_include_directories(h5xx
-                             INTERFACE $<BUILD_INTERFACE:${h5xx_SOURCE_DIR}>)
+  # We need to define our own h5xx target, since the project version we depend
+  # on is not fully compatible with modern CMake.
+  add_library(h5xx INTERFACE)
+  # cmake-format: off
+  ExternalProject_Add(
+    h5xx_library
+    GIT_REPOSITORY    https://github.com/h5md/h5xx.git
+    GIT_TAG           0.9.1
+    PREFIX            lib_h5xx
+    # header-only library: disable configuration/build/install steps
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND     ""
+    INSTALL_COMMAND   ""
+  )
+  # cmake-format: on
+  ExternalProject_Get_Property(h5xx_library SOURCE_DIR)
+  target_include_directories(h5xx INTERFACE $<BUILD_INTERFACE:${SOURCE_DIR}>)
   target_compile_features(h5xx INTERFACE cxx_std_11)
   target_compile_definitions(h5xx INTERFACE H5XX_USE_MPI)
   add_library(espresso_h5xx_cpp_flags INTERFACE)
@@ -693,6 +720,11 @@ endif()
 # Boost
 #
 
+if(POLICY CMP0167)
+  # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
 
 if(ESPRESSO_BUILD_TESTS)
@@ -788,7 +820,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
   if(NOT walberla_POPULATED)
     set(BUILD_SHARED_LIBS ON)
-    set(CMAKE_SHARED_LIBRARY_PREFIX "libwalberla_")
+    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
     FetchContent_MakeAvailable(walberla)
     set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
     set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
@@ -805,8 +837,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   endif()
   set(WALBERLA_LIBS_EXPORT
       ${WALBERLA_LIBS}
-      walberla::lodepng
-      walberla::sqlite3
+      lodepng
+      sqlite3
       walberla::lbm_generated
       walberla::pe
       walberla::pe_coupling
@@ -817,19 +849,13 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       walberla::executiontree
       walberla::geometry
       walberla::postprocessing
-      walberla::gather
-      walberla::gui)
-  # workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21283
-  foreach(target_w_namespace IN LISTS WALBERLA_LIBS)
-    string(REPLACE "walberla::" "" target_wo_namespace ${target_w_namespace})
-    add_library(${target_w_namespace} ALIAS ${target_wo_namespace})
-  endforeach()
+      walberla::gather)
   # install all waLBerla shared objects
-  foreach(target_w_namespace IN LISTS WALBERLA_LIBS_EXPORT)
-    string(REPLACE "walberla::" "" target_wo_namespace ${target_w_namespace})
-    get_target_property(target_type ${target_wo_namespace} TYPE)
+  foreach(target_alias IN LISTS WALBERLA_LIBS_EXPORT)
+    string(REPLACE "::" "_" target_name ${target_alias})
+    get_target_property(target_type ${target_name} TYPE)
     if(${target_type} STREQUAL "SHARED_LIBRARY")
-      install(TARGETS ${target_wo_namespace}
+      install(TARGETS ${target_name}
               LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
     endif()
   endforeach()

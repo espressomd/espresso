@@ -83,6 +83,10 @@ System::System(Private) {
   auto_update_accumulators =
       std::make_shared<Accumulators::AutoUpdateAccumulators>();
   constraints = std::make_shared<Constraints::Constraints>();
+#ifdef NPT
+  nptiso = std::make_shared<NptIsoParameters>();
+  npt_inst_pressure = std::make_shared<InstantaneousPressure>();
+#endif
   reinit_thermo = true;
   time_step = -1.;
   sim_time = 0.;
@@ -291,6 +295,7 @@ void System::on_short_range_ia_change() {
 void System::on_non_bonded_ia_change() {
   nonbonded_ias->recalc_maximal_cutoffs();
   rebuild_cell_structure();
+  on_thermostat_param_change();
   propagation->recalc_forces = true;
 }
 
@@ -438,12 +443,15 @@ void System::set_box_l(Utils::Vector3d const &box_l) {
 void System::on_integration_start() {
   // sanity checks
   integrator_sanity_checks();
-#ifdef NPT
-  integrator_npt_sanity_checks();
-#endif
   long_range_interactions_sanity_checks();
   lb.sanity_checks();
   ek.sanity_checks();
+
+#ifdef NPT
+  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
+    npt_ensemble_init(propagation->recalc_forces);
+  }
+#endif
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -451,12 +459,6 @@ void System::on_integration_start() {
     reinit_thermo = false;
     propagation->recalc_forces = true;
   }
-
-#ifdef NPT
-  if (propagation->integ_switch == INTEG_METHOD_NPT_ISO) {
-    npt_ensemble_init(box_geo->length(), propagation->recalc_forces);
-  }
-#endif
 
   invalidate_fetch_cache();
 

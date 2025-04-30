@@ -97,8 +97,9 @@ function(python_test)
         ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
         ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS} ${MPIEXEC_POSTFLAGS})
   else()
-    add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-             ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS})
+    add_test(NAME ${TEST_NAME}
+             COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
+                     ${TEST_FILE_CONFIGURED} ${TEST_ARGUMENTS})
   endif()
 
   if(${TEST_GPU_SLOTS} GREATER 0 AND ESPRESSO_BUILD_WITH_CUDA)
@@ -116,9 +117,12 @@ function(python_test)
     list(APPEND TEST_LABELS "parallel_odd")
   endif()
 
+  # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC} SKIP_RETURN_CODE 5
+                            ENVIRONMENT "OMP_PROC_BIND=false"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
+  # cmake-format: on
 
   set(python_tests ${python_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(python_test)

@@ -13,6 +13,9 @@ else
   PYTHONPATH="@ESPRESSO_PYTHON_DIR@"
 fi
 export PYTHONPATH
+if test -z "$OMP_PROC_BIND"; then
+  export OMP_PROC_BIND=false
+fi
 
 espresso_parse_cmake_boolean_value() {
   local varname="${2}"

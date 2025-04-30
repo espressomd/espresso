@@ -216,6 +216,11 @@ void System::System::integrator_sanity_checks() const {
     if (box_geo->type() == BoxType::LEES_EDWARDS) {
       runtimeErrorMsg() << "The NpT integrator cannot use Lees-Edwards";
     }
+    try {
+      nptiso->coulomb_dipole_sanity_checks(*this);
+    } catch (std::runtime_error const &err) {
+      runtimeErrorMsg() << err.what();
+    }
   }
 #endif
   if (propagation->used_propagations & PropagationMode::TRANS_BROWNIAN) {
@@ -320,7 +325,7 @@ void System::System::thermostat_force_init() {
   }
   auto const &langevin = *thermostat->langevin;
   auto const kT = thermostat->kT;
-  for (auto &p : cell_structure->local_particles()) {
+  cell_structure->for_each_local_particle([&](Particle &p) {
     if (propagation.should_propagate_with(p, PropagationMode::TRANS_LANGEVIN))
       p.force() += friction_thermo_langevin(langevin, p, time_step, kT);
 #ifdef ROTATION
@@ -328,26 +333,26 @@ void System::System::thermostat_force_init() {
       p.torque() += convert_vector_body_to_space(
           p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
 #endif
-  }
+  });
 }
 
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
  */
-static bool integrator_step_1(ParticleRange const &particles,
+static bool integrator_step_1(CellStructure &cell_structure,
                               Propagation const &propagation,
                               System::System &system, double time_step) {
   // steepest decent
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
-    return steepest_descent_step(particles);
+    return steepest_descent_step(cell_structure.local_particles());
 
   auto const &thermostat = *system.thermostat;
   auto const kT = thermostat.kT;
-  for (auto &p : particles) {
+  cell_structure.for_each_local_particle([&](Particle &p) {
 #ifdef VIRTUAL_SITES
     // virtual sites are updated later in the integration loop
     if (p.is_virtual())
-      continue;
+      return;
 #endif
     if (propagation.should_propagate_with(
             p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
@@ -370,14 +375,14 @@ static bool integrator_step_1(ParticleRange const &particles,
     if (propagation.should_propagate_with(p, PropagationMode::ROT_BROWNIAN))
       brownian_dynamics_rotator(*thermostat.brownian, p, time_step, kT);
 #endif
-  }
+  });
 
 #ifdef NPT
   if ((propagation.used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) and
       (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
     auto pred = PropagationPredicateNPT(propagation.default_propagation);
-    velocity_verlet_npt_step_1(particles.filter(pred), *thermostat.npt_iso,
-                               time_step, system);
+    velocity_verlet_npt_step_1(cell_structure.local_particles().filter(pred),
+                               *thermostat.npt_iso, time_step, system);
   }
 #endif
 
@@ -385,26 +390,26 @@ static bool integrator_step_1(ParticleRange const &particles,
   if ((propagation.used_propagations & PropagationMode::TRANS_STOKESIAN) and
       (propagation.default_propagation & PropagationMode::TRANS_STOKESIAN)) {
     auto pred = PropagationPredicateStokesian(propagation.default_propagation);
-    stokesian_dynamics_step_1(particles.filter(pred), *thermostat.stokesian,
-                              time_step, kT);
+    stokesian_dynamics_step_1(cell_structure.local_particles().filter(pred),
+                              *thermostat.stokesian, time_step, kT);
   }
 #endif // STOKESIAN_DYNAMICS
 
   return false;
 }
 
-static void integrator_step_2(ParticleRange const &particles,
+static void integrator_step_2(CellStructure &cell_structure,
                               Propagation const &propagation,
-                              Thermostat::Thermostat const &thermostat,
+                              [[maybe_unused]] System::System &system,
                               double time_step) {
   if (propagation.integ_switch == INTEG_METHOD_STEEPEST_DESCENT)
     return;
 
-  for (auto &p : particles) {
+  cell_structure.for_each_local_particle([&](Particle &p) {
 #ifdef VIRTUAL_SITES
     // virtual sites are updated later in the integration loop
     if (p.is_virtual())
-      continue;
+      return;
 #endif
     if (propagation.should_propagate_with(
             p, PropagationMode::TRANS_LB_MOMENTUM_EXCHANGE))
@@ -421,14 +426,14 @@ static void integrator_step_2(ParticleRange const &particles,
     if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
       velocity_verlet_rotator_2(p, time_step);
 #endif
-  }
+  });
 
 #ifdef NPT
   if ((propagation.used_propagations & PropagationMode::TRANS_LANGEVIN_NPT) and
       (propagation.default_propagation & PropagationMode::TRANS_LANGEVIN_NPT)) {
     auto pred = PropagationPredicateNPT(propagation.default_propagation);
-    velocity_verlet_npt_step_2(particles.filter(pred), *thermostat.npt_iso,
-                               time_step);
+    velocity_verlet_npt_step_2(cell_structure.local_particles().filter(pred),
+                               time_step, system);
   }
 #endif
 }
@@ -525,25 +530,23 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     CALI_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 #endif
 
-    auto particles = cell_structure->local_particles();
-
 #ifdef BOND_CONSTRAINT
     if (n_rigid_bonds)
-      save_old_position(particles, cell_structure->ghost_particles());
+      save_old_position(cell_structure->local_particles(),
+                        cell_structure->ghost_particles());
 #endif
 
     lees_edwards->update_box_params(*box_geo, sim_time);
     bool early_exit =
-        integrator_step_1(particles, propagation, *this, time_step);
+        integrator_step_1(*cell_structure, propagation, *this, time_step);
     if (early_exit)
       break;
 
     sim_time += time_step;
     if (box_geo->type() == BoxType::LEES_EDWARDS) {
       auto const kernel = LeesEdwards::Push{*box_geo};
-      for (auto &p : particles) {
-        kernel(p);
-      }
+      cell_structure->for_each_local_particle(
+          [&kernel](Particle &p) { kernel(p); });
     }
 
 #ifdef NPT
@@ -581,8 +584,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
-    particles = cell_structure->local_particles();
-
     calculate_forces();
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
@@ -592,15 +593,14 @@ int System::System::integrate(int n_steps, int reuse_forces) {
                                              *local_geo, lb);
     }
 #endif
-    integrator_step_2(particles, propagation, *thermostat, time_step);
+    integrator_step_2(*cell_structure, propagation, *this, time_step);
     if (propagation.integ_switch == INTEG_METHOD_BD) {
       resort_particles_if_needed(*this);
     }
     if (box_geo->type() == BoxType::LEES_EDWARDS) {
       auto const kernel = LeesEdwards::UpdateOffset{*box_geo};
-      for (auto &p : particles) {
-        kernel(p);
-      }
+      cell_structure->for_each_local_particle(
+          [&kernel](Particle &p) { kernel(p); });
     }
 #ifdef BOND_CONSTRAINT
     if (n_rigid_bonds) {

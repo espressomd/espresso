@@ -22,7 +22,11 @@ jobs:
       - name: Get runner specifications
         run: system_profiler SPHardwareDataType
       - run: |
-         brew install boost boost-mpi fftw
+         brew install boost boost-mpi fftw ccache
+         # https://mac.r-project.org/openmp/
+         curl -O https://mac.r-project.org/openmp/openmp-17.0.6-darwin20-Release.tar.gz
+         sudo tar fvxz openmp-17.0.6-darwin20-Release.tar.gz -C /
+         codesign -d -vv /usr/local/lib/libomp.dylib
          python3 -m venv venv
          . venv/bin/activate
          pip3 install -c requirements.txt cython numpy scipy packaging

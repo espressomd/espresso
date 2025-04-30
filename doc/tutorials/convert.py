@@ -31,7 +31,7 @@ import re
 import os
 import sys
 import uuid
-sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
+sys.path.insert(0, '@CMAKE_SOURCE_DIR@/maintainer/parsing')
 
 
 SOLUTION_CELL_TOKEN = "# SOLUTION CELL"

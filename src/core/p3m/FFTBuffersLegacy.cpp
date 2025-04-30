@@ -63,11 +63,6 @@ void FFTBuffersLegacy<FloatType>::perform_vector_halo_spread() {
 }
 
 template <typename FloatType>
-void FFTBuffersLegacy<FloatType>::perform_scalar_halo_gather() {
-  mesh_comm.gather_grid(::comm_cart, rs_mesh.data(), local_mesh.dim);
-}
-
-template <typename FloatType>
 void FFTBuffersLegacy<FloatType>::perform_vector_halo_gather() {
   std::array<FloatType *, 3u> meshes = {{rs_mesh_fields[0u].data(),
                                          rs_mesh_fields[1u].data(),

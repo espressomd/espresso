@@ -21,14 +21,11 @@
 
 #include <iostream>
 
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
 
 #include <Cabana_Core.hpp>
 #include "custom_verlet_list.hpp"
 #include <unordered_map>
-#endif
-
-#ifdef CABANA
 
 using data_types = Cabana::MemberTypes<double[3], double[3], int, int, int>;
 using memory_space = Kokkos::SharedSpace;
@@ -50,7 +47,5 @@ public:
     std::unordered_map<int, int> get_id_to_index() const { return id_to_index; }
 
     ~CabanaData() {};
-
-
 };
 #endif 

@@ -68,7 +68,8 @@ which is also located in the build directory:
 
     ./ipypresso console
 
-The name comes from the IPython interpreter, today known as Jupyter.
+The name comes from the IPython interpreter :cite:`perez07a`,
+whose notebook feature is today known as Jupyter :cite:`kluyver16a`.
 
 Interactive notebooks
 ~~~~~~~~~~~~~~~~~~~~~
@@ -256,8 +257,7 @@ The simulation box partition is controlled by the cell system
 By default, MPI ranks are assigned in decreasing order, e.g. on 6 MPI ranks
 ``node_grid`` is ``[3, 2, 1]``. It is possible to re-assign the ranks by
 changing the value of the ``node_grid`` property, however a few algorithms
-(such as FFT-based electrostatic methods) only work for the default
-partitioning scheme where values must be arranged in decreasing order.
+only work for the default partitioning scheme.
 
 ::
 

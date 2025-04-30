@@ -18,23 +18,15 @@
 #
 
 function(TUTORIAL_TEST)
-  python_scripts_test(${ARGV} TYPE tutorial) # forward arguments
-  set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
+  espresso_importlib_based_test(${ARGV} TYPE tutorial)
 endfunction(TUTORIAL_TEST)
 
-# configure Python modules importlib_wrapper.py and convert.py
-configure_file(test_convert.py ${CMAKE_CURRENT_BINARY_DIR})
-add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-         ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
-add_test(convert ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
-         ${CMAKE_CURRENT_BINARY_DIR}/test_convert.py)
-set_tests_properties(
-  importlib_wrapper convert PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER
-                                       SKIP_RETURN_CODE 5)
-set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER}
-    PARENT_SCOPE)
-configure_file(../importlib_wrapper.py
-               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
+configure_file(test_convert.py test_convert.py)
+configure_file(${ESPRESSO_IMPORTLIB_WRAPPER}
+               ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py COPYONLY)
+espresso_importlib_based_fixture(SRC ${ESPRESSO_IMPORTLIB_WRAPPER_TEST} TYPE
+                                 tutorial)
+espresso_importlib_based_fixture(SRC test_convert.py TYPE tutorial)
 
 # create a local copy of the tutorials
 set(TUTORIALS_DIR "${CMAKE_CURRENT_BINARY_DIR}/local_tutorials")

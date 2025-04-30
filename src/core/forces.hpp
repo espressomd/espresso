@@ -32,10 +32,10 @@
 #include <utils/Vector.hpp>
 
 /** Assign external forces/torques to real particles and zero to ghosts. */
-void init_forces(ParticleRange const &particles, double time_step);
+void init_forces(const CellStructure &cell_structure);
 
 /** Set forces of all ghosts to zero */
-void init_forces_ghosts(ParticleRange const &particles);
+void init_forces_ghosts(const CellStructure &cell_structure);
 
 /** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(ParticleRange const &particles);

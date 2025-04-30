@@ -45,10 +45,12 @@ RuntimeErrorCollector::~RuntimeErrorCollector() {
 }
 
 void RuntimeErrorCollector::message(const RuntimeError &message) {
+  std::lock_guard<std::mutex> lock(mutex);
   m_errors.emplace_back(message);
 }
 
 void RuntimeErrorCollector::message(RuntimeError message) {
+  std::lock_guard<std::mutex> lock(mutex);
   m_errors.emplace_back(std::move(message));
 }
 
@@ -56,6 +58,7 @@ void RuntimeErrorCollector::message(RuntimeError::ErrorLevel level,
                                     const std::string &msg,
                                     const char *function, const char *file,
                                     const int line) {
+  std::lock_guard<std::mutex> lock(mutex);
   m_errors.emplace_back(level, m_comm.rank(), msg, std::string(function),
                         std::string(file), line);
 }
@@ -63,6 +66,7 @@ void RuntimeErrorCollector::message(RuntimeError::ErrorLevel level,
 void RuntimeErrorCollector::warning(const std::string &msg,
                                     const char *function, const char *file,
                                     const int line) {
+  std::lock_guard<std::mutex> lock(mutex);
   m_errors.emplace_back(RuntimeError::ErrorLevel::WARNING, m_comm.rank(), msg,
                         std::string(function), std::string(file), line);
 }
@@ -80,6 +84,7 @@ void RuntimeErrorCollector::warning(const std::ostringstream &mstr,
 
 void RuntimeErrorCollector::error(const std::string &msg, const char *function,
                                   const char *file, const int line) {
+  std::lock_guard<std::mutex> lock(mutex);
   m_errors.emplace_back(RuntimeError::ErrorLevel::ERROR, m_comm.rank(), msg,
                         std::string(function), std::string(file), line);
 }
@@ -96,6 +101,7 @@ void RuntimeErrorCollector::error(const std::ostringstream &mstr,
 }
 
 int RuntimeErrorCollector::count() const {
+  std::lock_guard<std::mutex> lock(mutex);
   return boost::mpi::all_reduce(m_comm, static_cast<int>(m_errors.size()),
                                 std::plus<>());
 }
@@ -105,16 +111,23 @@ int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
       m_errors, [level](auto const &e) { return e.level() >= level; }));
 }
 
-void RuntimeErrorCollector::clear() { m_errors.clear(); }
+void RuntimeErrorCollector::clear() {
+  std::lock_guard<std::mutex> lock(mutex);
+  m_errors.clear();
+}
 
 void RuntimeErrorCollector::flush() {
-  for (auto const &e : m_errors) {
-    std::cerr << e.format() << std::endl;
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    for (auto const &e : m_errors) {
+      std::cerr << e.format() << std::endl;
+    }
   }
   this->clear();
 }
 
 std::vector<RuntimeError> RuntimeErrorCollector::gather() {
+  std::lock_guard<std::mutex> lock(mutex);
   std::vector<RuntimeError> all_errors{};
   std::swap(all_errors, m_errors);
 
@@ -124,8 +137,10 @@ std::vector<RuntimeError> RuntimeErrorCollector::gather() {
 }
 
 void RuntimeErrorCollector::gather_local() {
-  Utils::Mpi::gather_buffer(m_errors, m_comm);
-
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    Utils::Mpi::gather_buffer(m_errors, m_comm);
+  }
   this->clear();
 }
 

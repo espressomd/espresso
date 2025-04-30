@@ -44,6 +44,19 @@
  *
  * This implements Eq. 30 of @cite cerda08d, which can be used
  * for monopole and dipole P3M by choosing the appropriate S factor.
+ * @f[
+ * \tilde{G}_{\text{opt}} ( k ) = \frac{\sum_{m \in \mathbb{Z}^{3}} [ [ \tilde{
+ * \left ( D \right ) } ( k ) \cdot i k_{m} ]^{S} ( \hat{U} ( k_{m} ) )^{2}
+ * \hat{\phi} ( k_{m} ) ]}{[ \tilde{ \left ( D \right ) } ( k ) ]^{2 S} [
+ * \sum_{m \in \mathbb{Z}^{3}} ( \hat{U} ( k_{m} ) )^{2} ]^{2}}
+ * @f]
+ *
+ * Eq 8.29 in Hockney:
+ * @f[
+ * G_{\text{opt}}(\mathbf{k}) = \frac{\hat{\mathbf{D}}\sum_n
+ * \hat{\mathbf{R}}^\ast \hat{U}^2}{|\hat{\mathbf{D}}|^2\sum_n
+ * \hat{U}^2\sum_{n'}^{'} \hat{U}^2}
+ * @f]
  *
  * The full equation is:
  * @f{align*}{
@@ -112,6 +125,10 @@ double G_opt(P3MParameters const &params, Utils::Vector3d const &k) {
         fnm[dim] = math::sinc(km[dim] * wavevector_i[dim]);
       });
 
+  if (numerator == 0. and denominator != 0.) {
+    // avoid FPE issues involving subnormal numbers
+    return 0.;
+  }
   return numerator / (Utils::int_pow<S>(k2) * Utils::sqr(denominator));
 }
 
@@ -127,17 +144,13 @@ double G_opt(P3MParameters const &params, Utils::Vector3d const &k) {
  * @param params P3M parameters.
  * @param n_start Lower left corner of the grid in k-space.
  * @param n_stop Upper right corner of the grid in k-space.
- * @param KX k-space x-axis index.
- * @param KY k-space y-axis index.
- * @param KZ k-space z-axis index.
  * @param inv_box_l Inverse box length.
  * @return Values of G_opt at regular grid points.
  */
 template <typename FloatType, std::size_t S, std::size_t m>
 std::vector<FloatType> grid_influence_function(
     P3MParameters const &params, Utils::Vector3i const &n_start,
-    Utils::Vector3i const &n_stop, int const KX, int const KY, int const KZ,
-    Utils::Vector3d const &inv_box_l) {
+    Utils::Vector3i const &n_stop, Utils::Vector3d const &inv_box_l) {
 
   auto const shifts = calc_p3m_mesh_shift(params.mesh);
   auto const size = n_stop - n_start;
@@ -154,19 +167,19 @@ std::vector<FloatType> grid_influence_function(
   auto const wavevector = (2. * std::numbers::pi) * inv_box_l;
   auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
-  auto index = std::size_t(0u);
 
   for_each_3d(n_start, n_stop, indices, [&]() {
-    if ((indices[KX] % half_mesh[0u] != 0) or
-        (indices[KY] % half_mesh[1u] != 0) or
-        (indices[KZ] % half_mesh[2u] != 0)) {
+    if ((indices[0u] % half_mesh[0u] != 0) or
+        (indices[1u] % half_mesh[1u] != 0) or
+        (indices[2u] % half_mesh[2u] != 0)) {
       auto const k =
-          Utils::Vector3d{{shifts[0u][indices[KX]] * wavevector[0u],
-                           shifts[1u][indices[KY]] * wavevector[1u],
-                           shifts[2u][indices[KZ]] * wavevector[2u]}};
+          Utils::Vector3d{{shifts[0u][indices[0u]] * wavevector[0u],
+                           shifts[1u][indices[1u]] * wavevector[1u],
+                           shifts[2u][indices[2u]] * wavevector[2u]}};
+      auto const index = Utils::get_linear_index(
+          indices - n_start, size, Utils::MemoryOrder::COLUMN_MAJOR);
       g[index] = FloatType(G_opt<S, m>(params, k));
     }
-    ++index;
   });
 
   return g;

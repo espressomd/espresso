@@ -27,7 +27,7 @@
 #include <caliper/cali.h>
 #endif
 
-#ifdef CABANA
+#ifdef SHARED_MEMORY_PARALLELISM
 
 #include <Cabana_Core.hpp>
 #include "cabana_data.hpp"
@@ -159,7 +159,6 @@ void cabana_short_range(BondKernel bond_kernel,
     auto slice_id = Cabana::slice<2>(particle_storage);
     auto slice_type = Cabana::slice<3>(particle_storage);
     
-
     for (auto const& p : particles) {
       write_particle(p, id_to_index, slice_position, slice_force, slice_id, slice_type);
     }

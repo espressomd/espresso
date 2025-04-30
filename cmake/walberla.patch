@@ -9,3 +9,9 @@ https://i10git.cs.fau.de/walberla/walberla/-/merge_requests/709
 @@ -700 +700 @@
 -   begin_ = new T[0];
 +   begin_ = nullptr;
+support for CMake 4.0
+--- cmake/FindOpenMesh.cmake
++++ cmake/FindOpenMesh.cmake
+@@ -56 +56 @@
+-cmake_minimum_required(VERSION 3.5.0)
++cmake_minimum_required(VERSION 3.10.0)

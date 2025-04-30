@@ -1,0 +1,10 @@
+https://github.com/icl-utk-edu/heffte/issues/83
+--- cmake/FindHeffteFFTW.cmake
++++ cmake/FindHeffteFFTW.cmake
+@@ -129,4 +129,6 @@
+ # create imported target
++if(NOT TARGET Heffte::FFTW)
+ add_library(Heffte::FFTW INTERFACE IMPORTED GLOBAL)
+ target_link_libraries(Heffte::FFTW INTERFACE ${FFTW_LIBRARIES})
+ set_target_properties(Heffte::FFTW PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${FFTW_INCLUDES})
++endif()

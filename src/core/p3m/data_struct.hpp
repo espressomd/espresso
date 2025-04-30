@@ -34,30 +34,26 @@
 #include <utility>
 #include <vector>
 
-template <typename FloatType> class FFTBackend;
-template <typename FloatType> class FFTBuffers;
+/** @brief State of the p3m methods, the part which applies to  both,
+  electrostatic and dipolar p3m */
 
-/**
- * @brief Base class for the electrostatics and magnetostatics P3M algorithms.
- * Contains a handle to the FFT backend, information about the local mesh,
- * the differential operator, and various buffers.
- */
-template <typename FloatType> struct p3m_data_struct {
+template <typename FloatType> struct P3MStateCommon {
   using value_type = FloatType;
 
-  explicit p3m_data_struct(P3MParameters &&parameters)
+  explicit P3MStateCommon(P3MParameters &&parameters)
       : params{std::move(parameters)} {}
 
   /** @brief P3M base parameters. */
   P3MParameters params;
-  /** @brief Local mesh properties. */
+  /** @brief Local mesh geometry information for this MPI rank */
   P3MLocalMesh local_mesh;
-  /** @brief Local mesh FFT buffers. */
-  P3MFFTMesh<FloatType> mesh;
 
   /**
    * @brief Spatial differential operator in k-space.
    * We use an i*k differentiation.
+   * TODO: RW: I think this is not the differential operator but the mapping
+   * between index in the GLOBAL mesh and the corresponding
+   * k-vector with a few pre-factors missing.
    */
   std::array<std::vector<int>, 3> d_op;
 
@@ -73,6 +69,24 @@ template <typename FloatType> struct p3m_data_struct {
   std::vector<FloatType> g_force;
   /** @brief Energy optimised influence function (k-space) */
   std::vector<FloatType> g_energy;
+};
+
+template <typename FloatType> class FFTBackend;
+template <typename FloatType> class FFTBuffers;
+
+/**
+ * @brief LEGACY Base class for the electrostatics and magnetostatics P3M
+ * algorithms. Contains a handle to the FFT backend, information about the local
+ * mesh, the differential operator, and various buffers.
+ */
+template <typename FloatType>
+struct p3m_data_struct : public P3MStateCommon<FloatType> {
+  using value_type = FloatType;
+  using P3MStateCommon<FloatType>::P3MStateCommon;
+  using P3MStateCommon<FloatType>::local_mesh;
+
+  P3MFFTMesh<FloatType> mesh;
+
   /** @brief FFT algorithm. */
   std::unique_ptr<FFTBackend<FloatType>> fft;
   /** @brief FFT buffers. */
@@ -143,8 +157,6 @@ public:
   virtual void init_meshes(int ca_mesh_size) = 0;
   /** @brief Initialize the halo buffers. */
   virtual void init_halo() = 0;
-  /** @brief Update scalar mesh halo with data from neighbors (accumulation). */
-  virtual void perform_scalar_halo_gather() = 0;
   /** @brief Update vector mesh halo with data from neighbors (accumulation). */
   virtual void perform_vector_halo_gather() = 0;
   /** @brief Update scalar mesh halo of all neighbors. */

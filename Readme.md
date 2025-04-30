@@ -63,14 +63,32 @@ The official website is https://espressomd.org/wordpress/.
 
 Detailed installation instructions for Ubuntu and macOS can be found in the
 user guide, section [Installation](https://espressomd.github.io/doc/installation.html).
-Common installation issues are addressed in the
-[FAQ](https://github.com/espressomd/espresso/wiki/Installation-FAQ).
+For most users, we recommend downloading the latest release version of ESPResSo.
+The [release page](https://github.com/espressomd/espresso/releases) shows all
+releases since 4.0. When choosing a release, we recommend the latest bugfix
+release in that line. For example, in the 4.2 line, choose 4.2.2.
 
-For most users, we recommend downloading the latest release version of ESPResSo. You
-can find it in the [release page](https://github.com/espressomd/espresso/releases),
-together with past releases until 4.0. When choosing a release, we recommend that
-you get the latest bugfix release in that line. For example, for 4.2 you would like
-to use 4.2.2.
+Quickstart:
+
+1. download the source code: one of the
+   [stable releases](https://github.com/espressomd/espresso/releases)
+   (.tar.gz files before 2025) or the development version
+   (`git clone -b python https://github.com/espressomd/espresso.git`)
+2. install dependencies on
+   [Ubuntu](https://espressomd.github.io/doc/installation.html#installing-requirements-on-ubuntu),
+   [macOS](https://espressomd.github.io/doc/installation.html#installing-requirements-on-macos),
+   [Windows](https://espressomd.github.io/doc/installation.html#installing-requirements-on-windows-via-wsl),
+   or [other Linux distributions](https://espressomd.github.io/doc/installation.html#installing-requirements-on-other-linux-distributions)
+3. build the application: default build ([Quick installation](https://espressomd.github.io/doc/installation.html#quick-installation)),
+   or custom build ([Configuring](https://espressomd.github.io/doc/installation.html#configuring))
+
+Common installation issues are addressed in the
+[FAQ](https://github.com/espressomd/espresso/wiki/Installation-FAQ),
+together with contributed patches for compiler-related and library-related issues.
+
+You can also try ESPReSSo in the cloud using
+[Binder](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD) or
+[Gitpod](https://gitpod.io/#https://github.com/espressomd/espresso).
 
 ### Join the community
 
@@ -92,7 +110,7 @@ publications, as indicated in the documentation. For detailed instructions, see
 
 ## License
 
-Copyright (C) 2010-2022 The ESPResSo project
+Copyright (C) 2010-2025 The ESPResSo project
 
 Copyright (C) 2002-2010 Max-Planck-Institute for Polymer Research, Theory Group
 

@@ -21,23 +21,22 @@ import unittest as ut
 import sys
 import nbformat
 import traceback
+import contextlib
 import pathlib
 
 sys.path.insert(0, '@CMAKE_BINARY_DIR@/doc/tutorials')
 import convert
 
 
-def skipIfMissingModules(x): return x
+def noskip(x): return x
 
 
-try:
+skipIfMissingModules = ut.skip(
+    "Python modules 'yaml' or 'autopep8' not available, skipping test!")
+with contextlib.suppress(ImportError):
     import yaml  # pylint: disable=unused-import
     import autopep8  # pylint: disable=unused-import
-except ImportError:
-    skipIfMissingModules = ut.skip(
-        "Python modules 'yaml' or 'autopep8' not available, skipping test!")
-else:
-    def skipIfMissingModules(x): return x
+    skipIfMissingModules = noskip
 
 
 class HtmlRunner(ut.TestCase):

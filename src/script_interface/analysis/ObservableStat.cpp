@@ -142,6 +142,15 @@ static auto get_summary(::System::System const &system,
   }
 #endif // VIRTUAL_SITES
 
+#ifdef DPD
+  {
+    auto const values = get_obs_contribs(obs.dpd);
+    for (std::size_t i = 0ul; i < values.size(); ++i) {
+      dict["dpd," + std::to_string(i)] = values[i];
+    }
+  }
+#endif // DPD
+
   return dict;
 }
 

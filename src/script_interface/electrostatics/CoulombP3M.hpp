@@ -27,8 +27,6 @@
 
 #include "core/electrostatics/p3m.hpp"
 #include "core/electrostatics/p3m.impl.hpp"
-#include "core/p3m/FFTBackendLegacy.hpp"
-#include "core/p3m/FFTBuffersLegacy.hpp"
 
 #include "script_interface/get_value.hpp"
 
@@ -37,10 +35,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-
-#ifdef FFTW3_H
-#error "The FFTW3 library shouldn't be visible in this translation unit"
-#endif
 
 namespace ScriptInterface {
 namespace Coulomb {
@@ -174,8 +168,8 @@ public:
 private:
   template <typename FloatType, class... Args>
   void make_handle_impl(Args &&...args) {
-    m_actor = new_p3m_handle<FloatType, Architecture, FFTBackendLegacy,
-                             FFTBuffersLegacy>(std::forward<Args>(args)...);
+    m_actor =
+        new_coulomb_p3m<FloatType, Architecture>(std::forward<Args>(args)...);
   }
   template <class... Args>
   void make_handle(bool single_precision, Args &&...args) {

@@ -78,8 +78,12 @@ The interface for tabulated interactions are implemented in the
 :class:`~espressomd.interactions.TabulatedNonBonded` class. They can be configured
 via the following syntax::
 
-  system.non_bonded_inter[type1, type2].tabulated.set_params(
-      min='min', max='max', energy='energy', force='force')
+    import numpy as np
+    r = np.linspace(0., 8., 100)
+    energy = 4 * eps * ((sig / r)**12 - (sig / r)**6)
+    force = -4 * eps * (-12 / r * (sig / r)**12 + 6 / r * (sig / r)**6)
+    system.non_bonded_inter[type1, type2].tabulated.set_params(
+        min=0., max=8., energy=energy, force=force)
 
 This defines an interaction between particles of the types ``type1`` and
 ``type2`` according to an arbitrary tabulated pair potential by linear interpolation.
@@ -93,6 +97,22 @@ value for the potential.
 The values of :math:`r` are assumed to be equally distributed between
 :math:`r_\mathrm{min}` and :math:`r_\mathrm{max}` with a fixed distance
 of :math:`(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)`.
+
+Alternatively, one can generate the tabulated interaction from an analytical
+expression of the potential. The expression of the force is automatically
+determined through symbolic differentiation, via method
+:meth:`~espressomd.interactions.TabulatedNonBonded.set_analytical()`::
+
+    system.non_bonded_inter[type1, type2].tabulated.set_analytical(
+        min=0., max=8., steps=100, sigma=1., epsilon=4.,
+        energy_expr="4*epsilon*((sigma/r)**12-(sigma/r)**6)")
+
+    # optional: plot tabulated values
+    import matplotlib.pyplot as plt
+    plt.plot(system.non_bonded_inter[type1, type2].tabulated.force, label="force")
+    plt.plot(system.non_bonded_inter[type1, type2].tabulated.energy, label="energy")
+    plt.legend()
+    plt.show()
 
 .. _Lennard-Jones interaction:
 

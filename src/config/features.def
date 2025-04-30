@@ -116,5 +116,5 @@ WALBERLA_FFT external
 VALGRIND external
 CALIPER external
 FPE external
-CABANA external
+SHARED_MEMORY_PARALLELISM external
 
