@@ -278,9 +278,12 @@ static void write_attributes(HighFive::File &h5md_file) {
   h5md_creator_group.createAttribute("version", ESPRESSO_VERSION);
   auto h5md_author_group = h5md_group.createGroup("author");
   h5md_author_group.createAttribute("name", "N/A");
-  auto group = h5md_file.getGroup("/particles/atoms/box");
-  group.createAttribute("dimension", 3);
-  group.createAttribute("boundary", "periodic");
+  auto box_path = "/particles/atoms/box";
+  if (h5md_file.exist(box_path)) {
+    auto group = h5md_file.getGroup(box_path);
+    group.createAttribute("dimension", 3);
+    group.createAttribute("boundary", "periodic");
+  }
 }
 
 void File::write_units() {
