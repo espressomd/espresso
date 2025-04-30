@@ -40,7 +40,8 @@
 
 #include <h5xx/h5xx.hpp>
 #include <highfive/highfive.hpp>
-#include <highfive/H5DataType.hpp>
+#define H5_USE_BOOST
+#include <highfive/boost.hpp>
 
 #include <mpi.h>
 
@@ -556,14 +557,8 @@ void File::write_connectivity(const ParticleRange &particles) {
       std::max(static_cast<hsize_t>(n_bonds_total),
 	       static_cast<hsize_t>(extents[1])) - extents[1];
   Vector3s change_extent_bonds = {1, static_cast<size_t>(n_bond_diff), 0};
-  //write_dataset(bond.data(), datasets["/connectivity/atoms/value"], change_extent_bonds,
-  //              offset_bonds, count_bonds);
-  HighFive::DataSet dataset = datasets["/connectivity/atoms/value"];
-  extend_dataset(dataset, change_extent_bonds);
-  auto xfer_props = HighFive::DataTransferProps{};
-  xfer_props.add(HighFive::UseCollectiveIO{});
-  /* write the iata to the dataset. */
-  dataset.write(bond.data(), xfer_props);
+  write_dataset(bond, datasets["/connectivity/atoms/value"], change_extent_bonds,
+                offset_bonds, count_bonds);
 }
 
 void File::flush() { m_h5md_file->flush(); }
