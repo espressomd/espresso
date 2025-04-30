@@ -124,6 +124,11 @@ FetchContent_Declare(
   GIT_TAG        7914d28708b1c67b40d5743c1fbc09e221144dd3
   PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
 )
+FetchContent_Declare(
+  HighFive
+  GIT_REPOSITORY https://github.com/BlueBrain/HighFive.git
+  GIT_TAG        v2.10.1
+)
 # cmake-format: on
 
 # ##############################################################################
@@ -549,10 +554,24 @@ if(ESPRESSO_BUILD_WITH_HDF5)
       )
     endif()
   endif()
+  message(STATUS "HDF5 include dirs: ${HDF5_INCLUDE_DIRS}, $<BUILD_INTERFACE:${HDF5_INCLUDE_DIRS}>")
+  message(STATUS "HDF5 libraries: ${HDF5_LIBRARIES}")
+  message(STATUS "HDF5 is parallel: ${HDF5_IS_PARALLEL}")
+  message(STATUS "CMake binary dirs: ${CMAKE_BINARY_DIR}")
   add_library(hdf5 INTERFACE)
   target_link_libraries(hdf5 INTERFACE $<BUILD_INTERFACE:${HDF5_LIBRARIES}>)
   target_include_directories(hdf5
                              INTERFACE $<BUILD_INTERFACE:${HDF5_INCLUDE_DIRS}>)
+  #HighFive Start
+  FetchContent_GetProperties(HighFive)
+  if(NOT HighFive_POPULATED)
+    FetchContent_Populate(HighFive)
+    add_library(HighFive INTERFACE)
+    target_include_directories(HighFive INTERFACE $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/highfive-src/include>)
+    target_link_libraries(HighFive INTERFACE hdf5)
+  endif()
+  #HighFive End
+
   # We need to define our own h5xx target, since the project version we depend
   # on is not fully compatible with modern CMake.
   add_library(h5xx INTERFACE)
