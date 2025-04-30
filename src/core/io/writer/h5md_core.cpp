@@ -119,15 +119,15 @@ static void write_dataset(value_type const &data, HighFive::DataSet &dataset,
   write_dataset(data, dataset, offset, count);
 }
 
-static void write_script(std::string const &target,
+static void write_script(HighFive::File &h5md_file,
                          boost::filesystem::path const &script_path) {
   if (!script_path.empty()) {
     std::ifstream scriptfile(script_path.string());
     std::string buffer((std::istreambuf_iterator<char>(scriptfile)),
                        std::istreambuf_iterator<char>());
-    HighFive::File file(target, HighFive::File::Overwrite);
-    file.createGroup("/parameters");
-    auto group = file.createGroup("/parameters/files");
+    //HighFive::File file(target, HighFive::File::Overwrite);
+    h5md_file.createGroup("/parameters");
+    auto group = h5md_file.createGroup("/parameters/files");
     group.createAttribute("script", buffer);
   }
 }
@@ -265,7 +265,7 @@ void File::load_file(const std::string &file_path) {
   HighFive::FileAccessProps fapl;
   fapl.add(HighFive::MPIOFileAccess{m_comm, MPI_INFO_NULL});
   fapl.add(HighFive::MPIOCollectiveMetadata{});
-  m_h5md_file = std::make_unique<HighFive::File>(file_path, HighFive::File::Overwrite, fapl);
+  m_h5md_file = std::make_unique<HighFive::File>(file_path, HighFive::File::ReadWrite, fapl);
   load_datasets();
 }
 
@@ -278,7 +278,7 @@ static void write_attributes(HighFive::File &h5md_file) {
   h5md_creator_group.createAttribute("version", ESPRESSO_VERSION);
   auto h5md_author_group = h5md_group.createGroup("author");
   h5md_author_group.createAttribute("name", "N/A");
-  auto group = h5md_file.getGroup("particles/atoms/box");
+  auto group = h5md_file.getGroup("/particles/atoms/box");
   group.createAttribute("dimension", 3);
   group.createAttribute("boundary", "periodic");
 }
@@ -332,14 +332,14 @@ void File::create_hard_links() {
 }
 
 void File::create_file(const std::string &file_path) {
-  if (m_comm.rank() == 0)
-    write_script(file_path, m_absolute_script_path);
-  m_comm.barrier();
   HighFive::FileAccessProps fapl;
   fapl.add(HighFive::MPIOFileAccess{m_comm, MPI_INFO_NULL});
   fapl.add(HighFive::MPIOCollectiveMetadata{});
-  m_h5md_file = std::make_unique<HighFive::File>(file_path, HighFive::File::Overwrite, fapl);
+  m_h5md_file = std::make_unique<HighFive::File>(file_path, HighFive::File::Create, fapl);
   //m_h5md_file = std::make_unique<h5xx::file>(file_path, m_comm, MPI_INFO_NULL, h5xx::file::out);
+  if (m_comm.rank() == 0)
+    write_script(*m_h5md_file, m_absolute_script_path);
+  m_comm.barrier();
   create_groups();
   create_datasets();
   write_attributes(*m_h5md_file);
