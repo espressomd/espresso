@@ -73,14 +73,24 @@ private:
     }
 
     void set_node_boundary_value(Utils::Vector3i const &node, T const &val) {
-      auto const global = Cell(node[0], node[1], node[2]);
-      (*m_value_boundary)[global] = val;
+#ifdef _OPENMP
+#pragma omp single
+#endif
+      {
+        auto const global = Cell(node[0], node[1], node[2]);
+        (*m_value_boundary)[global] = val;
+      }
     }
 
     void unset_node_boundary_value(Utils::Vector3i const &node) {
-      auto const global = Cell(node[0], node[1], node[2]);
-      assert(m_value_boundary->count(global));
-      m_value_boundary->erase(global);
+#ifdef _OPENMP
+#pragma omp single
+#endif
+      {
+        auto const global = Cell(node[0], node[1], node[2]);
+        assert(m_value_boundary->count(global));
+        m_value_boundary->erase(global);
+      }
     }
 
     [[nodiscard]] auto &
