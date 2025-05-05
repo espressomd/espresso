@@ -79,9 +79,11 @@ else:
         "assume_inner_stride_one": True,
         "assume_aligned": True,
         "assume_sufficient_line_padding": False}
-    parameters["CPU"] = ({"target": target}, "")
+    parameters["CPU"] = ({"target": target,
+                          "cpu_openmp": True}, "")
     parameters["AVX"] = ({"target": target,
-                         "cpu_vectorize_info": cpu_vectorize_info}, "AVX")
+                          "cpu_openmp": True,
+                          "cpu_vectorize_info": cpu_vectorize_info}, "AVX")
 
 # global parameters
 stencil = lbmpy.stencils.LBStencil(lbmpy.enums.Stencil.D3Q19)
@@ -102,25 +104,38 @@ def get_ext_source(target_suffix):
     return {"CUDA": "cu"}.get(target_suffix, "cpp")
 
 
+def patch_openmp_kernels(content):
+    # surrounds omp pragmas with ifdefs
+    content = re.sub("^( *#pragma omp .*)$",
+                     r"#ifdef _OPENMP\n\1\n#endif", content, flags=re.MULTILINE)
+    return content
+
+
 def generate_init_kernels(ctx, method):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     for params, target_suffix in paramlist(parameters, (default_key,)):
+        stem = f"InitialPDFsSetter{precision_prefix}{target_suffix}"
         pystencils_walberla.generate_sweep(
             ctx,
-            f"InitialPDFsSetter{precision_prefix}{target_suffix}",
+            stem,
             pystencils_espresso.generate_setters(method, data_type),
             **params)
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
 def generate_stream_kernels(ctx, method):
     precision_prefix = pystencils_espresso.precision_prefix[ctx.double_accuracy]
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
+        stem = f"StreamSweep{precision_prefix}{target_suffix}"
         pystencils_espresso.generate_stream_sweep(
             ctx,
             method,
             data_type,
-            f"StreamSweep{precision_prefix}{target_suffix}",
+            stem,
             params)
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
 def generate_collide_lees_edwards_kernels(ctx, data_type, fields):
@@ -143,14 +158,17 @@ def generate_collide_lees_edwards_kernels(ctx, data_type, fields):
         shear_dir_normal)
 
     for params, target_suffix in paramlist(parameters, ("GPU", "CPU", "AVX")):
+        stem = f"CollideSweep{precision_prefix}LeesEdwards{target_suffix}"
         pystencils_espresso.generate_collision_sweep(
             ctx,
             le_config,
             data_type,
             le_collision_rule_unthermalized,
-            f"CollideSweep{precision_prefix}LeesEdwards{target_suffix}",
+            stem,
             params
         )
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
 def generate_collide_kernels(ctx, method, data_type):
@@ -182,6 +200,8 @@ def generate_collide_kernels(ctx, method, data_type):
             params,
             block_offset=block_offsets,
         )
+        ctx.patch_file(stem, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
 def generate_accessors_kernels(ctx, method):
@@ -238,6 +258,10 @@ def generate_packinfo_kernels(ctx, data_type, fields):
         return content
 
     for params, target_suffix in paramlist(parameters, ["CPU", "GPU"]):
+        # packing kernels are already called inside an OpenMP parallel region
+        if "cpu_openmp" in params:
+            tmp_flag = params["cpu_openmp"]
+            params["cpu_openmp"] = False
         pystencils_walberla.generate_pack_info_from_kernel(
             ctx, f"PackInfoPdf{precision_prefix}{target_suffix}", assignments,
             kind="pull", **params)
@@ -249,6 +273,8 @@ def generate_packinfo_kernels(ctx, data_type, fields):
                            patch_packinfo_header, target_suffix)
             ctx.patch_file(class_name, get_ext_source(target_suffix),
                            patch_packinfo_kernel, target_suffix)
+        if "cpu_openmp" in params:
+            params["cpu_openmp"] = tmp_flag
 
 
 def generate_boundary_kernels(ctx, method, data_type):
@@ -285,10 +311,14 @@ def generate_boundary_kernels(ctx, method, data_type):
                        patch_boundary_header, target_suffix)
         ctx.patch_file(class_name, get_ext_source(target_suffix),
                        patch_boundary_kernel, target_suffix)
+        ctx.patch_file(class_name, get_ext_source(target_suffix),
+                       patch_openmp_kernels)
 
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = not args.single_precision
+    if target == ps.Target.CPU:
+        ctx.openmp = True
     if target == ps.Target.GPU:
         ctx.gpu = True
         ctx.cuda = True

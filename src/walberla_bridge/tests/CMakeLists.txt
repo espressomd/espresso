@@ -20,10 +20,21 @@
 include(espresso_unit_test)
 
 function(ESPRESSO_ADD_TEST)
-  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC" "DEPENDS" ${ARGN})
+  cmake_parse_arguments(TEST "" "SRC;NAME;NUM_PROC;NUM_THREADS" "DEPENDS"
+                        ${ARGN})
   espresso_unit_test(
-    SRC ${TEST_SRC} NAME ${TEST_NAME} NUM_PROC ${TEST_NUM_PROC} DEPENDS
-    ${TEST_DEPENDS} espresso::walberla espresso::walberla_codegen
+    SRC
+    ${TEST_SRC}
+    NAME
+    ${TEST_NAME}
+    NUM_PROC
+    ${TEST_NUM_PROC}
+    NUM_THREADS
+    ${TEST_NUM_THREADS}
+    DEPENDS
+    ${TEST_DEPENDS}
+    espresso::walberla
+    espresso::walberla_codegen
     espresso::utils)
   if(WALBERLA_BUILD_WITH_CUDA)
     target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla_cuda
@@ -53,10 +64,11 @@ espresso_add_test(SRC ek_kernels_unit_tests.cpp)
 espresso_add_test(SRC LatticeWalberla_unit_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
 espresso_add_test(SRC LBWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi NUM_PROC
-                  2)
+                  2 NUM_THREADS 1)
 espresso_add_test(SRC LBWalberlaImpl_bspline_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
-espresso_add_test(SRC LBWalberlaImpl_flow_tests.cpp DEPENDS Boost::mpi)
+espresso_add_test(SRC LBWalberlaImpl_flow_tests.cpp DEPENDS Boost::mpi
+                  NUM_THREADS 1)
 espresso_add_test(SRC LBWalberlaImpl_lees_edwards_tests.cpp DEPENDS Boost::mpi)
 espresso_add_test(SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
