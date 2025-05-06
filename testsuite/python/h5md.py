@@ -37,7 +37,7 @@ with contextlib.suppress(ImportError):
     import h5py  # h5py has to be imported *after* espressomd (MPI)
 
 
-N_PART = 10000 #26
+N_PART = 26
 
 
 @utx.skipIfMissingFeatures(['H5MD'])
