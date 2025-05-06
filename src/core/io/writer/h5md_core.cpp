@@ -1,5 +1,5 @@
 /*
- i Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2022 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -589,7 +589,6 @@ File::File(std::string file_path, std::string script_path,
       m_velocity_unit(std::move(velocity_unit)),
       m_charge_unit(std::move(charge_unit)), m_comm(boost::mpi::communicator()),
       m_fields(fields_list_to_bitfield(output_fields)),
-      //m_h5md_file(std::make_unique<HighFive::File>()),
       m_datasets(std::make_unique<decltype(m_datasets)::element_type>()),
       m_h5md_specification(m_fields) {
   init_file(file_path);
