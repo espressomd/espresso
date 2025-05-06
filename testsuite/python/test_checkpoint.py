@@ -842,7 +842,8 @@ class CheckpointTest(ut.TestCase):
             # check stored physical units
             def predicate(key, attribute):
                 self.assertEqual(cur[key].attrs['unit'],
-                                 getattr(h5_units, attribute).encode('utf-8'))
+                                 getattr(h5_units, attribute))
+                                 #getattr(h5_units, attribute).encode('utf-8'))
             predicate('particles/atoms/id/time', 'time')
             predicate('particles/atoms/lees_edwards/offset/value', 'length')
             predicate('particles/atoms/box/edges/value', 'length')

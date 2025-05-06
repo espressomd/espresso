@@ -571,66 +571,6 @@ if(ESPRESSO_BUILD_WITH_HDF5)
     target_link_libraries(HighFive INTERFACE hdf5)
   endif()
   #HighFive End
-
-  # We need to define our own h5xx target, since the project version we depend
-  # on is not fully compatible with modern CMake.
-  add_library(h5xx INTERFACE)
-  # cmake-format: off
-  ExternalProject_Add(
-    h5xx_library
-    GIT_REPOSITORY    https://github.com/h5md/h5xx.git
-    GIT_TAG           0.9.1
-    PREFIX            lib_h5xx
-    # header-only library: disable configuration/build/install steps
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND     ""
-    INSTALL_COMMAND   ""
-  )
-  # cmake-format: on
-  ExternalProject_Get_Property(h5xx_library SOURCE_DIR)
-  target_include_directories(h5xx INTERFACE $<BUILD_INTERFACE:${SOURCE_DIR}>)
-  target_compile_features(h5xx INTERFACE cxx_std_11)
-  target_compile_definitions(h5xx INTERFACE H5XX_USE_MPI)
-  add_library(espresso_h5xx_cpp_flags INTERFACE)
-  add_library(espresso::h5xx_cpp_flags ALIAS espresso_h5xx_cpp_flags)
-  target_compile_options(
-    espresso_h5xx_cpp_flags
-    INTERFACE
-      $<$<CXX_COMPILER_ID:GNU>:-Wno-terminate>
-      $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-exceptions>
-      $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-unused-but-set-variable>
-      $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-delete-non-abstract-non-virtual-dtor>
-  )
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set(H5XX_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-    set(SKIP_CLANG_TIDY_CHECKS "")
-    set(SKIP_CLANG_TIDY_CHECKS_CXX "")
-    # silence hdf5 and h5xx diagnostics
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-clang-analyzer-deadcode.DeadStores")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-clang-analyzer-optin.performance.Padding")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-clang-diagnostic-unused-but-set-variable")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-clang-diagnostic-exceptions")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-bugprone-multi-level-implicit-pointer-conversion")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-assignment-in-if-condition")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-exception-escape")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-nullptr")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-noexcept")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-override")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-equals-default")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-loop-convert")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-pass-by-value")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-redundant-void-arg")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-else-after-return")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-container-size-empty")
-    espresso_override_clang_tidy_checks(
-      H5XX_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-      "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_SCAFACOS)

@@ -38,7 +38,6 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/multi_array.hpp>
 
-#include <h5xx/h5xx.hpp>
 #include <highfive/highfive.hpp>
 #define H5_USE_BOOST
 #include <highfive/boost.hpp>
@@ -54,11 +53,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-namespace h5xx {
-template <typename T, std::size_t size>
-struct is_array<Utils::Vector<T, size>> : std::true_type {};
-} // namespace h5xx
 
 namespace Writer {
 namespace H5md {
@@ -94,10 +88,6 @@ static void extend_dataset(HighFive::DataSet &dataset,
   for (auto i = 0u; i < rank; i++) {
     extents[i] += change_extent[i];
   }
-  //std::vector<hsize_t> dst(rank);
-  //std::transform(extents.begin(), extents.end(), dst.begin(),
-  //		  [](long unsigned int val) {return static_cast<hsize_t>(val);});
-  //H5Dset_extent(dataset.getId(), dst.data()); // extend all dims is collective
   dataset.resize(extents);
 }
 
@@ -106,7 +96,7 @@ static void write_dataset(value_type const &data, HighFive::DataSet &dataset,
                           extent_type const &offset, extent_type const &count) {
   auto xfer_props = HighFive::DataTransferProps{};
   xfer_props.add(HighFive::UseCollectiveIO{});
-  /* write the iata to the dataset. */
+  /* write the data to the dataset. */
   dataset.select(offset, count).write(data, xfer_props);
 }
 
@@ -125,7 +115,6 @@ static void write_script(HighFive::File &h5md_file,
     std::ifstream scriptfile(script_path.string());
     std::string buffer((std::istreambuf_iterator<char>(scriptfile)),
                        std::istreambuf_iterator<char>());
-    //HighFive::File file(target, HighFive::File::Overwrite);
     h5md_file.createGroup("/parameters");
     auto group = h5md_file.createGroup("/parameters/files");
     group.createAttribute("script", buffer);
@@ -177,7 +166,6 @@ void File::load_datasets() {
 }
 
 void File::create_groups() {
-  //HighFive::Group group = m_h5md_file->getGroup("/");
   for (auto const &ds : m_h5md_specification.get_datasets()) {
     std::stringstream ss(ds.group);
     std::string segment;
@@ -236,18 +224,13 @@ static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim) {
 }
 
 void File::create_datasets() {
-  //namespace hps = h5xx::policy::storage;
   auto &datasets = *m_datasets;
   for (auto const &ds : m_h5md_specification.get_datasets()) {
     if (ds.is_link)
       continue;
-    //auto maxdims = std::vector<hsize_t>(ds.rank, H5S_UNLIMITED);
     auto dims = create_dims(ds.rank, ds.data_dim);
     auto maxdims = create_maxdims(ds.rank, ds.data_dim, H5S_UNLIMITED);
-    //auto dataspace = HighFive::DataSpace(dims, maxdims);
     auto dataspace = HighFive::DataSpace(dims, maxdims);
-    //auto storage = hps::chunked(create_chunk_dims(ds.rank, ds.data_dim))
-    //                   .set(hps::fill_value(-10));
     auto chunk = create_chunk_dims(ds.rank, ds.data_dim);
     HighFive::DataSetCreateProps props;
     props.add(HighFive::Chunking(chunk));
@@ -325,7 +308,6 @@ void File::create_hard_links() {
         from = path_time.c_str();
       }
       assert(from != nullptr);
-      //if (H5Lcreate_hard(m_h5md_file->hid(), from, m_h5md_file->hid(),
       if (H5Lcreate_hard(m_h5md_file->getId(), from, m_h5md_file->getId(),
                          ds.path().c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0) {
         throw std::runtime_error("Error creating hard link for " + ds.path());
@@ -339,15 +321,17 @@ void File::create_file(const std::string &file_path) {
   fapl.add(HighFive::MPIOFileAccess{m_comm, MPI_INFO_NULL});
   fapl.add(HighFive::MPIOCollectiveMetadata{});
   m_h5md_file = std::make_unique<HighFive::File>(file_path, HighFive::File::Create, fapl);
-  //m_h5md_file = std::make_unique<h5xx::file>(file_path, m_comm, MPI_INFO_NULL, h5xx::file::out);
-  if (m_comm.rank() == 0)
-    write_script(*m_h5md_file, m_absolute_script_path);
-  m_comm.barrier();
+  //if (m_comm.rank() == 0) {
+  write_script(*m_h5md_file, m_absolute_script_path);
+  //}
+  //m_comm.barrier();
   create_groups();
   create_datasets();
   write_attributes(*m_h5md_file);
   write_units();
   create_hard_links();
+  //}
+  //m_comm.barrier();
 }
 
 void File::close() {
@@ -363,47 +347,80 @@ template <> struct slice_info<3> {
   static auto extent(hsize_t n_part_diff) {
     return Vector3s{1, n_part_diff, 0};
   }
-  static constexpr auto count() { return Vector3s{1, 1, 3}; }
+  static constexpr auto count(size_t local_n_part) { return Vector3s{1, local_n_part, 3}; }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector3s{n_time_steps, prefix, 0};
+  }
+  template <typename T>
+  static boost::multi_array<T, 3> reshape(std::vector<T>& v1d, Vector3s count) {
+    if (!v1d.empty()) {
+      const size_t rows = count[1];
+      const size_t cols = count[2];
+
+      boost::multi_array<T, 3> data(boost::extents[1][rows][cols]);
+
+      for (size_t i = 0; i < rows; i++) {
+	for (size_t j = 0; j < cols; j++) {
+	  data[0][i][j] = v1d[cols*i + j];
+	}
+      }
+
+      return data;
+    } else {
+      boost::multi_array<T, 3> data(boost::extents[0][0][0]);
+      return data;
+    }
   }
 };
 
 template <> struct slice_info<2> {
   static auto extent(hsize_t n_part_diff) { return Vector2s{1, n_part_diff}; }
-  static constexpr auto count() { return Vector2s{1, 1}; }
+  static constexpr auto count(size_t local_n) { return Vector2s{1, local_n}; }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector2s{n_time_steps, prefix};
+  }
+  template <typename T>
+  static std::vector<T> reshape(std::vector<T>& v1d, Vector2s count) {
+    return v1d;
   }
 };
 
 } // namespace detail
 
+
 template <std::size_t dim, typename Op>
 void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
                                 ParticleRange const &particles,
                                 HighFive::DataSet &dataset, Op op) {
-  //auto const old_extents = static_cast<h5xx::dataspace>(dataset).extents();
+  auto const n_part_local = static_cast<int>(particles.size());
   auto const old_extents = dataset.getSpace().getDimensions();
   auto const extent_particle_number =
-      std::max(n_part_global, static_cast<hsize_t>(old_extents[1])) - old_extents[1]; //?????
+      std::max(n_part_global, static_cast<hsize_t>(old_extents[1])) - old_extents[1];
   extend_dataset(dataset,
                  detail::slice_info<dim>::extent(extent_particle_number));
-  auto const count = detail::slice_info<dim>::count();
+  auto const count = detail::slice_info<dim>::count(n_part_local);
   auto offset = detail::slice_info<dim>::offset(old_extents[0], prefix);
-  for (auto const &p : particles) {
-    //h5xx::write_dataset(dataset, op(p), h5xx::slice(offset, count));
-    write_dataset(op(p), dataset, offset, count);
-    // advance in the particle dimension
-    offset[1] += 1;
+  HighFive::DataType dtype = dataset.getDataType();
+  auto write = [&](auto data) {
+    data.reserve(dim * n_part_local);
+    for (auto const &p : particles) {
+      auto p_data = op(p);
+      data.insert(data.end(), p_data.begin(), p_data.end());
+    }
+    write_dataset(detail::slice_info<dim>::reshape(data, count), dataset, offset, count);
+  };
+  if (dtype == HighFive::AtomicType<int>()) {
+    auto data = std::vector<int>{};
+    write(data);
+  } else if (dtype == HighFive::AtomicType<double>()) {
+    auto data = std::vector<double>{};
+    write(data);
   }
 }
 
 static void write_box(BoxGeometry const &box_geo, HighFive::DataSet &dataset) {
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  //h5xx::write_dataset(dataset, box_geo.length(),
-  //                    h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 3}));
   std::vector<size_t> offset{static_cast<size_t>(extents[0]), 0};
   std::vector<size_t> count{1ul, 3ul};
   write_dataset(box_geo.length().as_vector(), dataset, offset, count);
@@ -412,8 +429,6 @@ static void write_box(BoxGeometry const &box_geo, HighFive::DataSet &dataset) {
 static void write_le_off(LeesEdwardsBC const &lebc, HighFive::DataSet &dataset) {
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  //h5xx::write_dataset(dataset, Utils::Vector<double, 1>{lebc.pos_offset},
-  //                    h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
   std::vector<size_t> offset{extents[0], 0};
   std::vector<size_t> count{1ul, 1ul};
   write_dataset(std::vector<double>{lebc.pos_offset}, dataset, offset, count);
@@ -423,8 +438,6 @@ static void write_le_dir(LeesEdwardsBC const &lebc, HighFive::DataSet &dataset) 
   auto const shear_direction = static_cast<int>(lebc.shear_direction);
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  //h5xx::write_dataset(dataset, Utils::Vector<int, 1>{shear_direction},
-  //                    h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
   std::vector<size_t> offset{extents[0], 0};
   std::vector<size_t> count{1ul, 1ul};
   write_dataset(std::vector<int>{shear_direction}, dataset, offset, count);
@@ -434,8 +447,6 @@ static void write_le_normal(LeesEdwardsBC const &lebc, HighFive::DataSet &datase
   auto const shear_plane_normal = static_cast<int>(lebc.shear_plane_normal);
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  //h5xx::write_dataset(dataset, Utils::Vector<int, 1>{shear_plane_normal},
-  //                    h5xx::slice(Vector2hs{extents[0], 0}, Vector2hs{1, 1}));
   std::vector<size_t> offset{extents[0], 0};
   std::vector<size_t> count{1ul, 1ul};
   write_dataset(std::vector<int>{shear_plane_normal}, dataset, offset, count);
@@ -453,11 +464,11 @@ void File::write(const ParticleRange &particles, double time, int step,
   }
   if (m_fields & H5MD_OUT_LE_DIR) {
     write_le_dir(lebc,
-                 datasets["/particles/atoms/lees_edwards/direction/value"]);
+		 datasets["/particles/atoms/lees_edwards/direction/value"]);
   }
   if (m_fields & H5MD_OUT_LE_NORMAL) {
     write_le_normal(lebc,
-                    datasets["/particles/atoms/lees_edwards/normal/value"]);
+		    datasets["/particles/atoms/lees_edwards/normal/value"]);
   }
 
   auto const n_part_local = static_cast<int>(particles.size());
@@ -466,7 +477,6 @@ void File::write(const ParticleRange &particles, double time, int step,
   // calculate prefix for write of the current process
   BOOST_MPI_CHECK_RESULT(MPI_Exscan,
                          (&n_part_local, &prefix, 1, MPI_INT, MPI_SUM, m_comm));
-
   auto const n_part_global =
       boost::mpi::all_reduce(m_comm, n_part_local, std::plus<int>());
 

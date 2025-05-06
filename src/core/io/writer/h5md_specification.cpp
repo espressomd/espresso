@@ -25,7 +25,6 @@
 #include "h5md_dataset.hpp"
 #include "h5md_specification.hpp"
 
-#include <h5xx/h5xx.hpp>
 #include <highfive/highfive.hpp>
 
 #include <hdf5.h>
