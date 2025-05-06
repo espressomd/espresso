@@ -273,7 +273,7 @@ void npt_add_virial_force_contribution(const Utils::Vector3d &force,
                                        const Utils::Vector3d &d) {
   ::System::get_system().npt_add_virial_contribution(force, d);
 }
-void npt_add_virial_energy_contribution(double energy) {
-  ::System::get_system().npt_add_virial_contribution(energy);
+void npt_add_virial_diagonalSum_contribution(double diagonal_sum) {
+  ::System::get_system().npt_add_virial_contribution(diagonal_sum);
 }
 #endif

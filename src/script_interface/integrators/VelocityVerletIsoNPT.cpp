@@ -31,7 +31,6 @@
 
 #include <utils/Vector.hpp>
 
-#include <iostream>
 #include <memory>
 #include <string>
 
