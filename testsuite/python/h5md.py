@@ -232,7 +232,8 @@ class H5mdTests(ut.TestCase):
         self.assertIn('version', self.py_file['h5md/creator'].attrs)
         self.assertEqual(
             bytes(self.py_file['h5md/creator'].attrs['name'][:-1]).decode('utf-8'), 'ESPResSo')
-        version = bytes(self.py_file['h5md/creator'].attrs['version'][:-1]).decode('utf-8')
+        version = bytes(
+            self.py_file['h5md/creator'].attrs['version'][:-1]).decode('utf-8')
         self.assertTrue(
             version.startswith(espressomd.version.friendly()))
         self.assertIn('author', self.py_file['h5md'])

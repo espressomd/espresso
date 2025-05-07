@@ -45,8 +45,8 @@ Specification::Specification(unsigned int fields) {
   };
 
   if (fields & H5MD_OUT_BOX_L) {
-    add_time_series(
-        {"/particles/atoms/box/edges", "value", 2, H5T_NATIVE_DOUBLE, 3, false});
+    add_time_series({"/particles/atoms/box/edges", "value", 2,
+                     H5T_NATIVE_DOUBLE, 3, false});
   }
   if (fields & H5MD_OUT_LE_OFF) {
     add_time_series({"/particles/atoms/lees_edwards/offset", "value", 2,

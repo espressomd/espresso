@@ -38,7 +38,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace HighFive{
+namespace HighFive {
 class File;
 class DataSet;
 } // namespace HighFive
@@ -260,7 +260,8 @@ private:
   std::string m_backup_filename;
   boost::filesystem::path m_absolute_script_path;
   std::unique_ptr<HighFive::File> m_h5md_file;
-  std::unique_ptr<std::unordered_map<std::string, HighFive::DataSet>> m_datasets;
+  std::unique_ptr<std::unordered_map<std::string, HighFive::DataSet>>
+      m_datasets;
   Specification m_h5md_specification;
 };
 
