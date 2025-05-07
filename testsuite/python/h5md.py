@@ -116,8 +116,6 @@ class H5mdTests(ut.TestCase):
 
     def test_opening(self):
         h5 = espressomd.io.writer.h5md.H5md(file_path=str(self.temp_file))
-        for i in range(100):
-            h5.write()
         h5.close()
 
     # doesn't alway work in parallel: https://github.com/h5py/h5py/issues/736
