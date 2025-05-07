@@ -121,7 +121,7 @@ class H5mdTests(ut.TestCase):
         h5.close()
 
     # doesn't alway work in parallel: https://github.com/h5py/h5py/issues/736
-    @ut.skipIf(n_nodes > 0, "only runs for 1 MPI rank")
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_appending(self):
         import time
         # write one frame to the file
@@ -152,7 +152,7 @@ class H5mdTests(ut.TestCase):
             predicate(cur, f'particles/atoms/box/edges/value')
             predicate(cur, f'connectivity/atoms/value')
 
-    @ut.skipIf(n_nodes > 0, "only runs for 1 MPI rank")
+    @ut.skipIf(n_nodes > 1, "only runs for 1 MPI rank")
     def test_exceptions(self):
         h5md = espressomd.io.writer.h5md
         h5_units = h5md.UnitSystem(time='ps', mass='u', length='m', charge='e')
