@@ -547,12 +547,6 @@ if(ESPRESSO_BUILD_WITH_HDF5)
       set(HDF5_FOUND FALSE)
       message(FATAL_ERROR "HDF5 parallel version not found.")
     endif()
-    if(${HDF5_VERSION} VERSION_GREATER_EQUAL 1.13.0)
-      message(
-        WARNING
-          "Library hdf5 >= 1.13.0 is incompatible with h5xx 0.9.1 on some platforms (https://github.com/fhoefling/h5xx/issues/11)"
-      )
-    endif()
   endif()
   add_library(hdf5 INTERFACE)
   target_link_libraries(hdf5 INTERFACE $<BUILD_INTERFACE:${HDF5_LIBRARIES}>)
