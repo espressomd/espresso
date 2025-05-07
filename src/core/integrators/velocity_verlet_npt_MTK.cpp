@@ -114,6 +114,14 @@ velocity_verlet_npt_propagate_pos_MTK(NptIsoParameters &nptiso,
   }
 }
 
+/**
+ * @brief propagete positions and the volume and add thermal fluctuation.
+ * A and V are the position and volume propagators for half-time step.
+ * O is the propagator corresponding to Ornstein-Uhlenbeck process
+ * representing the stochastic thermostat.
+ * The time evolution follows the sequence A-V-O-V-A in this function,
+ * with propagators applied right to left.
+ */
 static void velocity_verlet_npt_propagate_AVOVA_MTK(
     ParticleRangeNPT const &particles, IsotropicNptThermostat const &npt_iso,
     double time_step, System::System &system) {
