@@ -44,8 +44,9 @@ NPT
 ENGINE                          implies ROTATION, EXTERNAL_FORCES
 PARTICLE_ANISOTROPY             implies ROTATION
 STOKESIAN_DYNAMICS              implies ROTATION
+H5_USE_BOOST
 H5MD
-HDF5                            implies H5MD
+HDF5                            implies H5MD, H5_USE_BOOST
 
 /* Rotation */
 ROTATION

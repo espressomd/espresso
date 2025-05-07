@@ -39,7 +39,6 @@
 #include <boost/multi_array.hpp>
 
 #include <highfive/highfive.hpp>
-#define H5_USE_BOOST
 #include <highfive/boost.hpp>
 
 #include <mpi.h>
@@ -270,7 +269,6 @@ static void write_attributes(HighFive::File &h5md_file) {
 }
 
 void File::write_units() {
-  //auto const &datasets = *m_datasets;
   auto &datasets = *m_datasets;
   if (!mass_unit().empty() and (m_fields & H5MD_OUT_MASS)) {
     datasets.at("/particles/atoms/mass/value").createAttribute("unit", mass_unit());
@@ -321,17 +319,12 @@ void File::create_file(const std::string &file_path) {
   fapl.add(HighFive::MPIOFileAccess{m_comm, MPI_INFO_NULL});
   fapl.add(HighFive::MPIOCollectiveMetadata{});
   m_h5md_file = std::make_unique<HighFive::File>(file_path, HighFive::File::Create, fapl);
-  //if (m_comm.rank() == 0) {
   write_script(*m_h5md_file, m_absolute_script_path);
-  //}
-  //m_comm.barrier();
   create_groups();
   create_datasets();
   write_attributes(*m_h5md_file);
   write_units();
   create_hard_links();
-  //}
-  //m_comm.barrier();
 }
 
 void File::close() {
@@ -401,20 +394,20 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
   auto const count = detail::slice_info<dim>::count(n_part_local);
   auto offset = detail::slice_info<dim>::offset(old_extents[0], prefix);
   HighFive::DataType dtype = dataset.getDataType();
-  auto write = [&](auto data) {
-    data.reserve(dim * n_part_local);
+  auto write = [&](auto buffer) {
+    buffer.reserve(dim * n_part_local);
     for (auto const &p : particles) {
-      auto p_data = op(p);
-      data.insert(data.end(), p_data.begin(), p_data.end());
+      auto data = op(p);
+      buffer.insert(buffer.end(), data.begin(), data.end());
     }
-    write_dataset(detail::slice_info<dim>::reshape(data, count), dataset, offset, count);
+    write_dataset(detail::slice_info<dim>::reshape(buffer, count), dataset, offset, count);
   };
   if (dtype == HighFive::AtomicType<int>()) {
-    auto data = std::vector<int>{};
-    write(data);
+    auto buffer = std::vector<int>{};
+    write(buffer);
   } else if (dtype == HighFive::AtomicType<double>()) {
-    auto data = std::vector<double>{};
-    write(data);
+    auto buffer = std::vector<double>{};
+    write(buffer);
   }
 }
 
