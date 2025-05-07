@@ -17,8 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if(FFTW3_FOUND)
-  target_link_libraries(espresso_core PUBLIC FFTW3::FFTW3)
+if(ESPRESSO_BUILD_WITH_FFTW)
+  target_link_libraries(espresso_p3m PRIVATE FFTW3::FFTW3)
+  target_sources(espresso_p3m PRIVATE fft.cpp)
 endif()
-
-target_sources(espresso_core PRIVATE fft.cpp)

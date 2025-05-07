@@ -48,11 +48,13 @@ add_library(
   PartCfg.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
-set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
-                                               "${ESPRESSO_CXX_CLANG_TIDY}")
-if(ESPRESSO_BUILD_WITH_FFTW AND ESPRESSO_BUILD_WITH_CLANG_TIDY)
+if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
   set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
-                                                 "${HEFFTE_CXX_CLANG_TIDY}")
+                                                 "${ESPRESSO_CXX_CLANG_TIDY}")
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    set_target_properties(espresso_core PROPERTIES CXX_CLANG_TIDY
+                                                   "${CABANA_CXX_CLANG_TIDY}")
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
@@ -73,6 +75,10 @@ if(ESPRESSO_BUILD_WITH_CUDA)
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
   set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
                                                  "${ESPRESSO_CUDA_CLANG_TIDY}")
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    set_target_properties(espresso_cuda PROPERTIES CUDA_CLANG_TIDY
+                                                   "${CABANA_CUDA_CLANG_TIDY}")
+  endif()
   target_link_libraries(espresso_core PUBLIC espresso::cuda)
   install(TARGETS espresso_cuda
           LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
@@ -100,8 +106,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
 endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
-  add_subdirectory(fft)
   add_subdirectory(p3m)
+  add_subdirectory(fft)
 endif()
 
 add_subdirectory(accumulators)
