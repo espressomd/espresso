@@ -61,10 +61,15 @@ public:
 
   void communicateLocal(IBlock const *sender, IBlock *receiver,
                         stencil::Direction dir) override {
-    mpi::SendBuffer sBuffer;
-    packDataImpl(sender, dir, sBuffer);
-    mpi::RecvBuffer rBuffer(sBuffer);
-    unpackData(receiver, stencil::inverseDir[dir], rBuffer);
+#ifdef _OPENMP
+#pragma omp single nowait
+#endif
+    {
+      mpi::SendBuffer sBuffer;
+      packDataImpl(sender, dir, sBuffer);
+      mpi::RecvBuffer rBuffer(sBuffer);
+      unpackData(receiver, stencil::inverseDir[dir], rBuffer);
+    }
   }
 
   void unpackData(IBlock *receiver, stencil::Direction dir,
