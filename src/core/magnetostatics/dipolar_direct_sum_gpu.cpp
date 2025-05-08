@@ -37,8 +37,12 @@ static void get_simulation_box(BoxGeometry const &box_geo, float *box,
   }
 }
 
-DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor) {
+DipolarDirectSumGpu::DipolarDirectSumGpu(double prefactor, int n_replicas) {
   set_prefactor(prefactor);
+  this->n_replicas = n_replicas;
+  if (n_replicas < 0) {
+    throw std::domain_error("Parameter 'n_replicas' must be >= 0");
+  }
 }
 
 void DipolarDirectSumGpu::on_activation() const {
@@ -66,7 +70,7 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
   auto const dipoles_device = gpu.get_particle_dipoles_device();
   DipolarDirectSum_kernel_wrapper_force(
       static_cast<float>(prefactor), npart, positions_device, dipoles_device,
-      forces_device, torques_device, box, periodicity);
+      forces_device, torques_device, box, periodicity, n_replicas);
 }
 
 void DipolarDirectSumGpu::long_range_energy() const {

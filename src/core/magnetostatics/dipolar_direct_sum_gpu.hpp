@@ -26,7 +26,8 @@
 #include "magnetostatics/actor.hpp"
 
 struct DipolarDirectSumGpu : public Dipoles::Actor<DipolarDirectSumGpu> {
-  DipolarDirectSumGpu(double prefactor);
+  int n_replicas;
+  DipolarDirectSumGpu(double prefactor, int n_replicas);
 
   void on_activation() const;
   void on_boxl_change() const {}

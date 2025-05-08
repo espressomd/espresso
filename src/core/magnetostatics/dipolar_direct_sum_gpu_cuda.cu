@@ -56,14 +56,9 @@ __device__ inline void get_mi_vector_dds(float res[3], float const a[3],
   }
 }
 
-__device__ void dipole_ia_force(float pf, float const *r1, float const *r2,
-                                float const *dip1, float const *dip2, float *f1,
-                                float *torque1, float *torque2, float box_l[3],
-                                int periodic[3]) {
-  // Distance between particles
-  float dr[3];
-  get_mi_vector_dds(dr, r1, r2, box_l, periodic);
-
+__device__ void dipole_ia_force(float pf, float const dr[3], float const *dip1,
+                                float const *dip2, float *f1, float *torque1,
+                                float *torque2) {
   // Powers of distance
   auto const r_sq = scalar_product(dr, dr);
   auto const r_sq_inv = 1.0f / r_sq;
@@ -134,20 +129,21 @@ __device__ float dipole_ia_energy(float pf, float const *r1, float const *r2,
 }
 // LCOV_EXCL_STOP
 
+// constant‐memory shift list
+__constant__ Int3 d_imageShifts[4096];
+__constant__ int d_nShifts;
 __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
                                               float *pos, float *dip, float *f,
-                                              float *torque, float box_l[3],
-                                              int periodic[3]) {
-
+                                              float *torque,
+                                              float const box_l[3],
+                                              int const periodic[3]) {
   auto const i = blockIdx.x * blockDim.x + threadIdx.x;
-
   if (i >= n)
     return;
 
   // Kahan summation based on the wikipedia article
   // Force
   float fi[3], fsum[3], tj[3];
-
   // Torque
   float ti[3], tsum[3];
 
@@ -159,32 +155,74 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
   // to global memory at the end.
 
   // Clear summation vars
-  for (unsigned int j = 0; j < 3; j++) {
-    // Force
-    fsum[j] = 0;
-    // Torque
-    tsum[j] = 0;
+  for (unsigned int k = 0; k < 3; ++k) {
+    fsum[k] = 0.0f;
+    tsum[k] = 0.0f;
   }
 
-  for (unsigned int j = i + 1; j < n; j++) {
-    dipole_ia_force(pf, pos + 3 * i, pos + 3 * j, dip + 3 * i, dip + 3 * j, fi,
-                    ti, tj, box_l, periodic);
-    for (unsigned int k = 0; k < 3; k++) {
-      // Add rhs to global memory
-      atomicAdd(f + 3 * j + k, -fi[k]);
-      atomicAdd((torque + 3 * j + k), tj[k]);
-      tsum[k] += ti[k];
+  // --- Self‐images of particle i (all shifts except the primary) ---
+  //   these only update thread‐private fsum/tsum, so no atomics
+  for (int s = 1; s < d_nShifts; ++s) {
+    Int3 sh = d_imageShifts[s];
+    float dr[3] = {sh.x * box_l[0], sh.y * box_l[1], sh.z * box_l[2]};
+    dipole_ia_force(pf, dr, dip + 3 * i, dip + 3 * i, fi, ti, tj);
+    for (int k = 0; k < 3; ++k) {
       fsum[k] += fi[k];
+      tsum[k] += ti[k];
     }
   }
 
-  // Add the left hand side result to global memory
-  for (int j = 0; j < 3; j++) {
-    atomicAdd(f + 3 * i + j, fsum[j]);
-    atomicAdd(torque + 3 * i + j, tsum[j]);
+  // Pre‐load pos[i] once
+  float pi[3] = {pos[3 * i], pos[3 * i + 1], pos[3 * i + 2]};
+
+  // --- Pairwise interactions i ↔ j, for j>i, summing over all images ---
+  for (unsigned int j = i + 1; j < n; ++j) {
+    // Base MIC vector in the primary box
+    float pj[3] = {pos[3 * j], pos[3 * j + 1], pos[3 * j + 2]};
+    float d0[3];
+    get_mi_vector_dds(d0, pi, pj, box_l, periodic);
+
+    // Loop over every image shift
+    for (int s = 0; s < d_nShifts; ++s) {
+      Int3 sh = d_imageShifts[s];
+      float dr[3];
+      if (sh.x == 0 && sh.y == 0 && sh.z == 0) {
+        // zero‐shift: use true minimal‐image vector
+        dr[0] = d0[0];
+        dr[1] = d0[1];
+        dr[2] = d0[2];
+      } else {
+        // explicit replica: offset the MIC vector
+        dr[0] = d0[0] + sh.x * box_l[0];
+        dr[1] = d0[1] + sh.y * box_l[1];
+        dr[2] = d0[2] + sh.z * box_l[2];
+      }
+
+      // Compute interactions for this image
+      dipole_ia_force(pf, dr, dip + 3 * i, dip + 3 * j, fi, ti, tj);
+
+      // 1) deposit force/torque on particle j **atomically**
+      //    (many threads i racing to update the same j)
+      for (int k = 0; k < 3; ++k) {
+        atomicAdd(f + 3 * j + k, -fi[k]);
+        atomicAdd(torque + 3 * j + k, tj[k]);
+      }
+
+      // 2) accumulate into thread‐private sums for particle i
+      for (int k = 0; k < 3; ++k) {
+        fsum[k] += fi[k];
+        tsum[k] += ti[k];
+      }
+    }
+  }
+
+  // Add i’s total to global memory **atomically**,
+  // in case any other asynchronous update might race
+  for (int k = 0; k < 3; ++k) {
+    atomicAdd(f + 3 * i + k, fsum[k]);
+    atomicAdd(torque + 3 * i + k, tsum[k]);
   }
 }
-
 // LCOV_EXCL_START
 __device__ void dds_sumReduction(float *input, float *sum) {
   auto const tid = static_cast<int>(threadIdx.x);
@@ -244,16 +282,43 @@ inline void copy_box_data(float **box_l_gpu, int **periodic_gpu,
       cudaMemcpy(*periodic_gpu, periodic, s_per, cudaMemcpyHostToDevice));
 }
 
+// build all shifts with x²+y²+z² ≤ n_replicas²
+static std::vector<Int3> build_shifts(int n_replicas, int periodic[3]) {
+  std::vector<Int3> shifts;
+  int rx = n_replicas * periodic[0];
+  int ry = n_replicas * periodic[1];
+  int rz = n_replicas * periodic[2];
+  int cutoff2 = n_replicas * n_replicas;
+  shifts.reserve((2 * rx + 1) * (2 * ry + 1) * (2 * rz + 1));
+  for (int x = -rx; x <= rx; ++x)
+    for (int y = -ry; y <= ry; ++y)
+      for (int z = -rz; z <= rz; ++z)
+        if (x * x + y * y + z * z <= cutoff2)
+          shifts.push_back({x, y, z});
+  return shifts;
+}
+
 void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
                                            float *dip, float *f, float *torque,
-                                           float box_l[3], int periodic[3]) {
+                                           float box_l[3], int periodic[3],
+                                           int n_replicas) {
 
-  unsigned int const bs = 64;
+  unsigned int const bs = 32;
   dim3 grid(1, 1, 1);
   dim3 block(1, 1, 1);
 
   if (n == 0)
     return;
+
+  static bool first = true;
+  if (first) {
+    auto shifts = build_shifts(n_replicas, periodic);
+    cudaMemcpyToSymbol(d_imageShifts, shifts.data(),
+                       shifts.size() * sizeof(Int3));
+    int nShifts = static_cast<int>(shifts.size());
+    cudaMemcpyToSymbol(d_nShifts, &nShifts, sizeof(int));
+    first = false;
+  }
 
   if (n <= bs) {
     grid.x = 1;

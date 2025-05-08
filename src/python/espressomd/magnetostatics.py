@@ -255,7 +255,7 @@ class DipolarDirectSumGpu(MagnetostaticInteraction):
     _so_features = ("DIPOLAR_DIRECT_SUM", "CUDA")
 
     def default_params(self):
-        return {}
+        return {"n_replicas": 0}
 
     def required_keys(self):
         return {"prefactor"}
