@@ -236,12 +236,13 @@ void File::create_datasets() {
     auto chunk = create_chunk_dims(ds.rank, ds.data_dim);
     HighFive::DataSetCreateProps props;
     props.add(HighFive::Chunking(chunk));
+    auto path = ds.path();
     if (ds.type == H5T_NATIVE_INT) {
-      datasets[ds.path()] =
-          m_h5md_file->createDataSet<int>(ds.path(), dataspace, props); // Tmp
+      datasets.emplace(path,
+          m_h5md_file->createDataSet<int>(path, dataspace, props));
     } else if (ds.type == H5T_NATIVE_DOUBLE) {
-      datasets[ds.path()] = m_h5md_file->createDataSet<double>(
-          ds.path(), dataspace, props); // Tmp
+      datasets.emplace(path,
+	  m_h5md_file->createDataSet<double>(path, dataspace, props));
     }
   }
 }
