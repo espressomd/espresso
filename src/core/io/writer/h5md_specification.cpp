@@ -70,6 +70,10 @@ H5MD_Specification::H5MD_Specification(unsigned int fields) {
     add_time_series(
         {"particles/atoms/position", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
   }
+  if (fields & H5MD_OUT_DIP) {
+    add_time_series(
+        {"particles/atoms/dip_mom", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
+  }
   if (fields & H5MD_OUT_VEL) {
     add_time_series(
         {"particles/atoms/velocity", "value", 3, H5T_NATIVE_DOUBLE, 3, false});
