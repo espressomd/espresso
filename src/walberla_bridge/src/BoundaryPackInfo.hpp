@@ -74,12 +74,12 @@ public:
 
   void communicateLocal(IBlock const *sender, IBlock *receiver,
                         stencil::Direction dir) override {
-    mpi::SendBuffer sBuffer;
-    packDataImpl(sender, dir, sBuffer);
 #ifdef _OPENMP
 #pragma omp critical
 #endif
     {
+      mpi::SendBuffer sBuffer;
+      packDataImpl(sender, dir, sBuffer);
       mpi::RecvBuffer rBuffer(sBuffer);
       unpackData(receiver, stencil::inverseDir[dir], rBuffer);
     }
