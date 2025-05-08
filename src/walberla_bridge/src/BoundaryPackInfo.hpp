@@ -35,6 +35,19 @@ namespace walberla {
 namespace field {
 namespace communication {
 
+template <typename GhostLayerField_T>
+class BoundaryFlagPackInfo : public PackInfo<GhostLayerField_T> {
+
+public:
+  using PackInfo<GhostLayerField_T>::PackInfo;
+  using PackInfo<GhostLayerField_T>::numberOfGhostLayersToCommunicate;
+
+  ~BoundaryFlagPackInfo() override = default;
+
+  bool constantDataExchange() const override { return false; }
+  bool threadsafeReceiving() const override { return false; }
+};
+
 template <typename GhostLayerField_T, typename Boundary_T>
 class BoundaryPackInfo : public PackInfo<GhostLayerField_T> {
 protected:
@@ -61,12 +74,12 @@ public:
 
   void communicateLocal(IBlock const *sender, IBlock *receiver,
                         stencil::Direction dir) override {
+    mpi::SendBuffer sBuffer;
+    packDataImpl(sender, dir, sBuffer);
 #ifdef _OPENMP
-#pragma omp single nowait
+#pragma omp critical
 #endif
     {
-      mpi::SendBuffer sBuffer;
-      packDataImpl(sender, dir, sBuffer);
       mpi::RecvBuffer rBuffer(sBuffer);
       unpackData(receiver, stencil::inverseDir[dir], rBuffer);
     }
