@@ -73,9 +73,6 @@ private:
     }
 
     void set_node_boundary_value(Utils::Vector3i const &node, T const &val) {
-#ifdef _OPENMP
-#pragma omp single nowait
-#endif
       {
         auto const global = Cell(node[0], node[1], node[2]);
         (*m_value_boundary)[global] = val;
@@ -83,9 +80,6 @@ private:
     }
 
     void unset_node_boundary_value(Utils::Vector3i const &node) {
-#ifdef _OPENMP
-#pragma omp single nowait
-#endif
       {
         auto const global = Cell(node[0], node[1], node[2]);
         assert(m_value_boundary->count(global));
