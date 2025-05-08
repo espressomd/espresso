@@ -474,7 +474,8 @@ void File::write(const ParticleRange &particles, double time, int step,
   }
   auto const &lebc = box_geo.lees_edwards_bc();
   if (m_fields & H5MD_OUT_LE_OFF) {
-    write_le_off(lebc, datasets.at("/particles/atoms/lees_edwards/offset/value"));
+    write_le_off(lebc,
+                 datasets.at("/particles/atoms/lees_edwards/offset/value"));
   }
   if (m_fields & H5MD_OUT_LE_DIR) {
     write_le_dir(lebc,
@@ -495,7 +496,8 @@ void File::write(const ParticleRange &particles, double time, int step,
       boost::mpi::all_reduce(m_comm, n_part_local, std::plus<int>());
 
   write_td_particle_property<2>(
-      prefix, n_part_global, particles, datasets.at("/particles/atoms/id/value"),
+      prefix, n_part_global, particles,
+      datasets.at("/particles/atoms/id/value"),
       [](auto const &p) { return std::vector<int>{p.id()}; });
 
   {
@@ -504,8 +506,9 @@ void File::write(const ParticleRange &particles, double time, int step,
     write_dataset(std::vector<double>{time},
                   datasets.at("/particles/atoms/id/time"), Vector1s{1},
                   Vector1s{extents[0]}, Vector1s{1});
-    write_dataset(std::vector<int>{step}, datasets.at("/particles/atoms/id/step"),
-                  Vector1s{1}, Vector1s{extents[0]}, Vector1s{1});
+    write_dataset(std::vector<int>{step},
+                  datasets.at("/particles/atoms/id/step"), Vector1s{1},
+                  Vector1s{extents[0]}, Vector1s{1});
   }
 
   if (m_fields & H5MD_OUT_TYPE) {
