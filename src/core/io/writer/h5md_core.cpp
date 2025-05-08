@@ -239,10 +239,10 @@ void File::create_datasets() {
     auto path = ds.path();
     if (ds.type == H5T_NATIVE_INT) {
       datasets.emplace(path,
-          m_h5md_file->createDataSet<int>(path, dataspace, props));
+                       m_h5md_file->createDataSet<int>(path, dataspace, props));
     } else if (ds.type == H5T_NATIVE_DOUBLE) {
-      datasets.emplace(path,
-	  m_h5md_file->createDataSet<double>(path, dataspace, props));
+      datasets.emplace(
+          path, m_h5md_file->createDataSet<double>(path, dataspace, props));
     }
   }
 }
