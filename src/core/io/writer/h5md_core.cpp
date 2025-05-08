@@ -470,19 +470,19 @@ void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &box_geo) {
   auto &datasets = *m_datasets;
   if (m_fields & H5MD_OUT_BOX_L) {
-    write_box(box_geo, datasets["/particles/atoms/box/edges/value"]);
+    write_box(box_geo, datasets.at("/particles/atoms/box/edges/value"));
   }
   auto const &lebc = box_geo.lees_edwards_bc();
   if (m_fields & H5MD_OUT_LE_OFF) {
-    write_le_off(lebc, datasets["/particles/atoms/lees_edwards/offset/value"]);
+    write_le_off(lebc, datasets.at("/particles/atoms/lees_edwards/offset/value"));
   }
   if (m_fields & H5MD_OUT_LE_DIR) {
     write_le_dir(lebc,
-                 datasets["/particles/atoms/lees_edwards/direction/value"]);
+                 datasets.at("/particles/atoms/lees_edwards/direction/value"));
   }
   if (m_fields & H5MD_OUT_LE_NORMAL) {
     write_le_normal(lebc,
-                    datasets["/particles/atoms/lees_edwards/normal/value"]);
+                    datasets.at("/particles/atoms/lees_edwards/normal/value"));
   }
 
   auto const n_part_local = static_cast<int>(particles.size());
@@ -495,61 +495,61 @@ void File::write(const ParticleRange &particles, double time, int step,
       boost::mpi::all_reduce(m_comm, n_part_local, std::plus<int>());
 
   write_td_particle_property<2>(
-      prefix, n_part_global, particles, datasets["/particles/atoms/id/value"],
+      prefix, n_part_global, particles, datasets.at("/particles/atoms/id/value"),
       [](auto const &p) { return std::vector<int>{p.id()}; });
 
   {
-    HighFive::DataSet &dataset = datasets["/particles/atoms/id/value"];
+    HighFive::DataSet &dataset = datasets.at("/particles/atoms/id/value");
     auto const extents = dataset.getSpace().getDimensions();
     write_dataset(std::vector<double>{time},
-                  datasets["/particles/atoms/id/time"], Vector1s{1},
+                  datasets.at("/particles/atoms/id/time"), Vector1s{1},
                   Vector1s{extents[0]}, Vector1s{1});
-    write_dataset(std::vector<int>{step}, datasets["/particles/atoms/id/step"],
+    write_dataset(std::vector<int>{step}, datasets.at("/particles/atoms/id/step"),
                   Vector1s{1}, Vector1s{extents[0]}, Vector1s{1});
   }
 
   if (m_fields & H5MD_OUT_TYPE) {
     write_td_particle_property<2>(
         prefix, n_part_global, particles,
-        datasets["/particles/atoms/species/value"],
+        datasets.at("/particles/atoms/species/value"),
         [](auto const &p) { return std::vector<int>{p.type()}; });
   }
   if (m_fields & H5MD_OUT_MASS) {
     write_td_particle_property<2>(
         prefix, n_part_global, particles,
-        datasets["/particles/atoms/mass/value"],
+        datasets.at("/particles/atoms/mass/value"),
         [](auto const &p) { return std::vector<double>{p.mass()}; });
   }
   if (m_fields & H5MD_OUT_POS) {
     write_td_particle_property<3>(
         prefix, n_part_global, particles,
-        datasets["/particles/atoms/position/value"], [&](auto const &p) {
+        datasets.at("/particles/atoms/position/value"), [&](auto const &p) {
           return box_geo.folded_position(p.pos()).as_vector();
         });
   }
   if (m_fields & H5MD_OUT_IMG) {
     write_td_particle_property<3>(
         prefix, n_part_global, particles,
-        datasets["/particles/atoms/image/value"], [&](auto const &p) {
+        datasets.at("/particles/atoms/image/value"), [&](auto const &p) {
           return box_geo.folded_image_box(p.pos(), p.image_box()).as_vector();
         });
   }
   if (m_fields & H5MD_OUT_VEL) {
     write_td_particle_property<3>(
         prefix, n_part_global, particles,
-        datasets["/particles/atoms/velocity/value"],
+        datasets.at("/particles/atoms/velocity/value"),
         [](auto const &p) { return p.v().as_vector(); });
   }
   if (m_fields & H5MD_OUT_FORCE) {
     write_td_particle_property<3>(
         prefix, n_part_global, particles,
-        datasets["/particles/atoms/force/value"],
+        datasets.at("/particles/atoms/force/value"),
         [](auto const &p) { return p.force().as_vector(); });
   }
   if (m_fields & H5MD_OUT_CHARGE) {
     write_td_particle_property<2>(
         prefix, n_part_global, particles,
-        datasets["/particles/atoms/charge/value"],
+        datasets.at("/particles/atoms/charge/value"),
         [](auto const &p) { return std::vector<double>{p.q()}; });
   }
   if (m_fields & H5MD_OUT_BONDS) {
@@ -580,14 +580,14 @@ void File::write_connectivity(const ParticleRange &particles) {
   auto const n_bonds_total =
       boost::mpi::all_reduce(m_comm, n_bonds_local, std::plus<int>());
   auto const extents =
-      datasets["/connectivity/atoms/value"].getSpace().getDimensions();
+      datasets.at("/connectivity/atoms/value").getSpace().getDimensions();
   Vector3s offset_bonds = {extents[0], static_cast<size_t>(prefix_bonds), 0};
   Vector3s count_bonds = {1, static_cast<size_t>(n_bonds_local), 2};
   auto const n_bond_diff = std::max(static_cast<hsize_t>(n_bonds_total),
                                     static_cast<hsize_t>(extents[1])) -
                            extents[1];
   Vector3s change_extent_bonds = {1, static_cast<size_t>(n_bond_diff), 0};
-  write_dataset(bond, datasets["/connectivity/atoms/value"],
+  write_dataset(bond, datasets.at("/connectivity/atoms/value"),
                 change_extent_bonds, offset_bonds, count_bonds);
 }
 
