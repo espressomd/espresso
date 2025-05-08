@@ -160,7 +160,8 @@ void File::load_datasets() {
   for (auto const &ds : m_h5md_specification.get_datasets()) {
     if (ds.is_link)
       continue;
-    datasets[ds.path()] = m_h5md_file->getDataSet(ds.path());
+    auto path = ds.path();
+    datasets.emplace(path, m_h5md_file->getDataSet(path));
   }
 }
 
