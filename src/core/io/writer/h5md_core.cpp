@@ -401,7 +401,7 @@ template <> struct slice_info<2> {
       boost::multi_array<T, 2> data(boost::extents[1][cols]);
 
       for (std::size_t i = 0; i < cols; i++) {
-          data[0][i] = v1d[i];
+        data[0][i] = v1d[i];
       }
 
       return data;
@@ -452,7 +452,8 @@ static void write_box(BoxGeometry const &box_geo, HighFive::DataSet &dataset) {
   Vector2s offset{extents[0], 0};
   Vector2s count{1ul, 3ul};
   auto data = box_geo.length().as_vector();
-  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset,
+                count);
 }
 
 static void write_le_off(LeesEdwardsBC const &lebc,
@@ -462,7 +463,8 @@ static void write_le_off(LeesEdwardsBC const &lebc,
   Vector2s offset{extents[0], 0};
   Vector2s count{1ul, 1ul};
   auto data = std::vector<double>{lebc.pos_offset};
-  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset,
+                count);
 }
 
 static void write_le_dir(LeesEdwardsBC const &lebc,
@@ -473,7 +475,8 @@ static void write_le_dir(LeesEdwardsBC const &lebc,
   Vector2s offset{extents[0], 0};
   Vector2s count{1ul, 1ul};
   auto data = std::vector<int>{shear_direction};
-  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset,
+                count);
 }
 
 static void write_le_normal(LeesEdwardsBC const &lebc,
@@ -484,7 +487,8 @@ static void write_le_normal(LeesEdwardsBC const &lebc,
   Vector2s offset{extents[0], 0};
   Vector2s count{1ul, 1ul};
   auto data = std::vector<int>{shear_plane_normal};
-  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset,
+                count);
 }
 
 void File::write(const ParticleRange &particles, double time, int step,
