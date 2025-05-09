@@ -516,8 +516,7 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
   endif()
   if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     # cmake-format: off
-    
-    eclare(
+    FetchContent_Declare(
       kokkos
       GIT_REPOSITORY https://github.com/kokkos/kokkos.git
       GIT_TAG        b4f7c84 # version 4.6.1 with patches
@@ -607,18 +606,11 @@ if(ESPRESSO_BUILD_WITH_HDF5)
   # cmake-format: off
   FetchContent_Declare(
     HighFive
-    GIT_REPOSITORY https://github.com/BlueBrain/HighFive.git
-    GIT_TAG        v2.10.1
+    GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+    GIT_TAG        0103467 # v3.0.0-beta with patches
   )
   # cmake-format: on
-  FetchContent_GetProperties(HighFive)
-  if(NOT HighFive_POPULATED)
-    FetchContent_Populate(HighFive)
-    add_library(HighFive INTERFACE)
-    target_include_directories(
-      HighFive INTERFACE $<BUILD_INTERFACE:${highfive_SOURCE_DIR}/include>)
-    target_link_libraries(HighFive INTERFACE hdf5)
-  endif()
+  FetchContent_MakeAvailable(HighFive)
 endif()
 
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
