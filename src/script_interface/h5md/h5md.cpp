@@ -50,7 +50,8 @@ H5md::H5md() {
        {"time_unit", m_h5md, &::Writer::H5md::File::time_unit},
        {"force_unit", m_h5md, &::Writer::H5md::File::force_unit},
        {"velocity_unit", m_h5md, &::Writer::H5md::File::velocity_unit},
-       {"charge_unit", m_h5md, &::Writer::H5md::File::charge_unit}});
+       {"charge_unit", m_h5md, &::Writer::H5md::File::charge_unit},
+       {"chunk_size", m_h5md, &::Writer::H5md::File::chunk_size}});
 };
 
 void H5md::do_construct(VariantMap const &params) {
@@ -58,10 +59,10 @@ void H5md::do_construct(VariantMap const &params) {
   m_h5md =
       make_shared_from_args<::Writer::H5md::File, std::string, std::string,
                             std::vector<std::string>, std::string, std::string,
-                            std::string, std::string, std::string, std::string>(
+                            std::string, std::string, std::string, std::string, int>(
           params, "file_path", "script_path", "fields", "mass_unit",
           "length_unit", "time_unit", "force_unit", "velocity_unit",
-          "charge_unit");
+          "charge_unit", "chunk_size");
   // MPI communicator is needed to close parallel file handles
   m_mpi_env_lock = ::Communication::mpiCallbacksHandle()->share_mpi_env();
 }

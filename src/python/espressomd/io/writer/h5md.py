@@ -19,6 +19,7 @@
 
 import sys
 import pathlib
+from ctypes import c_uint
 
 from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
 from ...code_features import assert_features
@@ -77,6 +78,8 @@ class H5md(ScriptInterfaceHelper):
         list of valid fields. This list defines the H5MD specifications.
         If the file in ``file_path`` already exists but has different
         specifications, an exception is raised.
+    chunk_size : :obj:`int`
+        The chunk size for HighFive::DataSet. It must be larger than 0.
 
     Methods
     -------
@@ -109,6 +112,12 @@ class H5md(ScriptInterfaceHelper):
     force_unit: :obj:`str`
     velocity_unit: :obj:`str`
     charge_unit: :obj:`str`
+    chunk_size: :obj:`int`
+
+    Raises
+    ------
+    ValueError
+        If chunk_size is smaller than 1.
 
     """
     _so_name = "ScriptInterface::Writer::H5md"
@@ -128,6 +137,7 @@ class H5md(ScriptInterfaceHelper):
         fields = params["fields"]
         fields = [fields] if isinstance(fields, str) else list(fields)
         params["fields"] = fields
+        chunk_size = params["chunk_size"]
         self.validate_params(params)
         script_path = ""
         if sys.argv and sys.argv[0]:
@@ -142,17 +152,18 @@ class H5md(ScriptInterfaceHelper):
             time_unit=unit_system.time,
             force_unit=unit_system.force,
             velocity_unit=unit_system.velocity,
-            charge_unit=unit_system.charge
+            charge_unit=unit_system.charge,
+            chunk_size=chunk_size
         )
 
     def default_params(self):
-        return {"unit_system": UnitSystem(), "fields": "all"}
+        return {"unit_system": UnitSystem(), "fields": "all", "chunk_size": 1000}
 
     def required_keys(self):
         return {"file_path"}
 
     def valid_keys(self):
-        return {"file_path", "unit_system", "fields"}
+        return {"file_path", "unit_system", "fields", "chunk_size"}
 
     def validate_params(self, params):
         """Check validity of given parameters.
@@ -162,3 +173,8 @@ class H5md(ScriptInterfaceHelper):
         for item in params["fields"]:
             utils.check_type_or_throw_except(
                 item, 1, str, "'fields' should be a string or a list of strings")
+        utils.check_type_or_throw_except(
+            params["chunk_size"], 1, int, "'chunk_size' should be integer")
+        if params["chunk_size"] <= 0:
+            raise ValueError(
+                'Usage: chunk_size must be larger than 0.')

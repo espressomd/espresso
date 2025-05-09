@@ -210,8 +210,8 @@ static std::vector<std::size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
   }
 }
 
-static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim) {
-  hsize_t chunk_size = (rank > 1ul) ? 1000ul : 1ul;
+static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim, int size) {
+  hsize_t chunk_size = (rank > 1ul) ? static_cast<hsize_t>(size) : 1ul;
   switch (rank) {
   case 3ul:
     return {1ul, chunk_size, data_dim};
@@ -233,7 +233,7 @@ void File::create_datasets() {
     auto dims = create_dims(ds.rank, ds.data_dim);
     auto maxdims = create_maxdims(ds.rank, ds.data_dim, H5S_UNLIMITED);
     auto dataspace = HighFive::DataSpace(dims, maxdims);
-    auto chunk = create_chunk_dims(ds.rank, ds.data_dim);
+    auto chunk = create_chunk_dims(ds.rank, ds.data_dim, m_chunk_size);
     HighFive::DataSetCreateProps props;
     props.add(HighFive::Chunking(chunk));
     auto path = ds.path();
@@ -602,12 +602,13 @@ File::File(std::string file_path, std::string script_path,
            std::vector<std::string> const &output_fields, std::string mass_unit,
            std::string length_unit, std::string time_unit,
            std::string force_unit, std::string velocity_unit,
-           std::string charge_unit)
+           std::string charge_unit, int chunk_size)
     : m_script_path(std::move(script_path)), m_mass_unit(std::move(mass_unit)),
       m_length_unit(std::move(length_unit)), m_time_unit(std::move(time_unit)),
       m_force_unit(std::move(force_unit)),
       m_velocity_unit(std::move(velocity_unit)),
-      m_charge_unit(std::move(charge_unit)), m_comm(boost::mpi::communicator()),
+      m_charge_unit(std::move(charge_unit)), m_chunk_size(std::move(chunk_size)),
+      m_comm(boost::mpi::communicator()),
       m_fields(fields_list_to_bitfield(output_fields)),
       m_datasets(std::make_unique<decltype(m_datasets)::element_type>()),
       m_h5md_specification(m_fields) {
