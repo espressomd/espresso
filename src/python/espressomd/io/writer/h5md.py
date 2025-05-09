@@ -19,7 +19,6 @@
 
 import sys
 import pathlib
-from ctypes import c_uint
 
 from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
 from ...code_features import assert_features
