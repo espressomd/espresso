@@ -394,8 +394,21 @@ template <> struct slice_info<2> {
     return Vector2s{n_time_steps, prefix};
   }
   template <typename T>
-  static std::vector<T> reshape(std::vector<T> &v1d, Vector2s count) {
-    return v1d;
+  static boost::multi_array<T, 2> reshape(std::vector<T> &v1d, Vector2s count) {
+    if (!v1d.empty()) {
+      const std::size_t cols = count[1];
+
+      boost::multi_array<T, 2> data(boost::extents[1][cols]);
+
+      for (std::size_t i = 0; i < cols; i++) {
+          data[0][i] = v1d[i];
+      }
+
+      return data;
+    } else {
+      boost::multi_array<T, 2> data(boost::extents[0][0]);
+      return data;
+    }
   }
 };
 
@@ -436,18 +449,20 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
 static void write_box(BoxGeometry const &box_geo, HighFive::DataSet &dataset) {
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<std::size_t> offset{static_cast<std::size_t>(extents[0]), 0};
-  std::vector<std::size_t> count{1ul, 3ul};
-  write_dataset(box_geo.length().as_vector(), dataset, offset, count);
+  Vector2s offset{extents[0], 0};
+  Vector2s count{1ul, 3ul};
+  auto data = box_geo.length().as_vector();
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
 }
 
 static void write_le_off(LeesEdwardsBC const &lebc,
                          HighFive::DataSet &dataset) {
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<std::size_t> offset{extents[0], 0};
-  std::vector<std::size_t> count{1ul, 1ul};
-  write_dataset(std::vector<double>{lebc.pos_offset}, dataset, offset, count);
+  Vector2s offset{extents[0], 0};
+  Vector2s count{1ul, 1ul};
+  auto data = std::vector<double>{lebc.pos_offset};
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
 }
 
 static void write_le_dir(LeesEdwardsBC const &lebc,
@@ -455,9 +470,10 @@ static void write_le_dir(LeesEdwardsBC const &lebc,
   auto const shear_direction = static_cast<int>(lebc.shear_direction);
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<std::size_t> offset{extents[0], 0};
-  std::vector<std::size_t> count{1ul, 1ul};
-  write_dataset(std::vector<int>{shear_direction}, dataset, offset, count);
+  Vector2s offset{extents[0], 0};
+  Vector2s count{1ul, 1ul};
+  auto data = std::vector<int>{shear_direction};
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
 }
 
 static void write_le_normal(LeesEdwardsBC const &lebc,
@@ -465,9 +481,10 @@ static void write_le_normal(LeesEdwardsBC const &lebc,
   auto const shear_plane_normal = static_cast<int>(lebc.shear_plane_normal);
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<std::size_t> offset{extents[0], 0};
-  std::vector<std::size_t> count{1ul, 1ul};
-  write_dataset(std::vector<int>{shear_plane_normal}, dataset, offset, count);
+  Vector2s offset{extents[0], 0};
+  Vector2s count{1ul, 1ul};
+  auto data = std::vector<int>{shear_plane_normal};
+  write_dataset(detail::slice_info<2>::reshape(data, count), dataset, offset, count);
 }
 
 void File::write(const ParticleRange &particles, double time, int step,
