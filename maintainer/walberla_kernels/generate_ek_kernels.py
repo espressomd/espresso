@@ -35,6 +35,7 @@ import custom_additional_extensions
 parser = argparse.ArgumentParser(description="Generate the waLBerla kernels.")
 parser.add_argument("--single-precision", action="store_true", required=False,
                     help="Use single-precision")
+parser.add_argument("--gpu", action="store_true")
 args = parser.parse_args()
 
 # Make sure we have the correct versions of the required dependencies
@@ -73,6 +74,8 @@ def patch_diffusive_flux_elec_kernel(content):
 
 dim: int = 3
 target: ps.enums.Target = ps.enums.Target.CPU
+if args.gpu:
+    target = ps.enums.Target.GPU
 flux_count: int = 3 ** dim // 2
 
 diffusion = ps.TypedSymbol("D", data_type_np)
@@ -134,27 +137,37 @@ block_offsets = tuple(
     ps.TypedSymbol(f"block_offset_{i}", np.uint32)
     for i in range(3))
 
-params = {
-    "target": target,
-    "cpu_vectorize_info": {"assume_inner_stride_one": False}, }
+if args.gpu:
+    params = {
+        "target": target}
+    processor_suffix = "CUDA"
+    file_suffix = "cu"
+else:
+    params = {
+        "target": target,
+        "cpu_vectorize_info": {"assume_inner_stride_one": False}, }
+    processor_suffix = "CPU"
+    file_suffix = "cpp"
 
 
 with code_generation_context.CodeGeneration() as ctx:
     ctx.double_accuracy = double_precision
-
+    if target == ps.Target.GPU:
+        ctx.gpu = True
+        ctx.cuda = True
     # codegen configuration
     config = pystencils_espresso.generate_config(ctx, params)
 
     for midfix, fluctuation in (("", False), ("Thermalized", True)):
         pystencils_walberla.generate_sweep(
             ctx,
-            f"DiffusiveFluxKernel{midfix}_{precision_suffix}",
+            f"DiffusiveFluxKernel{midfix}_{precision_suffix}_{processor_suffix}",
             ek.flux(include_vof=False, include_fluctuations=fluctuation,
                     rng_node=precision_rng),
             staggered=True,
             block_offset=block_offsets if fluctuation else None,
             **params)
-        class_name = f"DiffusiveFluxKernelWithElectrostatic{midfix}_{precision_suffix}"  # nopep8
+        class_name = f"DiffusiveFluxKernelWithElectrostatic{midfix}_{precision_suffix}_{processor_suffix}"  # nopep8
         pystencils_walberla.generate_sweep(
             ctx, class_name,
             ek_electrostatic.flux(include_vof=False, include_fluctuations=fluctuation,
@@ -171,19 +184,19 @@ with code_generation_context.CodeGeneration() as ctx:
 
     pystencils_walberla.generate_sweep(
         ctx,
-        f"AdvectiveFluxKernel_{precision_suffix}",
+        f"AdvectiveFluxKernel_{precision_suffix}_{processor_suffix}",
         flux_advection,
         staggered=True,
         **params)
     pystencils_walberla.generate_sweep(
         ctx,
-        f"ContinuityKernel_{precision_suffix}",
+        f"ContinuityKernel_{precision_suffix}_{processor_suffix}",
         ek.continuity(),
         **params)
 
     pystencils_walberla.generate_sweep(
         ctx,
-        f"FrictionCouplingKernel_{precision_suffix}",
+        f"FrictionCouplingKernel_{precision_suffix}_{processor_suffix}",
         ek.friction_coupling(),
         **params)
 
@@ -196,7 +209,7 @@ with code_generation_context.CodeGeneration() as ctx:
 
     pystencils_walberla.boundary.generate_staggered_flux_boundary(
         generation_context=ctx,
-        class_name=f"FixedFlux_{precision_suffix}",
+        class_name=f"FixedFlux_{precision_suffix}_{processor_suffix}",
         boundary_object=dynamic_flux,
         dim=dim,
         neighbor_stencil=stencil,
@@ -213,7 +226,7 @@ with code_generation_context.CodeGeneration() as ctx:
 
     pystencils_walberla.boundary.generate_boundary(
         generation_context=ctx,
-        class_name=f"Dirichlet_{precision_suffix}",
+        class_name=f"Dirichlet_{precision_suffix}_{processor_suffix}",
         boundary_object=dirichlet,
         additional_data_handler=dirichlet_additional_data,
         field_name="field",
@@ -224,13 +237,14 @@ with code_generation_context.CodeGeneration() as ctx:
     # ek reactions
     for i in range(1, max_num_reactants + 1):
         assignments = list(reaction_obj.generate_reaction(num_reactants=i))
-        class_name: str = f"ReactionKernelBulk_{i}_{precision_suffix}"
+        class_name: str = f"ReactionKernelBulk_{i}_{precision_suffix}_{processor_suffix}"
         pystencils_walberla.generate_sweep(
-            ctx,
-            class_name,
-            assignments)
+            generation_context=ctx,
+            class_name=class_name,
+            target=target,
+            assignments=assignments)
 
-        class_name: str = f"ReactionKernelIndexed_{i}_{precision_suffix}"
+        class_name: str = f"ReactionKernelIndexed_{i}_{precision_suffix}_{processor_suffix}"
         custom_additional_extensions.generate_boundary(
             generation_context=ctx,
             stencil=dirichlet_stencil,
@@ -238,16 +252,19 @@ with code_generation_context.CodeGeneration() as ctx:
             dim=dim,
             target=target,
             assignment=assignments)
-        ctx.patch_file(class_name, "cpp", patch_reaction_indexed_kernel)
+        if(target==ps.enums.Target.CPU):
+            ctx.patch_file(class_name, file_suffix, patch_reaction_indexed_kernel)
 
     # ek reactions helper functions
     custom_additional_extensions.generate_kernel_selector(
         generation_context=ctx,
         class_name="ReactionKernelBulk",
         max_num_reactants=max_num_reactants,
-        precision_suffix=pystencils_espresso.precision_suffix)
+        precision_suffix=pystencils_espresso.precision_suffix,
+        processor_suffix=processor_suffix)
     custom_additional_extensions.generate_kernel_selector(
         generation_context=ctx,
         class_name="ReactionKernelIndexed",
         max_num_reactants=max_num_reactants,
-        precision_suffix=pystencils_espresso.precision_suffix)
+        precision_suffix=pystencils_espresso.precision_suffix,
+        processor_suffix=processor_suffix)

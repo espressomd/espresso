@@ -326,6 +326,7 @@ def generate_kernel_selector(
         namespace="pystencils",
         max_num_reactants=None,
         precision_suffix=None,
+        processor_suffix=None
 ):
     """
     Generate helper functions to select a kernel with the appropriate
@@ -338,6 +339,7 @@ def generate_kernel_selector(
         "class_name": class_name,
         "precision_suffix": precision_suffix,
         "max_num_reactants": max_num_reactants,
+        "processor_suffix": processor_suffix,
     }
 
     custom_env = jinja2.Environment(

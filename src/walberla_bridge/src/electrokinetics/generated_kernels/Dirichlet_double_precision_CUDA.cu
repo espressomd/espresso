@@ -1,0 +1,118 @@
+//======================================================================================================================
+//
+//  This file is part of waLBerla. waLBerla is free software: you can
+//  redistribute it and/or modify it under the terms of the GNU General Public
+//  License as published by the Free Software Foundation, either version 3 of
+//  the License, or (at your option) any later version.
+//
+//  waLBerla is distributed in the hope that it will be useful, but WITHOUT
+//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+//  for more details.
+//
+//  You should have received a copy of the GNU General Public License along
+//  with waLBerla (see COPYING.txt). If not, see <http://www.gnu.org/licenses/>.
+//
+//! \\file Dirichlet_double_precision_CUDA.cpp
+//! \\author pystencils
+//======================================================================================================================
+
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+
+#include "Dirichlet_double_precision_CUDA.h"
+#include "core/DataTypes.h"
+#include "core/Macros.h"
+#include "gpu/ErrorChecking.h"
+
+#define FUNC_PREFIX __global__
+
+using namespace std;
+
+namespace walberla {
+namespace pystencils {
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#ifdef __CUDACC__
+#pragma push
+#ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
+#pragma nv_diag_suppress 177
+#else
+#pragma diag_suppress 177
+#endif
+#endif
+// NOLINTBEGIN(readability-non-const-parameter*)
+namespace internal_dirichlet_double_precision_cuda_boundary_Dirichlet_double_precision_CUDA {
+static FUNC_PREFIX __launch_bounds__(256) void dirichlet_double_precision_cuda_boundary_Dirichlet_double_precision_CUDA(double *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int32_t indexVectorSize) {
+  if (blockDim.x * blockIdx.x + threadIdx.x < indexVectorSize) {
+    uint8_t *RESTRICT _data_indexVector_10 = _data_indexVector;
+    const int32_t x = *((int32_t *)(&_data_indexVector_10[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
+    uint8_t *RESTRICT _data_indexVector_14 = _data_indexVector + 4;
+    const int32_t y = *((int32_t *)(&_data_indexVector_14[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
+    uint8_t *RESTRICT _data_indexVector_18 = _data_indexVector + 8;
+    const int32_t z = *((int32_t *)(&_data_indexVector_18[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
+
+    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
+    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
+    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
+    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
+
+    uint8_t *RESTRICT _data_indexVector_112 = _data_indexVector + 12;
+    const int32_t dir = *((int32_t *)(&_data_indexVector_112[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
+    double *RESTRICT _data_field_10_20 = _data_field + _stride_field_1 * y + _stride_field_2 * z;
+    uint8_t *RESTRICT _data_indexVector_116 = _data_indexVector + 16;
+    _data_field_10_20[_stride_field_0 * x] = *((double *)(&_data_indexVector_116[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
+  }
+}
+} // namespace internal_dirichlet_double_precision_cuda_boundary_Dirichlet_double_precision_CUDA
+
+// NOLINTEND(readability-non-const-parameter*)
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+#ifdef __CUDACC__
+#pragma pop
+#endif
+
+void Dirichlet_double_precision_CUDA::run_impl(IBlock *block, IndexVectors::Type type, gpuStream_t stream) {
+  auto *indexVectors = block->getData<IndexVectors>(indexVectorID);
+  int32_t indexVectorSize = int32_c(indexVectors->indexVector(type).size());
+  if (indexVectorSize == 0)
+    return;
+
+  auto pointer = indexVectors->pointerGpu(type);
+
+  uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
+
+  auto field = block->getData<gpu::GPUField<double>>(fieldID);
+
+  WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(field->nrOfGhostLayers()))
+  double *RESTRICT _data_field = field->dataAt(0, 0, 0, 0);
+  const int64_t _stride_field_0 = int64_t(field->xStride());
+  const int64_t _stride_field_1 = int64_t(field->yStride());
+  const int64_t _stride_field_2 = int64_t(field->zStride());
+  dim3 _block(uint32_c(((256 < indexVectorSize) ? 256 : indexVectorSize)), uint32_c(1), uint32_c(1));
+  dim3 _grid(uint32_c(((indexVectorSize) % (((256 < indexVectorSize) ? 256 : indexVectorSize)) == 0 ? (int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize)) : ((int64_t)(indexVectorSize) / (int64_t)(((256 < indexVectorSize) ? 256 : indexVectorSize))) + 1)), uint32_c(1), uint32_c(1));
+  internal_dirichlet_double_precision_cuda_boundary_Dirichlet_double_precision_CUDA::dirichlet_double_precision_cuda_boundary_Dirichlet_double_precision_CUDA<<<_grid, _block, 0, stream>>>(_data_field, _data_indexVector, _stride_field_0, _stride_field_1, _stride_field_2, indexVectorSize);
+}
+
+void Dirichlet_double_precision_CUDA::run(IBlock *block, gpuStream_t stream) {
+  run_impl(block, IndexVectors::ALL, stream);
+}
+
+void Dirichlet_double_precision_CUDA::inner(IBlock *block, gpuStream_t stream) {
+  run_impl(block, IndexVectors::INNER, stream);
+}
+
+void Dirichlet_double_precision_CUDA::outer(IBlock *block, gpuStream_t stream) {
+  run_impl(block, IndexVectors::OUTER, stream);
+}
+
+} // namespace pystencils
+} // namespace walberla
