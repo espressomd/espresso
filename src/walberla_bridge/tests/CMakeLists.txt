@@ -37,8 +37,7 @@ function(ESPRESSO_ADD_TEST)
     espresso::walberla_codegen
     espresso::utils)
   if(WALBERLA_BUILD_WITH_CUDA)
-    target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla_cuda
-                                               espresso::walberla_codegen_cuda)
+    target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla_cuda)
   endif()
   if(${TEST_SRC} MATCHES ".*\.cu$")
     target_link_libraries(${TEST_NAME} PRIVATE espresso::walberla::cuda_flags)

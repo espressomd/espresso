@@ -34,6 +34,6 @@ foreach(precision double_precision single_precision)
     AdvectiveFluxKernel_${precision}.cpp
     DiffusiveFluxKernelWithElectrostatic_${precision}.cpp
     DiffusiveFluxKernelWithElectrostaticThermalized_${precision}.cpp
-    TARGET_DIRECTORY espresso_walberla PROPERTIES COMPILE_FLAGS
-                                                  -fno-sanitize=undefined)
+    TARGET_DIRECTORY espresso_walberla_codegen
+    PROPERTIES COMPILE_FLAGS -fno-sanitize=undefined)
 endforeach()

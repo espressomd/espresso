@@ -829,6 +829,14 @@ if(ESPRESSO_BUILD_TESTS)
             "Extra arguments to give to ctest calls (separated by semicolons)")
   set(ESPRESSO_TEST_NP "4" CACHE STRING
                                  "Maximal number of MPI ranks to use per test")
+  add_library(espresso_tests_cpp_flags INTERFACE)
+  add_library(espresso::tests::cpp_flags ALIAS espresso_tests_cpp_flags)
+  if(ESPRESSO_BUILD_WITH_COVERAGE)
+    target_compile_options(
+      espresso_tests_cpp_flags
+      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-default-inline>
+                $<$<CXX_COMPILER_ID:GNU>:-fno-elide-constructors>)
+  endif()
   if(ESPRESSO_BUILD_WITH_PYTHON)
     add_subdirectory(testsuite)
   endif()
@@ -848,6 +856,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+                   https://github.com/lssfau/walberla.git
     GIT_TAG        0aab9c0af2335b1f6fec75deae06e514ccb233ab
     PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/walberla.patch
   )
@@ -861,7 +870,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
   set(WALBERLA_BUILD_DOC off CACHE BOOL "")
   set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-  set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   if(ESPRESSO_BUILD_WITH_CUDA)
     set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
     if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
