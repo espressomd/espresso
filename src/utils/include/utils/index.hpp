@@ -31,6 +31,17 @@ namespace Utils {
 
 enum class MemoryOrder { COLUMN_MAJOR, ROW_MAJOR };
 
+template <MemoryOrder memory_order>
+inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
+  assert((a >= 0) && (a < adim[0]));
+  assert((b >= 0) && (b < adim[1]));
+  assert((c >= 0) && (c < adim[2]));
+  if constexpr (memory_order == MemoryOrder::COLUMN_MAJOR) {
+    return a + adim[0] * (b + adim[1] * c);
+  }
+  return adim[1] * adim[2] * a + adim[2] * b + c;
+}
+
 /** get the linear index from the position (@p a,@p b,@p c) in a 3D grid
  *  of dimensions @p adim.
  *
@@ -42,20 +53,21 @@ enum class MemoryOrder { COLUMN_MAJOR, ROW_MAJOR };
 inline int
 get_linear_index(int a, int b, int c, const Vector3i &adim,
                  MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
-  assert((a >= 0) && (a < adim[0]));
-  assert((b >= 0) && (b < adim[1]));
-  assert((c >= 0) && (c < adim[2]));
-
   if (memory_order == MemoryOrder::COLUMN_MAJOR) {
-    return a + adim[0] * (b + adim[1] * c);
+    return get_linear_index<MemoryOrder::COLUMN_MAJOR>(a, b, c, adim);
   }
-  return adim[1] * adim[2] * a + adim[2] * b + c;
+  return get_linear_index<MemoryOrder::ROW_MAJOR>(a, b, c, adim);
 }
 
 inline int
 get_linear_index(const Vector3i &ind, const Vector3i &adim,
                  MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
   return get_linear_index(ind[0], ind[1], ind[2], adim, memory_order);
+}
+
+template <MemoryOrder memory_order>
+inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
+  return get_linear_index<memory_order>(ind[0], ind[1], ind[2], adim);
 }
 
 /**

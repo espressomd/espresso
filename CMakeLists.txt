@@ -452,7 +452,13 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_FFTW)
-  find_package(FFTW3 REQUIRED)
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    list(APPEND FFTW3_COMPONENTS omp)
+  endif()
+  if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
+    list(APPEND FFTW3_COMPONENTS mpi)
+  endif()
+  find_package(fftw3 REQUIRED COMPONENTS ${FFTW3_COMPONENTS})
 
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/heffte-src)
     find_package(Heffte 2.4.1 QUIET)
@@ -503,6 +509,8 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+  find_package(OpenMP REQUIRED)
+
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
     find_package(Kokkos 4.3 QUIET)
   endif()
@@ -778,6 +786,14 @@ if(ESPRESSO_BUILD_TESTS)
             "Extra arguments to give to ctest calls (separated by semicolons)")
   set(ESPRESSO_TEST_NP "4" CACHE STRING
                                  "Maximal number of MPI ranks to use per test")
+  add_library(espresso_tests_cpp_flags INTERFACE)
+  add_library(espresso::tests::cpp_flags ALIAS espresso_tests_cpp_flags)
+  if(ESPRESSO_BUILD_WITH_COVERAGE)
+    target_compile_options(
+      espresso_tests_cpp_flags
+      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-default-inline>
+                $<$<CXX_COMPILER_ID:GNU>:-fno-elide-constructors>)
+  endif()
   if(ESPRESSO_BUILD_WITH_PYTHON)
     add_subdirectory(testsuite)
   endif()
@@ -797,6 +813,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   FetchContent_Declare(
     walberla
     GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+                   https://github.com/lssfau/walberla.git
     GIT_TAG        0aab9c0af2335b1f6fec75deae06e514ccb233ab
     PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/walberla.patch
   )
@@ -810,7 +827,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
   set(WALBERLA_BUILD_DOC off CACHE BOOL "")
   set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-  set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   if(ESPRESSO_BUILD_WITH_CUDA)
     set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
     if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")

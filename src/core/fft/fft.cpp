@@ -40,6 +40,10 @@
 
 #include <fftw3.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -677,13 +681,19 @@ int fft_data_struct<FloatType>::initialize_fft(
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for (int i = 1; i < 4; i++) {
     if (init_tag) {
+#ifdef _OPENMP
+#pragma omp critical(fftw_destroy_plan_forward)
       forw[i].destroy_plan();
+#endif
     }
     forw[i].dir = FFTW_FORWARD;
+#ifdef _OPENMP
+#pragma omp critical(fftw_create_plan_forward)
     forw[i].plan_handle = fftw<FloatType>::plan_many_dft(
         1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data, nullptr, 1,
         forw[i].new_mesh[2], c_data, nullptr, 1, forw[i].new_mesh[2],
         forw[i].dir, FFTW_PATIENT);
+#endif
     assert(forw[i].plan_handle);
   }
 
@@ -691,13 +701,19 @@ int fft_data_struct<FloatType>::initialize_fft(
   /* this is needed because slightly different functions are used */
   for (int i = 1; i < 4; i++) {
     if (init_tag) {
+#ifdef _OPENMP
+#pragma omp critical(fftw_destroy_plan_backward)
       back[i].destroy_plan();
+#endif
     }
     back[i].dir = FFTW_BACKWARD;
+#ifdef _OPENMP
+#pragma omp critical(fftw_create_plan_backward)
     back[i].plan_handle = fftw<FloatType>::plan_many_dft(
         1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data, nullptr, 1,
         forw[i].new_mesh[2], c_data, nullptr, 1, forw[i].new_mesh[2],
         back[i].dir, FFTW_PATIENT);
+#endif
     back[i].pack_function = pack_block_permute1;
     assert(back[i].plan_handle);
   }

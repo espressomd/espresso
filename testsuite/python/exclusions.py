@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Integration test for exclusions
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -33,7 +32,8 @@ class Exclusions(ut.TestCase):
         self.system.time_step = 0.01
 
     def tearDown(self):
-        self.system.electrostatics.clear()
+        if espressomd.has_features("P3M"):
+            self.system.electrostatics.clear()
         self.system.part.clear()
 
     def test_add_remove(self):

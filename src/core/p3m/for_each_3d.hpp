@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <utils/index.hpp>
+
 #include <concepts>
 #include <cstddef>
 
@@ -65,6 +67,45 @@ void for_each_3d(detail::IndexVectorConcept auto &&start,
       for (nz = start[2u]; nz < stop[2u]; ++nz) {
         projector(2u, nz);
         kernel();
+      }
+    }
+  }
+}
+
+template <Utils::MemoryOrder memory_order, class Kernel,
+          class Projector = decltype(detail::noop_projector)>
+  requires std::invocable<Kernel> and std::invocable<Projector, unsigned, int>
+void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
+                     detail::IndexVectorConcept auto &&stop,
+                     detail::IndexVectorConcept auto &&counters,
+                     std::size_t &linear_loop_index, Kernel &&kernel,
+                     Projector &&projector = detail::noop_projector) {
+  auto &nx = counters[0u];
+  auto &ny = counters[1u];
+  auto &nz = counters[2u];
+  linear_loop_index = 0u;
+  if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {
+    for (nx = start[0u]; nx < stop[0u]; ++nx) {
+      projector(0u, nx);
+      for (ny = start[1u]; ny < stop[1u]; ++ny) {
+        projector(1u, ny);
+        for (nz = start[2u]; nz < stop[2u]; ++nz) {
+          projector(2u, nz);
+          kernel();
+          linear_loop_index++;
+        }
+      }
+    }
+  } else {
+    for (nz = start[2u]; nz < stop[2u]; ++nz) {
+      projector(2u, nz);
+      for (ny = start[1u]; ny < stop[1u]; ++ny) {
+        projector(1u, ny);
+        for (nx = start[0u]; nx < stop[0u]; ++nx) {
+          projector(0u, nx);
+          kernel();
+          linear_loop_index++;
+        }
       }
     }
   }
