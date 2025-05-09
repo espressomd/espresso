@@ -196,7 +196,7 @@ static std::vector<std::size_t> create_dims(hsize_t rank, hsize_t data_dim) {
 }
 
 static std::vector<std::size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
-                                          hsize_t max_dim) {
+                                               hsize_t max_dim) {
   switch (rank) {
   case 3ul:
     return std::vector<std::size_t>{max_dim, max_dim, data_dim};
@@ -210,7 +210,8 @@ static std::vector<std::size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
   }
 }
 
-static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim, int size) {
+static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim,
+                                              int size) {
   hsize_t chunk_size = (rank > 1ul) ? static_cast<hsize_t>(size) : 1ul;
   switch (rank) {
   case 3ul:
@@ -259,7 +260,8 @@ void File::load_file(const std::string &file_path) {
 static void write_attributes(HighFive::File &h5md_file) {
   auto h5md_group = h5md_file.createGroup("h5md");
   auto att = h5md_group.createAttribute<std::size_t>(
-      "version", HighFive::DataSpace::From(std::array<std::size_t, 2>{{1ul, 1ul}}));
+      "version",
+      HighFive::DataSpace::From(std::array<std::size_t, 2>{{1ul, 1ul}}));
   att.write(std::array<std::size_t, 2>{{1ul, 1ul}});
   auto h5md_creator_group = h5md_group.createGroup("creator");
   h5md_creator_group.createAttribute("name", "ESPResSo");
@@ -385,7 +387,9 @@ template <> struct slice_info<3> {
 
 template <> struct slice_info<2> {
   static auto extent(hsize_t n_part_diff) { return Vector2s{1, n_part_diff}; }
-  static constexpr auto count(std::size_t local_n) { return Vector2s{1, local_n}; }
+  static constexpr auto count(std::size_t local_n) {
+    return Vector2s{1, local_n};
+  }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector2s{n_time_steps, prefix};
   }
@@ -584,7 +588,8 @@ void File::write_connectivity(const ParticleRange &particles) {
       boost::mpi::all_reduce(m_comm, n_bonds_local, std::plus<int>());
   auto const extents =
       datasets.at("/connectivity/atoms/value").getSpace().getDimensions();
-  Vector3s offset_bonds = {extents[0], static_cast<std::size_t>(prefix_bonds), 0};
+  Vector3s offset_bonds = {extents[0], static_cast<std::size_t>(prefix_bonds),
+                           0};
   Vector3s count_bonds = {1, static_cast<std::size_t>(n_bonds_local), 2};
   auto const n_bond_diff = std::max(static_cast<hsize_t>(n_bonds_total),
                                     static_cast<hsize_t>(extents[1])) -
@@ -607,8 +612,8 @@ File::File(std::string file_path, std::string script_path,
       m_length_unit(std::move(length_unit)), m_time_unit(std::move(time_unit)),
       m_force_unit(std::move(force_unit)),
       m_velocity_unit(std::move(velocity_unit)),
-      m_charge_unit(std::move(charge_unit)), m_chunk_size(std::move(chunk_size)),
-      m_comm(boost::mpi::communicator()),
+      m_charge_unit(std::move(charge_unit)),
+      m_chunk_size(std::move(chunk_size)), m_comm(boost::mpi::communicator()),
       m_fields(fields_list_to_bitfield(output_fields)),
       m_datasets(std::make_unique<decltype(m_datasets)::element_type>()),
       m_h5md_specification(m_fields) {
