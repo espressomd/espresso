@@ -60,9 +60,9 @@ using MultiArray3i = boost::multi_array<int, 3>;
 using Vector1hs = Utils::Vector<hsize_t, 1>;
 using Vector2hs = Utils::Vector<hsize_t, 2>;
 using Vector3hs = Utils::Vector<hsize_t, 3>;
-using Vector1s = Utils::Vector<size_t, 1>;
-using Vector2s = Utils::Vector<size_t, 2>;
-using Vector3s = Utils::Vector<size_t, 3>;
+using Vector1s = Utils::Vector<std::size_t, 1>;
+using Vector2s = Utils::Vector<std::size_t, 2>;
+using Vector3s = Utils::Vector<std::size_t, 3>;
 
 static void backup_file(const std::string &from, const std::string &to) {
   /*
@@ -181,29 +181,29 @@ void File::create_groups() {
   }
 }
 
-static std::vector<size_t> create_dims(hsize_t rank, hsize_t data_dim) {
+static std::vector<std::size_t> create_dims(hsize_t rank, hsize_t data_dim) {
   switch (rank) {
   case 3ul:
-    return std::vector<size_t>{0ul, 0ul, data_dim};
+    return std::vector<std::size_t>{0ul, 0ul, data_dim};
   case 2ul:
-    return std::vector<size_t>{0ul, data_dim};
+    return std::vector<std::size_t>{0ul, data_dim};
   case 1ul:
-    return std::vector<size_t>{data_dim};
+    return std::vector<std::size_t>{data_dim};
   default:
     throw std::runtime_error(
         "H5MD Error: datasets with this dimension are not implemented\n");
   }
 }
 
-static std::vector<size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
+static std::vector<std::size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
                                           hsize_t max_dim) {
   switch (rank) {
   case 3ul:
-    return std::vector<size_t>{max_dim, max_dim, data_dim};
+    return std::vector<std::size_t>{max_dim, max_dim, data_dim};
   case 2ul:
-    return std::vector<size_t>{max_dim, max_dim};
+    return std::vector<std::size_t>{max_dim, max_dim};
   case 1ul:
-    return std::vector<size_t>{max_dim};
+    return std::vector<std::size_t>{max_dim};
   default:
     throw std::runtime_error(
         "H5MD Error: datasets with this dimension are not implemented\n");
@@ -258,9 +258,9 @@ void File::load_file(const std::string &file_path) {
 
 static void write_attributes(HighFive::File &h5md_file) {
   auto h5md_group = h5md_file.createGroup("h5md");
-  auto att = h5md_group.createAttribute<size_t>(
-      "version", HighFive::DataSpace::From(std::array<size_t, 2>{{1ul, 1ul}}));
-  att.write(std::array<size_t, 2>{{1ul, 1ul}});
+  auto att = h5md_group.createAttribute<std::size_t>(
+      "version", HighFive::DataSpace::From(std::array<std::size_t, 2>{{1ul, 1ul}}));
+  att.write(std::array<std::size_t, 2>{{1ul, 1ul}});
   auto h5md_creator_group = h5md_group.createGroup("creator");
   h5md_creator_group.createAttribute("name", "ESPResSo");
   h5md_creator_group.createAttribute("version", ESPRESSO_VERSION);
@@ -355,7 +355,7 @@ template <> struct slice_info<3> {
   static auto extent(hsize_t n_part_diff) {
     return Vector3s{1, n_part_diff, 0};
   }
-  static constexpr auto count(size_t local_n_part) {
+  static constexpr auto count(std::size_t local_n_part) {
     return Vector3s{1, local_n_part, 3};
   }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
@@ -364,13 +364,13 @@ template <> struct slice_info<3> {
   template <typename T>
   static boost::multi_array<T, 3> reshape(std::vector<T> &v1d, Vector3s count) {
     if (!v1d.empty()) {
-      const size_t rows = count[1];
-      const size_t cols = count[2];
+      const std::size_t rows = count[1];
+      const std::size_t cols = count[2];
 
       boost::multi_array<T, 3> data(boost::extents[1][rows][cols]);
 
-      for (size_t i = 0; i < rows; i++) {
-        for (size_t j = 0; j < cols; j++) {
+      for (std::size_t i = 0; i < rows; i++) {
+        for (std::size_t j = 0; j < cols; j++) {
           data[0][i][j] = v1d[cols * i + j];
         }
       }
@@ -385,7 +385,7 @@ template <> struct slice_info<3> {
 
 template <> struct slice_info<2> {
   static auto extent(hsize_t n_part_diff) { return Vector2s{1, n_part_diff}; }
-  static constexpr auto count(size_t local_n) { return Vector2s{1, local_n}; }
+  static constexpr auto count(std::size_t local_n) { return Vector2s{1, local_n}; }
   static auto offset(hsize_t n_time_steps, hsize_t prefix) {
     return Vector2s{n_time_steps, prefix};
   }
@@ -432,8 +432,8 @@ void write_td_particle_property(hsize_t prefix, hsize_t n_part_global,
 static void write_box(BoxGeometry const &box_geo, HighFive::DataSet &dataset) {
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<size_t> offset{static_cast<size_t>(extents[0]), 0};
-  std::vector<size_t> count{1ul, 3ul};
+  std::vector<std::size_t> offset{static_cast<std::size_t>(extents[0]), 0};
+  std::vector<std::size_t> count{1ul, 3ul};
   write_dataset(box_geo.length().as_vector(), dataset, offset, count);
 }
 
@@ -441,8 +441,8 @@ static void write_le_off(LeesEdwardsBC const &lebc,
                          HighFive::DataSet &dataset) {
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<size_t> offset{extents[0], 0};
-  std::vector<size_t> count{1ul, 1ul};
+  std::vector<std::size_t> offset{extents[0], 0};
+  std::vector<std::size_t> count{1ul, 1ul};
   write_dataset(std::vector<double>{lebc.pos_offset}, dataset, offset, count);
 }
 
@@ -451,8 +451,8 @@ static void write_le_dir(LeesEdwardsBC const &lebc,
   auto const shear_direction = static_cast<int>(lebc.shear_direction);
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<size_t> offset{extents[0], 0};
-  std::vector<size_t> count{1ul, 1ul};
+  std::vector<std::size_t> offset{extents[0], 0};
+  std::vector<std::size_t> count{1ul, 1ul};
   write_dataset(std::vector<int>{shear_direction}, dataset, offset, count);
 }
 
@@ -461,8 +461,8 @@ static void write_le_normal(LeesEdwardsBC const &lebc,
   auto const shear_plane_normal = static_cast<int>(lebc.shear_plane_normal);
   auto const extents = dataset.getSpace().getDimensions();
   extend_dataset(dataset, Vector2hs{1, 0});
-  std::vector<size_t> offset{extents[0], 0};
-  std::vector<size_t> count{1ul, 1ul};
+  std::vector<std::size_t> offset{extents[0], 0};
+  std::vector<std::size_t> count{1ul, 1ul};
   write_dataset(std::vector<int>{shear_plane_normal}, dataset, offset, count);
 }
 
@@ -584,12 +584,12 @@ void File::write_connectivity(const ParticleRange &particles) {
       boost::mpi::all_reduce(m_comm, n_bonds_local, std::plus<int>());
   auto const extents =
       datasets.at("/connectivity/atoms/value").getSpace().getDimensions();
-  Vector3s offset_bonds = {extents[0], static_cast<size_t>(prefix_bonds), 0};
-  Vector3s count_bonds = {1, static_cast<size_t>(n_bonds_local), 2};
+  Vector3s offset_bonds = {extents[0], static_cast<std::size_t>(prefix_bonds), 0};
+  Vector3s count_bonds = {1, static_cast<std::size_t>(n_bonds_local), 2};
   auto const n_bond_diff = std::max(static_cast<hsize_t>(n_bonds_total),
                                     static_cast<hsize_t>(extents[1])) -
                            extents[1];
-  Vector3s change_extent_bonds = {1, static_cast<size_t>(n_bond_diff), 0};
+  Vector3s change_extent_bonds = {1, static_cast<std::size_t>(n_bond_diff), 0};
   write_dataset(bond, datasets.at("/connectivity/atoms/value"),
                 change_extent_bonds, offset_bonds, count_bonds);
 }
