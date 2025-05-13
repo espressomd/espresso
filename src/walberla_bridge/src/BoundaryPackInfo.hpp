@@ -71,7 +71,6 @@ public:
   }
 
   bool constantDataExchange() const override { return false; }
-  bool threadsafeReceiving() const override { return true; }
 
   void communicateLocal(IBlock const *sender, IBlock *receiver,
                         stencil::Direction dir) override {
