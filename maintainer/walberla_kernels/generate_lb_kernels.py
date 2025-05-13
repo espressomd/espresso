@@ -81,6 +81,7 @@ else:
         "assume_sufficient_line_padding": False}
     parameters["CPU"] = ({"target": target,
                           "cpu_openmp": True}, "")
+    parameters["CPU_linear"] = ({"target": target}, "")
     parameters["AVX"] = ({"target": target,
                           "cpu_openmp": True,
                           "cpu_vectorize_info": cpu_vectorize_info}, "AVX")
@@ -257,11 +258,7 @@ def generate_packinfo_kernels(ctx, data_type, fields):
             content = content.replace(token, f'#include "core/DataTypes.h"\n#include "core/cell/CellInterval.h"\n#include "domain_decomposition/IBlock.h"\n#include "stencil/Directions.h"\n\n{token}')  # nopep8
         return content
 
-    for params, target_suffix in paramlist(parameters, ["CPU", "GPU"]):
-        # packing kernels are already called inside an OpenMP parallel region
-        if "cpu_openmp" in params:
-            tmp_flag = params["cpu_openmp"]
-            params["cpu_openmp"] = False
+    for params, target_suffix in paramlist(parameters, ["CPU_linear", "GPU"]):
         pystencils_walberla.generate_pack_info_from_kernel(
             ctx, f"PackInfoPdf{precision_prefix}{target_suffix}", assignments,
             kind="pull", **params)
@@ -273,8 +270,6 @@ def generate_packinfo_kernels(ctx, data_type, fields):
                            patch_packinfo_header, target_suffix)
             ctx.patch_file(class_name, get_ext_source(target_suffix),
                            patch_packinfo_kernel, target_suffix)
-        if "cpu_openmp" in params:
-            params["cpu_openmp"] = tmp_flag
 
 
 def generate_boundary_kernels(ctx, method, data_type):
