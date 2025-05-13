@@ -91,41 +91,6 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # avoid applying patches twice with FetchContent
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
-#
-# External dependencies declarations
-#
-
-# cmake-format: off
-FetchContent_Declare(
-  walberla
-  GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-  GIT_TAG        0aab9c0af2335b1f6fec75deae06e514ccb233ab
-  PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/walberla.patch
-)
-FetchContent_Declare(
-  stokesian_dynamics
-  GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
-  GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
-)
-FetchContent_Declare(
-  caliper
-  GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-  GIT_TAG        v2.12.1
-)
-FetchContent_Declare(
-  heffte
-  GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
-  GIT_TAG        v2.4.1
-  PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
-)
-FetchContent_Declare(
-  cabana
-  GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-  GIT_TAG        7914d28708b1c67b40d5743c1fbc09e221144dd3
-  PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
-)
-# cmake-format: on
-
 # ##############################################################################
 # User input options
 # ##############################################################################
@@ -351,6 +316,8 @@ target_compile_options(
     $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM>>:-Wno-implicit-fallthrough>
     $<$<NOT:$<CXX_COMPILER_ID:IntelLLVM,GNU>>:-Wno-unused-private-field>
     $<$<AND:$<CXX_COMPILER_ID:GNU>,$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},arm>>:-Wno-psabi>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:-Wno-implicit-int-float-conversion>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:-Wno-float-conversion>
     # warnings are errors
     $<$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>:-Werror>)
 
@@ -484,45 +451,134 @@ endif()
 # Libraries
 #
 
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  FetchContent_GetProperties(cabana)
-  set(Cabana_REQUIRE_HEFFTE OFF CACHE BOOL "")
-  if(NOT cabana_POPULATED)
-    FetchContent_MakeAvailable(cabana)
-  endif()
-  find_package(Kokkos REQUIRED)
-endif()
-
 if(ESPRESSO_BUILD_WITH_FFTW)
-  find_package(FFTW3 REQUIRED)
-  FetchContent_GetProperties(heffte)
-  set(Heffte_ENABLE_FFTW on CACHE BOOL "")
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    set(Heffte_ENABLE_CUDA "on" CACHE BOOL "")
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    list(APPEND FFTW3_COMPONENTS omp)
   endif()
-  if(NOT heffte_POPULATED)
+  if(ESPRESSO_BUILD_WITH_WALBERLA_FFT)
+    list(APPEND FFTW3_COMPONENTS mpi)
+  endif()
+  find_package(fftw3 REQUIRED COMPONENTS ${FFTW3_COMPONENTS})
+
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/heffte-src)
+    find_package(Heffte 2.4.1 QUIET)
+  endif()
+  if(NOT DEFINED Heffte_FOUND OR NOT ${Heffte_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      heffte
+      GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
+      GIT_TAG        v2.4.1
+      OVERRIDE_FIND_PACKAGE
+    )
+    # cmake-format: on
+    set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
+    if(ESPRESSO_BUILD_WITH_CUDA)
+      set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
+    endif()
     set(BUILD_SHARED_LIBS ON)
     FetchContent_MakeAvailable(heffte)
     set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    foreach(HEFFTE_MODULE IN ITEMS FFTW CUDA)
+      if(TARGET Heffte::${HEFFTE_MODULE})
+        set(Heffte_${HEFFTE_MODULE}_FOUND true)
+      endif()
+    endforeach()
+    add_library(Heffte::Heffte INTERFACE IMPORTED GLOBAL)
+    target_link_libraries(Heffte::Heffte INTERFACE Heffte)
+    install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+    if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
+      set(HEFFTE_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+      set(SKIP_CLANG_TIDY_CHECKS "")
+      set(SKIP_CLANG_TIDY_CHECKS_CXX "")
+      # silence heFFTe diagnostics
+      list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-exception-escape")
+      list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
+      list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-branch-clone")
+      list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-loop-convert")
+      list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-override")
+      list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
+      list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-else-after-return")
+      list(APPEND SKIP_CLANG_TIDY_CHECKS
+           "-readability-avoid-const-params-in-decls")
+      espresso_override_clang_tidy_checks(
+        HEFFTE_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+        "${SKIP_CLANG_TIDY_CHECKS_CXX}")
+    endif()
   endif()
-  install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+endif()
+
+if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+  find_package(OpenMP REQUIRED)
+
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
+    find_package(Kokkos 4.3 QUIET)
+  endif()
+  if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      kokkos
+      GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+      GIT_TAG        b4f7c84 # version 4.6.1 with patches
+      OVERRIDE_FIND_PACKAGE
+    )
+    # cmake-format: on
+    set(BUILD_SHARED_LIBS ON)
+    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+    FetchContent_MakeAvailable(kokkos)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+    install(TARGETS kokkos LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+    # install all kokkos shared objects
+    foreach(target_name IN LISTS KOKKOS_COMPONENT_LIBRARIES)
+      get_target_property(target_type ${target_name} TYPE)
+      if(${target_type} STREQUAL "SHARED_LIBRARY")
+        install(TARGETS ${target_name}
+                LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+      endif()
+    endforeach()
+  endif()
+
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
+    find_package(Cabana 0.7.0 QUIET)
+  endif()
+  if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      cabana
+      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+      GIT_TAG        6647fed3 # 0.7.0 with patches
+      PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
+    )
+    # cmake-format: on
+    set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
+    FetchContent_MakeAvailable(cabana)
+  endif()
+
   if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set(HEFFTE_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-    set(SKIP_CLANG_TIDY_CHECKS "")
-    set(SKIP_CLANG_TIDY_CHECKS_CXX "")
-    # silence heFFTe diagnostics
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-exception-escape")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-branch-clone")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-loop-convert")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-override")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-else-after-return")
+    # silence Kokkos and Cabana diagnostics
+    set(CABANA_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
+    set(CABANA_CUDA_CLANG_TIDY "${ESPRESSO_CUDA_CLANG_TIDY}")
+    unset(SKIP_CLANG_TIDY_CHECKS)
+    unset(SKIP_CLANG_TIDY_CHECKS_CXX)
+    unset(SKIP_CLANG_TIDY_CHECKS_CUDA)
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-*")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-*")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-clang-diagnostic-float-conversion")
     list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-readability-avoid-const-params-in-decls")
+         "-clang-diagnostic-implicit-int-float-conversion")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS
+         "-bugprone-return-const-ref-from-parameter")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-sizeof-expression")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-fold-init-type")
+    list(APPEND SKIP_CLANG_TIDY_CHECKS_CUDA "-bugprone-branch-clone")
     espresso_override_clang_tidy_checks(
-      HEFFTE_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+      CABANA_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
       "${SKIP_CLANG_TIDY_CHECKS_CXX}")
+    espresso_override_clang_tidy_checks(
+      CABANA_CUDA_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
+      "${SKIP_CLANG_TIDY_CHECKS_CUDA}")
   endif()
 endif()
 
@@ -624,13 +680,17 @@ if(ESPRESSO_BUILD_WITH_GSL)
 endif()
 
 if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
-  FetchContent_GetProperties(stokesian_dynamics)
+  # cmake-format: off
+  FetchContent_Declare(
+    stokesian_dynamics
+    GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
+    GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
+  )
+  # cmake-format: on
   set(STOKESIAN_DYNAMICS 1)
-  if(NOT stokesian_dynamics_POPULATED)
-    set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
-    FetchContent_MakeAvailable(stokesian_dynamics)
-    set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
-  endif()
+  set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
+  FetchContent_MakeAvailable(stokesian_dynamics)
+  set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
 endif()
 
 if(ESPRESSO_BUILD_WITH_VALGRIND)
@@ -775,6 +835,14 @@ if(ESPRESSO_BUILD_TESTS)
             "Extra arguments to give to ctest calls (separated by semicolons)")
   set(ESPRESSO_TEST_NP "4" CACHE STRING
                                  "Maximal number of MPI ranks to use per test")
+  add_library(espresso_tests_cpp_flags INTERFACE)
+  add_library(espresso::tests::cpp_flags ALIAS espresso_tests_cpp_flags)
+  if(ESPRESSO_BUILD_WITH_COVERAGE)
+    target_compile_options(
+      espresso_tests_cpp_flags
+      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-default-inline>
+                $<$<CXX_COMPILER_ID:GNU>:-fno-elide-constructors>)
+  endif()
   if(ESPRESSO_BUILD_WITH_PYTHON)
     add_subdirectory(testsuite)
   endif()
@@ -790,7 +858,15 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  FetchContent_GetProperties(walberla)
+  # cmake-format: off
+  FetchContent_Declare(
+    walberla
+    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+                   https://github.com/lssfau/walberla.git
+    GIT_TAG        0aab9c0af2335b1f6fec75deae06e514ccb233ab
+    PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/walberla.patch
+  )
+  # cmake-format: on
   string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
                        "${walberla_SOURCE_DIR}")
   set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
@@ -800,7 +876,6 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
   set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
   set(WALBERLA_BUILD_DOC off CACHE BOOL "")
   set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-  set(CMAKE_POSITION_INDEPENDENT_CODE on CACHE BOOL "")
   if(ESPRESSO_BUILD_WITH_CUDA)
     set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
     if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
@@ -816,13 +891,11 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
   endif()
   set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
-  if(NOT walberla_POPULATED)
-    set(BUILD_SHARED_LIBS ON)
-    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-    FetchContent_MakeAvailable(walberla)
-    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-  endif()
+  set(BUILD_SHARED_LIBS ON)
+  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+  FetchContent_MakeAvailable(walberla)
+  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
   set(WALBERLA_LIBS
       walberla::core walberla::domain_decomposition walberla::blockforest
       walberla::boundary walberla::field walberla::lbm walberla::timeloop
@@ -868,22 +941,26 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CALIPER)
-  FetchContent_GetProperties(caliper)
+  # cmake-format: off
+  FetchContent_Declare(
+    caliper
+    GIT_REPOSITORY https://github.com/LLNL/Caliper.git
+    GIT_TAG        v2.12.1
+  )
+  # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
   set(CALIPER_WITH_MPI on CACHE BOOL "")
   set(CALIPER_WITH_NVTX off CACHE BOOL "")
   set(CALIPER_WITH_CUPTI off CACHE BOOL "")
   set(CALIPER_INSTALL_CONFIG off CACHE BOOL "")
   set(CALIPER_INSTALL_HEADERS off CACHE BOOL "")
-  if(NOT caliper_POPULATED)
-    set(BUILD_SHARED_LIBS ON)
-    set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
-    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-    FetchContent_MakeAvailable(caliper)
-    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-    set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
-    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-  endif()
+  set(BUILD_SHARED_LIBS ON)
+  set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
+  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+  FetchContent_MakeAvailable(caliper)
+  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
+  set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
   target_compile_options(caliper-common
                          PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-restrict>)
   target_compile_options(

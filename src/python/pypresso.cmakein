@@ -16,6 +16,9 @@ export PYTHONPATH
 if test -z "$OMP_PROC_BIND"; then
   export OMP_PROC_BIND=false
 fi
+if test -z "$OMP_NUM_THREADS"; then
+  export OMP_NUM_THREADS=1
+fi
 
 espresso_parse_cmake_boolean_value() {
   local varname="${2}"

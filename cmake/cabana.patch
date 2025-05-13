@@ -1,16 +1,6 @@
-https://github.com/ECP-copa/Cabana/pull/815
 --- CMakeLists.txt
 +++ CMakeLists.txt
-@@ -216,12 +216,6 @@
-   enable_testing()
+@@ -56,3 +56,2 @@ endforeach()
+ if(Kokkos_ENABLE_CUDA)
+-  kokkos_check(OPTIONS CUDA_LAMBDA)
  endif()
- 
--# enable doxygen
--find_package(Doxygen)
--if(Doxygen_FOUND)
--  doxygen_add_docs(doxygen core/src grid/src)
--endif()
--
- ##---------------------------------------------------------------------------##
- ## Libraries and Examples
- ##---------------------------------------------------------------------------##

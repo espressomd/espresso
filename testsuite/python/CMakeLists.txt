@@ -121,6 +121,7 @@ function(python_test)
   set_tests_properties(
     ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC} SKIP_RETURN_CODE 5
                             ENVIRONMENT "OMP_PROC_BIND=false"
+                            ENVIRONMENT "OMP_NUM_THREADS=2"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
   # cmake-format: on
 

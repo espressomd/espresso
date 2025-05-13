@@ -20,7 +20,9 @@
 
 #ifdef NPT
 
+#include "BoxGeometry.hpp"
 #include "PropagationMode.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "config/config.hpp"
 #include "electrostatics/coulomb.hpp"
