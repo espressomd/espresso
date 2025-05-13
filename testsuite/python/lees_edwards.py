@@ -380,6 +380,79 @@ class LeesEdwards(ut.TestCase):
                 np.copy(system.velocity_difference(p3, p5)),
                 np.copy(p5.v - p3.v))
 
+    def test_push_and_distance_consistency(self):
+        """
+        The Lees-Edwars aware distance between a pair of particles should
+        stay constant even after one of them has crossed a
+        LE boundary with a constant position offset. 
+        """
+
+        system = self.system
+        atol = 1E-10
+        for shear_direction, shear_plane_normal in self.direction_permutations:
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=const_offset_protocol)
+
+            shear_normal_axis = axis(shear_plane_normal)
+            for dir in [1, -1]:  # up down
+                p1 = system.part.add(
+                    pos=system.box_l / 2, v=dir * shear_normal_axis)
+                p2 = system.part.add(
+                    pos=p1.pos + shear_normal_axis, v=p1.v)
+                # Integrate until the first particle crosses the boundary
+                while p1.lees_edwards_offset == 0 and p2.lees_edwards_offset == 0:
+                    np.testing.assert_allclose(
+                        np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+                    system.integrator.run(1)
+                # make sure only one particle has crossed 
+                assert p1.lees_edwards_offset != p2.lees_edwards_offset
+                # make sure the distance stays constnat until both particles have crossed
+                while p1.lees_edwards_offset != p2.lees_edwards_offset:
+                    np.testing.assert_allclose(
+                        np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+                    system.integrator.run(1)
+                # chekc the distance is still correct after both have crossed 
+                np.testing.assert_allclose(
+                    np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
+
+    def test_push_and_vel_difference_consistency(self):
+        """
+        The Lees-Edwars aware velocity difference between a pair of particles should
+        stay constant even after one of them has crossed a
+        LE boundary with a linear shear.
+        """
+
+        system = self.system
+        atol = 1E-10
+        for shear_direction, shear_plane_normal in self.direction_permutations:
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction=shear_direction,
+                shear_plane_normal=shear_plane_normal, protocol=const_offset_protocol)
+
+            shear_normal_axis = axis(shear_plane_normal)
+            for dir in [1, -1]:  # up down
+                dv = np.random.random(3) * .1
+                p1 = system.part.add(
+                    pos=system.box_l / 2, v=dir * shear_normal_axis)
+                p2 = system.part.add(
+                    pos=p1.pos + shear_normal_axis, v=p1.v + dv)
+                # Integrate until the first particle crosses the boundary
+                while p1.lees_edwards_offset == 0 and p2.lees_edwards_offset == 0:
+                    np.testing.assert_allclose(
+                        np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
+                    system.integrator.run(1)
+                # make sure only one particle has crossed 
+                assert p1.lees_edwards_offset != p2.lees_edwards_offset
+                # make sure the distance stays constnat until both particles have crossed
+                while p1.lees_edwards_offset != p2.lees_edwards_offset:
+                    np.testing.assert_allclose(
+                        np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
+                    system.integrator.run(1)
+                # chekc the distance is still correct after both have crossed 
+                np.testing.assert_allclose(
+                    np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
+
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "SOFT_SPHERE"])
     def test_interactions(self):
         """
