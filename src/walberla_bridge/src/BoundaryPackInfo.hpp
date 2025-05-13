@@ -56,6 +56,7 @@ protected:
   FlagUID const Domain_flag{"domain"};
   /** Flag for boundary cells. */
   FlagUID const Boundary_flag{"boundary"};
+  bool threadsafeReceiving() const override { return false; }
 
 public:
   using PackInfo<GhostLayerField_T>::PackInfo;
