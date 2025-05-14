@@ -113,34 +113,33 @@ class TestLBMomentumConservationRegularDoublePrecisionWalberlaCPU(
         self.system.cell_system.set_regular_decomposition()
 
 
-# TODO fix test for single precision. issue: #5071
-# @ut.skipIf(TestLBMomentumConservation.n_nodes == 1,
-#            "LB with regular decomposition already tested with 2 MPI ranks")
-# @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
-# class TestLBMomentumConservationRegularSinglePrecisionWalberlaCPU(
-#         TestLBMomentumConservation, ut.TestCase):
+@ut.skipIf(TestLBMomentumConservation.n_nodes == 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
+@utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
+class TestLBMomentumConservationRegularSinglePrecisionWalberlaCPU(
+        TestLBMomentumConservation, ut.TestCase):
 
-#     lb_class = espressomd.lb.LBFluidWalberla
-#     lb_params = {"single_precision": True}
-#     atol = 6.5e-4
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 6.5e-4
 
-#     def set_cellsystem(self):
-#         self.system.cell_system.set_regular_decomposition()
+    def set_cellsystem(self):
+        self.system.cell_system.set_regular_decomposition()
 
 
-# @utx.skipIfMissingGPU()
-# @ut.skipIf(TestLBMomentumConservation.n_nodes != 1,
-#            "LB with regular decomposition already tested with 2 MPI ranks")
-# @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES", "CUDA"])
-# class TestLBMomentumConservationRegularSinglePrecisionWalberlaGPU(
-#         TestLBMomentumConservation, ut.TestCase):
+@utx.skipIfMissingGPU()
+@ut.skipIf(TestLBMomentumConservation.n_nodes != 1,
+           "LB with regular decomposition already tested with 2 MPI ranks")
+@utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES", "CUDA"])
+class TestLBMomentumConservationRegularSinglePrecisionWalberlaGPU(
+        TestLBMomentumConservation, ut.TestCase):
 
-#     lb_class = espressomd.lb.LBFluidWalberlaGPU
-#     lb_params = {"single_precision": True}
-#     atol = 6.5e-4
+    lb_class = espressomd.lb.LBFluidWalberlaGPU
+    lb_params = {"single_precision": True}
+    atol = 6.5e-4
 
-#     def set_cellsystem(self):
-#         self.system.cell_system.set_regular_decomposition()
+    def set_cellsystem(self):
+        self.system.cell_system.set_regular_decomposition()
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
@@ -156,17 +155,17 @@ class TestLBCPUMomentumConservationHybridNSquareWalberla(
             n_square_types={0}, cutoff_regular=1)
 
 
-# @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
-# class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
-#         TestLBMomentumConservation, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
+class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
+        TestLBMomentumConservation, ut.TestCase):
 
-#     lb_class = espressomd.lb.LBFluidWalberla
-#     lb_params = {"single_precision": True}
-#     atol = 6.5e-4
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 6.5e-4
 
-#     def set_cellsystem(self):
-#         self.system.cell_system.set_hybrid_decomposition(
-#             n_square_types={0}, cutoff_regular=1)
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={0}, cutoff_regular=1)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
@@ -182,17 +181,17 @@ class TestLBCPUMomentumConservationHybridRegularWalberla(
             n_square_types={1}, cutoff_regular=1)
 
 
-# @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
-# class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
-#         TestLBMomentumConservation, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
+class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
+        TestLBMomentumConservation, ut.TestCase):
 
-#     lb_class = espressomd.lb.LBFluidWalberla
-#     lb_params = {"single_precision": True}
-#     atol = 6.5e-4
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 6.5e-4
 
-#     def set_cellsystem(self):
-#         self.system.cell_system.set_hybrid_decomposition(
-#             n_square_types={1}, cutoff_regular=1)
+    def set_cellsystem(self):
+        self.system.cell_system.set_hybrid_decomposition(
+            n_square_types={1}, cutoff_regular=1)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
@@ -207,16 +206,16 @@ class TestLBMomentumConservationNSquareWalberla(
         self.system.cell_system.set_n_square()
 
 
-# @utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
-# class TestLBMomentumConservationNSquareWalberlaSinglePrecision(
-#         TestLBMomentumConservation, ut.TestCase):
+@utx.skipIfMissingFeatures(["WALBERLA", "EXTERNAL_FORCES"])
+class TestLBMomentumConservationNSquareWalberlaSinglePrecision(
+        TestLBMomentumConservation, ut.TestCase):
 
-#     lb_class = espressomd.lb.LBFluidWalberla
-#     lb_params = {"single_precision": True}
-#     atol = 6.5e-4
+    lb_class = espressomd.lb.LBFluidWalberla
+    lb_params = {"single_precision": True}
+    atol = 6.5e-4
 
-#     def set_cellsystem(self):
-#         self.system.cell_system.set_n_square()
+    def set_cellsystem(self):
+        self.system.cell_system.set_n_square()
 
 
 @ut.skipIf(TestLBMomentumConservation.n_nodes != 1,
