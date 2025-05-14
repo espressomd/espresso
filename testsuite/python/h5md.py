@@ -188,12 +188,14 @@ class H5mdTests(ut.TestCase):
         for key in self.h5_obj.get_params():
             with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
                 setattr(self.h5_obj, key, None)
-        # cannot create a new file when chunk_size is not integer
-        with self.assertRaisesRegex(ValueError, "'chunk_size' should be integer"):
-            h5md.H5md(file_path=str(main_file), chunk_size=1.0)
-        # cannot create a new file when chunk_size is negative
-        with self.assertRaisesRegex(ValueError, "chunk_size must be larger than 0."):
-            h5md.H5md(file_path=str(main_file), chunk_size=-1)
+        # check invalid parameters
+        temp_file = self.temp_path / 'invalid_params.h5'
+        with self.assertRaisesRegex(RuntimeError, "Provided argument of type 'double' for parameter 'chunk_size' is not convertible to 'int'"):
+            h5md.H5md(file_path=str(temp_file), chunk_size=1.0)
+        with self.assertRaisesRegex(ValueError, "Parameter 'chunk_size' must be > 0"):
+            h5md.H5md(file_path=str(temp_file), chunk_size=-1)
+        with self.assertRaisesRegex(TypeError, "Parameter 'file_path' should be a string"):
+            h5md.H5md(file_path=None)
 
     def test_empty(self):
         temp_file = self.temp_path / 'empty.h5'

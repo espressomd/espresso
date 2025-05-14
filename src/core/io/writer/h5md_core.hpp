@@ -185,7 +185,6 @@ public:
 
   /**
    * @brief Retrieve the set chunk size.
-   * @return The value as std::size_t.
    */
   auto const &chunk_size() const { return m_chunk_size; }
 
@@ -262,7 +261,7 @@ private:
   std::string m_force_unit;
   std::string m_velocity_unit;
   std::string m_charge_unit;
-  int m_chunk_size;
+  std::size_t m_chunk_size;
   boost::mpi::communicator m_comm;
   unsigned int m_fields;
   std::string m_backup_filename;

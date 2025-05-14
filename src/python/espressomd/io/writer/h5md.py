@@ -21,8 +21,6 @@ import sys
 import pathlib
 
 from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
-from ...code_features import assert_features
-from ... import utils
 
 
 class UnitSystem:
@@ -78,7 +76,7 @@ class H5md(ScriptInterfaceHelper):
         If the file in ``file_path`` already exists but has different
         specifications, an exception is raised.
     chunk_size : :obj:`int`
-        The chunk size for HighFive::DataSet. It must be larger than 0.
+        The chunk size for hdf5 write operations. Must be greater than 0.
 
     Methods
     -------
@@ -113,67 +111,45 @@ class H5md(ScriptInterfaceHelper):
     charge_unit: :obj:`str`
     chunk_size: :obj:`int`
 
-    Raises
-    ------
-    ValueError
-        If chunk_size is smaller than 1.
-
     """
     _so_name = "ScriptInterface::Writer::H5md"
+    _so_features = ("H5MD",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = ("valid_fields", "write", "flush", "close")
 
     def __init__(self, **kwargs):
-        assert_features("H5MD")
-
         if "sip" in kwargs:
             super().__init__(**kwargs)
             return
 
         params = self.default_params()
         params.update(kwargs)
-        unit_system = params["unit_system"]
-        fields = params["fields"]
-        fields = [fields] if isinstance(fields, str) else list(fields)
-        params["fields"] = fields
-        chunk_size = params["chunk_size"]
-        self.validate_params(params)
+        unit_system = params.pop("unit_system")
+        if isinstance(params["fields"], str):
+            params["fields"] = [params["fields"]]
         script_path = ""
         if sys.argv and sys.argv[0]:
             script_path = str(pathlib.Path(sys.argv[0]).resolve())
-        file_path = str(pathlib.Path(params["file_path"]).resolve())
+        if not isinstance(params["file_path"], str):
+            raise TypeError("Parameter 'file_path' should be a string")
+        params["file_path"] = str(pathlib.Path(params["file_path"]).resolve())
         super().__init__(
-            file_path=file_path,
             script_path=script_path,
-            fields=fields,
             mass_unit=unit_system.mass,
             length_unit=unit_system.length,
             time_unit=unit_system.time,
             force_unit=unit_system.force,
             velocity_unit=unit_system.velocity,
             charge_unit=unit_system.charge,
-            chunk_size=chunk_size
+            **params
         )
 
     def default_params(self):
-        return {"unit_system": UnitSystem(), "fields": "all", "chunk_size": 1000}
+        return {"unit_system": UnitSystem(), "fields": "all",
+                "chunk_size": 1000}
 
     def required_keys(self):
         return {"file_path"}
 
     def valid_keys(self):
         return {"file_path", "unit_system", "fields", "chunk_size"}
-
-    def validate_params(self, params):
-        """Check validity of given parameters.
-        """
-        utils.check_type_or_throw_except(
-            params["file_path"], 1, str, "'file_path' should be a string")
-        for item in params["fields"]:
-            utils.check_type_or_throw_except(
-                item, 1, str, "'fields' should be a string or a list of strings")
-        utils.check_type_or_throw_except(
-            params["chunk_size"], 1, int, "'chunk_size' should be integer")
-        if params["chunk_size"] <= 0:
-            raise ValueError(
-                'Usage: chunk_size must be larger than 0.')

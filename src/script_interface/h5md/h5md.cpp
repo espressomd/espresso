@@ -42,6 +42,7 @@ namespace Writer {
 H5md::H5md() {
   add_parameters(
       {{"file_path", m_h5md, &::Writer::H5md::File::file_path},
+       {"chunk_size", m_h5md, &::Writer::H5md::File::chunk_size},
        {"script_path", m_h5md, &::Writer::H5md::File::script_path},
        {"fields", AutoParameter::read_only,
         [this]() { return make_vector_of_variants(m_output_fields); }},
@@ -50,8 +51,7 @@ H5md::H5md() {
        {"time_unit", m_h5md, &::Writer::H5md::File::time_unit},
        {"force_unit", m_h5md, &::Writer::H5md::File::force_unit},
        {"velocity_unit", m_h5md, &::Writer::H5md::File::velocity_unit},
-       {"charge_unit", m_h5md, &::Writer::H5md::File::charge_unit},
-       {"chunk_size", m_h5md, &::Writer::H5md::File::chunk_size}});
+       {"charge_unit", m_h5md, &::Writer::H5md::File::charge_unit}});
 };
 
 void H5md::do_construct(VariantMap const &params) {
