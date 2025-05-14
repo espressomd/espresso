@@ -63,11 +63,10 @@ espresso_add_test(SRC ek_kernels_unit_tests.cpp)
 espresso_add_test(SRC LatticeWalberla_unit_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
 espresso_add_test(SRC LBWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi NUM_PROC
-                  2 NUM_THREADS 1)
+                  2)
 espresso_add_test(SRC LBWalberlaImpl_bspline_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
-espresso_add_test(SRC LBWalberlaImpl_flow_tests.cpp DEPENDS Boost::mpi
-                  NUM_THREADS 1)
+espresso_add_test(SRC LBWalberlaImpl_flow_tests.cpp DEPENDS Boost::mpi)
 espresso_add_test(SRC LBWalberlaImpl_lees_edwards_tests.cpp DEPENDS Boost::mpi)
 espresso_add_test(SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)

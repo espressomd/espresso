@@ -1088,9 +1088,9 @@ namespace MomentumDensity {
 inline auto reduce(GhostLayerField<double, uint_t{19u}> const *pdf_field,
                    GhostLayerField<double, uint_t{3u}> const *force_field) {
   Vector3<double> momentumDensity(double{0});
-  for (auto z = 0; z < pdf_field->zSize(); ++z) {
-    for (auto y = 0; y < pdf_field->ySize(); ++y) {
-      for (auto x = 0; x < pdf_field->xSize(); ++x) {
+  for (uint_t z = 0; z < pdf_field->zSize(); ++z) {
+    for (uint_t y = 0; y < pdf_field->ySize(); ++y) {
+      for (uint_t x = 0; x < pdf_field->xSize(); ++x) {
         const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
         const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
         const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
@@ -1249,9 +1249,9 @@ inline auto get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
 
 inline auto reduce(GhostLayerField<double, uint_t{19u}> const *pdf_field) {
   Matrix3<double> pressureTensor(double{0});
-  for (auto z = 0; z < pdf_field->zSize(); ++z) {
-    for (auto y = 0; y < pdf_field->ySize(); ++y) {
-      for (auto x = 0; x < pdf_field->xSize(); ++x) {
+  for (uint_t z = 0; z < pdf_field->zSize(); ++z) {
+    for (uint_t y = 0; y < pdf_field->ySize(); ++y) {
+      for (uint_t x = 0; x < pdf_field->xSize(); ++x) {
         const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
         const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
         const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
