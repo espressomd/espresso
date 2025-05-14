@@ -280,7 +280,7 @@ class VirtualSites(ut.TestCase):
             f_max=0, gamma=0.1, max_displacement=0.1)
         n_loops = 0
         n_max = 10
-        while system.analysis.energy()["total"] > 10 * n and n_loops < n_max:
+        while system.analysis.energy()["total"] > 1 * n and n_loops < n_max:
             system.integrator.run(20)
             n_loops += 1
         assert n_loops < n_max, "Steepest descent didn't converge"
