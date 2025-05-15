@@ -20,7 +20,7 @@
 
 // kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1,
 // lbmpy_walberla/pystencils_walberla from waLBerla commit
-// f36fa0a68bae59f0b516f6587ea8fa7c24a41141
+// 0aab9c0af2335b1f6fec75deae06e514ccb233ab
 
 /*
  * Lattice field accessors.
@@ -1088,48 +1088,52 @@ namespace MomentumDensity {
 inline auto reduce(GhostLayerField<double, uint_t{19u}> const *pdf_field,
                    GhostLayerField<double, uint_t{3u}> const *force_field) {
   Vector3<double> momentumDensity(double{0});
-  WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-    const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-    const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-    const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-    const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-    const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-    const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-    const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-    const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-    const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-    const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-    const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-    const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-    const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-    const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-    const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-    const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-    const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-    const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-    const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-    const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-    const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
-    const double momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
-    const double vel1Term = f_1 + f_11 + f_15 + f_7;
-    const double momdensity_1 =
-        -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
-    const double vel2Term = f_12 + f_13 + f_5;
-    const double momdensity_2 =
-        f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
-    const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 + vel0Term +
-                       vel1Term + vel2Term;
-    const double md_0 =
-        force_field->get(x, y, z, 0) * 0.50000000000000000 + momdensity_0;
-    const double md_1 =
-        force_field->get(x, y, z, 1) * 0.50000000000000000 + momdensity_1;
-    const double md_2 =
-        force_field->get(x, y, z, 2) * 0.50000000000000000 + momdensity_2;
+  for (uint_t z = 0; z < pdf_field->zSize(); ++z) {
+    for (uint_t y = 0; y < pdf_field->ySize(); ++y) {
+      for (uint_t x = 0; x < pdf_field->xSize(); ++x) {
+        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
+        const double vel0Term = f_10 + f_14 + f_18 + f_4 + f_8;
+        const double momdensity_0 = -f_13 - f_17 - f_3 - f_7 - f_9 + vel0Term;
+        const double vel1Term = f_1 + f_11 + f_15 + f_7;
+        const double momdensity_1 =
+            -f_10 - f_12 - f_16 - f_2 + f_8 - f_9 + vel1Term;
+        const double vel2Term = f_12 + f_13 + f_5;
+        const double momdensity_2 =
+            f_11 + f_14 - f_15 - f_16 - f_17 - f_18 - f_6 + vel2Term;
+        const double rho = f_0 + f_16 + f_17 + f_2 + f_3 + f_6 + f_9 +
+                           vel0Term + vel1Term + vel2Term;
+        const double md_0 =
+            force_field->get(x, y, z, 0) * 0.50000000000000000 + momdensity_0;
+        const double md_1 =
+            force_field->get(x, y, z, 1) * 0.50000000000000000 + momdensity_1;
+        const double md_2 =
+            force_field->get(x, y, z, 2) * 0.50000000000000000 + momdensity_2;
 
-    momentumDensity[0u] += md_0;
-    momentumDensity[1u] += md_1;
-    momentumDensity[2u] += md_2;
-  });
+        momentumDensity[0u] += md_0;
+        momentumDensity[1u] += md_1;
+        momentumDensity[2u] += md_2;
+      }
+    }
+  }
   return momentumDensity;
 }
 } // namespace MomentumDensity
@@ -1245,52 +1249,56 @@ inline auto get(GhostLayerField<double, uint_t{19u}> const *pdf_field,
 
 inline auto reduce(GhostLayerField<double, uint_t{19u}> const *pdf_field) {
   Matrix3<double> pressureTensor(double{0});
-  WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-    const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
-    const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
-    const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
-    const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
-    const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
-    const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
-    const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
-    const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
-    const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
-    const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
-    const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
-    const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
-    const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
-    const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
-    const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
-    const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
-    const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
-    const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
-    const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
-    const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
-    const double p_0 =
-        f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
-    const double p_1 = -f_10 - f_7 + f_8 + f_9;
-    const double p_2 = -f_13 + f_14 + f_17 - f_18;
-    const double p_3 = -f_10 - f_7 + f_8 + f_9;
-    const double p_4 =
-        f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
-    const double p_5 = f_11 - f_12 - f_15 + f_16;
-    const double p_6 = -f_13 + f_14 + f_17 - f_18;
-    const double p_7 = f_11 - f_12 - f_15 + f_16;
-    const double p_8 =
-        f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
+  for (uint_t z = 0; z < pdf_field->zSize(); ++z) {
+    for (uint_t y = 0; y < pdf_field->ySize(); ++y) {
+      for (uint_t x = 0; x < pdf_field->xSize(); ++x) {
+        const double &xyz0 = pdf_field->get(x, y, z, uint_t{0u});
+        const double f_0 = pdf_field->getF(&xyz0, uint_t{0u});
+        const double f_1 = pdf_field->getF(&xyz0, uint_t{1u});
+        const double f_2 = pdf_field->getF(&xyz0, uint_t{2u});
+        const double f_3 = pdf_field->getF(&xyz0, uint_t{3u});
+        const double f_4 = pdf_field->getF(&xyz0, uint_t{4u});
+        const double f_5 = pdf_field->getF(&xyz0, uint_t{5u});
+        const double f_6 = pdf_field->getF(&xyz0, uint_t{6u});
+        const double f_7 = pdf_field->getF(&xyz0, uint_t{7u});
+        const double f_8 = pdf_field->getF(&xyz0, uint_t{8u});
+        const double f_9 = pdf_field->getF(&xyz0, uint_t{9u});
+        const double f_10 = pdf_field->getF(&xyz0, uint_t{10u});
+        const double f_11 = pdf_field->getF(&xyz0, uint_t{11u});
+        const double f_12 = pdf_field->getF(&xyz0, uint_t{12u});
+        const double f_13 = pdf_field->getF(&xyz0, uint_t{13u});
+        const double f_14 = pdf_field->getF(&xyz0, uint_t{14u});
+        const double f_15 = pdf_field->getF(&xyz0, uint_t{15u});
+        const double f_16 = pdf_field->getF(&xyz0, uint_t{16u});
+        const double f_17 = pdf_field->getF(&xyz0, uint_t{17u});
+        const double f_18 = pdf_field->getF(&xyz0, uint_t{18u});
+        const double p_0 =
+            f_10 + f_13 + f_14 + f_17 + f_18 + f_3 + f_4 + f_7 + f_8 + f_9;
+        const double p_1 = -f_10 - f_7 + f_8 + f_9;
+        const double p_2 = -f_13 + f_14 + f_17 - f_18;
+        const double p_3 = -f_10 - f_7 + f_8 + f_9;
+        const double p_4 =
+            f_1 + f_10 + f_11 + f_12 + f_15 + f_16 + f_2 + f_7 + f_8 + f_9;
+        const double p_5 = f_11 - f_12 - f_15 + f_16;
+        const double p_6 = -f_13 + f_14 + f_17 - f_18;
+        const double p_7 = f_11 - f_12 - f_15 + f_16;
+        const double p_8 =
+            f_11 + f_12 + f_13 + f_14 + f_15 + f_16 + f_17 + f_18 + f_5 + f_6;
 
-    pressureTensor[0u] += p_0;
-    pressureTensor[1u] += p_1;
-    pressureTensor[2u] += p_2;
+        pressureTensor[0u] += p_0;
+        pressureTensor[1u] += p_1;
+        pressureTensor[2u] += p_2;
 
-    pressureTensor[3u] += p_3;
-    pressureTensor[4u] += p_4;
-    pressureTensor[5u] += p_5;
+        pressureTensor[3u] += p_3;
+        pressureTensor[4u] += p_4;
+        pressureTensor[5u] += p_5;
 
-    pressureTensor[6u] += p_6;
-    pressureTensor[7u] += p_7;
-    pressureTensor[8u] += p_8;
-  });
+        pressureTensor[6u] += p_6;
+        pressureTensor[7u] += p_7;
+        pressureTensor[8u] += p_8;
+      }
+    }
+  }
   return pressureTensor;
 }
 } // namespace PressureTensor
