@@ -225,7 +225,8 @@ void File::create_datasets() {
     auto dims = create_dims(ds.rank, ds.data_dim);
     auto maxdims = create_maxdims(ds.rank, ds.data_dim, H5S_UNLIMITED);
     auto dataspace = HighFive::DataSpace(dims, maxdims);
-    auto const chunk = create_chunk_dims(ds.rank, ds.data_dim, m_chunk_size);
+    auto const chunk_size = static_cast<hsize_t>(m_chunk_size);
+    auto const chunk = create_chunk_dims(ds.rank, ds.data_dim, chunk_size);
     HighFive::DataSetCreateProps props;
     props.add(HighFive::Chunking(chunk));
     auto path = ds.path();

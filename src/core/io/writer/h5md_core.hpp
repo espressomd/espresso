@@ -261,7 +261,7 @@ private:
   std::string m_force_unit;
   std::string m_velocity_unit;
   std::string m_charge_unit;
-  std::size_t m_chunk_size;
+  int m_chunk_size;
   boost::mpi::communicator m_comm;
   unsigned int m_fields;
   std::string m_backup_filename;
