@@ -598,76 +598,19 @@ if(ESPRESSO_BUILD_WITH_HDF5)
       set(HDF5_FOUND FALSE)
       message(FATAL_ERROR "HDF5 parallel version not found.")
     endif()
-    if(${HDF5_VERSION} VERSION_GREATER_EQUAL 1.13.0)
-      message(
-        WARNING
-          "Library hdf5 >= 1.13.0 is incompatible with h5xx 0.9.1 on some platforms (https://github.com/fhoefling/h5xx/issues/11)"
-      )
-    endif()
   endif()
   add_library(hdf5 INTERFACE)
   target_link_libraries(hdf5 INTERFACE $<BUILD_INTERFACE:${HDF5_LIBRARIES}>)
   target_include_directories(hdf5
                              INTERFACE $<BUILD_INTERFACE:${HDF5_INCLUDE_DIRS}>)
-  # We need to define our own h5xx target, since the project version we depend
-  # on is not fully compatible with modern CMake.
-  add_library(h5xx INTERFACE)
   # cmake-format: off
-  ExternalProject_Add(
-    h5xx_library
-    GIT_REPOSITORY    https://github.com/h5md/h5xx.git
-    GIT_TAG           0.9.1
-    PREFIX            lib_h5xx
-    # header-only library: disable configuration/build/install steps
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND     ""
-    INSTALL_COMMAND   ""
+  FetchContent_Declare(
+    HighFive
+    GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+    GIT_TAG        0103467 # v3.0.0-beta with patches
   )
   # cmake-format: on
-  ExternalProject_Get_Property(h5xx_library SOURCE_DIR)
-  target_include_directories(h5xx INTERFACE $<BUILD_INTERFACE:${SOURCE_DIR}>)
-  target_compile_features(h5xx INTERFACE cxx_std_11)
-  target_compile_definitions(h5xx INTERFACE H5XX_USE_MPI)
-  add_library(espresso_h5xx_cpp_flags INTERFACE)
-  add_library(espresso::h5xx_cpp_flags ALIAS espresso_h5xx_cpp_flags)
-  target_compile_options(
-    espresso_h5xx_cpp_flags
-    INTERFACE
-      $<$<CXX_COMPILER_ID:GNU>:-Wno-terminate>
-      $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-exceptions>
-      $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-unused-but-set-variable>
-      $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-delete-non-abstract-non-virtual-dtor>
-  )
-  if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
-    set(H5XX_CXX_CLANG_TIDY "${ESPRESSO_CXX_CLANG_TIDY}")
-    set(SKIP_CLANG_TIDY_CHECKS "")
-    set(SKIP_CLANG_TIDY_CHECKS_CXX "")
-    # silence hdf5 and h5xx diagnostics
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-clang-analyzer-deadcode.DeadStores")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-clang-analyzer-optin.performance.Padding")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-clang-diagnostic-unused-but-set-variable")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-clang-diagnostic-exceptions")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS
-         "-bugprone-multi-level-implicit-pointer-conversion")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-assignment-in-if-condition")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-exception-escape")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-bugprone-narrowing-conversions")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-nullptr")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-noexcept")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-override")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-equals-default")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-loop-convert")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-pass-by-value")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-redundant-void-arg")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-else-after-return")
-    list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-container-size-empty")
-    espresso_override_clang_tidy_checks(
-      H5XX_CXX_CLANG_TIDY "${SKIP_CLANG_TIDY_CHECKS}"
-      "${SKIP_CLANG_TIDY_CHECKS_CXX}")
-  endif()
+  FetchContent_MakeAvailable(HighFive)
 endif()
 
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
@@ -889,6 +832,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_WITH_FFTW on CACHE BOOL "")
   else()
     set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
+  endif()
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
   endif()
   set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
   set(BUILD_SHARED_LIBS ON)

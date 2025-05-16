@@ -577,18 +577,22 @@ namespace MomentumDensity
             GhostLayerField< {{dtype}}, uint_t{ {{D}}u } > const * force_field )
     {
         Vector{{D}}< {{dtype}} > momentumDensity({{dtype}} {0});
-        WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-            const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
-            {% for i in range(Q) -%}
-                const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
-            {% endfor -%}
+        for(uint_t z = 0; z < pdf_field->zSize(); ++z) {
+            for(uint_t y = 0; y < pdf_field->ySize(); ++y) {
+                for(uint_t x = 0; x < pdf_field->xSize(); ++x) {
+                    const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(Q) -%}
+                        const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
+                    {% endfor -%}
 
-            {{momentum_density_getter | substitute_force_getter_cpp | indent(8) }}
+                    {{momentum_density_getter | substitute_force_getter_cpp | indent(8) }}
 
-            {% for i in range(D) -%}
-                momentumDensity[{{i}}u] += md_{{i}};
-            {% endfor %}
-        });
+                    {% for i in range(D) -%}
+                        momentumDensity[{{i}}u] += md_{{i}};
+                    {% endfor %}
+                }
+            }
+        }
         return momentumDensity;
     }
 } // namespace MomentumDensity
@@ -646,20 +650,24 @@ namespace PressureTensor
     reduce( GhostLayerField< {{dtype}}, uint_t{ {{Q}}u } > const * pdf_field)
     {
         Matrix{{D}}< {{dtype}} > pressureTensor({{dtype}} {0});
-        WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-            const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
-            {% for i in range(Q) -%}
-                const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
-            {% endfor -%}
+        for(uint_t z = 0; z < pdf_field->zSize(); ++z) {
+            for(uint_t y = 0; y < pdf_field->ySize(); ++y) {
+                for(uint_t x = 0; x < pdf_field->xSize(); ++x) {
+                    const {{dtype}} & xyz0 = pdf_field->get(x, y, z, uint_t{ 0u });
+                    {% for i in range(Q) -%}
+                        const {{dtype}} f_{{i}} = pdf_field->getF( &xyz0, uint_t{ {{i}}u });
+                    {% endfor -%}
 
-            {{second_momentum_getter | indent(8) }}
+                    {{second_momentum_getter | indent(8) }}
 
-            {% for i in range(D) -%}
-                {% for j in range(D) -%}
-                    pressureTensor[{{i*D+j}}u] += p_{{i*D+j}};
-                {% endfor %}
-            {% endfor %}
-        });
+                    {% for i in range(D) -%}
+                        {% for j in range(D) -%}
+                            pressureTensor[{{i*D+j}}u] += p_{{i*D+j}};
+                        {% endfor %}
+                    {% endfor %}
+                }
+            }
+        }
         return pressureTensor;
     }
 } // namespace PressureTensor

@@ -55,9 +55,10 @@
  *     seed-per-node)
  */
 Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
-  return Random::noise_uniform<RNGSalt::SALT_DPD>(
-      dpd.rng_counter(), dpd.rng_seed(), (pid1 < pid2) ? pid2 : pid1,
-      (pid1 < pid2) ? pid1 : pid2);
+  const double pref = (pid1 < pid2) ? 1.0 : -1.0;
+  return pref * Random::noise_uniform<RNGSalt::SALT_DPD>(
+                    dpd.rng_counter(), dpd.rng_seed(),
+                    (pid1 < pid2) ? pid2 : pid1, (pid1 < pid2) ? pid1 : pid2);
 }
 
 void dpd_init(double kT, double time_step) {

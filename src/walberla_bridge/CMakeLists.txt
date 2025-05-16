@@ -109,8 +109,11 @@ add_library(espresso_walberla_cpp_flags INTERFACE)
 add_library(espresso::walberla::cpp_flags ALIAS espresso_walberla_cpp_flags)
 target_link_libraries(
   espresso_walberla_cpp_flags
-  INTERFACE espresso::cpp_flags
-            $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>)
+  INTERFACE
+    espresso::cpp_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
+)
 add_library(espresso_walberla_cuda_flags INTERFACE)
 add_library(espresso::walberla::cuda_flags ALIAS espresso_walberla_cuda_flags)
 target_link_libraries(
