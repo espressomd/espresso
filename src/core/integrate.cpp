@@ -159,8 +159,6 @@ void Propagation::update_default_propagation(int thermo_switch) {
   }
 #ifdef NPT
   case INTEG_METHOD_NPT_ISO_AND:
-    default_propagation = PropagationMode::TRANS_LANGEVIN_NPT;
-    break;
   case INTEG_METHOD_NPT_ISO_MTK:
     default_propagation = PropagationMode::TRANS_LANGEVIN_NPT;
     break;
@@ -585,7 +583,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES_RELATIVE
     if (has_vs_rel()) {
 #ifdef NPT
-      if ((propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
+      if ((propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) or
           (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
         cell_structure->update_ghosts_and_resort_particle(
             Cells::DATA_PART_PROPERTIES);
@@ -722,7 +720,7 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   cell_structure->update_verlet_stats(n_steps, n_verlet_updates);
 
 #ifdef NPT
-  if ((propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
+  if ((propagation.integ_switch == INTEG_METHOD_NPT_ISO_AND) or
       (propagation.integ_switch == INTEG_METHOD_NPT_ISO_MTK)) {
     synchronize_npt_state();
   }

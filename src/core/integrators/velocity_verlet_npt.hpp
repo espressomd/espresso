@@ -85,18 +85,18 @@ void velocity_verlet_npt_MTK_step_2(ParticleRangeNPT const &particles,
  * @brief Propagate the particle's velocity.
  * @f$ v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) @f$
  */
-static void velocity_verlet_npt_propagate_vel_final(
+inline void velocity_verlet_npt_propagate_vel_final(
     NptIsoParameters const &nptiso, InstantaneousPressure &npt_inst_pressure,
     ParticleRangeNPT const &particles, double time_step) {
 
   npt_inst_pressure.p_vel = {};
   for (auto &p : particles) {
-    for (unsigned int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           npt_inst_pressure.p_vel[j] += Utils::sqr(p.v()[j]) * p.mass();
         }
-        p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
+        p.v()[j] += p.force()[j] * time_step / (2. * p.mass());
       }
     }
   }
@@ -106,15 +106,15 @@ static void velocity_verlet_npt_propagate_vel_final(
  * @brief Propagate the particle's velocity.
  * @f$ v(t+0.5*dt) = v(t) + 0.5*dt * a(t) @f$
  */
-static void velocity_verlet_npt_propagate_vel(
+inline void velocity_verlet_npt_propagate_vel(
     NptIsoParameters const &nptiso, InstantaneousPressure &npt_inst_pressure,
     ParticleRangeNPT const &particles, double time_step) {
   npt_inst_pressure.p_vel = {};
 
   for (auto &p : particles) {
-    for (unsigned int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
-        p.v()[j] += p.force()[j] * time_step / 2.0 / p.mass();
+        p.v()[j] += p.force()[j] * time_step / (2. * p.mass());
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           npt_inst_pressure.p_vel[j] += Utils::sqr(p.v()[j]) * p.mass();
         }

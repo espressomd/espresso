@@ -49,7 +49,7 @@ velocity_verlet_npt_finalize_p_inst(NptIsoParameters &nptiso,
                                     double time_step) {
   /* finalize derivation of p_inst */
   npt_inst_pressure.p_inst = {0., 0.};
-  for (unsigned int i = 0; i < 3; i++) {
+  for (auto i = 0u; i < 3u; ++i) {
     if (nptiso.geometry & NptIsoParameters::nptgeom_dir[i]) {
       npt_inst_pressure.p_inst[0] +=
           npt_inst_pressure.p_vir[i] + npt_inst_pressure.p_vel[i];
@@ -58,11 +58,11 @@ velocity_verlet_npt_finalize_p_inst(NptIsoParameters &nptiso,
   }
 
   Utils::Vector2d p_sum = {0., 0.};
-  boost::mpi::reduce(comm_cart, npt_inst_pressure.p_inst, p_sum,
+  boost::mpi::reduce(::comm_cart, npt_inst_pressure.p_inst, p_sum,
                      std::plus<Utils::Vector2d>(), 0);
 
   /* propagate p_epsilon */
-  if (this_node == 0) {
+  if (::this_node == 0) {
     npt_inst_pressure.p_inst = p_sum / (nptiso.dimension * nptiso.volume);
     nptiso.p_epsilon +=
         (npt_inst_pressure.p_inst[0] - nptiso.p_ext) * 0.5 * time_step;
@@ -99,7 +99,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
    * @f$ V(t+0.5*dt) = V(t) + 0.5*p_{\epsilon}*dt @f$
    * and prepare pos and vel-rescaling
    */
-  if (this_node == 0) {
+  if (::this_node == 0) {
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
     // L(t)**2 / L(t+0.5*dt)**2, where the numerator follows time in position,
     // and the denominator follows time in velocity
@@ -121,14 +121,14 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
     // L(t) / L(t+0.5*dt)
     scal[0] = 1. / scal[1];
   }
-  boost::mpi::broadcast(comm_cart, scal, 0);
+  boost::mpi::broadcast(::comm_cart, scal, 0);
 
   /* 1st propagate positions with dt/2 and rescaling pos;
    * @f$ pos[t+0.5*dt] = (L(t+0.5*dt) / L(t)) *
    *    (pos[t] + (L(t)**2 / L(t+0.5*dt)**2) * vel[t+0.5*dt] * 0.5 * dt) @f$
    */
   for (auto &p : particles) {
-    for (unsigned int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           p.pos()[j] =
@@ -149,7 +149,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
    * @f$ V(t+dt) = V(t+0.5*dt) + 0.5*p_{\epsilon}*dt @f$,
    * and prepare pos- and vel-rescaling
    */
-  if (this_node == 0) {
+  if (::this_node == 0) {
     nptiso.p_epsilon =
         propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon, nptiso.piston);
     nptiso.volume += nptiso.inv_piston * nptiso.p_epsilon * 0.5 * time_step;
@@ -159,7 +159,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
     scal[1] = L_dt / L_halfdt;
     scal[0] = 1. / scal[1];
   }
-  boost::mpi::broadcast(comm_cart, scal, 0);
+  boost::mpi::broadcast(::comm_cart, scal, 0);
 
   /* stochastic reserviors for velocities;
    *  @f$ p(t+0.5*dt) = p(t+0.5*dt) \exp(- \gamma_0 dt / m)
@@ -171,7 +171,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
   for (auto &p : particles) {
     auto const v_therm =
         propagate_therm0_nptiso(npt_iso, p.v(), p.mass(), p.id());
-    for (unsigned int j = 0; j < 3; j++) {
+    for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
         if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           p.v()[j] = v_therm[j];
@@ -192,10 +192,9 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
    * necessary adjustments to the cell geometry */
   Utils::Vector3d new_box;
 
-  if (this_node == 0) {
+  if (::this_node == 0) {
     new_box = box_geo.length();
-
-    for (unsigned int i = 0; i < 3; i++) {
+    for (auto i = 0u; i < 3u; ++i) {
       if (nptiso.cubic_box ||
           nptiso.geometry & NptIsoParameters::nptgeom_dir[i]) {
         new_box[i] = L_dt;
@@ -203,7 +202,7 @@ static void velocity_verlet_npt_propagate_AVOVA_And(
     }
   }
 
-  boost::mpi::broadcast(comm_cart, new_box, 0);
+  boost::mpi::broadcast(::comm_cart, new_box, 0);
 
   box_geo.set_length(new_box);
   // fast box length update

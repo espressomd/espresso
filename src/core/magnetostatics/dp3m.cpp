@@ -257,7 +257,7 @@ double DipolarP3MImpl<FloatType, Architecture>::long_range_kernel(
 #ifdef NPT
   auto const npt_flag =
       force_flag and
-      ((system.propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) ||
+      ((system.propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND) or
        (system.propagation->integ_switch == INTEG_METHOD_NPT_ISO_MTK));
 #else
   auto constexpr npt_flag = false;

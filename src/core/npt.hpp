@@ -31,6 +31,7 @@
 #include <utils/Vector.hpp>
 
 #include <array>
+#include <cstddef>
 #include <vector>
 
 namespace System {
@@ -52,8 +53,8 @@ struct NptIsoParameters {
   double volume = 0.;
   /** list of particle mass */
   std::vector<double> mass_list;
-  /** number of particle */
-  int particle_number = 0;
+  /** number of particles */
+  std::size_t particle_number = 0ul;
   /** desired pressure to which the algorithm strives to */
   double p_ext = 0.;
   /** conjugate momentum of volume */

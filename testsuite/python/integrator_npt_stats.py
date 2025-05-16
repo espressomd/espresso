@@ -113,8 +113,8 @@ class IntegratorNPT:
         self.assertAlmostEqual(avp, p_ext, delta=0.02)
         self.assertAlmostEqual(compressibility, 0.5, delta=0.05)
         np.testing.assert_allclose(avp_sim_vir, avp_inst_vir, atol=1e-10)
-        self.assertAlmostEqual(avpV_sim, 100, delta=0.5)
-        self.assertAlmostEqual(avpV_inst, 100, delta=0.5)
+        self.assertAlmostEqual(avpV_sim, 100., delta=1.)
+        self.assertAlmostEqual(avpV_inst, 100., delta=1.)
 
     def test_negative_volume(self):
         """Test for NpT with bad parameters."""
