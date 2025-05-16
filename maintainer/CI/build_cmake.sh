@@ -75,20 +75,30 @@ set_default_value() {
 }
 
 # the number of available processors depends on the CI runner
-ci_procs=2
+set_default_value with_cuda false
+default_build_procs=2
+default_check_procs=2
 if [ "${GITLAB_CI}" = "true" ]; then
     if [[ "${OSTYPE}" == "linux-gnu"* ]]; then
         # Linux runner
-        ci_procs=4
+        default_build_procs=4
+        default_check_procs=4
+        if [ "${with_cuda}" = "true" ]; then
+            default_build_procs=6
+            default_check_procs=4 # buffer for oversubscribed OpenMP threads
+        fi
     elif [[ "${OSTYPE}" == "darwin"* ]]; then
         # macOS runner
-        ci_procs=4
+        default_build_procs=4
+        default_check_procs=4
     fi
 elif [ "${GITHUB_ACTIONS}" = "true" ]; then
     # GitHub Actions provide 4 cores
-    ci_procs=4
+    default_build_procs=4
+    default_check_procs=4
 else
-    ci_procs=$(nproc)
+    default_build_procs=$(nproc)
+    default_check_procs=$(nproc)
 fi
 
 # handle environment variables
@@ -101,9 +111,10 @@ set_default_value with_asan false
 set_default_value with_static_analysis false
 set_default_value with_caliper false
 set_default_value with_fpe false
+set_default_value with_shared_memory_parallelism false
 set_default_value myconfig "default"
-set_default_value build_procs ${ci_procs}
-set_default_value check_procs ${build_procs}
+set_default_value build_procs ${default_build_procs}
+set_default_value check_procs ${default_check_procs}
 set_default_value check_odd_only false
 set_default_value check_gpu_only false
 set_default_value check_skip_long false
@@ -113,7 +124,6 @@ set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
 set_default_value with_fast_math false
-set_default_value with_cuda false
 set_default_value with_cuda_compiler "nvcc"
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
@@ -149,6 +159,7 @@ cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=${make_check_benchmar
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=${with_ccache}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CALIPER=${with_caliper}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FPE=${with_fpe}"
+cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=${with_shared_memory_parallelism}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=${with_hdf5}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=${with_fftw}"
 cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=${with_gsl}"

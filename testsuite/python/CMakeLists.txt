@@ -117,9 +117,13 @@ function(python_test)
     list(APPEND TEST_LABELS "parallel_odd")
   endif()
 
+  # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC} SKIP_RETURN_CODE 5
+                            ENVIRONMENT "OMP_PROC_BIND=false"
+                            ENVIRONMENT "OMP_NUM_THREADS=2"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
+  # cmake-format: on
 
   set(python_tests ${python_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(python_test)

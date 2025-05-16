@@ -27,8 +27,8 @@ if(ESPRESSO_BUILD_WITH_HDF5)
   target_include_directories(espresso_hdf5 PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
   target_link_libraries(
     espresso_hdf5
-    PRIVATE h5xx hdf5 espresso::cpp_flags espresso::h5xx_cpp_flags MPI::MPI_CXX
-            Boost::mpi Boost::filesystem espresso::utils espresso::config
+    PRIVATE HighFive hdf5 espresso::cpp_flags MPI::MPI_CXX Boost::mpi
+            Boost::filesystem espresso::utils espresso::config
             espresso::instrumentation)
   target_link_libraries(espresso_core PUBLIC espresso_hdf5)
   install(TARGETS espresso_hdf5

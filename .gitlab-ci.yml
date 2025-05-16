@@ -149,6 +149,7 @@ fedora:41:
      myconfig: 'maxset'
      make_check_python: 'true'
      with_stokesian_dynamics: 'true'
+     with_fftw: 'false'
      cmake_params: '-D CMAKE_INCLUDE_PATH=/usr/include/mpich-x86_64 -D CMAKE_PREFIX_PATH=/usr/lib64/mpich/lib/'
   script:
     - bash maintainer/CI/build_cmake.sh
@@ -219,6 +220,7 @@ cuda12-coverage:
      with_scafacos: 'true'
      with_walberla: 'true'
      with_stokesian_dynamics: 'true'
+     with_shared_memory_parallelism: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   timeout: 90m
@@ -240,11 +242,12 @@ cuda12-maxset:
      with_coverage_python: 'true'
      test_timeout: '900'
      srcdir: '${CI_PROJECT_DIR}'
+     with_caliper: 'true'
      with_scafacos: 'true'
      with_walberla: 'true'
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
-     with_caliper: 'true'
+     with_shared_memory_parallelism: 'true'
   script:
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -389,6 +392,7 @@ installation:
      with_walberla: 'true'
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
+     with_shared_memory_parallelism: 'true'
      srcdir: '${CI_PROJECT_DIR}'
      build_type: 'Release'
   script:
@@ -533,11 +537,12 @@ maxset_3_cores:
      with_coverage: 'false'
      with_coverage_python: 'false'
      srcdir: '${CI_PROJECT_DIR}'
+     with_caliper: 'true'
      with_scafacos: 'true'
      with_walberla: 'true'
      with_walberla_avx: 'true'
      with_stokesian_dynamics: 'true'
-     with_caliper: 'true'
+     with_shared_memory_parallelism: 'true'
      check_odd_only: 'true'
      cmake_params: '-D ESPRESSO_TEST_NP=3'
   script:

@@ -17,18 +17,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "init.hpp"
 
-// guard for hdf5.h
-#if not defined(_H5public_H)
-#ifdef OMPI_SKIP_MPICXX
-#undef OMPI_SKIP_MPICXX
+#include "config/config.hpp"
+
+#include <cassert>
+
+#include <fftw3.h>
+
+#ifdef _OPENMP
+#include <omp.h>
 #endif
-#ifdef MPICH_SKIP_MPICXX
-#undef MPICH_SKIP_MPICXX
-#endif
-#endif // not defined(_H5public_H)
 
-#define H5_USE_BOOST
-
-#include <H5public.h>
+#ifdef FFTW
+void fft_on_program_start() {
+#ifdef _OPENMP
+  int omp_num_threads = 1;
+#pragma omp parallel
+  {
+#pragma omp single
+    omp_num_threads = omp_get_num_threads();
+  }
+  [[maybe_unused]] auto const init_status_success = fftw_init_threads();
+  assert(init_status_success);
+  fftw_plan_with_nthreads(omp_num_threads);
+#endif // _OPENMP
+}
+#endif // FFTW

@@ -19,16 +19,8 @@
 
 #pragma once
 
-// guard for hdf5.h
-#if not defined(_H5public_H)
-#ifdef OMPI_SKIP_MPICXX
-#undef OMPI_SKIP_MPICXX
-#endif
-#ifdef MPICH_SKIP_MPICXX
-#undef MPICH_SKIP_MPICXX
-#endif
-#endif // not defined(_H5public_H)
+#include "config/config.hpp"
 
-#define H5_USE_BOOST
-
-#include <H5public.h>
+#ifdef FFTW
+void fft_on_program_start();
+#endif

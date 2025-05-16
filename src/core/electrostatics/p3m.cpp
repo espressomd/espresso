@@ -114,19 +114,6 @@ FloatType complex_norm2(std::complex<FloatType> const &z) {
   return Utils::sqr(z.real()) + Utils::sqr(z.imag());
 }
 
-template <Utils::MemoryOrder order_in, Utils::MemoryOrder order_out, typename T>
-auto transpose(std::span<T> const &flat_array, Utils::Vector3i const &shape) {
-  auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
-  Utils::Vector3i indices{};
-  std::vector<T> flat_array_t(flat_array.size());
-  for_each_3d(mesh_start, shape, indices, [&]() {
-    auto const index_in = Utils::get_linear_index(indices, shape, order_in);
-    auto const index_out = Utils::get_linear_index(indices, shape, order_out);
-    flat_array_t[index_out] = flat_array[index_in];
-  });
-  return flat_array_t;
-}
-
 static bool is_node_grid_compatible_with_mesh(Utils::Vector3i const &node_grid,
                                               Utils::Vector3i const &mesh) {
   return mesh[0u] % node_grid[0u] == 0 and mesh[1u] % node_grid[1u] == 0 and
@@ -451,10 +438,11 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
                             p3m.local_mesh.dim);
 
   // get real space charge density without ghost layers
-  auto charge_density_no_halos = extract_block(
-      p3m.rs_charge_density, p3m.local_mesh.dim, p3m.local_mesh.n_halo_ld,
-      p3m.local_mesh.dim - p3m.local_mesh.n_halo_ur,
-      Utils::MemoryOrder::ROW_MAJOR, Utils::MemoryOrder::COLUMN_MAJOR);
+  auto charge_density_no_halos =
+      extract_block<Utils::MemoryOrder::ROW_MAJOR,
+                    Utils::MemoryOrder::COLUMN_MAJOR>(
+          p3m.rs_charge_density, p3m.local_mesh.dim, p3m.local_mesh.n_halo_ld,
+          p3m.local_mesh.dim - p3m.local_mesh.n_halo_ur);
 
   // Set up the FFT using the Heffte library.
   // This is in global mesh coordinates without any ghost layers
@@ -466,14 +454,13 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_ks_charge_density() {
 
 template <typename FloatType, Arch Architecture>
 void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
-  auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
-  auto const &mesh_stop = p3m.fft->ks_local_size();
+  auto const mesh_start = p3m.fft->ks_local_ld_index();
+  auto const mesh_stop = mesh_start + p3m.fft->ks_local_size();
   auto const &box_geo = *get_system().box_geo;
-  auto indices = Utils::Vector3i{};
 
   // hold electric field in k-space
   std::array<std::span<std::complex<FloatType>>, 3> ks_E_fields;
-  auto const fft_mesh_length = get_size_from_shape(mesh_stop);
+  auto const fft_mesh_length = get_size_from_shape(mesh_stop - mesh_start);
   for (auto d : {0u, 1u, 2u}) {
     auto const offset = d * fft_mesh_length;
     auto const begin = p3m.ks_E_fields_storage.begin() + offset;
@@ -485,38 +472,43 @@ void CoulombP3MImpl<FloatType, Architecture>::kernel_rs_electric_field() {
       Utils::Vector3<FloatType>((2. * std::numbers::pi) * box_geo.length_inv());
 
   // compute electric field, Eq. (3.49) @cite deserno00b
-  for_each_3d(mesh_start, mesh_stop, indices, [&]() {
-    auto const global_index = indices + p3m.fft->ks_local_ld_index();
-    auto const local_index = Utils::get_linear_index(
-        indices, mesh_stop, Utils::MemoryOrder::COLUMN_MAJOR);
-    auto const phi_hat = multiply_complex_by_real(
-        p3m.ks_charge_density[local_index], p3m.g_force[local_index]);
+  for_each_3d_lin<Utils::MemoryOrder::COLUMN_MAJOR>(
+      mesh_start, mesh_stop,
+      [&](const Utils::Vector3i &indices, int local_index) {
+#ifdef ADDITIONAL_CHECKS
+        assert(local_index ==
+               Utils::get_linear_index<Utils::MemoryOrder::COLUMN_MAJOR>(
+                   indices - mesh_start, p3m.fft->ks_local_size()));
+#endif
+        auto const phi_hat = multiply_complex_by_real(
+            p3m.ks_charge_density[local_index], p3m.g_force[local_index]);
 
-    for (auto d : {0u, 1u, 2u}) {
-      // wave vector of the current mesh point
-      auto const k = FloatType(p3m.d_op[d][global_index[d]]) * wavevector[d];
-      // electric field in k-space
-      ks_E_fields[d][local_index] = multiply_complex_by_imaginary(phi_hat, k);
-    }
-  });
+        for (auto d : {0u, 1u, 2u}) {
+          // wave vector of the current mesh point
+          auto const k = FloatType(p3m.d_op[d][indices[d]]) * wavevector[d];
+          // electric field in k-space
+          ks_E_fields[d][local_index] =
+              multiply_complex_by_imaginary(phi_hat, k);
+        }
+      });
 
   // back-transform the k-space electric field to real space
-  auto const rs_mesh_size_no_halo =
-      get_size_from_shape(p3m.local_mesh.dim_no_halo);
-  p3m.fft->backward_batch(3, p3m.ks_E_fields_storage.data(),
-                          p3m.rs_E_fields_no_halo.data());
-
-  // add zeros around the E-field in real space to make room for ghost layers
   auto const size = p3m.local_mesh.ur_no_halo - p3m.local_mesh.ld_no_halo;
+  auto const rs_mesh_size_no_halo = Utils::product(size);
   for (auto d : {0u, 1u, 2u}) {
+    auto k_space = ks_E_fields[d].data();
+    auto real_space = p3m.rs_E_fields_no_halo.data() + d * rs_mesh_size_no_halo;
+    p3m.fft->backward(k_space, real_space);
+
+    // add zeros around the E-field in real space to make room for ghost layers
     auto const offset = d * rs_mesh_size_no_halo;
     auto const begin = p3m.rs_E_fields_no_halo.begin() + offset;
     auto f = std::span<std::complex<FloatType>>(begin, rs_mesh_size_no_halo);
-    auto f_t = transpose<Utils::MemoryOrder::COLUMN_MAJOR,
-                         Utils::MemoryOrder::ROW_MAJOR>(f, size);
-    p3m.rs_E_fields[d] = pad_with_zeros_discard_imag(
-        std::span<std::complex<FloatType>>(f_t), p3m.local_mesh.dim_no_halo,
-        p3m.local_mesh.n_halo_ld, p3m.local_mesh.n_halo_ur);
+    p3m.rs_E_fields[d] =
+        pad_with_zeros_discard_imag<Utils::MemoryOrder::COLUMN_MAJOR,
+                                    Utils::MemoryOrder::ROW_MAJOR>(
+            std::span<std::complex<FloatType>>(f), p3m.local_mesh.dim_no_halo,
+            p3m.local_mesh.n_halo_ld, p3m.local_mesh.n_halo_ur);
   }
 
   // ghost communicate the boundary layers of the E-field in real space

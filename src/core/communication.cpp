@@ -25,9 +25,15 @@
 
 #include "cuda/init.hpp"
 #include "errorhandling.hpp"
+#include "fft/init.hpp"
 
 #ifdef WALBERLA
 #include <walberla_bridge/walberla_init.hpp>
+#endif
+
+#ifdef SHARED_MEMORY_PARALLELISM
+#include <Cabana_Core.hpp>
+#include <Kokkos_Core.hpp>
 #endif
 
 #include <utils/Vector.hpp>
@@ -84,9 +90,23 @@ void init(std::shared_ptr<boost::mpi::environment> mpi_env) {
 #ifdef CUDA
   cuda_on_program_start();
 #endif
+
+#ifdef FFTW
+  fft_on_program_start();
+#endif
+
+#ifdef SHARED_MEMORY_PARALLELISM
+  Kokkos::initialize();
+#endif
 }
 
-void deinit() { Communication::m_callbacks.reset(); }
+void deinit() {
+  Communication::m_callbacks.reset();
+
+#ifdef SHARED_MEMORY_PARALLELISM
+  Kokkos::finalize();
+#endif
+}
 } // namespace Communication
 
 Communicator::Communicator()

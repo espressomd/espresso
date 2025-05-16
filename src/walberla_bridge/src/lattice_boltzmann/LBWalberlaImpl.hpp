@@ -560,7 +560,7 @@ public:
     m_boundary_communicator =
         std::make_shared<BoundaryFullCommunicator>(blocks);
     m_boundary_communicator->addPackInfo(
-        std::make_shared<field::communication::PackInfo<FlagField>>(
+        std::make_shared<field::communication::BoundaryFlagPackInfo<FlagField>>(
             m_flag_field_id));
     auto boundary_packinfo = std::make_shared<
         field::communication::BoundaryPackInfo<FlagField, BoundaryModel>>(

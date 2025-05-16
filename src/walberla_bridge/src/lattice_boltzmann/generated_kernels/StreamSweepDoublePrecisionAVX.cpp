@@ -49,114 +49,122 @@ namespace pystencils {
 
 namespace internal_91e2c9bdb4c4fa8a405803890749bf98 {
 static FUNC_PREFIX void streamsweepdoubleprecisionavx_streamsweepdoubleprecisionavx(double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp, double *RESTRICT _data_velocity, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, int64_t const _stride_velocity_1, int64_t const _stride_velocity_2, int64_t const _stride_velocity_3) {
-  for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
-    for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
-      {
-        for (int64_t ctr_0 = 1; ctr_0 < (int64_t)((_size_force_0 - 2) / (4)) * (4) + 1; ctr_0 += 4) {
-          const __m256d streamed_0 = _mm256_load_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + ctr_0]);
-          const __m256d streamed_1 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_2 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_3 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3 + ctr_0 + 1]);
-          const __m256d streamed_4 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3 + ctr_0 - 1]);
-          const __m256d streamed_5 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 5 * _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_6 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 6 * _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_7 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3 + ctr_0 + 1]);
-          const __m256d streamed_8 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3 + ctr_0 - 1]);
-          const __m256d streamed_9 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3 + ctr_0 + 1]);
-          const __m256d streamed_10 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3 + ctr_0 - 1]);
-          const __m256d streamed_11 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 11 * _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_12 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 12 * _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_13 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 13 * _stride_pdfs_3 + ctr_0 + 1]);
-          const __m256d streamed_14 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 14 * _stride_pdfs_3 + ctr_0 - 1]);
-          const __m256d streamed_15 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 15 * _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_16 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 16 * _stride_pdfs_3 + ctr_0]);
-          const __m256d streamed_17 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 17 * _stride_pdfs_3 + ctr_0 + 1]);
-          const __m256d streamed_18 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 18 * _stride_pdfs_3 + ctr_0 - 1]);
-          const __m256d vel0Term = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(streamed_10, streamed_14), streamed_18), streamed_4), streamed_8);
-          const __m256d momdensity_0 = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(streamed_13, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), _mm256_mul_pd(streamed_17, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_3, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_7, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_9, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), vel0Term);
-          const __m256d vel1Term = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(streamed_1, streamed_11), streamed_15), streamed_7);
-          const __m256d momdensity_1 = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(streamed_10, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), _mm256_mul_pd(streamed_12, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_16, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_2, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_9, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), streamed_8), vel1Term);
-          const __m256d vel2Term = _mm256_add_pd(_mm256_add_pd(streamed_12, streamed_13), streamed_5);
-          const __m256d rho = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(streamed_0, streamed_16), streamed_17), streamed_2), streamed_3), streamed_6), streamed_9), vel0Term), vel1Term), vel2Term);
-          const __m256d momdensity_2 = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(streamed_15, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), _mm256_mul_pd(streamed_16, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_17, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_18, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_6, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), streamed_11), streamed_14), vel2Term);
-          const __m256d u_0 = _mm256_add_pd(_mm256_mul_pd(momdensity_0, _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_mul_pd(_mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5), _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_load_pd(&_data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + ctr_0])));
-          const __m256d u_1 = _mm256_add_pd(_mm256_mul_pd(momdensity_1, _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_mul_pd(_mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5), _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_loadu_pd(&_data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + _stride_force_3 + ctr_0])));
-          const __m256d u_2 = _mm256_add_pd(_mm256_mul_pd(momdensity_2, _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_mul_pd(_mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5), _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_loadu_pd(&_data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + 2 * _stride_force_3 + ctr_0])));
-          _mm256_store_pd(&_data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + ctr_0], u_0);
-          _mm256_storeu_pd(&_data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + _stride_velocity_3 + ctr_0], u_1);
-          _mm256_storeu_pd(&_data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3 + ctr_0], u_2);
-          _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + ctr_0], streamed_0);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + _stride_pdfs_tmp_3 + ctr_0], streamed_1);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 2 * _stride_pdfs_tmp_3 + ctr_0], streamed_2);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 3 * _stride_pdfs_tmp_3 + ctr_0], streamed_3);
-          _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 4 * _stride_pdfs_tmp_3 + ctr_0], streamed_4);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 5 * _stride_pdfs_tmp_3 + ctr_0], streamed_5);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 6 * _stride_pdfs_tmp_3 + ctr_0], streamed_6);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 7 * _stride_pdfs_tmp_3 + ctr_0], streamed_7);
-          _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 8 * _stride_pdfs_tmp_3 + ctr_0], streamed_8);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 9 * _stride_pdfs_tmp_3 + ctr_0], streamed_9);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 10 * _stride_pdfs_tmp_3 + ctr_0], streamed_10);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 11 * _stride_pdfs_tmp_3 + ctr_0], streamed_11);
-          _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 12 * _stride_pdfs_tmp_3 + ctr_0], streamed_12);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 13 * _stride_pdfs_tmp_3 + ctr_0], streamed_13);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 14 * _stride_pdfs_tmp_3 + ctr_0], streamed_14);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 15 * _stride_pdfs_tmp_3 + ctr_0], streamed_15);
-          _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 16 * _stride_pdfs_tmp_3 + ctr_0], streamed_16);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 17 * _stride_pdfs_tmp_3 + ctr_0], streamed_17);
-          _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 18 * _stride_pdfs_tmp_3 + ctr_0], streamed_18);
-        }
-        for (int64_t ctr_0 = (int64_t)((_size_force_0 - 2) / (4)) * (4) + 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {
-          const double streamed_0 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + ctr_0];
-          const double streamed_1 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3 + ctr_0];
-          const double streamed_2 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3 + ctr_0];
-          const double streamed_3 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3 + ctr_0 + 1];
-          const double streamed_4 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3 + ctr_0 - 1];
-          const double streamed_5 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 5 * _stride_pdfs_3 + ctr_0];
-          const double streamed_6 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 6 * _stride_pdfs_3 + ctr_0];
-          const double streamed_7 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3 + ctr_0 + 1];
-          const double streamed_8 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3 + ctr_0 - 1];
-          const double streamed_9 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3 + ctr_0 + 1];
-          const double streamed_10 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3 + ctr_0 - 1];
-          const double streamed_11 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 11 * _stride_pdfs_3 + ctr_0];
-          const double streamed_12 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 12 * _stride_pdfs_3 + ctr_0];
-          const double streamed_13 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 13 * _stride_pdfs_3 + ctr_0 + 1];
-          const double streamed_14 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 14 * _stride_pdfs_3 + ctr_0 - 1];
-          const double streamed_15 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 15 * _stride_pdfs_3 + ctr_0];
-          const double streamed_16 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 16 * _stride_pdfs_3 + ctr_0];
-          const double streamed_17 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 17 * _stride_pdfs_3 + ctr_0 + 1];
-          const double streamed_18 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 18 * _stride_pdfs_3 + ctr_0 - 1];
-          const double vel0Term = streamed_10 + streamed_14 + streamed_18 + streamed_4 + streamed_8;
-          const double momdensity_0 = -streamed_13 - streamed_17 - streamed_3 - streamed_7 - streamed_9 + vel0Term;
-          const double vel1Term = streamed_1 + streamed_11 + streamed_15 + streamed_7;
-          const double momdensity_1 = -streamed_10 - streamed_12 - streamed_16 - streamed_2 + streamed_8 - streamed_9 + vel1Term;
-          const double vel2Term = streamed_12 + streamed_13 + streamed_5;
-          const double rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 + streamed_3 + streamed_6 + streamed_9 + vel0Term + vel1Term + vel2Term;
-          const double momdensity_2 = streamed_11 + streamed_14 - streamed_15 - streamed_16 - streamed_17 - streamed_18 - streamed_6 + vel2Term;
-          const double u_0 = momdensity_0 * ((1.0) / (rho)) + 0.5 * ((1.0) / (rho)) * _data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + ctr_0];
-          const double u_1 = momdensity_1 * ((1.0) / (rho)) + 0.5 * ((1.0) / (rho)) * _data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + _stride_force_3 + ctr_0];
-          const double u_2 = momdensity_2 * ((1.0) / (rho)) + 0.5 * ((1.0) / (rho)) * _data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + 2 * _stride_force_3 + ctr_0];
-          _data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + ctr_0] = u_0;
-          _data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + _stride_velocity_3 + ctr_0] = u_1;
-          _data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3 + ctr_0] = u_2;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + ctr_0] = streamed_0;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + _stride_pdfs_tmp_3 + ctr_0] = streamed_1;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 2 * _stride_pdfs_tmp_3 + ctr_0] = streamed_2;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 3 * _stride_pdfs_tmp_3 + ctr_0] = streamed_3;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 4 * _stride_pdfs_tmp_3 + ctr_0] = streamed_4;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 5 * _stride_pdfs_tmp_3 + ctr_0] = streamed_5;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 6 * _stride_pdfs_tmp_3 + ctr_0] = streamed_6;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 7 * _stride_pdfs_tmp_3 + ctr_0] = streamed_7;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 8 * _stride_pdfs_tmp_3 + ctr_0] = streamed_8;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 9 * _stride_pdfs_tmp_3 + ctr_0] = streamed_9;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 10 * _stride_pdfs_tmp_3 + ctr_0] = streamed_10;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 11 * _stride_pdfs_tmp_3 + ctr_0] = streamed_11;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 12 * _stride_pdfs_tmp_3 + ctr_0] = streamed_12;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 13 * _stride_pdfs_tmp_3 + ctr_0] = streamed_13;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 14 * _stride_pdfs_tmp_3 + ctr_0] = streamed_14;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 15 * _stride_pdfs_tmp_3 + ctr_0] = streamed_15;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 16 * _stride_pdfs_tmp_3 + ctr_0] = streamed_16;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 17 * _stride_pdfs_tmp_3 + ctr_0] = streamed_17;
-          _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 18 * _stride_pdfs_tmp_3 + ctr_0] = streamed_18;
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  {
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+    for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
+      for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
+        {
+          for (int64_t ctr_0 = 1; ctr_0 < (int64_t)((_size_force_0 - 2) / (4)) * (4) + 1; ctr_0 += 4) {
+            const __m256d streamed_0 = _mm256_load_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + ctr_0]);
+            const __m256d streamed_1 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_2 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_3 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3 + ctr_0 + 1]);
+            const __m256d streamed_4 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3 + ctr_0 - 1]);
+            const __m256d streamed_5 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 5 * _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_6 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 6 * _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_7 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3 + ctr_0 + 1]);
+            const __m256d streamed_8 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3 + ctr_0 - 1]);
+            const __m256d streamed_9 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3 + ctr_0 + 1]);
+            const __m256d streamed_10 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3 + ctr_0 - 1]);
+            const __m256d streamed_11 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 11 * _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_12 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 12 * _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_13 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 13 * _stride_pdfs_3 + ctr_0 + 1]);
+            const __m256d streamed_14 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 14 * _stride_pdfs_3 + ctr_0 - 1]);
+            const __m256d streamed_15 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 15 * _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_16 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 16 * _stride_pdfs_3 + ctr_0]);
+            const __m256d streamed_17 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 17 * _stride_pdfs_3 + ctr_0 + 1]);
+            const __m256d streamed_18 = _mm256_loadu_pd(&_data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 18 * _stride_pdfs_3 + ctr_0 - 1]);
+            const __m256d vel0Term = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(streamed_10, streamed_14), streamed_18), streamed_4), streamed_8);
+            const __m256d momdensity_0 = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(streamed_13, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), _mm256_mul_pd(streamed_17, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_3, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_7, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_9, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), vel0Term);
+            const __m256d vel1Term = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(streamed_1, streamed_11), streamed_15), streamed_7);
+            const __m256d momdensity_1 = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(streamed_10, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), _mm256_mul_pd(streamed_12, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_16, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_2, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_9, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), streamed_8), vel1Term);
+            const __m256d vel2Term = _mm256_add_pd(_mm256_add_pd(streamed_12, streamed_13), streamed_5);
+            const __m256d rho = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(streamed_0, streamed_16), streamed_17), streamed_2), streamed_3), streamed_6), streamed_9), vel0Term), vel1Term), vel2Term);
+            const __m256d momdensity_2 = _mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_add_pd(_mm256_mul_pd(streamed_15, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0)), _mm256_mul_pd(streamed_16, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_17, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_18, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), _mm256_mul_pd(streamed_6, _mm256_set_pd(-1.0, -1.0, -1.0, -1.0))), streamed_11), streamed_14), vel2Term);
+            const __m256d u_0 = _mm256_add_pd(_mm256_mul_pd(momdensity_0, _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_mul_pd(_mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5), _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_load_pd(&_data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + ctr_0])));
+            const __m256d u_1 = _mm256_add_pd(_mm256_mul_pd(momdensity_1, _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_mul_pd(_mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5), _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_loadu_pd(&_data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + _stride_force_3 + ctr_0])));
+            const __m256d u_2 = _mm256_add_pd(_mm256_mul_pd(momdensity_2, _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_mul_pd(_mm256_mul_pd(_mm256_set_pd(0.5, 0.5, 0.5, 0.5), _mm256_div_pd(_mm256_set_pd(1.0, 1.0, 1.0, 1.0), rho)), _mm256_loadu_pd(&_data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + 2 * _stride_force_3 + ctr_0])));
+            _mm256_store_pd(&_data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + ctr_0], u_0);
+            _mm256_storeu_pd(&_data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + _stride_velocity_3 + ctr_0], u_1);
+            _mm256_storeu_pd(&_data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3 + ctr_0], u_2);
+            _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + ctr_0], streamed_0);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + _stride_pdfs_tmp_3 + ctr_0], streamed_1);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 2 * _stride_pdfs_tmp_3 + ctr_0], streamed_2);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 3 * _stride_pdfs_tmp_3 + ctr_0], streamed_3);
+            _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 4 * _stride_pdfs_tmp_3 + ctr_0], streamed_4);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 5 * _stride_pdfs_tmp_3 + ctr_0], streamed_5);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 6 * _stride_pdfs_tmp_3 + ctr_0], streamed_6);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 7 * _stride_pdfs_tmp_3 + ctr_0], streamed_7);
+            _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 8 * _stride_pdfs_tmp_3 + ctr_0], streamed_8);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 9 * _stride_pdfs_tmp_3 + ctr_0], streamed_9);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 10 * _stride_pdfs_tmp_3 + ctr_0], streamed_10);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 11 * _stride_pdfs_tmp_3 + ctr_0], streamed_11);
+            _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 12 * _stride_pdfs_tmp_3 + ctr_0], streamed_12);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 13 * _stride_pdfs_tmp_3 + ctr_0], streamed_13);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 14 * _stride_pdfs_tmp_3 + ctr_0], streamed_14);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 15 * _stride_pdfs_tmp_3 + ctr_0], streamed_15);
+            _mm256_store_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 16 * _stride_pdfs_tmp_3 + ctr_0], streamed_16);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 17 * _stride_pdfs_tmp_3 + ctr_0], streamed_17);
+            _mm256_storeu_pd(&_data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 18 * _stride_pdfs_tmp_3 + ctr_0], streamed_18);
+          }
+          for (int64_t ctr_0 = (int64_t)((_size_force_0 - 2) / (4)) * (4) + 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {
+            const double streamed_0 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + ctr_0];
+            const double streamed_1 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_3 + ctr_0];
+            const double streamed_2 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 2 * _stride_pdfs_3 + ctr_0];
+            const double streamed_3 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 3 * _stride_pdfs_3 + ctr_0 + 1];
+            const double streamed_4 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + 4 * _stride_pdfs_3 + ctr_0 - 1];
+            const double streamed_5 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 5 * _stride_pdfs_3 + ctr_0];
+            const double streamed_6 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 6 * _stride_pdfs_3 + ctr_0];
+            const double streamed_7 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 7 * _stride_pdfs_3 + ctr_0 + 1];
+            const double streamed_8 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 8 * _stride_pdfs_3 + ctr_0 - 1];
+            const double streamed_9 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 9 * _stride_pdfs_3 + ctr_0 + 1];
+            const double streamed_10 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + 10 * _stride_pdfs_3 + ctr_0 - 1];
+            const double streamed_11 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 11 * _stride_pdfs_3 + ctr_0];
+            const double streamed_12 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 12 * _stride_pdfs_3 + ctr_0];
+            const double streamed_13 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 13 * _stride_pdfs_3 + ctr_0 + 1];
+            const double streamed_14 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 - _stride_pdfs_2 + 14 * _stride_pdfs_3 + ctr_0 - 1];
+            const double streamed_15 = _data_pdfs[_stride_pdfs_1 * ctr_1 - _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 15 * _stride_pdfs_3 + ctr_0];
+            const double streamed_16 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 16 * _stride_pdfs_3 + ctr_0];
+            const double streamed_17 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 17 * _stride_pdfs_3 + ctr_0 + 1];
+            const double streamed_18 = _data_pdfs[_stride_pdfs_1 * ctr_1 + _stride_pdfs_2 * ctr_2 + _stride_pdfs_2 + 18 * _stride_pdfs_3 + ctr_0 - 1];
+            const double vel0Term = streamed_10 + streamed_14 + streamed_18 + streamed_4 + streamed_8;
+            const double momdensity_0 = -streamed_13 - streamed_17 - streamed_3 - streamed_7 - streamed_9 + vel0Term;
+            const double vel1Term = streamed_1 + streamed_11 + streamed_15 + streamed_7;
+            const double momdensity_1 = -streamed_10 - streamed_12 - streamed_16 - streamed_2 + streamed_8 - streamed_9 + vel1Term;
+            const double vel2Term = streamed_12 + streamed_13 + streamed_5;
+            const double rho = streamed_0 + streamed_16 + streamed_17 + streamed_2 + streamed_3 + streamed_6 + streamed_9 + vel0Term + vel1Term + vel2Term;
+            const double momdensity_2 = streamed_11 + streamed_14 - streamed_15 - streamed_16 - streamed_17 - streamed_18 - streamed_6 + vel2Term;
+            const double u_0 = momdensity_0 * ((1.0) / (rho)) + 0.5 * ((1.0) / (rho)) * _data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + ctr_0];
+            const double u_1 = momdensity_1 * ((1.0) / (rho)) + 0.5 * ((1.0) / (rho)) * _data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + _stride_force_3 + ctr_0];
+            const double u_2 = momdensity_2 * ((1.0) / (rho)) + 0.5 * ((1.0) / (rho)) * _data_force[_stride_force_1 * ctr_1 + _stride_force_2 * ctr_2 + 2 * _stride_force_3 + ctr_0];
+            _data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + ctr_0] = u_0;
+            _data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + _stride_velocity_3 + ctr_0] = u_1;
+            _data_velocity[_stride_velocity_1 * ctr_1 + _stride_velocity_2 * ctr_2 + 2 * _stride_velocity_3 + ctr_0] = u_2;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + ctr_0] = streamed_0;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + _stride_pdfs_tmp_3 + ctr_0] = streamed_1;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 2 * _stride_pdfs_tmp_3 + ctr_0] = streamed_2;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 3 * _stride_pdfs_tmp_3 + ctr_0] = streamed_3;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 4 * _stride_pdfs_tmp_3 + ctr_0] = streamed_4;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 5 * _stride_pdfs_tmp_3 + ctr_0] = streamed_5;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 6 * _stride_pdfs_tmp_3 + ctr_0] = streamed_6;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 7 * _stride_pdfs_tmp_3 + ctr_0] = streamed_7;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 8 * _stride_pdfs_tmp_3 + ctr_0] = streamed_8;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 9 * _stride_pdfs_tmp_3 + ctr_0] = streamed_9;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 10 * _stride_pdfs_tmp_3 + ctr_0] = streamed_10;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 11 * _stride_pdfs_tmp_3 + ctr_0] = streamed_11;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 12 * _stride_pdfs_tmp_3 + ctr_0] = streamed_12;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 13 * _stride_pdfs_tmp_3 + ctr_0] = streamed_13;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 14 * _stride_pdfs_tmp_3 + ctr_0] = streamed_14;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 15 * _stride_pdfs_tmp_3 + ctr_0] = streamed_15;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 16 * _stride_pdfs_tmp_3 + ctr_0] = streamed_16;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 17 * _stride_pdfs_tmp_3 + ctr_0] = streamed_17;
+            _data_pdfs_tmp[_stride_pdfs_tmp_1 * ctr_1 + _stride_pdfs_tmp_2 * ctr_2 + 18 * _stride_pdfs_tmp_3 + ctr_0] = streamed_18;
+          }
         }
       }
     }

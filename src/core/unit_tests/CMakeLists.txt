@@ -50,8 +50,10 @@ espresso_unit_test(SRC field_coupling_couplings_test.cpp DEPENDS
 espresso_unit_test(SRC field_coupling_fields_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC field_coupling_force_field_test.cpp DEPENDS
                    espresso::utils)
-espresso_unit_test(SRC field_layout_helpers_test.cpp DEPENDS espresso::utils
-                   espresso::core)
+espresso_unit_test(
+  SRC field_layout_helpers_test.cpp DEPENDS espresso::utils espresso::core
+  $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
+
 espresso_unit_test(SRC periodic_fold_test.cpp)
 espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core)
 espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core)
@@ -83,8 +85,12 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
 endif()
 
 if(ESPRESSO_BUILD_WITH_FFTW)
-  espresso_unit_test(SRC p3m_test.cpp DEPENDS espresso::utils espresso::core)
-  espresso_unit_test(SRC fft_test.cpp DEPENDS espresso::utils espresso::core)
+  espresso_unit_test(
+    SRC p3m_test.cpp DEPENDS espresso::utils espresso::core
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
+  espresso_unit_test(
+    SRC fft_test.cpp DEPENDS espresso::utils espresso::core
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>)
   espresso_unit_test(SRC math_test.cpp DEPENDS espresso::utils espresso::core)
 endif()
 
