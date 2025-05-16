@@ -382,9 +382,9 @@ class LeesEdwards(ut.TestCase):
 
     def test_push_and_distance_consistency(self):
         """
-        The Lees-Edwars aware distance between a pair of particles should
+        The Lees-Edwards-aware distance between a pair of particles should
         stay constant even after one of them has crossed a
-        LE boundary with a constant position offset. 
+        LE boundary with a constant position offset.
         """
 
         system = self.system
@@ -418,8 +418,8 @@ class LeesEdwards(ut.TestCase):
 
     def test_push_and_vel_difference_consistency(self):
         """
-        The Lees-Edwars aware velocity difference between a pair of particles should
-        stay constant even after one of them has crossed a
+        The Lees-Edwards-aware velocity difference between a pair of particles
+        should stay constant even after one of them has crossed a
         LE boundary with a linear shear.
         """
 
@@ -908,5 +908,4 @@ class LeesEdwards(ut.TestCase):
 
 
 if __name__ == "__main__":
-
     ut.main()
