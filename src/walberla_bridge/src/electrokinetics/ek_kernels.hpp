@@ -41,7 +41,10 @@
 
 namespace walberla {
 namespace detail {
-template <typename FloatType = double> struct KernelTrait {
+
+using lbmpy::Arch;
+
+template <> struct KernelTrait<double, Arch::CPU> {
   using ContinuityKernel = pystencils::ContinuityKernel_double_precision;
   using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision;
   using DiffusiveFluxKernelThermalized =
@@ -57,7 +60,7 @@ template <typename FloatType = double> struct KernelTrait {
   using Dirichlet = pystencils::Dirichlet_double_precision;
   using FixedFlux = pystencils::FixedFlux_double_precision;
 };
-template <> struct KernelTrait<float> {
+template <> struct KernelTrait<float, Arch::CPU> {
   using ContinuityKernel = pystencils::ContinuityKernel_single_precision;
   using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_single_precision;
   using DiffusiveFluxKernelThermalized =

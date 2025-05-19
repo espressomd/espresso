@@ -33,6 +33,9 @@
 #include "../utils/boundary.hpp"
 #include "../utils/types_conversion.hpp"
 #include "ek_kernels.hpp"
+#if defined(__CUDACC__)
+#include "lb_kernels.cuh"
+#endif
 
 #include <walberla_bridge/BlockAndCell.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
@@ -53,21 +56,24 @@
 namespace walberla {
 
 /** @brief Class that runs and controls the EK on waLBerla. */
-template <std::size_t FluxCount = 13, typename FloatType = double>
+template <std::size_t FluxCount = 13, typename FloatType = double,
+          lbmpy::Arch Architecture>
 class EKinWalberlaImpl : public EKinWalberlaBase {
-  using ContinuityKernel = detail::KernelTrait<FloatType>::ContinuityKernel;
+  using ContinuityKernel =
+      typename detail::KernelTrait<FloatType, Architecture>::ContinuityKernel;
   using DiffusiveFluxKernelUnthermalized =
-      detail::KernelTrait<FloatType>::DiffusiveFluxKernel;
+      typename detail::KernelTrait<FloatType, Architecture>::DiffusiveFluxKernel;
   using DiffusiveFluxKernelThermalized =
-      detail::KernelTrait<FloatType>::DiffusiveFluxKernelThermalized;
+      typename detail::KernelTrait<FloatType, Architecture>::DiffusiveFluxKernelThermalized;
   using AdvectiveFluxKernel =
-      detail::KernelTrait<FloatType>::AdvectiveFluxKernel;
+      typename detail::KernelTrait<FloatType, Architecture>::AdvectiveFluxKernel;
   using FrictionCouplingKernel =
-      detail::KernelTrait<FloatType>::FrictionCouplingKernel;
+      typename detail::KernelTrait<FloatType, Architecture>::FrictionCouplingKernel;
   using DiffusiveFluxKernelElectrostaticUnthermalized =
-      detail::KernelTrait<FloatType>::DiffusiveFluxKernelElectrostatic;
-  using DiffusiveFluxKernelElectrostaticThermalized = detail::KernelTrait<
-      FloatType>::DiffusiveFluxKernelElectrostaticThermalized;
+      typename detail::KernelTrait<FloatType, Architecture>::DiffusiveFluxKernelElectrostatic;
+  using DiffusiveFluxKernelElectrostaticThermalized =
+      typename detail::KernelTrait<
+          FloatType, Architecture>::DiffusiveFluxKernelElectrostaticThermalized;
 
   using DiffusiveFluxKernel = std::variant<DiffusiveFluxKernelUnthermalized,
                                            DiffusiveFluxKernelThermalized>;
@@ -75,21 +81,57 @@ class EKinWalberlaImpl : public EKinWalberlaBase {
       std::variant<DiffusiveFluxKernelElectrostaticUnthermalized,
                    DiffusiveFluxKernelElectrostaticThermalized>;
 
-  using Dirichlet = detail::KernelTrait<FloatType>::Dirichlet;
-  using FixedFlux = detail::KernelTrait<FloatType>::FixedFlux;
+  using Dirichlet = typename detail::KernelTrait<FloatType, Architecture>::Dirichlet;
+  using FixedFlux = typename detail::KernelTrait<FloatType, Architecture>::FixedFlux;
+
+  using BoundaryModelDensity = BoundaryHandling<FloatType, FloatType, Dirichlet>;
+  using BoundaryModelFlux = BoundaryHandling<FloatType, Vector3<FloatType>, FixedFlux>;
+
+public:
+  /** @brief Stencil for collision and streaming operations. */
+  using Stencil = stencil::D3Q27;
+  /** @brief Lattice model (e.g. blockforest). */
+  using BlockStorage = LatticeWalberla::Lattice_T;
 
 protected:
-  // Type definitions
-  using FluxField = GhostLayerField<FloatType, FluxCount>;
-  using FlagField = walberla::FlagField<walberla::uint8_t>;
-  using DensityField = GhostLayerField<FloatType, 1>;
+  template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct FieldTrait {
+    // Type definitions
+    using FluxField = GhostLayerField<FT, FluxCount>;
+    using FlagField = walberla::FlagField<walberla::uint8_t>;
+    using DensityField = GhostLayerField<FT, 1>;
+#if defined(__CUDACC__)
+  template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
+  private:
+    static auto constexpr AT = lbmpy::Arch::GPU;
+    template <class Field>
+    using MemcpyPackInfo = gpu::communication::MemcpyPackInfo<Field>;
 
-  using BoundaryModelDensity =
-      BoundaryHandling<FloatType, FloatType, Dirichlet>;
-  using BoundaryModelFlux =
-      BoundaryHandling<FloatType, Vector3<FloatType>, FixedFlux>;
+  public:
+    explicit UniformGPUScheme(auto const &bf)
+          : gpu::communication::UniformGPUScheme<Stencil>(
+                bf, /* sendDirectlyFromGPU */ false,
+                /* useLocalCommunication */ false) {}
+    };
+    using FluxField = gpu::GPUField<FT>;
+    using DensityField = gpu::GPUField<FT>;
+#endif
 
-  using BlockStorage = LatticeWalberla::Lattice_T;
+  // "underlying" field types (`GPUField` has no f-size info at compile time)
+  using _FluxField = typename FieldTrait<FloatType>::FluxField;
+  using _DensityField = typename FieldTrait<FloatType>::DensityField;
+public:
+  using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
+  using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
+  using FlagField = typename BoundaryModel::FlagField;
+#if defined(__CUDACC__)
+  using GPUField = gpu::GPUField<FloatType>;
+  using PdfFieldCpu =
+      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::PdfField;
+  using VectorFieldCpu =
+      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::VectorField;
+#endif
+
+
 
 public:
   template <typename T> FloatType FloatType_c(T t) {
@@ -140,6 +182,10 @@ protected:
       m_diffusive_flux_electrostatic;
   std::unique_ptr<ContinuityKernel> m_continuity;
 
+#if defined(__CUDACC__)
+  std::shared_ptr<gpu::HostFieldAllocator<FloatType>> m_host_field_allocator;
+#endif
+
   // ResetFlux + external force
   // TODO: kernel for that
   // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
@@ -157,6 +203,45 @@ protected:
     }
     assert(&(*(lower_bc->block)) == &(*(upper_bc->block)));
     return {CellInterval(lower_bc->cell, upper_bc->cell)};
+  }
+
+ /**
+   * @brief Convenience function to add a field with a custom allocator.
+   *
+   * When vectorization is off, let waLBerla decide which memory allocator
+   * to use. When vectorization is on, the aligned memory allocator is
+   * required, otherwise <tt>cpu_vectorize_info["assume_aligned"]</tt> will
+   * trigger assertions. That is because for single-precision kernels the
+   * waLBerla heuristic in <tt>src/field/allocation/FieldAllocator.h</tt>
+   * will fall back to @c StdFieldAlloc, yet @c AllocateAligned is needed
+   * for intrinsics to work.
+   */
+  template <typename Field> auto add_to_storage(std::string const tag) {
+    auto const &blocks = m_lattice->get_blocks();
+    auto const n_ghost_layers = m_lattice->get_ghost_layers();
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      return field::addToStorage<Field>(blocks, tag, FloatType{0}, field::fzyx,
+                                        n_ghost_layers);
+    }
+#if defined(__CUDACC__)
+    else {
+      auto field_id = gpu::addGPUFieldToStorage<GPUField>(
+          blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);
+      if constexpr (std::is_same_v<Field, _DensityField>) {
+        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+          auto field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Vector::initialize(field, FloatType);
+        }
+      } else if constexpr (std::is_same_v<Field, _FluxField>) {
+        for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+          auto field = block->template getData<GPUField>(field_id);
+          lbm::accessor::Population::initialize(
+              field, std::array<FloatType, FluxCount>{});
+        }
+      }
+      return field_id;
+    }
+#endif
   }
 
   void
@@ -192,14 +277,11 @@ public:
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
 
-    m_density_field_id = field::addToStorage<DensityField>(
-        blocks, "density field", FloatType_c(density), field::fzyx,
-        n_ghost_layers);
+    m_density_field_id = add_to_storage<DensityField>("density field");
     m_density_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<DensityField>(
             blocks, m_density_field_id, "flattened density field");
-    m_flux_field_id = field::addToStorage<FluxField>(
-        blocks, "flux field", FloatType{0}, field::fzyx, n_ghost_layers);
+    m_flux_field_id = add_to_storage<FluxField>("flux field");
     m_flux_field_flattened_id =
         field::addFlattenedShallowCopyToStorage<FluxField>(
             blocks, m_flux_field_id, "flattened flux field");
