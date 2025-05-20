@@ -19,6 +19,7 @@
 
 import subprocess
 import numpy as np
+import zndraw.type_defs
 import zndraw.zndraw
 import zndraw.utils
 import zndraw.draw
@@ -30,6 +31,8 @@ import time
 import urllib.parse
 import typing as t
 import scipy.spatial.transform
+
+from espressomd.plugins import ase
 
 
 # Standard colors
@@ -46,196 +49,6 @@ color_dict = {"black": "#303030",
               "brown": "#9A6324",
               "grey": "#a9a9a9",
               "white": "#f0f0f0"}
-
-
-class EspressoConverter(znjson.ConverterBase):
-    """
-    Converter for ESPResSo systems to ASEDict
-    """
-    level = 100
-    representation = "ase.Atoms"
-    instance = espressomd.system.System
-
-    def encode(self, system) -> zndraw.utils.ASEDict:
-        self.system = system
-        self.particles = self.system.part.all()
-        self.num_particles = len(self.particles)
-        self.params = system.visualizer_params
-
-        self.numbers = self.num_particles * [1]
-
-        if self.params["folded"] is True:
-            self.positions = self.particles.pos_folded
-        else:
-            self.positions = self.particles.pos
-
-        if self.params["colors"] is None:
-            self.colors = self.get_default_colors()
-        else:
-            self.colors = self.set_colors(self.params["colors"])
-
-        if self.params["radii"] is None:
-            self.radii = self.get_default_radii()
-        else:
-            self.radii = self.set_radii(self.params["radii"])
-
-        if self.params["bonds"] is True:
-            bonds = self.get_bonds()
-        else:
-            bonds = []
-
-        arrays = {
-            "colors": self.colors,
-            "radii": self.radii,
-        }
-        cell = [[system.box_l[0], 0, 0],
-                [0, system.box_l[1], 0],
-                [0, 0, system.box_l[2]]]
-        pbc = system.periodicity
-        calc = None
-        info = {}
-
-        if self.params["vector_field"] is not None:
-            vectors = self.params["vector_field"]()
-        else:
-            vectors = []
-
-        return zndraw.utils.ASEDict(
-            numbers=self.numbers,
-            positions=self.positions.tolist(),
-            connectivity=bonds,
-            arrays=arrays,
-            info=info,
-            calc=calc,
-            pbc=pbc.tolist(),
-            cell=cell,
-            vectors=vectors,
-        )
-
-    def decode(self, value):
-        value = None
-        return value
-
-    def get_default_colors(self):
-        return [color_dict["white"]] * self.num_particles
-
-    def get_default_radii(self):
-        return [0.5] * self.num_particles
-
-    def set_colors(self, colors):
-        color_list = list()
-        for p in self.particles:
-            color = colors[p.type]
-            # if color starts with #, assume it is a hex color
-            if color.startswith("#"):
-                color_list.append(color)
-            else:
-                if color not in color_dict:
-                    raise ValueError(
-                        f"Color {color} not found in color dictionary")
-                color_list.append(color_dict[color])
-        return color_list
-
-    def set_radii(self, radii):
-        radius_list = list()
-        for p in self.particles:
-            radius_list.append(radii[p.type])
-        return radius_list
-
-    def get_bonds(self):
-        bonds = []
-        for p in self.particles:
-            if not p.bonds:
-                continue
-            for bond in p.bonds:
-                if len(bond) == 4:
-                    bonds.append([p.id, bond[1], 1])
-                    bonds.append([p.id, bond[2], 1])
-                    bonds.append([bond[2], bond[3], 1])
-                else:
-                    for bond_partner in bond[1:]:
-                        bonds.append([p.id, bond_partner, 1])
-
-        self.process_bonds(bonds)
-
-        return bonds
-
-    def process_bonds(self, bonds):
-        half_box_l = 0.5 * self.system.box_l
-        num_part = len(self.positions)
-        bonds_to_remove = []
-        bonds_to_add = []
-
-        for b in bonds:
-            try:
-                if self.params["folded"] is True:
-                    x_a = self.system.part.by_id(b[0]).pos_folded
-                    x_b = self.system.part.by_id(b[1]).pos_folded
-                else:
-                    x_a = self.system.part.by_id(b[0]).pos
-                    x_b = self.system.part.by_id(b[1]).pos
-            except Exception:
-                bonds_to_remove.append(b)
-                continue
-
-            dx = x_b - x_a
-
-            if np.all(np.abs(dx) < half_box_l):
-                continue
-
-            if self.params["folded"] is False:
-                bonds_to_remove.append(b)
-                continue
-
-            d = self.cut_bond(x_a, dx)
-            if d is np.inf:
-                bonds_to_remove.append(b)
-                continue
-
-            s_a = x_a + 0.8 * dx
-            s_b = x_b - 0.8 * dx
-
-            bonds_to_remove.append(b)
-
-            self.add_ghost_particle(pos=s_a, color=self.colors[b[0]])
-            bonds_to_add.append([b[0], num_part, 1])
-
-            self.add_ghost_particle(pos=s_b, color=self.colors[b[1]])
-            bonds_to_add.append([b[1], num_part + 1, 1])
-            num_part += 2
-
-        for b in bonds_to_remove:
-            bonds.remove(b)
-
-        bonds.extend(bonds_to_add)
-
-    def cut_bond(self, x_a, dx):
-        if np.dot(dx, dx) < 1e-9:
-            return np.inf
-        shift = np.rint(dx / self.system.box_l)
-        dx -= shift * self.system.box_l
-        best_d = np.inf
-        for i in range(3):
-            if dx[i] == 0:
-                continue
-            elif dx[i] > 0:
-                p0_i = self.system.box_l[i]
-            else:
-                p0_i = 0
-
-            d = (p0_i - x_a[i]) / dx[i]
-            if d < best_d:
-                best_d = d
-        return best_d
-
-    def add_ghost_particle(self, pos, color):
-        self.positions = np.vstack([self.positions, pos])
-        self.radii.append(1e-6 * min(self.radii))
-        self.colors.append(color)
-        self.numbers.append(2)
-
-
-znjson.config.register(EspressoConverter)
 
 
 class LBField:
@@ -536,12 +349,15 @@ class Visualizer():
         Update the visualizer with the current state of the system
         """
         self.system.visualizer_params = self.params
-
-        data = znjson.dumps(
-            self.system, cls=znjson.ZnEncoder.from_converters(
-                [EspressoConverter])
-        )
-
+        
+        Asedata = ase.ASEInterface({x: "X" for x in set(self.system.part.all().type)})
+        Asedata.register_system(self.system)
+        data = Asedata.get()
+        if self.params["colors"] is not None:
+            data.arrays['colors'] = [self.params["colors"].get(z, "white") for z in self.system.part.all().type]
+        if self.params["radii"] is not None:
+             data.arrays['radii'] = [self.params["radii"].get(z, 0.5) for z in self.system.part.all().type]
+            
         # Catch when the server is initializing an empty frame
         # len(self.zndraw) is a expensive socket call, so we try to avoid it
         if self.frame_count != 0 or len(self.zndraw) == 0:
