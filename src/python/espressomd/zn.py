@@ -349,14 +349,16 @@ class Visualizer():
         Update the visualizer with the current state of the system
         """
         self.system.visualizer_params = self.params
-        
-        Asedata = ase.ASEInterface({x: "X" for x in set(self.system.part.all().type)})
+        Asedata = ase.ASEInterface(
+            {x: "X" for x in set(self.system.part.all().type)})
         Asedata.register_system(self.system)
         data = Asedata.get()
         if self.params["colors"] is not None:
-            data.arrays['colors'] = [self.params["colors"].get(z, "white") for z in self.system.part.all().type]
+            data.arrays['colors'] = [self.params["colors"].get(
+                z, "white") for z in self.system.part.all().type]
         if self.params["radii"] is not None:
-             data.arrays['radii'] = [self.params["radii"].get(z, 0.5) for z in self.system.part.all().type]
+             data.arrays['radii'] = [self.params["radii"].get(
+                z, 0.5) for z in self.system.part.all().type]
             
         # Catch when the server is initializing an empty frame
         # len(self.zndraw) is a expensive socket call, so we try to avoid it
