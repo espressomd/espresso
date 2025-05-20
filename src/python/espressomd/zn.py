@@ -24,7 +24,6 @@ import zndraw.zndraw
 import zndraw.utils
 import zndraw.draw
 import znsocket
-import znjson
 import espressomd
 import secrets
 import time
@@ -357,9 +356,9 @@ class Visualizer():
             data.arrays['colors'] = [self.params["colors"].get(
                 z, "white") for z in self.system.part.all().type]
         if self.params["radii"] is not None:
-             data.arrays['radii'] = [self.params["radii"].get(
+            data.arrays['radii'] = [self.params["radii"].get(
                 z, 0.5) for z in self.system.part.all().type]
-            
+
         # Catch when the server is initializing an empty frame
         # len(self.zndraw) is a expensive socket call, so we try to avoid it
         if self.frame_count != 0 or len(self.zndraw) == 0:
