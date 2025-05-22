@@ -72,6 +72,8 @@ using is_solver = std::is_convertible<std::shared_ptr<T>, MagnetostaticsActor>;
 template <class T> struct has_dipole_fields : std::false_type {};
 #ifdef DIPOLE_FIELD_TRACKING
 template <> struct has_dipole_fields<DipolarDirectSum> : std::true_type {};
+template <> struct has_dipole_fields<DipolarDirectSumGpu> : std::true_type {};
+
 #endif // DIPOLE_FIELD_TRACKING
 
 } // namespace traits

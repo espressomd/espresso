@@ -58,7 +58,12 @@ __device__ inline void get_mi_vector_dds(float res[3], float const a[3],
 
 __device__ void dipole_ia_force(float pf, float const dr[3], float const *dip1,
                                 float const *dip2, float *f1, float *torque1,
-                                float *torque2) {
+                                float *torque2
+#ifdef DIPOLE_FIELD_TRACKING
+                                ,
+                                float *dip_fld1, float *dip_fld2
+#endif
+) {
   // Powers of distance
   auto const r_sq = scalar_product(dr, dr);
   auto const r_sq_inv = 1.0f / r_sq;
@@ -72,6 +77,18 @@ __device__ void dipole_ia_force(float pf, float const dr[3], float const *dip1,
   auto const pe2 = scalar_product(dip1, dr);
   auto const pe3 = scalar_product(dip2, dr);
   auto const pe4 = 3.0f * r5_inv;
+
+#ifdef DIPOLE_FIELD_TRACKING
+  auto const rep1 = pe3 * pe4;
+  auto const rep2 = pe2 * pe4;
+  dip_fld1[0] = pf * (rep1 * dr[0] - dip2[0] * r3_inv);
+  dip_fld1[1] = pf * (rep1 * dr[1] - dip2[1] * r3_inv);
+  dip_fld1[2] = pf * (rep1 * dr[2] - dip2[2] * r3_inv);
+
+  dip_fld2[0] = pf * (rep2 * dr[0] - dip1[0] * r3_inv);
+  dip_fld2[1] = pf * (rep2 * dr[1] - dip1[1] * r3_inv);
+  dip_fld2[2] = pf * (rep2 * dr[2] - dip1[2] * r3_inv);
+#endif
 
   // Force
   auto const aa = pe4 * pe1;
@@ -129,89 +146,140 @@ __device__ float dipole_ia_energy(float pf, float const *r1, float const *r2,
 }
 // LCOV_EXCL_STOP
 
-// constant‐memory shift list
-__constant__ Int3 d_imageShifts[4096];
-__constant__ int d_nShifts;
 __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
-                                              float *pos, float *dip, float *f,
-                                              float *torque,
-                                              float const box_l[3],
-                                              int const periodic[3]) {
-  auto const i = blockIdx.x * blockDim.x + threadIdx.x;
+                                              const float *pos, const float *dip
+#ifdef DIPOLE_FIELD_TRACKING
+                                              ,
+                                              float *dip_fld
+#endif
+                                              ,
+                                              float *f, float *torque,
+                                              const float box_l[3],
+                                              const int periodic[3],
+                                              int n_replicas) {
+  unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i >= n)
     return;
 
-  // Kahan summation based on the wikipedia article
-  // Force
-  float fi[3], fsum[3], tj[3];
-  // Torque
-  float ti[3], tsum[3];
+  // Load particle i
+  float xi = pos[3 * i + 0], yi = pos[3 * i + 1], zi = pos[3 * i + 2];
 
-  // There is one thread per particle. Each thread computes interactions
-  // with particles whose id is smaller than the thread id.
-  // The force and torque of all the interaction partners of the current thread
-  // is atomically added to global results at once.
-  // The result for the particle id equal to the thread id is atomically added
-  // to global memory at the end.
+  const float *mi = dip + 3 * i;
 
-  // Clear summation vars
-  for (unsigned int k = 0; k < 3; ++k) {
-    fsum[k] = 0.0f;
-    tsum[k] = 0.0f;
-  }
+  // Per‐thread accumulators
+  float fsum[3] = {0.0f, 0.0f, 0.0f};
+  float tsum[3] = {0.0f, 0.0f, 0.0f};
+#ifdef DIPOLE_FIELD_TRACKING
+  float dfsum[3] = {0.0f, 0.0f, 0.0f};
+#endif
 
-  // --- Self‐images of particle i (all shifts except the primary) ---
-  //   these only update thread‐private fsum/tsum, so no atomics
-  for (int s = 1; s < d_nShifts; ++s) {
-    Int3 sh = d_imageShifts[s];
-    float dr[3] = {sh.x * box_l[0], sh.y * box_l[1], sh.z * box_l[2]};
-    dipole_ia_force(pf, dr, dip + 3 * i, dip + 3 * i, fi, ti, tj);
+  float fi[3], ti1[3], ti2[3];
+#ifdef DIPOLE_FIELD_TRACKING
+  float dfi[3], dfj[3];
+#endif
+
+  // --- Minimal‐image branch (no replicas) ---
+  if (n_replicas == 0) {
+    for (unsigned int j = i + 1; j < n; ++j) {
+      // Compute MIC vector
+      float d0[3];
+      get_mi_vector_dds(d0, (float[]){xi, yi, zi}, pos + 3 * j, box_l,
+                        periodic);
+      // Compute force/torque
+      dipole_ia_force(pf, d0, mi, dip + 3 * j, fi, ti1, ti2
+#ifdef DIPOLE_FIELD_TRACKING
+                      ,
+                      dfi, dfj
+#endif
+      );
+
+      // Deposit on j (atomic)
+      for (int k = 0; k < 3; ++k) {
+        atomicAdd(f + 3 * j + k, -fi[k]);
+        atomicAdd(torque + 3 * j + k, ti2[k]);
+#ifdef DIPOLE_FIELD_TRACKING
+        atomicAdd(dip_fld + 3 * j + k, dfj[k]);
+#endif
+      }
+      // Accumulate on i
+      for (int k = 0; k < 3; ++k) {
+        fsum[k] += fi[k];
+        tsum[k] += ti1[k];
+#ifdef DIPOLE_FIELD_TRACKING
+        dfsum[k] += dfi[k];
+#endif
+      }
+    }
+    // Flush i’s result
     for (int k = 0; k < 3; ++k) {
-      fsum[k] += fi[k];
-      tsum[k] += ti[k];
+      atomicAdd(f + 3 * i + k, fsum[k]);
+      atomicAdd(torque + 3 * i + k, tsum[k]);
+#ifdef DIPOLE_FIELD_TRACKING
+      atomicAdd(dip_fld + 3 * i + k, dfsum[k]);
+#endif
+    }
+    return;
+  }
+  // --- Replica branch (n_replicas > 0) ---
+  int nx = periodic[0] * n_replicas;
+  int ny = periodic[1] * n_replicas;
+  int nz = periodic[2] * n_replicas;
+
+  // Self‐images of i (exclude primary)
+  for (int dx = -nx; dx <= nx; ++dx) {
+    for (int dy = -ny; dy <= ny; ++dy) {
+      for (int dz = -nz; dz <= nz; ++dz) {
+        if (dx == 0 && dy == 0 && dz == 0)
+          continue;
+        float dr[3] = {dx * box_l[0], dy * box_l[1], dz * box_l[2]};
+        dipole_ia_force(pf, dr, mi, mi, fi, ti1, ti2
+#ifdef DIPOLE_FIELD_TRACKING
+                        ,
+                        dfi, dfj
+#endif
+        );
+        for (int k = 0; k < 3; ++k) {
+          fsum[k] += fi[k];
+          tsum[k] += ti1[k];
+#ifdef DIPOLE_FIELD_TRACKING
+          dfsum[k] += dfi[k];
+#endif
+        }
+      }
     }
   }
 
-  // Pre‐load pos[i] once
-  float pi[3] = {pos[3 * i], pos[3 * i + 1], pos[3 * i + 2]};
-
-  // --- Pairwise interactions i ↔ j, for j>i, summing over all images ---
+  // Pairwise i <-> j over all images
   for (unsigned int j = i + 1; j < n; ++j) {
-    // Base MIC vector in the primary box
-    float pj[3] = {pos[3 * j], pos[3 * j + 1], pos[3 * j + 2]};
-    float d0[3];
-    get_mi_vector_dds(d0, pi, pj, box_l, periodic);
+    float xj = pos[3 * j + 0], yj = pos[3 * j + 1], zj = pos[3 * j + 2];
+    const float *mj = dip + 3 * j;
 
-    // Loop over every image shift
-    for (int s = 0; s < d_nShifts; ++s) {
-      Int3 sh = d_imageShifts[s];
-      float dr[3];
-      if (sh.x == 0 && sh.y == 0 && sh.z == 0) {
-        // zero‐shift: use true minimal‐image vector
-        dr[0] = d0[0];
-        dr[1] = d0[1];
-        dr[2] = d0[2];
-      } else {
-        // explicit replica: offset the MIC vector
-        dr[0] = d0[0] + sh.x * box_l[0];
-        dr[1] = d0[1] + sh.y * box_l[1];
-        dr[2] = d0[2] + sh.z * box_l[2];
-      }
+    for (int dx = -nx; dx <= nx; ++dx) {
+      for (int dy = -ny; dy <= ny; ++dy) {
+        for (int dz = -nz; dz <= nz; ++dz) {
+          float dr[3] = {(xi - xj) + dx * box_l[0], (yi - yj) + dy * box_l[1],
+                         (zi - zj) + dz * box_l[2]};
+          dipole_ia_force(pf, dr, mi, mj, fi, ti1, ti2
+#ifdef DIPOLE_FIELD_TRACKING
+                          ,
+                          dfi, dfj
+#endif
+          );
 
-      // Compute interactions for this image
-      dipole_ia_force(pf, dr, dip + 3 * i, dip + 3 * j, fi, ti, tj);
-
-      // 1) deposit force/torque on particle j **atomically**
-      //    (many threads i racing to update the same j)
-      for (int k = 0; k < 3; ++k) {
-        atomicAdd(f + 3 * j + k, -fi[k]);
-        atomicAdd(torque + 3 * j + k, tj[k]);
-      }
-
-      // 2) accumulate into thread‐private sums for particle i
-      for (int k = 0; k < 3; ++k) {
-        fsum[k] += fi[k];
-        tsum[k] += ti[k];
+          // Deposit on j (atomic)
+          for (int k = 0; k < 3; ++k) {
+            atomicAdd(f + 3 * j + k, -fi[k]);
+            atomicAdd(torque + 3 * j + k, ti2[k]);
+#ifdef DIPOLE_FIELD_TRACKING
+            atomicAdd(dip_fld + 3 * j + k, dfj[k]);
+#endif
+            fsum[k] += fi[k];
+            tsum[k] += ti1[k];
+#ifdef DIPOLE_FIELD_TRACKING
+            dfsum[k] += dfi[k];
+#endif
+          }
+        }
       }
     }
   }
@@ -221,6 +289,9 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
   for (int k = 0; k < 3; ++k) {
     atomicAdd(f + 3 * i + k, fsum[k]);
     atomicAdd(torque + 3 * i + k, tsum[k]);
+#ifdef DIPOLE_FIELD_TRACKING
+    atomicAdd(dip_fld + 3 * i + k, dfsum[k]);
+#endif
   }
 }
 // LCOV_EXCL_START
@@ -282,43 +353,24 @@ inline void copy_box_data(float **box_l_gpu, int **periodic_gpu,
       cudaMemcpy(*periodic_gpu, periodic, s_per, cudaMemcpyHostToDevice));
 }
 
-// build all shifts with x²+y²+z² ≤ n_replicas²
-static std::vector<Int3> build_shifts(int n_replicas, int periodic[3]) {
-  std::vector<Int3> shifts;
-  int rx = n_replicas * periodic[0];
-  int ry = n_replicas * periodic[1];
-  int rz = n_replicas * periodic[2];
-  int cutoff2 = n_replicas * n_replicas;
-  shifts.reserve((2 * rx + 1) * (2 * ry + 1) * (2 * rz + 1));
-  for (int x = -rx; x <= rx; ++x)
-    for (int y = -ry; y <= ry; ++y)
-      for (int z = -rz; z <= rz; ++z)
-        if (x * x + y * y + z * z <= cutoff2)
-          shifts.push_back({x, y, z});
-  return shifts;
-}
-
 void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
-                                           float *dip, float *f, float *torque,
+                                           float *dip
+
+#ifdef DIPOLE_FIELD_TRACKING
+                                           ,
+                                           float *dip_fld
+#endif
+                                           ,
+                                           float *f, float *torque,
                                            float box_l[3], int periodic[3],
                                            int n_replicas) {
 
-  unsigned int const bs = 32;
+  unsigned int const bs = 64;
   dim3 grid(1, 1, 1);
   dim3 block(1, 1, 1);
 
   if (n == 0)
     return;
-
-  static bool first = true;
-  if (first) {
-    auto shifts = build_shifts(n_replicas, periodic);
-    cudaMemcpyToSymbol(d_imageShifts, shifts.data(),
-                       shifts.size() * sizeof(Int3));
-    int nShifts = static_cast<int>(shifts.size());
-    cudaMemcpyToSymbol(d_nShifts, &nShifts, sizeof(int));
-    first = false;
-  }
 
   if (n <= bs) {
     grid.x = 1;
@@ -332,8 +384,13 @@ void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n, float *pos,
   int *periodic_gpu;
   copy_box_data(&box_l_gpu, &periodic_gpu, box_l, periodic);
 
-  KERNELCALL(DipolarDirectSum_kernel_force, grid, block, k, n, pos, dip, f,
-             torque, box_l_gpu, periodic_gpu);
+  KERNELCALL(DipolarDirectSum_kernel_force, grid, block, k, n, pos, dip
+#ifdef DIPOLE_FIELD_TRACKING
+             ,
+             dip_fld
+#endif
+             ,
+             f, torque, box_l_gpu, periodic_gpu, n_replicas);
   cudaFree(box_l_gpu);
   cudaFree(periodic_gpu);
 }

@@ -51,6 +51,9 @@ void DipolarDirectSumGpu::on_activation() const {
   gpu_particle_data.enable_property(GpuParticleData::prop::torque);
   gpu_particle_data.enable_property(GpuParticleData::prop::pos);
   gpu_particle_data.enable_property(GpuParticleData::prop::dip);
+#ifdef DIPOLE_FIELD_TRACKING
+  gpu_particle_data.enable_property(GpuParticleData::prop::dip_fld);
+#endif
 }
 
 void DipolarDirectSumGpu::add_long_range_forces() const {
@@ -68,8 +71,16 @@ void DipolarDirectSumGpu::add_long_range_forces() const {
   auto const torques_device = gpu.get_particle_torques_device();
   auto const positions_device = gpu.get_particle_positions_device();
   auto const dipoles_device = gpu.get_particle_dipoles_device();
+#ifdef DIPOLE_FIELD_TRACKING
+  auto const dipole_fields_device = gpu.get_particle_dip_fld_device();
+#endif
   DipolarDirectSum_kernel_wrapper_force(
-      static_cast<float>(prefactor), npart, positions_device, dipoles_device,
+      static_cast<float>(prefactor), npart, positions_device, dipoles_device
+#ifdef DIPOLE_FIELD_TRACKING
+      ,
+      dipole_fields_device
+#endif
+      ,
       forces_device, torques_device, box, periodicity, n_replicas);
 }
 

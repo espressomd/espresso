@@ -115,6 +115,14 @@ class Test(ut.TestCase):
         rel_diff = 100. * (time_series[-1] - time_series[0]) / time_series[0]
         self.assertGreater(np.linalg.norm(rel_diff), 10)
 
+    # @utx.skipIfMissingFeatures(["CUDA",])
+    def test_dds_gpu(self):
+        for replicas in [0, 1 ,2]:
+            solver = espressomd.magnetostatics.DipolarDirectSumGpu(prefactor=1.,n_replicas=replicas)
+            self.system.magnetostatics.solver = solver
+            self.system.integrator.run(steps=1)
+            for p in self.system.part.all():
+                np.testing.assert_allclose(np.copy(p.torque_lab), np.cross(p.dip,p.dip_fld),rtol=1e-9, atol=1e-5)
 
 if __name__ == "__main__":
     ut.main()

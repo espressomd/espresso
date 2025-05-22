@@ -97,6 +97,16 @@ void init_forces(const CellStructure &cell_structure) {
 
   init_forces_ghosts(cell_structure);
 }
+#ifdef DIPOLE_FIELD_TRACKING
+void invalidate_dip_fld(const CellStructure &cell_structure) {
+#ifdef CALIPER
+  CALI_CXX_MARK_FUNCTION;
+#endif
+
+  cell_structure.for_each_local_particle(
+      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
+}
+#endif
 
 void init_forces_ghosts(const CellStructure &cell_structure) {
   cell_structure.for_each_ghost_particle(
@@ -151,6 +161,11 @@ void System::System::calculate_forces() {
   }
 #endif
   init_forces(*cell_structure);
+#ifdef DIPOLE_FIELD_TRACKING
+  // reset dipole field
+  invalidate_dip_fld(*cell_structure);
+#endif
+
   thermostat_force_init();
 
   calc_long_range_forces(particles);
@@ -224,6 +239,9 @@ void System::System::calculate_forces() {
   CALI_MARK_BEGIN("copy_forces_from_GPU");
 #endif
   gpu.copy_forces_to_host(particles, this_node);
+#ifdef DIPOLE_FIELD_TRACKING
+  gpu.copy_dip_fld_to_host(particles, this_node);
+#endif
 #ifdef CALIPER
   CALI_MARK_END("copy_forces_from_GPU");
 #endif

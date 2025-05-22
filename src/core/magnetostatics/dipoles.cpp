@@ -181,6 +181,8 @@ struct LongRangeField {
     actor->dipole_field_at_part(m_particles);
   }
 
+  void operator()(std::shared_ptr<DipolarDirectSumGpu> const &actor) const {}
+
   template <typename T,
             std::enable_if_t<!traits::has_dipole_fields<T>::value> * = nullptr>
   void operator()(std::shared_ptr<T> const &) const {
