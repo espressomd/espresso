@@ -158,10 +158,4 @@ std::optional<double> System::particle_bond_energy(int pid, int bond_id,
   }
 }
 
-#ifdef DIPOLE_FIELD_TRACKING
-void System::calculate_long_range_fields() {
-  dipoles.calc_long_range_field(cell_structure->local_particles());
-}
-#endif
-
 } // namespace System

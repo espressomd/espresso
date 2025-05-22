@@ -17,36 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "config/config.hpp"
+#ifndef OBSERVABLES_PARTICLEDIPOLEFIELDS_HPP
+#define OBSERVABLES_PARTICLEDIPOLEFIELDS_HPP
 
 #include "PidObservable.hpp"
-#include "system/System.hpp"
-
-#include <vector>
 
 namespace Observables {
 
-/** Extract particle dipole fields.
- *  For \f$n\f$ particles, return \f$3 n\f$ dipole fields ordered as
- *  \f$(h_d1_x, h_d1_y, h_d1_z, \dots, h_dn_x, h_dn_y, h_dn_z)\f$.
+/** Extract dip_flds.
+ *  For \f$n\f$ particles, return \f$3 n\f$ OBSERVABLES_PARTICLEDIPOLEFIELDS_HPP
+ * ordered as
+ *  \f$(dip_fld_x^1, dip_fld_y^1, dip_fld_z^1, \dots, dip_fld_x^n, dip_fld_y^n,
+ * dip_fld_z^n)\f$.
  */
-class ParticleDipoleFields
-    : public ParticleObservable<ParticleObservables::DipoleFields> {
-public:
-  using ParticleObservable<
-      ParticleObservables::DipoleFields>::ParticleObservable;
-  std::vector<double>
-  evaluate(boost::mpi::communicator const &comm,
-           ParticleReferenceRange const &local_particles,
-           const ParticleObservables::traits<Particle> &traits) const override {
-#ifdef DIPOLE_FIELD_TRACKING
-    System::get_system().calculate_long_range_fields();
-#endif
-    return ParticleObservable<ParticleObservables::DipoleFields>::evaluate(
-        comm, local_particles, traits);
-  }
-};
+using ParticleDipoleFields =
+    ParticleObservable<ParticleObservables::DipoleFields>;
 
 } // namespace Observables
+#endif

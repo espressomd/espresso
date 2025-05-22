@@ -138,6 +138,14 @@ struct LongRangeForce {
     actor->add_long_range_forces();
   }
 #endif
+#ifdef DIPOLE_FIELD_TRACKING
+  template <typename T,
+            std::enable_if_t<!traits::has_dipole_fields<T>::value> * = nullptr>
+  void operator()(std::shared_ptr<T> const &) const {
+    runtimeErrorMsg() << "Dipoles field calculation not implemented by "
+                      << "dipolar method " << Utils::demangle<T>();
+  }
+#endif
 };
 
 struct LongRangeEnergy {
@@ -171,27 +179,6 @@ struct LongRangeEnergy {
 #endif
 };
 
-#ifdef DIPOLE_FIELD_TRACKING
-struct LongRangeField {
-  ParticleRange const &m_particles;
-  explicit LongRangeField(ParticleRange const &particles)
-      : m_particles(particles) {}
-
-  void operator()(std::shared_ptr<DipolarDirectSum> const &actor) const {
-    actor->dipole_field_at_part(m_particles);
-  }
-
-  void operator()(std::shared_ptr<DipolarDirectSumGpu> const &actor) const {}
-
-  template <typename T,
-            std::enable_if_t<!traits::has_dipole_fields<T>::value> * = nullptr>
-  void operator()(std::shared_ptr<T> const &) const {
-    runtimeErrorMsg() << "Dipoles field calculation not implemented by "
-                      << "dipolar method " << Utils::demangle<T>();
-  }
-};
-#endif
-
 void Solver::calc_pressure_long_range() const {
   if (impl->solver) {
     runtimeWarningMsg() << "pressure calculated, but pressure not implemented.";
@@ -210,14 +197,6 @@ double Solver::calc_energy_long_range(ParticleRange const &particles) const {
   }
   return 0.;
 }
-
-#ifdef DIPOLE_FIELD_TRACKING
-void Solver::calc_long_range_field(ParticleRange const &particles) const {
-  if (impl->solver) {
-    std::visit(LongRangeField(particles), *impl->solver);
-  }
-}
-#endif
 
 } // namespace Dipoles
 #endif // DIPOLES

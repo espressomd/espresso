@@ -53,7 +53,7 @@ class Observables(ut.TestCase):
         partcls.dip = np.random.random((N_PART, 3)) - .3
 
     if espressomd.has_features(["DIPOLE_FIELD_TRACKING"]):
-        system.analysis.dipole_fields()
+        partcls.dip_fld = np.random.random((N_PART, 3)) - .3
 
     if espressomd.has_features(["ROTATION"]):
         partcls.omega_body = np.random.random((N_PART, 3)) - .5

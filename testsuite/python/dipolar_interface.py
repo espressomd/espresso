@@ -115,9 +115,6 @@ class Test(ut.TestCase):
                 ["DIPOLAR_DIRECT_SUM", "DIPOLE_FIELD_TRACKING"]) and has_gpu:
             ddsg = DDSG(prefactor=1.)
             self.system.magnetostatics.solver = ddsg
-            with self.assertRaisesRegex(Exception, "Dipoles field calculation not implemented by dipolar method DipolarDirectSumGpu"):
-                self.system.part.add(pos=(0.2, 0.2, 0.2), dip=(0.0, 0.0, 1.0))
-                self.system.analysis.dipole_fields()
             self.system.part.clear()
             self.system.magnetostatics.clear()
         # check it's safe to resize the box, i.e. there are no currently
