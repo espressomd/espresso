@@ -296,7 +296,10 @@ class Test(ut.TestCase):
             np.testing.assert_allclose(node_01_energy, node_00_energy, **tol)
             np.testing.assert_allclose(node_01_forces, node_00_forces, **tol)
             np.testing.assert_allclose(node_01_torques, node_00_torques, **tol)
-    
+
+    @utx.skipIfMissingGPU()
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] == 1,
+               "only runs for 2 or more MPI ranks")
     def test_inner_loop_consistency_gpu(self):
         system = self.system
         system.periodicity = [True, True, True]
