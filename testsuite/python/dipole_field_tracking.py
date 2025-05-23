@@ -125,5 +125,6 @@ class Test(ut.TestCase):
                 np.testing.assert_allclose(np.copy(p.torque_lab), np.cross(
                     p.dip, p.dip_fld), rtol=1e-9, atol=1e-5)
 
+
 if __name__ == "__main__":
     ut.main()
