@@ -231,7 +231,9 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
       for (int dz = -nz; dz <= nz; ++dz) {
         if (dx == 0 && dy == 0 && dz == 0)
           continue;
-        float dr[3] = {dx * box_l[0], dy * box_l[1], dz * box_l[2]};
+        float dr[3] = {static_cast<float>(dx) * box_l[0],
+                       static_cast<float>(dy) * box_l[1],
+                       static_cast<float>(dz) * box_l[2]};
         dipole_ia_force(pf, dr, mi, mi, fi, ti1, ti2
 #ifdef DIPOLE_FIELD_TRACKING
                         ,
@@ -257,8 +259,9 @@ __global__ void DipolarDirectSum_kernel_force(float pf, unsigned int n,
     for (int dx = -nx; dx <= nx; ++dx) {
       for (int dy = -ny; dy <= ny; ++dy) {
         for (int dz = -nz; dz <= nz; ++dz) {
-          float dr[3] = {(xi - xj) + dx * box_l[0], (yi - yj) + dy * box_l[1],
-                         (zi - zj) + dz * box_l[2]};
+          float dr[3] = {(xi - xj) + static_cast<float>(dx) * box_l[0],
+                         (yi - yj) + static_cast<float>(dy) * box_l[1],
+                         (zi - zj) + static_cast<float>(dz) * box_l[2]};
           dipole_ia_force(pf, dr, mi, mj, fi, ti1, ti2
 #ifdef DIPOLE_FIELD_TRACKING
                           ,

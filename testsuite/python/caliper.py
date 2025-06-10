@@ -31,6 +31,7 @@ integrate
     calculate_forces
       copy_particles_to_GPU
       init_forces
+      invalidate_dip_fld
       calc_long_range_forces
       short_range_loop
       copy_forces_from_GPU
@@ -38,6 +39,7 @@ integrate
     calculate_forces
       copy_particles_to_GPU
       init_forces
+      invalidate_dip_fld
       calc_long_range_forces
       short_range_loop
       copy_forces_from_GPU
@@ -52,6 +54,8 @@ class Test(ut.TestCase):
     @utx.skipIfMissingFeatures(["P3M", "WCA"])
     def test_runtime_report(self):
         has_cuda = espressomd.has_features(["CUDA"])
+        has_dipfld = espressomd.has_features(["DIPOLE_FIELD_TRACKING"])
+
         script = str(pathlib.Path(__file__).parent / "caliper_child.py")
         my_env = os.environ.copy()
         my_env["CALI_CONFIG"] = "runtime-report"
@@ -69,8 +73,17 @@ class Test(ut.TestCase):
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
         labels = [line[:30].strip() for line in lines[1:]]
-        labels_ref = [x.strip() for x in EXPECTED_LABELS.strip().split("\n")
-                      if "GPU" not in x.upper() or has_cuda]
+        # build expected labels, skipping GPU-only and dip_fld if not enabled
+        labels_ref = []
+        for line in EXPECTED_LABELS.strip().split("\n"):
+            label = line.strip()
+            # skip GPU-only entries if CUDA not present
+            if "GPU" in label.upper() and not has_cuda:
+                continue
+            # skip our dip_fld entry if the feature wasn't compiled in
+            if label == "invalidate_dip_fld" and not has_dipfld:
+                continue
+            labels_ref.append(label)
         self.assertEqual(labels[:len(labels_ref)], labels_ref,
                          msg=f"Caliper returned this summary:\n{stderr}")
 
