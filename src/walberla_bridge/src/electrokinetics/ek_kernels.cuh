@@ -31,6 +31,8 @@
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision_CUDA.h"
 #include "generated_kernels/DiffusiveFluxKernel_double_precision_CUDA.h"
 #include "generated_kernels/DiffusiveFluxKernel_single_precision_CUDA.h"
+#include "generated_kernels/EK_FieldAccessors_double_precision_CUDA.h"
+#include "generated_kernels/EK_FieldAccessors_single_precision_CUDA.h"
 #include "generated_kernels/FrictionCouplingKernel_double_precision_CUDA.h"
 #include "generated_kernels/FrictionCouplingKernel_single_precision_CUDA.h"
 

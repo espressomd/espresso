@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 59c9b8b185782eba184e0fdfb2144793343213f0
 
 #include <cmath>
 
@@ -63,8 +63,8 @@ void ReactionKernelBulk_1_single_precision_CUDA::run(IBlock *block, gpuStream_t 
   auto rho_0 = block->getData<gpu::GPUField<float>>(rho_0ID);
 
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_0 = this->order_0_;
   auto &stoech_0 = this->stoech_0_;
+  auto &order_0 = this->order_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   float *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(rho_0->xSizeWithGhostLayer(), int64_t(int64_c(rho_0->xSize()) + 0))
@@ -94,8 +94,8 @@ void ReactionKernelBulk_1_single_precision_CUDA::runOnCellInterval(const shared_
   auto rho_0 = block->getData<gpu::GPUField<float>>(rho_0ID);
 
   auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_0 = this->order_0_;
   auto &stoech_0 = this->stoech_0_;
+  auto &order_0 = this->order_0_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin(), -int_c(rho_0->nrOfGhostLayers()))

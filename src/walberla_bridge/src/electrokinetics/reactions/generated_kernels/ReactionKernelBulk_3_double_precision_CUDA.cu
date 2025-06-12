@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 59c9b8b185782eba184e0fdfb2144793343213f0
 
 #include <cmath>
 
@@ -64,16 +64,16 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelbulk_3_double_preci
 
 void ReactionKernelBulk_3_double_precision_CUDA::run(IBlock *block, gpuStream_t stream) {
 
-  auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
   auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
   auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
+  auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
 
   auto &stoech_2 = this->stoech_2_;
-  auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_0 = this->order_0_;
-  auto &stoech_0 = this->stoech_0_;
   auto &order_2 = this->order_2_;
   auto &order_1 = this->order_1_;
+  auto &stoech_0 = this->stoech_0_;
+  auto &rate_coefficient = this->rate_coefficient_;
+  auto &order_0 = this->order_0_;
   auto &stoech_1 = this->stoech_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
@@ -111,16 +111,16 @@ void ReactionKernelBulk_3_double_precision_CUDA::runOnCellInterval(const shared_
   if (ci.empty())
     return;
 
-  auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
   auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
   auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
+  auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
 
   auto &stoech_2 = this->stoech_2_;
-  auto &rate_coefficient = this->rate_coefficient_;
-  auto &order_0 = this->order_0_;
-  auto &stoech_0 = this->stoech_0_;
   auto &order_2 = this->order_2_;
   auto &order_1 = this->order_1_;
+  auto &stoech_0 = this->stoech_0_;
+  auto &rate_coefficient = this->rate_coefficient_;
+  auto &order_0 = this->order_0_;
   auto &stoech_1 = this->stoech_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin(), -int_c(rho_0->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin(), -int_c(rho_0->nrOfGhostLayers()))

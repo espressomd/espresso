@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <walberla_bridge/Architecture.hpp>
+
 #include "generated_kernels/AdvectiveFluxKernel_double_precision.h"
 #include "generated_kernels/AdvectiveFluxKernel_single_precision.h"
 #include "generated_kernels/ContinuityKernel_double_precision.h"
@@ -31,6 +33,8 @@
 #include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision.h"
 #include "generated_kernels/DiffusiveFluxKernel_double_precision.h"
 #include "generated_kernels/DiffusiveFluxKernel_single_precision.h"
+#include "generated_kernels/EK_FieldAccessors_double_precision_CPU.h"
+#include "generated_kernels/EK_FieldAccessors_single_precision_CPU.h"
 #include "generated_kernels/FrictionCouplingKernel_double_precision.h"
 #include "generated_kernels/FrictionCouplingKernel_single_precision.h"
 
@@ -44,7 +48,7 @@ namespace detail {
 
 using lbmpy::Arch;
 
-template <> struct KernelTrait<double, Arch::CPU> {
+template <typename FT = double, Arch AT = Arch::CPU> struct KernelTrait {
   using ContinuityKernel = pystencils::ContinuityKernel_double_precision;
   using DiffusiveFluxKernel = pystencils::DiffusiveFluxKernel_double_precision;
   using DiffusiveFluxKernelThermalized =

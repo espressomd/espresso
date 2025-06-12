@@ -37,6 +37,7 @@
 #include "lb_kernels.cuh"
 #endif
 
+#include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/BlockAndCell.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
@@ -57,7 +58,7 @@ namespace walberla {
 
 /** @brief Class that runs and controls the EK on waLBerla. */
 template <std::size_t FluxCount = 13, typename FloatType = double,
-          lbmpy::Arch Architecture>
+          lbmpy::Arch Architecture = lbmpy::Arch::CPU>
 class EKinWalberlaImpl : public EKinWalberlaBase {
   using ContinuityKernel =
       typename detail::KernelTrait<FloatType, Architecture>::ContinuityKernel;
@@ -97,40 +98,33 @@ protected:
   template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct FieldTrait {
     // Type definitions
     using FluxField = GhostLayerField<FT, FluxCount>;
-    using FlagField = walberla::FlagField<walberla::uint8_t>;
     using DensityField = GhostLayerField<FT, 1>;
+  };
+  using FlagField = walberla::FlagField<walberla::uint8_t>;
 #if defined(__CUDACC__)
   template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
   private:
     static auto constexpr AT = lbmpy::Arch::GPU;
     template <class Field>
     using MemcpyPackInfo = gpu::communication::MemcpyPackInfo<Field>;
-
-  public:
-    explicit UniformGPUScheme(auto const &bf)
-          : gpu::communication::UniformGPUScheme<Stencil>(
-                bf, /* sendDirectlyFromGPU */ false,
-                /* useLocalCommunication */ false) {}
+    template <typename Stencil>
+    class UniformGPUScheme
+        : public gpu::communication::UniformGPUScheme<Stencil> {
+    public:
+      explicit UniformGPUScheme(auto const &bf)
+            : gpu::communication::UniformGPUScheme<Stencil>(
+                  bf, /* sendDirectlyFromGPU */ false,
+                  /* useLocalCommunication */ false) {}
     };
     using FluxField = gpu::GPUField<FT>;
     using DensityField = gpu::GPUField<FT>;
+    using GPUField = gpu::GPUField<FloatType>;
+  };
 #endif
 
   // "underlying" field types (`GPUField` has no f-size info at compile time)
   using _FluxField = typename FieldTrait<FloatType>::FluxField;
   using _DensityField = typename FieldTrait<FloatType>::DensityField;
-public:
-  using PdfField = typename FieldTrait<FloatType, Architecture>::PdfField;
-  using VectorField = typename FieldTrait<FloatType, Architecture>::VectorField;
-  using FlagField = typename BoundaryModel::FlagField;
-#if defined(__CUDACC__)
-  using GPUField = gpu::GPUField<FloatType>;
-  using PdfFieldCpu =
-      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::PdfField;
-  using VectorFieldCpu =
-      typename FieldTrait<FloatType, lbmpy::Arch::CPU>::VectorField;
-#endif
-
 
 
 public:
@@ -230,12 +224,12 @@ protected:
       if constexpr (std::is_same_v<Field, _DensityField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
           auto field = block->template getData<GPUField>(field_id);
-          lbm::accessor::Vector::initialize(field, FloatType);
+          ek::accessor::Vector::initialize(field, FloatType);
         }
       } else if constexpr (std::is_same_v<Field, _FluxField>) {
         for (auto block = blocks->begin(); block != blocks->end(); ++block) {
           auto field = block->template getData<GPUField>(field_id);
-          lbm::accessor::Population::initialize(
+          ek::accessor::Flux::initialize(
               field, std::array<FloatType, FluxCount>{});
         }
       }
@@ -277,13 +271,13 @@ public:
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
 
-    m_density_field_id = add_to_storage<DensityField>("density field");
+    m_density_field_id = add_to_storage<_DensityField>("density field");
     m_density_field_flattened_id =
-        field::addFlattenedShallowCopyToStorage<DensityField>(
+        field::addFlattenedShallowCopyToStorage<_DensityField>(
             blocks, m_density_field_id, "flattened density field");
-    m_flux_field_id = add_to_storage<FluxField>("flux field");
+    m_flux_field_id = add_to_storage<_FluxField>("flux field");
     m_flux_field_flattened_id =
-        field::addFlattenedShallowCopyToStorage<FluxField>(
+        field::addFlattenedShallowCopyToStorage<_FluxField>(
             blocks, m_flux_field_id, "flattened flux field");
 
     m_continuity = std::make_unique<ContinuityKernel>(
@@ -306,7 +300,7 @@ public:
 
     m_full_communication = std::make_shared<FullCommunicator>(blocks);
     m_full_communication->addPackInfo(
-        std::make_shared<field::communication::PackInfo<DensityField>>(
+        std::make_shared<field::communication::PackInfo<_DensityField>>(
             m_density_field_id));
   }
 
@@ -606,7 +600,7 @@ public:
       return false;
 
     auto density_field =
-        bc->block->template getData<DensityField>(m_density_field_id);
+        bc->block->template getData<_DensityField>(m_density_field_id);
     density_field->get(bc->cell) = FloatType_c(density);
 
     return true;
@@ -621,7 +615,7 @@ public:
       return std::nullopt;
 
     auto const density_field =
-        bc->block->template getData<DensityField>(m_density_field_id);
+        bc->block->template getData<_DensityField>(m_density_field_id);
 
     return {double_c(density_field->get(bc->cell))};
   }
@@ -634,7 +628,7 @@ public:
       auto const &lattice = get_lattice();
       auto const &block = *(lattice.get_blocks()->begin());
       auto const density_field =
-          block.template getData<DensityField>(m_density_field_id);
+          block.template getData<_DensityField>(m_density_field_id);
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
       auto const n_values = ci->numCells();
@@ -658,7 +652,7 @@ public:
       auto const &lattice = get_lattice();
       auto &block = *(lattice.get_blocks()->begin());
       auto density_field =
-          block.template getData<DensityField>(m_density_field_id);
+          block.template getData<_DensityField>(m_density_field_id);
       auto it = density.begin();
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
@@ -977,17 +971,16 @@ protected:
   };
 
   template <typename OutputType = float,
-            class Base = VTKWriter<DensityField, 1u, OutputType>>
-  class DensityVTKWriter : public VTKWriter<DensityField, 1u, OutputType> {
+            class Base = VTKWriter<_DensityField, 1u, OutputType>>
+  class DensityVTKWriter : public VTKWriter<_DensityField, 1u, OutputType> {
   public:
-    using VTKWriter<DensityField, 1u, OutputType>::VTKWriter;
+    using VTKWriter<_DensityField, 1u, OutputType>::VTKWriter;
 
   protected:
     OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                         cell_idx_t const z, cell_idx_t const) override {
       WALBERLA_ASSERT_NOT_NULLPTR(this->m_field);
-      auto const density = VectorTrait<typename DensityField::value_type>::get(
-          this->m_field->get(x, y, z, 0), uint_c(0));
+      auto const density = ek::accessor::Scalar::get(this->m_field, {x, y, z});
       return numeric_cast<OutputType>(this->m_conversion * density);
     }
   };

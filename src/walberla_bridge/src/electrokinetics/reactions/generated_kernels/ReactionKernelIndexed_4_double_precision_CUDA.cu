@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 59c9b8b185782eba184e0fdfb2144793343213f0
 
 #include "ReactionKernelIndexed_4_double_precision_CUDA.h"
 #include "core/DataTypes.h"
@@ -31,21 +31,39 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-#ifdef __GNUC__
+#if defined(__NVCC__)
+#define RESTRICT __restrict__
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 177 // unused variable
+#else
+#pragma push
+#pragma diag_suppress 177 // unused variable
+#endif                    // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#elif defined(__clang__)
+#if defined(__CUDA__)
+#if defined(__CUDA_ARCH__)
+// clang compiling CUDA code in device mode
+#define RESTRICT __restrict__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#else
+// clang compiling CUDA code in host mode
+#define RESTRICT __restrict__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#endif // defined(__CUDA_ARCH__)
+#endif // defined(__CUDA__)
+#elif defined(__GNUC__) or defined(__GNUG__)
+#define RESTRICT __restrict__
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wconversion"
+#elif defined(_MSC_VER)
+#define RESTRICT __restrict
+#else
+#define RESTRICT
 #endif
 
-#ifdef __CUDACC__
-#pragma push
-#ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
-#pragma nv_diag_suppress 177
-#else
-#pragma diag_suppress 177
-#endif
-#endif
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_reactionkernelindexed_4_double_precision_cuda_boundary_ReactionKernelIndexed_4_double_precision_CUDA {
 static FUNC_PREFIX __launch_bounds__(256) void reactionkernelindexed_4_double_precision_cuda_boundary_ReactionKernelIndexed_4_double_precision_CUDA(uint8_t *RESTRICT const _data_indexVector, double *RESTRICT _data_rho_0, double *RESTRICT _data_rho_1, double *RESTRICT _data_rho_2, double *RESTRICT _data_rho_3, int64_t const _stride_rho_0_0, int64_t const _stride_rho_0_1, int64_t const _stride_rho_0_2, int64_t const _stride_rho_1_0, int64_t const _stride_rho_1_1, int64_t const _stride_rho_1_2, int64_t const _stride_rho_2_0, int64_t const _stride_rho_2_1, int64_t const _stride_rho_2_2, int64_t const _stride_rho_3_0, int64_t const _stride_rho_3_1, int64_t const _stride_rho_3_2, int32_t indexVectorSize, double order_0, double order_1, double order_2, double order_3, double rate_coefficient, double stoech_0, double stoech_1, double stoech_2, double stoech_3) {
@@ -81,12 +99,25 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelindexed_4_double_pr
 } // namespace internal_reactionkernelindexed_4_double_precision_cuda_boundary_ReactionKernelIndexed_4_double_precision_CUDA
 
 // NOLINTEND(readability-non-const-parameter*)
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
 
-#ifdef __CUDACC__
+#if defined(__NVCC__)
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic pop
+#else
 #pragma pop
+#endif // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#elif defined(__clang__)
+#if defined(__CUDA__)
+#if defined(__CUDA_ARCH__)
+// clang compiling CUDA code in device mode
+#pragma clang diagnostic pop
+#else
+// clang compiling CUDA code in host mode
+#pragma clang diagnostic pop
+#endif // defined(__CUDA_ARCH__)
+#endif // defined(__CUDA__)
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
 #endif
 
 void ReactionKernelIndexed_4_double_precision_CUDA::run_impl(IBlock *block, IndexVectors::Type type, gpuStream_t stream) {
@@ -99,20 +130,20 @@ void ReactionKernelIndexed_4_double_precision_CUDA::run_impl(IBlock *block, Inde
 
   uint8_t *_data_indexVector = reinterpret_cast<uint8_t *>(pointer);
 
-  auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
   auto rho_1 = block->getData<gpu::GPUField<double>>(rho_1ID);
   auto rho_0 = block->getData<gpu::GPUField<double>>(rho_0ID);
   auto rho_3 = block->getData<gpu::GPUField<double>>(rho_3ID);
+  auto rho_2 = block->getData<gpu::GPUField<double>>(rho_2ID);
 
   auto &stoech_2 = stoech_2_;
+  auto &order_2 = order_2_;
+  auto &stoech_3 = stoech_3_;
+  auto &order_1 = order_1_;
+  auto &stoech_0 = stoech_0_;
+  auto &order_3 = order_3_;
   auto &rate_coefficient = rate_coefficient_;
   auto &order_0 = order_0_;
-  auto &stoech_0 = stoech_0_;
-  auto &order_2 = order_2_;
-  auto &order_1 = order_1_;
   auto &stoech_1 = stoech_1_;
-  auto &order_3 = order_3_;
-  auto &stoech_3 = stoech_3_;
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_0->nrOfGhostLayers()))
   double *RESTRICT _data_rho_0 = rho_0->dataAt(0, 0, 0, 0);
   WALBERLA_ASSERT_GREATER_EQUAL(0, -int_c(rho_1->nrOfGhostLayers()))

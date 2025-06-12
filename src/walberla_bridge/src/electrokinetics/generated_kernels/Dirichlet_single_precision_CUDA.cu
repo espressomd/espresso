@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.3.7, lbmpy v1.3.7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 59c9b8b185782eba184e0fdfb2144793343213f0
 
 #include "Dirichlet_single_precision_CUDA.h"
 #include "core/DataTypes.h"
@@ -31,21 +31,47 @@ using namespace std;
 namespace walberla {
 namespace pystencils {
 
-#ifdef __GNUC__
+#if defined(__NVCC__)
+#define RESTRICT __restrict__
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 177 // unused variable
+#else
+#pragma push
+#pragma diag_suppress 177 // unused variable
+#endif                    // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#elif defined(__clang__)
+#if defined(__CUDA__)
+#if defined(__CUDA_ARCH__)
+// clang compiling CUDA code in device mode
+#define RESTRICT __restrict__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wstrict-aliasing"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wsign-compare"
+#else
+// clang compiling CUDA code in host mode
+#define RESTRICT __restrict__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wstrict-aliasing"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wsign-compare"
+#endif // defined(__CUDA_ARCH__)
+#endif // defined(__CUDA__)
+#elif defined(__GNUC__) or defined(__GNUG__)
+#define RESTRICT __restrict__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wconversion"
+#elif defined(_MSC_VER)
+#define RESTRICT __restrict
+#else
+#define RESTRICT
 #endif
 
-#ifdef __CUDACC__
-#pragma push
-#ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
-#pragma nv_diag_suppress 177
-#else
-#pragma diag_suppress 177
-#endif
-#endif
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_dirichlet_single_precision_cuda_boundary_Dirichlet_single_precision_CUDA {
 static FUNC_PREFIX __launch_bounds__(256) void dirichlet_single_precision_cuda_boundary_Dirichlet_single_precision_CUDA(float *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int32_t indexVectorSize) {
@@ -72,12 +98,25 @@ static FUNC_PREFIX __launch_bounds__(256) void dirichlet_single_precision_cuda_b
 } // namespace internal_dirichlet_single_precision_cuda_boundary_Dirichlet_single_precision_CUDA
 
 // NOLINTEND(readability-non-const-parameter*)
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
 
-#ifdef __CUDACC__
+#if defined(__NVCC__)
+#if defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#pragma nv_diagnostic pop
+#else
 #pragma pop
+#endif // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
+#elif defined(__clang__)
+#if defined(__CUDA__)
+#if defined(__CUDA_ARCH__)
+// clang compiling CUDA code in device mode
+#pragma clang diagnostic pop
+#else
+// clang compiling CUDA code in host mode
+#pragma clang diagnostic pop
+#endif // defined(__CUDA_ARCH__)
+#endif // defined(__CUDA__)
+#elif defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
 #endif
 
 void Dirichlet_single_precision_CUDA::run_impl(IBlock *block, IndexVectors::Type type, gpuStream_t stream) {

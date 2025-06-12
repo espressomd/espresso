@@ -370,6 +370,18 @@ def generate_device_preprocessor(kernel, defines=()):
             "clang_dev": ["-Wstrict-aliasing", "-Wunused-variable", "-Wconversion", "-Wsign-compare"],  # nopep8
             "gcc": ["-Wstrict-aliasing", "-Wunused-variable", "-Wconversion"],
         },
+        "advection": {
+            "nvcc": ["diag_suppress 177 // unused variable"],
+            "clang_host": ["-Wunused-variable"],
+            "clang_dev": ["-Wunused-variable"],
+            "gcc": ["-Wunused-variable"],
+        },
+        "reactions": {
+            "nvcc": ["diag_suppress 177 // unused variable"],
+            "clang_host": ["-Wunused-variable"],
+            "clang_dev": ["-Wunused-variable"],
+            "gcc": ["-Wunused-variable"],
+        },
     }
 
     defines_table = {
