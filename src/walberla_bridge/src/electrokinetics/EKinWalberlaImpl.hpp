@@ -184,20 +184,20 @@ protected:
   // TODO: kernel for that
   // std::shared_ptr<ResetForce<PdfField, VectorField>> m_reset_force;
 
-  [[nodiscard]] std::optional<CellInterval>
-  get_interval(Utils::Vector3i const &lower_corner,
-               Utils::Vector3i const &upper_corner) const {
-    auto const &lattice = get_lattice();
-    auto const &cell_min = lower_corner;
-    auto const cell_max = upper_corner - Utils::Vector3i::broadcast(1);
-    auto const lower_bc = get_block_and_cell(lattice, cell_min, true);
-    auto const upper_bc = get_block_and_cell(lattice, cell_max, true);
-    if (not lower_bc or not upper_bc) {
-      return std::nullopt;
-    }
-    assert(&(*(lower_bc->block)) == &(*(upper_bc->block)));
-    return {CellInterval(lower_bc->cell, upper_bc->cell)};
-  }
+  // [[nodiscard]] std::optional<CellInterval>
+  // get_interval(Utils::Vector3i const &lower_corner,
+  //              Utils::Vector3i const &upper_corner) const {
+  //   auto const &lattice = get_lattice();
+  //   auto const &cell_min = lower_corner;
+  //   auto const cell_max = upper_corner - Utils::Vector3i::broadcast(1);
+  //   auto const lower_bc = get_block_and_cell(lattice, cell_min, true);
+  //   auto const upper_bc = get_block_and_cell(lattice, cell_max, true);
+  //   if (not lower_bc or not upper_bc) {
+  //     return std::nullopt;
+  //   }
+  //   assert(&(*(lower_bc->block)) == &(*(upper_bc->block)));
+  //   return {CellInterval(lower_bc->cell, upper_bc->cell)};
+  // }
 
  /**
    * @brief Convenience function to add a field with a custom allocator.
@@ -601,8 +601,7 @@ public:
 
     auto density_field =
         bc->block->template getData<_DensityField>(m_density_field_id);
-    density_field->get(bc->cell) = FloatType_c(density);
-
+    ek::accessor::Scalar::set(density_field, FloatType_c(density), bc->cell);
     return true;
   }
 
@@ -617,30 +616,37 @@ public:
     auto const density_field =
         bc->block->template getData<_DensityField>(m_density_field_id);
 
-    return {double_c(density_field->get(bc->cell))};
+    return {double_c(ek::accessor::Scalar::get(density_field, bc->cell))};
   }
 
   [[nodiscard]] std::vector<double>
   get_slice_density(Utils::Vector3i const &lower_corner,
                     Utils::Vector3i const &upper_corner) const override {
     std::vector<double> out;
-    if (auto const ci = get_interval(lower_corner, upper_corner)) {
-      auto const &lattice = get_lattice();
-      auto const &block = *(lattice.get_blocks()->begin());
-      auto const density_field =
-          block.template getData<_DensityField>(m_density_field_id);
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      auto const n_values = ci->numCells();
-      out.reserve(n_values);
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            out.emplace_back(density_field->get(Cell{x, y, z}));
-          }
+    uint_t values_size = 0;
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      out = std::vector<double>(ci->numCells());
+      for (auto &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(lattice, 
+                                                lower_corner, upper_corner,
+                                                block_offset, block)) {
+          auto const density_field =
+              block.template getData<_DensityField>(m_density_field_id);
+          auto const values = ek::accessor::Scalar::get(density_field, *bci);
+          assert(values.size() == bci->numCells());
+          values_size += 3u * bci->numCells();
+          auto kernel = [&values, &out, this](unsigned const block_index,
+                                              unsigned const local_index,
+                                              Utils::Vector3i const &node) {
+            out[local_index] = double_c(values[block_index]);
+          };
+
+          copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
         }
       }
-      assert(out.size() == n_values);
+      assert(values_size == ci->numCells());
     }
     return out;
   }
@@ -648,21 +654,26 @@ public:
   void set_slice_density(Utils::Vector3i const &lower_corner,
                          Utils::Vector3i const &upper_corner,
                          std::vector<double> const &density) override {
-    if (auto const ci = get_interval(lower_corner, upper_corner)) {
-      auto const &lattice = get_lattice();
-      auto &block = *(lattice.get_blocks()->begin());
-      auto density_field =
-          block.template getData<_DensityField>(m_density_field_id);
-      auto it = density.begin();
-      auto const lower_cell = ci->min();
-      auto const upper_cell = ci->max();
-      assert(density.size() == ci->numCells());
-      for (auto x = lower_cell.x(); x <= upper_cell.x(); ++x) {
-        for (auto y = lower_cell.y(); y <= upper_cell.y(); ++y) {
-          for (auto z = lower_cell.z(); z <= upper_cell.z(); ++z) {
-            density_field->get(Cell{x, y, z}) = FloatType_c(*it);
-            ++it;
-          }
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      assert(velocity.size() == ci->numCells());
+      for (auto &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(lattice, 
+                                                lower_corner, upper_corner,
+                                                block_offset, block)) {
+          auto const density_field =
+              block.template getData<_DensityField>(m_density_field_id);
+          std::vector<FloatType> values(bci->numCells());
+
+          auto kernel = [&values, &density](unsigned const block_index,
+                                            unsigned const local_index,
+                                            Utils::Vector3i const &node) {
+            values[block_index] = numeric_cast<FloatType>(density[local_index]);
+          };
+
+          copy_block_buffer(*bci, *ci, block_offset, lower_corner, kernel);
+          ek::accessor::Scalar::set(density_field, values, *bci);
         }
       }
     }
@@ -733,8 +744,8 @@ public:
   void set_slice_density_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<std::optional<double>> const &density) override {
-    if (auto const ci = get_interval(lower_corner, upper_corner)) {
-      auto const &lattice = get_lattice();
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
@@ -764,8 +775,8 @@ public:
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
     std::vector<std::optional<double>> out;
-    if (auto const ci = get_interval(lower_corner, upper_corner)) {
-      auto const &lattice = get_lattice();
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
@@ -792,8 +803,8 @@ public:
   void set_slice_flux_boundary(
       Utils::Vector3i const &lower_corner, Utils::Vector3i const &upper_corner,
       std::vector<std::optional<Utils::Vector3d>> const &flux) override {
-    if (auto const ci = get_interval(lower_corner, upper_corner)) {
-      auto const &lattice = get_lattice();
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
@@ -823,8 +834,8 @@ public:
       Utils::Vector3i const &lower_corner,
       Utils::Vector3i const &upper_corner) const override {
     std::vector<std::optional<Utils::Vector3d>> out;
-    if (auto const ci = get_interval(lower_corner, upper_corner)) {
-      auto const &lattice = get_lattice();
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
@@ -852,8 +863,8 @@ public:
   get_slice_is_boundary(Utils::Vector3i const &lower_corner,
                         Utils::Vector3i const &upper_corner) const override {
     std::vector<bool> out;
-    if (auto const ci = get_interval(lower_corner, upper_corner)) {
-      auto const &lattice = get_lattice();
+    auto const &lattice = get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
       auto const local_offset = std::get<0>(lattice.get_local_grid_range());
       auto const lower_cell = ci->min();
       auto const upper_cell = ci->max();
